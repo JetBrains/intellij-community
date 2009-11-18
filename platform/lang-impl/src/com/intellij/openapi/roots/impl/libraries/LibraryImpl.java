@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.roots.impl.libraries;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -45,8 +46,8 @@ import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -72,6 +73,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   private final ModifiableRootModel myRootModel;
   private MessageBusConnection myBusConnection = null;
   private boolean myDisposed;
+  private final Disposable myPointersDisposable = Disposer.newDisposable();
 
   LibraryImpl(LibraryTable table, Element element, ModifiableRootModel rootModel) throws InvalidDataException {
     myLibraryTable = table;
@@ -118,7 +120,6 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
       myBusConnection.disconnect();
       myBusConnection = null;
     }
-    disposeMyPointers();
     myDisposed = true;
   }
 
@@ -214,10 +215,12 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   }
 
   private Map<OrderRootType, VirtualFilePointerContainer> initRoots() {
+    Disposer.register(this, myPointersDisposable);
+    
     Map<OrderRootType, VirtualFilePointerContainer> result = new HashMap<OrderRootType, VirtualFilePointerContainer>(5);
 
     for (OrderRootType rootType : OrderRootType.getAllTypes()) {
-      result.put(rootType, VirtualFilePointerManager.getInstance().createContainer(this));
+      result.put(rootType, VirtualFilePointerManager.getInstance().createContainer(myPointersDisposable));
     }
     result.put(OrderRootType.COMPILATION_CLASSES, result.get(OrderRootType.CLASSES));
     result.put(OrderRootType.PRODUCTION_COMPILATION_CLASSES, result.get(OrderRootType.CLASSES));
@@ -365,31 +368,32 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   }
 
   public boolean isChanged() {
-    return !Comparing.equal(mySource.myName, myName) || areRootsChanged(mySource);
+    return !mySource.equals(this);
   }
 
   private boolean areRootsChanged(final LibraryImpl that) {
-    final OrderRootType[] allTypes = OrderRootType.getAllTypes();
-    for (OrderRootType type : allTypes) {
-      final String[] urls = getUrls(type);
-      final String[] thatUrls = that.getUrls(type);
-      if (urls.length != thatUrls.length) {
-        return true;
-      }
-      for (int idx = 0; idx < urls.length; idx++) {
-        final String url = urls[idx];
-        final String thatUrl = thatUrls[idx];
-        if (!Comparing.equal(url, thatUrl)) {
-          return true;
-        }
-        final Boolean jarDirRecursive = myJarDirectories.get(url);
-        final Boolean sourceJarDirRecursive = that.myJarDirectories.get(thatUrl);
-        if (jarDirRecursive == null ? sourceJarDirRecursive != null : !jarDirRecursive.equals(sourceJarDirRecursive)) {
-          return true;
-        }
-      }
-    }
-    return false;
+    return !that.equals(this);
+    //final OrderRootType[] allTypes = OrderRootType.getAllTypes();
+    //for (OrderRootType type : allTypes) {
+    //  final String[] urls = getUrls(type);
+    //  final String[] thatUrls = that.getUrls(type);
+    //  if (urls.length != thatUrls.length) {
+    //    return true;
+    //  }
+    //  for (int idx = 0; idx < urls.length; idx++) {
+    //    final String url = urls[idx];
+    //    final String thatUrl = thatUrls[idx];
+    //    if (!Comparing.equal(url, thatUrl)) {
+    //      return true;
+    //    }
+    //    final Boolean jarDirRecursive = myJarDirectories.get(url);
+    //    final Boolean sourceJarDirRecursive = that.myJarDirectories.get(thatUrl);
+    //    if (jarDirRecursive == null ? sourceJarDirRecursive != null : !jarDirRecursive.equals(sourceJarDirRecursive)) {
+    //      return true;
+    //    }
+    //  }
+    //}
+    //return false;
   }
 
   public Library getSource() {
@@ -430,7 +434,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     for (Map.Entry<OrderRootType, VirtualFilePointerContainer> entry : fromModel.myRoots.entrySet()) {
       OrderRootType rootType = entry.getKey();
       VirtualFilePointerContainer container = entry.getValue();
-      VirtualFilePointerContainer clone = container.clone(this);
+      VirtualFilePointerContainer clone = container.clone(myPointersDisposable);
       myRoots.put(rootType, clone);
     }
   }
@@ -439,6 +443,8 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     for (VirtualFilePointerContainer container : new THashSet<VirtualFilePointerContainer>(myRoots.values())) {
       container.killAll();
     }
+    Disposer.dispose(myPointersDisposable);
+    Disposer.register(this, myPointersDisposable);
   }
 
   private void updateWatchedRoots() {
@@ -448,9 +454,10 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
       myWatchRequests.clear();
     }
     final VirtualFileManager fm = VirtualFileManager.getInstance();
-    for (String url : myJarDirectories.keySet()) {
+    for (Map.Entry<String, Boolean> entry : myJarDirectories.entrySet()) {
+      String url = entry.getKey();
       if (fm.getFileSystem(VirtualFileManager.extractProtocol(url)) instanceof LocalFileSystem) {
-        final boolean watchRecursively = myJarDirectories.get(url).booleanValue();
+        final boolean watchRecursively = entry.getValue().booleanValue();
         final LocalFileSystem.WatchRequest request = fs.addRootToWatch(VirtualFileManager.extractPath(url), watchRecursively);
         myWatchRequests.add(request);
       }
@@ -524,8 +531,8 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   }
 
   private class MyRootProviderImpl extends RootProviderBaseImpl {
-
-    public String[] getUrls(OrderRootType rootType) {
+    @NotNull
+    public String[] getUrls(@NotNull OrderRootType rootType) {
       Set<String> originalUrls = new HashSet<String>(Arrays.asList(LibraryImpl.this.getUrls(rootType)));
       for (VirtualFile file : getFiles(rootType)) { // Add those expanded with jar directories.
         originalUrls.add(file.getUrl());
@@ -533,7 +540,8 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
       return ArrayUtil.toStringArray(originalUrls);
     }
 
-    public VirtualFile[] getFiles(final OrderRootType rootType) {
+    @NotNull
+    public VirtualFile[] getFiles(@NotNull final OrderRootType rootType) {
       return LibraryImpl.this.getFiles(rootType);
     }
 

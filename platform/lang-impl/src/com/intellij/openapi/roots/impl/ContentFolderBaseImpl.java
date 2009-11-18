@@ -36,20 +36,30 @@ public abstract class ContentFolderBaseImpl extends RootModelComponentBase imple
   protected final ContentEntryImpl myContentEntry;
   @NonNls public static final String URL_ATTRIBUTE = "url";
 
-  ContentFolderBaseImpl(VirtualFile file, ContentEntryImpl contentEntry) {
-    this(VirtualFilePointerManager.getInstance().create(file, contentEntry.getRootModel().getModule(), contentEntry.getRootModel().myVirtualFilePointerListener), contentEntry);
+  ContentFolderBaseImpl(@NotNull VirtualFile file, @NotNull ContentEntryImpl contentEntry) {
+    super(contentEntry.getRootModel());
+    myContentEntry = contentEntry;
+    myFilePointer = VirtualFilePointerManager.getInstance().create(file, this, contentEntry.getRootModel().myVirtualFilePointerListener);
   }
 
-  ContentFolderBaseImpl(String url, ContentEntryImpl contentEntry) {
-    this(VirtualFilePointerManager.getInstance().create(url, contentEntry.getRootModel().getModule(), contentEntry.getRootModel().myVirtualFilePointerListener), contentEntry);
+  ContentFolderBaseImpl(@NotNull String url, @NotNull ContentEntryImpl contentEntry) {
+    super(contentEntry.getRootModel());
+    myContentEntry = contentEntry;
+    myFilePointer = VirtualFilePointerManager.getInstance().create(url, this, contentEntry.getRootModel().myVirtualFilePointerListener);
   }
 
-  protected ContentFolderBaseImpl(ContentFolderBaseImpl that, ContentEntryImpl contentEntry) {
-    this(VirtualFilePointerManager.getInstance().duplicate(that.myFilePointer, contentEntry.getRootModel().getModule(), contentEntry.getRootModel().myVirtualFilePointerListener), contentEntry);
+  protected ContentFolderBaseImpl(@NotNull ContentFolderBaseImpl that, @NotNull ContentEntryImpl contentEntry) {
+    this(that.myFilePointer, contentEntry);
   }
 
-  ContentFolderBaseImpl(Element element, ContentEntryImpl contentEntry) throws InvalidDataException {
+  ContentFolderBaseImpl(@NotNull Element element, @NotNull ContentEntryImpl contentEntry) throws InvalidDataException {
     this(getUrlFrom(element), contentEntry);
+  }
+
+  ContentFolderBaseImpl(@NotNull VirtualFilePointer filePointer, @NotNull ContentEntryImpl contentEntry) {
+    super(contentEntry.getRootModel());
+    myContentEntry = contentEntry;
+    myFilePointer = VirtualFilePointerManager.getInstance().duplicate(filePointer,this, contentEntry.getRootModel().myVirtualFilePointerListener);
   }
 
   private static String getUrlFrom(Element element) throws InvalidDataException {
@@ -58,20 +68,9 @@ public abstract class ContentFolderBaseImpl extends RootModelComponentBase imple
     return url;
   }
 
-  ContentFolderBaseImpl(VirtualFilePointer filePointer, ContentEntryImpl contentEntry) {
-    super(contentEntry.getRootModel());
-    myContentEntry = contentEntry;
-    myFilePointer = filePointer;
-  }
-
   public VirtualFile getFile() {
     final VirtualFile file = myFilePointer.getFile();
-    if (file == null || file.isDirectory()) {
-      return file;
-    }
-    else {
-      return null;
-    }
+    return file == null || !file.isDirectory() ? null : file;
   }
 
   @NotNull
@@ -106,5 +105,10 @@ public abstract class ContentFolderBaseImpl extends RootModelComponentBase imple
   @Override
   public int hashCode() {
     return getUrl().hashCode();
+  }
+  
+  @Override
+   public String toString() {
+    return myFilePointer == null ? null : getUrl();
   }
 }

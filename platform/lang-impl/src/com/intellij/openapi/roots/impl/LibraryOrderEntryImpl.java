@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -45,22 +46,16 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
   private final MyOrderEntryLibraryTableListener myLibraryListener = new MyOrderEntryLibraryTableListener();
   @NonNls private static final String EXPORTED_ATTR = "exported";
 
-  LibraryOrderEntryImpl (Library library,
-                         RootModelImpl rootModel,
-                         ProjectRootManagerImpl projectRootManager,
-                         VirtualFilePointerManager virtualFilePointerManager) {
-    super(rootModel, projectRootManager, virtualFilePointerManager);
+  LibraryOrderEntryImpl(Library library, RootModelImpl rootModel, ProjectRootManagerImpl projectRootManager) {
+    super(rootModel, projectRootManager);
     LOG.assertTrue(library.getTable() != null);
     myLibrary = library;
-    init(getRootProvider());
     addListeners();
+    init();
   }
 
-  LibraryOrderEntryImpl (Element element,
-                         RootModelImpl rootModel,
-                         ProjectRootManagerImpl projectRootManager,
-                         VirtualFilePointerManager filePointerManager) throws InvalidDataException {
-    super(rootModel, projectRootManager, filePointerManager);
+  LibraryOrderEntryImpl(Element element, RootModelImpl rootModel, ProjectRootManagerImpl projectRootManager) throws InvalidDataException {
+    super(rootModel, projectRootManager);
     LOG.assertTrue(ENTRY_TYPE.equals(element.getAttributeValue(OrderEntryFactory.ORDER_ENTRY_TYPE_ATTR)));
     myExported = element.getAttributeValue(EXPORTED_ATTR) != null;
     myScope = DependencyScope.readExternal(element);
@@ -69,15 +64,12 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
     if (name == null) throw new InvalidDataException();
     if (level == null) throw new InvalidDataException();
     searchForLibrary(name, level);
-    init(getRootProvider());
     addListeners();
+    init();
   }
 
-  private LibraryOrderEntryImpl(LibraryOrderEntryImpl that,
-                                RootModelImpl rootModel,
-                                ProjectRootManagerImpl projectRootManager,
-                                VirtualFilePointerManager filePointerManager) {
-    super (rootModel, projectRootManager, filePointerManager);
+  private LibraryOrderEntryImpl(LibraryOrderEntryImpl that, RootModelImpl rootModel, ProjectRootManagerImpl projectRootManager) {
+    super (rootModel, projectRootManager);
     if (that.myLibrary == null) {
       myLibraryName = that.myLibraryName;
       myLibraryLevel = that.myLibraryLevel;
@@ -87,18 +79,16 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
     }
     myExported = that.myExported;
     myScope = that.myScope;
-    init(getRootProvider());
     addListeners();
+    init();
   }
 
   public LibraryOrderEntryImpl(@NotNull String name,
                                @NotNull String level,
                                RootModelImpl rootModel,
-                               ProjectRootManagerImpl projectRootManager,
-                               VirtualFilePointerManager filePointerManager) {
-    super(rootModel, projectRootManager, filePointerManager);
+                               ProjectRootManagerImpl projectRootManager) {
+    super(rootModel, projectRootManager);
     searchForLibrary(name, level);
-    init(getRootProvider());
     addListeners();
   }
 
@@ -163,7 +153,11 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
   }
 
   public boolean isValid() {
-    return !isDisposed() && getLibrary() != null;
+    if (isDisposed()) {
+      return false;
+    }
+    Library library = getLibrary();
+    return library != null && !((LibraryEx)library).isDisposed();
   }
 
   public <R> R accept(RootPolicy<R> policy, R initialValue) {
@@ -174,7 +168,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
                                ProjectRootManagerImpl projectRootManager,
                                VirtualFilePointerManager filePointerManager) {
     ProjectRootManagerImpl rootManager = ProjectRootManagerImpl.getInstanceImpl(getRootModel().getModule().getProject());
-    return new LibraryOrderEntryImpl(this, rootModel, rootManager, VirtualFilePointerManager.getInstance());
+    return new LibraryOrderEntryImpl(this, rootModel, rootManager);
   }
 
   public void writeExternal(Element rootElement) throws WriteExternalException {
@@ -231,7 +225,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
         myLibrary = newLibrary;
         myLibraryName = null;
         myLibraryLevel = null;
-        updateFromRootProviderAndSubscribe(getRootProvider());
+        updateFromRootProviderAndSubscribe();
       }
     }
   }
@@ -241,7 +235,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
       myLibraryName = myLibrary.getName();
       myLibraryLevel = myLibrary.getTable().getTableLevel();
       myLibrary = null;
-      updateFromRootProviderAndSubscribe(getRootProvider());
+      updateFromRootProviderAndSubscribe();
     }
   }
 

@@ -45,19 +45,13 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
   private String myJdkName;
   private String myJdkType;
 
-  ModuleJdkOrderEntryImpl(@NotNull Sdk projectJdk,
-                          RootModelImpl rootModel,
-                          ProjectRootManagerImpl projectRootManager,
-                          VirtualFilePointerManager filePointerManager) {
-    super(rootModel, projectRootManager, filePointerManager);
+  ModuleJdkOrderEntryImpl(@NotNull Sdk projectJdk, RootModelImpl rootModel, ProjectRootManagerImpl projectRootManager) {
+    super(rootModel, projectRootManager);
     init(projectJdk, null, null);
   }
 
-  ModuleJdkOrderEntryImpl(Element element,
-                          RootModelImpl rootModel,
-                          ProjectRootManagerImpl projectRootManager,
-                          VirtualFilePointerManager filePointerManager) throws InvalidDataException {
-    super(rootModel, projectRootManager, filePointerManager);
+  ModuleJdkOrderEntryImpl(Element element, RootModelImpl rootModel, ProjectRootManagerImpl projectRootManager) throws InvalidDataException {
+    super(rootModel, projectRootManager);
     if (!element.getName().equals(OrderEntryFactory.ORDER_ENTRY_ELEMENT_NAME)) {
       throw new InvalidDataException();
     }
@@ -71,29 +65,25 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
     final ProjectJdkTable projectJdkTable = ProjectJdkTable.getInstance();
     final Sdk jdkByName = projectJdkTable.findJdk(jdkName, jdkType);
     if (jdkByName == null) {
-      init ( null, jdkName, jdkType);
+      init(null, jdkName, jdkType);
     }
     else {
-      init ( jdkByName, null, null);
+      init(jdkByName, null, null);
     }
   }
 
 
 
-  private ModuleJdkOrderEntryImpl(ModuleJdkOrderEntryImpl that,
-                                  RootModelImpl rootModel,
-                                  ProjectRootManagerImpl projectRootManager,
-                                  VirtualFilePointerManager filePointerManager) {
-    super(rootModel, projectRootManager, filePointerManager);
+  private ModuleJdkOrderEntryImpl(ModuleJdkOrderEntryImpl that, RootModelImpl rootModel, ProjectRootManagerImpl projectRootManager) {
+    super(rootModel, projectRootManager);
     init(that.myJdk, that.getJdkName(), that.getJdkType());
   }
 
   public ModuleJdkOrderEntryImpl(final String jdkName,
                                  final String jdkType,
                                  final RootModelImpl rootModel,
-                                 final ProjectRootManagerImpl projectRootManager,
-                                 final VirtualFilePointerManager filePointerManager) {
-    super(rootModel, projectRootManager, filePointerManager);
+                                 final ProjectRootManagerImpl projectRootManager) {
+    super(rootModel, projectRootManager);
     init(null, jdkName, jdkType);
   }
 
@@ -101,8 +91,8 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
     myJdk = jdk;
     setJdkName(jdkName);
     setJdkType(jdkType);
-    init(getRootProvider());
     addListener();
+    init();
   }
 
   private String getJdkType() {
@@ -155,7 +145,7 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
       myJdk = jdk;
       setJdkName(null);
       setJdkType(null);
-      updateFromRootProviderAndSubscribe(getRootProvider());
+      updateFromRootProviderAndSubscribe();
     }
   }
 
@@ -164,7 +154,7 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
       myJdk = jdk;
       setJdkName(null);
       setJdkType(null);
-      updateFromRootProviderAndSubscribe(getRootProvider());
+      updateFromRootProviderAndSubscribe();
     }
   }
 
@@ -173,7 +163,7 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
       setJdkName(myJdk.getName());
       setJdkType(myJdk.getSdkType().getName());
       myJdk = null;
-      updateFromRootProviderAndSubscribe(getRootProvider());
+      updateFromRootProviderAndSubscribe();
     }
   }
 
@@ -193,8 +183,7 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
   public OrderEntry cloneEntry(RootModelImpl rootModel,
                                ProjectRootManagerImpl projectRootManager,
                                VirtualFilePointerManager filePointerManager) {
-    return new ModuleJdkOrderEntryImpl(this, rootModel, ProjectRootManagerImpl.getInstanceImpl(getRootModel().getModule().getProject()),
-                                       VirtualFilePointerManager.getInstance());
+    return new ModuleJdkOrderEntryImpl(this, rootModel, ProjectRootManagerImpl.getInstanceImpl(getRootModel().getModule().getProject()));
   }
 
   public void dispose() {

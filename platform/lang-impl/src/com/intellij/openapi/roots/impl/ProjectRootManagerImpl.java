@@ -85,8 +85,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private String myProjectJdkName;
   private String myProjectJdkType;
 
-  private final ArrayList<CacheUpdater> myRootsChangeUpdaters = new ArrayList<CacheUpdater>();
-  private final ArrayList<CacheUpdater> myRefreshCacheUpdaters = new ArrayList<CacheUpdater>();
+  private final List<CacheUpdater> myRootsChangeUpdaters = new ArrayList<CacheUpdater>();
+  private final List<CacheUpdater> myRefreshCacheUpdaters = new ArrayList<CacheUpdater>();
 
   private long myModificationCount = 0;
   private Set<LocalFileSystem.WatchRequest> myRootsToWatch = new HashSet<LocalFileSystem.WatchRequest>();
@@ -277,7 +277,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
       result.addAll(Arrays.asList(contentRoots));
     }
-    return result.toArray(new VirtualFile[result.size()]);
+    return VfsUtil.toVirtualFileArray(result);
   }
 
   public VirtualFile[] getContentSourceRoots() {
@@ -287,7 +287,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
       result.addAll(Arrays.asList(sourceRoots));
     }
-    return result.toArray(new VirtualFile[result.size()]);
+    return VfsUtil.toVirtualFileArray(result);
   }
 
   public VirtualFile[] getFilesFromAllModules(OrderRootType type) {
@@ -297,7 +297,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       final VirtualFile[] files = ModuleRootManager.getInstance(module).getFiles(type);
       result.addAll(Arrays.asList(files));
     }
-    return result.toArray(new VirtualFile[result.size()]);
+    return VfsUtil.toVirtualFileArray(result);
   }
 
   public VirtualFile[] getContentRootsFromAllModules() {
@@ -308,7 +308,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       result.addAll(Arrays.asList(files));
     }
     result.add(myProject.getBaseDir());
-    return result.toArray(new VirtualFile[result.size()]);
+    return VfsUtil.toVirtualFileArray(result);
   }
 
   public Sdk getProjectJdk() {
@@ -414,14 +414,14 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private boolean myMergedCallHasRootChange = false;
   private int myRootsChangesDepth = 0;
 
-  public void mergeRootsChangesDuring(Runnable r) {
+  public void mergeRootsChangesDuring(@NotNull Runnable runnable) {
     if (getBatchSession(false).myBatchLevel == 0 && !myMergedCallStarted) {
       LOG.assertTrue(myRootsChangesDepth == 0,
                      "Merged rootsChanged not allowed inside rootsChanged, rootsChanged level == " + myRootsChangesDepth);
       myMergedCallStarted = true;
       myMergedCallHasRootChange = false;
       try {
-        r.run();
+        runnable.run();
       }
       finally {
         if (myMergedCallHasRootChange) {
@@ -433,7 +433,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       }
     }
     else {
-      r.run();
+      runnable.run();
     }
   }
 
@@ -454,6 +454,18 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   public void beforeRootsChange(boolean filetypes) {
     if (myProject.isDisposed()) return;
     getBatchSession(filetypes).beforeRootsChanged();
+  }
+
+  public void makeRootsChange(@NotNull Runnable runnable, boolean filetypes, boolean fireEvents) {
+    if (myProject.isDisposed()) return;
+    BatchSession session = getBatchSession(filetypes);
+    if (fireEvents) session.beforeRootsChanged();
+    try {
+      runnable.run();
+    }
+    finally {
+      if (fireEvents) session.rootsChanged(false);
+    }
   }
 
   public void rootsChanged(boolean filetypes) {
@@ -687,8 +699,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     return ModuleManager.getInstance(myProject);
   }
 
-  void addRootSetChangedListener(RootProvider.RootSetChangedListener rootSetChangedListener,
-                                 final RootProvider provider) {
+  void addRootSetChangedListener(RootProvider.RootSetChangedListener rootSetChangedListener, final RootProvider provider) {
     RootSetChangedMulticaster multicaster = myRegisteredRootProviderListeners.get(provider);
     if (multicaster == null) {
       multicaster = new RootSetChangedMulticaster(provider);
@@ -696,8 +707,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     multicaster.addListener(rootSetChangedListener);
   }
 
-  void removeRootSetChangedListener(RootProvider.RootSetChangedListener rootSetChangedListener,
-                                    final RootProvider provider) {
+  void removeRootSetChangedListener(RootProvider.RootSetChangedListener rootSetChangedListener, final RootProvider provider) {
     RootSetChangedMulticaster multicaster = myRegisteredRootProviderListeners.get(provider);
     if (multicaster != null) {
       multicaster.removeListener(rootSetChangedListener);
@@ -774,7 +784,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     = new HashMap<LibraryTable, LibraryTableMultilistener>();
 
   private class LibraryTableMultilistener implements LibraryTable.Listener {
-    final EventDispatcher<LibraryTable.Listener> myDispatcher = EventDispatcher.create(LibraryTable.Listener.class);
     final Set<LibraryTable.Listener> myListeners = new HashSet<LibraryTable.Listener>();
     private final LibraryTable myLibraryTable;
 
@@ -786,13 +795,11 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
     private void addListener(LibraryTable.Listener listener) {
       myListeners.add(listener);
-      myDispatcher.addListener(listener);
     }
 
     private void removeListener(LibraryTable.Listener listener) {
-      myDispatcher.removeListener(listener);
       myListeners.remove(listener);
-      if (!myDispatcher.hasListeners()) {
+      if (myListeners.isEmpty()) {
         myLibraryTable.removeListener(this);
         myLibraryTableMultilisteners.remove(myLibraryTable);
       }
@@ -801,7 +808,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     public void afterLibraryAdded(final Library newLibrary) {
       mergeRootsChangesDuring(new Runnable() {
         public void run() {
-          myDispatcher.getMulticaster().afterLibraryAdded(newLibrary);
+          for (LibraryTable.Listener listener : myListeners) {
+            listener.afterLibraryAdded(newLibrary);
+          }
         }
       });
     }
@@ -809,7 +818,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     public void afterLibraryRenamed(final Library library) {
       mergeRootsChangesDuring(new Runnable() {
         public void run() {
-          myDispatcher.getMulticaster().afterLibraryRenamed(library);
+          for (LibraryTable.Listener listener : myListeners) {
+            listener.afterLibraryRenamed(library);
+          }
         }
       });
     }
@@ -817,7 +828,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     public void beforeLibraryRemoved(final Library library) {
       mergeRootsChangesDuring(new Runnable() {
         public void run() {
-          myDispatcher.getMulticaster().beforeLibraryRemoved(library);
+          for (LibraryTable.Listener listener : myListeners) {
+            listener.beforeLibraryRemoved(library);
+          }
         }
       });
     }
@@ -825,7 +838,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     public void afterLibraryRemoved(final Library library) {
       mergeRootsChangesDuring(new Runnable() {
         public void run() {
-          myDispatcher.getMulticaster().afterLibraryRemoved(library);
+          for (LibraryTable.Listener listener : myListeners) {
+            listener.afterLibraryRemoved(library);
+          }
         }
       });
     }
@@ -909,8 +924,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   }
 
   private class RootSetChangedMulticaster implements RootProvider.RootSetChangedListener {
-    private final EventDispatcher<RootProvider.RootSetChangedListener> myDispatcher
-      = EventDispatcher.create(RootProvider.RootSetChangedListener.class);
+    private final EventDispatcher<RootProvider.RootSetChangedListener> myDispatcher = EventDispatcher.create(RootProvider.RootSetChangedListener.class);
     private final RootProvider myProvider;
 
     private RootSetChangedMulticaster(RootProvider provider) {

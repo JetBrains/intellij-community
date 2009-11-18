@@ -39,47 +39,48 @@ public class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl imple
   private final Library myLibrary;
   @NonNls public static final String ENTRY_TYPE = "module-library";
   private boolean myExported;
- @NonNls private static final String EXPORTED_ATTR = "exported";
+  @NonNls private static final String EXPORTED_ATTR = "exported";
 
   //cloning
   private ModuleLibraryOrderEntryImpl(Library library, RootModelImpl rootModel, boolean isExported, DependencyScope scope) {
-    super(rootModel, ProjectRootManagerImpl.getInstanceImpl(rootModel.getProject()), VirtualFilePointerManager.getInstance());
+    super(rootModel, ProjectRootManagerImpl.getInstanceImpl(rootModel.getProject()));
     myLibrary = ((LibraryEx)library).cloneLibrary(getRootModel());
-    init();
+    doinit();
     myExported = isExported;
     myScope = scope;
   }
 
-  ModuleLibraryOrderEntryImpl(RootModelImpl rootModel,
-                              ProjectRootManagerImpl projectRootManager,
-                              VirtualFilePointerManager filePointerManager) {
-    this((String)null, rootModel, projectRootManager, filePointerManager);
+  ModuleLibraryOrderEntryImpl(RootModelImpl rootModel, ProjectRootManagerImpl projectRootManager) {
+    this((String)null, rootModel, projectRootManager);
   }
 
-  ModuleLibraryOrderEntryImpl(String name,
-                              RootModelImpl rootModel,
-                              ProjectRootManagerImpl projectRootManager,
-                              VirtualFilePointerManager filePointerManager) {
-    super(rootModel, projectRootManager, filePointerManager);
+  ModuleLibraryOrderEntryImpl(String name, RootModelImpl rootModel, ProjectRootManagerImpl projectRootManager) {
+    super(rootModel, projectRootManager);
     myLibrary = LibraryTableImplUtil.createModuleLevelLibrary(name, getRootModel());
-    init();
+    doinit();
   }
 
-  private void init() {
-    Disposer.register(this, myLibrary);
-    init(myLibrary.getRootProvider());
-  }
-
-  ModuleLibraryOrderEntryImpl (Element element,
-                               RootModelImpl rootModel,
-                               ProjectRootManagerImpl projectRootManager,
-                               VirtualFilePointerManager filePointerManager) throws InvalidDataException {
-    super(rootModel, projectRootManager, filePointerManager);
+  ModuleLibraryOrderEntryImpl(Element element, RootModelImpl rootModel, ProjectRootManagerImpl projectRootManager) throws InvalidDataException {
+    super(rootModel, projectRootManager);
     LOG.assertTrue(ENTRY_TYPE.equals(element.getAttributeValue(OrderEntryFactory.ORDER_ENTRY_TYPE_ATTR)));
     myExported = element.getAttributeValue(EXPORTED_ATTR) != null;
     myScope = DependencyScope.readExternal(element);
     myLibrary = LibraryTableImplUtil.loadLibrary(element, getRootModel());
+    doinit();
+  }
+
+  private void doinit() {
+    Disposer.register(this, myLibrary);
     init();
+  }
+
+  @Override
+  public void dispose() {
+    super.dispose();
+  }
+
+  protected RootProvider getRootProvider() {
+    return myLibrary.getRootProvider();
   }
 
   public Library getLibrary() {
@@ -88,16 +89,6 @@ public class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl imple
 
   public boolean isModuleLevel() {
     return true;
-  }
-
-  protected void addListenerToWrapper(RootProvider wrapper,
-                                      RootProvider.RootSetChangedListener rootSetChangedListener) {
-    wrapper.addRootSetChangedListener(rootSetChangedListener);
-  }
-
-  protected void removeListenerFromWrapper(RootProvider wrapper,
-                                           RootProvider.RootSetChangedListener rootSetChangedListener) {
-    wrapper.removeRootSetChangedListener(rootSetChangedListener);
   }
 
   public String getLibraryName() {
@@ -173,10 +164,5 @@ public class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl imple
 
   public void setScope(@NotNull DependencyScope scope) {
     myScope = scope;
-  }
-
-  @Override
-  public void dispose() {
-    super.dispose();
   }
 }
