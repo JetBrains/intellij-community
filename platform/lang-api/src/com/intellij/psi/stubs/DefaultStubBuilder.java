@@ -19,12 +19,17 @@
  */
 package com.intellij.psi.stubs;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.StubBuilder;
+import com.intellij.psi.tree.IElementType;
 
 public class DefaultStubBuilder implements StubBuilder {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.DefaultStubBuilder");
+
   public StubElement buildStubTree(final PsiFile file) {
     return buildStubTreeFor(file, createStubForFile(file));
   }
@@ -41,6 +46,13 @@ public class DefaultStubBuilder implements StubBuilder {
       if (type.shouldCreateStub(elt.getNode())) {
         //noinspection unchecked
         stub = type.createStub(elt, parentStub);
+      }
+    }
+    else {
+      final ASTNode node = elt.getNode();
+      final IElementType type = node == null? null : node.getElementType();
+      if (type instanceof IStubElementType && ((IStubElementType)type).shouldCreateStub(node)) {
+        LOG.error("Non-StubBasedPsiElement requests stub creation. Stub type: " + type + ", PSI: " + elt);
       }
     }
 
