@@ -16,23 +16,26 @@
 
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.ProjectTopics;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModulePointer;
-import com.intellij.openapi.module.ModulePointerManager;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.impl.ModuleManagerImpl;
+import com.intellij.openapi.project.ModuleListener;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
-import gnu.trove.THashSet;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -43,24 +46,28 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
   @NonNls public static final String ENTRY_TYPE = "module";
   @NonNls public static final String MODULE_NAME_ATTR = "module-name";
   @NonNls private static final String EXPORTED_ATTR = "exported";
+  @NonNls private static final String SCOPE_ATTR = "scope";
 
-  private final ModulePointer myModulePointer;
+  private Module myModule;
+  private String myModuleName; // non-null if myProject is null
   private boolean myExported = false;
   @NotNull private DependencyScope myScope;
+  private MessageBusConnection myConnection;
 
-  ModuleOrderEntryImpl(@NotNull Module module, @NotNull RootModelImpl rootModel) {
+  ModuleOrderEntryImpl(Module module, RootModelImpl rootModel) {
     super(rootModel);
-    myModulePointer = ModulePointerManager.getInstance(module.getProject()).create(module);
+    myModule = module;
     myScope = DependencyScope.COMPILE;
   }
 
-  ModuleOrderEntryImpl(@NotNull String moduleName, @NotNull RootModelImpl rootModel) {
+  ModuleOrderEntryImpl(String moduleName, RootModelImpl rootModel) {
     super(rootModel);
-    myModulePointer = ModulePointerManager.getInstance(rootModel.getProject()).create(moduleName);
+    myModuleName = moduleName;
+    myModule = null;
     myScope = DependencyScope.COMPILE;
   }
 
-  ModuleOrderEntryImpl(Element element, RootModelImpl rootModel) throws InvalidDataException {
+  ModuleOrderEntryImpl(Element element, RootModelImpl rootModel, ModuleManager moduleManager) throws InvalidDataException {
     super(rootModel);
     myExported = element.getAttributeValue(EXPORTED_ATTR) != null;
     final String moduleName = element.getAttributeValue(MODULE_NAME_ATTR);
@@ -68,16 +75,41 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
       throw new InvalidDataException();
     }
 
-    myModulePointer = ModulePointerManager.getInstance(rootModel.getProject()).create(moduleName);
+    myModule = moduleManager.findModuleByName(moduleName);
+    if (myModule == null) {
+      myModuleName = moduleName;
+    }
+    else {
+      myModuleName = null;
+    }
     myScope = DependencyScope.readExternal(element);
   }
 
   private ModuleOrderEntryImpl(ModuleOrderEntryImpl that, RootModelImpl rootModel) {
     super(rootModel);
-    final ModulePointer thatModule = that.myModulePointer;
-    myModulePointer = ModulePointerManager.getInstance(rootModel.getProject()).create(thatModule.getModuleName());
+    final Module thatModule = that.myModule;
+    if (thatModule != null) {
+      if (!thatModule.isDisposed()) {
+        myModule = thatModule;
+      } else { 
+        myModule = null;
+        myModuleName = thatModule.getUserData(ModuleManagerImpl.DISPOSED_MODULE_NAME);
+      }
+    }
+    else {
+      myModuleName = that.myModuleName;
+    }
     myExported = that.myExported;
     myScope = that.myScope;
+    addListeners();
+  }
+
+  private boolean myListenersAdded = false;
+
+  private void addListeners() {
+    myListenersAdded = true;
+    myConnection = getRootModel().getProject().getMessageBus().connect();
+    myConnection.subscribe(ProjectTopics.MODULES, new MyModuleListener());
   }
 
   @NotNull
@@ -92,7 +124,6 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
 
   @NotNull
   VirtualFile[] getFiles(OrderRootType type, Set<Module> processed) {
-    Module myModule = myModulePointer.getModule();
     if (myModule != null && !processed.contains(myModule) && !myModule.isDisposed()) {
       processed.add(myModule);
       if (myScope == DependencyScope.RUNTIME && type == OrderRootType.PRODUCTION_COMPILATION_CLASSES) {
@@ -113,27 +144,26 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
 
   @NotNull
   public String[] getUrls(OrderRootType rootType) {
-    List<String> urls = getUrls(rootType, null);
-    return ArrayUtil.toStringArray(urls);
+    return getUrls(rootType, new HashSet<Module>());
   }
 
-  public List<String> getUrls(OrderRootType rootType, @Nullable Set<Module> processed) {
-    Module myModule = myModulePointer.getModule();
-    if (myModule != null && !myModule.isDisposed() && (processed == null || !processed.contains(myModule))) {
-      if (processed == null) processed = new THashSet<Module>();
+  public String[] getUrls (OrderRootType rootType, Set<Module> processed) {
+    if (myModule != null && !processed.contains(myModule) && !myModule.isDisposed()) {
       processed.add(myModule);
       if (myScope == DependencyScope.RUNTIME && rootType == OrderRootType.PRODUCTION_COMPILATION_CLASSES) {
-        return Collections.emptyList();
+        return ArrayUtil.EMPTY_STRING_ARRAY;
       }
       if (myScope == DependencyScope.TEST && rootType == OrderRootType.PRODUCTION_COMPILATION_CLASSES) {
-        return Collections.emptyList();
+        return ArrayUtil.EMPTY_STRING_ARRAY;
       }
       if (myScope == DependencyScope.PROVIDED && rootType == OrderRootType.CLASSES_AND_OUTPUT) {
-        return Collections.emptyList();
+        return ArrayUtil.EMPTY_STRING_ARRAY;
       }
       return ((ModuleRootManagerImpl)ModuleRootManager.getInstance(myModule)).getUrlsForOtherModules(rootType, processed);
     }
-    return Collections.emptyList();
+    else {
+      return ArrayUtil.EMPTY_STRING_ARRAY;
+    }
   }
 
 
@@ -146,7 +176,12 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
   }
 
   public String getPresentableName() {
-    return getModuleName();
+    if (myModule != null) {
+      return myModule.getName();
+    }
+    else {
+      return myModuleName;
+    }
   }
 
   public boolean isSynthetic() {
@@ -155,7 +190,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
 
   @Nullable
   public Module getModule() {
-    return getRootModel().getConfigurationAccessor().getModule(myModulePointer.getModule(), myModulePointer.getModuleName());
+    return getRootModel().getConfigurationAccessor().getModule(myModule, myModuleName);
   }
 
   public void writeExternal(Element rootElement) throws WriteExternalException {
@@ -169,13 +204,47 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
   }
 
   public String getModuleName() {
-    return myModulePointer.getModuleName();
+    if (myModule != null) {
+      return myModule.getName();
+    }
+    else {
+      return myModuleName;
+    }
   }
 
   public OrderEntry cloneEntry(RootModelImpl rootModel,
                                ProjectRootManagerImpl projectRootManager,
                                VirtualFilePointerManager filePointerManager) {
     return new ModuleOrderEntryImpl(this, rootModel);
+  }
+
+  public void dispose() {
+    super.dispose();
+    if (myListenersAdded) {
+      myConnection.disconnect();
+    }
+  }
+
+  private void moduleAdded(Module module) {
+    if (Comparing.equal(myModuleName, module.getName())) {
+      setModule(module);
+    }
+  }
+
+  private void setModule(Module module) {
+    myModule = module;
+    myModuleName = null;
+  }
+
+  private void moduleRemoved(Module module) {
+    if (myModule == module) {
+      unsetModule(module);
+    }
+  }
+
+  private void unsetModule(Module module) {
+    myModuleName = module.getName();
+    myModule = null;
   }
 
   public boolean isExported() {
@@ -195,5 +264,48 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
   public void setScope(@NotNull DependencyScope scope) {
     getRootModel().assertWritable();
     myScope = scope;
+  }
+
+  private class MyModuleListener implements ModuleListener {
+
+    public MyModuleListener() {
+    }
+
+    public void moduleAdded(Project project, Module module) {
+      final ModuleOrderEntryImpl moduleOrderEntry = ModuleOrderEntryImpl.this;
+      moduleOrderEntry.moduleAdded(module);
+    }
+
+    public void beforeModuleRemoved(Project project, Module module) {
+    }
+
+    public void moduleRemoved(Project project, Module module) {
+      final ModuleOrderEntryImpl moduleOrderEntry = ModuleOrderEntryImpl.this;
+      moduleOrderEntry.moduleRemoved(module);
+    }
+
+    public void modulesRenamed(Project project, List<Module> modules) {
+      if (myModule != null) return;
+      for (Module module : modules) {
+        if (module.getName().equals(myModuleName)) {
+          setModule(module);
+          break;
+        }
+      }
+    }
+  }
+
+  protected void projectOpened() {
+    addListeners();
+  }
+
+  protected void moduleAdded() {
+    super.moduleAdded();
+    if (myModule == null) {
+      final Module module = ModuleManager.getInstance(getRootModel().getModule().getProject()).findModuleByName(myModuleName);
+      if (module != null) {
+        setModule(module);
+      }
+    }
   }
 }

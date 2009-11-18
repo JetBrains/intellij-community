@@ -52,15 +52,11 @@ public abstract class StubProjectRootManagerEx extends ProjectRootManagerEx {
     throw new UnsupportedOperationException();
   }
 
-  public void makeRootsChange(@NotNull Runnable runnable, boolean filetypes, boolean fireEvents) {
-    throw new UnsupportedOperationException();
-  }
-
   public void rootsChanged(boolean filetypes) {
     throw new UnsupportedOperationException();
   }
 
-  public void mergeRootsChangesDuring(@NotNull Runnable r) {
+  public void mergeRootsChangesDuring(Runnable r) {
     throw new UnsupportedOperationException();
   }
 

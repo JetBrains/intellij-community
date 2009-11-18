@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 import java.util.List;
@@ -45,9 +44,8 @@ public abstract class ProjectRootManagerEx extends ProjectRootManager {
   public abstract void beforeRootsChange(boolean filetypes);
 
   public abstract void rootsChanged(boolean filetypes);
-  public abstract void makeRootsChange(@NotNull Runnable runnable, boolean filetypes, boolean fireEvents);
 
-  public abstract void mergeRootsChangesDuring(@NotNull Runnable runnable);
+  public abstract void mergeRootsChangesDuring(Runnable r);
 
   public abstract GlobalSearchScope getScopeForLibraryUsedIn(List<Module> modulesLibraryIsUsedIn);
 

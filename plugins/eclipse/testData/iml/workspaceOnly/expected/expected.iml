@@ -13,7 +13,7 @@
         <root url="jar://$MODULE_DIR$/test.jar!/" />
       </CLASSES>
       <JAVADOC>
-        <root url="jar://$MODULE_DIR$/testJavadoc.jar!/a" />
+        <root url="jar://$MODULE_DIR$/..//test/testJavadoc.jar!/a" />
       </JAVADOC>
       <SOURCES>
         <root url="jar://$MODULE_DIR$/testSrc.jar!/" />

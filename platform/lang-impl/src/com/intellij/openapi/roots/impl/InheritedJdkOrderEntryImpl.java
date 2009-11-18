@@ -19,7 +19,10 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.InheritedJdkOrderEntry;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.RootPolicy;
+import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -30,35 +33,48 @@ import org.jetbrains.annotations.NonNls;
 /**
  * @author dsl
  */
-public class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implements InheritedJdkOrderEntry, ClonableOrderEntry, WritableOrderEntry {
+public class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implements InheritedJdkOrderEntry, ClonableOrderEntry,
+                                                                                     WritableOrderEntry {
+  private final ProjectRootManagerEx myProjectRootManager;
   @NonNls static final String ENTRY_TYPE = "inheritedJdk";
   private final MyJdkTableListener myJdkTableListener = new MyJdkTableListener();
   private final MyProjectJdkListener myListener = new MyProjectJdkListener();
 
-  InheritedJdkOrderEntryImpl(RootModelImpl rootModel, ProjectRootManagerImpl projectRootManager) {
-    super(rootModel, projectRootManager);
-    myProjectRootManagerImpl.addProjectJdkListener(myListener);
+  InheritedJdkOrderEntryImpl(RootModelImpl rootModel,
+                             ProjectRootManagerImpl projectRootManager,
+                             VirtualFilePointerManager filePointerManager) {
+    super(rootModel, projectRootManager, filePointerManager);
+    myProjectRootManager = projectRootManager;
+    myProjectRootManager.addProjectJdkListener(myListener);
+    init(getRootProvider());
     myProjectRootManagerImpl.addJdkTableListener(myJdkTableListener);
-    init();
   }
+
 
   /**
    * @param element
    * @param rootModel
    * @param projectRootManager
+   * @param filePointerManager
    * @throws InvalidDataException
    */
-  InheritedJdkOrderEntryImpl(Element element, RootModelImpl rootModel, ProjectRootManagerImpl projectRootManager) throws InvalidDataException {
-    this(rootModel, projectRootManager);
+  InheritedJdkOrderEntryImpl(Element element,
+                             RootModelImpl rootModel,
+                             ProjectRootManagerImpl projectRootManager,
+                             VirtualFilePointerManager filePointerManager) throws InvalidDataException {
+    super(rootModel, projectRootManager, filePointerManager);
     if (!element.getName().equals(OrderEntryFactory.ORDER_ENTRY_ELEMENT_NAME)) {
-      throw new InvalidDataException(element.getName());
+      throw new InvalidDataException();
     }
+    myProjectRootManager = projectRootManager;
+    myProjectRootManager.addProjectJdkListener(myListener);
+    init(getRootProvider());
   }
 
   public OrderEntry cloneEntry(RootModelImpl rootModel,
                                ProjectRootManagerImpl projectRootManager,
                                VirtualFilePointerManager filePointerManager) {
-    return new InheritedJdkOrderEntryImpl(rootModel, projectRootManager);
+    return new InheritedJdkOrderEntryImpl(rootModel, projectRootManager, filePointerManager);
   }
 
   public boolean isSynthetic() {
@@ -88,10 +104,16 @@ public class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implem
     return getRootModel().getConfigurationAccessor().getProjectSdkName(project);
   }
 
-  protected RootProvider getRootProvider() {
-    final Sdk projectJdk = myProjectRootManagerImpl.getProjectJdk();
-    return projectJdk == null ? null : projectJdk.getRootProvider();
+  private RootProvider getRootProvider() {
+    final Sdk projectJdk = myProjectRootManager.getProjectJdk();
+    if (projectJdk != null) {
+      return projectJdk.getRootProvider();
+    }
+    else {
+      return null;
+    }
   }
+
 
   public String getPresentableName() {
     return "< " + getJdkName() + " >";
@@ -100,40 +122,43 @@ public class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implem
   public void dispose() {
     super.dispose();
     myProjectRootManagerImpl.removeJdkTableListener(myJdkTableListener);
-    myProjectRootManagerImpl.removeProjectJdkListener(myListener);
+    myProjectRootManager.removeProjectJdkListener(myListener);
   }
 
 
   private class MyJdkTableListener implements ProjectJdkTable.Listener {
     public void jdkRemoved(Sdk jdk) {
-      if (jdk.equals(getJdk())) {
-        updateFromRootProviderAndSubscribe();
+      if (isAffectedByJdkAddition(jdk)) {
+        updateFromRootProviderAndSubscribe(null);
       }
     }
 
+    private boolean isAffectedByJdkAddition(Sdk jdk) {
+      return jdk.equals(getJdk());
+    }
+
     public void jdkAdded(Sdk jdk) {
-      if (isAffectedByJdk(jdk)) {
-        updateFromRootProviderAndSubscribe();
+      if (isAffectedByJdkRemoval(jdk)) {
+        updateFromRootProviderAndSubscribe(getRootProvider());
       }
     }
 
     public void jdkNameChanged(Sdk jdk, String previousName) {
-      if (isAffectedByJdk(jdk)) {
+      String currentName = getJdkName();
+      if (jdk.getName().equals(currentName)) {
         // if current name matches my name
-        updateFromRootProviderAndSubscribe();
+        updateFromRootProviderAndSubscribe(getRootProvider());
       }
     }
 
-    private boolean isAffectedByJdk(Sdk jdk) {
+    private boolean isAffectedByJdkRemoval(Sdk jdk) {
       return jdk.getName().equals(getJdkName());
     }
   }
 
   private class MyProjectJdkListener implements ProjectRootManagerEx.ProjectJdkListener {
     public void projectJdkChanged() {
-      updateFromRootProviderAndSubscribe();
+      updateFromRootProviderAndSubscribe(getRootProvider());
     }
   }
-
-
 }

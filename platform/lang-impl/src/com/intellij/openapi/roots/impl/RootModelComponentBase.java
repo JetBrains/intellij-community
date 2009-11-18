@@ -52,7 +52,7 @@ public abstract class RootModelComponentBase implements Disposable {
     myDisposed = true;
   }
 
-  public boolean isDisposed() {
+  protected boolean isDisposed() {
     return myDisposed;
   }
 }

@@ -16,7 +16,6 @@
 
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,7 +33,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -47,7 +45,6 @@ import com.intellij.util.graph.GraphGenerator;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -155,10 +152,6 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
         if (Disposer.isDebugMode()) {
           myModelCreations.remove(this);
         }
-
-        for (OrderEntry entry : ModuleRootManagerImpl.this.getOrderEntries()) {
-          assert !((RootModelComponentBase)entry).isDisposed();
-        }
       }
     };
     if (Disposer.isDebugMode()) {
@@ -167,11 +160,19 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     return model;
   }
 
-  void makeRootsChange(@NotNull Runnable runnable) {
-    ProjectRootManagerEx projectRootManagerEx = (ProjectRootManagerEx)ProjectRootManager.getInstance(myModule.getProject());
+  void fireBeforeRootsChange() {
+    if (!isModuleAdded) return;
+
     // IMPORTANT: should be the first listener!
-    projectRootManagerEx.makeRootsChange(runnable, false, isModuleAdded);
+    ((ProjectRootManagerEx)ProjectRootManager.getInstance(myModule.getProject())).beforeRootsChange(false);
   }
+
+  void fireRootsChanged() {
+    if (!isModuleAdded) return;
+
+    ((ProjectRootManagerEx)ProjectRootManager.getInstance(myModule.getProject())).rootsChanged(false);
+  }
+
 
   RootModelImpl getRootModel() {
     return myRootModel;
@@ -209,8 +210,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
         OrderEntry entry = (OrderEntry)orderIterator.next();
         final String [] urls;
         if (entry instanceof ModuleOrderEntryImpl) {
-          List<String> list = ((ModuleOrderEntryImpl)entry).getUrls(type, processed);
-          urls = ArrayUtil.toStringArray(list);
+          urls = ((ModuleOrderEntryImpl)entry).getUrls(type, processed);
         }
         else {
           urls = entry.getUrls(type);
@@ -236,30 +236,29 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
       }
     }
 
-    return VfsUtil.toVirtualFileArray(result);
+    return result.toArray(new VirtualFile[result.size()]);
   }
 
   @NotNull
   public String[] getUrls(OrderRootType type) {
-    List<String> urls = getUrls(type, null);
-    return ArrayUtil.toStringArray(urls);
+    return getUrls(type, new HashSet<Module>());
   }
 
-  @NotNull
-  private List<String> getUrls(OrderRootType type, @Nullable Set<Module> processed) {
+  @NotNull private String[] getUrls(OrderRootType type, Set<Module> processed) {
     final ArrayList<String> result = new ArrayList<String>();
     final Iterator orderIterator = myRootModel.getOrderIterator();
     while (orderIterator.hasNext()) {
       final OrderEntry entry = (OrderEntry)orderIterator.next();
+      final String[] urls;
       if (entry instanceof ModuleOrderEntryImpl) {
-        result.addAll(((ModuleOrderEntryImpl)entry).getUrls(type, processed));
+        urls = ((ModuleOrderEntryImpl)entry).getUrls(type, processed);
       }
       else {
-        final String[] urls = entry.getUrls(type);
-        result.addAll(Arrays.asList(urls));
+        urls = entry.getUrls(type);
       }
+      result.addAll(Arrays.asList(urls));
     }
-    return result;
+    return ArrayUtil.toStringArray(result);
   }
 
   void commitModel(RootModelImpl rootModel) {
@@ -271,13 +270,26 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     multiCommit(new ModifiableRootModel[]{rootModel}, moduleModel);
   }
 
-  private static void commitModelWithoutEvents(RootModelImpl rootModel) {
+  private void commitModelWithoutEvents(RootModelImpl rootModel) {
     doCommit(rootModel);
   }
 
-  private static void doCommit(RootModelImpl rootModel) {
+  private void doCommit(RootModelImpl rootModel) {
     rootModel.docommit();
     rootModel.dispose();
+
+    //if (myRootModel != rootModel) {
+    //  myRootModel.disposeModel();
+    //}
+    //if (isModuleAdded) {
+    //  final VirtualFilePointerListener listener = ((ProjectRootManagerImpl)ProjectRootManager.getInstance(
+    //    myModule.getProject())).getVirtualFilePointerListener();
+    //  myRootModel = new RootModelImpl(rootModel, this, false, new RootConfigurationAccessor(), listener, myFilePointerManager, myProjectRootManager);
+    //  rootModel.disposeModel();
+    //}
+    //else {
+    //  myRootModel = rootModel;
+    //}
   }
 
 
@@ -293,7 +305,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     Runnable runnable = new Runnable() {
       public void run() {
         for (RootModelImpl rootModel : modelsToCommit) {
-          commitModelWithoutEvents(rootModel);
+          rootModel.myModuleRootManager.commitModelWithoutEvents(rootModel);
         }
 
         for (ModifiableRootModel model : modelsToDispose) {
@@ -358,49 +370,33 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     return myRootModel.processOrder(policy, initialValue);
   }
 
-  List<String> getUrlsForOtherModules(OrderRootType rootType, Set<Module> processed) {
+  String[] getUrlsForOtherModules(OrderRootType rootType, Set<Module> processed) {
     List<String> result = new ArrayList<String>();
     if (OrderRootType.SOURCES.equals(rootType) || OrderRootType.COMPILATION_CLASSES.equals(rootType) || OrderRootType.PRODUCTION_COMPILATION_CLASSES.equals(rootType)) {
-      addExportedUrls(myRootModel, rootType, result, processed);
-      return result;
+      myRootModel.addExportedUrs(rootType, result, processed);
+      return ArrayUtil.toStringArray(result);
     }
     else if (OrderRootType.CLASSES.equals(rootType)) {
-      addExportedUrls(myRootModel, rootType, result, processed);
-      return result;
+      myRootModel.addExportedUrs(rootType, result, processed);
+      return ArrayUtil.toStringArray(result);
     }
     else if (OrderRootType.CLASSES_AND_OUTPUT.equals(rootType)) {
       return getUrls(OrderRootType.CLASSES_AND_OUTPUT, processed);
     }
-    return Collections.emptyList();
-  }
-
-  private static void addExportedUrls(RootModelImpl model, OrderRootType type, List<String> result, Set<Module> processed) {
-    for (final OrderEntry orderEntry : model.getOrderEntries()) {
-      if (orderEntry instanceof ModuleSourceOrderEntryImpl) {
-        ((ModuleSourceOrderEntryImpl)orderEntry).addExportedUrls(type, result);
-      }
-      else if (orderEntry instanceof ExportableOrderEntry && ((ExportableOrderEntry)orderEntry).isExported()) {
-        if (orderEntry instanceof ModuleOrderEntryImpl) {
-          result.addAll(((ModuleOrderEntryImpl)orderEntry).getUrls(type, processed));
-        }
-        else {
-          result.addAll(Arrays.asList(orderEntry.getUrls(type)));
-        }
-      }
-    }
+    return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
   @NotNull
   VirtualFile[] getFilesForOtherModules(OrderRootType rootType, Set<Module> processed) {
-    Set<VirtualFilePointer> filePointers = myCachedExportedFiles.get(rootType);
-    if (filePointers == null) {
-      filePointers = new LinkedHashSet<VirtualFilePointer>();
+    Set<VirtualFilePointer> files = myCachedExportedFiles.get(rootType);
+    if (files == null) {
+      files = new LinkedHashSet<VirtualFilePointer>();
       List<String> result = new ArrayList<String>();
       if (OrderRootType.SOURCES.equals(rootType) || OrderRootType.COMPILATION_CLASSES.equals(rootType) || OrderRootType.PRODUCTION_COMPILATION_CLASSES.equals(rootType)) {
-        addExportedUrls(myRootModel, rootType, result, processed);
+        myRootModel.addExportedUrs(rootType, result, processed);
       }
       else if (OrderRootType.CLASSES.equals(rootType)) {
-        addExportedUrls(myRootModel, rootType, result, processed);
+        myRootModel.addExportedUrs(rootType, result, processed);
       }
       else if (OrderRootType.CLASSES_AND_OUTPUT.equals(rootType)) {
         return getFiles(OrderRootType.CLASSES_AND_OUTPUT, processed);
@@ -414,13 +410,13 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
       final VirtualFilePointerManager pointerManager = VirtualFilePointerManager.getInstance();
       for (String url : result) {
         if (url != null) {
-          filePointers.add(pointerManager.create(url, getModule(), null));
+          files.add(pointerManager.create(url, getModule(), null));
         }
       }
-      myCachedExportedFiles.put(rootType, filePointers);
+      myCachedExportedFiles.put(rootType, files);
     }
 
-    return convertPointers(filePointers);
+    return convertPointers(files);
   }
 
   @NotNull
@@ -468,6 +464,14 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   }
 
   public void moduleAdded() {
+    //RootModelImpl oldModel = myRootModel;
+    //final VirtualFilePointerListener listener = ((ProjectRootManagerImpl)ProjectRootManager.getInstance(
+    //  myModule.getProject())).getVirtualFilePointerListener();
+    //myRootModel = new RootModelImpl(myRootModel, this, false, new RootConfigurationAccessor(), listener, myFilePointerManager, myProjectRootManager);
+    //oldModel.disposeModel();
+    for (RootModelComponentBase rootModelComponentBase : myRootModel.myComponents) {
+      rootModelComponentBase.moduleAdded();
+    }
     isModuleAdded = true;
   }
 
@@ -546,17 +550,16 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
       boolean throwEvent = myRootModel != null;
 
       if (throwEvent) {
-        makeRootsChange(new Runnable() {
-          public void run() {
-            doCommit(newModel);
-          }
-        });
+        fireBeforeRootsChange();
+        doCommit(newModel);
+        for (RootModelComponentBase rootModelComponentBase : myRootModel.myComponents) {
+          rootModelComponentBase.moduleAdded();
+        }
+        fireRootsChanged();
       }
       else {
         myRootModel = newModel;
       }
-
-      assert !myRootModel.isOrderEntryDisposed();
     }
     catch (InvalidDataException e) {
       LOG.error(e);

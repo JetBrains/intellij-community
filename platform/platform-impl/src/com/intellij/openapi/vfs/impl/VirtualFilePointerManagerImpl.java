@@ -29,7 +29,6 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.pointers.*;
 import com.intellij.util.messages.MessageBus;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -179,6 +178,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       return new IdentityVirtualFilePointer(file);
     }
 
+    url = FileUtil.toSystemIndependentName(url);
     String protocol = VirtualFileManager.extractProtocol(url);
     VirtualFileSystem fileSystem = myVirtualFileManager.getFileSystem(protocol);
     if (fileSystem == null) {
@@ -191,16 +191,9 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       return found == null ? new NullVirtualFilePointer(url) : new IdentityVirtualFilePointer(found);
     }
 
-    String path;
-    if (file == null) {
-      path = VirtualFileManager.extractPath(url);
-      path = cleanupPath(path, protocol);
-      url = VirtualFileManager.constructUrl(protocol, path);
-    }
-    else {
-      path = file.getPath();
-      // url has come from VirtualFile.getUrl() and is good enough
-    }
+    url = stripTrailingPathSeparator(url, protocol);
+
+    String path = urlToPath(url);
 
     VirtualFilePointerImpl pointer = getOrCreate(file, url, parentDisposable, listener, path);
 
@@ -215,27 +208,6 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     }
 
     return pointer;
-  }
-
-  private static String cleanupPath(String path, String protocol) {
-    path = FileUtil.toSystemIndependentName(path);
-
-    path = stripTrailingPathSeparator(path, protocol);
-    path = removeDoubleSlashes(path);
-    return path;
-  }
-
-  private static String removeDoubleSlashes(String path) {
-    while(true) {
-      int i = path.lastIndexOf("//");
-      if (i != -1) {
-        path = path.substring(0, i) + path.substring(i + 1);
-      }
-      else {
-        break;
-      }
-    }
-    return path;
   }
 
   private synchronized VirtualFilePointerImpl getOrCreate(VirtualFile file, String url, Disposable parentDisposable, VirtualFilePointerListener listener, String path) {
@@ -253,11 +225,25 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     return pointer;
   }
 
-  private static String stripTrailingPathSeparator(String path, String protocol) {
-    while (path.endsWith("/") && !(protocol.equals(JarFileSystem.PROTOCOL) && path.endsWith(JarFileSystem.JAR_SEPARATOR))) {
-      path = StringUtil.trimEnd(path, "/");
+  private static String stripTrailingPathSeparator(String url, String protocol) {
+    String tail = StringUtil.trimStart(url, protocol);
+    if (protocol.equals(JarFileSystem.PROTOCOL)) {
+      int separator = tail.lastIndexOf(JarFileSystem.JAR_SEPARATOR);
+      if (separator != -1) {
+        tail = tail.substring(separator + JarFileSystem.JAR_SEPARATOR.length());
+      }
     }
-    return path;
+    while (tail.endsWith("/")) {
+      tail = StringUtil.trimEnd(tail, "/");
+      url = StringUtil.trimEnd(url, "/");
+    }
+    return url;
+  }
+
+  private String urlToPath(@NotNull String url) {
+    VirtualFile virtualFile = myVirtualFileManager.findFileByUrl(url);
+    if (virtualFile != null) return virtualFile.getPath();
+    return VfsUtil.urlToPath(url);
   }
 
   /**
@@ -271,8 +257,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   @NotNull
   public synchronized VirtualFilePointer duplicate(@NotNull VirtualFilePointer pointer, @NotNull Disposable parent,
                                                    VirtualFilePointerListener listener) {
-    VirtualFile file = pointer.getFile();
-    return file == null ? create(pointer.getUrl(), parent, listener) : create(file, parent, listener);
+    return create(pointer.getUrl(), parent, listener);
   }
 
   /**
@@ -508,32 +493,5 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     public String toString() {
       return "D:" + myPointer.toString();
     }
-  }
-
-  @TestOnly
-  public int countPointers() {
-    int result = 0;
-    for (TreeMap<String, VirtualFilePointerImpl> map : myUrlToPointerMaps.values()) {
-      result += map.values().size();
-    }
-    return result;
-  }
-
-  @TestOnly
-  public int coundDupContainers() {
-    Map<VirtualFilePointerContainer,Integer> c = new THashMap<VirtualFilePointerContainer,Integer>();
-    for (VirtualFilePointerContainerImpl container : myContainers) {
-      Integer count = c.get(container);
-      if (count == null) count = 0;
-      count++;
-      c.put(container, count);
-    }
-    int i = 0;
-    for (Integer count : c.values()) {
-      if (count > 1) {
-        i++;
-      }
-    }
-    return i;
   }
 }
