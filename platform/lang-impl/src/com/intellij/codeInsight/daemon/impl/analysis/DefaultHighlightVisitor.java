@@ -22,8 +22,10 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -31,6 +33,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -91,6 +94,33 @@ public class DefaultHighlightVisitor extends PsiElementVisitor implements Highli
       return LanguageAnnotators.INSTANCE.allForLanguage(key);
     }
   };
+  
+  static {
+    LanguageAnnotators.INSTANCE.addListener(new ExtensionPointListener<Annotator>() {
+      public void extensionAdded(Annotator extension, @Nullable PluginDescriptor pluginDescriptor) {
+        cachedAnnotators.clear();
+      }
+
+      public void extensionRemoved(Annotator extension, @Nullable PluginDescriptor pluginDescriptor) {
+        cachedAnnotators.clear();
+      }
+    });
+
+    //final ExtensionPoint<LanguageExtensionPoint<Annotator>> point = Extensions.getRootArea().getExtensionPoint(LanguageAnnotators.EP_NAME);
+    //point.addExtensionPointListener(new ExtensionPointAndAreaListener<LanguageExtensionPoint<Annotator>>() {
+    //  public void areaReplaced(ExtensionsArea area) {
+    //    cachedAnnotators.clear();
+    //  }
+    //
+    //  public void extensionAdded(LanguageExtensionPoint<Annotator> extension, @Nullable PluginDescriptor pluginDescriptor) {
+    //    cachedAnnotators.clear();
+    //  }
+    //
+    //  public void extensionRemoved(LanguageExtensionPoint<Annotator> extension, @Nullable PluginDescriptor pluginDescriptor) {
+    //    cachedAnnotators.clear();
+    //  }
+    //});
+  }
 
   private void runAnnotators(final PsiElement element) {
     List<Annotator> annotators = cachedAnnotators.get(element.getLanguage());
