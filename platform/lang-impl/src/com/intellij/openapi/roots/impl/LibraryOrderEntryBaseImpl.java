@@ -21,112 +21,91 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootProvider;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.HashMap;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Map;
+import java.util.List;
 
 /**
  *  @author dsl
  */
 abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.LibraryOrderEntryBaseImpl");
-  private final Map<OrderRootType, VirtualFilePointerContainer> myRootContainers;
-  private final MyRootSetChangedListener myRootSetChangedListener = new MyRootSetChangedListener();
-  private RootProvider myCurrentlySubscribedRootProvider = null;
   protected final ProjectRootManagerImpl myProjectRootManagerImpl;
   @NotNull protected DependencyScope myScope = DependencyScope.COMPILE;
+  private final MyRootSetChangedListener myRootSetChangedListener = new MyRootSetChangedListener();
+  private RootProvider myCurrentlySubscribedRootProvider = null;
 
-  LibraryOrderEntryBaseImpl(RootModelImpl rootModel, ProjectRootManagerImpl instanceImpl, VirtualFilePointerManager filePointerManager) {
+  LibraryOrderEntryBaseImpl(RootModelImpl rootModel, ProjectRootManagerImpl instanceImpl) {
     super(rootModel);
-    myRootContainers = new HashMap<OrderRootType, VirtualFilePointerContainer>();
-    for (OrderRootType type : OrderRootType.getAllTypes()) {
-      myRootContainers.put(type, filePointerManager.createContainer(this, rootModel.myVirtualFilePointerListener));
-    }
     myProjectRootManagerImpl = instanceImpl;
   }
 
-  protected final void init(RootProvider rootProvider) {
-    if (rootProvider == null) return;
-    updatePathsFromProviderAndSubscribe(rootProvider);
-  }
-
-  private void updatePathsFromProviderAndSubscribe(final RootProvider rootProvider) {
-    updatePathsFromProvider(rootProvider);
-    resubscribe(rootProvider);
-  }
-
-  private void updatePathsFromProvider(final RootProvider rootProvider) {
-    final OrderRootType[] allTypes = OrderRootType.getAllTypes();
-    for (OrderRootType type : allTypes) {
-      final VirtualFilePointerContainer container = myRootContainers.get(type);
-      container.clear();
-      if (rootProvider != null) {
-        final String[] urls = rootProvider.getUrls(type);
-        for (String url : urls) {
-          container.add(url);
-        }
-      }
-    }
-  }
-
-  private boolean needUpdateFromProvider(final RootProvider rootProvider) {
-    final OrderRootType[] allTypes = OrderRootType.getAllTypes();
-    for (OrderRootType type : allTypes) {
-      final VirtualFilePointerContainer container = myRootContainers.get(type);
-      final String[] urls = container.getUrls();
-      final String[] providerUrls = rootProvider.getUrls(type);
-      if (!Arrays.equals(urls, providerUrls)) return true;
-    }
-    return false;
+  protected final void init() {
+    updateFromRootProviderAndSubscribe();
   }
 
   @NotNull
   public VirtualFile[] getFiles(OrderRootType type) {
     if (type == OrderRootType.COMPILATION_CLASSES) {
-      return myRootContainers.get(OrderRootType.CLASSES).getDirectories();
+      return getRootFiles(OrderRootType.CLASSES);
     }
     else if (type == OrderRootType.PRODUCTION_COMPILATION_CLASSES) {
       if (myScope == DependencyScope.RUNTIME || myScope == DependencyScope.TEST) {
         return VirtualFile.EMPTY_ARRAY;
       }
-      return myRootContainers.get(OrderRootType.CLASSES).getDirectories();
+      return getRootFiles(OrderRootType.CLASSES);
     }
     else if (type == OrderRootType.CLASSES_AND_OUTPUT) {
-      return myScope == DependencyScope.PROVIDED ? VirtualFile.EMPTY_ARRAY : myRootContainers.get(OrderRootType.CLASSES).getDirectories();
+      return myScope == DependencyScope.PROVIDED ? VirtualFile.EMPTY_ARRAY : getRootFiles(OrderRootType.CLASSES);
     }
-    return myRootContainers.get(type).getDirectories();
+    return getRootFiles(type);
   }
 
   @NotNull
   public String[] getUrls(OrderRootType type) {
     LOG.assertTrue(!getRootModel().getModule().isDisposed());
+    RootProvider rootProvider = getRootProvider();
+    if (rootProvider == null) return ArrayUtil.EMPTY_STRING_ARRAY;
     if (type == OrderRootType.COMPILATION_CLASSES) {
-      return myRootContainers.get(OrderRootType.CLASSES).getUrls();
+      return rootProvider.getUrls(OrderRootType.CLASSES);
     }
     else if (type == OrderRootType.PRODUCTION_COMPILATION_CLASSES) {
       if (myScope == DependencyScope.RUNTIME || myScope == DependencyScope.TEST) {
         return ArrayUtil.EMPTY_STRING_ARRAY;
       }
-      return myRootContainers.get(OrderRootType.CLASSES).getUrls();
+      return rootProvider.getUrls(OrderRootType.CLASSES);
     }
     else if (type == OrderRootType.CLASSES_AND_OUTPUT) {
-      return myScope == DependencyScope.PROVIDED ? ArrayUtil.EMPTY_STRING_ARRAY : myRootContainers.get(OrderRootType.CLASSES).getUrls();
+      return myScope == DependencyScope.PROVIDED ? ArrayUtil.EMPTY_STRING_ARRAY : rootProvider.getUrls(OrderRootType.CLASSES);
     }
-    return myRootContainers.get(type).getUrls();
+    return rootProvider.getUrls(type);
   }
 
   public VirtualFile[] getRootFiles(OrderRootType type) {
-    return myRootContainers.get(type).getDirectories();
+    RootProvider rootProvider = getRootProvider();
+    return rootProvider == null ? VirtualFile.EMPTY_ARRAY : filterDirectories(rootProvider.getFiles(type));
   }
 
+  private static VirtualFile[] filterDirectories(VirtualFile[] files) {
+    List<VirtualFile> filtered = ContainerUtil.mapNotNull(files, new Function<VirtualFile, VirtualFile>() {
+      public VirtualFile fun(VirtualFile file) {
+        return file.isDirectory() ? file : null;
+      }
+    });
+    return VfsUtil.toVirtualFileArray(filtered);
+  }
+
+  protected abstract RootProvider getRootProvider();
+
+  @SuppressWarnings({"UnusedDeclaration"})
   public String[] getRootUrls(OrderRootType type) {
-    return myRootContainers.get(type).getUrls();
+    RootProvider rootProvider = getRootProvider();
+    return rootProvider == null ? ArrayUtil.EMPTY_STRING_ARRAY : rootProvider.getUrls(type);
   }
 
   @NotNull
@@ -134,16 +113,12 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
     return getRootModel().getModule();
   }
 
-  protected void updateFromRootProviderAndSubscribe(RootProvider wrapper) {
-    getRootModel().fireBeforeExternalChange();
-    updatePathsFromProviderAndSubscribe(wrapper);
-    getRootModel().fireAfterExternalChange();
-  }
-
-  private void updateFromRootProvider(RootProvider wrapper) {
-    getRootModel().fireBeforeExternalChange();
-    updatePathsFromProvider(wrapper);
-    getRootModel().fireAfterExternalChange();
+  protected void updateFromRootProviderAndSubscribe() {
+    getRootModel().makeExternalChange(new Runnable() {
+      public void run() {
+        resubscribe(getRootProvider());
+      }
+    });
   }
 
   private void resubscribe(RootProvider wrapper) {
@@ -158,7 +133,7 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
     myCurrentlySubscribedRootProvider = wrapper;
   }
 
-  protected void addListenerToWrapper(final RootProvider wrapper,
+  private void addListenerToWrapper(final RootProvider wrapper,
                                       final RootProvider.RootSetChangedListener rootSetChangedListener) {
     myProjectRootManagerImpl.addRootSetChangedListener(rootSetChangedListener, wrapper);
   }
@@ -178,23 +153,15 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
   }
 
 
-  public void dispose() {
-    super.dispose();
-    //for (VirtualFilePointerContainer virtualFilePointerContainer : new THashSet<VirtualFilePointerContainer>(myRootContainers.values())) {
-    //  virtualFilePointerContainer.killAll();
-    //}
-    unsubscribe();
+  private class MyRootSetChangedListener implements RootProvider.RootSetChangedListener {
+    public void rootSetChanged(RootProvider wrapper) {
+      updateFromRootProviderAndSubscribe();
+    }
   }
 
-  private class MyRootSetChangedListener implements RootProvider.RootSetChangedListener {
-
-    public MyRootSetChangedListener() {
-    }
-
-    public void rootSetChanged(RootProvider wrapper) {
-      if (needUpdateFromProvider(wrapper)) {
-        updateFromRootProvider(wrapper);
-      }
-    }
+  @Override
+  public void dispose() {
+    unsubscribe();
+    super.dispose();
   }
 }

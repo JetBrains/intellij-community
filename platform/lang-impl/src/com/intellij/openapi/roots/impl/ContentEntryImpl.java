@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -53,7 +54,8 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   }
 
   ContentEntryImpl(String url, RootModelImpl m) {
-    this(VirtualFilePointerManager.getInstance().create(url, m.getModule(), m.myVirtualFilePointerListener), m);
+    super(m);
+    myRoot = VirtualFilePointerManager.getInstance().create(url, this, m.myVirtualFilePointerListener);
   }
 
   ContentEntryImpl(Element e, RootModelImpl m) throws InvalidDataException {
@@ -64,7 +66,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
 
   private static String getUrlFrom(Element e) throws InvalidDataException {
     LOG.assertTrue(ELEMENT_NAME.equals(e.getName()));
-    
+
     String url = e.getAttributeValue(URL_ATTRIBUTE);
     if (url == null) throw new InvalidDataException();
     return url;
@@ -84,20 +86,10 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     }
   }
 
-  private ContentEntryImpl(VirtualFilePointer root, RootModelImpl m) {
-    super(m);
-    myRoot = root;
-  }
-
   public VirtualFile getFile() {
     //assert !isDisposed();
     final VirtualFile file = myRoot.getFile();
-    if (file == null || file.isDirectory()) {
-      return file;
-    }
-    else {
-      return null;
-    }
+    return file == null || !file.isDirectory() ? null : file;
   }
 
   @NotNull
@@ -119,7 +111,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
         result.add(file);
       }
     }
-    return result.toArray(new VirtualFile[result.size()]);
+    return VfsUtil.toVirtualFileArray(result);
   }
 
   public ExcludeFolder[] getExcludeFolders() {
@@ -156,7 +148,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
         result.add(file);
       }
     }
-    return result.toArray(new VirtualFile[result.size()]);
+    return VfsUtil.toVirtualFileArray(result);
   }
 
   public SourceFolder addSourceFolder(@NotNull VirtualFile file, boolean isTestSource) {
@@ -240,8 +232,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
 
   public ContentEntry cloneEntry(RootModelImpl rootModel) {
     assert !isDisposed();
-    VirtualFilePointer root = VirtualFilePointerManager.getInstance().duplicate(myRoot, rootModel.getModule(), rootModel.myVirtualFilePointerListener);
-    ContentEntryImpl cloned = new ContentEntryImpl(root, rootModel);
+    ContentEntryImpl cloned = new ContentEntryImpl(myRoot.getUrl(), rootModel);
     for (final SourceFolder sourceFolder : mySourceFolders) {
       if (sourceFolder instanceof ClonableContentFolder) {
         ContentFolder folder = ((ClonableContentFolder)sourceFolder).cloneFolder(cloned);
