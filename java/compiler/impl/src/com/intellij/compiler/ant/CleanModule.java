@@ -27,10 +27,8 @@ public class CleanModule extends Target {
   public CleanModule(ModuleChunk chunk) {
     super(BuildProperties.getModuleCleanTargetName(chunk.getName()), null,
           CompilerBundle.message("generated.ant.build.cleanup.module.task.comment"), null);
-    if (ChunkBuildExtension.hasSelfOutput(chunk)) {
-      final String chunkName = chunk.getName();
-      add(new Delete(BuildProperties.propertyRef(BuildProperties.getOutputPathProperty(chunkName))));
-      add(new Delete(BuildProperties.propertyRef(BuildProperties.getOutputPathForTestsProperty(chunkName))));
-    }
+    final String chunkName = chunk.getName();
+    add(new Delete(BuildProperties.propertyRef(BuildProperties.getOutputPathProperty(chunkName))));
+    add(new Delete(BuildProperties.propertyRef(BuildProperties.getOutputPathForTestsProperty(chunkName))));
   }
 }

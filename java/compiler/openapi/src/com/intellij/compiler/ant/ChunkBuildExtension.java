@@ -19,7 +19,6 @@ package com.intellij.compiler.ant;
 import com.intellij.ExtensionPoints;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
@@ -30,14 +29,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public abstract class ChunkBuildExtension {
-  /**
-   * true, if there are build extensions for the modules, the variable is accessed only from AWT thread
-   */
-  private static Boolean myHasExtensions = null;
-
   public static final ExtensionPointName<ChunkBuildExtension> EP_NAME = ExtensionPointName.create(ExtensionPoints.ANT_BUILD_GEN);
-
-  public abstract boolean haveSelfOutputs(Module[] modules);
 
   @NotNull
   @NonNls
@@ -46,26 +38,6 @@ public abstract class ChunkBuildExtension {
   public abstract void process(Project project, ModuleChunk chunk, GenerationOptions genOptions, CompositeGenerator generator);
 
   public void generateProperties(final PropertyFileGenerator generator, final Project project, final GenerationOptions options) {
-  }
-
-  public static boolean hasSelfOutput(ModuleChunk chunk) {
-    final ChunkBuildExtension[] extensions = Extensions.getRootArea().getExtensionPoint(EP_NAME).getExtensions();
-    final Module[] modules = chunk.getModules();
-    for (ChunkBuildExtension extension : extensions) {
-      if (extension.haveSelfOutputs(modules)) return true;
-    }
-    return false;
-  }
-
-  /**
-   * @return true if there are build extensions registered
-   */
-  public static boolean hasBuildExtensions() {
-    if (myHasExtensions == null) {
-      ChunkBuildExtension[] extensions = Extensions.getRootArea().getExtensionPoint(EP_NAME).getExtensions();
-      myHasExtensions = extensions.length != 0;
-    }
-    return myHasExtensions;
   }
 
   public static String[] getAllTargets(ModuleChunk chunk) {
