@@ -477,7 +477,9 @@ public final class ComponentTree extends Tree implements DataProvider {
         setIcon(getComponentIcon(component));
 
         if (component == myDropTargetComponent) {
-          setBorder(BorderFactory.createLineBorder(Color.BLUE, 2));
+          setBorder(BorderFactory.createLineBorder(Color.BLUE, 1));
+        } else {
+          setBorder(BorderFactory.createEmptyBorder(1,1,1,1));
         }
       }
       else if (node.getUserObject() != null) {
