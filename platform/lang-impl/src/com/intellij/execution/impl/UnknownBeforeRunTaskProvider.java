@@ -31,7 +31,7 @@ import java.util.List;
  * @author Eugene Zhuravlev
  *         Date: Sep 15, 2009
  */
-public class UnknownBeforeRunTaskProvider implements BeforeRunTaskProvider<UnknownBeforeRunTaskProvider.UnknownTask>{
+public class UnknownBeforeRunTaskProvider extends BeforeRunTaskProvider<UnknownBeforeRunTaskProvider.UnknownTask> {
   private final Key<UnknownTask> myId;
 
   public UnknownBeforeRunTaskProvider(String mirrorProviderName) {
@@ -46,7 +46,8 @@ public class UnknownBeforeRunTaskProvider implements BeforeRunTaskProvider<Unkno
     return "Unknown task " + myId.toString();
   }
 
-  public void configureTask(RunConfiguration runConfiguration, UnknownTask task) {
+  public boolean configureTask(RunConfiguration runConfiguration, UnknownTask task) {
+    return false;
   }
 
   public boolean executeTask(DataContext context, RunConfiguration configuration, UnknownTask task) {

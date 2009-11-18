@@ -39,7 +39,7 @@ import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.util.Collections;
 
-public class MavenBeforeRunTasksProvider implements BeforeRunTaskProvider<MavenBeforeRunTask> {
+public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBeforeRunTask> {
   public static final Key<MavenBeforeRunTask> TASK_ID = Key.create("Maven.BeforeRunTask");
   private final Project myProject;
 
@@ -84,18 +84,19 @@ public class MavenBeforeRunTasksProvider implements BeforeRunTaskProvider<MavenB
     return new MavenBeforeRunTask();
   }
 
-  public void configureTask(RunConfiguration runConfiguration, MavenBeforeRunTask task) {
+  public boolean configureTask(RunConfiguration runConfiguration, MavenBeforeRunTask task) {
     SelectMavenGoalDialog dialog = new SelectMavenGoalDialog(myProject,
                                                              task.getProjectPath(),
                                                              task.getGoal(),
                                                              TasksBundle.message("maven.tasks.select.goal.title"));
     dialog.show();
-    if (!dialog.isOK()) return;
+    if (!dialog.isOK()) return false;
 
     task.setProjectPath(dialog.getSelectedProjectPath());
     task.setGoal(dialog.getSelectedGoal());
 
     MavenTasksManager.getInstance(myProject).fireTasksChanged();
+    return true;
   }
 
   public boolean executeTask(final DataContext context, RunConfiguration configuration, final MavenBeforeRunTask task) {

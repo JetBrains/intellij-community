@@ -33,7 +33,6 @@ import java.util.List;
 public abstract class SettingsEditor<Settings> implements Disposable {
   private List<SettingsEditorListener<Settings>> myListeners;
   private UserActivityWatcher myWatcher;
-  private UserActivityListener myUserActivityListener;
   private boolean myIsInUpdate = false;
   private Factory<Settings> mySettingsFactory;
   private CompositeSettingsEditor<Settings> myOwner;
@@ -112,12 +111,12 @@ public abstract class SettingsEditor<Settings> implements Disposable {
   protected void installWatcher(JComponent c) {
     myWatcher = new UserActivityWatcher();
     myWatcher.register(c);
-    myUserActivityListener = new UserActivityListener() {
+    UserActivityListener userActivityListener = new UserActivityListener() {
       public void stateChanged() {
         fireEditorStateChanged();
       }
     };
-    myWatcher.addUserActivityListener(myUserActivityListener, this);
+    myWatcher.addUserActivityListener(userActivityListener, this);
   }
 
   public final void addSettingsEditorListener(SettingsEditorListener<Settings> listener) {
@@ -134,8 +133,8 @@ public abstract class SettingsEditor<Settings> implements Disposable {
   protected final void fireEditorStateChanged() {
     if (myIsInUpdate || myListeners == null) return;
     SettingsEditorListener[] listeners = myListeners.toArray(new SettingsEditorListener[myListeners.size()]);
-    for (int i = 0; i < listeners.length; i++) {
-      listeners[i].stateChanged(this);
+    for (SettingsEditorListener listener : listeners) {
+      listener.stateChanged(this);
     }
   }
 }
