@@ -139,8 +139,13 @@ public class JarsBuilder {
   }
 
   private void buildJar(final JarInfo jar) throws IOException {
-    myContext.getProgressIndicator().setText(CompilerBundle.message("packaging.compiler.message.building.0",
-                                                                    jar.getPresentableDestination()));
+    if (jar.getPackedFiles().isEmpty() && jar.getPackedJars().isEmpty()) {
+      myContext.addMessage(CompilerMessageCategory.WARNING, "Archive '" + jar.getPresentableDestination() + "' has no files so it won't be created", null, -1, -1);
+      return;
+    }
+
+    myContext.getProgressIndicator()
+      .setText(CompilerBundle.message("packaging.compiler.message.building.0", jar.getPresentableDestination()));
     File jarFile = FileUtil.createTempFile("artifactCompiler", "tmp");
     myBuiltJars.put(jar, jarFile);
 
