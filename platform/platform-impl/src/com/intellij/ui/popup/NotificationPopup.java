@@ -46,11 +46,7 @@ public class NotificationPopup {
   public NotificationPopup(final JComponent owner, final JComponent content, Color backgroud, final boolean useDefaultPreferredSize, ActionListener clickHandler, boolean closeOnClick) {
     final IdeFrameImpl frame = findFrame(owner);
     if (frame == null || !frame.isShowing()) {
-      //todo kirillk
-      if (clickHandler != null) {
-        throw new UnsupportedOperationException("Click handler is not supported in frameless mode");
-      }
-      final FramelessNotificationPopup popup = new FramelessNotificationPopup(owner, content, backgroud, useDefaultPreferredSize);
+      final FramelessNotificationPopup popup = new FramelessNotificationPopup(owner, content, backgroud, useDefaultPreferredSize, clickHandler);
 
       myImpl = new Impl() {
         public void addListener(JBPopupListener listener) {
