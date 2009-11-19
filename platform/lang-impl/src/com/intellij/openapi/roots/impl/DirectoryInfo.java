@@ -20,11 +20,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.OrderedSet;
-import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class DirectoryInfo {
   public Module module; // module to which content it belongs or null
@@ -36,7 +34,7 @@ public class DirectoryInfo {
   public VirtualFile sourceRoot;
 
   /**
-   *  orderEntry to (classes of) which a directory belongs
+   * orderEntry to (classes of) which a directory belongs
    */
   private List<OrderEntry> orderEntries = null;
 
@@ -80,20 +78,23 @@ public class DirectoryInfo {
   }
 
   @SuppressWarnings({"unchecked"})
-  public void addOrderEntries(final List<OrderEntry> orderEntries,
-                              final DirectoryInfo parentInfo,
-                              final List<OrderEntry> oldParentEntries) {
-    if (this.orderEntries == null) {
+  public void addOrderEntries(List<OrderEntry> orderEntries,
+                              @Nullable final DirectoryInfo parentInfo,
+                              @Nullable final List<OrderEntry> oldParentEntries) {
+    if (orderEntries.isEmpty()) {
+      this.orderEntries = null;
+    }
+    else if (this.orderEntries == null) {
       this.orderEntries = orderEntries;
     }
     else if (parentInfo != null && oldParentEntries == this.orderEntries) {
-      this.orderEntries = parentInfo.getOrderEntries();
+      this.orderEntries = parentInfo.orderEntries;
     }
     else {
-      List<OrderEntry> tmp = new OrderedSet<OrderEntry>(TObjectHashingStrategy.CANONICAL);
+      LinkedHashSet tmp = new LinkedHashSet(this.orderEntries.size() + orderEntries.size());
       tmp.addAll(this.orderEntries);
       tmp.addAll(orderEntries);
-      this.orderEntries = tmp;
+      this.orderEntries = new ArrayList<OrderEntry>(tmp);
     }
   }
 }
