@@ -390,12 +390,9 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
                                                      final boolean forCompletion) {
     PsiTypeParameterListOwner owner = typeParameter.getOwner();
     Pair<PsiType, ConstraintType> substitution = null;
-    if (owner instanceof PsiMethod) {
-      if (parent instanceof PsiMethodCallExpression) {
-        PsiMethodCallExpression methodCall = (PsiMethodCallExpression)parent;
-        substitution = inferMethodTypeParameterFromParent(methodCall.getParent(), methodCall, typeParameter, substitutor,
-                                                          forCompletion);
-      }
+    if (owner instanceof PsiMethod && parent instanceof PsiMethodCallExpression) {
+      PsiMethodCallExpression methodCall = (PsiMethodCallExpression)parent;
+      substitution = inferMethodTypeParameterFromParent(methodCall.getParent(), methodCall, typeParameter, substitutor, forCompletion);
     }
     return substitution;
   }
