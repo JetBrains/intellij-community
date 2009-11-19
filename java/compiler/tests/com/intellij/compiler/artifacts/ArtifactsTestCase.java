@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
@@ -22,6 +23,7 @@ import com.intellij.packaging.ui.ManifestFileConfiguration;
 import com.intellij.testFramework.IdeaTestCase;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -78,6 +80,19 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
 
   protected PackagingElementResolvingContext getContext() {
     return ArtifactManager.getInstance(myProject).getResolvingContext();
+  }
+
+  protected void renameFile(final VirtualFile file, final String newName) {
+    new WriteAction() {
+      protected void run(final Result result) {
+        try {
+          file.rename(this, newName);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }.execute();
   }
 
   protected class MockPackagingEditorContext implements ArtifactEditorContext {

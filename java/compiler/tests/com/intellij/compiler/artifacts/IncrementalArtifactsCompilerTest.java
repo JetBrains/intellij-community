@@ -47,7 +47,8 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
     compileProject().assertDeleted("out/artifacts/a/index.html");
   }
 
-  public void testIDEADEV40714OverwriteFileInArchive() throws Exception {
+  //IDEADEV-40714
+  public void testOverwriteFileInArchive() throws Exception {
     final VirtualFile file1 = createFile("a/a.txt", "a");
     final VirtualFile file2 = createFile("b/a.txt", "b");
     addArtifact(root()
@@ -57,5 +58,28 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
     compileProject();
     changeFile(file1);
     compileProject().assertRecompiled("a/a.txt");
+  }
+
+  public void testRenameFile() throws Exception {
+    final VirtualFile file = createFile("a/a.txt");
+    final Artifact a = addArtifact(root().dirCopy(file.getParent()));
+    compileProject();
+
+    assertOutput(a, fs().file("a.txt"));
+    renameFile(file, "b.txt");
+    compileProject();
+    assertOutput(a, fs().file("b.txt"));
+  }
+
+  //IDEADEV-25840
+  public void testUpdateFileIfCaseOfLetterInNameChanged() throws Exception {
+    final VirtualFile file = createFile("a/a.txt");
+    final Artifact a = addArtifact(root().dirCopy(file.getParent()));
+    compileProject();
+
+    assertOutput(a, fs().file("a.txt"));
+    renameFile(file, "A.txt");
+    compileProject();
+    assertOutput(a, fs().file("A.txt"));
   }
 }

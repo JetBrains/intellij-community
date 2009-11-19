@@ -86,20 +86,6 @@ public class UpdateArtifactsAfterRenameTest extends PackagingElementsTestCase {
                            " module:newName");
   }
 
-
-  private void renameFile(final VirtualFile file, final String newName) {
-    new WriteAction() {
-      protected void run(final Result result) {
-        try {
-          file.rename(this, newName);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    }.execute();
-  }
-
   private void moveFile(final VirtualFile file, final VirtualFile newParent) {
     new WriteAction() {
       protected void run(final Result result) {
