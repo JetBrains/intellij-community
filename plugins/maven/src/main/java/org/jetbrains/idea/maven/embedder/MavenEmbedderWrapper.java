@@ -41,7 +41,9 @@ import org.apache.maven.execution.DefaultMavenExecutionRequest;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.ReactorManager;
 import org.apache.maven.extension.ExtensionManager;
+import org.apache.maven.model.Build;
 import org.apache.maven.model.Extension;
+import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.monitor.event.DefaultEventDispatcher;
 import org.apache.maven.monitor.event.DefaultEventMonitor;
@@ -52,6 +54,12 @@ import org.apache.maven.profiles.ProfileManager;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.*;
 import org.apache.maven.project.artifact.ProjectArtifactFactory;
+import org.apache.maven.project.interpolation.AbstractStringBasedModelInterpolator;
+import org.apache.maven.project.interpolation.ModelInterpolationException;
+import org.apache.maven.project.interpolation.ModelInterpolator;
+import org.apache.maven.project.interpolation.StringSearchModelInterpolator;
+import org.apache.maven.project.path.DefaultPathTranslator;
+import org.apache.maven.project.path.PathTranslator;
 import org.apache.maven.settings.Mirror;
 import org.apache.maven.settings.Proxy;
 import org.apache.maven.settings.Server;
@@ -61,6 +69,7 @@ import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.PlexusContainerException;
 import org.codehaus.plexus.component.repository.ComponentDescriptor;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
+import org.codehaus.plexus.personality.plexus.lifecycle.phase.InitializationException;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.*;
@@ -531,6 +540,33 @@ public class MavenEmbedderWrapper {
     });
   }
 
+  public static Model interpolate(Model model, File basedir) {
+    try {
+      AbstractStringBasedModelInterpolator interpolator = new CustomModelInterpolator(new DefaultPathTranslator());
+      interpolator.initialize();
+
+      Properties context = MavenEmbedderFactory.collectSystemProperties();
+
+      ProjectBuilderConfiguration config = new DefaultProjectBuilderConfiguration().setExecutionProperties(context);
+      model = interpolator.interpolate(ModelUtils.cloneModel(model), basedir, config, false);
+    }
+    catch (ModelInterpolationException e) {
+      MavenLog.LOG.warn(e);
+    }
+    catch (InitializationException e) {
+      MavenLog.LOG.error(e);
+    }
+
+    return model;
+  }
+
+  public static void alignModel(Model model, File basedir) {
+    PathTranslator pathTranslator = new DefaultPathTranslator();
+    pathTranslator.alignToBaseDirectory(model, basedir);
+    Build build = model.getBuild();
+    build.setScriptSourceDirectory(pathTranslator.alignToBaseDirectory(build.getScriptSourceDirectory(), basedir));
+  }
+
   private void withProjectCachesDo(Function<Map, ?> func) {
     MavenProjectBuilder builder = getComponent(MavenProjectBuilder.class);
     Field field;
@@ -556,6 +592,7 @@ public class MavenEmbedderWrapper {
     setImplementation(ProjectArtifactFactory.class, CustomArtifactFactory.class);
     setImplementation(ArtifactResolver.class, CustomArtifactResolver.class);
     setImplementation(WagonManager.class, CustomWagonManager.class);
+    setImplementation(ModelInterpolator.class, CustomModelInterpolator.class);
   }
 
   private <T> void setImplementation(Class<T> componentClass,
