@@ -34,7 +34,9 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -49,9 +51,7 @@ import org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class MavenProjectsManagerWatcher {
   private static final int DOCUMENT_SAVE_DELAY = 1000;
@@ -397,8 +397,14 @@ public class MavenProjectsManagerWatcher {
     private void deleteRecursively(VirtualFile f) {
       if (isRelevant(f.getPath())) deleteFile(f);
       if (f.isDirectory()) {
-        for (VirtualFile each : f.getChildren()) {
-          deleteRecursively(each);
+        // prevent reading directories content if not already cached.
+        Collection<VirtualFile> children = f instanceof NewVirtualFile
+                                           ? ((NewVirtualFile)f).getInDbChildren()
+                                           : Arrays.asList(f.getChildren());
+        for (VirtualFile each : children) {
+          if (each != NullVirtualFile.INSTANCE) {
+            deleteRecursively(each);
+          }
         }
       }
     }
