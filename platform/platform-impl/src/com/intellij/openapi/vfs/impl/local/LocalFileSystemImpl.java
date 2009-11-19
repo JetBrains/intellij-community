@@ -311,7 +311,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   }
 
   public WatchRequest addRootToWatch(@NotNull String rootPath, boolean toWatchRecursively) {
-    if (rootPath.length() == 0) return null;
+    if (rootPath.length() == 0 || !FileWatcher.getInstance().isOperational()) return null;
 
     WRITE_LOCK.lock();
     try {
@@ -346,6 +346,8 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
 
   @NotNull
   public Set<WatchRequest> addRootsToWatch(@NotNull final Collection<String> rootPaths, final boolean toWatchRecursively) {
+    if (!FileWatcher.getInstance().isOperational()) return Collections.emptySet();
+
     Set<WatchRequest> result = new HashSet<WatchRequest>();
     Set<VirtualFile> filesToSynchronize = new HashSet<VirtualFile>();
 
