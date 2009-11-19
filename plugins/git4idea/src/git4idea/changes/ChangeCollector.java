@@ -19,10 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.VcsDirtyScope;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
@@ -123,9 +120,20 @@ class ChangeCollector {
       }
     }
     myIsCollected = true;
+    updateIndex();
     collectUnmergedAndUnversioned();
     collectDiffChanges();
     myIsFailed = false;
+  }
+
+  private void updateIndex() throws VcsException {
+    GitSimpleHandler handler = new GitSimpleHandler(myProject, myVcsRoot, GitHandler.UPDATE_INDEX);
+    handler.addParameters("--refresh", "--ignore-missing");
+    handler.setSilent(true);
+    handler.setNoSSH(true);
+    handler.setStdoutSuppressed(true);
+    handler.ignoreErrorCode(1);
+    handler.run();
   }
 
   /**

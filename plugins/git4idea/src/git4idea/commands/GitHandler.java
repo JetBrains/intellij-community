@@ -228,6 +228,8 @@ public abstract class GitHandler {
    * The constant for git command {@value}
    */
   @NonNls public static final String RESET = "reset";
+
+  @NonNls public static final String UPDATE_INDEX = "update-index";
   /**
    * Check attributes command
    */
