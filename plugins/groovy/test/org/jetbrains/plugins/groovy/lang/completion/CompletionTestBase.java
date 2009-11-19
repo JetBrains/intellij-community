@@ -24,7 +24,7 @@ public abstract class CompletionTestBase extends JavaCodeInsightFixtureTestCase 
   }
   protected void doTest(String directory) throws Throwable {
     final List<String> stringList = TestUtils.readInput(getTestDataPath() + "/" + getTestName(true) + ".test");
-    if (!directory.isEmpty()) directory += "/";
+    if (directory.length()!=0) directory += "/";
     final String fileName = directory + getTestName(true) + "." + getExtension();
     myFixture.addFileToProject(fileName, stringList.get(0));
     myFixture.configureByFile(fileName);
