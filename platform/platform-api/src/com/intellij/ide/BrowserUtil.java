@@ -205,7 +205,7 @@ public class BrowserUtil {
   @NotNull
   public static String escapeUrl(@NotNull @NonNls String url) {
     if (SystemInfo.isWindows) {
-      return "\"" + url + "\"";
+      return url.indexOf(' ') > 0? "\"" + url + "\"" : url;
     }
     else {
       return url.replaceAll(" ", "%20");

@@ -341,8 +341,12 @@ public class CompileDriver {
 
   private void attachAnnotationProcessorsOutputDirectories(CompileContextEx context) {
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
+    final CompilerConfiguration config = CompilerConfiguration.getInstance(myProject);
     final Set<Module> affected = new HashSet<Module>(Arrays.asList(context.getCompileScope().getAffectedModules()));
     for (Module module : affected) {
+      if (!config.isAnnotationProcessingEnabled(module)) {
+        continue;
+      }
       final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
       if (path == null) {
         continue;

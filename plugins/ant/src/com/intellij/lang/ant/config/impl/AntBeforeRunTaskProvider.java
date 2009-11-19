@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Vladislav.Kaznacheev
  */
-public class AntBeforeRunTaskProvider implements BeforeRunTaskProvider<AntBeforeRunTask> {
+public class AntBeforeRunTaskProvider extends BeforeRunTaskProvider<AntBeforeRunTask> {
   public static final Key<AntBeforeRunTask> ID = Key.create("AntTarget");
   private final Project myProject;
 
@@ -56,7 +56,7 @@ public class AntBeforeRunTaskProvider implements BeforeRunTaskProvider<AntBefore
     return true;
   }
 
-  public void configureTask(RunConfiguration runConfiguration, AntBeforeRunTask task) {
+  public boolean configureTask(RunConfiguration runConfiguration, AntBeforeRunTask task) {
     AntBuildTarget buildTarget = findTargetToExecute(task);
     final TargetChooserDialog dlg = new TargetChooserDialog(myProject, buildTarget);
     dlg.show();
@@ -71,7 +71,9 @@ public class AntBeforeRunTaskProvider implements BeforeRunTaskProvider<AntBefore
           task.setTargetName(buildTarget.getName());
         }
       }
+      return true;
     }
+    return false;
   }
 
   public AntBeforeRunTask createTask(RunConfiguration runConfiguration) {

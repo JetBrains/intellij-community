@@ -180,8 +180,10 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
     return facet != null ? getFacetConfigurator().getFacetInfo(facet) : null;
   }
 
-  public void clearMaps() {
+  public void clearMaps(boolean clearNodes) {
     myConfigurables.clear();
-    myNodes.clear();
+    if (clearNodes) {
+      myNodes.clear();
+    }
   }
 }

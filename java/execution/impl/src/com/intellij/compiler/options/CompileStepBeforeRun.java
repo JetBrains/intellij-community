@@ -39,7 +39,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author spleaner
  */
-public class CompileStepBeforeRun implements BeforeRunTaskProvider<CompileStepBeforeRun.MakeBeforeRunTask> {
+public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBeforeRun.MakeBeforeRunTask> {
   public static final Key<MakeBeforeRunTask> ID = Key.create("Make");
   private static final Key<RunConfiguration> RUN_CONFIGURATION = Key.create("RUN_CONFIGURATION");
 
@@ -64,7 +64,8 @@ public class CompileStepBeforeRun implements BeforeRunTaskProvider<CompileStepBe
            : null;
   }
 
-  public void configureTask(RunConfiguration runConfiguration, MakeBeforeRunTask task) {
+  public boolean configureTask(RunConfiguration runConfiguration, MakeBeforeRunTask task) {
+    return false;
   }
 
   public boolean executeTask(DataContext context, final RunConfiguration configuration, MakeBeforeRunTask task) {

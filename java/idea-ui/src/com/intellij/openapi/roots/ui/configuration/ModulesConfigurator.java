@@ -250,7 +250,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
           ex[0] = e;
         }
         finally {          
-          ModuleStructureConfigurable.getInstance(myProject).getFacetEditorFacade().clearMaps();
+          ModuleStructureConfigurable.getInstance(myProject).getFacetEditorFacade().clearMaps(false);
 
           for (final ModuleEditor moduleEditor : myModuleEditors) {
             moduleEditor.removeChangeListener(myFacetsConfigurator);

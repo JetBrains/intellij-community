@@ -169,8 +169,10 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
 
         myButton.addActionListener(new ActionListener() {
           public void actionPerformed(ActionEvent e) {
-            provider.configureTask(runConfiguration, beforeRunTask);
-            myCheckBox.setText(provider.getDescription(runConfiguration, beforeRunTask));
+            if (provider.configureTask(runConfiguration, beforeRunTask)) {
+              myCheckBox.setText(provider.getDescription(runConfiguration, beforeRunTask));
+              fireEditorStateChanged();
+            }
           }
         });
       }

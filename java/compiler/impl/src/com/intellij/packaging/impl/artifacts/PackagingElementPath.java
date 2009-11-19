@@ -107,6 +107,7 @@ public class PackagingElementPath {
       if (path.myLastElement instanceof CompositePackagingElement<?>) {
         return (CompositePackagingElement)path.myLastElement;
       }
+      path = path.myParentPath;
     }
     return null;
   }

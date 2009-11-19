@@ -32,10 +32,7 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
-import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.artifacts.ArtifactManager;
-import com.intellij.packaging.artifacts.ArtifactPointer;
-import com.intellij.packaging.artifacts.ArtifactPointerManager;
+import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.impl.compiler.ArtifactAwareCompiler;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
 import com.intellij.packaging.impl.compiler.IncrementalArtifactsCompiler;
@@ -53,13 +50,32 @@ import java.util.Set;
 /**
  * @author nik
  */
-public class BuildArtifactsBeforeRun implements BeforeRunTaskProvider<BuildArtifactsBeforeRunTask> {
+public class BuildArtifactsBeforeRunTaskProvider extends BeforeRunTaskProvider<BuildArtifactsBeforeRunTask> {
   @NonNls public static final String BUILD_ARTIFACTS_ID = "BuildArtifacts";
   public static final Key<BuildArtifactsBeforeRunTask> ID = Key.create(BUILD_ARTIFACTS_ID);
   private Project myProject;
 
-  public BuildArtifactsBeforeRun(Project project) {
+  public BuildArtifactsBeforeRunTaskProvider(Project project) {
     myProject = project;
+    project.getMessageBus().connect().subscribe(ArtifactManager.TOPIC, new ArtifactAdapter() {
+      @Override
+      public void artifactRemoved(@NotNull Artifact artifact) {
+        final RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
+        for (RunConfiguration configuration : runManager.getAllConfigurations()) {
+          final BuildArtifactsBeforeRunTask task = runManager.getBeforeRunTask(configuration, ID);
+          if (task != null) {
+            final String artifactName = artifact.getName();
+            final List<ArtifactPointer> pointersList = task.getArtifactPointers();
+            final ArtifactPointer[] pointers = pointersList.toArray(new ArtifactPointer[pointersList.size()]);
+            for (ArtifactPointer pointer : pointers) {
+              if (pointer.getArtifactName().equals(artifactName) && ArtifactManager.getInstance(myProject).findArtifact(artifactName) == null) {
+                task.removeArtifact(pointer);
+              }
+            }
+          }
+        }
+      }
+    });
   }
 
   public Key<BuildArtifactsBeforeRunTask> getId() {
@@ -85,7 +101,7 @@ public class BuildArtifactsBeforeRun implements BeforeRunTaskProvider<BuildArtif
     return new BuildArtifactsBeforeRunTask(myProject);
   }
 
-  public void configureTask(RunConfiguration runConfiguration, BuildArtifactsBeforeRunTask task) {
+  public boolean configureTask(RunConfiguration runConfiguration, BuildArtifactsBeforeRunTask task) {
     final Artifact[] artifacts = ArtifactManager.getInstance(myProject).getArtifacts();
     Set<ArtifactPointer> pointers = new THashSet<ArtifactPointer>();
     for (Artifact artifact : artifacts) {
@@ -103,7 +119,9 @@ public class BuildArtifactsBeforeRun implements BeforeRunTaskProvider<BuildArtif
     builder.setPreferedFocusComponent(chooser);
     if (builder.show() == DialogWrapper.OK_EXIT_CODE) {
       task.setArtifactPointers(chooser.getMarkedElements());
+      return true;
     }
+    return false;
   }
 
   public boolean executeTask(DataContext context, RunConfiguration configuration, final BuildArtifactsBeforeRunTask task) {

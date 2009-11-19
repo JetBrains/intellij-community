@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.OrderRootType;
@@ -77,6 +78,7 @@ public class SimpleClasspathPanel extends JPanel {
     controller.addRemoveAction(ProjectBundle.message("module.remove.action"));
     controller.addMoveUpAction();
     controller.addMoveDownAction();
+    customizeToolbarActions(actionGroup);
     myList.setCellRenderer(new ColoredListCellRenderer() {
       protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof Library) {
@@ -106,6 +108,9 @@ public class SimpleClasspathPanel extends JPanel {
       public void contentsChanged(ListDataEvent e) {
       }
     });
+  }
+
+  protected void customizeToolbarActions(DefaultActionGroup actionGroup) {
   }
 
   private void listChanged(final ListDataEvent e) {
@@ -181,7 +186,7 @@ public class SimpleClasspathPanel extends JPanel {
     return Collections.singletonList(library);
   }
 
-  private abstract static class PopupAction implements ActionListener {
+  public abstract static class PopupAction implements ActionListener {
     private final String myTitle;
     private final Icon myIcon;
     private final int myIndex;
@@ -204,8 +209,7 @@ public class SimpleClasspathPanel extends JPanel {
       return myIndex;
     }
 
-    protected void executeImpl() {
-    }
+    protected abstract void executeImpl();
 
     public void execute() {
       executeImpl();
@@ -216,62 +220,17 @@ public class SimpleClasspathPanel extends JPanel {
     }
   }
 
-  private class AddAction extends AnAction {
+  public static abstract class PopupActionGroupAction extends DumbAwareAction {
     private PopupAction[] myPopupActions;
     private Icon[] myIcons;
 
-    public AddAction() {
-      super(ProjectBundle.message("module.add.action"), null, IconLoader.getIcon("/general/add.png"));
+    protected PopupActionGroupAction(String text, String description, Icon icon) {
+      super(text, description, icon);
     }
 
     private void initPopupActions() {
       if (myPopupActions == null) {
-        int index = 1;
-        final List<PopupAction> actions = new ArrayList<PopupAction>();
-        actions.add(new ChooseAndAddAction(index++, "Jar...", Icons.JAR_ICON) {
-          @NotNull
-          protected List<Library> doChoose() {
-            final ChooseJarDialog dialog = new ChooseJarDialog(SimpleClasspathPanel.this, getVirtualFiles(), myDisposable);
-            dialog.doChoose();
-            return dialog.getChosenElements();
-          }
-        });
-        actions.add(new ChooseAndAddAction(index++, "Library...", Icons.LIBRARY_ICON) {
-
-          @NotNull
-          protected List<Library> doChoose() {
-            final Set<VirtualFile> existingFiles = getVirtualFiles();
-            final ChooseLibrariesDialog dialog = new ChooseLibrariesDialog(ProjectManager.getInstance().getDefaultProject(), "Choose Existing Libraries") {
-              @Override
-              protected boolean acceptsElement(final Object element) {
-                if (!(element instanceof Library)) return true;
-                final Library library = (Library)element;
-                return !existingFiles.containsAll(Arrays.asList(library.getFiles(OrderRootType.CLASSES)));
-              }
-
-              @Override
-              protected JComponent createCenterPanel() {
-                final JPanel panel = new JPanel(new BorderLayout());
-                panel.add(super.createCenterPanel(), BorderLayout.CENTER);
-                final MultiLineLabel label = new MultiLineLabel("Please note that project-level and module-level libraries will not be\n\n" +
-                                                                "  added as a whole but will be converted to jars and folders instead.");
-                label.setIcon(Messages.getWarningIcon());
-                label.setIcon(Messages.getWarningIcon());
-                panel.add(label, BorderLayout.SOUTH);
-                return panel;
-              }
-
-            };
-            dialog.show();
-            final List<Library> libraries = dialog.getSelectedLibraries();
-            final ArrayList<Library> result = new ArrayList<Library>();
-            for (Library o : libraries) {
-              result.addAll(ensureApplicationLevel(o, existingFiles, myDisposable));
-            }
-            return result;
-          }
-        });
-        myPopupActions = actions.toArray(new PopupAction[actions.size()]);
+        myPopupActions = createPopupActions();
 
         myIcons = new Icon[myPopupActions.length];
         for (int idx = 0; idx < myPopupActions.length; idx++) {
@@ -280,9 +239,11 @@ public class SimpleClasspathPanel extends JPanel {
       }
     }
 
+    protected abstract PopupAction[] createPopupActions();
+
     public void actionPerformed(final AnActionEvent e) {
       initPopupActions();
-      final JBPopup popup = JBPopupFactory.getInstance().createWizardStep(new BaseListPopupStep<PopupAction>(null, myPopupActions, myIcons) {
+      final JBPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<PopupAction>(null, myPopupActions, myIcons) {
         public boolean isMnemonicsNavigationEnabled() {
           return true;
         }
@@ -297,7 +258,7 @@ public class SimpleClasspathPanel extends JPanel {
               selectedValue.execute();
             }
           }, ModalityState.stateForComponent(e.getInputEvent().getComponent()));
-          return PopupStep.FINAL_CHOICE;
+          return FINAL_CHOICE;
         }
 
         @NotNull
@@ -307,10 +268,61 @@ public class SimpleClasspathPanel extends JPanel {
       });
       popup.showUnderneathOf(e.getInputEvent().getComponent());
     }
+  }
 
-    public Object fun(final AnActionEvent s) {
-      actionPerformed(s);
-      return null;
+  private class AddAction extends PopupActionGroupAction {
+
+    public AddAction() {
+      super(ProjectBundle.message("module.add.action"), null, IconLoader.getIcon("/general/add.png"));
+    }
+
+    protected PopupAction[] createPopupActions() {
+      int index = 1;
+      final List<PopupAction> actions = new ArrayList<PopupAction>();
+      actions.add(new ChooseAndAddAction(index++, "Jar...", Icons.JAR_ICON) {
+        @NotNull
+        protected List<Library> doChoose() {
+          final ChooseJarDialog dialog = new ChooseJarDialog(SimpleClasspathPanel.this, getVirtualFiles(), myDisposable);
+          dialog.doChoose();
+          return dialog.getChosenElements();
+        }
+      });
+      actions.add(new ChooseAndAddAction(index++, "Library...", Icons.LIBRARY_ICON) {
+
+        @NotNull
+        protected List<Library> doChoose() {
+          final Set<VirtualFile> existingFiles = getVirtualFiles();
+          final ChooseLibrariesDialog dialog = new ChooseLibrariesDialog(ProjectManager.getInstance().getDefaultProject(), "Choose Existing Libraries") {
+            @Override
+            protected boolean acceptsElement(final Object element) {
+              if (!(element instanceof Library)) return true;
+              final Library library = (Library)element;
+              return !existingFiles.containsAll(Arrays.asList(library.getFiles(OrderRootType.CLASSES)));
+            }
+
+            @Override
+            protected JComponent createCenterPanel() {
+              final JPanel panel = new JPanel(new BorderLayout());
+              panel.add(super.createCenterPanel(), BorderLayout.CENTER);
+              final MultiLineLabel label = new MultiLineLabel("Please note that project-level and module-level libraries will not be\n\n" +
+                                                              "  added as a whole but will be converted to jars and folders instead.");
+              label.setIcon(Messages.getWarningIcon());
+              label.setIcon(Messages.getWarningIcon());
+              panel.add(label, BorderLayout.SOUTH);
+              return panel;
+            }
+
+          };
+          dialog.show();
+          final List<Library> libraries = dialog.getSelectedLibraries();
+          final ArrayList<Library> result = new ArrayList<Library>();
+          for (Library o : libraries) {
+            result.addAll(ensureApplicationLevel(o, existingFiles, myDisposable));
+          }
+          return result;
+        }
+      });
+      return actions.toArray(new PopupAction[actions.size()]);
     }
   }
 

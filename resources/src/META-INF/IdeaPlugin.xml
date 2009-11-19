@@ -907,7 +907,7 @@
     <favoriteNodeProvider implementation="com.intellij.ide.favoritesTreeView.PsiPackageFavoriteNodeProvider"/>
 
     <stepsBeforeRunProvider implementation="com.intellij.compiler.options.CompileStepBeforeRun" id="compileBeforeRun"/>
-    <stepsBeforeRunProvider implementation="com.intellij.packaging.impl.run.BuildArtifactsBeforeRun" order="after compileBeforeRun"/>
+    <stepsBeforeRunProvider implementation="com.intellij.packaging.impl.run.BuildArtifactsBeforeRunTaskProvider" order="after compileBeforeRun"/>
     <programRunner implementation="com.intellij.execution.impl.DefaultJavaProgramRunner"/>
     <programRunner implementation="com.intellij.debugger.impl.GenericDebuggerRunner" order="last"/>
 

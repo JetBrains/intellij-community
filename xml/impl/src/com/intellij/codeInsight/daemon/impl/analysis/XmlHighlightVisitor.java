@@ -377,7 +377,9 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         reportAttributeProblem(tag, name, attribute, localizedMessage);
       }
 
-      doCheckRefs(attribute, attribute.getReferences(), 1);
+      // we skip resolve of attribute references since there is separate check when taking attribute descriptors
+      PsiReference[] attrRefs = attribute.getReferences();
+      doCheckRefs(attribute, attrRefs, attribute.getNamespacePrefix().length() > 0 ? 2 : 1);
     }
   }
 
