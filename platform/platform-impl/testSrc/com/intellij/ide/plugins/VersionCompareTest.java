@@ -88,6 +88,7 @@ public class VersionCompareTest extends TestCase {
 
   public void testJira() {
     assertTrue(StringUtil.compareVersionNumbers("3.6.2", "3.7") < 0);
+    assertTrue(StringUtil.compareVersionNumbers("3.7.1", "3.13.4") < 0);
   }
 }
 
