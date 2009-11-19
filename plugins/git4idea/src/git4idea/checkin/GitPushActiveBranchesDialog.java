@@ -526,16 +526,21 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
         }
       }
       final ProgressManager manager = ProgressManager.getInstance();
+      final ArrayList<VcsException> errors = new ArrayList<VcsException>();
       manager.runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
           for (Root r : rootsToPush) {
             GitLineHandler h = new GitLineHandler(project, r.root, GitHandler.PUSH);
             String src = r.commitToPush != null ? r.commitToPush : r.branch;
             h.addParameters("-v", r.remote, src + ":" + r.remoteBranch);
-            GitHandlerUtil.doSynchronouslyWithExceptions(h);
+            GitPushUtils.trackPushRejectedAsError(h, "Rejected push (" + r.root.getPresentableUrl() + "): ");
+            errors.addAll(GitHandlerUtil.doSynchronouslyWithExceptions(h));
           }
         }
       }, GitBundle.getString("push.active.pushing"), false, project);
+      if (!errors.isEmpty()) {
+        GitUIUtil.showOperationErrors(project, errors, GitBundle.getString("push.active.pushing"));
+      }
     }
   }
 

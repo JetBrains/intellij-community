@@ -60,15 +60,25 @@ public class GitPushUtils {
     }
     final GitLineHandler rc = new GitLineHandler(project, vcsRoot, GitHandler.PUSH);
     rc.addParameters("-v", remote, current.getFullName() + ":" + tracked);
-    rc.addLineListener(new GitLineHandlerAdapter() {
+    trackPushRejectedAsError(rc, "Rejected push (" + vcsRoot.getPresentableUrl() + "): ");
+    return rc;
+  }
+
+  /**
+   * Install listener that tracks rejected push branch operations as errors
+   *
+   * @param handler the handler to use
+   * @param prefix  the prefix for errors
+   */
+  public static void trackPushRejectedAsError(final GitLineHandler handler, final String prefix) {
+    handler.addLineListener(new GitLineHandlerAdapter() {
       @Override
       public void onLineAvailable(final String line, final Key outputType) {
         if (outputType == ProcessOutputTypes.STDERR && line.startsWith(" ! [")) {
           //noinspection ThrowableInstanceNeverThrown
-          rc.addError(new VcsException("Rejected push: " + line));
+          handler.addError(new VcsException(prefix + line));
         }
       }
     });
-    return rc;
   }
 }
