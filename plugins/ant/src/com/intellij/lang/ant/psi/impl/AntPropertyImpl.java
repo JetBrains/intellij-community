@@ -26,10 +26,10 @@ import com.intellij.psi.PsiLock;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.StringSetSpinAllocator;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +42,13 @@ import java.util.*;
 public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
 
   private PsiElement myPropertiesFile;
+  private static final Set<String> ourPropertyDefiningTags = new HashSet<String>(Arrays.asList(
+    AntFileImpl.PROPERTY,
+    "param",
+    "condition",
+    "input",
+    "available"
+  ));
 
   public AntPropertyImpl(final AntElement parent,
                          final XmlTag sourceElement,
@@ -111,7 +118,7 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
     synchronized (PsiLock.LOCK) {
       final XmlTag se = getSourceElement();
       final String tagName = se.getName();
-      if (AntFileImpl.PROPERTY.equals(tagName) || "param".equals(tagName) || "condition".equals(tagName) || "input".equals(tagName)) { // todo: support conditions separately
+      if (ourPropertyDefiningTags.contains(tagName)) { // todo: support conditions separately
         String value = getPropertyValue();
         if (value == null && propName != null) {
           final PropertiesFile propertiesFile = getPropertiesFile();
@@ -241,6 +248,20 @@ public class AntPropertyImpl extends AntTaskImpl implements AntProperty {
   @Nullable
   private String getPropertyValue() {
     final XmlTag sourceElement = getSourceElement();
+    final String tagName = sourceElement.getName();
+    if ("available".equals(tagName)) {
+      // check only 'file' tag because others could be examined only at runtime
+      final String filePath = sourceElement.getAttributeValue("file");
+      if (filePath != null) {
+        final String _filePath = computeAttributeValue(filePath);
+        if (_filePath != null) {
+          if (!new File(_filePath).exists()) {
+            return null;
+          }
+        }
+      }
+    }
+
     String value = sourceElement.getAttributeValue("value");
     if (value == null) {
       value = sourceElement.getAttributeValue("location");

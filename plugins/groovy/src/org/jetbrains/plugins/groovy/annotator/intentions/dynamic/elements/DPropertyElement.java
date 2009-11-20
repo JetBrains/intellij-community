@@ -15,15 +15,15 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements;
 
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiVariable;
-import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiVariable;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrDynamicImplicitProperty;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.LightModifierList;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashSet;
 
@@ -57,7 +57,7 @@ public class DPropertyElement extends DItemElement {
     if (isStatic != null && isStatic.booleanValue()) {
       hashSet.add(PsiModifier.STATIC);
     }
-    myPsi = new GrDynamicImplicitProperty(manager, getName(), getType(), containingClassName, new LightModifierList(manager, hashSet)) {
+    myPsi = new GrDynamicImplicitProperty(manager, getName(), getType(), containingClassName, new LightModifierList(manager, hashSet), null) {
       @Override
       public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
         DynamicManager.getInstance(getProject()).replaceDynamicPropertyName(containingClassName, getName(), name);

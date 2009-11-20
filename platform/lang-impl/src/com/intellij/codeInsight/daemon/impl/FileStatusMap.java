@@ -21,15 +21,15 @@ import com.intellij.codeHighlighting.DirtyScopeTrackingHighlightingPassFactory;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.Disposable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.WeakHashMap;
@@ -37,6 +37,7 @@ import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -130,6 +131,22 @@ public class FileStatusMap implements Disposable {
           return true;
         }
       });
+    }
+
+    @Override
+    public String toString() {
+      final StringBuilder s = new StringBuilder();
+      s.append("defensivelyMarked = " + defensivelyMarked);
+      s.append("; wolfPassFinfished = " + wolfPassFinfished);
+      s.append("; errorFound = " + errorFound);
+      s.append("; dirtyScopes: (");
+      dirtyScopes.forEachEntry(new TIntObjectProcedure<RangeMarker>() {
+        public boolean execute(int passId, RangeMarker rangeMarker) {
+          s.append(" pass: " + passId + " -> " + rangeMarker + ";");
+          return true;
+        }
+      });
+      return s.toString();
     }
   }
 
@@ -260,6 +277,14 @@ public class FileStatusMap implements Disposable {
 
       FileStatus status = myDocumentToStatusMap.get(document);
       return status != null && !status.defensivelyMarked && status.wolfPassFinfished && status.allDirtyScopesAreNull();
+    }
+  }
+
+  @TestOnly
+  public void assertAllDirtyScopesAreNull(@NotNull Document document) {
+    synchronized (myDocumentToStatusMap) {
+      FileStatus status = myDocumentToStatusMap.get(document);
+      assert status != null && !status.defensivelyMarked && status.wolfPassFinfished && status.allDirtyScopesAreNull() : status;
     }
   }
 }

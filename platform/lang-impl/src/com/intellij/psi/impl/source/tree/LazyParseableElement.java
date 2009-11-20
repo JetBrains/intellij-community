@@ -29,7 +29,17 @@ import org.jetbrains.annotations.NotNull;
 public class LazyParseableElement extends CompositeElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.LazyParseableElement");
 
-  private final Object lock = new String("chameleon parsing lock");
+  private static class ChameleonLock {
+    private ChameleonLock() {}
+
+    @Override
+    public String toString() {
+      return "chameleon parsing lock";
+    }
+  }
+
+  private final Object lock = new ChameleonLock();
+
   private CharSequence myText;
 
   public LazyParseableElement(@NotNull IElementType type, CharSequence text) {

@@ -26,6 +26,7 @@ import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -218,6 +219,14 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
   }
 
   public void testAddingAndRemovingManagedFilesAddsAndRemovesModules() throws Exception {
+    doTestAddingAndRemovingAddsAndRemovesModules(true);
+  }
+
+  public void testAddingAndRemovingManagedFilesAddsAndRemovesModulesInNonAutoImportMode() throws Exception {
+    doTestAddingAndRemovingAddsAndRemovesModules(false);
+  }
+
+  private void doTestAddingAndRemovingAddsAndRemovesModules(boolean autoImport) throws IOException {
     VirtualFile m1 = createModulePom("m1",
                                      "<groupId>test</groupId>" +
                                      "<artifactId>m1</artifactId>" +
@@ -230,9 +239,13 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     importProject(m1);
     assertModules("m1");
 
+    myProjectsManager.performScheduledImport(); // ensure no pending imports
+
+    getMavenImporterSettings().setImportAutomatically(autoImport);
+
     myProjectsManager.addManagedFiles(Arrays.asList(m2));
     waitForReadingCompletion();
-    myProjectsManager.performScheduledImport();
+    myProjectsManager.performScheduledImport(true);
 
     assertModules("m1", "m2");
 
@@ -240,7 +253,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
 
     myProjectsManager.removeManagedFiles(Arrays.asList(m2));
     waitForReadingCompletion();
-    myProjectsManager.performScheduledImport();
+    myProjectsManager.performScheduledImport(true);
 
     assertModules("m1");
   }

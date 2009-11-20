@@ -22,6 +22,7 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
 import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +39,7 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
   private ExtensionPoint<KeyedLazyInstance<T>> myPoint;
   private final String myEpName;
   private ExtensionPointAndAreaListener<KeyedLazyInstance<T>> myListener;
+  private final List<ExtensionPointListener<T>> myListeners = ContainerUtil.createEmptyCOWList();
 
   public KeyedExtensionCollector(@NonNls String epName) {
     myEpName = epName;
@@ -66,6 +68,9 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
       }
       list.add(t);
       myCache.remove(skey);
+      for (ExtensionPointListener<T> listener : myListeners) {
+        listener.extensionAdded(t, null);
+      }
     }
   }
 
@@ -76,6 +81,9 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
       if (list != null) {
         list.remove(t);
         myCache.remove(skey);
+      }
+      for (ExtensionPointListener<T> listener : myListeners) {
+        listener.extensionRemoved(t, null);
       }
     }
   }
@@ -141,12 +149,18 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
           public void extensionAdded(final KeyedLazyInstance<T> bean, @Nullable final PluginDescriptor pluginDescriptor) {
             synchronized (lock) {
               myCache.remove(bean.getKey());
+              for (ExtensionPointListener<T> listener : myListeners) {
+                listener.extensionAdded(bean.getInstance(), null);
+              }
             }
           }
 
           public void extensionRemoved(final KeyedLazyInstance<T> bean, @Nullable final PluginDescriptor pluginDescriptor) {
             synchronized (lock) {
               myCache.remove(bean.getKey());
+              for (ExtensionPointListener<T> listener : myListeners) {
+                listener.extensionRemoved(bean.getInstance(), null);
+              }
             }
           }
 
@@ -168,5 +182,12 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
       final ExtensionPoint<KeyedLazyInstance<T>> point = getPoint();
       return point != null && point.hasAnyExtensions();
     }
+  }
+  
+  public void addListener(@NotNull ExtensionPointListener<T> listener) {
+    myListeners.add(listener);
+  }
+  public void removeListener(@NotNull ExtensionPointListener<T> listener) {
+    myListeners.remove(listener);
   }
 }

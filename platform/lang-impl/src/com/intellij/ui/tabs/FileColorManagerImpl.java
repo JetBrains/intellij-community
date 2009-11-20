@@ -20,9 +20,13 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.ui.FileColorManager;
+import com.intellij.ui.LightColors;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -152,6 +156,28 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
   @Override
   public boolean isColored(@NotNull final String scopeName, final boolean shared) {
     return myModel.isColored(scopeName, shared);
+  }
+
+  @Nullable
+  @Override
+  public Color getRendererBackground(VirtualFile file) {
+    return getRendererBackground(PsiManager.getInstance(myProject).findFile(file));
+  }
+
+  @Nullable
+  @Override
+  public Color getRendererBackground(PsiFile file) {
+    if (file == null) return null;
+
+    if (isEnabled()) {
+      final Color fileColor = getFileColor(file);
+      if (fileColor != null) return fileColor;
+    }
+
+    final VirtualFile vFile = file.getVirtualFile();
+    if (vFile == null) return null;
+
+    return FileEditorManager.getInstance(myProject).isFileOpen(vFile) ? LightColors.SLIGHTLY_GREEN : null;
   }
 
   @Nullable

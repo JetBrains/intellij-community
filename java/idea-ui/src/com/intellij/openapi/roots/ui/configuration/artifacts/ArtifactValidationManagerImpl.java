@@ -97,12 +97,11 @@ public class ArtifactValidationManagerImpl implements Disposable {
   private void registerProblem(String message, List<PackagingElement<?>> pathToPlace) {
     final LayoutTree layoutTree = myArtifactEditor.getLayoutTreeComponent().getLayoutTree();
     PackagingElementNode<?> node = layoutTree.getRootPackagingNode();
-    int i = 0;
-    while (node != null) {
-      registerProblem(node, message);
-      i++;
-      if (i >= pathToPlace.size()) break;
-      node = node.findChildByElement(pathToPlace.get(i));
+    if (node != null) {
+      List<PackagingElementNode<?>> nodes = node.getNodesByPath(pathToPlace.subList(1, pathToPlace.size()));
+      for (PackagingElementNode<?> elementNode : nodes) {
+        registerProblem(elementNode, message);
+      }
     }
   }
 }

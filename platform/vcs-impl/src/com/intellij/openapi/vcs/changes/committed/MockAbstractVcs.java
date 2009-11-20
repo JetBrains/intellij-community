@@ -36,9 +36,11 @@ public class MockAbstractVcs extends AbstractVcs {
   private CommittedChangesProvider myCommittedChangesProvider;
   private DiffProvider myDiffProvider;
   private ChangeProvider myChangeProvider;
+  private boolean myAllowNestedRoots;
 
   public MockAbstractVcs(Project project){
     super(project, NAME);
+    myAllowNestedRoots = false;
   }
 
   public MockAbstractVcs(final Project project, final String name) {
@@ -114,5 +116,14 @@ public class MockAbstractVcs extends AbstractVcs {
 
   public static VcsKey getKey() {
     return ourKey;
+  }
+
+  @Override
+  public boolean allowsNestedRoots() {
+    return myAllowNestedRoots;
+  }
+
+  public void setAllowNestedRoots(boolean allowNestedRoots) {
+    myAllowNestedRoots = allowNestedRoots;
   }
 }

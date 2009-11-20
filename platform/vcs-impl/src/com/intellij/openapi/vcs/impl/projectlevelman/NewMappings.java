@@ -175,11 +175,11 @@ public class NewMappings {
   public VcsDirectoryMapping getMappingFor(final VirtualFile file, final Object matchContext) {
     // performance: calculate file path just once, rather than once per mapping
     String path = file.getPath();
+    final String systemIndependPath = FileUtil.toSystemIndependentName((file.isDirectory() && (! path.endsWith("/"))) ? (path + "/") : path);
 
     synchronized (myLock) {
       for (int i = mySortedMappings.length - 1; i >= 0; -- i) {
         final VcsDirectoryMapping mapping = mySortedMappings[i];
-        final String systemIndependPath = FileUtil.toSystemIndependentName((file.isDirectory() && (! path.endsWith("/"))) ? (path + "/") : path);
         if (fileMatchesMapping(file, matchContext, systemIndependPath, mapping)) {
           return mapping;
         }

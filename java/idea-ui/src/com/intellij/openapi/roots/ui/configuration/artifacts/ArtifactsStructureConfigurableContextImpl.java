@@ -186,13 +186,8 @@ public class ArtifactsStructureConfigurableContextImpl implements ArtifactsStruc
     return myContext.getModulesConfigurator().getFacetsConfigurator();
   }
 
-  @NotNull
   public ManifestFileConfiguration getManifestFile(CompositePackagingElement<?> element, ArtifactType artifactType) {
     return myManifestFilesInfo.getManifestFile(element, artifactType, this);
-  }
-
-  public boolean isManifestFile(String path) {
-    return myManifestFilesInfo.isManifestFile(path);
   }
 
   public ManifestFilesInfo getManifestFilesInfo() {

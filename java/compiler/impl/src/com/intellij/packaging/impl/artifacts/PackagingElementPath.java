@@ -15,9 +15,12 @@
  */
 package com.intellij.packaging.impl.artifacts;
 
+import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.ComplexPackagingElement;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
 import com.intellij.util.SmartList;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
@@ -114,5 +117,18 @@ public class PackagingElementPath {
   
   public boolean isEmpty() {
     return myParentPath == null;
+  }
+
+  @Nullable
+  public Artifact findLastArtifact(PackagingElementResolvingContext context) {
+    PackagingElementPath path = this;
+    while (path != EMPTY) {
+      final PackagingElement<?> element = path.myLastElement;
+      if (element instanceof ArtifactPackagingElement) {
+        return ((ArtifactPackagingElement)element).findArtifact(context);
+      }
+      path = path.myParentPath;
+    }
+    return null;
   }
 }

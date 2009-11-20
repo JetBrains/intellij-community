@@ -331,7 +331,7 @@ public abstract class UsefulTestCase extends TestCase {
   public static void assertEmpty(final Object[] array) {
     assertOrderedEquals(array);
   }
-  
+
   public static void assertEmpty(final Collection<?> collection) {
     assertEmpty(null, collection);
   }

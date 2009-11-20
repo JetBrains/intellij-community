@@ -15,14 +15,18 @@
  */
 package git4idea.actions;
 
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
@@ -41,30 +45,76 @@ import java.util.List;
  */
 public class GitRevert extends BasicAction {
   @Override
-  public void perform(@NotNull final Project project, GitVcs vcs, @NotNull List<VcsException> exceptions, @NotNull VirtualFile[] affectedFiles)
-    throws VcsException {
+  public void perform(@NotNull final Project project,
+                      GitVcs vcs,
+                      @NotNull final List<VcsException> exceptions,
+                      @NotNull VirtualFile[] affectedFiles) throws VcsException {
     saveAll();
     final ChangeListManager changeManager = ChangeListManager.getInstance(project);
     final List<Change> changes = new ArrayList<Change>();
-    final HashSet<VirtualFile> roots = new HashSet<VirtualFile>();
+    final HashSet<VirtualFile> files = new HashSet<VirtualFile>();
     for (VirtualFile f : affectedFiles) {
       Change ch = changeManager.getChange(f);
       if (ch != null) {
-        roots.add(GitUtil.getGitRoot(f));
+        files.add(GitUtil.getGitRoot(f));
         changes.add(ch);
       }
     }
-    GitRollbackEnvironment re = GitRollbackEnvironment.getInstance(project);
-    re.rollbackChanges(changes, exceptions, RollbackProgressListener.EMPTY);
-
-    final RefreshSession session = RefreshQueue.getInstance().createSession(true, true, new Runnable() {
+    final ProgressManager progress = ProgressManager.getInstance();
+    progress.runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
-        final VcsDirtyScopeManager mgr = VcsDirtyScopeManager.getInstance(project);
-        mgr.filesDirty(null, roots);
+        ProgressIndicator pi = progress.getProgressIndicator();
+        pi.setIndeterminate(true);
+        GitRollbackEnvironment re = GitRollbackEnvironment.getInstance(project);
+        re.rollbackChanges(changes, exceptions, RollbackProgressListener.EMPTY);
+        if(changes.size() == 1) {
+          Change c = changes.get(0);
+          ContentRevision r = c.getAfterRevision();
+          if(r == null) {
+            r = c.getBeforeRevision();
+            assert r != null;
+          }
+          pi.setText2(r.getFile().getPath());
+        } else {
+          pi.setText2(GitBundle.message("revert.reverting.mulitple", changes.size()));
+        }
+        LocalFileSystem lfs = LocalFileSystem.getInstance();
+        for (Change c : changes) {
+          ContentRevision before = c.getBeforeRevision();
+          if (before != null) {
+            VirtualFile f = lfs.refreshAndFindFileByPath(before.getFile().getPath());
+            if (f != null) {
+              files.add(f);
+            }
+          }
+          ContentRevision after = c.getAfterRevision();
+          if (after != null) {
+            VirtualFile f = lfs.refreshAndFindFileByPath(after.getFile().getPath());
+            if (f != null) {
+              files.add(f);
+            }
+          }
+        }
+
+        final RefreshSession session = RefreshQueue.getInstance().createSession(true, true, new Runnable() {
+          public void run() {
+            final VcsDirtyScopeManager mgr = VcsDirtyScopeManager.getInstance(project);
+            for (Change c : changes) {
+              ContentRevision before = c.getBeforeRevision();
+              if (before != null) {
+                mgr.fileDirty(before.getFile());
+              }
+              ContentRevision after = c.getAfterRevision();
+              if (after != null) {
+                mgr.fileDirty(after.getFile());
+              }
+            }
+          }
+        });
+        session.addAllFiles(files);
+        session.launch();
       }
-    });
-    session.addAllFiles(roots);
-    session.launch();
+    }, GitBundle.getString("revert.reverting"), false, project);
   }
 
   @Override

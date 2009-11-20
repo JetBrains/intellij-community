@@ -402,18 +402,19 @@ public class FileManagerImpl implements FileManager {
   @NotNull
   public GlobalSearchScope getUseScope(@NotNull PsiElement element) {
     VirtualFile vFile;
+    final GlobalSearchScope allScope = GlobalSearchScope.allScope(myManager.getProject());
     if (element instanceof PsiDirectory) {
       vFile = ((PsiDirectory)element).getVirtualFile();
     }
     else {
       final PsiFile containingFile = element.getContainingFile();
-      if (containingFile == null) return GlobalSearchScope.allScope(myManager.getProject());
+      if (containingFile == null) return allScope;
       final VirtualFile virtualFile = containingFile.getVirtualFile();
-      if (virtualFile == null) return GlobalSearchScope.allScope(myManager.getProject());
+      if (virtualFile == null) return allScope;
       vFile = virtualFile.getParent();
     }
 
-    if (vFile == null) return GlobalSearchScope.allScope(myManager.getProject());
+    if (vFile == null) return allScope;
     ProjectFileIndex projectFileIndex = myProjectRootManager.getFileIndex();
     Module module = projectFileIndex.getModuleForFile(vFile);
     if (module != null) {
@@ -423,7 +424,8 @@ public class FileManagerImpl implements FileManager {
              : GlobalSearchScope.moduleWithDependentsScope(module);
     }
     else {
-      return GlobalSearchScope.allScope(myManager.getProject());
+      final PsiFile f = element.getContainingFile();
+      return allScope.contains(f.getVirtualFile()) ? allScope : GlobalSearchScope.fileScope(f).uniteWith(allScope);
     }
   }
 

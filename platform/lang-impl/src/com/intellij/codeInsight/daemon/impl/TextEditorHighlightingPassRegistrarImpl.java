@@ -116,7 +116,10 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
     final TIntArrayList ignoredPasses = new TIntArrayList();
     myRegisteredPassFactories.forEachKey(new TIntProcedure() {
       public boolean execute(int passId) {
-        if (ArrayUtil.find(passesToIgnore, passId) != -1) return true;
+        if (ArrayUtil.find(passesToIgnore, passId) != -1) {
+          ignoredPasses.add(passId);
+          return true;
+        }
         PassConfig passConfig = myRegisteredPassFactories.get(passId);
         TextEditorHighlightingPassFactory factory = passConfig.passFactory;
         final TextEditorHighlightingPass pass = factory.createHighlightingPass(psiFile, editor);
