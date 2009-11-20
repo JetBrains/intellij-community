@@ -1391,8 +1391,8 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                        "jar://" + getRepositoryPath() + "/org/testng/testng/5.8/testng-5.8-jdk15-sources.jar!/",
                        "jar://" + getRepositoryPath() + "/org/testng/testng/5.8/testng-5.8-jdk15-javadoc.jar!/");
 
-    myProjectsManager.listenForExternalChanges(); // to recognize repository change
     setRepositoryPath(new File(myDir, "__repo").getPath());
+    myProjectsManager.getEmbeddersManagerInTests().reset(); // to recognize repository change
 
     scheduleResolveAll();
 
