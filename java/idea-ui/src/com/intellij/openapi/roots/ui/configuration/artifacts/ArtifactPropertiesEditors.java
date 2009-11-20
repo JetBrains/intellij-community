@@ -32,6 +32,9 @@ import java.util.*;
  * @author nik
  */
 public class ArtifactPropertiesEditors {
+  private static final List<String> STANDARD_TABS_ORDER = Arrays.asList(
+    ArtifactPropertiesEditor.VALIDATION_TAB, ArtifactPropertiesEditor.PRE_PROCESSING_TAB, ArtifactPropertiesEditor.POST_PROCESSING_TAB
+  );
   private Map<String, JPanel> myMainPanels;
   private final ArtifactEditorContext myContext;
   private final Artifact myOriginalArtifact;
@@ -65,7 +68,18 @@ public class ArtifactPropertiesEditors {
 
   public void addTabs(TabbedPaneWrapper tabbedPane) {
     List<String> sortedTabs = new ArrayList<String>(myMainPanels.keySet());
-    Collections.sort(sortedTabs);
+    Collections.sort(sortedTabs, new Comparator<String>() {
+      public int compare(String o1, String o2) {
+        int i1 = STANDARD_TABS_ORDER.indexOf(o1);
+        if (i1 == -1) i1 = STANDARD_TABS_ORDER.size();
+        int i2 = STANDARD_TABS_ORDER.indexOf(o2);
+        if (i2 == -1) i2 = STANDARD_TABS_ORDER.size();
+        if (i1 != i2) {
+          return i1 - i2;
+        }
+        return o1.compareTo(o2);
+      }
+    });
     for (String tab : sortedTabs) {
       tabbedPane.addTab(tab, myMainPanels.get(tab));
     }
