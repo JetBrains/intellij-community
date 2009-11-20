@@ -69,11 +69,20 @@ public abstract class DeploymentUtil {
     return builder.toString();
   }
 
-  public static String appendToPath(@NotNull String path, @NotNull String name) {
-    if (!StringUtil.endsWithChar(path, '/') && !path.endsWith(File.separator)) {
-      path += "/";
+  public static String appendToPath(@NotNull String basePath, @NotNull String relativePath) {
+    final boolean endsWithSlash = StringUtil.endsWithChar(basePath, '/') || StringUtil.endsWithChar(basePath, '\\');
+    final boolean startsWithSlash = StringUtil.startsWithChar(relativePath, '/') || StringUtil.startsWithChar(relativePath, '\\');
+    String tail;
+    if (endsWithSlash && startsWithSlash) {
+      tail = trimForwardSlashes(relativePath);
     }
-    return path + trimForwardSlashes(name);
+    else if (!endsWithSlash && !startsWithSlash && basePath.length() > 0 && relativePath.length() > 0) {
+      tail = "/" + relativePath;
+    }
+    else {
+      tail = relativePath;
+    }
+    return basePath + tail;
   }
 
   public abstract BuildRecipe createBuildRecipe();
