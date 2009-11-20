@@ -146,6 +146,7 @@ public class FileStatusMap implements Disposable {
           return true;
         }
       });
+      s.append(")");
       return s.toString();
     }
   }
