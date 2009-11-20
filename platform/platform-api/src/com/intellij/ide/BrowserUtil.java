@@ -226,6 +226,7 @@ public class BrowserUtil {
 
       JarFileSystem jarFileSystem = (JarFileSystem)file.getFileSystem();
       VirtualFile jarVirtualFile = jarFileSystem.getVirtualFileForJar(file);
+      if (jarVirtualFile == null) return null;
 
       String targetFilePath = file.getPath();
       String targetFileRelativePath = targetFilePath.substring(
