@@ -37,14 +37,14 @@ public class ExtendsListFix implements IntentionAction, LocalQuickFix {
   private final boolean myToAdd;
   private final PsiClassType myTypeToExtendFrom;
 
-  public ExtendsListFix(PsiClass aClass, PsiClassType typeToExtendFrom, boolean toAdd) {
+  public ExtendsListFix(@NotNull PsiClass aClass, @NotNull PsiClassType typeToExtendFrom, boolean toAdd) {
     myClass = aClass;
     myClassToExtendFrom = typeToExtendFrom.resolve();
     myTypeToExtendFrom = typeToExtendFrom;
     myToAdd = toAdd;
   }
 
-  public ExtendsListFix(PsiClass aClass, PsiClass classToExtendFrom, boolean toAdd) {
+  public ExtendsListFix(@NotNull PsiClass aClass, @NotNull PsiClass classToExtendFrom, boolean toAdd) {
     myClass = aClass;
     myClassToExtendFrom = classToExtendFrom;
     myTypeToExtendFrom = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(classToExtendFrom);
@@ -126,7 +126,7 @@ public class ExtendsListFix implements IntentionAction, LocalQuickFix {
     PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
     boolean alreadyExtends = false;
     for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
-      if (referenceElement.resolve() == myClassToExtendFrom) {
+      if (referenceElement.getManager().areElementsEquivalent(myClassToExtendFrom, referenceElement.resolve())) {
         alreadyExtends = true;
         if (!add) {
           referenceElement.delete();
