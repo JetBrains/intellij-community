@@ -137,18 +137,18 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
     public void queueValidation() {
     }
 
-    @NotNull
     public ManifestFileConfiguration getManifestFile(CompositePackagingElement<?> element, ArtifactType artifactType) {
+      final VirtualFile manifestFile = ManifestFileUtil.findManifestFile(element, this, PlainArtifactType.getInstance());
+      if (manifestFile == null) {
+        return null;
+      }
+
       ManifestFileConfiguration configuration = myManifestFiles.get(element);
       if (configuration == null) {
-        configuration = ManifestFileUtil.createManifestFileConfiguration(element, this, PlainArtifactType.getInstance());
+        configuration = ManifestFileUtil.createManifestFileConfiguration(manifestFile);
         myManifestFiles.put(element, configuration);
       }
       return configuration;
-    }
-
-    public boolean isManifestFile(String path) {
-      return false;
     }
 
     public CompositePackagingElement<?> getRootElement(@NotNull Artifact artifact) {
