@@ -127,11 +127,8 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
   }
 
   public PackagingElementNode<?> getRootPackagingNode() {
-    final DefaultMutableTreeNode rootNode = getRootNode();
-    if (rootNode == null) {
-      return null;
-    }
-    return (PackagingElementNode<?>)getNodeFor(new TreePath(rootNode));
+    final SimpleNode node = getNodeFor(new TreePath(getRootNode()));
+    return node instanceof PackagingElementNode ? (PackagingElementNode<?>)node : null;
   }
 
   public DefaultMutableTreeNode getRootNode() {

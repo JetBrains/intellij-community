@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolder;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -31,14 +32,15 @@ import java.util.Map;
  * User: cdr
  */
 public abstract class PerThreadMap<T, KeyT extends UserDataHolder> {
-
+  private volatile int version;
   @NotNull
   public abstract Collection<T> initialValue(@NotNull KeyT key);
 
-  private final ThreadLocal<Map<KeyT,List<T>>> CACHE = new ThreadLocal<Map<KeyT, List<T>>>(){
+  // pair(version, map)
+  private final ThreadLocal<Pair<Integer, Map<KeyT,List<T>>>> CACHE = new ThreadLocal<Pair<Integer, Map<KeyT,List<T>>>>(){
     @Override
-    protected Map<KeyT, List<T>> initialValue() {
-      return new THashMap<KeyT, List<T>>();
+    protected Pair<Integer, Map<KeyT,List<T>>> initialValue() {
+      return Pair.<Integer, Map<KeyT,List<T>>>create(version, new THashMap<KeyT, List<T>>());
     }
   };
 
@@ -55,7 +57,13 @@ public abstract class PerThreadMap<T, KeyT extends UserDataHolder> {
 
   @NotNull
   public List<T> get(@NotNull KeyT key) {
-    Map<KeyT, List<T>> map = CACHE.get();
+    Pair<Integer, Map<KeyT, List<T>>> pair = CACHE.get();
+    Integer mapVersion = pair.getFirst();
+    if (version != mapVersion) {
+      CACHE.remove();
+      pair = CACHE.get();
+    }
+    Map<KeyT, List<T>> map = pair.getSecond();
     List<T> cached = map.get(key);
     if (cached == null) {
       Collection<T> templates = initialValue(key);
@@ -63,5 +71,9 @@ public abstract class PerThreadMap<T, KeyT extends UserDataHolder> {
       map.put(key, cached);
     }
     return cached;
+  }
+
+  public void clear() {
+    version++; //we don't care about atomicity here
   }
 }

@@ -692,10 +692,10 @@ public class AbstractPopup implements JBPopup {
         Point point = (Point)e.getPoint().clone();
         SwingUtilities.convertPointToScreen(point, e.getComponent());
 
-        final Dimension dimension = myComponent.getSize();
+        final Dimension dimension = myContent.getSize();
         dimension.height += myResizable && isToDrawMacCorner() ? ourMacCorner.getHeight(myContent) : 4;
         dimension.width += 4;
-        Point locationOnScreen = myComponent.getLocationOnScreen();
+        Point locationOnScreen = myContent.getLocationOnScreen();
         final Rectangle bounds = new Rectangle(new Point(locationOnScreen.x - 2, locationOnScreen.y - 2), dimension);
         if (!bounds.contains(point)) {
           cancel();

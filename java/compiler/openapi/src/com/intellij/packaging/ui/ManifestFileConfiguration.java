@@ -33,7 +33,7 @@ public class ManifestFileConfiguration {
     copyFrom(configuration);
   }
 
-  public ManifestFileConfiguration(@Nullable List<String> classpath, @Nullable String mainClass, @Nullable String manifestFilePath) {
+  public ManifestFileConfiguration(@NotNull String manifestFilePath, @Nullable List<String> classpath, @Nullable String mainClass) {
     if (classpath != null) {
       myClasspath.addAll(classpath);
     }

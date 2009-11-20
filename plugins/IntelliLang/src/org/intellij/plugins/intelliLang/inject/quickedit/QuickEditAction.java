@@ -198,12 +198,13 @@ public class QuickEditAction implements IntentionAction {
         return Boolean.TRUE;
       }
     });
+    builder.setModalContext(true);
     builder.setDimensionServiceKey(project, getClass().getSimpleName()+"DimensionKey", false);
 
     final JBPopup popup = builder.createPopup();
     e.install(popup);
 
-    popup.showInBestPositionFor(editor);
+    popup.showCenteredInCurrentWindow(project);
   }
 
   public boolean startInWriteAction() {

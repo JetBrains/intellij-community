@@ -15,24 +15,17 @@
  */
 package com.intellij.packaging.impl.ui.properties;
 
-import com.intellij.CommonBundle;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.packaging.elements.PackagingElementFactory;
 import com.intellij.packaging.impl.elements.CompositeElementWithManifest;
 import com.intellij.packaging.impl.elements.ManifestFileUtil;
 import com.intellij.packaging.ui.ArtifactEditorContext;
@@ -51,21 +44,18 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
 import java.util.List;
 
 /**
  * @author nik
  */
 public abstract class ElementWithManifestPropertiesPanel<E extends CompositeElementWithManifest<?>> extends PackagingElementPropertiesPanel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.packaging.impl.ui.properties.ElementWithManifestPropertiesPanel");
   private final E myElement;
   private final ArtifactEditorContext myContext;
   private JPanel myMainPanel;
   private TextFieldWithBrowseButton myMainClassField;
   private TextFieldWithBrowseButton myClasspathField;
   private JLabel myTitleLabel;
-  private JButton myRemoveFromArtifactButton;
   private JButton myCreateManifestButton;
   private JButton myUseExistingManifestButton;
   private JPanel myPropertiesPanel;
@@ -75,7 +65,6 @@ public abstract class ElementWithManifestPropertiesPanel<E extends CompositeElem
 
   public ElementWithManifestPropertiesPanel(E element, final ArtifactEditorContext context) {
     myElement = element;
-    myManifestFileConfiguration = context.getManifestFile(element, context.getArtifactType());
     myContext = context;
 
     myMainClassField.addActionListener(new ActionListener() {
@@ -115,64 +104,17 @@ public abstract class ElementWithManifestPropertiesPanel<E extends CompositeElem
         createManifest();
       }
     });
-
-    //todo[nik] do we really need this button?
-    myRemoveFromArtifactButton.setVisible(false);
-    myRemoveFromArtifactButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        removeManifest();
-      }
-    });
-  }
-
-  private void removeManifest() {
   }
 
   private void createManifest() {
-    FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    descriptor.setTitle("Select Directory for META-INF/MANIFEST.MF file");
-    final VirtualFile[] files = FileChooser.chooseFiles(myContext.getProject(), descriptor, ManifestFileUtil.suggestManifestFileDirectory(myElement, myContext, myContext.getArtifactType()));
-    if (files.length != 1) return;
-
-    final Ref<IOException> exc = Ref.create(null);
-    final VirtualFile file = new WriteAction<VirtualFile>() {
-      protected void run(final Result<VirtualFile> result) {
-        VirtualFile dir = files[0];
-        try {
-          if (!dir.getName().equals(ManifestFileUtil.MANIFEST_DIR_NAME)) {
-            VirtualFile newDir = dir.findChild(ManifestFileUtil.MANIFEST_DIR_NAME);
-            if (newDir == null) {
-              newDir = dir.createChildDirectory(this, ManifestFileUtil.MANIFEST_DIR_NAME);
-            }
-            dir = newDir;
-          }
-          result.setResult(dir.createChildData(this, ManifestFileUtil.MANIFEST_FILE_NAME));
-        }
-        catch (IOException e) {
-          exc.set(e);
-        }
-      }
-    }.execute().getResultObject();
-
-    final IOException exception = exc.get();
-    if (exception != null) {
-      LOG.info(exception);
-      Messages.showErrorDialog(myMainPanel, exception.getMessage(), CommonBundle.getErrorTitle());
+    final VirtualFile file = ManifestFileUtil.showDialogAndCreateManifest(myContext, myElement);
+    if (file == null) {
       return;
     }
 
-    addManifestFile(file.getPath());
-    updateComponents(new ManifestFileConfiguration(null, null, file.getPath()));
-    apply();
+    ManifestFileUtil.addManifestFileToLayout(file.getPath(), myContext, myElement);
+    updateManifest();
     myContext.getThisArtifactEditor().updateLayoutTree();
-  }
-
-  private void addManifestFile(final String path) {
-    myContext.editLayout(myContext.getArtifact(), new Runnable() {
-      public void run() {
-        PackagingElementFactory.getInstance().addFileCopy(myElement, ManifestFileUtil.MANIFEST_DIR_NAME, path, ManifestFileUtil.MANIFEST_FILE_NAME);
-      }
-    });
   }
 
   private void chooseManifest() {
@@ -187,20 +129,19 @@ public abstract class ElementWithManifestPropertiesPanel<E extends CompositeElem
     final VirtualFile[] files = FileChooser.chooseFiles(myContext.getProject(), descriptor);
     if (files.length != 1) return;
 
-    addManifestFile(files[0].getPath());
-    updateComponents(ManifestFileUtil.createManifestFileConfiguration(files[0]));
-    apply();
+    ManifestFileUtil.addManifestFileToLayout(files[0].getPath(), myContext, myElement);
+    updateManifest();
     myContext.getThisArtifactEditor().updateLayoutTree();
   }
 
-  private void updateComponents(@NotNull ManifestFileConfiguration configuration) {
-    final String manifestFilePath = configuration.getManifestFilePath();
+  private void updateManifest() {
+    myManifestFileConfiguration = myContext.getManifestFile(myElement, myContext.getArtifactType());
     final String card;
-    if (manifestFilePath != null) {
+    if (myManifestFileConfiguration != null) {
       card = "properties";
-      myManifestPathField.setText(FileUtil.toSystemDependentName(manifestFilePath));
-      myMainClassField.setText(StringUtil.notNullize(configuration.getMainClass()));
-      myClasspathField.setText(StringUtil.join(configuration.getClasspath(), " "));
+      myManifestPathField.setText(FileUtil.toSystemDependentName(myManifestFileConfiguration.getManifestFilePath()));
+      myMainClassField.setText(StringUtil.notNullize(myManifestFileConfiguration.getMainClass()));
+      myClasspathField.setText(StringUtil.join(myManifestFileConfiguration.getClasspath(), " "));
     }
     else {
       card = "buttons";
@@ -212,18 +153,13 @@ public abstract class ElementWithManifestPropertiesPanel<E extends CompositeElem
   public void reset() {
     myTitleLabel.setText("'" + myElement.getName() + "' manifest properties:");
     myManifestNotFoundLabel.setText("META-INF/MANIFEST.MF file not found in '" + myElement.getName() + "'");
-    final VirtualFile file = ManifestFileUtil.findManifestFile(myElement, myContext, myContext.getArtifactType());
-    String path = file != null ? file.getPath() : null;
-    if (!Comparing.equal(path, myManifestFileConfiguration.getManifestFilePath())) {
-      myManifestFileConfiguration.copyFrom(ManifestFileUtil.createManifestFileConfiguration(file));
-    }
-    updateComponents(myManifestFileConfiguration);
+    updateManifest();
   }
 
   public boolean isModified() {
-    return !myManifestFileConfiguration.getClasspath().equals(getConfiguredClasspath())
+    return myManifestFileConfiguration != null && (!myManifestFileConfiguration.getClasspath().equals(getConfiguredClasspath())
            || !Comparing.equal(myManifestFileConfiguration.getMainClass(), getConfiguredMainClass())
-           || !Comparing.equal(myManifestFileConfiguration.getManifestFilePath(), getConfiguredManifestPath());
+           || !Comparing.equal(myManifestFileConfiguration.getManifestFilePath(), getConfiguredManifestPath()));
   }
 
   @Nullable
@@ -234,9 +170,11 @@ public abstract class ElementWithManifestPropertiesPanel<E extends CompositeElem
 
   @Override
   public void apply() {
-    myManifestFileConfiguration.setMainClass(getConfiguredMainClass());
-    myManifestFileConfiguration.setClasspath(getConfiguredClasspath());
-    myManifestFileConfiguration.setManifestFilePath(getConfiguredManifestPath());
+    if (myManifestFileConfiguration != null) {
+      myManifestFileConfiguration.setMainClass(getConfiguredMainClass());
+      myManifestFileConfiguration.setClasspath(getConfiguredClasspath());
+      myManifestFileConfiguration.setManifestFilePath(getConfiguredManifestPath());
+    }
   }
 
   private List<String> getConfiguredClasspath() {

@@ -25,6 +25,7 @@ import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -766,6 +767,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     myTempDirFixture.setUp();
     myPsiManager = (PsiManagerImpl)PsiManager.getInstance(getProject());
     configureInspections(myInspections == null ? new LocalInspectionTool[0] : myInspections);
+    DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
   }
 
   private void enableInspectionTool(InspectionProfileEntry tool){
@@ -906,7 +908,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
     }
     VfsUtil.saveText(vFile, text);
-    assert vFile != null;
     configureInner(vFile, SelectionAndCaretMarkupLoader.fromFile(vFile, getProject()));
     return myFile;
   }
@@ -984,7 +985,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   private static void setContext(final PsiFile file, final PsiElement context) {
     if (file != null && context != null) {
-      file.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, new IdentitySmartPointer(context));
+      file.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, new IdentitySmartPointer<PsiElement>(context));
     }
   }
 
@@ -1040,7 +1041,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     data.checkResult(infos, myEditor.getDocument().getText());
   }
 
-  private void removeDuplicatedRangesForInjected(List<HighlightInfo> infos) {
+  private static void removeDuplicatedRangesForInjected(List<HighlightInfo> infos) {
     Collections.sort(infos, new Comparator<HighlightInfo>() {
       public int compare(HighlightInfo o1, HighlightInfo o2) {
         final int i = o2.startOffset - o1.startOffset;
@@ -1069,7 +1070,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return
     ApplicationManager.getApplication().runReadAction(new Computable<List<HighlightInfo>>() {
       public List<HighlightInfo> compute() {
-        return instantiateAndRun(CodeInsightTestFixtureImpl.this.getFile(), CodeInsightTestFixtureImpl.this.getEditor(), ArrayUtil.EMPTY_INT_ARRAY);
+        return instantiateAndRun(getFile(), getEditor(), ArrayUtil.EMPTY_INT_ARRAY);
       }
     });
   }

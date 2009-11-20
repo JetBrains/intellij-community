@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightingPass;
+import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobImpl;
@@ -37,8 +38,8 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SmartList;
@@ -202,7 +203,7 @@ public abstract class PassExecutorService implements Disposable {
     toBeSubmitted.put(key, scheduledPass);
     for (int predecessorId : pass.getCompletionPredecessorIds()) {
       ScheduledPass predecessor = findOrCreatePredecessorPass(fileEditors, document, toBeSubmitted, textEditorHighlightingPasses, freePasses,
-                                                              updateProgress, threadsToStartCountdown, jobPriority, predecessorId);
+                                                              updateProgress, threadsToStartCountdown, jobPriority, predecessorId, passId);
       if (predecessor != null) {
         predecessor.mySuccessorsOnCompletion.add(scheduledPass);
         scheduledPass.myRunningPredecessorsCount.incrementAndGet();
@@ -210,7 +211,7 @@ public abstract class PassExecutorService implements Disposable {
     }
     for (int predecessorId : pass.getStartingPredecessorIds()) {
       ScheduledPass predecessor = findOrCreatePredecessorPass(fileEditors, document, toBeSubmitted, textEditorHighlightingPasses, freePasses,
-                                                              updateProgress, threadsToStartCountdown, jobPriority, predecessorId);
+                                                              updateProgress, threadsToStartCountdown, jobPriority, predecessorId, passId);
       if (predecessor != null) {
         predecessor.mySuccessorsOnSubmit.add(scheduledPass);
         scheduledPass.myRunningPredecessorsCount.incrementAndGet();
@@ -230,12 +231,17 @@ public abstract class PassExecutorService implements Disposable {
                                                     final DaemonProgressIndicator updateProgress,
                                                     final AtomicInteger myThreadsToStartCountdown,
                                                     final int jobPriority,
-                                                    final int predecessorId) {
+                                                    final int predecessorId, int passId) {
     Pair<Document, Integer> predkey = Pair.create(document, predecessorId);
     ScheduledPass predecessor = toBeSubmitted.get(predkey);
     if (predecessor == null) {
       TextEditorHighlightingPass textEditorPass = findPassById(predecessorId, textEditorHighlightingPasses);
-      predecessor = textEditorPass == null ? null : createScheduledPass(fileEditors, textEditorPass, toBeSubmitted, textEditorHighlightingPasses,freePasses,
+      if (textEditorPass == null && predecessorId == Pass.UPDATE_VISIBLE && passId != Pass.UPDATE_ALL && findPassById(Pass.UPDATE_ALL, textEditorHighlightingPasses) != null) {
+        // when UPDATE_VISIBLE pass is not going to run, pretend that all dependent passes are depend on UPDATE_ALL pass instead
+        return findOrCreatePredecessorPass(fileEditors, document, toBeSubmitted, textEditorHighlightingPasses, freePasses, updateProgress,
+                                           myThreadsToStartCountdown, jobPriority, Pass.UPDATE_ALL, passId);
+      }
+      predecessor = textEditorPass == null ? null : createScheduledPass(fileEditors, textEditorPass, toBeSubmitted, textEditorHighlightingPasses, freePasses,
                                                                         updateProgress, myThreadsToStartCountdown, jobPriority);
     }
     return predecessor;

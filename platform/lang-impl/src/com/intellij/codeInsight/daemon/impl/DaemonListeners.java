@@ -269,10 +269,7 @@ public class DaemonListeners implements Disposable {
     if (file instanceof PsiCodeFragment) return true;
     Project project = file.getProject();
     if (!ModuleUtil.projectContainsFile(project, virtualFile, false)) return false;
-    FileEditor[] editors = FileEditorManager.getInstance(myProject).getEditors(virtualFile);
-    for (FileEditor editor : editors) {
-      if (!editor.isModified()) return false;
-    }
+    if (!FileDocumentManager.getInstance().isFileModified(virtualFile)) return false;
     FilePath path = new FilePathImpl(virtualFile);
     boolean vcsIsThinking = !VcsDirtyScopeManager.getInstance(myProject).whatFilesDirty(Arrays.asList(path)).isEmpty();
     if (vcsIsThinking) return false;

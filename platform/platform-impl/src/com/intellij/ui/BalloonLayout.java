@@ -30,13 +30,13 @@ import java.util.List;
 
 public class BalloonLayout {
 
-  private JLayeredPane myParent;
-  private Insets myInsets;
+  private final JLayeredPane myParent;
+  private final Insets myInsets;
 
-  private List<Balloon> myBalloons = new ArrayList<Balloon>();
+  private final List<Balloon> myBalloons = new ArrayList<Balloon>();
 
-  private Alarm myRelayoutAlarm = new Alarm();
-  private Runnable myRelayoutRunnable = new Runnable() {
+  private final Alarm myRelayoutAlarm = new Alarm();
+  private final Runnable myRelayoutRunnable = new Runnable() {
     public void run() {
       relayout();
     }
@@ -102,7 +102,7 @@ public class BalloonLayout {
 
 
 
-  private List<Integer> computeWidths(List<ArrayList<Balloon>> columns) {
+  private static List<Integer> computeWidths(List<ArrayList<Balloon>> columns) {
     List<Integer> columnWidths = new ArrayList<Integer>();
     for (ArrayList<Balloon> eachColumn : columns) {
       int maxWidth = 0;

@@ -123,7 +123,7 @@ public class ArtifactConfigurable extends ProjectStructureElementConfigurable<Ar
     artifactTypeBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final ArtifactType selected = (ArtifactType)artifactTypeBox.getSelectedItem();
-        if (!Comparing.equal(selected, getArtifact().getArtifactType())) {
+        if (selected != null && !Comparing.equal(selected, getArtifact().getArtifactType())) {
           myEditor.setArtifactType(selected);
         }
       }

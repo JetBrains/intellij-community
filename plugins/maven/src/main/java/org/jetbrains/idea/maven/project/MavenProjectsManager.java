@@ -66,8 +66,8 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
                                                                             SettingsSavingComponent {
   private static final int IMPORT_DELAY = 1000;
 
-  private static final Object SCHEDULE_IMPORT_MESSAGE = new Object();
-  private static final Object FORCE_IMPORT_MESSAGE = new Object();
+  static final Object SCHEDULE_IMPORT_MESSAGE = "SCHEDULE_IMPORT_MESSAGE";
+  static final Object FORCE_IMPORT_MESSAGE = "FORCE_IMPORT_MESSAGE";
 
   private final AtomicBoolean isInitialized = new AtomicBoolean();
 
@@ -633,21 +633,12 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     // read when postStartupActivitias start
     MavenUtil.runWhenInitialized(myProject, new DumbAwareRunnable() {
       public void run() {
-        Object message = forceImport ? FORCE_IMPORT_MESSAGE : null;
-
-        MavenProjectsProcessorReadingTask task;
         if (projects == null) {
-          task = new MavenProjectsProcessorReadingTask(force, myProjectsTree, getGeneralSettings(), message);
+          myWatcher.scheduleUpdateAll(force, forceImport);
         }
         else {
-          task = new MavenProjectsProcessorReadingTask(MavenUtil.collectFiles(projects),
-                                                       Collections.EMPTY_LIST,
-                                                       force,
-                                                       myProjectsTree,
-                                                       getGeneralSettings(),
-                                                       message);
+          myWatcher.scheduleUpdate(MavenUtil.collectFiles(projects), Collections.EMPTY_LIST, force, forceImport);
         }
-        myReadingProcessor.scheduleTask(task);
       }
     });
   }
@@ -804,10 +795,17 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   }
 
   public void performScheduledImport() {
+    performScheduledImport(false);
+  }
+
+  public void performScheduledImport(final boolean onlyIfAutoImportMode) {
     if (!isInitialized()) return;
     runWhenFullyOpen(new Runnable() {
       public void run() {
-        myImportingQueue.flush();
+        // ensure all pending schedules are processed
+        mySchedulesQueue.flush(false);
+        if (onlyIfAutoImportMode && !myImportingQueue.isActive()) return;
+        myImportingQueue.flush(false);
       }
     });
   }

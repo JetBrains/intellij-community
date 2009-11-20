@@ -30,7 +30,7 @@ public class PasswordUtil {
     return result;
   }
 
-  public static String decodePassword(String password) {
+  public static String decodePassword(String password) throws NumberFormatException {
     String result = "";
     if (password == null) return result;
     for (int i =0; i< password.length(); i+=4) {
@@ -41,6 +41,7 @@ public class PasswordUtil {
     }
     return result;
   }
+  
   public static String requestPassword(String prompt, String title, final String defaultValue) {
     final PasswordPromptDialog dialog = new PasswordPromptDialog(prompt, title, defaultValue);
     dialog.show();
@@ -50,6 +51,4 @@ public class PasswordUtil {
       return null;
     }
   }
-
-
 }

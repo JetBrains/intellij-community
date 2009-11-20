@@ -27,11 +27,11 @@ import java.util.List;
 public abstract class MavenProjectsTreeTestCase extends MavenImportingTestCase {
   protected MavenProjectsTree myTree = new MavenProjectsTree();
 
-  protected void updateAll(VirtualFile... files) throws MavenProcessCanceledException, MavenException {
+  protected void updateAll(VirtualFile... files) throws MavenProcessCanceledException {
     updateAll(Collections.<String>emptyList(), files);
   }
 
-  protected void updateAll(List<String> profiles, VirtualFile... files) throws MavenProcessCanceledException, MavenException {
+  protected void updateAll(List<String> profiles, VirtualFile... files) throws MavenProcessCanceledException {
     myTree.resetManagedFilesAndProfiles(asList(files), profiles);
     myTree.updateAll(false, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS, null);
   }

@@ -65,13 +65,8 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
     return myParent.getModifiableModuleModel();
   }
 
-  @NotNull
   public ManifestFileConfiguration getManifestFile(CompositePackagingElement<?> element, ArtifactType artifactType) {
     return myParent.getManifestFile(element, artifactType);
-  }
-
-  public boolean isManifestFile(String path) {
-    return myParent.isManifestFile(path);
   }
 
   @NotNull

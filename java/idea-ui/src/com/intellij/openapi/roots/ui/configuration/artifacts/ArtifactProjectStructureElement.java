@@ -49,7 +49,6 @@ public class ArtifactProjectStructureElement extends ProjectStructureElement {
   @Override
   public void check(final ProjectStructureProblemsHolder problemsHolder) {
     final ArtifactEditorEx artifactEditor = (ArtifactEditorEx)myArtifactsStructureContext.getOrCreateEditor(myOriginalArtifact);
-    artifactEditor.getLayoutTreeComponent().saveElementProperties();
     final Artifact artifact = artifactEditor.getArtifact();
     artifact.getArtifactType().checkRootElement(artifactEditor.getRootElement(), artifact, new ArtifactProblemsHolderImpl(artifactEditor.getContext(), problemsHolder));
   }

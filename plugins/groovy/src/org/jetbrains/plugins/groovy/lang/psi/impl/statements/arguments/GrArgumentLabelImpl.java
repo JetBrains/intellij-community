@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -33,6 +34,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
 
 /**
  * @author ilyas
@@ -95,7 +98,14 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
           if (clazz != null) {
             PsiMethod[] byName = clazz.findMethodsByName(setterName, true);
             if (byName.length > 0) return byName[0];
-            return clazz.findFieldByName(propName, true);
+            final PsiField field = clazz.findFieldByName(propName, true);
+            if (field != null) return field;
+            final PropertyResolverProcessor processor = new PropertyResolverProcessor(propName, this);
+            ResolveUtil
+              .processNonCodeMethods(JavaPsiFacade.getElementFactory(getProject()).createType(clazz), processor, getProject(), this, false);
+            final GroovyResolveResult[] candidates = processor.getCandidates();
+            if (candidates.length == 0) return null;
+            return candidates[0].getElement();
           }
         }
       }

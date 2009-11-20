@@ -35,6 +35,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.artifacts.ModifiableArtifact;
@@ -44,6 +45,7 @@ import com.intellij.packaging.elements.PackagingElementFactory;
 import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.elements.ArchivePackagingElement;
+import com.intellij.packaging.impl.elements.ManifestFileUtil;
 import com.intellij.packaging.ui.ManifestFileConfiguration;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
@@ -378,10 +380,22 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     myLayoutTreeComponent.putIntoDefaultLocations(Collections.singletonList(new LibrarySourceItem(library)));
   }
 
-  public void addToClasspath(CompositePackagingElement<?> element, List<String> classpath) {
+  public void addToClasspath(final CompositePackagingElement<?> element, List<String> classpath) {
     myLayoutTreeComponent.saveElementProperties();
-    final ManifestFileConfiguration manifest = myContext.getManifestFile(element, getArtifact().getArtifactType());
-    manifest.addToClasspath(classpath);
+    ManifestFileConfiguration manifest = myContext.getManifestFile(element, getArtifact().getArtifactType());
+    if (manifest == null) {
+      final VirtualFile file = ManifestFileUtil.showDialogAndCreateManifest(myContext, element);
+      if (file == null) {
+        return;
+      }
+
+      ManifestFileUtil.addManifestFileToLayout(file.getPath(), myContext, element);
+      manifest = myContext.getManifestFile(element, getArtifact().getArtifactType());
+    }
+
+    if (manifest != null) {
+      manifest.addToClasspath(classpath);
+    }
     myLayoutTreeComponent.resetElementProperties();
   }
 

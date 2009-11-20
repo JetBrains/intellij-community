@@ -47,7 +47,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   private final VcsGuess myGuess;
   private final SynchronizedLife myLife;
 
-  private MyProgressHolder myProgressHolder;
+  private final MyProgressHolder myProgressHolder;
 
   public VcsDirtyScopeManagerImpl(Project project, ChangeListManager changeListManager, ProjectLevelVcsManager vcsManager) {
     myProject = project;
@@ -104,7 +104,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       }
     });
 
-    if (lifeDrop.isDone() && (! lifeDrop.isSuspened())) {
+    if (lifeDrop.isDone() && !lifeDrop.isSuspened()) {
       myChangeListManager.scheduleUpdate();
     }
   }
@@ -153,8 +153,8 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
         convertPaths(dirsRecursivelyDirty, dirsConverted);
       }
     });
-    final boolean haveStuff = ((filesConverted != null) && (! filesConverted.isEmpty())) ||
-                              ((dirsConverted != null) && (! dirsConverted.isEmpty()));
+    final boolean haveStuff = filesConverted != null && ! filesConverted.isEmpty()
+                              || dirsConverted != null && ! dirsConverted.isEmpty();
     if (! haveStuff) return false;
 
     return takeDirt(new Consumer<DirtBuilder>() {
@@ -183,11 +183,11 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     };
     final LifeDrop lifeDrop = myLife.doIfAlive(runnable);
 
-    if (lifeDrop.isDone() && (! lifeDrop.isSuspened()) && (Boolean.TRUE.equals(wasNotEmptyRef.get()))) {
+    if (lifeDrop.isDone() && !lifeDrop.isSuspened() && Boolean.TRUE.equals(wasNotEmptyRef.get())) {
       myChangeListManager.scheduleUpdate();
     }
     // no sense in checking correct here any more: vcs is searched for asynchronously
-    return (! lifeDrop.isDone());
+    return !lifeDrop.isDone();
   }
 
   private void convert(@Nullable final Collection<VirtualFile> from, final Collection<VcsRoot> to) {
@@ -211,8 +211,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
         convert(dirsRecursivelyDirty, dirsConverted);
       }
     });
-    final boolean haveStuff = ((filesConverted != null) && (! filesConverted.isEmpty())) ||
-                              ((dirsConverted != null) && (! dirsConverted.isEmpty()));
+    final boolean haveStuff = filesConverted != null && ! filesConverted.isEmpty() || dirsConverted != null && ! dirsConverted.isEmpty();
     if (! haveStuff) return false;
 
     return takeDirt(new Consumer<DirtBuilder>() {
@@ -369,10 +368,11 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
         currentHolderRef.set(new MyProgressHolder(new DirtBuilder(myDirtBuilder), null));
       }
     });
-    final VcsInvalidated inProgressInvalidated = inProgressHolderRef.get().calculateInvalidated();
-    final VcsInvalidated currentInvalidated = currentHolderRef.get().calculateInvalidated();
+    final VcsInvalidated inProgressInvalidated = inProgressHolderRef.get() == null ? null : inProgressHolderRef.get().calculateInvalidated();
+    final VcsInvalidated currentInvalidated = currentHolderRef.get() == null ? null : currentHolderRef.get().calculateInvalidated();
     for (FilePath fp : files) {
-      if (inProgressInvalidated != null && inProgressInvalidated.isFileDirty(fp) || currentInvalidated.isFileDirty(fp)) {
+      if (inProgressInvalidated != null && inProgressInvalidated.isFileDirty(fp)
+          || currentInvalidated != null && currentInvalidated.isFileDirty(fp)) {
         result.add(fp);
       }
     }
@@ -457,7 +457,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     public LifeDrop doIfAliveAndNotSuspended(final Runnable runnable) {
       synchronized (myLock) {
         synchronized (myLock) {
-          if (LifeStages.ALIVE.equals(myStage) && (! mySuspended)) {
+          if (LifeStages.ALIVE.equals(myStage) && ! mySuspended) {
             runnable.run();
             return new LifeDrop(true, mySuspended);
           }

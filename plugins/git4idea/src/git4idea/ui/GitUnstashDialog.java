@@ -17,6 +17,7 @@ package git4idea.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -38,6 +39,8 @@ import java.awt.event.ActionListener;
 import java.nio.charset.Charset;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * The unstash dialog
@@ -220,7 +223,7 @@ public class GitUnstashDialog extends DialogWrapper {
   /**
    * Update state dialog depending on the current state of the fields
    */
-  public void updateDialogState() {
+  private void updateDialogState() {
     String branch = myBranchTextField.getText();
     if (branch.length() != 0) {
       setOKButtonText(GitBundle.getString("unstash.button.branch"));
@@ -311,7 +314,7 @@ public class GitUnstashDialog extends DialogWrapper {
   /**
    * @return the selected git root
    */
-  public VirtualFile getGitRoot() {
+  private VirtualFile getGitRoot() {
     return (VirtualFile)myGitRootComboBox.getSelectedItem();
   }
 
@@ -319,8 +322,8 @@ public class GitUnstashDialog extends DialogWrapper {
    * @param escaped if true stash name will be escaped
    * @return unstash handler
    */
-  public GitSimpleHandler handler(boolean escaped) {
-    GitSimpleHandler h = new GitSimpleHandler(myProject, getGitRoot(), GitHandler.STASH);
+  private GitLineHandler handler(boolean escaped) {
+    GitLineHandler h = new GitLineHandler(myProject, getGitRoot(), GitHandler.STASH);
     h.setNoSSH(true);
     String branch = myBranchTextField.getText();
     if (branch.length() == 0) {
@@ -366,6 +369,43 @@ public class GitUnstashDialog extends DialogWrapper {
   @Override
   protected String getHelpId() {
     return "reference.VersionControl.Git.Unstash";
+  }
+
+  /**
+   * Show unstash dialog and process its result
+   *
+   * @param project       the context project
+   * @param gitRoots      the git roots
+   * @param defaultRoot   the default git root
+   * @param affectedRoots the affected roots
+   */
+  public static void showUnstashDialog(Project project,
+                                       List<VirtualFile> gitRoots,
+                                       VirtualFile defaultRoot,
+                                       Set<VirtualFile> affectedRoots) {
+    GitUnstashDialog d = new GitUnstashDialog(project, gitRoots, defaultRoot);
+    d.show();
+    if (!d.isOK()) {
+      return;
+    }
+    affectedRoots.add(d.getGitRoot());
+    GitLineHandler h = d.handler(false);
+    final AtomicBoolean needToEscapedBraces = new AtomicBoolean(false);
+    h.addLineListener(new GitLineHandlerAdapter() {
+      public void onLineAvailable(String line, Key outputType) {
+        if (line.startsWith("fatal: Needed a single revision")) {
+          needToEscapedBraces.set(true);
+        }
+      }
+    });
+    int rc = GitHandlerUtil.doSynchronously(h, GitBundle.getString("unstash.unstashing"), h.printableCommandLine(), false);
+    if (needToEscapedBraces.get()) {
+      h = d.handler(true);
+      rc = GitHandlerUtil.doSynchronously(h, GitBundle.getString("unstash.unstashing"), h.printableCommandLine(), false);
+    }
+    if (rc != 0) {
+      GitUIUtil.showOperationErrors(project, h.errors(), h.printableCommandLine());
+    }
   }
 
   /**

@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -95,46 +96,52 @@ public final class TodoPackageNode extends PackageElementNode implements Highlig
     super.update(data);
     final PackageElement packageElement = getValue();
 
-    if (packageElement == null || !packageElement.getPackage().isValid()) {
-      setValue(null);
-      return;
+    try {
+      if (packageElement == null || !packageElement.getPackage().isValid()) {
+        setValue(null);
+        return;
+      }
+
+      int fileCount = getFileCount(packageElement);
+      if (fileCount == 0){
+        setValue(null);
+        return;
+      }
+
+      PsiPackage aPackage = packageElement.getPackage();
+      String newName;
+      if (getStructure().areFlattenPackages()) {
+        newName = aPackage.getQualifiedName();
+      }
+      else {
+        newName = myPresentationName != null ? myPresentationName : "";
+      }
+
+      int nameEndOffset = newName.length();
+      int todoItemCount = getTodoItemCount(packageElement);
+      newName = IdeBundle.message("node.todo.group", newName, todoItemCount, fileCount);
+
+      myHighlightedRegions.clear();
+
+      TextAttributes textAttributes = new TextAttributes();
+      Color newColor = null;
+
+      if (CopyPasteManager.getInstance().isCutElement(packageElement)) {
+        newColor = CopyPasteManager.CUT_COLOR;
+      }
+      textAttributes.setForegroundColor(newColor);
+      myHighlightedRegions.add(new HighlightedRegion(0, nameEndOffset, textAttributes));
+
+      EditorColorsScheme colorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
+      myHighlightedRegions.add(
+        new HighlightedRegion(nameEndOffset, newName.length(), colorsScheme.getAttributes(UsageTreeColors.NUMBER_OF_USAGES)));
+
+      data.setPresentableText(newName);
     }
-
-    int fileCount = getFileCount(packageElement);
-    if (fileCount == 0){
-      setValue(null);
-      return;
+    catch (IndexNotReadyException e) {
+      LOG.info(e);
+      data.setPresentableText("N/A");
     }
-
-    PsiPackage aPackage = packageElement.getPackage();
-    String newName;
-    if (getStructure().areFlattenPackages()) {
-      newName = aPackage.getQualifiedName();
-    }
-    else {
-      newName = myPresentationName != null ? myPresentationName : "";
-    }
-
-    int nameEndOffset = newName.length();
-    int todoItemCount = getTodoItemCount(packageElement);
-    newName = IdeBundle.message("node.todo.group", newName, todoItemCount, fileCount);
-
-    myHighlightedRegions.clear();
-
-    TextAttributes textAttributes = new TextAttributes();
-    Color newColor = null;
-
-    if (CopyPasteManager.getInstance().isCutElement(packageElement)) {
-      newColor = CopyPasteManager.CUT_COLOR;
-    }
-    textAttributes.setForegroundColor(newColor);
-    myHighlightedRegions.add(new HighlightedRegion(0, nameEndOffset, textAttributes));
-
-    EditorColorsScheme colorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
-    myHighlightedRegions.add(
-      new HighlightedRegion(nameEndOffset, newName.length(), colorsScheme.getAttributes(UsageTreeColors.NUMBER_OF_USAGES)));
-
-    data.setPresentableText(newName);
   }
 
   private int getFileCount(final PackageElement packageElement) {

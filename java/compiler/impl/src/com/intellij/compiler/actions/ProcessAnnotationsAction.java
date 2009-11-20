@@ -80,12 +80,13 @@ public class ProcessAnnotationsAction extends CompileActionBase {
 
     if (!compilerConfiguration.isAnnotationProcessorsEnabled() ||
         compilerConfiguration.getAnnotationProcessorsMap().isEmpty() ||
-        module != null && !Boolean.TRUE.equals(compilerConfiguration.getAnotationProcessedModules().get(module))) {
+        module != null && StringUtil.isEmpty(compilerConfiguration.getAnotationProcessedModules().get(module))) {
       presentation.setEnabled(false);
       return;
     }
 
     presentation.setVisible(true);
+    presentation.setText(createPresentationText(""), true);
     final VirtualFile[] files = getCompilableFiles(project, PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
     if (moduleContext == null && files.length == 0) {
       presentation.setEnabled(false);
