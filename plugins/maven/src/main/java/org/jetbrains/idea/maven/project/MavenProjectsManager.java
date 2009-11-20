@@ -803,9 +803,9 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     runWhenFullyOpen(new Runnable() {
       public void run() {
         // ensure all pending schedules are processed
-        mySchedulesQueue.flush();
+        mySchedulesQueue.flush(false);
         if (onlyIfAutoImportMode && !myImportingQueue.isActive()) return;
-        myImportingQueue.flush();
+        myImportingQueue.flush(false);
       }
     });
   }
