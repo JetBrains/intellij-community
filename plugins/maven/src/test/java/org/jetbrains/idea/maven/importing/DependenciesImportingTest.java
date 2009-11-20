@@ -1199,10 +1199,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertProjectLibraries("Maven: junit:junit:4.0");
     assertModuleLibDeps("project", "Maven: junit:junit:4.0");
 
-    Library lib = ProjectLibraryTable.getInstance(myProject).createLibrary("My Library");
-    ModifiableRootModel model = ModuleRootManager.getInstance(getModule("project")).getModifiableModel();
-    model.addLibraryEntry(lib);
-    model.commit();
+    createAndAddProjectLibrary("project", "My Library");
 
     assertProjectLibraries("Maven: junit:junit:4.0", "My Library");
     assertModuleLibDeps("project", "Maven: junit:junit:4.0", "My Library");
@@ -1359,8 +1356,8 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/",
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/");
 
-    myProjectsManager.listenForExternalChanges(); // to recognize repository change
     setRepositoryPath(new File(myDir, "__repo").getPath());
+    myProjectsManager.getEmbeddersManagerInTests().reset(); // to recognize repository change
 
     scheduleResolveAll();
     resolveDependenciesAndImport();
@@ -1631,6 +1628,42 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                            "Maven: group:lib2:1");
   }
 
+  public void testDoNoRemoveUserProjectLibraries() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    createAndAddProjectLibrary("project", "lib");
+
+    assertProjectLibraries("lib");
+    addLibraryRoot("lib", OrderRootType.CLASSES, "file://" + getRepositoryPath() + "/foo/bar.jar!/");
+    assertModuleLibDeps("project", "lib");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    assertProjectLibraries("lib");
+    assertModuleLibDeps("project", "lib");
+  }
+
+  public void testDoNoRemoveUnusedUserProjectLibraries() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    createProjectLibrary("lib");
+    addLibraryRoot("lib", OrderRootType.CLASSES, "file://" + getRepositoryPath() + "/foo/bar.jar!/");
+
+    assertProjectLibraries("lib");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    assertProjectLibraries("lib");
+  }
+
   public void testRemovingUnusedLibrariesIfProjectRemoved() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -1714,6 +1747,17 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "<version>1</version>");
 
     assertProjectLibraries();
+  }
+
+  private Library createProjectLibrary(String libraryName) {
+    return ProjectLibraryTable.getInstance(myProject).createLibrary(libraryName);
+  }
+
+  private void createAndAddProjectLibrary(String moduleName, String libraryName) {
+    Library lib = createProjectLibrary(libraryName);
+    ModifiableRootModel model = ModuleRootManager.getInstance(getModule(moduleName)).getModifiableModel();
+    model.addLibraryEntry(lib);
+    model.commit();
   }
 
   private void clearLibraryRoots(String libraryName, OrderRootType... types) {
