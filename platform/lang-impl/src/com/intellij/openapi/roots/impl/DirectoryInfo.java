@@ -16,13 +16,16 @@
 
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
+
 
 public class DirectoryInfo {
   public Module module; // module to which content it belongs or null
@@ -38,7 +41,11 @@ public class DirectoryInfo {
    */
   private List<OrderEntry> orderEntries = null;
 
+  @TestOnly
+  @SuppressWarnings({"unchecked"})
   public boolean equals(Object o) {
+    assert ApplicationManager.getApplication().isUnitTestMode() : "DirectoryInfo.equals should only be used in tests";
+
     if (this == o) return true;
     if (!(o instanceof DirectoryInfo)) return false;
 
@@ -48,7 +55,7 @@ public class DirectoryInfo {
     if (isInModuleSource != info.isInModuleSource) return false;
     if (isTestSource != info.isTestSource) return false;
     if (module != null ? !module.equals(info.module) : info.module != null) return false;
-    if (orderEntries != null ? !orderEntries.equals(info.orderEntries) : info.orderEntries != null) return false;
+    if (orderEntries != null ? !new HashSet(orderEntries).equals(new HashSet(info.orderEntries)) : info.orderEntries != null) return false;
     if (!Comparing.equal(libraryClassRoot, info.libraryClassRoot)) return false;
     if (!Comparing.equal(contentRoot, info.contentRoot)) return false;
     if (!Comparing.equal(sourceRoot, info.sourceRoot)) return false;
