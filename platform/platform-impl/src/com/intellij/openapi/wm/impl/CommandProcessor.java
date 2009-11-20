@@ -15,11 +15,12 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.impl.commands.FinalizableCommand;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -43,7 +44,7 @@ public final class CommandProcessor implements Runnable {
    * commands with BlockFocusEventsCmd - UnbockFocusEventsCmd. It's required to
    * prevent focus handling of events which is caused by the commands to be executed.
    */
-  public final void execute(final List<FinalizableCommand> commandList, Condition expired) {
+  public final void execute(@NotNull List<FinalizableCommand> commandList, @NotNull Condition expired) {
     synchronized (myLock) {
       final boolean isBusy = myCommandCount > 0;
 
@@ -60,32 +61,28 @@ public final class CommandProcessor implements Runnable {
   public final void run() {
     synchronized (myLock) {
       final CommandGroup commandGroup = getNextCommandGroup();
-      if (commandGroup == null) {
-        return;
-      }
+      if (commandGroup == null || commandGroup.isEmpty()) return;
 
       final Condition conditionForGroup = commandGroup.getExpireCondition();
 
-      if (!commandGroup.isEmpty()) {
-        final FinalizableCommand command = commandGroup.takeNextCommand();
-        myCommandCount--;
+      final FinalizableCommand command = commandGroup.takeNextCommand();
+      myCommandCount--;
 
-        final Condition expire = command.getExpireCondition() != null ? command.getExpireCondition() : conditionForGroup;
+      final Condition expire = command.getExpireCondition() != null ? command.getExpireCondition() : conditionForGroup;
 
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("CommandProcessor.run " + command);
-        }
-        // max. I'm not actually quite sure this should have NON_MODAL modality but it should
-        // definitely have some since runnables in command list may (and do) request some PSI activity
-        final boolean queueNext = myCommandCount > 0;
-        ApplicationManager.getApplication().getInvokator().invokeLater(command, ModalityState.NON_MODAL, expire == null ? Condition.FALSE : expire).doWhenDone(new Runnable() {
-          public void run() {
-            if (queueNext) {
-              CommandProcessor.this.run();
-            }
-          }
-        });
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("CommandProcessor.run " + command);
       }
+      // max. I'm not actually quite sure this should have NON_MODAL modality but it should
+      // definitely have some since runnables in command list may (and do) request some PSI activity
+      final boolean queueNext = myCommandCount > 0;
+      ApplicationManager.getApplication().getInvokator().invokeLater(command, ModalityState.NON_MODAL, expire == null ? Condition.FALSE : expire).doWhenDone(new Runnable() {
+        public void run() {
+          if (queueNext) {
+            CommandProcessor.this.run();
+          }
+        }
+      });
     }
   }
 
@@ -104,9 +101,9 @@ public final class CommandProcessor implements Runnable {
 
   private static class CommandGroup {
     private final List<FinalizableCommand> myList;
-    private final Condition myExpireCondition;
+    private Condition myExpireCondition;
 
-    private CommandGroup(final List<FinalizableCommand> list, final Condition expireCondition) {
+    private CommandGroup(@NotNull List<FinalizableCommand> list, @NotNull Condition expireCondition) {
       myList = list;
       myExpireCondition = expireCondition;
     }
@@ -120,7 +117,12 @@ public final class CommandProcessor implements Runnable {
     }
 
     public FinalizableCommand takeNextCommand() {
-      return myList.remove(0);
+      FinalizableCommand command = myList.remove(0);
+      if (isEmpty()) {
+        // memory leak otherwise
+        myExpireCondition = Condition.TRUE;
+      }
+      return command;
     }
   }
 }
