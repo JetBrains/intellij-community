@@ -195,7 +195,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return ApplicationManager.getApplication().runReadAction(new Computable<AbstractVcs>() {
       @Nullable
       public AbstractVcs compute() {
-        if (! myProject.isInitialized()) return null;
+        if ((! ApplicationManager.getApplication().isUnitTestMode()) && (! myProject.isInitialized())) return null;
         if (myProject.isDisposed()) throw new ProcessCanceledException();
         VirtualFile vFile = ChangesUtil.findValidParent(file);
         if (vFile != null) {

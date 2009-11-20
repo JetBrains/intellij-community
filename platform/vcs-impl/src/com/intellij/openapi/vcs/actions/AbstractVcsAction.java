@@ -24,6 +24,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -42,22 +43,7 @@ public abstract class AbstractVcsAction extends AsyncUpdateAction<VcsContext> im
 
   @NotNull
   protected static FilePath[] filterDescindingFiles(@NotNull FilePath[] roots, Project project) {
-    ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
-    List<FilePath> result = new ArrayList<FilePath>(Arrays.asList(roots));
-    for (FilePath first : roots) {
-      for (FilePath second : roots) {
-        if (first != second) {
-          AbstractVcs firstVcs = manager.getVcsFor(first);
-          AbstractVcs secondVcs = manager.getVcsFor(second);
-
-          if ((firstVcs == secondVcs) && (firstVcs != null) && (! firstVcs.allowsNestedRoots()) && VfsUtil.isAncestor(first.getIOFile(), second.getIOFile(), false)) {
-            result.remove(second);
-          }
-        }
-      }
-    }
-
-    return result.toArray(new FilePath[result.size()]);
+    return DescindingFilesFilter.filterDescindingFiles(roots, project);
   }
 
   protected VcsContext prepareDataFromContext(final AnActionEvent e) {
