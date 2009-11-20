@@ -294,7 +294,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
     if (!canChangeDocumentDuringHighlighting()) {
       Document document = getDocument(getFile());
-      assertTrue(((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).getFileStatusMap().allDirtyScopesAreNull(document));
+      ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).getFileStatusMap().assertAllDirtyScopesAreNull(document);
     }
 
     List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), getProject());
