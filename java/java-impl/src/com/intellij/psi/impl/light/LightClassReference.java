@@ -94,6 +94,9 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
   @NotNull
   public JavaResolveResult advancedResolve(boolean incompleteCode){
     final PsiElement resolved = resolve();
+    if (resolved == null) {
+      return JavaResolveResult.EMPTY;
+    }
     PsiSubstitutor substitutor = mySubstitutor;
     if (substitutor == null) {
       if (resolved instanceof PsiClass) {
