@@ -135,7 +135,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
                        @NotNull UsageViewPresentation presentation,
                        @NotNull UsageTarget[] targets,
                        Factory<UsageSearcher> usageSearcherFactory) {
-
     myPresentation = presentation;
     myTargets = targets;
     myUsageSearcherFactory = usageSearcherFactory;
@@ -159,7 +158,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       }
     };
     myRootPanel = new MyPanel(myTree);
-    myModelTracker = new UsageModelTracker(project, this);
+    myModelTracker = new UsageModelTracker(project);
+    Disposer.register(this, myModelTracker);
 
     myModel = new UsageViewTreeModelBuilder(myPresentation, targets);
     myRoot = (GroupNode)myModel.getRoot();
