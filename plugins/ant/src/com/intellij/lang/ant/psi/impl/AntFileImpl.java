@@ -50,6 +50,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Alarm;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.Processor;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.TaskContainer;
@@ -101,7 +102,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   private ClassLoader myClassLoader;
   private Hashtable myProjectProperties;
   private boolean myNeedPropertiesRebuild = false;
-  private Map<String, AntProperty> myProperties;
+  private Map<String, List<AntProperty>> myProperties;
   private volatile AntProperty[] myPropertiesArray;
   private volatile PropertiesWatcher myDependentFilesWatcher;
   private List<String> myEnvPrefixes;
@@ -219,7 +220,16 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       copy.myProjectElements = myProjectElements == null ? null : new HashMap<AntTypeId, String>(myProjectElements);
       copy.myClassLoader = myClassLoader;
       copy.myExternalProperties = myExternalProperties != null? new HashMap<String, String>(myExternalProperties) : null;
-      copy.myProperties = myProperties != null? new HashMap<String, AntProperty>(myProperties) : null;
+      if (myProperties != null) {
+        final HashMap<String, List<AntProperty>> map = new HashMap<String, List<AntProperty>>();
+        for (Map.Entry<String, List<AntProperty>> entry : myProperties.entrySet()) {
+          map.put(entry.getKey(), new ArrayList<AntProperty>(entry.getValue()));
+        }
+        copy.myProperties = map;
+      }
+      else {
+        copy.myProperties = null;
+      }
 
       return copy;
     }
@@ -411,6 +421,10 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     return getPropertyRecursively(name, new HashSet<AntFile>());
   }
 
+  public void processAllProperties(@NonNls String name, Processor<AntProperty> processor) {
+    processAllPropertiesRecursively(name, new HashSet<AntFile>(), processor);
+  }
+
   @Nullable
   private AntProperty getPropertyRecursively(final String name, final Set<AntFile> processed) {
     if (name == null || processed.contains(this)) {
@@ -422,7 +436,13 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       AntProperty antProperty;
 
       synchronized (PsiLock.LOCK) {
-        antProperty = myProperties != null ? myProperties.get(name) : null;
+        if (myProperties != null) {
+          final List<AntProperty> antProperties = myProperties.get(name);
+          antProperty = antProperties != null && !antProperties.isEmpty()? antProperties.get(0) : null;
+        }
+        else {
+          antProperty = null;
+        }
       }
 
       if (antProperty == null) {
@@ -444,6 +464,43 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     }
   }
 
+  private void processAllPropertiesRecursively(final String name, final Set<AntFile> processed, Processor<AntProperty> processor) {
+    if (name == null || processed.contains(this)) {
+      return;
+    }
+    processed.add(this);
+
+    try {
+      synchronized (PsiLock.LOCK) {
+        if (myProperties != null) {
+          final List<AntProperty> antProperties = myProperties.get(name);
+          if (antProperties != null) {
+            for (AntProperty property : antProperties) {
+              if (!processor.process(property)) {
+                return;
+              }
+            }
+          }
+        }
+      }
+
+      final AntProject antProject = getAntProject();
+      if (antProject != null) {
+        for (AntFile imported : antProject.getImportedFiles()) {
+          if (imported instanceof AntFileImpl) {
+            ((AntFileImpl)imported).processAllPropertiesRecursively(name, processed, processor);
+          }
+          else {
+            imported.processAllProperties(name, processor);
+          }
+        }
+      }
+    }
+    finally {
+      processed.remove(this);
+    }
+  }
+
   public void buildPropertiesIfNeeded() {
     if (myNeedPropertiesRebuild || (myDependentFilesWatcher != null && myDependentFilesWatcher.needRebuildProperties())) {
       buildPropertiesMap();
@@ -453,7 +510,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   private void buildPropertiesMap() {
     myNeedPropertiesRebuild = false;
     myDependentFilesWatcher = null;
-    myProperties = new HashMap<String, AntProperty>();
+    myProperties = new HashMap<String, List<AntProperty>>();
     myPropertiesArray = null;
     loadPredefinedProperties(myProjectProperties, myExternalProperties);
     final List<PsiFile> dependentFiles = PropertiesBuilder.defineProperties(this);
@@ -577,7 +634,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
             return super.getNavigationElement();
           }
         };
-        myProperties.put(property.getName(), property);
+        appendProperty(property.getName(), property);
       }
     }
     finally {
@@ -591,15 +648,20 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       if (myNeedPropertiesRebuild) {
         buildPropertiesMap();
       }
-      if (myProperties == null) {
-        myProperties = new HashMap<String, AntProperty>();
-        myPropertiesArray = null;
-      }
-      if (!myProperties.containsKey(name)) {
-        myProperties.put(name, element);
-        myPropertiesArray = null;
-      }
+      appendProperty(name, element);
     }
+  }
+
+  private void appendProperty(String name, AntProperty element) {
+    if (myProperties == null) {
+      myProperties = new HashMap<String, List<AntProperty>>();
+    }
+    List<AntProperty> props = myProperties.get(name);
+    if (props == null) {
+      myProperties.put(name, props = new ArrayList<AntProperty>());
+    }
+    props.add(element);
+    myPropertiesArray = null;
   }
 
   @NotNull
@@ -612,7 +674,13 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
         return AntProperty.EMPTY_ARRAY;
       }
       if (myPropertiesArray == null) {
-        myPropertiesArray = myProperties.values().toArray(new AntProperty[myProperties.size()]);
+        final List<AntProperty> props = new ArrayList<AntProperty>(myProperties.size());
+        for (List<AntProperty> list : myProperties.values()) {
+          if (!list.isEmpty()) {
+            props.add(list.get(0));
+          }
+        }
+        myPropertiesArray = props.toArray(new AntProperty[props.size()]);
       }
       return myPropertiesArray;
     }
