@@ -122,12 +122,7 @@ public class PutSourceItemIntoParentAndLinkViaManifestAction extends PutIntoDefa
     });
 
     final ArtifactEditor parentArtifactEditor = context.getOrCreateEditor(parentsInfo.getParentArtifact());
-    final ParentElementsInfo finalParentsInfo = parentsInfo;
-    context.editLayout(parentsInfo.getParentArtifact(), new Runnable() {
-      public void run() {
-        parentArtifactEditor.addToClasspath(finalParentsInfo.getParentElement(), classpath);
-      }
-    });
+    parentArtifactEditor.addToClasspath(parentsInfo.getParentElement(), classpath);
     ((ArtifactEditorImpl)context.getOrCreateEditor(parentsInfo.getGrandparentArtifact())).rebuildTries();
   }
 

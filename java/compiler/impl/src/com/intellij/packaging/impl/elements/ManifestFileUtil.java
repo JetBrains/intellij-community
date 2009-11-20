@@ -15,22 +15,32 @@
  */
 package com.intellij.packaging.impl.elements;
 
+import com.intellij.CommonBundle;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.compiler.make.ManifestBuilder;
 import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.elements.PackagingElementFactory;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.artifacts.PackagingElementPath;
 import com.intellij.packaging.impl.artifacts.PackagingElementProcessor;
+import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.ManifestFileConfiguration;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
@@ -135,11 +145,10 @@ public class ManifestFileUtil {
     }
   }
 
-  public static void updateManifest(VirtualFile file, ManifestFileConfiguration configuration, final boolean replaceValues) {
+  public static void updateManifest(VirtualFile file, final String mainClass, final List<String> classpath, final boolean replaceValues) {
     final Manifest manifest = readManifest(file);
     final Attributes mainAttributes = manifest.getMainAttributes();
 
-    final String mainClass = configuration.getMainClass();
     if (mainClass != null) {
       mainAttributes.put(Attributes.Name.MAIN_CLASS, mainClass);
     }
@@ -147,7 +156,6 @@ public class ManifestFileUtil {
       mainAttributes.remove(Attributes.Name.MAIN_CLASS);
     }
 
-    final List<String> classpath = configuration.getClasspath();
     if (classpath != null && !classpath.isEmpty()) {
       List<String> updatedClasspath;
       if (replaceValues) {
@@ -188,29 +196,16 @@ public class ManifestFileUtil {
   }
 
   @NotNull
-  public static ManifestFileConfiguration createManifestFileConfiguration(CompositePackagingElement<?> element,
-                                                                    final PackagingElementResolvingContext context, final ArtifactType artifactType) {
-    return createManifestFileConfiguration(findManifestFile(element, context, artifactType));
-  }
-
-  @NotNull
-  public static ManifestFileConfiguration createManifestFileConfiguration(@Nullable VirtualFile manifestFile) {
+  public static ManifestFileConfiguration createManifestFileConfiguration(@NotNull VirtualFile manifestFile) {
+    final String path = manifestFile.getPath();
+    Manifest manifest = readManifest(manifestFile);
+    String mainClass = manifest.getMainAttributes().getValue(Attributes.Name.MAIN_CLASS);
+    final String classpathText = manifest.getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
     final List<String> classpath = new ArrayList<String>();
-    String mainClass = null;
-    final String path;
-    if (manifestFile != null) {
-      path = manifestFile.getPath();
-      Manifest manifest = readManifest(manifestFile);
-      mainClass = manifest.getMainAttributes().getValue(Attributes.Name.MAIN_CLASS);
-      final String classpathText = manifest.getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
-      if (classpathText != null) {
-        classpath.addAll(StringUtil.split(classpathText, " "));
-      }
+    if (classpathText != null) {
+      classpath.addAll(StringUtil.split(classpathText, " "));
     }
-    else {
-      path = null;
-    }
-    return new ManifestFileConfiguration(classpath, mainClass, path);
+    return new ManifestFileConfiguration(path, classpath, mainClass);
   }
 
   public static List<String> getClasspathForElements(List<? extends PackagingElement<?>> elements, PackagingElementResolvingContext context, final ArtifactType artifactType) {
@@ -236,5 +231,56 @@ public class ManifestFileUtil {
       ArtifactUtil.processPackagingElements(element, null, processor, context, true, artifactType);
     }
     return classpath;
+  }
+
+  @Nullable
+  public static VirtualFile showDialogAndCreateManifest(final ArtifactEditorContext context, final CompositePackagingElement<?> element) {
+    FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+    descriptor.setTitle("Select Directory for META-INF/MANIFEST.MF file");
+    final VirtualFile directory = suggestManifestFileDirectory(element, context, context.getArtifactType());
+    final VirtualFile[] files = FileChooser.chooseFiles(context.getProject(), descriptor, directory);
+    if (files.length != 1) {
+      return null;
+    }
+
+    final Ref<IOException> exc = Ref.create(null);
+    final VirtualFile file = new WriteAction<VirtualFile>() {
+      protected void run(final Result<VirtualFile> result) {
+        VirtualFile dir = files[0];
+        try {
+          if (!dir.getName().equals(MANIFEST_DIR_NAME)) {
+            VirtualFile newDir = dir.findChild(MANIFEST_DIR_NAME);
+            if (newDir == null) {
+              newDir = dir.createChildDirectory(this, MANIFEST_DIR_NAME);
+            }
+            dir = newDir;
+          }
+          result.setResult(dir.createChildData(this, MANIFEST_FILE_NAME));
+        }
+        catch (IOException e) {
+          exc.set(e);
+        }
+      }
+    }.execute().getResultObject();
+
+    final IOException exception = exc.get();
+    if (exception != null) {
+      LOG.info(exception);
+      Messages.showErrorDialog(context.getProject(), exception.getMessage(), CommonBundle.getErrorTitle());
+      return null;
+    }
+    return file;
+  }
+
+  public static void addManifestFileToLayout(final @NotNull String path, final @NotNull ArtifactEditorContext context,
+                                             final @NotNull CompositePackagingElement<?> element) {
+    context.editLayout(context.getArtifact(), new Runnable() {
+      public void run() {
+        final VirtualFile file = findManifestFile(element, context, context.getArtifactType());
+        if (file == null || !FileUtil.pathsEqual(file.getPath(), path)) {
+          PackagingElementFactory.getInstance().addFileCopy(element, MANIFEST_DIR_NAME, path, MANIFEST_FILE_NAME);
+        }
+      }
+    });
   }
 }

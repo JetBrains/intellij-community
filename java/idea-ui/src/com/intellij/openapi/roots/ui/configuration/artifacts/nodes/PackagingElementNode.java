@@ -147,27 +147,45 @@ public class PackagingElementNode<E extends PackagingElement<?>> extends Artifac
     return null;
   }
 
-  @Nullable
-  public PackagingElementNode findChildByElement(@NotNull PackagingElement<?> element) {
-    final SimpleNode[] children = getCached();
-    if (children != null) {
+
+  public List<PackagingElementNode<?>> getNodesByPath(List<PackagingElement<?>> pathToPlace) {
+    List<PackagingElementNode<?>> result = new ArrayList<PackagingElementNode<?>>();
+    PackagingElementNode<?> current = this;
+    int i = 0;
+    result.add(current);
+    while (current != null && i < pathToPlace.size()) {
+      final SimpleNode[] children = current.getCached();
+      if (children == null) {
+        break;
+      }
+
+      PackagingElementNode<?> next = null;
+      final PackagingElement<?> element = pathToPlace.get(i);
+
+      search:
       for (SimpleNode child : children) {
         if (child instanceof PackagingElementNode<?>) {
-          PackagingElementNode<?> elementNode = (PackagingElementNode<?>)child;
-          for (PackagingElement<?> childElement : elementNode.getPackagingElements()) {
+          PackagingElementNode<?> childNode = (PackagingElementNode<?>)child;
+          for (PackagingElement<?> childElement : childNode.getPackagingElements()) {
             if (childElement.isEqualTo(element)) {
-              return elementNode;
+              next = childNode;
+              break search;
             }
           }
-          for (PackagingNodeSource nodeSource : elementNode.getNodeSources()) {
+          for (PackagingNodeSource nodeSource : childNode.getNodeSources()) {
             if (nodeSource.getSourceElement().isEqualTo(element)) {
-              return elementNode;
+              next = current;
+              break search;
             }
           }
         }
       }
+      current = next;
+      if (current != null) {
+        result.add(current);
+      }
+      i++;
     }
-
-    return null;
+    return result;
   }
 }

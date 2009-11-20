@@ -15,39 +15,45 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.elements.ManifestFileUtil;
 import com.intellij.packaging.ui.ManifestFileConfiguration;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 public class ManifestFilesInfo {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.artifacts.ManifestFilesInfo");
-  private Map<CompositePackagingElement<?>, ManifestFileConfiguration> myManifestFiles = new HashMap<CompositePackagingElement<?>, ManifestFileConfiguration>();
-  private Map<CompositePackagingElement<?>, ManifestFileConfiguration> myOriginalManifestFiles = new HashMap<CompositePackagingElement<?>, ManifestFileConfiguration>();
+  private Map<VirtualFile, ManifestFileConfiguration> myManifestFiles = new HashMap<VirtualFile, ManifestFileConfiguration>();
+  private Map<VirtualFile, ManifestFileConfiguration> myOriginalManifestFiles = new HashMap<VirtualFile, ManifestFileConfiguration>();
 
+  @Nullable 
   public ManifestFileConfiguration getManifestFile(CompositePackagingElement<?> element, ArtifactType artifactType,
                                                    final PackagingElementResolvingContext context) {
-    ManifestFileConfiguration manifestFile = myManifestFiles.get(element);
+    final VirtualFile manifestFile = ManifestFileUtil.findManifestFile(element, context, artifactType);
     if (manifestFile == null) {
-      manifestFile = ManifestFileUtil.createManifestFileConfiguration(element, context, artifactType);
-      myOriginalManifestFiles.put(element, new ManifestFileConfiguration(manifestFile));
-      myManifestFiles.put(element, manifestFile);
+      return null;
     }
-    return manifestFile;
+
+    ManifestFileConfiguration configuration = myManifestFiles.get(manifestFile);
+    if (configuration == null) {
+      configuration = ManifestFileUtil.createManifestFileConfiguration(manifestFile);
+      myOriginalManifestFiles.put(manifestFile, new ManifestFileConfiguration(configuration));
+      myManifestFiles.put(manifestFile, configuration);
+    }
+    return configuration;
   }
 
   public void saveManifestFiles() {
-    for (Map.Entry<CompositePackagingElement<?>, ManifestFileConfiguration> entry : myManifestFiles.entrySet()) {
+    for (Map.Entry<VirtualFile, ManifestFileConfiguration> entry : myManifestFiles.entrySet()) {
       final ManifestFileConfiguration configuration = entry.getValue();
       final String path = configuration.getManifestFilePath();
       if (path == null) continue;
@@ -68,7 +74,7 @@ public class ManifestFilesInfo {
         }
       }
 
-      ManifestFileUtil.updateManifest(file, configuration, true);
+      ManifestFileUtil.updateManifest(file, configuration.getMainClass(), configuration.getClasspath(), true);
     }
   }
 
@@ -79,14 +85,5 @@ public class ManifestFilesInfo {
   public void clear() {
     myManifestFiles.clear();
     myOriginalManifestFiles.clear();
-  }
-
-  public boolean isManifestFile(@NotNull String path) {
-    for (ManifestFileConfiguration configuration : myManifestFiles.values()) {
-      if (path.equals(configuration.getManifestFilePath())) {
-        return true;
-      }
-    }
-    return false;
   }
 }

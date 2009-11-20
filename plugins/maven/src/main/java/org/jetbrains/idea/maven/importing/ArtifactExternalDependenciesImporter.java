@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.roots.ui.configuration.artifacts.ManifestFilesInfo;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.packaging.elements.CompositePackagingElement;
@@ -27,8 +28,10 @@ import com.intellij.packaging.impl.artifacts.PackagingElementPath;
 import com.intellij.packaging.impl.artifacts.PackagingElementProcessor;
 import com.intellij.packaging.impl.elements.ArtifactElementType;
 import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
+import com.intellij.packaging.impl.elements.ManifestFileUtil;
 import com.intellij.packaging.ui.ManifestFileConfiguration;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,6 +45,7 @@ public class ArtifactExternalDependenciesImporter {
   private ManifestFilesInfo myManifestFiles = new ManifestFilesInfo();
   private Map<Artifact, List<PackagingElement<?>>> myExternalDependencies = new HashMap<Artifact, List<PackagingElement<?>>>();
 
+  @Nullable
   public ManifestFileConfiguration getManifestFile(@NotNull Artifact artifact,
                                                    @NotNull PackagingElementResolvingContext context) {
     return myManifestFiles.getManifestFile(artifact.getRootElement(), artifact.getArtifactType(), context);

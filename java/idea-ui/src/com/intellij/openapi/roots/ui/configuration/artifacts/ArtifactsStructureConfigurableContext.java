@@ -33,10 +33,8 @@ public interface ArtifactsStructureConfigurableContext extends PackagingElementR
   @NotNull
   ModifiableArtifactModel getOrCreateModifiableArtifactModel();
 
-  @NotNull
+  @Nullable
   ManifestFileConfiguration getManifestFile(CompositePackagingElement<?> element, ArtifactType artifactType);
-
-  boolean isManifestFile(String path);
 
   CompositePackagingElement<?> getRootElement(@NotNull Artifact artifact);
 
