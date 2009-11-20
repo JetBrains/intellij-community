@@ -26,9 +26,6 @@ import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -43,6 +40,8 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
@@ -50,7 +49,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -91,7 +93,7 @@ public class GitRootTracker implements VcsListener {
    */
   private final AtomicBoolean myNotificationPosted = new AtomicBoolean(false);
 
-  private final Object myCheckRootsLock = new Object();
+  private final MergingUpdateQueue myQueue;
 
   private Notification myNotification;
 
@@ -129,12 +131,14 @@ public class GitRootTracker implements VcsListener {
    * @param multicaster the listeners to notify
    */
   public GitRootTracker(GitVcs vcs, @NotNull Project project, @NotNull GitRootsListener multicaster) {
+
     myMulticaster = multicaster;
     if (project.isDefault()) {
       throw new IllegalArgumentException("The project must not be default");
     }
     myProject = project;
     myProjectRoots = ProjectRootManager.getInstance(myProject);
+    myQueue = new MergingUpdateQueue("queue", 500, true, null, project, null, false);
     myVcs = vcs;
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
     myVcsManager.addVcsListener(this);
@@ -208,12 +212,10 @@ public class GitRootTracker implements VcsListener {
       doCheckRoots(rootsChanged);
       return;
     }
-    ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Checking Git roots...") {
-      public void run(@NotNull ProgressIndicator indicator) {
-        synchronized (myCheckRootsLock) {
-          if (myProject.isDisposed()) return;
-          doCheckRoots(rootsChanged);
-        }
+    myQueue.queue(new Update("root check") {
+      public void run() {
+        if (myProject.isDisposed()) return;
+        doCheckRoots(rootsChanged);
       }
     });
   }
@@ -250,7 +252,6 @@ public class GitRootTracker implements VcsListener {
         return false;
       }
     });
-
     if (!hasInvalidRoots && rootSet.isEmpty()) {
       myHasGitRoots.set(false);
       return;
@@ -306,12 +307,11 @@ public class GitRootTracker implements VcsListener {
    *
    * @param directory the content root to check
    * @param rootSet   the mapped root set
-   * @return true if there are unmapped subroots
    */
   private static boolean hasUnmappedSubroots(final VirtualFile directory, final @Nullable HashSet<VirtualFile> rootSet) {
     VirtualFile[] children = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile[]>() {
       public VirtualFile[] compute() {
-        return directory.getChildren();
+        return directory.isValid() ? directory.getChildren() : VirtualFile.EMPTY_ARRAY;
       }
     });
 
