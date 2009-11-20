@@ -30,7 +30,6 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
@@ -48,7 +47,10 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.ui.*;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.FileColorManager;
+import com.intellij.ui.ListUtil;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.FilteringListModel;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
@@ -310,16 +312,11 @@ public class BookmarksAction extends AnAction implements DumbAware {
 
       if (!selected) {
         FileColorManager colorManager = FileColorManager.getInstance(project);
-        if (colorManager.isEnabled()) {
-          if (fileOrDir instanceof PsiFile) {
-            Color color = colorManager.getFileColor((PsiFile)fileOrDir);
-            if (color != null) {
-              renderer.setBackground(color);
-            }
+        if (fileOrDir instanceof PsiFile) {
+          Color color = colorManager.getRendererBackground((PsiFile)fileOrDir);
+          if (color != null) {
+            renderer.setBackground(color);
           }
-        }
-        else if (FileEditorManager.getInstance(project).isFileOpen(file)) {
-          renderer.setBackground(LightColors.SLIGHTLY_GREEN);
         }
       }
 
