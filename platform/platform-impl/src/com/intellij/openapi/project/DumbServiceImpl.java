@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.Queue;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
@@ -184,7 +185,25 @@ public class DumbServiceImpl extends DumbService {
   }
 
   private static final Ref<CacheUpdateRunner> NULL_ACTION = new Ref<CacheUpdateRunner>(null);
-  
+
+  public void waitForSmartMode() {
+    final Application application = ApplicationManager.getApplication();
+    if (!application.isUnitTestMode()) {
+      assert !application.isDispatchThread();
+      assert !application.isReadAccessAllowed();
+    }
+
+    final Semaphore semaphore = new Semaphore();
+    semaphore.down();
+    runWhenSmart(new Runnable() {
+          public void run() {
+            semaphore.up();
+          }
+        });
+    semaphore.waitFor();
+    LOG.assertTrue(!isDumb());
+  }
+
   private class IndexUpdateRunnable implements Runnable {
     private final CacheUpdateRunner myAction;
     private double myProcessedItems;
