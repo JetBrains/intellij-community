@@ -251,7 +251,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     }
   }
 
-  public Collection<Value> getArgumentValues() throws EvaluateException {
+  public List<Value> getArgumentValues() throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     try {
       final StackFrame stackFrame = getStackFrame();
@@ -260,7 +260,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
         try {
           final Method method = StackFrame.class.getMethod("getArgumentValues");
           //noinspection unchecked
-          return (Collection<Value>)method.invoke(stackFrame, ArrayUtil.EMPTY_OBJECT_ARRAY);
+          return (List<Value>)method.invoke(stackFrame, ArrayUtil.EMPTY_OBJECT_ARRAY);
         }
         catch (NoSuchMethodException ignored) {
         }
