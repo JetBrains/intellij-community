@@ -40,6 +40,7 @@ public class ConvertMethodToClosureIntention extends Intention {
 
   @Override
   protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+    element = element.getParent();
     final GrMethod method = (GrMethod)element;
     StringBuilder builder = new StringBuilder(method.getTextLength());
     String modifiers = method.getModifierList().getText();
@@ -58,7 +59,12 @@ public class ConvertMethodToClosureIntention extends Intention {
 
   private static class MyPredicate implements PsiElementPredicate {
     public boolean satisfiedBy(PsiElement element) {
-      return element instanceof GrMethod && ((GrMethod)element).getBlock() != null && element.getParent() instanceof GrTypeDefinitionBody;
+      final PsiElement parent = element.getParent();
+      return parent instanceof GrMethod &&
+             element == ((GrMethod)parent).getNameIdentifierGroovy() &&
+             ((GrMethod)parent).getBlock() != null &&
+             parent.getParent() instanceof GrTypeDefinitionBody;
+//      return element instanceof GrMethod && ((GrMethod)element).getBlock() != null && element.getParent() instanceof GrTypeDefinitionBody;
     }
   }
 }
