@@ -171,7 +171,7 @@ public class GroovyAnnotator implements Annotator {
       }
     }
     else if (element instanceof GrImportStatement) {
-      checkAnnotationList(holder, ((GrImportStatement)element).getAnnotationList());
+      checkAnnotationList(holder, ((GrImportStatement)element).getAnnotationList(), GroovyBundle.message("import.statement.cannot.have.modifiers"));
     }
     else {
       final ASTNode node = element.getNode();
@@ -332,14 +332,16 @@ public class GroovyAnnotator implements Annotator {
       }
     }
     final GrModifierList modifierList = packageDefinition.getAnnotationList();
-    checkAnnotationList(holder, modifierList);
+    checkAnnotationList(holder, modifierList, GroovyBundle.message("package.definition.cannot.have.modifiers"));
   }
 
-  private static void checkAnnotationList(AnnotationHolder holder, @Nullable GrModifierList modifierList) {
+  private static void checkAnnotationList(AnnotationHolder holder, @Nullable GrModifierList modifierList, String message) {
     if (modifierList == null) return;
     final PsiElement[] modifiers = modifierList.getModifiers();
     for (PsiElement modifier : modifiers) {
-      holder.createErrorAnnotation(modifier, GroovyBundle.message("package.definition.cannot.have.modifiers"));
+      if (!(modifier instanceof PsiAnnotation)) {
+        holder.createErrorAnnotation(modifier, message);
+      }
     }
   }
 
