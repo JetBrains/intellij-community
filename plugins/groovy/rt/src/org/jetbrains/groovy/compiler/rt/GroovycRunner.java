@@ -181,15 +181,17 @@ public class GroovycRunner {
 
       String line;
 
-      while ((line = reader.readLine()) != null && !line.equals(OUTPUTPATH)) {
-        if (SRC_FILE.equals(line)) {
-          final File file = new File(reader.readLine());
-          srcFiles.add(file);
-          String s;
-          while (!END.equals(s = reader.readLine())) {
-            class2File.put(s, file);
-          }
+      while ((line = reader.readLine()) != null) {
+        if (!SRC_FILE.equals(line)) {
+          break;
         }
+
+        final File file = new File(reader.readLine());
+        srcFiles.add(file);
+        while (!END.equals(line = reader.readLine())) {
+          class2File.put(line, file);
+        }
+
       }
 
       while (line != null) {
