@@ -15,17 +15,15 @@
  */
 package org.jetbrains.generate.tostring.psi;
 
-import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.generate.tostring.util.StringUtil;
 
@@ -40,17 +38,7 @@ public abstract class PsiAdapter {
     protected PsiAdapter() {
     }
 
-    /**
-     * Get's the PSIManager.
-     *
-     * @param project IDEA project.
-     * @return the PSIManager.
-     */
-    public PsiManager getPsiManager(Project project) {
-        return PsiManager.getInstance(project);
-    }
-
-    /**
+  /**
      * Get's the fields for the class.
      *
      * @param clazz class.
@@ -283,17 +271,7 @@ public abstract class PsiAdapter {
         }
     }
 
-    /**
-     * Is the given type an array? (using [] in its name)
-     *
-     * @param type the type.
-     * @return true if it is an array, false if not.
-     */
-    private boolean isArray(PsiType type) {
-        return type.getCanonicalText().indexOf("[]") > 0;
-    }
-
-    /**
+  /**
      * Is there a <code>transient</code> modifier?
      * <p/>eg: <code>private transient String myField;</code>.
      *
@@ -403,17 +381,7 @@ public abstract class PsiAdapter {
         return CodeStyleManager.getInstance(project);
     }
 
-    /**
-     * Does the class have any fields?
-     *
-     * @param clazz the PsiClass.
-     * @return true if the class has fields.
-     */
-    public boolean hasFields(PsiClass clazz) {
-        return clazz.getFields().length > 0;
-    }
-
-    /**
+  /**
      * Does the javafile have the import statement?
      *
      * @param javaFile        javafile.
@@ -500,18 +468,7 @@ public abstract class PsiAdapter {
         return (!"Object".equals(superClass.getName()));
     }
 
-    /**
-     * Optimizes the imports on the given java file.
-     *
-     * @param project  the PSI project
-     * @param javaFile the java file
-     * @throws IncorrectOperationException error optimizing imports.
-     */
-    public void optimizeImports(Project project, PsiJavaFile javaFile) throws IncorrectOperationException {
-        JavaCodeStyleManager.getInstance(project).optimizeImports(javaFile);
-    }
-
-    /**
+  /**
      * Get's the fields fully qualified classname (etc java.lang.String, java.util.ArrayList)
      *
      * @param type the type.
@@ -553,82 +510,7 @@ public abstract class PsiAdapter {
         return name.substring(i + 1, name.length());
     }
 
-    /**
-     * Removes the action from the menu.
-     * <p/>
-     * The group must be of a DefaultActionGroup instance, if not this method returns false.
-     *
-     * @param actionId group id of the action to remove.
-     * @param menuId   id of the menu that contains the action. See ActionManager.xml in the IDEA openapi folder.
-     * @return true if the action was remove, false if not (action could not be found)
-     */
-    public boolean removeActionFromMenu(String actionId, String menuId) {
-        ActionManager am = ActionManager.getInstance();
-        AnAction group = am.getAction(menuId);
-
-        // must be default action group
-        if (group instanceof DefaultActionGroup) {
-            DefaultActionGroup defGroup = (DefaultActionGroup) group;
-
-            // loop children (actions) and remove the matching id
-            AnAction[] actions = defGroup.getChildren(null);
-            for (AnAction action : actions) {
-                String id = am.getId(action);
-
-                // if match id then remove action from menu
-                if (actionId.equals(id)) {
-                    defGroup.remove(action);
-                    return true;
-                }
-
-            }
-
-        }
-
-        // action to remove not found
-        return false;
-    }
-
-    /**
-     * Adds the action to the menu.
-     * <p/>
-     * The group must be of a DefaultActionGroup instance, if not this method returns false.
-     *
-     * @param actionId    group id of the action to add.
-     * @param menuId      id of the menu the action should be added to. See ActionManager.xml in the IDEA openapi folder.
-     * @param anchorId    id of the action to position relative to.  See ActionManager.xml in the IDEA openapi folder.
-     * @param afterAnchor true if the action should be added after the anchorId, false if before.
-     * @return true if the action was added, false if not.
-     */
-    public boolean addActionToMenu(String actionId, String menuId, String anchorId, boolean afterAnchor) {
-        ActionManager am = ActionManager.getInstance();
-        AnAction group = am.getAction(menuId);
-
-        // must be default action group
-        if (group instanceof DefaultActionGroup) {
-            DefaultActionGroup defGroup = (DefaultActionGroup) group;
-
-            // loop children (actions) and remove the matching id
-            AnAction[] actions = defGroup.getChildren(null);
-            for (AnAction action : actions) {
-                String id = am.getId(action);
-
-                // if match id then add action to menu
-                if (anchorId.equals(id)) {
-                    AnAction actionToAdd = am.getAction(actionId); // find the action to add
-                    defGroup.add(actionToAdd, new Constraints(afterAnchor ? Anchor.AFTER : Anchor.BEFORE, anchorId));
-                    return true;
-                }
-
-            }
-
-        }
-
-        // action to add next to not found
-        return false;
-    }
-
-    /**
+  /**
      * Finds the public static void main(String[] args) method.
      *
      * @param clazz the class.
@@ -817,27 +699,7 @@ public abstract class PsiAdapter {
         return null;
     }
 
-    /**
-     * Get's the javadoc for the given method as a String.
-     *
-     * @param method the method
-     * @return the javadoc, null if no javadoc.
-     */
-    @Nullable
-    public String getJavaDoc(PsiMethod method) {
-        if (method == null) {
-            return null;
-        }
-
-        PsiDocComment doc = method.getDocComment();
-        if (doc != null) {
-            return doc.getText();
-        }
-
-        return null;
-    }
-
-    /**
+  /**
      * Returns true if the field is enum (JDK1.5).
      *
      * @param field   field to check if it's a enum
@@ -929,22 +791,7 @@ public abstract class PsiAdapter {
         return isModifierAbstract(clazz.getModifierList());
     }
 
-    /**
-     * Finds the PsiElement at the current cursor position in the javafile.
-     *
-     * @param javaFile javafile for the class to find.
-     * @param editor   the editor.
-     * @return the elemenet, null if not found or not possible to find.
-     */
-    @Nullable
-    public PsiElement findElementAtCursorPosition(PsiJavaFile javaFile, Editor editor) {
-        if (javaFile == null) {
-            return null;
-        }
-        return javaFile.findElementAt(editor.getCaretModel().getOffset());
-    }
-
-    /**
+  /**
      * Finds the public boolean equals(Object o) method.
      *
      * @param clazz the class.
@@ -1172,23 +1019,7 @@ public abstract class PsiAdapter {
         }
     }
 
-    /**
-     * Looks for a PsiMethod within the elements parent.
-     *
-     * @param elem the element
-     * @return the parent method if found, <tt>null</tt> if not found.
-     */
-    @Nullable
-    public static PsiMethod findParentMethod(PsiElement elem) {
-        if (elem == null) {
-            return null;
-        } else if (elem instanceof PsiMethod) {
-            return (PsiMethod) elem;
-        }
-        return findParentMethod(elem.getParent());
-    }
-
-    /**
+  /**
      * Get's the full filename to this plugin .jar file
      *
      * @return the full filename to this plugin .jar file
