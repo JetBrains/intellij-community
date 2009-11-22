@@ -139,11 +139,6 @@ public abstract class AbstractConfigUtils {
 
   public abstract boolean isSDKLibrary(Library library);
 
-  @NotNull
-  public String getSDKLibVersion(Library library) {
-    return getSDKVersion(LibrariesUtil.getGroovyLibraryHome(library));
-  }
-
   public Library[] getSDKLibrariesByModule(final Module module) {
     final Condition<Library> condition = new Condition<Library>() {
       public boolean value(Library library) {
@@ -153,15 +148,5 @@ public abstract class AbstractConfigUtils {
     return LibrariesUtil.getLibrariesByCondition(module, condition);
   }
 
-  public Collection<String> getSDKVersions(final Project project) {
-    return ContainerUtil.map2List(getAllSDKLibraries(project), new Function<Library, String>() {
-      public String fun(Library library) {
-        return getSDKLibVersion(library);
-      }
-    });
-  }
-
-  @NotNull
-  public abstract String getSDKInstallPath(Module module);
 
 }
