@@ -130,7 +130,8 @@ public class XDebugSessionTab extends DebuggerLogConsoleManagerBase {
   }
 
   public XDebugSessionData saveData() {
-    return new XDebugSessionData(myWatchesView.getWatchExpressions());
+    final List<String> watchExpressions = myWatchesView.getWatchExpressions();
+    return new XDebugSessionData(watchExpressions.toArray(new String[watchExpressions.size()]));
   }
 
   public ExecutionConsole getConsole() {
