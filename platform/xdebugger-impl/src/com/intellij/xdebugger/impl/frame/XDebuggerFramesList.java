@@ -39,7 +39,12 @@ public class XDebuggerFramesList extends DebuggerFramesList {
           repaint();
         }
       });
-      mySelectedFrame = (XStackFrame)selectedValue;
+      if (selectedValue instanceof XStackFrame) {
+        mySelectedFrame = (XStackFrame)selectedValue;
+      }
+      else {
+        mySelectedFrame = null;
+      }
     }
   }
 

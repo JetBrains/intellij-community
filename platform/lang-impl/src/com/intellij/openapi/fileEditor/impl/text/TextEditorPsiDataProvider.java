@@ -17,6 +17,8 @@
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.ide.IdeView;
+import com.intellij.ide.util.EditorHelper;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -30,13 +32,13 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.ide.IdeView;
-import com.intellij.ide.util.EditorHelper;
 import org.jetbrains.annotations.Nullable;
 
 public class TextEditorPsiDataProvider implements EditorDataProvider {
   @Nullable
   public Object getData(final String dataId, final Editor e, final VirtualFile file) {
+    if (!file.isValid()) return null;
+
     if (dataId.equals(AnActionEvent.injectedId(DataConstants.EDITOR))) {
       if (PsiDocumentManager.getInstance(e.getProject()).isUncommited(e.getDocument())) {
         return e;
