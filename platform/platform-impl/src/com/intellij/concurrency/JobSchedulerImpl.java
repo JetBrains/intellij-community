@@ -23,7 +23,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.concurrent.*;
+import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -34,7 +37,9 @@ public class JobSchedulerImpl extends JobScheduler implements Disposable {
   private static final ThreadFactory WORKERS_FACTORY = new ThreadFactory() {
     int i;
     public Thread newThread(final Runnable r) {
-      return new Thread(r, "JobScheduler pool "+i+++"/"+CORES_COUNT);
+      final Thread thread = new Thread(r, "JobScheduler pool " + i++ + "/" + CORES_COUNT);
+      thread.setPriority(Thread.NORM_PRIORITY);
+      return thread;
     }
   };
 

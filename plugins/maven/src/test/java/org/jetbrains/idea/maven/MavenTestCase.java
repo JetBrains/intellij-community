@@ -77,11 +77,15 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
     MavenWorkspaceSettingsComponent.getInstance(myProject).loadState(new MavenWorkspaceSettings());
 
+    String home = getTestMavenHome();
+    if (home != null) {
+      getMavenGeneralSettings().setMavenHome(home);
+    }
+
     restoreSettingsFile();
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        
         try {
           setUpInWriteAction();
         }
@@ -153,11 +157,20 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
   @Override
   protected void runTest() throws Throwable {
-    new WriteAction() {
-      protected void run(Result result) throws Throwable {
-        MavenTestCase.super.runTest();
-      }
-    }.executeSilently().throwException();
+    if (runInWriteAction()) {
+      new WriteAction() {
+        protected void run(Result result) throws Throwable {
+          MavenTestCase.super.runTest();
+        }
+      }.executeSilently().throwException();
+    }
+    else {
+      MavenTestCase.super.runTest();
+    }
+  }
+
+  protected boolean runInWriteAction() {
+    return true;
   }
 
   protected MavenGeneralSettings getMavenGeneralSettings() {
@@ -409,8 +422,12 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   protected boolean hasMavenInstallation() {
-    boolean result = "true".equals(System.getProperty("idea.maven.test.has.installation"));
+    boolean result = getTestMavenHome() != null;
     if (!result) System.out.println("Ignored, because Maven installation not found: " + getClass().getSimpleName() + "." + getName());
     return result;
+  }
+
+  private String getTestMavenHome() {
+    return System.getProperty("idea.maven.test.home");
   }
 }

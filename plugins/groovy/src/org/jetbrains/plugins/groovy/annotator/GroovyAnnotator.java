@@ -218,7 +218,7 @@ public class GroovyAnnotator implements Annotator {
   private static void checkLabeledStatement(GrLabeledStatement statement, AnnotationHolder holder) {
     final String name = statement.getLabelName();
     if (ResolveUtil.resolveLabeledStatement(name, statement, true) != null) {
-      holder.createErrorAnnotation(statement.getLabel(), GroovyBundle.message("label.already.used", name));
+      holder.createWarningAnnotation(statement.getLabel(), GroovyBundle.message("label.already.used", name));
     }
   }
 
@@ -232,19 +232,17 @@ public class GroovyAnnotator implements Annotator {
       }
     }
 
-    final PsiElement targetStatement = statement.findTargetStatement();
+    final GrStatement targetStatement = statement.findTargetStatement();
     if (targetStatement == null) {
       if (statement instanceof GrContinueStatement && label == null) {
         holder.createErrorAnnotation(statement, GroovyBundle.message("continue.outside.loop"));
       }
-      else if (statement instanceof GrBreakStatement) {
-        if (label == null) {
-          holder.createErrorAnnotation(statement, GroovyBundle.message("break.outside.loop.or.switch"));
-        }
-        else if (findFirstLoop(statement) == null) {
-          holder.createErrorAnnotation(statement, GroovyBundle.message("break.outside.loop"));
-        }
+      else if (statement instanceof GrBreakStatement && label == null) {
+        holder.createErrorAnnotation(statement, GroovyBundle.message("break.outside.loop.or.switch"));
       }
+    }
+    if (statement instanceof GrBreakStatement && label != null && findFirstLoop(statement) == null) {
+      holder.createErrorAnnotation(statement, GroovyBundle.message("break.outside.loop"));
     }
   }
 
