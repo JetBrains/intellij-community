@@ -71,6 +71,7 @@ public class StreamLogger implements IStreamLogger {
     };
   }
 
+  // todo!!!! in memory logging
   public InputStream createLoggingInputStream(final InputStream inputStream) {
     return new InputStream() {
       public int read() throws IOException {
@@ -92,6 +93,7 @@ public class StreamLogger implements IStreamLogger {
         }
       }
 
+      // todo !!!! do not read byte by byte
       public int read(byte[] b, int off, int len) throws IOException {
         if (len == 0) return 0;
         final int read = read();
