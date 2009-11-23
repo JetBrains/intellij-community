@@ -537,7 +537,7 @@ public class MavenProjectImporter {
 
     boolean removed = false;
     for (Library each : unusedLibraries) {
-      if (!MavenRootModelAdapter.isChangedByUser(each)) {
+      if (MavenRootModelAdapter.isMavenLibrary(each) && !MavenRootModelAdapter.isChangedByUser(each)) {
         myModelsProvider.removeLibrary(each);
         removed = true;
       }

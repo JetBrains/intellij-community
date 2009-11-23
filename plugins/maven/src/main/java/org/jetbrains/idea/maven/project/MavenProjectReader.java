@@ -499,30 +499,11 @@ public class MavenProjectReader {
   }
 
   private Model expandProperties(Model model, File basedir) {
-    try {
-      AbstractStringBasedModelInterpolator interpolator = new StringSearchModelInterpolator(new DefaultPathTranslator());
-      interpolator.initialize();
-
-      Properties context = MavenEmbedderFactory.collectSystemProperties();
-
-      ProjectBuilderConfiguration config = new DefaultProjectBuilderConfiguration().setExecutionProperties(context);
-      model = interpolator.interpolate(ModelUtils.cloneModel(model), basedir, config, false);
-    }
-    catch (ModelInterpolationException e) {
-      MavenLog.LOG.warn(e);
-    }
-    catch (InitializationException e) {
-      MavenLog.LOG.error(e);
-    }
-
-    return model;
+    return MavenEmbedderWrapper.interpolate(model, basedir);
   }
 
   private void alignModel(Model model, File basedir) {
-    PathTranslator pathTranslator = new DefaultPathTranslator();
-    pathTranslator.alignToBaseDirectory(model, basedir);
-    Build build = model.getBuild();
-    build.setScriptSourceDirectory(pathTranslator.alignToBaseDirectory(build.getScriptSourceDirectory(), basedir));
+    MavenEmbedderWrapper.alignModel(model, basedir);
   }
 
   private MavenProjectProblem createStructureProblem(VirtualFile file, String description) {

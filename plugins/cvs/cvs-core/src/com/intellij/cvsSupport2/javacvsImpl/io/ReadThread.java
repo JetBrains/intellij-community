@@ -57,8 +57,11 @@ public class ReadThread implements Runnable {
     READ_THREADS.add(this);
   }
 
-  public void waitForStart(){
+  public void prepareForWait() {
     myStarted.down();
+  }
+
+  public void waitForStart(){
     myStarted.waitFor();
   }
 

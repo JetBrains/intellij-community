@@ -61,7 +61,8 @@ import com.intellij.util.concurrency.JBLock;
 import com.intellij.util.concurrency.JBReentrantReadWriteLock;
 import com.intellij.util.concurrency.LockFactory;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ConcurrentHashSet;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.*;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -76,9 +77,6 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.io.*;
 import java.util.*;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
@@ -1225,6 +1223,7 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
         tasks.add(new Runnable() {
           public void run() {
             try {
+              ProgressManager.checkCanceled();
               updateSingleIndex(indexId, file, _fc);
             }
             catch (ProcessCanceledException e) {

@@ -89,7 +89,10 @@
   <applicationService serviceInterface="com.intellij.util.InstanceofCheckerGenerator"
                       serviceImplementation="com.intellij.util.InstanceofCheckerGeneratorImpl"/>
   <applicationService serviceInterface="com.intellij.internal.psiView.PsiViewerSettings"
-                  serviceImplementation="com.intellij.internal.psiView.PsiViewerSettings"/>  
+                  serviceImplementation="com.intellij.internal.psiView.PsiViewerSettings"/>
+
+  <applicationService serviceInterface="com.intellij.openapi.keymap.impl.DefaultKeymap"
+                      serviceImplementation="com.intellij.openapi.keymap.impl.DefaultKeymap"/>
 
   <projectService serviceInterface="com.intellij.openapi.vfs.ReadonlyStatusHandler"
                   serviceImplementation="com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl"/>
@@ -169,5 +172,6 @@
   <progressFunComponentProvider implementation="com.intellij.featureStatistics.ProgressFunProvider"/>
   <projectConfigurable implementation="com.intellij.javaee.ExternalResourceConfigurable"/>
 
+  <bundledKeymapProvider implementation="com.intellij.openapi.keymap.impl.DefaultBundledKeymaps"/>
   <!-- <checkinHandlerFactory implementation="com.intellij.openapi.vcs.CheckRemoteStatusCheckinHandlerFactory"/> -->
 </extensions>

@@ -123,11 +123,8 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
         Project project = myUsageView.getProject();
         PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
         if (psiFile != null && psiFile.isValid()) {
-          final FileColorManager colorManager = FileColorManager.getInstance(project);
-          if (colorManager.isEnabled()) {
-            final Color color = colorManager.getFileColor(psiFile);
-            if (color != null) fileBgColor = color;
-          }
+          final Color color = FileColorManager.getInstance(project).getRendererBackground(psiFile);
+          if (color != null) fileBgColor = color;
         }
       }
     }

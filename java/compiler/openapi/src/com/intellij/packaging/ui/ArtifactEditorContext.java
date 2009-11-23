@@ -45,10 +45,8 @@ public interface ArtifactEditorContext extends PackagingElementResolvingContext 
   @Nullable
   ModifiableModuleModel getModifiableModuleModel();
 
-  @NotNull
+  @Nullable
   ManifestFileConfiguration getManifestFile(CompositePackagingElement<?> element, ArtifactType artifactType);
-
-  boolean isManifestFile(String path);
 
 
   CompositePackagingElement<?> getRootElement(@NotNull Artifact artifact);

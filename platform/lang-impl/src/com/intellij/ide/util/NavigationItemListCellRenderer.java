@@ -21,20 +21,19 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.project.Project;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.FileColorManager;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.UIUtil;
 
@@ -107,11 +106,9 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
             isProblemFile = WolfTheProblemSolver.getInstance(project).isProblemFile(virtualFile);
 
             final FileColorManager fileColorManager = FileColorManager.getInstance(project);
-            if (virtualFile != null && fileColorManager.isEnabled()) {
-              final Color fileColor = fileColorManager.getFileColor(psiElement.getContainingFile());
-              if (fileColor != null) {
-                bgColor = fileColor;
-              }
+            final Color fileColor = fileColorManager.getRendererBackground(psiElement.getContainingFile());
+            if (fileColor != null) {
+              bgColor = fileColor;
             }
           }
         }

@@ -234,7 +234,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
       mySingleFile = element.getChild("single-file") != null;
       readExternalImpl(element);
       for (Element placeElement : (List<Element>)element.getChildren("place")) {
-        final boolean enabled = !Boolean.TRUE.equals(placeElement.getAttributeValue("disabled"));
+        final boolean enabled = !Boolean.parseBoolean(placeElement.getAttributeValue("disabled"));
         final String text = placeElement.getText();
         myPlaces.add(new InjectionPlace(text, null, enabled));
       }

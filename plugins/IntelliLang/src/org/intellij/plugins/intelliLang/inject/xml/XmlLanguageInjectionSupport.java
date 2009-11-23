@@ -106,8 +106,13 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
     final Configuration configuration = Configuration.getInstance();
     final ArrayList<BaseInjection> injections = collectInjections(host, configuration);
     if (injections.isEmpty()) return false;
+    final ArrayList<BaseInjection> newInjections = new ArrayList<BaseInjection>();
+    for (BaseInjection injection : injections) {
+      final BaseInjection newInjection = injection.copy();
+      newInjection.setPlaceEnabled(null, false);
+    }
     Configuration.getInstance().replaceInjectionsWithUndo(
-      host.getProject(), Collections.<AbstractTagInjection>emptyList(), injections, Collections.<PsiElement>emptyList());
+      host.getProject(), newInjections, injections, Collections.<PsiElement>emptyList());
     return true;
   }
 

@@ -253,6 +253,7 @@ public class PsiViewerDialog extends DialogWrapper {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         myEditor.getDocument().setText(settings.text);
+        myEditor.getSelectionModel().setSelection(0, settings.text.length());
       }
     });
 

@@ -33,10 +33,13 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 public class ProcessAnnotationsAction extends CompileActionBase {
@@ -52,9 +55,9 @@ public class ProcessAnnotationsAction extends CompileActionBase {
       CompilerManager.getInstance(project).make(new ModuleCompileScope(module, false), filter, null);
     }
     else {
-      VirtualFile[] files = getCompilableFiles(project, PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
-      if (files.length > 0) {
-        CompilerManager.getInstance(project).make(new FileSetCompileScope(Arrays.asList(files), Module.EMPTY_ARRAY), filter, null);
+      final FileSetCompileScope scope = getCompilableFiles(project, PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
+      if (scope != null) {
+        CompilerManager.getInstance(project).make(scope, filter, null);
       }
     }
   }
@@ -87,8 +90,8 @@ public class ProcessAnnotationsAction extends CompileActionBase {
 
     presentation.setVisible(true);
     presentation.setText(createPresentationText(""), true);
-    final VirtualFile[] files = getCompilableFiles(project, PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
-    if (moduleContext == null && files.length == 0) {
+    final FileSetCompileScope scope = getCompilableFiles(project, PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
+    if (moduleContext == null && scope == null) {
       presentation.setEnabled(false);
       return;
     }
@@ -99,8 +102,9 @@ public class ProcessAnnotationsAction extends CompileActionBase {
     }
     else {
       PsiPackage aPackage = null;
-      if (files.length == 1) {
-        final PsiDirectory directory = PsiManager.getInstance(project).findDirectory(files[0]);
+      final Collection<VirtualFile> files = scope.getRootFiles();
+      if (files.size() == 1) {
+        final PsiDirectory directory = PsiManager.getInstance(project).findDirectory(files.iterator().next());
         if (directory != null) {
           aPackage = JavaDirectoryService.getInstance().getPackage(directory);
         }
@@ -120,8 +124,8 @@ public class ProcessAnnotationsAction extends CompileActionBase {
         }
         elementDescription = "'" + name + "'";
       }
-      else if (files.length == 1) {
-        final VirtualFile file = files[0];
+      else if (files.size() == 1) {
+        final VirtualFile file = files.iterator().next();
         FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
         if (CompilerManager.getInstance(project).isCompilableFileType(fileType)) {
           elementDescription = "'" + file.getName() + "'";
@@ -155,15 +159,17 @@ public class ProcessAnnotationsAction extends CompileActionBase {
     return MessageFormat.format(ActionsBundle.actionText("RunAPT"), target);
   }
 
-  private static VirtualFile[] getCompilableFiles(Project project, VirtualFile[] files) {
+  @Nullable
+  private static FileSetCompileScope getCompilableFiles(Project project, VirtualFile[] files) {
     if (files == null || files.length == 0) {
-      return VirtualFile.EMPTY_ARRAY;
+      return null;
     }
     final PsiManager psiManager = PsiManager.getInstance(project);
     final FileTypeManager typeManager = FileTypeManager.getInstance();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final CompilerManager compilerManager = CompilerManager.getInstance(project);
     final List<VirtualFile> filesToCompile = new ArrayList<VirtualFile>();
+    final List<Module> affectedModules = new ArrayList<Module>();
     for (final VirtualFile file : files) {
       if (!fileIndex.isInSourceContent(file)) {
         continue;
@@ -184,7 +190,9 @@ public class ProcessAnnotationsAction extends CompileActionBase {
         }
       }
       filesToCompile.add(file);
+      ContainerUtil.addIfNotNull(fileIndex.getModuleForFile(file), affectedModules);
     }
-    return filesToCompile.size() > 0 ? filesToCompile.toArray(new VirtualFile[filesToCompile.size()]) : VirtualFile.EMPTY_ARRAY;
+    if (filesToCompile.isEmpty()) return null;
+    return new FileSetCompileScope(filesToCompile, affectedModules.toArray(new Module[affectedModules.size()]));
   }
 }

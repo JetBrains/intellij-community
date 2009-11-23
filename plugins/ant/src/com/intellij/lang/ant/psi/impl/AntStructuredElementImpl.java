@@ -24,6 +24,7 @@ import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
 import com.intellij.lang.ant.psi.introspection.impl.AntTypeDefinitionImpl;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -33,10 +34,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SpinAllocator;
-import com.intellij.util.StringBuilderSpinAllocator;
-import com.intellij.util.StringSetSpinAllocator;
+import com.intellij.util.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -527,28 +525,37 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
           continue;
         }
         final String prop = value.substring(startProp + 2, endProp);
-        final AntProperty propElement = antFile.getProperty(prop);
-        String resolvedValue = null;
-        if (propElement != null) {
-          resolvedValue = propElement.getValue(prop);
-          if (resolvedValue != null) {
-            if (elementStack.contains(new Pair<PsiElement, String>(propElement, resolvedValue))) {
-              return value;  // prevent cycles
+        final Ref<String> resolvedValueRef = new Ref<String>(null);
+        final Ref<Boolean> shouldReturnOriginalValue = new Ref<Boolean>(Boolean.FALSE);
+        antFile.processAllProperties(prop, new Processor<AntProperty>() {
+          public boolean process(AntProperty antProperty) {
+            final String resolvedValue = antProperty.getValue(prop);
+            if (resolvedValue == null) {
+              return true;
             }
-            resolvedValue = ((AntStructuredElementImpl)propElement).computeAttributeValue(resolvedValue, elementStack, antConfig);
+            if (elementStack.contains(new Pair<PsiElement, String>(antProperty, resolvedValue))) {
+              shouldReturnOriginalValue.set(Boolean.TRUE);
+            }
+            else {
+              resolvedValueRef.set(((AntStructuredElementImpl)antProperty).computeAttributeValue(resolvedValue, elementStack, antConfig));
+            }
+            return false;
           }
+        });
+        if (shouldReturnOriginalValue.get()) {
+          return value; // prevent cycles
         }
-        if (resolvedValue == null) {
+        if (resolvedValueRef.get() == null) {
           startProp += 2;
         }
         else {
-          if (resolvedValue.equals(value) /*prevent tail recursion*/) {
+          if (resolvedValueRef.get().equals(value) /*prevent tail recursion*/) {
             return value;
           }
           final StringBuilder builder = StringBuilderSpinAllocator.alloc();
           try {
             builder.append(value, 0, startProp);
-            builder.append(resolvedValue);
+            builder.append(resolvedValueRef.get());
             if (endProp < value.length() - 1) {
               builder.append(value, endProp + 1, value.length());
             }

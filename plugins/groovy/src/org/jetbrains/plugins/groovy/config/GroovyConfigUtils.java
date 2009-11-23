@@ -29,6 +29,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,6 +38,8 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
+
+import java.util.Collection;
 
 /**
  * @author ilyas
@@ -173,5 +177,18 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
       return ref.get().booleanValue();
     }
     return false;
+  }
+
+  @NotNull
+  public String getSDKLibVersion(Library library) {
+    return getSDKVersion(LibrariesUtil.getGroovyLibraryHome(library));
+  }
+
+  public Collection<String> getSDKVersions(final Project project) {
+    return ContainerUtil.map2List(getAllSDKLibraries(project), new Function<Library, String>() {
+      public String fun(Library library) {
+        return getSDKLibVersion(library);
+      }
+    });
   }
 }

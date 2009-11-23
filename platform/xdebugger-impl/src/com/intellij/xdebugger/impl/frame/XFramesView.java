@@ -130,13 +130,15 @@ public class XFramesView extends XDebugViewBase {
     }
 
     mySelectedStack = executionStack;
-    StackFramesListBuilder builder = getOrCreateBuilder(executionStack);
-    builder.initModel(myFramesList.getModel());
-    builder.start();
-    XStackFrame topFrame = executionStack.getTopFrame();
-    if (topFrame != null) {
-      myFramesList.setSelectedValue(topFrame, true);
-      onFrameSelected(topFrame);
+    if (executionStack != null) {
+      StackFramesListBuilder builder = getOrCreateBuilder(executionStack);
+      builder.initModel(myFramesList.getModel());
+      builder.start();
+      XStackFrame topFrame = executionStack.getTopFrame();
+      if (topFrame != null) {
+        myFramesList.setSelectedValue(topFrame, true);
+        onFrameSelected(topFrame);
+      }
     }
   }
 
