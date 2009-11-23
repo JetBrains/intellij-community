@@ -23,6 +23,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -83,7 +84,7 @@ public class ChangeStringLiteralToCharInMethodCallFix implements IntentionAction
 
   private String convertedValue() {
     String value = String.valueOf(myLiteral.getValue());
-    return ("\"".equals(value) || "'".equals(value)) ? "\\" + value : value;
+    return StringUtil.escapeStringCharacters(value);
   }
 
   public static void createHighLighting(@NotNull final PsiMethod[] candidates, @NotNull final PsiConstructorCall call,
