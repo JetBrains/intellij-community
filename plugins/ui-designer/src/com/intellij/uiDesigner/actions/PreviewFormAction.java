@@ -321,6 +321,10 @@ public final class PreviewFormAction extends AnAction{
       myStatusbarMessage = statusbarMessage;
     }
 
+    public Icon getIcon() {
+      return null;
+    }
+
     public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
       final JavaCommandLineState state = new JavaCommandLineState(env) {
         protected JavaParameters createJavaParameters() {

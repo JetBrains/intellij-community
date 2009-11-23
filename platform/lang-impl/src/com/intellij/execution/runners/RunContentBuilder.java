@@ -276,7 +276,7 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
     private final Disposable[] myAdditionalDisposables;
 
     public MyRunContentDescriptor(final RunProfile profile, final ExecutionResult executionResult, final boolean reuseProhibited, final JComponent component, final Disposable... additionalDisposables) {
-      super(executionResult.getExecutionConsole(), executionResult.getProcessHandler(), component, profile.getName());
+      super(executionResult.getExecutionConsole(), executionResult.getProcessHandler(), component, profile.getName(), profile.getIcon());
       myReuseProhibited = reuseProhibited;
       myAdditionalDisposables = additionalDisposables;
     }

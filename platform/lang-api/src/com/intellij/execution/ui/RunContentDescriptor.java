@@ -34,18 +34,21 @@ public class RunContentDescriptor {
   private final ProcessHandler myProcessHandler;
   private final JComponent myComponent;
   private final String myDisplayName;
+  private final Icon myIcon;
+
   /**
    * Used to hack {@link com.intellij.execution.runners.RestartAction}
    */
   private Content myContent;
 
   public RunContentDescriptor(final ExecutionConsole executionConsole,
-                              final ProcessHandler processHandler, final JComponent component, final String displayName) {
+                              final ProcessHandler processHandler, final JComponent component, final String displayName, final Icon icon) {
     LOG.assertTrue(executionConsole != null || ApplicationManager.getApplication().isUnitTestMode());
     myExecutionConsole = executionConsole;
     myProcessHandler = processHandler;
     myComponent = component;
     myDisplayName = displayName;
+    myIcon = icon;
     myComponent.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, new DataProvider() {
 
       public Object getData(@NonNls final String dataId) {
@@ -55,7 +58,11 @@ public class RunContentDescriptor {
         return null;
       }
     });
+  }
 
+  public RunContentDescriptor(final ExecutionConsole executionConsole,
+                              final ProcessHandler processHandler, final JComponent component, final String displayName) {
+    this(executionConsole, processHandler, component, displayName, null);
   }
 
   public ExecutionConsole getExecutionConsole() {
@@ -64,6 +71,11 @@ public class RunContentDescriptor {
 
   public void dispose() {
     Disposer.dispose(myExecutionConsole);
+  }
+
+  @Nullable
+  public Icon getIcon() {
+    return myIcon;
   }
 
   @Nullable

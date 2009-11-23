@@ -21,6 +21,8 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 public interface RunProfile {
    /**
     * todo - javadoc
@@ -29,6 +31,9 @@ public interface RunProfile {
   RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException ;
 
   String getName();
+
+  @Nullable
+  Icon getIcon();
 
   void checkConfiguration() throws RuntimeConfigurationException;
 
