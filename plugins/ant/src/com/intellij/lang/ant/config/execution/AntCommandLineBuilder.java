@@ -88,7 +88,7 @@ public class AntCommandLineBuilder {
     }
     myCommandLine.setJdk(jdk);
 
-    ParametersList vmParametersList = myCommandLine.getVMParametersList();
+    final ParametersList vmParametersList = myCommandLine.getVMParametersList();
     vmParametersList.add("-Xmx" + AntBuildFileImpl.MAX_HEAP_SIZE.get(container) + "m");
     vmParametersList.add("-Xss" + AntBuildFileImpl.MAX_STACK_SIZE.get(container) + "m");
 
@@ -125,7 +125,22 @@ public class AntCommandLineBuilder {
 
     myCommandLine.setMainClass(AntMain2.class.getName());
     final ParametersList programParameters = myCommandLine.getProgramParametersList();
-    programParameters.addParametersString(AntBuildFileImpl.ANT_COMMAND_LINE_PARAMETERS.get(container));
+
+    final String additionalParams = AntBuildFileImpl.ANT_COMMAND_LINE_PARAMETERS.get(container);
+    if (additionalParams != null) {
+      for (String param : ParametersList.parse(additionalParams)) {
+        if (param.startsWith("-J")) {
+          final String cutParam = param.substring("-J".length());
+          if (cutParam.length() > 0) {
+            vmParametersList.add(cutParam);
+          }
+        }
+        else {
+          programParameters.add(param);
+        }
+      }
+    }
+
     if (!(programParameters.getList().contains(LOGFILE_SHORT_PARAMETER) || programParameters.getList().contains(LOGFILE_PARAMETER)) ) {
       programParameters.add("-logger", IdeaAntLogger2.class.getName());
     }

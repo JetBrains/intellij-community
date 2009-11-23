@@ -47,9 +47,9 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
-import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -95,6 +95,10 @@ public class AntExplorer extends JPanel implements DataProvider {
       return canExpand();
     }
   };
+  private static final Icon ICON_RUN = IconLoader.getIcon("/actions/execute.png");
+  private static final Icon ICON_REMOVE = IconLoader.getIcon("/general/remove.png");
+  private static final Icon ICON_ADD = IconLoader.getIcon("/general/add.png");
+  private static final Icon ICON_FILTER = IconLoader.getIcon("/ant/filter.png");
 
   public AntExplorer(final Project project) {
     super(new BorderLayout(0, 2));
@@ -495,8 +499,7 @@ public class AntExplorer extends JPanel implements DataProvider {
 
   private final class AddAction extends AnAction {
     public AddAction() {
-      super(AntBundle.message("add.ant.file.action.name"), AntBundle.message("add.ant.file.action.description"),
-            IconLoader.getIcon("/general/add.png"));
+      super(AntBundle.message("add.ant.file.action.name"), AntBundle.message("add.ant.file.action.description"), ICON_ADD);
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -506,8 +509,7 @@ public class AntExplorer extends JPanel implements DataProvider {
 
   private final class RemoveAction extends AnAction {
     public RemoveAction() {
-      super(AntBundle.message("remove.ant.file.action.name"), AntBundle.message("remove.ant.file.action.description"),
-            IconLoader.getIcon("/general/remove.png"));
+      super(AntBundle.message("remove.ant.file.action.name"), AntBundle.message("remove.ant.file.action.description"), ICON_REMOVE);
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -521,8 +523,7 @@ public class AntExplorer extends JPanel implements DataProvider {
 
   private final class RunAction extends AnAction {
     public RunAction() {
-      super(AntBundle.message("run.ant.file.or.target.action.name"), AntBundle.message("run.ant.file.or.target.action.description"),
-            IconLoader.getIcon("/actions/execute.png"));
+      super(AntBundle.message("run.ant.file.or.target.action.name"), AntBundle.message("run.ant.file.or.target.action.description"), ICON_RUN);
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -557,8 +558,7 @@ public class AntExplorer extends JPanel implements DataProvider {
 
   private final class ShowAllTargetsAction extends ToggleAction {
     public ShowAllTargetsAction() {
-      super(AntBundle.message("filter.ant.targets.action.name"), AntBundle.message("filter.ant.targets.action.description"),
-            IconLoader.getIcon("/ant/filter.png"));
+      super(AntBundle.message("filter.ant.targets.action.name"), AntBundle.message("filter.ant.targets.action.description"), ICON_FILTER);
     }
 
     public boolean isSelected(AnActionEvent event) {
