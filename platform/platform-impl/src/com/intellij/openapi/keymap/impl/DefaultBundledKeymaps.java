@@ -26,6 +26,7 @@ public class DefaultBundledKeymaps implements BundledKeymapProvider {
   public List<String> getKeymapFileNames() {
     return Arrays.asList(
       "Keymap_Default.xml",
+      "Keymap_Mac.xml",
       "Keymap_MacClassic.xml",
       "Keymap_Emacs.xml",
       "Keymap_VisualStudio.xml",
