@@ -25,6 +25,7 @@ import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.*;
@@ -69,6 +70,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -87,6 +89,7 @@ import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
 import com.intellij.refactoring.rename.RenameProcessor;
@@ -99,6 +102,7 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.FileBasedIndex;
 import gnu.trove.THashMap;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
@@ -1070,28 +1074,37 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return
     ApplicationManager.getApplication().runReadAction(new Computable<List<HighlightInfo>>() {
       public List<HighlightInfo> compute() {
-        return instantiateAndRun(getFile(), getEditor(), ArrayUtil.EMPTY_INT_ARRAY);
+        return instantiateAndRun(getFile(), getEditor(), ArrayUtil.EMPTY_INT_ARRAY, false);
       }
     });
   }
 
   @NotNull
-  public static List<HighlightInfo> instantiateAndRun(PsiFile file, Editor editor, int[] toIgnore) {
-    TextEditorHighlightingPassRegistrarEx registrar = TextEditorHighlightingPassRegistrarEx.getInstanceEx(file.getProject());
-    final List<TextEditorHighlightingPass> passes = registrar.instantiatePasses(file, editor, toIgnore);
-    final ProgressIndicator progress = new DaemonProgressIndicator();
-    ProgressManager.getInstance().runProcess(new Runnable() {
-      public void run() {
-        for (TextEditorHighlightingPass pass : passes) {
-          pass.collectInformation(progress);
+  public static List<HighlightInfo> instantiateAndRun(PsiFile file, Editor editor, int[] toIgnore, boolean allowDirt) {
+    Project project = file.getProject();
+    FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, null);
+    assertTrue(!DumbServiceImpl.getInstance(project).isDumb());
+    ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).getFileStatusMap().allowDirt(allowDirt);
+    try {
+      TextEditorHighlightingPassRegistrarEx registrar = TextEditorHighlightingPassRegistrarEx.getInstanceEx(project);
+      final List<TextEditorHighlightingPass> passes = registrar.instantiatePasses(file, editor, toIgnore);
+      final ProgressIndicator progress = new DaemonProgressIndicator();
+      ProgressManager.getInstance().runProcess(new Runnable() {
+        public void run() {
+          for (TextEditorHighlightingPass pass : passes) {
+            pass.collectInformation(progress);
+          }
+          for (TextEditorHighlightingPass pass : passes) {
+            pass.applyInformationToEditor();
+          }
         }
-        for (TextEditorHighlightingPass pass : passes) {
-          pass.applyInformationToEditor();
-        }
-      }
-    }, progress);
-    List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), file.getProject());
-    return infos == null ? Collections.<HighlightInfo>emptyList() : new ArrayList<HighlightInfo>(infos);
+      }, progress);
+      List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), project);
+      return infos == null ? Collections.<HighlightInfo>emptyList() : new ArrayList<HighlightInfo>(infos);
+    }
+    finally {
+      ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).getFileStatusMap().allowDirt(true);
+    }
   }
 
   public String getTestDataPath() {

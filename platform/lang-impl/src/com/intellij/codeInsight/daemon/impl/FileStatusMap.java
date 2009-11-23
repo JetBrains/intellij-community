@@ -40,13 +40,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class FileStatusMap implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.FileStatusMap");
   private final Project myProject;
   private final Map<Document,FileStatus> myDocumentToStatusMap = new WeakHashMap<Document, FileStatus>(); // all dirty if absent
-  private final AtomicInteger myClearModificationCount = new AtomicInteger();
+  private boolean myAllowDirt = true;
 
   public FileStatusMap(@NotNull Project project) {
     myProject = project;
@@ -152,11 +151,11 @@ public class FileStatusMap implements Disposable {
   }
 
   public void markAllFilesDirty() {
+    assert myAllowDirt;
     LOG.debug("********************************* Mark all dirty");
-    synchronized(myDocumentToStatusMap){
+    synchronized (myDocumentToStatusMap) {
       myDocumentToStatusMap.clear();
     }
-    myClearModificationCount.incrementAndGet();
   }
 
   public void markFileUpToDate(@NotNull Document document, @NotNull PsiFile file, int passId) {
@@ -206,6 +205,7 @@ public class FileStatusMap implements Disposable {
   }
   
   public void markFileScopeDirty(@NotNull Document document, int passId) {
+    assert myAllowDirt;
     synchronized(myDocumentToStatusMap){
       FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null){
@@ -227,6 +227,7 @@ public class FileStatusMap implements Disposable {
   }
 
   public void markFileScopeDirtyDefensively(@NotNull PsiFile file) {
+    assert myAllowDirt;
     if (LOG.isDebugEnabled()) {
       LOG.debug("********************************* Mark dirty file defensively: "+file.getName());
     }
@@ -242,6 +243,7 @@ public class FileStatusMap implements Disposable {
   }
 
   public void markFileScopeDirty(@NotNull Document document, @NotNull TextRange scope, int fileLength) {
+    assert myAllowDirt;
     if (LOG.isDebugEnabled()) {
       LOG.debug("********************************* Mark dirty: "+scope);
     }
@@ -287,5 +289,10 @@ public class FileStatusMap implements Disposable {
       FileStatus status = myDocumentToStatusMap.get(document);
       assert status != null && !status.defensivelyMarked && status.wolfPassFinfished && status.allDirtyScopesAreNull() : status;
     }
+  }
+
+  @TestOnly
+  public void allowDirt(boolean allow) {
+    myAllowDirt = allow;
   }
 }

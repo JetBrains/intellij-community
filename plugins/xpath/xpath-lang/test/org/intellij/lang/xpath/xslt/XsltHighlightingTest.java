@@ -105,7 +105,7 @@ public class XsltHighlightingTest extends TestBase {
       return ApplicationManager.getApplication().runReadAction(new Computable<Long>() {
         public Long compute() {
           final long l = System.currentTimeMillis();
-          CodeInsightTestFixtureImpl.instantiateAndRun(myFixture.getFile(), myFixture.getEditor(), ArrayUtil.EMPTY_INT_ARRAY);
+          CodeInsightTestFixtureImpl.instantiateAndRun(myFixture.getFile(), myFixture.getEditor(), ArrayUtil.EMPTY_INT_ARRAY, false);
           return System.currentTimeMillis() - l;
         }
       });

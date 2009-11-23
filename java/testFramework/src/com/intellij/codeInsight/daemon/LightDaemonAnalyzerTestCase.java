@@ -85,7 +85,7 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
       file = InjectedLanguageUtil.getTopLevelFile(file);
     }
     
-    return CodeInsightTestFixtureImpl.instantiateAndRun(file, editor, toIgnore);
+    return CodeInsightTestFixtureImpl.instantiateAndRun(file, editor, toIgnore, false);
   }
 
   protected boolean doFolding() {
