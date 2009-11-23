@@ -229,7 +229,7 @@ public class AbstractTreeUi {
   private void initClearanceServiceIfNeeded() {
     if (ourClearanceService != null) return;
 
-    ourClearanceService = ConcurrencyUtil.newSingleScheduledThreadExecutor("AbstractTreeBuilder's janitor");
+    ourClearanceService = ConcurrencyUtil.newSingleScheduledThreadExecutor("AbstractTreeBuilder's janitor", Thread.MIN_PRIORITY + 1);
     ourClearanceService.scheduleWithFixedDelay(new Runnable() {
       public void run() {
         cleanUpAll();

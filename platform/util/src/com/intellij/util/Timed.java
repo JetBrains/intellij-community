@@ -74,7 +74,7 @@ abstract class Timed<T> implements Disposable {
 
 
   static {
-    ScheduledExecutorService service = ConcurrencyUtil.newSingleScheduledThreadExecutor("timed reference disposer");
+    ScheduledExecutorService service = ConcurrencyUtil.newSingleScheduledThreadExecutor("timed reference disposer", Thread.MIN_PRIORITY + 1);
     service.scheduleWithFixedDelay(new Runnable() {
       public void run() {
         try {

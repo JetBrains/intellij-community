@@ -15,9 +15,9 @@
  */
 package com.intellij.ide;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.application.ApplicationManager;
 import org.apache.xmlrpc.IdeaAwareWebServer;
 import org.apache.xmlrpc.IdeaAwareXmlRpcServer;
 import org.apache.xmlrpc.WebServer;
@@ -46,14 +46,19 @@ public class XmlRpcServerImpl implements XmlRpcServer, ApplicationComponent {
 
   public void initComponent() {
     if (ApplicationManager.getApplication().isUnitTestMode() || !checkPort()) return;
-
+    final Thread thread = Thread.currentThread();
+    final int currentPrio = thread.getPriority();
     try {
+      thread.setPriority(Thread.NORM_PRIORITY - 2);
       myWebServer = new IdeaAwareWebServer(getPortNumber(), null, new IdeaAwareXmlRpcServer());
       myWebServer.start();
     }
     catch (Exception e) {
       LOG.error(e);
       myWebServer = null;
+    }
+    finally {
+      thread.setPriority(currentPrio);
     }
   }
 

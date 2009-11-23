@@ -21,7 +21,7 @@ import java.util.*;
  * Simple timer that keeps order of scheduled tasks
  */
 public class SimpleTimer {
-  private final Timer ourTimer = new Timer(THREAD_NAME, true);
+  private final Timer ourTimer;
 
   private static final SimpleTimer ourInstance = new SimpleTimer();
   private static final String THREAD_NAME = "SimpleTimer";
@@ -32,6 +32,16 @@ public class SimpleTimer {
   private final Map<Long, ArrayList<SimpleTimerTask>> myTime2Task = new TreeMap<Long, ArrayList<SimpleTimerTask>>();
 
   private SimpleTimer() {
+    final Thread thread = Thread.currentThread();
+    final int currentPrio = thread.getPriority();
+    try {
+      // need this becase the timer's thread will inherit the priority on creation
+      thread.setPriority(Thread.MIN_PRIORITY + 1);
+      ourTimer = new Timer(THREAD_NAME, true);
+    }
+    finally {
+      thread.setPriority(currentPrio);
+    }
   }
 
   public static SimpleTimer getInstance() {
@@ -47,7 +57,7 @@ public class SimpleTimer {
 
       ArrayList<SimpleTimerTask> tasks = myTime2Task.get(targetTime);
       if (tasks == null) {
-        tasks = new ArrayList<SimpleTimerTask>(2);
+        tasks = new ArrayList<SimpleTimerTask>(2);                                       
         myTime2Task.put(targetTime, tasks);
       }
       tasks.add(result);

@@ -54,7 +54,7 @@ public class ProgressManagerImpl extends ProgressManager {
 
   public ProgressManagerImpl(Application application) {
     if (!application.isUnitTestMode() && !DISABLED) {
-      new Thread(NAME) {
+      final Thread thread = new Thread(NAME) {
         public void run() {
           while (true) {
             try {
@@ -65,7 +65,9 @@ public class ProgressManagerImpl extends ProgressManager {
             ourNeedToCheckCancel = true;
           }
         }
-      }.start();
+      };
+      thread.setPriority(Thread.MIN_PRIORITY + 1);
+      thread.start();
     }
   }
 
