@@ -27,6 +27,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Pair;
@@ -36,6 +37,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.FileContentUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.EmptyIcon;
@@ -45,7 +47,9 @@ import org.jetbrains.annotations.Nullable;
 import org.intellij.plugins.intelliLang.Configuration;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 public class InjectLanguageAction implements IntentionAction {
   @NonNls protected static final String INJECT_LANGUAGE_FAMILY = "Inject Language";
@@ -108,23 +112,31 @@ public class InjectLanguageAction implements IntentionAction {
     final String[] langIds = InjectedLanguage.getAvailableLanguageIDs();
     Arrays.sort(langIds);
 
-    final Map<String, List<String>> map = new LinkedHashMap<String, List<String>>();
-    buildLanguageTree(langIds, map);
-
-    final BaseListPopupStep<String> step = new MyPopupStep(map, new ArrayList<String>(map.keySet()), onChosen);
-
-    final ListPopup listPopup = JBPopupFactory.getInstance().createListPopup(step);
-    listPopup.showInBestPositionFor(DataManager.getInstance().getDataContext());
-    return true;
-  }
-
-
-  private static void buildLanguageTree(String[] langIds, Map<String, List<String>> map) {
-    for (final String id : langIds) {
-      if (!map.containsKey(id)) {
-        map.put(id, new ArrayList<String>());
+    final JList list = new JList(langIds);
+    list.setCellRenderer(new DefaultListCellRenderer() {
+      @Override
+      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        final String aValue = (String)value;
+        final Language language = InjectedLanguage.findLanguageById(aValue);
+        assert language != null;
+        final FileType ft = language.getAssociatedFileType();
+        setIcon(ft != null ? ft.getIcon() : new EmptyIcon(16));
+        setText(value + (ft != null ? " (" + ft.getDescription() + ")" : ""));
+        return this;
       }
-    }
+    });
+    new PopupChooserBuilder(list).setItemChoosenCallback(new Runnable() {
+      public void run() {
+        final String string = (String)list.getSelectedValue();
+        onChosen.process(string);
+      }
+    }).setFilteringEnabled(new Function<Object, String>() {
+      public String fun(Object o) {
+        return (String)o;
+      }
+    }).createPopup().showInBestPositionFor(DataManager.getInstance().getDataContext());
+    return true;
   }
 
   public boolean startInWriteAction() {
@@ -133,51 +145,5 @@ public class InjectLanguageAction implements IntentionAction {
 
   public static boolean doEditConfigurable(final Project project, final Configurable configurable) {
     return true; //ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
-  }
-
-  private static class MyPopupStep extends BaseListPopupStep<String> {
-    private final Map<String, List<String>> myMap;
-    private final Processor<String> myFinalStepProcessor;
-
-    public MyPopupStep(final Map<String, List<String>> map, final List<String> values, final Processor<String> finalStepProcessor) {
-      super("Choose Language", values);
-      myMap = map;
-      myFinalStepProcessor = finalStepProcessor;
-    }
-
-    @Override
-    public PopupStep onChosen(final String selectedValue, boolean finalChoice) {
-      if (finalChoice) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            myFinalStepProcessor.process(selectedValue);
-          }
-        });
-        return FINAL_CHOICE;
-      }
-      return new MyPopupStep(myMap, myMap.get(selectedValue), myFinalStepProcessor);
-    }
-
-    @Override
-    public boolean hasSubstep(String selectedValue) {
-      return myMap.containsKey(selectedValue) && !myMap.get(selectedValue).isEmpty();
-    }
-
-    @Override
-    public Icon getIconFor(String aValue) {
-      final Language language = InjectedLanguage.findLanguageById(aValue);
-      assert language != null;
-      final FileType ft = language.getAssociatedFileType();
-      return ft != null ? ft.getIcon() : new EmptyIcon(16);
-    }
-
-    @NotNull
-    @Override
-    public String getTextFor(String value) {
-      final Language language = InjectedLanguage.findLanguageById(value);
-      assert language != null;
-      final FileType ft = language.getAssociatedFileType();
-      return value + (ft != null ? " ("+ft.getDescription()+")" : "");
-    }
   }
 }
