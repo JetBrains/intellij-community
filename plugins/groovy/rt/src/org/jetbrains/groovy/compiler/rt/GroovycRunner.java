@@ -181,15 +181,17 @@ public class GroovycRunner {
 
       String line;
 
-      while ((line = reader.readLine()) != null && !line.equals(OUTPUTPATH)) {
-        if (SRC_FILE.equals(line)) {
-          final File file = new File(reader.readLine());
-          srcFiles.add(file);
-          String s;
-          while (!END.equals(s = reader.readLine())) {
-            class2File.put(s, file);
-          }
+      while ((line = reader.readLine()) != null) {
+        if (!SRC_FILE.equals(line)) {
+          break;
         }
+
+        final File file = new File(reader.readLine());
+        srcFiles.add(file);
+        while (!END.equals(line = reader.readLine())) {
+          class2File.put(line, file);
+        }
+
       }
 
       while (line != null) {
@@ -330,16 +332,12 @@ public class GroovycRunner {
   }
 
   private static CompilationUnit createCompilationUnit(final boolean forStubs, final CompilerConfiguration config, final String finalOutput) {
-    config.setClasspathList(Collections.EMPTY_LIST);
+    config.setClasspath("");
 
     final GroovyClassLoader classLoader = buildClassLoaderFor(config);
 
     final GroovyClassLoader transformLoader = new GroovyClassLoader(classLoader) {
       public Enumeration getResources(String name) throws IOException {
-        if (forStubs) {
-          //return Collections.enumeration(Collections.EMPTY_LIST);
-        }
-
         if (name.endsWith("org.codehaus.groovy.transform.ASTTransformation")) {
           final Enumeration resources = super.getResources(name);
           final ArrayList list = Collections.list(resources);
@@ -354,45 +352,69 @@ public class GroovycRunner {
         return super.getResources(name);
       }
     };
-    final CompilationUnit unit = new CompilationUnit(config, null, classLoader, transformLoader) {
+    CompilationUnit unit;
+    try {
+      unit = new CompilationUnit(config, null, classLoader, transformLoader) {
 
-      public void gotoPhase(int phase) throws CompilationFailedException {
-        super.gotoPhase(phase);
-        if (phase <= Phases.ALL) {
-          System.out.println(PRESENTABLE_MESSAGE + (forStubs ? "Groovy stub generator: " : "Groovy compiler: ") + getPhaseDescription());
+        public void gotoPhase(int phase) throws CompilationFailedException {
+          super.gotoPhase(phase);
+          if (phase <= Phases.ALL) {
+            System.out.println(PRESENTABLE_MESSAGE + (forStubs ? "Groovy stub generator: " : "Groovy compiler: ") + getPhaseDescription());
+          }
         }
-      }
-    };
+      };
+    }
+    catch (NoSuchMethodError e) {
+      //groovy 1.5.x
+      unit = new CompilationUnit(config, null, classLoader) {
+
+        public void gotoPhase(int phase) throws CompilationFailedException {
+          super.gotoPhase(phase);
+          if (phase <= Phases.ALL) {
+            System.out.println(PRESENTABLE_MESSAGE + (forStubs ? "Groovy stub generator: " : "Groovy compiler: ") + getPhaseDescription());
+          }
+        }
+      };
+    }
     if (forStubs) {
-      //todo reuse JavaStubCompilationUnit in groovy 1.7
-      boolean useJava5 = config.getTargetBytecode().equals(CompilerConfiguration.POST_JDK5);
-      final JavaStubGenerator stubGenerator = new JavaStubGenerator(config.getTargetDirectory(), false, useJava5);
-
-      //but JavaStubCompilationUnit doesn't have this...
-      unit.addPhaseOperation(new CompilationUnit.PrimaryClassNodeOperation() {
-        public void call(SourceUnit source, GeneratorContext context, ClassNode node) throws CompilationFailedException {
-          new JavaAwareResolveVisitor(unit).startResolving(node, source);
-        }
-      },Phases.CONVERSION);
-
-      unit.addPhaseOperation(new CompilationUnit.PrimaryClassNodeOperation() {
-        public void call(final SourceUnit source, final GeneratorContext context, final ClassNode node) throws CompilationFailedException {
-          final String name = node.getNameWithoutPackage();
-          if ("package-info".equals(name)) {
-            return;
-          }
-
-          System.out.println(PRESENTABLE_MESSAGE + "Generating stub for " + name);
-          try {
-            stubGenerator.generateClass(node);
-          }
-          catch (FileNotFoundException e) {
-            source.addException(e);
-          }
-        }
-      },Phases.CONVERSION);
+      try {
+        addStubGeneration(config, unit);
+      }
+      catch (LinkageError e) {
+        //older groovy distributions, just don't generate stubs
+      }
     }
     return unit;
+  }
+
+  private static void addStubGeneration(CompilerConfiguration config, final CompilationUnit unit) {
+    //todo reuse JavaStubCompilationUnit in groovy 1.7
+    boolean useJava5 = config.getTargetBytecode().equals(CompilerConfiguration.POST_JDK5);
+    final JavaStubGenerator stubGenerator = new JavaStubGenerator(config.getTargetDirectory(), false, useJava5);
+
+    //but JavaStubCompilationUnit doesn't have this...
+    unit.addPhaseOperation(new CompilationUnit.PrimaryClassNodeOperation() {
+      public void call(SourceUnit source, GeneratorContext context, ClassNode node) throws CompilationFailedException {
+        new JavaAwareResolveVisitor(unit).startResolving(node, source);
+      }
+    }, Phases.CONVERSION);
+
+    unit.addPhaseOperation(new CompilationUnit.PrimaryClassNodeOperation() {
+      public void call(final SourceUnit source, final GeneratorContext context, final ClassNode node) throws CompilationFailedException {
+        final String name = node.getNameWithoutPackage();
+        if ("package-info".equals(name)) {
+          return;
+        }
+
+        System.out.println(PRESENTABLE_MESSAGE + "Generating stub for " + name);
+        try {
+          stubGenerator.generateClass(node);
+        }
+        catch (FileNotFoundException e) {
+          source.addException(e);
+        }
+      }
+    },Phases.CONVERSION);
   }
 
   static GroovyClassLoader buildClassLoaderFor(final CompilerConfiguration compilerConfiguration) {

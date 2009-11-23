@@ -14,17 +14,26 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.config.util;
-
-/**
- * @author ilyas
+/*
+ * @author max
  */
-public interface AbstractSDK {
+package com.intellij.openapi.keymap.impl;
 
-  String getLibraryName();
+import java.util.Arrays;
+import java.util.List;
 
-  boolean isProjectLib();
-
-  String getPresentation();
-
+public class DefaultBundledKeymaps implements BundledKeymapProvider {
+  public List<String> getKeymapFileNames() {
+    return Arrays.asList(
+      "Keymap_Default.xml",
+      "Keymap_MacClassic.xml",
+      "Keymap_Emacs.xml",
+      "Keymap_VisualStudio.xml",
+      "Keymap_GNOME.xml",
+      "Keymap_XWin.xml",
+      "Keymap_KDE.xml",
+      "Keymap_Eclipse.xml",
+      "Keymap_Netbeans.xml"
+    );
+  }
 }

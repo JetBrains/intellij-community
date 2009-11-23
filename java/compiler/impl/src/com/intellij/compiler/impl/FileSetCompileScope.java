@@ -59,6 +59,10 @@ public class FileSetCompileScope extends UserDataHolderBase implements CompileSc
     return myAffectedModules;
   }
 
+  public Collection<VirtualFile> getRootFiles() {
+    return Collections.unmodifiableCollection(myRootFiles);
+  }
+
   @NotNull
   public VirtualFile[] getFiles(final FileType fileType, boolean inSourceOnly) {
     final List<VirtualFile> files = new ArrayList<VirtualFile>();

@@ -114,7 +114,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
         final String placeText = getPatternStringForJavaPlace(info.method, info.parameterIndex);
         final BaseInjection newInjection = injection.copy();
         newInjection.setPlaceEnabled(placeText, false);
-        return newInjection.isEnabled() ? newInjection : null;
+        return newInjection;
       }
     });
     Configuration.getInstance().replaceInjectionsWithUndo(project, newInjections, originalInjections, annotations);

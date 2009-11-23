@@ -65,8 +65,6 @@ public class WebBrowsersPanel extends JPanel {
     result.setLayout(new BoxLayout(result, BoxLayout.Y_AXIS));
 
     final TextFieldWithBrowseButton field = new TextFieldWithBrowseButton();
-    field.setEditable(false);
-
     FileChooserDescriptor descriptor = SystemInfo.isMac
                                        ? FileChooserDescriptorFactory.createSingleFolderDescriptor()
                                        : FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();

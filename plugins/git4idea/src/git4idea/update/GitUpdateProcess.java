@@ -109,11 +109,9 @@ public class GitUpdateProcess extends GitBaseRebaseProcess {
    */
   @Override
   protected void markEnd(VirtualFile root, final boolean cancelled) {
-    if (!cancelled) {
-      // find out what have changed
-      MergeChangeCollector collector = new MergeChangeCollector(myProject, root, myBefore, myUpdatedFiles);
-      collector.collect(myExceptions);
-    }
+    // find out what have changed, this is done even if the process was cancelled.
+    MergeChangeCollector collector = new MergeChangeCollector(myProject, root, myBefore, myUpdatedFiles);
+    collector.collect(myExceptions);
   }
 
   /**

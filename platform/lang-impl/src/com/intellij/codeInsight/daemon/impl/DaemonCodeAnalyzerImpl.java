@@ -504,7 +504,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   private static boolean isCoveredBy(HighlightInfo info, HighlightInfo coveredBy) {
-    return info.startOffset >= coveredBy.startOffset && info.endOffset <= coveredBy.endOffset;
+    return info.startOffset >= coveredBy.startOffset && info.endOffset <= coveredBy.endOffset && info.getGutterIconRenderer() == null;
   }
 
   @Nullable

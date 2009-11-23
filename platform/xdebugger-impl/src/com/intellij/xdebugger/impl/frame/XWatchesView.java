@@ -21,7 +21,6 @@ import com.intellij.ide.dnd.DnDNativeTarget;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -33,7 +32,10 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeRestorer;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
-import com.intellij.xdebugger.impl.ui.tree.nodes.*;
+import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -41,7 +43,6 @@ import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -49,9 +50,9 @@ import java.util.List;
  */
 public class XWatchesView extends XDebugViewBase implements DnDNativeTarget {
   private final XDebuggerTreePanel myTreePanel;
-  private final List<String> myWatchExpressions = new ArrayList<String>();
   private XDebuggerTreeState myTreeState;
   private XDebuggerTreeRestorer myTreeRestorer;
+  private WatchesRootNode myRootNode;
 
   public XWatchesView(final XDebugSession session, final Disposable parentDisposable, final XDebugSessionData sessionData) {
     super(session, parentDisposable);
@@ -69,23 +70,17 @@ public class XWatchesView extends XDebugViewBase implements DnDNativeTarget {
     CustomShortcutSet f2Shortcut = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0));
     actionManager.getAction(XDebuggerActions.XEDIT_WATCH).registerCustomShortcutSet(f2Shortcut, tree);
 
-    myWatchExpressions.addAll(Arrays.asList(sessionData.getWatchExpressions()));
     DnDManager.getInstance().registerTarget(this, tree);
+    myRootNode = new WatchesRootNode(tree, sessionData.getWatchExpressions());
+    tree.setRoot(myRootNode, false);
   }
 
   public void addWatchExpression(@NotNull String expression, int index) {
-    if (index == -1) {
-      myWatchExpressions.add(expression);
-    }
-    else {
-      myWatchExpressions.add(index, expression);
-    }
     XStackFrame stackFrame = mySession.getCurrentStackFrame();
     if (stackFrame != null) {
       XDebuggerEvaluator evaluator = stackFrame.getEvaluator();
-      XDebuggerTreeNode root = myTreePanel.getTree().getRoot();
-      if (evaluator != null && root instanceof WatchesRootNode) {
-        ((WatchesRootNode)root).addWatchExpression(evaluator, expression, index);
+      if (evaluator != null) {
+        myRootNode.addWatchExpression(evaluator, expression, index);
       }
     }
   }
@@ -106,14 +101,14 @@ public class XWatchesView extends XDebugViewBase implements DnDNativeTarget {
 
     if (stackFrame != null) {
       tree.setSourcePosition(stackFrame.getSourcePosition());
-      tree.setRoot(new WatchesRootNode(tree, stackFrame.getEvaluator()), false);
+      myRootNode.updateWatches(stackFrame.getEvaluator());
       if (myTreeState != null) {
         myTreeRestorer = myTreeState.restoreState(tree);
       }
     }
     else {
       tree.setSourcePosition(null);
-      tree.setRoot(MessageTreeNode.createInfoMessage(tree, null, mySession.getDebugProcess().getCurrentStateMessage()), true);
+      myRootNode.updateWatches(null);
     }
   }
 
@@ -132,36 +127,34 @@ public class XWatchesView extends XDebugViewBase implements DnDNativeTarget {
   }
 
   public void removeWatches(final List<? extends XDebuggerTreeNode> nodes) {
-    XDebuggerTreeNode root = getTree().getRoot();
-    if (!(root instanceof WatchesRootNode)) return;
-    final WatchesRootNode watchesRoot = (WatchesRootNode)root;
-
-    List<? extends XDebuggerTreeNode> children = watchesRoot.getAllChildren();
+    List<? extends WatchNode> children = myRootNode.getAllChildren();
     int minIndex = Integer.MAX_VALUE;
     if (children != null) {
       for (XDebuggerTreeNode node : nodes) {
         int index = children.indexOf(node);
         if (index != -1) {
           minIndex = Math.min(minIndex, index);
-          myWatchExpressions.remove(index);
         }
       }
     }
-    watchesRoot.removeChildren(nodes);
+    myRootNode.removeChildren(nodes);
 
-    List<? extends XDebuggerTreeNode> newChildren = watchesRoot.getAllChildren();
+    List<? extends WatchNode> newChildren = myRootNode.getAllChildren();
     if (newChildren != null && newChildren.size() > 0) {
-      XDebuggerTreeNode node = minIndex < newChildren.size() ? newChildren.get(minIndex) : newChildren.get(newChildren.size() - 1);
+      WatchNode node = minIndex < newChildren.size() ? newChildren.get(minIndex) : newChildren.get(newChildren.size() - 1);
       TreeUtil.selectNode(myTreePanel.getTree(), node);
     }
   }
 
-  public String[] getWatchExpressions() {
-    return ArrayUtil.toStringArray(myWatchExpressions);
-  }
-
-  public void removeWatchExpression(final int index) {
-    myWatchExpressions.remove(index);
+  public List<String> getWatchExpressions() {
+    List<String> watchExpressions = new ArrayList<String>();
+    final List<? extends WatchNode> children = myRootNode.getAllChildren();
+    if (children != null) {
+      for (WatchNode child : children) {
+        watchExpressions.add(child.getExpression());
+      }
+    }
+    return watchExpressions;
   }
 
   public boolean update(final DnDEvent aEvent) {
