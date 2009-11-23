@@ -44,11 +44,13 @@ public class ProjectStructureProblemsHolderImpl implements ProjectStructureProbl
   public String composeTooltipMessage() {
     final StringBuilder buf = StringBuilderSpinAllocator.alloc();
     try {
+      buf.append("<html><body>");
       if (myProblemDescriptions != null) {
         for (ProjectStructureProblemDescription problemDescription : myProblemDescriptions) {
-          buf.append(problemDescription.getMessage()).append("\n");
+          buf.append(problemDescription.getMessage()).append("<br>");
         }
       }
+      buf.append("</body></html>");
       return buf.toString();
     }
     finally {
