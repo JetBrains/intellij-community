@@ -510,27 +510,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   }
 
   private void substituteMethodTypeParams(PsiElement scope, final PsiSubstitutor substitutor) {
-    scope.accept(new JavaRecursiveElementVisitor() {
-      @Override public void visitTypeElement(PsiTypeElement typeElement) {
-        PsiType type = typeElement.getType();
-
-        if (type instanceof PsiClassType) {
-          JavaResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
-          PsiElement resolved = resolveResult.getElement();
-          if (resolved instanceof PsiTypeParameter && ((PsiTypeParameter)resolved).getOwner() == myMethodCopy) {
-            PsiType newType = resolveResult.getSubstitutor().putAll(substitutor).substitute((PsiTypeParameter)resolved);
-            try {
-              typeElement.replace(myFactory.createTypeElement(newType));
-              return;
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-          }
-        }
-        super.visitTypeElement(typeElement);
-      }
-    });
+    InlineUtil.substituteTypeParams(scope, substitutor, myFactory);
   }
 
   private boolean isStrictlyFinal(PsiParameter parameter) {
