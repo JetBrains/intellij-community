@@ -241,8 +241,8 @@ public class ResolveUtil {
     do {
       PsiElement last = element;
       element = element.getParent();
-      if (element == null || element instanceof GrMember || element instanceof GrClosableBlock || element instanceof GroovyFile) break;
-      if (element instanceof GrStatement) {
+      if (element == null || element instanceof GrMember || element instanceof GroovyFile) break;
+      if (element instanceof GrStatement && !(element instanceof GrClosableBlock)) {
         statement = (GrStatement)element;
       }
       PsiElement sibling = element;
@@ -253,6 +253,7 @@ public class ResolveUtil {
         }
         sibling = sibling.getPrevSibling();
       }
+      if (element instanceof GrClosableBlock) break;
     }
     while (true);
     return new Pair<GrStatement, GrLabeledStatement>(null, null);
