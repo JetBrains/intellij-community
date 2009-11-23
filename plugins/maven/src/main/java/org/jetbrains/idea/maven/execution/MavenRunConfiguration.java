@@ -18,6 +18,9 @@ package org.jetbrains.idea.maven.execution;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.module.Module;
@@ -69,6 +72,18 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
         return MavenExternalParameters
           .createJavaParameters(mySettings.myRunnerParameters, mySettings.myGeneralSettings, mySettings.myRunnerSettings);
       }
+
+      @Override
+      protected OSProcessHandler startProcess() throws ExecutionException {
+        OSProcessHandler result = super.startProcess();
+        result.addProcessListener(new ProcessAdapter() {
+          @Override
+          public void processTerminated(ProcessEvent event) {
+            updateProjectsFolders();
+          }
+        });
+        return result;
+      }
     };
     state.setConsoleBuilder(MavenConsoleImpl.createConsoleBuilder(getProject()));
     return state;
@@ -79,6 +94,10 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
     if (filePath == null || !new File(filePath).isFile()) {
       throw new RuntimeConfigurationError(RunnerBundle.message("maven.run.configuration.error.file.not.found"));
     }
+  }
+
+  private void updateProjectsFolders() {
+    MavenProjectsManager.getInstance(getProject()).updateProjectTargetFolders();
   }
 
   @NotNull
@@ -125,7 +144,7 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
 
       if (mySettings.myGeneralSettings == null) mySettings.myGeneralSettings = new MavenGeneralSettings();
       if (mySettings.myRunnerSettings == null) mySettings.myRunnerSettings = new MavenRunnerSettings();
-      if (mySettings.myRunnerParameters == null) mySettings.myRunnerParameters = new MavenRunnerParameters(); 
+      if (mySettings.myRunnerParameters == null) mySettings.myRunnerParameters = new MavenRunnerParameters();
     }
   }
 
@@ -158,8 +177,7 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
     }
 
     public MavenSettings(Project project) {
-      this(MavenProjectsManager.getInstance(project).getGeneralSettings(),
-           MavenRunner.getInstance(project).getState(),
+      this(MavenProjectsManager.getInstance(project).getGeneralSettings(), MavenRunner.getInstance(project).getState(),
            new MavenRunnerParameters());
     }
 

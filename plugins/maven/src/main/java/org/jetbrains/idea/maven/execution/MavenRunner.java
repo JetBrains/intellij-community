@@ -62,10 +62,6 @@ public class MavenRunner extends SimpleProjectComponent implements PersistentSta
     mySettings = settings;
   }
 
-  public void run(MavenRunnerParameters parameters, MavenRunnerSettings settings) {
-    run(parameters, settings, null);
-  }
-
   public void run(final MavenRunnerParameters parameters, final MavenRunnerSettings settings, final Runnable onComplete) {
     FileDocumentManager.getInstance().saveAllDocuments();
 

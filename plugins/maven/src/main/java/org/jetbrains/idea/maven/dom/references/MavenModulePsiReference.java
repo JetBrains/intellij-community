@@ -19,9 +19,6 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.notification.Notifications;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
@@ -134,7 +131,7 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
                                                         myWithParent ? id : null);
       }
       catch (IOException e) {
-        Notifications.Bus.notify(new Notification("Maven", "Cannot create a module", e.getMessage(), NotificationType.ERROR), project);
+        MavenUtil.showError(project, "Cannot create a module", e);
       }
     }
 
