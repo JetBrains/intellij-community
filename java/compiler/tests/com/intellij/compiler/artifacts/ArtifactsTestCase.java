@@ -7,6 +7,8 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
@@ -21,7 +23,9 @@ import com.intellij.packaging.ui.ArtifactEditor;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.ManifestFileConfiguration;
 import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -93,6 +97,21 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
         }
       }
     }.execute();
+  }
+
+  protected Module addModule(final String moduleName, final @Nullable VirtualFile sourceRoot) {
+    return new WriteAction<Module>() {
+      protected void run(final Result<Module> result) {
+        final Module module = createModule(moduleName);
+        if (sourceRoot != null) {
+          PsiTestUtil.addSourceContentToRoots(module, sourceRoot);
+        }
+        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+        model.setSdk(getTestProjectJdk());
+        model.commit();
+        result.setResult(module);
+      }
+    }.execute().getResultObject();
   }
 
   protected class MockPackagingEditorContext implements ArtifactEditorContext {

@@ -140,6 +140,16 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
     }.execute().getResultObject();
   }
 
+  protected void addModuleDependency(final Module module, final Module dependency) {
+    new WriteAction() {
+      protected void run(final Result result) {
+        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+        model.addModuleOrderEntry(dependency);
+        model.commit();
+      }
+    }.execute();
+  }
+
   protected class PackagingElementBuilder {
     private CompositePackagingElement<?> myElement;
     private final PackagingElementBuilder myParent;

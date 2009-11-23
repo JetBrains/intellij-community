@@ -63,17 +63,4 @@ public class ArtifactCompileScopeTest extends ArtifactCompilerTestCase {
     assertOutput(artifact, fs().file("A.class").file("B.class"));
   }
 
-  private Module addModule(final String moduleName, final VirtualFile sourceRoot) {
-    return new WriteAction<Module>() {
-      protected void run(final Result<Module> result) {
-        final Module module = createModule(moduleName);
-        PsiTestUtil.addSourceContentToRoots(module, sourceRoot);
-        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-        model.setSdk(getTestProjectJdk());
-        model.commit();
-        result.setResult(module);
-      }
-    }.execute().getResultObject();
-  }
-
 }
