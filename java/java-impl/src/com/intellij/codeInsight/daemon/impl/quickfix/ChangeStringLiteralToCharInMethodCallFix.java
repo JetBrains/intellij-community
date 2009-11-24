@@ -84,7 +84,9 @@ public class ChangeStringLiteralToCharInMethodCallFix implements IntentionAction
 
   private String convertedValue() {
     String value = String.valueOf(myLiteral.getValue());
-    return StringUtil.escapeStringCharacters(value);
+    final StringBuilder builder = new StringBuilder();
+    StringUtil.escapeStringCharacters(value.length(), value, "\"'", builder);
+    return builder.toString();
   }
 
   public static void createHighLighting(@NotNull final PsiMethod[] candidates, @NotNull final PsiConstructorCall call,
