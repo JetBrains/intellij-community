@@ -28,7 +28,10 @@ public class AlphaNumericTypeCommand extends TypeCommand {
   }
 
   public ActionCallback _execute(PlaybackRunner.StatusCallback cb, Robot robot, boolean directActionCall) {
-    final String text = getText();
+    return type(robot, getText());
+  }
+
+  protected ActionCallback type(Robot robot, String text) {
     for (int i = 0; i < text.length(); i++) {
       final char each = text.charAt(i);
       if ('\\' == each && i + 1 < text.length()) {

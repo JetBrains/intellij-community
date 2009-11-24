@@ -24,7 +24,7 @@ import java.awt.event.KeyEvent;
 
 public abstract class TypeCommand extends AbstractCommand {
 
-  private KeyStokeMap myMap = new KeyStokeMap();
+  private static KeyStokeMap ourMap = new KeyStokeMap();
 
   public TypeCommand(String text, int line) {
     super(text, line);
@@ -56,9 +56,16 @@ public abstract class TypeCommand extends AbstractCommand {
       robot.keyPress(KeyEvent.VK_META);
     }
 
-    robot.keyPress(keyStroke.getKeyCode());
-    robot.delay(Registry.intValue("actionSystem.playback.autodelay"));
-    robot.keyRelease(keyStroke.getKeyCode());
+    if (keyStroke.getKeyCode() > 0) {
+      robot.keyPress(keyStroke.getKeyCode());
+      robot.delay(Registry.intValue("actionSystem.playback.autodelay"));
+      robot.keyRelease(keyStroke.getKeyCode());
+    } else {
+      robot.keyPress(keyStroke.getKeyChar());
+      robot.delay(Registry.intValue("actionSystem.playback.autodelay"));
+      robot.keyRelease(keyStroke.getKeyChar());
+    }
+
 
     if (shift) {
       robot.keyRelease(KeyEvent.VK_SHIFT);
@@ -78,10 +85,18 @@ public abstract class TypeCommand extends AbstractCommand {
   }
 
   protected KeyStroke get(char c) {
-    return myMap.get(c);
+    return ourMap.get(c);
   }
 
   protected KeyStroke getFromShortcut(String sc) {
-    return myMap.get(sc);
+    return ourMap.get(sc);
+  }
+
+  public static boolean containsUnicode(String s) {
+    for (int i = 0; i < s.length(); i++) {
+      if (!ourMap.containsChar(s.charAt(i))) return true;
+    }
+
+    return false;
   }
 }

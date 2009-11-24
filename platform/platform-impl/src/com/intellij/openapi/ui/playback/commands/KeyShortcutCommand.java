@@ -23,7 +23,7 @@ import java.awt.*;
 public class KeyShortcutCommand extends TypeCommand {
 
   public static String PREFIX = CMD_PREFIX + "[";
-  public static String POSTFIX = CMD_PREFIX + "]";
+  public static String POSTFIX = "]";
 
   public KeyShortcutCommand(String text, int line) {
     super(text, line);
@@ -31,7 +31,7 @@ public class KeyShortcutCommand extends TypeCommand {
 
   public ActionCallback _execute(PlaybackRunner.StatusCallback cb, Robot robot, boolean directActionCall) {
     final String one = getText().substring(PREFIX.length());
-    if (!one.endsWith("]")) {
+    if (!one.endsWith(POSTFIX)) {
       dumpError(cb, "Expected " + "]");
       return new ActionCallback.Rejected();
     }
