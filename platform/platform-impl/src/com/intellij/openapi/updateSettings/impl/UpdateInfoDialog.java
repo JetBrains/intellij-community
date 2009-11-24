@@ -121,7 +121,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
     public UpdateInfoPanel() {
       ApplicationInfo appInfo = ApplicationInfo.getInstance();
-      myBuildNumber.setText(appInfo.getBuild().asString() + ")");
+      myBuildNumber.setText(appInfo.getBuild().asStringWithoutProductCode() + ")");
       final String majorVersion = appInfo.getMajorVersion();
       final String version;
       if (majorVersion != null && majorVersion.trim().length() > 0) {
@@ -138,8 +138,8 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       }
 
       myVersionNumber.setText(version);
-      myNewBuildNumber.setText(myLatestBuild.getNumber().asString() + ")");
-      myNewVersionNumber.setText(myLatestBuild.getName());
+      myNewBuildNumber.setText(myLatestBuild.getNumber().asStringWithoutProductCode() + ")");
+      myNewVersionNumber.setText(myLatestBuild.getVersion());
       if (myLatestBuild.getMessage() != null) {
         myUpdateMessageLabel.setText("<html><body><br>" + myLatestBuild.getMessage() + "</body></html>");
       }

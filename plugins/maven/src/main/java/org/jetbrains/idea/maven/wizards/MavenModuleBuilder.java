@@ -15,14 +15,16 @@
  */
 package org.jetbrains.idea.maven.wizards;
 
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.SourcePathsBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.notification.Notifications;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -46,6 +48,7 @@ import com.intellij.psi.xml.XmlElement;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomModule;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
 import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
@@ -107,9 +110,7 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
           result.setResult(file);
         }
         catch (IOException e) {
-          MavenLog.LOG.warn(e);
-          Notifications.Bus.notify(new Notification("Maven", "Cannot create " + MavenConstants.POM_XML + " " + root.getPath(),
-                                                    e.getMessage(), NotificationType.ERROR), project);
+          showError(project, e);
           return;
         }
 
@@ -185,7 +186,7 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
       workingDir.deleteOnExit();
     }
     catch (IOException e) {
-      MavenLog.LOG.warn("Cannot generate archetype", e);
+      showError(project, e);
       return;
     }
 
@@ -208,22 +209,30 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
 
     runner.run(params, settings, new Runnable() {
       public void run() {
-        try {
-          FileUtil.copyDir(new File(workingDir, myProjectId.getArtifactId()), new File(myContentRootPath));
-        }
-        catch (IOException e) {
-          MavenLog.LOG.warn("Cannot generate archetype", e);
-          return;
-        }
-
-        FileUtil.delete(workingDir);
-
-        pom.refresh(false, false);
-        updateProjectPom(project, pom);
-
-        LocalFileSystem.getInstance().refreshWithoutFileWatcher(true);
+        copyGeneratedFiles(workingDir, pom, project);
       }
     });
+  }
+
+  private void copyGeneratedFiles(File workingDir, VirtualFile pom, Project project) {
+    try {
+      FileUtil.copyDir(new File(workingDir, myProjectId.getArtifactId()), new File(myContentRootPath));
+    }
+    catch (IOException e) {
+      showError(project, e);
+      return;
+    }
+
+    FileUtil.delete(workingDir);
+
+    pom.refresh(false, false);
+    updateProjectPom(project, pom);
+
+    LocalFileSystem.getInstance().refreshWithoutFileWatcher(true);
+  }
+
+  private void showError(Project project, Throwable e) {
+    MavenUtil.showError(project, "Failed to create a Maven project", e);
   }
 
   @Override

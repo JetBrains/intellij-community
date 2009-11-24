@@ -16,8 +16,8 @@
 
 package com.intellij.util;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -84,19 +84,33 @@ public class ConcurrencyUtil {
     V prev = map.putIfAbsent(key, defaultValue);
     return prev == null ? defaultValue : prev;
   }
+
   public static ThreadPoolExecutor newSingleThreadExecutor(@NonNls final String threadFactoryName) {
+    return newSingleThreadExecutor(threadFactoryName, Thread.NORM_PRIORITY);
+  }
+
+  public static ThreadPoolExecutor newSingleThreadExecutor(final String threadFactoryName, final int threadPriority) {
     return new ThreadPoolExecutor(1, 1,
                                     0L, TimeUnit.MILLISECONDS,
                                     new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
       public Thread newThread(final Runnable r) {
-        return new Thread(r, threadFactoryName);
+        final Thread thread = new Thread(r, threadFactoryName);
+        thread.setPriority(threadPriority);
+        return thread;
       }
     });
   }
+
   public static ScheduledThreadPoolExecutor newSingleScheduledThreadExecutor(@NonNls final String threadFactoryName) {
+    return newSingleScheduledThreadExecutor(threadFactoryName, Thread.NORM_PRIORITY);
+  }
+
+  public static ScheduledThreadPoolExecutor newSingleScheduledThreadExecutor(final String threadFactoryName, final int threadPriority) {
     ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1, new ThreadFactory() {
       public Thread newThread(final Runnable r) {
-        return new Thread(r, threadFactoryName);
+        final Thread thread = new Thread(r, threadFactoryName);
+        thread.setPriority(threadPriority);
+        return thread;
       }
     });
     executor.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);

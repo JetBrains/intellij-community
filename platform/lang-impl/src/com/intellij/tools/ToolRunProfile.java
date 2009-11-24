@@ -35,6 +35,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+
 /**
  * @author Eugene Zhuravlev
  *         Date: Mar 30, 2005
@@ -55,6 +57,10 @@ public class ToolRunProfile implements ModuleRunProfile{
 
   public String getName() {
     return myTool.getName();
+  }
+
+  public Icon getIcon() {
+    return null;
   }
 
   public void checkConfiguration() throws RuntimeConfigurationException {

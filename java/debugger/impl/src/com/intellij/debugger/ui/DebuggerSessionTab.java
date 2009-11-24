@@ -99,10 +99,12 @@ public class DebuggerSessionTab extends DebuggerLogConsoleManagerBase implements
   public static final String BREAKPOINT_CONDITION = "breakpoint";
   private final ThreadsPanel myThreadsPanel;
   private static final String THREAD_DUMP_CONTENT_PREFIX = "Dump";
+  private Icon myIcon;
 
-  public DebuggerSessionTab(Project project, String sessionName) {
+  public DebuggerSessionTab(final Project project, final String sessionName, @Nullable final Icon icon) {
     super(project);
 
+    myIcon = icon;
 
     myUi = RunnerLayoutUi.Factory.getInstance(project).create("JavaDebugger", DebuggerBundle.message("title.generic.debug.dialog"), sessionName, this);
 
@@ -253,7 +255,7 @@ public class DebuggerSessionTab extends DebuggerLogConsoleManagerBase implements
   private RunContentDescriptor initUI(ExecutionResult executionResult) {
 
     myConsole = executionResult.getExecutionConsole();
-    myRunContentDescriptor = new RunContentDescriptor(myConsole, executionResult.getProcessHandler(), myUi.getComponent(), getSessionName());
+    myRunContentDescriptor = new RunContentDescriptor(myConsole, executionResult.getProcessHandler(), myUi.getComponent(), getSessionName(), myIcon);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return myRunContentDescriptor;

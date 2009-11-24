@@ -43,6 +43,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -66,7 +68,17 @@ public class ChooseRunConfigurationAction extends AnAction {
     final Executor executor = getDefaultExecutor();
     assert executor != null;
 
-    final RunListPopup popup = new RunListPopup(project, new ConfigurationListPopupStep(this, project, String.format("%s", executor.getActionName())));
+    final RunListPopup popup = new RunListPopup(project, new ConfigurationListPopupStep(this, project, String.format("%s", executor.getActionName()))) {
+      @Override
+      protected void handleShiftClick(final boolean handleFinalChoices, final InputEvent inputEvent, final RunListPopup popup) {
+        try {
+          myCurrentExecutor = getAlternateExecutor();
+          popup._handleSelect(handleFinalChoices, inputEvent);
+        } finally {
+          myCurrentExecutor = null;
+        }
+      }
+    };
     registerActions(popup);
 
     final String adText = getAdText(getAlternateExecutor());
@@ -792,12 +804,34 @@ public class ChooseRunConfigurationAction extends AnAction {
     }
   }
 
-  private static class RunListPopup extends ListPopupImpl {
+  private static abstract class RunListPopup extends ListPopupImpl {
     private Project myProject_;
 
     public RunListPopup(final Project project, ListPopupStep step) {
       super(step);
       myProject_ = project;
+    }
+
+    @Override
+    public void handleSelect(boolean handleFinalChoices, InputEvent e) {
+      if (e instanceof MouseEvent && e.isShiftDown()) {
+        handleShiftClick(handleFinalChoices, e, this);
+        return;
+      }
+
+      _handleSelect(handleFinalChoices, e);
+    }
+
+    protected void _handleSelect(boolean handleFinalChoices, InputEvent e) {
+      super.handleSelect(handleFinalChoices, e);
+    }
+
+    protected abstract void handleShiftClick(boolean handleFinalChoices, final InputEvent inputEvent, final RunListPopup popup);
+
+    @Override
+    protected boolean isActionClick(MouseEvent e) {
+      if (e.getButton() == MouseEvent.BUTTON2 || e.isPopupTrigger() || e.getID() != MouseEvent.MOUSE_PRESSED) return false;
+      return e.getButton() == MouseEvent.BUTTON1;
     }
 
     @Override

@@ -60,10 +60,11 @@ public class CompositeCheckoutListener implements CheckoutProvider.Listener {
         result.set(vDir);
         if (vDir != null) {
           final LocalFileSystem.WatchRequest watchRequest = lfs.addRootToWatch(vDir.getPath(), true);
-          assert watchRequest != null;
           ((NewVirtualFile)vDir).markDirtyRecursively();
           vDir.refresh(false, true);
-          lfs.removeWatchedRoot(watchRequest);
+          if (watchRequest != null) {
+            lfs.removeWatchedRoot(watchRequest);
+          }
         }
       }
     });

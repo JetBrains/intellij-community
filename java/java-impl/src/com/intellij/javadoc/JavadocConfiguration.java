@@ -49,6 +49,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -115,6 +116,10 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
 
   public JavadocConfigurable createConfigurable() {
     return new JavadocConfigurable(this);
+  }
+
+  public Icon getIcon() {
+    return null;
   }
 
   @NotNull

@@ -50,7 +50,9 @@ public class SlowlyClosingAlarm implements AtomicSectionsAware, Disposable {
   private static ThreadFactory threadFactory(@NonNls final String threadsName) {
     return new ThreadFactory() {
       public Thread newThread(final Runnable r) {
-        return new Thread(r, threadsName);
+        final Thread thread = new Thread(r, threadsName);
+        thread.setPriority(Thread.MIN_PRIORITY);
+        return thread;
       }
     };
   }

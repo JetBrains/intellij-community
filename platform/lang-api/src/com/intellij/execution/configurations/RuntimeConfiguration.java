@@ -24,6 +24,8 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+
 public abstract class RuntimeConfiguration extends RunConfigurationBase implements LocatableConfiguration, Cloneable, ModuleRunConfiguration {
   protected RuntimeConfiguration(final String name, final Project project, final ConfigurationFactory factory) {
     super(project, factory, name);

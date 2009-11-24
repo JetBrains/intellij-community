@@ -22,6 +22,7 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler;
@@ -35,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 
 public class MoveJavaFileHandler extends MoveFileHandler {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveClassesOrPackages.MoveJavaFileHandler");
   @Override
   public boolean canProcessElement(PsiFile element) {
     return element instanceof PsiJavaFile && !JspPsiUtil.isInJspFile(element) && !CollectHighlightsUtil.isOutsideSourceRootJavaFile(element);
@@ -69,7 +71,11 @@ public class MoveJavaFileHandler extends MoveFileHandler {
         final PsiElement newElement = oldToNewMap.get(oldElement);
         final PsiReference reference = moveRenameUsage.getReference();
         if (reference != null) {
-          reference.bindToElement(newElement);
+          try {
+            reference.bindToElement(newElement);
+          } catch (IncorrectOperationException ex) {
+            LOG.error(ex);
+          }
         }
       }
     }

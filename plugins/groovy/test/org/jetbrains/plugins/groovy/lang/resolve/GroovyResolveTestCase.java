@@ -21,9 +21,11 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * @author ven
@@ -39,7 +41,7 @@ public abstract class GroovyResolveTestCase extends LightGroovyTestCase {
     }
   }
 
-  protected PsiReference configureByFile(@NonNls String filePath) throws Exception{
+  protected PsiReference configureByFile(@NonNls String filePath, @Nullable String newFilePath) throws IOException {
     filePath = StringUtil.trimStart(filePath, getTestName(true) + "/");
     final VirtualFile vFile = myFixture.getTempDirFixture().getFile(filePath);
     assertNotNull("file " + filePath + " not found", vFile);
@@ -50,11 +52,20 @@ public abstract class GroovyResolveTestCase extends LightGroovyTestCase {
     assertTrue(offset >= 0);
     fileText = fileText.substring(0, offset) + fileText.substring(offset + MARKER.length());
 
-    myFixture.configureByText(vFile.getFileType(), fileText);
+    if (newFilePath == null) {
+      myFixture.configureByText(vFile.getName(), fileText);
+    }
+    else {
+      myFixture.configureByText(newFilePath, fileText);
+    }
 
     PsiReference ref = myFixture.getFile().findReferenceAt(offset);
     assertNotNull(ref);
     return ref;
+  }
+
+  protected PsiReference configureByFile(@NonNls String filePath) throws Exception {
+    return configureByFile(filePath, null);
   }
 
 }

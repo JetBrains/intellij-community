@@ -19,6 +19,9 @@ import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
@@ -148,6 +151,11 @@ public class MavenUtil {
   public static boolean isInModalContext() {
     if (isNoBackgroundMode()) return false;
     return LaterInvocator.isInModalContext();
+  }
+
+  public static void showError(Project project, String title, Throwable e) {
+    MavenLog.LOG.error(e);
+    Notifications.Bus.notify(new Notification("Maven", title, e.getMessage(), NotificationType.ERROR), project);
   }
 
   public static Properties getSystemProperties() {

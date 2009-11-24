@@ -62,6 +62,7 @@ import com.intellij.util.Icons;
 import com.intellij.util.Processor;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.Table;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -334,12 +335,7 @@ public class ShowUsagesAction extends AnAction {
     addUsageNodes(usageView.getRoot(), usageView, new ArrayList<UsageNode>());
 
 
-    final JTable table = new Table(){
-      @Override
-      public boolean getScrollableTracksViewportWidth() {
-        return true;
-      }
-    };
+    final JTable table = new MyTable();
     TableScrollingUtil.installActions(table);
     final Vector<Object> data = new Vector<Object>();
     setModel(table, usages, visibleNodes, usageView, data);
@@ -410,6 +406,8 @@ public class ShowUsagesAction extends AnAction {
         });
       }
     };
+
+
 
     KeyboardShortcut shortcut = getSettingsShortcut();
     if (shortcut != null) {
@@ -633,6 +631,32 @@ public class ShowUsagesAction extends AnAction {
           });
         }
       });
+    }
+  }
+
+  static class MyTable extends Table implements DataProvider {
+    @Override
+    public boolean getScrollableTracksViewportWidth() {
+      return true;
+    }
+
+    public Object getData(@NonNls String dataId) {
+      if (LangDataKeys.PSI_ELEMENT.getName().equals(dataId)) {
+        final int[] selected = getSelectedRows();
+        if (selected.length == 1) {
+          final Object at = getValueAt(selected[0], 0);
+          if (at instanceof UsageNode) {
+            final Usage usage = ((UsageNode)at).getUsage();
+            if (usage instanceof UsageInfo2UsageAdapter) {
+              final PsiElement element = ((UsageInfo2UsageAdapter)usage).getElement();
+              if (element != null) {
+                return element.getContainingFile();
+              }
+            }
+          }
+        }
+      }
+      return null;
     }
   }
 }

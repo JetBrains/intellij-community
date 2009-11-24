@@ -29,6 +29,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
@@ -53,6 +54,11 @@ public class UnknownRunConfiguration implements RunConfiguration {
 
   public void setDoNotStore(boolean b) {
     myDoNotStore = b;
+  }
+
+  @Nullable
+  public Icon getIcon() {
+    return null;
   }
 
   public boolean isDoNotStore() {

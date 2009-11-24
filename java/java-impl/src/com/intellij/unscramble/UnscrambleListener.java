@@ -28,15 +28,13 @@ import java.util.regex.Pattern;
  * @author Konstantin Bulenkov
  */
 public class UnscrambleListener extends ApplicationAdapter {
-  private static final int MAX_STACKTRACE_SIZE = 15*1024; //15Kb
+  private static final int MAX_STACKTRACE_SIZE = 15 * 1024; //15Kb
   private String stacktrace = null;
 
   @Override
   public void applicationActivated(IdeFrame ideFrame) {
     final String clipboard = getClipboardContents();
-    if (clipboard != null
-        && clipboard.length() < MAX_STACKTRACE_SIZE
-        && !clipboard.equals(stacktrace)) {
+    if (clipboard != null && clipboard.length() < MAX_STACKTRACE_SIZE && !clipboard.equals(stacktrace)) {
       stacktrace = clipboard;
       if (isStacktrace(stacktrace)) {
         new UnscrambleDialog(ideFrame.getProject()).doOKAction();
@@ -51,20 +49,22 @@ public class UnscrambleListener extends ApplicationAdapter {
 
   public static String getClipboardContents() {
     String result = "";
-    final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-    final Transferable contents = clipboard.getContents(null);
-    final boolean hasTransferableText = (contents != null) && contents.isDataFlavorSupported(DataFlavor.stringFlavor);
-    if (hasTransferableText) {
-      try {
+    try {
+      final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+      final Transferable contents = clipboard.getContents(null);
+      final boolean hasTransferableText = (contents != null) && contents.isDataFlavorSupported(DataFlavor.stringFlavor);
+      if (hasTransferableText) {
         result = (String)contents.getTransferData(DataFlavor.stringFlavor);
       }
-      catch (Exception ex){//
-      }
+    }
+    catch (Exception e) {//
     }
     return result;
   }
 
-  private static final Pattern STACKTRACE_LINE = Pattern.compile("[\t]*at [[a-zA-Z0-9]+\\.]+[a-zA-Z$0-9]+\\.[a-zA-Z0-9_]+\\([A-Za-z0-9_]+\\.java:[\\d]+\\)");
+  private static final Pattern STACKTRACE_LINE =
+    Pattern.compile("[\t]*at [[a-zA-Z0-9]+\\.]+[a-zA-Z$0-9]+\\.[a-zA-Z0-9_]+\\([A-Za-z0-9_]+\\.java:[\\d]+\\)");
+
   public static boolean isStacktrace(String stacktrace) {
     int linesCount = 0;
     for (String line : stacktrace.split("\n")) {
@@ -74,7 +74,8 @@ public class UnscrambleListener extends ApplicationAdapter {
       }
       if (STACKTRACE_LINE.matcher(line).matches()) {
         linesCount++;
-      } else {
+      }
+      else {
         linesCount = 0;
       }
       if (linesCount > 2) return true;

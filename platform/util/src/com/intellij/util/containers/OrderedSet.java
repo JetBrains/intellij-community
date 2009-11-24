@@ -29,6 +29,11 @@ public class OrderedSet<T> extends AbstractSet<T> implements List<T> {
     myElements = new ArrayList<T>();
   }
 
+  public OrderedSet(TObjectHashingStrategy<T> hashingStrategy, int capacity) {
+    myHashSet = new THashSet<T>(capacity, hashingStrategy);
+    myElements = new ArrayList<T>(capacity);
+  }
+
   public OrderedSet() {
     myHashSet = new THashSet<T>();
     myElements = new ArrayList<T>();

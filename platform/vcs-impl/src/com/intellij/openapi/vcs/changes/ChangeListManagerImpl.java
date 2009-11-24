@@ -34,8 +34,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.ui.CommitHelper;
 import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictTracker;
+import com.intellij.openapi.vcs.changes.ui.CommitHelper;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
@@ -69,7 +69,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private final UpdateRequestsQueue myUpdater;
 
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
-  private static final ScheduledExecutorService ourUpdateAlarm = ConcurrencyUtil.newSingleScheduledThreadExecutor("Change List Updater");
+  private static final ScheduledExecutorService ourUpdateAlarm = ConcurrencyUtil.newSingleScheduledThreadExecutor("Change List Updater", Thread.MIN_PRIORITY + 1);
 
   private final Modifier myModifier;
 

@@ -13,28 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.util.containers;
 
-/*
- * @author max
- */
-package com.intellij.openapi.keymap.impl;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
-import java.util.Arrays;
-import java.util.List;
+public class EmptyIterable<T> implements Iterable<T> {
+  private static final EmptyIterable INSTANCE = new EmptyIterable();
 
-public class DefaultBundledKeymaps implements BundledKeymapProvider {
-  public List<String> getKeymapFileNames() {
-    return Arrays.asList(
-      "Keymap_Default.xml",
-      "Keymap_Mac.xml",
-      "Keymap_MacClassic.xml",
-      "Keymap_Emacs.xml",
-      "Keymap_VisualStudio.xml",
-      "Keymap_GNOME.xml",
-      "Keymap_XWin.xml",
-      "Keymap_KDE.xml",
-      "Keymap_Eclipse.xml",
-      "Keymap_Netbeans.xml"
-    );
+  public static <T> EmptyIterable<T> getInstance() {
+    return INSTANCE;
+  }
+
+  public Iterator<T> iterator() {
+    return EmptyIterator.getInstance();
   }
 }

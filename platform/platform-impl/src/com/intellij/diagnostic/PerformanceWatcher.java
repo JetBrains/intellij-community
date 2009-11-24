@@ -106,6 +106,7 @@ public class PerformanceWatcher implements ApplicationComponent {
         checkEDTResponsiveness();
       }
     }, "Performance watcher");
+    myThread.setPriority(Thread.MIN_PRIORITY);
     myThread.start();
   }
 

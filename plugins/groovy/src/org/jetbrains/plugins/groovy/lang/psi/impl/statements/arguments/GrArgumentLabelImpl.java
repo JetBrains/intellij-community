@@ -19,6 +19,8 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -55,7 +57,9 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
   }
 
   public PsiReference getReference() {
-    return this;
+    PsiReference[] otherReferences = ReferenceProvidersRegistry.getReferencesFromProviders(this, GrArgumentLabel.class);
+    PsiReference[] thisReference = {this};
+    return new PsiMultiReference(otherReferences.length == 0 ? thisReference : ArrayUtil.mergeArrays(thisReference, otherReferences, PsiReference.class), this);
   }
 
   public String getName() {
@@ -166,6 +170,7 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
 
   }
 
+  @NotNull
   public Object[] getVariants() {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
