@@ -105,21 +105,6 @@ public class DefaultHighlightVisitor extends PsiElementVisitor implements Highli
         cachedAnnotators.clear();
       }
     });
-
-    //final ExtensionPoint<LanguageExtensionPoint<Annotator>> point = Extensions.getRootArea().getExtensionPoint(LanguageAnnotators.EP_NAME);
-    //point.addExtensionPointListener(new ExtensionPointAndAreaListener<LanguageExtensionPoint<Annotator>>() {
-    //  public void areaReplaced(ExtensionsArea area) {
-    //    cachedAnnotators.clear();
-    //  }
-    //
-    //  public void extensionAdded(LanguageExtensionPoint<Annotator> extension, @Nullable PluginDescriptor pluginDescriptor) {
-    //    cachedAnnotators.clear();
-    //  }
-    //
-    //  public void extensionRemoved(LanguageExtensionPoint<Annotator> extension, @Nullable PluginDescriptor pluginDescriptor) {
-    //    cachedAnnotators.clear();
-    //  }
-    //});
   }
 
   private void runAnnotators(final PsiElement element) {

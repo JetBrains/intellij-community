@@ -17,12 +17,12 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.ReferenceImporter;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.Document;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.lang.StdLanguages;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
