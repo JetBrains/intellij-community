@@ -1084,7 +1084,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     Project project = file.getProject();
     FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, null);
     assertTrue(!DumbServiceImpl.getInstance(project).isDumb());
-    ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).getFileStatusMap().allowDirt(allowDirt);
+    FileStatusMap fileStatusMap = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).getFileStatusMap();
+    for (int ignoreId : toIgnore) {
+      fileStatusMap.markFileUpToDate(editor.getDocument(), file, ignoreId);
+    }
+    fileStatusMap.allowDirt(allowDirt);
     try {
       TextEditorHighlightingPassRegistrarEx registrar = TextEditorHighlightingPassRegistrarEx.getInstanceEx(project);
       final List<TextEditorHighlightingPass> passes = registrar.instantiatePasses(file, editor, toIgnore);
@@ -1103,7 +1107,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       return infos == null ? Collections.<HighlightInfo>emptyList() : new ArrayList<HighlightInfo>(infos);
     }
     finally {
-      ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).getFileStatusMap().allowDirt(true);
+      fileStatusMap.allowDirt(true);
     }
   }
 
