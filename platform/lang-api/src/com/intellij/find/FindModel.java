@@ -15,10 +15,11 @@
  */
 package com.intellij.find;
 
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.psi.search.SearchScope;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents the settings of a Find, Replace, Find in Path or Replace in Path
@@ -131,6 +132,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    *
    * @return the string to replace with.
    */
+  @NotNull
   public String getStringToReplace() {
     return myStringToReplace;
   }
@@ -140,7 +142,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    *
    * @param s the string to replace with.
    */
-  public void setStringToReplace(String s) {
+  public void setStringToReplace(@NotNull String s) {
     myStringToReplace = s;
   }
 
