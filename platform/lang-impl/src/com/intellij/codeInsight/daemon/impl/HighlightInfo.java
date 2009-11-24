@@ -361,7 +361,7 @@ public class HighlightInfo {
 
   public static class IntentionActionDescriptor {
     private final IntentionAction myAction;
-    private List<IntentionAction> myOptions;
+    private volatile List<IntentionAction> myOptions;
     private HighlightDisplayKey myKey;
     private final String myDisplayName;
     private final Icon myIcon;
@@ -390,7 +390,7 @@ public class HighlightInfo {
     @Nullable
     public List<IntentionAction> getOptions(@NotNull PsiElement element) {
       if (myOptions == null && myKey != null) {
-        myOptions = IntentionManager.getInstance().getStandardIntentionOptions(myKey, element);
+        List<IntentionAction> options = IntentionManager.getInstance().getStandardIntentionOptions(myKey, element);
         final InspectionProfileEntry tool = InspectionProjectProfileManager.getInstance(element.getProject())
           .getInspectionProfile()
           .getInspectionTool(myKey.toString(), element);
@@ -400,15 +400,20 @@ public class HighlightInfo {
           if (myAction instanceof QuickFixWrapper) {
             aClass = ((QuickFixWrapper)myAction).getFix().getClass();
           }
-          myOptions.add(new CleanupInspectionIntention(localInspectionTool, aClass));
+          options.add(new CleanupInspectionIntention(localInspectionTool, aClass));
           if (localInspectionTool instanceof CustomSuppressableInspectionTool) {
             final IntentionAction[] suppressActions = ((CustomSuppressableInspectionTool)localInspectionTool).getSuppressActions(element);
             if (suppressActions != null) {
-              myOptions.addAll(Arrays.asList(suppressActions));
+              options.addAll(Arrays.asList(suppressActions));
             }
           }
         }
         myKey = null;
+        synchronized (this) {
+          if (myOptions == null) {
+            myOptions = options;
+          }
+        }
       }
       return myOptions;
     }
