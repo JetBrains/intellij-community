@@ -453,16 +453,16 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
       fs.removeWatchedRoots(myWatchRequests);
       myWatchRequests.clear();
     }
-    final VirtualFileManager fm = VirtualFileManager.getInstance();
-    for (Map.Entry<String, Boolean> entry : myJarDirectories.entrySet()) {
-      String url = entry.getKey();
-      if (fm.getFileSystem(VirtualFileManager.extractProtocol(url)) instanceof LocalFileSystem) {
-        final boolean watchRecursively = entry.getValue().booleanValue();
-        final LocalFileSystem.WatchRequest request = fs.addRootToWatch(VirtualFileManager.extractPath(url), watchRecursively);
-        myWatchRequests.add(request);
-      }
-    }
     if (!myJarDirectories.isEmpty()) {
+      final VirtualFileManager fm = VirtualFileManager.getInstance();
+      for (Map.Entry<String, Boolean> entry : myJarDirectories.entrySet()) {
+        String url = entry.getKey();
+        if (fm.getFileSystem(VirtualFileManager.extractProtocol(url)) instanceof LocalFileSystem) {
+          final boolean watchRecursively = entry.getValue().booleanValue();
+          final LocalFileSystem.WatchRequest request = fs.addRootToWatch(VirtualFileManager.extractPath(url), watchRecursively);
+          myWatchRequests.add(request);
+        }
+      }
       if (myBusConnection == null) {
         myBusConnection = ApplicationManager.getApplication().getMessageBus().connect();
         myBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
