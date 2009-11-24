@@ -252,7 +252,6 @@ public class AnnotationUtilEx {
           }
         });
         final int parameterIndex = byNameWorkAround > -1? byNameWorkAround : method.getParameterList().getParameterIndex(parameter);
-        assert parameterIndex > 0;
         all.addAll(Arrays.asList(modifierList.getAnnotations()));
         SuperMethodsSearch.search(method, null, true, true).forEach(new Processor<MethodSignatureBackedByPsiMethod>() {
           public boolean process(final MethodSignatureBackedByPsiMethod superMethod) {
