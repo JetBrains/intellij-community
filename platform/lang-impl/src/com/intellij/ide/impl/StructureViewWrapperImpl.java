@@ -16,14 +16,16 @@
 
 package com.intellij.ide.impl;
 
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewWrapper;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -32,7 +34,6 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 
@@ -46,13 +47,14 @@ import java.awt.event.HierarchyListener;
  */
 public class StructureViewWrapperImpl implements StructureViewWrapper, Disposable {
   private final Project myProject;
+
   private FileEditor myFileEditor;
+  private Module myModule;
 
   private StructureView myStructureView;
+  private ModuleStructureComponent myModuleStructureComponent;
 
   private final JPanel myPanel;
-
-  private final Alarm myAlarm;
 
   // -------------------------------------------------------------------------
   // Constructor
@@ -63,7 +65,15 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     myPanel = new JPanel(new BorderLayout());
     myPanel.setBackground(UIUtil.getTreeTextBackground());
 
-    myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+    ActionManager.getInstance().addTimerListener(500, new TimerListener() {
+      public ModalityState getModalityState() {
+        return ModalityState.NON_MODAL;
+      }
+
+      public void run() {
+        checkUpdate();
+      }
+    });
 
     getComponent().addHierarchyListener(new HierarchyListener() {
       public void hierarchyChanged(HierarchyEvent e) {
@@ -72,38 +82,32 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
         }
       }
     });
-
-    FileEditorManagerListener editorManagerListener = new FileEditorManagerAdapter() {
-      private FileEditorManagerEvent myLastEvent;
-
-      public void selectionChanged(final FileEditorManagerEvent event) {
-        myLastEvent = event;
-        myAlarm.cancelAllRequests();
-        myAlarm.addRequest(new Runnable() {
-          public void run() {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              public void run() {
-                if (myLastEvent == null) {
-                  return;
-                }
-                try {
-                  if (myProject.isDisposed()) {
-                    return; // project may have been closed
-                  }
-                  PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-                  setFileEditor(myLastEvent.getNewEditor());
-                }
-                finally {
-                  myLastEvent = null;
-                }
-              }
-            }, ModalityState.NON_MODAL);
-          }
-        }, 400);
-      }
-    };
-    FileEditorManager.getInstance(project).addFileEditorManagerListener(editorManagerListener,this);
   }
+
+  private void checkUpdate() {
+    if (myProject.isDisposed()) return;
+
+    Window mywindow = SwingUtilities.windowForComponent(myPanel);
+    if (mywindow != null && !mywindow.isActive()) return;
+
+    final KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+    final Window focusWindow = focusManager.getFocusedWindow();
+
+    if (focusWindow == mywindow) {
+      final Component owner = focusManager.getFocusOwner();
+      if (owner == null || SwingUtilities.isDescendingFrom(owner, myPanel)) return;
+
+      final DataContext dataContext = DataManager.getInstance().getDataContext(owner);
+      final FileEditor fileEditor = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
+      if (fileEditor != null) {
+        setFileEditor(fileEditor);
+      }
+      else {
+        setModule(LangDataKeys.MODULE_CONTEXT.getData(dataContext));
+      }
+    }
+  }
+
 
   // -------------------------------------------------------------------------
   // StructureView interface implementation
@@ -120,48 +124,77 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
 
   public boolean selectCurrentElement(FileEditor fileEditor, boolean requestFocus) {
     if (myStructureView != null) {
-      if (!Comparing.equal(myStructureView.getFileEditor(), fileEditor)){
+      if (!Comparing.equal(myStructureView.getFileEditor(), fileEditor)) {
         setFileEditor(fileEditor);
         rebuild();
       }
       return myStructureView.navigateToSelectedElement(requestFocus);
-    } else {
+    }
+    else {
       return false;
     }
   }
 
-  // -------------------------------------------------------------------------
-  // Helper methods
-  // -------------------------------------------------------------------------
-
-
-  public void setFileEditor(FileEditor fileEditor) {
-    final boolean fileChanged = myFileEditor != null ? !myFileEditor.equals(fileEditor) : fileEditor != null;
-    if (fileChanged) {
-      myFileEditor = fileEditor;      
-    }
-    if (fileChanged ||
-        isStructureViewShowing() && myPanel.getComponentCount() == 0 && myFileEditor != null) {
+  private void setModule(Module module) {
+    if (module != myModule) {
+      myModule = module;
       rebuild();
     }
+  }
+
+  public void setFileEditor(FileEditor fileEditor) {
+    if (myModule != null) {
+      myModule = null;
+      rebuild();
+    }
+    else {
+      if (!Comparing.equal(myFileEditor, fileEditor)) {
+        myFileEditor = fileEditor;
+        rebuild();
+        return;
+      }
+
+      if (isStructureViewShowing() && myPanel.getComponentCount() == 0 && myFileEditor != null) {
+        rebuild();
+      }
+    }
+
   }
 
   public void rebuild() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    boolean hadFocus = myStructureView != null && IJSwingUtilities.hasFocus2(myStructureView.getComponent());
+    boolean hadFocus = myStructureView != null && IJSwingUtilities.hasFocus2(myStructureView.getComponent()) ||
+                       myModuleStructureComponent != null && IJSwingUtilities.hasFocus2(myModuleStructureComponent);
+
     if (myStructureView != null) {
       myStructureView.storeState();
       Disposer.dispose(myStructureView);
       myStructureView = null;
     }
+
+    if (myModuleStructureComponent != null) {
+      Disposer.dispose(myModuleStructureComponent);
+      myModuleStructureComponent = null;
+    }
+
     myPanel.removeAll();
 
     if (!isStructureViewShowing()) {
       return;
     }
 
-    if (myFileEditor!=null && myFileEditor.isValid()) {
+    if (myModule != null) {
+      myModuleStructureComponent = new ModuleStructureComponent(myModule);
+      myPanel.add(myModuleStructureComponent, BorderLayout.CENTER);
+      if (hadFocus) {
+        JComponent focusedComponent = IdeFocusTraversalPolicy.getPreferredFocusedComponent(myModuleStructureComponent);
+        if (focusedComponent != null) {
+          focusedComponent.requestFocus();
+        }
+      }
+    }
+    else if (myFileEditor != null && myFileEditor.isValid()) {
       final StructureViewBuilder structureViewBuilder = myFileEditor.getStructureViewBuilder();
       if (structureViewBuilder != null) {
         myStructureView = structureViewBuilder.createStructureView(myFileEditor, myProject);
@@ -176,7 +209,8 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
         myStructureView.centerSelectedRow();
       }
     }
-    if (myStructureView == null) {
+
+    if (myModuleStructureComponent == null && myStructureView == null) {
       myPanel.add(new JLabel(IdeBundle.message("message.nothing.to.show.in.structure.view"), SwingConstants.CENTER), BorderLayout.CENTER);
     }
 
@@ -187,7 +221,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
 
   protected boolean isStructureViewShowing() {
     ToolWindowManager windowManager = ToolWindowManager.getInstance(myProject);
-    ToolWindow toolWindow=windowManager.getToolWindow(ToolWindowId.STRUCTURE_VIEW);
+    ToolWindow toolWindow = windowManager.getToolWindow(ToolWindowId.STRUCTURE_VIEW);
     // it means that window is registered
     return toolWindow != null && toolWindow.isVisible();
   }
