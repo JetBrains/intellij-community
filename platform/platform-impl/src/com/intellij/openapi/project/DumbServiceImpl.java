@@ -201,7 +201,6 @@ public class DumbServiceImpl extends DumbService {
           }
         });
     semaphore.waitFor();
-    LOG.assertTrue(!isDumb());
   }
 
   private class IndexUpdateRunnable implements Runnable {
