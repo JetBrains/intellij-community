@@ -22,11 +22,13 @@ import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.artifacts.actions.*;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.LibrarySourceItem;
+import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.ModuleOutputSourceItem;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.SourceItemsTree;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.Splitter;
@@ -378,6 +380,10 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
 
   public void putLibraryIntoDefaultLocation(@NotNull Library library) {
     myLayoutTreeComponent.putIntoDefaultLocations(Collections.singletonList(new LibrarySourceItem(library)));
+  }
+
+  public void putModuleIntoDefaultLocation(@NotNull Module module) {
+    myLayoutTreeComponent.putIntoDefaultLocations(Collections.singletonList(new ModuleOutputSourceItem(module)));
   }
 
   public void addToClasspath(final CompositePackagingElement<?> element, List<String> classpath) {
