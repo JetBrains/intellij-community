@@ -36,7 +36,7 @@ import org.jdom.Element;
 )
 public class GroovyCompilerConfiguration implements PersistentStateComponent<GroovyCompilerConfiguration.MyStateBean>, Disposable {
   private String myHeapSize = "400";
-  private ExcludedEntriesConfiguration myExcludeFromStubGeneration = new ExcludedEntriesConfiguration();
+  private final ExcludedEntriesConfiguration myExcludeFromStubGeneration = new ExcludedEntriesConfiguration();
 
   public MyStateBean getState() {
     final MyStateBean bean = new MyStateBean();

@@ -15,13 +15,10 @@
  */
 package com.intellij.compiler.impl.javaCompiler.jikes;
 
-import com.intellij.openapi.components.*;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
-import org.jdom.Element;
+import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StorageScheme;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.StringTokenizer;
@@ -33,40 +30,13 @@ import java.util.StringTokenizer;
    ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
-public class JikesSettings implements PersistentStateComponent<Element> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.jikes.JikesSettings");
-
+public class JikesSettings extends JavacSettings {
   public String JIKES_PATH = "";
-  public boolean DEBUGGING_INFO = true;
-  public boolean DEPRECATION = true;
-  public boolean GENERATE_NO_WARNINGS = false;
   public boolean IS_EMACS_ERRORS_MODE = true;
 
-  public String ADDITIONAL_OPTIONS_STRING = "";
-
-  public Element getState() {
-    try {
-      final Element e = new Element("state");
-      writeExternal(e);
-      return e;
-    }
-    catch (WriteExternalException e1) {
-      LOG.error(e1);
-      return null;
-    }
-  }
-
-  public void loadState(Element state) {
-    try {
-      readExternal(state);
-    }
-    catch (InvalidDataException e) {
-      LOG.error(e);
-    }
-  }
-
+  @NonNls
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public @NonNls String getOptionsString() {
+  public String getOptionsString() {
     StringBuffer options = new StringBuffer();
     if(DEBUGGING_INFO) {
       options.append("-g ");
@@ -114,17 +84,5 @@ public class JikesSettings implements PersistentStateComponent<Element> {
       options.append(" ");
     }
     return options.toString();
-  }
-
-  public static JikesSettings getInstance(Project project) {
-    return ServiceManager.getService(project, JikesSettings.class);
-  }
-
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
   }
 }

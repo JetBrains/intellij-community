@@ -16,12 +16,14 @@
 
 package com.intellij.util.xmlb;
 
+import org.jetbrains.annotations.NotNull;
+
 public class XmlSerializerUtil {
   private XmlSerializerUtil() {
   }
 
-  public static void copyBean(final Object from, final Object to) {
-    assert from.getClass().isAssignableFrom(to.getClass()) : "Beans of different classes specified";
+  public static <T> void copyBean(@NotNull T from, @NotNull T to) {
+    assert from.getClass().isAssignableFrom(to.getClass()) : "Beans of different classes specified: Cannot assign "+from.getClass()+" to "+to.getClass();
 
     final Accessor[] accessors = BeanBinding.getAccessors(to.getClass());
     for (Accessor accessor : accessors) {

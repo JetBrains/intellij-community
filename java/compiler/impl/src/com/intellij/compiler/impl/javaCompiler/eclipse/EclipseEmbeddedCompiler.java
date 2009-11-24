@@ -19,6 +19,7 @@ import com.intellij.compiler.OutputParser;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.impl.javaCompiler.DependencyProcessor;
 import com.intellij.compiler.impl.javaCompiler.ModuleChunk;
+import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
@@ -76,7 +77,7 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
 
   @NotNull
   public Configurable createConfigurable() {
-    return new EclipseCompilerConfigurable(EclipseEmbeddedCompilerSettings.getInstance(myProject));
+    return new EclipseCompilerConfigurable(EclipseEmbeddedCompilerConfiguration.getSettings(myProject, EclipseEmbeddedCompilerConfiguration.class));
   }
 
   @NotNull
@@ -109,7 +110,8 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         try {
-          myEclipseExternalCompiler.addCommandLineOptions(commandLine, chunk, outputDir, EclipseEmbeddedCompilerSettings.getInstance(myProject), false, false);
+          JavacSettings settings = EclipseEmbeddedCompilerConfiguration.getSettings(myProject, EclipseEmbeddedCompilerConfiguration.class);
+          myEclipseExternalCompiler.addCommandLineOptions(commandLine, chunk, outputDir, settings, false, false);
         }
         catch (IOException e) {
           ex[0] = e;

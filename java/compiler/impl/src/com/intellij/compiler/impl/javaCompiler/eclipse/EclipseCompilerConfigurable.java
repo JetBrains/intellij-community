@@ -15,11 +15,12 @@
  */
 package com.intellij.compiler.impl.javaCompiler.eclipse;
 
+import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
+import com.intellij.compiler.options.ComparingUtils;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.ui.RawCommandLineEditor;
-import com.intellij.compiler.options.ComparingUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,9 +36,9 @@ public class EclipseCompilerConfigurable implements Configurable {
   private JCheckBox myCbGenerateNoWarnings;
   private RawCommandLineEditor myAdditionalOptionsField;
   private JTextField myJavacMaximumHeapField;
-  private final EclipseCompilerSettings myCompilerSettings;
+  private final JavacSettings myCompilerSettings;
 
-  public EclipseCompilerConfigurable(EclipseCompilerSettings compilerSettings) {
+  public EclipseCompilerConfigurable(JavacSettings compilerSettings) {
     myCompilerSettings = compilerSettings;
     myAdditionalOptionsField.setDialogCaption(CompilerBundle.message("java.compiler.option.additional.command.line.parameters"));
   }

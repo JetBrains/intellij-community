@@ -37,7 +37,7 @@ public class JikesOutputParser extends OutputParser {
   @NonNls private static final String ENTER_TO_CONTINUE_REGEXP = ".*Enter\\s+to\\s+continue.*";
 
   public JikesOutputParser(Project project) {
-    myJikesSettings = JikesSettings.getInstance(project);
+    myJikesSettings = JikesConfiguration.getSettings(project);
     myParserActions.add(new ParserActionJikes());
   }
 

@@ -13,21 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.compiler.impl.javaCompiler.eclipse;
+package com.intellij.compiler.impl.javaCompiler.api;
 
-import com.intellij.openapi.components.*;
-import com.intellij.openapi.project.Project;
-import org.jdom.Element;
+import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StorageScheme;
 
 @State(
-  name = "EclipseEmbeddedCompilerSettings",
+  name = "CompilerAPISettings",
   storages = {
     @Storage(id = "default", file = "$PROJECT_FILE$")
    ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
-public class EclipseEmbeddedCompilerSettings extends EclipseCompilerSettings implements PersistentStateComponent<Element> {
-  public static EclipseEmbeddedCompilerSettings getInstance(Project project) {
-    return ServiceManager.getService(project, EclipseEmbeddedCompilerSettings.class);
-  }
+public class CompilerAPIConfiguration extends JavacConfiguration {
 }
