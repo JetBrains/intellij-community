@@ -148,7 +148,10 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
       relevantRange = TextRange.from(textEscaper.getRelevantTextRange().getStartOffset(), 0);
     }
     else {
+      int before = outChars.length();
       boolean result = textEscaper.decode(relevantRange, outChars);
+      int after = outChars.length();
+      assert after >= before : "Escaper " + textEscaper + "("+textEscaper.getClass()+") must not mangle char buffer";
       if (!result) {
         // if there are invalid chars, adjust the range
         int offsetInHost = textEscaper.getOffsetInHost(outChars.length() - startOffset, rangeInsideHost);
