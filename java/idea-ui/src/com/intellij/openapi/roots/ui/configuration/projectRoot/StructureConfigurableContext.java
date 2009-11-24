@@ -140,6 +140,15 @@ public class StructureConfigurableContext implements Disposable {
   }
 
   @Nullable
+  public Library getLibraryModel(@NotNull Library library) {
+    final LibraryTable libraryTable = library.getTable();
+    if (libraryTable != null) {
+      return findLibraryModel(library, myLevel2Providers.get(libraryTable.getTableLevel()));
+    }
+    return library;
+  }
+
+  @Nullable
   private static Library findLibraryModel(final Library library, LibrariesModifiableModel tableModel) {
     if (tableModel == null) return library;
     if (tableModel.wasLibraryRemoved(library)) return null;
