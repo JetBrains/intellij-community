@@ -61,6 +61,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -103,10 +104,11 @@ public class CompileDriver {
   private final Map<Module, String> myModuleOutputPaths = new HashMap<Module, String>();
   private final Map<Module, String> myModuleTestOutputPaths = new HashMap<Module, String>();
 
-  @NonNls private static final String VERSION_FILE_NAME = "version.dat";
-  @NonNls private static final String LOCK_FILE_NAME = "in_progress.dat";
+  private static final String VERSION_FILE_NAME = "version.dat";
+  private static final String LOCK_FILE_NAME = "in_progress.dat";
 
-  @NonNls private static final boolean GENERATE_CLASSPATH_INDEX = "true".equals(System.getProperty("generate.classpath.index"));
+  private static final boolean GENERATE_CLASSPATH_INDEX = "true".equals(System.getProperty("generate.classpath.index"));
+  private static final String PROP_PERFORM_INITIAL_REFRESH = "compiler.perform.outputs.refresh.on.start";
 
   private static final FileProcessingCompilerAdapterFactory FILE_PROCESSING_COMPILER_ADAPTER_FACTORY = new FileProcessingCompilerAdapterFactory() {
     public FileProcessingCompilerAdapter create(CompileContext context, FileProcessingCompiler compiler) {
@@ -616,76 +618,78 @@ public class CompileDriver {
         return ExitStatus.ERRORS;
       }
 
-      final long refreshStart = System.currentTimeMillis();
-
-      // need this to make sure the VFS is built
       boolean needRecalcOutputDirs = false;
-      //final List<VirtualFile> outputsToRefresh = new ArrayList<VirtualFile>();
+      if (Registry.is(PROP_PERFORM_INITIAL_REFRESH)) {
+        final long refreshStart = System.currentTimeMillis();
 
-      final VirtualFile[] all = context.getAllOutputDirectories();
+        // need this to make sure the VFS is built
+        //final List<VirtualFile> outputsToRefresh = new ArrayList<VirtualFile>();
 
-      final ProgressIndicator progressIndicator = context.getProgressIndicator();
+        final VirtualFile[] all = context.getAllOutputDirectories();
 
-      final int totalCount = all.length + myGenerationCompilerModuleToOutputDirMap.size() * 2;
-      final CountDownLatch latch = new CountDownLatch(totalCount);
-      final Runnable decCount = new Runnable() {
-        public void run() {
-          latch.countDown();
-          progressIndicator.setFraction(((double)(totalCount - latch.getCount())) / totalCount);
-        }
-      };
-      progressIndicator.pushState();
-      progressIndicator.setText("Inspecting output directories...");
-      final boolean asyncMode = !ApplicationManager.getApplication().isDispatchThread(); // must not lock awt thread with latch.await()
-      try {
-        for (VirtualFile output : all) {
-          if (output.isValid()) {
-            walkChildren(output, context);
+        final ProgressIndicator progressIndicator = context.getProgressIndicator();
+
+        final int totalCount = all.length + myGenerationCompilerModuleToOutputDirMap.size() * 2;
+        final CountDownLatch latch = new CountDownLatch(totalCount);
+        final Runnable decCount = new Runnable() {
+          public void run() {
+            latch.countDown();
+            progressIndicator.setFraction(((double)(totalCount - latch.getCount())) / totalCount);
           }
-          else {
-            needRecalcOutputDirs = true;
-            final File file = new File(output.getPath());
-            if (!file.exists()) {
-              final boolean created = file.mkdirs();
-              if (!created) {
-                context.addMessage(CompilerMessageCategory.ERROR, "Failed to create output directory " + file.getPath(), null, 0, 0);
+        };
+        progressIndicator.pushState();
+        progressIndicator.setText("Inspecting output directories...");
+        final boolean asyncMode = !ApplicationManager.getApplication().isDispatchThread(); // must not lock awt thread with latch.await()
+        try {
+          for (VirtualFile output : all) {
+            if (output.isValid()) {
+              walkChildren(output, context);
+            }
+            else {
+              needRecalcOutputDirs = true;
+              final File file = new File(output.getPath());
+              if (!file.exists()) {
+                final boolean created = file.mkdirs();
+                if (!created) {
+                  context.addMessage(CompilerMessageCategory.ERROR, "Failed to create output directory " + file.getPath(), null, 0, 0);
+                  return ExitStatus.ERRORS;
+                }
+              }
+              output = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+              if (output == null) {
+                context.addMessage(CompilerMessageCategory.ERROR, "Failed to locate output directory " + file.getPath(), null, 0, 0);
                 return ExitStatus.ERRORS;
               }
             }
-            output = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-            if (output == null) {
-              context.addMessage(CompilerMessageCategory.ERROR, "Failed to locate output directory " + file.getPath(), null, 0, 0);
-              return ExitStatus.ERRORS;
-            }
+            output.refresh(asyncMode, true, decCount);
+            //outputsToRefresh.add(output);
           }
-          output.refresh(asyncMode, true, decCount);
-          //outputsToRefresh.add(output);
+          for (Pair<IntermediateOutputCompiler, Module> pair : myGenerationCompilerModuleToOutputDirMap.keySet()) {
+            final Pair<VirtualFile, VirtualFile> generated = myGenerationCompilerModuleToOutputDirMap.get(pair);
+            walkChildren(generated.getFirst(), context);
+            //outputsToRefresh.add(generated.getFirst());
+            generated.getFirst().refresh(asyncMode, true, decCount);
+            walkChildren(generated.getSecond(), context);
+            //outputsToRefresh.add(generated.getSecond());
+            generated.getSecond().refresh(asyncMode, true, decCount);
+          }
+
+          //RefreshQueue.getInstance().refresh(false, true, null, outputsToRefresh.toArray(new VirtualFile[outputsToRefresh.size()]));
+          try {
+            latch.await(); // wait until all threads are refreshed
+          }
+          catch (InterruptedException e) {
+            LOG.info(e);
+          }
         }
-        for (Pair<IntermediateOutputCompiler, Module> pair : myGenerationCompilerModuleToOutputDirMap.keySet()) {
-          final Pair<VirtualFile, VirtualFile> generated = myGenerationCompilerModuleToOutputDirMap.get(pair);
-          walkChildren(generated.getFirst(), context);
-          //outputsToRefresh.add(generated.getFirst());
-          generated.getFirst().refresh(asyncMode, true, decCount);
-          walkChildren(generated.getSecond(), context);
-          //outputsToRefresh.add(generated.getSecond());
-          generated.getSecond().refresh(asyncMode, true, decCount);
+        finally {
+          progressIndicator.popState();
         }
 
-        //RefreshQueue.getInstance().refresh(false, true, null, outputsToRefresh.toArray(new VirtualFile[outputsToRefresh.size()]));
-        try {
-          latch.await(); // wait until all threads are refreshed
-        }
-        catch (InterruptedException e) {
-          LOG.info(e);
-        }
+        final long initialRefreshTime = System.currentTimeMillis() - refreshStart;
+        CompilerUtil.logDuration("Initial VFS refresh", initialRefreshTime);
+        CompilerUtil.ourRefreshTime += initialRefreshTime;
       }
-      finally {
-        progressIndicator.popState();
-      }
-
-      final long initialRefreshTime = System.currentTimeMillis() - refreshStart;
-      CompilerUtil.logDuration("Initial VFS refresh", initialRefreshTime);
-      CompilerUtil.ourRefreshTime += initialRefreshTime;
 
       DumbService.getInstance(myProject).waitForSmartMode();
 
