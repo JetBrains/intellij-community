@@ -23,14 +23,15 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.BaseStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.*;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.ui.MasterDetailsStateService;
 import com.intellij.packaging.artifacts.*;
@@ -40,7 +41,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author nik
@@ -58,8 +61,8 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     MasterDetailsStateService.getInstance(project).register("ArtifactsStructureConfigurable.UI", this);
   }
 
-  @Override
-  public void init(StructureConfigurableContext context) {
+  public void init(StructureConfigurableContext context, ModuleStructureConfigurable moduleStructureConfigurable,
+                   ProjectLibrariesConfigurable projectLibrariesConfig, GlobalLibrariesConfigurable globalLibrariesConfig) {
     super.init(context);
     myPackagingEditorContext = new ArtifactsStructureConfigurableContextImpl(myContext, myProject, myDefaultSettings, new ArtifactAdapter() {
       @Override
@@ -77,6 +80,26 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
         }
       }
     });
+    final ItemsChangeListener listener = new ItemsChangeListener() {
+      public void itemChanged(@Nullable Object deletedItem) {
+        if (deletedItem instanceof Library || deletedItem instanceof Module) {
+          onElementDeleted();
+        }
+      }
+
+      public void itemsExternallyChanged() {
+      }
+    };
+    moduleStructureConfigurable.addItemsChangeListener(listener);
+    projectLibrariesConfig.addItemsChangeListener(listener);
+    globalLibrariesConfig.addItemsChangeListener(listener);
+  }
+
+  private void onElementDeleted() {
+    for (ArtifactEditorImpl editor : myPackagingEditorContext.getArtifactEditors()) {
+      editor.getSourceItemsTree().rebuildTree();
+      editor.queueValidation();
+    }
   }
 
   @Nls
@@ -250,7 +273,6 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   public Icon getIcon() {
     return null;
   }
-
 
   private class AddArtifactAction extends DumbAwareAction {
     private final ArtifactType myType;

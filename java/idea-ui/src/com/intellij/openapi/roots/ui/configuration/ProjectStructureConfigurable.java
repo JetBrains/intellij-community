@@ -122,7 +122,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     myGlobalLibrariesConfig.init(myContext);
     myModulesConfig.init(myContext);
     myFacetStructureConfigurable.init(myContext);
-    myArtifactsStructureConfigurable.init(myContext);
+    myArtifactsStructureConfigurable.init(myContext, myModulesConfig, myProjectLibrariesConfig, myGlobalLibrariesConfig);
 
     final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(myProject);
     myUiState.lastEditedConfigurable = propertiesComponent.getValue("project.structure.last.edited");
