@@ -16,16 +16,13 @@
 package org.intellij.plugins.intelliLang.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiConstantEvaluationHelperImpl;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
-import gnu.trove.Equality;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -245,13 +242,8 @@ public class AnnotationUtilEx {
       PsiParameter parameter = (PsiParameter)listOwner;
       PsiElement declarationScope = parameter.getDeclarationScope();
       if (declarationScope instanceof PsiMethod && parameter.getParent() == ((PsiMethod)declarationScope).getParameterList()) {
-        final PsiMethod method = (PsiMethod)declarationScope;
-        final int byNameWorkAround = ArrayUtil.indexOf(method.getParameterList().getParameters(), parameter, new Equality<PsiParameter>() {
-          public boolean equals(PsiParameter o1, PsiParameter o2) {
-            return Comparing.equal(o1.getName(), o2.getName());
-          }
-        });
-        final int parameterIndex = byNameWorkAround > -1? byNameWorkAround : method.getParameterList().getParameterIndex(parameter);
+        PsiMethod method = (PsiMethod)declarationScope;
+        final int parameterIndex = method.getParameterList().getParameterIndex(parameter);
         all.addAll(Arrays.asList(modifierList.getAnnotations()));
         SuperMethodsSearch.search(method, null, true, true).forEach(new Processor<MethodSignatureBackedByPsiMethod>() {
           public boolean process(final MethodSignatureBackedByPsiMethod superMethod) {
