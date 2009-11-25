@@ -16,8 +16,8 @@
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -36,13 +36,29 @@ public abstract class WelcomePopupAction extends AnAction implements DumbAware {
 
   protected abstract String getCaption();
 
+  /**
+   * When there is only one option to choose from, this method is called to determine whether
+   * the popup should still be shown or that the option should be chosen silently.
+   *
+   * @return true to choose single option silently
+   *         false otherwise
+   */
+  protected abstract boolean isSilentlyChooseSingleOption();
+
   public void actionPerformed(final AnActionEvent e) {
-    showPopup(e.getDataContext());
+    showPopup(e);
   }
 
-  private void showPopup(final DataContext context) {
+  private void showPopup(final AnActionEvent e) {
     final DefaultActionGroup group = new DefaultActionGroup();
     fillActions(group);
+
+    if (group.getChildrenCount() == 1 && isSilentlyChooseSingleOption()) {
+      final AnAction[] children = group.getChildren(null);
+      children[0].actionPerformed(e);
+      return;
+    }
+
 
     if (group.getChildrenCount() == 0) {
       group.add(new AnAction(getTextForEmpty()) {
@@ -52,6 +68,7 @@ public abstract class WelcomePopupAction extends AnAction implements DumbAware {
       } );
     }
 
+    final DataContext context = e.getDataContext();
     final ListPopup popup = JBPopupFactory.getInstance()
       .createActionGroupPopup(getCaption(),
                               group,
