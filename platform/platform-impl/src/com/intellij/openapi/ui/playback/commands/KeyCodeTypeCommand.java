@@ -15,9 +15,12 @@
  */
 package com.intellij.openapi.ui.playback.commands;
 
+import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.ui.playback.PlaybackRunner;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.List;
@@ -34,12 +37,12 @@ public class KeyCodeTypeCommand extends AlphaNumericTypeCommand {
   }
 
   @Override
-  public ActionCallback _execute(PlaybackRunner.StatusCallback cb, Robot robot, boolean directActionCall) {
+  public ActionCallback _execute(final PlaybackRunner.StatusCallback cb, final Robot robot, boolean directActionCall) {
     String text = getText().substring(PREFIX.length()).trim();
 
     int textDelim = text.indexOf(" ");
     
-    String codes;
+    final String codes;
     if (textDelim >= 0) {
       codes = text.substring(0, textDelim);
     } else {
@@ -53,7 +56,27 @@ public class KeyCodeTypeCommand extends AlphaNumericTypeCommand {
       unicode = "";
     }
 
+    final ActionCallback result = new ActionCallback();
 
+    TypingTarget typingTarget = findTarget();
+    if (typingTarget != null) {
+      typingTarget.type(unicode).doWhenDone(new Runnable() {
+        public void run() {
+          result.setDone();
+        }
+      }).doWhenRejected(new Runnable() {
+        public void run() {
+          typeCodes(cb, robot, codes).notify(result);
+        }
+      });
+    } else {
+      typeCodes(cb, robot, codes).notify(result);
+    }
+
+    return result;
+  }
+
+  private ActionCallback typeCodes(PlaybackRunner.StatusCallback cb, Robot robot, String codes) {
     String[] pairs = codes.split(CODE_DELIMITER);
     for (String eachPair : pairs) {
       try {
@@ -82,7 +105,7 @@ public class KeyCodeTypeCommand extends AlphaNumericTypeCommand {
         String[] strings = each.split(MODIFIER_DELIMITER);
         if (strings.length == 2) {
           codes.add(Integer.valueOf(strings[0]));
-          codes.add(Integer.valueOf(strings[1]));
+          modifiers.add(Integer.valueOf(strings[1]));
         }
       }
     }

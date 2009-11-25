@@ -208,7 +208,7 @@ public class ActionMacro implements JDOMExternalizable {
       myKeyCodes.addAll(keyCodes);
       myModifiers.addAll(modifiers);
 
-      assert myKeyCodes.size() == myModifiers.size();
+      assert myKeyCodes.size() == myModifiers.size() : "codes=" + myKeyCodes.toString() + " modifiers=" + myModifiers.toString();
     }
 
     public TypedDescriptor(char c, int keyCode, int modifiers) {

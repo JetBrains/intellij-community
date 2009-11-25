@@ -593,17 +593,28 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myPropertyChangeSupport.firePropertyChange(PROP_FONT_SIZE, oldFontSize, fontSize);
   }
 
-  private void processKeyTyped(char c) {
+  public ActionCallback type(String text) {
+    for (int i = 0; i < text.length(); i++) {
+      if (!processKeyTyped(text.charAt(i))) {
+        return new ActionCallback.Rejected();
+      }
+    }
+    return new ActionCallback.Done();
+  }
+
+  private boolean processKeyTyped(char c) {
     // [vova] This is patch for Mac OS X. Under Mac "input methods"
     // is handled before our EventQueue consume upcoming KeyEvents.
     IdeEventQueue queue = IdeEventQueue.getInstance();
     if (queue.shouldNotTypeInEditor() || ProgressManager.getInstance().hasModalProgressIndicator()) {
-      return;
+      return false;
     }
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     DataContext dataContext = getDataContext();
     actionManager.fireBeforeEditorTyping(c, dataContext);
     EditorActionManager.getInstance().getTypedAction().actionPerformed(this, c, dataContext);
+
+    return true;
   }
 
   private void fireFocusLost() {
