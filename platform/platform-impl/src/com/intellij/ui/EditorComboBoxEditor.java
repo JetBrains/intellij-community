@@ -37,7 +37,7 @@ public class EditorComboBoxEditor implements ComboBoxEditor{
     myTextField = new EditorTextField((Document)null, project, fileType) {
       @Override
       protected boolean shouldHaveBorder() {
-        return false;
+        return UIManager.getBorder("ComboBox.border") == null;
       }
     };
 
