@@ -39,7 +39,17 @@ public class ArtifactProblemsHolderImpl extends ArtifactProblemsHolderBase {
   }
 
   public void registerError(@NotNull String message, @Nullable List<PackagingElement<?>> pathToPlace, @Nullable ArtifactProblemQuickFix... quickFixes) {
-    myProblemsHolder.registerProblem(new ArtifactProblemDescription(message, ProjectStructureProblemDescription.Severity.ERROR, pathToPlace, Arrays.asList(
-      quickFixes)));
+    registerProblem(message, pathToPlace, ProjectStructureProblemDescription.Severity.ERROR, quickFixes);
+  }
+
+  private void registerProblem(@NotNull String message, @Nullable List<PackagingElement<?>> pathToPlace,
+                               final ProjectStructureProblemDescription.Severity severity, @Nullable ArtifactProblemQuickFix... quickFixes) {
+    myProblemsHolder.registerProblem(new ArtifactProblemDescription(message, severity, pathToPlace, Arrays.asList(quickFixes)));
+  }
+
+  public void registerWarning(@NotNull String message,
+                              @Nullable List<PackagingElement<?>> pathToPlace,
+                              ArtifactProblemQuickFix... quickFixes) {
+    registerProblem(message, pathToPlace, ProjectStructureProblemDescription.Severity.WARNING, quickFixes);
   }
 }

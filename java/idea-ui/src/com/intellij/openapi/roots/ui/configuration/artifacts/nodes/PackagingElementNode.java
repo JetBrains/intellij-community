@@ -19,14 +19,16 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorImpl;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactProblemDescription;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemDescription;
 import com.intellij.openapi.util.MultiValuesMap;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.SmartList;
+import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,22 +95,36 @@ public class PackagingElementNode<E extends PackagingElement<?>> extends Artifac
 
   @Override
   protected void update(PresentationData presentation) {
-    final Collection<String> problems = ((ArtifactEditorImpl)myContext.getThisArtifactEditor()).getValidationManager().getProblems(this);
+    final Collection<ArtifactProblemDescription> problems = ((ArtifactEditorImpl)myContext.getThisArtifactEditor()).getValidationManager().getProblems(this);
     if (problems == null || problems.isEmpty()) {
       super.update(presentation);
       return;
     }
-    final String message = StringUtil.join(problems, "\n");
+    StringBuilder buffer = StringBuilderSpinAllocator.alloc();
+    final String tooltip;
+    boolean isError = false;
+    try {
+      buffer.append("<html>");
+      for (ArtifactProblemDescription problem : problems) {
+        isError |= problem.getSeverity() == ProjectStructureProblemDescription.Severity.ERROR;
+        buffer.append(problem.getMessage()).append("<br>");
+      }
+      buffer.append("</html>");
+      tooltip = buffer.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(buffer);
+    }
 
-    getElementPresentation().render(presentation, addErrorHighlighting(SimpleTextAttributes.REGULAR_ATTRIBUTES), 
-                                    addErrorHighlighting(SimpleTextAttributes.GRAY_ATTRIBUTES));
-    presentation.setTooltip(message);
+    getElementPresentation().render(presentation, addErrorHighlighting(isError, SimpleTextAttributes.REGULAR_ATTRIBUTES),
+                                    addErrorHighlighting(isError, SimpleTextAttributes.GRAY_ATTRIBUTES));
+    presentation.setTooltip(tooltip);
   }
 
-  private static SimpleTextAttributes addErrorHighlighting(SimpleTextAttributes attributes) {
+  private static SimpleTextAttributes addErrorHighlighting(boolean error, SimpleTextAttributes attributes) {
     final TextAttributes textAttributes = attributes.toTextAttributes();
     textAttributes.setEffectType(EffectType.WAVE_UNDERSCORE);
-    textAttributes.setEffectColor(Color.RED);
+    textAttributes.setEffectColor(error ? Color.RED : Color.GRAY);
     return SimpleTextAttributes.fromTextAttributes(textAttributes);
   }
 
