@@ -25,6 +25,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -41,6 +42,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
+import java.util.Arrays;
 
 /**
  * @author Eugene Belyaev
@@ -100,7 +102,9 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
       final DataContext dataContext = DataManager.getInstance().getDataContext(owner);
       final FileEditor fileEditor = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
       if (fileEditor != null) {
-        setFileEditor(fileEditor);
+        if (Arrays.asList(FileEditorManager.getInstance(myProject).getSelectedEditors()).contains(fileEditor)) {
+          setFileEditor(fileEditor);
+        }
       }
       else {
         setModule(LangDataKeys.MODULE_CONTEXT.getData(dataContext));
