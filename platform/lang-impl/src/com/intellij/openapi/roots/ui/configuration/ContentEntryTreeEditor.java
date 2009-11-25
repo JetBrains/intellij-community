@@ -180,7 +180,7 @@ public abstract class ContentEntryTreeEditor {
 
   public void select(VirtualFile file) {
     if (myFileSystemTree != null) {
-      myFileSystemTree.select(file);
+      myFileSystemTree.select(file, null);
     }
   }
 
