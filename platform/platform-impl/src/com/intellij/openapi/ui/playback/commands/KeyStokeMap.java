@@ -22,7 +22,6 @@ import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 
 public class KeyStokeMap {
@@ -32,11 +31,17 @@ public class KeyStokeMap {
   private Map<Character, KeyStroke> myMap;
 
   public KeyStroke get(char c) {
-    if (myMap == null) {
-      myMap = generateKeyStrokeMappings();
-    }
+    Character mappedChar = new Character(c);
 
-    return myMap.get(new Character(c));
+    if (getMap().containsKey(mappedChar)) {
+      return getMap().get(mappedChar);
+    } else {
+      return KeyStroke.getKeyStroke(c);
+    }
+  }
+
+  public boolean containsChar(char c) {
+    return getMap().containsKey(c);
   }
 
   public KeyStroke get(String strokeText) {
@@ -136,13 +141,13 @@ public class KeyStokeMap {
       map.put(new Character((char)entry[0]), stroke);
     }
 
-    // If the locale is not en_US/GB, provide only a very basic map and
-    // rely on key_typed events instead
-    Locale locale = Locale.getDefault();
-    if (!Locale.US.equals(locale) && !Locale.UK.equals(locale)) {
-      LOG.debug("Not US: " + locale);
-      return map;
-    }
+    //// If the locale is not en_US/GB, provide only a very basic map and
+    //// rely on key_typed events instead
+    //Locale locale = Locale.getDefault();
+    //if (!Locale.US.equals(locale) && !Locale.UK.equals(locale)) {
+    //  LOG.debug("Not US: " + locale);
+    //  return map;
+    //}
 
     // Basic symbol/punctuation mappings
     for (int i = 0; i < mappings.length; i++) {
@@ -175,4 +180,11 @@ public class KeyStokeMap {
     return map;
   }
 
+  private Map<Character, KeyStroke> getMap() {
+    if (myMap == null) {
+      myMap = generateKeyStrokeMappings();
+    }
+
+    return myMap;
+  }
 }

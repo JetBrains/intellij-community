@@ -20,14 +20,14 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.ui.playback.commands.KeyCodeTypeCommand;
+import com.intellij.openapi.ui.playback.commands.TypeCommand;
+import com.intellij.openapi.util.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -49,6 +49,8 @@ public class ActionMacro implements JDOMExternalizable {
   private static final String ELEMENT_SHORTCUT = "shortuct";
   @NonNls
   private static final String ATTRIBUTE_TEXT = "text";
+  @NonNls
+  private static final String ATTRIBUTE_KEY_CODES = "text-keycode";
   @NonNls
   private static final String ELEMENT_ACTION = "action";
   @NonNls
@@ -80,7 +82,8 @@ public class ActionMacro implements JDOMExternalizable {
     for (Iterator iterator = actions.iterator(); iterator.hasNext();) {
       Element action = (Element)iterator.next();
       if (ELEMENT_TYPING.equals(action.getName())) {
-        myActions.add(new TypedDescriptor(action.getAttributeValue(ATTRIBUTE_TEXT)));
+        Pair<List<Integer>, List<Integer>> codes = parseKeyCodes(action.getAttributeValue(ATTRIBUTE_KEY_CODES));
+        myActions.add(new TypedDescriptor(action.getAttributeValue(ATTRIBUTE_TEXT), codes.getFirst(), codes.getSecond()));
       }
       else if (ELEMENT_ACTION.equals(action.getName())) {
         myActions.add(new IdActionDescriptor(action.getAttributeValue(ATTRIBUTE_ID)));
@@ -88,6 +91,14 @@ public class ActionMacro implements JDOMExternalizable {
         myActions.add(new ShortcutActionDesciption(action.getAttributeValue(ATTRIBUTE_TEXT)));
       }
     }
+  }
+
+  private Pair<List<Integer>, List<Integer>> parseKeyCodes(String keyCodesText) {
+    return KeyCodeTypeCommand.parseKeyCodes(keyCodesText);
+  }
+
+  public String unparseKeyCodes(Pair<List<Integer>, List<Integer>> keyCodes) {
+    return KeyCodeTypeCommand.unparseKeyCodes(keyCodes);
   }
 
   public void writeExternal(Element macro) throws WriteExternalException {
@@ -98,8 +109,10 @@ public class ActionMacro implements JDOMExternalizable {
       Element actionNode = null;
       if (action instanceof TypedDescriptor) {
         actionNode = new Element(ELEMENT_TYPING);
-        final String t = ((TypedDescriptor)action).getText();
+        TypedDescriptor typedDescriptor = (TypedDescriptor)action;
+        final String t = typedDescriptor.getText();
         actionNode.setAttribute(ATTRIBUTE_TEXT, JDOMUtil.escapeText(t));
+        actionNode.setAttribute(ATTRIBUTE_KEY_CODES, unparseKeyCodes(new Pair<List<Integer>, List<Integer>>(typedDescriptor.getKeyCodes(), typedDescriptor.getKeyModifiers())));
       }
       else if (action instanceof IdActionDescriptor) {
         actionNode = new Element(ELEMENT_ACTION);
@@ -161,13 +174,13 @@ public class ActionMacro implements JDOMExternalizable {
     myActions.add(new ShortcutActionDesciption(text));
   }
 
-  public void appendKeytyped(char c) {
+  public void appendKeytyped(char c, int keyCode, int modifiers) {
     ActionDescriptor lastAction = myActions.size() > 0 ? myActions.get(myActions.size() - 1) : null;
     if (lastAction instanceof TypedDescriptor) {
-      ((TypedDescriptor)lastAction).addChar(c);
+      ((TypedDescriptor)lastAction).addChar(c, keyCode, modifiers);
     }
     else {
-      myActions.add(new TypedDescriptor(c));
+      myActions.add(new TypedDescriptor(c, keyCode, modifiers));
     }
   }
 
@@ -184,18 +197,30 @@ public class ActionMacro implements JDOMExternalizable {
   }
 
   public static class TypedDescriptor implements ActionDescriptor {
+
     private String myText;
 
-    public TypedDescriptor(String text) {
+    private List<Integer> myKeyCodes = new ArrayList<Integer>();
+    private List<Integer> myModifiers = new ArrayList<Integer>();
+
+    public TypedDescriptor(String text, List<Integer> keyCodes, List<Integer> modifiers) {
       myText = text;
+      myKeyCodes.addAll(keyCodes);
+      myModifiers.addAll(modifiers);
+
+      assert myKeyCodes.size() == myModifiers.size() : "codes=" + myKeyCodes.toString() + " modifiers=" + myModifiers.toString();
     }
 
-    public TypedDescriptor(char c) {
+    public TypedDescriptor(char c, int keyCode, int modifiers) {
       myText = String.valueOf(c);
+      myKeyCodes.add(keyCode);
+      myModifiers.add(modifiers);
     }
 
-    public void addChar(char c) {
+    public void addChar(char c, int keyCode, int modifier) {
       myText = myText + c;
+      myKeyCodes.add(keyCode);
+      myModifiers.add(modifier);
     }
 
     public String getText() {
@@ -203,7 +228,7 @@ public class ActionMacro implements JDOMExternalizable {
     }
 
     public Object clone() {
-      return new TypedDescriptor(myText);
+      return new TypedDescriptor(myText, myKeyCodes, myModifiers);
     }
 
     public boolean equals(Object o) {
@@ -217,8 +242,23 @@ public class ActionMacro implements JDOMExternalizable {
     }
 
     public void generateTo(StringBuffer script) {
-      script.append(myText);
-      script.append("\n");
+      if (TypeCommand.containsUnicode(myText)) {
+        script.append(KeyCodeTypeCommand.PREFIX).append(" ");
+
+        for (int i = 0; i < myKeyCodes.size(); i++) {
+          Integer each = myKeyCodes.get(i);
+          script.append(each.toString());
+          script.append(KeyCodeTypeCommand.MODIFIER_DELIMITER);
+          script.append(myModifiers.get(i));
+          if (i < myKeyCodes.size() - 1) {
+            script.append(KeyCodeTypeCommand.CODE_DELIMITER);
+          }
+        }
+        script.append(" ").append(myText).append("\n");
+      } else {
+        script.append(myText);
+        script.append("\n");
+      }
     }
 
     public String toString() {
@@ -232,6 +272,14 @@ public class ActionMacro implements JDOMExternalizable {
       for (int i = 0; i < chars.length; i++) {
         typedAction.actionPerformed(editor, chars[i], context);
       }
+    }
+
+    public List<Integer> getKeyCodes() {
+      return myKeyCodes;
+    }
+
+    public List<Integer> getKeyModifiers() {
+      return myModifiers;
     }
   }
 

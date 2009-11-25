@@ -24,6 +24,7 @@ import com.intellij.ide.*;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -593,17 +594,43 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myPropertyChangeSupport.firePropertyChange(PROP_FONT_SIZE, oldFontSize, fontSize);
   }
 
-  private void processKeyTyped(char c) {
+  public ActionCallback type(final String text) {
+    final ActionCallback result = new ActionCallback();
+
+    Application app = ApplicationManager.getApplication();
+    if (!app.isWriteAccessAllowed()) {
+      result.setRejected();
+    } else {
+      app.runWriteAction(new Runnable() {
+        public void run() {
+          for (int i = 0; i < text.length(); i++) {
+            if (!processKeyTyped(text.charAt(i))) {
+              result.setRejected();
+              return;
+            }
+          }
+
+          result.setDone();
+        }
+      });
+    }
+
+    return result;
+  }
+
+  private boolean processKeyTyped(char c) {
     // [vova] This is patch for Mac OS X. Under Mac "input methods"
     // is handled before our EventQueue consume upcoming KeyEvents.
     IdeEventQueue queue = IdeEventQueue.getInstance();
     if (queue.shouldNotTypeInEditor() || ProgressManager.getInstance().hasModalProgressIndicator()) {
-      return;
+      return false;
     }
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     DataContext dataContext = getDataContext();
     actionManager.fireBeforeEditorTyping(c, dataContext);
     EditorActionManager.getInstance().getTypedAction().actionPerformed(this, c, dataContext);
+
+    return true;
   }
 
   private void fireFocusLost() {
