@@ -38,6 +38,7 @@ import java.util.List;
 
 public class FileWatcher {
   @NonNls public static final String PROPERTY_WATCHER_DISABLED = "filewatcher.disabled";
+  @NonNls private static final String PROPERTY_WATCHER_EXECUTABLE_PATH = "idea.filewatcher.executable.path";
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.local.FileWatcher");
 
@@ -180,7 +181,15 @@ public class FileWatcher {
     shutdownProcess();
 
     @NonNls final String executableName = SystemInfo.isWindows ? "fsnotifier.exe" : "fsnotifier";
-    notifierProcess = Runtime.getRuntime().exec(new String[]{PathManager.getBinPath() + File.separatorChar + executableName});
+
+    String alternatePathToFilewatcherExecutable = System.getProperty(PROPERTY_WATCHER_EXECUTABLE_PATH);
+    if (alternatePathToFilewatcherExecutable != null) {
+      if (!new File(alternatePathToFilewatcherExecutable).exists()) {
+        alternatePathToFilewatcherExecutable = null;
+      }
+    }
+    final String pathToExecutable = alternatePathToFilewatcherExecutable != null? FileUtil.toSystemDependentName(alternatePathToFilewatcherExecutable) : PathManager.getBinPath() + File.separatorChar + executableName;
+    notifierProcess = Runtime.getRuntime().exec(new String[]{pathToExecutable});
     
     notifierReader = new BufferedReader(new InputStreamReader(notifierProcess.getInputStream()));
     notifierWriter = new BufferedWriter(new OutputStreamWriter(notifierProcess.getOutputStream()));
