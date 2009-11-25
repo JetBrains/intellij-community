@@ -32,16 +32,16 @@ public abstract class PackagingValidationTestCase extends PackagingElementsTestC
 
   protected class MockArtifactProblemsHolder extends ArtifactProblemsHolderBase {
     private List<String> myProblems = new ArrayList<String>();
-    private Map<String, ArtifactProblemQuickFix> myQuickFixes = new THashMap<String, ArtifactProblemQuickFix>();
+    private Map<String, ArtifactProblemQuickFix[]> myQuickFixes = new THashMap<String, ArtifactProblemQuickFix[]>();
 
     public MockArtifactProblemsHolder() {
       super(new MockPackagingEditorContext());
     }
 
-    public void registerError(@NotNull String message, @Nullable List<PackagingElement<?>> pathToPlace, @Nullable ArtifactProblemQuickFix quickFix) {
+    public void registerError(@NotNull String message, @Nullable List<PackagingElement<?>> pathToPlace, @Nullable ArtifactProblemQuickFix... quickFixes) {
       myProblems.add(message);
-      if (quickFix != null) {
-        myQuickFixes.put(message, quickFix);
+      if (quickFixes != null) {
+        myQuickFixes.put(message, quickFixes);
       }
     }
 

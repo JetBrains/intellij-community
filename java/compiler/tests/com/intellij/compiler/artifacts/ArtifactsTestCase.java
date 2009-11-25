@@ -116,6 +116,7 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
 
   protected class MockPackagingEditorContext implements ArtifactEditorContext {
     private ModifiableArtifactModel myModifiableModel;
+    private Map<Module, ModifiableRootModel> myModifiableRootModels = new HashMap<Module, ModifiableRootModel>();
     private Map<CompositePackagingElement<?>, ManifestFileConfiguration> myManifestFiles = new HashMap<CompositePackagingElement<?>, ManifestFileConfiguration>();
 
     @NotNull
@@ -128,6 +129,16 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
 
     public ModifiableModuleModel getModifiableModuleModel() {
       return null;
+    }
+
+    @NotNull
+    public ModifiableRootModel getOrCreateModifiableRootModel(@NotNull Module module) {
+      ModifiableRootModel model = myModifiableRootModels.get(module);
+      if (model == null) {
+        model = ModuleRootManager.getInstance(module).getModifiableModel();
+        myModifiableRootModels.put(module, model);
+      }
+      return model;
     }
 
     @NotNull
