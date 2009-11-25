@@ -1,0 +1,12 @@
+Types:
+PsiField:f : A
+PsiMethodCallExpression:f.foo(f) : int
+PsiReferenceExpression:f : A
+PsiReferenceExpression:f : A
+
+Conversions:
+f -> $
+f.foo(f) -> $
+
+New expression type changes:
+Fails:

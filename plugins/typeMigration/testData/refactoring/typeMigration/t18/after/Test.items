@@ -1,0 +1,9 @@
+Types:
+PsiField:f : B
+PsiReferenceExpression:f : B
+
+Conversions:
+f -> $
+
+New expression type changes:
+Fails:

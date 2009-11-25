@@ -1,0 +1,9 @@
+Types:
+PsiField:f : java.lang.Integer[]
+PsiNewExpression:new int[0] : java.lang.Integer[]
+
+Conversions:
+
+New expression type changes:
+new int[0] -> java.lang.Integer[]
+Fails:
