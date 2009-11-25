@@ -45,6 +45,12 @@ public abstract class PackagingValidationTestCase extends PackagingElementsTestC
       }
     }
 
+    public void registerWarning(@NotNull String message,
+                                @Nullable List<PackagingElement<?>> pathToPlace,
+                                ArtifactProblemQuickFix... quickFixes) {
+      registerError(message, pathToPlace, quickFixes);
+    }
+
     public void assertNoProblems() {
       assertProblems();
     }
