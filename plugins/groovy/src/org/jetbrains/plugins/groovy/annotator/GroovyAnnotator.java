@@ -425,7 +425,7 @@ public class GroovyAnnotator implements Annotator {
     for (List<GrNamedArgument> args : map.values()) {
       for (int i = 1; i < args.size(); i++) {
         GrNamedArgument namedArgument = args.get(i);
-        holder.createErrorAnnotation(namedArgument, GroovyBundle.message("duplicate.element.in.the.map"));
+        holder.createWarningAnnotation(namedArgument, GroovyBundle.message("duplicate.element.in.the.map"));
       }
     }
   }
