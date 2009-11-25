@@ -26,15 +26,19 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorProvider;
+import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 
@@ -57,6 +61,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   private ModuleStructureComponent myModuleStructureComponent;
 
   private final JPanel myPanel;
+  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   // -------------------------------------------------------------------------
   // Constructor
@@ -69,7 +74,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
 
     ActionManager.getInstance().addTimerListener(500, new TimerListener() {
       public ModalityState getModalityState() {
-        return ModalityState.NON_MODAL;
+        return ModalityState.stateForComponent(myPanel);
       }
 
       public void run() {
@@ -80,7 +85,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     getComponent().addHierarchyListener(new HierarchyListener() {
       public void hierarchyChanged(HierarchyEvent e) {
         if ((e.getChangeFlags() & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0) {
-          rebuild();
+          scheduleRebuild();
         }
       }
     });
@@ -104,11 +109,22 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
       if (fileEditor != null) {
         if (Arrays.asList(FileEditorManager.getInstance(myProject).getSelectedEditors()).contains(fileEditor)) {
           setFileEditor(fileEditor);
+          return;
         }
       }
-      else {
-        setModule(LangDataKeys.MODULE_CONTEXT.getData(dataContext));
+
+      final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+      if (files != null && files.length == 1) {
+        FileEditorProviderManager editorProviderManager = FileEditorProviderManager.getInstance();
+        final FileEditorProvider[] providers = editorProviderManager.getProviders(myProject, files[0]);
+        for (FileEditorProvider provider : providers) {
+          FileEditor tempFileEditor = provider.createEditor(myProject, files[0]);
+          setFileEditor(tempFileEditor);
+          return;
+        }
       }
+
+      setModule(LangDataKeys.MODULE_CONTEXT.getData(dataContext));
     }
   }
 
@@ -141,28 +157,40 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
 
   private void setModule(Module module) {
     if (module != myModule) {
+      myFileEditor = null;
       myModule = module;
-      rebuild();
+      scheduleRebuild();
+    }
+    else if (module == null) {
+      setFileEditor(null);
     }
   }
 
   public void setFileEditor(FileEditor fileEditor) {
     if (myModule != null) {
       myModule = null;
-      rebuild();
+      scheduleRebuild();
     }
     else {
       if (!Comparing.equal(myFileEditor, fileEditor)) {
         myFileEditor = fileEditor;
-        rebuild();
+        scheduleRebuild();
         return;
       }
 
       if (isStructureViewShowing() && myPanel.getComponentCount() == 0 && myFileEditor != null) {
-        rebuild();
+        scheduleRebuild();
       }
     }
+  }
 
+  private void scheduleRebuild() {
+    myUpdateAlarm.cancelAllRequests();
+    myUpdateAlarm.addRequest(new Runnable() {
+      public void run() {
+        rebuild();
+      }
+    }, 300, ModalityState.stateForComponent(myPanel));
   }
 
   public void rebuild() {
