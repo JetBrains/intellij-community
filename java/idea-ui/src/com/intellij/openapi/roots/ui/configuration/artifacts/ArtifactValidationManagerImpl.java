@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -78,9 +79,9 @@ public class ArtifactValidationManagerImpl implements Disposable {
       if (problemDescriptions != null) {
         for (ProjectStructureProblemDescription description : problemDescriptions) {
           final String message = description.getMessage();
-          ArtifactProblemQuickFix quickFix = null;
+          List<ArtifactProblemQuickFix> quickFix = Collections.emptyList();
           if (description instanceof ArtifactProblemDescription) {
-            quickFix = ((ArtifactProblemDescription)description).getQuickFix();
+            quickFix = ((ArtifactProblemDescription)description).getQuickFixes();
             final List<PackagingElement<?>> pathToPlace = ((ArtifactProblemDescription)description).getPathToPlace();
             if (pathToPlace != null) {
               myProblems.add(Pair.create(message, pathToPlace));

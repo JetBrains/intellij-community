@@ -24,6 +24,7 @@ import com.intellij.packaging.ui.ArtifactProblemQuickFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -37,7 +38,8 @@ public class ArtifactProblemsHolderImpl extends ArtifactProblemsHolderBase {
     myProblemsHolder = problemsHolder;
   }
 
-  public void registerError(@NotNull String message, @Nullable List<PackagingElement<?>> pathToPlace, @Nullable ArtifactProblemQuickFix quickFix) {
-    myProblemsHolder.registerProblem(new ArtifactProblemDescription(message, ProjectStructureProblemDescription.Severity.ERROR, pathToPlace, quickFix));
+  public void registerError(@NotNull String message, @Nullable List<PackagingElement<?>> pathToPlace, @Nullable ArtifactProblemQuickFix... quickFixes) {
+    myProblemsHolder.registerProblem(new ArtifactProblemDescription(message, ProjectStructureProblemDescription.Severity.ERROR, pathToPlace, Arrays.asList(
+      quickFixes)));
   }
 }

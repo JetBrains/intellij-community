@@ -15,14 +15,18 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.packaging.ui.ArtifactProblemQuickFix;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 
 /**
  * @author nik
@@ -31,29 +35,50 @@ public class ArtifactErrorPanel {
   private JPanel myMainPanel;
   private JButton myFixButton;
   private JLabel myErrorLabel;
-  private ArtifactProblemQuickFix myCurrentQuickFix;
+  private List<ArtifactProblemQuickFix> myCurrentQuickFixes;
 
   public ArtifactErrorPanel(final ArtifactEditorImpl artifactEditor) {
     myErrorLabel.setIcon(IconLoader.getIcon("/runConfigurations/configurationWarning.png"));
     myFixButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        if (myCurrentQuickFix != null) {
-          myCurrentQuickFix.performFix(artifactEditor);
-          artifactEditor.queueValidation();
+        if (!myCurrentQuickFixes.isEmpty()) {
+          if (myCurrentQuickFixes.size() == 1) {
+            performFix(ContainerUtil.getFirstItem(myCurrentQuickFixes, null), artifactEditor);
+          }
+          else {
+            JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<ArtifactProblemQuickFix>(null, myCurrentQuickFixes) {
+              @NotNull
+              @Override
+              public String getTextFor(ArtifactProblemQuickFix value) {
+                return value.getActionName();
+              }
+
+              @Override
+              public PopupStep onChosen(ArtifactProblemQuickFix selectedValue, boolean finalChoice) {
+                performFix(selectedValue, artifactEditor);
+                return FINAL_CHOICE;
+              }
+            }).showUnderneathOf(myFixButton);
+          }
         }
       }
     });
     clearError();
   }
 
-  public void showError(@NotNull String message, @Nullable ArtifactProblemQuickFix quickFix) {
+  private static void performFix(ArtifactProblemQuickFix quickFix, ArtifactEditorImpl artifactEditor) {
+    quickFix.performFix(artifactEditor);
+    artifactEditor.queueValidation();
+  }
+
+  public void showError(@NotNull String message, @NotNull List<ArtifactProblemQuickFix> quickFixes) {
     myErrorLabel.setVisible(true);
     myErrorLabel.setText("<html>" + message + "</html>");
     myMainPanel.setVisible(true);
-    myCurrentQuickFix = quickFix;
-    myFixButton.setVisible(quickFix != null);
-    if (quickFix != null) {
-      myFixButton.setText(quickFix.getActionName());
+    myCurrentQuickFixes = quickFixes;
+    myFixButton.setVisible(!quickFixes.isEmpty());
+    if (!quickFixes.isEmpty()) {
+      myFixButton.setText(quickFixes.size() == 1 ? ContainerUtil.getFirstItem(quickFixes, null).getActionName() : "Fix");
     }
   }
 
