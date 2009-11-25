@@ -107,8 +107,7 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
       );
   }
 
-  //todo[nik] fix
-  public void _testOverwriteArchives() throws Exception {
+  public void testOverwriteArchives() throws Exception {
     final Artifact included = addArtifact("included",
                                           root().archive("x.jar").file(createFile("aaa.class")).build());
     final Artifact a = addArtifact(
@@ -120,8 +119,17 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
     assertOutput(a, fs()
       .archive("x.jar")
         .file("aaa.class")
-        .dir("META-INF").file("MANIFEST.MF")
       );
+  }
+  
+  public void testOverwriteNestedArchive() throws Exception {
+    final Artifact included = addArtifact("included", root().archive("a.jar").archive("b.jar").file(createFile("c.class")).build());
+    final Artifact a = addArtifact(
+      root()
+        .artifact(included)
+        .archive("a.jar").archive("d.jar").file(createFile("e.class")));
+    compileProject();
+    assertOutput(a, fs().archive("a.jar").archive("b.jar").file("c.class"));
   }
 
   public void testCopyLibrary() throws Exception {
