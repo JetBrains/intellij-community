@@ -125,11 +125,13 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
       if (projectProfile != null) {
         final Element profileElement = new Element(PROFILE);
         projectProfile.writeExternal(profileElement);
-        boolean hasSmthToSave = sortedProfiles.size() > 1;
-        for (Object child : profileElement.getChildren()) {
-          if (!((Element)child).getName().equals("option")) {
-            hasSmthToSave = true;
-            break;
+        boolean hasSmthToSave = sortedProfiles.size() > 1 || !Comparing.strEqual(PROJECT_PROFILE, PROJECT_DEFAULT_PROFILE_NAME);
+        if (!hasSmthToSave) {
+          for (Object child : profileElement.getChildren()) {
+            if (!((Element)child).getName().equals("option")) {
+              hasSmthToSave = true;
+              break;
+            }
           }
         }
         if (!hasSmthToSave) continue;
@@ -143,7 +145,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
       }
     }
 
-    if (profiles != null || !Comparing.strEqual(PROJECT_PROFILE, PROJECT_DEFAULT_PROFILE_NAME)) {
+    if (profiles != null) {
       DefaultJDOMExternalizer.writeExternal(this, element);
       final Element version = new Element("version");
       version.setAttribute("value", VERSION);
