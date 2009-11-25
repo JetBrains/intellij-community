@@ -1,0 +1,8 @@
+Types:
+PsiParameter:b : boolean
+PsiReferenceExpression:b : boolean
+
+Conversions:
+
+New expression type changes:
+Fails:
