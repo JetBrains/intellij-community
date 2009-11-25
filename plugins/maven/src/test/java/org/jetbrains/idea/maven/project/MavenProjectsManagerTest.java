@@ -245,7 +245,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
 
     myProjectsManager.addManagedFiles(Arrays.asList(m2));
     waitForReadingCompletion();
-    myProjectsManager.performScheduledImport(true);
+    myProjectsManager.performScheduledImport(false);
 
     assertModules("m1", "m2");
 
@@ -253,7 +253,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
 
     myProjectsManager.removeManagedFiles(Arrays.asList(m2));
     waitForReadingCompletion();
-    myProjectsManager.performScheduledImport(true);
+    myProjectsManager.performScheduledImport(false);
 
     assertModules("m1");
   }
