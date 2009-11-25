@@ -36,7 +36,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.EventDispatcher;
@@ -272,7 +271,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     myImportingQueue.makeDumbAware(myProject);
     myImportingQueue.makeModalAware(myProject);
 
-    mySchedulesQueue = new MavenMergingUpdateQueue(getComponentName() + ": Schedules queue", 500, true, myProject);
+    mySchedulesQueue = new MavenMergingUpdateQueue(getComponentName() + ": Schedules queue", 500, !isUnitTestMode(), myProject);
     mySchedulesQueue.setPassThrough(false);
   }
 
@@ -714,10 +713,6 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     scheduleArtifactsDownloading(getProjects());
   }
 
-  private void scheduleImport(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
-    scheduleImport(Collections.singletonList(projectWithChanges), false);
-  }
-
   private void scheduleImport(List<Pair<MavenProject, MavenProjectChanges>> projectsWithChanges, boolean forceImport) {
     scheduleForNextImport(projectsWithChanges);
     scheduleImport(forceImport);
@@ -762,12 +757,14 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
   @TestOnly
   public void scheduleImportInTests(List<VirtualFile> projectFiles) {
+    List<Pair<MavenProject, MavenProjectChanges>> toImport = new ArrayList<Pair<MavenProject, MavenProjectChanges>>();
     for (VirtualFile each : projectFiles) {
       MavenProject project = findProject(each);
       if (project != null) {
-        scheduleImport(Pair.create(project, MavenProjectChanges.ALL));
+        toImport.add(Pair.create(project, MavenProjectChanges.ALL));
       }
     }
+    scheduleImport(toImport, false);
   }
 
   private void scheduleForNextImport(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
@@ -796,16 +793,16 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   }
 
   public void performScheduledImport() {
-    performScheduledImport(false);
+    performScheduledImport(true);
   }
 
-  public void performScheduledImport(final boolean onlyIfAutoImportMode) {
+  public void performScheduledImport(final boolean force) {
     if (!isInitialized()) return;
     runWhenFullyOpen(new Runnable() {
       public void run() {
         // ensure all pending schedules are processed
         mySchedulesQueue.flush(false);
-        if (onlyIfAutoImportMode && !myImportingQueue.isActive()) return;
+        if (!force && !myImportingQueue.isActive()) return;
         myImportingQueue.flush(false);
       }
     });
@@ -1014,7 +1011,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
       }
     }.execute().getResultObject();
 
-    scheduleImport(Pair.create(mavenProject, MavenProjectChanges.DEPENDENCIES));
+    scheduleImport(Collections.singletonList(Pair.create(mavenProject, MavenProjectChanges.DEPENDENCIES)), false);
 
     return result;
   }

@@ -20,20 +20,27 @@
 package com.intellij.ide.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.NonNls;
 
-public class ModuleStructureComponent extends SimpleToolWindowPanel implements Disposable {
+public class ModuleStructureComponent extends SimpleToolWindowPanel implements Disposable, DataProvider {
+  private final ModuleStructurePane myStructurePane;
+
   public ModuleStructureComponent(Module module) {
     super(true, true);
 
-    final ModuleStructurePane structurePane = new ModuleStructurePane(module);
-    Disposer.register(this, structurePane);
+    myStructurePane = new ModuleStructurePane(module);
+    Disposer.register(this, myStructurePane);
 
-    setContent(structurePane.createComponent());
+    setContent(myStructurePane.createComponent());
   }
 
+  public Object getData(@NonNls String dataId) {
+    return myStructurePane.getData(dataId);
+  }
 
   public void dispose() {
     

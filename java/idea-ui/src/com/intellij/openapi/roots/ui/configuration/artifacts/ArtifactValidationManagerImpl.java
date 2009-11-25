@@ -21,10 +21,8 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStr
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemsHolderImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.MultiValuesMap;
-import com.intellij.openapi.util.Pair;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.ui.ArtifactProblemQuickFix;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -39,8 +37,8 @@ import java.util.List;
 public class ArtifactValidationManagerImpl implements Disposable {
   private ArtifactErrorPanel myErrorPanel;
   private final ArtifactEditorImpl myArtifactEditor;
-  private MultiValuesMap<PackagingElementNode<?>, String> myErrorsForNodes = new MultiValuesMap<PackagingElementNode<?>, String>(true);
-  private List<Pair<String, List<PackagingElement<?>>>> myProblems = new ArrayList<Pair<String, List<PackagingElement<?>>>>();
+  private MultiValuesMap<PackagingElementNode<?>, ArtifactProblemDescription> myProblemsForNodes = new MultiValuesMap<PackagingElementNode<?>, ArtifactProblemDescription>(true);
+  private List<ArtifactProblemDescription> myProblems = new ArrayList<ArtifactProblemDescription>();
 
   ArtifactValidationManagerImpl(ArtifactEditorImpl artifactEditor) {
     Disposer.register(artifactEditor, this);
@@ -56,23 +54,19 @@ public class ArtifactValidationManagerImpl implements Disposable {
   }
 
   public void onNodesAdded() {
-    for (Pair<String, List<PackagingElement<?>>> problem : myProblems) {
-      registerProblem(problem.getFirst(), problem.getSecond());
+    for (ArtifactProblemDescription problem : myProblems) {
+      showProblemInTree(problem);
     }
   }
 
-  private void registerProblem(@NotNull PackagingElementNode<?> node, @NotNull String message) {
-    myErrorsForNodes.put(node, message);
-  }
-
   @Nullable
-  public Collection<String> getProblems(PackagingElementNode<?> node) {
-    return myErrorsForNodes.get(node);
+  public Collection<ArtifactProblemDescription> getProblems(PackagingElementNode<?> node) {
+    return myProblemsForNodes.get(node);
   }
 
   public void updateProblems(@Nullable ProjectStructureProblemsHolderImpl holder) {
     myErrorPanel.clearError();
-    myErrorsForNodes.clear();
+    myProblemsForNodes.clear();
     myProblems.clear();
     if (holder != null) {
       final List<ProjectStructureProblemDescription> problemDescriptions = holder.getProblemDescriptions();
@@ -81,11 +75,11 @@ public class ArtifactValidationManagerImpl implements Disposable {
           final String message = description.getMessage();
           List<ArtifactProblemQuickFix> quickFix = Collections.emptyList();
           if (description instanceof ArtifactProblemDescription) {
-            quickFix = ((ArtifactProblemDescription)description).getQuickFixes();
-            final List<PackagingElement<?>> pathToPlace = ((ArtifactProblemDescription)description).getPathToPlace();
-            if (pathToPlace != null) {
-              myProblems.add(Pair.create(message, pathToPlace));
-              registerProblem(message, pathToPlace);
+            final ArtifactProblemDescription artifactProblem = (ArtifactProblemDescription)description;
+            quickFix = artifactProblem.getQuickFixes();
+            if (artifactProblem.getPathToPlace() != null) {
+              myProblems.add(artifactProblem);
+              showProblemInTree(artifactProblem);
             }
           }
           myErrorPanel.showError(message, quickFix);
@@ -95,13 +89,14 @@ public class ArtifactValidationManagerImpl implements Disposable {
     myArtifactEditor.getLayoutTreeComponent().updateTreeNodesPresentation();
   }
 
-  private void registerProblem(String message, List<PackagingElement<?>> pathToPlace) {
+  private void showProblemInTree(ArtifactProblemDescription problem) {
     final LayoutTree layoutTree = myArtifactEditor.getLayoutTreeComponent().getLayoutTree();
     PackagingElementNode<?> node = layoutTree.getRootPackagingNode();
-    if (node != null) {
+    final List<PackagingElement<?>> pathToPlace = problem.getPathToPlace();
+    if (node != null && pathToPlace != null) {
       List<PackagingElementNode<?>> nodes = node.getNodesByPath(pathToPlace.subList(1, pathToPlace.size()));
       for (PackagingElementNode<?> elementNode : nodes) {
-        registerProblem(elementNode, message);
+        myProblemsForNodes.put(elementNode, problem);
       }
     }
   }

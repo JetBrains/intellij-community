@@ -45,11 +45,22 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
   public Collection<AbstractTreeNode> getChildren() {
     List<VirtualFile> topLevelContentRoots = ProjectViewDirectoryHelper.getInstance(myProject).getTopLevelRoots();
 
+    Set<Module> modules = new LinkedHashSet<Module>(topLevelContentRoots.size());
+
+    for (VirtualFile root : topLevelContentRoots) {
+      modules.add(ModuleUtil.findModuleForFile(root, myProject));
+    }
+
     ArrayList<AbstractTreeNode> nodes = new ArrayList<AbstractTreeNode>();
     final PsiManager psiManager = PsiManager.getInstance(getProject());
+
+    /*
     for (VirtualFile root : reduceRoots(topLevelContentRoots)) {
       nodes.add(new PsiDirectoryNode(getProject(), psiManager.findDirectory(root), getSettings()));
     }
+    */
+
+    nodes.addAll(modulesAndGroups(modules.toArray(new Module[modules.size()])));
 
     final VirtualFile baseDir = getProject().getBaseDir();
     if (baseDir == null) return nodes;

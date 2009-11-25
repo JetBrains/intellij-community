@@ -52,7 +52,7 @@ public class StructureViewSelectInTarget implements SelectInTarget {
         StructureViewFactoryEx.getInstanceEx(myProject).runWhenInitialized(new Runnable() {
           public void run() {
             final StructureViewWrapper structureView = getStructureViewWrapper();
-            structureView.selectCurrentElement(fileEditor,requestFocus);
+            structureView.selectCurrentElement(fileEditor, context.getVirtualFile(), requestFocus);
           }
         });
       }

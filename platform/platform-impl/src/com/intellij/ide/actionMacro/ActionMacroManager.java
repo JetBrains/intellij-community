@@ -360,11 +360,11 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
                  && e.getKeyCode() != KeyEvent.VK_META
                  && e.getKeyCode() != KeyEvent.VK_SHIFT;
 
-      if (e.getID() == KeyEvent.KEY_TYPED && plainType && !isEnter) {
-         myRecordingMacro.appendKeytyped(e.getKeyChar());
+      if (e.getID() == KeyEvent.KEY_PRESSED && plainType && !isEnter) {
+         myRecordingMacro.appendKeytyped(e.getKeyChar(), e.getKeyCode(), e.getModifiers());
       } else if (e.getID() == KeyEvent.KEY_PRESSED && noModifierKeyIsPressed && (!plainType || isEnter)) {
         final boolean waiting = IdeEventQueue.getInstance().getKeyEventDispatcher().isWaitingForSecondKeyStroke();
-        if (!e.equals(myLastActionInputEvent) && !waiting) {
+        if ((!e.equals(myLastActionInputEvent) && !waiting) || isEnter) {
           final String stroke = KeyStroke.getKeyStrokeForEvent(e).toString();
 
           final int pressed = stroke.indexOf("pressed");
@@ -374,7 +374,9 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
           String ready = (modifiers.replaceAll("ctrl", "control").trim() + " " + key.trim()).trim();
           
           myRecordingMacro.appendShortuct(ready);
-          myLastActionInputEvent = null;
+          if (!isEnter) {
+            myLastActionInputEvent = null;
+          }
         }
       }
     }

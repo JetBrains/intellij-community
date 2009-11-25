@@ -30,7 +30,7 @@ public class XmlFileViewProvider extends CompositeLanguageFileViewProvider {
   private final XMLLanguage myLanguage;
 
   public XmlFileViewProvider(final PsiManager manager, final VirtualFile virtualFile, final boolean physical, XMLLanguage language) {
-    super(manager, virtualFile, physical);
+    super(manager, virtualFile, physical, language);
     myLanguage = language;
     assert !(myLanguage instanceof TemplateLanguage);
   }

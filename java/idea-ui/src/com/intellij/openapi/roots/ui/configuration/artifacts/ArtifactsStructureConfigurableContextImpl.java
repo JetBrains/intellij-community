@@ -36,6 +36,8 @@ import com.intellij.packaging.ui.ManifestFileConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -213,6 +215,10 @@ public class ArtifactsStructureConfigurableContextImpl implements ArtifactsStruc
       myModifiableModel.dispose();
     }
     myArtifactElements.clear();
+  }
+
+  public Collection<? extends ArtifactEditorImpl> getArtifactEditors() {
+    return Collections.unmodifiableCollection(myArtifactEditors.values());
   }
 
   public void saveEditorSettings() {

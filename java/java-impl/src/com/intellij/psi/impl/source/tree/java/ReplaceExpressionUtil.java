@@ -48,7 +48,7 @@ public class ReplaceExpressionUtil implements Constants {
     else if (i == BINARY_EXPRESSION) {
       if (priority < parentPriority) return true;
       final IElementType opType = ((PsiBinaryExpression)SourceTreeToPsiMap.treeElementToPsi(oldParent)).getOperationSign().getTokenType();
-      return ((CompositeElement)oldParent).getChildRole(oldExpr) == ChildRole.LOPERAND ? false : opType != PLUS && opType != ASTERISK;
+      return ((CompositeElement)oldParent).getChildRole(oldExpr) == ChildRole.LOPERAND ? false : opType != PLUS && opType != ASTERISK && opType != ANDAND;
     }
     else if (i == INSTANCE_OF_EXPRESSION) {
       return priority < parentPriority;

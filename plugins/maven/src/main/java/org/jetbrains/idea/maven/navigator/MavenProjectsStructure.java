@@ -242,16 +242,6 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     ALWAYS, NEVER, NORMAL
   }
 
-  private DisplayKind getDisplayKind(CustomNode node) {
-    Class[] visibles = getVisibleNodesClasses();
-    if (visibles == null) return DisplayKind.NORMAL;
-
-    for (Class each : visibles) {
-      if (each.isInstance(node)) return DisplayKind.ALWAYS;
-    }
-    return DisplayKind.NORMAL;
-  }
-
   protected Class<? extends CustomNode>[] getVisibleNodesClasses() {
     return null;
   }
@@ -353,7 +343,13 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     public DisplayKind getDisplayKind() {
-      return MavenProjectsStructure.this.getDisplayKind(this);
+      Class[] visibles = getVisibleNodesClasses();
+      if (visibles == null) return DisplayKind.NORMAL;
+
+      for (Class each : visibles) {
+        if (each.isInstance(this)) return DisplayKind.ALWAYS;
+      }
+      return DisplayKind.NEVER;
     }
 
     public CustomNode[] getChildren() {
@@ -1095,11 +1091,6 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     @Override
-    public boolean isVisible() {
-      return true;
-    }
-
-    @Override
     public Navigatable getNavigatable() {
       final Module m = myProjectsManager.findModule(myMavenProject);
       if (m == null) return null;
@@ -1118,6 +1109,11 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
           return false;
         }
       };
+    }
+
+    @Override
+    public boolean isVisible() {
+      return getDisplayKind() != DisplayKind.NEVER;
     }
   }
 }
