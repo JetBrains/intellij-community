@@ -46,8 +46,8 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.rt.execution.junit.JUnitStarter;
 import com.intellij.rt.execution.junit.IDEAJUnitListener;
+import com.intellij.rt.execution.junit.JUnitStarter;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +57,10 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public abstract class TestObject implements JavaCommandLine {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit.TestObject");
@@ -296,13 +299,18 @@ public abstract class TestObject implements JavaCommandLine {
       try {
         writer.println(junit4 ? JUnitStarter.JUNIT4_PARAMETER : "-junit3");
         writer.println(packageName);
+        final List<String> testNames = new ArrayList<String>();
         for (final PsiElement element : elements) {
           final String name = nameFunction.fun(element);
           if (name == null) {
             LOG.error("invalid element " + element);
             return;
           }
-          writer.println(name);
+          testNames.add(name);
+        }
+        Collections.sort(testNames); //sort tests in FQN order
+        for (String testName : testNames) {
+          writer.println(testName);
         }
       }
       finally {
