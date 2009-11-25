@@ -17,9 +17,12 @@ package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.SystemProperties;
+import org.jetbrains.idea.svn.SvnAuthenticationNotifier;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.*;
@@ -37,9 +40,11 @@ import java.security.cert.X509Certificate;
  */
 public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
   private final Project myProject;
+  private final SvnAuthenticationNotifier myAuthenticationNotifier;
 
-  public SvnAuthenticationProvider(Project project) {
-    myProject = project;
+  public SvnAuthenticationProvider(final SvnVcs svnVcs) {
+    myProject = svnVcs.getProject();
+    myAuthenticationNotifier = new SvnAuthenticationNotifier(svnVcs);
   }
 
   public SVNAuthentication requestClientAuthentication(final String kind,
@@ -48,6 +53,13 @@ public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
                                                        SVNErrorMessage errorMessage,
                                                        final SVNAuthentication previousAuth,
                                                        final boolean authMayBeStored) {
+    final SvnAuthenticationNotifier.AuthenticationRequest obj =
+      new SvnAuthenticationNotifier.AuthenticationRequest(myProject, kind, url, realm);
+    final boolean askInteractively = myAuthenticationNotifier.retrieveTicket(obj);
+    if (! askInteractively) {
+      myAuthenticationNotifier.ensureNotify(obj);
+      return null;
+    }
     final SVNAuthentication[] result = new SVNAuthentication[1];
     Runnable command = null;
 
@@ -148,6 +160,9 @@ public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
       }
       catch (InvocationTargetException e) {
         //
+      }
+      if (result[0] == null) {
+        myAuthenticationNotifier.ensureNotify(obj);
       }
     }
     return result[0];

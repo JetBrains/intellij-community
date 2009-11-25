@@ -408,52 +408,52 @@ public class SvnVcs extends AbstractVcs {
 
   public SVNRepository createRepository(String url) throws SVNException {
     SVNRepository repos = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(url));
-    repos.setAuthenticationManager(myConfiguration.getAuthenticationManager(myProject));
+    repos.setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
     repos.setTunnelProvider(myConfiguration.getOptions(myProject));
     return repos;
   }
 
   public SVNRepository createRepository(SVNURL url) throws SVNException {
     SVNRepository repos = SVNRepositoryFactory.create(url);
-    repos.setAuthenticationManager(myConfiguration.getAuthenticationManager(myProject));
+    repos.setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
     repos.setTunnelProvider(myConfiguration.getOptions(myProject));
     return repos;
   }
 
   public SVNUpdateClient createUpdateClient() {
-    return new SVNUpdateClient(myConfiguration.getAuthenticationManager(myProject), myConfiguration.getOptions(myProject));
+    return new SVNUpdateClient(myConfiguration.getAuthenticationManager(this), myConfiguration.getOptions(myProject));
   }
 
   public SVNStatusClient createStatusClient() {
-    return new SVNStatusClient(myConfiguration.getAuthenticationManager(myProject), myConfiguration.getOptions(myProject));
+    return new SVNStatusClient(myConfiguration.getAuthenticationManager(this), myConfiguration.getOptions(myProject));
   }
 
   public SVNWCClient createWCClient() {
-    return new SVNWCClient(myConfiguration.getAuthenticationManager(myProject), myConfiguration.getOptions(myProject));
+    return new SVNWCClient(myConfiguration.getAuthenticationManager(this), myConfiguration.getOptions(myProject));
   }
 
   public SVNCopyClient createCopyClient() {
-    return new SVNCopyClient(myConfiguration.getAuthenticationManager(myProject), myConfiguration.getOptions(myProject));
+    return new SVNCopyClient(myConfiguration.getAuthenticationManager(this), myConfiguration.getOptions(myProject));
   }
 
   public SVNMoveClient createMoveClient() {
-    return new SVNMoveClient(myConfiguration.getAuthenticationManager(myProject), myConfiguration.getOptions(myProject));
+    return new SVNMoveClient(myConfiguration.getAuthenticationManager(this), myConfiguration.getOptions(myProject));
   }
 
   public SVNLogClient createLogClient() {
-    return new SVNLogClient(myConfiguration.getAuthenticationManager(myProject), myConfiguration.getOptions(myProject));
+    return new SVNLogClient(myConfiguration.getAuthenticationManager(this), myConfiguration.getOptions(myProject));
   }
 
   public SVNCommitClient createCommitClient() {
-    return new SVNCommitClient(myConfiguration.getAuthenticationManager(myProject), myConfiguration.getOptions(myProject));
+    return new SVNCommitClient(myConfiguration.getAuthenticationManager(this), myConfiguration.getOptions(myProject));
   }
 
   public SVNDiffClient createDiffClient() {
-    return new SVNDiffClient(myConfiguration.getAuthenticationManager(myProject), myConfiguration.getOptions(myProject));
+    return new SVNDiffClient(myConfiguration.getAuthenticationManager(this), myConfiguration.getOptions(myProject));
   }
 
   public SVNChangelistClient createChangelistClient() {
-    return new SVNChangelistClient(myConfiguration.getAuthenticationManager(myProject), myConfiguration.getOptions(myProject));
+    return new SVNChangelistClient(myConfiguration.getAuthenticationManager(this), myConfiguration.getOptions(myProject));
   }
 
   public SVNWCAccess createWCAccess() {
@@ -467,7 +467,7 @@ public class SvnVcs extends AbstractVcs {
   }
 
   public ISVNAuthenticationManager getSvnAuthenticationManager() {
-    return myConfiguration.getAuthenticationManager(myProject);
+    return myConfiguration.getAuthenticationManager(this);
   }
 
   void dumpFileStatus(FileStatus fs) {
