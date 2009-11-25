@@ -24,6 +24,7 @@ import com.intellij.ide.*;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -593,13 +594,28 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myPropertyChangeSupport.firePropertyChange(PROP_FONT_SIZE, oldFontSize, fontSize);
   }
 
-  public ActionCallback type(String text) {
-    for (int i = 0; i < text.length(); i++) {
-      if (!processKeyTyped(text.charAt(i))) {
-        return new ActionCallback.Rejected();
-      }
+  public ActionCallback type(final String text) {
+    final ActionCallback result = new ActionCallback();
+
+    Application app = ApplicationManager.getApplication();
+    if (!app.isWriteAccessAllowed()) {
+      result.setRejected();
+    } else {
+      app.runWriteAction(new Runnable() {
+        public void run() {
+          for (int i = 0; i < text.length(); i++) {
+            if (!processKeyTyped(text.charAt(i))) {
+              result.setRejected();
+              return;
+            }
+          }
+
+          result.setDone();
+        }
+      });
     }
-    return new ActionCallback.Done();
+
+    return result;
   }
 
   private boolean processKeyTyped(char c) {
