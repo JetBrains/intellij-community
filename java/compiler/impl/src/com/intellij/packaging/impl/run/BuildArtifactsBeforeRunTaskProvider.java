@@ -43,6 +43,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -110,9 +111,11 @@ public class BuildArtifactsBeforeRunTaskProvider extends BeforeRunTaskProvider<B
     pointers.addAll(task.getArtifactPointers());
     ArtifactChooser chooser = new ArtifactChooser(new ArrayList<ArtifactPointer>(pointers));
     chooser.markElements(task.getArtifactPointers());
+    chooser.setPreferredSize(new Dimension(400, 300));
 
     DialogBuilder builder = new DialogBuilder(myProject);
     builder.setTitle("Select Artifacts");
+    builder.setDimensionServiceKey("#BuildArtifactsBeforeRunChooser");
     builder.addOkAction();
     builder.addCancelAction();
     builder.setCenterPanel(chooser);

@@ -18,7 +18,7 @@ package com.intellij.compiler.options;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerSettingsFactory;
-import com.intellij.compiler.RmicSettings;
+import com.intellij.compiler.impl.rmiCompiler.RmicConfiguration;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfigurable;
 import com.intellij.openapi.extensions.Extensions;
@@ -135,7 +135,7 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent {
         });
       }
 
-      additional.add(0, new RmicConfigurable(RmicSettings.getInstance(myProject)));
+      additional.add(0, new RmicConfigurable(RmicConfiguration.getSettings(myProject)));
       additional.add(0, new AnnotationProcessorsConfigurable(myProject));
       additional.add(0, new JavaCompilersTab(myProject, compilerConfiguration.getRegisteredJavaCompilers(), compilerConfiguration.getDefaultCompiler()));
 

@@ -65,6 +65,24 @@ public class VirtualFilePattern extends TreeElementPattern<VirtualFile, VirtualF
       }
     });
   }
+  public VirtualFilePattern xmlWithRootTagNamespace(final String... namespace) {
+    StringPattern namespacePattern = StandardPatterns.string().oneOf(namespace);
+    return xmlWithRootTagNamespace(namespacePattern);
+  }
+
+  public VirtualFilePattern xmlWithRootTagNamespace(final ElementPattern<String> namespacePattern) {
+    return with(new PatternCondition<VirtualFile>("xmlWithRootTagNamespace") {
+      public boolean accepts(@NotNull final VirtualFile virtualFile, final ProcessingContext context) {
+        try {
+          String rootTagNamespace = NanoXmlUtil.parseHeaderWithException(virtualFile).getRootTagNamespace();
+          return rootTagNamespace != null && namespacePattern.getCondition().accepts(rootTagNamespace, context);
+        }
+        catch (IOException e) {
+          return false;
+        }
+      }
+    });
+  }
 
   protected VirtualFile getParent(@NotNull final VirtualFile t) {
     return t.getParent();

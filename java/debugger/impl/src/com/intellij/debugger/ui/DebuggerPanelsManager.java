@@ -33,11 +33,12 @@ import com.intellij.execution.configurations.RemoteState;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentListener;
 import com.intellij.execution.ui.RunContentManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
@@ -45,7 +46,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -121,7 +121,7 @@ public class DebuggerPanelsManager implements ProjectComponent {
       debugProcess.putUserData(BatchEvaluator.REMOTE_SESSION_KEY, Boolean.TRUE);
     }
 
-    final DebuggerSessionTab sessionTab = new DebuggerSessionTab(myProject, debuggerSession.getSessionName());
+    final DebuggerSessionTab sessionTab = new DebuggerSessionTab(myProject, debuggerSession.getSessionName(), environment.getRunProfile().getIcon());
     Disposer.register(myProject, sessionTab);
     RunContentDescriptor runContentDescriptor =
       sessionTab.attachToSession(debuggerSession, runner, environment);

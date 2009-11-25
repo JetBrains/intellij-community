@@ -79,7 +79,7 @@ public class TextBlock extends DocumentAdapter {
         myTextEndOffset = offset + e.getNewLength();
       }
       else {
-        myTextEndOffset += (e.getNewLength() - e.getOldLength());
+        myTextEndOffset += e.getNewLength() - e.getOldLength();
       }
 
       myStartOffset = Math.min(myStartOffset, offset);

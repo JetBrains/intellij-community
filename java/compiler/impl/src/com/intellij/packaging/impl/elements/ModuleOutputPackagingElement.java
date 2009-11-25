@@ -22,6 +22,8 @@ import com.intellij.openapi.module.ModulePointer;
 import com.intellij.openapi.module.ModulePointerManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.*;
@@ -29,6 +31,7 @@ import com.intellij.packaging.impl.ui.DelegatedPackagingElementPresentation;
 import com.intellij.packaging.impl.ui.ModuleElementPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -123,10 +126,14 @@ public class ModuleOutputPackagingElement extends PackagingElement<ModuleOutputP
   public Module findModule(PackagingElementResolvingContext context) {
     if (myModulePointer != null) {
       final Module module = myModulePointer.getModule();
+      final ModulesProvider modulesProvider = context.getModulesProvider();
       if (module != null) {
-        return module;
+        if (modulesProvider instanceof DefaultModulesProvider//optimization
+           || ArrayUtil.contains(module, modulesProvider.getModules())) {
+          return module;
+        }
       }
-      return context.getModulesProvider().getModule(myModulePointer.getModuleName());
+      return modulesProvider.getModule(myModulePointer.getModuleName());
     }
     return null;
   }

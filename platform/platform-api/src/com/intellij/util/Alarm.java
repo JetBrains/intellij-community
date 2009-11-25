@@ -45,7 +45,7 @@ public class Alarm implements Disposable {
 
   private final ThreadPoolExecutor myExecutorService;
 
-  private static final ThreadPoolExecutor ourSharedExecutorService = ConcurrencyUtil.newSingleThreadExecutor("Alarm pool(shared)");
+  private static final ThreadPoolExecutor ourSharedExecutorService = ConcurrencyUtil.newSingleThreadExecutor("Alarm pool(shared)", Thread.NORM_PRIORITY - 2);
 
   private final Object LOCK = new Object();
   private final ThreadToUse myThreadToUse;
@@ -84,7 +84,7 @@ public class Alarm implements Disposable {
   }
   public Alarm(@NotNull ThreadToUse threadToUse, Disposable parentDisposable) {
     myThreadToUse = threadToUse;
-    myExecutorService = threadToUse == ThreadToUse.OWN_THREAD ? ConcurrencyUtil.newSingleThreadExecutor("Alarm pool(own)") : ourSharedExecutorService;
+    myExecutorService = threadToUse == ThreadToUse.OWN_THREAD ? ConcurrencyUtil.newSingleThreadExecutor("Alarm pool(own)", Thread.NORM_PRIORITY - 2) : ourSharedExecutorService;
 
     if (parentDisposable != null) {
       Disposer.register(parentDisposable, this);

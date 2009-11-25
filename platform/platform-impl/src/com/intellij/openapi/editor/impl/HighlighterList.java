@@ -52,6 +52,14 @@ public abstract class HighlighterList {
         super.sort(delegate);
       }
     }
+
+    @Override
+    public boolean remove(Object o) {
+      if (o instanceof RangeHighlighterImpl) {
+        if (!((RangeHighlighterImpl)o).isValid()) return false;
+      }
+      return super.remove(o);
+    }
   };
 
   private boolean myIsDirtied = false;

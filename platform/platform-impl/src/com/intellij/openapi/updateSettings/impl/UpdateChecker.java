@@ -383,7 +383,7 @@ public final class UpdateChecker {
     PatchInfo patch = newVersion.findPatchForCurrentBuild();
     if (patch == null) throw new IOException("No patch is available for current version");
 
-    String platform = System.getProperty("idea.platform.prefix", "idea");
+    String productCode = ApplicationInfo.getInstance().getBuild().getProductCode();
 
     String osSuffix = "";
     if (SystemInfo.isWindows) {
@@ -394,12 +394,14 @@ public final class UpdateChecker {
     }
     else if (SystemInfo.isUnix) osSuffix = "-unix";
 
-    String fileName = platform + "-" + patch.getFromBuild().asString() + "-" + newVersion.getNumber().asString() + "-patch" + osSuffix + ".jar";
+    String fromBuildNumber = patch.getFromBuild().asStringWithoutProductCode();
+    String toBuildNumber = newVersion.getNumber().asStringWithoutProductCode();
+    String fileName = productCode + "-" + fromBuildNumber + "-" + toBuildNumber + "-patch" + osSuffix + ".jar";
     URLConnection connection = null;
     InputStream in = null;
     OutputStream out = null;
 
-    String patchFileName = "jetbrains.patch.jar." + platform;
+    String patchFileName = "jetbrains.patch.jar." + productCode;
     File patchFile = new File(FileUtil.getTempDirectory(), patchFileName);
 
     try {

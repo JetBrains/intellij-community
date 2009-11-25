@@ -19,6 +19,7 @@ import com.intellij.compiler.OutputParser;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.javaCompiler.ExternalCompiler;
 import com.intellij.compiler.impl.javaCompiler.ModuleChunk;
+import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.compiler.CompileContext;
@@ -100,7 +101,7 @@ public class EclipseCompiler extends ExternalCompiler {
 
   @NotNull
   public Configurable createConfigurable() {
-    return new EclipseCompilerConfigurable(EclipseCompilerSettings.getInstance(myProject));
+    return new EclipseCompilerConfigurable(EclipseCompilerConfiguration.getSettings(myProject, EclipseCompilerConfiguration.class));
   }
 
   public OutputParser createErrorParser(@NotNull final String outputDir, Process process) {
@@ -138,7 +139,7 @@ public class EclipseCompiler extends ExternalCompiler {
                                     @NonNls final ArrayList<String> commandLine,
                                     final String outputPath,
                                     final boolean useTempFile) throws IOException {
-    EclipseCompilerSettings compilerSettings = EclipseCompilerSettings.getInstance(myProject);
+    JavacSettings compilerSettings = EclipseCompilerConfiguration.getSettings(myProject, EclipseCompilerConfiguration.class);
 
     final Sdk projectJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
     final String vmExePath = ((JavaSdkType)projectJdk.getSdkType()).getVMExecutablePath(projectJdk);
@@ -157,7 +158,7 @@ public class EclipseCompiler extends ExternalCompiler {
   public void addCommandLineOptions(@NotNull @NonNls final List<String> commandLine,
                                     @NotNull final ModuleChunk chunk,
                                     @NotNull final String outputPath,
-                                    @NotNull final EclipseCompilerSettings compilerSettings,
+                                    @NotNull final JavacSettings compilerSettings,
                                     final boolean useTempFile,
                                     boolean quoteBootClasspath) throws IOException {
     final Sdk jdk = chunk.getJdk();
@@ -178,7 +179,7 @@ public class EclipseCompiler extends ExternalCompiler {
     commandLine.add(outputPath.replace('/', File.separatorChar));
 
     commandLine.add("-verbose");
-    StringTokenizer tokenizer = new StringTokenizer(compilerSettings.getOptionsString(), " ");
+    StringTokenizer tokenizer = new StringTokenizer(compilerSettings.getOptionsString(myProject), " ");
     while (tokenizer.hasMoreTokens()) {
       commandLine.add(tokenizer.nextToken());
     }

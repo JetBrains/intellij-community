@@ -211,10 +211,7 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
     final ArtifactsProcessingItemsBuilderContext builderContext = context.getUserData(BUILDER_CONTEXT_KEY);
     final Set<JarInfo> changedJars = new THashSet<JarInfo>();
     for (String deletedJar : deletedJars) {
-      final Collection<JarInfo> infos = builderContext.getJarInfos(deletedJar);
-      if (infos != null) {
-        changedJars.addAll(infos);
-      }
+      ContainerUtil.addIfNotNull(builderContext.getJarInfo(deletedJar), changedJars);
     }
 
     try {

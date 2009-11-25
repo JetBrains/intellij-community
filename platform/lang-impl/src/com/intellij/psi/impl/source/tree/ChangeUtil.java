@@ -129,10 +129,14 @@ public class ChangeUtil {
   }
 
   public static TreeElement copyElement(TreeElement original, CharTable table) {
+    CompositeElement treeParent = original.getTreeParent();
+    return copyElement(original, treeParent == null ? null : treeParent.getPsi(), table);
+  }
+
+  public static TreeElement copyElement(TreeElement original, final PsiElement context, CharTable table) {
     final TreeElement element = (TreeElement)original.clone();
     final PsiManager manager = original.getManager();
-    CompositeElement treeParent = original.getTreeParent();
-    DummyHolderFactory.createHolder(manager, element, treeParent == null ? null : treeParent.getPsi(), table).getTreeElement();
+    DummyHolderFactory.createHolder(manager, element, context, table).getTreeElement();
     encodeInformation(element, original);
     TreeUtil.clearCaches(element);
     saveIndentationToCopy(original, element);

@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.tasks;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -28,17 +27,16 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
+import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
+import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.project.MavenPlugin;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
-import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
+import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
+import org.jetbrains.idea.maven.utils.MavenIcons;
+import org.jetbrains.idea.maven.utils.MavenPluginInfo;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
-import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
-import org.jetbrains.idea.maven.utils.MavenLog;
-import org.jetbrains.idea.maven.utils.MavenPluginInfo;
-import org.jetbrains.idea.maven.utils.MavenIcons;
 
 import java.io.File;
 import java.util.*;
@@ -184,16 +182,11 @@ public class MavenKeymapExtension implements KeymapExtension {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      try {
-        MavenRunnerParameters params = new MavenRunnerParameters(true,
-                                                                 myMavenProject.getDirectory(),
-                                                                 Arrays.asList(myGoal),
-                                                                 MavenActionUtil.getProjectsManager(e).getActiveProfiles());
-        MavenRunConfigurationType.runConfiguration(MavenActionUtil.getProject(e), params, e.getDataContext());
-      }
-      catch (ExecutionException ex) {
-        MavenLog.LOG.warn(ex);
-      }
+      MavenRunnerParameters params = new MavenRunnerParameters(true,
+                                                               myMavenProject.getDirectory(),
+                                                               Arrays.asList(myGoal),
+                                                               MavenActionUtil.getProjectsManager(e).getActiveProfiles());
+      MavenRunConfigurationType.runConfiguration(MavenActionUtil.getProject(e), params, e.getDataContext(), null);
     }
 
     public MavenProject getMavenProject() {

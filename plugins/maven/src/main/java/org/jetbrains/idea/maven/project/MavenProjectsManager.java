@@ -388,6 +388,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   public void projectClosed() {
     if (!isInitialized.getAndSet(false)) return;
 
+    Disposer.dispose(mySchedulesQueue);
     Disposer.dispose(myImportingQueue);
 
     myWatcher.stop();

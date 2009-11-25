@@ -123,6 +123,10 @@ public class ContainerUtil {
     return EmptyIterator.getInstance();
   }
 
+  public static <T> Iterable<T> emptyIterable() {
+    return EmptyIterable.getInstance();
+  }
+
   @Nullable
   public static <T> T find(T[] array, Condition<T> condition) {
     for (T element : array) {
@@ -293,6 +297,42 @@ public class ContainerUtil {
 
       public void remove() {
         throw new UnsupportedOperationException();
+      }
+    };
+  }
+
+  public static <T> Iterable<T> iterate(final Collection<? extends T> collection, final Condition<? super T> condition) {
+    if (collection.isEmpty()) return emptyIterable();
+    return new Iterable<T>() {
+      public Iterator<T> iterator() {
+        return new Iterator<T>() {
+          Iterator<? extends T> impl = collection.iterator();
+          T next = findNext();
+
+          public boolean hasNext() {
+            return next != null;
+          }
+
+          public T next() {
+            T result = next;
+            next = findNext();
+            return result;
+          }
+
+          private T findNext() {
+            while (impl.hasNext()) {
+              T each = impl.next();
+              if (condition.value(each)) {
+                return each;
+              }
+            }
+            return null;
+          }
+
+          public void remove() {
+            throw new UnsupportedOperationException();
+          }
+        };
       }
     };
   }

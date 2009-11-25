@@ -290,9 +290,10 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       toIgnore.add(Pass.VISIBLE_LINE_MARKERS);
     }
 
-    CodeInsightTestFixtureImpl.instantiateAndRun(getFile(), getEditor(), toIgnore.toNativeArray());
+    boolean canChange = canChangeDocumentDuringHighlighting();
+    CodeInsightTestFixtureImpl.instantiateAndRun(getFile(), getEditor(), toIgnore.toNativeArray(), canChange);
 
-    if (!canChangeDocumentDuringHighlighting()) {
+    if (!canChange) {
       Document document = getDocument(getFile());
       ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).getFileStatusMap().assertAllDirtyScopesAreNull(document);
     }

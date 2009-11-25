@@ -37,9 +37,8 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   private final PsiDocumentManagerImpl myPsiDocumentManager;
   private final MessageBus myBus;
   private final Map<Document, Pair<DocumentChangeTransaction, Integer>> myTransactionsMap = new HashMap<Document, Pair<DocumentChangeTransaction, Integer>>();
-  private final Object mySyncLock = this;
 
-  private Document mySyncDocument = null;
+  private volatile Document mySyncDocument = null;
 
   public PsiToDocumentSynchronizer(PsiDocumentManagerImpl psiDocumentManager, MessageBus bus) {
     myPsiDocumentManager = psiDocumentManager;
@@ -53,9 +52,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   }
 
   public boolean isInSynchronization(final Document document) {
-    synchronized (mySyncLock) {
-      return mySyncDocument == document;
-    }
+    return mySyncDocument == document;
   }
 
   private interface DocSyncAction {
@@ -179,29 +176,26 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     myTransactionsMap.put(doc, pair);
   }
 
-  public void commitTransaction(Document document){
+  public void commitTransaction(final Document document){
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final DocumentChangeTransaction documentChangeTransaction = removeTransaction(document);
     if(documentChangeTransaction == null) return;
-    synchronized(mySyncLock){
-      try {
-        mySyncDocument = document;
-        //if(documentChangeTransaction.getAffectedFragments().size() == 0) return; // Nothing to do
+    final PsiElement changeScope = documentChangeTransaction.getChangeScope();
+    try {
+      mySyncDocument = document;
 
-        final PsiElement changeScope = documentChangeTransaction.getChangeScope();
-        final PsiTreeChangeEventImpl fakeEvent = new PsiTreeChangeEventImpl(changeScope.getManager());
-        fakeEvent.setParent(changeScope);
-        fakeEvent.setFile(changeScope.getContainingFile());
-        doSync(fakeEvent, new DocSyncAction() {
-          public void syncDocument(Document document, PsiTreeChangeEventImpl event) {
-            doCommitTransaction(document, documentChangeTransaction);
-          }
-        });
-
-        myBus.syncPublisher(PsiDocumentTransactionListener.TOPIC).transactionCompleted(document, (PsiFile)changeScope);
-      }
-      finally {
-        mySyncDocument = null;
-      }
+      final PsiTreeChangeEventImpl fakeEvent = new PsiTreeChangeEventImpl(changeScope.getManager());
+      fakeEvent.setParent(changeScope);
+      fakeEvent.setFile(changeScope.getContainingFile());
+      doSync(fakeEvent, new DocSyncAction() {
+        public void syncDocument(Document document, PsiTreeChangeEventImpl event) {
+          doCommitTransaction(document, documentChangeTransaction);
+        }
+      });
+      myBus.syncPublisher(PsiDocumentTransactionListener.TOPIC).transactionCompleted(document, (PsiFile)changeScope);
+    }
+    finally {
+      mySyncDocument = null;
     }
   }
 

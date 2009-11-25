@@ -15,12 +15,13 @@
  */
 package com.intellij.ide.fileTemplates;
 
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
+import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.Properties;
@@ -56,6 +57,18 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
     else{
       JavaDirectoryService.getInstance().checkCreateClass(directory, className);
     }
+
+    final LanguageLevel ll = JavaDirectoryService.getInstance().getLanguageLevel(directory);
+    if (ll.compareTo(LanguageLevel.JDK_1_5) < 0) {
+      if (createdClass.isAnnotationType()) {
+        throw new IncorrectOperationException("Annotations only supported at language level 1.5 and higher");
+      }
+
+      if (createdClass.isEnum()) {
+        throw new IncorrectOperationException("Enums only supported at language level 1.5 and higher");
+      }
+    }
+
     psiJavaFile = (PsiJavaFile)psiJavaFile.setName(fileName);
     PsiElement addedElement = directory.add(psiJavaFile);
     if (addedElement instanceof PsiJavaFile) {

@@ -101,9 +101,15 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
 
   protected abstract String getQualifiedName(T reference);
 
-  public boolean doFix(@NotNull final Editor editor, boolean doShow, final boolean allowCaretNearRef) {
+  public enum Result {
+    POPUP_SHOWN,
+    CLASS_IMPORTED,
+    POPUP_NOT_SHOWN
+  }
+
+  public Result doFix(@NotNull final Editor editor, boolean doShow, final boolean allowCaretNearRef) {
     List<PsiClass> classesToImport = getClassesToImport();
-    if (classesToImport.isEmpty()) return false;
+    if (classesToImport.isEmpty()) return Result.POPUP_NOT_SHOWN;
 
     try {
       String name = getQualifiedName(myRef);
@@ -111,7 +117,7 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
         Pattern pattern = Pattern.compile(DaemonCodeAnalyzerSettings.getInstance().NO_AUTO_IMPORT_PATTERN);
         Matcher matcher = pattern.matcher(name);
         if (matcher.matches()) {
-          return false;
+          return Result.POPUP_NOT_SHOWN;
         }
       }
     }
@@ -141,14 +147,15 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
           action.execute();
         }
       });
-      return false;
+      return Result.CLASS_IMPORTED;
     }
 
     if (doShow && canImportHere) {
       String hintText = ShowAutoImportPass.getMessage(classes.length > 1, classes[0].getQualifiedName());
       HintManager.getInstance().showQuestionHint(editor, hintText, myRef.getTextOffset(), myRef.getTextRange().getEndOffset(), action);
+      return Result.POPUP_SHOWN;
     }
-    return true;
+    return Result.POPUP_NOT_SHOWN;
   }
 
   private boolean canImportHere(boolean allowCaretNearRef, Editor editor, PsiFile psiFile, String exampleClassName) {
@@ -160,7 +167,11 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
   protected abstract boolean isQualified(T reference);
 
   public boolean showHint(final Editor editor) {
-    return !isQualified(myRef) && doFix(editor, true, false);
+    if (isQualified(myRef)) {
+      return false;
+    }
+    Result result = doFix(editor, true, false);
+    return result == Result.POPUP_SHOWN || result == Result.CLASS_IMPORTED;
   }
 
   @NotNull
@@ -198,7 +209,7 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
     TextRange range = ref.getTextRange();
     int offset = editor.getCaretModel().getOffset();
 
-    return range.grown(1).contains(offset);
+    return offset == range.getEndOffset();
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) {
@@ -228,5 +239,4 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
       }
     };
   }
-
 }

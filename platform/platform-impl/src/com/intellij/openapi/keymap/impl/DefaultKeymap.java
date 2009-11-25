@@ -66,7 +66,7 @@ public class DefaultKeymap {
     for (Element child : (List<Element>)element.getChildren()) {
       if (KEY_MAP.equals(child.getName())) {
         String keymapName = child.getAttributeValue(NAME_ATTRIBUTE);
-        DefaultKeymapImpl keymap = KeymapManager.MAC_OS_X_KEYMAP.equals(keymapName) ? new MacOSDefaultKeymap() : new DefaultKeymapImpl();
+        DefaultKeymapImpl keymap = keymapName.startsWith(KeymapManager.MAC_OS_X_KEYMAP) ? new MacOSDefaultKeymap() : new DefaultKeymapImpl();
         keymap.readExternal(child, myKeymaps.toArray(new Keymap[myKeymaps.size()]));
         keymap.setName(keymapName);
         myKeymaps.add(keymap);

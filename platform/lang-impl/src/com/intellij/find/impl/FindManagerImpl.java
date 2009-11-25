@@ -571,7 +571,8 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
 
     if (Character.isUpperCase(foundString.charAt(0))) {
       buffer.append(Character.toUpperCase(toReplace.charAt(0)));
-    } else {
+    }
+    else {
       buffer.append(Character.toLowerCase(toReplace.charAt(0)));
     }
     if (toReplace.length() == 1) return buffer.toString();
@@ -591,9 +592,11 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
 
     if (isTailUpper) {
       buffer.append(toReplace.substring(1).toUpperCase());
-    } else if (isTailLower) {
+    }
+    else if (isTailLower) {
       buffer.append(toReplace.substring(1).toLowerCase());
-    } else {
+    }
+    else {
       buffer.append(toReplace.substring(1));
     }
     return buffer.toString();

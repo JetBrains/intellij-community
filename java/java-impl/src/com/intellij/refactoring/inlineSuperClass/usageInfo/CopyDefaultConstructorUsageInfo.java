@@ -20,10 +20,10 @@
  */
 package com.intellij.refactoring.inlineSuperClass.usageInfo;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiCodeBlock;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.FixableUsageInfo;
+import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.util.IncorrectOperationException;
 
 public class CopyDefaultConstructorUsageInfo extends FixableUsageInfo{
@@ -41,7 +41,11 @@ public class CopyDefaultConstructorUsageInfo extends FixableUsageInfo{
     final PsiCodeBlock body = myConstructor.getBody();
     assert body != null;
     if (body.getFirstBodyElement() != null) { //do not copy empty constructor
-      myTargetClass.add(myConstructor.copy());
+      final PsiElement constructorCopy = myConstructor.copy();
+      final PsiClass srcClass = myConstructor.getContainingClass();
+      assert srcClass != null;
+      InlineUtil.substituteTypeParams(constructorCopy, TypeConversionUtil.getSuperClassSubstitutor(srcClass, myTargetClass, PsiSubstitutor.EMPTY), JavaPsiFacade.getElementFactory(getProject()));
+      myTargetClass.add(constructorCopy);
     }
   }
 }

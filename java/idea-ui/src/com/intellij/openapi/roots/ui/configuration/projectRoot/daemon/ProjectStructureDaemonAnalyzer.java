@@ -245,7 +245,12 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
     }
 
     public void run() {
-      doUpdate(myElement, myCheck, myCollectUsages);
+      try {
+        doUpdate(myElement, myCheck, myCollectUsages);
+      }
+      catch (Throwable t) {
+        LOG.error(t);
+      }
     }
   }
 }

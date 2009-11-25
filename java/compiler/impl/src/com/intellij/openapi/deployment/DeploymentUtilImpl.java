@@ -110,21 +110,9 @@ public class DeploymentUtilImpl extends DeploymentUtil {
                               FileUtil.toSystemDependentName(toFile.getPath()));
   }
 
-  public final boolean addItemsRecursively(@NotNull BuildRecipe items,
-                                           @NotNull File root,
-                                           Module module,
-                                           String outputRelativePath,
-                                           @Nullable String possibleBaseOutputPath) {
+  public final boolean addItemsRecursively(@NotNull BuildRecipe items, @NotNull File root, String outputRelativePath) {
     if (outputRelativePath == null) outputRelativePath = "";
     outputRelativePath = trimForwardSlashes(outputRelativePath);
-
-    if (possibleBaseOutputPath != null) {
-      File file = new File(possibleBaseOutputPath, outputRelativePath);
-      String relativePath = getRelativePath(root, file);
-      if (relativePath != null && !relativePath.startsWith("..") && relativePath.length() != 0) {
-        return false;
-      }
-    }
 
     items.addFileCopyInstruction(root, true, outputRelativePath);
     return true;

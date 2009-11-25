@@ -50,6 +50,18 @@ public class ModuleProjectStructureElement extends ProjectStructureElement {
           problemsHolder.registerError(ProjectBundle.message("project.roots.library.problem.message", entry.getPresentableName()));
         }
       }
+      //todo[nik] highlight libraries with invalid paths in ClasspathEditor
+      //else if (entry instanceof LibraryOrderEntry) {
+      //  final LibraryEx library = (LibraryEx)((LibraryOrderEntry)entry).getLibrary();
+      //  if (library != null) {
+      //    if (!library.allPathsValid(OrderRootType.CLASSES)) {
+      //      problemsHolder.registerError(ProjectBundle.message("project.roots.tooltip.library.misconfigured", entry.getPresentableName()));
+      //    }
+      //    else if (!library.allPathsValid(OrderRootType.SOURCES)) {
+      //      problemsHolder.registerWarning(ProjectBundle.message("project.roots.tooltip.library.misconfigured", entry.getPresentableName()));
+      //    }
+      //  }
+      //}
     }
   }
 

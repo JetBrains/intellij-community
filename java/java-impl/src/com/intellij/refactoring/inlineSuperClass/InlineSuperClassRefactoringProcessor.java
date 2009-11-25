@@ -212,7 +212,6 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
         return true;
       }
     }.run();
-    replaceInnerTypeUsages();
 
     RefactoringUtil.sortDepthFirstRightLeftOrder(usages);
     for (UsageInfo usageInfo : usages) {
@@ -225,6 +224,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
         }
       }
     }
+    replaceInnerTypeUsages();
 
     //postpone broken hierarchy
     for (UsageInfo usage : usages) {

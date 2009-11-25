@@ -13,16 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.compiler;
+package com.intellij.compiler.impl.rmiCompiler;
 
-import com.intellij.openapi.components.*;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StorageScheme;
 import com.intellij.util.ArrayUtil;
-import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
@@ -36,38 +33,13 @@ import java.util.StringTokenizer;
    ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
-public class RmicSettings implements PersistentStateComponent<Element> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.RmicSettings");
-
+public class RmicSettings extends JavacSettings {
   public boolean IS_EANABLED = false;
-  public boolean DEBUGGING_INFO = true;
-  public boolean GENERATE_NO_WARNINGS = false;
   public boolean GENERATE_IIOP_STUBS = false;
-  public String ADDITIONAL_OPTIONS_STRING = "";
 
-  public Element getState() {
-    try {
-      final Element e = new Element("state");
-      writeExternal(e);
-      return e;
-    }
-    catch (WriteExternalException e1) {
-      LOG.error(e1);
-      return null;
-    }
-  }
-
-  public void loadState(Element state) {
-    try {
-      readExternal(state);
-    }
-    catch (InvalidDataException e) {
-      LOG.error(e);
-    }
-  }
-
+  @NonNls
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public @NonNls String[] getOptions() {
+  public String[] getOptions() {
     List<String> options = new ArrayList<String>();
     if(DEBUGGING_INFO) {
       options.add("-g");
@@ -93,17 +65,5 @@ public class RmicSettings implements PersistentStateComponent<Element> {
       options.add(token);
     }
     return ArrayUtil.toStringArray(options);
-  }
-
-  public static RmicSettings getInstance(Project project) {
-    return ServiceManager.getService(project, RmicSettings.class);
-  }
-
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
   }
 }

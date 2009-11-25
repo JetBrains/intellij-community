@@ -146,10 +146,12 @@ class ExceptionUtils{
         final PsiElement[] elements =
                 declarationStatement.getDeclaredElements();
         for(PsiElement element : elements){
-            final PsiVariable var = (PsiVariable) element;
-            final PsiExpression initializer = var.getInitializer();
-            if(initializer != null){
-                calculateExceptionsThrown(initializer, exceptionTypes);
+            if (element instanceof PsiVariable) {
+              final PsiVariable var = (PsiVariable) element;
+              final PsiExpression initializer = var.getInitializer();
+              if(initializer != null){
+                  calculateExceptionsThrown(initializer, exceptionTypes);
+              }
             }
         }
     }

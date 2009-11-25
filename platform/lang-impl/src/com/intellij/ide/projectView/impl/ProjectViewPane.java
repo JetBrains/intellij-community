@@ -38,7 +38,7 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 
-public final class ProjectViewPane extends AbstractProjectViewPSIPane {
+public class ProjectViewPane extends AbstractProjectViewPSIPane {
   @NonNls public static final String ID = "ProjectPane";
   private static final Icon ICON = IconLoader.getIcon("/general/projectTab.png");
 

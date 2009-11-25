@@ -172,6 +172,10 @@
     <value-pattern>[^:]*:[\s]*([^\}]*)</value-pattern>
     <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("value").withParameters().definedInClass("javax.ws.rs.Path"))]]></place>
   </injection>
+  <injection language="XPath" injector-id="xml">
+    <display-name>JAXB attribute node</display-name>
+    <place><![CDATA[xmlAttribute().withLocalName(string().matches("node")).inside(xmlTag().withLocalName(string().matches("bindings")).withNamespace(string().matches("http://java.sun.com/xml/ns/jaxb")))]]></place>
+  </injection>
   <injection language="RegExp" injector-id="java">
     <display-name>Pattern (java.util.regex)</display-name>
     <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("compile").withParameters("java.lang.String").definedInClass("java.util.regex.Pattern"))]]></place>

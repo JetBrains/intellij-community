@@ -47,6 +47,7 @@ import com.intellij.usages.*;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.AdapterProcessor;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -71,19 +72,22 @@ public class ReplaceInProjectManager {
     private final FindModel findModel;
     private Set<Usage> excludedSet;
 
-    ReplaceContext(UsageView _usageView, FindModel _findModel) {
-      usageView = _usageView;
-      findModel = _findModel;
+    ReplaceContext(@NotNull UsageView usageView, @NotNull FindModel findModel) {
+      this.usageView = usageView;
+      this.findModel = findModel;
     }
 
+    @NotNull
     public FindModel getFindModel() {
       return findModel;
     }
 
+    @NotNull
     public UsageView getUsageView() {
       return usageView;
     }
 
+    @NotNull
     public Set<Usage> getExcludedSet() {
       if (excludedSet == null) excludedSet = usageView.getExcludedUsages();
       return excludedSet;
@@ -151,7 +155,7 @@ public class ReplaceInProjectManager {
           presentation,
           new UsageViewManager.UsageViewStateListener() {
             public void usageViewCreated(UsageView usageView) {
-              context[0] = new ReplaceContext(usageView,findModelCopy);
+              context[0] = new ReplaceContext(usageView, findModelCopy);
               addReplaceActions(context[0]);
             }
 
@@ -349,7 +353,9 @@ public class ReplaceInProjectManager {
             return;
           }
           String stringToReplace = findManager.getStringToReplace(foundString.toString(), replaceContext.getFindModel());
-          document.replaceString(textOffset, textEndOffset, stringToReplace);
+          if (stringToReplace != null) {
+            document.replaceString(textOffset, textEndOffset, stringToReplace);
+          }
         }
       }
     });

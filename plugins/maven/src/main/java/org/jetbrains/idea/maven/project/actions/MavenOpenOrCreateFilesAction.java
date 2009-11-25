@@ -15,9 +15,6 @@
  */
 package org.jetbrains.idea.maven.project.actions;
 
-import com.intellij.notification.Notifications;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.Result;
@@ -84,7 +81,7 @@ public abstract class MavenOpenOrCreateFilesAction extends MavenAction {
             MavenUtil.runFileTemplate(project, newFile, getFileTemplate());
           }
           catch (IOException ex) {
-            Notifications.Bus.notify(new Notification("Maven", "Cannot create " + file.getName(), ex.getMessage(), NotificationType.ERROR), project);
+            MavenUtil.showError(project, "Cannot create " + file.getName(), ex);
           }
         }
       }.execute();

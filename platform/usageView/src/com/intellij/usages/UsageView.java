@@ -66,7 +66,9 @@ public interface UsageView extends Disposable {
 
   UsageViewPresentation getPresentation();
 
-  @NotNull Set<Usage> getExcludedUsages();
+  @NotNull
+  Set<Usage> getExcludedUsages();
+
   @Nullable
   Set<Usage> getSelectedUsages();
   @NotNull Set<Usage> getUsages();

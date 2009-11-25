@@ -33,9 +33,19 @@ public class BuildNumber implements Comparable<BuildNumber> {
   }
 
   public String asString() {
+    return asString(true); 
+  }
+
+  public String asStringWithoutProductCode() {
+    return asString(false);
+  }
+
+  private String asString(boolean includeProductCode) {
     StringBuilder builder = new StringBuilder();
-    if (!StringUtil.isEmpty(myProductCode)) {
-      builder.append(myProductCode).append('-');
+    if (includeProductCode) {
+      if (!StringUtil.isEmpty(myProductCode)) {
+        builder.append(myProductCode).append('-');
+      }
     }
 
     builder.append(myBaselineVersion).append('.');
@@ -50,15 +60,10 @@ public class BuildNumber implements Comparable<BuildNumber> {
     return builder.toString();
   }
 
-  @Override
-  public String toString() {
-    return asString();
-  }
-
   public static BuildNumber fromString(String version) {
     if (version == null) return null;
 
-    if ("__BUILD_NUMBER__".equals(version)) return new BuildNumber("", 92, Integer.MAX_VALUE);
+    if ("__BUILD_NUMBER__".equals(version)) return new BuildNumber("IU", 92, Integer.MAX_VALUE);
 
     String code = version;
     int productSeparator = code.indexOf('-');
@@ -112,6 +117,11 @@ public class BuildNumber implements Comparable<BuildNumber> {
     }
 
     return new BuildNumber(productCode, baselineVersion, buildNumber);
+  }
+
+  @Override
+  public String toString() {
+    return asString();
   }
 
   public int compareTo(BuildNumber o) {

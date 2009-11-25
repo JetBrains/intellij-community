@@ -18,8 +18,11 @@ package com.intellij.openapi.roots.ui.configuration.artifacts;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
+import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureDaemonAnalyzerListener;
@@ -228,5 +231,10 @@ public class ArtifactsStructureConfigurableContextImpl implements ArtifactsStruc
       myArtifactElements.put(artifact, element);
     }
     return element;
+  }
+
+  public ModifiableRootModel getOrCreateModifiableRootModel(Module module) {
+    final ModuleEditor editor = myContext.getModulesConfigurator().getEditor(module);
+    return editor.getModifiableRootModelProxy();
   }
 }

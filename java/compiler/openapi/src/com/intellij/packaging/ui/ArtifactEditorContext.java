@@ -18,6 +18,7 @@ package com.intellij.packaging.ui;
 import com.intellij.facet.Facet;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactType;
@@ -44,6 +45,9 @@ public interface ArtifactEditorContext extends PackagingElementResolvingContext 
 
   @Nullable
   ModifiableModuleModel getModifiableModuleModel();
+
+  @NotNull
+  ModifiableRootModel getOrCreateModifiableRootModel(@NotNull Module module);
 
   @Nullable
   ManifestFileConfiguration getManifestFile(CompositePackagingElement<?> element, ArtifactType artifactType);

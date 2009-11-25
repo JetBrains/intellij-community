@@ -225,7 +225,7 @@ public abstract class BaseShowRecentFilesAction extends AnAction implements Dumb
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
       if (value instanceof VirtualFile) {
         VirtualFile virtualFile = (VirtualFile)value;
-        String name = virtualFile.getName();
+        String name = virtualFile.getPresentableName();
         setIcon(IconUtil.getIcon(virtualFile, Iconable.ICON_FLAG_READ_STATUS, myProject));
 
         FileStatus fileStatus = FileStatusManager.getInstance(myProject).getStatus(virtualFile);

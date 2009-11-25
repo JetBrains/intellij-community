@@ -31,7 +31,6 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,18 +85,6 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
       return cachedReferences;
     }
     cachedReferences = ReferenceProvidersRegistry.getReferencesFromProviders(this, XmlAttributeValue.class);
-    final String value = getValue();
-    if (value != null && value.contains(":")) {
-      final int index = value.indexOf(':');
-      String nsName = value.substring(0, index);
-      final PsiElement element = XmlUtil.findNamespaceDeclaration(this.getContainingFile(), nsName);
-      if (element != null) {
-        PsiReference[] refs = new PsiReference[cachedReferences.length + 1];
-        System.arraycopy(cachedReferences, 0, refs, 1, cachedReferences.length);
-        refs[0] = new SchemaPrefixReference(this, TextRange.from(1, index), nsName);
-        cachedReferences = refs;
-      }
-    }
     myCachedReferences = cachedReferences;
     myModCount = curModCount;
     return cachedReferences;

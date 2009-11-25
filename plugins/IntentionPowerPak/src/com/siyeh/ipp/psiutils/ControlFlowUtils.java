@@ -151,7 +151,7 @@ public class ControlFlowUtils{
         final Boolean constantValue =
                 (Boolean) ConstantExpressionUtil.computeCastTo(test,
                                                                PsiType.BOOLEAN);
-        return constantValue.booleanValue() == value;
+        return constantValue != null && constantValue.booleanValue() == value;
     }
 
     private static boolean statementIsBreakTarget(PsiStatement statement){
