@@ -18,13 +18,14 @@ package com.intellij.ide.projectView.impl.nodes;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
-
-import org.jetbrains.annotations.NotNull;
 
 public class PackageViewModuleNode extends AbstractModuleNode{
   public PackageViewModuleNode(Project project, Module value, ViewSettings viewSettings) {
@@ -45,4 +46,9 @@ public class PackageViewModuleNode extends AbstractModuleNode{
 
   }
 
+  public boolean contains(@NotNull VirtualFile file) {
+    Module module = getValue();
+    return module != null && !module.isDisposed() &&
+           (ModuleUtil.moduleContainsFile(module, file, false) || ModuleUtil.moduleContainsFile(module, file, true));
+  }
 }

@@ -21,6 +21,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -47,5 +48,10 @@ public class StructureViewModuleNode extends AbstractModuleNode {
 
   public int getTypeSortWeight(final boolean sortByType) {
     return 2;
+  }
+
+  @Override
+  public boolean contains(@NotNull VirtualFile file) {
+    return false;
   }
 }
