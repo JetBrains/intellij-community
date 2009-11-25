@@ -20,10 +20,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
-import com.intellij.codeInspection.CustomSuppressableInspectionTool;
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.actions.CleanupInspectionIntention;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
@@ -391,9 +388,14 @@ public class HighlightInfo {
     public List<IntentionAction> getOptions(@NotNull PsiElement element) {
       if (myOptions == null && myKey != null) {
         List<IntentionAction> options = IntentionManager.getInstance().getStandardIntentionOptions(myKey, element);
-        final InspectionProfileEntry tool = InspectionProjectProfileManager.getInstance(element.getProject())
-          .getInspectionProfile()
-          .getInspectionTool(myKey.toString(), element);
+        InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile();
+        InspectionProfileEntry tool = profile.getInspectionTool(myKey.toString(), element);
+        if (!(tool instanceof LocalInspectionToolWrapper)) {
+          HighlightDisplayKey key = HighlightDisplayKey.findById(myKey.toString());
+          if (key != null) {
+            tool = profile.getInspectionTool(key.toString(), element);
+          }
+        }
         if (tool instanceof LocalInspectionToolWrapper) {
           final LocalInspectionTool localInspectionTool = ((LocalInspectionToolWrapper)tool).getTool();
           Class aClass = myAction.getClass();
