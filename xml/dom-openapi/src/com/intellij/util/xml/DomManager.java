@@ -19,10 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.NotNullLazyKey;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiReferenceFactory;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
@@ -120,6 +117,8 @@ public abstract class DomManager implements ModificationTracker {
    * @return stable DOM element
    */
   public abstract <T extends DomElement> T createStableValue(Factory<T> provider);
+
+  public abstract <T> T createStableValue(final Factory<T> provider, final Condition<T> validator);
 
   /**
    * Registers a new {@link com.intellij.util.xml.DomFileDescription} within the manager. The description parameter describes some DOM

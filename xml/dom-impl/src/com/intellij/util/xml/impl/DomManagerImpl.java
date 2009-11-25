@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
@@ -320,7 +321,7 @@ public final class DomManagerImpl extends DomManager {
     }
     final InvocationHandler handler = AdvancedProxy.getInvocationHandler(proxy);
     if (handler instanceof StableInvocationHandler) {
-      final DomElement element = ((StableInvocationHandler)handler).getWrappedElement();
+      final DomElement element = ((StableInvocationHandler<DomElement>)handler).getWrappedElement();
       return element == null ? null : getDomInvocationHandler(element);
     }
     if (handler instanceof DomInvocationHandler) {
@@ -493,9 +494,17 @@ public final class DomManagerImpl extends DomManager {
   }
 
   public final <T extends DomElement> T createStableValue(final Factory<T> provider) {
+    return createStableValue(provider, new Condition<T>() {
+      public boolean value(T t) {
+        return t.isValid();
+      }
+    });
+  }
+
+  public final <T> T createStableValue(final Factory<T> provider, final Condition<T> validator) {
     final T initial = provider.create();
     assert initial != null;
-    final StableInvocationHandler handler = new StableInvocationHandler<T>(initial, provider);
+    final StableInvocationHandler handler = new StableInvocationHandler<T>(initial, provider, validator);
 
     final Set<Class> intf = new HashSet<Class>();
     intf.addAll(Arrays.asList(initial.getClass().getInterfaces()));

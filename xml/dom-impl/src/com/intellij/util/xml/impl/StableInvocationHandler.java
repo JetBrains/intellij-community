@@ -16,6 +16,7 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
@@ -33,16 +34,18 @@ import java.util.Set;
 /**
  * @author peter
  */
-class StableInvocationHandler<T extends DomElement> implements InvocationHandler, StableElement {
+class StableInvocationHandler<T> implements InvocationHandler, StableElement {
   private T myOldValue;
   private T myCachedValue;
   private final Set<Class> myClasses;
   private final Factory<T> myProvider;
+  private final Condition<T> myValidator;
 
-  public StableInvocationHandler(final T initial, final Factory<T> provider) {
+  public StableInvocationHandler(final T initial, final Factory<T> provider, Condition<T> validator) {
     myProvider = provider;
     myCachedValue = initial;
     myOldValue = initial;
+    myValidator = validator;
     final Class superClass = initial.getClass().getSuperclass();
     final Set<Class> classes = new HashSet<Class>();
     classes.addAll(Arrays.asList(initial.getClass().getInterfaces()));
@@ -125,7 +128,7 @@ class StableInvocationHandler<T extends DomElement> implements InvocationHandler
     }
   }
 
-  public final DomElement getWrappedElement() {
+  public final T getWrappedElement() {
     if (isNotValid(myCachedValue)) {
       myCachedValue = myProvider.create();
     }
@@ -137,7 +140,7 @@ class StableInvocationHandler<T extends DomElement> implements InvocationHandler
   }
 
   private boolean isNotValid(final T t) {
-    if (t == null || !t.isValid()) return true;
+    if (t == null || !myValidator.value(t)) return true;
     for (final Class aClass : myClasses) {
       if (!aClass.isInstance(t)) return true;
     }
