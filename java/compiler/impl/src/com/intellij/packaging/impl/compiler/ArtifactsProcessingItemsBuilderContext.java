@@ -19,7 +19,6 @@ import com.intellij.compiler.impl.packagingCompiler.DestinationInfo;
 import com.intellij.compiler.impl.packagingCompiler.ExplodedDestinationInfo;
 import com.intellij.compiler.impl.packagingCompiler.JarInfo;
 import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.elements.ArtifactIncrementalCompilerContext;
 import org.jetbrains.annotations.NotNull;
@@ -36,14 +35,14 @@ public class ArtifactsProcessingItemsBuilderContext implements ArtifactIncrement
   private boolean myCollectingEnabledItems;
   protected final Map<VirtualFile, ArtifactPackagingProcessingItem> myItemsBySource;
   private final Map<String, VirtualFile> mySourceByOutput;
-  private final MultiValuesMap<String, JarInfo> myJarsByPath;
+  private final Map<String, JarInfo> myJarByPath;
   private final CompileContext myCompileContext;
 
   public ArtifactsProcessingItemsBuilderContext(CompileContext compileContext) {
     myCompileContext = compileContext;
     myItemsBySource = new HashMap<VirtualFile, ArtifactPackagingProcessingItem>();
     mySourceByOutput = new HashMap<String, VirtualFile>();
-    myJarsByPath = new MultiValuesMap<String, JarInfo>();
+    myJarByPath = new HashMap<String, JarInfo>();
   }
 
   public boolean addDestination(@NotNull VirtualFile sourceFile, @NotNull DestinationInfo destinationInfo) {
@@ -81,13 +80,17 @@ public class ArtifactsProcessingItemsBuilderContext implements ArtifactIncrement
     return myItemsBySource.get(source);
   }
 
-  public void registerJarFile(@NotNull JarInfo jarInfo, @NotNull String outputPath) {
-    myJarsByPath.put(outputPath, jarInfo);
+  public boolean registerJarFile(@NotNull JarInfo jarInfo, @NotNull String outputPath) {
+    if (myJarByPath.containsKey(outputPath)) {
+      return false;
+    }
+    myJarByPath.put(outputPath, jarInfo);
+    return true;
   }
 
   @Nullable
-  public Collection<JarInfo> getJarInfos(String outputPath) {
-    return myJarsByPath.get(outputPath);
+  public JarInfo getJarInfo(String outputPath) {
+    return myJarByPath.get(outputPath);
   }
 
   @Nullable
