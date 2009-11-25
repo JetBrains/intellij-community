@@ -1077,6 +1077,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     public void disposeUIResources() {
       if (mySubPanel != null) {
         mySubPanel.disposeUIResources();
+        mySubPanel = null;
       }
     }
 
