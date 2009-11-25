@@ -23,6 +23,7 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractModuleNode extends ProjectViewNode<Module> {
@@ -36,6 +37,8 @@ public abstract class AbstractModuleNode extends ProjectViewNode<Module> {
       return;
     }
     presentation.setPresentableText(getValue().getName());
+    presentation.addText(getValue().getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+    
     presentation.setOpenIcon(getValue().getModuleType().getNodeIcon(true));
     presentation.setClosedIcon(getValue().getModuleType().getNodeIcon(false));
   }
