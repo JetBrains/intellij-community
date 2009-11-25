@@ -286,6 +286,7 @@
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CurrentTimeMacro"/>
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CurrentUserMacro"/>
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CapitalizeMacro"/>
+  <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.GroovyScriptMacro"/>
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.DecapitalizeMacro"/>
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.FirstWordMacro"/>
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ReplaceUnderscoresWithSpacesMacro"/>
