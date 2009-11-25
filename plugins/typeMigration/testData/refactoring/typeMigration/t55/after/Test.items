@@ -1,0 +1,9 @@
+Types:
+PsiField:f : java.util.Set<?>
+PsiNewExpression:new Set<Object>() : java.util.Set<java.lang.Object>
+
+Conversions:
+
+New expression type changes:
+new Set<Object>() -> java.util.Set<java.lang.Object>
+Fails:

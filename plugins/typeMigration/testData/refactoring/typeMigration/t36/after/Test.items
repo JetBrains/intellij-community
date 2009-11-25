@@ -1,0 +1,9 @@
+Types:
+PsiParameter:i : byte
+PsiReferenceExpression:i : byte
+
+Conversions:
+i -> $
+
+New expression type changes:
+Fails:
