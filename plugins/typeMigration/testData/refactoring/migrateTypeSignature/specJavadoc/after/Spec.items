@@ -1,0 +1,8 @@
+Types:
+PsiParameter:p : java.util.Set
+
+Conversions:
+#meth(double) -> PsiMethod:meth
+
+New expression type changes:
+Fails:

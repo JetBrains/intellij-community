@@ -1,0 +1,11 @@
+Types:
+PsiParameter:p : java.lang.Boolean
+PsiReferenceExpression:p : java.lang.Boolean
+PsiReferenceExpression:p : java.lang.Boolean
+
+Conversions:
+myField -> $
+myFieldSuper3 -> $
+
+New expression type changes:
+Fails:
