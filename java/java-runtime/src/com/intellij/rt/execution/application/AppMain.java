@@ -41,7 +41,7 @@ public class AppMain {
     if (osName.startsWith("windows")) {
       libPath = binPath + "breakgen.dll";
     } else if (osName.startsWith("linux")) {
-      if (System.getProperty("os.name").toLowerCase().equals("amd64")) {
+      if (System.getProperty("os.arch").toLowerCase().equals("amd64")) {
         libPath = binPath + "libbreakgen64.so";
       } else {
         libPath = binPath + "libbreakgen.so";
