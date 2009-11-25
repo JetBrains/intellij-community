@@ -16,6 +16,8 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
@@ -52,4 +54,6 @@ public interface ArtifactsStructureConfigurableContext extends PackagingElementR
 
   @NotNull
   ArtifactProjectStructureElement getOrCreateArtifactElement(@NotNull Artifact artifact);
+
+  ModifiableRootModel getOrCreateModifiableRootModel(Module module);
 }

@@ -66,7 +66,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This class also controls the auto-reparse and auto-hints.
@@ -221,7 +220,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
   public void updateVisibleHighlighters(@NotNull Editor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    //if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
     final TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
     BackgroundEditorHighlighter highlighter = textEditor.getBackgroundHighlighter();

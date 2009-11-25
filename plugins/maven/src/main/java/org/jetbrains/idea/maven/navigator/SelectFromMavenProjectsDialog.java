@@ -61,6 +61,11 @@ public class SelectFromMavenProjectsDialog extends DialogWrapper {
       protected boolean showDescriptions() {
         return false;
       }
+
+      @Override
+      protected boolean showOnlyBasicPhases() {
+        return false;
+      }
     };
     treeStructure.update();
 

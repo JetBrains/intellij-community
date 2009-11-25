@@ -37,7 +37,7 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
   private final VirtualFileManager myVirtualFileManager;
   private final VirtualFilePointerListener myListener;
   private boolean disposed = false;
-  private int useCount;
+  int useCount;
   private long myLastUpdated = -1;
 
   private static final Key<Throwable> CREATE_TRACE = Key.create("CREATION_TRACE");

@@ -260,6 +260,10 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     return true;
   }
 
+  protected boolean showOnlyBasicPhases() {
+    return myProjectsNavigator.getShowBasicPhasesOnly();
+  }
+
   public static <T extends CustomNode> List<T> getSelectedNodes(SimpleTree tree, Class<T> nodeClass) {
     final List<T> filtered = new ArrayList<T>();
     for (SimpleNode node : getSelectedNodes(tree)) {
@@ -844,7 +848,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     public boolean isVisible() {
-      return super.isVisible() && (!myProjectsNavigator.getShowBasicPhasesOnly() || BASIC_PHASES.contains(getGoal()));
+      return super.isVisible() && (!showOnlyBasicPhases() || BASIC_PHASES.contains(getGoal()));
     }
   }
 

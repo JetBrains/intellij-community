@@ -21,36 +21,32 @@ import com.intellij.packaging.ui.ArtifactProblemQuickFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author nik
  */
 public class ArtifactProblemDescription extends ProjectStructureProblemDescription {
-  private ArtifactProblemQuickFix myQuickFix;
+  private List<ArtifactProblemQuickFix> myQuickFixes;
   private List<PackagingElement<?>> myPathToPlace;
 
   public ArtifactProblemDescription(@NotNull String message, @NotNull Severity severity) {
-    super(message, severity);
-  }
-
-  public ArtifactProblemDescription(@NotNull String message, @NotNull Severity severity, @Nullable ArtifactProblemQuickFix quickFix) {
-    super(message, severity);
-    myQuickFix = quickFix;
+    this(message, severity, null, Collections.<ArtifactProblemQuickFix>emptyList());
   }
 
   public ArtifactProblemDescription(@NotNull String message,
                                     @NotNull Severity severity,
                                     @Nullable List<PackagingElement<?>> pathToPlace,
-                                    @Nullable ArtifactProblemQuickFix quickFix) {
+                                    @NotNull List<ArtifactProblemQuickFix> quickFixes) {
     super(message, severity);
     myPathToPlace = pathToPlace;
-    myQuickFix = quickFix;
+    myQuickFixes = quickFixes;
   }
 
-  @Nullable
-  public ArtifactProblemQuickFix getQuickFix() {
-    return myQuickFix;
+  @NotNull
+  public List<ArtifactProblemQuickFix> getQuickFixes() {
+    return myQuickFixes;
   }
 
   @Nullable 

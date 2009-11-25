@@ -113,11 +113,10 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
       assert documentFromFile == editor.getDocument() : "Documents are different: " + editor.getDocument() + ";" + documentFromFile;
     }
     final TIntObjectHashMap<TextEditorHighlightingPass> id2Pass = new TIntObjectHashMap<TextEditorHighlightingPass>();
-    final TIntArrayList ignoredPasses = new TIntArrayList();
+    final TIntArrayList passesRefusedToCreate = new TIntArrayList();
     myRegisteredPassFactories.forEachKey(new TIntProcedure() {
       public boolean execute(int passId) {
         if (ArrayUtil.find(passesToIgnore, passId) != -1) {
-          ignoredPasses.add(passId);
           return true;
         }
         PassConfig passConfig = myRegisteredPassFactories.get(passId);
@@ -125,7 +124,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
         final TextEditorHighlightingPass pass = factory.createHighlightingPass(psiFile, editor);
 
         if (pass == null) {
-          ignoredPasses.add(passId);
+          passesRefusedToCreate.add(passId);
         }
         else {
           TIntArrayList ids = new TIntArrayList(passConfig.completionPredecessorIds.length);
@@ -146,7 +145,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
     });
 
     final FileStatusMap statusMap = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).getFileStatusMap();
-    ignoredPasses.forEach(new TIntProcedure() {
+    passesRefusedToCreate.forEach(new TIntProcedure() {
       public boolean execute(int passId) {
         statusMap.markFileUpToDate(editor.getDocument(), psiFile, passId);
         return true;

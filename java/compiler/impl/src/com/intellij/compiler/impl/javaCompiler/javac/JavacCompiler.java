@@ -220,7 +220,7 @@ public class JavacCompiler extends ExternalCompiler {
     }
 
     final List<String> additionalOptions =
-      addAdditionalSettings(commandLine, javacSettings, myAnnotationProcessorMode, versionIndex);
+      addAdditionalSettings(commandLine, javacSettings, myAnnotationProcessorMode, versionIndex, myProject);
 
     CompilerUtil.addLocaleOptions(commandLine, false);
 
@@ -280,14 +280,15 @@ public class JavacCompiler extends ExternalCompiler {
     }
   }
 
-  public static List<String> addAdditionalSettings(List<String> commandLine, JavacSettings javacSettings, boolean isAnnotationProcessing, int versionIndex) {
+  public static List<String> addAdditionalSettings(List<String> commandLine, JavacSettings javacSettings, boolean isAnnotationProcessing,
+                                                   int versionIndex, Project project) {
     final List<String> additionalOptions = new ArrayList<String>();
-    StringTokenizer tokenizer = new StringTokenizer(javacSettings.getOptionsString(), " ");
+    StringTokenizer tokenizer = new StringTokenizer(javacSettings.getOptionsString(project), " ");
     if (versionIndex < 6) {
       isAnnotationProcessing = false; // makes no sense for these versions
     }
     if (isAnnotationProcessing) {
-      final CompilerConfiguration config = CompilerConfiguration.getInstance(javacSettings.getProject());
+      final CompilerConfiguration config = CompilerConfiguration.getInstance(project);
       additionalOptions.add("-Xprefer:source");
       additionalOptions.add("-implicit:none");
       additionalOptions.add("-proc:only");

@@ -26,8 +26,8 @@ import org.jetbrains.annotations.Nullable;
  * operations.
  */
 public class FindModel extends UserDataHolderBase implements Cloneable {
-  private String myStringToFind;
-  private String myStringToReplace;
+  private String myStringToFind = "";
+  private String myStringToReplace = "";
   private boolean isSearchHighlighters = false;
   private boolean isReplaceState = false;
   private boolean isWholeWordsOnly = false;
@@ -114,6 +114,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    *
    * @return the string to find.
    */
+  @NotNull
   public String getStringToFind() {
     return myStringToFind;
   }
@@ -123,7 +124,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    *
    * @param s the string to find.
    */
-  public void setStringToFind(String s) {
+  public void setStringToFind(@NotNull String s) {
     myStringToFind = s;
   }
 

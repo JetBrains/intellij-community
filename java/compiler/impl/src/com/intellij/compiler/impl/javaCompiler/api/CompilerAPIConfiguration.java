@@ -13,21 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.compiler.impl.javaCompiler.api;
 
-package com.intellij.util.xmlb;
+import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StorageScheme;
 
-import org.jetbrains.annotations.NotNull;
-
-public class XmlSerializerUtil {
-  private XmlSerializerUtil() {
-  }
-
-  public static <T> void copyBean(@NotNull T from, @NotNull T to) {
-    assert from.getClass().isAssignableFrom(to.getClass()) : "Beans of different classes specified: Cannot assign "+from.getClass()+" to "+to.getClass();
-
-    final Accessor[] accessors = BeanBinding.getAccessors(to.getClass());
-    for (Accessor accessor : accessors) {
-      accessor.write(to, accessor.read(from));
+@State(
+  name = "CompilerAPISettings",
+  storages = {
+    @Storage(id = "default", file = "$PROJECT_FILE$")
+   ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
-  }
+)
+public class CompilerAPIConfiguration extends JavacConfiguration {
 }

@@ -16,7 +16,6 @@
 package com.intellij.compiler.impl.rmiCompiler;
 
 import com.intellij.compiler.OutputParser;
-import com.intellij.compiler.RmicSettings;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.javaCompiler.CompilerParsingThread;
 import com.intellij.compiler.impl.javaCompiler.FileObject;
@@ -69,7 +68,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
 
   @NotNull
   public ProcessingItem[] getProcessingItems(final CompileContext context) {
-    if (!RmicSettings.getInstance(context.getProject()).IS_EANABLED) {
+    if (!RmicConfiguration.getSettings(context.getProject()).IS_EANABLED) {
       return ProcessingItem.EMPTY_ARRAY;
     }
     final Project project = context.getProject();
@@ -139,7 +138,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
 
   public ProcessingItem[] process(CompileContext context, ProcessingItem[] items) {
     final Project project = context.getProject();
-    if (!RmicSettings.getInstance(project).IS_EANABLED) {
+    if (!RmicConfiguration.getSettings(project).IS_EANABLED) {
       return ProcessingItem.EMPTY_ARRAY;
     }
     final ProgressIndicator progressIndicator = context.getProgressIndicator();
@@ -289,7 +288,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
 
     commandLine.add("-verbose");
 
-    commandLine.addAll(Arrays.asList(RmicSettings.getInstance(module.getProject()).getOptions()));
+    commandLine.addAll(Arrays.asList(RmicConfiguration.getSettings(module.getProject()).getOptions()));
 
     commandLine.add("-classpath");
 

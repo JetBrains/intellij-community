@@ -18,10 +18,12 @@ package com.intellij.openapi.vfs.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.objectTree.ObjectNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
@@ -38,6 +40,8 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 
 public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager implements ApplicationComponent{
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl");
+
   // guarded by this
   private final Map<VirtualFilePointerListener, TreeMap<String, VirtualFilePointerImpl>> myUrlToPointerMaps = new LinkedHashMap<VirtualFilePointerListener, TreeMap<String, VirtualFilePointerImpl>>();
 
@@ -211,10 +215,21 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     }
     else {
       //already registered
-      Disposer.register(parentDisposable, new DelegatingDisposable(pointer));
+      register(parentDisposable, pointer);
     }
 
     return pointer;
+  }
+
+  private static void register(Disposable parentDisposable, VirtualFilePointerImpl pointer) {
+    DelegatingDisposable delegating = new DelegatingDisposable(pointer);
+    DelegatingDisposable registered = Disposer.findRegisteredObject(parentDisposable, delegating);
+    if (registered == null) {
+      Disposer.register(parentDisposable, delegating);
+    }
+    else {
+      registered.disposeCount++;
+    }
   }
 
   private static String cleanupPath(String path, String protocol) {
@@ -495,18 +510,32 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
   private static class DelegatingDisposable implements Disposable {
     private final VirtualFilePointerImpl myPointer;
+    private int disposeCount = 1;
 
-    private DelegatingDisposable(VirtualFilePointerImpl pointer) {
+    private DelegatingDisposable(@NotNull VirtualFilePointerImpl pointer) {
       myPointer = pointer;
     }
 
     public void dispose() {
+      myPointer.useCount -= disposeCount-1;
+      LOG.assertTrue(myPointer.useCount > 0);
       myPointer.dispose();
     }
 
     @Override
     public String toString() {
       return "D:" + myPointer.toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      DelegatingDisposable that = (DelegatingDisposable)o;
+      return myPointer == that.myPointer;
+    }
+
+    @Override
+    public int hashCode() {
+      return myPointer.hashCode();
     }
   }
 
@@ -520,7 +549,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   @TestOnly
-  public int coundDupContainers() {
+  public int countDupContainers() {
     Map<VirtualFilePointerContainer,Integer> c = new THashMap<VirtualFilePointerContainer,Integer>();
     for (VirtualFilePointerContainerImpl container : myContainers) {
       Integer count = c.get(container);
@@ -536,4 +565,26 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     }
     return i;
   }
+  
+  @TestOnly
+  public static int countMaxRefCount() {
+    int result = 0;
+    for (Disposable disposable : Disposer.getTree().getRootObjects()) {
+      result = calcMaxRefCount(disposable, result);
+    }
+    return result;
+  }
+
+  private static int calcMaxRefCount(Disposable disposable, int result) {
+    if (disposable instanceof DelegatingDisposable) {
+      result = Math.max(((DelegatingDisposable)disposable).disposeCount, result);
+    }
+
+    for (ObjectNode<Disposable> node : Disposer.getTree().getNode(disposable).getChildren()) {
+      result = calcMaxRefCount(node.getObject(), result);
+    }
+    return result;
+  }
+
+  
 }

@@ -19,6 +19,7 @@ import com.intellij.facet.Facet;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.ModuleLibraryOrderEntryImpl;
@@ -63,6 +64,11 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
 
   public ModifiableModuleModel getModifiableModuleModel() {
     return myParent.getModifiableModuleModel();
+  }
+
+  @NotNull
+  public ModifiableRootModel getOrCreateModifiableRootModel(@NotNull Module module) {
+    return myParent.getOrCreateModifiableRootModel(module);
   }
 
   public ManifestFileConfiguration getManifestFile(CompositePackagingElement<?> element, ArtifactType artifactType) {

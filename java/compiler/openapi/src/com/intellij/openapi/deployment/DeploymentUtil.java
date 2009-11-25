@@ -41,10 +41,7 @@ public abstract class DeploymentUtil {
                                 @Nullable Set<String> writtenPaths,
                                 @Nullable FileFilter fileFilter) throws IOException;
 
-  public abstract boolean addItemsRecursively(@NotNull BuildRecipe items,
-                                              @NotNull File root,
-                                              Module module,
-                                              String outputRelativePath, @Nullable String possibleBaseOutputPath);
+  public abstract boolean addItemsRecursively(@NotNull BuildRecipe items, @NotNull File root, String outputRelativePath);
 
   public static String trimForwardSlashes(@NotNull String path) {
     while (path.length() != 0 && (path.charAt(0) == '/' || path.charAt(0) == File.separatorChar)) {
@@ -91,15 +88,7 @@ public abstract class DeploymentUtil {
   public abstract String getConfigFileErrorMessage(ConfigFile configFile);
 
   @Nullable
-  public static String getRelativePath(File baseDir, File file) {
-    if (baseDir == null || file == null) return null;
-
-    String basePath = baseDir.getAbsolutePath();
-    final String filePath = file.getAbsolutePath();
-    return getRelativePath(basePath, filePath);
-  }
-
-  @Nullable public static String getRelativePath(@NotNull String basePath, @NotNull final String filePath) {
+  public static String getRelativePath(@NotNull String basePath, @NotNull final String filePath) {
     if (basePath.equals(filePath)) return "";
     if (!basePath.endsWith(File.separator)) basePath += File.separatorChar;
 

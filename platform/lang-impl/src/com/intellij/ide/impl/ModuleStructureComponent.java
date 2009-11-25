@@ -14,20 +14,28 @@
  * limitations under the License.
  */
 
-package com.intellij.util.xmlb;
+/*
+ * @author max
+ */
+package com.intellij.ide.impl;
 
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.ui.SimpleToolWindowPanel;
+import com.intellij.openapi.util.Disposer;
 
-public class XmlSerializerUtil {
-  private XmlSerializerUtil() {
+public class ModuleStructureComponent extends SimpleToolWindowPanel implements Disposable {
+  public ModuleStructureComponent(Module module) {
+    super(true, true);
+
+    final ModuleStructurePane structurePane = new ModuleStructurePane(module);
+    Disposer.register(this, structurePane);
+
+    setContent(structurePane.createComponent());
   }
 
-  public static <T> void copyBean(@NotNull T from, @NotNull T to) {
-    assert from.getClass().isAssignableFrom(to.getClass()) : "Beans of different classes specified: Cannot assign "+from.getClass()+" to "+to.getClass();
 
-    final Accessor[] accessors = BeanBinding.getAccessors(to.getClass());
-    for (Accessor accessor : accessors) {
-      accessor.write(to, accessor.read(from));
-    }
+  public void dispose() {
+    
   }
 }
