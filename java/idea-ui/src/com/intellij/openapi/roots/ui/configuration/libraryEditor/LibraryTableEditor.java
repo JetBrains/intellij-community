@@ -145,12 +145,6 @@ public class LibraryTableEditor implements Disposable {
     return result;
   }
 
-  public static LibraryTableEditor editLibraryTable(LibraryTable libraryTable){
-    LibraryTableEditor result = new LibraryTableEditor(libraryTable,null);
-    result.init(new LibraryTableTreeStructure(result));
-    return result;
-  }
-
   public static LibraryTableEditor editLibrary(final LibraryTableModifiableModelProvider provider,
                                                final Library library,
                                                final Project project) {
@@ -220,27 +214,9 @@ public class LibraryTableEditor implements Disposable {
     return myPanel;
   }
 
-  public static boolean showEditDialog(final Component parent, LibraryTable libraryTable, final Collection<Library> selection) {
-    final LibraryTableEditor libraryTableEditor = editLibraryTable(libraryTable);
-    final boolean ok = libraryTableEditor.openDialog(parent, selection, true);
-    if (selection != null && ok) {
-      selection.clear();
-      selection.addAll(Arrays.asList(libraryTableEditor.getSelectedLibraries()));
-    }
-    Disposer.dispose(libraryTableEditor);
-    return ok;
-  }
-
   public void selectLibrary(Library library, boolean expand) {
     LibraryTableTreeContentElement element = new LibraryElement(library, this, false);
     myTreeBuilder.updateAndSelect(element);
-  }
-
-  public void disableAttachButtons() {
-    myAttachJavadocsButton.setVisible(false);
-    myAttachSourcesButton.setVisible(false);
-    myAttachAnnotationsButton.setVisible(false);
-    myAttachUrlJavadocsButton.setVisible(false);
   }
 
   public <T> void addFileChooserContext(DataKey<T> key, T value) {
