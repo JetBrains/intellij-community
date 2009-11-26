@@ -144,6 +144,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   protected void disposeComponents() {
+    assert !myDisposeCompleted : "Already disposed!";
+
     final List<Object> components = myComponentsRegistry.getRegisteredImplementations();
     myDisposed = true;
 
