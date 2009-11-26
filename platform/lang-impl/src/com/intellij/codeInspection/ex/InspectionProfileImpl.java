@@ -23,6 +23,7 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ModifiableModel;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -247,6 +248,17 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
       myDeinstalledInspectionsSettings.put(toolClassName, toolElement);
     }
+  }
+
+  public Set<HighlightSeverity> getUsedSeverities() {
+    LOG.assertTrue(myInitialized.get());
+    final Set<HighlightSeverity> result = new HashSet<HighlightSeverity>();
+    for (ToolsImpl tools : myTools.values()) {
+      for (ScopeToolState state : tools.getTools()) {
+        result.add(state.getLevel().getSeverity());
+      }
+    }
+    return result;
   }
 
 

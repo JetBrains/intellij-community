@@ -21,6 +21,7 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
@@ -32,6 +33,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
+import com.intellij.packaging.impl.artifacts.DefaultPackagingElementResolvingContext;
 import com.intellij.packaging.ui.ManifestFileConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -152,6 +154,11 @@ public class ArtifactsStructureConfigurableContextImpl implements ArtifactsStruc
     myContext.getDaemonAnalyzer().queueUpdate(getOrCreateArtifactElement(originalArtifact));
   }
 
+  @Nullable 
+  public ArtifactEditorImpl getArtifactEditor(Artifact artifact) {
+    return myArtifactEditors.get(getOriginalArtifact(artifact));
+  }
+
   public ArtifactEditorImpl getOrCreateEditor(Artifact artifact) {
     artifact = getOriginalArtifact(artifact);
     ArtifactEditorImpl artifactEditor = myArtifactEditors.get(artifact);
@@ -189,6 +196,11 @@ public class ArtifactsStructureConfigurableContextImpl implements ArtifactsStruc
   @NotNull
   public FacetsProvider getFacetsProvider() {
     return myContext.getModulesConfigurator().getFacetsConfigurator();
+  }
+
+  public Library findLibrary(@NotNull String level, @NotNull String libraryName) {
+    final Library library = DefaultPackagingElementResolvingContext.findLibrary(myProject, level, libraryName);
+    return library != null ? myContext.getLibraryModel(library) : myContext.getLibrary(libraryName, level);
   }
 
   public ManifestFileConfiguration getManifestFile(CompositePackagingElement<?> element, ArtifactType artifactType) {

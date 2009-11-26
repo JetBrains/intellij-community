@@ -19,6 +19,7 @@ package com.intellij.profile.codeInspection.ui;
 import com.intellij.CommonBundle;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -36,6 +37,8 @@ import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
@@ -926,6 +929,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       if (selectedProfile.getProfileManager().getProfile(selectedProfile.getName(), false) != null) {
         selectedProfile.getProfileManager().deleteProfile(selectedProfile.getName());
       }
+      copyUsedSeveritiesIfUndefined(selectedProfile, profileManager);
       selectedProfile.setProfileManager(profileManager);
     }
     final InspectionProfile parentProfile = selectedProfile.getParentProfile();
@@ -946,6 +950,29 @@ public class SingleInspectionProfilePanel extends JPanel {
     setSelectedProfile(parentProfile.getModifiableModel());
     setSelectedProfileModified(false);
     myModified = false;
+  }
+
+  private static void copyUsedSeveritiesIfUndefined(final ModifiableModel selectedProfile, final ProfileManager profileManager) {
+    final SeverityRegistrar registrar = ((SeverityProvider)profileManager).getSeverityRegistrar();
+    final Set<HighlightSeverity> severities = ((InspectionProfileImpl)selectedProfile).getUsedSeverities();
+    for (Iterator<HighlightSeverity> iterator = severities.iterator(); iterator.hasNext();) {
+      HighlightSeverity severity = iterator.next();
+      if (registrar.isSeverityValid(severity.toString())) {
+        iterator.remove();
+      }
+    }
+
+    if (!severities.isEmpty()) {
+      final SeverityRegistrar oppositeRegister = ((SeverityProvider)selectedProfile.getProfileManager()).getSeverityRegistrar();
+      for (HighlightSeverity severity : severities) {
+        final TextAttributesKey attributesKey = TextAttributesKey.find(severity.toString());
+        final TextAttributes textAttributes = oppositeRegister.getTextAttributesBySeverity(severity);
+        LOG.assertTrue(textAttributes != null);
+        HighlightInfoType.HighlightInfoTypeImpl info = new HighlightInfoType.HighlightInfoTypeImpl(severity, attributesKey);
+        registrar.registerSeverity(new SeverityRegistrar.SeverityBasedTextAttributes(textAttributes.clone(), info),
+                                   textAttributes.getErrorStripeColor());
+      }
+    }
   }
 
   private boolean descriptorsAreChanged() {

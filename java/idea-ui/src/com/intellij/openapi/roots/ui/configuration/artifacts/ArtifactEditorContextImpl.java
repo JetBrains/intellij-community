@@ -154,6 +154,10 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
     return myParent.getFacetsProvider();
   }
 
+  public Library findLibrary(@NotNull String level, @NotNull String libraryName) {
+    return myParent.findLibrary(level, libraryName);
+  }
+
   public void queueValidation() {
     myParent.queueValidation(getArtifact());
   }

@@ -29,13 +29,21 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditorListener;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.*;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.ui.MasterDetailsStateService;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.elements.CompositePackagingElement;
+import com.intellij.packaging.impl.artifacts.ArtifactUtil;
+import com.intellij.packaging.impl.artifacts.PackagingElementPath;
+import com.intellij.packaging.impl.artifacts.PackagingElementProcessor;
+import com.intellij.packaging.impl.elements.LibraryElementType;
+import com.intellij.packaging.impl.elements.LibraryPackagingElement;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,6 +88,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
         }
       }
     });
+
     final ItemsChangeListener listener = new ItemsChangeListener() {
       public void itemChanged(@Nullable Object deletedItem) {
         if (deletedItem instanceof Library || deletedItem instanceof Module) {
@@ -93,6 +102,59 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     moduleStructureConfigurable.addItemsChangeListener(listener);
     projectLibrariesConfig.addItemsChangeListener(listener);
     globalLibrariesConfig.addItemsChangeListener(listener);
+
+    context.addLibraryEditorListener(new LibraryEditorListener() {
+      public void libraryRenamed(@NotNull Library library, String oldName, String newName) {
+        final Artifact[] artifacts = myPackagingEditorContext.getArtifactModel().getArtifacts();
+        for (Artifact artifact : artifacts) {
+          updateLibraryElements(artifact, library, oldName, newName);
+        }
+      }
+
+    });
+  }
+
+  private void updateLibraryElements(final Artifact artifact, final Library library, final String oldName, final String newName) {
+    if (ArtifactUtil.processPackagingElements(myPackagingEditorContext.getRootElement(artifact), LibraryElementType.LIBRARY_ELEMENT_TYPE,
+                                              new PackagingElementProcessor<LibraryPackagingElement>() {
+                                                @Override
+                                                public boolean process(@NotNull LibraryPackagingElement element,
+                                                                       @NotNull PackagingElementPath path) {
+                                                  return !isResolvedToLibrary(element, library, oldName);
+                                                }
+                                              }, myPackagingEditorContext, false, artifact.getArtifactType())) {
+      return;
+    }
+    myPackagingEditorContext.editLayout(artifact, new Runnable() {
+      public void run() {
+        final ModifiableArtifact modifiableArtifact = myPackagingEditorContext.getOrCreateModifiableArtifactModel().getOrCreateModifiableArtifact(artifact);
+        ArtifactUtil.processPackagingElements(modifiableArtifact, LibraryElementType.LIBRARY_ELEMENT_TYPE, new PackagingElementProcessor<LibraryPackagingElement>() {
+          @Override
+          public boolean process(@NotNull LibraryPackagingElement element, @NotNull PackagingElementPath path) {
+            if (isResolvedToLibrary(element, library, oldName)) {
+              element.setLibraryName(newName);
+            }
+            return true;
+          }
+        }, myPackagingEditorContext, false);
+      }
+    });
+    final ArtifactEditorImpl artifactEditor = myPackagingEditorContext.getArtifactEditor(artifact);
+    if (artifactEditor != null) {
+      artifactEditor.rebuildTries();
+    }
+  }
+
+  private static boolean isResolvedToLibrary(LibraryPackagingElement element, Library library, String name) {
+    if (!element.getLibraryName().equals(name)) {
+      return false;
+    }
+    
+    final LibraryTable table = library.getTable();
+    if (table != null) {
+      return table.getTableLevel().equals(element.getLevel());
+    }
+    return element.getLevel().equals(LibraryTableImplUtil.MODULE_LEVEL);
   }
 
   private void onElementDeleted() {

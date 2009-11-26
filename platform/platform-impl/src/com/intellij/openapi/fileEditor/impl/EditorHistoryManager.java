@@ -65,6 +65,8 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
     final MyUISettingsListener myUISettingsListener = new MyUISettingsListener();
 
     fileEditorManager.addFileEditorManagerListener(editorManagerListener, project);
+    project.getMessageBus().connect().subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, new MyEditorManagerBeforeListener());
+
     uiSettings.addUISettingsListener(myUISettingsListener);
     Disposer.register(project, new Disposable() {
       public void dispose() {
@@ -311,6 +313,13 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
     public void selectionChanged(final FileEditorManagerEvent event){
       updateHistoryEntry(event.getOldFile(), false);
       updateHistoryEntry(event.getNewFile(), true);
+    }
+  }
+
+  private final class MyEditorManagerBeforeListener extends FileEditorManagerListener.Before.Adapter {
+    @Override
+    public void beforeFileClosed(FileEditorManager source, VirtualFile file) {
+      updateHistoryEntry(file, false);
     }
   }
 

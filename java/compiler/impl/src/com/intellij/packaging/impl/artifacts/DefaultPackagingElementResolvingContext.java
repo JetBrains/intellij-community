@@ -15,20 +15,24 @@
  */
 package com.intellij.packaging.impl.artifacts;
 
-import com.intellij.packaging.elements.PackagingElementResolvingContext;
-import com.intellij.packaging.artifacts.ArtifactModel;
-import com.intellij.packaging.artifacts.ArtifactManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.facet.impl.DefaultFacetsProvider;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
+import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.packaging.artifacts.ArtifactManager;
+import com.intellij.packaging.artifacts.ArtifactModel;
+import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
 * @author nik
 */
-class DefaultPackagingElementResolvingContext implements PackagingElementResolvingContext {
+public class DefaultPackagingElementResolvingContext implements PackagingElementResolvingContext {
   private final Project myProject;
   private final DefaultModulesProvider myModulesProvider;
 
@@ -55,5 +59,15 @@ class DefaultPackagingElementResolvingContext implements PackagingElementResolvi
   @NotNull
   public FacetsProvider getFacetsProvider() {
     return DefaultFacetsProvider.INSTANCE;
+  }
+
+  public Library findLibrary(@NotNull String level, @NotNull String libraryName) {
+    return findLibrary(myProject, level, libraryName);
+  }
+
+  @Nullable
+  public static Library findLibrary(Project project, String level, String libraryName) {
+    LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(level, project);
+    return table != null ? table.getLibraryByName(libraryName) : null;
   }
 }

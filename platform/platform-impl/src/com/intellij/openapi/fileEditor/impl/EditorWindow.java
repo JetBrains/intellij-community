@@ -131,6 +131,11 @@ public class EditorWindow {
           if (editors.isEmpty()) return;
           final EditorWithProviderComposite editor = findFileComposite(file);
 
+          final FileEditorManagerListener.Before beforePublisher =
+            editorManager.getProject().getMessageBus().syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER);
+
+          beforePublisher.beforeFileClosed(editorManager, file);
+
           if (myTabbedPane != null) {
             final int componentIndex = findComponentIndex(editor.getComponent());
             if (componentIndex >= 0) { // editor could close itself on decomposition
@@ -157,9 +162,10 @@ public class EditorWindow {
           }
         }
         finally {
-          final FileEditorManagerListener publisher =
+          final FileEditorManagerListener afterPublisher =
             editorManager.getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
-          publisher.fileClosed(editorManager, file);
+
+          afterPublisher.fileClosed(editorManager, file);
         }
       }
     });

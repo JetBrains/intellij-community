@@ -53,6 +53,7 @@ class CopyClassDialog extends DialogWrapper{
   public CopyClassDialog(PsiClass aClass, PsiDirectory defaultTargetDirectory, Project project, boolean doClone) {
     super(project, true);
     myProject = project;
+    myDefaultTargetDirectory = defaultTargetDirectory;
     init();
     myDoClone = doClone;
     String text = myDoClone ? RefactoringBundle.message("copy.class.clone.0.1", UsageViewUtil.getType(aClass), UsageViewUtil.getLongName(aClass)) :
@@ -60,13 +61,6 @@ class CopyClassDialog extends DialogWrapper{
     myInformationLabel.setText(text);
     myNameField.setText(UsageViewUtil.getShortName(aClass));
     myNameLabel.setText(RefactoringBundle.message("name.prompt"));
-    myDefaultTargetDirectory = defaultTargetDirectory;
-    if (myDefaultTargetDirectory != null) {
-      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(myDefaultTargetDirectory);
-      if (aPackage != null) {
-        myTfPackage.prependItem(aPackage.getQualifiedName());
-      }
-    }
     if (myDoClone) {
       myTfPackage.setVisible(false);
       myPackageLabel.setVisible(false);
@@ -116,7 +110,18 @@ class CopyClassDialog extends DialogWrapper{
 
     gbConstraints.gridx = 1;
     gbConstraints.weightx = 1;
-    myTfPackage = new PackageNameReferenceEditorCombo("", myProject, RECENTS_KEY, RefactoringBundle.message("choose.destination.package"));
+    String qualifiedName = "";
+    if (myDefaultTargetDirectory != null) {
+      final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(myDefaultTargetDirectory);
+      if (aPackage != null) {
+        qualifiedName = aPackage.getQualifiedName();
+      }
+    }
+
+    myTfPackage = new PackageNameReferenceEditorCombo(qualifiedName, myProject, RECENTS_KEY, RefactoringBundle.message("choose.destination.package"));
+    if (qualifiedName.length() > 0) {
+      myTfPackage.setTextFieldPreferredWidth(qualifiedName.length() + 5);
+    }
 
     myPackageLabel.setText(RefactoringBundle.message("destination.package"));
 

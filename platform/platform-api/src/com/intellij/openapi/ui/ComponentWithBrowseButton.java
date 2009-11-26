@@ -74,6 +74,8 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     FontMetrics fontMetrics = comp.getFontMetrics(comp.getFont());
     size.width = fontMetrics.charWidth('a') * charCount;
     comp.setPreferredSize(size);
+    final Dimension preferredSize = myBrowseButton.getPreferredSize();
+    setPreferredSize(new Dimension(size.width + preferredSize.width + 2, preferredSize.height + 2));
   }
 
   public void setEnabled(boolean enabled) {

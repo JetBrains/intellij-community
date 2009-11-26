@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditorListener;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,10 +40,12 @@ public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
   private LibraryTable.ModifiableModel myLibrariesModifiableModel;
   private final Project myProject;
   private LibraryTable myTable;
+  private final LibraryEditorListener myLibraryEditorListener;
 
-  public LibrariesModifiableModel(final LibraryTable table, final Project project) {
+  public LibrariesModifiableModel(final LibraryTable table, final Project project, LibraryEditorListener libraryEditorListener) {
     myProject = project;
     myTable = table;
+    myLibraryEditorListener = libraryEditorListener;
   }
 
   public Library createLibrary(String name) {
@@ -126,7 +129,7 @@ public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
   }
 
   private LibraryEditor createLibraryEditor(final Library library) {
-    final LibraryEditor libraryEditor = new LibraryEditor(library);
+    final LibraryEditor libraryEditor = new LibraryEditor(library, myLibraryEditorListener);
     myLibrary2EditorMap.put(library, libraryEditor);
     return libraryEditor;
   }
