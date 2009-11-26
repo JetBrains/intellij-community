@@ -1,10 +1,19 @@
 package com.intellij.refactoring;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.rename.RenameProcessor;
-import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.impl.TestLookupManager;
+import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.rename.RenameProcessor;
+import com.intellij.refactoring.rename.inplace.ResolveSnapshotProvider;
+import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
+import com.intellij.testFramework.LightCodeInsightTestCase;
 
 /**
  * @author ven
@@ -35,6 +44,39 @@ public class RenameLocalTest extends LightCodeInsightTestCase {
       .findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
     assertNotNull(element);
     new RenameProcessor(getProject(), element, newName, true, true).run();
+    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+  }
+
+  public void testRenameInPlaceQualifyFieldReference() throws Exception {
+    doTestInplaceRenameCollisionsResolved("myI");
+  }
+
+  //reference itself won't be renamed
+  private void doTestInplaceRenameCollisionsResolved(String newName) throws Exception {
+    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
+    assertNotNull(element);
+    final PsiMethod methodScope = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+    assertNotNull(methodScope);
+
+    ResolveSnapshotProvider resolveSnapshotProvider = VariableInplaceRenamer.INSTANCE.forLanguage(getFile().getLanguage());
+    assertNotNull(resolveSnapshotProvider);
+    final ResolveSnapshotProvider.ResolveSnapshot snapshot = resolveSnapshotProvider.createSnapshot(methodScope);
+    assertNotNull(snapshot);
+
+    VariableInplaceRenamer renamer = new VariableInplaceRenamer((PsiNameIdentifierOwner)element, getEditor());
+    ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(true);
+    try {
+      renamer.performInplaceRename();
+    }
+    finally {
+      renamer.finish();
+      snapshot.apply(newName);
+
+      TemplateManagerImpl.getTemplateState(myEditor).gotoEnd();
+      ((TestLookupManager)LookupManager.getInstance(getProject())).clearLookup();
+      ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(false);
+    }
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 }
