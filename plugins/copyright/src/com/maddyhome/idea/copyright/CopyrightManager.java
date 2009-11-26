@@ -40,6 +40,7 @@ import com.maddyhome.idea.copyright.options.LanguageOptions;
 import com.maddyhome.idea.copyright.options.Options;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
 import com.maddyhome.idea.copyright.util.NewFileTracker;
+import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -288,6 +289,9 @@ public class CopyrightManager extends AbstractProjectComponent implements JDOMEx
           for (Element state : states) {
             state.detach();
             target.addContent(state);
+          }
+          for (Object attr : element.getAttributes()) {
+            target.setAttribute((Attribute)((Attribute)attr).clone());
           }
         }
       }
