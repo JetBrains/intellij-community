@@ -393,13 +393,16 @@ public class ActionsTreeUtil {
     mainGroup.addGroup(otherGroup);
     mainGroup.addGroup(createPluginsActionsGroup(filtered, otherGroup));
     if (filter != null || filtered != null) {
+      final KeymapConfigurable keymapConfigurable = ShowSettingsUtil.getInstance().findApplicationConfigurable(KeymapConfigurable.class);
       final ArrayList list = mainGroup.getChildren();
       for (Iterator i = list.iterator(); i.hasNext();) {
         final Object o = i.next();
         if (o instanceof Group) {
           final Group group = (Group)o;
           if (group.getSize() == 0) {
-            i.remove();
+            if (!SearchUtil.isComponentHighlighted(group.getName(), filter, forceFiltering, keymapConfigurable)) {
+              i.remove();
+            }
           }
         }
       }
