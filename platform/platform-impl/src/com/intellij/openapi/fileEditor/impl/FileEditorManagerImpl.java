@@ -491,6 +491,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       }
       newEditorCreated = true;
 
+      getProject().getMessageBus().syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER).beforeFileOpened(this, file);
+      
       editors = new FileEditor[providers.length];
       for (int i = 0; i < providers.length; i++) {
         try {
