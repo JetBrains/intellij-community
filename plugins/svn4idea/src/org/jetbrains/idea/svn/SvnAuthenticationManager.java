@@ -103,8 +103,9 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
     if ((proxyHost == null) || "".equals(proxyHost.trim())) {
       if (SvnConfiguration.getInstanceChecked(myProject).isIsUseDefaultProxy()) {
         // ! use common proxy if it is set
-        final String ideaWideProxyHost = System.getProperty("http.proxyHost");
-        String ideaWideProxyPort = System.getProperty("http.proxyPort");
+        final HttpConfigurable httpConfigurable = HttpConfigurable.getInstance();
+        final String ideaWideProxyHost = httpConfigurable.PROXY_HOST;
+        String ideaWideProxyPort = String.valueOf(httpConfigurable.PROXY_PORT);
 
         if (ideaWideProxyPort == null) {
           ideaWideProxyPort = "3128";

@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.FilePath;
@@ -26,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 class UpdatingChangeListBuilder implements ChangelistBuilder {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.UpdatingChangeListBuilder");
   private final ChangeListWorker myChangeListWorker;
   private final FileHolderComposite myComposite;
   // todo +-
@@ -67,17 +69,26 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   public void processChangeInList(final Change change, @Nullable final ChangeList changeList, final VcsKey vcsKey) {
     checkIfDisposed();
 
+    LOG.debug("[processChangeInList-1] entering, cl name: " + ((changeList == null) ? null: changeList.getName()) +
+      " change: " + ChangesUtil.getFilePath(change).getPath());
     final String fileName = ChangesUtil.getFilePath(change).getName();
-    if (FileTypeManager.getInstance().isFileIgnored(fileName)) return;
+    if (FileTypeManager.getInstance().isFileIgnored(fileName)) {
+      LOG.debug("[processChangeInList-1] file type ignored");
+      return;
+    }
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         if (ChangeListManagerImpl.isUnder(change, myScope)) {
           if (changeList != null) {
+            LOG.debug("[processChangeInList-1] to add change to cl");
             myChangeListWorker.addChangeToList(changeList.getName(), change, vcsKey);
           } else {
+            LOG.debug("[processChangeInList-1] to add to corresponding list");
             myChangeListWorker.addChangeToCorrespondingList(change, vcsKey);
           }
+        } else {
+          LOG.debug("[processChangeInList-1] not under scope");
         }
       }
     });

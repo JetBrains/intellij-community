@@ -27,19 +27,18 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinder;
 import com.intellij.psi.*;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class CompileAction extends CompileActionBase {
-  private Condition<Pair<Project, VirtualFile>> myCompilableResourceFileCondition;
-
   protected void doAction(DataContext dataContext, Project project) {
     final Module module = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
     final boolean trackDependencies = CompilerWorkspaceConfiguration.getInstance(project).COMPILE_DEPENDENT_FILES;
@@ -154,11 +153,7 @@ public class CompileAction extends CompileActionBase {
     return buffer.toString();
   }
 
-  public void setCompilableResourceFileCondition(final Condition<Pair<Project, VirtualFile>> compilableResourceFileCondition) {
-    myCompilableResourceFileCondition = compilableResourceFileCondition;
-  }
-
-  private VirtualFile[] getCompilableFiles(Project project, VirtualFile[] files) {
+  private static VirtualFile[] getCompilableFiles(Project project, VirtualFile[] files) {
     if (files == null || files.length == 0) {
       return VirtualFile.EMPTY_ARRAY;
     }
@@ -192,8 +187,11 @@ public class CompileAction extends CompileActionBase {
     return VfsUtil.toVirtualFileArray(filesToCompile);
   }
 
-  private boolean isCompilableResourceFile(final Project project, final CompilerConfiguration compilerConfiguration, final VirtualFile file) {
-    return compilerConfiguration.isResourceFile(file) &&
-           (myCompilableResourceFileCondition == null || myCompilableResourceFileCondition.value(Pair.create(project, file)));
+  private static boolean isCompilableResourceFile(final Project project, final CompilerConfiguration compilerConfiguration, final VirtualFile file) {
+    if (!compilerConfiguration.isResourceFile(file)) {
+      return false;
+    }
+    final Collection<? extends Artifact> artifacts = ArtifactBySourceFileFinder.getInstance(project).findArtifacts(file);
+    return artifacts.isEmpty();
   }
 }

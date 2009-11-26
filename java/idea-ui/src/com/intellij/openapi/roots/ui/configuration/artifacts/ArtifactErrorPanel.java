@@ -78,7 +78,7 @@ public class ArtifactErrorPanel {
     myCurrentQuickFixes = quickFixes;
     myFixButton.setVisible(!quickFixes.isEmpty());
     if (!quickFixes.isEmpty()) {
-      myFixButton.setText(quickFixes.size() == 1 ? ContainerUtil.getFirstItem(quickFixes, null).getActionName() : "Fix");
+      myFixButton.setText(quickFixes.size() == 1 ? ContainerUtil.getFirstItem(quickFixes, null).getActionName() : "Fix...");
     }
   }
 

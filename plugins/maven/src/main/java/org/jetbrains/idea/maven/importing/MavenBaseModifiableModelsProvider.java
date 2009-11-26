@@ -25,6 +25,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -148,6 +150,14 @@ public abstract class MavenBaseModifiableModelsProvider implements MavenModifiab
     @NotNull
     public FacetsProvider getFacetsProvider() {
       return myFacetsProvider;
+    }
+
+    public Library findLibrary(@NotNull String level, @NotNull String libraryName) {
+      if (level.equals(LibraryTablesRegistrar.PROJECT_LEVEL)) {
+        return getLibraryByName(libraryName);
+      }
+      final LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(level, myProject);
+      return table != null ? table.getLibraryByName(libraryName) : null;
     }
 
   }

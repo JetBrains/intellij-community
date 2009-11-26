@@ -31,10 +31,7 @@ public class LocalChangeListImpl extends LocalChangeList {
 
   private boolean myIsDefault = false;
   private boolean myIsReadOnly = false;
-  private Collection<Change> myOutdatedChanges;
-  private boolean myIsInUpdate = false;
   private ChangeHashSet myChangesBeforeUpdate;
-  private ChangeListEditHandler myEditHandler;
 
   public static LocalChangeListImpl createEmptyChangeListImpl(Project project, String name) {
     return new LocalChangeListImpl(project, name);
@@ -58,11 +55,7 @@ public class LocalChangeListImpl extends LocalChangeList {
 
   private void createReadChangesCache() {
     if (myReadChangesCache == null) {
-      final HashSet<Change> changes = new HashSet<Change>(myChanges);
-      if (myOutdatedChanges != null) {
-        changes.addAll(myOutdatedChanges);
-      }
-      myReadChangesCache = Collections.unmodifiableCollection(changes);
+      myReadChangesCache = Collections.unmodifiableCollection(new HashSet<Change>(myChanges));
     }
   }
 
@@ -81,14 +74,8 @@ public class LocalChangeListImpl extends LocalChangeList {
     return myName;
   }
 
-  // seems that here we can do "rename list with the same name inside ChangeListManagerImpl"
-  // because it's likely that usages of this method is like that.
-  // but it is not very good... it can mix everything up
   public void setName(@NotNull final String name) {
     if (! myName.equals(name)) {
-      
-      String oldName = myName;
-      ChangeListManagerImpl.getInstanceImpl(myProject).editName(oldName, name);
       myName = name;
     }
   }
@@ -100,7 +87,6 @@ public class LocalChangeListImpl extends LocalChangeList {
   // same as for setName()
   public void setComment(final String comment) {
     if (! Comparing.equal(comment, myComment)) {
-      ChangeListManagerImpl.getInstanceImpl(myProject).editComment(myName, comment);
       myComment = comment != null ? comment : "";
     }
   }
@@ -117,10 +103,6 @@ public class LocalChangeListImpl extends LocalChangeList {
     return myIsDefault;
   }
 
-  public synchronized boolean isInUpdate() {
-    return myIsInUpdate;
-  }
-
   void setDefault(final boolean isDefault) {
     myIsDefault = isDefault;
   }
@@ -134,7 +116,7 @@ public class LocalChangeListImpl extends LocalChangeList {
   }
 
   synchronized void addChange(Change change) {
-    if (!myIsInUpdate) myReadChangesCache = null;
+    myReadChangesCache = null;
     myChanges.add(change);
   }
 
@@ -142,9 +124,7 @@ public class LocalChangeListImpl extends LocalChangeList {
     for (Change localChange : myChanges) {
       if (localChange.equals(change)) {
         myChanges.remove(localChange);
-        if (! myIsInUpdate) {
-          myReadChangesCache = null;
-        }
+        myReadChangesCache = null;
         return localChange;
       }
     }
@@ -155,7 +135,6 @@ public class LocalChangeListImpl extends LocalChangeList {
     createReadChangesCache();
     final Collection<Change> result = new ArrayList<Change>();
     myChangesBeforeUpdate = new ChangeHashSet(myChanges);
-    myOutdatedChanges = new ArrayList<Change>();
     final ExcludedFileIndex fileIndex = ExcludedFileIndex.getInstance(project);
     for (Change oldBoy : myChangesBeforeUpdate) {
       final ContentRevision before = oldBoy.getBeforeRevision();
@@ -163,13 +142,8 @@ public class LocalChangeListImpl extends LocalChangeList {
       if (scope == null || before != null && scope.belongsTo(before.getFile()) || after != null && scope.belongsTo(after.getFile())
         || isIgnoredChange(oldBoy, fileIndex)) {
         result.add(oldBoy);
-        myIsInUpdate = true;
         removeChange(oldBoy);
-        myOutdatedChanges.add(oldBoy);
       }
-    }
-    if (isDefault()) {
-      myIsInUpdate = true;
     }
     return result;
   }
@@ -186,44 +160,44 @@ public class LocalChangeListImpl extends LocalChangeList {
   }
 
   synchronized boolean processChange(Change change) {
+    LOG.debug("[process change] for '" + myName + "' isDefault: " + myIsDefault + " change: " +
+              ChangesUtil.getFilePath(change).getPath());
     if (myIsDefault) {
+      LOG.debug("[process change] adding because default");
       addChange(change);
       return true;
     }
 
-    for (Change oldChange : myOutdatedChanges) {
+    for (Change oldChange : myChangesBeforeUpdate) {
       if (Comparing.equal(oldChange, change)) {
+        LOG.debug("[process change] adding bacuae equal to old: " + ChangesUtil.getFilePath(oldChange).getPath());
         addChange(change);
         return true;
       }
     }
+    LOG.debug("[process change] not found");
     return false;
   }
 
   synchronized boolean doneProcessingChanges(final List<Change> removedChanges) {
     boolean changesDetected = (myChanges.size() != myChangesBeforeUpdate.size());
 
-    Change[] newChanges = myChanges.toArray(new Change[myChanges.size()]);
-    for (int i = 0; i < newChanges.length; i++) {
-      Change oldChange = findOldChange(newChanges[i]);
-      if (oldChange != null) {
-        // or additional info from change descendants will be lost todo: maybe override equals, but then..
-        // todo: equivalency not <-> to equals there
-        //newChanges[i] = oldChange;
-      }
-      else {
-        changesDetected = true;
+    if (! changesDetected) {
+      for (Change newChange : myChanges) {
+        Change oldChange = findOldChange(newChange);
+        if (oldChange == null) {
+          changesDetected = true;
+          break;
+        }
       }
     }
     final List<Change> removed = new ArrayList<Change>(myChangesBeforeUpdate);
     // since there are SAME objects...
-    removed.removeAll(Arrays.asList(newChanges));
+    removed.removeAll(myChanges);
     removedChanges.addAll(removed);
+    changesDetected = changesDetected || (! removedChanges.isEmpty());
 
-    myChanges = new HashSet<Change>(Arrays.asList(newChanges));
-    myOutdatedChanges = null;
     myReadChangesCache = null;
-    myIsInUpdate = false;
     return changesDetected;
   }
 
@@ -276,7 +250,6 @@ public class LocalChangeListImpl extends LocalChangeList {
     final LocalChangeListImpl copy = new LocalChangeListImpl(this);
     copy.myComment = myComment;
     copy.myIsDefault = myIsDefault;
-    copy.myIsInUpdate = myIsInUpdate;
     copy.myIsReadOnly = myIsReadOnly;
 
     if (myChanges != null) {
@@ -285,10 +258,6 @@ public class LocalChangeListImpl extends LocalChangeList {
 
     if (myChangesBeforeUpdate != null) {
       copy.myChangesBeforeUpdate = new ChangeHashSet(myChangesBeforeUpdate);
-    }
-
-    if (myOutdatedChanges != null) {
-      copy.myOutdatedChanges = new ArrayList<Change>(myOutdatedChanges);
     }
 
     if (myReadChangesCache != null) {
@@ -300,11 +269,7 @@ public class LocalChangeListImpl extends LocalChangeList {
 
   @Nullable
   public ChangeListEditHandler getEditHandler() {
-    return myEditHandler;
-  }
-
-  public void setEditHandler(final ChangeListEditHandler editHandler) {
-    myEditHandler = editHandler;
+    return null;
   }
 
   public void setId(String id) {

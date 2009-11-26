@@ -15,19 +15,10 @@
  */
 package org.jetbrains.idea.maven.wizards;
 
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.SourcePathsBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.options.ConfigurationException;
@@ -39,33 +30,17 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.xml.XmlElement;
-import org.jetbrains.idea.maven.dom.MavenDomUtil;
-import org.jetbrains.idea.maven.dom.model.MavenDomModule;
-import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
-import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
-import org.jetbrains.idea.maven.execution.MavenRunner;
-import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
-import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.indices.ArchetypeInfo;
 import org.jetbrains.idea.maven.project.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.MavenConstants;
-import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import javax.swing.*;
 import java.io.File;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuilder {
   private static final Icon BIG_ICON = IconLoader.getIcon("/modules/javaModule.png");
@@ -91,148 +66,10 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
 
     MavenUtil.runWhenInitialized(project, new DumbAwareRunnable() {
       public void run() {
-        doCreateMavenProject(project, root);
+        new MavenModuleBuilderHelper(myProjectId, myAggregatorProject, myParentProject, myInheritGroupId,
+                                     myInheritVersion, myArchetype,"Create new Maven module").configure(project, root, false);
       }
     });
-  }
-
-  private void doCreateMavenProject(final Project project, final VirtualFile root) {
-    PsiFile[] psiFiles = myAggregatorProject != null
-                         ? new PsiFile[]{getPsiFile(project, myAggregatorProject.getFile())}
-                         : PsiFile.EMPTY_ARRAY;
-    final VirtualFile pom = new WriteCommandAction<VirtualFile>(project, "Create new Maven module", psiFiles) {
-      @Override
-      protected void run(Result<VirtualFile> result) throws Throwable {
-        VirtualFile file;
-        try {
-          file = root.createChildData(this, MavenConstants.POM_XML);
-          MavenUtil.applyMavenProjectFileTemplate(project, file, myProjectId);
-          result.setResult(file);
-        }
-        catch (IOException e) {
-          showError(project, e);
-          return;
-        }
-
-        updateProjectPom(project, file);
-
-        if (myAggregatorProject != null) {
-          MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(project, myAggregatorProject.getFile());
-          model.getPackaging().setStringValue("pom");
-          MavenDomModule module = model.getModules().addModule();
-          module.setValue(getPsiFile(project, file));
-        }
-      }
-    }.execute().getResultObject();
-
-    if (pom == null) return;
-
-    if (myAggregatorProject == null) {
-      MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
-      manager.addManagedFiles(Collections.singletonList(pom));
-    }
-
-    if (myArchetype == null) {
-      try {
-        VfsUtil.createDirectories(root.getPath() + "/src/main/java");
-        VfsUtil.createDirectories(root.getPath() + "/src/test/java");
-      }
-      catch (IOException e) {
-        MavenLog.LOG.info(e);
-      }
-    }
-
-    // execute when current dialog is closed (e.g. Project Structure)
-    MavenUtil.invokeLater(project, ModalityState.NON_MODAL, new Runnable() {
-      public void run() {
-        EditorHelper.openInEditor(getPsiFile(project, pom));
-        if (myArchetype != null) generateFromArchetype(project, pom);
-      }
-    });
-  }
-
-  private void updateProjectPom(final Project project, final VirtualFile pom) {
-    if (myParentProject == null) return;
-
-    new WriteCommandAction.Simple(project, "Create new Maven module") {
-      protected void run() throws Throwable {
-        MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(project, pom);
-        if (model == null) return;
-
-        MavenDomUtil.updateMavenParent(model, myParentProject);
-
-        if (myInheritGroupId) {
-          XmlElement el = model.getGroupId().getXmlElement();
-          if (el != null) el.delete();
-        }
-        if (myInheritVersion) {
-          XmlElement el = model.getVersion().getXmlElement();
-          if (el != null) el.delete();
-        }
-
-        CodeStyleManager.getInstance(project).reformat(getPsiFile(project, pom));
-      }
-    }.execute();
-  }
-
-  private PsiFile getPsiFile(Project project, VirtualFile pom) {
-    return PsiManager.getInstance(project).findFile(pom);
-  }
-
-  private void generateFromArchetype(final Project project, final VirtualFile pom) {
-    final File workingDir;
-    try {
-      workingDir = FileUtil.createTempDirectory("archetype", "tmp");
-      workingDir.deleteOnExit();
-    }
-    catch (IOException e) {
-      showError(project, e);
-      return;
-    }
-
-    MavenRunnerParameters params = new MavenRunnerParameters(
-      false, workingDir.getPath(), Collections.singletonList("org.apache.maven.plugins:maven-archetype-plugin:generate"), null);
-
-    MavenRunner runner = MavenRunner.getInstance(project);
-    MavenRunnerSettings settings = runner.getState().clone();
-    Map<String, String> props = settings.getMavenProperties();
-
-    props.put("interactiveMode", "false");
-    props.put("archetypeGroupId", myArchetype.groupId);
-    props.put("archetypeArtifactId", myArchetype.artifactId);
-    props.put("archetypeVersion", myArchetype.version);
-    if (myArchetype.repository != null) props.put("archetypeRepository", myArchetype.repository);
-
-    props.put("groupId", myProjectId.getGroupId());
-    props.put("artifactId", myProjectId.getArtifactId());
-    props.put("version", myProjectId.getVersion());
-
-    runner.run(params, settings, new Runnable() {
-      public void run() {
-        copyGeneratedFiles(workingDir, pom, project);
-      }
-    });
-  }
-
-  private void copyGeneratedFiles(File workingDir, VirtualFile pom, Project project) {
-    try {
-      FileUtil.copyDir(new File(workingDir, myProjectId.getArtifactId()), new File(myContentRootPath));
-    }
-    catch (IOException e) {
-      showError(project, e);
-      return;
-    }
-
-    FileUtil.delete(workingDir);
-
-    pom.refresh(false, false);
-    updateProjectPom(project, pom);
-
-    LocalFileSystem.getInstance().refreshWithoutFileWatcher(true);
-  }
-
-  private void showError(Project project, Throwable e) {
-    MavenUtil.showError(project, "Failed to create a Maven project", e);
   }
 
   @Override

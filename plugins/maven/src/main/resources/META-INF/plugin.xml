@@ -18,6 +18,7 @@
     <projectOpenProcessor implementation="org.jetbrains.idea.maven.wizards.MavenProjectOpenProcessor"/>
     <projectImportBuilder implementation="org.jetbrains.idea.maven.wizards.MavenProjectBuilder"/>
     <moduleBuilder builderClass="org.jetbrains.idea.maven.wizards.MavenModuleBuilder"/>
+    <frameworkSupport implementation="org.jetbrains.idea.maven.wizards.MavenFrameworkSupportProvider"/>
 
     <projectConfigurable implementation="org.jetbrains.idea.maven.utils.MavenSettings" order="last"/>
 

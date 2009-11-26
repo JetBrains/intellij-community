@@ -57,10 +57,6 @@ public class GitChangeList extends LocalChangeList {
     return true;
   }
 
-  public boolean isInUpdate() {
-    return false;
-  }
-
   public boolean isReadOnly() {
     return true;
   }
