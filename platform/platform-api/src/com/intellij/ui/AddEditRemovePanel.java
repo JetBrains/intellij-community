@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.util.ui.Table;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
@@ -150,8 +151,10 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons {
     myTable.setRowSelectionInterval(index, index);
   }
 
+  @Nullable
   protected abstract T addItem();
   protected abstract boolean removeItem(T o);
+  @Nullable
   protected abstract T editItem(T o);
 
   protected void doEdit() {
