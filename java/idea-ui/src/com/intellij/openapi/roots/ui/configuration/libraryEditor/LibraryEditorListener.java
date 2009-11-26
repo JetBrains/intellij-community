@@ -13,32 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.packaging.elements;
+package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.packaging.artifacts.ArtifactModel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
  */
-public interface PackagingElementResolvingContext {
-  @NotNull
-  Project getProject();
-
-  @NotNull
-  ArtifactModel getArtifactModel();
-
-  @NotNull
-  ModulesProvider getModulesProvider();
-
-  @NotNull
-  FacetsProvider getFacetsProvider();
-
-  @Nullable
-  Library findLibrary(@NotNull String level, @NotNull String libraryName);
+public interface LibraryEditorListener {
+  void libraryRenamed(@NotNull Library library, String oldName, String newName);
 }

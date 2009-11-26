@@ -34,7 +34,6 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.PathUIUtils;
@@ -57,6 +56,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -77,7 +77,7 @@ import java.util.List;
  * @author Eugene Zhuravlev
  *         Date: Jan 11, 2004
  */
-public class LibraryTableEditor implements Disposable {
+public class LibraryTableEditor implements Disposable, LibraryEditorListener {
   static final UrlComparator ourUrlComparator = new UrlComparator();
 
   private JPanel myPanel;
@@ -102,30 +102,10 @@ public class LibraryTableEditor implements Disposable {
   private static final Icon JAR_DIRECTORY_ICON = IconLoader.getIcon("/nodes/jarDirectory.png");
 
   private final Collection<Runnable> myListeners = new ArrayList<Runnable>();
+  private final List<LibraryEditorListener> myLibraryEditorListeners = new ArrayList<LibraryEditorListener>();
   @Nullable private final Project myProject;
 
   private final Map<DataKey, Object> myFileChooserUserData = new HashMap<DataKey, Object>();
-
-  private LibraryTableEditor(final LibraryTable libraryTableProvider, Project project) {
-    this(new LibraryTableModifiableModelProvider() {
-      public LibraryTable.ModifiableModel getModifiableModel() {
-        return libraryTableProvider.getModifiableModel();
-      }
-
-      public String getTableLevel() {
-        return libraryTableProvider.getTableLevel();
-      }
-
-      public LibraryTablePresentation getLibraryTablePresentation() {
-        return libraryTableProvider.getPresentation();
-      }
-
-      public boolean isLibraryTableEditable() {
-        return libraryTableProvider.isEditable();
-      }
-    }, project);
-  }
-
 
   private LibraryTableEditor(LibraryTableModifiableModelProvider provider, Project project){
     myProject = project;
@@ -139,7 +119,7 @@ public class LibraryTableEditor implements Disposable {
     }
   }
 
-  public static LibraryTableEditor editLibraryTable(LibraryTableModifiableModelProvider provider, Project project){
+  public static LibraryTableEditor editLibraryTable(LibraryTableModifiableModelProvider provider, Project project) {
     LibraryTableEditor result = new LibraryTableEditor(provider,project);
     result.init(new LibraryTableTreeStructure(result));
     return result;
@@ -229,7 +209,7 @@ public class LibraryTableEditor implements Disposable {
     }
     LibraryEditor libraryEditor = myLibraryToEditorMap.get(library);
     if (libraryEditor == null) {
-      libraryEditor = new LibraryEditor(library);
+      libraryEditor = new LibraryEditor(library, this);
       myLibraryToEditorMap.put(library, libraryEditor);
     }
     return libraryEditor;
@@ -280,6 +260,16 @@ public class LibraryTableEditor implements Disposable {
       }
     }
     return false;
+  }
+
+  public void addLibraryEditorListener(@NotNull LibraryEditorListener listener) {
+    myLibraryEditorListeners.add(listener);
+  }
+
+  public void libraryRenamed(@NotNull Library library, String oldName, String newName) {
+    for (LibraryEditorListener listener : myLibraryEditorListeners) {
+      listener.libraryRenamed(library, oldName, newName);
+    }
   }
 
   public Library[] getLibraries() {

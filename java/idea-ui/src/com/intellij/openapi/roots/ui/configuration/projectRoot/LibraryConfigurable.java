@@ -45,6 +45,7 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
   private final LibraryTableModifiableModelProvider myModel;
   private final Project myProject;
   private final LibraryProjectStructureElement myProjectStructureElement;
+  private boolean myUpdatingName;
 
   protected LibraryConfigurable(final LibraryTableModifiableModelProvider libraryTable,
                                 final Library library,
@@ -60,9 +61,11 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
 
   public JComponent createOptionsPanel() {
     myLibraryEditor = LibraryTableEditor.editLibrary(myModel, myLibrary, myProject);
+    final StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(myProject).getContext();
+    myLibraryEditor.addLibraryEditorListener(context);
     myLibraryEditor.addListener(new Runnable() {
       public void run() {
-        ModuleStructureConfigurable.getInstance(myProject).getContext().getDaemonAnalyzer().queueUpdate(myProjectStructureElement);
+        context.getDaemonAnalyzer().queueUpdate(myProjectStructureElement);
       }
     });
     return myLibraryEditor.getComponent();
@@ -94,11 +97,25 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
   }
 
   public void setDisplayName(final String name) {
-    getLibraryEditor().setName(name);
+    if (!myUpdatingName) {
+      getLibraryEditor().setName(name);
+    }
   }
 
   private LibraryEditor getLibraryEditor() {
     return ((LibrariesModifiableModel)myModel.getModifiableModel()).getLibraryEditor(myLibrary);
+  }
+
+  @Override
+  public void updateName() {
+    //todo[nik] pull up to NamedConfigurable
+    myUpdatingName = true;
+    try {
+      super.updateName();
+    }
+    finally {
+      myUpdatingName = false;
+    }
   }
 
   public Library getEditableObject() {
