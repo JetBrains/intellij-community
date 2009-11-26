@@ -71,8 +71,7 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
   public void testIncludedArtifact() throws Exception {
     final Artifact included = addArtifact("included",
                                           root()
-                                            .file(createFile("aaa.txt"))
-                                            .build());
+                                            .file(createFile("aaa.txt")));
     final Artifact a = addArtifact(
       root()
         .dir("dir")
@@ -93,7 +92,7 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
 
   public void testMergeDirectories() throws Exception {
     final Artifact included = addArtifact("included",
-                                          root().dir("dir").file(createFile("aaa.class")).build());
+                                          root().dir("dir").file(createFile("aaa.class")));
     final Artifact a = addArtifact(
       root()
         .artifact(included)
@@ -109,7 +108,7 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
 
   public void testOverwriteArchives() throws Exception {
     final Artifact included = addArtifact("included",
-                                          root().archive("x.jar").file(createFile("aaa.class")).build());
+                                          root().archive("x.jar").file(createFile("aaa.class")));
     final Artifact a = addArtifact(
       root()
         .artifact(included)
@@ -123,7 +122,7 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
   }
   
   public void testOverwriteNestedArchive() throws Exception {
-    final Artifact included = addArtifact("included", root().archive("a.jar").archive("b.jar").file(createFile("c.class")).build());
+    final Artifact included = addArtifact("included", root().archive("a.jar").archive("b.jar").file(createFile("c.class")));
     final Artifact a = addArtifact(
       root()
         .artifact(included)
@@ -141,9 +140,9 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
 
   public void testFileOrder() throws Exception {
     final Artifact a1 = addArtifact("included1",
-                                    root().dir("ddd").file(createFile("d1/xxx.txt", "first")).build());
+                                    root().dir("ddd").file(createFile("d1/xxx.txt", "first")));
     final Artifact a2 = addArtifact("included2",
-                                    root().dir("ddd").file(createFile("d2/xxx.txt", "second")).build());
+                                    root().dir("ddd").file(createFile("d2/xxx.txt", "second")));
     final Artifact a = addArtifact(
       root()
       .artifact(a1)

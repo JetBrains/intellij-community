@@ -2,6 +2,7 @@ package com.intellij.compiler.artifacts;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 
 /**
  * @author nik
@@ -19,10 +20,10 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
   public void testOneFileInTwoArtifacts() throws Exception {
     final VirtualFile file = createFile("file.txt");
     final Artifact a1 = addArtifact("a1",
-                                    root().dir("dir").file(file).build());
+                                    root().dir("dir").file(file));
 
     final Artifact a2 = addArtifact("a2",
-                                    root().dir("dir2").file(file).build());
+                                    root().dir("dir2").file(file));
 
     compileProject();
     compile(a1).assertUpToDate();
@@ -81,5 +82,50 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
     renameFile(file, "A.txt");
     compileProject();
     assertOutput(a, fs().file("A.txt"));
+  }
+
+  //IDEADEV-41556
+  public void testDeleteFilesFromSelectedArtifactsOnly() throws Exception {
+    final VirtualFile file = createFile("a/a.txt");
+    final Artifact a1 = addArtifact("a1", root().dirCopy(file.getParent()));
+    final Artifact a2 = addArtifact("a2", root().dirCopy(file.getParent()));
+
+    compileProject();
+    assertOutput(a1, fs().file("a.txt"));
+    assertOutput(a2, fs().file("a.txt"));
+
+    deleteFile(file);
+    compile(a1).assertDeleted("out/artifacts/a1/a.txt");
+    assertEmptyOutput(a1);
+    assertOutput(a2, fs().file("a.txt"));
+
+    compile(a2).assertDeleted("out/artifacts/a2/a.txt");
+    assertEmptyOutput(a1);
+    assertEmptyOutput(a2);
+  }
+
+  public void testDeleteOutputWhenOutputPathIsChanged() throws Exception {
+    final VirtualFile file = createFile("a.txt");
+    final Artifact a = addArtifact("a", root().file(file));
+    compileProject();
+    assertOutput(a, fs().file("a.txt"));
+
+    final ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
+    model.getOrCreateModifiableArtifact(a).setOutputPath(getProjectBasePath() + "/xxx");
+    commitModel(model);
+
+    compileProject().assertRecompiledAndDeleted(new String[]{"a.txt"}, "out/artifacts/a/a.txt");
+    assertOutput(a, fs().file("a.txt"));
+  }
+
+  public void testDeleteOutputWhenArtifactIsDeleted() throws Exception {
+    final VirtualFile file = createFile("a.txt");
+    final Artifact a = addArtifact("a", root().file(file));
+    compileProject();
+
+    deleteArtifact(a);
+
+    compileProject().assertDeleted("out/artifacts/a/a.txt");
+    assertEmptyOutput(a);
   }
 }

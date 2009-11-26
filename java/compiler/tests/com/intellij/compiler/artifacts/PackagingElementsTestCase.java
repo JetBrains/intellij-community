@@ -29,7 +29,11 @@ import java.io.IOException;
  */
 public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
   protected Artifact addArtifact(PackagingElementBuilder builder) {
-    return addArtifact("a", builder.build());
+    return addArtifact("a", builder);
+  }
+
+  protected Artifact addArtifact(final String name, PackagingElementBuilder builder) {
+    return addArtifact(name, builder.build());
   }
 
   protected void assertLayout(Artifact artifact, String expected) {

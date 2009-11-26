@@ -114,7 +114,7 @@ public class PackageFileActionTest extends ArtifactCompilerTestCase {
 
   public void testFileInIncludedArtifact() throws Exception {
     final VirtualFile file = createFile("a.txt", "321");
-    final Artifact a = addArtifact("a", root().dir("x").file(file).build());
+    final Artifact a = addArtifact("a", root().dir("x").file(file));
     final Artifact b = addArtifact(root().dir("y").artifact(a));
 
     compileAndUpdate(file, "123");
@@ -124,7 +124,7 @@ public class PackageFileActionTest extends ArtifactCompilerTestCase {
   
   public void testFileInIncludedArchiveArtifact() throws Exception {
     final VirtualFile file = createFile("a.txt", "xxx");
-    final Artifact a = addArtifact("a", archive("a.jar").file(file).build());
+    final Artifact a = addArtifact("a", archive("a.jar").file(file));
     final Artifact b = addArtifact(archive("b.jar").artifact(a));
 
     compileAndUpdate(file, "yyy");

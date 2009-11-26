@@ -141,6 +141,10 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
     assertFalse(new File(FileUtil.toSystemDependentName(outputPath)).exists());
   }
 
+  public static void assertEmptyOutput(Artifact a1) throws IOException {
+    assertOutput(a1, ArtifactCompilerTestCase.fs());
+  }
+
   public static void assertOutput(Artifact artifact, TestFileSystemBuilder item) throws IOException {
     final String output = artifact.getOutputPath();
     assertNotNull("output path not specified for " + artifact.getName(), output);
