@@ -895,6 +895,7 @@
     <keyboard-shortcut first-keystroke="control 3"/>
   </action>
   <action id="FileChooser.NewFolder">
+    <keyboard-shortcut first-keystroke="alt INSERT"/>
     <keyboard-shortcut first-keystroke="control N"/>
   </action>
   <action id="PopupHector">
