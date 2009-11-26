@@ -258,7 +258,9 @@ public class PsiViewerDialog extends DialogWrapper {
     });
 
     myShowWhiteSpacesBox.setSelected(settings.showWhiteSpaces);
+    treeStructure.setShowWhiteSpaces(settings.showWhiteSpaces);
     myShowTreeNodesCheckBox.setSelected(settings.showTreeNodes);
+    treeStructure.setShowTreeNodes(settings.showTreeNodes);
 
     final ChoosePsiTypeButton typeButton = new ChoosePsiTypeButton();
     myButtonPanel.add(typeButton.createCustomComponent(myPresentation), BorderLayout.CENTER);
