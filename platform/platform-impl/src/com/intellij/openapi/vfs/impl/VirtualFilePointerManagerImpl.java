@@ -18,10 +18,12 @@ package com.intellij.openapi.vfs.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.objectTree.ObjectNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
@@ -29,6 +31,7 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.pointers.*;
 import com.intellij.util.messages.MessageBus;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -37,6 +40,8 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 
 public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager implements ApplicationComponent{
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl");
+
   // guarded by this
   private final Map<VirtualFilePointerListener, TreeMap<String, VirtualFilePointerImpl>> myUrlToPointerMaps = new LinkedHashMap<VirtualFilePointerListener, TreeMap<String, VirtualFilePointerImpl>>();
 
@@ -178,7 +183,6 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       return new IdentityVirtualFilePointer(file);
     }
 
-    url = FileUtil.toSystemIndependentName(url);
     String protocol = VirtualFileManager.extractProtocol(url);
     VirtualFileSystem fileSystem = myVirtualFileManager.getFileSystem(protocol);
     if (fileSystem == null) {
@@ -191,9 +195,16 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       return found == null ? new NullVirtualFilePointer(url) : new IdentityVirtualFilePointer(found);
     }
 
-    url = stripTrailingPathSeparator(url, protocol);
-
-    String path = urlToPath(url);
+    String path;
+    if (file == null) {
+      path = VirtualFileManager.extractPath(url);
+      path = cleanupPath(path, protocol);
+      url = VirtualFileManager.constructUrl(protocol, path);
+    }
+    else {
+      path = file.getPath();
+      // url has come from VirtualFile.getUrl() and is good enough
+    }
 
     VirtualFilePointerImpl pointer = getOrCreate(file, url, parentDisposable, listener, path);
 
@@ -204,10 +215,42 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     }
     else {
       //already registered
-      Disposer.register(parentDisposable, new DelegatingDisposable(pointer));
+      register(parentDisposable, pointer);
     }
 
     return pointer;
+  }
+
+  private static void register(Disposable parentDisposable, VirtualFilePointerImpl pointer) {
+    DelegatingDisposable delegating = new DelegatingDisposable(pointer);
+    DelegatingDisposable registered = Disposer.findRegisteredObject(parentDisposable, delegating);
+    if (registered == null) {
+      Disposer.register(parentDisposable, delegating);
+    }
+    else {
+      registered.disposeCount++;
+    }
+  }
+
+  private static String cleanupPath(String path, String protocol) {
+    path = FileUtil.toSystemIndependentName(path);
+
+    path = stripTrailingPathSeparator(path, protocol);
+    path = removeDoubleSlashes(path);
+    return path;
+  }
+
+  private static String removeDoubleSlashes(String path) {
+    while(true) {
+      int i = path.lastIndexOf("//");
+      if (i != -1) {
+        path = path.substring(0, i) + path.substring(i + 1);
+      }
+      else {
+        break;
+      }
+    }
+    return path;
   }
 
   private synchronized VirtualFilePointerImpl getOrCreate(VirtualFile file, String url, Disposable parentDisposable, VirtualFilePointerListener listener, String path) {
@@ -225,25 +268,11 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     return pointer;
   }
 
-  private static String stripTrailingPathSeparator(String url, String protocol) {
-    String tail = StringUtil.trimStart(url, protocol);
-    if (protocol.equals(JarFileSystem.PROTOCOL)) {
-      int separator = tail.lastIndexOf(JarFileSystem.JAR_SEPARATOR);
-      if (separator != -1) {
-        tail = tail.substring(separator + JarFileSystem.JAR_SEPARATOR.length());
-      }
+  private static String stripTrailingPathSeparator(String path, String protocol) {
+    while (path.endsWith("/") && !(protocol.equals(JarFileSystem.PROTOCOL) && path.endsWith(JarFileSystem.JAR_SEPARATOR))) {
+      path = StringUtil.trimEnd(path, "/");
     }
-    while (tail.endsWith("/")) {
-      tail = StringUtil.trimEnd(tail, "/");
-      url = StringUtil.trimEnd(url, "/");
-    }
-    return url;
-  }
-
-  private String urlToPath(@NotNull String url) {
-    VirtualFile virtualFile = myVirtualFileManager.findFileByUrl(url);
-    if (virtualFile != null) return virtualFile.getPath();
-    return VfsUtil.urlToPath(url);
+    return path;
   }
 
   /**
@@ -257,7 +286,8 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   @NotNull
   public synchronized VirtualFilePointer duplicate(@NotNull VirtualFilePointer pointer, @NotNull Disposable parent,
                                                    VirtualFilePointerListener listener) {
-    return create(pointer.getUrl(), parent, listener);
+    VirtualFile file = pointer.getFile();
+    return file == null ? create(pointer.getUrl(), parent, listener) : create(file, parent, listener);
   }
 
   /**
@@ -480,12 +510,15 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
   private static class DelegatingDisposable implements Disposable {
     private final VirtualFilePointerImpl myPointer;
+    private int disposeCount = 1;
 
-    private DelegatingDisposable(VirtualFilePointerImpl pointer) {
+    private DelegatingDisposable(@NotNull VirtualFilePointerImpl pointer) {
       myPointer = pointer;
     }
 
     public void dispose() {
+      myPointer.useCount -= disposeCount-1;
+      LOG.assertTrue(myPointer.useCount > 0);
       myPointer.dispose();
     }
 
@@ -493,5 +526,65 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     public String toString() {
       return "D:" + myPointer.toString();
     }
+
+    @Override
+    public boolean equals(Object o) {
+      DelegatingDisposable that = (DelegatingDisposable)o;
+      return myPointer == that.myPointer;
+    }
+
+    @Override
+    public int hashCode() {
+      return myPointer.hashCode();
+    }
   }
+
+  @TestOnly
+  public int countPointers() {
+    int result = 0;
+    for (TreeMap<String, VirtualFilePointerImpl> map : myUrlToPointerMaps.values()) {
+      result += map.values().size();
+    }
+    return result;
+  }
+
+  @TestOnly
+  public int countDupContainers() {
+    Map<VirtualFilePointerContainer,Integer> c = new THashMap<VirtualFilePointerContainer,Integer>();
+    for (VirtualFilePointerContainerImpl container : myContainers) {
+      Integer count = c.get(container);
+      if (count == null) count = 0;
+      count++;
+      c.put(container, count);
+    }
+    int i = 0;
+    for (Integer count : c.values()) {
+      if (count > 1) {
+        i++;
+      }
+    }
+    return i;
+  }
+  
+  @TestOnly
+  public static int countMaxRefCount() {
+    int result = 0;
+    for (Disposable disposable : Disposer.getTree().getRootObjects()) {
+      result = calcMaxRefCount(disposable, result);
+    }
+    return result;
+  }
+
+  private static int calcMaxRefCount(Disposable disposable, int result) {
+    if (disposable instanceof DelegatingDisposable) {
+      result = Math.max(((DelegatingDisposable)disposable).disposeCount, result);
+    }
+
+    for (ObjectNode<Disposable> node : Disposer.getTree().getNode(disposable).getChildren()) {
+      result = calcMaxRefCount(node.getObject(), result);
+    }
+    return result;
+  }
+
+  
 }

@@ -152,16 +152,26 @@ public class ResolveCache {
   }
 
   private static final Key<Thread[]> IS_BEING_RESOLVED_KEY = Key.create("ResolveCache.IS_BEING_RESOLVED_KEY");
-  private static boolean lockElement(PsiReference ref) {
-    PsiElement element = ref.getElement();
 
+  private static boolean lockElement(PsiReference ref) {
+    return lockElement(ref.getElement(), IS_BEING_RESOLVED_KEY);
+  }
+
+  /**
+   * Implementation of per thread lock to prevent element-analysing recursive algorithms from infinite looping.
+   * @see #unlockElement
+   * @param element
+   * @param key
+   * @return lock status
+   */
+  public static boolean lockElement(PsiElement element, Key<Thread[]> key) {
     final Thread currentThread = Thread.currentThread();
     while (true) {
-      Thread[] lockingThreads = element.getUserData(IS_BEING_RESOLVED_KEY);
+      Thread[] lockingThreads = element.getUserData(key);
       Thread[] newThreads;
       if (lockingThreads == null) {
         newThreads = new Thread[]{currentThread};
-        if (((UserDataHolderEx)element).putUserDataIfAbsent(IS_BEING_RESOLVED_KEY, newThreads) == newThreads) {
+        if (((UserDataHolderEx)element).putUserDataIfAbsent(key, newThreads) == newThreads) {
           break;
         }
       }
@@ -170,12 +180,12 @@ public class ResolveCache {
           return false;
         }
         newThreads = ArrayUtil.append(lockingThreads, currentThread);
-        if (((UserDataHolderEx)element).replace(IS_BEING_RESOLVED_KEY, lockingThreads, newThreads)) {
+        if (((UserDataHolderEx)element).replace(key, lockingThreads, newThreads)) {
           break;
         }
       }
     }
-    Thread[] data = element.getUserData(IS_BEING_RESOLVED_KEY);
+    Thread[] data = element.getUserData(key);
     int i = ArrayUtil.find(data, currentThread);
     assert i != -1;
     assert i == ArrayUtil.lastIndexOf(data, currentThread);
@@ -184,10 +194,18 @@ public class ResolveCache {
   }
 
   private static void unlockElement(PsiReference ref) {
-    PsiElement element = ref.getElement();
+    unlockElement(ref.getElement(), IS_BEING_RESOLVED_KEY);
+  }
+
+  /**
+   * @see #lockElement
+   * @param element
+   * @param key
+   */
+  public static void unlockElement(PsiElement element , Key<Thread[]> key) {
     final Thread currentThread = Thread.currentThread();
     while (true) {
-      Thread[] lockingThreads = element.getUserData(IS_BEING_RESOLVED_KEY);
+      Thread[] lockingThreads = element.getUserData(key);
       Thread[] newThreads;
       if (lockingThreads.length == 1) {
         assert lockingThreads[0] == currentThread : "Locking thread = " + lockingThreads[0] + "; current=" + currentThread;
@@ -202,11 +220,11 @@ public class ResolveCache {
         assert newThreads.length == lockingThreads.length - 1 : "Locking threads = " + Arrays.asList(lockingThreads) + "; newThreads=" + Arrays.asList(newThreads);
         assert ArrayUtil.find(newThreads, currentThread) == -1;
       }
-      if (((UserDataHolderEx)element).replace(IS_BEING_RESOLVED_KEY, lockingThreads, newThreads)) {
+      if (((UserDataHolderEx)element).replace(key, lockingThreads, newThreads)) {
         break;
       }
     }
-    Thread[] data = element.getUserData(IS_BEING_RESOLVED_KEY);
+    Thread[] data = element.getUserData(key);
     assert data == null || ArrayUtil.find(data, currentThread) == -1;
   }
 

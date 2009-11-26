@@ -17,16 +17,13 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.ui.UIBundle;
 
 /**
- * Created by IntelliJ IDEA.
- * User: pti
- * Date: Mar 2, 2005
- * Time: 4:02:31 PM
- * To change this template use File | Settings | File Templates.
+ * @author pti
+ *         Date: Mar 2, 2005
  */
 public class RecentProjectsAction extends WelcomePopupAction {
   protected void fillActions(final DefaultActionGroup group) {
@@ -42,6 +39,11 @@ public class RecentProjectsAction extends WelcomePopupAction {
 
   protected String getCaption() {
     return "";
+  }
+
+  @Override
+  protected boolean isSilentlyChooseSingleOption() {
+    return false;
   }
 
   @Override

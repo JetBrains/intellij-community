@@ -22,9 +22,11 @@ package com.intellij.find;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.highlighting.HighlightManagerImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.SelectionModel;
@@ -157,8 +159,10 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     leadPanel.add(cbMatchCase);
     leadPanel.add(myCbWholeWords);
     leadPanel.add(myCbRegexp);
-    leadPanel.add(myCbInComments);
-    leadPanel.add(myCbInLiterals);
+    if (FindManagerImpl.ourHasSearchInCommentsAndLiterals) {
+      leadPanel.add(myCbInComments);
+      leadPanel.add(myCbInLiterals);
+    }
 
     cbMatchCase.setSelected(isCaseSensitive());
     myCbWholeWords.setSelected(isWholeWords());

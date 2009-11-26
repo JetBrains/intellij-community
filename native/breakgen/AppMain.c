@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
+#include <jni.h>
 #if defined(WIN32)
 #include <windows.h>
 #else
-#include <jni.h>
 #include <signal.h>
 #include <unistd.h>
 #include <stdlib.h>

@@ -16,7 +16,6 @@
 package com.intellij.packaging.impl.compiler;
 
 import com.intellij.compiler.impl.packagingCompiler.DestinationInfo;
-import com.intellij.compiler.impl.packagingCompiler.ExplodedDestinationInfo;
 import com.intellij.compiler.impl.packagingCompiler.JarDestinationInfo;
 import com.intellij.compiler.impl.packagingCompiler.JarInfo;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -56,8 +55,8 @@ public class PackIntoArchiveInstructionCreator extends IncrementalCompilerInstru
 
   public IncrementalCompilerInstructionCreator archive(@NotNull String archiveFileName) {
     final JarInfo jarInfo = new JarInfo();
-    if (myJarDestination instanceof ExplodedDestinationInfo) {
-      myContext.registerJarFile(jarInfo, myJarDestination.getOutputPath());
+    if (!myContext.registerJarFile(jarInfo, myJarDestination.getOutputPath() + "/" + archiveFileName)) {
+      return new SkipAllInstructionCreator(myContext);
     }
     final JarDestinationInfo destination = new JarDestinationInfo(childPathInJar(archiveFileName), myJarInfo, myJarDestination);
     jarInfo.addDestination(destination);

@@ -15,11 +15,11 @@
  */
 package com.intellij.psi.impl.source.xml;
 
+import com.intellij.codeInsight.completion.XmlAttributeInsertHandler;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.codeInsight.lookup.MutableLookupElement;
-import com.intellij.codeInsight.completion.XmlAttributeInsertHandler;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NullableLazyValue;
@@ -57,6 +57,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+
+import static com.intellij.codeInsight.completion.CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED;
 
 /**
  * @author Mike
@@ -307,9 +309,25 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     if (!(parentElement instanceof XmlTag)) return PsiReference.EMPTY_ARRAY;
     final PsiReference[] referencesFromProviders = ReferenceProvidersRegistry.getReferencesFromProviders(this, XmlAttribute.class);
     if (referencesFromProviders == null) return new PsiReference[]{new MyPsiReference()};
-    PsiReference[] refs = new PsiReference[referencesFromProviders.length + 1];
-    refs[0] = new MyPsiReference();
-    System.arraycopy(referencesFromProviders, 0, refs, 1, referencesFromProviders.length);
+    PsiReference[] refs;
+    if (isNamespaceDeclaration()) {
+      refs = new PsiReference[referencesFromProviders.length + 1];
+      final String localName = getLocalName();
+      final String prefix = XmlUtil.findPrefixByQualifiedName(getName());
+      final TextRange range = prefix.length() == 0 ? TextRange.from(getName().length(), 0) : TextRange.from(prefix.length() + 1, localName.length());
+      refs[0] = new SchemaPrefixReference(this, range,localName);
+    } else {
+      final String prefix = getNamespacePrefix();
+      if (prefix.length() > 0 && getLocalName().length() > 0) {
+        refs = new PsiReference[referencesFromProviders.length + 2];
+        refs[0] = new SchemaPrefixReference(this, TextRange.from(0, prefix.length()), prefix);
+        refs[1] = new MyPsiReference();
+      } else {
+        refs = new PsiReference[referencesFromProviders.length + 1];
+        refs[0] = new MyPsiReference();
+      }
+    }
+    System.arraycopy(referencesFromProviders, 0, refs, refs.length - referencesFromProviders.length, referencesFromProviders.length);
     return refs;
   }
 
@@ -343,7 +361,9 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
 
     public TextRange getRangeInElement() {
       final int parentOffset = getNameElement().getStartOffsetInParent();
-      return new TextRange(parentOffset, parentOffset + getNameElement().getTextLength());
+      int nsLen = getNamespacePrefix().length();
+      nsLen+= nsLen > 0 && getRealLocalName().length() > 0 ? 1 : -nsLen;
+      return new TextRange(parentOffset + nsLen, parentOffset + getNameElement().getTextLength());
     }
 
     public PsiElement resolve() {
@@ -403,14 +423,22 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     private void addVariants(final Collection<MutableLookupElement<String>> variants, final XmlAttribute[] attributes, final XmlAttributeDescriptor[] descriptors) {
       final XmlTag tag = getParent();
       final XmlExtension extension = XmlExtension.getExtension(tag.getContainingFile());
+      final String prefix = getName().contains(":") && getRealLocalName().length() > 0 ? getNamespacePrefix() + ":" : null;
+
       for (XmlAttributeDescriptor descriptor : descriptors) {
         if (isValidVariant(descriptor, attributes, extension)) {
-          final MutableLookupElement<String> element = LookupElementFactory.getInstance().createLookupElement(descriptor.getName(tag));
-          if (descriptor instanceof PsiPresentableMetaData) {
-            element.setIcon(((PsiPresentableMetaData)descriptor).getIcon());
+          String name = descriptor.getName(tag);
+          if (prefix == null || name.startsWith(prefix)) {
+            if (prefix != null && name.length() > prefix.length()) {
+              name = descriptor.getName(tag).substring(prefix.length());
+            }
+            final MutableLookupElement<String> element = LookupElementFactory.getInstance().createLookupElement(name);
+            if (descriptor instanceof PsiPresentableMetaData) {
+              element.setIcon(((PsiPresentableMetaData)descriptor).getIcon());
+            }
+            element.setInsertHandler(XmlAttributeInsertHandler.INSTANCE);
+            variants.add(element);
           }
-          element.setInsertHandler(XmlAttributeInsertHandler.INSTANCE);
-          variants.add(element);
         }
       }
     }
@@ -439,4 +467,10 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     }
   }
 
+  private String getRealLocalName() {
+    final String name = getLocalName();
+    return name.endsWith(DUMMY_IDENTIFIER_TRIMMED)
+           ? name.substring(0, name.length() - DUMMY_IDENTIFIER_TRIMMED.length())
+           : name;
+  }
 }

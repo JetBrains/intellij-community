@@ -23,16 +23,18 @@ import com.intellij.openapi.module.ModulePointerManager;
 import com.intellij.openapi.project.ModuleAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
  * @author nik
  */
 public class ModulePointerManagerImpl extends ModulePointerManager {
-  private Map<String, ModulePointerImpl> myUnresolved = new HashMap<String, ModulePointerImpl>();
-  private Map<Module, ModulePointerImpl> myPointers = new HashMap<Module, ModulePointerImpl>();
+  private final Map<String, ModulePointerImpl> myUnresolved = new HashMap<String, ModulePointerImpl>();
+  private final Map<Module, ModulePointerImpl> myPointers = new HashMap<Module, ModulePointerImpl>();
   private final Project myProject;
 
   public ModulePointerManagerImpl(Project project) {
@@ -49,6 +51,16 @@ public class ModulePointerManagerImpl extends ModulePointerManager {
         if (pointer != null) {
           pointer.moduleAdded(module);
           registerPointer(module, pointer);
+        }
+      }
+
+      @Override
+      public void modulesRenamed(Project project, List<Module> modules) {
+        for (Module module : modules) {
+          ModulePointerImpl pointer = myUnresolved.get(module.getName());
+          if (pointer != null) {
+            pointer.moduleAdded(module);
+          }
         }
       }
     });
@@ -71,8 +83,9 @@ public class ModulePointerManagerImpl extends ModulePointerManager {
     }
   }
 
+  @NotNull
   @Override
-  public ModulePointer create(Module module) {
+  public ModulePointer create(@NotNull Module module) {
     ModulePointerImpl pointer = myPointers.get(module);
     if (pointer == null) {
       pointer = new ModulePointerImpl(module);
@@ -81,8 +94,9 @@ public class ModulePointerManagerImpl extends ModulePointerManager {
     return pointer;
   }
 
+  @NotNull
   @Override
-  public ModulePointer create(String moduleName) {
+  public ModulePointer create(@NotNull String moduleName) {
     final Module module = ModuleManagerImpl.getInstance(myProject).findModuleByName(moduleName);
     if (module != null) {
       return create(module);

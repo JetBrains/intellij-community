@@ -18,6 +18,7 @@ package com.intellij.refactoring.util;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -210,8 +211,10 @@ public class CommonRefactoringUtil {
       list.add(vFile);
     }
     final VirtualFile[] children = vFile.getChildren();
+    final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     if (children != null) {
       for (VirtualFile virtualFile : children) {
+        if (fileTypeManager.isFileIgnored(virtualFile.getName())) continue;
         addVirtualFiles(virtualFile, list);
       }
     }

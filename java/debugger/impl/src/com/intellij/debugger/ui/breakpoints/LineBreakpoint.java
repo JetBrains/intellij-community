@@ -34,10 +34,10 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
@@ -52,9 +52,13 @@ import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.BreakpointRequest;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class LineBreakpoint extends BreakpointWithHighlighter {
@@ -107,13 +111,13 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   }
 
   protected void createOrWaitPrepare(DebugProcessImpl debugProcess, String classToBeLoaded) {
-    if (isInScopeOf(debugProcess)) {
+    if (isInScopeOf(debugProcess, classToBeLoaded)) {
       super.createOrWaitPrepare(debugProcess, classToBeLoaded);
     }
   }
 
   protected void createRequestForPreparedClass(final DebugProcessImpl debugProcess, final ReferenceType classType) {
-    if (!isInScopeOf(debugProcess)) {
+    if (!isInScopeOf(debugProcess, classType.name())) {
       return;
     }
     ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -171,16 +175,48 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     });
   }
 
-  private boolean isInScopeOf(DebugProcessImpl debugProcess) {
+  private boolean isInScopeOf(DebugProcessImpl debugProcess, String className) {
     final SourcePosition position = getSourcePosition();
     if (position != null) {
-      final GlobalSearchScope scope = debugProcess.getSearchScope();
-      final VirtualFile file = position.getFile().getVirtualFile();
-      if (file != null && ProjectRootManager.getInstance(debugProcess.getProject()).getFileIndex().isInSourceContent(file)) {
-        return scope.accept(file);
+      final VirtualFile breakpointFile = position.getFile().getVirtualFile();
+      if (breakpointFile != null) {
+        final Collection<VirtualFile> candidates = findClassFileCandidates(className, debugProcess.getSearchScope());
+        if (!candidates.isEmpty()) {
+          for (VirtualFile classFile : candidates) {
+            if (breakpointFile.equals(classFile)) {
+              return true;
+            }
+          }
+          return false;
+        }
       }
     }
     return true;
+  }
+
+  @NotNull
+  private Collection<VirtualFile> findClassFileCandidates(final String className, final GlobalSearchScope scope) {
+    final int dollarIndex = className.indexOf("$");
+    final String topLevelClassName = dollarIndex >= 0? className.substring(0, dollarIndex) : className;
+    return ApplicationManager.getApplication().runReadAction(new Computable<Collection<VirtualFile>>() {
+      public Collection<VirtualFile> compute() {
+        final PsiClass[] classes = JavaPsiFacade.getInstance(myProject).findClasses(topLevelClassName, scope);
+        if (classes.length == 0) {
+          return Collections.emptyList();
+        }
+        final List<VirtualFile> list = new ArrayList<VirtualFile>(classes.length);
+        for (PsiClass aClass : classes) {
+          final PsiFile psiFile = aClass.getContainingFile();
+          if (psiFile != null) {
+            final VirtualFile vFile = psiFile.getVirtualFile();
+            if (vFile != null && vFile.getFileSystem() instanceof LocalFileSystem) {
+              list.add(vFile);
+            }
+          }
+        }
+        return list;
+      }
+    });
   }
 
   public boolean evaluateCondition(EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {

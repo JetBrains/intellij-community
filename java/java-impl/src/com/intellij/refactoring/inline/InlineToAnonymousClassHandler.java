@@ -16,6 +16,7 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -41,6 +42,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
   }
 
   public boolean canInlineElement(PsiElement element) {
+    if (element.getLanguage() != StdLanguages.JAVA) return false;
     if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)element;
       if (method.isConstructor() && !InlineMethodHandler.isChainingConstructor(method)) {

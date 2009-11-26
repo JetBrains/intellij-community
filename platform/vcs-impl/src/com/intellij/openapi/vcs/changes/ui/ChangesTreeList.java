@@ -17,10 +17,12 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -40,9 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeCellRenderer;
-import javax.swing.tree.TreePath;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
@@ -204,8 +204,10 @@ public abstract class ChangesTreeList<T> extends JPanel {
   }
 
   public void setShowFlatten(final boolean showFlatten) {
+    final List<T> wasSelected = getSelectedChanges();
     myShowFlatten = showFlatten;
     myCards.show(this, myShowFlatten ? LIST_CARD : TREE_CARD);
+    select(wasSelected);
     if (myList.hasFocus() || myTree.hasFocus()) {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
@@ -242,7 +244,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
     final DefaultTreeModel model = buildTreeModel(changes, myChangeDecorator);
     myTree.setModel(model);
 
-    SwingUtilities.invokeLater(new Runnable() {
+    final Runnable runnable = new Runnable() {
       public void run() {
         if (myProject.isDisposed()) return;
         TreeUtil.expandAll(myTree);
@@ -255,7 +257,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
               listSelection = count;
               break;
             }
-            count ++;
+            count++;
           }
 
           ChangesBrowserNode root = (ChangesBrowserNode)model.getRoot();
@@ -289,7 +291,12 @@ public abstract class ChangesTreeList<T> extends JPanel {
           }
         }
       }
-    });
+    };
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      runnable.run();
+    } else {
+      SwingUtilities.invokeLater(runnable);
+    }
   }
 
   protected abstract DefaultTreeModel buildTreeModel(final List<T> changes, final ChangeNodeDecorator changeNodeDecorator);
@@ -576,12 +583,26 @@ public abstract class ChangesTreeList<T> extends JPanel {
             }
           }
           append(path.getName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, fileStatus.getColor(), null));
+          final boolean applyChangeDecorator = (value instanceof Change) && myChangeDecorator != null;
           final File parentFile = path.getIOFile().getParentFile();
           if (parentFile != null) {
-            append(" (" + parentFile.getPath() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+            final String parentPath = parentFile.getPath();
+            List<Pair<String,ChangeNodeDecorator.Stress>> parts = null;
+            if (applyChangeDecorator) {
+              parts = myChangeDecorator.stressPartsOfFileName((Change)value, parentPath);
+            }
+            if (parts == null) {
+              parts = Collections.singletonList(new Pair<String, ChangeNodeDecorator.Stress>(parentPath, ChangeNodeDecorator.Stress.PLAIN));
+            }
+
+            append(" (");
+            for (Pair<String, ChangeNodeDecorator.Stress> part : parts) {
+              append(part.getFirst(), part.getSecond().derive(SimpleTextAttributes.GRAYED_ATTRIBUTES));
+            }
+            append(")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
           }
-          if ((value instanceof Change) && myChangeDecorator != null) {
-            myChangeDecorator.decorate((Change) value, this);
+          if (applyChangeDecorator) {
+            myChangeDecorator.decorate((Change) value, this, isShowFlatten());
           }
         }
       };
@@ -643,12 +664,49 @@ public abstract class ChangesTreeList<T> extends JPanel {
         }
       }
       else {
-        final int count = myTree.getRowCount();
-        if (count > 0) {
-          myTree.setSelectionInterval(0, count-1);
+        final int countTree = myTree.getRowCount();
+        if (countTree > 0) {
+          myTree.setSelectionInterval(0, countTree-1);
         }
       }
     }
   }
 
+  public void select(final List<T> changes) {
+    final DefaultTreeModel treeModel = (DefaultTreeModel) myTree.getModel();
+    final TreeNode root = (TreeNode) treeModel.getRoot();
+    final List<TreePath> treeSelection = new ArrayList<TreePath>(changes.size());
+    TreeUtil.traverse(root, new TreeUtil.Traverse() {
+      public boolean accept(Object node) {
+        final T change = (T) ((DefaultMutableTreeNode) node).getUserObject();
+        if (changes.contains(change)) {
+          treeSelection.add(new TreePath(((DefaultMutableTreeNode) node).getPath()));
+        }
+        return true;
+      }
+    });
+    myTree.setSelectionPaths(treeSelection.toArray(new TreePath[treeSelection.size()]));
+
+    // list
+    final ListModel model = myList.getModel();
+    final int size = model.getSize();
+    final List<Integer> listSelection = new ArrayList<Integer>(changes.size());
+    for (int i = 0; i < size; i++) {
+      final T el = (T) model.getElementAt(i);
+      if (changes.contains(el)) {
+        listSelection.add(i);
+      }
+    }
+    myList.setSelectedIndices(int2int(listSelection));
+  }
+
+  private static int[] int2int(List<Integer> treeSelection) {
+    final int[] toPass = new int[treeSelection.size()];
+    int i = 0;
+    for (Integer integer : treeSelection) {
+      toPass[i] = integer;
+      ++ i;
+    }
+    return toPass;
+  }
 }

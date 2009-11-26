@@ -16,13 +16,11 @@
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.openapi.util.NotNullLazyKey;
-import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,22 +55,7 @@ public abstract class DumbService {
    */
   public abstract void runWhenSmart(Runnable runnable);
 
-  public void waitForSmartMode() {
-    final Application application = ApplicationManager.getApplication();
-    if (!application.isUnitTestMode()) {
-      assert !application.isDispatchThread();
-      assert !application.isReadAccessAllowed();
-    }
-
-    final Semaphore semaphore = new Semaphore();
-    semaphore.down();
-    runWhenSmart(new Runnable() {
-          public void run() {
-            semaphore.up();
-          }
-        });
-    semaphore.waitFor();
-  }
+  public abstract void waitForSmartMode();
 
   /**
    * Invoke the runnable later on EventDispatchThread AND when IDEA isn't in dumb mode

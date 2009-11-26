@@ -24,9 +24,9 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,11 +47,19 @@ import javax.swing.tree.TreePath;
 public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements GrDynamicImplicitElement, PsiField {
   private final String myContainingClassName;
   private final Project myProject;
+  private final PsiElement myNavigationalElement;
 
-  public GrDynamicImplicitProperty(PsiManager manager, @NonNls String name, @NonNls String type, String containingClassName, LightModifierList modifierList) {
-    super(modifierList, manager, name, type, null);
+  public GrDynamicImplicitProperty(PsiManager manager, @NonNls String name, @NonNls String type, String containingClassName,
+                                   LightModifierList modifierList, PsiElement navigationalElement) {
+    super(modifierList, manager, name, type, navigationalElement);
     myContainingClassName = containingClassName;
     myProject = manager.getProject();
+    if (navigationalElement==null) {
+      myNavigationalElement = this;
+    }
+    else {
+      myNavigationalElement = navigationalElement;
+    }
   }
 
   @Nullable
@@ -94,6 +102,10 @@ public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements
   }
 
   public void navigate(boolean requestFocus) {
+    if (canNavigateToSource()) {
+      super.navigate(requestFocus);
+      return;
+    }
     DynamicToolWindowWrapper.getInstance(myProject).getToolWindow().activate(new Runnable() {
       public void run() {
         DynamicToolWindowWrapper toolWindowWrapper = DynamicToolWindowWrapper.getInstance(myProject);
@@ -143,7 +155,13 @@ public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements
   }
 
   public boolean canNavigateToSource() {
-    return false;
+    return myNavigationalElement != this;
+  }
+
+  @NotNull
+  @Override
+  public PsiElement getNavigationElement() {
+    return myNavigationalElement;
   }
 
   public boolean canNavigate() {

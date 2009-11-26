@@ -33,10 +33,7 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiRecursiveElementVisitor;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -47,7 +44,11 @@ public class PsiChangeTracker {
 
   public static <T extends PsiElement> Map<T, FileStatus> getElementsChanged(PsiFile file, final PsiElementFilter<T> filter) {
     final Project project = file.getProject();
-    final String oldText = getUnmodifiedDocument(file.getVirtualFile(), project);
+    final VirtualFile vf = file.getVirtualFile();
+
+    if (vf == null) return Collections.emptyMap();
+
+    final String oldText = getUnmodifiedDocument(vf, project);
     //TODO: make loop for different languages
     //TODO: for ( PsiFile f : file.getViewProvider().getAllFiles() )
     //TODO: for some languages (eg XML) isEquivalentTo works ugly. Think about pluggable matchers for different languages/elements

@@ -67,14 +67,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   private static final Logger LOG = Logger.getInstance("#" + ModulesConfigurator.class.getName());
 
   private final Project myProject;
-  //private final ModuleStructureConfigurable myProjectRootConfigurable;
-
-  private boolean myModified = false;
-
   private final ProjectConfigurable myProjectConfigurable;
-
   private final List<ModuleEditor> myModuleEditors = new ArrayList<ModuleEditor>();
-
   private final Comparator<ModuleEditor> myModuleEditorComparator = new Comparator<ModuleEditor>() {
     final ModulesAlphaComparator myModulesComparator = new ModulesAlphaComparator();
 
@@ -87,10 +81,12 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       return false;
     }
   };
+  private boolean myModified = false;
   private ModifiableModuleModel myModuleModel;
   private ProjectFacetsConfigurator myFacetsConfigurator;
 
   private StructureConfigurableContext myContext;
+  private List<ModuleEditor.ChangeListener> myAllModulesChangeListeners = new ArrayList<ModuleEditor.ChangeListener>();
 
   public ModulesConfigurator(Project project, ProjectJdksModel projectJdksModel) {
     myProject = project;
@@ -211,6 +207,13 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   public void moduleStateChanged(final ModifiableRootModel moduleRootModel) {
     myProjectConfigurable.updateCircularDependencyWarning();
+    for (ModuleEditor.ChangeListener listener : myAllModulesChangeListeners) {
+      listener.moduleStateChanged(moduleRootModel);
+    }
+  }
+
+  public void addAllModuleChangeListener(ModuleEditor.ChangeListener listener) {
+    myAllModulesChangeListeners.add(listener);
   }
 
   public GraphGenerator<ModifiableRootModel> createGraphGenerator() {
@@ -247,7 +250,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
           ex[0] = e;
         }
         finally {          
-          ModuleStructureConfigurable.getInstance(myProject).getFacetEditorFacade().clearMaps();
+          ModuleStructureConfigurable.getInstance(myProject).getFacetEditorFacade().clearMaps(false);
 
           for (final ModuleEditor moduleEditor : myModuleEditors) {
             moduleEditor.removeChangeListener(myFacetsConfigurator);

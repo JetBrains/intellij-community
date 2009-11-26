@@ -17,12 +17,15 @@ package com.intellij.openapi.module;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class ModulePointerManager {
   public static ModulePointerManager getInstance(Project project) {
     return ServiceManager.getService(project, ModulePointerManager.class);
   }
 
-  public abstract ModulePointer create(Module module);
-  public abstract ModulePointer create(String moduleName);
+  @NotNull
+  public abstract ModulePointer create(@NotNull Module module);
+  @NotNull
+  public abstract ModulePointer create(@NotNull String moduleName);
 }

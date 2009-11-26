@@ -108,15 +108,17 @@ public class InstanceOfUtils {
                     expression.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
             if (tokenType == JavaTokenType.ANDAND) {
-                inElse = false;
-                final PsiExpression lhs = expression.getLOperand();
-                checkExpression(lhs);
-                final PsiExpression rhs = expression.getROperand();
-                checkExpression(rhs);
+              checkExpression(expression.getLOperand());
+              checkExpression(expression.getROperand());
+              if (!inElse && conflictingInstanceof != null) {
+                agreeingInstanceof = false;
+              }
             } else if (tokenType == JavaTokenType.OROR) {
-                inElse = true;
-                final PsiExpression lhs = expression.getLOperand();
-                checkExpression(lhs);
+              checkExpression(expression.getLOperand());
+              checkExpression(expression.getROperand());
+              if (inElse && conflictingInstanceof != null) {
+                agreeingInstanceof = false;
+              }
             }
         }
 

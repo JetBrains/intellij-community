@@ -245,7 +245,6 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
         if (PsiModifier.PACKAGE_LOCAL.equals(visibility)) {
           if (PsiTreeUtil.getParentOfType(element, PsiImportStatement.class) != null) continue;
           PsiElement container = ConflictsUtil.getContainer(element);
-          if (container == null) continue;
           HashSet<PsiElement> reported = reportedClassToContainers.get(aClass);
           if (reported == null) {
             reported = new HashSet<PsiElement>();

@@ -108,12 +108,12 @@ public class LibrariesContainerFactory {
   private abstract static class LibrariesContainerBase implements LibrariesContainer {
     @NotNull
     public Library[] getAllLibraries() {
-      Library[] libraries = getLibraies(LibraryLevel.GLOBAL);
-      Library[] projectLibraries = getLibraies(LibraryLevel.PROJECT);
+      Library[] libraries = getLibraries(LibraryLevel.GLOBAL);
+      Library[] projectLibraries = getLibraries(LibraryLevel.PROJECT);
       if (projectLibraries.length > 0) {
         libraries = ArrayUtil.mergeArrays(libraries, projectLibraries, Library.class);
       }
-      Library[] moduleLibraries = getLibraies(LibraryLevel.MODULE);
+      Library[] moduleLibraries = getLibraries(LibraryLevel.MODULE);
       if (moduleLibraries.length > 0) {
         libraries = ArrayUtil.mergeArrays(libraries, moduleLibraries, Library.class);
       }
@@ -139,7 +139,7 @@ public class LibrariesContainerFactory {
     }
 
     @NotNull
-    public Library[] getLibraies(@NotNull final LibraryLevel libraryLevel) {
+    public Library[] getLibraries(@NotNull final LibraryLevel libraryLevel) {
       if (libraryLevel == LibraryLevel.MODULE && myModule != null) {
         return getModuleLibraries();
       }
@@ -240,7 +240,7 @@ public class LibrariesContainerFactory {
     }
 
     @NotNull
-    public Library[] getLibraies(@NotNull final LibraryLevel libraryLevel) {
+    public Library[] getLibraries(@NotNull final LibraryLevel libraryLevel) {
       LibraryTableModifiableModelProvider provider = getProvider(libraryLevel);
       return provider != null ? provider.getModifiableModel().getLibraries() : EMPTY_LIBRARIES_ARRAY;
     }

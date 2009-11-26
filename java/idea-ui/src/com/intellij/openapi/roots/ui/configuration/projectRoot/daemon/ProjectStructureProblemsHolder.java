@@ -1,57 +1,29 @@
+/*
+ * Copyright 2000-2009 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
-import com.intellij.util.SmartList;
-import com.intellij.util.StringBuilderSpinAllocator;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
  */
-public class ProjectStructureProblemsHolder {
-  private List<ProjectStructureProblemDescription> myProblemDescriptions;
+public interface ProjectStructureProblemsHolder {
+  void registerError(@NotNull String message);
 
-  public void addError(String message) {
-    addProblem(message, ProjectStructureProblemDescription.Severity.ERROR);
-  }
+  void registerWarning(@NotNull String message);
 
-  public void addWarning(String message) {
-    addProblem(message, ProjectStructureProblemDescription.Severity.WARNING);
-  }
-
-  public void addProblem(String description, ProjectStructureProblemDescription.Severity severity) {
-    if (myProblemDescriptions == null) {
-      myProblemDescriptions = new SmartList<ProjectStructureProblemDescription>();
-    }
-    myProblemDescriptions.add(new ProjectStructureProblemDescription(description, severity));
-  }
-
-  @Nullable
-  public ProjectStructureProblemDescription.Severity getSeverity() {
-    if (myProblemDescriptions == null || myProblemDescriptions.isEmpty()) {
-      return null;
-    }
-    for (ProjectStructureProblemDescription description : myProblemDescriptions) {
-      if (description.getSeverity() == ProjectStructureProblemDescription.Severity.ERROR) {
-        return ProjectStructureProblemDescription.Severity.ERROR;
-      }
-    }
-    return ProjectStructureProblemDescription.Severity.WARNING;
-  }
-
-  public String composeTooltipMessage() {
-    final StringBuilder buf = StringBuilderSpinAllocator.alloc();
-    try {
-      if (myProblemDescriptions != null) {
-        for (ProjectStructureProblemDescription problemDescription : myProblemDescriptions) {
-          buf.append(problemDescription.getMessage()).append("\n");
-        }
-      }
-      return buf.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(buf);
-    }
-  }
+  void registerProblem(@NotNull ProjectStructureProblemDescription description);
 }

@@ -210,10 +210,14 @@ public class LookupElementBuilder extends LookupElement {
 
     LookupElementBuilder that = (LookupElementBuilder)o;
 
-    if (myInsertHandler != null ? !myInsertHandler.getClass().equals(that.myInsertHandler.getClass()) : that.myInsertHandler != null) return false;
+    final InsertHandler<LookupElement> insertHandler = that.myInsertHandler;
+    if (myInsertHandler != null && insertHandler != null ? !myInsertHandler.getClass().equals(insertHandler.getClass())
+                                                         : myInsertHandler != insertHandler) return false;
     if (!myLookupString.equals(that.myLookupString)) return false;
     if (!myObject.equals(that.myObject)) return false;
-    if (myRenderer != null ? !myRenderer.getClass().equals(that.myRenderer.getClass()) : that.myRenderer != null) return false;
+    
+    final LookupElementRenderer<LookupElement> renderer = that.myRenderer;
+    if (myRenderer != null && renderer != null ? !myRenderer.getClass().equals(renderer.getClass()) : myRenderer != renderer) return false;
 
     return true;
   }

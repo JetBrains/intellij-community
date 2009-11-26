@@ -60,6 +60,13 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
     super(manager, virtualFile, physical);
   }
 
+  protected CompositeLanguageFileViewProvider(@NotNull PsiManager manager,
+                                              @NotNull VirtualFile virtualFile,
+                                              boolean physical,
+                                              @NotNull Language language) {
+    super(manager, virtualFile, physical, language);
+  }
+
   @NotNull
   public SingleRootFileViewProvider createCopy(final LightVirtualFile copy) {
     final CompositeLanguageFileViewProvider viewProvider = cloneInner(copy);

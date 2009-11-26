@@ -36,7 +36,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.EventDispatcher;
@@ -66,8 +65,8 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
                                                                             SettingsSavingComponent {
   private static final int IMPORT_DELAY = 1000;
 
-  private static final Object SCHEDULE_IMPORT_MESSAGE = new Object();
-  private static final Object FORCE_IMPORT_MESSAGE = new Object();
+  static final Object SCHEDULE_IMPORT_MESSAGE = "SCHEDULE_IMPORT_MESSAGE";
+  static final Object FORCE_IMPORT_MESSAGE = "FORCE_IMPORT_MESSAGE";
 
   private final AtomicBoolean isInitialized = new AtomicBoolean();
 
@@ -272,7 +271,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     myImportingQueue.makeDumbAware(myProject);
     myImportingQueue.makeModalAware(myProject);
 
-    mySchedulesQueue = new MavenMergingUpdateQueue(getComponentName() + ": Schedules queue", 500, true, myProject);
+    mySchedulesQueue = new MavenMergingUpdateQueue(getComponentName() + ": Schedules queue", 500, !isUnitTestMode(), myProject);
     mySchedulesQueue.setPassThrough(false);
   }
 
@@ -388,6 +387,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   public void projectClosed() {
     if (!isInitialized.getAndSet(false)) return;
 
+    Disposer.dispose(mySchedulesQueue);
     Disposer.dispose(myImportingQueue);
 
     myWatcher.stop();
@@ -633,21 +633,12 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     // read when postStartupActivitias start
     MavenUtil.runWhenInitialized(myProject, new DumbAwareRunnable() {
       public void run() {
-        Object message = forceImport ? FORCE_IMPORT_MESSAGE : null;
-
-        MavenProjectsProcessorReadingTask task;
         if (projects == null) {
-          task = new MavenProjectsProcessorReadingTask(force, myProjectsTree, getGeneralSettings(), message);
+          myWatcher.scheduleUpdateAll(force, forceImport);
         }
         else {
-          task = new MavenProjectsProcessorReadingTask(MavenUtil.collectFiles(projects),
-                                                       Collections.EMPTY_LIST,
-                                                       force,
-                                                       myProjectsTree,
-                                                       getGeneralSettings(),
-                                                       message);
+          myWatcher.scheduleUpdate(MavenUtil.collectFiles(projects), Collections.EMPTY_LIST, force, forceImport);
         }
-        myReadingProcessor.scheduleTask(task);
       }
     });
   }
@@ -722,10 +713,6 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     scheduleArtifactsDownloading(getProjects());
   }
 
-  private void scheduleImport(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
-    scheduleImport(Collections.singletonList(projectWithChanges), false);
-  }
-
   private void scheduleImport(List<Pair<MavenProject, MavenProjectChanges>> projectsWithChanges, boolean forceImport) {
     scheduleForNextImport(projectsWithChanges);
     scheduleImport(forceImport);
@@ -770,12 +757,14 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
   @TestOnly
   public void scheduleImportInTests(List<VirtualFile> projectFiles) {
+    List<Pair<MavenProject, MavenProjectChanges>> toImport = new ArrayList<Pair<MavenProject, MavenProjectChanges>>();
     for (VirtualFile each : projectFiles) {
       MavenProject project = findProject(each);
       if (project != null) {
-        scheduleImport(Pair.create(project, MavenProjectChanges.ALL));
+        toImport.add(Pair.create(project, MavenProjectChanges.ALL));
       }
     }
+    scheduleImport(toImport, false);
   }
 
   private void scheduleForNextImport(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
@@ -804,10 +793,17 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   }
 
   public void performScheduledImport() {
+    performScheduledImport(true);
+  }
+
+  public void performScheduledImport(final boolean force) {
     if (!isInitialized()) return;
     runWhenFullyOpen(new Runnable() {
       public void run() {
-        myImportingQueue.flush();
+        // ensure all pending schedules are processed
+        mySchedulesQueue.flush(false);
+        if (!force && !myImportingQueue.isActive()) return;
+        myImportingQueue.flush(false);
       }
     });
   }
@@ -1015,7 +1011,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
       }
     }.execute().getResultObject();
 
-    scheduleImport(Pair.create(mavenProject, MavenProjectChanges.DEPENDENCIES));
+    scheduleImport(Collections.singletonList(Pair.create(mavenProject, MavenProjectChanges.DEPENDENCIES)), false);
 
     return result;
   }

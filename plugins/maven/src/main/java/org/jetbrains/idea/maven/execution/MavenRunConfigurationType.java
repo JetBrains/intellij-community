@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.execution;
 
+import com.intellij.compiler.options.CompileStepBeforeRun;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
@@ -31,12 +32,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.compiler.options.CompileStepBeforeRun;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import javax.swing.*;
 import java.util.List;
@@ -143,7 +145,7 @@ public class MavenRunConfigurationType implements LocatableConfigurationType {
   public RunnerAndConfigurationSettings createConfigurationByLocation(Location l) {
     final MavenRunnerParameters params = createBuildParameters(l);
     if (params == null) return null;
-    return createRunnerAndConfigurationSettings(null, null, params, l.getProject(), false);
+    return createRunnerAndConfigurationSettings(null, null, params, l.getProject());
   }
 
   public boolean isConfigurationByLocation(RunConfiguration configuration, Location location) {
@@ -161,24 +163,42 @@ public class MavenRunConfigurationType implements LocatableConfigurationType {
     return new MavenRunnerParameters(true, f.getParent().getPath(), goals, profiles);
   }
 
-  public static void runConfiguration(Project project, MavenRunnerParameters params, DataContext dataContext) throws ExecutionException {
-    doRunConfiguration(dataContext, createRunnerAndConfigurationSettings(MavenProjectsManager.getInstance(project).getGeneralSettings(),
-                                                                         MavenRunner.getInstance(project).getState(),
-                                                                         params,
-                                                                         project,
-                                                                         true));
+  public static void runConfiguration(Project project,
+                                      MavenRunnerParameters params,
+                                      DataContext dataContext,
+                                      @Nullable ProgramRunner.Callback callback) {
+    MavenGeneralSettings settings = MavenProjectsManager.getInstance(project).getGeneralSettings();
+    MavenRunnerSettings runnerSettings = MavenRunner.getInstance(project).getState();
+    runConfiguration(project, params, settings, runnerSettings, dataContext, callback);
   }
 
-  private static void doRunConfiguration(DataContext dataContext, RunnerAndConfigurationSettings settings) throws ExecutionException {
+  public static void runConfiguration(Project project,
+                                      MavenRunnerParameters params,
+                                      MavenGeneralSettings settings,
+                                      MavenRunnerSettings runnerSettings,
+                                      DataContext context,
+                                      @Nullable ProgramRunner.Callback callback) {
+    RunnerAndConfigurationSettings configSettings = createRunnerAndConfigurationSettings(settings,
+                                                                                         runnerSettings,
+                                                                                         params,
+                                                                                         project);
+
     ProgramRunner runner = RunnerRegistry.getInstance().findRunnerById(DefaultRunExecutor.EXECUTOR_ID);
-    runner.execute(DefaultRunExecutor.getRunExecutorInstance(), new ExecutionEnvironment(runner, settings, dataContext));
+    ExecutionEnvironment env = new ExecutionEnvironment(runner, configSettings, context);
+    Executor executor = DefaultRunExecutor.getRunExecutorInstance();
+
+    try {
+      runner.execute(executor, env, callback);
+    }
+    catch (ExecutionException e) {
+      MavenUtil.showError(project, "Failed to execute Maven goal", e);
+    }
   }
 
   private static RunnerAndConfigurationSettings createRunnerAndConfigurationSettings(MavenGeneralSettings generalSettings,
                                                                                      MavenRunnerSettings runnerSettings,
                                                                                      MavenRunnerParameters params,
-                                                                                     Project project,
-                                                                                     boolean diableMakeBeforeRun) {
+                                                                                     Project project) {
     MavenRunConfigurationType type = ConfigurationTypeUtil.findConfigurationType(MavenRunConfigurationType.class);
 
     final RunnerAndConfigurationSettingsImpl settings = RunManagerEx.getInstanceEx(project)
@@ -188,12 +208,6 @@ public class MavenRunConfigurationType implements LocatableConfigurationType {
     if (generalSettings != null) runConfiguration.setGeneralSettings(generalSettings);
     if (runnerSettings != null) runConfiguration.setRunnerSettings(runnerSettings);
 
-    if (diableMakeBeforeRun) disableMakeBeforeRun(RunManager.getInstance(project), runConfiguration);
-
     return settings;
-  }
-
-  private static void disableMakeBeforeRun(RunManager runManager, MavenRunConfiguration runConfiguration) {
-    //((RunManagerEx)runManager).getBeforeRunTask(runConfiguration, CompileStepBeforeRun.ID).setEnabled(false);
   }
 }

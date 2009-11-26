@@ -44,7 +44,9 @@ import java.util.Set;
  * @author cdr
  */
 public class SliceUtil {
-  public static boolean processUsagesFlownDownTo(@NotNull PsiElement expression, @NotNull Processor<SliceUsage> processor, @NotNull SliceUsage parent,
+  public static boolean processUsagesFlownDownTo(@NotNull PsiElement expression,
+                                                 @NotNull Processor<SliceUsage> processor,
+                                                 @NotNull SliceUsage parent,
                                                  @NotNull PsiSubstitutor parentSubstitutor) {
     expression = simplify(expression);
     PsiElement original = expression;
@@ -210,16 +212,18 @@ public class SliceUtil {
     PsiElement declarationScope = parameter.getDeclarationScope();
     if (!(declarationScope instanceof PsiMethod)) return true;
     final PsiMethod method = (PsiMethod)declarationScope;
+    final PsiType actualType = parameter.getType();
 
-    final int paramSeqNo = ArrayUtil.find(method.getParameterList().getParameters(), parameter);
+    final PsiParameter[] actualParameters = method.getParameterList().getParameters();
+    final int paramSeqNo = ArrayUtil.find(actualParameters, parameter);
     assert paramSeqNo != -1;
 
     Collection<PsiMethod> superMethods = new THashSet<PsiMethod>(Arrays.asList(method.findDeepestSuperMethods()));
     superMethods.add(method);
-    Collection<PsiMethod> overrides = new THashSet<PsiMethod>(superMethods);
+
     final Set<PsiReference> processed = new THashSet<PsiReference>(); //usages of super method and overridden method can overlap
-    for (final PsiMethod containingMethod : overrides) {
-      if (!MethodReferencesSearch.search(containingMethod, parent.getScope().toSearchScope(), false).forEach(new Processor<PsiReference>() {
+    for (final PsiMethod superMethod : superMethods) {
+      if (!MethodReferencesSearch.search(superMethod, parent.getScope().toSearchScope(), true).forEach(new Processor<PsiReference>() {
         public boolean process(final PsiReference reference) {
           SliceManager.getInstance(parameter.getProject()).checkCanceled();
           synchronized (processed) {
@@ -254,29 +258,30 @@ public class SliceUtil {
           PsiSubstitutor substitutor = result.getSubstitutor();
 
           PsiExpression[] expressions = argumentList.getExpressions();
-          if (paramSeqNo < expressions.length) {
-            PsiExpression passExpression = expressions[paramSeqNo];
-
-            Project project = argumentList.getProject();
-            PsiElement element = result.getElement();
-            // for erased method calls for which we cannot determine target substitutor,
-            // rely on call argument types. I.e. new Pair(1,2) -> Pair<Integer, Integer>
-            if (element instanceof PsiTypeParameterListOwner && PsiUtil.isRawSubstitutor((PsiTypeParameterListOwner)element, substitutor)) {
-              PsiTypeParameter[] typeParameters = substitutor.getSubstitutionMap().keySet().toArray(new PsiTypeParameter[0]);
-              PsiParameter[] parameters = method.getParameterList().getParameters();
-
-              PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(project).getResolveHelper();
-              substitutor = resolveHelper.inferTypeArguments(typeParameters, parameters, expressions, parentSubstitutor, argumentList, false);
-            }
-
-            substitutor = removeRawMappingsLeftFromResolve(substitutor);
-
-            PsiSubstitutor combined = unify(substitutor, parentSubstitutor, project);
-            if (combined != null) {
-              return handToProcessor(passExpression, processor, parent, combined);
-            }
+          if (paramSeqNo >= expressions.length) {
+            return true;
           }
-          return true;
+          PsiExpression passExpression = expressions[paramSeqNo];
+
+          Project project = argumentList.getProject();
+          PsiElement element = result.getElement();
+          // for erased method calls for which we cannot determine target substitutor,
+          // rely on call argument types. I.e. new Pair(1,2) -> Pair<Integer, Integer>
+          if (element instanceof PsiTypeParameterListOwner && PsiUtil.isRawSubstitutor((PsiTypeParameterListOwner)element, substitutor)) {
+            PsiTypeParameter[] typeParameters = substitutor.getSubstitutionMap().keySet().toArray(new PsiTypeParameter[0]);
+
+            PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(project).getResolveHelper();
+            substitutor = resolveHelper.inferTypeArguments(typeParameters, actualParameters, expressions, parentSubstitutor, argumentList, false);
+          }
+
+          substitutor = removeRawMappingsLeftFromResolve(substitutor);
+
+          PsiSubstitutor combined = unify(substitutor, parentSubstitutor, project);
+          if (combined == null) return true;
+          PsiType substitited = combined.substitute(passExpression.getType());
+          if (!TypeConversionUtil.areTypesConvertible(substitited, actualType)) return true;
+
+          return handToProcessor(passExpression, processor, parent, combined);
         }
       })) {
         return false;

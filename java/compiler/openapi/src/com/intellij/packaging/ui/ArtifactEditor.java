@@ -15,9 +15,10 @@
  */
 package com.intellij.packaging.ui;
 
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.packaging.elements.CompositePackagingElement;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -28,6 +29,8 @@ public interface ArtifactEditor {
   void updateLayoutTree();
 
   void putLibraryIntoDefaultLocation(@NotNull Library library);
+
+  void putModuleIntoDefaultLocation(@NotNull Module module);
 
   void addToClasspath(CompositePackagingElement<?> element, List<String> classpath);
 }

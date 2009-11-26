@@ -229,7 +229,7 @@ public class AbstractTreeUi {
   private void initClearanceServiceIfNeeded() {
     if (ourClearanceService != null) return;
 
-    ourClearanceService = ConcurrencyUtil.newSingleScheduledThreadExecutor("AbstractTreeBuilder's janitor");
+    ourClearanceService = ConcurrencyUtil.newSingleScheduledThreadExecutor("AbstractTreeBuilder's janitor", Thread.MIN_PRIORITY + 1);
     ourClearanceService.scheduleWithFixedDelay(new Runnable() {
       public void run() {
         cleanUpAll();
@@ -1493,7 +1493,6 @@ public class AbstractTreeUi {
           Object element = getElementFromDescriptor(childDescr.get());
           if (element == null) {
             processingDone.setDone();
-            LOG.error("childDescr.getElement() == null, child = " + child + ", builder = " + this);
           }
           else {
             DefaultMutableTreeNode node = getNodeForElement(element, false);

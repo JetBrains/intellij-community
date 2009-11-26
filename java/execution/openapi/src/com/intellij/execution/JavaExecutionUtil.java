@@ -34,6 +34,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 /**
  * @author spleaner
  */
@@ -41,14 +43,14 @@ public class JavaExecutionUtil {
   private JavaExecutionUtil() {
   }
 
-  public static boolean executeRun(@NotNull final Project project, String contentName,
+  public static boolean executeRun(@NotNull final Project project, String contentName, Icon icon,
                       final DataContext dataContext) throws ExecutionException {
-    return executeRun(project, contentName, dataContext, null);
+    return executeRun(project, contentName, icon, dataContext, null);
   }
 
-  public static boolean executeRun(@NotNull final Project project, String contentName, DataContext dataContext, Filter[] filters) throws ExecutionException {
+  public static boolean executeRun(@NotNull final Project project, String contentName, Icon icon, DataContext dataContext, Filter[] filters) throws ExecutionException {
     final JavaParameters cmdLine = JavaParameters.JAVA_PARAMETERS.getData(dataContext);
-    final DefaultRunProfile profile = new DefaultRunProfile(project, cmdLine, contentName, filters);
+    final DefaultRunProfile profile = new DefaultRunProfile(project, cmdLine, contentName, icon, filters);
     final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(DefaultRunExecutor.EXECUTOR_ID, profile);
     if (runner != null) {
       runner.execute(DefaultRunExecutor.getRunExecutorInstance(), new ExecutionEnvironment(profile, dataContext));
@@ -63,12 +65,18 @@ public class JavaExecutionUtil {
     private final String myContentName;
     private final Filter[] myFilters;
     private final Project myProject;
+    private Icon myIcon;
 
-    public DefaultRunProfile(final Project project, final JavaParameters parameters, String contentName, Filter[] filters) {
+    public DefaultRunProfile(final Project project, final JavaParameters parameters, final String contentName, final Icon icon, Filter[] filters) {
       myProject = project;
       myParameters = parameters;
       myContentName = contentName;
       myFilters = filters;
+      myIcon = icon;
+    }
+
+    public Icon getIcon() {
+      return myIcon;
     }
 
     public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {

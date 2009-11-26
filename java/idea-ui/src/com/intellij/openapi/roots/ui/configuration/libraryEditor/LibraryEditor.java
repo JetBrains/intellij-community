@@ -21,14 +21,17 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 public class LibraryEditor implements Disposable {
   private final Library myLibrary;
+  private final LibraryEditorListener myListener;
   private String myLibraryName = null;
   private Library.ModifiableModel myModel = null;
 
-  public LibraryEditor(Library library) {
+  public LibraryEditor(Library library, @NotNull LibraryEditorListener listener) {
     myLibrary = library;
+    myListener = listener;
   }
 
   public String getName() {
@@ -56,8 +59,10 @@ public class LibraryEditor implements Disposable {
   }
 
   public void setName(String name) {
+    String oldName = getModel().getName();
     myLibraryName = name;
     getModel().setName(name);
+    myListener.libraryRenamed(myLibrary, oldName, name);
   }
 
   public void addRoot(String url, OrderRootType rootType) {

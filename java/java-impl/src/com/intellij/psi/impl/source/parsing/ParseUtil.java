@@ -116,12 +116,18 @@ public class ParseUtil {
         }
       });
 
+      // we'll only bind additional preceding comments in pass 2 when the declaration does not yet have a "doc comment"
+      boolean docCommentBound = false;
+
       Iterator<ASTNode> iterator = comments.iterator();
       while (iterator.hasNext()) {
         ASTNode child = iterator.next();
         IElementType type = child.getElementType();
         if (type == JavaDocElementType.DOC_COMMENT) {
-          if (bindDocComment((TreeElement)child)) iterator.remove();
+          if (bindDocComment((TreeElement)child)) {
+            iterator.remove();
+            docCommentBound = true;
+          }
         }
         // bind "trailing comments" (like "int a; // comment")
         else if (type == JavaTokenType.END_OF_LINE_COMMENT || type == JavaTokenType.C_STYLE_COMMENT) {
@@ -130,10 +136,12 @@ public class ParseUtil {
       }
 
       //pass 2: bind preceding comments (like "// comment \n void f();")
-      for (ASTNode child : comments) {
-        if (child.getElementType() == JavaTokenType.END_OF_LINE_COMMENT || child.getElementType() == JavaTokenType.C_STYLE_COMMENT) {
-          TreeElement next = (TreeElement)TreeUtil.skipElements(child, PRECEDING_COMMENT_OR_SPACE_BIT_SET);
-          bindPrecedingComment((TreeElement)child, next);
+      if (!docCommentBound) {
+        for (ASTNode child : comments) {
+          if (child.getElementType() == JavaTokenType.END_OF_LINE_COMMENT || child.getElementType() == JavaTokenType.C_STYLE_COMMENT) {
+            TreeElement next = (TreeElement)TreeUtil.skipElements(child, PRECEDING_COMMENT_OR_SPACE_BIT_SET);
+            bindPrecedingComment((TreeElement)child, next);
+          }
         }
       }
     }

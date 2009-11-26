@@ -26,6 +26,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.util.Function;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.lang.parameterInfo.*;
@@ -60,7 +61,7 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
     return getSortedDescriptors(p);
   }
 
-  private static XmlAttributeDescriptor[] getSortedDescriptors(final XmlElementDescriptor p) {
+  public static XmlAttributeDescriptor[] getSortedDescriptors(final XmlElementDescriptor p) {
     final XmlAttributeDescriptor[] xmlAttributeDescriptors = p.getAttributesDescriptors(null);
     Arrays.sort(xmlAttributeDescriptors, COMPARATOR);
     return xmlAttributeDescriptors;
@@ -148,11 +149,21 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
     return null;
   }
 
-  public void updateUI(XmlElementDescriptor o, ParameterInfoUIContext context) {
-    updateElementDescriptor(o, context);
+  public void updateUI(XmlElementDescriptor o, final ParameterInfoUIContext context) {
+    updateElementDescriptor(
+      o,
+      context,
+      new Function<String, Boolean>() {
+        final XmlTag parameterOwner  = (XmlTag)context.getParameterOwner();
+
+        public Boolean fun(String s) {
+          return parameterOwner != null ? parameterOwner.getAttributeValue(s) != null:false;
+        }
+      });
   }
 
-  private static void updateElementDescriptor(XmlElementDescriptor descriptor, ParameterInfoUIContext context) {
+  public static void updateElementDescriptor(XmlElementDescriptor descriptor, ParameterInfoUIContext context,
+                                             Function<String, Boolean> attributePresentFun) {
     final XmlAttributeDescriptor[] attributes = descriptor != null ? getSortedDescriptors(descriptor) : XmlAttributeDescriptor.EMPTY;
 
     StringBuffer buffer = new StringBuffer();
@@ -167,10 +178,8 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
       StringBuffer text2 = new StringBuffer(" ");
       StringBuffer text3 = new StringBuffer(" ");
 
-      final XmlTag parameterOwner  = (XmlTag)context.getParameterOwner();
-
       for (XmlAttributeDescriptor attribute : attributes) {
-        if (parameterOwner != null && parameterOwner.getAttributeValue(attribute.getName()) != null) {
+        if (Boolean.TRUE.equals(attributePresentFun.fun(attribute.getName()))) {
           if (!(text1.toString().equals(" "))) {
             text1.append(", ");
           }

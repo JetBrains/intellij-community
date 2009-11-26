@@ -62,7 +62,7 @@ public class GitHistoryProvider implements VcsHistoryProvider {
    * {@inheritDoc}
    */
   public AnAction[] getAdditionalActions(FileHistoryPanel panel) {
-    return new AnAction[]{new GitShowAllSubmittedFilesAction()};
+    return new AnAction[]{new GitShowAllSubmittedFilesAction(), new GitCopyHistoryRevisionNumberAction()};
   }
 
   /**

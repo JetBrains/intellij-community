@@ -41,6 +41,7 @@ public class ConvertClosureToMethodIntention extends Intention {
 
   @Override
   protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+    element = element.getParent();
     StringBuilder builder = new StringBuilder(element.getTextLength());
     final GrField field = (GrField)element;
     final GrClosableBlock block = (GrClosableBlock)field.getInitializerGroovy();
@@ -68,12 +69,15 @@ public class ConvertClosureToMethodIntention extends Intention {
 
   private static class MyPredicate implements PsiElementPredicate {
     public boolean satisfiedBy(PsiElement element) {
-      if (!(element instanceof GrField)) return false;
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof GrVariableDeclaration)) return false;
-      if (((GrVariableDeclaration)parent).getVariables().length != 1) return false;
+      if (!(parent instanceof GrField)) return false;
+      if (((GrField)parent).getNameIdentifierGroovy() != element) return false;
 
-      final GrExpression expression = ((GrField)element).getInitializerGroovy();
+      final PsiElement varDeclaration = parent.getParent();
+      if (!(varDeclaration instanceof GrVariableDeclaration)) return false;
+      if (((GrVariableDeclaration)varDeclaration).getVariables().length != 1) return false;
+
+      final GrExpression expression = ((GrField)parent).getInitializerGroovy();
       return expression instanceof GrClosableBlock;
     }
   }

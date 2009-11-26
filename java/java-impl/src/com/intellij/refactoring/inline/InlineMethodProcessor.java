@@ -208,12 +208,13 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     Map<PsiMember, Set<PsiMember>> result = new HashMap<PsiMember, Set<PsiMember>>();
 
     for (UsageInfo usage : usages) {
-      final PsiMember container = ConflictsUtil.getContainer(usage.getElement());
-      if (container == null) continue;    // usage in import statement
-      Set<PsiMember> inaccessibleReferenced = result.get(container);
+      final PsiElement container = ConflictsUtil.getContainer(usage.getElement());
+      if (!(container instanceof PsiMember)) continue;    // usage in import statement
+      PsiMember memberContainer = (PsiMember)container;
+      Set<PsiMember> inaccessibleReferenced = result.get(memberContainer);
       if (inaccessibleReferenced == null) {
         inaccessibleReferenced = new HashSet<PsiMember>();
-        result.put(container, inaccessibleReferenced);
+        result.put(memberContainer, inaccessibleReferenced);
         for (PsiMember member : referencedElements) {
           if (!PsiUtil.isAccessible(member, usage.getElement(), null)) {
             inaccessibleReferenced.add(member);
@@ -510,27 +511,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   }
 
   private void substituteMethodTypeParams(PsiElement scope, final PsiSubstitutor substitutor) {
-    scope.accept(new JavaRecursiveElementVisitor() {
-      @Override public void visitTypeElement(PsiTypeElement typeElement) {
-        PsiType type = typeElement.getType();
-
-        if (type instanceof PsiClassType) {
-          JavaResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
-          PsiElement resolved = resolveResult.getElement();
-          if (resolved instanceof PsiTypeParameter && ((PsiTypeParameter)resolved).getOwner() == myMethodCopy) {
-            PsiType newType = resolveResult.getSubstitutor().putAll(substitutor).substitute((PsiTypeParameter)resolved);
-            try {
-              typeElement.replace(myFactory.createTypeElement(newType));
-              return;
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-          }
-        }
-        super.visitTypeElement(typeElement);
-      }
-    });
+    InlineUtil.substituteTypeParams(scope, substitutor, myFactory);
   }
 
   private boolean isStrictlyFinal(PsiParameter parameter) {

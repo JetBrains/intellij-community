@@ -20,6 +20,7 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.deployment.DeploymentUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -31,6 +32,7 @@ import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.io.ZipUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
@@ -43,6 +45,7 @@ import java.util.zip.ZipOutputStream;
  * @author nik
  */
 public class JarsBuilder {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.packagingCompiler.JarsBuilder");
   private final Set<JarInfo> myJarsToBuild;
   private final FileFilter myFileFilter;
   private final CompileContext myContext;
@@ -139,8 +142,13 @@ public class JarsBuilder {
   }
 
   private void buildJar(final JarInfo jar) throws IOException {
-    myContext.getProgressIndicator().setText(CompilerBundle.message("packaging.compiler.message.building.0",
-                                                                    jar.getPresentableDestination()));
+    if (jar.getPackedFiles().isEmpty() && jar.getPackedJars().isEmpty()) {
+      myContext.addMessage(CompilerMessageCategory.WARNING, "Archive '" + jar.getPresentableDestination() + "' has no files so it won't be created", null, -1, -1);
+      return;
+    }
+
+    myContext.getProgressIndicator()
+      .setText(CompilerBundle.message("packaging.compiler.message.building.0", jar.getPresentableDestination()));
     File jarFile = FileUtil.createTempFile("artifactCompiler", "tmp");
     myBuiltJars.put(jar, jarFile);
 
@@ -156,7 +164,12 @@ public class JarsBuilder {
 
       for (Pair<String, JarInfo> nestedJar : jar.getPackedJars()) {
         File nestedJarFile = myBuiltJars.get(nestedJar.getSecond());
-        addFileToJar(jarOutputStream, nestedJarFile, nestedJar.getFirst(), writtenPaths);
+        if (nestedJarFile != null) {
+          addFileToJar(jarOutputStream, nestedJarFile, nestedJar.getFirst(), writtenPaths);
+        }
+        else {
+          LOG.debug("nested jar file " + nestedJar.getFirst() + " for " + jar.getPresentableDestination() + " not found");
+        }
       }
     }
     finally {
@@ -164,8 +177,8 @@ public class JarsBuilder {
     }
   }
 
-  private void addFileToJar(final JarOutputStream jarOutputStream, final File file, String relativePath,
-                            final THashSet<String> writtenPaths) throws IOException {
+  private void addFileToJar(final @NotNull JarOutputStream jarOutputStream, final @NotNull File file, @NotNull String relativePath,
+                            final @NotNull THashSet<String> writtenPaths) throws IOException {
     //todo[nik] check file exists?
     while (relativePath.startsWith("/")) {
       relativePath = relativePath.substring(1);

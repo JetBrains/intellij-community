@@ -37,7 +37,6 @@ import java.awt.*;
 public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
   private static final Icon myThreadGroupIcon = IconLoader.getIcon("/debugger/threadGroup.png");
   private static final Icon myCurrentThreadGroupIcon = IconLoader.getIcon("/debugger/threadGroupCurrent.png");
-  private static final Icon myWatchedValueIcon = IconLoader.getIcon("/debugger/watch.png");
   private static final Icon myStaticFieldIcon = Icons.FIELD_ICON;
 
   private static final Icon myStaticIcon = IconLoader.getIcon("/nodes/static.png");
@@ -83,7 +82,7 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
       }
       else {
         if (valueDescriptor instanceof WatchItemDescriptor) {
-          nodeIcon = myWatchedValueIcon;           
+          nodeIcon = DebuggerIcons.WATCHED_VALUE_ICON;
         } else {
           nodeIcon = DebuggerIcons.VALUE_ICON;
         }

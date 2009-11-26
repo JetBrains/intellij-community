@@ -19,6 +19,7 @@ package org.intellij.plugins.intelliLang.inject;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -30,6 +31,9 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.IncorrectOperationException;
 import static org.intellij.plugins.intelliLang.inject.InjectLanguageAction.findInjectionHost;
+
+import org.intellij.plugins.intelliLang.Configuration;
+import org.intellij.plugins.intelliLang.InjectionsSettingsUI;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -64,6 +68,7 @@ public class EditInjectionSettingsAction implements IntentionAction {
       for (LanguageInjectionSupport support : Extensions.getExtensions(LanguageInjectionSupport.EP_NAME)) {
         if (support.editInjectionInPlace(host)) return;
       }
+      ShowSettingsUtil.getInstance().editConfigurable(project, new InjectionsSettingsUI(project, Configuration.getInstance()));
     }
     finally {
       FileContentUtil.reparseFiles(project, Collections.<VirtualFile>emptyList(), true);

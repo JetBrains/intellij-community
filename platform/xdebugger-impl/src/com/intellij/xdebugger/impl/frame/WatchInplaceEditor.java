@@ -34,8 +34,8 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
   private final WatchesRootNode myRootNode;
   @Nullable private final WatchNode myOldNode;
 
-  public WatchInplaceEditor(WatchesRootNode rootNode, final XDebuggerTreeNode node, @NonNls final String historyId, final @Nullable WatchNode oldNode) {
-    super(node, historyId);
+  public WatchInplaceEditor(WatchesRootNode rootNode, final WatchNode node, @NonNls final String historyId, final @Nullable WatchNode oldNode) {
+    super((XDebuggerTreeNode)node, historyId);
     myRootNode = rootNode;
     myOldNode = oldNode;
     myExpressionEditor.setText(oldNode != null ? oldNode.getExpression() : "");

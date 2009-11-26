@@ -613,7 +613,7 @@ public class VfsUtil {
     return name == null || name.length() == 0 || "/".equals(name) || "\\".equals(name);
   }
 
-  public static VirtualFile createDirectories(final @NotNull String dir) throws IOException {
+  public static VirtualFile createDirectories(@NotNull final String dir) throws IOException {
     final Ref<IOException> err = new Ref<IOException>();
     VirtualFile result = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
       public VirtualFile compute() {

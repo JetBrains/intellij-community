@@ -40,7 +40,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
 
   private final FileIncludeProvider[] myProviders = Extensions.getExtensions(FileIncludeProvider.EP_NAME);
 
-  public static final ID<FileIncludeIndex.Key,List<FileIncludeInfoImpl>> INDEX_ID = ID.create("fileIncludes");
+  public static final ID<Key,List<FileIncludeInfoImpl>> INDEX_ID = ID.create("fileIncludes");
 
   public static List<FileIncludeInfoImpl> getIncludes(VirtualFile file, GlobalSearchScope scope) {
     final List<FileIncludeInfoImpl> result = new ArrayList<FileIncludeInfoImpl>();
@@ -64,7 +64,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
     return result;
   }
 
-  public ID<FileIncludeIndex.Key, List<FileIncludeInfoImpl>> getName() {
+  public ID<Key, List<FileIncludeInfoImpl>> getName() {
     return INDEX_ID;
   }
 

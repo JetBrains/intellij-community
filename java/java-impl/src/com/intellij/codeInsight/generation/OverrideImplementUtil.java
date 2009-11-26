@@ -127,9 +127,18 @@ public class OverrideImplementUtil {
     Map<MethodSignature, CandidateInfo> result = new TreeMap<MethodSignature,CandidateInfo>(new Comparator<MethodSignature>() {
       // signatures should appear in the order of declaration
       public int compare(MethodSignature o1, MethodSignature o2) {
-        int offset1 = o1 instanceof MethodSignatureBackedByPsiMethod ? ((MethodSignatureBackedByPsiMethod)o1).getMethod().getTextOffset() : -1;
-        int offset2 = o2 instanceof MethodSignatureBackedByPsiMethod ? ((MethodSignatureBackedByPsiMethod)o2).getMethod().getTextOffset() : -2;
-        return offset1 - offset2;
+        if (o1 instanceof MethodSignatureBackedByPsiMethod && o2 instanceof MethodSignatureBackedByPsiMethod) {
+          PsiMethod m1 = ((MethodSignatureBackedByPsiMethod)o1).getMethod();
+          PsiMethod m2 = ((MethodSignatureBackedByPsiMethod)o2).getMethod();
+          PsiElement p1 = m1.getParent();
+          PsiElement p2 = m2.getParent();
+          if (p1 instanceof PsiClass && p2 instanceof PsiClass) {
+            if (((PsiClass)p1).isInheritor((PsiClass)p2, true)) return -1;
+            if (((PsiClass)p2).isInheritor((PsiClass)p1, true)) return 1;
+          }
+          return m1.getTextOffset() - m2.getTextOffset();
+        }
+        return 0;
       }
     });
     if (toImplement || aClass.isInterface()) {

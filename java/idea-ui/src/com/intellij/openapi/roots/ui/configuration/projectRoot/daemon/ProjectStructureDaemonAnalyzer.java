@@ -7,9 +7,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.MultiValuesMap;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
@@ -20,12 +22,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class ProjectStructureDaemonAnalyzer implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.projectRoot.validation.ProjectStructureDaemonAnalyzer");
-  private Map<ProjectStructureElement, ProjectStructureProblemsHolder> myProblemHolders = new HashMap<ProjectStructureElement, ProjectStructureProblemsHolder>();
+  private Map<ProjectStructureElement, ProjectStructureProblemsHolderImpl> myProblemHolders = new HashMap<ProjectStructureElement, ProjectStructureProblemsHolderImpl>();
   private MultiValuesMap<ProjectStructureElement, ProjectStructureElementUsage> mySourceElement2Usages = new MultiValuesMap<ProjectStructureElement, ProjectStructureElementUsage>();
   private MultiValuesMap<ProjectStructureElement, ProjectStructureElementUsage> myContainingElement2Usages = new MultiValuesMap<ProjectStructureElement, ProjectStructureElementUsage>();
   private Set<ProjectStructureElement> myElementWithNotCalculatedUsages = new HashSet<ProjectStructureElement>();
   private MergingUpdateQueue myAnalyzerQueue;
-  private List<Runnable> myListeners = new ArrayList<Runnable>();
+  private final EventDispatcher<ProjectStructureDaemonAnalyzerListener> myDispatcher = EventDispatcher.create(ProjectStructureDaemonAnalyzerListener.class);
   private final AtomicBoolean myStopped = new AtomicBoolean(false);
 
   public ProjectStructureDaemonAnalyzer(StructureConfigurableContext context) {
@@ -45,7 +47,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
   }
 
   private void doCheck(final ProjectStructureElement element) {
-    final ProjectStructureProblemsHolder problemsHolder = new ProjectStructureProblemsHolder();
+    final ProjectStructureProblemsHolderImpl problemsHolder = new ProjectStructureProblemsHolderImpl();
     new ReadAction() {
       protected void run(final Result result) {
         if (myStopped.get()) return;
@@ -64,16 +66,9 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
           LOG.debug("updating problems for " + element);
         }
         myProblemHolders.put(element, problemsHolder);
-        fireProblemsUpdated();
+        myDispatcher.getMulticaster().problemsChanged(element);
       }
     });
-  }
-
-  private void fireProblemsUpdated() {
-    Runnable[] listeners = myListeners.toArray(new Runnable[myListeners.size()]);
-    for (Runnable listener : listeners) {
-      listener.run();
-    }
   }
 
   private void doCollectUsages(final ProjectStructureElement element) {
@@ -96,7 +91,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
           LOG.debug("updating usages for " + element);
         }
         updateUsages(element, usages);
-        fireProblemsUpdated();
+        myDispatcher.getMulticaster().usagesCollected(element);
       }
     });
   }
@@ -137,7 +132,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
       }
     }
     removeUsagesInElement(element);
-    fireProblemsUpdated();
+    myDispatcher.getMulticaster().problemsChanged(element);
   }
 
   public boolean isUnused(ProjectStructureElement element) {
@@ -180,7 +175,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
 
   public void clearAllProblems() {
     myProblemHolders.clear();
-    fireProblemsUpdated();
+    myDispatcher.getMulticaster().allProblemsChanged();
   }
 
   public void dispose() {
@@ -188,7 +183,8 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
     myAnalyzerQueue.cancelAllUpdates();
   }
 
-  public ProjectStructureProblemsHolder getProblemsHolder(ProjectStructureElement element) {
+  @Nullable
+  public ProjectStructureProblemsHolderImpl getProblemsHolder(ProjectStructureElement element) {
     return myProblemHolders.get(element);
   }
 
@@ -197,14 +193,13 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
     for (ProjectStructureElement element : elements) {
       updateUsages(element, element.getUsagesInElement());
     }
-    fireProblemsUpdated();
     final Collection<ProjectStructureElementUsage> usages = mySourceElement2Usages.get(selected);
     return usages != null ? usages : Collections.<ProjectStructureElementUsage>emptyList();
   }
 
-  public void addListener(Runnable runnable) {
-    LOG.debug("listener added " + runnable);
-    myListeners.add(runnable);
+  public void addListener(ProjectStructureDaemonAnalyzerListener listener) {
+    LOG.debug("listener added " + listener);
+    myDispatcher.addListener(listener);
   }
 
   public void reset() {
@@ -250,7 +245,12 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
     }
 
     public void run() {
-      doUpdate(myElement, myCheck, myCollectUsages);
+      try {
+        doUpdate(myElement, myCheck, myCollectUsages);
+      }
+      catch (Throwable t) {
+        LOG.error(t);
+      }
     }
   }
 }

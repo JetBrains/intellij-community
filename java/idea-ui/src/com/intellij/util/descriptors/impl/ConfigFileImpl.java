@@ -30,12 +30,15 @@ public class ConfigFileImpl implements ConfigFile {
   private final ConfigFileContainerImpl myContainer;
   private final Project myProject;
   private long myModificationCount;
+  private final Object myPsiFileLock = new Object();
   private final VirtualFilePointerListener myListener = new VirtualFilePointerListener() {
     public void beforeValidityChanged(final VirtualFilePointer[] pointers) {
     }
 
     public void validityChanged(final VirtualFilePointer[] pointers) {
-      myPsiFile = null;
+      synchronized (myPsiFileLock) {
+        myPsiFile = null;
+      }
       onChange();
     }
   };
@@ -73,17 +76,26 @@ public class ConfigFileImpl implements ConfigFile {
   }
 
   @Nullable
-  public synchronized PsiFile getPsiFile() {
-    if (myPsiFile != null && myPsiFile.isValid()) {
-      return myPsiFile;
+  public PsiFile getPsiFile() {
+    PsiFile psiFile;
+    synchronized (myPsiFileLock) {
+      psiFile = myPsiFile;
+    }
+
+    if (psiFile != null && psiFile.isValid()) {
+      return psiFile;
     }
 
     VirtualFile virtualFile = getVirtualFile();
     if (virtualFile == null || !virtualFile.isValid()) return null;
 
-    myPsiFile = PsiManager.getInstance(myProject).findFile(virtualFile);
+    psiFile = PsiManager.getInstance(myProject).findFile(virtualFile);
 
-    return myPsiFile;
+    synchronized (myPsiFileLock) {
+      myPsiFile = psiFile;
+    }
+
+    return psiFile;
   }
 
   @Nullable

@@ -22,11 +22,12 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
@@ -35,6 +36,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
+
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 /**
  * @author ilyas
@@ -118,6 +121,16 @@ public class GrLiteralImpl extends GrExpressionImpl implements GrLiteral, PsiLan
   @NotNull
   public PsiReference[] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this, GrLiteral.class);
+  }
+
+  @Nullable
+  @Override
+  public PsiReference getReference() {
+    final PsiReference[] references = getReferences();
+    if (references.length > 0) {
+      return new PsiMultiReference(references, this);
+    }
+    return null;
   }
 
   public List<Pair<PsiElement, TextRange>> getInjectedPsi() {

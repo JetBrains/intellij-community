@@ -19,7 +19,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsStructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.ArtifactsTreeNode;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.FindUsagesInProjectStructureActionBase;
@@ -67,7 +66,7 @@ public abstract class ArtifactEditorFindUsagesActionBase extends FindUsagesInPro
       return new LibraryProjectStructureElement(context, (Library)sourceObject);
     }
     else if (sourceObject instanceof Artifact) {
-      return new ArtifactProjectStructureElement(context, myArtifactContext, (Artifact)sourceObject);
+      return myArtifactContext.getOrCreateArtifactElement((Artifact)sourceObject);
     }
     return null;
   }

@@ -62,6 +62,7 @@ public abstract class Timer implements Disposable {
         myDisposed = true;
       }
     };
+    myThread.setPriority(Thread.MIN_PRIORITY + 1);
   }
 
   public void setTakeInitialDelay(final boolean take) {

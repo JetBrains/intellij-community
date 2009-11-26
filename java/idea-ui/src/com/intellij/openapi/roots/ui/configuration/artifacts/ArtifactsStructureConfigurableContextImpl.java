@@ -15,26 +15,38 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
+import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureDaemonAnalyzerListener;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemsHolderImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
+import com.intellij.packaging.impl.artifacts.DefaultPackagingElementResolvingContext;
 import com.intellij.packaging.ui.ManifestFileConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
 * @author nik
 */
-class ArtifactsStructureConfigurableContextImpl implements ArtifactsStructureConfigurableContext {
+public class ArtifactsStructureConfigurableContextImpl implements ArtifactsStructureConfigurableContext {
   private ModifiableArtifactModel myModifiableModel;
   private final ManifestFilesInfo myManifestFilesInfo = new ManifestFilesInfo();
   private ArtifactAdapter myModifiableModelListener;
@@ -43,6 +55,7 @@ class ArtifactsStructureConfigurableContextImpl implements ArtifactsStructureCon
   private Map<Artifact, CompositePackagingElement<?>> myModifiableRoots = new HashMap<Artifact, CompositePackagingElement<?>>();
   private Map<Artifact, ArtifactEditorImpl> myArtifactEditors = new HashMap<Artifact, ArtifactEditorImpl>();
   private Map<ArtifactPointer, ArtifactEditorSettings> myEditorSettings = new HashMap<ArtifactPointer, ArtifactEditorSettings>();
+  private Map<Artifact, ArtifactProjectStructureElement> myArtifactElements = new HashMap<Artifact, ArtifactProjectStructureElement>();
   private final ArtifactEditorSettings myDefaultSettings;
 
   public ArtifactsStructureConfigurableContextImpl(StructureConfigurableContext context, Project project,
@@ -51,6 +64,31 @@ class ArtifactsStructureConfigurableContextImpl implements ArtifactsStructureCon
     myModifiableModelListener = modifiableModelListener;
     myContext = context;
     myProject = project;
+    context.getDaemonAnalyzer().addListener(new ProjectStructureDaemonAnalyzerListener() {
+      public void usagesCollected(@NotNull ProjectStructureElement containingElement) {
+      }
+
+      public void problemsChanged(@NotNull ProjectStructureElement element) {
+        if (element instanceof ArtifactProjectStructureElement) {
+          final Artifact originalArtifact = ((ArtifactProjectStructureElement)element).getOriginalArtifact();
+          final ArtifactEditorImpl artifactEditor = myArtifactEditors.get(originalArtifact);
+          if (artifactEditor != null) {
+            updateProblems(originalArtifact, artifactEditor);
+          }
+        }
+      }
+
+      public void allProblemsChanged() {
+        for (Map.Entry<Artifact, ArtifactEditorImpl> entry : myArtifactEditors.entrySet()) {
+          updateProblems(entry.getKey(), entry.getValue());
+        }
+      }
+    });
+  }
+
+  private void updateProblems(Artifact originalArtifact, ArtifactEditorImpl artifactEditor) {
+    final ProjectStructureProblemsHolderImpl holder = myContext.getDaemonAnalyzer().getProblemsHolder(getOrCreateArtifactElement(originalArtifact));
+    artifactEditor.getValidationManager().updateProblems(holder);
   }
 
   @NotNull
@@ -78,6 +116,10 @@ class ArtifactsStructureConfigurableContextImpl implements ArtifactsStructureCon
     return myContext.getModulesConfigurator().getModuleModel();
   }
 
+  public void queueValidation(Artifact artifact) {
+    myContext.getDaemonAnalyzer().queueUpdate(getOrCreateArtifactElement(artifact), true, false);
+  }
+
   public CompositePackagingElement<?> getRootElement(@NotNull Artifact artifact) {
     artifact = getOriginalArtifact(artifact);
     if (myModifiableModel != null) {
@@ -98,14 +140,23 @@ class ArtifactsStructureConfigurableContextImpl implements ArtifactsStructureCon
     return root;
   }
 
-  public void editLayout(@NotNull Artifact artifact, Runnable action) {
-    artifact = getOriginalArtifact(artifact);
-    final ModifiableArtifact modifiableArtifact = getOrCreateModifiableArtifactModel().getOrCreateModifiableArtifact(artifact);
-    if (modifiableArtifact.getRootElement() == artifact.getRootElement()) {
-      modifiableArtifact.setRootElement(getOrCreateModifiableRootElement(artifact));
-    }
-    action.run();
-    myContext.getDaemonAnalyzer().queueUpdate(new ArtifactProjectStructureElement(myContext, this, artifact));
+  public void editLayout(@NotNull final Artifact artifact, final Runnable action) {
+    final Artifact originalArtifact = getOriginalArtifact(artifact);
+    new WriteAction() {
+      protected void run(final Result result) {
+        final ModifiableArtifact modifiableArtifact = getOrCreateModifiableArtifactModel().getOrCreateModifiableArtifact(originalArtifact);
+        if (modifiableArtifact.getRootElement() == originalArtifact.getRootElement()) {
+          modifiableArtifact.setRootElement(getOrCreateModifiableRootElement(originalArtifact));
+        }
+        action.run();
+      }
+    }.execute();
+    myContext.getDaemonAnalyzer().queueUpdate(getOrCreateArtifactElement(originalArtifact));
+  }
+
+  @Nullable 
+  public ArtifactEditorImpl getArtifactEditor(Artifact artifact) {
+    return myArtifactEditors.get(getOriginalArtifact(artifact));
   }
 
   public ArtifactEditorImpl getOrCreateEditor(Artifact artifact) {
@@ -147,13 +198,13 @@ class ArtifactsStructureConfigurableContextImpl implements ArtifactsStructureCon
     return myContext.getModulesConfigurator().getFacetsConfigurator();
   }
 
-  @NotNull
-  public ManifestFileConfiguration getManifestFile(CompositePackagingElement<?> element, ArtifactType artifactType) {
-    return myManifestFilesInfo.getManifestFile(element, artifactType, this);
+  public Library findLibrary(@NotNull String level, @NotNull String libraryName) {
+    final Library library = DefaultPackagingElementResolvingContext.findLibrary(myProject, level, libraryName);
+    return library != null ? myContext.getLibraryModel(library) : myContext.getLibrary(libraryName, level);
   }
 
-  public boolean isManifestFile(String path) {
-    return myManifestFilesInfo.isManifestFile(path);
+  public ManifestFileConfiguration getManifestFile(CompositePackagingElement<?> element, ArtifactType artifactType) {
+    return myManifestFilesInfo.getManifestFile(element, artifactType, this);
   }
 
   public ManifestFilesInfo getManifestFilesInfo() {
@@ -175,6 +226,11 @@ class ArtifactsStructureConfigurableContextImpl implements ArtifactsStructureCon
     if (myModifiableModel != null) {
       myModifiableModel.dispose();
     }
+    myArtifactElements.clear();
+  }
+
+  public Collection<? extends ArtifactEditorImpl> getArtifactEditors() {
+    return Collections.unmodifiableCollection(myArtifactEditors.values());
   }
 
   public void saveEditorSettings() {
@@ -183,5 +239,20 @@ class ArtifactsStructureConfigurableContextImpl implements ArtifactsStructureCon
       final ArtifactPointer pointer = ArtifactPointerManager.getInstance(myProject).createPointer(artifactEditor.getArtifact(), getArtifactModel());
       myEditorSettings.put(pointer, artifactEditor.createSettings());
     }
+  }
+
+  @NotNull
+  public ArtifactProjectStructureElement getOrCreateArtifactElement(@NotNull Artifact artifact) {
+    ArtifactProjectStructureElement element = myArtifactElements.get(getOriginalArtifact(artifact));
+    if (element == null) {
+      element = new ArtifactProjectStructureElement(myContext, this, artifact);
+      myArtifactElements.put(artifact, element);
+    }
+    return element;
+  }
+
+  public ModifiableRootModel getOrCreateModifiableRootModel(Module module) {
+    final ModuleEditor editor = myContext.getModulesConfigurator().getEditor(module);
+    return editor.getModifiableRootModelProxy();
   }
 }

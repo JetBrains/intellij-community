@@ -162,7 +162,9 @@ public class SocketLock {
       }
     }
 
-    new Thread(new MyRunnable(), LOCK_THREAD_NAME).start();
+    final Thread thread = new Thread(new MyRunnable(), LOCK_THREAD_NAME);
+    thread.setPriority(Thread.MIN_PRIORITY);
+    thread.start();
 
     return;
   }

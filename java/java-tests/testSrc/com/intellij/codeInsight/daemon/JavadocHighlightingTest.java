@@ -86,6 +86,8 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testUnknownInlineTag() throws Exception {doTest();}
   public void testUnknownTags() throws Exception {doTest();}
 
+  public void testBadCharacters() throws Exception {doTest();}
+
   public void testVararg() throws Exception {doTest();}
 
   public void testBadReference() throws Exception{

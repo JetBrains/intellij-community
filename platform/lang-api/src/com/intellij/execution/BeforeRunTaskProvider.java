@@ -26,26 +26,27 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Key;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-public interface BeforeRunTaskProvider<T extends BeforeRunTask> {
-  @NonNls ExtensionPointName<BeforeRunTaskProvider<BeforeRunTask>> EXTENSION_POINT_NAME = new ExtensionPointName<BeforeRunTaskProvider<BeforeRunTask>>("com.intellij.stepsBeforeRunProvider");
+public abstract class BeforeRunTaskProvider<T extends BeforeRunTask> {
+  public static final ExtensionPointName<BeforeRunTaskProvider<BeforeRunTask>> EXTENSION_POINT_NAME = new ExtensionPointName<BeforeRunTaskProvider<BeforeRunTask>>("com.intellij.stepsBeforeRunProvider");
 
-  Key<T> getId();
+  public abstract Key<T> getId();
 
-  String getDescription(final RunConfiguration runConfiguration, T task);
+  public abstract String getDescription(final RunConfiguration runConfiguration, T task);
 
-  boolean hasConfigurationButton();
+  public abstract boolean hasConfigurationButton();
 
-  // lifecycle methods:
   /**
    * @return 'before run' task for the configuration or null, if the task from this provider is not applicable to the specified configuration 
    */
   @Nullable
-  T createTask(final RunConfiguration runConfiguration);
-  
-  void configureTask(final RunConfiguration runConfiguration, T task);
+  public abstract T createTask(final RunConfiguration runConfiguration);
 
-  boolean executeTask(DataContext context, RunConfiguration configuration, T task);
+  /**
+   * @return <code>true</code> if task configuration is changed
+   */
+  public abstract boolean configureTask(final RunConfiguration runConfiguration, T task);
+
+  public abstract boolean executeTask(DataContext context, RunConfiguration configuration, T task);
 }

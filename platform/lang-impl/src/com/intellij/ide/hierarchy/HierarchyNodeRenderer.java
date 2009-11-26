@@ -55,9 +55,7 @@ public final class HierarchyNodeRenderer extends ColoredTreeCellRenderer {
     final PsiFile psiFile = descriptor.getContainingFile();
     if (psiFile != null && psiFile.isValid()) {
       final FileColorManager colorManager = FileColorManager.getInstance(descriptor.getProject());
-      if (colorManager.isEnabled()) {
-        return colorManager.getFileColor(psiFile);
-      }
+      return colorManager.getRendererBackground(psiFile);
     }
     return null;
   }

@@ -19,19 +19,28 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 
 public final class UnscrambleAction extends AnAction implements DumbAware {
+  static {
+    if (Registry.is("analyze.exceptions.on.the.fly")) {
+      ApplicationManagerEx.getApplicationEx().addApplicationListener(new UnscrambleListener());
+    }
+  }
   public void actionPerformed(AnActionEvent e) {
     Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     UnscrambleDialog dialog = new UnscrambleDialog(project);
     dialog.show();
   }
 
-  public void update(AnActionEvent event){
+  public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());
     presentation.setEnabled(project != null);
   }
+
+
 }

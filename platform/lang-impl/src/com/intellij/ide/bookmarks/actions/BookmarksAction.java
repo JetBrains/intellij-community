@@ -30,7 +30,6 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
@@ -48,7 +47,10 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.ui.*;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.FileColorManager;
+import com.intellij.ui.ListUtil;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.FilteringListModel;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
@@ -77,10 +79,7 @@ public class BookmarksAction extends AnAction implements DumbAware {
   public void update(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    e.getPresentation().setEnabled(project != null &&
-                                   (ToolWindowManager.getInstance(project).isEditorComponentActive() &&
-                                    PlatformDataKeys.EDITOR.getData(dataContext) != null ||
-                                    PlatformDataKeys.VIRTUAL_FILE.getData(dataContext) != null));
+    e.getPresentation().setEnabled(project != null);
   }
 
   @Override
@@ -90,14 +89,7 @@ public class BookmarksAction extends AnAction implements DumbAware {
     if (project == null) return;
 
 
-    BookmarkInContextInfo bookmarkInContextInfo = new BookmarkInContextInfo(dataContext, project).invoke();
-    VirtualFile file = bookmarkInContextInfo.getFile();
-    Bookmark bookmarkAtPlace = bookmarkInContextInfo.getBookmarkAtPlace();
-    int line = bookmarkInContextInfo.getLine();
-
-    if (file == null) return;
-
-    final DefaultListModel model = buildModel(project, bookmarkAtPlace, file, line);
+    final DefaultListModel model = buildModel(project);
 
 
     final JLabel pathLabel = new JLabel(" ");
@@ -268,15 +260,11 @@ public class BookmarksAction extends AnAction implements DumbAware {
     popup.showCenteredInCurrentWindow(project);
   }
 
-  private static DefaultListModel buildModel(Project project, Bookmark bookmarkAtPlace, VirtualFile file, int line) {
+  private static DefaultListModel buildModel(Project project) {
     final DefaultListModel model = new DefaultListModel();
 
     for (Bookmark bookmark : BookmarkManager.getInstance(project).getValidBookmarks()) {
       model.addElement(new BookmarkItem(bookmark));
-    }
-
-    if (bookmarkAtPlace == null) {
-      model.addElement(new SetBookmarkItem(file, line));
     }
 
     return model;
@@ -294,82 +282,6 @@ public class BookmarksAction extends AnAction implements DumbAware {
     String footerText();
 
     void updatePreviewPanel(PreviewPanel panel);
-  }
-
-  protected static class SetBookmarkItem implements ItemWrapper {
-    private final VirtualFile myFile;
-    private final int myLine;
-
-    public SetBookmarkItem(VirtualFile file, int line) {
-      myFile = file;
-      myLine = line;
-    }
-
-    public void setupRenderer(ColoredListCellRenderer renderer, Project project, boolean selected) {
-      renderer.append(speedSearchText());
-    }
-
-    public void updateMnemonicLabel(JLabel label) {
-      label.setText("");
-    }
-
-    public String speedSearchText() {
-      return "Bookmark this place";
-    }
-
-    public void execute(Project project) {
-      BookmarkManager.getInstance(project).addTextBookmark(myFile, myLine, "");
-    }
-
-    @Nullable
-    public String footerText() {
-      return null;
-    }
-
-    public void updatePreviewPanel(PreviewPanel panel) {
-      panel.cleanup();
-
-      JLabel label = new JLabel("Choose this option to bookmark current place");
-      label.setHorizontalAlignment(JLabel.CENTER);
-      panel.add(label);
-    }
-  }
-
-  protected static class RemoveBookmarkItem implements ItemWrapper {
-    private final Bookmark myBookmark;
-
-    public RemoveBookmarkItem(Bookmark bookmark) {
-      myBookmark = bookmark;
-    }
-
-    public void setupRenderer(ColoredListCellRenderer renderer, Project project, boolean selected) {
-      renderer.append(speedSearchText());
-    }
-
-    public void updateMnemonicLabel(JLabel label) {
-      label.setText("");
-    }
-
-    public String speedSearchText() {
-      return "Remove Bookmark";
-    }
-
-    public void execute(Project project) {
-      BookmarkManager.getInstance(project).removeBookmark(myBookmark);
-    }
-
-    @Nullable
-    public String footerText() {
-      return null;
-    }
-
-    public void updatePreviewPanel(PreviewPanel panel) {
-      panel.cleanup();
-
-      JLabel label = new JLabel("Choose this option to remove bookmark at current place");
-      label.setHorizontalAlignment(JLabel.CENTER);
-      panel.add(label);
-    }
   }
 
   private static class BookmarkItem implements ItemWrapper {
@@ -400,16 +312,11 @@ public class BookmarksAction extends AnAction implements DumbAware {
 
       if (!selected) {
         FileColorManager colorManager = FileColorManager.getInstance(project);
-        if (colorManager.isEnabled()) {
-          if (fileOrDir instanceof PsiFile) {
-            Color color = colorManager.getFileColor((PsiFile)fileOrDir);
-            if (color != null) {
-              renderer.setBackground(color);
-            }
+        if (fileOrDir instanceof PsiFile) {
+          Color color = colorManager.getRendererBackground((PsiFile)fileOrDir);
+          if (color != null) {
+            renderer.setBackground(color);
           }
-        }
-        else if (FileEditorManager.getInstance(project).isFileOpen(file)) {
-          renderer.setBackground(LightColors.SLIGHTLY_GREEN);
         }
       }
 
@@ -588,6 +495,7 @@ public class BookmarksAction extends AnAction implements DumbAware {
         }
         else {
           cleanup();
+          repaint();
         }
 
         revalidate();

@@ -29,13 +29,13 @@ import java.util.List;
 
 public class BuildInfo implements Comparable<BuildInfo> {
   private final BuildNumber myNumber;
-  private final String myName;
+  private final String myVersion;
   private final String myMessage;
   private final List<PatchInfo> myPatches;
 
   public BuildInfo(Element node) {
     myNumber = BuildNumber.fromString(node.getAttributeValue("number"));
-    myName = node.getAttributeValue("name");
+    myVersion = node.getAttributeValue("version");
 
     myPatches = new ArrayList<PatchInfo>();
     for (Object patchNode : node.getChildren("patch")) {
@@ -54,8 +54,8 @@ public class BuildInfo implements Comparable<BuildInfo> {
     return myNumber;
   }
 
-  public String getName() {
-    return myName != null ? myName : "";
+  public String getVersion() {
+    return myVersion != null ? myVersion : "";
   }
 
   public String getMessage() {
@@ -66,7 +66,7 @@ public class BuildInfo implements Comparable<BuildInfo> {
   public PatchInfo findPatchForCurrentBuild() {
     BuildNumber currentBuild = ApplicationInfo.getInstance().getBuild();
     for (PatchInfo each : myPatches) {
-      if (each.getFromBuild().equals(currentBuild)) return each;
+      if (each.getFromBuild().asStringWithoutProductCode().equals(currentBuild.asStringWithoutProductCode())) return each;
     }
     return null;
   }

@@ -880,72 +880,69 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     }
   }
 
-  private void commitModel(ModuleModelImpl moduleModel, Runnable runnable) {
+  private void commitModel(final ModuleModelImpl moduleModel, final Runnable runnable) {
     myModuleModel.myModulesCache = null;
     myModificationCount++;
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     final Collection<Module> oldModules = myModuleModel.myPathToModule.values();
     final Collection<Module> newModules = moduleModel.myPathToModule.values();
-    List<Module> removedModules = new ArrayList<Module>(oldModules);
+    final List<Module> removedModules = new ArrayList<Module>(oldModules);
     removedModules.removeAll(newModules);
-    List<Module> addedModules = new ArrayList<Module>(newModules);
+    final List<Module> addedModules = new ArrayList<Module>(newModules);
     addedModules.removeAll(oldModules);
 
-    ProjectRootManagerEx.getInstanceEx(myProject).beforeRootsChange(false);
+    ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(new Runnable() {
+      public void run() {
+        for (Module removedModule : removedModules) {
+          fireBeforeModuleRemoved(removedModule);
+          cleanCachedStuff();
+        }
 
-    try {
-      for (Module removedModule : removedModules) {
-        fireBeforeModuleRemoved(removedModule);
+        List<Module> neverAddedModules = new ArrayList<Module>(moduleModel.myModulesToDispose);
+        neverAddedModules.removeAll(myModuleModel.myPathToModule.values());
+        for (final Module neverAddedModule : neverAddedModules) {
+          ModuleImpl module = (ModuleImpl)neverAddedModule;
+          module.putUserData(DISPOSED_MODULE_NAME, module.getName());
+          Disposer.dispose(module);
+        }
+
+        if (runnable != null) {
+          runnable.run();
+        }
+
+        final Map<Module, String> modulesToNewNamesMap = moduleModel.myModuleToNewName;
+        final Set<Module> modulesToBeRenamed = modulesToNewNamesMap.keySet();
+        modulesToBeRenamed.removeAll(moduleModel.myModulesToDispose);
+        final List<Module> modules = new ArrayList<Module>();
+        for (final Module aModulesToBeRenamed : modulesToBeRenamed) {
+          ModuleImpl module = (ModuleImpl)aModulesToBeRenamed;
+          moduleModel.myPathToModule.remove(module.getModuleFilePath());
+          modules.add(module);
+          module.rename(modulesToNewNamesMap.get(module));
+          moduleModel.myPathToModule.put(module.getModuleFilePath(), module);
+        }
+
+        moduleModel.myIsWritable = false;
+        myModuleModel = moduleModel;
+
+        for (Module module : removedModules) {
+          fireModuleRemoved(module);
+          cleanCachedStuff();
+          Disposer.dispose(module);
+          cleanCachedStuff();
+        }
+
+        for (Module addedModule : addedModules) {
+          ((ModuleImpl)addedModule).moduleAdded();
+          cleanCachedStuff();
+          fireModuleAdded(addedModule);
+          cleanCachedStuff();
+        }
+        cleanCachedStuff();
+        fireModulesRenamed(modules);
         cleanCachedStuff();
       }
-
-      List<Module> neverAddedModules = new ArrayList<Module>(moduleModel.myModulesToDispose);
-      neverAddedModules.removeAll(myModuleModel.myPathToModule.values());
-      for (final Module neverAddedModule : neverAddedModules) {
-        ModuleImpl module = (ModuleImpl)neverAddedModule;
-        module.putUserData(DISPOSED_MODULE_NAME, module.getName());
-        Disposer.dispose(module);
-      }
-
-      if (runnable != null) {
-        runnable.run();
-      }
-
-      final Map<Module, String> modulesToNewNamesMap = moduleModel.myModuleToNewName;
-      final Set<Module> modulesToBeRenamed = modulesToNewNamesMap.keySet();
-      modulesToBeRenamed.removeAll(moduleModel.myModulesToDispose);
-      final List<Module> modules = new ArrayList<Module>();
-      for (final Module aModulesToBeRenamed : modulesToBeRenamed) {
-        ModuleImpl module = (ModuleImpl)aModulesToBeRenamed;
-        moduleModel.myPathToModule.remove(module.getModuleFilePath());
-        modules.add(module);
-        module.rename(modulesToNewNamesMap.get(module));
-        moduleModel.myPathToModule.put(module.getModuleFilePath(), module);
-      }
-
-      moduleModel.myIsWritable = false;
-      myModuleModel = moduleModel;
-
-      for (Module module : removedModules) {
-        fireModuleRemoved(module);
-        cleanCachedStuff();
-        Disposer.dispose(module);
-        cleanCachedStuff();
-      }
-
-      for (Module addedModule : addedModules) {
-        ((ModuleImpl)addedModule).moduleAdded();
-        cleanCachedStuff();
-        fireModuleAdded(addedModule);
-        cleanCachedStuff();
-      }
-      cleanCachedStuff();
-      fireModulesRenamed(modules);
-      cleanCachedStuff();
-    }
-    finally {
-      ProjectRootManagerEx.getInstanceEx(myProject).rootsChanged(false);
-    }
+    }, false, true);
   }
 
   private void fireModulesRenamed(List<Module> modules) {
@@ -954,14 +951,12 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     }
   }
 
-  void fireModuleRenamedByVfsEvent(Module module) {
-    ProjectRootManagerEx.getInstanceEx(myProject).beforeRootsChange(false);
-    try {
-      fireModulesRenamed(Collections.singletonList(module));
-    }
-    finally {
-      ProjectRootManagerEx.getInstanceEx(myProject).rootsChanged(false);
-    }
+  void fireModuleRenamedByVfsEvent(@NotNull final Module module) {
+    ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(new Runnable() {
+      public void run() {
+        fireModulesRenamed(Collections.singletonList(module));
+      }
+    }, false, true);
   }
 
   public String[] getModuleGroupPath(@NotNull Module module) {

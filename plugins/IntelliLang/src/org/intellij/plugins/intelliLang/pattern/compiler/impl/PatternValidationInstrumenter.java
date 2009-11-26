@@ -73,7 +73,7 @@ public class PatternValidationInstrumenter extends ClassAdapter implements Instr
     if (name.equals(ASSERTIONS_DISABLED_NAME)) {
       myHasAssertions = true;
     } else if (name.equals(PATTERN_CACHE_NAME)) {
-      throw new InstrumentationException("Internal Error: Processing already instrumented class: " + myClassName);
+      throw new InstrumentationException("Error: Processing an already instrumented class: " + myClassName + ". Please recompile the affected class(es) or rebuild the project.");
     }
 
     return super.visitField(access, name, desc, signature, value);
@@ -175,7 +175,7 @@ public class PatternValidationInstrumenter extends ClassAdapter implements Instr
       };
     }
 
-    final Type argTypes[] = Type.getArgumentTypes(desc);
+    final Type[] argTypes = Type.getArgumentTypes(desc);
     final Type returnType = Type.getReturnType(desc);
 
     // don't dig through the whole method if there's nothing to do in it

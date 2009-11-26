@@ -16,6 +16,7 @@
 
 package com.intellij.ide.actions;
 
+import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent;
@@ -29,6 +30,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 
 public class GotoClassAction extends GotoActionBase implements DumbAware {
   public void gotoActionPerformed(AnActionEvent e) {
@@ -53,7 +55,12 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
       }
 
       public void elementChosen(Object element) {
-        ((NavigationItem)element).navigate(true);
+        if (element instanceof PsiElement) {
+          NavigationUtil.activateFileWithPsiElement((PsiElement)element);
+        }
+        else {
+          ((NavigationItem)element).navigate(true);
+        }
       }
     }, ModalityState.current(), true);
   }

@@ -241,9 +241,10 @@ public class AnnotationUtilEx {
     if (listOwner instanceof PsiParameter) {
       PsiParameter parameter = (PsiParameter)listOwner;
       PsiElement declarationScope = parameter.getDeclarationScope();
-      if (declarationScope instanceof PsiMethod && parameter.getParent() == ((PsiMethod)declarationScope).getParameterList()) {
+      PsiParameterList parameterList;
+      if (declarationScope instanceof PsiMethod && parameter.getParent() == (parameterList = ((PsiMethod)declarationScope).getParameterList())) {
         PsiMethod method = (PsiMethod)declarationScope;
-        final int parameterIndex = method.getParameterList().getParameterIndex(parameter);
+        final int parameterIndex = parameterList.getParameterIndex(parameter);
         all.addAll(Arrays.asList(modifierList.getAnnotations()));
         SuperMethodsSearch.search(method, null, true, true).forEach(new Processor<MethodSignatureBackedByPsiMethod>() {
           public boolean process(final MethodSignatureBackedByPsiMethod superMethod) {

@@ -17,6 +17,7 @@
 package com.intellij.ide.structureView;
 
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.vfs.VirtualFile;
 
 /**
  * Created by IntelliJ IDEA.
@@ -26,5 +27,5 @@ import com.intellij.openapi.fileEditor.FileEditor;
  * To change this template use File | Settings | File Templates.
  */
 public interface StructureViewWrapper {
-  boolean selectCurrentElement(FileEditor fileEditor, boolean requestFocus);
+  boolean selectCurrentElement(FileEditor fileEditor, VirtualFile file, boolean requestFocus);
 }

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.dom.references;
 
+import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -57,6 +58,11 @@ public class MavenPsiElementWrapper extends RenameableFakePsiElement {
 
   public Icon getIcon() {
     return MavenIcons.MAVEN_ICON;
+  }
+
+  @Override
+  public TextRange getTextRange() {
+    return myWrappee.getTextRange();
   }
 
   @Override

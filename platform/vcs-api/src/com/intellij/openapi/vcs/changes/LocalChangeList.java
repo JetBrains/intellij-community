@@ -57,8 +57,6 @@ public abstract class LocalChangeList implements Cloneable, ChangeList {
 
   public abstract boolean isDefault();
 
-  public abstract boolean isInUpdate();
-
   public abstract boolean isReadOnly();
 
   public abstract void setReadOnly(boolean isReadOnly);

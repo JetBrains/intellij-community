@@ -22,10 +22,16 @@
  */
 package com.intellij.profile.codeInspection.ui;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -36,6 +42,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.Profile;
@@ -53,9 +60,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 
 public abstract class InspectionToolsConfigurable extends BaseConfigurable implements ErrorsConfigurable {
   private CardLayout myLayout = new CardLayout();
@@ -116,7 +121,37 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
         InspectionProfileImpl profile =
         new InspectionProfileImpl("TempProfile", InspectionToolRegistrar.getInstance(), myProfileManager);
         try {
-          profile.readExternal(JDOMUtil.loadDocument(VfsUtil.virtualToIoFile(files[0])).getRootElement());
+          final Element rootElement = JDOMUtil.loadDocument(VfsUtil.virtualToIoFile(files[0])).getRootElement();
+          final Set<String> levels = new HashSet<String>();
+          for (Object o : rootElement.getChildren("inspection_tool")) {
+            final Element inspectElement = (Element)o;
+            levels.add(inspectElement.getAttributeValue("level"));
+            for (Object s : inspectElement.getChildren("scope")) {
+              levels.add(((Element)s).getAttributeValue("level"));
+            }
+          }
+          for (Iterator<String> iterator = levels.iterator(); iterator.hasNext();) {
+            String level = iterator.next();
+            if (myProfileManager.getOwnSeverityRegistrar().getSeverity(level) != null) {
+              iterator.remove();
+            }
+          }
+          if (!levels.isEmpty()) {
+            if (Messages.showYesNoDialog(myWholePanel, "Undefined severities detected: " +
+                                                          StringUtil.join(levels, ", ") +
+                                                          ". Do you want to create them?", "Warning", Messages.getWarningIcon()) ==
+                DialogWrapper.OK_EXIT_CODE) {
+              for (String level : levels) {
+                final TextAttributes textAttributes = CodeInsightColors.WARNINGS_ATTRIBUTES.getDefaultAttributes();
+                HighlightInfoType.HighlightInfoTypeImpl info
+                  = new HighlightInfoType.HighlightInfoTypeImpl(new HighlightSeverity(level, 50), TextAttributesKey.createTextAttributesKey(level));
+                myProfileManager.getOwnSeverityRegistrar()
+                  .registerSeverity(new SeverityRegistrar.SeverityBasedTextAttributes(textAttributes.clone(), info),
+                                    textAttributes.getErrorStripeColor());
+              }
+            }
+          }
+          profile.readExternal(rootElement);
           profile.initInspectionTools();
           if (myProfileManager.getProfile(profile.getName(), false) != null) {
             if (Messages.showOkCancelDialog(myWholePanel, "Profile with name \'" + profile.getName() + "\' already exists. Do you want to overwrite it?", "Warning", Messages.getInformationIcon()) != DialogWrapper.OK_EXIT_CODE) return;

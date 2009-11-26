@@ -168,8 +168,11 @@ public class ToolsImpl implements Tools {
           final InspectionProfileEntry copyTool =
             ((InspectionProfileImpl)profile).myRegistrar.createInspectionTool(myShortName, tool);
           copyTool.readSettings(scopeElement);
-          final HighlightDisplayLevel scopeLevel = errorLevel != null ? HighlightDisplayLevel
-            .find(((SeverityProvider)profileManager).getOwnSeverityRegistrar().getSeverity(errorLevel)) : level;
+          HighlightDisplayLevel scopeLevel = errorLevel != null ?
+             HighlightDisplayLevel.find(((SeverityProvider)profileManager).getOwnSeverityRegistrar().getSeverity(errorLevel)) : null;
+          if (scopeLevel == null) {
+            scopeLevel = level;
+          }
           if (namedScope != null) {
             addTool(namedScope, copyTool, enabledInScope != null && Boolean.parseBoolean(enabledInScope), scopeLevel);
           } else {

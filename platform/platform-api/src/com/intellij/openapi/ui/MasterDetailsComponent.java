@@ -260,7 +260,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     }
   }
 
-  protected void addItemsChangeListener(ItemsChangeListener l) {
+  public void addItemsChangeListener(ItemsChangeListener l) {
     myListners.add(l);
   }
 

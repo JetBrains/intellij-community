@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.VirtualFileMoveEvent;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
-import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.impl.elements.FileOrDirectoryCopyPackagingElement;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -33,7 +32,6 @@ import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.List;
 
 /**
  * @author nik
@@ -58,7 +56,7 @@ public class ArtifactVirtualFileListener extends VirtualFileAdapter {
     for (final Artifact artifact : myArtifactManager.getArtifacts()) {
       ArtifactUtil.processFileOrDirectoryCopyElements(artifact, new PackagingElementProcessor<FileOrDirectoryCopyPackagingElement<?>>() {
         @Override
-        public boolean process(@NotNull List<CompositePackagingElement<?>> parents, @NotNull FileOrDirectoryCopyPackagingElement<?> element) {
+        public boolean process(@NotNull FileOrDirectoryCopyPackagingElement<?> element, @NotNull PackagingElementPath pathToElement) {
           String path = element.getFilePath();
           while (path.length() > 0) {
             result.put(path, artifact);
@@ -86,8 +84,7 @@ public class ArtifactVirtualFileListener extends VirtualFileAdapter {
         final Artifact copy = model.getOrCreateModifiableArtifact(artifact);
         ArtifactUtil.processFileOrDirectoryCopyElements(copy, new PackagingElementProcessor<FileOrDirectoryCopyPackagingElement<?>>() {
           @Override
-          public boolean process(@NotNull List<CompositePackagingElement<?>> parents,
-                                 @NotNull FileOrDirectoryCopyPackagingElement<?> element) {
+          public boolean process(@NotNull FileOrDirectoryCopyPackagingElement<?> element, @NotNull PackagingElementPath pathToElement) {
             final String path = element.getFilePath();
             if (FileUtil.startsWith(path, oldPath)) {
               element.setFilePath(newPath + path.substring(oldPath.length()));

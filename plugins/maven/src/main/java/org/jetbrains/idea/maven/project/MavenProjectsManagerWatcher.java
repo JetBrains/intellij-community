@@ -34,7 +34,9 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -44,14 +46,13 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.Update;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.utils.MavenConstants;
 import org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class MavenProjectsManagerWatcher {
   private static final int DOCUMENT_SAVE_DELAY = 1000;
@@ -188,44 +189,47 @@ public class MavenProjectsManagerWatcher {
 
   public synchronized void addManagedFilesWithProfiles(List<VirtualFile> files, List<String> profiles) {
     myProjectsTree.addManagedFilesWithProfiles(files, profiles);
-    scheduleUpdateAll();
+    scheduleUpdateAll(true);
   }
 
+  @TestOnly
   public synchronized void resetManagedFilesAndProfilesInTests(List<VirtualFile> files, List<String> profiles) {
     myProjectsTree.resetManagedFilesAndProfiles(files, profiles);
-    scheduleUpdateAll();
+    scheduleUpdateAll(true);
   }
 
   public synchronized void removeManagedFiles(List<VirtualFile> files) {
     myProjectsTree.removeManagedFiles(files);
-    scheduleUpdateAll();
+    scheduleUpdateAll(true);
   }
 
   public synchronized void setActiveProfiles(List<String> profiles) {
     myProjectsTree.setActiveProfiles(profiles);
-    scheduleUpdateAll();
+    scheduleUpdateAll(true);
   }
 
-  private void scheduleUpdateAll() {
-    scheduleUpdateAll(false);
+  private void scheduleUpdateAll(boolean forceImport) {
+    scheduleUpdateAll(false, forceImport);
   }
 
-  private void scheduleUpdateAll(boolean force) {
-    myReadingProcessor.scheduleTask(new MavenProjectsProcessorReadingTask(force, myProjectsTree, myGeneralSettings, null));
+  public void scheduleUpdateAll(boolean force, boolean forceImport) {
+    Object message = forceImport ? MavenProjectsManager.FORCE_IMPORT_MESSAGE : null;
+    myReadingProcessor.scheduleTask(new MavenProjectsProcessorReadingTask(force, myProjectsTree, myGeneralSettings, message));
   }
 
-  private void scheduleUpdate(List<VirtualFile> filesToUpdate, List<VirtualFile> filesToDelete) {
+  public void scheduleUpdate(List<VirtualFile> filesToUpdate, List<VirtualFile> filesToDelete, boolean force, boolean forceImport) {
+    Object message = forceImport ? MavenProjectsManager.FORCE_IMPORT_MESSAGE : null;
     myReadingProcessor.scheduleTask(new MavenProjectsProcessorReadingTask(filesToUpdate,
                                                                           filesToDelete,
-                                                                          false,
+                                                                          force,
                                                                           myProjectsTree,
                                                                           myGeneralSettings,
-                                                                          null));
+                                                                          message));
   }
 
   private void onSettingsChange() {
     myEmbeddersManager.reset();
-    scheduleUpdateAll(true);
+    scheduleUpdateAll(true, true);
   }
 
   private class MyRootChangesListener implements ModuleRootListener {
@@ -248,7 +252,7 @@ public class MavenProjectsManagerWatcher {
         if (!f.isValid()) deletedFiles.add(f);
       }
 
-      scheduleUpdate(newFiles, deletedFiles);
+      scheduleUpdate(newFiles, deletedFiles, false, false);
     }
   }
 
@@ -332,7 +336,7 @@ public class MavenProjectsManagerWatcher {
         }
         else {
           filesToUpdate.removeAll(filesToRemove);
-          scheduleUpdate(filesToUpdate, filesToRemove);
+          scheduleUpdate(filesToUpdate, filesToRemove, false, false);
         }
       }
 
@@ -397,8 +401,14 @@ public class MavenProjectsManagerWatcher {
     private void deleteRecursively(VirtualFile f) {
       if (isRelevant(f.getPath())) deleteFile(f);
       if (f.isDirectory()) {
-        for (VirtualFile each : f.getChildren()) {
-          deleteRecursively(each);
+        // prevent reading directories content if not already cached.
+        Collection<VirtualFile> children = f instanceof NewVirtualFile
+                                           ? ((NewVirtualFile)f).getInDbChildren()
+                                           : Arrays.asList(f.getChildren());
+        for (VirtualFile each : children) {
+          if (each != NullVirtualFile.INSTANCE) {
+            deleteRecursively(each);
+          }
         }
       }
     }

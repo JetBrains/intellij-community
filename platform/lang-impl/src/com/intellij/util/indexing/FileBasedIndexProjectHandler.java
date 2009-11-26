@@ -52,7 +52,7 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
       startupManager.registerPreStartupActivity(new Runnable() {
         public void run() {
           final RefreshCacheUpdater refreshUpdater = new RefreshCacheUpdater();
-          final UnindexedFilesUpdater rootsChangeUpdater = new UnindexedFilesUpdater(project, rootManager, index);
+          final UnindexedFilesUpdater rootsChangeUpdater = new UnindexedFilesUpdater(project, index);
 
           startupManager.registerCacheUpdater(rootsChangeUpdater);
           rootManager.registerRootsChangeUpdater(rootsChangeUpdater);

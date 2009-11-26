@@ -32,6 +32,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -97,6 +98,8 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
   private final MessageBus myBus;
   private static final Key<Boolean> HIGHLIGHTER_WAS_NOT_FOUND_KEY = Key.create("com.intellij.find.impl.FindManagerImpl.HighlighterNotFoundKey");
   @NonNls private static final String FIND_USAGES_MANAGER_ELEMENT = "FindUsagesManager";
+  public static final boolean ourHasSearchInCommentsAndLiterals = ApplicationManagerEx.getApplicationEx().isInternal(); // TODO: maxim
+  FindDialog myFindDialog;
 
   public FindManagerImpl(Project project, FindSettings findSettings, UsageViewManager anotherManager, MessageBus bus) {
     myProject = project;
@@ -162,31 +165,34 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
   }
 
   public void showFindDialog(@NotNull final FindModel model, @NotNull final Runnable okHandler) {
-    FindDialog findDialog = new FindDialog(myProject, model, new Runnable(){
-      public void run() {
-        String stringToFind = model.getStringToFind();
-        if (stringToFind == null || stringToFind.length() == 0){
-          return;
-        }
-        FindSettings.getInstance().addStringToFind(stringToFind);
-        if (!model.isMultipleFiles()){
-          setFindWasPerformed();
-        }
-        if (model.isReplaceState()){
-          FindSettings.getInstance().addStringToReplace(model.getStringToReplace());
-        }
-        if (model.isMultipleFiles() && !model.isProjectScope()){
-          FindSettings.getInstance().addDirectory(model.getDirectoryName());
 
-          if (model.getDirectoryName()!=null) {
-            myFindInProjectModel.setWithSubdirectories(model.isWithSubdirectories());
+    if(myFindDialog==null || Disposer.isDisposed(myFindDialog.getDisposable())){
+      myFindDialog = new FindDialog(myProject, model, new Runnable(){
+        public void run() {
+          String stringToFind = model.getStringToFind();
+          if (stringToFind == null || stringToFind.length() == 0){
+            return;
           }
+          FindSettings.getInstance().addStringToFind(stringToFind);
+          if (!model.isMultipleFiles()){
+            setFindWasPerformed();
+          }
+          if (model.isReplaceState()){
+            FindSettings.getInstance().addStringToReplace(model.getStringToReplace());
+          }
+          if (model.isMultipleFiles() && !model.isProjectScope()){
+            FindSettings.getInstance().addDirectory(model.getDirectoryName());
+
+            if (model.getDirectoryName()!=null) {
+              myFindInProjectModel.setWithSubdirectories(model.isWithSubdirectories());
+            }
+          }
+          okHandler.run();
         }
-        okHandler.run();
-      }
-    });
-    findDialog.setModal(false);
-    findDialog.show();
+      });
+      myFindDialog.setModal(false);
+    }
+    myFindDialog.show();
   }
 
   @NotNull
@@ -565,7 +571,8 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
 
     if (Character.isUpperCase(foundString.charAt(0))) {
       buffer.append(Character.toUpperCase(toReplace.charAt(0)));
-    } else {
+    }
+    else {
       buffer.append(Character.toLowerCase(toReplace.charAt(0)));
     }
     if (toReplace.length() == 1) return buffer.toString();
@@ -585,9 +592,11 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
 
     if (isTailUpper) {
       buffer.append(toReplace.substring(1).toUpperCase());
-    } else if (isTailLower) {
+    }
+    else if (isTailLower) {
       buffer.append(toReplace.substring(1).toLowerCase());
-    } else {
+    }
+    else {
       buffer.append(toReplace.substring(1));
     }
     return buffer.toString();

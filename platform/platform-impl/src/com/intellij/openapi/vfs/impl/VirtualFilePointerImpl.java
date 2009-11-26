@@ -37,21 +37,21 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
   private final VirtualFileManager myVirtualFileManager;
   private final VirtualFilePointerListener myListener;
   private boolean disposed = false;
-  private int useCount;
+  int useCount;
   private long myLastUpdated = -1;
 
   private static final Key<Throwable> CREATE_TRACE = Key.create("CREATION_TRACE");
   private static final Key<Throwable> KILL_TRACE = Key.create("KILL_TRACE");
   private static final boolean TRACE_CREATION = /*true || */LOG.isDebugEnabled();
 
-  VirtualFilePointerImpl(VirtualFile file, String url, VirtualFileManager virtualFileManager, VirtualFilePointerListener listener, Disposable parentDisposable) {
+  VirtualFilePointerImpl(VirtualFile file, String url, VirtualFileManager virtualFileManager, VirtualFilePointerListener listener, @NotNull Disposable parentDisposable) {
     myFile = file;
     myUrl = url;
     myVirtualFileManager = virtualFileManager;
     myListener = listener;
     useCount = 0;
     if (TRACE_CREATION) {
-      putUserData(CREATE_TRACE, new Throwable("parent ="+parentDisposable));
+      putUserData(CREATE_TRACE, new Throwable("parent = '"+parentDisposable+"' ("+parentDisposable.getClass()+")"));
     }
   }
 

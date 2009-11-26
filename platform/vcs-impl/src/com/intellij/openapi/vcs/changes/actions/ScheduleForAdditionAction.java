@@ -73,8 +73,8 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
     if (dataContext == null) {
       return null;
     }
-    final Project project = LangDataKeys.PROJECT.getData(dataContext);
-    final VirtualFile file = project == null ? null : LangDataKeys.VIRTUAL_FILE.getData(dataContext);
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final VirtualFile file = project == null ? null : PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
     if (file != null && FileStatusManager.getInstance(project).getStatus(file) == FileStatus.UNKNOWN) {
       return file;
     }

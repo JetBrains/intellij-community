@@ -418,6 +418,10 @@ public class StringUtil {
   }
 
   public static void escapeStringCharacters(int length, final String str, @NotNull @NonNls StringBuilder buffer) {
+    escapeStringCharacters(length, str, "\"", buffer);
+  }
+
+  public static StringBuilder escapeStringCharacters(int length, final String str, String additionalChars, @NotNull @NonNls StringBuilder buffer) {
     for (int idx = 0; idx < length; idx++) {
       char ch = str.charAt(idx);
       switch (ch) {
@@ -441,16 +445,15 @@ public class StringUtil {
           buffer.append("\\r");
           break;
 
-        case'\"':
-          buffer.append("\\\"");
-          break;
-
         case'\\':
           buffer.append("\\\\");
           break;
 
         default:
-          if (Character.isISOControl(ch)) {
+          if (additionalChars != null && additionalChars.indexOf(ch) > -1) {
+            buffer.append("\\").append(ch);
+          }
+          else if (Character.isISOControl(ch)) {
             String hexCode = Integer.toHexString(ch).toUpperCase();
             buffer.append("\\u");
             int paddingCount = 4 - hexCode.length();
@@ -464,6 +467,7 @@ public class StringUtil {
           }
       }
     }
+    return buffer;
   }
 
   @NotNull public static String escapeStringCharacters(@NotNull String s) {
@@ -1515,5 +1519,9 @@ public class StringUtil {
     if (s1 == null) return 1;
     if (s2 == null) return -1;
     return s1.compareTo(s2);
+  }
+
+  public static String tail(final String s, final int idx) {
+    return idx >= s.length() ? "" : s.substring(idx, s.length());
   }
 }

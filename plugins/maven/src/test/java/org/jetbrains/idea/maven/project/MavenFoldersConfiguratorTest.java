@@ -213,7 +213,7 @@ public class MavenFoldersConfiguratorTest extends MavenImportingTestCase {
     assertEquals(1, count[0]);
   }
 
-  private void updateProjectFolders() throws MavenException {
+  private void updateProjectFolders() {
     MavenFoldersImporter.updateProjectFolders(myProject, false);
   }
 }

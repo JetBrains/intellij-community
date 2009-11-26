@@ -37,7 +37,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
-import org.jetbrains.idea.maven.project.MavenException;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -187,6 +186,8 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   private void assertModuleLibDepPath(LibraryOrderEntry lib, OrderRootType type, List<String> paths) {
     if (paths == null) return;
     assertUnorderedElementsAreEqual(lib.getUrls(type), ArrayUtil.toStringArray(paths));
+    // also check the library because it may contain slight different set of urls (e.g. with duplicates)
+    assertUnorderedElementsAreEqual(lib.getLibrary().getUrls(type), ArrayUtil.toStringArray(paths));
   }
 
   protected void assertModuleLibDepScope(String moduleName, String depName, DependencyScope scope) {
@@ -319,24 +320,24 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     return ModuleRootManager.getInstance(getModule(module));
   }
 
-  protected void importProject(String xml) throws IOException, MavenException {
+  protected void importProject(String xml) throws IOException{
     createProjectPom(xml);
     importProject();
   }
 
-  protected void importProject() throws MavenException {
+  protected void importProject() {
     importProjectWithProfiles();
   }
 
-  protected void importProjectWithProfiles(String... profiles) throws MavenException {
+  protected void importProjectWithProfiles(String... profiles) {
     doImportProjects(Collections.singletonList(myProjectPom), profiles);
   }
 
-  protected void importProject(VirtualFile file) throws MavenException {
+  protected void importProject(VirtualFile file)  {
     importProjects(file);
   }
 
-  protected void importProjects(VirtualFile... files) throws MavenException {
+  protected void importProjects(VirtualFile... files) {
     doImportProjects(Arrays.asList(files));
   }
 

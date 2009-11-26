@@ -168,6 +168,11 @@ public class PsiViewerDialog extends DialogWrapper {
     return "#com.intellij.internal.psiView.PsiViewerDialog";
   }
 
+  @Override
+  protected String getHelpId() {
+    return "reference.psi.viewer";
+  }
+
   public JComponent getPreferredFocusedComponent() {
     return myEditor.getContentComponent();
   }
@@ -253,20 +258,33 @@ public class PsiViewerDialog extends DialogWrapper {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         myEditor.getDocument().setText(settings.text);
+        myEditor.getSelectionModel().setSelection(0, settings.text.length());
       }
     });
 
     myShowWhiteSpacesBox.setSelected(settings.showWhiteSpaces);
+    treeStructure.setShowWhiteSpaces(settings.showWhiteSpaces);
     myShowTreeNodesCheckBox.setSelected(settings.showTreeNodes);
+    treeStructure.setShowTreeNodes(settings.showTreeNodes);
 
     final ChoosePsiTypeButton typeButton = new ChoosePsiTypeButton();
     myButtonPanel.add(typeButton.createCustomComponent(myPresentation), BorderLayout.CENTER);
 
     updateDialectsCombo();
+    myDialectsComboBox.setRenderer(new DefaultListCellRenderer() {
+      @Override
+      public Component getListCellRendererComponent(JList list, Object value, int index,
+                                                    boolean isSelected, boolean cellHasFocus) {
+        final Component result = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        if (value == null) setText("<no dialect>");
+        return result;
+      }
+    });
+
     if (myDialectsComboBox.isVisible()) {
       for (int i = 0; i < myLanguageDialects.length; i++) {
         if (settings.dialect.equals(myLanguageDialects[i].toString())) {
-          myDialectsComboBox.setSelectedIndex(i);
+          myDialectsComboBox.setSelectedIndex(i+1);
           break;
         }
       }
@@ -393,6 +411,7 @@ public class PsiViewerDialog extends DialogWrapper {
       myLanguageDialects = LanguageUtil.getLanguageDialects(baseLang);
       Arrays.sort(myLanguageDialects, DIALECTS_COMPARATOR);
       model.setAll(myLanguageDialects);
+      model.add(null);
     }
     myDialectsComboBox.setModel(model);
     myDialectsComboBox.setVisible(model.getSize() > 1);

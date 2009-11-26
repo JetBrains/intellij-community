@@ -16,6 +16,8 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
@@ -33,10 +35,8 @@ public interface ArtifactsStructureConfigurableContext extends PackagingElementR
   @NotNull
   ModifiableArtifactModel getOrCreateModifiableArtifactModel();
 
-  @NotNull
+  @Nullable
   ManifestFileConfiguration getManifestFile(CompositePackagingElement<?> element, ArtifactType artifactType);
-
-  boolean isManifestFile(String path);
 
   CompositePackagingElement<?> getRootElement(@NotNull Artifact artifact);
 
@@ -49,4 +49,11 @@ public interface ArtifactsStructureConfigurableContext extends PackagingElementR
 
   @Nullable
   ModifiableModuleModel getModifiableModuleModel();
+
+  void queueValidation(Artifact artifact);
+
+  @NotNull
+  ArtifactProjectStructureElement getOrCreateArtifactElement(@NotNull Artifact artifact);
+
+  ModifiableRootModel getOrCreateModifiableRootModel(Module module);
 }

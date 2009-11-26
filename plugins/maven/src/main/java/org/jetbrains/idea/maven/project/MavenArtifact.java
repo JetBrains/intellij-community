@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.handler.ArtifactHandler;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.embedder.CustomArtifact;
 import static org.jetbrains.idea.maven.project.MavenId.append;
@@ -134,10 +135,10 @@ public class MavenArtifact implements Serializable {
   }
 
   public boolean isResolved() {
-    return myResolved && myFile != null && myFile.exists() && !myStubbed;
+    return myResolved && myFile.exists() && !myStubbed;
   }
 
-  @Nullable
+  @NotNull
   public File getFile() {
     return myFile;
   }

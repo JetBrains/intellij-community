@@ -34,6 +34,7 @@ public class InputStreamWrapper extends InputStream {
                             ICvsCommandStopper cvsCommandStopper,
                             ReadWriteStatistics statistics) {
     myReadThread = new ReadThread(original, cvsCommandStopper);
+    myReadThread.prepareForWait();
     ApplicationManager.getApplication().executeOnPooledThread(myReadThread);
     myReadThread.waitForStart();
     myStatistics = statistics;

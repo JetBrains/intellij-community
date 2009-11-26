@@ -131,8 +131,9 @@ public class InspectionProfileConvertor {
     return rootElement;
   }
 
-  private void renameOldDefaultsProfile() {
-    final File profileDirectory = myManager.getProfileDirectory();
+  private static void renameOldDefaultsProfile() {
+    final File profileDirectory = InspectionProfileManager.getProfileDirectory();
+    if (profileDirectory == null) return;
     final File[] files = profileDirectory.listFiles(new FileFilter() {
       public boolean accept(File pathname) {
         return pathname.getPath().endsWith(File.separator + DEFAULT_XML);

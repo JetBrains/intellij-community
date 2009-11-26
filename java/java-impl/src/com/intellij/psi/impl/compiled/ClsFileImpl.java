@@ -383,6 +383,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
       StubTree emptyTree = new StubTree(new PsiJavaFileStubImpl("corrupted.classfiles", true));
       setStubTree(emptyTree);
+      resetMirror();
       return emptyTree;
     }
 
@@ -391,8 +392,10 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       if (derefdOnLock != null) return derefdOnLock;
 
       setStubTree(stubHolder);
-      return stubHolder;
     }
+
+    resetMirror();
+    return stubHolder;
   }
 
   private void setStubTree(StubTree tree) {
@@ -400,7 +403,9 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       myStub = new SoftReference<StubTree>(tree);
       ((PsiFileStubImpl)tree.getRoot()).setPsi(this);
     }
+  }
 
+  private void resetMirror() {
     synchronized (MIRROR_LOCK) {
       myMirrorFileElement = null;
       myPackageStatement = new ClsPackageStatementImpl(this);

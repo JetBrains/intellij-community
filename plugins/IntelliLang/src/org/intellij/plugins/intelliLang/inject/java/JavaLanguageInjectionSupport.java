@@ -114,7 +114,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
         final String placeText = getPatternStringForJavaPlace(info.method, info.parameterIndex);
         final BaseInjection newInjection = injection.copy();
         newInjection.setPlaceEnabled(placeText, false);
-        return newInjection.isEnabled() ? newInjection : null;
+        return newInjection;
       }
     });
     Configuration.getInstance().replaceInjectionsWithUndo(project, newInjections, originalInjections, annotations);
@@ -203,7 +203,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
   static boolean doAddLanguageAnnotation(final Project project, final PsiModifierListOwner modifierListOwner,
                                                  final String languageId) {
     if (modifierListOwner.getModifierList() == null || !PsiUtil.getLanguageLevel(modifierListOwner).hasEnumKeywordAndAutoboxing()) return false;
-    OrderEntryFix.ensureAnnotationsJarInPath(ModuleUtil.findModuleForPsiElement(modifierListOwner), AnnotationUtil.LANGUAGE);
+    if (!OrderEntryFix.ensureAnnotationsJarInPath(ModuleUtil.findModuleForPsiElement(modifierListOwner), AnnotationUtil.LANGUAGE)) return false;
     new WriteCommandAction(project, modifierListOwner.getContainingFile()) {
       protected void run(final Result result) throws Throwable {
         final PsiAnnotation annotation = JavaPsiFacade.getInstance(project).getElementFactory()

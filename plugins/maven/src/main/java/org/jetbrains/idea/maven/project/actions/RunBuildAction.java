@@ -15,15 +15,13 @@
  */
 package org.jetbrains.idea.maven.project.actions;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
+import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.utils.MavenDataKeys;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
-import org.jetbrains.idea.maven.utils.MavenDataKeys;
-import org.jetbrains.idea.maven.utils.MavenLog;
-import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.util.List;
 
@@ -47,14 +45,9 @@ public class RunBuildAction extends MavenAction {
 
     if (!perform) return true;
 
-    try {
-      MavenRunnerParameters params = new MavenRunnerParameters(
-        true, project.getDirectory(), goals, MavenActionUtil.getProjectsManager(e).getActiveProfiles());
-      MavenRunConfigurationType.runConfiguration(MavenActionUtil.getProject(e), params, e.getDataContext());
-    }
-    catch (ExecutionException ex) {
-      MavenLog.LOG.warn(ex);
-    }
+    MavenRunnerParameters params = new MavenRunnerParameters(
+      true, project.getDirectory(), goals, MavenActionUtil.getProjectsManager(e).getActiveProfiles());
+    MavenRunConfigurationType.runConfiguration(MavenActionUtil.getProject(e), params, e.getDataContext(), null);
 
     return true;
   }

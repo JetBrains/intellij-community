@@ -22,11 +22,13 @@ import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.artifacts.actions.*;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.LibrarySourceItem;
+import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.ModuleOutputSourceItem;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.SourceItemsTree;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.Splitter;
@@ -35,6 +37,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.artifacts.ModifiableArtifact;
@@ -44,6 +47,7 @@ import com.intellij.packaging.elements.PackagingElementFactory;
 import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.elements.ArchivePackagingElement;
+import com.intellij.packaging.impl.elements.ManifestFileUtil;
 import com.intellij.packaging.ui.ManifestFileConfiguration;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
@@ -111,7 +115,6 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     });
     setOutputPath(outputPath);
     myValidationManager = new ArtifactValidationManagerImpl(this);
-    myContext.setValidationManager(myValidationManager);
     updateShowContentCheckbox();
   }
 
@@ -174,7 +177,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   }
 
   public void queueValidation() {
-    myValidationManager.queueValidation();
+    myContext.queueValidation();
   }
 
   public JComponent createMainComponent() {
@@ -379,10 +382,26 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     myLayoutTreeComponent.putIntoDefaultLocations(Collections.singletonList(new LibrarySourceItem(library)));
   }
 
-  public void addToClasspath(CompositePackagingElement<?> element, List<String> classpath) {
+  public void putModuleIntoDefaultLocation(@NotNull Module module) {
+    myLayoutTreeComponent.putIntoDefaultLocations(Collections.singletonList(new ModuleOutputSourceItem(module)));
+  }
+
+  public void addToClasspath(final CompositePackagingElement<?> element, List<String> classpath) {
     myLayoutTreeComponent.saveElementProperties();
-    final ManifestFileConfiguration manifest = myContext.getManifestFile(element, getArtifact().getArtifactType());
-    manifest.addToClasspath(classpath);
+    ManifestFileConfiguration manifest = myContext.getManifestFile(element, getArtifact().getArtifactType());
+    if (manifest == null) {
+      final VirtualFile file = ManifestFileUtil.showDialogAndCreateManifest(myContext, element);
+      if (file == null) {
+        return;
+      }
+
+      ManifestFileUtil.addManifestFileToLayout(file.getPath(), myContext, element);
+      manifest = myContext.getManifestFile(element, getArtifact().getArtifactType());
+    }
+
+    if (manifest != null) {
+      manifest.addToClasspath(classpath);
+    }
     myLayoutTreeComponent.resetElementProperties();
   }
 
@@ -398,6 +417,10 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     final CompositePackagingElement<?> newRootElement = artifactType.createRootElement(getArtifact().getName());
     ArtifactUtil.copyChildren(oldRootElement, newRootElement, myProject);
     myLayoutTreeComponent.setRootElement(newRootElement);
+  }
+
+  public ArtifactValidationManagerImpl getValidationManager() {
+    return myValidationManager;
   }
 
   private class MyDataProvider implements TypeSafeDataProvider {

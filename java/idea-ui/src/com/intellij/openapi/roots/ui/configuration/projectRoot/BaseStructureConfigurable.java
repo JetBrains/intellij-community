@@ -30,10 +30,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureDaemonAnalyzer;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemDescription;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemsHolder;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.*;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.ActionCallback;
@@ -77,8 +74,20 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
 
   public void init(StructureConfigurableContext context) {
     myContext = context;
-    myContext.getDaemonAnalyzer().addListener(new Runnable() {
-      public void run() {
+    myContext.getDaemonAnalyzer().addListener(new ProjectStructureDaemonAnalyzerListener() {
+      public void usagesCollected(@NotNull ProjectStructureElement containingElement) {
+        updateTree();
+      }
+
+      public void problemsChanged(@NotNull ProjectStructureElement element) {
+        updateTree();
+      }
+
+      public void allProblemsChanged() {
+        updateTree();
+      }
+
+      private void updateTree() {
         if (!myTree.isShowing()) return;
 
         myTree.revalidate();
@@ -173,7 +182,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
             if (projectStructureElement != null) {
               final ProjectStructureDaemonAnalyzer daemonAnalyzer = myContext.getDaemonAnalyzer();
               final boolean unused = daemonAnalyzer.isUnused(projectStructureElement);
-              final ProjectStructureProblemsHolder problemsHolder = daemonAnalyzer.getProblemsHolder(projectStructureElement);
+              final ProjectStructureProblemsHolderImpl problemsHolder = daemonAnalyzer.getProblemsHolder(projectStructureElement);
               if (problemsHolder == null) {
                 daemonAnalyzer.queueUpdate(projectStructureElement, true, false);
               }

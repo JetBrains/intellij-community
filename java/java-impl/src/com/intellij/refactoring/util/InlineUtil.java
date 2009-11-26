@@ -277,6 +277,30 @@ public class InlineUtil {
     return TailCallType.None;
   }
 
+  public static void substituteTypeParams(PsiElement scope, final PsiSubstitutor substitutor, final PsiElementFactory factory) {
+    scope.accept(new JavaRecursiveElementVisitor() {
+      @Override public void visitTypeElement(PsiTypeElement typeElement) {
+        PsiType type = typeElement.getType();
+
+        if (type instanceof PsiClassType) {
+          JavaResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
+          PsiElement resolved = resolveResult.getElement();
+          if (resolved instanceof PsiTypeParameter) {
+            PsiType newType = resolveResult.getSubstitutor().putAll(substitutor).substitute((PsiTypeParameter)resolved);
+            try {
+              typeElement.replace(factory.createTypeElement(newType));
+              return;
+            }
+            catch (IncorrectOperationException e) {
+              LOG.error(e);
+            }
+          }
+        }
+        super.visitTypeElement(typeElement);
+      }
+    });
+  }
+
   public enum TailCallType {
     None, Simple, Return
   }

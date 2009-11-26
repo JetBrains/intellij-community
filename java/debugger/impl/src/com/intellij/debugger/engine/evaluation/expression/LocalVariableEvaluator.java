@@ -20,6 +20,7 @@
  */
 package com.intellij.debugger.engine.evaluation.expression;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -28,13 +29,11 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.ui.impl.watch.LocalVariableDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.sun.jdi.ClassNotLoadedException;
-import com.sun.jdi.InvalidTypeException;
-import com.sun.jdi.Type;
-import com.sun.jdi.Value;
+import com.sun.jdi.*;
+
+import java.util.List;
 
 class LocalVariableEvaluator implements Evaluator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.evaluation.expression.LocalVariableEvaluator");
@@ -43,10 +42,15 @@ class LocalVariableEvaluator implements Evaluator {
   private EvaluationContextImpl myContext;
   private LocalVariableProxyImpl myEvaluatedVariable;
   private final boolean myIsJspSpecial;
+  private int myParameterIndex = -1;
 
   public LocalVariableEvaluator(String localVariableName, boolean isJspSpecial) {
     myLocalVariableName = localVariableName;
     myIsJspSpecial = isJspSpecial;
+  }
+
+  public void setParameterIndex(int parameterIndex) {
+    myParameterIndex = parameterIndex;
   }
 
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
@@ -56,18 +60,40 @@ class LocalVariableEvaluator implements Evaluator {
     }
 
     try {
-      for(;;) {
-        LocalVariableProxyImpl local = frameProxy.visibleVariableByName(myLocalVariableName);
-        if (local != null) {
-          myEvaluatedVariable = local;
-          myContext = context;
-          return frameProxy.getValue(local);
+      ThreadReferenceProxyImpl threadProxy = null;
+      int lastFrameIndex = -1;
+
+      while (true) {
+        try {
+          LocalVariableProxyImpl local = frameProxy.visibleVariableByName(myLocalVariableName);
+          if (local != null) {
+            myEvaluatedVariable = local;
+            myContext = context;
+            return frameProxy.getValue(local);
+          }
+        }
+        catch (EvaluateException e) {
+          if (!(e.getCause() instanceof AbsentInformationException)) {
+            throw e;
+          }
+          if (myParameterIndex < 0) {
+            throw e;
+          }
+          final List<Value> values = frameProxy.getArgumentValues();
+          if (values.isEmpty() || myParameterIndex >= values.size()) {
+            throw e;
+          }
+          return values.get(myParameterIndex);
         }
 
-        ThreadReferenceProxyImpl threadProxy = frameProxy.threadProxy();
-        if(myIsJspSpecial && frameProxy.getFrameIndex() < threadProxy.frameCount() - 1) {
-          if(frameProxy.getFrameIndex() < threadProxy.frameCount() - 1) {
-            frameProxy = threadProxy.frame(frameProxy.getFrameIndex() + 1);
+        if (myIsJspSpecial) {
+          if (threadProxy == null /* initialize it lazily */) {
+            threadProxy = frameProxy.threadProxy();
+            lastFrameIndex = threadProxy.frameCount() - 1;
+          }
+          final int currentFrameIndex = frameProxy.getFrameIndex();
+          if (currentFrameIndex < lastFrameIndex) {
+            frameProxy = threadProxy.frame(currentFrameIndex + 1);
             continue;
           }
         }

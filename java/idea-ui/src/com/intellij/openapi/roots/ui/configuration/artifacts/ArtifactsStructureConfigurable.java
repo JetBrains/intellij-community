@@ -23,22 +23,35 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.BaseStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditorListener;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.*;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.ui.MasterDetailsStateService;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.elements.CompositePackagingElement;
+import com.intellij.packaging.impl.artifacts.ArtifactUtil;
+import com.intellij.packaging.impl.artifacts.PackagingElementPath;
+import com.intellij.packaging.impl.artifacts.PackagingElementProcessor;
+import com.intellij.packaging.impl.elements.LibraryElementType;
+import com.intellij.packaging.impl.elements.LibraryPackagingElement;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author nik
@@ -56,17 +69,99 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     MasterDetailsStateService.getInstance(project).register("ArtifactsStructureConfigurable.UI", this);
   }
 
-  @Override
-  public void init(StructureConfigurableContext context) {
+  public void init(StructureConfigurableContext context, ModuleStructureConfigurable moduleStructureConfigurable,
+                   ProjectLibrariesConfigurable projectLibrariesConfig, GlobalLibrariesConfigurable globalLibrariesConfig) {
     super.init(context);
     myPackagingEditorContext = new ArtifactsStructureConfigurableContextImpl(myContext, myProject, myDefaultSettings, new ArtifactAdapter() {
       @Override
       public void artifactAdded(@NotNull Artifact artifact) {
         final MyNode node = addArtifactNode(artifact);
         selectNodeInTree(node);
-        myContext.getDaemonAnalyzer().queueUpdate(new ArtifactProjectStructureElement(myContext, myPackagingEditorContext, artifact));
+        myContext.getDaemonAnalyzer().queueUpdate(myPackagingEditorContext.getOrCreateArtifactElement(artifact));
       }
     });
+
+    context.getModulesConfigurator().addAllModuleChangeListener(new ModuleEditor.ChangeListener() {
+      public void moduleStateChanged(ModifiableRootModel moduleRootModel) {
+        for (ProjectStructureElement element : getProjectStructureElements()) {
+          myContext.getDaemonAnalyzer().queueUpdate(element, true, false);
+        }
+      }
+    });
+
+    final ItemsChangeListener listener = new ItemsChangeListener() {
+      public void itemChanged(@Nullable Object deletedItem) {
+        if (deletedItem instanceof Library || deletedItem instanceof Module) {
+          onElementDeleted();
+        }
+      }
+
+      public void itemsExternallyChanged() {
+      }
+    };
+    moduleStructureConfigurable.addItemsChangeListener(listener);
+    projectLibrariesConfig.addItemsChangeListener(listener);
+    globalLibrariesConfig.addItemsChangeListener(listener);
+
+    context.addLibraryEditorListener(new LibraryEditorListener() {
+      public void libraryRenamed(@NotNull Library library, String oldName, String newName) {
+        final Artifact[] artifacts = myPackagingEditorContext.getArtifactModel().getArtifacts();
+        for (Artifact artifact : artifacts) {
+          updateLibraryElements(artifact, library, oldName, newName);
+        }
+      }
+
+    });
+  }
+
+  private void updateLibraryElements(final Artifact artifact, final Library library, final String oldName, final String newName) {
+    if (ArtifactUtil.processPackagingElements(myPackagingEditorContext.getRootElement(artifact), LibraryElementType.LIBRARY_ELEMENT_TYPE,
+                                              new PackagingElementProcessor<LibraryPackagingElement>() {
+                                                @Override
+                                                public boolean process(@NotNull LibraryPackagingElement element,
+                                                                       @NotNull PackagingElementPath path) {
+                                                  return !isResolvedToLibrary(element, library, oldName);
+                                                }
+                                              }, myPackagingEditorContext, false, artifact.getArtifactType())) {
+      return;
+    }
+    myPackagingEditorContext.editLayout(artifact, new Runnable() {
+      public void run() {
+        final ModifiableArtifact modifiableArtifact = myPackagingEditorContext.getOrCreateModifiableArtifactModel().getOrCreateModifiableArtifact(artifact);
+        ArtifactUtil.processPackagingElements(modifiableArtifact, LibraryElementType.LIBRARY_ELEMENT_TYPE, new PackagingElementProcessor<LibraryPackagingElement>() {
+          @Override
+          public boolean process(@NotNull LibraryPackagingElement element, @NotNull PackagingElementPath path) {
+            if (isResolvedToLibrary(element, library, oldName)) {
+              element.setLibraryName(newName);
+            }
+            return true;
+          }
+        }, myPackagingEditorContext, false);
+      }
+    });
+    final ArtifactEditorImpl artifactEditor = myPackagingEditorContext.getArtifactEditor(artifact);
+    if (artifactEditor != null) {
+      artifactEditor.rebuildTries();
+    }
+  }
+
+  private static boolean isResolvedToLibrary(LibraryPackagingElement element, Library library, String name) {
+    if (!element.getLibraryName().equals(name)) {
+      return false;
+    }
+    
+    final LibraryTable table = library.getTable();
+    if (table != null) {
+      return table.getTableLevel().equals(element.getLevel());
+    }
+    return element.getLevel().equals(LibraryTableImplUtil.MODULE_LEVEL);
+  }
+
+  private void onElementDeleted() {
+    for (ArtifactEditorImpl editor : myPackagingEditorContext.getArtifactEditors()) {
+      editor.getSourceItemsTree().rebuildTree();
+      editor.queueValidation();
+    }
   }
 
   @Nls
@@ -87,13 +182,13 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   protected Collection<? extends ProjectStructureElement> getProjectStructureElements() {
     final List<ProjectStructureElement> elements = new ArrayList<ProjectStructureElement>();
     for (Artifact artifact : myPackagingEditorContext.getArtifactModel().getArtifacts()) {
-      elements.add(new ArtifactProjectStructureElement(myContext, myPackagingEditorContext, artifact));
+      elements.add(myPackagingEditorContext.getOrCreateArtifactElement(artifact));
     }
     return elements;
   }
 
   private MyNode addArtifactNode(final Artifact artifact) {
-    final MyNode node = new MyNode(new ArtifactConfigurable(artifact, myPackagingEditorContext, TREE_UPDATER, myContext));
+    final MyNode node = new MyNode(new ArtifactConfigurable(artifact, myPackagingEditorContext, TREE_UPDATER));
     addNode(node, myRoot);
     return node;
   }
@@ -216,7 +311,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   @Override
   protected void removeArtifact(Artifact artifact) {
     myPackagingEditorContext.getOrCreateModifiableArtifactModel().removeArtifact(artifact);
-    myContext.getDaemonAnalyzer().removeElement(new ArtifactProjectStructureElement(myContext, myPackagingEditorContext, artifact));
+    myContext.getDaemonAnalyzer().removeElement(myPackagingEditorContext.getOrCreateArtifactElement(artifact));
   }
 
   protected void processRemovedItems() {
@@ -240,7 +335,6 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   public Icon getIcon() {
     return null;
   }
-
 
   private class AddArtifactAction extends DumbAwareAction {
     private final ArtifactType myType;

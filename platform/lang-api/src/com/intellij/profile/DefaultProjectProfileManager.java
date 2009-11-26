@@ -59,6 +59,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
   protected Map<String, Profile> myProfiles = new HashMap<String, Profile>();
   protected final DependencyValidationManager myHolder;
   protected List<ProfileChangeAdapter> myProfilesListener = new ArrayList<ProfileChangeAdapter>();
+  @NonNls private static final String PROJECT_DEFAULT_PROFILE_NAME = "Project Default";
 
   public DefaultProjectProfileManager(final Project project, final String profileType, final DependencyValidationManager holder) {
     myProject = project;
@@ -124,11 +125,13 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
       if (projectProfile != null) {
         final Element profileElement = new Element(PROFILE);
         projectProfile.writeExternal(profileElement);
-        boolean hasSmthToSave = sortedProfiles.size() > 1;
-        for (Object child : profileElement.getChildren()) {
-          if (!((Element)child).getName().equals("option")) {
-            hasSmthToSave = true;
-            break;
+        boolean hasSmthToSave = sortedProfiles.size() > 1 || !Comparing.strEqual(PROJECT_PROFILE, PROJECT_DEFAULT_PROFILE_NAME);
+        if (!hasSmthToSave) {
+          for (Object child : profileElement.getChildren()) {
+            if (!((Element)child).getName().equals("option")) {
+              hasSmthToSave = true;
+              break;
+            }
           }
         }
         if (!hasSmthToSave) continue;
@@ -188,13 +191,12 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
   public Profile getProjectProfileImpl(){
     if (isPlatform() || !USE_PROJECT_PROFILE) return myApplicationProfileManager.getRootProfile();
     if (PROJECT_PROFILE == null || myProfiles.isEmpty()){
-      @NonNls final String projectProfileName = "Project Default";
-      setProjectProfile(projectProfileName);
+      setProjectProfile(PROJECT_DEFAULT_PROFILE_NAME);
       final Profile projectProfile = myApplicationProfileManager.createProfile();
       projectProfile.copyFrom(myApplicationProfileManager.getRootProfile());
       projectProfile.setLocal(false);
-      projectProfile.setName(projectProfileName);
-      myProfiles.put(projectProfileName, projectProfile);
+      projectProfile.setName(PROJECT_DEFAULT_PROFILE_NAME);
+      myProfiles.put(PROJECT_DEFAULT_PROFILE_NAME, projectProfile);
     } else if (!myProfiles.containsKey(PROJECT_PROFILE)){
       final String projectProfileAttempt = myProfiles.keySet().iterator().next();
       setProjectProfile(projectProfileAttempt);

@@ -340,7 +340,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
   public void disposeUIResources() {
     super.disposeUIResources();
-    myFacetEditorFacade.clearMaps();
+    myFacetEditorFacade.clearMaps(true);
     myContext.myModulesConfigurator.disposeUIResources();
     ModuleStructureConfigurable.super.disposeUIResources();
   }
@@ -387,24 +387,8 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     myContext.myModulesConfigurator.getModulesConfigurable().setStartModuleWizardOnShow(show);
   }
 
-
-
   public Project getProject() {
     return myProject;
-  }
-
-
-  public void selectModuleTab(@NotNull final String moduleName, final String tabName) {
-    final MyNode node = findModuleNode(ModuleManager.getInstance(myProject).findModuleByName(moduleName));
-    if (node != null) {
-      selectNodeInTree(node);
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          ModuleConfigurable moduleConfigurable = (ModuleConfigurable)node.getConfigurable();
-          moduleConfigurable.getModuleEditor().setSelectedTabName(tabName);
-        }
-      });
-    }
   }
 
   public void selectOrderEntry(@NotNull final Module module, @Nullable final OrderEntry orderEntry) {

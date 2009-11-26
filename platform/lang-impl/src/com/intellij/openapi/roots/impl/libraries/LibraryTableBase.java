@@ -261,6 +261,9 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
           myLibraries.add(library);
           fireLibraryAdded(library);
         }
+        else {
+          Disposer.dispose(library);
+        }
       }
     }
 

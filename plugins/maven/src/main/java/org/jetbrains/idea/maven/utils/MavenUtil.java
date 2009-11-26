@@ -19,6 +19,9 @@ import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
@@ -150,6 +153,11 @@ public class MavenUtil {
     return LaterInvocator.isInModalContext();
   }
 
+  public static void showError(Project project, String title, Throwable e) {
+    MavenLog.LOG.error(e);
+    Notifications.Bus.notify(new Notification("Maven", title, e.getMessage(), NotificationType.ERROR), project);
+  }
+
   public static Properties getSystemProperties() {
     Properties result = (Properties)System.getProperties().clone();
     for (String each : new THashSet<String>((Set)result.keySet())) {
@@ -238,22 +246,11 @@ public class MavenUtil {
     return "<img src=\"" + url + "\"> ";
   }
 
-  public static void applyMavenProjectFileTemplate(Project project, VirtualFile file, MavenId projectId) throws IOException {
-    runOrApplyMavenProjectFileTemplate(project, file, projectId, null, false);
-  }
-
-  public static void runMavenProjectWithParentFileTemplate(Project project,
-                                                           VirtualFile file,
-                                                           MavenId projectId,
-                                                           MavenId parentId) throws IOException {
-    runOrApplyMavenProjectFileTemplate(project, file, projectId, parentId, true);
-  }
-
-  private static void runOrApplyMavenProjectFileTemplate(Project project,
-                                                         VirtualFile file,
-                                                         MavenId projectId,
-                                                         MavenId parentId,
-                                                         boolean interactive) throws IOException {
+  public static void runOrApplyMavenProjectFileTemplate(Project project,
+                                                        VirtualFile file,
+                                                        MavenId projectId,
+                                                        MavenId parentId,
+                                                        boolean interactive) throws IOException {
     Properties properties = new Properties();
     Properties conditions = new Properties();
     properties.setProperty("GROUP_ID", projectId.getGroupId());
@@ -308,6 +305,7 @@ public class MavenUtil {
     if (interactive) {
       OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file);
       Editor editor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+      editor.getDocument().setText("");
       TemplateManager.getInstance(project).startTemplate(editor, template);
     }
     else {

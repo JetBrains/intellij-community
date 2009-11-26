@@ -18,7 +18,6 @@ package com.intellij.openapi.roots.ui.configuration.artifacts;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectStructureElementConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
@@ -41,13 +40,12 @@ public class ArtifactConfigurable extends ProjectStructureElementConfigurable<Ar
   private boolean myIsInUpdateName;
   private ProjectStructureElement myProjectStructureElement;
 
-  public ArtifactConfigurable(Artifact originalArtifact, ArtifactsStructureConfigurableContextImpl artifactsStructureContext, final Runnable updateTree,
-                              StructureConfigurableContext context) {
+  public ArtifactConfigurable(Artifact originalArtifact, ArtifactsStructureConfigurableContextImpl artifactsStructureContext, final Runnable updateTree) {
     super(true, updateTree);
     myOriginalArtifact = originalArtifact;
     myArtifactsStructureContext = artifactsStructureContext;
     myEditor = artifactsStructureContext.getOrCreateEditor(originalArtifact);
-    myProjectStructureElement = new ArtifactProjectStructureElement(context, myArtifactsStructureContext, myOriginalArtifact);
+    myProjectStructureElement = myArtifactsStructureContext.getOrCreateArtifactElement(myOriginalArtifact);
   }
 
   public void setDisplayName(String name) {
@@ -125,7 +123,7 @@ public class ArtifactConfigurable extends ProjectStructureElementConfigurable<Ar
     artifactTypeBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final ArtifactType selected = (ArtifactType)artifactTypeBox.getSelectedItem();
-        if (!Comparing.equal(selected, getArtifact().getArtifactType())) {
+        if (selected != null && !Comparing.equal(selected, getArtifact().getArtifactType())) {
           myEditor.setArtifactType(selected);
         }
       }

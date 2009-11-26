@@ -19,6 +19,7 @@ import com.intellij.facet.Facet;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.ModuleLibraryOrderEntryImpl;
@@ -50,7 +51,6 @@ import java.util.List;
 public class ArtifactEditorContextImpl implements ArtifactEditorContext {
   private final ArtifactsStructureConfigurableContext myParent;
   private final ArtifactEditorEx myEditor;
-  private ArtifactValidationManagerImpl myValidationManager;
 
   public ArtifactEditorContextImpl(ArtifactsStructureConfigurableContext parent, ArtifactEditorEx editor) {
     myParent = parent;
@@ -67,12 +67,12 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
   }
 
   @NotNull
-  public ManifestFileConfiguration getManifestFile(CompositePackagingElement<?> element, ArtifactType artifactType) {
-    return myParent.getManifestFile(element, artifactType);
+  public ModifiableRootModel getOrCreateModifiableRootModel(@NotNull Module module) {
+    return myParent.getOrCreateModifiableRootModel(module);
   }
 
-  public boolean isManifestFile(String path) {
-    return myParent.isManifestFile(path);
+  public ManifestFileConfiguration getManifestFile(CompositePackagingElement<?> element, ArtifactType artifactType) {
+    return myParent.getManifestFile(element, artifactType);
   }
 
   @NotNull
@@ -154,21 +154,17 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
     return myParent.getFacetsProvider();
   }
 
+  public Library findLibrary(@NotNull String level, @NotNull String libraryName) {
+    return myParent.findLibrary(level, libraryName);
+  }
+
   public void queueValidation() {
-    myEditor.queueValidation();
+    myParent.queueValidation(getArtifact());
   }
 
   @NotNull
   public ArtifactType getArtifactType() {
     return myEditor.getArtifact().getArtifactType();
-  }
-
-  public ArtifactValidationManagerImpl getValidationManager() {
-    return myValidationManager;
-  }
-
-  public void setValidationManager(ArtifactValidationManagerImpl validationManager) {
-    myValidationManager = validationManager;
   }
 
   public List<Module> chooseModules(final List<Module> modules, final String title) {

@@ -155,6 +155,10 @@ public class InlineSuperClassTest extends MultiFileTestCase {
     doTest();
   }
 
+  public void testReplaceGenericsInside() throws Exception {
+    doTest();
+  }
+
   public void testMultipleSubclasses() throws Exception {
     doTest(new PerformAction() {
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {

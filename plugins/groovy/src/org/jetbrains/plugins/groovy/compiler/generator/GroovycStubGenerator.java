@@ -141,7 +141,13 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
             deleteChildrenRecursively(child);
           }
           TranslatingCompilerFilesMonitor.removeSourceInfo(child);
-          child.delete(this);
+          try {
+            child.delete(this);
+          }
+          catch (IOException ignored) {
+            //may be a leaked handle from some non-completely terminated compiler process, or compiler caches, or something else
+            //not a big deal, we'll delete it next time
+          }
         }
       }
     }.execute();

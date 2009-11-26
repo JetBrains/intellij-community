@@ -239,6 +239,8 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
 
     public StructureViewBuilder getStructureViewBuilder() {
       VirtualFile file = FileDocumentManager.getInstance().getFile(myEditor.getDocument());
+      if (file == null) return null;
+      
       final Project project = myEditor.getProject();
       LOG.assertTrue(project != null);
       return StructureViewBuilder.PROVIDER.getStructureViewBuilder(file.getFileType(), file, project);

@@ -79,7 +79,8 @@ public class PropertyUtil {
     String methodName = method.getName();
 
     if (!(methodName.startsWith("set") && methodName.length() > "set".length())) return false;
-    if (Character.isLowerCase(methodName.charAt("set".length()))) return false;
+    if (Character.isLowerCase(methodName.charAt("set".length()))
+      && (methodName.length() == "set".length() + 1 || Character.isLowerCase(methodName.charAt("set".length() + 1)))) return false;
 
     if (method.getParameterList().getParametersCount() != 1) {
       return false;

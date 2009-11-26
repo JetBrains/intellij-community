@@ -489,8 +489,10 @@ public class BackendCompilerWrapper {
         threadFuture.get();
       }
       catch (InterruptedException ignored) {
+        LOG.info("Thread interrupted", ignored);
       }
-      catch(ExecutionException ignored) {
+      catch (ExecutionException ignored) {
+        LOG.info("Thread interrupted", ignored);
       }
     }
   }

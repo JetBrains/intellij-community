@@ -95,7 +95,7 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> impleme
     }
 
     if (myDecorator != null) {
-      myDecorator.decorate(change, renderer);
+      myDecorator.decorate(change, renderer, renderer.isShowFlatten());
     }
   }
 

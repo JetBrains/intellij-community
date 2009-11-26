@@ -49,8 +49,15 @@ public class FileContentQueue {
             if (indicator != null) {
               indicator.checkCanceled();
             }
+            put(file);
+          }
 
-            addLast(file);
+          // put end-of-queue marker only if not canceled
+          try {
+            myQueue.put(new FileContent(null));
+          }
+          catch (InterruptedException e) {
+            LOG.error(e);
           }
         }
         catch (ProcessCanceledException e) {
@@ -59,22 +66,13 @@ public class FileContentQueue {
         catch (InterruptedException e) {
           LOG.error(e);
         }
-        finally {
-          try {
-            myQueue.put(new FileContent(null));
-          }
-          catch (InterruptedException e) {
-            LOG.error(e);
-          }
-        }
       }
     };
 
     ApplicationManager.getApplication().executeOnPooledThread(contentLoadingRunnable);
   }
 
-  @SuppressWarnings({"MethodOverloadsMethodOfSuperclass"})
-  protected void addLast(VirtualFile file) throws InterruptedException {
+  private void put(VirtualFile file) throws InterruptedException {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
 
     FileContent content = new FileContent(file);

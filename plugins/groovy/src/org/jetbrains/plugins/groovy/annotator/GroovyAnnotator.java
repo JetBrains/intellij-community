@@ -95,7 +95,7 @@ public class GroovyAnnotator implements Annotator {
     return node != null && PsiTreeUtil.getParentOfType(element, GrDocComment.class) != null || element instanceof GrDocComment;
   }
 
-  public void annotate(PsiElement element, AnnotationHolder holder) {
+  public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     if (element instanceof GrCodeReferenceElement) {
       checkReferenceElement(holder, (GrCodeReferenceElement)element);
     }
@@ -171,7 +171,7 @@ public class GroovyAnnotator implements Annotator {
       }
     }
     else if (element instanceof GrImportStatement) {
-      checkAnnotationList(holder, ((GrImportStatement)element).getAnnotationList());
+      checkAnnotationList(holder, ((GrImportStatement)element).getAnnotationList(), GroovyBundle.message("import.statement.cannot.have.modifiers"));
     }
     else {
       final ASTNode node = element.getNode();
@@ -218,7 +218,7 @@ public class GroovyAnnotator implements Annotator {
   private static void checkLabeledStatement(GrLabeledStatement statement, AnnotationHolder holder) {
     final String name = statement.getLabelName();
     if (ResolveUtil.resolveLabeledStatement(name, statement, true) != null) {
-      holder.createErrorAnnotation(statement.getLabel(), GroovyBundle.message("label.already.used", name));
+      holder.createWarningAnnotation(statement.getLabel(), GroovyBundle.message("label.already.used", name));
     }
   }
 
@@ -232,19 +232,17 @@ public class GroovyAnnotator implements Annotator {
       }
     }
 
-    final PsiElement targetStatement = statement.findTargetStatement();
+    final GrStatement targetStatement = statement.findTargetStatement();
     if (targetStatement == null) {
       if (statement instanceof GrContinueStatement && label == null) {
         holder.createErrorAnnotation(statement, GroovyBundle.message("continue.outside.loop"));
       }
-      else if (statement instanceof GrBreakStatement) {
-        if (label == null) {
-          holder.createErrorAnnotation(statement, GroovyBundle.message("break.outside.loop.or.switch"));
-        }
-        else if (findFirstLoop(statement) == null) {
-          holder.createErrorAnnotation(statement, GroovyBundle.message("break.outside.loop"));
-        }
+      else if (statement instanceof GrBreakStatement && label == null) {
+        holder.createErrorAnnotation(statement, GroovyBundle.message("break.outside.loop.or.switch"));
       }
+    }
+    if (statement instanceof GrBreakStatement && label != null && findFirstLoop(statement) == null) {
+      holder.createErrorAnnotation(statement, GroovyBundle.message("break.outside.loop"));
     }
   }
 
@@ -332,14 +330,16 @@ public class GroovyAnnotator implements Annotator {
       }
     }
     final GrModifierList modifierList = packageDefinition.getAnnotationList();
-    checkAnnotationList(holder, modifierList);
+    checkAnnotationList(holder, modifierList, GroovyBundle.message("package.definition.cannot.have.modifiers"));
   }
 
-  private static void checkAnnotationList(AnnotationHolder holder, @Nullable GrModifierList modifierList) {
+  private static void checkAnnotationList(AnnotationHolder holder, @Nullable GrModifierList modifierList, String message) {
     if (modifierList == null) return;
     final PsiElement[] modifiers = modifierList.getModifiers();
     for (PsiElement modifier : modifiers) {
-      holder.createErrorAnnotation(modifier, GroovyBundle.message("package.definition.cannot.have.modifiers"));
+      if (!(modifier instanceof PsiAnnotation)) {
+        holder.createErrorAnnotation(modifier, message);
+      }
     }
   }
 
@@ -425,7 +425,7 @@ public class GroovyAnnotator implements Annotator {
     for (List<GrNamedArgument> args : map.values()) {
       for (int i = 1; i < args.size(); i++) {
         GrNamedArgument namedArgument = args.get(i);
-        holder.createErrorAnnotation(namedArgument, GroovyBundle.message("duplicate.element.in.the.map"));
+        holder.createWarningAnnotation(namedArgument, GroovyBundle.message("duplicate.element.in.the.map"));
       }
     }
   }
@@ -1124,7 +1124,7 @@ public class GroovyAnnotator implements Annotator {
     for (int i = 0; i < argumentTypes.length; i++) {
       final PsiType paramType = TypesUtil.boxPrimitiveType(paramTypes[i], manager, resolveScope);
       final PsiType argType = argumentTypes[i];
-      if (!paramType.isAssignableFrom(argType)) return false;
+      if (!TypesUtil.isAssignableByMethodCallConversion(paramType, argType, manager, resolveScope)) return false;
     }
     return true;
   }

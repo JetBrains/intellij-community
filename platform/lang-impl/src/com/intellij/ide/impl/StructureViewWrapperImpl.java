@@ -16,25 +16,36 @@
 
 package com.intellij.ide.impl;
 
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewWrapper;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorProvider;
+import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -46,13 +57,15 @@ import java.awt.event.HierarchyListener;
  */
 public class StructureViewWrapperImpl implements StructureViewWrapper, Disposable {
   private final Project myProject;
-  private FileEditor myFileEditor;
+
+  private VirtualFile myFile;
 
   private StructureView myStructureView;
+  private ModuleStructureComponent myModuleStructureComponent;
 
   private final JPanel myPanel;
-
-  private final Alarm myAlarm;
+  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final String myKey = new String("DATA_SELECTOR");
 
   // -------------------------------------------------------------------------
   // Constructor
@@ -60,50 +73,61 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
 
   public StructureViewWrapperImpl(Project project) {
     myProject = project;
-    myPanel = new JPanel(new BorderLayout());
+    myPanel = new ContentPanel();
     myPanel.setBackground(UIUtil.getTreeTextBackground());
 
-    myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+    ActionManager.getInstance().addTimerListener(500, new TimerListener() {
+      public ModalityState getModalityState() {
+        return ModalityState.stateForComponent(myPanel);
+      }
+
+      public void run() {
+        checkUpdate();
+      }
+    });
 
     getComponent().addHierarchyListener(new HierarchyListener() {
       public void hierarchyChanged(HierarchyEvent e) {
         if ((e.getChangeFlags() & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0) {
-          rebuild();
+          scheduleRebuild();
         }
       }
     });
-
-    FileEditorManagerListener editorManagerListener = new FileEditorManagerAdapter() {
-      private FileEditorManagerEvent myLastEvent;
-
-      public void selectionChanged(final FileEditorManagerEvent event) {
-        myLastEvent = event;
-        myAlarm.cancelAllRequests();
-        myAlarm.addRequest(new Runnable() {
-          public void run() {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              public void run() {
-                if (myLastEvent == null) {
-                  return;
-                }
-                try {
-                  if (myProject.isDisposed()) {
-                    return; // project may have been closed
-                  }
-                  PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-                  setFileEditor(myLastEvent.getNewEditor());
-                }
-                finally {
-                  myLastEvent = null;
-                }
-              }
-            }, ModalityState.NON_MODAL);
-          }
-        }, 400);
-      }
-    };
-    FileEditorManager.getInstance(project).addFileEditorManagerListener(editorManagerListener,this);
   }
+
+  private void checkUpdate() {
+    if (myProject.isDisposed()) return;
+
+    Window mywindow = SwingUtilities.windowForComponent(myPanel);
+    if (mywindow != null && !mywindow.isActive()) return;
+
+    final KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+    final Window focusWindow = focusManager.getFocusedWindow();
+
+    if (focusWindow == mywindow) {
+      final Component owner = focusManager.getFocusOwner();
+      if (owner instanceof IdeRootPane) return;
+
+      final DataContext dataContext = DataManager.getInstance().getDataContext(owner);
+      if (dataContext.getData(myKey) == this) return;
+
+      final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+      if (files != null && files.length == 1) {
+        setFile(files[0]);
+      }
+      else {
+        setFile(null);
+      }
+    }
+  }
+
+  private void setFile(VirtualFile file) {
+    if (!Comparing.equal(file, myFile)) {
+      myFile = file;
+      scheduleRebuild();
+    }
+  }
+
 
   // -------------------------------------------------------------------------
   // StructureView interface implementation
@@ -114,69 +138,100 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   }
 
   public void dispose() {
-    myFileEditor = null;
     rebuild();
   }
 
-  public boolean selectCurrentElement(FileEditor fileEditor, boolean requestFocus) {
+  public boolean selectCurrentElement(FileEditor fileEditor, VirtualFile file, boolean requestFocus) {
     if (myStructureView != null) {
-      if (!Comparing.equal(myStructureView.getFileEditor(), fileEditor)){
-        setFileEditor(fileEditor);
+      if (!Comparing.equal(myStructureView.getFileEditor(), fileEditor)) {
+        myFile = file;
         rebuild();
       }
       return myStructureView.navigateToSelectedElement(requestFocus);
-    } else {
+    }
+    else {
       return false;
     }
   }
 
-  // -------------------------------------------------------------------------
-  // Helper methods
-  // -------------------------------------------------------------------------
-
-
-  public void setFileEditor(FileEditor fileEditor) {
-    final boolean fileChanged = myFileEditor != null ? !myFileEditor.equals(fileEditor) : fileEditor != null;
-    if (fileChanged) {
-      myFileEditor = fileEditor;      
-    }
-    if (fileChanged ||
-        isStructureViewShowing() && myPanel.getComponentCount() == 0 && myFileEditor != null) {
-      rebuild();
-    }
+  private void scheduleRebuild() {
+    myUpdateAlarm.cancelAllRequests();
+    myUpdateAlarm.addRequest(new Runnable() {
+      public void run() {
+        rebuild();
+      }
+    }, 300, ModalityState.stateForComponent(myPanel));
   }
 
   public void rebuild() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    boolean hadFocus = myStructureView != null && IJSwingUtilities.hasFocus2(myStructureView.getComponent());
+    boolean hadFocus = myStructureView != null && IJSwingUtilities.hasFocus2(myStructureView.getComponent()) ||
+                       myModuleStructureComponent != null && IJSwingUtilities.hasFocus2(myModuleStructureComponent);
+
     if (myStructureView != null) {
       myStructureView.storeState();
       Disposer.dispose(myStructureView);
       myStructureView = null;
     }
+
+    if (myModuleStructureComponent != null) {
+      Disposer.dispose(myModuleStructureComponent);
+      myModuleStructureComponent = null;
+    }
+
     myPanel.removeAll();
 
     if (!isStructureViewShowing()) {
       return;
     }
 
-    if (myFileEditor!=null && myFileEditor.isValid()) {
-      final StructureViewBuilder structureViewBuilder = myFileEditor.getStructureViewBuilder();
-      if (structureViewBuilder != null) {
-        myStructureView = structureViewBuilder.createStructureView(myFileEditor, myProject);
-        myPanel.add(myStructureView.getComponent(), BorderLayout.CENTER);
-        if (hadFocus) {
-          JComponent focusedComponent = IdeFocusTraversalPolicy.getPreferredFocusedComponent(myStructureView.getComponent());
-          if (focusedComponent != null) {
-            focusedComponent.requestFocus();
-          }
-        }
-        myStructureView.restoreState();
-        myStructureView.centerSelectedRow();
+    VirtualFile file = myFile;
+    if (file == null) {
+      final VirtualFile[] selectedFiles = FileEditorManager.getInstance(myProject).getSelectedFiles();
+      if (selectedFiles.length > 0) {
+        file = selectedFiles[0];
       }
     }
-    if (myStructureView == null) {
+
+    if (file != null) {
+      if (file.isDirectory()) {
+        if (ProjectRootsUtil.isModuleContentRoot(file, myProject)) {
+          Module module = ModuleUtil.findModuleForFile(file, myProject);
+          if (module != null) {
+            myModuleStructureComponent = new ModuleStructureComponent(module);
+            myPanel.add(myModuleStructureComponent, BorderLayout.CENTER);
+            if (hadFocus) {
+              JComponent focusedComponent = IdeFocusTraversalPolicy.getPreferredFocusedComponent(myModuleStructureComponent);
+              if (focusedComponent != null) {
+                focusedComponent.requestFocus();
+              }
+            }
+          }
+        }
+      }
+      else {
+        FileEditor editor = FileEditorManager.getInstance(myProject).getSelectedEditor(file);
+        if (editor == null) editor = crteateTempFileEditor(file);
+        if (editor != null && editor.isValid()) {
+          final StructureViewBuilder structureViewBuilder = editor.getStructureViewBuilder();
+          if (structureViewBuilder != null) {
+            myStructureView = structureViewBuilder.createStructureView(editor, myProject);
+            myPanel.add(myStructureView.getComponent(), BorderLayout.CENTER);
+            if (hadFocus) {
+              JComponent focusedComponent = IdeFocusTraversalPolicy.getPreferredFocusedComponent(myStructureView.getComponent());
+              if (focusedComponent != null) {
+                focusedComponent.requestFocus();
+              }
+            }
+            myStructureView.restoreState();
+            myStructureView.centerSelectedRow();
+          }
+        }
+      }
+    }
+
+    if (myModuleStructureComponent == null && myStructureView == null) {
       myPanel.add(new JLabel(IdeBundle.message("message.nothing.to.show.in.structure.view"), SwingConstants.CENTER), BorderLayout.CENTER);
     }
 
@@ -184,11 +239,32 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     myPanel.repaint();
   }
 
+  @Nullable
+  private FileEditor crteateTempFileEditor(VirtualFile file) {
+    FileEditorProviderManager editorProviderManager = FileEditorProviderManager.getInstance();
+    final FileEditorProvider[] providers = editorProviderManager.getProviders(myProject, file);
+    for (FileEditorProvider provider : providers) {
+      return provider.createEditor(myProject, file);
+    }
+    return null;
+  }
+
 
   protected boolean isStructureViewShowing() {
     ToolWindowManager windowManager = ToolWindowManager.getInstance(myProject);
-    ToolWindow toolWindow=windowManager.getToolWindow(ToolWindowId.STRUCTURE_VIEW);
+    ToolWindow toolWindow = windowManager.getToolWindow(ToolWindowId.STRUCTURE_VIEW);
     // it means that window is registered
     return toolWindow != null && toolWindow.isVisible();
+  }
+
+  private class ContentPanel extends JPanel implements DataProvider {
+    public ContentPanel() {
+      super(new BorderLayout());
+    }
+
+    public Object getData(@NonNls String dataId) {
+      if (dataId == myKey) return StructureViewWrapperImpl.this;
+      return null;
+    }
   }
 }

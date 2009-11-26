@@ -59,10 +59,6 @@ public class AlienLocalChangeList extends LocalChangeList {
     return false;
   }
 
-  public boolean isInUpdate() {
-    return false;
-  }
-
   public boolean isReadOnly() {
     return false;
   }

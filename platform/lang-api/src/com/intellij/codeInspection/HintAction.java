@@ -23,6 +23,5 @@ import com.intellij.openapi.editor.Editor;
  * @author Dmitry Avdeev
  */
 public interface HintAction extends IntentionAction {
-
-  boolean showHint(final Editor editor);  
+  boolean showHint(final Editor editor);
 }

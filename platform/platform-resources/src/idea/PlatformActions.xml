@@ -208,6 +208,7 @@
           <separator/>
           <group id="PlaySavedMacroActions" class="com.intellij.ide.actionMacro.actions.MacrosGroup"/>
         </group>
+        <action id="PsiViewer" class="com.intellij.internal.psiView.ViewerAction"/>
       </group>
 
       <group id="WindowMenu" popup="true">
@@ -379,7 +380,6 @@
     </group>
 
     <group id="Internal" text="Internal Actions" internal="true" popup="true">
-      <action id="PsiViewer" internal="true" class="com.intellij.internal.psiView.ViewerAction"/>
       <action id="DropAnError" internal="true" class="com.intellij.diagnostic.DropAnErrorAction"/>
       <action id="DropAnOutOfMemoryError" internal="true" class="com.intellij.diagnostic.DropAnOutOfMemoryErrorAction"/>
       <action id="DropAnOutOfPermGenMemoryError" internal="true" class="com.intellij.diagnostic.DropAnOutOfPermGenMemoryErrorAction"/>

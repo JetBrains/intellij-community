@@ -29,6 +29,7 @@ import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 public class TextEditorBackgroundHighlighter implements BackgroundEditorHighlighter {
@@ -48,7 +49,6 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
   private final Project myProject;
   private boolean myCompiled;
   private static final int[] EXCEPT_VISIBLE = {
-    Pass.UPDATE_ALL,
     Pass.POST_UPDATE_ALL,
     Pass.UPDATE_OVERRIDEN_MARKERS,
     Pass.LOCAL_INSPECTIONS,
@@ -79,31 +79,52 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
     }
   }
 
-  private TextEditorHighlightingPass[] getPasses(int[] passesToIgnore) {
-    if (myProject.isDisposed()) return TextEditorHighlightingPass.EMPTY_ARRAY;
+  private List<TextEditorHighlightingPass> getPasses(int[] passesToIgnore) {
+    if (myProject.isDisposed()) return Collections.emptyList();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     renewFile();
-    if (myFile == null || !myFile.isPhysical()) return TextEditorHighlightingPass.EMPTY_ARRAY;
+    if (myFile == null || !myFile.isPhysical()) return Collections.emptyList();
     if (myCompiled) {
       passesToIgnore = EXCEPT_OVERRIDDEN;
     }
     else if (!DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(myFile)) {
-      return TextEditorHighlightingPass.EMPTY_ARRAY;
+      return Collections.emptyList();
     }
 
     TextEditorHighlightingPassRegistrarEx passRegistrar = TextEditorHighlightingPassRegistrarEx.getInstanceEx(myProject);
 
-    List<TextEditorHighlightingPass> createdPasses = passRegistrar.instantiatePasses(myFile, myEditor, passesToIgnore);
-    return createdPasses.toArray(new TextEditorHighlightingPass[createdPasses.size()]);
+    return passRegistrar.instantiatePasses(myFile, myEditor, passesToIgnore);
   }
 
   @NotNull
   public TextEditorHighlightingPass[] createPassesForVisibleArea() {
-    return getPasses(EXCEPT_VISIBLE);
+    List<TextEditorHighlightingPass> passes = getPasses(EXCEPT_VISIBLE);
+    int updateAllIndex = -1;
+    int updateVisibleIndex = -1;
+    for (int i = 0, passesSize = passes.size(); i < passesSize; i++) {
+      TextEditorHighlightingPass pass = passes.get(i);
+      if (pass instanceof GeneralHighlightingPass) {
+        if (pass.getId() == Pass.UPDATE_ALL) updateAllIndex = i;
+        if (pass.getId() == Pass.UPDATE_VISIBLE) updateVisibleIndex = i;
+      }
+    }
+
+    if (updateVisibleIndex != -1 && updateAllIndex == -1) {
+      // ok
+    }
+    else if (updateVisibleIndex == -1 && updateAllIndex != -1) {
+      // use updateAll pass instead of updateVisible
+    }
+    else if (updateVisibleIndex != -1 && updateAllIndex != -1) {
+      // run only updateVisible, not both
+      passes.remove(updateAllIndex);
+    }
+    return passes.isEmpty() ? TextEditorHighlightingPass.EMPTY_ARRAY : passes.toArray(new TextEditorHighlightingPass[passes.size()]);
   }
 
   @NotNull
   public TextEditorHighlightingPass[] createPassesForEditor() {
-    return getPasses(ArrayUtil.EMPTY_INT_ARRAY);
+    List<TextEditorHighlightingPass> passes = getPasses(ArrayUtil.EMPTY_INT_ARRAY);
+    return passes.isEmpty() ? TextEditorHighlightingPass.EMPTY_ARRAY : passes.toArray(new TextEditorHighlightingPass[passes.size()]);
   }
 }

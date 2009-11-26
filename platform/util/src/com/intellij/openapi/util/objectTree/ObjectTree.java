@@ -68,10 +68,10 @@ public final class ObjectTree<T> {
 
   public final void register(T parent, T child) {
     synchronized (treeLock) {
-      checkValid(child);
+      final ObjectNode<T> childNode = getOrCreateNodeFor(child);
+      checkValid(childNode, child);
 
       final ObjectNode<T> parentNode = getOrCreateNodeFor(parent);
-      final ObjectNode<T> childNode = getOrCreateNodeFor(child);
 
       ObjectNode<T> childParent = childNode.getParent();
       if (childParent != parentNode && childParent != null) {
@@ -90,8 +90,7 @@ public final class ObjectTree<T> {
     }
   }
 
-  private void checkValid(T child) {
-    ObjectNode childNode = getNode(child);
+  private void checkValid(ObjectNode<T> childNode, T child) {
     boolean childIsInTree = childNode != null && childNode.getParent() != null;
     if (!childIsInTree) return;
 

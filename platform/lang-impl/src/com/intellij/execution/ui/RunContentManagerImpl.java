@@ -15,10 +15,7 @@
  */
 package com.intellij.execution.ui;
 
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.Executor;
-import com.intellij.execution.ExecutorRegistry;
-import com.intellij.execution.TerminateRemoteProcessDialog;
+import com.intellij.execution.*;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -39,6 +36,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -47,6 +45,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.ui.content.*;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.IconUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -249,7 +248,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   public void showRunContent(@NotNull final Executor executor, final RunContentDescriptor descriptor) {
     if(ApplicationManager.getApplication().isUnitTestMode()) return;
 
-    final ContentManager contentManager = getContentManagerForRunner(executor);
+    final ContentManager contentManager  = getContentManagerForRunner(executor);
     RunContentDescriptor oldDescriptor = chooseReuseContentForDescriptor(contentManager, descriptor);
 
     final Content content;
@@ -261,7 +260,8 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     }
     else {
       content = createNewContent(contentManager, descriptor, executor.getToolWindowId());
-      content.setIcon(executor.getToolWindowIcon());
+      final Icon icon = descriptor.getIcon();
+      content.setIcon(icon == null ? executor.getToolWindowIcon() : icon);
     }
 
     content.setComponent(descriptor.getComponent());
@@ -272,7 +272,8 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
         public void startNotified(final ProcessEvent event) {
           LaterInvocator.invokeLater(new Runnable() {
             public void run() {
-              content.setIcon(executor.getToolWindowIcon());
+              final Icon icon = descriptor.getIcon();
+              content.setIcon(icon == null ? executor.getToolWindowIcon() : icon);
             }
           });
         }
@@ -280,7 +281,8 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
         public void processTerminated(final ProcessEvent event) {
           LaterInvocator.invokeLater(new Runnable() {
             public void run() {
-              content.setIcon(executor.getDisabledIcon());
+              final Icon icon = descriptor.getIcon();
+              content.setIcon(icon == null ? executor.getDisabledIcon() : IconLoader.getTransparentIcon(icon));
             }
           });
         }

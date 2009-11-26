@@ -18,7 +18,9 @@ package com.intellij.openapi.roots.ui.configuration.artifacts.nodes;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorContextImpl;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorImpl;
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactProblemDescription;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemDescription;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
@@ -26,6 +28,7 @@ import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.SmartList;
+import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +58,6 @@ public class PackagingElementNode<E extends PackagingElement<?>> extends Artifac
 
   private void doAddElement(E packagingElement) {
     myPackagingElements.add(packagingElement);
-    ((ArtifactEditorContextImpl)myContext).getValidationManager().elementAddedToNode(this, packagingElement);
   }
 
   @Nullable 
@@ -93,21 +95,36 @@ public class PackagingElementNode<E extends PackagingElement<?>> extends Artifac
 
   @Override
   protected void update(PresentationData presentation) {
-    final String message = ((ArtifactEditorContextImpl)myContext).getValidationManager().getProblem(this);
-    if (message == null) {
+    final Collection<ArtifactProblemDescription> problems = ((ArtifactEditorImpl)myContext.getThisArtifactEditor()).getValidationManager().getProblems(this);
+    if (problems == null || problems.isEmpty()) {
       super.update(presentation);
       return;
     }
+    StringBuilder buffer = StringBuilderSpinAllocator.alloc();
+    final String tooltip;
+    boolean isError = false;
+    try {
+      buffer.append("<html>");
+      for (ArtifactProblemDescription problem : problems) {
+        isError |= problem.getSeverity() == ProjectStructureProblemDescription.Severity.ERROR;
+        buffer.append(problem.getMessage()).append("<br>");
+      }
+      buffer.append("</html>");
+      tooltip = buffer.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(buffer);
+    }
 
-    getElementPresentation().render(presentation, addErrorHighlighting(SimpleTextAttributes.REGULAR_ATTRIBUTES), 
-                                    addErrorHighlighting(SimpleTextAttributes.GRAY_ATTRIBUTES));
-    presentation.setTooltip(message);
+    getElementPresentation().render(presentation, addErrorHighlighting(isError, SimpleTextAttributes.REGULAR_ATTRIBUTES),
+                                    addErrorHighlighting(isError, SimpleTextAttributes.GRAY_ATTRIBUTES));
+    presentation.setTooltip(tooltip);
   }
 
-  private SimpleTextAttributes addErrorHighlighting(SimpleTextAttributes attributes) {
+  private static SimpleTextAttributes addErrorHighlighting(boolean error, SimpleTextAttributes attributes) {
     final TextAttributes textAttributes = attributes.toTextAttributes();
     textAttributes.setEffectType(EffectType.WAVE_UNDERSCORE);
-    textAttributes.setEffectColor(Color.RED);
+    textAttributes.setEffectColor(error ? Color.RED : Color.GRAY);
     return SimpleTextAttributes.fromTextAttributes(textAttributes);
   }
 
@@ -144,5 +161,47 @@ public class PackagingElementNode<E extends PackagingElement<?>> extends Artifac
       }
     }
     return null;
+  }
+
+
+  public List<PackagingElementNode<?>> getNodesByPath(List<PackagingElement<?>> pathToPlace) {
+    List<PackagingElementNode<?>> result = new ArrayList<PackagingElementNode<?>>();
+    PackagingElementNode<?> current = this;
+    int i = 0;
+    result.add(current);
+    while (current != null && i < pathToPlace.size()) {
+      final SimpleNode[] children = current.getCached();
+      if (children == null) {
+        break;
+      }
+
+      PackagingElementNode<?> next = null;
+      final PackagingElement<?> element = pathToPlace.get(i);
+
+      search:
+      for (SimpleNode child : children) {
+        if (child instanceof PackagingElementNode<?>) {
+          PackagingElementNode<?> childNode = (PackagingElementNode<?>)child;
+          for (PackagingElement<?> childElement : childNode.getPackagingElements()) {
+            if (childElement.isEqualTo(element)) {
+              next = childNode;
+              break search;
+            }
+          }
+          for (PackagingNodeSource nodeSource : childNode.getNodeSources()) {
+            if (nodeSource.getSourceElement().isEqualTo(element)) {
+              next = current;
+              break search;
+            }
+          }
+        }
+      }
+      current = next;
+      if (current != null) {
+        result.add(current);
+      }
+      i++;
+    }
+    return result;
   }
 }

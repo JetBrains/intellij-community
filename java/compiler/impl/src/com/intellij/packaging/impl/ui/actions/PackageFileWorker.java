@@ -26,6 +26,7 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.ArtifactRootElement;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
+import com.intellij.packaging.impl.artifacts.PackagingElementPath;
 import com.intellij.packaging.impl.elements.ArchivePackagingElement;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.zip.JBZipEntry;
@@ -52,15 +53,14 @@ public class PackageFileWorker {
   }
 
   public static void packageFile(@NotNull VirtualFile file, @NotNull Project project) throws IOException {
-    final Collection<Trinity<Artifact,List<CompositePackagingElement<?>>,String>> items = ArtifactUtil.findContainingArtifactsWithOutputPaths(file, project);
+    final Collection<Trinity<Artifact, PackagingElementPath, String>> items = ArtifactUtil.findContainingArtifactsWithOutputPaths(file, project);
     File ioFile = VfsUtil.virtualToIoFile(file);
-    for (Trinity<Artifact, List<CompositePackagingElement<?>>, String> item : items) {
+    for (Trinity<Artifact, PackagingElementPath, String> item : items) {
       final Artifact artifact = item.getFirst();
-      final List<CompositePackagingElement<?>> parents = item.getSecond();
       final String outputPath = artifact.getOutputPath();
       if (!StringUtil.isEmpty(outputPath)) {
         PackageFileWorker worker = new PackageFileWorker(ioFile, item.getThird());
-        worker.packageFile(outputPath, parents);
+        worker.packageFile(outputPath, item.getSecond().getParents());
       }
     }
   }

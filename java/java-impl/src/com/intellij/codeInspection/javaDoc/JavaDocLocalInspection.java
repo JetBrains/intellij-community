@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.codeInspection.reference.RefJavaUtil;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -405,7 +406,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     checkForPeriodInDoc(docComment, problems, manager, isOnTheFly);
     checkInlineTags(manager, problems, docComment.getDescriptionElements(),
                     JavaPsiFacade.getInstance(docComment.getProject()).getJavadocManager(), isOnTheFly);
-
+    checkForBadCharacters(docComment, problems, manager, isOnTheFly);
     for (PsiDocTag tag : tags) {
       for (int i = 0; i < tagsToCheck.length; i++) {
         final String tagToCheck = tagsToCheck[i];
@@ -468,6 +469,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
                     JavaPsiFacade.getInstance(docComment.getProject()).getJavadocManager(), isOnTheFly);
     checkForPeriodInDoc(docComment, problems, manager, isOnTheFly);
     checkDuplicateTags(docComment.getTags(), problems, manager, isOnTheFly);
+    checkForBadCharacters(docComment, problems, manager, isOnTheFly);
     return problems.isEmpty()
            ? null
            : problems.toArray(new ProblemDescriptor[problems.size()]);
@@ -615,7 +617,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     }
 
     checkForPeriodInDoc(docComment, problems, manager, isOnTheFly);
-
+    checkForBadCharacters(docComment, problems, manager, isOnTheFly);
     for (PsiDocTag tag : tags) {
       if ("param".equals(tag.getName())) {
         if (extractTagDescription(tag).length() == 0) {
@@ -812,6 +814,23 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     }
 
     return buf.toString().trim();
+  }
+
+  private void checkForBadCharacters(PsiDocComment docComment,
+                                   final ArrayList<ProblemDescriptor> problems,
+                                   final InspectionManager manager, final boolean onTheFly) {
+    docComment.accept(new PsiRecursiveElementVisitor(){
+      @Override
+      public void visitElement(PsiElement element) {
+        super.visitElement(element);
+        final ASTNode node = element.getNode();
+        if (node != null) {
+          if (node.getElementType() == JavaDocTokenType.DOC_COMMENT_BAD_CHARACTER) {
+            problems.add(manager.createProblemDescriptor(element, "Illegal character", (LocalQuickFix)null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, onTheFly));
+          }
+        }
+      }
+    });
   }
 
   private void checkForPeriodInDoc(PsiDocComment docComment,

@@ -29,14 +29,14 @@ import java.io.File;
 import java.io.IOException;
 
 public class StorageTest extends TestCase {
-  protected AbstractStorage myStorage;
+  private Storage myStorage;
 
   protected void setUp() throws Exception {
     super.setUp();
     myStorage = Storage.create(getFileName());
   }
 
-  protected String getFileName() {
+  private String getFileName() {
     return FileUtil.getTempDirectory() + File.separatorChar + getName();
   }
 
@@ -47,7 +47,7 @@ public class StorageTest extends TestCase {
   }
 
   public void testSmoke() throws Exception {
-    int record = myStorage.createNewRecord(0);
+    final int record = myStorage.createNewRecord();
     myStorage.writeBytes(record, "Hello".getBytes());
     assertEquals("Hello", new String(myStorage.readBytes(record)));
   }
@@ -64,15 +64,13 @@ public class StorageTest extends TestCase {
     int[] records = new int[count];
 
     for (int i = 0; i < count; i++) {
-      byte[] bytes = hello.getBytes();
-      int record = myStorage.createNewRecord(bytes.length);
-      myStorage.writeBytes(record, bytes);
+      final int record = myStorage.createNewRecord();
+      myStorage.writeBytes(record, hello.getBytes());
       records[i] = record;
     }
 
     for (int record : records) {
-      byte[] bytes = myStorage.readBytes(record);
-      assertEquals(hello, new String(bytes));
+      assertEquals(hello, new String(myStorage.readBytes(record)));
     }
 
     long timedelta = System.currentTimeMillis() - start;
@@ -80,22 +78,23 @@ public class StorageTest extends TestCase {
   }
 
   public void testAppender() throws Exception {
-    final int count = 1000;
-    int r = myStorage.createNewRecord(count * 4);
+    final int r = myStorage.createNewRecord();
 
-    AbstractStorage.AppenderStream out = myStorage.appendStream(r);
-    for (int i = 0; i < count; i++) {
+    DataOutputStream out = new DataOutputStream(myStorage.appendStream(r));
+    for (int i = 0; i < 10000; i++) {
       out.writeInt(i);
       if (i % 100 == 0) {
+        myStorage.readStream(r); // Drop the appenders cache
         out.close();
-        out = myStorage.appendStream(r);
+        out = new DataOutputStream(myStorage.appendStream(r));
       }
     }
     
     out.close();
 
-    DataInputStream in = myStorage.readStream(r);
-    for (int i = 0; i < count; i++) {
+
+    DataInputStream in = new DataInputStream(myStorage.readStream(r));
+    for (int i = 0; i < 10000; i++) {
       assertEquals(i, in.readInt());
     }
 
@@ -103,7 +102,7 @@ public class StorageTest extends TestCase {
   }
   
   public void testAppender2() throws Exception {
-    int r = myStorage.createNewRecord(0);
+    int r = myStorage.createNewRecord();
     appendNBytes(r, 64);
     appendNBytes(r, 256);
     appendNBytes(r, 512);

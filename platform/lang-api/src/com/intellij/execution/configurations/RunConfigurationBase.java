@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,11 +43,13 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   private ArrayList<PredefinedLogFile> myPredefinedLogFiles = new ArrayList<PredefinedLogFile>();
   @NonNls private static final String LOG_FILE = "log_file";
   @NonNls private static final String PREDEFINED_LOG_FILE_ELEMENT = "predefined_log_file";
+  private Icon myIcon;
 
-  protected RunConfigurationBase(Project project, ConfigurationFactory factory, String name) {
+  protected RunConfigurationBase(final Project project, final ConfigurationFactory factory, final String name) {
     myProject = project;
     myFactory = factory;
     myName = name;
+    myIcon = factory.getIcon();
   }
 
   public int getUniqueID() {
@@ -68,6 +71,10 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   @NotNull
   public ConfigurationType getType() {
     return myFactory.getType();
+  }
+
+  public Icon getIcon() {
+    return myIcon;
   }
 
   public final String getName() {

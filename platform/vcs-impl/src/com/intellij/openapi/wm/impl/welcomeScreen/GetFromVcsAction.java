@@ -46,4 +46,9 @@ public class GetFromVcsAction extends WelcomePopupAction{
   protected String getTextForEmpty() {
     return UIBundle.message("welcome.screen.get.from.vcs.action.no.vcs.plugins.with.check.out.action.installed.action.name");
   }
+
+  @Override
+  protected boolean isSilentlyChooseSingleOption() {
+    return true;
+  }
 }

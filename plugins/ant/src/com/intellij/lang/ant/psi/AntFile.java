@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,6 +73,8 @@ public interface AntFile extends PsiFile, AntElement, PsiNamedElement, Modificat
 
   @Nullable
   AntProperty getProperty(@NonNls final String name);
+
+  void processAllProperties(@NonNls final String name, Processor<AntProperty> processor);
 
   void setProperty(final String name, final AntProperty element);
 

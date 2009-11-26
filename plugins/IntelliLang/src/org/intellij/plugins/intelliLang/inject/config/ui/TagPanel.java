@@ -21,12 +21,12 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Computable;
-import com.intellij.psi.impl.source.jsp.JspManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.ui.EditorTextField;
 import org.intellij.lang.regexp.RegExpLanguage;
 import org.intellij.plugins.intelliLang.inject.config.AbstractTagInjection;
+import org.intellij.plugins.intelliLang.inject.config.JspSupportProxy;
 import org.intellij.plugins.intelliLang.inject.config.XmlTagInjection;
 import org.intellij.plugins.intelliLang.util.LanguageTextField;
 
@@ -62,14 +62,14 @@ public class TagPanel extends AbstractInjectionPanel<AbstractTagInjection> {
     final List<String> urls = new ArrayList<String>(Arrays.asList(ExternalResourceManager.getInstance().getResourceUrls(null, true)));
     Collections.sort(urls);
 
-    final JspManager jspManager = JspManager.getInstance(project);
-    if (jspManager != null) {
+    final JspSupportProxy jspSupport = JspSupportProxy.getInstance();
+    if (jspSupport != null) {
       final List<String> tlds = new ArrayList<String>();
       final Module[] modules = ModuleManager.getInstance(project).getModules();
       for (final Module module : modules) {
         final String[] tldUris = ApplicationManager.getApplication().runReadAction(new Computable<String[]>() {
           public String[] compute() {
-            return jspManager.getPossibleTldUris(module);
+            return jspSupport.getPossibleTldUris(module);
           }
         });
         for (String uri : tldUris) {
@@ -77,15 +77,6 @@ public class TagPanel extends AbstractInjectionPanel<AbstractTagInjection> {
             tlds.add(uri);
           }
         }
-
-// That's the OpenAPI way, but TldInfoManager is always null:
-//                final TldInfoManager manager = TldInfoManager.getTldInfoManager(module);
-//                if (manager != null) {
-//                    final Collection<TldInfo> infos = manager.getTldInfos().getTldInfos();
-//                    for (TldInfo info : infos) {
-//                        tlds.add(info.getUri());
-//                    }
-//                }
       }
       Collections.sort(tlds);
 

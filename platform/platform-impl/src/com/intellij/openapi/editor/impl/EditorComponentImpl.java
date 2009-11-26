@@ -22,6 +22,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.ui.TestableUi;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.ui.TypingTarget;
+import com.intellij.openapi.util.ActionCallback;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,7 +35,7 @@ import java.util.Map;
 /**
  *
  */
-public class EditorComponentImpl extends JComponent implements Scrollable, DataProvider, TestableUi {
+public class EditorComponentImpl extends JComponent implements Scrollable, DataProvider, TestableUi, TypingTarget {
   private final EditorImpl myEditor;
 
   public EditorComponentImpl(EditorImpl editor) {
@@ -94,6 +96,10 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
       }
       e.consume();
     }
+  }
+
+  public ActionCallback type(String text) {
+    return myEditor.type(text);
   }
 
   public InputMethodRequests getInputMethodRequests() {

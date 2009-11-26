@@ -322,13 +322,23 @@ final class FindDialog extends DialogWrapper {
 
     topOptionsPanel.add(createFindOptionsPanel());
     if (!myModel.isMultipleFiles()){
-      JPanel leftOptionsPanel = new JPanel();
-      leftOptionsPanel.setLayout(new GridLayout(3, 1, 0, 4));
+      if (FindManagerImpl.ourHasSearchInCommentsAndLiterals) {
+        JPanel leftOptionsPanel = new JPanel();
+        leftOptionsPanel.setLayout(new GridLayout(3, 1, 0, 4));
 
-      leftOptionsPanel.add(createDirectionPanel());
-      leftOptionsPanel.add(createOriginPanel());
-      leftOptionsPanel.add(createScopePanel());
-      topOptionsPanel.add(leftOptionsPanel);
+        leftOptionsPanel.add(createDirectionPanel());
+        leftOptionsPanel.add(createOriginPanel());
+        leftOptionsPanel.add(createScopePanel());
+        topOptionsPanel.add(leftOptionsPanel);
+      } else {
+        topOptionsPanel.add(createDirectionPanel());
+        gbConstraints.gridwidth = GridBagConstraints.RELATIVE;
+        JPanel bottomOptionsPanel = new JPanel();
+        bottomOptionsPanel.setLayout(new GridLayout(1, 2, 8, 0));
+        optionsPanel.add(bottomOptionsPanel, gbConstraints);
+        bottomOptionsPanel.add(createScopePanel());
+        bottomOptionsPanel.add(createOriginPanel());
+      }
     }
     else{
       optionsPanel.add(createGlobalScopePanel(), gbConstraints);
@@ -511,13 +521,12 @@ final class FindDialog extends DialogWrapper {
     findOptionsPanel.add(myCbRegularExpressions);
 
     myCbInCommentsOnly = createCheckbox(FindBundle.message("find.options.comments.only"));
-
-    findOptionsPanel.add(myCbInCommentsOnly);
-
     myCbInStringLiteralsOnly = createCheckbox(FindBundle.message("find.options.string.literals.only"));
 
-    findOptionsPanel.add(myCbInStringLiteralsOnly);
-
+    if (FindManagerImpl.ourHasSearchInCommentsAndLiterals) {
+      findOptionsPanel.add(myCbInCommentsOnly);
+      findOptionsPanel.add(myCbInStringLiteralsOnly);
+    }
 
     ActionListener actionListener = new ActionListener() {
       public void actionPerformed(ActionEvent e) {

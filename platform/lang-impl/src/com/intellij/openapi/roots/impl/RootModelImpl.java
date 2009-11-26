@@ -51,7 +51,7 @@ import java.util.*;
 public class RootModelImpl implements ModifiableRootModel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.RootModelImpl");
 
-  private final TreeSet<ContentEntry> myContent = new TreeSet<ContentEntry>(ContentComparator.INSTANCE);
+  private final Set<ContentEntry> myContent = new TreeSet<ContentEntry>(ContentComparator.INSTANCE);
 
   private final List<OrderEntry> myOrderEntries = new Order();
   // cleared by myOrderEntries modification, see Order
@@ -98,7 +98,7 @@ public class RootModelImpl implements ModifiableRootModel {
 
     myVirtualFilePointerListener = projectRootManager.getVirtualFilePointerListener();
     addSourceOrderEntries();
-    myModuleLibraryTable = new ModuleLibraryTable(this, myProjectRootManager, myFilePointerManager);
+    myModuleLibraryTable = new ModuleLibraryTable(this, myProjectRootManager);
 
     for (ModuleExtension extension : Extensions.getExtensions(ModuleExtension.EP_NAME, moduleRootManager.getModule())) {
       ModuleExtension model = extension.getModifiableModel(false);
@@ -120,7 +120,7 @@ public class RootModelImpl implements ModifiableRootModel {
     myFilePointerManager = filePointerManager;
     myModuleRootManager = moduleRootManager;
 
-    myModuleLibraryTable = new ModuleLibraryTable(this, myProjectRootManager, myFilePointerManager);
+    myModuleLibraryTable = new ModuleLibraryTable(this, myProjectRootManager);
 
     myVirtualFilePointerListener = null;
     final List contentChildren = element.getChildren(ContentEntryImpl.ELEMENT_NAME);
@@ -134,7 +134,7 @@ public class RootModelImpl implements ModifiableRootModel {
     boolean moduleSourceAdded = false;
     for (Object orderElement : orderElements) {
       Element child = (Element)orderElement;
-      final OrderEntry orderEntry = OrderEntryFactory.createOrderEntryByElement(child, this, myProjectRootManager, myFilePointerManager);
+      final OrderEntry orderEntry = OrderEntryFactory.createOrderEntryByElement(child, this, myProjectRootManager);
       if (orderEntry instanceof ModuleSourceOrderEntry) {
         if (moduleSourceAdded) continue;
         moduleSourceAdded = true;
@@ -195,7 +195,7 @@ public class RootModelImpl implements ModifiableRootModel {
     myModuleRootManager = moduleRootManager;
     myProjectRootManager = projectRootManager;
 
-    myModuleLibraryTable = new ModuleLibraryTable(this, myProjectRootManager, myFilePointerManager);
+    myModuleLibraryTable = new ModuleLibraryTable(this, myProjectRootManager);
 
     myWritable = writable;
     myConfigurationAccessor = rootConfigurationAccessor;
@@ -204,7 +204,7 @@ public class RootModelImpl implements ModifiableRootModel {
 
     setExplodedFrom(rootModel, virtualFilePointerListener, filePointerManager);
 
-    final TreeSet<ContentEntry> thatContent = rootModel.myContent;
+    final Set<ContentEntry> thatContent = rootModel.myContent;
     for (ContentEntry contentEntry : thatContent) {
       if (contentEntry instanceof ClonableContentEntry) {
         myContent.add(((ClonableContentEntry)contentEntry).cloneEntry(this));
@@ -235,7 +235,7 @@ public class RootModelImpl implements ModifiableRootModel {
     for(PersistentOrderRootType orderRootType: OrderRootType.getAllPersistentTypes()) {
       final VirtualFilePointerContainer otherContainer = rootModel.getOrderRootContainer(orderRootType);
       if (otherContainer != null) {
-        myOrderRootPointerContainers.put(orderRootType, otherContainer.clone(getModule(), myVirtualFilePointerListener));
+        myOrderRootPointerContainers.put(orderRootType, otherContainer.clone(myDisposable, myVirtualFilePointerListener));
       }
     }
   }
@@ -250,7 +250,7 @@ public class RootModelImpl implements ModifiableRootModel {
   }
 
   @Nullable
-  VirtualFilePointerContainer getOrderRootContainer(OrderRootType orderRootType) {
+  private VirtualFilePointerContainer getOrderRootContainer(PersistentOrderRootType orderRootType) {
     return myOrderRootPointerContainers.get(orderRootType);
   }
 
@@ -384,14 +384,15 @@ public class RootModelImpl implements ModifiableRootModel {
 
   public LibraryOrderEntry addLibraryEntry(Library library) {
     assertWritable();
-    final LibraryOrderEntry libraryOrderEntry = new LibraryOrderEntryImpl(library, this, myProjectRootManager, myFilePointerManager);
+    final LibraryOrderEntry libraryOrderEntry = new LibraryOrderEntryImpl(library, this, myProjectRootManager);
+    assert libraryOrderEntry.isValid();
     myOrderEntries.add(libraryOrderEntry);
     return libraryOrderEntry;
   }
 
   public LibraryOrderEntry addInvalidLibrary(String name, String level) {
     assertWritable();
-    final LibraryOrderEntry libraryOrderEntry = new LibraryOrderEntryImpl(name, level, this, myProjectRootManager, myFilePointerManager);
+    final LibraryOrderEntry libraryOrderEntry = new LibraryOrderEntryImpl(name, level, this, myProjectRootManager);
     myOrderEntries.add(libraryOrderEntry);
     return libraryOrderEntry;
   }
@@ -591,7 +592,7 @@ public class RootModelImpl implements ModifiableRootModel {
     assertWritable();
     final JdkOrderEntry jdkLibraryEntry;
     if (jdk != null) {
-      jdkLibraryEntry = new ModuleJdkOrderEntryImpl(jdk, this, myProjectRootManager, myFilePointerManager);
+      jdkLibraryEntry = new ModuleJdkOrderEntryImpl(jdk, this, myProjectRootManager);
     }
     else {
       jdkLibraryEntry = null;
@@ -602,12 +603,12 @@ public class RootModelImpl implements ModifiableRootModel {
 
   public void setInvalidSdk(String jdkName, String jdkType) {
     assertWritable();
-    replaceEntryOfType(JdkOrderEntry.class, new ModuleJdkOrderEntryImpl(jdkName, jdkType, this, myProjectRootManager, myFilePointerManager));
+    replaceEntryOfType(JdkOrderEntry.class, new ModuleJdkOrderEntryImpl(jdkName, jdkType, this, myProjectRootManager));
   }
 
   public void inheritSdk() {
     assertWritable();
-    replaceEntryOfType(JdkOrderEntry.class, new InheritedJdkOrderEntryImpl(this, myProjectRootManager, myFilePointerManager));
+    replaceEntryOfType(JdkOrderEntry.class, new InheritedJdkOrderEntryImpl(this, myProjectRootManager));
   }
 
 
@@ -690,6 +691,13 @@ public class RootModelImpl implements ModifiableRootModel {
     }
   }
 
+  public boolean isOrderEntryDisposed() {
+    for (OrderEntry entry : myOrderEntries) {
+      if (entry instanceof RootModelComponentBase && ((RootModelComponentBase)entry).isDisposed()) return true;
+    }
+    return false;
+  }
+
   private static class ContentComparator implements Comparator<ContentEntry> {
     public static final ContentComparator INSTANCE = new ContentComparator();
 
@@ -764,15 +772,6 @@ public class RootModelImpl implements ModifiableRootModel {
 
   private boolean areContentEntriesChanged() {
     return ArrayUtil.lexicographicCompare(getContentEntries(), getSourceModel().getContentEntries()) != 0;
-    //final ContentEntry[] contentEntries = getContentEntries();
-    //final ContentEntry[] thatContentEntries = getSourceModel().getContentEntries();
-    //if (contentEntries.length != thatContentEntries.length) return true;
-    //for (int i = 0; i < contentEntries.length; i++) {
-    //  ContentEntry entry = contentEntries[i];
-    //  ContentEntry sourceEntry = thatContentEntries[i];
-    //  if (!((ContentEntryImpl)entry).areRootsEqual((ContentEntryImpl)sourceEntry)) return true;
-    //}
-    //return false;
   }
 
   private boolean areOrderEntriesChanged() {
@@ -787,22 +786,6 @@ public class RootModelImpl implements ModifiableRootModel {
       }
     }
     return false;
-  }
-
-  void addExportedUrs(OrderRootType type, List<String> result, Set<Module> processed) {
-    for (final OrderEntry orderEntry : getOrderEntries()) {
-      if (orderEntry instanceof ModuleSourceOrderEntryImpl) {
-        ((ModuleSourceOrderEntryImpl)orderEntry).addExportedUrls(type, result);
-      }
-      else if (orderEntry instanceof ExportableOrderEntry && ((ExportableOrderEntry)orderEntry).isExported()) {
-        if (orderEntry instanceof ModuleOrderEntryImpl) {
-          result.addAll(Arrays.asList(((ModuleOrderEntryImpl)orderEntry).getUrls(type, processed)));
-        }
-        else {
-          result.addAll(Arrays.asList(orderEntry.getUrls(type)));
-        }
-      }
-    }
   }
 
   private static boolean orderEntriesEquals(OrderEntry orderEntry1, OrderEntry orderEntry2) {
@@ -858,14 +841,9 @@ public class RootModelImpl implements ModifiableRootModel {
     return true;
   }
 
-  void fireBeforeExternalChange() {
+  void makeExternalChange(Runnable runnable) {
     if (myWritable || myDisposed) return;
-    myModuleRootManager.fireBeforeRootsChange();
-  }
-
-  void fireAfterExternalChange() {
-    if (myWritable || myDisposed) return;
-    myModuleRootManager.fireRootsChanged();
+    myModuleRootManager.makeRootsChange(runnable);
   }
 
   public void dispose() {

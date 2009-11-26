@@ -21,6 +21,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.ContentEntryImpl;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -134,9 +135,15 @@ import java.util.Collection;
   public static ContentEntry addContentRoot(Module module, VirtualFile vDir) {
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
     final ModifiableRootModel rootModel = rootManager.getModifiableModel();
-    ContentEntry e = rootModel.addContentEntry(vDir);
+    rootModel.addContentEntry(vDir);
     rootModel.commit();
-    return e;
+    for (ContentEntry entry : rootManager.getContentEntries()) {
+      if (entry.getFile() == vDir) {
+        Assert.assertFalse(((ContentEntryImpl)entry).isDisposed());
+        return entry;
+      }
+    }
+    return null;
   }
 
   public static void removeContentEntry(Module m, ContentEntry e) {

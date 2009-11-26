@@ -19,10 +19,12 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractModuleNode extends ProjectViewNode<Module> {
@@ -36,8 +38,16 @@ public abstract class AbstractModuleNode extends ProjectViewNode<Module> {
       return;
     }
     presentation.setPresentableText(getValue().getName());
+    if (showModuleNameInBold()) {
+      presentation.addText(getValue().getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+    }
+
     presentation.setOpenIcon(getValue().getModuleType().getNodeIcon(true));
     presentation.setClosedIcon(getValue().getModuleType().getNodeIcon(false));
+  }
+
+  protected boolean showModuleNameInBold() {
+    return true;
   }
 
 
@@ -45,10 +55,12 @@ public abstract class AbstractModuleNode extends ProjectViewNode<Module> {
     return "Module";
   }
 
+  @Override
   public boolean contains(@NotNull VirtualFile file) {
-    Module module = getValue();
-    return module != null && !module.isDisposed() &&
-           (ModuleUtil.moduleContainsFile(module, file, false) || ModuleUtil.moduleContainsFile(module, file, true));
+    for (VirtualFile root : ModuleRootManager.getInstance(getValue()).getContentRoots()) {
+      if (VfsUtil.isAncestor(root, file, false)) return true;
+    }
+    return false;
   }
 
   public String getToolTip() {

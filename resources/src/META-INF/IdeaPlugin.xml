@@ -348,6 +348,8 @@
                     serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactManagerImpl"/>
     <projectService serviceInterface="com.intellij.packaging.artifacts.ArtifactPointerManager"
                     serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactPointerManagerImpl"/>
+    <projectService serviceInterface="com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinder"
+                    serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinderImpl"/>
 
     <applicationService serviceInterface="com.intellij.conversion.ConversionService"
                         serviceImplementation="com.intellij.conversion.impl.ConversionServiceImpl"/>
@@ -411,18 +413,18 @@
     <projectService serviceInterface="com.intellij.codeInspection.ex.EntryPointsManagerImpl"
                     serviceImplementation="com.intellij.codeInspection.ex.EntryPointsManagerImpl"/>
 
-    <projectService serviceInterface="com.intellij.compiler.impl.javaCompiler.javac.JavacSettings"
-                    serviceImplementation="com.intellij.compiler.impl.javaCompiler.javac.JavacSettings"/>
-    <projectService serviceInterface="com.intellij.compiler.impl.javaCompiler.api.CompilerAPISettings"
-                    serviceImplementation="com.intellij.compiler.impl.javaCompiler.api.CompilerAPISettings"/>
-    <projectService serviceInterface="com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompilerSettings"
-                    serviceImplementation="com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompilerSettings"/>
-    <projectService serviceInterface="com.intellij.compiler.impl.javaCompiler.eclipse.EclipseEmbeddedCompilerSettings"
-                    serviceImplementation="com.intellij.compiler.impl.javaCompiler.eclipse.EclipseEmbeddedCompilerSettings"/>
-    <projectService serviceInterface="com.intellij.compiler.RmicSettings"
-                    serviceImplementation="com.intellij.compiler.RmicSettings"/>
-    <projectService serviceInterface="com.intellij.compiler.impl.javaCompiler.jikes.JikesSettings"
-                    serviceImplementation="com.intellij.compiler.impl.javaCompiler.jikes.JikesSettings"/>
+    <projectService serviceInterface="com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration"
+                    serviceImplementation="com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration"/>
+    <projectService serviceInterface="com.intellij.compiler.impl.javaCompiler.api.CompilerAPIConfiguration"
+                    serviceImplementation="com.intellij.compiler.impl.javaCompiler.api.CompilerAPIConfiguration"/>
+    <projectService serviceInterface="com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompilerConfiguration"
+                    serviceImplementation="com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompilerConfiguration"/>
+    <projectService serviceInterface="com.intellij.compiler.impl.javaCompiler.eclipse.EclipseEmbeddedCompilerConfiguration"
+                    serviceImplementation="com.intellij.compiler.impl.javaCompiler.eclipse.EclipseEmbeddedCompilerConfiguration"/>
+    <projectService serviceInterface="com.intellij.compiler.impl.rmiCompiler.RmicConfiguration"
+                    serviceImplementation="com.intellij.compiler.impl.rmiCompiler.RmicConfiguration"/>
+    <projectService serviceInterface="com.intellij.compiler.impl.javaCompiler.jikes.JikesConfiguration"
+                    serviceImplementation="com.intellij.compiler.impl.javaCompiler.jikes.JikesConfiguration"/>
 
     <applicationService serviceInterface="com.intellij.openapi.wm.impl.FrameTitleBuilder"
                         serviceImplementation="com.intellij.openapi.wm.IdeaFrameTitleBuilder"/>
@@ -826,7 +828,7 @@
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SuggestIndexNameMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.GuessElementTypeMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ExpectedTypeMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.GroovyScriptMacro"/>
+    
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.AnnotatedMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.MethodNameMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.MethodReturnTypeMacro"/>
@@ -905,7 +907,7 @@
     <favoriteNodeProvider implementation="com.intellij.ide.favoritesTreeView.PsiPackageFavoriteNodeProvider"/>
 
     <stepsBeforeRunProvider implementation="com.intellij.compiler.options.CompileStepBeforeRun" id="compileBeforeRun"/>
-    <stepsBeforeRunProvider implementation="com.intellij.packaging.impl.run.BuildArtifactsBeforeRun" order="after compileBeforeRun"/>
+    <stepsBeforeRunProvider implementation="com.intellij.packaging.impl.run.BuildArtifactsBeforeRunTaskProvider" order="after compileBeforeRun"/>
     <programRunner implementation="com.intellij.execution.impl.DefaultJavaProgramRunner"/>
     <programRunner implementation="com.intellij.debugger.impl.GenericDebuggerRunner" order="last"/>
 
@@ -985,7 +987,7 @@
 
     <renameHandler implementation="com.intellij.refactoring.rename.DirectoryAsPackageRenameHandler"/>
     <rename.inplace.resolveSnapshotProvider
-            language="Java"
+            language="JAVA"
             implementationClass="com.intellij.refactoring.rename.inplace.JavaResolveSnapshotProvider"
     />
     <updateAddedFileProcessor implementation="com.intellij.psi.impl.file.JavaUpdateAddedFileProcessor"/>

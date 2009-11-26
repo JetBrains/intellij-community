@@ -31,13 +31,15 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
 
   @Override
   public void check(ProjectStructureProblemsHolder problemsHolder) {
-    final LibraryEx library = (LibraryEx)myLibrary;
-    final String libraryName = myLibrary.getName();//todo[nik] get modified name?
+    final LibraryEx library = (LibraryEx)myContext.getLibraryModel(myLibrary);
+    if (library == null) return;
+
+    final String libraryName = library.getName();
     if (!library.allPathsValid(OrderRootType.CLASSES)) {
-      problemsHolder.addError(ProjectBundle.message("project.roots.tooltip.library.misconfigured", libraryName));
+      problemsHolder.registerError(ProjectBundle.message("project.roots.tooltip.library.misconfigured", libraryName));
     }
     else if (!library.allPathsValid(JavadocOrderRootType.getInstance()) || !library.allPathsValid(OrderRootType.SOURCES)) {
-      problemsHolder.addWarning(ProjectBundle.message("project.roots.tooltip.library.misconfigured", libraryName));
+      problemsHolder.registerWarning(ProjectBundle.message("project.roots.tooltip.library.misconfigured", libraryName));
     }
   }
 

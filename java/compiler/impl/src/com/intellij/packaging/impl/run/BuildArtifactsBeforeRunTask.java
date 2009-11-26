@@ -22,6 +22,7 @@ import com.intellij.packaging.artifacts.ArtifactPointer;
 import com.intellij.packaging.artifacts.ArtifactPointerManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -80,8 +81,12 @@ public class BuildArtifactsBeforeRunTask extends BeforeRunTask {
     }
   }
 
-  public void removeArtifact(Artifact artifact) {
-    myArtifactPointers.remove(ArtifactPointerManager.getInstance(myProject).createPointer(artifact));
+  public void removeArtifact(@NotNull Artifact artifact) {
+    removeArtifact(ArtifactPointerManager.getInstance(myProject).createPointer(artifact));
+  }
+
+  public void removeArtifact(final @NotNull ArtifactPointer pointer) {
+    myArtifactPointers.remove(pointer);
   }
 
   public boolean equals(Object o) {

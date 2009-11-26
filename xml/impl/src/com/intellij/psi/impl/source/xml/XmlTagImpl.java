@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
@@ -121,22 +122,25 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     if (startTagName == null) return PsiReference.EMPTY_ARRAY;
     final ASTNode endTagName = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(this);
     final PsiReference[] referencesFromProviders = ReferenceProvidersRegistry.getReferencesFromProviders(this, XmlTag.class);
-
+    List<PsiReference> myRefs = new ArrayList<PsiReference>();
+    final String prefix = getNamespacePrefix();
     if (endTagName != null) {
-      final PsiReference[] psiReferences = new PsiReference[referencesFromProviders.length + 2];
-      psiReferences[0] = TagNameReference.create(this, startTagName, true);
-      psiReferences[1] = TagNameReference.create(this, endTagName, false);
-
-      System.arraycopy(referencesFromProviders, 0, psiReferences, 2, referencesFromProviders.length);
-      return psiReferences;
+      if (prefix.length() > 0) {
+        myRefs.add(new SchemaPrefixReference(this, TextRange.from(startTagName.getStartOffset() - this.getStartOffset(), prefix.length()), prefix));
+        myRefs.add(new SchemaPrefixReference(this, TextRange.from(endTagName.getStartOffset() - this.getStartOffset(), prefix.length()), prefix));
+      }
+      myRefs.add(TagNameReference.create(this, startTagName, true));
+      myRefs.add(TagNameReference.create(this, endTagName, false));
     }
     else {
-      final PsiReference[] psiReferences = new PsiReference[referencesFromProviders.length + 1];
-      psiReferences[0] = TagNameReference.create(this, startTagName, true);
-
-      System.arraycopy(referencesFromProviders, 0, psiReferences, 1, referencesFromProviders.length);
-      return psiReferences;
+      if (prefix.length() > 0) {
+        myRefs.add(new SchemaPrefixReference(this, TextRange.from(startTagName.getStartOffset() - this.getStartOffset(), prefix.length()), prefix));
+      }
+      myRefs.add(TagNameReference.create(this, startTagName, true));
     }
+    final PsiReference[] result = myRefs.toArray(new PsiReference[myRefs.size() + referencesFromProviders.length]);
+    System.arraycopy(referencesFromProviders, 0, result, myRefs.size(), referencesFromProviders.length);
+    return result;
   }
 
   public XmlNSDescriptor getNSDescriptor(final String namespace, boolean strict) {

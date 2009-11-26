@@ -19,19 +19,20 @@
  */
 package com.intellij.util.io.storage;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.PagePool;
+import com.intellij.util.io.RecordDataOutput;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
-public class Storage extends AbstractStorage {
-
+public class Storage implements Disposable, Forceable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.storage.Storage");
 
   private final Object lock = new Object();
@@ -201,21 +202,21 @@ public class Storage extends AbstractStorage {
     }
   }
 
-  public int createNewRecord(int requiredLength) throws IOException {
+  public int createNewRecord() throws IOException {
     synchronized (lock) {
       return myRecordsTable.createNewRecord();
     }
   }
 
   public StorageDataOutput createStream() throws IOException {
-    return writeStream(createNewRecord(0));
+    return writeStream(createNewRecord());
   }
 
-  protected int appendBytes(int record, byte[] bytes) {
+  private void appendBytes(int record, byte[] bytes) {
     assert record > 0;
 
     int delta = bytes.length;
-    if (delta == 0) return record;
+    if (delta == 0) return;
 
     synchronized (lock) {
       int capacity = myRecordsTable.getCapacity(record);
@@ -238,7 +239,6 @@ public class Storage extends AbstractStorage {
         myRecordsTable.setSize(record, newSize);
       }
     }
-    return record;
   }
 
   public void writeBytes(int record, byte[] bytes) {
@@ -271,18 +271,13 @@ public class Storage extends AbstractStorage {
       myDataTable.writeBytes(address, bytes);
       myRecordsTable.setSize(record, requiredLength);
     }
-    return;
   }
 
-  public int ensureCapacity(int attAddress, int capacity) {
-    return attAddress;
-  }
-
-  static int calcCapacity(int requiredLength) {
+  private static int calcCapacity(int requiredLength) {
     return Math.max(64, nearestPowerOfTwo(requiredLength * 3 / 2));
   }
 
-  static int nearestPowerOfTwo(int n) {
+  private static int nearestPowerOfTwo(int n) {
     int power = 1;
     while (n != 0) {
       power *= 2;
@@ -291,6 +286,19 @@ public class Storage extends AbstractStorage {
     return power;
   }
   
+  public StorageDataOutput writeStream(final int record) {
+    return new StorageDataOutput(this, record);
+  }
+
+  public AppenderStream appendStream(int record) {
+    return new AppenderStream(record);
+  }
+
+  public DataInputStream readStream(int record) {
+    final byte[] bytes = readBytes(record);
+    return new DataInputStream(new ByteArrayInputStream(bytes));
+  }
+
   public byte[] readBytes(int record) {
     assert record > 0;
 
@@ -332,4 +340,37 @@ public class Storage extends AbstractStorage {
     }
   }
 
+  public static class StorageDataOutput extends DataOutputStream implements RecordDataOutput {
+    private final Storage myStorage;
+    private final int myRecordId;
+
+    public StorageDataOutput(Storage storage, int recordId) {
+      super(new ByteArrayOutputStream());
+      myStorage = storage;
+      myRecordId = recordId;
+    }
+
+    public void close() throws IOException {
+      super.close();
+      myStorage.writeBytes(myRecordId, ((ByteArrayOutputStream)out).toByteArray());
+    }
+
+    public int getRecordId() {
+      return myRecordId;
+    }
+  }
+
+  public class AppenderStream extends DataOutputStream {
+    private final int myRecordId;
+
+    public AppenderStream(int recordId) {
+      super(new ByteArrayOutputStream());
+      myRecordId = recordId;
+    }
+
+    public void close() throws IOException {
+      super.close();
+      appendBytes(myRecordId, ((ByteArrayOutputStream)out).toByteArray());
+    }
+  }
 }

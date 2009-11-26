@@ -179,6 +179,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
         return new AnAction[]{new AnAction(getAddText()) {
           public void actionPerformed(AnActionEvent e) {
             final LibraryTableEditor editor = LibraryTableEditor.editLibraryTable(getModelProvider(false), myProject);
+            editor.addLibraryEditorListener(myContext);
             editor.createAddLibraryAction(true).actionPerformed(null);
             Disposer.dispose(editor);
           }

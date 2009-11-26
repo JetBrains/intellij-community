@@ -274,9 +274,13 @@ public class XmlTagBlock extends AbstractXmlBlock{
   }
 
   public Spacing getSpacing(Block child1, Block child2) {
-    final AbstractSyntheticBlock syntheticBlock1 = ((AbstractSyntheticBlock)child1);
-    final AbstractSyntheticBlock syntheticBlock2 = ((AbstractSyntheticBlock)child2);
+    if(child1 instanceof AbstractSyntheticBlock && child2 instanceof AbstractSyntheticBlock) {
+      return getSpacing((AbstractSyntheticBlock)child1, (AbstractSyntheticBlock)child2);
+    }
+    return null;
+  }
 
+  protected Spacing getSpacing(final AbstractSyntheticBlock syntheticBlock1, final AbstractSyntheticBlock syntheticBlock2) {
     if (syntheticBlock2.startsWithCDATA() || syntheticBlock1.endsWithCDATA()) {
       return Spacing.getReadOnlySpacing();
     }
@@ -334,7 +338,6 @@ public class XmlTagBlock extends AbstractXmlBlock{
     } else {
       return createDefaultSpace(true, true);
     }
-
   }
 
   public boolean insertLineBreakBeforeTag() {

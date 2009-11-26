@@ -15,29 +15,25 @@
  */
 package com.intellij.openapi.keymap.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.diagnostic.Logger;
-import org.jdom.Element;
 import org.jdom.Document;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Eugene Belyaev
  */
-public class DefaultKeymap implements JDOMExternalizable, ApplicationComponent {
+public class DefaultKeymap {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.keymap.impl.DefaultKeymap");
 
   @NonNls
@@ -45,21 +41,13 @@ public class DefaultKeymap implements JDOMExternalizable, ApplicationComponent {
   @NonNls
   private static final String NAME_ATTRIBUTE = "name";
 
-  private ArrayList<Keymap> myKeymaps = new ArrayList<Keymap>();
+  private final ArrayList<Keymap> myKeymaps = new ArrayList<Keymap>();
 
   public static DefaultKeymap getInstance() {
-    return ApplicationManager.getApplication().getComponent(DefaultKeymap.class);
+    return ServiceManager.getService(DefaultKeymap.class);
   }
 
-  public void disposeComponent() {
-  }
-
-  public void initComponent() { }
-
-  public void readExternal(Element element) throws InvalidDataException{
-    myKeymaps = new ArrayList<Keymap>();
-    loadKeymapsFromElement(element);
-
+  public DefaultKeymap() {
     for(BundledKeymapProvider provider: Extensions.getExtensions(BundledKeymapProvider.EP_NAME)) {
       final List<String> fileNames = provider.getKeymapFileNames();
       for (String fileName : fileNames) {
@@ -75,13 +63,10 @@ public class DefaultKeymap implements JDOMExternalizable, ApplicationComponent {
   }
 
   private void loadKeymapsFromElement(final Element element) throws InvalidDataException {
-    for (Iterator i = element.getChildren().iterator(); i.hasNext();) {
-      Element child=(Element)i.next();
+    for (Element child : (List<Element>)element.getChildren()) {
       if (KEY_MAP.equals(child.getName())) {
         String keymapName = child.getAttributeValue(NAME_ATTRIBUTE);
-        DefaultKeymapImpl keymap = KeymapManager.MAC_OS_X_KEYMAP.equals(keymapName)
-                                   ? new MacOSDefaultKeymap()
-                                   : new DefaultKeymapImpl();
+        DefaultKeymapImpl keymap = keymapName.startsWith(KeymapManager.MAC_OS_X_KEYMAP) ? new MacOSDefaultKeymap() : new DefaultKeymapImpl();
         keymap.readExternal(child, myKeymaps.toArray(new Keymap[myKeymaps.size()]));
         keymap.setName(keymapName);
         myKeymaps.add(keymap);
@@ -89,19 +74,7 @@ public class DefaultKeymap implements JDOMExternalizable, ApplicationComponent {
     }
   }
 
-  /**
-   * We override this method to disable saving the keymap.
-   */
-  public void writeExternal(Element element) throws WriteExternalException{
-    throw new WriteExternalException();
-  }
-
   public Keymap[] getKeymaps() {
     return myKeymaps.toArray(new Keymap[myKeymaps.size()]);
   }
-
-  public String getComponentName() {
-    return "DefaultKeymap";
-  }
-
 }

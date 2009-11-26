@@ -20,8 +20,12 @@ import java.util.List;
 public abstract class CompletionTestBase extends JavaCodeInsightFixtureTestCase {
 
   protected void doTest() throws Throwable {
+    doTest("");
+  }
+  protected void doTest(String directory) throws Throwable {
     final List<String> stringList = TestUtils.readInput(getTestDataPath() + "/" + getTestName(true) + ".test");
-    final String fileName = getTestName(true) + "." + getExtension();
+    if (directory.length()!=0) directory += "/";
+    final String fileName = directory + getTestName(true) + "." + getExtension();
     myFixture.addFileToProject(fileName, stringList.get(0));
     myFixture.configureByFile(fileName);
 

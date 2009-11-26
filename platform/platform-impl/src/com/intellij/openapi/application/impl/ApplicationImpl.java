@@ -25,7 +25,6 @@ import com.intellij.ide.IdeRepaintManager;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -112,8 +111,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     new SynchronousQueue<Runnable>(),
     new ThreadFactory() {
       public Thread newThread(Runnable r) {
-        return new Thread(r, "ApplicationImpl pooled thread")
-        {
+        final Thread thread = new Thread(r, "ApplicationImpl pooled thread") {
           public void interrupt() {
             if (LOG.isDebugEnabled()) {
               LOG.debug("Interrupted worker, will remove from pool");
@@ -124,13 +122,16 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
           public void run() {
             try {
               super.run();
-            } catch(Throwable t) {
+            }
+            catch (Throwable t) {
               if (LOG.isDebugEnabled()) {
                 LOG.debug("Worker exits due to exception", t);
               }
             }
           }
         };
+        thread.setPriority(Thread.NORM_PRIORITY - 1);
+        return thread;
       }
     }
   );

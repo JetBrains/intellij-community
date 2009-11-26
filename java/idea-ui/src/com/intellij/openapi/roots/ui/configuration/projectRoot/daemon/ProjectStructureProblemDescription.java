@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author nik
  */
@@ -22,7 +24,7 @@ public class ProjectStructureProblemDescription {
   private String myMessage;
   private final Severity mySeverity;
 
-  public ProjectStructureProblemDescription(String message, Severity severity) {
+  public ProjectStructureProblemDescription(@NotNull String message, @NotNull Severity severity) {
     myMessage = message;
     mySeverity = severity;
   }

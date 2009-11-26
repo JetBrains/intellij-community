@@ -19,6 +19,7 @@ package com.intellij.codeInsight.daemon.impl.actions;
 import com.intellij.application.options.editor.AutoImportOptionsConfigurable;
 import com.intellij.application.options.editor.EditorOptionsProvider;
 import com.intellij.application.options.editor.JavaAutoImportOptions;
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -211,7 +212,7 @@ public class AddImportAction implements PriorityQuestionAction {
 
     try{
       bindReference(ref, targetClass);
-      if (com.intellij.codeInsight.CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY) {
+      if (CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY) {
         Document document = myEditor.getDocument();
         PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
         new OptimizeImportsProcessor(myProject, psiFile).runWithoutProgress();

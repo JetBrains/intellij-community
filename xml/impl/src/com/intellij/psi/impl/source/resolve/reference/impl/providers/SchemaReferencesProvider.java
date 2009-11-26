@@ -31,13 +31,11 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
+import com.intellij.psi.impl.source.xml.SchemaPrefixReference;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
@@ -62,6 +60,7 @@ import java.util.regex.Pattern;
 
 /**
  * @by Maxim.Mossienko
+ * @author Konstantin Bulenkov
  */
 public class SchemaReferencesProvider extends PsiReferenceProvider {
   @NonNls private static final String VALUE_ATTR_NAME = "value";
@@ -183,6 +182,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
   static class TypeOrElementOrAttributeReference implements PsiReference, QuickFixProvider<TypeOrElementOrAttributeReference> {
     private final PsiElement myElement;
     private TextRange myRange;
+    private String nsPrefix;
 
     public void registerQuickfix(HighlightInfo info, TypeOrElementOrAttributeReference reference) {
       if (myType == ReferenceType.TypeReference) {
@@ -215,6 +215,10 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
           info, new CreateXmlElementIntentionAction(key, declarationTagName, reference)
         );
       }
+    }
+
+    public void setNamespacePrefix(String prefix) {
+      this.nsPrefix = prefix;
     }
 
     enum ReferenceType {
@@ -408,12 +412,17 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
 
     public String getCanonicalText() {
       final String text = myElement.getText();
-      return myRange.getEndOffset() < text.length() ? myRange.substring(text) : "";
+      String name = myRange.getEndOffset() < text.length() ? myRange.substring(text) : "";
+      if (name.length() > 0 && nsPrefix != null && nsPrefix.length() > 0) {
+        name = nsPrefix + ":" + name;
+      }
+      return name;
     }
 
     public PsiElement handleElementRename(String _newElementName) throws IncorrectOperationException {
       final String canonicalText = getCanonicalText();
-      final String newElementName = canonicalText.substring(0,canonicalText.indexOf(':') + 1) + _newElementName;
+      //final String newElementName = canonicalText.substring(0,canonicalText.indexOf(':') + 1) + _newElementName;
+      final String newElementName = _newElementName;
 
       final PsiElement element = ElementManipulators.getManipulator(myElement)
         .handleContentChange(myElement, getRangeInElement(), newElementName);
@@ -429,7 +438,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
       return myElement.getManager().areElementsEquivalent(resolve(), element);
     }
 
-    static class CompletionProcessor implements PsiElementProcessor<XmlTag> {
+    class CompletionProcessor implements PsiElementProcessor<XmlTag> {
       List<String> myElements = new ArrayList<String>(1);
       String namespace;
       XmlTag tag;
@@ -437,7 +446,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
       public boolean execute(final XmlTag element) {
         String name = element.getAttributeValue(NAME_ATTR_NAME);
         final String prefixByNamespace = tag.getPrefixByNamespace(namespace);
-        if (prefixByNamespace != null && prefixByNamespace.length() > 0) {
+        if (prefixByNamespace != null && prefixByNamespace.length() > 0 && nsPrefix == null) {
           name = prefixByNamespace + ":" + name;
         }
         myElements.add( name );
@@ -639,13 +648,36 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
       if (lastIndex != testLength - 1) result.add( new TypeOrElementOrAttributeReference(element, new TextRange(lastIndex, testLength - 1) ) );
       return result.toArray(new PsiReference[result.size()]);
     } else {
-      return new PsiReference[] {createTypeOrElementOrAttributeReference(element)};
+      final PsiReference prefix = createSchemaPrefixReference(element);
+      final PsiReference ref = createTypeOrElementOrAttributeReference(element, prefix == null ? null : prefix.getCanonicalText());
+      return prefix == null ? new PsiReference[] {ref} : new PsiReference[] {ref, prefix};
     }
   }
 
   public static PsiReference createTypeOrElementOrAttributeReference(final PsiElement element) {
+    return createTypeOrElementOrAttributeReference(element, null);
+  }
+
+  public static PsiReference createTypeOrElementOrAttributeReference(final PsiElement element, String ns) {
     final int length = element.getTextLength();
-    return new TypeOrElementOrAttributeReference(element, length >= 2 ? new TextRange(1, length - 1) : new TextRange(0,0));
+    int offset = (element instanceof XmlAttributeValue) ?
+      XmlUtil.findPrefixByQualifiedName(((XmlAttributeValue)element).getValue()).length() : 0;
+    if (offset > 0) offset++;
+    final TypeOrElementOrAttributeReference ref = new TypeOrElementOrAttributeReference(element, length >= 2 ? new TextRange(1 + offset, length - 1) : new TextRange(0,0));
+    ref.setNamespacePrefix(ns);
+    return ref;
+  }
+
+  @Nullable
+  public static PsiReference createSchemaPrefixReference(final PsiElement element) {
+    if (element instanceof XmlAttributeValue) {
+      final XmlAttributeValue attributeValue = (XmlAttributeValue)element;
+      final String prefix = XmlUtil.findPrefixByQualifiedName(attributeValue.getValue());
+      if (prefix.length() > 0) {
+        return new SchemaPrefixReference(attributeValue, TextRange.from(1, prefix.length()), prefix);
+      }
+    }
+    return null;
   }
 
   public static @Nullable XmlNSDescriptorImpl findRedefinedDescriptor(XmlTag tag, String text) {
