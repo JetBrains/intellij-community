@@ -23,7 +23,6 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.MultiValuesMap;
@@ -87,10 +86,7 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
     final Content content = ContentFactory.SERVICE.getInstance().createContent(myStructureViewWrapperImpl.getComponent(), "", false);
     Disposer.register(content, myStructureViewWrapperImpl);
     toolWindow.getContentManager().addContent(content);
-    final FileEditor[] fileEditors = FileEditorManager.getInstance(myProject).getSelectedEditors();
-    if (fileEditors.length > 0) {
-      myStructureViewWrapperImpl.setFileEditor(fileEditors [0]);
-    }
+
     if (myRunWhenInitialized != null) {
       myRunWhenInitialized.run();
       myRunWhenInitialized = null;

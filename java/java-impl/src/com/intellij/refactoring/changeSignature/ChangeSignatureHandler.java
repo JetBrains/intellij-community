@@ -37,7 +37,10 @@ public class ChangeSignatureHandler implements RefactoringActionHandler {
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement element = ChangeSignatureTargetUtil.findTargetMember(file, editor);
+    if (element == null) {
+      element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    }
     invokeOnElement(project, editor, element);
   }
 

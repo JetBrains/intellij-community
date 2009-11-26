@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,8 +65,13 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
             final PsiClass containingClass = aClass.getContainingClass();
             if (containingClass !=  null) {
                 if (aClass.isInterface()) {
-                    return InspectionGadgetsBundle.message(
-                            "unnecessary.interface.modifier.problem.descriptor1");
+                    if (containingClass.isInterface()) {
+                        return InspectionGadgetsBundle.message(
+                                "unnecessary.interface.modifier.inner.interface.of.interface.problem.descriptor");
+                    } else {
+                        return InspectionGadgetsBundle.message(
+                                "unnecessary.interface.modifier.inner.interface.of.class.problem.descriptor");
+                    }
                 } else {
                     return InspectionGadgetsBundle.message(
                             "unnecessary.interface.modifier.problem.descriptor3");
@@ -91,15 +96,15 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
 
     @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
-        return new UnnecessaryInterfaceModifersFix((String) infos[0]);
+        return new UnnecessaryInterfaceModifiersFix((String) infos[0]);
     }
 
-    private static class UnnecessaryInterfaceModifersFix
+    private static class UnnecessaryInterfaceModifiersFix
             extends InspectionGadgetsFix {
 
         private final String modifiersText;
 
-        private UnnecessaryInterfaceModifersFix(String modifiersText) {
+        private UnnecessaryInterfaceModifiersFix(String modifiersText) {
             this.modifiersText = modifiersText;
         }
 

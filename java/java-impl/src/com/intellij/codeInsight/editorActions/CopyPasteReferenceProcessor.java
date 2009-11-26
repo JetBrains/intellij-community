@@ -44,6 +44,9 @@ public class CopyPasteReferenceProcessor implements CopyPastePostProcessor {
     if (file instanceof PsiCompiledElement) {
       file = (PsiFile) ((PsiCompiledElement) file).getMirror();
     }
+    if (!(file instanceof PsiClassOwner)) {
+      return new ReferenceTransferableData(new ReferenceTransferableData.ReferenceData[0]);
+    }
 
     final ArrayList<ReferenceTransferableData.ReferenceData> array = new ArrayList<ReferenceTransferableData.ReferenceData>();
     for (int j = 0; j < startOffsets.length; j++) {
@@ -104,9 +107,12 @@ public class CopyPasteReferenceProcessor implements CopyPastePostProcessor {
     if (DumbService.getInstance(project).isDumb()) {
       return;
     }
-
     final Document document = editor.getDocument();
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+
+    if (!(file instanceof PsiClassOwner)) {
+      return;
+    }
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     final ReferenceTransferableData.ReferenceData[] referenceData = ((ReferenceTransferableData)value).getData();

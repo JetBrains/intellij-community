@@ -57,21 +57,27 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
     final PsiDirectory psiDirectory = getValue();
     final VirtualFile directoryFile = psiDirectory.getVirtualFile();
 
+    final Object parentValue = getParentValue();
     if (ProjectRootsUtil.isModuleContentRoot(directoryFile, project)) {
       ProjectFileIndex fi = ProjectRootManager.getInstance(project).getFileIndex();
       Module module = fi.getModuleForFile(directoryFile);
 
       data.setPresentableText(directoryFile.getName());
       if (module != null) {
-        if (Comparing.equal(module.getName(), directoryFile.getName())) {
-          data.addText(directoryFile.getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        if (!(parentValue instanceof Module )) {
+          if (Comparing.equal(module.getName(), directoryFile.getName())) {
+            data.addText(directoryFile.getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+          }
+          else {
+            data.addText(directoryFile.getName() + " ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            data.addText("[" + module.getName() + "]", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+          }
         }
         else {
-          data.addText(directoryFile.getName() + " ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-          data.addText("[" + module.getName() + "]", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+          data.addText(directoryFile.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
 
-        if (getParentValue() instanceof Project) {
+        if (parentValue instanceof Project || parentValue instanceof Module) {
           data.addText(" (" + directoryFile.getPresentableUrl() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
         else if (ProjectRootsUtil.isSourceOrTestRoot(directoryFile, project)) {
@@ -89,9 +95,9 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
       }
     }
 
-    final String name = getParentValue() instanceof Project
+    final String name = parentValue instanceof Project
                         ? psiDirectory.getVirtualFile().getPresentableUrl()
-                        : ProjectViewDirectoryHelper.getInstance(psiDirectory.getProject()).getNodeName(getSettings(), getParentValue(), psiDirectory);
+                        : ProjectViewDirectoryHelper.getInstance(psiDirectory.getProject()).getNodeName(getSettings(), parentValue, psiDirectory);
     if (name == null) {
       setValue(null);
       return;

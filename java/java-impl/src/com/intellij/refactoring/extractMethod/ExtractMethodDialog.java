@@ -89,19 +89,9 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
     myStaticFlag = isStatic;
     myCanBeStatic = canBeStatic;
     myElementsToExtract = elementsToExtract;
-
-    boolean canBeVarargs = false;
-    for (ParameterTablePanel.VariableData data : inputVariables.getInputVariables()) {
-      canBeVarargs |= data.type instanceof PsiArrayType;
-    }
     myVariableData = inputVariables;
-    
-    if (inputVariables.isFoldable()) {
-      canBeVarargs |= inputVariables.isFoldingSelectedByDefault();
-    }
-
-    setTitle(title);
     myHelpId = helpId;
+    setTitle(title);
 
     // Create UI components
 
@@ -117,9 +107,6 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
     myCbMakeStatic.setText(RefactoringBundle.message("declare.static.checkbox"));
     if (canBeChainedConstructor) {
       myCbChainedConstructor = new NonFocusableCheckBox(RefactoringBundle.message("extract.chained.constructor.checkbox"));
-    }
-    if (canBeVarargs) {
-      myCbMakeVarargs = new NonFocusableCheckBox(RefactoringBundle.message("declare.varargs.checkbox"));
     }
 
     // Initialize UI
@@ -232,7 +219,15 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
     });
     panel.add(myFoldCb);
 
-    if (myCbMakeVarargs != null) {
+    boolean canBeVarargs = false;
+    for (ParameterTablePanel.VariableData data : myInputVariables) {
+      canBeVarargs |= data.type instanceof PsiArrayType;
+    }
+    if (myVariableData.isFoldable()) {
+      canBeVarargs |= myVariableData.isFoldingSelectedByDefault();
+    }
+    if (canBeVarargs) {
+      myCbMakeVarargs = new NonFocusableCheckBox(RefactoringBundle.message("declare.varargs.checkbox"));
       updateVarargsEnabled();
       myCbMakeVarargs.setSelected(false);
       panel.add(myCbMakeVarargs);

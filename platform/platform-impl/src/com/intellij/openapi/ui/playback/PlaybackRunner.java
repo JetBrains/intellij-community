@@ -126,6 +126,10 @@ public class PlaybackRunner {
       return new EmptyCommand(line);
     }
 
+    if (actualString.startsWith(KeyCodeTypeCommand.PREFIX)) {
+      return new KeyCodeTypeCommand(string, line);
+    }
+
     if (actualString.startsWith(DelayCommand.PREFIX)) {
       return new DelayCommand(string, line);
     }
@@ -229,7 +233,7 @@ public class PlaybackRunner {
       }
     });
 
-    new PlaybackRunner("%[comma]", new StatusCallback() {
+    new PlaybackRunner("%type", new StatusCallback() {
       public void error(String text, int currentLine) {
         System.out.println("Error: " + currentLine + " " + text);
       }
