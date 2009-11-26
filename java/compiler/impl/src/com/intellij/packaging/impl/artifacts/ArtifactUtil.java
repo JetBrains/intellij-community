@@ -15,10 +15,12 @@
  */
 package com.intellij.packaging.impl.artifacts;
 
+import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
@@ -303,28 +305,57 @@ public class ArtifactUtil {
   }
 
   public static Collection<Trinity<Artifact, PackagingElementPath, String>> findContainingArtifactsWithOutputPaths(@NotNull final VirtualFile file, @NotNull Project project) {
+    final boolean isResourceFile = CompilerConfiguration.getInstance(project).isResourceFile(file);
     final List<Trinity<Artifact, PackagingElementPath, String>> artifacts = new ArrayList<Trinity<Artifact, PackagingElementPath, String>>();
+    final PackagingElementResolvingContext context = ArtifactManager.getInstance(project).getResolvingContext();
     for (final Artifact artifact : ArtifactManager.getInstance(project).getArtifacts()) {
-      processFileOrDirectoryCopyElements(artifact, new PackagingElementProcessor<FileOrDirectoryCopyPackagingElement<?>>() {
+      processPackagingElements(artifact, null, new PackagingElementProcessor<PackagingElement<?>>() {
         @Override
-        public boolean process(@NotNull FileOrDirectoryCopyPackagingElement<?> element, @NotNull PackagingElementPath path) {
-          final VirtualFile root = element.findFile();
-          if (root != null && VfsUtil.isAncestor(root, file, false)) {
-            final String relativePath;
-            if (root.equals(file) && element instanceof FileCopyPackagingElement) {
-              relativePath = ((FileCopyPackagingElement)element).getOutputFileName();
+        public boolean process(@NotNull PackagingElement<?> element, @NotNull PackagingElementPath path) {
+          if (element instanceof FileOrDirectoryCopyPackagingElement<?>) {
+            final VirtualFile root = ((FileOrDirectoryCopyPackagingElement)element).findFile();
+            if (root != null && VfsUtil.isAncestor(root, file, false)) {
+              final String relativePath;
+              if (root.equals(file) && element instanceof FileCopyPackagingElement) {
+                relativePath = ((FileCopyPackagingElement)element).getOutputFileName();
+              }
+              else {
+                relativePath = VfsUtil.getRelativePath(file, root, '/');
+              }
+              artifacts.add(Trinity.create(artifact, path, relativePath));
+              return false;
             }
-            else {
-              relativePath = VfsUtil.getRelativePath(file, root, '/');
+          }
+          else if (isResourceFile && element instanceof ModuleOutputPackagingElement) {
+            final String relativePath = getRelativePathInSources(file, (ModuleOutputPackagingElement)element, context);
+            if (relativePath != null) {
+              artifacts.add(Trinity.create(artifact, path, relativePath));
+              return false;
             }
-            artifacts.add(Trinity.create(artifact, path, relativePath));
-            return false;
           }
           return true;
         }
-      }, ArtifactManager.getInstance(project).getResolvingContext(), true);
+      }, context, true);
     }
     return artifacts;
+  }
+
+  @Nullable
+  private static String getRelativePathInSources(@NotNull VirtualFile file, final @NotNull ModuleOutputPackagingElement moduleElement,
+                                                @NotNull PackagingElementResolvingContext context) {
+    final Module module = moduleElement.findModule(context);
+    if (module != null) {
+      final ModuleRootModel rootModel = context.getModulesProvider().getRootModel(module);
+      for (ContentEntry entry : rootModel.getContentEntries()) {
+        for (SourceFolder folder : entry.getSourceFolders()) {
+          final VirtualFile sourceRoot = folder.getFile();
+          if (!folder.isTestSource() && sourceRoot != null && VfsUtil.isAncestor(sourceRoot, file, true)) {
+            return VfsUtil.getRelativePath(file, sourceRoot, '/');
+          }
+        }
+      }
+    }
+    return null;
   }
 
   @Nullable

@@ -15,15 +15,22 @@
  */
 package com.intellij.packaging.impl.artifacts;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.elements.ComplexPackagingElementType;
+import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementFactory;
+import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.elements.FileOrDirectoryCopyPackagingElement;
+import com.intellij.packaging.impl.elements.ModuleOutputPackagingElement;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -31,7 +38,10 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author nik
@@ -66,16 +76,33 @@ public class ArtifactBySourceFileFinderImpl extends ArtifactBySourceFileFinder {
     final MultiValuesMap<VirtualFile, Artifact> result = new MultiValuesMap<VirtualFile, Artifact>();
     final ArtifactManager artifactManager = ArtifactManager.getInstance(myProject);
     for (final Artifact artifact : artifactManager.getArtifacts()) {
-      ArtifactUtil.processFileOrDirectoryCopyElements(artifact, new PackagingElementProcessor<FileOrDirectoryCopyPackagingElement<?>>() {
+      final PackagingElementResolvingContext context = artifactManager.getResolvingContext();
+      ArtifactUtil.processPackagingElements(artifact, null, new PackagingElementProcessor<PackagingElement<?>>() {
         @Override
-        public boolean process(@NotNull FileOrDirectoryCopyPackagingElement<?> element, @NotNull PackagingElementPath path) {
-          final VirtualFile root = element.findFile();
-          if (root != null) {
-            result.put(root, artifact);
+        public boolean process(@NotNull PackagingElement<?> element, @NotNull PackagingElementPath path) {
+          if (element instanceof FileOrDirectoryCopyPackagingElement<?>) {
+            final VirtualFile root = ((FileOrDirectoryCopyPackagingElement)element).findFile();
+            if (root != null) {
+              result.put(root, artifact);
+            }
+          }
+          else if (element instanceof ModuleOutputPackagingElement) {
+            final Module module = ((ModuleOutputPackagingElement)element).findModule(context);
+            if (module != null) {
+              final ModuleRootModel rootModel = context.getModulesProvider().getRootModel(module);
+              for (ContentEntry contentEntry : rootModel.getContentEntries()) {
+                for (SourceFolder sourceFolder : contentEntry.getSourceFolders()) {
+                  final VirtualFile sourceRoot = sourceFolder.getFile();
+                  if (sourceRoot != null && !sourceFolder.isTestSource()) {
+                    result.put(sourceRoot, artifact);
+                  }
+                }
+              }
+            }
           }
           return true;
         }
-      }, artifactManager.getResolvingContext(), true);
+      }, context, true);
     }
     return result;
   }
