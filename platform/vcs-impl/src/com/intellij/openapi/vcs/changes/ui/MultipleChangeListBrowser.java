@@ -319,7 +319,7 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
     public void addToolbarActions(final DialogWrapper dialogWrapper) {
       final Icon icon = IconLoader.getIcon("/vcs/refresh.png");
       if (myBrowser.myChangesToDisplay == null) {
-        myBrowser.addToolbarAction(new AnAction() {
+        myBrowser.addToolbarAction(new AnAction("Refresh Changes") {
           @Override
           public void actionPerformed(AnActionEvent e) {
             myBrowser.rebuildList();
