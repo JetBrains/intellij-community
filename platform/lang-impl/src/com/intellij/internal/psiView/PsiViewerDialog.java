@@ -168,6 +168,11 @@ public class PsiViewerDialog extends DialogWrapper {
     return "#com.intellij.internal.psiView.PsiViewerDialog";
   }
 
+  @Override
+  protected String getHelpId() {
+    return "reference.psi.viewer";
+  }
+
   public JComponent getPreferredFocusedComponent() {
     return myEditor.getContentComponent();
   }
