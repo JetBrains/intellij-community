@@ -1,5 +1,6 @@
 package com.intellij.compiler.artifacts;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.ui.actions.PackageFileWorker;
@@ -129,6 +130,26 @@ public class PackageFileActionTest extends ArtifactCompilerTestCase {
     compileAndUpdate(file, "yyy");
 
     assertOutput(b, fs().archive("b.jar").archive("a.jar").file("a.txt", "yyy"));
+  }
+
+  public void testFileUnderSourceRoot() throws Exception {
+    final VirtualFile resource = createFile("src/x/a.xml", "old");
+    final Module module = addModule("mod", resource.getParent().getParent());
+    final Artifact a = addArtifact(root().dir("y").module(module));
+
+    compileAndUpdate(resource, "new");
+
+    assertOutput(a, fs().dir("y").dir("x").file("a.xml", "new"));
+  }
+
+  public void testJavaFileUnderSourceRoot() throws Exception {
+    final VirtualFile file = createFile("src/a.java", "public class a {}");
+    final Module module = addModule("mmm", file.getParent());
+    final Artifact a = addArtifact(root().module(module));
+
+    packageFile(file);
+
+    assertNoOutput(a);
   }
 
   private void compileAndUpdate(VirtualFile file, final String newText) throws Exception {

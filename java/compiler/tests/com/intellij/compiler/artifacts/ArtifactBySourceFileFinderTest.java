@@ -1,5 +1,6 @@
 package com.intellij.compiler.artifacts;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
@@ -35,6 +36,13 @@ public class ArtifactBySourceFileFinderTest extends PackagingElementsTestCase {
     deleteArtifact(a);
 
     assertEmpty(findArtifacts(file));
+  }
+
+  public void testFindFileUnderSourceRoot() throws Exception {
+    final VirtualFile file = createFile("src/a.xml");
+    final Module module = addModule("mmm", file.getParent());
+    final Artifact a = addArtifact(root().module(module));
+    assertSame(a, assertOneElement(findArtifacts(file)));
   }
 
   private Collection<? extends Artifact> findArtifacts(VirtualFile file) {
