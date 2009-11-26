@@ -1493,7 +1493,6 @@ public class AbstractTreeUi {
           Object element = getElementFromDescriptor(childDescr.get());
           if (element == null) {
             processingDone.setDone();
-            LOG.error("childDescr.getElement() == null, child = " + child + ", builder = " + this);
           }
           else {
             DefaultMutableTreeNode node = getNodeForElement(element, false);
