@@ -71,7 +71,7 @@ target('default': 'The default target') {
           version: "Maia",
           system_selector: "IntelliJIdeaCE90",
           jdk_req: "1.6*",
-          vmoptions: "-Xms32m -Xmx256m -XX:MaxPermSize=150m -ea",
+          vmoptions: "-Xms128m -Xmx512m -XX:MaxPermSize=250m -ea",
           home, out)
 }
 
