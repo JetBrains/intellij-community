@@ -164,6 +164,10 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
       return DefaultFacetsProvider.INSTANCE;
     }
 
+    public Library findLibrary(@NotNull String level, @NotNull String libraryName) {
+      return ArtifactManager.getInstance(myProject).getResolvingContext().findLibrary(level, libraryName);
+    }
+
     public void queueValidation() {
     }
 
