@@ -532,8 +532,15 @@ public class LineStatusTracker {
 
   @Nullable
   public Range getNextRange(int line) {
+    final Range currentRange = getRangeForLine(line);
+    if (currentRange != null) {
+      return getNextRange(currentRange);
+    }
+
     for (Range range : myRanges) {
-      if (range.getOffset2() < line) continue;
+      if (line > range.getOffset1() || line > range.getOffset2()) {
+        continue;
+      }
       return range;
     }
     return null;
@@ -541,10 +548,30 @@ public class LineStatusTracker {
 
   @Nullable
   public Range getPrevRange(int line) {
+    final Range currentRange = getRangeForLine(line);
+    if (currentRange != null) {
+      return getPrevRange(currentRange);
+    }
+
     for (ListIterator<Range> iterator = myRanges.listIterator(myRanges.size()); iterator.hasPrevious();) {
       Range range = iterator.previous();
-      if (range.getOffset1() > line) continue;
+      if (range.getOffset1() > line) {
+        continue;
+      }
       return range;
+    }
+    return null;
+  }
+
+  @Nullable
+  public Range getRangeForLine(final int line) {
+    for (final Range range : myRanges) {
+      if (range.getType() == Range.DELETED && line == range.getOffset1()) {
+        return range;
+      }
+      else if (line >= range.getOffset1() && line < range.getOffset2()) {
+        return range;
+      }
     }
     return null;
   }
