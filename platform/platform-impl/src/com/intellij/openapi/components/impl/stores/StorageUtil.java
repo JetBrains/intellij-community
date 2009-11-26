@@ -136,7 +136,7 @@ public class StorageUtil {
 
   @Nullable
   static VirtualFile getVirtualFile(final IFile ioFile) {
-    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
+    return LocalFileSystem.getInstance().findFileByIoFile(ioFile);
   }
 
   public static byte[] printDocument(final Document document) throws StateStorage.StateStorageException {
