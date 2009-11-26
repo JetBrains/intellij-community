@@ -247,14 +247,14 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
     }
   }
 
-  private static class IgnoredUrlsModel extends AddEditRemovePanel.TableModel {
+  private static class IgnoredUrlsModel extends AddEditRemovePanel.TableModel<String> {
     private final String[] myNames = {XmlBundle.message("column.name.edit.external.resource.uri")};
 
     public int getColumnCount() {
       return myNames.length;
     }
 
-    public Object getField(Object o, int columnIndex) {
+    public Object getField(String o, int columnIndex) {
       return o;
     }
 
@@ -266,7 +266,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
       return false; 
     }
 
-    public void setValue(Object aValue, Object data, int columnIndex) {
+    public void setValue(Object aValue, String data, int columnIndex) {
 
     }
 
