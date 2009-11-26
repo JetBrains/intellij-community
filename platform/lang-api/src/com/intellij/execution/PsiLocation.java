@@ -16,6 +16,8 @@
 package com.intellij.execution;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -28,10 +30,18 @@ public class PsiLocation<E extends PsiElement> extends Location<E> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.PsiLocation");
   private final E myPsiElement;
   private final Project myProject;
+  private final Module myModule;
 
   public PsiLocation(@NotNull final Project project, @NotNull final E psiElement) {
     myPsiElement = psiElement;
     myProject = project;
+    myModule = ModuleUtil.findModuleForPsiElement(psiElement);
+  }
+
+  public PsiLocation(Project project, Module module, E psiElement) {
+    myPsiElement = psiElement;
+    myProject = project;
+    myModule = module;
   }
 
   @NotNull
@@ -42,6 +52,11 @@ public class PsiLocation<E extends PsiElement> extends Location<E> {
   @NotNull
   public Project getProject() {
     return myProject;
+  }
+
+  @Override
+  public Module getModule() {
+    return myModule;
   }
 
   @NotNull
@@ -87,8 +102,12 @@ public class PsiLocation<E extends PsiElement> extends Location<E> {
   }
 
   public static <T extends PsiElement> Location<T> fromPsiElement(final T element) {
+    return fromPsiElement(element, null);
+  }
+
+  public static <T extends PsiElement> Location<T> fromPsiElement(T element, Module module) {
     if (element == null) return null;
     if (!element.isValid()) return null;
-    return new PsiLocation<T>(element.getProject(), element);
+    return module != null ? new PsiLocation<T>(element.getProject(), module, element) : new PsiLocation<T>(element.getProject(), element);
   }
 }

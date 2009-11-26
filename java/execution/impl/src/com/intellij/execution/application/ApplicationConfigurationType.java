@@ -18,7 +18,9 @@ package com.intellij.execution.application;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
@@ -77,8 +79,19 @@ public class ApplicationConfigurationType implements LocatableConfigurationType 
     if (aClass == null) {
       return false;
     }
-    return Comparing.equal(JavaExecutionUtil.getRuntimeQualifiedName(aClass), ((ApplicationConfiguration)configuration).MAIN_CLASS_NAME)
-           && Comparing.equal(JavaExecutionUtil.findModule(aClass), ((ApplicationConfiguration)configuration).getConfigurationModule().getModule());
+    if (Comparing.equal(JavaExecutionUtil.getRuntimeQualifiedName(aClass), ((ApplicationConfiguration)configuration).MAIN_CLASS_NAME)) {
+      if (Comparing.equal(location.getModule(), ((ApplicationConfiguration)configuration).getConfigurationModule().getModule())) {
+        return true;
+      }
+      final Module configurationModule = ((ApplicationConfiguration)configuration).getConfigurationModule().getModule();
+      if (Comparing.equal(location.getModule(), configurationModule)) return true;
+
+      final Module predefinedModule =
+        ((ApplicationConfiguration)((RunManagerImpl)RunManagerEx.getInstanceEx(location.getProject())).getConfigurationTemplate(myFactory)
+          .getConfiguration()).getConfigurationModule().getModule();
+      return Comparing.equal(predefinedModule, configurationModule);
+    }
+    return false;
   }
 
   public static PsiClass getMainClass(PsiElement element) {

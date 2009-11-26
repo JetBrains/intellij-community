@@ -16,6 +16,7 @@
 package com.intellij.execution;
 
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -79,4 +80,7 @@ public abstract class Location<E extends PsiElement> {
   public PsiLocation<E> toPsiLocation() {
     return new PsiLocation<E>(getProject(), getPsiElement());
   }
+
+  @Nullable
+  public abstract Module getModule();
 }

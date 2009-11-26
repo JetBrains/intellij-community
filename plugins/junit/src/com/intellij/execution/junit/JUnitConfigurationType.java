@@ -19,13 +19,13 @@ package com.intellij.execution.junit;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPackage;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,9 +79,13 @@ public class JUnitConfigurationType implements LocatableConfigurationType {
     else {
       final PsiElement element = location.getPsiElement();
       if (testobject.isConfiguredByElement(unitConfiguration, element)) {
-        return element instanceof PsiPackage ||
-               Comparing.equal(ModuleUtil.findModuleForPsiElement(element), unitConfiguration.getConfigurationModule().getModule());
+        final Module configurationModule = unitConfiguration.getConfigurationModule().getModule();
+        if (Comparing.equal(location.getModule(), configurationModule)) return true;
 
+        final Module predefinedModule =
+          ((JUnitConfiguration)((RunManagerImpl)RunManagerEx.getInstanceEx(location.getProject())).getConfigurationTemplate(myFactory)
+            .getConfiguration()).getConfigurationModule().getModule();
+        return Comparing.equal(predefinedModule, configurationModule);
       }
       else {
         return false;
