@@ -296,7 +296,9 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
       addElementsForTagWithManyQuickFixes(
         tag,
         localizedMessage,
-        SeverityRegistrar.getInstance(tag.getProject()).getHighlightInfoTypeBySeverity(profile.getErrorLevel(key, tag).getSeverity()),
+        isInjectedHtmlTag((HtmlTag)tag) ?
+          HighlightInfoType.INFORMATION : 
+          SeverityRegistrar.getInstance(tag.getProject()).getHighlightInfoTypeBySeverity(profile.getErrorLevel(key, tag).getSeverity()),
         intentionAction,
         basicIntention);
     } else if (!htmlTag) {
@@ -324,7 +326,17 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   }
 
   private static HighlightInfoType getTagProblemInfoType(XmlTag tag) {
-    return tag instanceof HtmlTag && XmlUtil.HTML_URI.equals(tag.getNamespace()) ? HighlightInfoType.WARNING : HighlightInfoType.WRONG_REF;
+    if (tag instanceof HtmlTag && XmlUtil.HTML_URI.equals(tag.getNamespace())) {
+      if (isInjectedHtmlTag((HtmlTag)tag)) return HighlightInfoType.INFORMATION;
+      return HighlightInfoType.WARNING;
+    }
+    return HighlightInfoType.WRONG_REF;
+  }
+
+  private static boolean isInjectedHtmlTag(HtmlTag tag) {
+    PsiElement context = tag.getContainingFile().getContext();
+    if (context != null && !(context instanceof XmlText)) return true;
+    return false;
   }
 
   @Override public void visitXmlAttribute(XmlAttribute attribute) {}
