@@ -229,7 +229,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       }
     }
 
-    myDeadCodeInfoType = /*HighlightInfoType.UNUSED_SYMBOL;//*/new HighlightInfoType.HighlightInfoTypeImpl(profile.getErrorLevel(myDeadCodeKey, myFile).getSeverity(), HighlightInfoType.UNUSED_SYMBOL.getAttributesKey());
+    myDeadCodeInfoType = myDeadCodeKey == null ? null : new HighlightInfoType.HighlightInfoTypeImpl(profile.getErrorLevel(myDeadCodeKey, myFile).getSeverity(), HighlightInfoType.UNUSED_SYMBOL.getAttributesKey());
 
     if (!unusedSymbolEnabled && !unusedImportEnabled) {
       return;
