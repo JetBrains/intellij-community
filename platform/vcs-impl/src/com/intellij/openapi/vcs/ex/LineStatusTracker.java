@@ -46,7 +46,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.actions.ShowNextChangeMarkerAction;
 import com.intellij.openapi.vcs.actions.ShowPrevChangeMarkerAction;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HintListener;
@@ -70,7 +69,6 @@ public class LineStatusTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.ex.LineStatusTracker");
   private final Document myDocument;
   private final Document myUpToDateDocument;
-  private final VirtualFile myVf;
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private List<Range> myRanges = new ArrayList<Range>();
   private final Project myProject;
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private int myHighlighterCount = 0;
@@ -80,15 +78,12 @@ public class LineStatusTracker {
   private boolean myIsReleased = false;
   private boolean myIsInitialized = false;
   private boolean myBulkUpdate;
-  private VcsDirtyScopeManager myDirtyScopeManager;
 
-  public LineStatusTracker(Document document, Document upToDateDocument, Project project, VirtualFile vf) {
+  public LineStatusTracker(Document document, Document upToDateDocument, Project project) {
     myDocument = document;
     myUpToDateDocument = upToDateDocument;
-    myVf = vf;
     myUpToDateDocument.putUserData(UndoManager.DONT_RECORD_UNDO, Boolean.TRUE);
     myProject = project;
-    myDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
   }
 
   public synchronized void initialize(@NotNull final String upToDateContent) {
@@ -386,10 +381,6 @@ public class LineStatusTracker {
       shiftRanges(rangesAfterChange, linesShift);
 
       if (!changedRanges.equals(newChangedRanges)) {
-        if ((myVf != null) && newChangedRanges.isEmpty() && (! changedRanges.isEmpty())) {
-          FileDocumentManager.getInstance().saveDocument(myDocument);
-          myDirtyScopeManager.fileDirty(myVf);
-        }
         replaceRanges(changedRanges, newChangedRanges);
 
         myRanges = new ArrayList<Range>();
@@ -837,16 +828,16 @@ public class LineStatusTracker {
     return file.getName();
   }
 
-  public static LineStatusTracker createOn(Document doc, String upToDateContent, Project project, VirtualFile vf) {
+  public static LineStatusTracker createOn(Document doc, String upToDateContent, Project project) {
     Document document = EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(upToDateContent));
-    final LineStatusTracker tracker = new LineStatusTracker(doc, document, project, vf);
+    final LineStatusTracker tracker = new LineStatusTracker(doc, document, project);
     tracker.initialize(upToDateContent);
     return tracker;
   }
 
-  public static LineStatusTracker createOn(Document doc, Project project, VirtualFile vf) {
+  public static LineStatusTracker createOn(Document doc, Project project) {
     Document document = EditorFactory.getInstance().createDocument("");
-    return new LineStatusTracker(doc, document, project, vf);
+    return new LineStatusTracker(doc, document, project);
   }
 
 }
