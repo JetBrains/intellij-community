@@ -231,6 +231,8 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   }
 
   public boolean addChangeToList(@NotNull final String name, final Change change, final VcsKey vcsKey) {
+    LOG.debug("[addChangeToList] name: " + name + " change: " + ChangesUtil.getFilePath(change).getPath() + " vcs: " +
+              (vcsKey == null ? null : vcsKey.getName()));
     final LocalChangeList changeList = myMap.get(name);
     if (changeList != null) {
       ((LocalChangeListImpl) changeList).addChange(change);
@@ -241,10 +243,16 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   }
 
   public void addChangeToCorrespondingList(final Change change, final VcsKey vcsKey) {
+    final String path = LOG.isDebugEnabled() ? ChangesUtil.getFilePath(change).getPath() : "";
+    LOG.debug("[addChangeToCorrespondingList] for change " + path);
     assert myDefault != null;
     for (LocalChangeList list : myMap.values()) {
-      if (list.isDefault()) continue;
+      if (list.isDefault()) {
+        LOG.debug("[addChangeToCorrespondingList] skip default list: " + list.getName());
+        continue;
+      }
       if (((LocalChangeListImpl) list).processChange(change)) {
+        LOG.debug("[addChangeToCorrespondingList] matched: " + list.getName());
         myIdx.changeAdded(change, vcsKey);
         correctChangeListEditHandler(list);
         return;
