@@ -335,6 +335,11 @@
     <place><![CDATA[xmlTag().withLocalName(string().matches("sql|select|insert|update|delete|statement")).withNamespace(string().matches("http://ibatis.apache.org/dtd/sql-map-2.dtd"))]]></place>
     <apply-to-subtags />
   </injection>
+  <injection language="SQL" injector-id="xml">
+    <display-name>iBatis3: sql|select|insert|update|delete</display-name>
+    <place><![CDATA[xmlTag().withLocalName(string().matches("sql|select|insert|update|delete")).withNamespace(string().matches("http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd"))]]></place>
+    <apply-to-subtags />
+  </injection>
   <injection language="CSS" injector-id="xml">
     <display-name>style</display-name>
     <place><![CDATA[xmlTag().withLocalName(string().matches("style")).withNamespace(string().matches("http://www.w3.org/1999/xhtml"))]]></place>
