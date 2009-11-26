@@ -38,10 +38,16 @@ public abstract class AbstractModuleNode extends ProjectViewNode<Module> {
       return;
     }
     presentation.setPresentableText(getValue().getName());
-    presentation.addText(getValue().getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-    
+    if (showModuleNameInBold()) {
+      presentation.addText(getValue().getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+    }
+
     presentation.setOpenIcon(getValue().getModuleType().getNodeIcon(true));
     presentation.setClosedIcon(getValue().getModuleType().getNodeIcon(false));
+  }
+
+  protected boolean showModuleNameInBold() {
+    return true;
   }
 
 

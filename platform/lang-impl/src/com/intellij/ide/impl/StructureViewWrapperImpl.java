@@ -23,10 +23,7 @@ import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewWrapper;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.TimerListener;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -42,10 +39,12 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -66,6 +65,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
 
   private final JPanel myPanel;
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final String myKey = new String("DATA_SELECTOR");
 
   // -------------------------------------------------------------------------
   // Constructor
@@ -73,7 +73,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
 
   public StructureViewWrapperImpl(Project project) {
     myProject = project;
-    myPanel = new JPanel(new BorderLayout());
+    myPanel = new ContentPanel();
     myPanel.setBackground(UIUtil.getTreeTextBackground());
 
     ActionManager.getInstance().addTimerListener(500, new TimerListener() {
@@ -106,9 +106,11 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
 
     if (focusWindow == mywindow) {
       final Component owner = focusManager.getFocusOwner();
-      if (owner == null || SwingUtilities.isDescendingFrom(owner, myPanel)) return;
+      if (owner instanceof IdeRootPane) return;
 
       final DataContext dataContext = DataManager.getInstance().getDataContext(owner);
+      if (dataContext.getData(myKey) == this) return;
+
       final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
       if (files != null && files.length == 1) {
         setFile(files[0]);
@@ -253,5 +255,16 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     ToolWindow toolWindow = windowManager.getToolWindow(ToolWindowId.STRUCTURE_VIEW);
     // it means that window is registered
     return toolWindow != null && toolWindow.isVisible();
+  }
+
+  private class ContentPanel extends JPanel implements DataProvider {
+    public ContentPanel() {
+      super(new BorderLayout());
+    }
+
+    public Object getData(@NonNls String dataId) {
+      if (dataId == myKey) return StructureViewWrapperImpl.this;
+      return null;
+    }
   }
 }
