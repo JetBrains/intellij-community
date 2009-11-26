@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,14 +37,15 @@ import java.util.Comparator;
  */
 class SettingsUI {
 
-  private JPanel myRoot = new JPanel(new BorderLayout());
-
   private Configurable[] myConfigurables;
+
+  private final JPanel myRoot = new JPanel(new BorderLayout());
+  private final JTabbedPane myTabbedPane;
 
 
   SettingsUI(@NotNull final Project project, Configuration configuration) {
-    final JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
-    myRoot.add(tabbedPane);
+    myTabbedPane = new JTabbedPane(JTabbedPane.TOP);
+    myRoot.add(myTabbedPane);
 
     final ArrayList<Configurable> configurables = new ArrayList<Configurable>();
     for (LanguageInjectionSupport support : Extensions.getExtensions(LanguageInjectionSupport.EP_NAME)) {
@@ -57,12 +59,19 @@ class SettingsUI {
     configurables.add(0, new InjectionsSettingsUI(project, configuration));
     myConfigurables = configurables.toArray(new Configurable[configurables.size()]);
     for (Configurable configurable : configurables) {
-      tabbedPane.addTab(configurable.getDisplayName(), configurable.createComponent());
+      myTabbedPane.addTab(configurable.getDisplayName(), configurable.createComponent());
     }
   }
 
   public JComponent createComponent() {
     return myRoot;
+  }
+
+  @Nullable
+  public Configurable getSelectedChild() {
+    final int index = myTabbedPane.getSelectedIndex();
+    if (index >= 0) return myConfigurables[index];
+    return null;
   }
 
   public boolean isModified() {

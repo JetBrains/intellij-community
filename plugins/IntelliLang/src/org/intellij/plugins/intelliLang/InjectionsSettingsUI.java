@@ -16,6 +16,7 @@
 
 package org.intellij.plugins.intelliLang;
 
+import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
@@ -29,10 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
@@ -58,6 +56,8 @@ import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
@@ -126,7 +126,7 @@ public class InjectionsSettingsUI implements Configurable {
         addInjection(injection);
       }
     };
-    final Factory<BaseInjection> producer = new Factory<BaseInjection>() {
+    final Factory<BaseInjection> producer = new NullableFactory<BaseInjection>() {
       public BaseInjection create() {
         return getSelectedInjection();
       }
@@ -152,7 +152,6 @@ public class InjectionsSettingsUI implements Configurable {
       @Override
       public void actionPerformed(final AnActionEvent e) {
         performAdd(e);
-        updateCountLabel();
       }
     };
     final AnAction removeAction = new AnAction("Remove", "Remove", Icons.DELETE_ICON) {
@@ -164,7 +163,6 @@ public class InjectionsSettingsUI implements Configurable {
       @Override
       public void actionPerformed(final AnActionEvent e) {
         performRemove();
-        updateCountLabel();
       }
     };
 
@@ -178,16 +176,29 @@ public class InjectionsSettingsUI implements Configurable {
 
       @Override
       public void actionPerformed(final AnActionEvent e) {
-        final int row = myInjectionsTable.getSelectedRow();
+        performEditAction(e);
+      }
+    };
+    final AnAction copyAction = new AnAction("Duplicate", "Duplicate", Icons.DUPLICATE_ICON) {
+      @Override
+      public void update(final AnActionEvent e) {
         final AnAction action = getEditAction();
-        action.actionPerformed(e);
-        ((ListTableModel)myInjectionsTable.getModel()).fireTableDataChanged();
-        myInjectionsTable.getSelectionModel().setSelectionInterval(row, row);
-        updateCountLabel();
+        e.getPresentation().setEnabled(action != null);
+        if (action != null) action.update(e);
+      }
+
+      @Override
+      public void actionPerformed(final AnActionEvent e) {
+        final BaseInjection injection = getSelectedInjection();
+        if (injection != null) {
+          addInjection(injection.copy());
+          //performEditAction(e);
+        }
       }
     };
     group.add(addAction);
     group.add(removeAction);
+    group.add(copyAction);
     group.add(editAction);
 
     addAction.registerCustomShortcutSet(CommonShortcuts.INSERT, myInjectionsTable);
@@ -212,7 +223,6 @@ public class InjectionsSettingsUI implements Configurable {
       @Override
       public void actionPerformed(final AnActionEvent e) {
         performSelectedInjectionsEnabled(false);
-        updateCountLabel();
       }
     });
 
@@ -220,10 +230,20 @@ public class InjectionsSettingsUI implements Configurable {
       @Override
       public void actionPerformed(final AnActionEvent e) {
         performToggleAction();
-        updateCountLabel();
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), myInjectionsTable);
     return group;
+  }
+
+  private void performEditAction(AnActionEvent e) {
+    final AnAction action = getEditAction();
+    if (action != null) {
+      final int row = myInjectionsTable.getSelectedRow();
+      action.actionPerformed(e);
+      ((ListTableModel)myInjectionsTable.getModel()).fireTableDataChanged();
+      myInjectionsTable.getSelectionModel().setSelectionInterval(row, row);
+      updateCountLabel();
+    }
   }
 
   private void updateCountLabel() {
@@ -246,6 +266,7 @@ public class InjectionsSettingsUI implements Configurable {
     }
   }
 
+  @Nullable
   private AnAction getEditAction() {
     final BaseInjection injection = getSelectedInjection();
     final String supportId = injection == null? null : injection.getSupportId();
@@ -255,13 +276,13 @@ public class InjectionsSettingsUI implements Configurable {
   private void addInjection(final BaseInjection injection) {
     injection.initializePlaces(true);
     myInjections.add(injection);
-    ((ListTableModel<BaseInjection>)myInjectionsTable.getModel()).setItems(myInjections);
+    myInjectionsTable.getListTableModel().setItems(myInjections);
     final int index = myInjections.indexOf(injection);
     myInjectionsTable.getSelectionModel().setSelectionInterval(index, index);
     TableUtil.scrollSelectionToVisible(myInjectionsTable);
   }
 
-  private void sortInjections(final List<BaseInjection> injections) {
+  private static void sortInjections(final List<BaseInjection> injections) {
     Collections.sort(injections, new Comparator<BaseInjection>() {
       public int compare(final BaseInjection o1, final BaseInjection o2) {
         final int support = Comparing.compare(o1.getSupportId(), o2.getSupportId());
@@ -282,7 +303,7 @@ public class InjectionsSettingsUI implements Configurable {
     for (BaseInjection injection : myOriginalInjections) {
       myInjections.add(injection.copy());
     }
-    ((ListTableModel<BaseInjection>)myInjectionsTable.getModel()).setItems(myInjections);
+    myInjectionsTable.getListTableModel().setItems(myInjections);
     updateCountLabel();
   }
 
@@ -308,6 +329,7 @@ public class InjectionsSettingsUI implements Configurable {
       injection.setPlaceEnabled(null, enabled);
     }
     myInjectionsTable.updateUI();
+    updateCountLabel();
   }
 
   private void performToggleAction() {
@@ -326,17 +348,27 @@ public class InjectionsSettingsUI implements Configurable {
   private void performRemove() {
     final int selectedRow = myInjectionsTable.getSelectedRow();
     if (selectedRow < 0) return;
-    myInjections.removeAll(getSelectedInjections());
+    final List<BaseInjection> selected = getSelectedInjections();
+    main: for (Iterator<BaseInjection> it = myInjections.iterator(); it.hasNext(); ) {
+      final BaseInjection injection = it.next();
+      for (BaseInjection selectedInjection : selected) {
+        if (injection == selectedInjection) {
+          it.remove();
+          continue main;
+        }
+      }
+    }
     ((ListTableModel)myInjectionsTable.getModel()).fireTableDataChanged();
     final int index = Math.min(myInjections.size() - 1, selectedRow);
     myInjectionsTable.getSelectionModel().setSelectionInterval(index, index);
     TableUtil.scrollSelectionToVisible(myInjectionsTable);
+    updateCountLabel();
   }
 
   private List<BaseInjection> getSelectedInjections() {
     final ArrayList<BaseInjection> toRemove = new ArrayList<BaseInjection>();
     for (int row : myInjectionsTable.getSelectedRows()) {
-      toRemove.add((BaseInjection)myInjectionsTable.getItems().get(row));
+      toRemove.add(myInjectionsTable.getItems().get(row));
     }
     return toRemove;
   }
@@ -344,7 +376,7 @@ public class InjectionsSettingsUI implements Configurable {
   @Nullable
   private BaseInjection getSelectedInjection() {
     final int row = myInjectionsTable.getSelectedRow();
-    return row < 0? null : (BaseInjection)myInjectionsTable.getItems().get(row);
+    return row < 0? null : myInjectionsTable.getItems().get(row);
   }
 
   private void performAdd(final AnActionEvent e) {
@@ -353,8 +385,11 @@ public class InjectionsSettingsUI implements Configurable {
       group.add(action);
     }
 
-    JBPopupFactory.getInstance().createActionGroupPopup(null, group, e.getDataContext(), JBPopupFactory.ActionSelectionAid.NUMBERING, true)
-      .showUnderneathOf(myToolbar.getComponent());
+    JBPopupFactory.getInstance().createActionGroupPopup(null, group, e.getDataContext(), JBPopupFactory.ActionSelectionAid.NUMBERING, true, new Runnable() {
+      public void run() {
+        updateCountLabel();
+      }
+    }, -1).showUnderneathOf(myToolbar.getComponent());
   }
 
   @Nls
@@ -367,10 +402,10 @@ public class InjectionsSettingsUI implements Configurable {
   }
 
   public String getHelpTopic() {
-    return null;
+    return "reference.settings.injection.language.injection.settings";
   }
 
-  private class InjectionsTable extends TableView {
+  private class InjectionsTable extends TableView<BaseInjection> {
     private InjectionsTable(final List<BaseInjection> injections) {
       super(new ListTableModel<BaseInjection>(createInjectionColumnInfos(), injections, 1));
       setAutoResizeMode(AUTO_RESIZE_LAST_COLUMN);
@@ -389,7 +424,18 @@ public class InjectionsSettingsUI implements Configurable {
           return true;
         }
       });
-      final int[] max = new int[] {0} ;
+      final int[] max = new int[] {0};
+      addMouseListener(new MouseAdapter() {
+        public void mouseClicked(MouseEvent e) {
+          if (e.getClickCount() != 2) return;
+          final int row = rowAtPoint(e.getPoint());
+          if (row < 0) return;
+          if (columnAtPoint(e.getPoint()) <= 0) return;
+          myInjectionsTable.getSelectionModel().setSelectionInterval(row, row);
+          performEditAction(new AnActionEvent(e, DataManager.getInstance().getDataContext(InjectionsTable.this),
+                                              ActionPlaces.UNKNOWN, new Presentation(""), ActionManager.getInstance(), 0));
+        }
+      });
       ContainerUtil.process(InjectedLanguage.getAvailableLanguageIDs(), new Processor<String>() {
         public boolean process(final String languageId) {
           if (max[0] < languageId.length()) max[0] = languageId.length();
@@ -609,7 +655,6 @@ public class InjectionsSettingsUI implements Configurable {
         final List<BaseInjection> importingInjections = cfg.getInjections(supportId);
         if (currentInjections == null) {
           newInjections.addAll(importingInjections);
-          continue;
         }
         else {
           Configuration.importInjections(currentInjections, importingInjections, originalInjections, newInjections);
@@ -620,7 +665,7 @@ public class InjectionsSettingsUI implements Configurable {
       for (BaseInjection injection : newInjections) {
         injection.initializePlaces(true);
       }
-      ((ListTableModel<BaseInjection>)myInjectionsTable.getModel()).setItems(myInjections);
+      myInjectionsTable.getListTableModel().setItems(myInjections);
       final int n = newInjections.size();
       if (n > 1) {
         Messages.showInfoMessage(myProject, n + " entries have been successfully imported", "Import Successful");
