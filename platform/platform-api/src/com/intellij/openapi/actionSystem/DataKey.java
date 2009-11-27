@@ -56,6 +56,17 @@ public class DataKey<T> {
     return myName;
   }
 
+  /**
+   * For short, use MY_KEY.is(dataId) instead of MY_KEY.getName().equals(dataId)
+   *
+   * @param dataId key name
+   * @return {@code true} if name of DataKey equals to {@code dataId},
+   *         {@code false} otherwise
+   */
+  public final boolean is(String dataId) {
+    return myName.equals(dataId);
+  }
+
   @Nullable
   public T getData(@NotNull DataContext dataContext) {
     //noinspection unchecked
