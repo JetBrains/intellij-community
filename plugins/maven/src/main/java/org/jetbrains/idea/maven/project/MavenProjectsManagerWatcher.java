@@ -229,7 +229,7 @@ public class MavenProjectsManagerWatcher {
 
   private void onSettingsChange() {
     myEmbeddersManager.reset();
-    scheduleUpdateAll(true, true);
+    scheduleUpdateAll(true, false);
   }
 
   private class MyRootChangesListener implements ModuleRootListener {
@@ -358,6 +358,7 @@ public class MavenProjectsManagerWatcher {
 
       filesToUpdate = new ArrayList<VirtualFile>();
       filesToRemove = new ArrayList<VirtualFile>();
+      settingsHaveChanged = false;
     }
 
     private void clearLists() {
