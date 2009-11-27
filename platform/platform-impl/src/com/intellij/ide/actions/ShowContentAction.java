@@ -59,10 +59,13 @@ public class ShowContentAction extends AnAction {
     if (project == null) return null;
 
     ToolWindowManager manager = ToolWindowManager.getInstance(project);
+
     final ToolWindow window = manager.getToolWindow(manager.getActiveToolWindowId());
+    if (window == null) return null;
 
     final Component context = PlatformDataKeys.CONTEXT_COMPONENT.getData(event.getDataContext());
+    if (context == null) return null;
 
-    return context == null || SwingUtilities.isDescendingFrom(window.getComponent(), context) ? window : null;
+    return SwingUtilities.isDescendingFrom(window.getComponent(), context) ? window : null;
   }
 }
