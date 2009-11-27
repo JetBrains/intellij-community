@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.wm.ToolWindow;
@@ -28,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class ShowContentAction extends AnAction {
+public class ShowContentAction extends AnAction implements DumbAware {
   private ToolWindow myWindow;
 
   public ShowContentAction() {
