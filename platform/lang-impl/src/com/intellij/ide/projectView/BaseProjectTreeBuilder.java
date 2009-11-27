@@ -24,7 +24,10 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.AsyncResult;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDirectory;
@@ -57,7 +60,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   }
 
   protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
-    return nodeDescriptor.getParentDescriptor() == null;
+    return nodeDescriptor.getParentDescriptor() == null || ((AbstractTreeNode)nodeDescriptor).isAlwaysExpand();
   }
 
   protected final void expandNodeChildren(final DefaultMutableTreeNode node) {

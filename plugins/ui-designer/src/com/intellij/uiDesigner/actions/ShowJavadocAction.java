@@ -17,6 +17,7 @@ package com.intellij.uiDesigner.actions;
 
 import com.intellij.codeInsight.documentation.DocumentationComponent;
 import com.intellij.codeInsight.documentation.DocumentationManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -57,7 +58,8 @@ public final class ShowJavadocAction extends AnAction {
     final DocumentationComponent component1 = new DocumentationComponent(documentationManager);
     final DocumentationComponent component2 = new DocumentationComponent(documentationManager);
 
-    final TabbedPaneWrapper tabbedPane = new TabbedPaneWrapper();
+    final Disposable disposable = Disposer.newDisposable();
+    final TabbedPaneWrapper tabbedPane = new TabbedPaneWrapper(disposable);
 
     tabbedPane.addTab(UIDesignerBundle.message("tab.getter"), component1);
     tabbedPane.addTab(UIDesignerBundle.message("tab.setter"), component2);
@@ -77,6 +79,7 @@ public final class ShowJavadocAction extends AnAction {
         component2.setHint(hint);
         Disposer.register(hint, component1);
         Disposer.register(hint, component2);
+        Disposer.register(hint, disposable);
         hint.show(new RelativePoint(inspector, new Point(0,0)));
         //component1.requestFocus();
       }

@@ -22,20 +22,17 @@
  */
 package com.theoryinpractice.testng.configuration;
 
-import com.intellij.execution.LocatableConfigurationType;
-import com.intellij.execution.Location;
-import com.intellij.execution.RunConfigurationExtension;
-import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPackage;
 import com.theoryinpractice.testng.model.TestData;
 import org.jetbrains.annotations.NotNull;
 
@@ -81,9 +78,13 @@ public class TestNGConfigurationType implements LocatableConfigurationType
         else {
           final PsiElement element = location.getPsiElement();
           if (testobject.isConfiguredByElement(element)) {
-            return element instanceof PsiPackage ||
-                   Comparing.equal(ModuleUtil.findModuleForPsiElement(element),
-                                   ((TestNGConfiguration)runConfiguration).getConfigurationModule().getModule());
+            final Module configurationModule = config.getConfigurationModule().getModule();
+            if (Comparing.equal(location.getModule(), configurationModule)) return true;
+
+            final Module predefinedModule =
+              ((TestNGConfiguration)((RunManagerImpl)RunManagerEx.getInstanceEx(location.getProject())).getConfigurationTemplate(myFactory)
+                .getConfiguration()).getConfigurationModule().getModule();
+            return Comparing.equal(predefinedModule, configurationModule);
 
           }
           else {

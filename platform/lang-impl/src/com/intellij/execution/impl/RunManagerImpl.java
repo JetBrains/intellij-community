@@ -329,7 +329,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     mySelectedConfiguration = configuration;
   }
 
-  public static boolean canRunConfiguration(@NotNull final RunnerAndConfigurationSettingsImpl configuration, final @NotNull Executor executor) {
+  public static boolean canRunConfiguration(@NotNull final RunnerAndConfigurationSettingsImpl configuration, @NotNull final Executor executor) {
     try {
       configuration.checkSettings(executor);
     }
@@ -755,14 +755,16 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   private Map<Key<? extends BeforeRunTask>, BeforeRunTaskProvider> myBeforeStepsMap;
   private Map<String, Key<? extends BeforeRunTask>> myProviderKeysMap;
 
-  private synchronized @NotNull BeforeRunTaskProvider getProvider(Key<? extends BeforeRunTask> providerId) {
+  @NotNull
+  private synchronized BeforeRunTaskProvider getProvider(Key<? extends BeforeRunTask> providerId) {
     if (myBeforeStepsMap == null) {
       initProviderMaps();
     }
     return myBeforeStepsMap.get(providerId);
   }
 
-  private synchronized @NotNull Key<? extends BeforeRunTask> getProviderKey(String keyString) {
+  @NotNull
+  private synchronized Key<? extends BeforeRunTask> getProviderKey(String keyString) {
     if (myProviderKeysMap == null) {
       initProviderMaps();
     }

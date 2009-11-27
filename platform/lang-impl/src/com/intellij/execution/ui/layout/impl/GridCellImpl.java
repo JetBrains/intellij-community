@@ -64,7 +64,7 @@ public class GridCellImpl implements GridCell, Disposable {
   private JBPopup myPopup;
   private boolean myDisposed;
 
-  public GridCellImpl(ViewContextEx context, GridImpl container, GridImpl.Placeholder placeholder, PlaceInGrid placeInGrid) {
+  public GridCellImpl(ViewContextEx context, @NotNull GridImpl container, GridImpl.Placeholder placeholder, PlaceInGrid placeInGrid) {
     myContext = context;
     myContainer = container;
 

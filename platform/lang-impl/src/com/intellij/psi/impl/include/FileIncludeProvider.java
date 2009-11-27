@@ -19,8 +19,9 @@ package com.intellij.psi.impl.include;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.indexing.FileContent;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.util.indexing.FileContent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,8 +41,7 @@ public abstract class FileIncludeProvider {
   public abstract FileIncludeInfo[] getIncludeInfos(FileContent content);
 
   @Nullable
-  public VirtualFile resolveInclude(FileIncludeInfo include, VirtualFile context, Project project) {
-    PsiFileSystemItem fileSystemItem = FileIncludeManager.getManager(project).resolveFileReference(include.path, context);
-    return fileSystemItem == null ? null : fileSystemItem.getVirtualFile();
+  public PsiFileSystemItem resolveInclude(FileIncludeInfo include, PsiFile context, Project project) {
+    return FileIncludeManager.getManager(project).resolveFileReference(include.path, context);
   }
 }

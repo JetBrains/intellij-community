@@ -136,7 +136,6 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
     }
 
     private class MyTabbedPane extends TabbedPaneImpl {
-
       public MyTabbedPane(int tabPlacement) {
         super(tabPlacement);
         addMouseListener(new MyPopupHandler());

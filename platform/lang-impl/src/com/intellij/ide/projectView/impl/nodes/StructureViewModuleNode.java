@@ -18,7 +18,6 @@ package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,8 +28,6 @@ import java.util.Collection;
 import java.util.List;
 
 public class StructureViewModuleNode extends AbstractModuleNode {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode");
-
   public StructureViewModuleNode(Project project, Module value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
@@ -38,7 +35,14 @@ public class StructureViewModuleNode extends AbstractModuleNode {
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>(2);
-    children.add(new LibraryGroupNode(getProject(), new LibraryGroupElement(getValue()), getSettings()));
+    children.add(new LibraryGroupNode(getProject(), new LibraryGroupElement(getValue()), getSettings()) {
+      @Override
+      public boolean isAlwaysExpand() {
+        return true;
+      }
+    });
+
+    children.add(new ModuleListNode(getProject(), getValue(), getSettings()));
     return children;
   }
 

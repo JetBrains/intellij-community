@@ -19,15 +19,21 @@ package com.intellij.codeInsight.navigation;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.PsiElementListCellRenderer;
+import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.ui.awt.RelativePoint;
 
 import javax.swing.*;
-import java.awt.event.MouseEvent;
 
 /**
  * @author ven
@@ -79,7 +85,38 @@ public final class NavigationUtil {
     return builder.setItemChoosenCallback(runnable).createPopup();
   }
 
-  public static void showPsiElementPopup(PsiElement[] elements, String title, MouseEvent event) {
-    getPsiElementPopup(elements, title).show(new RelativePoint(event));
+  public static void activateFileWithPsiElement(PsiElement elt) {
+    if (!activatePsiElementIfOpen(elt)) {
+      ((NavigationItem)elt).navigate(true);
+    }
+  }
+
+  private static boolean activatePsiElementIfOpen(PsiElement elt) {
+    final PsiFile file = elt.getContainingFile();
+    if (file == null || !file.isValid()) return false;
+
+    VirtualFile vFile = file.getVirtualFile();
+    if (vFile == null) return false;
+
+    final FileEditorManager fem = FileEditorManager.getInstance(elt.getProject());
+    if (!fem.isFileOpen(vFile)) return false;
+
+    final TextRange range = elt.getTextRange();
+    if (range == null) return false;
+
+    final FileEditor[] editors = fem.getEditors(vFile);
+    for (FileEditor editor : editors) {
+      if (editor instanceof TextEditor) {
+        final Editor text = ((TextEditor)editor).getEditor();
+        final int offset = text.getCaretModel().getOffset();
+
+        if (range.contains(offset)) {
+          fem.openFile(vFile, true);
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 }

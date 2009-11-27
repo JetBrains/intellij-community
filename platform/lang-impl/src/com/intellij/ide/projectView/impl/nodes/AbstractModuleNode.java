@@ -22,6 +22,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
@@ -38,10 +39,16 @@ public abstract class AbstractModuleNode extends ProjectViewNode<Module> {
       return;
     }
     presentation.setPresentableText(getValue().getName());
-    presentation.addText(getValue().getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-    
+    if (showModuleNameInBold()) {
+      presentation.addText(getValue().getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+    }
+
     presentation.setOpenIcon(getValue().getModuleType().getNodeIcon(true));
     presentation.setClosedIcon(getValue().getModuleType().getNodeIcon(false));
+  }
+
+  protected boolean showModuleNameInBold() {
+    return true;
   }
 
 
@@ -51,8 +58,17 @@ public abstract class AbstractModuleNode extends ProjectViewNode<Module> {
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {
+    final VirtualFile testee;
+    if (file.getFileSystem() instanceof JarFileSystem) {
+      testee = JarFileSystem.getInstance().getVirtualFileForJar(file);
+      if (testee == null) return false;
+    }
+    else {
+      testee = file;
+    }
+    
     for (VirtualFile root : ModuleRootManager.getInstance(getValue()).getContentRoots()) {
-      if (VfsUtil.isAncestor(root, file, false)) return true;
+      if (VfsUtil.isAncestor(root, testee, false)) return true;
     }
     return false;
   }

@@ -20,7 +20,6 @@ import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ex.LineStatusTracker;
 import com.intellij.openapi.vcs.ex.Range;
-import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.List;
 
@@ -31,19 +30,17 @@ public class UpToDateLineNumberProviderImpl implements UpToDateLineNumberProvide
   private final Document myDocument;
   private final Project myProject;
   private final String myUpToDateContent;
-  private final VirtualFile myVf;
 
-  public UpToDateLineNumberProviderImpl(Document document, Project project, String upToDateContent, VirtualFile vf) {
+  public UpToDateLineNumberProviderImpl(Document document, Project project, String upToDateContent) {
     myDocument = document;
     myProject = project;
     myUpToDateContent = upToDateContent;
-    myVf = vf;
   }
 
   public int getLineNumber(int currentNumber) {
     LineStatusTracker tracker = LineStatusTrackerManager.getInstance(myProject).getLineStatusTracker(myDocument);
     if (tracker == null) {
-      tracker = LineStatusTrackerManager.getInstance(myProject).setUpToDateContent(myDocument, myUpToDateContent, myVf);
+      tracker = LineStatusTrackerManager.getInstance(myProject).setUpToDateContent(myDocument, myUpToDateContent);
     }
     return calcLineNumber(tracker, currentNumber);
   }

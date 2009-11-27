@@ -16,10 +16,7 @@
 
 package com.intellij.conversion.impl;
 
-import com.intellij.conversion.CannotConvertException;
-import com.intellij.conversion.ConversionListener;
-import com.intellij.conversion.ConversionService;
-import com.intellij.conversion.ConverterProvider;
+import com.intellij.conversion.*;
 import com.intellij.conversion.impl.ui.ConvertProjectDialog;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.PathManager;
@@ -53,8 +50,9 @@ import java.util.*;
 public class ConversionServiceImpl extends ConversionService {
   private static final Logger LOG = Logger.getInstance("#com.intellij.conversion.impl.ConversionServiceImpl");
 
+  @NotNull
   @Override
-  public boolean convertSilently(@NotNull String projectPath) {
+  public ConversionResult convertSilently(@NotNull String projectPath) {
     return convertSilently(projectPath, new ConversionListener() {
       public void conversionNeeded() {
       }
@@ -70,11 +68,12 @@ public class ConversionServiceImpl extends ConversionService {
     });
   }
 
+  @NotNull
   @Override
-  public boolean convertSilently(@NotNull String projectPath, @NotNull ConversionListener listener) {
+  public ConversionResult convertSilently(@NotNull String projectPath, @NotNull ConversionListener listener) {
     try {
       if (!isConversionNeeded(projectPath)) {
-        return true;
+        return ConversionResultImpl.CONVERSION_NOT_NEEDED;
       }
 
       listener.conversionNeeded();
@@ -89,7 +88,7 @@ public class ConversionServiceImpl extends ConversionService {
       final List<File> readOnlyFiles = ConversionRunner.getReadOnlyFiles(affectedFiles);
       if (!readOnlyFiles.isEmpty()) {
         listener.cannotWriteToFiles(readOnlyFiles);
-        return false;
+        return ConversionResultImpl.ERROR_OCCURRED;
       }
       final File backupDir = ProjectConversionUtil.backupFiles(affectedFiles, context.getProjectBaseDir());
       for (ConversionRunner runner : runners) {
@@ -100,7 +99,7 @@ public class ConversionServiceImpl extends ConversionService {
       context.saveFiles(affectedFiles);
       listener.successfullyConverted(backupDir);
       saveConversionResult(context);
-      return true;
+      return new ConversionResultImpl(runners);
     }
     catch (CannotConvertException e) {
       listener.error(e.getMessage());
@@ -108,14 +107,15 @@ public class ConversionServiceImpl extends ConversionService {
     catch (IOException e) {
       listener.error(e.getMessage());
     }
-    return false;
+    return ConversionResultImpl.ERROR_OCCURRED;
   }
 
+  @NotNull
   @Override
-  public boolean convert(@NotNull String projectPath) {
+  public ConversionResult convert(@NotNull String projectPath) {
     try {
       if (!isConversionNeeded(projectPath)) {
-        return true;
+        return ConversionResultImpl.CONVERSION_NOT_NEEDED;
       }
 
       final ConversionContextImpl context = new ConversionContextImpl(projectPath);
@@ -124,19 +124,19 @@ public class ConversionServiceImpl extends ConversionService {
       dialog.show();
       if (dialog.isConverted()) {
         saveConversionResult(context);
-        return true;
+        return new ConversionResultImpl(converters);
       }
-      return false;
+      return ConversionResultImpl.CONVERSION_CANCELED;
     }
     catch (CannotConvertException e) {
       LOG.info(e);
       Messages.showErrorDialog(IdeBundle.message("error.cannot.convert.project", e.getMessage()),
                                IdeBundle.message("title.cannot.convert.project"));
-      return false;
+      return ConversionResultImpl.ERROR_OCCURRED;
     }
   }
 
-  private List<ConversionRunner> getConversionRunners(ConversionContextImpl context) throws CannotConvertException {
+  private static List<ConversionRunner> getConversionRunners(ConversionContextImpl context) throws CannotConvertException {
     final List<ConversionRunner> converters = getSortedConverters(context);
     final Iterator<ConversionRunner> iterator = converters.iterator();
 
@@ -153,7 +153,7 @@ public class ConversionServiceImpl extends ConversionService {
     return converters;
   }
 
-  public boolean isConversionNeeded(String projectPath) throws CannotConvertException {
+  public static boolean isConversionNeeded(String projectPath) throws CannotConvertException {
     final ConversionContextImpl context = new ConversionContextImpl(projectPath);
     final List<ConversionRunner> runners = getSortedConverters(context);
     if (runners.isEmpty()) {
@@ -168,7 +168,7 @@ public class ConversionServiceImpl extends ConversionService {
     return false;
   }
 
-  private List<ConversionRunner> getSortedConverters(final ConversionContextImpl context) throws CannotConvertException {
+  private static List<ConversionRunner> getSortedConverters(final ConversionContextImpl context) throws CannotConvertException {
     final CachedConversionResult conversionResult = loadCachedConversionResult(context.getProjectFile());
     final Map<String, Long> oldMap = conversionResult.myProjectFilesTimestamps;
     Map<String, Long> newMap = getProjectFilesMap(context);
@@ -209,7 +209,7 @@ public class ConversionServiceImpl extends ConversionService {
     return map;
   }
 
-  private List<ConversionRunner> createConversionRunners(ConversionContextImpl context, final Set<String> performedConversionIds) {
+  private static List<ConversionRunner> createConversionRunners(ConversionContextImpl context, final Set<String> performedConversionIds) {
     List<ConversionRunner> runners = new ArrayList<ConversionRunner>();
     final ConverterProvider[] providers = ConverterProvider.EP_NAME.getExtensions();
     for (ConverterProvider provider : providers) {
@@ -232,7 +232,7 @@ public class ConversionServiceImpl extends ConversionService {
     return runners;
   }
 
-  public void saveConversionResult(String projectPath) {
+  public static void saveConversionResult(String projectPath) {
     try {
       saveConversionResult(new ConversionContextImpl(projectPath));
     }
@@ -241,14 +241,14 @@ public class ConversionServiceImpl extends ConversionService {
     }
   }
 
-  private void saveConversionResult(ConversionContextImpl context) {
+  private static void saveConversionResult(ConversionContextImpl context) {
     final CachedConversionResult conversionResult = new CachedConversionResult();
     for (ConverterProvider provider : ConverterProvider.EP_NAME.getExtensions()) {
       conversionResult.myAppliedConverters.add(provider.getId());
     }
     conversionResult.myProjectFilesTimestamps = getProjectFilesMap(context);
     final File infoFile = getConversionInfoFile(context.getProjectFile());
-    infoFile.getParentFile().mkdirs();
+    FileUtil.createParentDirs(infoFile);
     try {
       JDOMUtil.writeDocument(new Document(XmlSerializer.serialize(conversionResult)), infoFile, SystemProperties.getLineSeparator());
     }
@@ -258,7 +258,7 @@ public class ConversionServiceImpl extends ConversionService {
   }
 
   @NotNull
-  private CachedConversionResult loadCachedConversionResult(File projectFile) {
+  private static CachedConversionResult loadCachedConversionResult(File projectFile) {
     try {
       final File infoFile = getConversionInfoFile(projectFile);
       if (!infoFile.exists()) {
@@ -274,28 +274,29 @@ public class ConversionServiceImpl extends ConversionService {
     }
   }
 
-  private File getConversionInfoFile(@NotNull File projectFile) {
+  private static File getConversionInfoFile(@NotNull File projectFile) {
     String dirName = PathUtil.suggestFileName(projectFile.getName() + Integer.toHexString(projectFile.getAbsolutePath().hashCode()));
     return new File(PathManager.getSystemPath() + File.separator + "conversion" + File.separator + dirName + ".xml");
   }
 
-  public boolean convertModule(@NotNull final Project project, @NotNull final File moduleFile) {
+  @NotNull
+  public ConversionResult convertModule(@NotNull final Project project, @NotNull final File moduleFile) {
     final IProjectStore stateStore = ((ProjectImpl)project).getStateStore();
     String projectPath = FileUtil.toSystemDependentName(stateStore.getLocation());
 
     if (!isConversionNeeded(projectPath, moduleFile)) {
-      return true;
+      return ConversionResultImpl.CONVERSION_NOT_NEEDED;
     }
 
     final int res = Messages.showYesNoDialog(project, IdeBundle.message("message.module.file.has.an.older.format.do.you.want.to.convert.it"),
                                              IdeBundle.message("dialog.title.convert.module"), Messages.getQuestionIcon());
     if (res != 0) {
-      return false;
+      return ConversionResultImpl.CONVERSION_CANCELED;
     }
     if (!moduleFile.canWrite()) {
       Messages.showErrorDialog(project, IdeBundle.message("error.message.cannot.modify.file.0", moduleFile.getAbsolutePath()),
                                IdeBundle.message("dialog.title.convert.module"));
-      return false;
+      return ConversionResultImpl.ERROR_OCCURRED;
     }
 
     try {
@@ -310,18 +311,20 @@ public class ConversionServiceImpl extends ConversionService {
       context.saveFiles(Collections.singletonList(moduleFile));
       Messages.showInfoMessage(project, IdeBundle.message("message.your.module.was.succesfully.converted.br.old.version.was.saved.to.0", backupFile.getAbsolutePath()),
                                IdeBundle.message("dialog.title.convert.module"));
-      return true;
+      return new ConversionResultImpl(runners);
     }
     catch (CannotConvertException e) {
+      LOG.info(e);
       Messages.showErrorDialog(IdeBundle.message("error.cannot.load.project", e.getMessage()), "Cannot Convert Module");
-      return false;
+      return ConversionResultImpl.ERROR_OCCURRED;
     }
     catch (IOException e) {
-      return false;
+      LOG.info(e);
+      return ConversionResultImpl.ERROR_OCCURRED;
     }
   }
 
-  private boolean isConversionNeeded(String projectPath, File moduleFile) {
+  private static boolean isConversionNeeded(String projectPath, File moduleFile) {
     try {
       ConversionContextImpl context = new ConversionContextImpl(projectPath);
       final List<ConversionRunner> runners = createConversionRunners(context, Collections.<String>emptySet());
@@ -349,7 +352,7 @@ public class ConversionServiceImpl extends ConversionService {
     public Map<String, Long> myProjectFilesTimestamps = new HashMap<String, Long>();
   }
 
-  private class ConverterProvidersGraph implements GraphGenerator.SemiGraph<ConverterProvider> {
+  private static class ConverterProvidersGraph implements GraphGenerator.SemiGraph<ConverterProvider> {
     private final ConverterProvider[] myProviders;
 
     public ConverterProvidersGraph(ConverterProvider[] providers) {

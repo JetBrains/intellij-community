@@ -50,8 +50,19 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
   private final Project myProject;
 
   public ExternalResourceConfigurable(Project project) {
-
     myProject = project;
+  }
+
+  public String getDisplayName() {
+    return XmlBundle.message("display.name.edit.external.resource");
+  }
+
+  public JComponent createComponent() {
+    myPanel = new JPanel(new GridBagLayout()) {
+      public Dimension getPreferredSize() {
+        return new Dimension(700, 400);
+      }
+    };
 
     myExtPanel = new AddEditRemovePanel<EditLocationDialog.NameLocationPair>(new ExtUrlsTableModel(), myPairs, XmlBundle.message("label.edit.external.resource.configure.external.resources")) {
       protected EditLocationDialog.NameLocationPair addItem() {
@@ -80,7 +91,6 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
         setModified(true);
       }
     });
-
     myIgnorePanel = new AddEditRemovePanel<String>(new IgnoredUrlsModel(), myIgnoredUrls, XmlBundle.message("label.edit.external.resource.configure.ignored.resources")) {
       protected String addItem() {
         return addIgnoreLocation();
@@ -95,26 +105,15 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
         return editIgnoreLocation(o);
       }
     };
-  }
-
-  public String getDisplayName() {
-    return XmlBundle.message("display.name.edit.external.resource");
-  }
-
-  public JComponent createComponent() {
-    myPanel = new JPanel(new GridBagLayout()) {
-      public Dimension getPreferredSize() {
-        return new Dimension(700, 400);
-      }
-    };
-
 
     myPanel.add(myExtPanel,
                 new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(5, 2, 4, 2), 0, 0));
     myPanel.add(myIgnorePanel,
                 new GridBagConstraints(0, 1, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(5, 2, 4, 2), 0, 0));
 
-
+    myExtPanel.setData(myPairs);
+    myIgnorePanel.setData(myIgnoredUrls);
+    
     return myPanel;
   }
 
@@ -167,8 +166,10 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
 
     Collections.sort(myIgnoredUrls);
 
-    myExtPanel.setData(myPairs);
-    myIgnorePanel.setData(myIgnoredUrls);
+    if (myExtPanel != null) {
+      myExtPanel.setData(myPairs);
+      myIgnorePanel.setData(myIgnoredUrls);
+    }
 
     setModified(false);
   }
@@ -253,7 +254,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
       return myNames.length;
     }
 
-    public String getField(String o, int columnIndex) {
+    public Object getField(String o, int columnIndex) {
       return o;
     }
 

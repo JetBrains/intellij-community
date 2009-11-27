@@ -181,11 +181,8 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
   @NotNull
   public LanguageLevel getLanguageLevel() {
-    return getClassStub().getLanguageLevel();
-  }
-
-  private PsiClassStub<?> getClassStub() {
-    return (PsiClassStub)getStub().getChildrenStubs().get(0);
+    final List stubs = getStub().getChildrenStubs();
+    return stubs.size() > 0 ? ((PsiClassStub<?>)stubs.get(0)).getLanguageLevel() : LanguageLevel.HIGHEST;
   }
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {

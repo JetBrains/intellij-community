@@ -39,6 +39,10 @@ public class EditAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     List<VirtualFile> files = e.getData(VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY);
+    editFilesAndShowErrors(project, files);
+  }
+
+  public static void editFilesAndShowErrors(Project project, List<VirtualFile> files) {
     final List<VcsException> exceptions = new ArrayList<VcsException>();
     editFiles(project, files, exceptions);
     if (!exceptions.isEmpty()) {

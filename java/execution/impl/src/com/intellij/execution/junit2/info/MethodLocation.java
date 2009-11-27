@@ -18,11 +18,14 @@ package com.intellij.execution.junit2.info;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 
@@ -53,6 +56,12 @@ public class MethodLocation extends Location<PsiMethod> {
   @NotNull
   public Project getProject() {
     return myProject;
+  }
+
+  @Nullable
+  @Override
+  public Module getModule() {
+    return ModuleUtil.findModuleForPsiElement(myMethod);
   }
 
   public PsiClass getContainingClass() {

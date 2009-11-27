@@ -41,7 +41,7 @@ public class AddCustomTagOrAttributeIntentionAction implements LocalQuickFix {
   private final int myType;
   private final String myInspectionName;
 
-  public AddCustomTagOrAttributeIntentionAction(String shortName, String name, int type) {
+  public AddCustomTagOrAttributeIntentionAction(@NotNull String shortName, String name, int type) {
     myInspectionName = shortName;
     myName = name;
     myType = type;

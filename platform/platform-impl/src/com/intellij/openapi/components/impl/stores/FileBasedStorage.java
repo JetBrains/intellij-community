@@ -187,36 +187,6 @@ public class FileBasedStorage extends XmlElementStorage {
 
   }
 
-  private VirtualFile ensureVirtualFile() {
-    if (!myFile.exists()) {
-      File ioFile = new File(myFile.getPath());
-      FileUtil.createIfDoesntExist(ioFile);
-    }
-
-    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myFile);
-
-    /*
-VirtualFile result = LocalFileSystem.getInstance().findFileByIoFile(myFile);
-    if (result != null) {
-      return result;
-    }
-    if (myFile.exists()) {
-      FileUtil.delete(new File(myFile.getAbsolutePath()));
-    }
-    VirtualFile parentVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(myFile.getParentFile());
-    LOG.assertTrue(parentVirtualFile != null);
-    try {
-      return parentVirtualFile.createChildData(this, myFile.getName());
-    }
-    catch (IOException e) {
-      LOG.error(e);
-      return null;
-    }
-    
-    * */
-  }
-
-
   protected void loadState(final StorageData result, final Element element) throws StateStorageException {
     ((FileStorageData)result).myFileName = myFile.getAbsolutePath();
     ((FileStorageData)result).myFilePath = myFile.getAbsolutePath();

@@ -50,6 +50,10 @@ public abstract class ProjectConverter {
     return Collections.emptyList();
   }
 
+  public Collection<File> getCreatedFiles() {
+    return Collections.emptyList();
+  }
+
   public void preProcessingFinished() throws CannotConvertException {
   }
 

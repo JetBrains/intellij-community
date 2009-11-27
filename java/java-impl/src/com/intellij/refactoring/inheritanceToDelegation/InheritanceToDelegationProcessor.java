@@ -251,7 +251,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
               reportedNonDelegatedUsages.put(nonDelegatedMember, reportedContainers);
             }
             final PsiElement container = ConflictsUtil.getContainer(element);
-            if (container != null && !reportedContainers.contains(container)) {
+            if (!reportedContainers.contains(container)) {
               String message = RefactoringBundle.message("0.uses.1.of.an.instance.of.a.2", RefactoringUIUtil.getDescription(container, true),
                                                          RefactoringUIUtil.getDescription(nonDelegatedMember, true), classDescription);
               conflicts.putValue(container, CommonRefactoringUtil.capitalize(message));
@@ -266,7 +266,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
               reportedUpcasts.put(upcastedTo, reportedContainers);
             }
             final PsiElement container = ConflictsUtil.getContainer(element);
-            if (container != null && !reportedContainers.contains(container)) {
+            if (!reportedContainers.contains(container)) {
               String message = RefactoringBundle.message("0.upcasts.an.instance.of.1.to.2",
                                                          RefactoringUIUtil.getDescription(container, true), classDescription,
                                                          RefactoringUIUtil.getDescription(upcastedTo, false));

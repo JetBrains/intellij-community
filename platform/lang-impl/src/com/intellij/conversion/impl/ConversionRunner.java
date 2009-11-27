@@ -73,6 +73,10 @@ public class ConversionRunner {
     return myModuleFileConverter != null && myModuleFileConverter.isConversionNeeded(myContext.getModuleSettings(moduleFile));
   }
 
+  public Collection<File> getCreatedFiles() {
+    return myConverter.getCreatedFiles();
+  }
+
   public Set<File> getAffectedFiles() {
     Set<File> affectedFiles = new HashSet<File>();
     if (myProcessProjectFile) {

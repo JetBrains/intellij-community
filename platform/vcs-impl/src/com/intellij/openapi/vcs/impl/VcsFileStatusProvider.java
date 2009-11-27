@@ -45,7 +45,7 @@ public class VcsFileStatusProvider implements FileStatusProvider {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.VcsFileStatusProvider");
 
-  private VcsFileStatusProvider(final Project project,
+  public VcsFileStatusProvider(final Project project,
                                final FileStatusManagerImpl fileStatusManager,
                                final ProjectLevelVcsManager vcsManager,
                                ChangeListManager changeListManager,

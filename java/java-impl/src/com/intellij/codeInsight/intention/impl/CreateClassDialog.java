@@ -71,6 +71,7 @@ public class CreateClassDialog extends DialogWrapper {
     myClassName = targetClassName;
     myProject = project;
     myPackageComponent = new PackageNameReferenceEditorCombo( targetPackageName != null ? targetPackageName : "", myProject, RECENTS_KEY, CodeInsightBundle.message("dialog.create.class.package.chooser.title"));
+    myPackageComponent.setTextFieldPreferredWidth(40);
 
     init();
 

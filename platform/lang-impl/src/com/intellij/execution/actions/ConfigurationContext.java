@@ -71,7 +71,7 @@ public class ConfigurationContext {
       myLocation = null;
       return;
     }
-    myLocation = new PsiLocation<PsiElement>(project, element);
+    myLocation = new PsiLocation<PsiElement>(project, myModule, element);
   }
 
   public RunnerAndConfigurationSettingsImpl getConfiguration() {

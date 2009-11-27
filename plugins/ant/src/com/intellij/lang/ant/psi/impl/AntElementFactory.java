@@ -337,7 +337,7 @@ public class AntElementFactory {
 
   private final static String[] PROPERTY_CLASSES = {Available.class.getName(), ConditionTask.class.getName(), UpToDate.class.getName(),
     Dirname.class.getName(), Basename.class.getName(), LoadFile.class.getName(), TempFile.class.getName(), PathConvert.class.getName(),
-    Length.class.getName(), WhichResource.class.getName(), JarLibResolveTask.class.getName(), P4Counter.class.getName()};
+    Length.class.getName(), WhichResource.class.getName(), JarLibResolveTask.class.getName(), P4Counter.class.getName(), ManifestClassPath.class.getName()};
 
   private final static String[] ALL_TASKS_CONTAINER_CLASSES =
     {MacroDef.NestedSequential.class.getName(), Sequential.class.getName(), Parallel.class.getName()};

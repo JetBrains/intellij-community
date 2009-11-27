@@ -137,7 +137,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
             }
           }
           if (!levels.isEmpty()) {
-            if (Messages.showOkCancelDialog(myWholePanel, "Undefined severities detected: " +
+            if (Messages.showYesNoDialog(myWholePanel, "Undefined severities detected: " +
                                                           StringUtil.join(levels, ", ") +
                                                           ". Do you want to create them?", "Warning", Messages.getWarningIcon()) ==
                 DialogWrapper.OK_EXIT_CODE) {

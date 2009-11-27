@@ -17,8 +17,10 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -26,19 +28,28 @@ import java.util.Map;
 public class HighlightDisplayKey {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.HighlightDisplayKey");
 
-  private static final HashMap<String,HighlightDisplayKey> ourMap = new HashMap<String, HighlightDisplayKey>();
+  private static final HashMap<String,HighlightDisplayKey> ourNameToKeyMap = new HashMap<String, HighlightDisplayKey>();
+  private static final HashMap<String,HighlightDisplayKey> ourIdToKeyMap = new HashMap<String, HighlightDisplayKey>();
   private static final Map<HighlightDisplayKey, String> ourKeyToDisplayNameMap = new HashMap<HighlightDisplayKey, String>();
   private static final Map<HighlightDisplayKey, String> ourKeyToAlternativeIDMap = new HashMap<HighlightDisplayKey, String>();
 
   private final String myName;
   private final String myID;
 
-  public static HighlightDisplayKey find(@NonNls String name){
-    return ourMap.get(name);
+  public static HighlightDisplayKey find(@NonNls @NotNull String name){
+    return ourNameToKeyMap.get(name);
+  }
+
+  public static HighlightDisplayKey findById(@NonNls @NotNull String id){
+    HighlightDisplayKey key = ourIdToKeyMap.get(id);
+    if (key != null) return key;
+    key = ourNameToKeyMap.get(id);
+    if (key != null && key.getID().equals(id)) return key;
+    return null;
   }
 
   @Nullable
-  public static HighlightDisplayKey register(@NonNls String name) {
+  public static HighlightDisplayKey register(@NonNls @NotNull String name) {
     if (find(name) != null) {
       LOG.info("Key with name \'" + name + "\' already registered");
       return null;
@@ -47,7 +58,7 @@ public class HighlightDisplayKey {
   }
 
   @Nullable
-  public static HighlightDisplayKey register(@NonNls String name, String displayName, @NonNls String id){
+  public static HighlightDisplayKey register(@NonNls @NotNull String name, @NotNull String displayName, @NotNull @NonNls String id){
     if (find(name) != null) {
       LOG.info("Key with name \'" + name + "\' already registered");
       return null;
@@ -58,22 +69,25 @@ public class HighlightDisplayKey {
   }
 
   @Nullable
-  public static HighlightDisplayKey register(@NonNls String name, String displayName) {
+  public static HighlightDisplayKey register(@NonNls @NotNull String name, @NotNull String displayName) {
     return register(name, displayName, name);
   }
 
-  public static String getDisplayNameByKey(HighlightDisplayKey key){
-    return ourKeyToDisplayNameMap.get(key);
+  public static String getDisplayNameByKey(@Nullable HighlightDisplayKey key){
+    return key == null ? null : ourKeyToDisplayNameMap.get(key);
   }
 
-  private HighlightDisplayKey(String name) {
+  private HighlightDisplayKey(@NotNull String name) {
     this(name, name);
   }
 
-  public HighlightDisplayKey(@NonNls final String name, @NonNls final String ID) {
+  public HighlightDisplayKey(@NonNls @NotNull final String name, @NotNull @NonNls final String ID) {
     myName = name;
     myID = ID;
-    ourMap.put(myName, this);
+    ourNameToKeyMap.put(myName, this);
+    if (!Comparing.equal(ID, name)) {
+      ourIdToKeyMap.put(ID, this);
+    }
   }
 
   public String toString() {
@@ -84,7 +98,7 @@ public class HighlightDisplayKey {
     return myID;
   }
 
-  public static HighlightDisplayKey register(String shortName, String displayName, String id, String alternativeID) {
+  public static HighlightDisplayKey register(@NotNull String shortName, @NotNull String displayName, @NotNull String id, String alternativeID) {
     final HighlightDisplayKey key = register(shortName, displayName, id);
     if (alternativeID != null) {
       ourKeyToAlternativeIDMap.put(key, alternativeID);
@@ -92,7 +106,7 @@ public class HighlightDisplayKey {
     return key;
   }
 
-  public static String getAlternativeID(HighlightDisplayKey key) {
+  public static String getAlternativeID(@NotNull HighlightDisplayKey key) {
     return ourKeyToAlternativeIDMap.get(key);
   }
 }

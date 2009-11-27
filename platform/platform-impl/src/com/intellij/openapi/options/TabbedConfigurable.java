@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.options;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.ui.TabbedPaneWrapper;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -25,9 +27,14 @@ import java.awt.*;
  */
 public abstract class TabbedConfigurable extends CompositeConfigurable<Configurable> {
   protected TabbedPaneWrapper myTabbedPane;
+  private final Disposable myParent;
+
+  protected TabbedConfigurable(@NotNull Disposable parent) {
+    myParent = parent;
+  }
 
   public JComponent createComponent() {
-    myTabbedPane = new TabbedPaneWrapper();
+    myTabbedPane = new TabbedPaneWrapper(myParent);
     createConfigurableTabs();
     final JComponent component = myTabbedPane.getComponent();
     component.setPreferredSize(new Dimension(500, 400));

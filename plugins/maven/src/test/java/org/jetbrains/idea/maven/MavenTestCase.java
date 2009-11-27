@@ -32,7 +32,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import org.intellij.lang.annotations.Language;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
@@ -118,7 +117,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
   @Override
   protected void tearDown() throws Exception {
     tearDownFixtures();
-
+    myProject = null;
     if (!FileUtil.delete(myDir)) {
       System.out.println("Cannot delete " + myDir);
       myDir.deleteOnExit();
@@ -130,6 +129,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
   protected void tearDownFixtures() throws Exception {
     myTestFixture.tearDown();
+    myTestFixture = null;
   }
 
   private void resetClassFields(final Class<?> aClass) {

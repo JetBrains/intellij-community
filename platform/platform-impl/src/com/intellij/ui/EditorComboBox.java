@@ -233,7 +233,12 @@ public class EditorComboBox extends JComboBox implements DocumentListener {
   }
 
   private void setEditor() {
-    myEditorField = new EditorTextField(myDocument, myProject, myFileType, myIsViewer);
+    myEditorField = new EditorTextField(myDocument, myProject, myFileType, myIsViewer) {
+      @Override
+      protected boolean shouldHaveBorder() {
+        return UIManager.getBorder("ComboBox.border") == null;
+      }
+    };
     final ComboBoxEditor editor = new MyEditor();
     setEditor(editor);
     setRenderer(new EditorComboBoxRenderer(editor));
