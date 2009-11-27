@@ -98,10 +98,10 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
 
     String beforeRevisionTitle = (bRev != null) ? bRev.getRevisionNumber().asString() : "";
     String afterRevisionTitle = (aRev != null) ? aRev.getRevisionNumber().asString() : "";
-    if (beforeRevisionTitle.length() == 0) {
+    if ((beforeRevisionTitle == null) || (beforeRevisionTitle.length() == 0)) {
       beforeRevisionTitle = "Base version";
     }
-    if (afterRevisionTitle.length() == 0) {
+    if ((afterRevisionTitle == null) || (afterRevisionTitle.length() == 0)) {
       afterRevisionTitle = "Your version";
     }
     request.setContentTitles(beforeRevisionTitle, afterRevisionTitle);
