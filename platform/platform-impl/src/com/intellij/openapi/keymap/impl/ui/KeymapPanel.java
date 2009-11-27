@@ -430,6 +430,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
                            KeyMapBundle.message("filter.shortcut.action.text"),
                            IconLoader.getIcon("/ant/shortcutFilter.png")) {
       public void actionPerformed(AnActionEvent e) {
+        myFilterComponent.reset();
         if (myPopup == null || myPopup.getContent() == null){
           myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(createFilteringPanel(), null)
             .setRequestFocus(true)
@@ -479,6 +480,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
 
 
   private JPanel createFilteringPanel() {
+    myActionsTree.reset(getSelectedKeymap(), getCurrentQuickListIds());
     JPanel filterComponent = new JPanel(new GridBagLayout());
     filterComponent.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 

@@ -50,7 +50,7 @@ public class SearchTextFieldWithStoredHistory extends SearchTextField {
         }
       }
       setHistory(result);
-      setSelectedItem("");
     }
+    setSelectedItem("");
   }
 }
