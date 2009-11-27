@@ -88,24 +88,34 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
             final PsiCallExpression expression =
                     (PsiCallExpression)descriptor.getPsiElement();
             final PsiType boxedType = expression.getType();
-            final PsiExpressionList argList = expression.getArgumentList();
-            assert argList != null;
-            final PsiExpression[] args = argList.getExpressions();
-            final PsiType argType = args[0].getType();
-            final String cast = getCastString(argType, boxedType);
-            final String newExpression = args[0].getText();
+            if (boxedType == null) {
+                return;
+            }
+            final PsiExpressionList argumentList = expression.getArgumentList();
+            if (argumentList == null) {
+                return;
+            }
+            final PsiExpression[] arguments = argumentList.getExpressions();
+            if (arguments.length != 1) {
+                return;
+            }
+            final PsiType argumentType = arguments[0].getType();
+            if (argumentType == null) {
+                return;
+            }
+            final String cast = getCastString(argumentType, boxedType);
+            final String newExpression = arguments[0].getText();
             replaceExpression(expression, cast + newExpression);
         }
 
-        private static String getCastString(PsiType fromType,
-                                            PsiType toType) {
+        private static String getCastString(@NotNull PsiType fromType,
+                                            @NotNull PsiType toType) {
             final String toTypeText = toType.getCanonicalText();
             final String fromTypeText = fromType.getCanonicalText();
             final String unboxedType = s_boxingArgs.get(toTypeText);
             if (fromTypeText.equals(unboxedType)) {
                 return "";
-            }
-            else {
+            } else {
                 return '(' + unboxedType + ')';
             }
         }
