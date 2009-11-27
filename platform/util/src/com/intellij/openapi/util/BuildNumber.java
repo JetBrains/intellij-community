@@ -25,6 +25,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
   private final String myProductCode;
   private final int myBaselineVersion;
   private final int myBuildNumber;
+  private static final String BUILD_NUMBER = "__BUILD_NUMBER__";
 
   public BuildNumber(String productCode, int baselineVersion, int buildNumber) {
     myProductCode = productCode;
@@ -58,7 +59,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
   public static BuildNumber fromString(String version) {
     if (version == null) return null;
 
-    if ("__BUILD_NUMBER__".equals(version)) return new BuildNumber("", 91, Integer.MAX_VALUE);
+    if (BUILD_NUMBER.equals(version)) return new BuildNumber("IU", 91, Integer.MAX_VALUE);
 
     String code = version;
     int productSeparator = code.indexOf('-');
@@ -83,25 +84,10 @@ public class BuildNumber implements Comparable<BuildNumber> {
         throw new RuntimeException("Unparseable version number: " + version);
       }
 
-      if ("SNAPSHOT".equals(code) || "__BUILD_NUMBER__".equals(code)) {
-        buildNumber = Integer.MAX_VALUE;
-      }
-      else {
-        try {
-          buildNumber = Integer.parseInt(code);
-        }
-        catch (NumberFormatException e) {
-          throw new RuntimeException("Unparseable version number: " + version);
-        }
-      }
+      buildNumber = parseBuildNumber(version, code);
     }
     else {
-      try {
-        buildNumber = Integer.parseInt(code);
-      }
-      catch (NumberFormatException e) {
-        throw new RuntimeException("Unparseable version number: " + version);
-      }
+      buildNumber = parseBuildNumber(version, code);
 
       if (buildNumber <= 2000) {
         // it's probably a baseline, not a build number
@@ -112,6 +98,18 @@ public class BuildNumber implements Comparable<BuildNumber> {
     }
 
     return new BuildNumber(productCode, baselineVersion, buildNumber);
+  }
+
+  private static int parseBuildNumber(String version, String code) {
+    if ("SNAPSHOT".equals(code) || BUILD_NUMBER.equals(code)) {
+      return Integer.MAX_VALUE;
+    }
+    try {
+      return Integer.parseInt(code);
+    }
+    catch (NumberFormatException e) {
+      throw new RuntimeException("Unparseable version number: " + version);
+    }
   }
 
   public int compareTo(BuildNumber o) {
