@@ -709,7 +709,7 @@ public class MavenIndex {
       IOException[] exceptions = new IOException[1];
 
       try {
-        myIndexer.removeIndexingContext(context, false);
+        if (context!= null) myIndexer.removeIndexingContext(context, false);
       }
       catch (IOException e) {
         MavenLog.LOG.info(e);
