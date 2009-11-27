@@ -26,6 +26,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
   private final int myBaselineVersion;
   private final int myBuildNumber;
   private static final String BUILD_NUMBER = "__BUILD_NUMBER__";
+  private static final int TOP_BASELINE_VERSION = 92;
 
   public BuildNumber(String productCode, int baselineVersion, int buildNumber) {
     myProductCode = productCode;
@@ -64,7 +65,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
   public static BuildNumber fromString(String version) {
     if (version == null) return null;
 
-    if (BUILD_NUMBER.equals(version)) return new BuildNumber("IU", 92, Integer.MAX_VALUE);
+    if (BUILD_NUMBER.equals(version)) return new BuildNumber("IU", TOP_BASELINE_VERSION, Integer.MAX_VALUE);
 
     String code = version;
     int productSeparator = code.indexOf('-');
@@ -163,6 +164,9 @@ public class BuildNumber implements Comparable<BuildNumber> {
 
   // See http://www.jetbrains.net/confluence/display/IDEADEV/Build+Number+Ranges for historic build ranges
   private static int getBaseLineForHistoricBuilds(int bn) {
+    if (bn == Integer.MAX_VALUE) {
+      return TOP_BASELINE_VERSION; // SNAPSHOTS
+    }
     if (bn >= 10000) {
       return 88; // Maia, 9x builds
     }
