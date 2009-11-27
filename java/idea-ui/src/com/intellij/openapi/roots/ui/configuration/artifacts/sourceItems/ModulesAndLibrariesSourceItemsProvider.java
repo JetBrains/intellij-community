@@ -17,10 +17,7 @@ package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModuleRootModel;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -66,8 +63,10 @@ public class ModulesAndLibrariesSourceItemsProvider extends PackagingSourceItems
     List<Library> libraries = new ArrayList<Library>();
     for (OrderEntry orderEntry : rootModel.getOrderEntries()) {
       if (orderEntry instanceof LibraryOrderEntry) {
-        final Library library = ((LibraryOrderEntry)orderEntry).getLibrary();
-        if (library != null) {
+        final LibraryOrderEntry libraryEntry = (LibraryOrderEntry)orderEntry;
+        final Library library = libraryEntry.getLibrary();
+        final DependencyScope scope = libraryEntry.getScope();
+        if (library != null && scope != DependencyScope.TEST && scope != DependencyScope.PROVIDED) {
           libraries.add(library);
         }
       }
