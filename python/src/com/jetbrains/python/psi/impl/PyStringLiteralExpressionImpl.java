@@ -18,11 +18,14 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.types.PyType;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -197,5 +200,10 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
 
   public PyType getType() {
     return PyBuiltinCache.getInstance(this).getStrType(); // TODO: detect unicode vs byte
+  }
+
+  @NotNull
+  public PsiReference[] getReferences() {
+    return ReferenceProvidersRegistry.getReferencesFromProviders(this, PyStringLiteralExpression.class);
   }
 }
