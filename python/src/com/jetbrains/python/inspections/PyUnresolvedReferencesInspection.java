@@ -3,6 +3,7 @@ package com.jetbrains.python.inspections;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.*;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -10,6 +11,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.Consumer;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.actions.AddFieldQuickFix;
 import com.jetbrains.python.actions.AddImportAction;
@@ -83,8 +85,6 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
       if (pos > 0)  return name.substring(0, pos);
       else return name;
     }
-
-    static LocalQuickFix[] LQF_EMPTY = new LocalQuickFix[0];
 
     @NotNull
     static List<LocalQuickFix> proposeImportFixes(final PyElement node, String ref_text) {
@@ -242,100 +242,116 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
           unresolved = (reference.resolve() == null);
         }
         if (unresolved) {
-          final StringBuilder description_buf = new StringBuilder(""); // TODO: clear description_buf logic. maybe a flag is needed instead.
-          final String text = reference.getElement().getText();
-          final String ref_text = reference.getRangeInElement().substring(text); // text of the part we're working with
-          final PsiElement ref_element = reference.getElement();
-          final boolean ref_in_import = SyntaxMatchers.IN_IMPORT.search(ref_element) != null;
-          List<LocalQuickFix> actions = new ArrayList<LocalQuickFix>(2);
-          HintAction hint_action = null;
-          if (ref_text.length() <= 0) return; // empty text, nothing to highlight
-          if (reference instanceof PyReferenceExpression) {
-            PyReferenceExpression refex = (PyReferenceExpression)reference;
-            String refname = refex.getReferencedName();
-            if (refex.getQualifier() != null) {
-              final PyClassType object_type = PyBuiltinCache.getInstance(node).getObjectType();
-              if ((object_type != null) && object_type.getPossibleInstanceMembers().contains(refname)) continue;
-            }
-            // unqualified:
-            // may be module's
-            if (PyModuleType.getPossibleInstanceMembers().contains(refname)) continue;
-            // may be a "try: import ..."; not an error not to resolve
-            if ((
-              PsiTreeUtil.getParentOfType(
-                PsiTreeUtil.getParentOfType(node, PyImportElement.class), PyTryExceptStatement.class, PyIfStatement.class
-              ) != null
-            )) {
-              severity = HighlightSeverity.INFO;
-              String errmsg = PyBundle.message("INSP.module.$0.not.found", ref_text);
-              description_buf.append(errmsg);
-              // TODO: mark the node so that future references pointing to it won't result in a error, but in a warning
-            }
-            // look in other imported modules for this whole name
-            if (! ref_in_import) {
-              List<LocalQuickFix> import_fixes = proposeImportFixes(node, ref_text);
-              if (import_fixes.size() > 0) {
-                actions.addAll(import_fixes);
-                Object first_action = import_fixes.get(0);
-                if (first_action instanceof HintAction) {
-                  hint_action = ((HintAction)first_action);
-                }
-              }
-            }
-          }
-          if (reference instanceof PsiReferenceEx) {
-            final String s = ((PsiReferenceEx)reference).getUnresolvedDescription();
-            if (s != null) description_buf.append(s);
-          }
-          if (description_buf.length() == 0) {
-            boolean marked_qualified = false;
-            if (reference instanceof PyQualifiedExpression) {
-              final PyExpression qexpr = ((PyQualifiedExpression)reference).getQualifier();
-              if (qexpr != null) {
-                PyType qtype = qexpr.getType();
-                if (qtype != null) {
-                  if (qtype instanceof PyNoneType) {
-                    // this almost always means that we don't know the type, so don't show an error in this case
-                    continue;
-                  }
-                  if (qtype instanceof PyClassType) {
-                    PyClass cls = ((PyClassType)qtype).getPyClass();
-                    if (cls != null && ! PyBuiltinCache.hasInBuiltins(cls)) {
-                      if (reference.getElement().getParent() instanceof PyCallExpression) {
-                        actions.add(new AddMethodQuickFix(ref_text, (PyClassType)qtype));
-                      }
-                      else actions.add(new AddFieldQuickFix(ref_text, cls));
-                    }
-                    description_buf.append(PyBundle.message("INSP.unresolved.ref.$0.for.class.$1", ref_text, qtype.getName()));
-                    marked_qualified = true;
-                  }
-                  else {
-                    description_buf.append(PyBundle.message("INSP.cannot.find.$0.in.$1", ref_text, qtype.getName()));
-                    marked_qualified = true;
-                  }
-                }
-              }
-            }
-            if (! marked_qualified) {
-              description_buf.append(PyBundle.message("INSP.unresolved.ref.$0", ref_text));
-              // add import hint unless we're an import ourselves; the rest of action will fend for itself.
-              if (ref_element != null && ! ref_in_import) hint_action = new AddImportAction(reference);
-            }
-          }
-          String description = description_buf.toString();
-          ProblemHighlightType hl_type;
-          if (severity == HighlightSeverity.WARNING) {
-            hl_type = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
-          }
-          else {
-            hl_type = ProblemHighlightType.LIKE_UNKNOWN_SYMBOL;
-          }
-          PsiElement point = node.getLastChild(); // usually the identifier at the end of qual ref
-          if (point == null) point = node;
-          registerProblem(point, description, hl_type, hint_action, actions.toArray(LQF_EMPTY));
+          registerUnresolvedReferenceProblem(node, reference, severity);
         }
       }
     }
 
+    private void registerUnresolvedReferenceProblem(PyElement node, PsiReference reference, HighlightSeverity severity) {
+      final StringBuilder description_buf = new StringBuilder(""); // TODO: clear description_buf logic. maybe a flag is needed instead.
+      final String text = reference.getElement().getText();
+      final String ref_text = reference.getRangeInElement().substring(text); // text of the part we're working with
+      final PsiElement ref_element = reference.getElement();
+      final boolean ref_in_import = SyntaxMatchers.IN_IMPORT.search(ref_element) != null;
+      final List<LocalQuickFix> actions = new ArrayList<LocalQuickFix>(2);
+      HintAction hint_action = null;
+      if (ref_text.length() <= 0) return; // empty text, nothing to highlight
+      if (reference instanceof PyReferenceExpression) {
+        PyReferenceExpression refex = (PyReferenceExpression)reference;
+        String refname = refex.getReferencedName();
+        if (refex.getQualifier() != null) {
+          final PyClassType object_type = PyBuiltinCache.getInstance(node).getObjectType();
+          if ((object_type != null) && object_type.getPossibleInstanceMembers().contains(refname)) return;
+        }
+        // unqualified:
+        // may be module's
+        if (PyModuleType.getPossibleInstanceMembers().contains(refname)) return;
+        // may be a "try: import ..."; not an error not to resolve
+        if ((
+          PsiTreeUtil.getParentOfType(
+            PsiTreeUtil.getParentOfType(node, PyImportElement.class), PyTryExceptStatement.class, PyIfStatement.class
+          ) != null
+        )) {
+          severity = HighlightSeverity.INFO;
+          String errmsg = PyBundle.message("INSP.module.$0.not.found", ref_text);
+          description_buf.append(errmsg);
+          // TODO: mark the node so that future references pointing to it won't result in a error, but in a warning
+        }
+        // look in other imported modules for this whole name
+        if (! ref_in_import) {
+          List<LocalQuickFix> import_fixes = proposeImportFixes(node, ref_text);
+          if (import_fixes.size() > 0) {
+            actions.addAll(import_fixes);
+            Object first_action = import_fixes.get(0);
+            if (first_action instanceof HintAction) {
+              hint_action = ((HintAction)first_action);
+            }
+          }
+        }
+      }
+      if (reference instanceof PsiReferenceEx) {
+        final String s = ((PsiReferenceEx)reference).getUnresolvedDescription();
+        if (s != null) description_buf.append(s);
+      }
+      if (description_buf.length() == 0) {
+        boolean marked_qualified = false;
+        if (reference instanceof PyQualifiedExpression) {
+          final PyExpression qexpr = ((PyQualifiedExpression)reference).getQualifier();
+          if (qexpr != null) {
+            PyType qtype = qexpr.getType();
+            if (qtype != null) {
+              if (qtype instanceof PyNoneType) {
+                // this almost always means that we don't know the type, so don't show an error in this case
+                return;
+              }
+              if (qtype instanceof PyClassType) {
+                PyClass cls = ((PyClassType)qtype).getPyClass();
+                if (cls != null && ! PyBuiltinCache.hasInBuiltins(cls)) {
+                  if (reference.getElement().getParent() instanceof PyCallExpression) {
+                    actions.add(new AddMethodQuickFix(ref_text, (PyClassType)qtype));
+                  }
+                  else actions.add(new AddFieldQuickFix(ref_text, cls));
+                }
+                description_buf.append(PyBundle.message("INSP.unresolved.ref.$0.for.class.$1", ref_text, qtype.getName()));
+                marked_qualified = true;
+              }
+              else {
+                description_buf.append(PyBundle.message("INSP.cannot.find.$0.in.$1", ref_text, qtype.getName()));
+                marked_qualified = true;
+              }
+            }
+          }
+        }
+        if (! marked_qualified) {
+          description_buf.append(PyBundle.message("INSP.unresolved.ref.$0", ref_text));
+          // add import hint unless we're an import ourselves; the rest of action will fend for itself.
+          if (ref_element != null && ! ref_in_import) hint_action = new AddImportAction(reference);
+        }
+      }
+      String description = description_buf.toString();
+      ProblemHighlightType hl_type;
+      if (severity == HighlightSeverity.WARNING) {
+        hl_type = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+      }
+      else {
+        hl_type = ProblemHighlightType.LIKE_UNKNOWN_SYMBOL;
+      }
+
+      addPluginQuickFixes(reference, actions);
+
+      PsiElement point = node.getLastChild(); // usually the identifier at the end of qual ref
+      if (point == null) point = node;
+      registerProblem(point, description, hl_type, hint_action, actions.toArray(new LocalQuickFix[actions.size()]));
+    }
+
+    private static void addPluginQuickFixes(PsiReference reference, final List<LocalQuickFix> actions) {
+      for(PyUnresolvedReferenceQuickFixProvider provider: Extensions.getExtensions(PyUnresolvedReferenceQuickFixProvider.EP_NAME)) {
+        provider.registerQuickFixes(reference, new Consumer<LocalQuickFix>() {
+          public void consume(LocalQuickFix localQuickFix) {
+            actions.add(localQuickFix);
+          }
+        });
+      }
+    }
   }
 }

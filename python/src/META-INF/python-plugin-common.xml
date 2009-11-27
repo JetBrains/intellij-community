@@ -104,6 +104,7 @@
     <extensionPoint qualifiedName="Pythonid.pyClassInheritorsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint qualifiedName="Pythonid.pyOverridingMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint qualifiedName="Pythonid.runnableScriptFilter" interface="com.jetbrains.python.run.RunnableScriptFilter"/>
+    <extensionPoint qualifiedName="Pythonid.unresolvedReferenceQuickFixProvider" interface="com.jetbrains.python.inspections.PyUnresolvedReferenceQuickFixProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
