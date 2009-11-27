@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -35,8 +36,8 @@ public class JBTabsPaneImpl implements TabbedPane, SwingConstants {
   private final JBTabs myTabs;
   private final CopyOnWriteArraySet<ChangeListener> myListeners = new CopyOnWriteArraySet<ChangeListener>();
 
-  public JBTabsPaneImpl(@Nullable Project project, int tabPlacement, Disposable parent) {
-    myTabs = new JBTabsImpl(project, ActionManager.getInstance(), project != null ? IdeFocusManager.getInstance(project) : null, parent);
+  public JBTabsPaneImpl(@Nullable Project project, int tabPlacement, @NotNull Disposable parent) {
+    myTabs = new JBTabsImpl(project, ActionManager.getInstance(), project == null ? null : IdeFocusManager.getInstance(project), parent);
     myTabs.addListener(new TabsListener.Adapter() {
       @Override
       public void selectionChanged(TabInfo oldSelection, TabInfo newSelection) {

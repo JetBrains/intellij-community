@@ -26,8 +26,7 @@ public class UnnamedConfigurableGroup implements UnnamedConfigurable {
 
   public JComponent createComponent() {
     JPanel panel = new JPanel(new VerticalFlowLayout());
-    for (int i = 0; i < myConfigurables.size(); i++) {
-      UnnamedConfigurable configurable = myConfigurables.get(i);
+    for (UnnamedConfigurable configurable : myConfigurables) {
       panel.add(configurable.createComponent());
     }
 
@@ -35,27 +34,27 @@ public class UnnamedConfigurableGroup implements UnnamedConfigurable {
   }
 
   public boolean isModified() {
-    for (int i = 0; i < myConfigurables.size(); i++) {
-      if (myConfigurables.get(i).isModified()) return true;
+    for (UnnamedConfigurable myConfigurable : myConfigurables) {
+      if (myConfigurable.isModified()) return true;
     }
     return false;
   }
 
   public void apply() throws ConfigurationException {
-    for (int i = 0; i < myConfigurables.size(); i++) {
-      myConfigurables.get(i).apply();
+    for (UnnamedConfigurable myConfigurable : myConfigurables) {
+      myConfigurable.apply();
     }
   }
 
   public void reset() {
-    for (int i = 0; i < myConfigurables.size(); i++) {
-      myConfigurables.get(i).reset();
+    for (UnnamedConfigurable myConfigurable : myConfigurables) {
+      myConfigurable.reset();
     }
   }
 
   public void disposeUIResources() {
-    for (int i = 0; i < myConfigurables.size(); i++) {
-      myConfigurables.get(i).disposeUIResources();
+    for (UnnamedConfigurable myConfigurable : myConfigurables) {
+      myConfigurable.disposeUIResources();
     }
   }
 

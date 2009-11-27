@@ -29,7 +29,6 @@ public class RunnerLayoutUiFactoryImpl extends RunnerLayoutUi.Factory {
   }
 
   public RunnerLayoutUi create(@NotNull final String runnerType, @NotNull final String runnerTitle, @NotNull final String sessionName, @NotNull final Disposable parent) {
-    final RunnerLayoutUiImpl ui = new RunnerLayoutUiImpl(myProject, parent, runnerType, runnerTitle, sessionName);
-    return ui;
+    return new RunnerLayoutUiImpl(myProject, parent, runnerType, runnerTitle, sessionName);
   }
 }

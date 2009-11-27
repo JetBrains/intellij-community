@@ -59,21 +59,21 @@ public class JBTabsImpl extends JComponent
 
   ActionManager myActionManager;
   public final List<TabInfo> myVisibleInfos = new ArrayList<TabInfo>();
-  final Map<TabInfo, Integer> myHiddenInfos = new HashMap<TabInfo, Integer>();
+  private final Map<TabInfo, Integer> myHiddenInfos = new HashMap<TabInfo, Integer>();
 
-  TabInfo mySelectedInfo;
+  private TabInfo mySelectedInfo;
   public final Map<TabInfo, TabLabel> myInfo2Label = new HashMap<TabInfo, TabLabel>();
   public final Map<TabInfo, Toolbar> myInfo2Toolbar = new HashMap<TabInfo, Toolbar>();
   public Dimension myHeaderFitSize;
 
-  Insets myInnerInsets = new Insets(0, 0, 0, 0);
+  private Insets myInnerInsets = new Insets(0, 0, 0, 0);
 
-  final List<EventListener> myTabMouseListeners = new ArrayList<EventListener>();
-  final List<TabsListener> myTabListeners = new ArrayList<TabsListener>();
+  private final List<EventListener> myTabMouseListeners = new ArrayList<EventListener>();
+  private final List<TabsListener> myTabListeners = new ArrayList<TabsListener>();
   public boolean myFocused;
 
-  Getter<ActionGroup> myPopupGroup;
-  String myPopupPlace;
+  private Getter<ActionGroup> myPopupGroup;
+  private String myPopupPlace;
 
   TabInfo myPopupInfo;
   DefaultActionGroup myNavigationActions;
@@ -83,19 +83,19 @@ public class JBTabsImpl extends JComponent
 
   public boolean myHorizontalSide = true;
 
-  boolean myStealthTabMode = false;
+  private boolean myStealthTabMode = false;
 
-  DataProvider myDataProvider;
+  private DataProvider myDataProvider;
 
-  WeakHashMap<Component, Component> myDeferredToRemove = new WeakHashMap<Component, Component>();
+  private final WeakHashMap<Component, Component> myDeferredToRemove = new WeakHashMap<Component, Component>();
 
-  SingleRowLayout mySingleRowLayout = new SingleRowLayout(this);
-  TableLayout myTableLayout = new TableLayout(this);
+  private final SingleRowLayout mySingleRowLayout = new SingleRowLayout(this);
+  private final TableLayout myTableLayout = new TableLayout(this);
 
 
   private TabLayout myLayout = mySingleRowLayout;
   LayoutPassInfo myLastLayoutPass;
-  TabInfo myLastPaintedSelection;
+  private TabInfo myLastPaintedSelection;
 
   public boolean myForcedRelayout;
 
@@ -110,16 +110,16 @@ public class JBTabsImpl extends JComponent
   private boolean myRequestFocusOnLastFocusedComponent = false;
   private boolean myListenerAdded;
   final Set<TabInfo> myAttractions = new HashSet<TabInfo>();
-  Animator myAnimator;
-  List<TabInfo> myAllTabs;
-  boolean myPaintBlocked;
-  BufferedImage myImage;
-  IdeFocusManager myFocusManager;
-  boolean myAdjustBorders = true;
+  private Animator myAnimator;
+  private List<TabInfo> myAllTabs;
+  private boolean myPaintBlocked;
+  private BufferedImage myImage;
+  private IdeFocusManager myFocusManager;
+  private boolean myAdjustBorders = true;
 
   boolean myAddNavigationGroup = true;
 
-  boolean myGhostsAlwaysVisible = false;
+  private boolean myGhostsAlwaysVisible = false;
   private boolean myDisposed;
   private boolean myToDrawBorderIfTabsHidden = true;
   private Color myActiveTabFillIn;
@@ -135,12 +135,11 @@ public class JBTabsImpl extends JComponent
   private long myRemoveDefferredRequest;
   private boolean myTestMode;
 
-  JBTabsPosition myPosition = JBTabsPosition.top;
+  private JBTabsPosition myPosition = JBTabsPosition.top;
 
   private final TabsBorder myBorder = new TabsBorder(this);
   private BaseNavigationAction myNextAction;
   private BaseNavigationAction myPrevAction;
-  private Disposable myParent;
 
   private boolean myWasEverShown;
 
@@ -153,15 +152,15 @@ public class JBTabsImpl extends JComponent
     this(project, project);
   }
 
-  public JBTabsImpl(@NotNull Project project, Disposable parent) {
+  public JBTabsImpl(@NotNull Project project, @NotNull Disposable parent) {
     this(project, ActionManager.getInstance(), IdeFocusManager.getInstance(project), parent);
   }
 
-  public JBTabsImpl(@Nullable Project project, IdeFocusManager focusManager, Disposable parent) {
+  public JBTabsImpl(@Nullable Project project, IdeFocusManager focusManager, @NotNull Disposable parent) {
     this(project, ActionManager.getInstance(), focusManager, parent);
   }
 
-  public JBTabsImpl(@Nullable Project project, ActionManager actionManager, IdeFocusManager focusManager, Disposable parent) {
+  public JBTabsImpl(@Nullable Project project, ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
     myProject = project;
     myActionManager = actionManager;
     myFocusManager = focusManager != null ? focusManager : PassThroughtIdeFocusManager.getInstance();
@@ -169,10 +168,7 @@ public class JBTabsImpl extends JComponent
     setOpaque(true);
     setPaintBorder(-1, -1, -1, -1);
 
-    myParent = parent;
-    if (myParent != null) {
-      Disposer.register(myParent, this);
-    }
+    Disposer.register(parent, this);
 
     myNavigationActions = new DefaultActionGroup();
 
