@@ -148,6 +148,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
     else throw new AssertionError();
     panel.reset();
     final DialogBuilder builder = new DialogBuilder(project);
+    builder.setHelpId("reference.settings.injection.language.injection.settings");
     builder.addOkAction();
     builder.addCancelAction();
     builder.setCenterPanel(panel.getComponent());

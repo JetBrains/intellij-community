@@ -13,33 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.conversion;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
-
-import java.io.File;
 
 /**
  * @author nik
  */
-public abstract class ConversionService {
+public interface ConversionResult {
+  boolean conversionNotNeeded();
 
-  public static ConversionService getInstance() {
-    return ServiceManager.getService(ConversionService.class);
-  }
+  boolean openingIsCanceled();
 
-  @NotNull
-  public abstract ConversionResult convertSilently(@NotNull String projectPath);
-
-  @NotNull
-  public abstract ConversionResult convertSilently(@NotNull String projectPath, @NotNull ConversionListener conversionListener);
-
-  @NotNull
-  public abstract ConversionResult convert(@NotNull String projectPath);
-
-  @NotNull
-  public abstract ConversionResult convertModule(@NotNull Project project, @NotNull File moduleFile);
+  void postStartupActivity(@NotNull Project project);
 }

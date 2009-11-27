@@ -112,7 +112,7 @@ public class InspectionApplication {
       }
 
       logMessage(1, InspectionsBundle.message("inspection.application.opening.project"));
-      if (!ConversionService.getInstance().convertSilently(myProjectPath, createConversionListener())) {
+      if (ConversionService.getInstance().convertSilently(myProjectPath, createConversionListener()).openingIsCanceled()) {
         if (myErrorCodeRequired) System.exit(1);
         return;
       }
