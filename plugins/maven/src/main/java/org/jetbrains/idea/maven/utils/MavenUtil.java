@@ -246,22 +246,11 @@ public class MavenUtil {
     return "<img src=\"" + url + "\"> ";
   }
 
-  public static void applyMavenProjectFileTemplate(Project project, VirtualFile file, MavenId projectId) throws IOException {
-    runOrApplyMavenProjectFileTemplate(project, file, projectId, null, false);
-  }
-
-  public static void runMavenProjectWithParentFileTemplate(Project project,
-                                                           VirtualFile file,
-                                                           MavenId projectId,
-                                                           MavenId parentId) throws IOException {
-    runOrApplyMavenProjectFileTemplate(project, file, projectId, parentId, true);
-  }
-
-  private static void runOrApplyMavenProjectFileTemplate(Project project,
-                                                         VirtualFile file,
-                                                         MavenId projectId,
-                                                         MavenId parentId,
-                                                         boolean interactive) throws IOException {
+  public static void runOrApplyMavenProjectFileTemplate(Project project,
+                                                        VirtualFile file,
+                                                        MavenId projectId,
+                                                        MavenId parentId,
+                                                        boolean interactive) throws IOException {
     Properties properties = new Properties();
     Properties conditions = new Properties();
     properties.setProperty("GROUP_ID", projectId.getGroupId());
@@ -316,6 +305,7 @@ public class MavenUtil {
     if (interactive) {
       OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file);
       Editor editor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+      editor.getDocument().setText("");
       TemplateManager.getInstance(project).startTemplate(editor, template);
     }
     else {

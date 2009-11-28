@@ -928,7 +928,7 @@ public class AbstractTreeUi {
         }
 
         if (isSelectionInside(node)) {
-          addSelectionPath(getPathFor(node), true, Condition.TRUE);
+          addSelectionPath(getPathFor(node), true, Condition.TRUE, null);
         }
 
         doWithUpdaterState(new Runnable() {
@@ -1493,7 +1493,6 @@ public class AbstractTreeUi {
           Object element = getElementFromDescriptor(childDescr.get());
           if (element == null) {
             processingDone.setDone();
-            LOG.error("childDescr.getElement() == null, child = " + child + ", builder = " + this);
           }
           else {
             DefaultMutableTreeNode node = getNodeForElement(element, false);
@@ -2096,7 +2095,7 @@ public class AbstractTreeUi {
     DefaultMutableTreeNode node = getNodeForElement(disposedElement, false);
     if (node != null && isValidForSelectionAdjusting(node)) {
       Object newElement = getElementFor(node);
-      addSelectionPath(getPathFor(node), true, getExpiredElementCondition(newElement));
+      addSelectionPath(getPathFor(node), true, getExpiredElementCondition(newElement), disposedElement);
       return;
     }
 
@@ -2106,18 +2105,18 @@ public class AbstractTreeUi {
         if (parentNode.getChildCount() > selectedIndex) {
           TreeNode newChildNode = parentNode.getChildAt(selectedIndex);
           if (isValidForSelectionAdjusting(newChildNode)) {
-            addSelectionPath(new TreePath(myTreeModel.getPathToRoot(newChildNode)), true, getExpiredElementCondition(disposedElement));
+            addSelectionPath(new TreePath(myTreeModel.getPathToRoot(newChildNode)), true, getExpiredElementCondition(disposedElement), disposedElement);
           }
         }
         else {
           TreeNode newChild = parentNode.getChildAt(parentNode.getChildCount() - 1);
           if (isValidForSelectionAdjusting(newChild)) {
-            addSelectionPath(new TreePath(myTreeModel.getPathToRoot(newChild)), true, getExpiredElementCondition(disposedElement));
+            addSelectionPath(new TreePath(myTreeModel.getPathToRoot(newChild)), true, getExpiredElementCondition(disposedElement), disposedElement);
           }
         }
       }
       else {
-        addSelectionPath(new TreePath(myTreeModel.getPathToRoot(parentNode)), true, getExpiredElementCondition(disposedElement));
+        addSelectionPath(new TreePath(myTreeModel.getPathToRoot(parentNode)), true, getExpiredElementCondition(disposedElement), disposedElement);
       }
     }
   }
@@ -2147,7 +2146,7 @@ public class AbstractTreeUi {
     };
   }
 
-  private void addSelectionPath(final TreePath path, final boolean isAdjustedSelection, final Condition isExpiredAdjustement) {
+  private void addSelectionPath(final TreePath path, final boolean isAdjustedSelection, final Condition isExpiredAdjustement, @Nullable final Object adjustmentCause) {
     doWithUpdaterState(new Runnable() {
       public void run() {
         TreePath toSelect = null;
@@ -2172,7 +2171,7 @@ public class AbstractTreeUi {
 
           if (isAdjustedSelection && myUpdaterState != null) {
             final Object toSelectElement = getElementFor(toSelect.getLastPathComponent());
-            myUpdaterState.addAdjustedSelection(toSelectElement, isExpiredAdjustement);
+            myUpdaterState.addAdjustedSelection(toSelectElement, isExpiredAdjustement, adjustmentCause);
           }
         }
       }
@@ -2738,7 +2737,7 @@ public class AbstractTreeUi {
     for (Object each : selection) {
       DefaultMutableTreeNode node = getNodeForElement(each, false);
       if (node != null && isValidForSelectionAdjusting(node)) {
-        addSelectionPath(getPathFor(node), false, null);
+        addSelectionPath(getPathFor(node), false, null, null);
       }
     }
   }
@@ -3205,7 +3204,7 @@ public class AbstractTreeUi {
   }
 
   private void dropUpdaterStateIfExternalChange() {
-    if (myUpdaterState != null && !myUpdaterState.isProcessingNow()) {
+   if (myUpdaterState != null && !myUpdaterState.isProcessingNow()) {
       clearUpdaterState();
     }
   }
@@ -3471,7 +3470,7 @@ public class AbstractTreeUi {
       }
 
       if (pathToSelect != null && myTree.isSelectionEmpty()) {
-        addSelectionPath(pathToSelect, true, Condition.FALSE);
+        addSelectionPath(pathToSelect, true, Condition.FALSE, null);
       }
     }
 

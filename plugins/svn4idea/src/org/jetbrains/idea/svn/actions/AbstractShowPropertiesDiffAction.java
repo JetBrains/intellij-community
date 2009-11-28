@@ -22,6 +22,7 @@ import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -54,7 +55,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-abstract class AbstractShowPropertiesDiffAction extends AnAction {
+abstract class AbstractShowPropertiesDiffAction extends AnAction implements DumbAware {
   protected abstract DataKey<Change[]> getChangesKey();
   @Nullable
   protected abstract SVNRevision getBeforeRevisionValue(final Change change, final SvnVcs vcs) throws SVNException;

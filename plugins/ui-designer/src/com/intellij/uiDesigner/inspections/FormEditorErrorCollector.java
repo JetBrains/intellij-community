@@ -55,7 +55,7 @@ public class FormEditorErrorCollector extends FormErrorCollector {
     return myResults == null ? null : myResults.toArray(new ErrorInfo[myResults.size()]);
   }
 
-  public void addError(final String inspectionId, final IComponent component, @Nullable IProperty prop,
+  public void addError(@NotNull final String inspectionId, final IComponent component, @Nullable IProperty prop,
                        @NotNull String errorMessage,
                        @Nullable EditorQuickFixProvider editorQuickFixProvider) {
     if (myResults == null) {

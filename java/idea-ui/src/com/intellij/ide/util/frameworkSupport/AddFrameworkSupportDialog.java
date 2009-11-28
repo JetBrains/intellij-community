@@ -60,23 +60,30 @@ public class AddFrameworkSupportDialog extends DialogWrapper {
   }
 
   protected void doOKAction() {
-    if (!myAddSupportPanel.downloadLibraries()) {
-      int answer = Messages.showYesNoDialog(myAddSupportPanel.getMainPanel(),
-                                            ProjectBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
-                                            CommonBundle.getWarningTitle(), Messages.getWarningIcon());
-      if (answer != 0) {
-        return;
+    if (myAddSupportPanel.haveSelectedFrameworks()) {
+      if (!myAddSupportPanel.downloadLibraries()) {
+        int answer = Messages.showYesNoDialog(myAddSupportPanel.getMainPanel(),
+                                              ProjectBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
+                                              CommonBundle.getWarningTitle(), Messages.getWarningIcon());
+        if (answer != 0) {
+          return;
+        }
       }
-    }
 
-    new WriteAction() {
-      protected void run(final Result result) {
-        ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
-        myAddSupportPanel.addSupport(myModule, model);
-        model.commit();
-      }
-    }.execute();
+      new WriteAction() {
+        protected void run(final Result result) {
+          ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
+          myAddSupportPanel.addSupport(myModule, model);
+          model.commit();
+        }
+      }.execute();
+    }
     super.doOKAction();
+  }
+
+  @Override
+  protected String getDimensionServiceKey() {
+    return "#com.intellij.ide.util.frameworkSupport.AddFrameworkSupportDialog";
   }
 
   @Override

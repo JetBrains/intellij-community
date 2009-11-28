@@ -22,6 +22,7 @@
  */
 package com.intellij.openapi.vcs.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,7 +49,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.Disposable;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashMap;
@@ -172,11 +172,11 @@ public class LineStatusTrackerManager implements ProjectComponent {
   }
 
 
-  public LineStatusTracker setUpToDateContent(final Document document, final String lastUpToDateContent, final VirtualFile vf) {
+  public LineStatusTracker setUpToDateContent(final Document document, final String lastUpToDateContent) {
     trackAwtThread();
     LineStatusTracker result = myLineStatusTrackers.get(document);
     if (result == null) {
-      result = LineStatusTracker.createOn(document, lastUpToDateContent, myProject, vf);
+      result = LineStatusTracker.createOn(document, lastUpToDateContent, myProject);
       myLineStatusTrackers.put(document, result);
     }
     return result;
@@ -184,7 +184,7 @@ public class LineStatusTrackerManager implements ProjectComponent {
 
   private LineStatusTracker createTrackerForDocument(Document document, VirtualFile vf) {
     LOG.assertTrue(!myLineStatusTrackers.containsKey(document));
-    LineStatusTracker result = LineStatusTracker.createOn(document, myProject, vf);
+    LineStatusTracker result = LineStatusTracker.createOn(document, myProject);
     myLineStatusTrackers.put(document, result);
     return result;
   }

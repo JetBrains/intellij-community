@@ -66,7 +66,7 @@ import java.util.Map;
  */
 public class VariableInplaceRenamer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.inplace.VariableInplaceRenamer");
-  private static final LanguageExtension<ResolveSnapshotProvider> INSTANCE = new LanguageExtension<ResolveSnapshotProvider>(
+  public static final LanguageExtension<ResolveSnapshotProvider> INSTANCE = new LanguageExtension<ResolveSnapshotProvider>(
     "com.intellij.rename.inplace.resolveSnapshotProvider"
   );
 

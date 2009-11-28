@@ -31,7 +31,6 @@ public class ApplyPatchForBaseRevisionTexts {
   private CharSequence myLocal;
   private CharSequence myBase;
   private String myPatched;
-  @NotNull
   private ApplyPatchStatus myStatus;
   private VcsException myException;
 
@@ -88,7 +87,6 @@ public class ApplyPatchForBaseRevisionTexts {
     return myPatched;
   }
 
-  @NotNull
   public ApplyPatchStatus getStatus() {
     return myStatus;
   }

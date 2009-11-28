@@ -145,14 +145,16 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
     if (!myDir.exists()) {
       return storageData;
     }
-    try {
-      final IFile[] files = myDir.listFiles();
 
-      for (IFile file : files) {
-        if (!StringUtil.endsWithIgnoreCase(file.getName(), ".xml")) {
-          //do not load system files like .DS_Store on Mac
-          continue;
-        }
+    final IFile[] files = myDir.listFiles();
+
+    for (IFile file : files) {
+      if (!StringUtil.endsWithIgnoreCase(file.getName(), ".xml")) {
+        //do not load system files like .DS_Store on Mac
+        continue;
+      }
+
+      try {
         final Document document = JDOMUtil.loadDocument(file);
         final Element element = document.getRootElement();
         assert element.getName().equals(COMPONENT);
@@ -163,18 +165,18 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
         if (myPathMacroSubstitutor != null) {
           myPathMacroSubstitutor.expandPaths(element);
 
-          final Set<String> unknownMacros = PathMacrosCollector.getMacroNames(element);
+          final Set<String> unknownMacros = StorageUtil.getMacroNames(element);
           myPathMacroSubstitutor.addUnknownMacros(componentName, unknownMacros);
         }
-        
+
         storageData.put(componentName, file, element, true);
       }
-    }
-    catch (IOException e) {
-      throw new StateStorageException(e);
-    }
-    catch (JDOMException e) {
-      throw new StateStorageException(e);
+      catch (IOException e) {
+        LOG.info("Unable to load state", e);
+      }
+      catch (JDOMException e) {
+        LOG.info("Unable to load state", e);
+      }
     }
 
     return storageData;
@@ -183,6 +185,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
 
   public boolean hasState(final Object component, final String componentName, final Class<?> aClass, final boolean reloadData) throws StateStorageException {
     if (!myDir.exists()) return false;
+    if (reloadData) myStorageData = null;
     return true;
   }
 

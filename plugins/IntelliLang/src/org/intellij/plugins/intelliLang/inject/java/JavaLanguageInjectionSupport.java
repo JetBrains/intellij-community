@@ -150,6 +150,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     final AbstractInjectionPanel panel = new MethodParameterPanel(methodParameterInjection, project);
     panel.reset();
     final DialogBuilder builder = new DialogBuilder(project);
+    builder.setHelpId("reference.settings.injection.language.injection.settings");
     builder.addOkAction();
     builder.addCancelAction();
     builder.setCenterPanel(panel.getComponent());

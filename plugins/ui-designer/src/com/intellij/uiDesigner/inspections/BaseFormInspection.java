@@ -46,7 +46,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class BaseFormInspection extends BaseJavaLocalInspectionTool implements FileCheckingInspection, FormInspectionTool {
   private final String myInspectionKey;
 
-  public BaseFormInspection(@NonNls String inspectionKey) {
+  public BaseFormInspection(@NonNls @NotNull String inspectionKey) {
     myInspectionKey = inspectionKey;
   }
 

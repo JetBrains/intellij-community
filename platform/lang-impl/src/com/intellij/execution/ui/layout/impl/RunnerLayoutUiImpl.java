@@ -31,7 +31,6 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
@@ -43,7 +42,6 @@ import javax.swing.*;
 import java.awt.*;
 
 public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutStateDefaults, LayoutViewOptions {
-  private final Project myProject;
   private final RunnerLayout myLayout;
   private final JPanel myContentPanel;
   private final RunnerContentUi myContentUI;
@@ -52,18 +50,15 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutSta
   public static final Key<String> CONTENT_TYPE = Key.create("ContentType");
 
   public RunnerLayoutUiImpl(Project project, Disposable parent, String runnerType, String runnerTitle, String sessionName) {
-    myProject = project;
     myLayout = RunnerLayoutSettings.getInstance().getLayout(runnerType);
     Disposer.register(parent, this);
 
-    myContentUI = new RunnerContentUi(myProject, this, ActionManager.getInstance(), IdeFocusManager.getInstance(myProject), myLayout,
+    myContentUI = new RunnerContentUi(project, this, ActionManager.getInstance(), IdeFocusManager.getInstance(project), myLayout,
                                            runnerTitle + " - " + sessionName);
-
 
     myContentPanel = new JPanel(new BorderLayout());
 
-    myViewsContentManager = getContentFactory().
-      createContentManager(myContentUI.getContentUI(), false, myProject);
+    myViewsContentManager = getContentFactory().createContentManager(myContentUI.getContentUI(), false, project);
     Disposer.register(this, myViewsContentManager);
 
     myContentPanel.add(myViewsContentManager.getComponent(), BorderLayout.CENTER);

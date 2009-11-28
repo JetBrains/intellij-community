@@ -342,6 +342,7 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
     mySchemesManager.addNewScheme(profile, true);
   }
 
+  @Nullable
   public static File getProfileDirectory() {
     String directoryPath = PathManager.getConfigPath() + File.separator + INSPECTION_DIR;
     File directory = new File(directoryPath);

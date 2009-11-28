@@ -111,7 +111,9 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
     myPanel.add(myIgnorePanel,
                 new GridBagConstraints(0, 1, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(5, 2, 4, 2), 0, 0));
 
-
+    myExtPanel.setData(myPairs);
+    myIgnorePanel.setData(myIgnoredUrls);
+    
     return myPanel;
   }
 
@@ -164,8 +166,10 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
 
     Collections.sort(myIgnoredUrls);
 
-    myExtPanel.setData(myPairs);
-    myIgnorePanel.setData(myIgnoredUrls);
+    if (myExtPanel != null) {
+      myExtPanel.setData(myPairs);
+      myIgnorePanel.setData(myIgnoredUrls);
+    }
 
     setModified(false);
   }
@@ -243,14 +247,14 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
     }
   }
 
-  private static class IgnoredUrlsModel extends AddEditRemovePanel.TableModel {
+  private static class IgnoredUrlsModel extends AddEditRemovePanel.TableModel<String> {
     private final String[] myNames = {XmlBundle.message("column.name.edit.external.resource.uri")};
 
     public int getColumnCount() {
       return myNames.length;
     }
 
-    public Object getField(Object o, int columnIndex) {
+    public Object getField(String o, int columnIndex) {
       return o;
     }
 
@@ -262,7 +266,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
       return false; 
     }
 
-    public void setValue(Object aValue, Object data, int columnIndex) {
+    public void setValue(Object aValue, String data, int columnIndex) {
 
     }
 

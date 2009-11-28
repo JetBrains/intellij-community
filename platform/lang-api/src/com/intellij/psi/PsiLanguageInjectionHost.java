@@ -80,13 +80,12 @@ public interface PsiLanguageInjectionHost extends PsiElement {
       return relevantRangeInHost;
     }
 
-    //@Nullable
     public TextRange getRangeInsideHost() {
-      //if (!relevantRangeInHost.isValid()) return null;
+      TextRange hostTextRange = host.getTextRange();
       ProperTextRange textRange = new ProperTextRange(relevantRangeInHost.getStartOffset(), relevantRangeInHost.getEndOffset());
-      TextRange result = textRange.shiftRight(-host.getTextRange().getStartOffset());
-      assert host.getTextRange().contains(textRange);
-      return result;
+      textRange = textRange.intersection(hostTextRange);
+      if (textRange == null) return new ProperTextRange(0, hostTextRange.getLength());
+      return textRange.shiftRight(-hostTextRange.getStartOffset());
     }
 
     @SuppressWarnings({"HardCodedStringLiteral"})

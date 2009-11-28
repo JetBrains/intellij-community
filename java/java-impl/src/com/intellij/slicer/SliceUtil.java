@@ -223,7 +223,7 @@ public class SliceUtil {
 
     final Set<PsiReference> processed = new THashSet<PsiReference>(); //usages of super method and overridden method can overlap
     for (final PsiMethod superMethod : superMethods) {
-      if (!MethodReferencesSearch.search(superMethod, parent.getScope().toSearchScope(), false).forEach(new Processor<PsiReference>() {
+      if (!MethodReferencesSearch.search(superMethod, parent.getScope().toSearchScope(), true).forEach(new Processor<PsiReference>() {
         public boolean process(final PsiReference reference) {
           SliceManager.getInstance(parameter.getProject()).checkCanceled();
           synchronized (processed) {

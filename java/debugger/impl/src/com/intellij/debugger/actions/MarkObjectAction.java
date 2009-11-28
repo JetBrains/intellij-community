@@ -16,6 +16,7 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
@@ -78,21 +79,13 @@ public class MarkObjectAction extends DebuggerAction {
             valueDescriptor.setMarkup(debugProcess, null);
           }
           else {
-            final Value value = valueDescriptor.getValue();
-            final Map<Long, ValueMarkup> additionalMarkup = suggestMarkup(debugProcess, value);
-            ValueMarkup valueMarkup = null;
-            if (value instanceof ObjectReference) {
-              valueMarkup = additionalMarkup.get(((ObjectReference)value).uniqueID());
-            }
-            if (valueMarkup == null) {
-              valueMarkup = new ValueMarkup(valueDescriptor.getName(), Color.RED);
-            }
+            final ValueMarkup suggestedMarkup = new ValueMarkup(valueDescriptor.getName(), Color.RED);
             final Ref<Pair<ValueMarkup,Boolean>> result = new Ref<Pair<ValueMarkup, Boolean>>(null);
             try {
-              final ValueMarkup _suggestion = valueMarkup;
+              final boolean suggestAdditionalMarkup = canSuggestAdditionalMarkup(debugProcess, valueDescriptor.getValue());
               SwingUtilities.invokeAndWait(new Runnable() {
                 public void run() {
-                  result.set(ObjectMarkupPropertiesDialog.chooseMarkup(_suggestion, additionalMarkup));
+                  result.set(ObjectMarkupPropertiesDialog.chooseMarkup(suggestedMarkup, suggestAdditionalMarkup));
                 }
               });
             }
@@ -105,12 +98,16 @@ public class MarkObjectAction extends DebuggerAction {
             if (pair != null) {
               valueDescriptor.setMarkup(debugProcess, pair.first);
               if (pair.second) {
-                final Map<Long, ValueMarkup> map = NodeDescriptorImpl.getMarkupMap(debugProcess);
-                if (map != null) {
-                  for (Map.Entry<Long,ValueMarkup> entry : additionalMarkup.entrySet()) {
-                    final Long key = entry.getKey();
-                    if (!map.containsKey(key)) {
-                      map.put(key, entry.getValue());
+                final Value value = valueDescriptor.getValue();
+                final Map<Long, ValueMarkup> additionalMarkup = suggestMarkup((ObjectReference)value);
+                if (!additionalMarkup.isEmpty()) {
+                  final Map<Long, ValueMarkup> map = NodeDescriptorImpl.getMarkupMap(debugProcess);
+                  if (map != null) {
+                    for (Map.Entry<Long,ValueMarkup> entry : additionalMarkup.entrySet()) {
+                      final Long key = entry.getKey();
+                      if (!map.containsKey(key)) {
+                        map.put(key, entry.getValue());
+                      }
                     }
                   }
                 }
@@ -140,48 +137,56 @@ public class MarkObjectAction extends DebuggerAction {
     });
   }
 
-  private static Map<Long, ValueMarkup> suggestMarkup(DebugProcessImpl debugProcess, Value value) {
+  private static boolean canSuggestAdditionalMarkup(DebugProcessImpl debugProcess, Value value) {
+    if (!debugProcess.getVirtualMachineProxy().canGetInstanceInfo()) {
+      return false;
+    }
     if (!(value instanceof ObjectReference)) {
-      return Collections.emptyMap();
+      return false;
     }
     final ObjectReference objRef = (ObjectReference)value;
     if (objRef instanceof ArrayReference || objRef instanceof ClassObjectReference || objRef instanceof ThreadReference || objRef instanceof ThreadGroupReference || objRef instanceof ClassLoaderReference) {
-      return Collections.emptyMap();
+      return false;
     }
-    final Map<Long, ValueMarkup> result = new HashMap<Long, ValueMarkup>();
-    if (debugProcess.getVirtualMachineProxy().canGetInstanceInfo()) {
-      for (ObjectReference ref : getReferringObjects(objRef)) {
-        if (!(ref instanceof ClassObjectReference)) {
-          // consider references from statisc fields only
-          continue;
-        }
-        final ReferenceType refType = ((ClassObjectReference)ref).reflectedType();
-        if (!refType.isAbstract()) {
-          continue;
-        }
-        for (Field field : refType.fields()) {
-          if (!(field.isStatic() && field.isFinal())) {
-            continue;
-          }
-          final Value fieldValue = refType.getValue(field);
-          if (!(fieldValue instanceof ObjectReference)) {
-            continue;
-          }
-          final long id = ((ObjectReference)fieldValue).uniqueID();
-          final ValueMarkup markup = result.get(id);
+    return true;
+  }
 
-          final String fieldName = field.name();
-          final Color autoMarkupColor = ValueMarkup.getAutoMarkupColor();
-          if (markup == null) {
-            result.put(id, new ValueMarkup(fieldName, autoMarkupColor, createMarkupTooltipText(null, refType, fieldName)));
-          }
-          else {
-            final String currentText = markup.getText();
-            if (!currentText.contains(fieldName)) {
-              final String currentTooltip = markup.getToolTipText();
-              final String tooltip = createMarkupTooltipText(currentTooltip, refType, fieldName);
-              result.put(id, new ValueMarkup(currentText + ", " + fieldName, autoMarkupColor, tooltip));
-            }
+  private static Map<Long, ValueMarkup> suggestMarkup(ObjectReference objRef) {
+    final Map<Long, ValueMarkup> result = new HashMap<Long, ValueMarkup>();
+    for (ObjectReference ref : getReferringObjects(objRef)) {
+      if (!(ref instanceof ClassObjectReference)) {
+        // consider references from statisc fields only
+        continue;
+      }
+      final ReferenceType refType = ((ClassObjectReference)ref).reflectedType();
+      if (!refType.isAbstract()) {
+        continue;
+      }
+      for (Field field : refType.visibleFields()) {
+        if (!(field.isStatic() && field.isFinal())) {
+          continue;
+        }
+        if (DebuggerUtils.isPrimitiveType(field.typeName())) {
+          continue;
+        }
+        final Value fieldValue = refType.getValue(field);
+        if (!(fieldValue instanceof ObjectReference)) {
+          continue;
+        }
+        final long id = ((ObjectReference)fieldValue).uniqueID();
+        final ValueMarkup markup = result.get(id);
+
+        final String fieldName = field.name();
+        final Color autoMarkupColor = ValueMarkup.getAutoMarkupColor();
+        if (markup == null) {
+          result.put(id, new ValueMarkup(fieldName, autoMarkupColor, createMarkupTooltipText(null, refType, fieldName)));
+        }
+        else {
+          final String currentText = markup.getText();
+          if (!currentText.contains(fieldName)) {
+            final String currentTooltip = markup.getToolTipText();
+            final String tooltip = createMarkupTooltipText(currentTooltip, refType, fieldName);
+            result.put(id, new ValueMarkup(currentText + ", " + fieldName, autoMarkupColor, tooltip));
           }
         }
       }

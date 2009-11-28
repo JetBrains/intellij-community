@@ -38,12 +38,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.PsiCommentImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Arrays;
-import java.util.*;
+import java.util.List;
 
 public class MyTestInjector {
   private final PsiManager myPsiManager;
@@ -64,6 +65,36 @@ public class MyTestInjector {
     registerForStringVarInitializer(parent, project, js, "js", null, null);
     registerForStringVarInitializer(parent, project, js, "jsSeparated", " + ", " + 'separator'");
     registerForStringVarInitializer(parent, project, js, "jsBrokenPrefix", "xx ", "");
+    registerForParameterValue(parent, project, findLanguageByID("Groovy"), "groovy");
+  }
+
+  private static void registerForParameterValue(Disposable parent, final Project project, final Language language, final String paramName) {
+    if (language == null) return;
+    final ConcatenationAwareInjector injector = new ConcatenationAwareInjector() {
+      public void getLanguagesToInject(@NotNull MultiHostRegistrar injectionPlacesRegistrar, @NotNull PsiElement... operands) {
+        PsiElement operand = operands[0];
+        if (!(operand instanceof PsiLiteralExpression)) return;
+        if (!(operand.getParent() instanceof PsiExpressionList)) return;
+        PsiExpressionList expressionList = (PsiExpressionList)operand.getParent();
+        int i = ArrayUtil.indexOf(expressionList.getExpressions(), operand);
+        if (!(operand.getParent().getParent() instanceof PsiMethodCallExpression)) return;
+        PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)operand.getParent().getParent();
+        PsiMethod method = methodCallExpression.resolveMethod();
+        PsiParameter parameter = method.getParameterList().getParameters()[i];
+        if (!paramName.equals(parameter.getName())) return;
+        TextRange textRange = textRangeToInject((PsiLanguageInjectionHost)operand);
+        injectionPlacesRegistrar.startInjecting(language);
+        injectionPlacesRegistrar.addPlace(null, null, (PsiLanguageInjectionHost)operand, textRange);
+        injectionPlacesRegistrar.doneInjecting();
+      }
+    };
+    JavaConcatenationInjectorManager.getInstance(project).registerConcatenationInjector(injector);
+    Disposer.register(parent, new Disposable() {
+      public void dispose() {
+        boolean b = JavaConcatenationInjectorManager.getInstance(project).unregisterConcatenationInjector(injector);
+        assert b;
+      }
+    });
   }
 
   private static void registerForStringVarInitializer(@NotNull Disposable parent,

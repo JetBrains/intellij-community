@@ -60,17 +60,18 @@ public class ProperTextRange extends TextRange {
   }
 
   @Override
-  public TextRange intersection(@NotNull TextRange textRange) {
+  public ProperTextRange intersection(@NotNull TextRange textRange) {
+    assertProperRange(textRange);
     TextRange range = super.intersection(textRange);
-    if (range != null) assertProperRange(range);
-    return range;
+    if (range == null) return null;
+    return new ProperTextRange(range);
   }
 
   @NotNull
   @Override
-  public TextRange union(@NotNull TextRange textRange) {
+  public ProperTextRange union(@NotNull TextRange textRange) {
+    assertProperRange(textRange);
     TextRange range = super.union(textRange);
-    assertProperRange(range);
-    return range;
+    return new ProperTextRange(range);
   }
 }

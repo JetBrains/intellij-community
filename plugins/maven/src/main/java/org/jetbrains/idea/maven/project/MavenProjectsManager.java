@@ -1011,7 +1011,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
       }
     }.execute().getResultObject();
 
-    scheduleImport(Collections.singletonList(Pair.create(mavenProject, MavenProjectChanges.DEPENDENCIES)), false);
+    scheduleImport(Collections.singletonList(Pair.create(mavenProject, MavenProjectChanges.DEPENDENCIES)), true);
 
     return result;
   }

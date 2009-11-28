@@ -632,6 +632,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
 
   public void setTemplates(List<TemplateGroup> newGroups) {
     myTemplates.clear();
+    myAllTemplates.clear();
     myDeletedTemplates.clear();
     for (TemplateImpl template : myDefaultTemplates.values()) {
       myDeletedTemplates.add(TemplateKey.keyOf(template));

@@ -16,6 +16,7 @@
 
 package com.intellij.ide.projectView.impl.nodes;
 
+import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ProjectViewNodeDecorator;
@@ -187,7 +188,12 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
 
   public void navigate(boolean requestFocus) {
     if (canNavigate()) {
-      getNavigationItem().navigate(requestFocus);
+      if (requestFocus) {
+        NavigationUtil.activateFileWithPsiElement(extractPsiFromValue());
+      }
+      else {
+        getNavigationItem().navigate(requestFocus);
+      }
     }
   }
 

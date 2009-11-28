@@ -155,7 +155,9 @@ public class Range {
 
   public Range mergeWith(Range range, LineStatusTracker tracker) {
     tracker.removeHighlighter(getHighlighter());
+    setHighlighter(null);
     tracker.removeHighlighter(range.getHighlighter());
+    range.setHighlighter(null);
     Range result = new Range(myOffset1, range.myOffset2, myUpToDateOffset1, range.myUpToDateOffset2, mergedStatusWith(range));
     return result;
   }

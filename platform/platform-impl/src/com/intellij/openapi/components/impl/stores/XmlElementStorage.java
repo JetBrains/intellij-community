@@ -560,7 +560,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
           final String name = element.getAttributeValue(NAME);
 
           if (name == null) {
-            LOG.error("Broken content in file : " + this);
+            LOG.info("Broken content in file : " + this);
             continue;
           }
 
@@ -711,7 +711,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
     public void checkUnknownMacros(TrackingPathMacroSubstitutor pathMacroSubstitutor) {
       for (String componentName : myComponentStates.keySet()) {
-        final Set<String> unknownMacros = PathMacrosCollector.getMacroNames(myComponentStates.get(componentName));
+        final Set<String> unknownMacros = StorageUtil.getMacroNames(myComponentStates.get(componentName));
         if (!unknownMacros.isEmpty()) {
           pathMacroSubstitutor.addUnknownMacros(componentName, unknownMacros);
         }

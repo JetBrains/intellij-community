@@ -213,7 +213,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       runnable.run();
     }
     myDisposeActions.clear();
-    myDialog.remove(myDialog.getRootPane());
+    final JRootPane root = myDialog.getRootPane();
 
     Runnable disposer = new Runnable() {
       public void run() {
@@ -227,6 +227,14 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
           myWindowManager.hideDialog(myDialog, myProject);
         }
         */
+
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            if (myDialog != null && root != null) {
+              myDialog.remove(root);
+            }
+          }
+        });
       }
     };
 

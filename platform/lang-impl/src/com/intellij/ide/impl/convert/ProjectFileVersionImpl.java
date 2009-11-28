@@ -16,7 +16,6 @@
 
 package com.intellij.ide.impl.convert;
 
-import com.intellij.conversion.ConversionService;
 import com.intellij.conversion.impl.ConversionServiceImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
@@ -77,7 +76,7 @@ public class ProjectFileVersionImpl extends ProjectFileVersion implements Projec
       filePath = baseDir != null ? baseDir.getPath() : null;
     }
     if (filePath != null) {
-      ((ConversionServiceImpl)ConversionService.getInstance()).saveConversionResult(FileUtil.toSystemDependentName(filePath));
+      ConversionServiceImpl.saveConversionResult(FileUtil.toSystemDependentName(filePath));
     }
     else {
       LOG.info("Cannot save conversion result: filePath == null");

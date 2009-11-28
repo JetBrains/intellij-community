@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
+import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -32,10 +33,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.UniqueFileNamesProvider;
 import com.intellij.util.io.fs.FileSystem;
 import com.intellij.util.io.fs.IFile;
+import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -136,7 +139,7 @@ public class StorageUtil {
 
   @Nullable
   static VirtualFile getVirtualFile(final IFile ioFile) {
-    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
+    return LocalFileSystem.getInstance().findFileByIoFile(ioFile);
   }
 
   public static byte[] printDocument(final Document document) throws StateStorage.StateStorageException {
@@ -185,6 +188,27 @@ public class StorageUtil {
     }
   }
 
+  @NotNull
+  public static Set<String> getMacroNames(@NotNull final Element e) {
+    return PathMacrosCollector.getMacroNames(e, new NotNullFunction<Object, Boolean>() {
+      @NotNull
+      public Boolean fun(Object o) {
+        if (o instanceof Attribute) {
+          final Attribute attribute = (Attribute)o;
+          final Element parent = attribute.getParent();
+          if (("value".equals(attribute.getName()) || "name".equals(attribute.getName())) && parent != null && "env".equals(parent.getName())) {
+            return false; // do not proceed environment variables from run configurations
+          }
+
+           // do not proceed macros in searchConfigurations (structural search)
+          if (parent != null && ("replaceConfiguration".equals(parent.getName())
+                                 || "searchConfiguration".equals(parent.getName()))) return false;
+        }
+
+        return true;
+      }
+    });
+  }
 
   @Nullable
   public static Document loadDocument(final byte[] bytes) {

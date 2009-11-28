@@ -168,6 +168,11 @@ public class PsiViewerDialog extends DialogWrapper {
     return "#com.intellij.internal.psiView.PsiViewerDialog";
   }
 
+  @Override
+  protected String getHelpId() {
+    return "reference.psi.viewer";
+  }
+
   public JComponent getPreferredFocusedComponent() {
     return myEditor.getContentComponent();
   }
@@ -258,7 +263,9 @@ public class PsiViewerDialog extends DialogWrapper {
     });
 
     myShowWhiteSpacesBox.setSelected(settings.showWhiteSpaces);
+    treeStructure.setShowWhiteSpaces(settings.showWhiteSpaces);
     myShowTreeNodesCheckBox.setSelected(settings.showTreeNodes);
+    treeStructure.setShowTreeNodes(settings.showTreeNodes);
 
     final ChoosePsiTypeButton typeButton = new ChoosePsiTypeButton();
     myButtonPanel.add(typeButton.createCustomComponent(myPresentation), BorderLayout.CENTER);

@@ -35,7 +35,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
@@ -48,16 +47,16 @@ public class ObjectMarkupPropertiesDialog extends DialogWrapper {
   private SimpleTextAttributes myAttributes;
   private final Alarm myUpdateAlarm;
   private static final int UPDATE_DELAY = 200;
-  private final Map<Long, ValueMarkup> myAdditional;
   private static Boolean ourMarkCbSavedState;
+  private final boolean mySuggestAdditionalMarkup;
 
-  public ObjectMarkupPropertiesDialog(@NotNull final ValueMarkup suggestion, @NotNull Map<Long, ValueMarkup> additional) {
+  public ObjectMarkupPropertiesDialog(@NotNull final ValueMarkup suggestion, boolean suggestAdditionalMarkup) {
     super(true);
-    myAdditional = additional;
+    mySuggestAdditionalMarkup = suggestAdditionalMarkup;
     setTitle("Select object label");
     setModal(true);
     myTextMarkupField = new JTextField(30);
-    myCbMarkAdditionalFields = new JCheckBox("Mark values referenced from constant fields", ourMarkCbSavedState == null? additional.size() > 0 : ourMarkCbSavedState);
+    myCbMarkAdditionalFields = new JCheckBox("Mark values referenced from constant fields", ourMarkCbSavedState == null? suggestAdditionalMarkup : ourMarkCbSavedState);
     myCbMarkAdditionalFields.addItemListener(new ItemListener() {
       public void itemStateChanged(ItemEvent e) {
         ourMarkCbSavedState = myCbMarkAdditionalFields.isSelected();
@@ -96,18 +95,18 @@ public class ObjectMarkupPropertiesDialog extends DialogWrapper {
     samplePanel.setBorder(BorderFactory.createEtchedBorder());
     final FixedSizeButton chooseColorButton = new FixedSizeButton(samplePanel);
 
-    final boolean shouldShowCheckbox = myAdditional.size() > 0;
-    double weighty = shouldShowCheckbox? 0.0 : 1.0;
+    double weighty = mySuggestAdditionalMarkup ? 0.0 : 1.0;
     mainPanel.add(new JLabel("Preview: "), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, weighty, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
     mainPanel.add(samplePanel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, weighty, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(5, 0, 0, 0), 0, 0));
     mainPanel.add(chooseColorButton, new GridBagConstraints(2, GridBagConstraints.RELATIVE, 1, 1, 0.0, weighty, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
 
-    if (shouldShowCheckbox) {
+    if (mySuggestAdditionalMarkup) {
       final JPanel panel = new JPanel(new BorderLayout());
       panel.add(new MultiLineLabel(
-        "The value is referenced by a constant field of an abstract class.\nIDEA could mark values referenced from this class with the names of referencing fields."
+        "If the value is referenced by a constant field of an abstract class,\nIDEA could additionally mark all values referenced from this class with the names of referencing fields."
       ), BorderLayout.CENTER);
       panel.add(myCbMarkAdditionalFields, BorderLayout.SOUTH);
+      myCbMarkAdditionalFields.setMnemonic('M');
 
       mainPanel.add(panel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 0.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(10, 0, 0, 0), 0, 0));
     }
@@ -138,8 +137,8 @@ public class ObjectMarkupPropertiesDialog extends DialogWrapper {
     }, updateDelay);
   }
   
-  public static Pair<ValueMarkup,Boolean> chooseMarkup(ValueMarkup suggestion, Map<Long, ValueMarkup> additionalMarkup) {
-    final ObjectMarkupPropertiesDialog dialog = new ObjectMarkupPropertiesDialog(suggestion, additionalMarkup);
+  public static Pair<ValueMarkup,Boolean> chooseMarkup(ValueMarkup suggestion, boolean suggestAdditionalMarkup) {
+    final ObjectMarkupPropertiesDialog dialog = new ObjectMarkupPropertiesDialog(suggestion, suggestAdditionalMarkup);
     dialog.show();
     if (dialog.isOK()) {
       final String text = dialog.myTextMarkupField.getText().trim();

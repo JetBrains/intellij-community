@@ -146,7 +146,7 @@ class PrintDialog extends DialogWrapper {
   }
 
   protected JComponent createCenterPanel() {
-    TabbedPaneWrapper tabbedPaneWrapper = new TabbedPaneWrapper();
+    TabbedPaneWrapper tabbedPaneWrapper = new TabbedPaneWrapper(myDisposable);
     tabbedPaneWrapper.addTab(CodeEditorBundle.message("print.settings.tab"), createPrintSettingsPanel());
     tabbedPaneWrapper.addTab(CodeEditorBundle.message("print.header.footer.tab"), createHeaderAndFooterPanel());
     tabbedPaneWrapper.addTab(CodeEditorBundle.message("print.advanced.tab"), createAdvancedPanel());

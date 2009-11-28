@@ -148,7 +148,7 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
   @Nullable
   public Library findLibrary(@NotNull PackagingElementResolvingContext context) {
     if (myModuleName == null) {
-      return findLibrary(myLibraryName, myLevel, context.getProject());
+      return context.findLibrary(myLevel, myLibraryName);
     }
     final ModulesProvider modulesProvider = context.getModulesProvider();
     final Module module = modulesProvider.getModule(myModuleName);
@@ -180,29 +180,5 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
       }
     }
     return new PackagingElementOutputKind(containsDirectories, containsJars);
-  }
-
-  @Nullable
-  private static Library findLibrary(String libraryName, String libraryLevel, Project project) {
-    if (libraryName == null) {
-      return null;
-    }
-
-    LibraryTable table = findTable(libraryLevel, project);
-    if (table == null) {
-      return null;
-    }
-    else {
-      return table.getLibraryByName(libraryName);
-    }
-  }
-
-  @Nullable
-  private static LibraryTable findTable(String libraryLevel, Project project) {
-    if (libraryLevel == null) return null;
-    if (LibraryTablesRegistrar.APPLICATION_LEVEL.equals(libraryLevel)) {
-      return LibraryTablesRegistrar.getInstance().getLibraryTable();
-    }
-    return project == null? null : LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(libraryLevel, project);
   }
 }

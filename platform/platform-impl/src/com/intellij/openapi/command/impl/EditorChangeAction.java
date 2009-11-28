@@ -50,16 +50,13 @@ class EditorChangeAction implements UndoableAction {
   }
 
   public void undo() {
-    doUndoRedo(myNewString, myOldString);
+    exchangeStrings(myNewString, myOldString);
     getDocument().setModificationStamp(myTimeStamp);
+    refreshFileStatus();
   }
 
   public void redo() {
-    doUndoRedo(myOldString, myNewString);
-  }
-
-  private void doUndoRedo(CharSequence from, CharSequence to) {
-    exchangeStrings(from, to);
+    exchangeStrings(myOldString, myNewString);
     refreshFileStatus();
   }
 

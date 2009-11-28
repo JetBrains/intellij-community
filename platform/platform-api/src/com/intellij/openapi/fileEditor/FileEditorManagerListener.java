@@ -37,4 +37,21 @@ public interface FileEditorManagerListener extends EventListener{
    * TODO[vova] write javadoc
    */
   void selectionChanged(FileEditorManagerEvent event);
+
+  interface Before extends EventListener {
+    Topic<Before> FILE_EDITOR_MANAGER = new Topic<Before>("file editor before events", Before.class);
+
+    void beforeFileOpened(FileEditorManager source, VirtualFile file);
+    void beforeFileClosed(FileEditorManager source, VirtualFile file);
+
+    public static class Adapter implements Before {
+
+      public void beforeFileOpened(FileEditorManager source, VirtualFile file) {
+      }
+
+      public void beforeFileClosed(FileEditorManager source, VirtualFile file) {
+      }
+    }
+
+  }
 }

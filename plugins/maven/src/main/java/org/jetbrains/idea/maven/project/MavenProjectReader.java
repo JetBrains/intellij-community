@@ -15,7 +15,9 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -634,15 +636,20 @@ public class MavenProjectReader {
     final LinkedList<Element> stack = new LinkedList<Element>();
     final Element root = new Element("root");
 
-    String text;
-    try {
-      text = VfsUtil.loadText(file);
-    }
-    catch (IOException e) {
-      MavenLog.LOG.warn("Cannot read the pom file: " + e);
-      problems.add(createProblem(file, e.getMessage(), type));
-      return root;
-    }
+    String text = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      public String compute() {
+        if (!file.isValid()) return null;
+        try {
+          return VfsUtil.loadText(file);
+        }
+        catch (IOException e) {
+          MavenLog.LOG.warn("Cannot read the pom file: " + e);
+          problems.add(createProblem(file, e.getMessage(), type));
+        }
+        return null;
+      }
+    });
+    if (text == null) return root;
 
     XmlBuilderDriver driver = new XmlBuilderDriver(text);
     XmlBuilder builder = new XmlBuilder() {
