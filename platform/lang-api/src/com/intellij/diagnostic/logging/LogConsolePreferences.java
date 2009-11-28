@@ -206,7 +206,9 @@ public class LogConsolePreferences extends LogFilterRegistrar {
     for (LogFilter logFilter : myRegisteredLogFilters.keySet()) {
       myRegisteredLogFilters.put(logFilter, false);
     }
-    setFilterSelected(filter, true);
+    if (filter != null) {
+      setFilterSelected(filter, true);
+    }
   }
 
   private void fireStateChanged(final LogFilter filter) {
