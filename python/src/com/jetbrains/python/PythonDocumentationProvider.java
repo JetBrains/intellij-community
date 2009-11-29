@@ -266,7 +266,6 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
       }
       else if (element instanceof PyFile) {
         // what to prepend to a module description??
-        prolog_cat.add("blah!");
       }
       else { // not a func, not a class
         doc_cat.add(combUp(PyUtil.getReadableRepr(element, false)));
