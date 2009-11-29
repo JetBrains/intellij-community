@@ -112,10 +112,10 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
     }
     else if (lhs_tuple != null && rhs_target != null) { // multiple LHS, single RHS: unpacking
       //for (PyExpression tuple_elt : lhs_tuple.getElements()) map.add(new Pair<PyExpression, PyExpression>(tuple_elt, rhs_target));
-      map.addAll(FP.zip(lhs_tuple, new RepeatIterable<PyExpression>(rhs_target)));
+      map.addAll(FP.zipList(lhs_tuple, new RepeatIterable<PyExpression>(rhs_target)));
     }
     else if (lhs_tuple != null && rhs_tuple != null) { // multiple both sides: piecewise mapping
-      map.addAll(FP.zip(lhs_tuple, rhs_tuple, null, null));
+      map.addAll(FP.zipList(lhs_tuple, rhs_tuple, null, null));
     }
   }
 

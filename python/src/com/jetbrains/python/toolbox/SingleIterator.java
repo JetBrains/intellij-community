@@ -8,12 +8,12 @@ import java.util.NoSuchElementException;
 * User: dcheryasov
 * Date: Nov 6, 2009 9:57:41 AM
 */
-class SingleIterator<T> implements Iterator<T> {
+public class SingleIterator<T> implements Iterator<T> {
 
   boolean expired;
   private T content;
 
-  SingleIterator(T content) {
+  public SingleIterator(T content) {
     this.content = content;
     expired = false;
   }
