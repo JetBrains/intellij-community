@@ -8,12 +8,15 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.toolbox.FP;
+import com.jetbrains.python.toolbox.*;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.EnumSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Provides quick docs for classes, methods, and functions.
@@ -31,11 +34,11 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
         cat.append("class ").append(cls_name).append("\n ");
         // It would be nice to have class import info here, but we don't know the ctrl+hovered reference and context
       }
-      return describeFunction(func, cat, LSame2, ", ", LSame2, LSame1).toString();
+      return describeFunction(func, LSame2, ", ", LSame2, LSame1).toString();
     }
     else if (element instanceof PyClass) {
       PyClass cls = (PyClass)element;
-      return describeClass(cls, new StringBuilder(), LSame2).toString();
+      return describeClass(cls, LSame2).toString();
     }
     return null;
   }
@@ -56,23 +59,22 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
    * @param escaper sanitizes values that come directly from doc string or code
    * @return cat for easy chaining
    */
-  private static StringBuilder describeFunction(
+  private static ChainIterable<String> describeFunction(
     PyFunction fun,
-    StringBuilder cat,
-    FP.Lambda2<String, StringBuilder, StringBuilder> deco_name_wrapper,
+    FP.Lambda1<Iterable<String>, Iterable<String>> deco_name_wrapper,
     String deco_separator,
-    FP.Lambda2<String, StringBuilder, StringBuilder> func_name_wrapper,
+    FP.Lambda1<Iterable<String>, Iterable<String>> func_name_wrapper,
     FP.Lambda1<String, String> escaper
   ) {
+    ChainIterable<String> cat = new ChainIterable<String>(null);
     PyDecoratorList deco_list = fun.getDecoratorList();
     if (deco_list != null) {
       for (PyDecorator deco : deco_list.getDecorators()) {
-        describeDeco(deco, cat, deco_name_wrapper, escaper).append(deco_separator);
+        cat.add(describeDeco(deco, deco_name_wrapper, escaper)).add(deco_separator); // can't easily pass describeDeco to map() %)
       }
     }
-    cat.append("def "); //.append("<b>").append(fun.getName()).append("</b>");
-    func_name_wrapper.apply(fun.getName(), cat);
-    cat.append(escaper.apply(PyUtil.getReadableRepr(fun.getParameterList(), false)));
+    cat.add("def ").addWith(func_name_wrapper, $(fun.getName()));
+    cat.add(escaper.apply(PyUtil.getReadableRepr(fun.getParameterList(), false)));
     return cat;
   }
 
@@ -82,44 +84,108 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
    * @param cat string buffer to append to
    * @return cat for easy chaining
    */
-  private static StringBuilder describeClass(
+  private static ChainIterable<String> describeClass(
     PyClass cls,
-    StringBuilder cat,
-    FP.Lambda2<String, StringBuilder, StringBuilder> name_wrapper
+    FP.Lambda1<Iterable<String>, Iterable<String>> name_wrapper
   ) {
-    cat.append("class ");
-    name_wrapper.apply(cls.getName(), cat);
+    ChainIterable<String> cat = new ChainIterable<String>();
+    cat.add("class ").addWith(name_wrapper, $(cls.getName()));
     final PyExpression[] ancestors = cls.getSuperClassExpressions();
     if (ancestors.length > 0) {
-      cat.append("(");
-      join(", ", FP.map(LReadableRepr, Arrays.asList(ancestors)), cat);
-      cat.append(")");
+      cat.add("(").add(interleave(FP.map(LReadableRepr, ancestors), ", ")).add(")");
     }
     // TODO: for py3k, show decorators
     return cat;
   }
 
+  //
+  private static Iterable<String> describeDeco(
+    PyDecorator deco,
+    final FP.Lambda1<Iterable<String>, Iterable<String>> name_wrapper, //  addWith in tags, if need be
+    final FP.Lambda1<String, String> arg_wrapper   // add escaping, if need be
+  ) {
+    ChainIterable<String> cat = new ChainIterable<String>();
+    cat.add("@").addWith(name_wrapper, $(PyUtil.getReadableRepr(deco.getCallee(), true)));
+    if (deco.hasArgumentList()) {
+      PyArgumentList arglist = deco.getArgumentList();
+      if (arglist != null) {
+        cat
+          .add("(")
+          .add(interleave(FP.map(FP.combine(LReadableRepr, arg_wrapper), arglist.getArguments()), ", "))
+          .add(")")
+        ;
+      }
+    }
+    return cat;
+  }
+
+  private static @NotNull ChainIterable<String> combUpDocString(@NotNull String docstring) {
+    ChainIterable<String> cat = new ChainIterable<String>();
+    // detect common indentation
+    String[] fragments = Pattern.compile("\n").split(docstring);
+    Pattern spaces_pat = Pattern.compile("^\\s+");
+    boolean is_first = true;
+    final int IMPOSSIBLY_BIG = 999999;
+    int cut_width = IMPOSSIBLY_BIG;
+    for (String frag : fragments) {
+      if (frag.length() == 0) continue;
+      int pad_width = 0;
+      final Matcher matcher = spaces_pat.matcher(frag);
+      if (matcher.find()) {
+        pad_width = matcher.end();
+        if (is_first) {
+          is_first = false;
+          if (pad_width == 0) continue; // first line may have zero padding // first line may have zero padding
+        }
+      }
+      if (pad_width < cut_width) cut_width = pad_width;
+    }
+    // remove common indentation
+    if (cut_width > 0 && cut_width < IMPOSSIBLY_BIG) {
+      for (int i=0; i < fragments.length; i+= 1) {
+        if (fragments[i].length() > 0) fragments[i] = fragments[i].substring(cut_width);
+      }
+    }
+    // reconstruct back, dropping first empty fragment as needed
+    is_first = true;
+    for (String frag : fragments) {
+      if (is_first && spaces_pat.matcher(frag).matches()) continue; // ignore all initial whitespace
+      if (is_first) is_first = false;
+      else cat.add(BR);
+      cat.add(combUp(frag));
+    }
+    return cat;
+  }
 
   // provides ctrl+Q doc
   public String generateDoc(PsiElement element, final PsiElement originalElement) {
-    final StringBuilder cat = new StringBuilder("<html><body>");
+    ChainIterable<String> cat = new ChainIterable<String>(); // our main output sequence
+    final ChainIterable<String> prolog_cat = new ChainIterable<String>(); // sequence for reassignment info, etc
+    final ChainIterable<String> doc_cat = new ChainIterable<String>(); // sequence for doc string
+    final ChainIterable<String> epilog_cat = new ChainIterable<String>(); // sequence for doc "copied from" notices and such
+
+    cat.add(prolog_cat).addWith(TagCode, doc_cat).add(epilog_cat); // pre-assemble; then add stuff to individual cats as needed
+    cat = wrapInTag("html", wrapInTag("body", cat));
+
     // here the ^Q target is already resolved; the resolved element may point to intermediate assignments
     boolean reassignment_marked = false;
     if (element instanceof PyTargetExpression) {
       if (! reassignment_marked) {
-        LWrapInSmall.enclose(cat, "Assigned to ", element.getText(), BR);
+        //prolog_cat.add(TagSmall.apply($("Assigned to ", element.getText(), BR)));
+        prolog_cat.addWith(TagSmall, $(PyBundle.message("QDOC.assigned.to.$0", element.getText())).add(BR));
         reassignment_marked = true;
       }
       element = PyUtil.findAssignedValue((PyTargetExpression)element);
     }
     if (element instanceof PyReferenceExpression) {
       if (! reassignment_marked) {
-        LWrapInSmall.enclose(cat, "Assigned to ", element.getText(), BR);
+        //prolog_cat.add(TagSmall.apply($("Assigned to ", element.getText(), BR)));
+        prolog_cat.addWith(TagSmall, $(PyBundle.message("QDOC.assigned.to.$0", element.getText())).add(BR));
         reassignment_marked = true;
       }
       element = PyUtil.followAssignmentsChain((PyReferenceExpression)element);
     }
-    // it may be a call to decorator
+    // it may be a call to a standard wrapper
     if (element instanceof PyCallExpression) {
       Pair<String, PyFunction> wrap_info = PyCallExpressionHelper.interpretAsStaticmethodOrClassmethodWrappingCall(
         (PyCallExpression)element, originalElement
@@ -127,34 +193,32 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
       if (wrap_info != null) {
         String wrapper_name = wrap_info.getFirst();
         PyFunction wrapped_func = wrap_info.getSecond();
-        LWrapInSmall.enclose(cat, "Wrapped in <code>", wrapper_name, "</code>", BR); // NOTE: abstraction fail :(
+        //prolog_cat.addWith(TagSmall, $("Wrapped in ").addWith(TagCode, $(wrapper_name)).add(BR));
+        prolog_cat.addWith(TagSmall, $(PyBundle.message("QDOC.wrapped.in.$0", wrapper_name)).add(BR));
         element = wrapped_func;
       }
 
     }
     // now element may contain a doc string
-    cat.append("<code>");
     if (element instanceof PyDocStringOwner) {
       String docString = null;
-      boolean prepended_something = false;
       PyStringLiteralExpression doc_expr = ((PyDocStringOwner) element).getDocStringExpression();
       if (doc_expr != null) docString = doc_expr.getStringValue();
+      // doc of what?
       if (element instanceof PyClass) {
         PyClass cls = (PyClass)element;
-        describeClass(cls, cat, LWrapInBold);
-        prepended_something = true;
+        doc_cat.addWith(TagSmall, describeClass(cls, TagBold));
       }
       else if (element instanceof PyFunction) {
         PyFunction fun = (PyFunction)element;
         PyClass cls = fun.getContainingClass();
-        if (cls != null) LWrapInSmall.enclose(cat, "class ", cls.getName(), BR);
-        describeFunction(fun, cat, LWrapInItalic, BR, LWrapInBold, LCombUp);
-        prepended_something = true;
+        if (cls != null) doc_cat.addWith(TagSmall, $("class ", cls.getName(), BR));
+        doc_cat.add(describeFunction(fun, TagItalic, BR, TagBold, LCombUp));
         boolean not_found = true;
         if (docString == null) {
           String meth_name = fun.getName();
           if (cls != null && meth_name != null ) {
-            // look for inherited
+            // look for inherited and its doc
             for (PyClass ancestor : cls.iterateAncestors()) {
               PyFunction inherited = ancestor.findMethodByName(meth_name, false);
               if (inherited != null) {
@@ -162,12 +226,11 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
                 if (doc_elt != null) {
                   String inherited_doc = doc_elt.getStringValue();
                   if (inherited_doc.length() > 1) {
-                    cat
-                      .append(BR).append(BR).append("</code>")
-                      .append(PyBundle.message("QDOC.copied.from.$0.$1", ancestor.getName(), meth_name))
-                      .append(BR).append(BR)
-                      .append(inherited_doc)
-                      .append("<code>")
+                    epilog_cat
+                      .add(BR).add(BR)
+                      .add(PyBundle.message("QDOC.copied.from.$0.$1", ancestor.getName(), meth_name))
+                      .add(BR).add(BR)
+                      .addWith(TagCode, $(inherited_doc))
                     ;
                     not_found = false;
                     break;
@@ -190,13 +253,8 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
                       PyStringLiteralExpression predefined_doc_expr = obj_underscored.getDocStringExpression();
                       String predefined_doc = predefined_doc_expr != null? predefined_doc_expr.getStringValue() : null;
                       if (predefined_doc != null && predefined_doc.length() > 1) { // only a real-looking doc string counts
-                        cat
-                          .append(BR).append(BR).append("</code>")
-                          .append(predefined_doc)
-                          .append(BR)
-                          .append(PyBundle.message("QDOC.copied.from.builtin"))
-                          .append("<code>")
-                          ;
+                        doc_cat.add(predefined_doc);
+                        epilog_cat.add(BR).add(BR).add(PyBundle.message("QDOC.copied.from.builtin"));
                       }
                     }
                   }
@@ -208,47 +266,18 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
       }
       else if (element instanceof PyFile) {
         // what to prepend to a module description??
+        prolog_cat.add("blah!");
       }
       else { // not a func, not a class
-        cat.append(combUp(PyUtil.getReadableRepr(element, false)));
-        prepended_something = true;
+        doc_cat.add(combUp(PyUtil.getReadableRepr(element, false)));
       }
-      cat.append("</code>");
       if (docString != null) {
-        if (prepended_something) cat.append(BR).append(BR);
-        cat.append(combUp(docString.trim()));
+        doc_cat.add(BR).add(combUpDocString(docString));
       }
-      else if (! prepended_something) return null; // no doc, no prepend -> not found
-      return cat.append("</body></html>").toString();
+      else if (prolog_cat.isEmpty() && doc_cat.isEmpty() && epilog_cat.isEmpty()) return null; // got nothing to say!
+      return cat.toString();
     }
     return null;
-  }
-
-  // // this is a shaky mirage of another world. instead, gotta learn how to write in Jython here.
-
-  //
-  private static StringBuilder describeDeco(
-    PyDecorator deco,
-    final StringBuilder cat,
-    final FP.Lambda2<String, StringBuilder, StringBuilder> name_wrapper, //  wrap in tags, if need be
-    final FP.Lambda1<String, String> arg_wrapper   // add escaping, if need be
-  ) {
-    cat.append("@");
-    name_wrapper.apply(PyUtil.getReadableRepr(deco.getCallee(), true), cat);
-    if (deco.hasArgumentList()) {
-      PyArgumentList arglist = deco.getArgumentList();
-      if (arglist != null) {
-        List<String> argnames = FP.map(
-          FP.combine(LReadableRepr, arg_wrapper),
-          Arrays.asList(arglist.getArguments())
-        );
-
-        cat.append("(");
-        join(", ", argnames, cat);
-        cat.append(")");
-      }
-    }
-    return cat;
   }
 
   private static FP.Lambda1<String, String> LCombUp = new FP.Lambda1<String, String>() {
@@ -263,33 +292,38 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
     }
   };
 
-  private static class TagWrapper implements FP.Lambda2<String, StringBuilder, StringBuilder> {
-    private String start_tag, end_tag;
 
-    TagWrapper(String tag) {
-      end_tag = "</" + tag + ">";
-      start_tag = "<" + tag + ">";
-    }
-
-    public StringBuilder apply(String content, @NonNls StringBuilder cat) {
-        return cat.append(start_tag).append(content).append(end_tag);
-    }
-
-    public StringBuilder enclose(@NonNls StringBuilder cat, String... contents) {
-      cat.append(start_tag);
-      for (String item : contents) cat.append(item);
-      cat.append(end_tag);
-      return cat;
-    }
+  private static ChainIterable<String> wrapInTag(String tag, Iterable<String> content) {
+    return new ChainIterable<String>(new SingleIterable<String>("<" + tag + ">")).add(content).add(new SingleIterable<String>("</" + tag + ">"));
   }
 
-  private static TagWrapper LWrapInBold = new TagWrapper("b");
-  private static TagWrapper LWrapInItalic = new TagWrapper("i");
-  private static TagWrapper LWrapInSmall = new TagWrapper("small");
+  private static ChainIterable<String> $(String... content) {
+    return new ChainIterable<String>(Arrays.asList(content));
+  }
 
-  private static FP.Lambda2<String, StringBuilder, StringBuilder> LSame2 = new FP.Lambda2<String, StringBuilder, StringBuilder>() {
-    public StringBuilder apply(String name, StringBuilder cat) {
-      return cat.append(name);
+
+  // make a first-order curried objects out of wrapInTag()
+  private static class TagWrapper implements FP.Lambda1<Iterable<String>, Iterable<String>> {
+    private String myTag;
+
+    TagWrapper(String tag) {
+      myTag = tag;
+    }
+
+    public Iterable<String> apply(Iterable<String> contents) {
+      return wrapInTag(myTag, contents);
+    }
+
+  }
+
+  private static TagWrapper TagBold = new TagWrapper("b");
+  private static TagWrapper TagItalic = new TagWrapper("i");
+  private static TagWrapper TagSmall = new TagWrapper("small");
+  private static TagWrapper TagCode = new TagWrapper("code");
+
+  private static FP.Lambda1<Iterable<String>, Iterable<String>> LSame2 = new FP.Lambda1<Iterable<String>, Iterable<String>>() {
+    public Iterable<String> apply(Iterable<String> what) {
+      return what;
     }
   };
 
@@ -299,7 +333,8 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
     }
   };
 
-  private static StringBuilder join(String delimiter, List list, StringBuilder cat) {
+  /*
+  private static StringBuilder join(String delimiter, Iterable list, StringBuilder cat) {
     boolean is_next = false;
     for (Object item : list) {
       if (is_next) cat.append(delimiter);
@@ -311,5 +346,17 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
 
   private static String join(String delimiter, List list) {
     return join(delimiter, list, new StringBuilder()).toString();
+  }
+  */
+
+  private static <T> Iterable<T> interleave(Iterable<T> source, T filler) {
+    List<T> ret = new LinkedList<T>();
+    boolean is_next = false;
+    for (T what : source) {
+      if (is_next) ret.add(filler);
+      else is_next = true;
+      ret.add(what);
+    }
+    return ret;
   }
 }
