@@ -8,6 +8,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -50,8 +51,14 @@ public class GrThisReferenceExpressionImpl extends GrExpressionImpl implements G
       final PsiElement resolved = qualifier.resolve();
       if (resolved instanceof PsiClass) {
         return new PsiImmediateClassType((PsiClass)resolved, PsiSubstitutor.EMPTY);
-      } else {
-        return JavaPsiFacade.getElementFactory(getProject()).createTypeFromText(qualifier.getText(), this);
+      }
+      else {
+        try {
+          return JavaPsiFacade.getElementFactory(getProject()).createTypeFromText(qualifier.getText(), this);
+        }
+        catch (IncorrectOperationException e) {
+          return null;
+        }
       }
     }
 
