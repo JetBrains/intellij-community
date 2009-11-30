@@ -80,7 +80,9 @@ public class MyTestInjector {
         if (!(operand.getParent().getParent() instanceof PsiMethodCallExpression)) return;
         PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)operand.getParent().getParent();
         PsiMethod method = methodCallExpression.resolveMethod();
-        PsiParameter parameter = method.getParameterList().getParameters()[i];
+        PsiParameter[] parameters = method.getParameterList().getParameters();
+        if (i>=parameters.length) return;
+        PsiParameter parameter = parameters[i];
         if (!paramName.equals(parameter.getName())) return;
         TextRange textRange = textRangeToInject((PsiLanguageInjectionHost)operand);
         injectionPlacesRegistrar.startInjecting(language);
