@@ -121,7 +121,8 @@ public class MavenProjectImporter {
 
     if (hasChanges) {
       myModelsProvider.commit();
-    } else {
+    }
+    else {
       myModelsProvider.dispose();
     }
 
@@ -144,7 +145,7 @@ public class MavenProjectImporter {
 
     Iterator<MavenProject> it = allProjectsToImport.iterator();
     while (it.hasNext()) {
-      if(!selectedProjectsToImport.contains(it.next())) it.remove();
+      if (!selectedProjectsToImport.contains(it.next())) it.remove();
     }
 
     return result;
@@ -229,7 +230,12 @@ public class MavenProjectImporter {
       public String fun(Pair<MavenProject, Module> each) {
         MavenProject project = each.first;
         Module module = each.second;
-        return module.getModuleType().getName() + " '" + module.getName() + "' for Maven project '" + project.getMavenId().getDisplayString() + "'";
+        return module.getModuleType().getName() +
+               " '" +
+               module.getName() +
+               "' for Maven project '" +
+               project.getMavenId().getDisplayString() +
+               "'";
       }
     }, "<br>");
   }
@@ -399,7 +405,7 @@ public class MavenProjectImporter {
     }
 
     final Map<Module, MavenModuleImporter> moduleImporters = new THashMap<Module, MavenModuleImporter>();
-    for (Map.Entry<MavenProject,MavenProjectChanges> each : projectsWithChanges.entrySet()) {
+    for (Map.Entry<MavenProject, MavenProjectChanges> each : projectsWithChanges.entrySet()) {
       MavenProject project = each.getKey();
       Module module = myMavenProjectToModule.get(project);
       boolean isNewModule = projectsWithNewlyCreatedModules.contains(project);
@@ -475,6 +481,12 @@ public class MavenProjectImporter {
     myProjectsTree.visit(new MavenProjectsTree.SimpleVisitor() {
       int depth = 0;
 
+      @Override
+      public boolean shouldVisit(MavenProject project) {
+        // in case some project has been added while we were importing
+        return myMavenProjectToModuleName.containsKey(project);
+      }
+
       public void visit(MavenProject each) {
         depth++;
 
@@ -489,18 +501,6 @@ public class MavenProjectImporter {
         }
 
         Module module = myModuleModel.findModuleByName(name);
-        if (module == null) {
-          // todo: IDEADEV-30669 hook
-          String message = "Module " + name + "not found.";
-          message += "\nmavenProject=" + each.getFile();
-          module = myMavenProjectToModule.get(each);
-          message += "\nmyMavenProjectToModule=" + (module == null ? null : module.getName());
-          message += "\nmyMavenProjectToModuleName=" + myMavenProjectToModuleName.get(each);
-          message += "\nmyMavenProjectToModulePath=" + myMavenProjectToModulePath.get(each);
-          MavenLog.LOG.error(message);
-          return;
-        }
-
         myModuleModel.setModuleGroupPath(module, groups.isEmpty() ? null : ArrayUtil.toStringArray(groups));
       }
 
