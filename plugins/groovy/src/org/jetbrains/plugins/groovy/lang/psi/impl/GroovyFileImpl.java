@@ -131,6 +131,12 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
     final GrImportStatement[] imports = getImportStatements();
 
+    for (GrImportStatement importStatement : imports) {
+      if (importStatement.isAliasedImport() && !importStatement.processDeclarations(processor, state, lastParent, place)) {
+        return false;
+      }
+    }
+
     final String className = getWantedClassName(processor, state);
     if (className != null) {
       final Set<String> maybeImplicit = getImplicitlyImportableClasses(facade, className);
@@ -142,9 +148,9 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
         }
       }
     }
-    
+
     for (GrImportStatement importStatement : imports) {
-      if (!importStatement.processDeclarations(processor, state, lastParent, place)) {
+      if (!importStatement.isAliasedImport() && !importStatement.processDeclarations(processor, state, lastParent, place)) {
         return false;
       }
     }
