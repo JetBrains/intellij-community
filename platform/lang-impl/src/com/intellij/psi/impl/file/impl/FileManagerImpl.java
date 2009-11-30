@@ -425,7 +425,10 @@ public class FileManagerImpl implements FileManager {
     }
     else {
       final PsiFile f = element.getContainingFile();
-      return allScope.contains(f.getVirtualFile()) ? allScope : GlobalSearchScope.fileScope(f).uniteWith(allScope);
+      final VirtualFile vf = f == null ? null : f.getVirtualFile();
+
+      return f == null || vf == null || vf.isDirectory() || allScope.contains(vf)
+             ? allScope : GlobalSearchScope.fileScope(f).uniteWith(allScope);
     }
   }
 
