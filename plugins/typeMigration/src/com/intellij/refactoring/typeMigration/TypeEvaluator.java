@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.java.PsiBinaryExpressionImpl;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -16,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.Map;
 
@@ -124,7 +124,7 @@ public class TypeEvaluator {
       return evaluateType(((PsiAssignmentExpression)expr).getLExpression());
     }
     else if (expr instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression call = ((PsiMethodCallExpression)expr);
+      final PsiMethodCallExpression call = (PsiMethodCallExpression)expr;
 
       final PsiMethod method = call.resolveMethod();
 
@@ -138,7 +138,7 @@ public class TypeEvaluator {
       final PsiExpression lOperand = ((PsiBinaryExpression)expr).getLOperand();
       final PsiExpression rOperand = ((PsiBinaryExpression)expr).getROperand();
       final PsiJavaToken operationSign = ((PsiBinaryExpression)expr).getOperationSign();
-      return TypeConversionUtil.calcTypeForBinaryExpression(evaluateType(lOperand), evaluateType(rOperand), operationSign.getTokenType());
+      return PsiBinaryExpressionImpl.calcTypeForBinaryExpression(evaluateType(lOperand), evaluateType(rOperand), operationSign.getTokenType());
     }
     else if (expr instanceof PsiPostfixExpression) {
       return evaluateType(((PsiPostfixExpression)expr).getOperand());
@@ -189,6 +189,7 @@ public class TypeEvaluator {
 
               default:
                 LOG.error("Must not happen.");
+                return null;
             }
           }
 
@@ -217,7 +218,7 @@ public class TypeEvaluator {
       }
     }
     else if (expr instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression ref = ((PsiReferenceExpression)expr);
+      final PsiReferenceExpression ref = (PsiReferenceExpression)expr;
       final PsiExpression qualifier = ref.getQualifierExpression();
 
       if (qualifier == null) {
@@ -313,7 +314,7 @@ public class TypeEvaluator {
       final StringBuffer b = new StringBuffer();
 
       if (types != null) {
-        b.append(info.getElement() + " : ");
+        b.append(info.getElement()).append(" : ");
 
         b.append(StringUtil.join(types, new Function<PsiType, String>() {
           public String fun(final PsiType psiType) {
@@ -327,14 +328,10 @@ public class TypeEvaluator {
       t[k++] = b.toString();
     }
 
-    Arrays.sort(t, new Comparator() {
-      public int compare(Object x, Object y) {
-        return ((String)x).compareTo((String)y);
-      }
-    });
+    Arrays.sort(t);
 
-    for (int i = 0; i < t.length; i++) {
-      buffer.append(t[i]);
+    for (String aT : t) {
+      buffer.append(aT);
     }
 
     return buffer.toString();
