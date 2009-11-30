@@ -17,11 +17,13 @@ package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -394,6 +396,10 @@ public class NewMappings {
         filteredFiles = AbstractVcs.filterUniqueRootsDefault(objects, fileConvertor);
       } else {
         final AbstractVcs vcs = allVcses.getByName(vcsName);
+        if (vcs == null) {
+          ChangesViewBalloonProblemNotifier.showMe(myProject, "VCS plugin not found for mapping to : '" + vcsName + "'", MessageType.ERROR);
+          continue;
+        }
         filteredFiles = vcs.filterUniqueRoots(objects, fileConvertor);
       }
 
