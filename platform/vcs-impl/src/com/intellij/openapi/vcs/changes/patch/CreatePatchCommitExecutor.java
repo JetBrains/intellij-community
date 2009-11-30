@@ -33,7 +33,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
-import com.intellij.util.Icons;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -69,19 +68,9 @@ public class CreatePatchCommitExecutor implements CommitExecutor, ProjectCompone
     myChangeListManager = changeListManager;
   }
 
-  @NotNull
-  public Icon getActionIcon() {
-    return Icons.TASK_ICON;
-  }
-
   @Nls
   public String getActionText() {
     return VcsBundle.message("create.patch.commit.action.text");
-  }
-
-  @Nls
-  public String getActionDescription() {
-    return VcsBundle.message("create.patch.commit.action.description");
   }
 
   @NotNull

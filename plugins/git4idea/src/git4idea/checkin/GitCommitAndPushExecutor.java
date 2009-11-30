@@ -13,19 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package git4idea.checkin;
 
-package com.intellij.openapi.vcs.changes;
-
+import com.intellij.openapi.vcs.changes.CommitExecutor;
+import com.intellij.openapi.vcs.changes.CommitSession;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author max
+ * @author yole
  */
-public interface CommitExecutor {
+public class GitCommitAndPushExecutor implements CommitExecutor {
+  private final GitCheckinEnvironment myCheckinEnvironment;
+
+  public GitCommitAndPushExecutor(GitCheckinEnvironment checkinEnvironment) {
+    myCheckinEnvironment = checkinEnvironment;
+  }
+
   @Nls
-  String getActionText();
+  public String getActionText() {
+    return "Commit and &Push";
+  }
 
   @NotNull
-  CommitSession createCommitSession();
+  public CommitSession createCommitSession() {
+    myCheckinEnvironment.setNextCommitIsPushed(true);
+    return CommitSession.VCS_COMMIT;
+  }
 }
