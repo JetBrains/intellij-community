@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -44,7 +45,8 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
     this(project, (ModuleGroup)value, viewSettings);
   }
 
-  protected abstract Class<? extends AbstractTreeNode> getModuleNodeClass();
+  protected abstract AbstractTreeNode createModuleNode(Module module) throws
+                                                                      InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException;
   protected abstract ModuleGroupNode createModuleGroupNode(ModuleGroup moduleGroup);
 
   @NotNull
@@ -55,8 +57,15 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
       result.add(createModuleGroupNode(childGroup));
     }
     Collection<Module> modules = getValue().modulesInGroup(getProject(), false);
-    final List<AbstractTreeNode> childModules = ProjectViewNode.wrap(modules, getProject(), getModuleNodeClass(), getSettings());
-    result.addAll(childModules);
+    try {
+      for (Module module : modules) {
+        result.add(createModuleNode(module));
+      }
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+
     return result;
   }
 
