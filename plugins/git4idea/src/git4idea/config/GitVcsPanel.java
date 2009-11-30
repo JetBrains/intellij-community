@@ -15,6 +15,8 @@
  */
 package git4idea.config;
 
+import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -67,7 +69,7 @@ public class GitVcsPanel {
   /**
    * IDEA ssh value
    */
-  private static final String IDEA_SSH = GitBundle.getString("git.vcs.config.ssh.mode.idea");
+  private static final String IDEA_SSH = ApplicationNamesInfo.getInstance().getProductName() + " " + GitBundle.getString("git.vcs.config.ssh.mode.idea");
   /**
    * Native SSH value
    */
@@ -92,6 +94,7 @@ public class GitVcsPanel {
     mySSHExecutableComboBox.addItem(IDEA_SSH);
     mySSHExecutableComboBox.addItem(NATIVE_SSH);
     mySSHExecutableComboBox.setSelectedItem(GitVcsSettings.isDefaultIdeaSsh() ? IDEA_SSH : NATIVE_SSH);
+    mySSHExecutableComboBox.setToolTipText(GitBundle.message("git.vcs.config.ssh.mode.tooltip", ApplicationInfo.getInstance().getVersionName()));
     myAskBeforeConversionsCheckBox.setSelected(mySettings.LINE_SEPARATORS_CONVERSION_ASK);
     myTestButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
