@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.MessageType;
@@ -44,12 +45,14 @@ public class ChangesViewBalloonProblemNotifier implements Runnable {
   }
 
   public static void showMe(final Project project, final String message, final MessageType type) {
+    final Application application = ApplicationManager.getApplication();
+    if (application.isHeadlessEnvironment()) return;
     final Runnable showErrorAction = new Runnable() {
       public void run() {
         new ChangesViewBalloonProblemNotifier(project, message, type).run();
       }
     };
-    if (ApplicationManager.getApplication().isDispatchThread()) {
+    if (application.isDispatchThread()) {
       showErrorAction.run();
     }
     else {
