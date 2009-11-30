@@ -80,6 +80,7 @@ public class MyTestInjector {
         if (!(operand.getParent().getParent() instanceof PsiMethodCallExpression)) return;
         PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)operand.getParent().getParent();
         PsiMethod method = methodCallExpression.resolveMethod();
+        if (method == null) return;
         PsiParameter[] parameters = method.getParameterList().getParameters();
         if (i>=parameters.length) return;
         PsiParameter parameter = parameters[i];
