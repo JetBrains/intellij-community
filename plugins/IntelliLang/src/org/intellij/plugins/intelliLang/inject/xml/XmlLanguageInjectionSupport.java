@@ -138,17 +138,18 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
 
   @Nullable
   private AbstractTagInjection showInjectionUI(final Project project, final BaseInjection xmlInjection) {
+    final DialogBuilder builder = new DialogBuilder(project);
     final AbstractInjectionPanel panel;
     if (xmlInjection instanceof XmlTagInjection) {
       panel = new XmlTagPanel((XmlTagInjection)xmlInjection, project);
+      builder.setHelpId("reference.settings.injection.language.injection.settings.xml.tag");
     }
     else if (xmlInjection instanceof XmlAttributeInjection) {
       panel = new XmlAttributePanel((XmlAttributeInjection)xmlInjection, project);
+      builder.setHelpId("reference.settings.injection.language.injection.settings.xml.attribute");
     }
     else throw new AssertionError();
     panel.reset();
-    final DialogBuilder builder = new DialogBuilder(project);
-    builder.setHelpId("reference.settings.injection.language.injection.settings");
     builder.addOkAction();
     builder.addCancelAction();
     builder.setCenterPanel(panel.getComponent());
