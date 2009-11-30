@@ -64,45 +64,6 @@ public class PyArgumentListInspection  extends LocalInspectionTool {
     public void visitPyArgumentList(final PyArgumentList node) {
       // analyze
       inspectPyArgumentList(node, getHolder());
-      /*
-      // X XX debug
-      PyCallExpression call_ex = node.getCallExpression();
-      System.out.println(PyResolveUtil.getReadableRepr(call_ex));
-      for (Map.Entry<PyExpression, PyNamedParameter> entry : result.getPlainMappedParams().entrySet()) {
-        System.out.println(
-          PyResolveUtil.getReadableRepr(entry.getValue()) +
-          " -> " + PyResolveUtil.getReadableRepr(entry.getKey())
-      PyCallExpression call_ex = node.getCallExpression();
-      System.out.println(PyResolveUtil.getReadableRepr(call_ex));
-      for (Map.Entry<PyExpression, PyNamedParameter> entry : result.getPlainMappedParams().entrySet()) {
-        System.out.println(
-          PyResolveUtil.getReadableRepr(entry.getValue()) +
-          " -> " + PyResolveUtil.getReadableRepr(entry.getKey())
-        );
-      }
-      for (PyExpression arg : result.getTupleMappedParams()) {
-        System.out.println(PyResolveUtil.getReadableRepr(arg) + " -> *");
-      }
-      for (PyExpression arg : result.getKwdMappedParams()) {
-        System.out.println(PyResolveUtil.getReadableRepr(arg) + " -> **");
-      }
-      System.out.println("Tuple arg " + PyResolveUtil.getReadableRepr(result.getTupleArg()));
-      System.out.println("Kwd arg " + PyResolveUtil.getReadableRepr(result.getKwdArg()));
-      System.out.println();
-
-        );
-      }
-      for (PyExpression arg : result.getTupleMappedParams()) {
-        System.out.println(PyResolveUtil.getReadableRepr(arg) + " -> *");
-      }
-      for (PyExpression arg : result.getKwdMappedParams()) {
-        System.out.println(PyResolveUtil.getReadableRepr(arg) + " -> **");
-      }
-      System.out.println("Tuple arg " + PyResolveUtil.getReadableRepr(result.getTupleArg()));
-      System.out.println("Kwd arg " + PyResolveUtil.getReadableRepr(result.getKwdArg()));
-      System.out.println();
-      // \\
-      */
     }
 
     @Override

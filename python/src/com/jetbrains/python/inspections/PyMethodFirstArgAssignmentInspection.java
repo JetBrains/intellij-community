@@ -11,8 +11,10 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.patterns.SyntaxMatchers;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Reports assignment to 'self' or 'cls'.
@@ -57,12 +59,13 @@ public class PyMethodFirstArgAssignmentInspection  extends LocalInspectionTool {
       registerProblem(element, PyBundle.message("INSP.first.arg.$0.assigned", name));
     }
 
-    private void handleTarget(PyTargetExpression target, String name) {
+    private void handleTarget(PyQualifiedExpression target, String name) {
       if (target.getQualifier() == null && name.equals(target.getText())) {
         complain(target, name);
       }
     }
 
+    @Nullable
     private static String extractFirstParamName(PyElement node) {
       // are we a method?
       List<? extends PsiElement> place = SyntaxMatchers.DEEP_IN_METHOD.search(node);
@@ -78,18 +81,8 @@ public class PyMethodFirstArgAssignmentInspection  extends LocalInspectionTool {
       final String first_param_name = first_parm.getName();
       if (first_param_name == null || first_param_name.length() < 1) return null; // ignore cases of incorrect code
       // is it a static method?
-      boolean is_staticmethod = false;
-      final PyDecoratorList deco_list = method.getDecoratorList();
-      if (deco_list != null) {
-        for (PyDecorator deco : deco_list.getDecorators()) {
-          if (PyNames.STATICMETHOD.equals(deco.getName()) && deco.isBuiltin()) {
-            is_staticmethod = true;
-            break; // sane code has no more than one
-          }
-          // we ignore other decorators
-        }
-      }
-      if (is_staticmethod) return null; // these may do whatever they please
+      Set<PyFunction.Flag> flagSet = PyUtil.detectDecorationsAndWrappersOf(method);      
+      if (flagSet.contains(PyFunction.Flag.STATICMETHOD)) return null; // these may do whatever they please
       return first_param_name;
     }
 
@@ -106,6 +99,20 @@ public class PyMethodFirstArgAssignmentInspection  extends LocalInspectionTool {
     @Override
     public void visitPyAssignmentStatement(PyAssignmentStatement node) {
       markNameDefiner(node);
+    }
+
+    @Override
+    public void visitPyAugAssignmentStatement(PyAugAssignmentStatement node) {
+      final String first_param_name = extractFirstParamName(node);
+      if (first_param_name != null) {
+        PyExpression target = node.getTarget();
+        if (target instanceof PyQualifiedExpression) handleTarget((PyQualifiedExpression)target, first_param_name);
+        else if (target instanceof PyTupleExpression) {
+          for (PyExpression elt : PyUtil.flattenedParens(((PyTupleExpression)target).getElements())) {
+            if (elt instanceof PyQualifiedExpression) handleTarget((PyQualifiedExpression)elt, first_param_name);
+          }
+        }
+      }
     }
 
     @Override

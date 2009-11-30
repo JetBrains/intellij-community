@@ -3,18 +3,25 @@ package com.jetbrains.python.inspections;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.*;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.AddSelfQuickFix;
 import com.jetbrains.python.actions.RenameToSelfQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.PyDecorator;
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
+import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.interpretAsStaticmethodOrClassmethodWrappingCall;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+import java.util.Set;
 
 /**
  * Looks for the 'self'.
@@ -61,31 +68,16 @@ public class PyMethodParametersInspection extends LocalInspectionTool {
       super(holder);
     }
 
-    protected static boolean decoratedJustWith(@NotNull final PyFunction node, @NotNull @NonNls String name) {
-      PyDecoratorList decolist = node.getDecoratorList();
-      if (decolist != null) {
-        PyDecorator[] decos = decolist.getDecorators();
-        // TODO: look for all decorators
-        if (decos.length == 1) {
-          PyDecorator deco = decos[0];
-          String deconame = deco.getName();
-          if (deco.isBuiltin() && name.equals(deconame)) {
-            return true;
-          }
-        }
-      }
-      return false;
-    }
-
     @Override
     public void visitPyFunction(final PyFunction node) {
       PsiElement cap = PyResolveUtil.getConcealingParent(node);
       if (cap instanceof PyClass) {
         PyParameterList plist = node.getParameterList();
         PyParameter[] params = plist.getParameters();
+        Set<PyFunction.Flag> flags = PyUtil.detectDecorationsAndWrappersOf(node);
         if (params.length == 0) {
           // check for "staticmetod"
-          if (decoratedJustWith(node, PyNames.STATICMETHOD)) return; // no params may be fine
+          if (flags.contains(PyFunction.Flag.STATICMETHOD)) return; // no params may be fine
           // check actual param list
           ASTNode name_node = node.getNameNode();
           if (name_node != null) {
@@ -115,17 +107,17 @@ public class PyMethodParametersInspection extends LocalInspectionTool {
               }
             }
             // TODO: check for style settings
-            if (decoratedJustWith(node, PyNames.CLASSMETHOD)) {
+            if (flags.contains(PyFunction.Flag.CLASSMETHOD)) {
               if (!"cls".equals(pname)) {
                 registerProblem(plist, PyBundle.message("INSP.usually.named.cls"));
               }
             }
-            else if (!"self".equals(pname) && !decoratedJustWith(node, PyNames.STATICMETHOD)) {
+            else if (!"self".equals(pname) && ! flags.contains(PyFunction.Flag.STATICMETHOD)) {
               registerProblem(plist, PyBundle.message("INSP.usually.named.self"));
             }
           }
           else { // the unusual case of a method with first tuple param
-            if (!decoratedJustWith(node, PyNames.STATICMETHOD)) {
+            if (! flags.contains(PyFunction.Flag.STATICMETHOD)) {
               registerProblem(plist, PyBundle.message("INSP.first.param.must.not.be.tuple"));
             }
           }

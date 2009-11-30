@@ -16,7 +16,6 @@
 
 package com.jetbrains.python.psi;
 
-import com.jetbrains.python.PyNames;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,33 +49,15 @@ public interface PyCallExpression extends PyExpression {
   PyMarkedFunction resolveCallee();
 
 
-  enum Flag {
-    /**
-     * Called function is decorated with @classmethod, first param is the class.
-     */
-    CLASSMETHOD,
-    /**
-     * Called function is decorated with {@code @staticmethod}, first param is as in a regular function.
-     */
-    STATICMETHOD,
-
-    /**
-     * Called function is not decorated, but wrapped in an actual call to {@code staticmethod} or {@code classmethod},
-     * e.g. {@code foo = classmethod(foo)}. The callee is the inner version of {@code foo}, not the outer callable produced
-     * by the wrapping call.
-     */
-    WRAPPED,
-  }
-
   /**
    * Couples function with a flag describing the way it is called.
    */
   class PyMarkedFunction {
     PyFunction myFunction;
-    EnumSet<Flag> myFlags;
+    EnumSet<PyFunction.Flag> myFlags;
     int myImplicitOffset;
 
-    public PyMarkedFunction(@NotNull PyFunction function, EnumSet<Flag> flags, int offset) {
+    public PyMarkedFunction(@NotNull PyFunction function, EnumSet<PyFunction.Flag> flags, int offset) {
       myFunction = function;
       myFlags = flags;
       myImplicitOffset = offset;
@@ -86,13 +67,13 @@ public interface PyCallExpression extends PyExpression {
       return myFunction;
     }
 
-    public EnumSet<Flag> getFlags() {
+    public EnumSet<PyFunction.Flag> getFlags() {
       return myFlags;
     }
 
     /**
      * @return number of implicitly passed positional parameters; 0 means no parameters are passed implicitly.
-     * Note that a <tt>*args</tt> is never markeg as passed implicitly.
+     * Note that a <tt>*args</tt> is never marked as passed implicitly.
      * E.g. for a function like <tt>foo(a, b, *args)</tt> always holds <tt>getImplicitOffset() < 2</tt>.   
      */
     public int getImplicitOffset() {

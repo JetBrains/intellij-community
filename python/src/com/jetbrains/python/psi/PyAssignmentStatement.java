@@ -62,7 +62,7 @@ public interface PyAssignmentStatement extends PyStatement, NameDefiner {
    * <br/>
    * If RHS and LHS are mis-balanced, certain target or value expressions may be null.
    * If source is severely incorrect, the returned mapping is empty.
-   * @return a map where target expressions are keys and expressions assigned to them are values.
+   * @return a list of [target, value] pairs; either part of a pair may be null, but not both.
    */
   @NotNull
   List<Pair<PyExpression, PyExpression>> getTargetsToValuesMapping();

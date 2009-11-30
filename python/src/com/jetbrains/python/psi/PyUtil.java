@@ -30,9 +30,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
+import static com.jetbrains.python.psi.PyFunction.Flag.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.interpretAsStaticmethodOrClassmethodWrappingCall;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NonNls;
@@ -646,6 +649,69 @@ public class PyUtil {
       }
     }
     return null;
+  }
+
+  /**
+   * For cases when a function is decorated with only one decorator, and this is a built-in decorator.
+   * <br/> <i>TODO: handle multiple decorators sensibly; then rename and move.</i>
+   * @param node the allegedly decorated function
+   * @return name of the only built-in decorator, or null (even if there are multiple or non-built-in decorators!)
+   */
+  public static @Nullable String getTheOnlyBuiltinDecorator(@NotNull final PyFunction node) {
+    PyDecoratorList decolist = node.getDecoratorList();
+    if (decolist != null) {
+      PyDecorator[] decos = decolist.getDecorators();
+      // TODO: look for all decorators
+      if (decos.length == 1) {
+        PyDecorator deco = decos[0];
+        String deconame = deco.getName();
+        if (deco.isBuiltin()) {
+          return deconame;
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Looks for two standard decorators to a function, or a wrapping assignment that closely follows it.
+   * @param function what to analyze
+   * @return a set of flags describing what was detected.
+   */
+  @NotNull
+  public static Set<PyFunction.Flag> detectDecorationsAndWrappersOf(PyFunction function) {
+    Set<PyFunction.Flag> flags = EnumSet.noneOf(PyFunction.Flag.class);
+    String deconame = getTheOnlyBuiltinDecorator(function);
+    if (PyNames.CLASSMETHOD.equals(deconame)) flags.add(CLASSMETHOD);
+    else if (PyNames.STATICMETHOD.equals(deconame)) flags.add(STATICMETHOD);
+    //
+    if (! flags.contains(CLASSMETHOD) && ! flags.contains(STATICMETHOD)) { // not set by decos, look for reassignment
+      String func_name = function.getName();
+      if (func_name != null) {
+        PyAssignmentStatement assignment = PsiTreeUtil.getNextSiblingOfType(function, PyAssignmentStatement.class);
+        if (assignment != null) {
+          for (Pair<PyExpression, PyExpression> pair : assignment.getTargetsToValuesMapping()) {
+            PyExpression value = pair.getSecond();
+            if (value instanceof PyCallExpression) {
+              PyExpression target = pair.getFirst();
+              if (target instanceof PyTargetExpression && func_name.equals(target.getName())) {
+                Pair<String, PyFunction> interpreted = interpretAsStaticmethodOrClassmethodWrappingCall((PyCallExpression)value, function);
+                if (interpreted != null) {
+                  PyFunction original = interpreted.getSecond();
+                  if (original == function) {
+                    String wrapper_name = interpreted.getFirst();
+                    if (PyNames.CLASSMETHOD.equals(wrapper_name)) flags.add(CLASSMETHOD);
+                    else if (PyNames.STATICMETHOD.equals(wrapper_name)) flags.add(STATICMETHOD);
+                    flags.add(WRAPPED);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return flags;
   }
 
 }
