@@ -471,7 +471,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     @Nullable
     public Navigatable getNavigatable() {
       VirtualFile file = getVirtualFile();
-      if (file == null) return null;
+      if (file == null || !file.isValid()) return null;
       return PsiManager.getInstance(myProject).findFile(file);
     }
 
