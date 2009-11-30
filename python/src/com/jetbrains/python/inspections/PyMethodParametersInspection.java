@@ -3,24 +3,20 @@ package com.jetbrains.python.inspections;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.AddSelfQuickFix;
-import com.jetbrains.python.actions.RenameToSelfQuickFix;
+import com.jetbrains.python.actions.RenameParameterQuickFix;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.PyDecorator;
-import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
-import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.interpretAsStaticmethodOrClassmethodWrappingCall;
+import static com.jetbrains.python.psi.PyFunction.Flag.CLASSMETHOD;
+import static com.jetbrains.python.psi.PyFunction.Flag.STATICMETHOD;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -77,7 +73,7 @@ public class PyMethodParametersInspection extends LocalInspectionTool {
         Set<PyFunction.Flag> flags = PyUtil.detectDecorationsAndWrappersOf(node);
         if (params.length == 0) {
           // check for "staticmetod"
-          if (flags.contains(PyFunction.Flag.STATICMETHOD)) return; // no params may be fine
+          if (flags.contains(STATICMETHOD)) return; // no params may be fine
           // check actual param list
           ASTNode name_node = node.getNameNode();
           if (name_node != null) {
@@ -102,22 +98,35 @@ public class PyMethodParametersInspection extends LocalInspectionTool {
             @NonNls String[] mangled = {"eslf", "sself", "elf", "felf", "slef", "seelf", "slf", "sslf", "sefl", "sellf", "sef", "seef"};
             for (String typo : mangled) {
               if (typo.equals(pname)) {
-                registerProblem(params[0].getNode().getPsi(), PyBundle.message("INSP.probably.mistyped.self"), new RenameToSelfQuickFix());
+                registerProblem(
+                  PyUtil.sure(params[0].getNode()).getPsi(),
+                  PyBundle.message("INSP.probably.mistyped.self"),
+                  new RenameParameterQuickFix(PyNames.CANONICAL_SELF)
+                );
                 return;
               }
             }
             // TODO: check for style settings
-            if (flags.contains(PyFunction.Flag.CLASSMETHOD)) {
-              if (!"cls".equals(pname)) {
-                registerProblem(plist, PyBundle.message("INSP.usually.named.cls"));
+            if (flags.contains(CLASSMETHOD)) {
+              String CLS = "cls";
+              if (!CLS.equals(pname)) {
+                registerProblem(
+                  PyUtil.sure(params[0].getNode()).getPsi(),
+                  PyBundle.message("INSP.usually.named.cls"),
+                  new RenameParameterQuickFix(CLS)
+                );
               }
             }
-            else if (!"self".equals(pname) && ! flags.contains(PyFunction.Flag.STATICMETHOD)) {
-              registerProblem(plist, PyBundle.message("INSP.usually.named.self"));
+            else if (!PyNames.CANONICAL_SELF.equals(pname) && ! flags.contains(STATICMETHOD)) {
+              registerProblem(
+                PyUtil.sure(params[0].getNode()).getPsi(),
+                PyBundle.message("INSP.usually.named.self"),
+                new RenameParameterQuickFix(PyNames.CANONICAL_SELF)
+              );
             }
           }
           else { // the unusual case of a method with first tuple param
-            if (! flags.contains(PyFunction.Flag.STATICMETHOD)) {
+            if (! flags.contains(STATICMETHOD)) {
               registerProblem(plist, PyBundle.message("INSP.first.param.must.not.be.tuple"));
             }
           }

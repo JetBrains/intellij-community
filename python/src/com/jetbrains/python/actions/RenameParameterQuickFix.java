@@ -13,19 +13,24 @@ import com.jetbrains.python.psi.PyNamedParameter;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * TODO: Add description
+ * Parameter renaming.
 * User: dcheryasov
 * Date: Nov 30, 2008 6:10:13 AM
 */
-public class RenameToSelfQuickFix implements LocalQuickFix {
-  private static final Logger LOG = Logger.getInstance("#" + RenameToSelfQuickFix.class.getName());
+public class RenameParameterQuickFix implements LocalQuickFix {
+  private static final Logger LOG = Logger.getInstance("#" + RenameParameterQuickFix.class.getName());
+  private String myNewName;
+
+  public RenameParameterQuickFix(String newName) {
+    myNewName = newName;
+  }
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     final PsiElement elt = descriptor.getPsiElement();
     if (elt != null && elt instanceof PyNamedParameter && elt.isWritable()) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          final PyNamedParameter the_self = PythonLanguage.getInstance().getElementGenerator().createParameter(project, "self");
+          final PyNamedParameter the_self = PythonLanguage.getInstance().getElementGenerator().createParameter(project, myNewName);
           try {
             elt.replace(the_self);
           }
@@ -44,6 +49,6 @@ public class RenameToSelfQuickFix implements LocalQuickFix {
 
   @NotNull
   public String getName() {
-    return PyBundle.message("QFIX.rename.parameter.to.self");
+    return PyBundle.message("QFIX.rename.parameter.to.$0", myNewName);
   }
 }
