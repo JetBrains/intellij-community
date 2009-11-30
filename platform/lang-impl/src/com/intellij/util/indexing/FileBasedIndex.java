@@ -193,8 +193,14 @@ public class FileBasedIndex implements ApplicationComponent {
 
       private void rebuildAllndices() {
         for (ID<?, ?> indexId : myIndices.keySet()) {
-          requestRebuild(indexId);
+          try {
+            clearIndex(indexId);
+          }
+          catch (StorageException e) {
+            LOG.info(e);
+          }
         }
+        scheduleIndexRebuild(true);
       }
     });
 
@@ -890,11 +896,7 @@ public class FileBasedIndex implements ApplicationComponent {
           try {
             clearIndex(indexId);
             if (!cleanupOnly) {
-              for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-                UnindexedFilesUpdater updater =
-                  new UnindexedFilesUpdater(project, FileBasedIndex.this);
-                DumbServiceImpl.getInstance(project).queueCacheUpdate(Collections.<CacheUpdater>singleton(updater));
-              }
+              scheduleIndexRebuild(false);
             }
           }
           catch (StorageException e) {
@@ -927,6 +929,19 @@ public class FileBasedIndex implements ApplicationComponent {
 
     if (myRebuildStatus.get(indexId).get() == REBUILD_IN_PROGRESS) {
       throw new ProcessCanceledException();
+    }
+  }
+
+  private void scheduleIndexRebuild(boolean forceDumbMode) {
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      final Set<CacheUpdater> updatersToRun = Collections.<CacheUpdater>singleton(new UnindexedFilesUpdater(project, this));
+      final DumbServiceImpl service = DumbServiceImpl.getInstance(project);
+      if (forceDumbMode) {
+        service.queueCacheUpdateInDumbMode(updatersToRun);
+      }
+      else {
+        service.queueCacheUpdate(updatersToRun);
+      }
     }
   }
 

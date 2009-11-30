@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.tabs.JBTabs;
@@ -38,7 +37,6 @@ import java.awt.event.MouseListener;
  * @author Vladimir Kondratyev
  */
 public class TabbedPaneWrapper  {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.TabbedPaneWrapper");
   private static final PrevNextActionsDescriptor DEFAULT_SHORTCUTS = new PrevNextActionsDescriptor(IdeActions.ACTION_NEXT_TAB, IdeActions.ACTION_PREVIOUS_TAB);
   protected TabbedPane myTabbedPane;
   protected JComponent myTabbedPaneHolder;
@@ -51,11 +49,7 @@ public class TabbedPaneWrapper  {
     }
   }
 
-  public TabbedPaneWrapper(){
-    this(SwingConstants.TOP);
-  }
-
-  public TabbedPaneWrapper(Disposable parentDisposable) {
+  public TabbedPaneWrapper(@NotNull Disposable parentDisposable) {
     this(SwingConstants.TOP, DEFAULT_SHORTCUTS, parentDisposable);
   }
 
@@ -66,16 +60,7 @@ public class TabbedPaneWrapper  {
    * <code>SwingConstants.LEFT</code>, <code>SwingConstants.BOTTOM</code> or
    * <code>SwingConstants.RIGHT</code>.
    */
-  public TabbedPaneWrapper(final int tabPlacement) {
-    this(tabPlacement, DEFAULT_SHORTCUTS);
-  }
-
-
-  public TabbedPaneWrapper(int tabPlacement, PrevNextActionsDescriptor installKeyboardNavigation) {
-    this(tabPlacement, installKeyboardNavigation, null);
-  }
-
-  public TabbedPaneWrapper(int tabPlacement, PrevNextActionsDescriptor installKeyboardNavigation, final Disposable parentDisposable) {
+  public TabbedPaneWrapper(int tabPlacement, PrevNextActionsDescriptor installKeyboardNavigation, @NotNull Disposable parentDisposable) {
     final TabFactory factory;
     if (SwingConstants.BOTTOM == tabPlacement || SwingConstants.TOP == tabPlacement) {
       factory = new JBTabsFactory(this, null, parentDisposable);
@@ -354,7 +339,7 @@ public class TabbedPaneWrapper  {
   public static final class TabWrapper extends JPanel implements DataProvider{
     private JComponent myComponent;
 
-    protected boolean myCustomFocus = true;
+    boolean myCustomFocus = true;
 
     public TabWrapper(@NotNull final JComponent component) {
       super(new BorderLayout());
@@ -499,7 +484,7 @@ public class TabbedPaneWrapper  {
     private final Disposable myParent;
     private final TabbedPaneWrapper myWrapper;
 
-    private JBTabsFactory(TabbedPaneWrapper wrapper, Project project, Disposable parent) {
+    private JBTabsFactory(TabbedPaneWrapper wrapper, Project project, @NotNull Disposable parent) {
       myWrapper = wrapper;
       myProject = project;
       myParent = parent;
@@ -535,14 +520,6 @@ public class TabbedPaneWrapper  {
   }
 
   public static class AsJBTabs extends TabbedPaneWrapper {
-    public AsJBTabs(@NotNull Project project) {
-      this(project, SwingConstants.TOP);
-    }
-
-    public AsJBTabs(@NotNull Project project, int tabPlacement) {
-      this(project, tabPlacement, DEFAULT_SHORTCUTS, project);
-    }
-
     public AsJBTabs(@Nullable Project project, int tabPlacement, PrevNextActionsDescriptor installKeyboardNavigation, @NotNull Disposable parent) {
       super(false);
       init(tabPlacement, installKeyboardNavigation, new JBTabsFactory(this, project, parent));
@@ -554,16 +531,9 @@ public class TabbedPaneWrapper  {
   }
 
   public static class AsJTabbedPane extends TabbedPaneWrapper {
-    public AsJTabbedPane() {
-      this(SwingConstants.TOP);
-    }
-
     public AsJTabbedPane(int tabPlacement) {
-      this(tabPlacement, DEFAULT_SHORTCUTS);
-    }
-
-    public AsJTabbedPane(int tabPlacement, PrevNextActionsDescriptor installKeyboardNavigation) {
-      init(tabPlacement, installKeyboardNavigation, new JTabbedPaneFactory(this));
+      super(false);
+      init(tabPlacement, DEFAULT_SHORTCUTS, new JTabbedPaneFactory(this));
     }
   }
 

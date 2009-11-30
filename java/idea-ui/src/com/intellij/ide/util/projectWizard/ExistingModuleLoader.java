@@ -22,6 +22,7 @@ import com.intellij.conversion.ConversionResult;
 import com.intellij.conversion.ConversionService;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.PathMacros;
+import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -83,7 +84,7 @@ public class ExistingModuleLoader extends ModuleBuilder {
         }
         final Document document = JDOMUtil.loadDocument(file);
         final Element root = document.getRootElement();
-        final Set<String> usedMacros = PathMacrosCollector.getMacroNames(root);
+        final Set<String> usedMacros = StorageUtil.getMacroNames(root);
         final Set<String> definedMacros = PathMacros.getInstance().getAllMacroNames();
         usedMacros.remove("$" + PathMacrosImpl.MODULE_DIR_MACRO_NAME + "$");
         usedMacros.removeAll(definedMacros);

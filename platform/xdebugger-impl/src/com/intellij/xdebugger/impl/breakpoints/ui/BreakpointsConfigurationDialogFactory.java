@@ -116,7 +116,7 @@ public class BreakpointsConfigurationDialogFactory {
     }
 
     protected JComponent createCenterPanel() {
-      myTabbedPane = new TabbedPaneWrapper();
+      myTabbedPane = new TabbedPaneWrapper(getDisposable());
       myPanel = new JPanel(new BorderLayout());
 
       for (BreakpointPanelProvider<?> panelProvider : myBreakpointPanelProviders) {

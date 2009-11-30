@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -29,7 +30,7 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.BranchConfigurationDialog;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 
-public class ConfigureBranchesAction extends AnAction {
+public class ConfigureBranchesAction extends AnAction implements DumbAware {
   public void update(final AnActionEvent e) {
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     final Presentation presentation = e.getPresentation();

@@ -400,6 +400,9 @@ public class FrameDebuggerTree extends DebuggerTree {
         private void autoscrollToNewLocals(DebuggerTreeNodeImpl frameNode) {
           final DebuggerSession debuggerSession = debuggerContext.getDebuggerSession();
           final boolean isSteppingThrough = debuggerSession.isSteppingThrough(debuggerContext.getThreadProxy());
+          final List<DebuggerTreeNodeImpl> toClear = new ArrayList<DebuggerTreeNodeImpl>();
+          final List<DebuggerTreeNodeImpl> newLocalsToSelect = new ArrayList<DebuggerTreeNodeImpl>();
+
           for (Enumeration e = frameNode.rawChildren(); e.hasMoreElements();) {
             final DebuggerTreeNodeImpl child = (DebuggerTreeNodeImpl)e.nextElement();
             final NodeDescriptorImpl descriptor = child.getDescriptor();
@@ -408,16 +411,24 @@ public class FrameDebuggerTree extends DebuggerTree {
             }
             final LocalVariableDescriptorImpl localVariableDescriptor = (LocalVariableDescriptorImpl)descriptor;
             if (isSteppingThrough && localVariableDescriptor.isNewLocal()) {
-              TreePath treePath = new TreePath(child.getPath());
-              addSelectionPath(treePath);
               myAnyNewLocals = true;
-              descriptor.myIsSelected = true;
+              newLocalsToSelect.add(child);
             }
             else {
-              removeSelectionPath(new TreePath(child.getPath()));
-              descriptor.myIsSelected = false;
+              toClear.add(child);
             }
             localVariableDescriptor.setNewLocal(false);
+          }
+
+          if (!newLocalsToSelect.isEmpty()) {
+            for (DebuggerTreeNodeImpl child : toClear) {
+              removeSelectionPath(new TreePath(child.getPath()));
+              child.getDescriptor().myIsSelected = false;
+            }
+            for (DebuggerTreeNodeImpl child : newLocalsToSelect) {
+              addSelectionPath(new TreePath(child.getPath()));
+              child.getDescriptor().myIsSelected = true;
+            }
           }
         }
       });

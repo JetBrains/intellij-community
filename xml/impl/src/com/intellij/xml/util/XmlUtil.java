@@ -1392,6 +1392,7 @@ public class XmlUtil {
     }
   }
 
+  @Nullable
   public static String trimLeadingSpacesInMultilineTagValue(@NonNls String tagValue) {
     return tagValue == null ? null : tagValue.replaceAll("\n\\s*", "\n");
   }
@@ -1408,8 +1409,9 @@ public class XmlUtil {
     return "";
   }
 
+  @Nullable
   public static String findLocalNameByQualifiedName(String name) {
-    return name.substring(name.indexOf(':') + 1);
+    return name == null ? null : name.substring(name.indexOf(':') + 1);
   }
 
 

@@ -85,11 +85,20 @@ public class DumbServiceImpl extends DumbService {
   }
 
   public void queueCacheUpdate(Collection<CacheUpdater> updaters) {
+    scheduleCacheUpdate(updaters, false);
+  }
+
+  public void queueCacheUpdateInDumbMode(Collection<CacheUpdater> updaters) {
+    scheduleCacheUpdate(updaters, true);
+  }
+
+  private void scheduleCacheUpdate(Collection<CacheUpdater> updaters, boolean forceDumbMode) {
     // prevent concurrent modifications
     final CacheUpdateRunner runner = new CacheUpdateRunner(myProject, new ArrayList<CacheUpdater>(updaters));
 
     final Application application = ApplicationManager.getApplication();
-    if (application.isDispatchThread() && !myDumb && application.isWriteAccessAllowed()) {
+    if (!forceDumbMode && application.isDispatchThread() && !myDumb && application.isWriteAccessAllowed()) {
+      // if there are not so many files to process, process them on the spot without entering dumb mode
       ProgressIndicator indicator = new EmptyProgressIndicator();
       final int size = runner.queryNeededFiles(indicator);
       if (size < 50) {

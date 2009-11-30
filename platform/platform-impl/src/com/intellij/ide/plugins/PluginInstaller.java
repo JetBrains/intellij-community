@@ -18,6 +18,7 @@ package com.intellij.ide.plugins;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.startup.StartupActionScriptManager;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -154,7 +155,7 @@ public class PluginInstaller {
     }
 
     synchronized (PluginManager.lock) {
-      final BuildNumber buildNumber = PluginManager.getBuildNumber();
+      final BuildNumber buildNumber = ApplicationInfo.getInstance().getBuild();
       final @NonNls String url = RepositoryHelper.DOWNLOAD_URL +
                          URLEncoder.encode(pluginNode.getPluginId().getIdString(), "UTF8") +
                          "&build=" + buildNumber.asString();

@@ -16,7 +16,9 @@
 package com.intellij.application.options;
 
 import com.intellij.openapi.components.PathMacroMap;
+import com.intellij.util.NotNullFunction;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -30,8 +32,6 @@ import java.util.regex.Pattern;
  */
 public class PathMacrosCollector extends PathMacroMap {
   private final Matcher myMatcher;
-  private static final String FILE_PROTOCOL = "file://";
-  private static final String JAR_PROTOCOL = "jar://";
 
   private static final Set<String> ourSystemMacroNames = new HashSet<String>(
     Arrays.asList(PathMacrosImpl.APPLICATION_HOME_MACRO_NAME, PathMacrosImpl.MODULE_DIR_MACRO_NAME, PathMacrosImpl.PROJECT_DIR_MACRO_NAME));
@@ -41,28 +41,15 @@ public class PathMacrosCollector extends PathMacroMap {
     myMatcher = pattern.matcher("");
   }
 
-  public static Set<String> getMacroNames(Element root) {
+  public static Set<String> getMacroNames(Element root, @Nullable final NotNullFunction<Object, Boolean> filter) {
     final PathMacrosCollector collector = new PathMacrosCollector();
-    collector.substitute(root, true);
+    collector.substitute(root, true, false, filter);
     final HashSet<String> result = new HashSet<String>(collector.myMacroMap.keySet());
     result.removeAll(ourSystemMacroNames);
     return result;
   }
 
   public String substitute(String text, boolean caseSensitive) {
-    final String protocol;
-    if (text.length() > 7 && text.charAt(0) == 'f') {
-      protocol = FILE_PROTOCOL;
-    } else if (text.length() > 6 && text.charAt(0) == 'j') {
-      protocol = JAR_PROTOCOL;
-    } else {
-      return text;
-    }
-
-    for (int i = 0; i < protocol.length(); i++) {
-      if (text.charAt(i) != protocol.charAt(i)) return text;
-    }
-
     myMatcher.reset(text);
     while (myMatcher.find()) {
       final String macroName = myMatcher.group(1);

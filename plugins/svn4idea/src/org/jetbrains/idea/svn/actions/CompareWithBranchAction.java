@@ -27,6 +27,7 @@ import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
@@ -50,8 +51,8 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
-import org.tmatesoft.svn.util.SVNLogType;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -62,7 +63,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class CompareWithBranchAction extends AnAction {
+public class CompareWithBranchAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.actions.CompareWithBranchAction");
 
   public void actionPerformed(AnActionEvent e) {

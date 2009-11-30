@@ -16,6 +16,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.BuildNumber;
@@ -54,7 +55,7 @@ public class RepositoryHelper {
   public static ArrayList<IdeaPluginDescriptor> process(JLabel label) throws IOException, ParserConfigurationException, SAXException {
     ArrayList<IdeaPluginDescriptor> plugins = null;
     try {
-      BuildNumber buildNumber = PluginManager.getBuildNumber();
+      BuildNumber buildNumber = ApplicationInfo.getInstance().getBuild();
       @NonNls String url = getListUrl() + "?build=" + buildNumber.asString();
 
       setLabelText(label, IdeBundle.message("progress.connecting.to.plugin.manager", getRepositoryHost()));
