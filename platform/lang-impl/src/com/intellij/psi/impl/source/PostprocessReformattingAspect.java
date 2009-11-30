@@ -52,6 +52,7 @@ import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
@@ -609,5 +610,10 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
   }
 
   public void disposeComponent() {
+  }
+
+  @TestOnly
+  public void clear() {
+    myReformatElements.clear();
   }
 }
