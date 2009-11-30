@@ -156,13 +156,14 @@ public class ChangelistConflictTracker {
         FileEditor[] editors = myFileEditorManager.getEditors(file);
         for (FileEditor editor : editors) {
           EditorNotificationPanel panel = editor.getUserData(KEY);
-          if (add && panel == null) {
+          if (!add && panel == null || add && panel != null) continue;          
+          if (add) {
             if (getChangeListManager().getChangeList(file) != null) {
               panel = new ChangelistConflictNotificationPanel(ChangelistConflictTracker.this, file);  
               myFileEditorManager.addTopComponent(editor, panel);
               editor.putUserData(KEY, panel);
             }
-          } else if (panel != null) {
+          } else {
             myFileEditorManager.removeTopComponent(editor, panel);
             editor.putUserData(KEY, null);
           }
