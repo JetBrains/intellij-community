@@ -18,7 +18,12 @@ import java.util.concurrent.CopyOnWriteArraySet;
  */
 public class PythonLanguage extends Language {
   private final PyElementGenerator elementGenerator = new PyElementGeneratorImpl(this);
-  private final IFileElementType ELTYPE_FILE = new IStubFileElementType(this);
+  private final IFileElementType ELTYPE_FILE = new IStubFileElementType(this) {
+    @Override
+    public int getStubVersion() {
+      return 2;
+    }
+  };
   private final Set<Class<? extends PyAnnotator>> _annotators = new CopyOnWriteArraySet<Class<? extends PyAnnotator>>();
 
   public static PythonLanguage getInstance() {
