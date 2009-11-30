@@ -501,6 +501,7 @@ public class MavenProjectImporter {
         }
 
         Module module = myModuleModel.findModuleByName(name);
+        if (module == null) return;
         myModuleModel.setModuleGroupPath(module, groups.isEmpty() ? null : ArrayUtil.toStringArray(groups));
       }
 
