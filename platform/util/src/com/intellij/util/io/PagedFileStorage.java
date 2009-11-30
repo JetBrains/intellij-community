@@ -31,22 +31,71 @@ import java.util.Map;
  * @author max
  */
 public class PagedFileStorage implements Forceable {
-  private final int BUFFER_SIZE = 10 * 1024 * 1024; // 10M
-  private final SLRUCache<Integer, MappedBufferWrapper> myBuffersCache = new SLRUCache<Integer, MappedBufferWrapper>(20, 10) {
-    @NotNull
-    public MappedBufferWrapper createValue(final Integer offset) {
-      int off = offset.intValue() * BUFFER_SIZE;
-      if (off > length()) {
-        throw new IndexOutOfBoundsException();
+  private final static int BUFFER_SIZE = 10 * 1024 * 1024; // 10M
+
+  private final StorageLock myLock;
+
+  public static class StorageLock {
+    private final boolean checkThreadAccess;
+
+    public StorageLock() {
+      this(true);
+    }
+
+    public StorageLock(boolean checkThreadAccess) {
+      this.checkThreadAccess = checkThreadAccess;
+    }
+
+    final SLRUCache<PageKey, MappedBufferWrapper> myBuffersCache = new SLRUCache<PageKey, MappedBufferWrapper>(20, 10) {
+      @NotNull
+      @Override
+      public MappedBufferWrapper createValue(PageKey key) {
+        if (checkThreadAccess && !Thread.holdsLock(StorageLock.this)) {
+          throw new IllegalStateException("Must hold StorageLock lock to access PagedFileStorage");
+        }
+
+        int off = key.page * BUFFER_SIZE;
+        if (off > key.owner.length()) {
+          throw new IndexOutOfBoundsException();
+        }
+        return new ReadWriteMappedBufferWrapper(key.owner.myFile, off, Math.min((int)(key.owner.length() - off), BUFFER_SIZE));
       }
-      return new ReadWriteMappedBufferWrapper(myFile, off, Math.min((int)(length() - off), BUFFER_SIZE));
+
+      @Override
+      protected void onDropFromCache(PageKey key, MappedBufferWrapper buf) {
+        buf.dispose();
+      }
+    };
+  }
+
+  private static class PageKey {
+    private PagedFileStorage owner;
+    private int page;
+
+    public PageKey(PagedFileStorage owner, int page) {
+      this.owner = owner;
+      this.page = page;
     }
 
     @Override
-    protected void onDropFromCache(final Integer key, final MappedBufferWrapper buf) {
-      buf.dispose();
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof PageKey)) return false;
+
+      PageKey pageKey = (PageKey)o;
+
+      if (!owner.equals(pageKey.owner)) return false;
+      if (page != pageKey.page) return false;
+
+      return true;
     }
-  };
+
+    @Override
+    public int hashCode() {
+      return 31 * owner.hashCode() + page;
+    }
+  }
+
 
   private final byte[] myTypedIOBuffer = new byte[8];
   private boolean isDirty = false;
@@ -54,8 +103,9 @@ public class PagedFileStorage implements Forceable {
   private long mySize = -1;
   @NonNls private static final String RW = "rw";
 
-  public PagedFileStorage(File file) throws IOException {
+  public PagedFileStorage(File file, StorageLock lock) throws IOException {
     myFile = file;
+    myLock = lock;
   }
 
   public File getFile() {
@@ -154,7 +204,11 @@ public class PagedFileStorage implements Forceable {
   }
 
   private void unmapAll() {
-    myBuffersCache.clear();
+    for (Map.Entry<PageKey, MappedBufferWrapper> entry : myLock.myBuffersCache.entrySet()) {
+      if (entry.getKey().owner == this) {
+        myLock.myBuffersCache.remove(entry.getKey());
+      }
+    }
   }
 
   public void resize(int newSize) throws IOException {
@@ -203,12 +257,14 @@ public class PagedFileStorage implements Forceable {
   }
 
   private ByteBuffer getBuffer(int page) {
-    return myBuffersCache.get(page).buf();
+    return myLock.myBuffersCache.get(new PageKey(this, page)).buf();
   }
 
   public void force() {
-    for (Map.Entry<Integer, MappedBufferWrapper> entry : myBuffersCache.entrySet()) {
-      entry.getValue().flush();
+    for (Map.Entry<PageKey,MappedBufferWrapper> entry : myLock.myBuffersCache.entrySet()) {
+      if (entry.getKey().owner == this) {
+        entry.getValue().flush();
+      }
     }
     isDirty = false;
   }

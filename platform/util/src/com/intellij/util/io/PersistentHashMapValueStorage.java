@@ -121,10 +121,10 @@ public class PersistentHashMapValueStorage {
     }
   }
 
-  public void switchToCompactionMode() {
+  public void switchToCompactionMode(PagedFileStorage.StorageLock lock) {
     myReader.dispose();
     try {
-      myReader = new MappedReader(myFile);
+      myReader = new MappedReader(myFile, lock);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -144,8 +144,8 @@ public class PersistentHashMapValueStorage {
   private static class MappedReader implements RAReader {
     private final PagedFileStorage myHolder;
 
-    private MappedReader(File file) throws IOException {
-      myHolder = new PagedFileStorage(file);
+    private MappedReader(File file, PagedFileStorage.StorageLock lock) throws IOException {
+      myHolder = new PagedFileStorage(file, lock);
       myHolder.length();
     }
 

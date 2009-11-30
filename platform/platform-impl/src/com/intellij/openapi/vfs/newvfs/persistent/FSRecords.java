@@ -28,6 +28,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.IntArrayList;
+import com.intellij.util.io.PagedFileStorage;
 import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.io.ResizeableMappedFile;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -178,7 +179,7 @@ public class FSRecords implements Disposable, Forceable {
         myNames = new PersistentStringEnumerator(namesFile);
         myAttributes = Storage.create(attributesFile.getCanonicalPath());
         myContents = Storage.create(contentsFile.getCanonicalPath());
-        myRecords = new ResizeableMappedFile(recordsFile, 20 * 1024);
+        myRecords = new ResizeableMappedFile(recordsFile, 20 * 1024, new PagedFileStorage.StorageLock(false));
 
         if (myRecords.length() == 0) {
           cleanRecord(0); // Clean header
