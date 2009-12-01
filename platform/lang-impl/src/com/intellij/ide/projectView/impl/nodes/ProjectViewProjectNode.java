@@ -50,7 +50,13 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
     Set<Module> modules = new LinkedHashSet<Module>(topLevelContentRoots.size());
 
     for (VirtualFile root : topLevelContentRoots) {
-      modules.add(ModuleUtil.findModuleForFile(root, myProject));
+      final Module module = ModuleUtil.findModuleForFile(root, myProject);
+      if (module != null) {
+        modules.add(module);
+      }
+      else {
+        LOG.error("Cannot find module for file, which is reported as content root. Path: " + root.getPresentableUrl());
+      }
     }
 
     ArrayList<AbstractTreeNode> nodes = new ArrayList<AbstractTreeNode>();
