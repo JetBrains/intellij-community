@@ -255,7 +255,7 @@ public class LineStatusTrackerManager implements ProjectComponent {
     if (virtualFile == null || virtualFile instanceof LightVirtualFile) return;
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    if (myProject.isDisposed()) return;
+    if (myProject.isDisposed() || myLineStatusTrackers == null) return;
     final FileStatusManager statusManager = FileStatusManager.getInstance(myProject);
     if (statusManager == null) return;
     final FileStatus status = statusManager.getStatus(virtualFile);
