@@ -16,8 +16,11 @@
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -25,6 +28,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
+import com.intellij.openapi.vcs.impl.VcsInitObject;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
@@ -48,7 +53,10 @@ public class NewMappings {
   private final EventDispatcher<VcsListener> myEventDispatcher;
   private final Project myProject;
 
-  public NewMappings(final Project project, final EventDispatcher<VcsListener> eventDispatcher) {
+  private boolean myActivated;
+
+  public NewMappings(final Project project, final EventDispatcher<VcsListener> eventDispatcher,
+                     final ProjectLevelVcsManagerImpl vcsManager) {
     myProject = project;
     myLock = new Object();
     myVcsToPaths = new HashMap<String, List<VcsDirectoryMapping>>();
@@ -62,6 +70,13 @@ public class NewMappings {
     listStr.add(mapping);
     myVcsToPaths.put("", listStr);
     mySortedMappings = new VcsDirectoryMapping[] {mapping};
+    myActivated = false;
+
+    vcsManager.addInitializationRequest(VcsInitObject.MAPPINGS, new DumbAwareRunnable() {
+      public void run() {
+        activateActiveVcses();
+      }
+    });
   }
 
   public AbstractVcs[] getActiveVcses() {
@@ -70,6 +85,15 @@ public class NewMappings {
       System.arraycopy(myActiveVcses, 0, result, 0, myActiveVcses.length);
       return result;
     }
+  }
+
+  public void activateActiveVcses() {
+    synchronized (myLock) {
+      if (myActivated) return;
+      myActivated = true;
+    }
+    keepActiveVcs(EmptyRunnable.getInstance());
+    mappingsChanged();
   }
 
   @Modification
@@ -105,7 +129,15 @@ public class NewMappings {
   private void keepActiveVcs(final Runnable runnable) {
     final MyVcsActivator activator;
     synchronized (myLock) {
-      activator = new MyVcsActivator(new HashSet<String>(myVcsToPaths.keySet()));
+      if (! myActivated) {
+        runnable.run();
+        return;
+      }
+      final HashSet<String> old = new HashSet<String>();
+      for (AbstractVcs activeVcs : myActiveVcses) {
+        old.add(activeVcs.getName());
+      }
+      activator = new MyVcsActivator(old);
       runnable.run();
       restoreActiveVcses();
     }
