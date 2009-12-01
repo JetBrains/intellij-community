@@ -38,10 +38,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.UniqueFileNamesProvider;
 import com.intellij.util.io.fs.FileSystem;
 import com.intellij.util.io.fs.IFile;
-import org.jdom.Attribute;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.JDOMException;
+import org.jdom.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -206,6 +203,20 @@ public class StorageUtil {
         }
 
         return true;
+      }
+    }, new NotNullFunction<Object, Boolean>() {
+      @NotNull
+      public Boolean fun(Object o) {
+        if (o instanceof Attribute) {
+          // process run configuration's options recursively
+          final Element parent = ((Attribute)o).getParent();
+          if (parent != null && "option".equals(parent.getName())) {
+            final Element grandParent = parent.getParentElement();
+            return grandParent != null && "configuration".equals(grandParent.getName());
+          }
+        }
+
+        return false;
       }
     });
   }
