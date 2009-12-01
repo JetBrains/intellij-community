@@ -500,17 +500,17 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
           LOG.assertTrue(provider != null);
           LOG.assertTrue(provider.accept(myProject, file));
           final FileEditor editor = provider.createEditor(myProject, file);
-          if (current && editor instanceof TextEditorImpl) {
-            ((TextEditorImpl)editor).initFolding();
-          }
-          editors[i] = editor;
           LOG.assertTrue(editor != null);
           LOG.assertTrue(editor.isValid());
-
+          editors[i] = editor;
           // Register PropertyChangeListener into editor
           editor.addPropertyChangeListener(myEditorPropertyChangeListener);
           editor.putUserData(DUMB_AWARE, provider instanceof DumbAware);
-        }
+
+          if (current && editor instanceof TextEditorImpl) {
+            ((TextEditorImpl)editor).initFolding();
+          }
+       }
         catch (Exception e) {
           LOG.error(e);
         }

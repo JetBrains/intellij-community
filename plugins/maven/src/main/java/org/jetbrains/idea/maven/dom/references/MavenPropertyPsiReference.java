@@ -161,6 +161,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     return new MyMavenParentProjectFileProcessor<T>() {
       protected T doProcessParent(VirtualFile parentFile) {
         MavenDomProjectModel parentProjectDom = MavenDomUtil.getMavenDomProjectModel(myProject, parentFile);
+        if (parentProjectDom == null) return null;
         MavenProject parentMavenProject = MavenDomUtil.findProject(parentProjectDom);
         return processProjectProperties(parentProjectDom, parentMavenProject, processor);
       }

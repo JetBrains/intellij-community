@@ -83,6 +83,10 @@ public class JavaResolveCache {
     manager.registerRunnableToRunOnAnyChange(cleanuper);
   }
 
+  public boolean isTypeCached(@NotNull PsiExpression expr) {
+    return myCalculatedTypes.get(expr) != null;
+  }
+
   @Nullable
   public <T extends PsiExpression> PsiType getType(@NotNull T expr, @NotNull Function<T, PsiType> f) {
     PsiType type = myCalculatedTypes.get(expr);

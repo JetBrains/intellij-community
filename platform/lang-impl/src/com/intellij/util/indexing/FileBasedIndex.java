@@ -17,8 +17,6 @@
 package com.intellij.util.indexing;
 
 import com.intellij.AppTopics;
-import com.intellij.concurrency.Job;
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.*;
@@ -38,7 +36,6 @@ import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -118,7 +115,6 @@ public class FileBasedIndex implements ApplicationComponent {
   private final Map<Document, PsiFile> myTransactionMap = new HashMap<Document, PsiFile>();
 
   private static final int ALREADY_PROCESSED = 0x02;
-  private static final String USE_MULTITHREADED_INDEXING = "fileIndex.multithreaded";
   private @Nullable String myConfigPath;
   private @Nullable String mySystemPath;
   private final boolean myIsUnitTestMode;
@@ -197,8 +193,14 @@ public class FileBasedIndex implements ApplicationComponent {
 
       private void rebuildAllndices() {
         for (ID<?, ?> indexId : myIndices.keySet()) {
-          requestRebuild(indexId);
+          try {
+            clearIndex(indexId);
+          }
+          catch (StorageException e) {
+            LOG.info(e);
+          }
         }
+        scheduleIndexRebuild(true);
       }
     });
 
@@ -545,7 +547,7 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
 
-  private boolean isUpToDateCheckEnabled() {
+  private static boolean isUpToDateCheckEnabled() {
     final Integer value = myUpToDateCheckState.get();
     return value == null || value.intValue() == 0;
   }
@@ -894,11 +896,7 @@ public class FileBasedIndex implements ApplicationComponent {
           try {
             clearIndex(indexId);
             if (!cleanupOnly) {
-              for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-                UnindexedFilesUpdater updater =
-                  new UnindexedFilesUpdater(project, FileBasedIndex.this);
-                DumbServiceImpl.getInstance(project).queueCacheUpdate(Collections.<CacheUpdater>singleton(updater));
-              }
+              scheduleIndexRebuild(false);
             }
           }
           catch (StorageException e) {
@@ -931,6 +929,19 @@ public class FileBasedIndex implements ApplicationComponent {
 
     if (myRebuildStatus.get(indexId).get() == REBUILD_IN_PROGRESS) {
       throw new ProcessCanceledException();
+    }
+  }
+
+  private void scheduleIndexRebuild(boolean forceDumbMode) {
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      final Set<CacheUpdater> updatersToRun = Collections.<CacheUpdater>singleton(new UnindexedFilesUpdater(project, this));
+      final DumbServiceImpl service = DumbServiceImpl.getInstance(project);
+      if (forceDumbMode) {
+        service.queueCacheUpdateInDumbMode(updatersToRun);
+      }
+      else {
+        service.queueCacheUpdate(updatersToRun);
+      }
     }
   }
 
@@ -1193,9 +1204,6 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
 
     PsiFile psiFile = null;
 
-    final Ref<ProcessCanceledException> pce = Ref.create(null);
-
-    final List<Runnable> tasks = new ArrayList<Runnable>();
     for (final ID<?, ?> indexId : myIndices.keySet()) {
       if (shouldIndexFile(file, indexId)) {
         if (fc == null) {
@@ -1219,48 +1227,19 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
           fc.putUserData(PROJECT, project);
         }
 
-        final FileContent _fc = fc;
-        tasks.add(new Runnable() {
-          public void run() {
-            try {
-              ProgressManager.checkCanceled();
-              updateSingleIndex(indexId, file, _fc);
-            }
-            catch (ProcessCanceledException e) {
-              pce.set(e);
-            }
-            catch (StorageException e) {
-              requestRebuild(indexId);
-              LOG.info(e);
-            }
-          }
-        });
-      }
-    }
-
-    if (tasks.size() > 0) {
-      if (Registry.get(USE_MULTITHREADED_INDEXING).asBoolean() && !myIsUnitTestMode) {
-        final Job<Object> job = JobScheduler.getInstance().createJob("IndexJob", Job.DEFAULT_PRIORITY / 2);
         try {
-          for (Runnable task : tasks) {
-            job.addTask(task);
-          }
-          job.scheduleAndWaitForResults();
+          ProgressManager.checkCanceled();
+          updateSingleIndex(indexId, file, fc);
         }
-        catch (Throwable throwable) {
-          LOG.info(throwable);
+        catch (ProcessCanceledException e) {
+          myChangedFilesCollector.scheduleForUpdate(file);
+          throw e;
         }
-      }
-      else {
-        for (Runnable task : tasks) {
-          task.run();
+        catch (StorageException e) {
+          requestRebuild(indexId);
+          LOG.info(e);
         }
       }
-    }
-
-    if (!pce.isNull()) {
-      myChangedFilesCollector.scheduleForUpdate(file);
-      throw pce.get();
     }
 
     if (psiFile != null) {
@@ -1608,7 +1587,9 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
     public Collection<VirtualFile> getAllFilesToUpdate() {
       r.lock();
       try {
-        if (myFilesToUpdate.isEmpty())  return Collections.EMPTY_LIST;
+        if (myFilesToUpdate.isEmpty()) {
+          return Collections.emptyList();
+        }
         return new ArrayList<VirtualFile>(myFilesToUpdate);
       }
       finally {

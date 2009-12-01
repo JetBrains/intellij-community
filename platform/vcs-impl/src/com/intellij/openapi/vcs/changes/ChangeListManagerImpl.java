@@ -38,6 +38,8 @@ import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictTracker;
 import com.intellij.openapi.vcs.changes.ui.CommitHelper;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
+import com.intellij.openapi.vcs.impl.VcsInitObject;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -132,7 +134,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       ProjectLevelVcsManager.getInstance(myProject).addVcsListener(myVcsListener);
     }
     else {
-      StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
+      ((ProjectLevelVcsManagerImpl) ProjectLevelVcsManager.getInstance(myProject)).addInitializationRequest(
+        VcsInitObject.CHANGE_LIST_MANAGER, new DumbAwareRunnable() {
         public void run() {
           myWorker.initialized();
           myUpdater.initialized();

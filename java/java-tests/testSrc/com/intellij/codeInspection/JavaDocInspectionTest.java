@@ -56,4 +56,10 @@ public class JavaDocInspectionTest extends InspectionTestCase {
   public void testGenericsParams() throws Exception {
     doTest();
   }
+
+  public void testIgnoreDuplicateThrows() throws Exception {
+    final JavaDocLocalInspection inspection = new JavaDocLocalInspection();
+    inspection.IGNORE_DUPLICATED_THROWS = true;
+    doTest("javaDocInspection/" + getTestName(true), inspection);
+  }
 }

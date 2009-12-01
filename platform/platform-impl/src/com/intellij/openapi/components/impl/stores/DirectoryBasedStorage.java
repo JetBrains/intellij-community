@@ -165,7 +165,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
         if (myPathMacroSubstitutor != null) {
           myPathMacroSubstitutor.expandPaths(element);
 
-          final Set<String> unknownMacros = PathMacrosCollector.getMacroNames(element);
+          final Set<String> unknownMacros = StorageUtil.getMacroNames(element);
           myPathMacroSubstitutor.addUnknownMacros(componentName, unknownMacros);
         }
 
@@ -185,6 +185,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
 
   public boolean hasState(final Object component, final String componentName, final Class<?> aClass, final boolean reloadData) throws StateStorageException {
     if (!myDir.exists()) return false;
+    if (reloadData) myStorageData = null;
     return true;
   }
 

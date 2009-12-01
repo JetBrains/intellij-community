@@ -37,7 +37,7 @@ import com.intellij.rt.execution.junit.JUnitStarter;
 import com.intellij.util.Function;
 
 import java.util.Collection;
-import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 
 public class TestMethods extends TestMethod {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit.TestMethods");
@@ -71,20 +71,18 @@ public class TestMethods extends TestMethod {
       }
     });
     if (exception[0] != null) throw exception[0];
-    final LinkedHashMap<PsiMethod, TestInfo> methods = new LinkedHashMap<PsiMethod, TestInfo>();
+    final LinkedHashSet<TestInfo> methods = new LinkedHashSet<TestInfo>();
     for (AbstractTestProxy failedTest : myFailedTests) {
       Location location = failedTest.getLocation(project);
       if (!(location instanceof MethodLocation)) continue;
       PsiElement psiElement = location.getPsiElement();
       LOG.assertTrue(psiElement instanceof PsiMethod);
       PsiMethod method = (PsiMethod)psiElement;
-      methods.put(method, ((TestProxy)failedTest).getInfo());
+      methods.add(((TestProxy)failedTest).getInfo());
     }
-    addClassesListToJavaParameters(methods.keySet(), new Function<PsiElement, String>() {
-      public String fun(PsiElement element) {
-        if (element instanceof PsiMethod) {
-          final PsiMethod method = (PsiMethod)element;
-          final TestInfo testInfo = methods.get(method);
+    addClassesListToJavaParameters(methods, new Function<TestInfo, String>() {
+      public String fun(TestInfo testInfo) {
+        if (testInfo != null) {
           final MethodLocation location = (MethodLocation)testInfo.getLocation(project);
           LOG.assertTrue(location != null);
           return JavaExecutionUtil.getRuntimeQualifiedName(location.getContainingClass()) + "," + testInfo.getName();

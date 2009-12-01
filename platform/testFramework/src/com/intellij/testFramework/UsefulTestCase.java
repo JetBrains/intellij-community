@@ -31,11 +31,11 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
+import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
-import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
 import gnu.trove.THashSet;
 import junit.framework.Assert;
 import junit.framework.AssertionFailedError;
@@ -459,22 +459,27 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  protected static void checkAllTimersAreDisposed() throws Exception {
-    Class<?> aClass = Class.forName("javax.swing.TimerQueue");
+  protected static void checkAllTimersAreDisposed() {
+    try {
+      Class<?> aClass = Class.forName("javax.swing.TimerQueue");
 
-    Method inst = aClass.getDeclaredMethod("sharedInstance");
-    inst.setAccessible(true);
-    Object queue = inst.invoke(null);
-    Field field = aClass.getDeclaredField("firstTimer");
-    field.setAccessible(true);
-    Object firstTimer = field.get(queue);
-    if (firstTimer != null) {
-      try {
-        fail("Not disposed Timer: "+firstTimer.toString()+"; queue:"+queue);
+      Method inst = aClass.getDeclaredMethod("sharedInstance");
+      inst.setAccessible(true);
+      Object queue = inst.invoke(null);
+      Field field = aClass.getDeclaredField("firstTimer");
+      field.setAccessible(true);
+      Object firstTimer = field.get(queue);
+      if (firstTimer != null) {
+        try {
+          fail("Not disposed Timer: "+firstTimer.toString()+"; queue:"+queue);
+        }
+        finally {
+          field.set(queue, null);
+        }
       }
-      finally {
-        field.set(queue, null);
-      }
+    }
+    catch (Throwable e) {
+      // Ignore
     }
   }
 

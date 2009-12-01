@@ -152,6 +152,9 @@ public class AbstractTreeUi {
   private boolean myPassthroughMode = false;
 
 
+  private Set<Object> myAutoExpandRoots = new HashSet<Object>();
+  private final RegistryValue myAutoExpandDepth = Registry.get("ide.tree.autoExpandMaxDepth");
+
   protected void init(AbstractTreeBuilder builder,
                       JTree tree,
                       DefaultTreeModel treeModel,
@@ -582,12 +585,41 @@ public class AbstractTreeUi {
       autoExpand = getBuilder().isAutoExpandNode(descriptor);
     }
 
+    Object element = getElementFromDescriptor(descriptor);
+    autoExpand = validateAutoExpand(autoExpand, element);
+
     if (!autoExpand && !myTree.isRootVisible()) {
-      Object element = getElementFromDescriptor(descriptor);
       if (element != null && element.equals(getTreeStructure().getRootElement())) return true;
     }
 
     return autoExpand;
+  }
+
+  private boolean validateAutoExpand(boolean autoExpand, Object element) {
+    if (autoExpand) {
+      int distance = getDistanceToAutoExpandRoot(element);
+      if (distance < 0) {
+        myAutoExpandRoots.add(element);
+      } else {
+        if (distance >= myAutoExpandDepth.asInteger() - 1) {
+          autoExpand = false;
+        }
+      }
+    }
+    return autoExpand;
+  }
+
+  private int getDistanceToAutoExpandRoot(Object element) {
+    int distance = 0;
+
+    Object eachParent = element;
+    while (eachParent != null) {
+      if (myAutoExpandRoots.contains(eachParent)) break;
+      eachParent = getTreeStructure().getParentElement(eachParent);
+      distance++;
+    }
+
+    return eachParent != null ? distance : -1;
   }
 
   private boolean isAutoExpand(DefaultMutableTreeNode node) {
@@ -928,10 +960,10 @@ public class AbstractTreeUi {
         }
 
         if (isSelectionInside(node)) {
-          addSelectionPath(getPathFor(node), true, Condition.TRUE);
+          addSelectionPath(getPathFor(node), true, Condition.TRUE, null);
         }
 
-        doWithUpdaterState(new Runnable() {
+        processInnerChange(new Runnable() {
           public void run() {
             for (TreeNode each : children) {
               removeNodeFromParent((MutableTreeNode)each, true);
@@ -1866,16 +1898,23 @@ public class AbstractTreeUi {
 
 
   private boolean canSmartExpand(DefaultMutableTreeNode node, boolean canSmartExpand) {
-    return !myNotForSmartExpand.contains(node) && canSmartExpand;
+    if (!getBuilder().isSmartExpand()) return false;
+
+    boolean smartExpand = !myNotForSmartExpand.contains(node) && canSmartExpand;
+    return smartExpand ? validateAutoExpand(smartExpand, getElementFor(node)) : false;
   }
 
-  private void processSmartExpand(final DefaultMutableTreeNode node, final boolean canSmartExpand) {
-    if (!getBuilder().isSmartExpand() || !canSmartExpand(node, canSmartExpand)) return;
+  private void processSmartExpand(final DefaultMutableTreeNode node, final boolean canSmartExpand, boolean forced) {
+    if (!getBuilder().isSmartExpand()) return;
 
-    if (isNodeBeingBuilt(node)) {
+    boolean can = canSmartExpand(node, canSmartExpand);
+
+    if (!can && !forced) return;
+
+    if (isNodeBeingBuilt(node) && !forced) {
       addNodeAction(getElementFor(node), new NodeAction() {
         public void onReady(DefaultMutableTreeNode node) {
-          processSmartExpand(node, canSmartExpand);
+          processSmartExpand(node, canSmartExpand, true);
         }
       }, true);
     }
@@ -1883,7 +1922,11 @@ public class AbstractTreeUi {
       TreeNode child = getChildForSmartExpand(node);
       if (child != null) {
         final TreePath childPath = new TreePath(node.getPath()).pathByAddingChild(child);
-        myTree.expandPath(childPath);
+        processInnerChange(new Runnable() {
+          public void run() {
+            myTree.expandPath(childPath);
+          }
+        });
       }
     }
   }
@@ -2095,7 +2138,7 @@ public class AbstractTreeUi {
     DefaultMutableTreeNode node = getNodeForElement(disposedElement, false);
     if (node != null && isValidForSelectionAdjusting(node)) {
       Object newElement = getElementFor(node);
-      addSelectionPath(getPathFor(node), true, getExpiredElementCondition(newElement));
+      addSelectionPath(getPathFor(node), true, getExpiredElementCondition(newElement), disposedElement);
       return;
     }
 
@@ -2105,18 +2148,18 @@ public class AbstractTreeUi {
         if (parentNode.getChildCount() > selectedIndex) {
           TreeNode newChildNode = parentNode.getChildAt(selectedIndex);
           if (isValidForSelectionAdjusting(newChildNode)) {
-            addSelectionPath(new TreePath(myTreeModel.getPathToRoot(newChildNode)), true, getExpiredElementCondition(disposedElement));
+            addSelectionPath(new TreePath(myTreeModel.getPathToRoot(newChildNode)), true, getExpiredElementCondition(disposedElement), disposedElement);
           }
         }
         else {
           TreeNode newChild = parentNode.getChildAt(parentNode.getChildCount() - 1);
           if (isValidForSelectionAdjusting(newChild)) {
-            addSelectionPath(new TreePath(myTreeModel.getPathToRoot(newChild)), true, getExpiredElementCondition(disposedElement));
+            addSelectionPath(new TreePath(myTreeModel.getPathToRoot(newChild)), true, getExpiredElementCondition(disposedElement), disposedElement);
           }
         }
       }
       else {
-        addSelectionPath(new TreePath(myTreeModel.getPathToRoot(parentNode)), true, getExpiredElementCondition(disposedElement));
+        addSelectionPath(new TreePath(myTreeModel.getPathToRoot(parentNode)), true, getExpiredElementCondition(disposedElement), disposedElement);
       }
     }
   }
@@ -2146,8 +2189,8 @@ public class AbstractTreeUi {
     };
   }
 
-  private void addSelectionPath(final TreePath path, final boolean isAdjustedSelection, final Condition isExpiredAdjustement) {
-    doWithUpdaterState(new Runnable() {
+  private void addSelectionPath(final TreePath path, final boolean isAdjustedSelection, final Condition isExpiredAdjustement, @Nullable final Object adjustmentCause) {
+    processInnerChange(new Runnable() {
       public void run() {
         TreePath toSelect = null;
 
@@ -2171,7 +2214,7 @@ public class AbstractTreeUi {
 
           if (isAdjustedSelection && myUpdaterState != null) {
             final Object toSelectElement = getElementFor(toSelect.getLastPathComponent());
-            myUpdaterState.addAdjustedSelection(toSelectElement, isExpiredAdjustement);
+            myUpdaterState.addAdjustedSelection(toSelectElement, isExpiredAdjustement, adjustmentCause);
           }
         }
       }
@@ -2196,7 +2239,7 @@ public class AbstractTreeUi {
 
 
   private void removeNodeFromParent(final MutableTreeNode node, final boolean willAdjustSelection) {
-    doWithUpdaterState(new Runnable() {
+    processInnerChange(new Runnable() {
       public void run() {
         if (willAdjustSelection) {
           final TreePath path = getPathFor(node);
@@ -2211,7 +2254,7 @@ public class AbstractTreeUi {
   }
 
   private void expandPath(final TreePath path, final boolean canSmartExpand) {
-    doWithUpdaterState(new Runnable() {
+    processInnerChange(new Runnable() {
       public void run() {
         if (path.getLastPathComponent() instanceof DefaultMutableTreeNode) {
           DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
@@ -2222,7 +2265,7 @@ public class AbstractTreeUi {
             try {
               myRequestedExpand = path;
               myTree.expandPath(path);
-              processSmartExpand(node, canSmartExpand);
+              processSmartExpand(node, canSmartExpand, false);
             }
             finally {
               myNotForSmartExpand.remove(node);
@@ -2237,13 +2280,16 @@ public class AbstractTreeUi {
     });
   }
 
-  private void doWithUpdaterState(Runnable runnable) {
-    if (myUpdaterState != null) {
-      myUpdaterState.process(runnable);
+  private void processInnerChange(Runnable runnable) {
+    if (myUpdaterState == null) {
+      setUpdaterState(new UpdaterTreeState(this));
     }
-    else {
-      runnable.run();
-    }
+
+    myUpdaterState.process(runnable);
+  }
+
+  private boolean isInnerChange() {
+    return myUpdaterState != null && myUpdaterState.isProcessingNow();
   }
 
   protected boolean doUpdateNodeDescriptor(final NodeDescriptor descriptor) {
@@ -2517,7 +2563,7 @@ public class AbstractTreeUi {
 
       sortChildren(parentNode, all, true, false);
       if (!before.equals(all)) {
-        doWithUpdaterState(new Runnable() {
+        processInnerChange(new Runnable() {
           public void run() {
             parentNode.removeAllChildren();
             for (TreeNode each : all) {
@@ -2564,6 +2610,7 @@ public class AbstractTreeUi {
     if (descriptor == null) return;
     final Object element = getElementFromDescriptor(descriptor);
     removeMapping(element, node, null);
+    myAutoExpandRoots.remove(element);
     node.setUserObject(null);
     node.removeAllChildren();
   }
@@ -2737,7 +2784,7 @@ public class AbstractTreeUi {
     for (Object each : selection) {
       DefaultMutableTreeNode node = getNodeForElement(each, false);
       if (node != null && isValidForSelectionAdjusting(node)) {
-        addSelectionPath(getPathFor(node), false, null);
+        addSelectionPath(getPathFor(node), false, null, null);
       }
     }
   }
@@ -3204,8 +3251,9 @@ public class AbstractTreeUi {
   }
 
   private void dropUpdaterStateIfExternalChange() {
-    if (myUpdaterState != null && !myUpdaterState.isProcessingNow()) {
-      clearUpdaterState();
+   if (!isInnerChange()) {
+     clearUpdaterState();
+     myAutoExpandRoots.clear();
     }
   }
 
@@ -3427,7 +3475,7 @@ public class AbstractTreeUi {
         getBuilder().expandNodeChildren(node);
       }
 
-      processSmartExpand(node, canSmartExpand(node, true));
+      processSmartExpand(node, canSmartExpand(node, true), false);
       processNodeActionsIfReady(node);
     }
 
@@ -3470,7 +3518,7 @@ public class AbstractTreeUi {
       }
 
       if (pathToSelect != null && myTree.isSelectionEmpty()) {
-        addSelectionPath(pathToSelect, true, Condition.FALSE);
+        addSelectionPath(pathToSelect, true, Condition.FALSE, null);
       }
     }
 

@@ -56,7 +56,9 @@ public class XmlUsageViewDescriptionProvider implements ElementDescriptionProvid
       }
 
       final FindUsagesProvider provider = LanguageFindUsages.INSTANCE.forLanguage(element.getLanguage());
-      return provider.getType(element);
+      if (provider.canFindUsagesFor(element)) {
+        return provider.getType(element);
+      }
     }
     return null;
   }

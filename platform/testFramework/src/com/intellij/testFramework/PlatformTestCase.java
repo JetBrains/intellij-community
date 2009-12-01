@@ -287,8 +287,11 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     checkAllTimersAreDisposed();
     if (myProject != null) {
       ((StartupManagerImpl)StartupManager.getInstance(myProject)).prepareForNextTest();
-      LookupManager.getInstance(myProject).hideActiveLookup();
-      
+      final LookupManager lookupManager = LookupManager.getInstance(myProject);
+      if (lookupManager != null) {
+        lookupManager.hideActiveLookup();
+      }
+
       ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).clearUncommitedDocuments();
     }
 

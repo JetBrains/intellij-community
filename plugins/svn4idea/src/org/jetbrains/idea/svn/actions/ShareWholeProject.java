@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -31,7 +32,7 @@ import org.jetbrains.idea.svn.SvnVcs;
 import java.util.Arrays;
 import java.util.List;
 
-public class ShareWholeProject extends AnAction {
+public class ShareWholeProject extends AnAction implements DumbAware {
   @Override
   public void update(final AnActionEvent e) {
     final MyChecker checker = new MyChecker();

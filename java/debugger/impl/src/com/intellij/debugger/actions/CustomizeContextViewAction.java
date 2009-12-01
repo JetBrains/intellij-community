@@ -22,6 +22,7 @@ import com.intellij.debugger.settings.UserRenderersConfigurable;
 import com.intellij.debugger.ui.impl.FrameDebuggerTree;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.options.CompositeConfigurable;
@@ -30,6 +31,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.TabbedConfigurable;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -44,7 +46,8 @@ public class CustomizeContextViewAction extends DebuggerAction{
   public void actionPerformed(AnActionEvent e) {
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
 
-    final CompositeConfigurable configurable = new TabbedConfigurable() {
+    Disposable disposable = Disposer.newDisposable();
+    final CompositeConfigurable configurable = new TabbedConfigurable(disposable) {
       protected List<Configurable> createConfigurables() {
         ArrayList<Configurable> array = new ArrayList<Configurable>();
         array.add(new DebuggerDataViewsConfigurable(project));
@@ -70,7 +73,9 @@ public class CustomizeContextViewAction extends DebuggerAction{
       }
     };
 
-    new SingleConfigurableEditor(project, configurable).show();
+    SingleConfigurableEditor editor = new SingleConfigurableEditor(project, configurable);
+    Disposer.register(editor.getDisposable(), disposable);
+    editor.show();
   }
 
   public void update(AnActionEvent e) {

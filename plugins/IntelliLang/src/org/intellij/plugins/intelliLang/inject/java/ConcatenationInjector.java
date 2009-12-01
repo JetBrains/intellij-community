@@ -140,8 +140,9 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       final PsiMethod psiMethod;
       final int parameterIndex;
       if (owner instanceof PsiParameter) {
-        psiMethod = PsiTreeUtil.getParentOfType(owner, PsiMethod.class, false);
-        final PsiParameterList parameterList = psiMethod == null? null : psiMethod.getParameterList();
+        final PsiElement declarationScope = ((PsiParameter)owner).getDeclarationScope();
+        psiMethod = declarationScope instanceof PsiMethod? (PsiMethod)declarationScope : null;
+        final PsiParameterList parameterList = psiMethod == null? null : ((PsiMethod)declarationScope).getParameterList();
         // don't check catchblock parameters & etc.
         if (parameterList == null || parameterList != owner.getParent()) continue;
         parameterIndex = parameterList.getParameterIndex((PsiParameter)owner);

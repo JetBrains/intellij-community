@@ -112,6 +112,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private static final String ATTRIBUTE_DOWNLOAD_URL = "download-url";
   @NonNls private static final String ATTRIBUTE_WEBHELP_URL = "webhelp-url";
   @NonNls private static final String ELEMENT_WHATSNEW = "whatsnew";
+  private static final String DEFAULT_PLUGINS_HOST = "http://plugins.intellij.net";
 
   public void initComponent() { }
 
@@ -394,8 +395,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
       myWhatsNewUrl = whatsnewElement.getAttributeValue(ATTRIBUTE_URL);
     }
 
-    myPluginsListUrl = "http://plugins.intellij.net/plugins/list/";
-    myPluginsDownloadUrl = "http://plugins.intellij.net/pluginManager";
+    myPluginsListUrl = DEFAULT_PLUGINS_HOST + "/plugins/list/";
+    myPluginsDownloadUrl = DEFAULT_PLUGINS_HOST + "/pluginManager";
 
     Element pluginsElement = parentNode.getChild(ELEMENT_PLUGINS);
     if (pluginsElement != null) {
@@ -410,7 +411,13 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
       }
     }
     else {
-      myPluginManagerUrl = "http://plugins.intellij.net";
+      myPluginManagerUrl = DEFAULT_PLUGINS_HOST;
+    }
+
+    final String pluginsHost = System.getProperty("idea.plugins.host");
+    if (pluginsHost != null) {
+      myPluginsListUrl = myPluginsListUrl.replace(DEFAULT_PLUGINS_HOST, pluginsHost);
+      myPluginsDownloadUrl = myPluginsDownloadUrl.replace(DEFAULT_PLUGINS_HOST, pluginsHost);
     }
 
     myPluginChooserPages = new ArrayList<PluginChooserPage>();

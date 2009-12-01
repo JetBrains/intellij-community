@@ -37,6 +37,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -413,7 +414,7 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
     final List<String> filesToDelete = context.getUserData(FILES_TO_DELETE_KEY);
     final Set<String> deletedJars;
     if (filesToDelete != null) {
-      deletedJars = deleteFiles(context.getProject(), filesToDelete);
+      deletedJars = deleteFiles(filesToDelete, context);
     }
     else {
       deletedJars = Collections.emptySet();
@@ -422,14 +423,34 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
     return deletedJars;
   }
 
-  protected Set<String> deleteFiles(final Project project, final List<String> paths) {
+  private Set<String> deleteFiles(final List<String> paths, CompileContext context) {
+
+    final Set<Artifact> artifactsToBuild = getAffectedArtifacts(context);
+
     final boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
     final THashSet<String> deletedJars = new THashSet<String>();
     if (LOG.isDebugEnabled()) {
       LOG.debug("Deleting outdated files...");
     }
+
+    final Artifact[] allArtifacts = ArtifactManager.getInstance(context.getProject()).getArtifacts();
+
     List<File> filesToRefresh = new ArrayList<File>();
     for (String fullPath : paths) {
+      boolean isUnderOutput = false;
+      boolean isInArtifactsToBuild = false;
+      for (Artifact artifact : allArtifacts) {
+        final String path = artifact.getOutputPath();
+        if (!StringUtil.isEmpty(path) && FileUtil.startsWith(fullPath, path)) {
+          isUnderOutput = true;
+          if (artifactsToBuild.contains(artifact)) {
+            isInArtifactsToBuild = true;
+            break;
+          }
+        }
+      }
+      if (isUnderOutput && !isInArtifactsToBuild) continue;
+
       int end = fullPath.indexOf(JarFileSystem.JAR_SEPARATOR);
       String filePath = end != -1 ? fullPath.substring(0, end) : fullPath;
       if (end != -1) {
@@ -446,7 +467,7 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
         if (testMode) {
           CompilerManagerImpl.addDeletedPath(file.getAbsolutePath());
         }
-        getOutputItemsCache(project).remove(fullPath);
+        getOutputItemsCache(context.getProject()).remove(fullPath);
       }
     }
 

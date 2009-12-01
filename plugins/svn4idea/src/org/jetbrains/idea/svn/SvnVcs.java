@@ -159,7 +159,7 @@ public class SvnVcs extends AbstractVcs {
   }
 
   public SvnVcs(final Project project, MessageBus bus, SvnConfiguration svnConfiguration, final ChangeListManager changeListManager,
-                final VcsDirtyScopeManager vcsDirtyScopeManager, final StartupManager startupManager) {
+                final VcsDirtyScopeManager vcsDirtyScopeManager) {
     super(project, VCS_NAME);
     LOG.debug("ct");
     myConfiguration = svnConfiguration;
@@ -196,26 +196,6 @@ public class SvnVcs extends AbstractVcs {
         }
       };
     }
-
-    // do one time after project loaded
-    startupManager.runWhenProjectIsInitialized(new DumbAwareRunnable() {
-      public void run() {
-        postStartup();
-
-        // for IDEA, it takes 2 minutes - and anyway this can be done in background, no sence...
-        // once it could be mistaken about copies for 2 minutes on start...
-
-        /*if (! myMapping.getAllWcInfos().isEmpty()) {
-          invokeRefreshSvnRoots();
-          return;
-        }
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-          public void run() {
-            myCopiesRefreshManager.getCopiesRefresh().ensureInit();
-          }
-        }, SvnBundle.message("refreshing.working.copies.roots.progress.text"), true, myProject);*/
-      }
-    });
 
     myFrameStateListener = new MyFrameStateListener(changeListManager, vcsDirtyScopeManager);
   }
@@ -358,6 +338,26 @@ public class SvnVcs extends AbstractVcs {
     // this will initialize its inner listener for committed changes upload
     LoadedRevisionsCache.getInstance(myProject);
     FrameStateManager.getInstance().addListener(myFrameStateListener);
+
+    // do one time after project loaded
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
+      public void run() {
+        postStartup();
+
+        // for IDEA, it takes 2 minutes - and anyway this can be done in background, no sence...
+        // once it could be mistaken about copies for 2 minutes on start...
+
+        /*if (! myMapping.getAllWcInfos().isEmpty()) {
+          invokeRefreshSvnRoots();
+          return;
+        }
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+          public void run() {
+            myCopiesRefreshManager.getCopiesRefresh().ensureInit();
+          }
+        }, SvnBundle.message("refreshing.working.copies.roots.progress.text"), true, myProject);*/
+      }
+    });
   }
 
   @Override

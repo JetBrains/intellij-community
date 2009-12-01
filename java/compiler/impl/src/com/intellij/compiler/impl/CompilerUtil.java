@@ -28,7 +28,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ThrowableRunnable;
 import gnu.trove.THashMap;
@@ -103,12 +105,7 @@ public class CompilerUtil {
   public static void refreshIOFiles(@NotNull final Collection<File> files) {
     final long start = System.currentTimeMillis();
     try {
-      for (File file1 : files) {
-        final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file1);
-        if (file != null) {
-          file.refresh(false, false);
-        }
-      }
+      LocalFileSystem.getInstance().refreshIoFiles(files);
     }
     finally {
       ourRefreshTime += (System.currentTimeMillis() - start);
@@ -118,12 +115,15 @@ public class CompilerUtil {
   public static void refreshIODirectories(@NotNull final Collection<File> files) {
     final long start = System.currentTimeMillis();
     try {
-      for (File file1 : files) {
-        final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file1);
-        if (file != null) {
-          file.refresh(false, true);
+      final LocalFileSystem lfs = LocalFileSystem.getInstance();
+      final List<VirtualFile> filesToRefresh = new ArrayList<VirtualFile>();
+      for (File file : files) {
+        final VirtualFile virtualFile = lfs.refreshAndFindFileByIoFile(file);
+        if (virtualFile != null) {
+          filesToRefresh.add(virtualFile);
         }
       }
+      RefreshQueue.getInstance().refresh(false, true, null, VfsUtil.toVirtualFileArray(filesToRefresh));
     }
     finally {
       ourRefreshTime += (System.currentTimeMillis() - start);

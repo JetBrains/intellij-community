@@ -30,6 +30,7 @@ import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -207,7 +208,7 @@ public class StartupManagerImpl extends StartupManagerEx {
         runnable.run();
       }
       else {
-        application.invokeLater(new Runnable() {
+        SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             if (!myProject.isDisposed()) {
               runnable.run();

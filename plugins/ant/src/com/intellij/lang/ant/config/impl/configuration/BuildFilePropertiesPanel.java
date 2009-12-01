@@ -18,6 +18,7 @@ package com.intellij.lang.ant.config.impl.configuration;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.AntBuildFileBase;
 import com.intellij.lang.ant.config.impl.*;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -26,6 +27,7 @@ import com.intellij.openapi.projectRoots.ui.ProjectJdksEditor;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.SimpleColoredComponent;
@@ -84,6 +86,7 @@ public class BuildFilePropertiesPanel {
 
   private void beforeClose() {
     myForm.beforeClose(myBuildFile);
+    Disposer.dispose(myForm);
   }
 
   public static boolean editBuildFile(AntBuildFileBase buildFile) {
@@ -92,7 +95,7 @@ public class BuildFilePropertiesPanel {
     return panel.showDialog();
   }
 
-  static abstract class Tab {
+  abstract static class Tab {
     private final UIPropertyBinding.Composite myBinding = new UIPropertyBinding.Composite();
 
     public abstract JComponent getComponent();
@@ -118,7 +121,7 @@ public class BuildFilePropertiesPanel {
     public abstract JComponent getPreferedFocusComponent();
   }
 
-  private static class Form {
+  private static class Form implements Disposable {
     private JLabel myBuildFileName;
     private JTextField myXmx;
     private JTextField myXss;
@@ -127,7 +130,7 @@ public class BuildFilePropertiesPanel {
     private JPanel myTabsPlace;
     private JPanel myWholePanel;
     private JLabel myHeapSizeLabel;
-    private final Tab[] myTabs = new Tab[]{
+    private final Tab[] myTabs = {
           new PropertiesTab(),
           new ExecutionTab(GlobalAntConfiguration.getInstance()),
           new AdditionalClasspathTab(),
@@ -136,9 +139,9 @@ public class BuildFilePropertiesPanel {
     private final UIPropertyBinding.Composite myBinding = new UIPropertyBinding.Composite();
     private final TabbedPaneWrapper myWrapper;
 
-    public Form() {
+    private Form() {
       myHeapSizeLabel.setLabelFor(myXmx);
-      myWrapper = new TabbedPaneWrapper();
+      myWrapper = new TabbedPaneWrapper(this);
       myTabsPlace.setLayout(new BorderLayout());
       myTabsPlace.add(myWrapper.getComponent(), BorderLayout.CENTER);
 
@@ -180,6 +183,9 @@ public class BuildFilePropertiesPanel {
       for (Tab tab : myTabs) {
         tab.beforeClose(buildFile.getAllOptions());
       }
+    }
+
+    public void dispose() {
     }
   }
 

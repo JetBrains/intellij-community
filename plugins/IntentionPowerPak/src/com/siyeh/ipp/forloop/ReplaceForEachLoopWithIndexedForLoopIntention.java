@@ -24,6 +24,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,7 +44,8 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
         if (statement == null) {
             return;
         }
-        final PsiExpression iteratedValue = statement.getIteratedValue();
+        final PsiExpression iteratedValue =
+                ParenthesesUtils.stripParentheses(statement.getIteratedValue());
         if (iteratedValue == null) {
             return;
         }
@@ -82,10 +84,12 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
             final PsiTypeCastExpression castExpression =
                     (PsiTypeCastExpression) iteratedValue;
             final PsiExpression operand = castExpression.getOperand();
-            if (operand == null) {
+            final PsiExpression strippedOperand =
+                    ParenthesesUtils.stripParentheses(operand);
+            if (strippedOperand == null) {
                 variableNameRoot = "";
             } else {
-                variableNameRoot = operand.getText();
+                variableNameRoot = strippedOperand.getText();
             }
         } else if (iteratedValue instanceof PsiJavaCodeReferenceElement) {
             final PsiJavaCodeReferenceElement referenceElement =

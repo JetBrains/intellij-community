@@ -112,17 +112,17 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
       for (Iterator<TreeUpdatePass> iterator = myNodeQueue.iterator(); iterator.hasNext();) {
         final TreeUpdatePass passInQueue = iterator.next();
 
-
         if (passInQueue == toAdd) {
-          return;
+          toAdd.expire();
+          break;
         }
         else if (passInQueue.getNode() == toAdd.getNode()) {
           toAdd.expire();
-          return;
+          break;
         }
         else if (toAdd.getNode().isNodeAncestor(passInQueue.getNode())) {
           toAdd.expire();
-          return;
+          break;
         }
         else if (passInQueue.getNode().isNodeAncestor(toAdd.getNode())) {
           iterator.remove();
@@ -151,7 +151,10 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
     }
 
 
-    if (toAdd.isExpired()) return;
+    if (toAdd.isExpired()) {
+      requeueViewUpdateIfNeeded();
+      return;
+    }
 
 
     myNodeQueue.add(toAdd);
@@ -159,6 +162,16 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
     myUpdateCount = newUpdateCount;
     toAdd.setUpdateStamp(myUpdateCount);
 
+    requeueViewUpdate();
+  }
+
+  private void requeueViewUpdateIfNeeded() {
+    if (myUpdateQueue.isEmpty() && !myNodeQueue.isEmpty()) {
+      requeueViewUpdate();
+    }
+  }
+
+  private void requeueViewUpdate() {
     queue(new Update("ViewUpdate") {
       public boolean isExpired() {
         return myTreeBuilder.isDisposed();
@@ -167,16 +180,18 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
       public void run() {
         if (myTreeBuilder.getTreeStructure().hasSomethingToCommit()) {
           myTreeBuilder.getTreeStructure().commit();
-          queue(this);
+          requeueViewUpdateIfNeeded();
           return;
         }
         try {
           performUpdate();
         }
         catch (ProcessCanceledException e) {
+          requeueViewUpdateIfNeeded();
           throw e;
         }
         catch (RuntimeException e) {
+          requeueViewUpdateIfNeeded();
           LOG.error(myTreeBuilder.getClass().getName(), e);
         }
       }

@@ -141,13 +141,23 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   public static boolean commitChanges(final Project project, final Collection<Change> changes, final LocalChangeList initialSelection,
                                    final CommitExecutor executor, final String comment) {
-    final ChangeListManager manager = ChangeListManager.getInstance(project);
     if (executor == null) {
-      return commitChanges(project, changes, initialSelection, manager.getRegisteredExecutors(), true, comment);
+      return commitChanges(project, changes, initialSelection, collectExecutors(project, changes), true, comment);
     }
     else {
       return commitChanges(project, changes, initialSelection, Collections.singletonList(executor), false, comment);
     }
+  }
+
+  public static List<CommitExecutor> collectExecutors(Project project, Collection<Change> changes) {
+    List<CommitExecutor> result = new ArrayList<CommitExecutor>();
+    final ChangeListManager manager = ChangeListManager.getInstance(project);
+    final List<AbstractVcs> vcses = getAffectedVcses(project, changes);
+    for (AbstractVcs vcs : vcses) {
+      result.addAll(vcs.getCommitExecutors());
+    }
+    result.addAll(manager.getRegisteredExecutors());
+    return result;
   }
 
   public static boolean commitChanges(final Project project, final Collection<Change> changes, final LocalChangeList initialSelection,
@@ -389,7 +399,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private void updateVcsOptionsVisibility() {
-    final List<AbstractVcs> affectedVcses = getAffectedVcses(myBrowser.getSelectedChangeList().getChanges());
+    final List<AbstractVcs> affectedVcses = getAffectedVcses(myProject, myBrowser.getSelectedChangeList().getChanges());
     for(Map.Entry<AbstractVcs, JPanel> entry: myPerVcsOptionsPanels.entrySet()) {
       entry.getValue().setVisible(affectedVcses.contains(entry.getKey()));
     }
@@ -420,6 +430,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     if (!saveDialogState()) return;
     saveComments(true);
     final CommitSession session = commitExecutor.createCommitSession();
+    if (session == CommitSession.VCS_COMMIT) {
+      doOKAction();
+      return;
+    }
     boolean isOK = true;
     if (SessionDialog.createConfigurationUI(session, getIncludedChanges(), getCommitMessage())!= null) {
       DialogWrapper sessionDialog = new SessionDialog(commitExecutor.getActionText(),
@@ -778,10 +792,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     return myBrowserExtender.getAffectedVcses();
   }
 
-  private List<AbstractVcs> getAffectedVcses(final Collection<Change> changes) {
+  private static List<AbstractVcs> getAffectedVcses(Project project, final Collection<Change> changes) {
     Set<AbstractVcs> result = new HashSet<AbstractVcs>();
     for (Change change : changes) {
-      final AbstractVcs vcs = ChangesUtil.getVcsForChange(change, myProject);
+      final AbstractVcs vcs = ChangesUtil.getVcsForChange(change, project);
       if (vcs != null) {
         result.add(vcs);
       }

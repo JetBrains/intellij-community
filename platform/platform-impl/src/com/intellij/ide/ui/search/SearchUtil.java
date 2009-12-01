@@ -281,7 +281,7 @@ public class SearchUtil {
   }
 
   public static boolean isComponentHighlighted(String text, String option, final boolean force, final SearchableConfigurable configurable) {
-    if (text == null || option == null) return false;
+    if (text == null || option == null || option.length() == 0) return false;
     SearchableOptionsRegistrar searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance();
     final Set<String> options =
       configurable != null ? searchableOptionsRegistrar.replaceSynonyms(searchableOptionsRegistrar.getProcessedWords(option), configurable) : null;

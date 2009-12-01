@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.conflicts;
 
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
@@ -63,10 +64,12 @@ public class ChangelistConflictAccessProvider implements WritingAccessProvider {
       }
       
       ChangelistConflictDialog dialog;
+      final int savedEventCount = IdeEventQueue.getInstance().getEventCount();
       do {
         dialog = new ChangelistConflictDialog(myProject, new ArrayList<ChangeList>(changeLists), denied);
         dialog.show();
       } while (dialog.isOK() && !dialog.getResolution().resolveConflict(myProject, changes));
+      IdeEventQueue.getInstance().setEventCount(savedEventCount);
 
       if (dialog.isOK()) {
         options.LAST_RESOLUTION = dialog.getResolution();

@@ -16,10 +16,12 @@
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.NotNullFunction;
 import org.jdom.Attribute;
 import org.jdom.Comment;
 import org.jdom.Element;
 import org.jdom.Text;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.LinkedHashMap;
@@ -57,16 +59,20 @@ public abstract class PathMacroMap {
     substitute(e, caseSensitive, false);
   }
 
-  public final void substitute(Element e, boolean caseSensitive, final boolean recursively) {
+  public final void substitute(Element e, boolean caseSensitive, final boolean recursively,
+                               @Nullable final NotNullFunction<Object, Boolean> filter,
+                               @Nullable final NotNullFunction<Object, Boolean> recursiveFilter) {
     List content = e.getContent();
     for (Object child : content) {
       if (child instanceof Element) {
         Element element = (Element)child;
-        substitute(element, caseSensitive, recursively);
+        substitute(element, caseSensitive, recursively, filter, recursiveFilter);
       }
       else if (child instanceof Text) {
         Text t = (Text)child;
-        t.setText(recursively ? substituteRecursively(t.getText(), caseSensitive) : substitute(t.getText(), caseSensitive));
+        if (filter == null || filter.fun(t)) t.setText((recursively || (recursiveFilter != null && recursiveFilter.fun(t)))
+                                                       ? substituteRecursively(t.getText(), caseSensitive)
+                                                       : substitute(t.getText(), caseSensitive));
       }
       else if (child instanceof Comment) {
         /*do not substitute in comments
@@ -82,11 +88,17 @@ public abstract class PathMacroMap {
     List attributes = e.getAttributes();
     for (final Object attribute1 : attributes) {
       Attribute attribute = (Attribute)attribute1;
-      final String value = recursively
-                           ? substituteRecursively(attribute.getValue(), caseSensitive)
-                           : substitute(attribute.getValue(), caseSensitive);
-      attribute.setValue(value);
+      if (filter == null || filter.fun(attribute)) {
+        final String value = (recursively || (recursiveFilter != null && recursiveFilter.fun(attribute)))
+                             ? substituteRecursively(attribute.getValue(), caseSensitive)
+                             : substitute(attribute.getValue(), caseSensitive);
+        attribute.setValue(value);
+      }
     }
+  }
+
+  public final void substitute(Element e, boolean caseSensitive, final boolean recursively) {
+    substitute(e, caseSensitive, recursively, null, null);
   }
 
   public String substituteRecursively(String text, boolean caseSensitive) {

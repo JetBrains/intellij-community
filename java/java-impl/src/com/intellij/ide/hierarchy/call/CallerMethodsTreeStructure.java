@@ -70,7 +70,8 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
               if (originalClass.isInheritor(superClass, true)) {
                 return true;
               }
-            } if (qualifier != null) {
+            }
+            if (qualifier != null && !methodToFind.hasModifierProperty(PsiModifier.STATIC)) {
               final PsiType qualifierType = qualifier.getType();
               if (qualifierType == null) return true;
               if (!TypeConversionUtil.isAssignable(qualifierType, originalType)) {

@@ -87,7 +87,7 @@ public class AddSupportForFrameworksPanel {
     createNodes();
     myMirrorsMap = createMirrorsMap();
 
-    final Splitter splitter = new Splitter(false, 0.35f, 0.1f, 0.7f);
+    final Splitter splitter = new Splitter(false, 0.30f, 0.1f, 0.7f);
     myFrameworksTree = new FrameworksTree(myGroups) {
       @Override
       protected void onNodeStateChanged(CheckedTreeNode node) {
@@ -305,6 +305,10 @@ public class AddSupportForFrameworksPanel {
 
   public JComponent getMainPanel() {
     return myMainPanel;
+  }
+
+  public boolean haveSelectedFrameworks() {
+    return !getFrameworkNodes(true).isEmpty();
   }
 
   private List<FrameworkSupportNode> getFrameworkNodes(final boolean selectedOnly) {

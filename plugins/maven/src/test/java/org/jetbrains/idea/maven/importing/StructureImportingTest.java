@@ -542,6 +542,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
                     "<artifactId>module2</artifactId>" +
                     "<version>1</version>");
     importProject();
+    assertModules("project", "module1", "module2");
 
     assertModuleGroupPath("module2");
 

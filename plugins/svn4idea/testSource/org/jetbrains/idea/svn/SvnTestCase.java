@@ -1,12 +1,14 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.lifecycle.AtomicSectionsAware;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.util.io.FileUtil;
@@ -81,7 +83,8 @@ public abstract class SvnTestCase extends AbstractVcsTestCase {
     };
 
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
-    vcs.postStartup();
+    ((StartupManagerImpl) StartupManager.getInstance(myProject)).runPostStartupActivities();
+    //vcs.postStartup();
     ((SvnFileUrlMappingImpl) vcs.getSvnFileUrlMapping()).realRefresh(myRefreshCopiesStub);
   }
 

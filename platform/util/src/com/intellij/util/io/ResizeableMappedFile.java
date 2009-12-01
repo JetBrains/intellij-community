@@ -30,15 +30,17 @@ public class ResizeableMappedFile implements Forceable {
   private long myLogicalSize;
   private final PagedFileStorage myStorage;
 
-  public ResizeableMappedFile(final File file, int initialSize) throws IOException {
-    myStorage = new PagedFileStorage(file);
+  public ResizeableMappedFile(final File file, int initialSize, PagedFileStorage.StorageLock lock) throws IOException {
+    myStorage = new PagedFileStorage(file, lock);
     if (!file.exists() || file.length() == 0) {
       writeLength(0);
     }
 
     myLogicalSize = readLength();
     if (myLogicalSize == 0) {
-      resize(initialSize);
+      synchronized (lock) {
+        resize(initialSize);
+      }
     }
   }
 

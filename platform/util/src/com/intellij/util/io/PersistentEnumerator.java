@@ -107,6 +107,8 @@ public class PersistentEnumerator<Data> implements Forceable {
     return ourFlyweight;
   }
 
+  protected static final PagedFileStorage.StorageLock ourLock = new PagedFileStorage.StorageLock();
+
   private static final SLRUMap<Object, Integer> ourEnumerationCache = new SLRUMap<Object, Integer>(8192, 8192);
 
   public static class CorruptedException extends IOException {
@@ -126,24 +128,26 @@ public class PersistentEnumerator<Data> implements Forceable {
       }
     }
 
-    myStorage = new ResizeableMappedFile(myFile, initialSize);
+    myStorage = new ResizeableMappedFile(myFile, initialSize, ourLock);
 
-    if (myStorage.length() == 0) {
-      markDirty(true);
-      putMetaData(0);
-      allocVector(FIRST_VECTOR);
-    }
-    else {
-      int sign;
-      try {
-        sign = myStorage.getInt(0);
+    synchronized (ourLock) {
+      if (myStorage.length() == 0) {
+        markDirty(true);
+        putMetaData(0);
+        allocVector(FIRST_VECTOR);
       }
-      catch(Exception e) {
-        sign = DIRTY_MAGIC;
-      }
-      if (sign != CORRECTLY_CLOSED_MAGIC) {
-        myStorage.close();
-        throw new CorruptedException(file);
+      else {
+        int sign;
+        try {
+          sign = myStorage.getInt(0);
+        }
+        catch(Exception e) {
+          sign = DIRTY_MAGIC;
+        }
+        if (sign != CORRECTLY_CLOSED_MAGIC) {
+          myStorage.close();
+          throw new CorruptedException(file);
+        }
       }
     }
 
@@ -152,7 +156,7 @@ public class PersistentEnumerator<Data> implements Forceable {
       myKeyReadStream = null;
     }
     else {
-      myKeyStorage = new ResizeableMappedFile(keystreamFile(), initialSize);
+      myKeyStorage = new ResizeableMappedFile(keystreamFile(), initialSize, ourLock);
       myKeyReadStream = new MyDataIS(myKeyStorage);
     }
   }
@@ -162,12 +166,18 @@ public class PersistentEnumerator<Data> implements Forceable {
       final Integer cachedId = ourEnumerationCache.get(sharedKey(value, this));
       if (cachedId != null) return cachedId.intValue();
     }
-    final int id = enumerateImpl(value, false);
+
+    final int id;
+    synchronized (ourLock) {
+      id = enumerateImpl(value, false);
+    }
+
     if (id != NULL_ID) {
       synchronized (ourEnumerationCache) {
         ourEnumerationCache.put(new CacheKey(value, this), id);
       }
     }
+
     return id;
   }
   
@@ -177,7 +187,11 @@ public class PersistentEnumerator<Data> implements Forceable {
       if (cachedId != null) return cachedId.intValue();
     }
 
-    final int id = enumerateImpl(value, true);
+    final int id;
+    synchronized (ourLock) {
+      id = enumerateImpl(value, true);
+    }
+
     synchronized (ourEnumerationCache) {
       ourEnumerationCache.put(new CacheKey(value, this), id);
     }
@@ -190,11 +204,15 @@ public class PersistentEnumerator<Data> implements Forceable {
   }
 
   public synchronized void putMetaData(int data) throws IOException {
-    myStorage.putInt(META_DATA_OFFSET, data);
+    synchronized (ourLock) {
+      myStorage.putInt(META_DATA_OFFSET, data);
+    }
   }
 
   public synchronized int getMetaData() throws IOException {
-    return myStorage.getInt(META_DATA_OFFSET);
+    synchronized (ourLock) {
+      return myStorage.getInt(META_DATA_OFFSET);
+    }
   }
 
   public boolean processAllDataObject(final Processor<Data> processor, @Nullable final DataFilter filter) throws IOException {
@@ -224,18 +242,20 @@ public class PersistentEnumerator<Data> implements Forceable {
   }
 
   private boolean traverseRecords(int vectorStart, int slotsCount, RecordsProcessor p) throws IOException {
-    for (int slotIdx = 0; slotIdx < slotsCount; slotIdx++) {
-      final int vector = myStorage.getInt(vectorStart + slotIdx * 4);
-      if (vector < 0) {
-        for (int record = -vector; record != 0; record = nextCanditate(record)) {
-          if (!p.process(record)) return false;
+    synchronized (ourLock) {
+      for (int slotIdx = 0; slotIdx < slotsCount; slotIdx++) {
+        final int vector = myStorage.getInt(vectorStart + slotIdx * 4);
+        if (vector < 0) {
+          for (int record = -vector; record != 0; record = nextCanditate(record)) {
+            if (!p.process(record)) return false;
+          }
+        }
+        else if (vector > 0) {
+          if (!traverseRecords(vector, SLOTS_PER_VECTOR, p)) return false;
         }
       }
-      else if (vector > 0) {
-        if (!traverseRecords(vector, SLOTS_PER_VECTOR, p)) return false;
-      }
+      return true;
     }
-    return true;
   }
 
   private int enumerateImpl(final Data value, final boolean saveNewValue) throws IOException {
@@ -429,22 +449,24 @@ public class PersistentEnumerator<Data> implements Forceable {
   }
 
   public synchronized Data valueOf(int idx) throws IOException {
-    try {
-      final ResizeableMappedFile storage = myStorage;
-      int addr = storage.getInt(idx + KEY_REF_OFFSET);
+    synchronized (ourLock) {
+      try {
+        final ResizeableMappedFile storage = myStorage;
+        int addr = storage.getInt(idx + KEY_REF_OFFSET);
 
-      if (myKeyReadStream == null) return ((InlineKeyDescriptor<Data>)myDataDescriptor).fromInt(addr);
+        if (myKeyReadStream == null) return ((InlineKeyDescriptor<Data>)myDataDescriptor).fromInt(addr);
 
-      myKeyReadStream.setup(addr, myKeyStorage.length());
-      return myDataDescriptor.read(myKeyReadStream);
-    }
-    catch (IOException io) {
-      markCorrupted();
-      throw io;
-    }
-    catch (Throwable e) {
-      markCorrupted();
-      throw new RuntimeException(e);
+        myKeyReadStream.setup(addr, myKeyStorage.length());
+        return myDataDescriptor.read(myKeyReadStream);
+      }
+      catch (IOException io) {
+        markCorrupted();
+        throw io;
+      }
+      catch (Throwable e) {
+        markCorrupted();
+        throw new RuntimeException(e);
+      }
     }
   }
 
@@ -471,16 +493,18 @@ public class PersistentEnumerator<Data> implements Forceable {
   }
 
   public synchronized void close() throws IOException {
-    if (!myClosed) {
-      myClosed = true;
-      try {
-        if (myKeyStorage != null) {
-          myKeyStorage.close();
+    synchronized (ourLock) {
+      if (!myClosed) {
+        myClosed = true;
+        try {
+          if (myKeyStorage != null) {
+            myKeyStorage.close();
+          }
+          flush();
         }
-        flush();
-      }
-      finally {
-        myStorage.close();
+        finally {
+          myStorage.close();
+        }
       }
     }
   }
@@ -494,34 +518,40 @@ public class PersistentEnumerator<Data> implements Forceable {
   }
 
   public synchronized void flush() throws IOException {
-     if (myStorage.isDirty() || isDirty()) {
-       markDirty(false);
-       myStorage.force();
-     }
-   }
+    synchronized (ourLock) {
+      if (myStorage.isDirty() || isDirty()) {
+        markDirty(false);
+        myStorage.force();
+      }
+    }
+  }
 
   public synchronized void force() {
-    try {
-      if (myKeyStorage != null) {
-        myKeyStorage.force();
+    synchronized (ourLock) {
+      try {
+        if (myKeyStorage != null) {
+          myKeyStorage.force();
+        }
+        flush();
       }
-      flush();
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 
   private void markDirty(boolean dirty) throws IOException {
-    if (myDirty) {
-      if (!dirty) {
-        markClean();
+    synchronized (ourLock) {
+      if (myDirty) {
+        if (!dirty) {
+          markClean();
+        }
       }
-    }
-    else {
-      if (dirty) {
-        myStorage.putInt(0, DIRTY_MAGIC);
-        myDirty = true;
+      else {
+        if (dirty) {
+          myStorage.putInt(0, DIRTY_MAGIC);
+          myDirty = true;
+        }
       }
     }
   }

@@ -19,7 +19,14 @@ package com.intellij.ide.projectView.impl.nodes;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiManager;
+
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * User: anna
@@ -34,8 +41,18 @@ public class ProjectViewModuleGroupNode extends ModuleGroupNode {
     super(project, value, viewSettings);
   }
 
-  protected Class<? extends AbstractTreeNode> getModuleNodeClass() {
-    return ProjectViewModuleNode.class;
+  @Override
+  protected AbstractTreeNode createModuleNode(Module module)
+    throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+    final VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
+    if (roots.length == 1) {
+      final PsiDirectory psi = PsiManager.getInstance(myProject).findDirectory(roots[0]);
+      if (psi != null) {
+        return createTreeNode(PsiDirectoryNode.class, myProject, psi, getSettings());
+      }
+    }
+
+    return createTreeNode(ProjectViewModuleNode.class, getProject(), module, getSettings());
   }
 
   protected ModuleGroupNode createModuleGroupNode(ModuleGroup moduleGroup) {

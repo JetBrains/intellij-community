@@ -79,7 +79,11 @@ public class CollectHighlightsUtil {
         }
 
         PsiElement child = element.getFirstChild();
-        if (child != null) {
+        if (child == null) {
+          // leaf element
+          offset += element.getTextLength();
+        }
+        else {
           ProgressManager.checkCanceled();
           // composite element
           while (child != null) {
@@ -91,10 +95,6 @@ public class CollectHighlightsUtil {
 
             child = child.getNextSibling();
           }
-        }
-        else {
-          // leaf element
-          offset += element.getTextLength();
         }
       }
     };

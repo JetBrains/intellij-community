@@ -25,6 +25,6 @@ public class CopyrightUpdaters extends FileTypeExtension<UpdateCopyrightInstance
   public static CopyrightUpdaters INSTANCE = new CopyrightUpdaters();
 
   private CopyrightUpdaters() {
-    super("com.intellij.copyright.updaters");
+    super("com.intellij.copyright.updater");
   }
 }

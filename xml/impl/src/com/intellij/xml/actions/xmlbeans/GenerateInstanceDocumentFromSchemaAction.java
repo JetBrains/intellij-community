@@ -16,13 +16,17 @@
 package com.intellij.xml.actions.xmlbeans;
 
 import com.intellij.javaee.ExternalResourceManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -130,7 +134,14 @@ public class GenerateInstanceDocumentFromSchemaAction extends AnAction {
     parameters.add("-name");
     parameters.add(dialog.getElementName());
 
-    String xml = Xsd2InstanceUtils.generate(ArrayUtil.toStringArray(parameters));
+    String xml;
+    try {
+      xml = Xsd2InstanceUtils.generate(ArrayUtil.toStringArray(parameters));
+    } catch (IllegalArgumentException e) {
+      Messages.showErrorDialog(project, StringUtil.getMessage(e), XmlBundle.message("error"));
+      return;
+    }
+
 
 
     final VirtualFile baseDirForCreatedInstanceDocument1 = relativeFileDir;

@@ -273,7 +273,7 @@ public class TodoView implements PersistentStateComponent<Element>, Disposable {
     public void fileTypesChanged(FileTypeEvent e){
       // this invokeLater guaranties that this code will be invoked after
       // PSI gets the same event.
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
+      DumbService.getInstance(myProject).smartInvokeLater(new Runnable() {
         public void run() {
           if (myProject.isDisposed()) return;
 

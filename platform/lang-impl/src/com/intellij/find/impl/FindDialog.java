@@ -22,6 +22,7 @@ import com.intellij.find.FindBundle;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindSettings;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -36,6 +37,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -49,10 +51,13 @@ import com.intellij.ui.EditorComboBoxRenderer;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
+import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -63,6 +68,8 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 final class FindDialog extends DialogWrapper {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.find.impl.FindDialog");
+
   private ComboBox myInputComboBox;
   private ComboBox myReplaceComboBox;
   private StateRestoringCheckBox myCbCaseSensitive;
@@ -518,7 +525,25 @@ final class FindDialog extends DialogWrapper {
     findOptionsPanel.add(myCbWholeWordsOnly);
 
     myCbRegularExpressions = createCheckbox(FindBundle.message("find.options.regular.expressions"));
-    findOptionsPanel.add(myCbRegularExpressions);
+
+    final JPanel regExPanel = new JPanel();
+    regExPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+    regExPanel.setLayout(new BoxLayout(regExPanel, BoxLayout.X_AXIS));
+    regExPanel.add(myCbRegularExpressions);
+
+    regExPanel.add(new LinkLabel("[Help]", null, new LinkListener() {
+      public void linkSelected(LinkLabel aSource, Object aLinkData) {
+        try {
+          final JBPopup helpPopup = RegExHelpPopup.createRegExHelpPopup();
+          helpPopup.showInCenterOf(regExPanel);
+        }
+        catch (BadLocationException e) {
+          LOG.info(e);
+        }
+      }
+    }));
+
+    findOptionsPanel.add(regExPanel);
 
     myCbInCommentsOnly = createCheckbox(FindBundle.message("find.options.comments.only"));
     myCbInStringLiteralsOnly = createCheckbox(FindBundle.message("find.options.string.literals.only"));

@@ -30,9 +30,7 @@ public interface ArtifactProblemsHolder {
 
   void registerError(@NotNull String message);
 
-  void registerError(@NotNull String message, @Nullable ArtifactProblemQuickFix quickFix);
+  void registerError(@NotNull String message, @Nullable List<PackagingElement<?>> pathToPlace, @NotNull ArtifactProblemQuickFix... quickFixes);
 
-  void registerError(@NotNull String message, @Nullable List<PackagingElement<?>> pathToPlace, ArtifactProblemQuickFix... quickFixes);
-
-  void registerWarning(@NotNull String message, @Nullable List<PackagingElement<?>> pathToPlace, ArtifactProblemQuickFix... quickFixes);
+  void registerWarning(@NotNull String message, @Nullable List<PackagingElement<?>> pathToPlace, @NotNull ArtifactProblemQuickFix... quickFixes);
 }

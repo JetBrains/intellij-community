@@ -135,16 +135,17 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
     Element mavenSettingsElement = element.getChild(MavenSettings.TAG);
     if (mavenSettingsElement != null) {
       mySettings = XmlSerializer.deserialize(mavenSettingsElement, MavenSettings.class);
+      if (mySettings == null) mySettings = new MavenSettings();
+
+      if (mySettings.myGeneralSettings == null) mySettings.myGeneralSettings = new MavenGeneralSettings();
+      if (mySettings.myRunnerSettings == null) mySettings.myRunnerSettings = new MavenRunnerSettings();
+      if (mySettings.myRunnerParameters == null) mySettings.myRunnerParameters = new MavenRunnerParameters();
 
       // fix old settings format
       File workingDir = mySettings.myRunnerParameters.getWorkingDirFile();
       if (MavenConstants.POM_XML.equals(workingDir.getName())) {
         mySettings.myRunnerParameters.setWorkingDirPath(workingDir.getParent());
       }
-
-      if (mySettings.myGeneralSettings == null) mySettings.myGeneralSettings = new MavenGeneralSettings();
-      if (mySettings.myRunnerSettings == null) mySettings.myRunnerSettings = new MavenRunnerSettings();
-      if (mySettings.myRunnerParameters == null) mySettings.myRunnerParameters = new MavenRunnerParameters();
     }
   }
 

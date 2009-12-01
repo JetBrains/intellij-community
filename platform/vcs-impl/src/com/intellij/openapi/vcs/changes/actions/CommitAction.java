@@ -35,6 +35,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 
 import java.util.Arrays;
+import java.util.List;
 
 public class CommitAction extends AnAction implements DumbAware {
   public void update(AnActionEvent e) {
@@ -73,8 +74,10 @@ public class CommitAction extends AnAction implements DumbAware {
 
     ChangeListManager.getInstance(project).invokeAfterUpdate(new Runnable() {
       public void run() {
-        CommitChangeListDialog.commitChanges(project, Arrays.asList(changes), (LocalChangeList) list,
-                                             ChangeListManager.getInstance(project).getRegisteredExecutors(), true, null);
+        final List<Change> changesList = Arrays.asList(changes);
+        final List<CommitExecutor> executors = CommitChangeListDialog.collectExecutors(project, changesList);
+        CommitChangeListDialog.commitChanges(project, changesList, (LocalChangeList) list,
+                                             executors, true, null);
       }
     }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, VcsBundle.message("waiting.changelists.update.for.show.commit.dialog.message"), null);
   }
