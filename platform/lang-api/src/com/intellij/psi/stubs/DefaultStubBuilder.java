@@ -21,23 +21,24 @@ package com.intellij.psi.stubs;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Key;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.psi.StubBuilder;
 import com.intellij.psi.tree.IElementType;
 
 public class DefaultStubBuilder implements StubBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.DefaultStubBuilder");
 
   public StubElement buildStubTree(final PsiFile file) {
-    StubElement stubForFile = createStubForFile(file);
-    return file instanceof PsiCompiledElement ? buildStubTreeFor(file, stubForFile) : nonRecBuildStubTreeFor(file, stubForFile);
+    return buildStubTreeFor(file, createStubForFile(file));
   }
 
   protected StubElement createStubForFile(final PsiFile file) {
-    return new PsiFileStubImpl<PsiFile>(file);
+    return new PsiFileStubImpl(file);
   }
 
-  private static StubElement buildStubTreeFor(PsiElement elt, StubElement parentStub) {
+  protected static StubElement buildStubTreeFor(PsiElement elt, StubElement parentStub) {
     StubElement stub = parentStub;
     if (elt instanceof StubBasedPsiElement) {
       final IStubElementType type = ((StubBasedPsiElement)elt).getElementType();
@@ -62,48 +63,4 @@ public class DefaultStubBuilder implements StubBuilder {
     return stub;
   }
 
-  private static final Key<StubElement> PARENT_STUB = Key.create("PARENT_STUB");
-  private static StubElement getParentStub(PsiElement element, PsiElement root, StubElement rootStub) {
-    if (element == root) return rootStub;
-    PsiElement parent = element.getParent();
-    return parent.getUserData(PARENT_STUB);
-  }
-  private static void setParentStubForChildrenOf(PsiElement element, StubElement parentStub) {
-    element.putUserData(PARENT_STUB, parentStub);
-  }
-
-  private static StubElement nonRecBuildStubTreeFor(final PsiElement root, final StubElement rootStub) {
-    root.accept(new PsiRecursiveElementWalkingVisitor() {
-      @Override
-      public void visitElement(PsiElement element) {
-        StubElement parentStub = getParentStub(element, root, rootStub);
-        StubElement stub = parentStub;
-        if (element instanceof StubBasedPsiElement) {
-          final IStubElementType type = ((StubBasedPsiElement)element).getElementType();
-
-          if (type.shouldCreateStub(element.getNode())) {
-            //noinspection unchecked
-            stub = type.createStub(element, parentStub);
-          }
-        }
-        else {
-          final ASTNode node = element.getNode();
-          final IElementType type = node == null? null : node.getElementType();
-          if (type instanceof IStubElementType && ((IStubElementType)type).shouldCreateStub(node)) {
-            LOG.error("Non-StubBasedPsiElement requests stub creation. Stub type: " + type + ", PSI: " + element);
-          }
-        }
-
-        setParentStubForChildrenOf(element, stub);
-        super.visitElement(element);
-      }
-
-      @Override
-      protected void elementFinished(PsiElement element) {
-        setParentStubForChildrenOf(element, null);
-      }
-    });
-
-    return rootStub;
-  }
 }
