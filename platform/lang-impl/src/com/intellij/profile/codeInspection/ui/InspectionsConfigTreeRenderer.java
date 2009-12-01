@@ -65,7 +65,7 @@ abstract class InspectionsConfigTreeRenderer extends CheckboxTree.CheckboxTreeCe
       final String scopeName = node.getScopeName();
       if (scopeName != null) {
         if (node.isByDefault()) {
-          text = "Everywhere except";
+          text = "Everywhere else";
         }
         else {
           text = "In scope \'" + scopeName + "\'";

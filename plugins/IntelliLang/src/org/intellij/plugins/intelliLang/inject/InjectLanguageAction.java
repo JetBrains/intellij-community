@@ -77,7 +77,9 @@ public class InjectLanguageAction implements IntentionAction {
     final int offset = editor.getCaretModel().getOffset();
     final PsiLanguageInjectionHost host = PsiTreeUtil.getParentOfType(file.findElementAt(offset), PsiLanguageInjectionHost.class, false);
     if (host == null) return null;
-    final TextRange textRange = ElementManipulators.getManipulator(host).getRangeInElement(host);
+    final ElementManipulator<PsiLanguageInjectionHost> manipulator = ElementManipulators.getManipulator(host);
+    if (manipulator == null) return null;
+    final TextRange textRange = manipulator.getRangeInElement(host);
     if (textRange.getStartOffset() == 0) return null;
     return host;
   }

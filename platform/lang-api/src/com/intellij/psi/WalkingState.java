@@ -75,7 +75,7 @@ public abstract class WalkingState<T> {
       if (next != null) {
         Object nextPrev = myWalker.getPrevSibling(next);
         if (nextPrev != element) {
-          String msg = "Element: " + element + "; next.prev: " + nextPrev;
+          String msg = "Element: " + element + "; next: "+next+"; next.prev: " + nextPrev;
           while (true) {
             T top = myWalker.getParent(element);
             if (top == null) break;

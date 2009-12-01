@@ -28,7 +28,6 @@ import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapExtension;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
@@ -253,8 +252,7 @@ public class ActionsTreeUtil {
     for (QuickList quickList : quickLists) {
       if (filtered != null && filtered.value(ActionManagerEx.getInstanceEx().getAction(quickList.getActionId()))) {
         group.addQuickList(quickList);
-      } else if (SearchUtil.isComponentHighlighted(quickList.getDisplayName(), filter, forceFiltering,
-                                                   ShowSettingsUtil.getInstance().findApplicationConfigurable(KeymapConfigurable.class))) {
+      } else if (SearchUtil.isComponentHighlighted(quickList.getDisplayName(), filter, forceFiltering, null)) {
         group.addQuickList(quickList);
       } else if (filtered == null && filter == null) {
         group.addQuickList(quickList);
@@ -399,7 +397,9 @@ public class ActionsTreeUtil {
         if (o instanceof Group) {
           final Group group = (Group)o;
           if (group.getSize() == 0) {
-            i.remove();
+            if (!SearchUtil.isComponentHighlighted(group.getName(), filter, forceFiltering, null)) {
+              i.remove();
+            }
           }
         }
       }
@@ -413,13 +413,11 @@ public class ActionsTreeUtil {
         if (filter == null) return true;
         if (action == null) return false;
         final String insensitiveFilter = filter.toLowerCase();
-        final KeymapConfigurable keymapConfigurable =
-          ShowSettingsUtil.getInstance().findApplicationConfigurable(KeymapConfigurable.class);
         final String text = action.getTemplatePresentation().getText();
         if (text != null) {
           final String lowerText = text.toLowerCase();
           if (SearchUtil
-            .isComponentHighlighted(lowerText, insensitiveFilter, force, keymapConfigurable)) {
+            .isComponentHighlighted(lowerText, insensitiveFilter, force, null)) {
             return true;
           }
           else if (lowerText.indexOf(insensitiveFilter) != -1) {
@@ -430,7 +428,7 @@ public class ActionsTreeUtil {
         if (description != null) {
           final String insensitiveDescription = description.toLowerCase();
           if (SearchUtil
-            .isComponentHighlighted(insensitiveDescription, insensitiveFilter, force, keymapConfigurable)) {
+            .isComponentHighlighted(insensitiveDescription, insensitiveFilter, force, null)) {
             return true;
           }
           else if (insensitiveDescription.indexOf(insensitiveFilter) != -1) {

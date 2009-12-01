@@ -25,6 +25,7 @@
     <configurationProducer implementation="com.intellij.execution.junit.TestClassConfigurationProducer"/>
     <configurationProducer implementation="com.intellij.execution.junit.TestMethodConfigurationProducer"/>
     <deadCode implementation="com.intellij.execution.junit2.inspection.JUnitUnusedCodeExtension"/>
+    <cantBeStatic implementation="com.intellij.execution.junit2.inspection.JUnitCantBeStaticExtension" />
     <testFramework implementation="com.intellij.execution.junit.JUnitTestFramework"/>
     <testFrameworkDescriptor implementation="com.intellij.execution.junit.JUnit3FrameworkDescriptor"/>
     <testFrameworkDescriptor implementation="com.intellij.execution.junit.JUnit4FrameworkDescriptor"/>

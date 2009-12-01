@@ -96,6 +96,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
   @NonNls public Options FIELD_OPTIONS = new Options("none", "");
   public boolean IGNORE_DEPRECATED = false;
   public boolean IGNORE_JAVADOC_PERIOD = true;
+  public boolean IGNORE_DUPLICATED_THROWS = false;
   public String myAdditionalJavadocTags = "";
 
   private static final Logger LOG = Logger.getInstance("com.intellij.codeInspection.javaDoc.JavaDocLocalInspection");
@@ -242,6 +243,15 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
         }
       });
       add(periodCheckBox, gc);
+
+      final JCheckBox ignoreDuplicateThrowsCheckBox = new JCheckBox("Ignore duplicate throws tag",
+                                                     IGNORE_DUPLICATED_THROWS);
+      ignoreDuplicateThrowsCheckBox.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          IGNORE_DUPLICATED_THROWS = ignoreDuplicateThrowsCheckBox.isSelected();
+        }
+      });
+      add(ignoreDuplicateThrowsCheckBox, gc);
     }
 
     public FieldPanel createAdditionalJavadocTagsPanel(){
@@ -1012,7 +1022,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     return false;
   }
 
-  private static void checkDuplicateTags(final PsiDocTag[] tags,
+  private void checkDuplicateTags(final PsiDocTag[] tags,
                                          ArrayList<ProblemDescriptor> problems,
                                          final InspectionManager manager, boolean isOnTheFly) {
     Set<String> documentedParamNames = null;
@@ -1037,7 +1047,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
           }
         }
       }
-      else if ("throws".equals(tag.getName()) || "exception".equals(tag.getName())) {
+      else if (!IGNORE_DUPLICATED_THROWS && ("throws".equals(tag.getName()) || "exception".equals(tag.getName()))) {
         PsiDocTagValue value = tag.getValueElement();
         if (value != null) {
           final PsiElement firstChild = value.getFirstChild();

@@ -20,12 +20,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.*;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.options.JavaOptions;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,9 +44,9 @@ public class UpdateJavaFileCopyright extends UpdatePsiFileCopyright
     {
         logger.debug("updating " + getFile().getVirtualFile());
 
-        PsiJavaFile javaFile = (PsiJavaFile)getFile();
-        PsiElement pkg = javaFile.getPackageStatement();
-        PsiElement imports = javaFile.getImportList();
+        PsiClassOwner javaFile = (PsiClassOwner)getFile();
+        PsiElement pkg = getPackageStatement();
+        PsiElement[] imports = getImportsList();
         PsiClass topclass = null;
         PsiClass[] classes = javaFile.getClasses();
         if (classes.length > 0)
@@ -69,10 +67,10 @@ public class UpdateJavaFileCopyright extends UpdatePsiFileCopyright
             location = JavaOptions.LOCATION_BEFORE_IMPORT;
         }
 
-        if (imports != null && imports.getChildren().length > 0)
+        if (imports != null && imports.length > 0)
         {
-            checkComments(first, imports, location == JavaOptions.LOCATION_BEFORE_IMPORT);
-            first = imports;
+            checkComments(first, imports[0], location == JavaOptions.LOCATION_BEFORE_IMPORT);
+            first = imports[0];
         }
         else if (location == JavaOptions.LOCATION_BEFORE_IMPORT)
         {
@@ -92,5 +90,20 @@ public class UpdateJavaFileCopyright extends UpdatePsiFileCopyright
         }
     }
 
-    private static final Logger logger = Logger.getInstance(UpdateJavaFileCopyright.class.getName());
+  @Nullable
+  protected PsiElement[] getImportsList() {
+    final PsiJavaFile javaFile = (PsiJavaFile)getFile();
+    assert javaFile != null;
+    final PsiImportList importList = javaFile.getImportList();
+    return importList == null ? null : importList.getChildren();
+  }
+
+  @Nullable
+  protected PsiElement getPackageStatement() {
+    PsiJavaFile javaFile = (PsiJavaFile)getFile();
+    assert javaFile != null;
+    return javaFile.getPackageStatement();
+  }
+
+  private static final Logger logger = Logger.getInstance(UpdateJavaFileCopyright.class.getName());
 }

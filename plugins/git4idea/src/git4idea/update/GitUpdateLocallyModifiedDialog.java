@@ -15,6 +15,7 @@
  */
 package git4idea.update;
 
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsException;
@@ -47,6 +48,8 @@ public class GitUpdateLocallyModifiedDialog extends DialogWrapper {
    * The list of files to revert
    */
   private JList myFilesList;
+
+  private JLabel myDescriptionLabel;
   /**
    * The git root label
    */
@@ -85,6 +88,7 @@ public class GitUpdateLocallyModifiedDialog extends DialogWrapper {
         }
       }
     });
+    myDescriptionLabel.setText(GitBundle.message("update.locally.modified.message", ApplicationNamesInfo.getInstance().getFullProductName()));
     init();
   }
 

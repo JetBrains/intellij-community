@@ -121,10 +121,7 @@ public class MethodMayBeStaticInspection extends BaseInspection {
                     !method.hasModifierProperty(PsiModifier.PRIVATE)){
                 return;
             }
-            if(TestUtils.isJUnitTestMethod(method) ||
-                    TestUtils.isJUnit4BeforeOrAfterMethod(method)){
-                return;
-            }
+           
             final Query<MethodSignatureBackedByPsiMethod> superMethodQuery =
                     SuperMethodsSearch.search(method, null, true, false);
             if (superMethodQuery.findFirst() != null) {

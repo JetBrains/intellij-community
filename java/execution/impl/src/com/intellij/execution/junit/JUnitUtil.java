@@ -32,6 +32,10 @@ import gnu.trove.THashSet;
 import junit.runner.BaseTestRunner;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.runners.Parameterized;
 
 import java.util.*;
@@ -191,6 +195,26 @@ public class JUnitUtil {
   }
   private static PsiClass getTestCaseClassOrNull(final GlobalSearchScope scope, final Project project) {
     return JavaPsiFacade.getInstance(project).findClass(TESTCASE_CLASS, scope);
+  }
+
+  public static boolean isTestMethodOrConfig(PsiMethod psiMethod) {
+    if (getTestMethod(psiMethod) != null) return true;
+    final String name = psiMethod.getName();
+    if (psiMethod.hasModifierProperty(PsiModifier.PUBLIC) && !psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      if ("suite".equals(name) || "setUp".equals(name) || "tearDown".equals(name)) {
+        return true;
+      }
+      if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
+        if (AnnotationUtil.isAnnotated(psiMethod, Arrays.asList(BeforeClass.class.getName(), AfterClass.class.getName(),
+                                                                Parameterized.Parameters.class.getName().replace('$', '.')))) {
+          return true;
+        }
+      }
+      else {
+        if (AnnotationUtil.isAnnotated(psiMethod, Arrays.asList(Before.class.getName(), After.class.getName()))) return true;
+      }
+    }
+    return false;
   }
 
   public static class  TestMethodFilter implements Condition<PsiMethod> {

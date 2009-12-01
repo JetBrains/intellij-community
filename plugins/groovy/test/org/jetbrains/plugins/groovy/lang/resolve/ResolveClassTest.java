@@ -106,6 +106,13 @@ public class ResolveClassTest extends GroovyResolveTestCase {
   public void testInnerClassInSubclass()throws Throwable {doTest();}
   public void testInnerClassUsageInsideOuterSubclass() throws Throwable{doTest();}
 
+  public void testAliasedImportVsImplicitImport() throws Exception {
+    PsiReference ref = configureByFile("aliasedImportVsImplicitImport/Test.groovy");
+    final PsiElement resolved = ref.resolve();
+    assertInstanceOf(resolved, PsiClass.class);
+    assertEquals("java.util.ArrayList", ((PsiClass)resolved).getQualifiedName());
+  }
+
   private void doTest() throws Exception {
     doTest(getTestName(true) + "/" + getTestName(false) + ".groovy");
   }

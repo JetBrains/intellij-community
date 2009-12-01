@@ -30,7 +30,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.util.Icons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,18 +46,8 @@ public class ShelveChangesCommitExecutor implements CommitExecutor {
     myProject = project;
   }
 
-  @NotNull
-  public Icon getActionIcon() {
-    return Icons.TASK_ICON;
-  }
-
   @Nls
   public String getActionText() {
-    return VcsBundle.message("shelve.changes.action");
-  }
-
-  @Nls
-  public String getActionDescription() {
     return VcsBundle.message("shelve.changes.action");
   }
 

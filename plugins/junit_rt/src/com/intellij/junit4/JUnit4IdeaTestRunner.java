@@ -25,10 +25,7 @@ import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
 import junit.textui.ResultPrinter;
 import org.junit.internal.requests.ClassRequest;
 import org.junit.internal.requests.FilterRequest;
-import org.junit.runner.Description;
-import org.junit.runner.JUnitCore;
-import org.junit.runner.Request;
-import org.junit.runner.Result;
+import org.junit.runner.*;
 import org.junit.runner.manipulation.Filter;
 import org.junit.runner.notification.RunListener;
 
@@ -63,8 +60,9 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
 
       final Request request = JUnit4TestRunnerUtil.buildRequest(args);
 
+      final Runner testRunner = request.getRunner();
       try {
-        Description description = request.getRunner().getDescription();
+        Description description = testRunner.getDescription();
         if (request instanceof ClassRequest) {
           description = getSuiteMethodDescription(request, description);
         }
@@ -93,7 +91,7 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
         });
       }
       long startTime = System.currentTimeMillis();
-      Result result = runner.run(request/*.sortWith(new Comparator() {
+      Result result = runner.run(testRunner/*.sortWith(new Comparator() {
         public int compare(Object d1, Object d2) {
           return ((Description)d1).getDisplayName().compareTo(((Description)d2).getDisplayName());
         }

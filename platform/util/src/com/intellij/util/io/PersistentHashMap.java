@@ -156,25 +156,27 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   }
 
   public synchronized void put(Key key, Value value) throws IOException {
-    myAppendCache.remove(key);
-    
-    final int id = enumerate(key);
-    AppendStream record = new AppendStream();
-    myValueExternalizer.save(record, value);
-    byte[] bytes = record.toByteArray();
+    synchronized (ourLock) {
+      myAppendCache.remove(key);
 
-    HeaderRecord header = readValueId(id);
-    if (header != null) {
-      myGarbageSize += header.size;
+      final int id = enumerate(key);
+      AppendStream record = new AppendStream();
+      myValueExternalizer.save(record, value);
+      byte[] bytes = record.toByteArray();
+
+      HeaderRecord header = readValueId(id);
+      if (header != null) {
+        myGarbageSize += header.size;
+      }
+      else {
+        header = new HeaderRecord();
+      }
+
+      header.size = bytes.length;
+      header.address = myValueStorage.appendBytes(bytes, 0);
+
+      updateValueId(id, header);
     }
-    else {
-      header = new HeaderRecord();
-    }
-
-    header.size = bytes.length;
-    header.address = myValueStorage.appendBytes(bytes, 0);
-
-    updateValueId(id, header);
   }
 
   public interface ValueDataAppender {
@@ -182,78 +184,90 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   }
   
   public synchronized void appendData(Key key, ValueDataAppender appender) throws IOException {
-    appender.append(myAppendCache.get(key));
+    synchronized (ourLock) {
+      appender.append(myAppendCache.get(key));
+    }
   }
 
   public synchronized boolean processKeys(Processor<Key> processor) throws IOException {
-    myAppendCache.clear();
-    return iterateData(processor);
+    synchronized (ourLock) {
+      myAppendCache.clear();
+      return iterateData(processor);
+    }
   }
 
   public synchronized Collection<Key> getAllKeysWithExistingMapping() throws IOException {
-    return getAllDataObjects(new DataFilter() {
-      public boolean accept(final int id) {
-        try {
-          return readValueId(id).address != NULL_ADDR;
+    synchronized (ourLock) {
+      return getAllDataObjects(new DataFilter() {
+        public boolean accept(final int id) {
+          try {
+            return readValueId(id).address != NULL_ADDR;
+          }
+          catch (IOException ignored) {
+          }
+          return true;
         }
-        catch (IOException ignored) {
-        }
-        return true;
-      }
-    });
+      });
+    }
   }
 
   public synchronized Value get(Key key) throws IOException {
-    myAppendCache.remove(key);
-    final int id = tryEnumerate(key);
-    if (id == NULL_ID) {
-      return null;
-    }
-    final HeaderRecord header = readValueId(id);
-    if (header.address == NULL_ID) {
-      return null;
-    }
+    synchronized (ourLock) {
+      myAppendCache.remove(key);
+      final int id = tryEnumerate(key);
+      if (id == NULL_ID) {
+        return null;
+      }
+      final HeaderRecord header = readValueId(id);
+      if (header.address == NULL_ID) {
+        return null;
+      }
 
-    byte[] data = new byte[header.size];
-    long newAddress = myValueStorage.readBytes(header.address, data);
-    if (newAddress != header.address) {
-      header.address = newAddress;
-      updateValueId(id, header);
-      myGarbageSize += header.size;
-    }
+      byte[] data = new byte[header.size];
+      long newAddress = myValueStorage.readBytes(header.address, data);
+      if (newAddress != header.address) {
+        header.address = newAddress;
+        updateValueId(id, header);
+        myGarbageSize += header.size;
+      }
 
-    final DataInputStream input = new DataInputStream(new ByteArrayInputStream(data));
-    try {
-      return myValueExternalizer.read(input);
-    }
-    finally {
-      input.close();
+      final DataInputStream input = new DataInputStream(new ByteArrayInputStream(data));
+      try {
+        return myValueExternalizer.read(input);
+      }
+      finally {
+        input.close();
+      }
     }
   }
 
   public synchronized boolean containsMapping(Key key) throws IOException {
-    myAppendCache.remove(key);
-    final int id = tryEnumerate(key);
-    if (id == NULL_ID) {
-      return false;
+    synchronized (ourLock) {
+      myAppendCache.remove(key);
+      final int id = tryEnumerate(key);
+      if (id == NULL_ID) {
+        return false;
+      }
+      return readValueId(id).address != NULL_ID;
     }
-    return readValueId(id).address != NULL_ID;
 
   }
 
   public synchronized void remove(Key key) throws IOException {
-    myAppendCache.remove(key);
-    final int id = tryEnumerate(key);
-    if (id == NULL_ID) {
-      return;
-    }
+    synchronized (ourLock) {
+      myAppendCache.remove(key);
+      final int id = tryEnumerate(key);
+      if (id == NULL_ID) {
+        return;
+      }
 
-    final HeaderRecord record = readValueId(id);
-    if (record != null) {
-      myGarbageSize += record.size;
-    }
+      final HeaderRecord record = readValueId(id);
+      if (record != null) {
+        myGarbageSize += record.size;
+      }
 
-    updateValueId(id, new HeaderRecord());
+      updateValueId(id, new HeaderRecord());
+    }
   }
 
   protected void markClean() throws IOException {
@@ -262,50 +276,56 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   }
 
   public synchronized void force() {
-    myAppendCache.clear();
-    myValueStorage.force();
+    synchronized (ourLock) {
+      myAppendCache.clear();
+      myValueStorage.force();
 
-    super.force();
+      super.force();
+    }
   }
 
   public synchronized void close() throws IOException {
-    myAppendCache.clear();
-    try {
-      super.close();
-    }
-    finally {
-      myValueStorage.dispose();
+    synchronized (ourLock) {
+      myAppendCache.clear();
+      try {
+        super.close();
+      }
+      finally {
+        myValueStorage.dispose();
+      }
     }
   }
   
   // made public for tests
   public synchronized void compact() throws IOException {
-    final long now = System.currentTimeMillis();
-    final String newPath = getDataFile(myFile).getPath() + ".new";
-    final PersistentHashMapValueStorage newStorage = PersistentHashMapValueStorage.create(newPath);
-    myValueStorage.switchToCompactionMode();
-    
-    traverseAllRecords(new RecordsProcessor() {
-      public boolean process(final int keyId) throws IOException {
-        final HeaderRecord record = readValueId(keyId);
-        if (record.address != NULL_ADDR) {
-          byte[] bytes = new byte[record.size];
-          myValueStorage.readBytes(record.address, bytes);
-          record.address = newStorage.appendBytes(bytes, 0);
-          updateValueId(keyId, record);
+    synchronized (ourLock) {
+      final long now = System.currentTimeMillis();
+      final String newPath = getDataFile(myFile).getPath() + ".new";
+      final PersistentHashMapValueStorage newStorage = PersistentHashMapValueStorage.create(newPath);
+      myValueStorage.switchToCompactionMode(ourLock);
+
+      traverseAllRecords(new RecordsProcessor() {
+        public boolean process(final int keyId) throws IOException {
+          final HeaderRecord record = readValueId(keyId);
+          if (record.address != NULL_ADDR) {
+            byte[] bytes = new byte[record.size];
+            myValueStorage.readBytes(record.address, bytes);
+            record.address = newStorage.appendBytes(bytes, 0);
+            updateValueId(keyId, record);
+          }
+          return true;
         }
-        return true;
-      }
-    });
+      });
 
-    myValueStorage.dispose();
-    newStorage.dispose();
+      myValueStorage.dispose();
+      newStorage.dispose();
 
-    FileUtil.rename(new File(newPath), getDataFile(myFile));
-    
-    myValueStorage = PersistentHashMapValueStorage.create(getDataFile(myFile).getPath());
-    LOG.info("Compacted " + myFile.getPath() + " in " + (System.currentTimeMillis() - now) + "ms.");
-    myGarbageSize = 0;
+      FileUtil.rename(new File(newPath), getDataFile(myFile));
+
+      myValueStorage = PersistentHashMapValueStorage.create(getDataFile(myFile).getPath());
+      LOG.info("Compacted " + myFile.getPath() + " in " + (System.currentTimeMillis() - now) + "ms.");
+      myGarbageSize = 0;
+    }
   }
 
   private HeaderRecord readValueId(final int keyId) throws IOException {

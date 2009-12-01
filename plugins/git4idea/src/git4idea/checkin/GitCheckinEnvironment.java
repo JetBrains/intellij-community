@@ -588,10 +588,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
      */
     private final JPanel myPanel;
     /**
-     * If checked, the changes are pushed to the server as well as connected.
-     */
-    private final JCheckBox myPushChanges;
-    /**
      * The author ComboBox, the combobox contains previously selected authors.
      */
     private final JComboBox myAuthor;
@@ -607,21 +603,13 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       c.gridy = 0;
       c.anchor = GridBagConstraints.WEST;
       c.insets = insets;
-      myPushChanges = new JCheckBox(GitBundle.message("commit.push.changes"));
-      myPushChanges.setToolTipText(GitBundle.getString("commit.push.changes.tooltip"));
-      myPanel.add(myPushChanges, c);
-      c = new GridBagConstraints();
-      c.anchor = GridBagConstraints.WEST;
-      c.insets = insets;
-      c.gridx = 0;
-      c.gridy = 1;
       final JLabel authorLabel = new JLabel(GitBundle.message("commit.author"));
       myPanel.add(authorLabel, c);
       c = new GridBagConstraints();
       c.anchor = GridBagConstraints.CENTER;
       c.insets = insets;
       c.gridx = 0;
-      c.gridy = 2;
+      c.gridy = 1;
       c.weightx = 1;
       c.fill = GridBagConstraints.HORIZONTAL;
       myAuthor = new JComboBox(mySettings.PREVIOUS_COMMIT_AUTHORS);
@@ -645,7 +633,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
      */
     public void refresh() {
       myAuthor.setSelectedItem("");
-      myPushChanges.setSelected(false);
       myNextCommitAuthor = null;
       myNextCommitIsPushed = null;
     }
@@ -663,7 +650,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         myNextCommitAuthor = author;
         mySettings.saveCommitAuthor(author);
       }
-      myNextCommitIsPushed = myPushChanges.isSelected();
     }
 
     /**
@@ -672,5 +658,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     public void restoreState() {
       refresh();
     }
+  }
+
+  public void setNextCommitIsPushed(Boolean nextCommitIsPushed) {
+    myNextCommitIsPushed = nextCommitIsPushed;
   }
 }

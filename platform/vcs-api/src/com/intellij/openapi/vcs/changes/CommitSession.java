@@ -25,6 +25,25 @@ import java.util.Collection;
  * @author max
  */
 public interface CommitSession {
+  CommitSession VCS_COMMIT = new CommitSession() {
+    public JComponent getAdditionalConfigurationUI() {
+      return null;
+    }
+
+    public JComponent getAdditionalConfigurationUI(Collection<Change> changes, String commitMessage) {
+      return null;
+    }
+
+    public boolean canExecute(Collection<Change> changes, String commitMessage) {
+      return true;
+    }
+
+    public void execute(Collection<Change> changes, String commitMessage) {
+    }
+
+    public void executionCanceled() {
+    }
+  };
 
   /**
    * @deprecated Since version 7.0, {@link #getAdditionalConfigurationUI(java.util.Collection, String)} is called instead
