@@ -23,6 +23,8 @@
   </vendor>
   <depends>com.intellij.properties</depends>
 
+  <depends optional="true" config-file="groovy-copyright.xml">com.intellij.copyright</depends>
+
   <extensionPoints>
     <extensionPoint name="libraryManager" interface="org.jetbrains.plugins.groovy.config.AbstractGroovyLibraryManager"/>
 

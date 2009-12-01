@@ -23,10 +23,12 @@ import java.io.IOException;
 public class PagedFileStorageTest extends TestCase {
   private File f;
   private PagedFileStorage s;
+  private PagedFileStorage.StorageLock lock;
 
   public void setUp() throws Exception {
     f = File.createTempFile("storage", ".tmp");
-    s = new PagedFileStorage(f);
+    lock = new PagedFileStorage.StorageLock();
+    s = new PagedFileStorage(f, lock);
   }
 
   public void tearDown() {
@@ -34,20 +36,24 @@ public class PagedFileStorageTest extends TestCase {
   }
 
   public void testResizing() throws IOException {
-    assertEquals(0, f.length());
+    synchronized (lock) {
+      assertEquals(0, f.length());
 
-    s.resize(12345);
-    assertEquals(12345, f.length());
+      s.resize(12345);
+      assertEquals(12345, f.length());
 
-    s.resize(123);
-    assertEquals(123, f.length());
+      s.resize(123);
+      assertEquals(123, f.length());
+    }
   }
 
   public void testFillingWithZerosAfterResize() throws IOException {
-    s.resize(1000);
+    synchronized (lock) {
+      s.resize(1000);
 
-    for (int i = 0; i < 1000; i++) {
-      assertEquals(0, s.get(i));
+      for (int i = 0; i < 1000; i++) {
+        assertEquals(0, s.get(i));
+      }
     }
   }
 }

@@ -169,7 +169,7 @@ public class AdvancedSettingsUI implements Configurable {
   }
 
   public String getHelpTopic() {
-    return null;
+    return "reference.settings.injection.advanced";
   }
 
   private static class BrowseClassListener implements ActionListener {

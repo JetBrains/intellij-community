@@ -230,12 +230,16 @@ public class TextPainter implements Printable {
   private void drawText(Graphics2D g, Rectangle2D clip) {
     float lineHeight = getLineHeight(g);
     HighlighterIterator hIterator = myHighlighter.createIterator(myOffset);
-    if (hIterator.atEnd())
+    if (hIterator.atEnd()) {
+      myOffset = mySegmentEnd;
       return;
+    }
     LineIterator lIterator = myDocument.createLineIterator();
     lIterator.start(myOffset);
-    if (lIterator.atEnd())
+    if (lIterator.atEnd()) {
+      myOffset = mySegmentEnd;
       return;
+    }
     TextAttributes attributes = hIterator.getTextAttributes();
     Color currentColor = attributes.getForegroundColor();
     Color backColor = attributes.getBackgroundColor();

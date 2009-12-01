@@ -24,10 +24,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.jsp.jspXml.JspDirective;
 import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlText;
-import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.*;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.options.XmlOptions;
 
@@ -47,7 +44,7 @@ public class UpdateJspFileCopyright extends UpdatePsiFileCopyright
     {
         logger.debug("updating " + getFile().getVirtualFile());
 
-        XmlDocument doc = ((JspFile)getFile()).getDocument();
+        XmlDocument doc = ((XmlFile)getFile()).getDocument();
         XmlTag root = doc.getRootTag();
         if (root == null)
         {

@@ -413,6 +413,10 @@ public class RedundantCastUtil {
       if (opType instanceof PsiPrimitiveType) {
         return !opType.equals(castType); // let's suppose all not equal primitive casts are necessary
       }
+      final PsiPrimitiveType unboxedOpType = PsiPrimitiveType.getUnboxedType(opType);
+      if (unboxedOpType != null && !unboxedOpType.equals(castType) ) {
+        return true;
+      }
     }
     else if (castType instanceof PsiClassType && ((PsiClassType)castType).hasParameters()) {
       if (opType instanceof PsiClassType && ((PsiClassType)opType).isRaw()) return true;

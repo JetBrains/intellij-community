@@ -23,9 +23,6 @@ import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.xml.XmlFile;
 import com.maddyhome.idea.copyright.CopyrightUpdaters;
 import com.maddyhome.idea.copyright.options.LanguageOptions;
 
@@ -237,23 +234,7 @@ public class FileTypeUtil
             return false;
         }
 
-        FileType type = file.getFileType();
-
-        FileType match = types.get(type.getName());
-        if (match != null)
-        {
-            if (type.equals(StdFileTypes.JAVA) && !(file instanceof PsiJavaFile))
-            {
-                return false;
-            }
-            if (type.equals(StdFileTypes.XML) && !(file instanceof XmlFile))
-            {
-                return false;
-            }
-            return !(type.equals(StdFileTypes.JSP) && !(file instanceof JspFile));
-        }
-
-        return false;
+        return isSupportedType(file.getFileType());
     }
 
     public FileType[] getSupportedTypes()

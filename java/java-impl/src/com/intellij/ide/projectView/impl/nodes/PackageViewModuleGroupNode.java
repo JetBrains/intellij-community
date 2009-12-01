@@ -18,7 +18,10 @@ package com.intellij.ide.projectView.impl.nodes;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * User: anna
@@ -33,8 +36,10 @@ public class PackageViewModuleGroupNode extends ModuleGroupNode {
     super(project, value, viewSettings);
   }
 
-  protected Class<? extends AbstractTreeNode> getModuleNodeClass() {
-    return PackageViewModuleNode.class;
+  @Override
+  protected AbstractTreeNode createModuleNode(Module module)
+    throws NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
+    return createTreeNode(PackageViewModuleNode.class, module.getProject(), module, getSettings());
   }
 
   protected ModuleGroupNode createModuleGroupNode(ModuleGroup moduleGroup) {

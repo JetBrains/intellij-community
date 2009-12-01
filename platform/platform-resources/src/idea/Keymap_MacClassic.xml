@@ -288,5 +288,12 @@
     <action id="Vcs.QuickListPopupAction">
       <keyboard-shortcut first-keystroke="ctrl V" />
     </action>
+    <action id="$Undo">
+      <keyboard-shortcut first-keystroke="meta Z"/>
+    </action>
+
+    <action id="QuickChangeScheme">
+      <keyboard-shortcut first-keystroke="control BACK_QUOTE"/>
+    </action>
   </keymap>
 </component>

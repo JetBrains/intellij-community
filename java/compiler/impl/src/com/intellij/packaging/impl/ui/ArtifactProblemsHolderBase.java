@@ -15,11 +15,9 @@
  */
 package com.intellij.packaging.impl.ui;
 
-import com.intellij.packaging.ui.ArtifactProblemsHolder;
 import com.intellij.packaging.ui.ArtifactEditorContext;
-import com.intellij.packaging.ui.ArtifactProblemQuickFix;
+import com.intellij.packaging.ui.ArtifactProblemsHolder;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
@@ -37,9 +35,5 @@ public abstract class ArtifactProblemsHolderBase implements ArtifactProblemsHold
 
   public void registerError(@NotNull String message) {
     registerError(message, null);
-  }
-
-  public void registerError(@NotNull String message, @Nullable ArtifactProblemQuickFix quickFix) {
-    registerError(message, null, quickFix);
   }
 }

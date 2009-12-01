@@ -285,7 +285,7 @@ public abstract class TestObject implements JavaCommandLine {
   }
 
 
-  protected void addClassesListToJavaParameters(Collection<? extends PsiElement> elements, Function<PsiElement, String> nameFunction, String packageName,
+   protected <T> void addClassesListToJavaParameters(Collection<? extends T> elements, Function<T, String> nameFunction, String packageName,
                                                 boolean createTempFile,
                                                 boolean junit4) {
     try {
@@ -300,7 +300,7 @@ public abstract class TestObject implements JavaCommandLine {
         writer.println(junit4 ? JUnitStarter.JUNIT4_PARAMETER : "-junit3");
         writer.println(packageName);
         final List<String> testNames = new ArrayList<String>();
-        for (final PsiElement element : elements) {
+        for (final T element : elements) {
           final String name = nameFunction.fun(element);
           if (name == null) {
             LOG.error("invalid element " + element);

@@ -34,7 +34,6 @@ public class PlatformFileTypeFactory extends FileTypeFactory {
                      new ExtensionFileNameMatcher("log"),
                      new ExtensionFileNameMatcher("cgi"),
                      new ExtensionFileNameMatcher("MF"),
-                     new ExtensionFileNameMatcher("sql"),
                      new ExtensionFileNameMatcher("jad"),
                      new ExtensionFileNameMatcher("jam"),
                      new ExtensionFileNameMatcher("htaccess"),

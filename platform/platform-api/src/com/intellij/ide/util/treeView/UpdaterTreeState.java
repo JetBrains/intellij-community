@@ -40,11 +40,17 @@ public class UpdaterTreeState {
   private WeakHashMap<Object, Object> myAdjustmentCause2Adjustment = new WeakHashMap<Object, Object>();
 
   public UpdaterTreeState(AbstractTreeUi ui) {
+    this(ui, false);
+  }
+
+  public UpdaterTreeState(AbstractTreeUi ui, boolean isEmpty) {
     myUi = ui;
 
-    final JTree tree = myUi.getTree();
-    putAll(addPaths(tree.getSelectionPaths()), myToSelect);
-    putAll(addPaths(tree.getExpandedDescendants(new TreePath(tree.getModel().getRoot()))), myToExpand);
+    if (!isEmpty) {
+      final JTree tree = myUi.getTree();
+      putAll(addPaths(tree.getSelectionPaths()), myToSelect);
+      putAll(addPaths(tree.getExpandedDescendants(new TreePath(tree.getModel().getRoot()))), myToExpand);
+    }
   }
 
   private static void putAll(final Set<Object> source, final Map<Object, Object> target) {

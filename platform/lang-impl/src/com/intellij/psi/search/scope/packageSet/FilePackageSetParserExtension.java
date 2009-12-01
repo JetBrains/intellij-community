@@ -64,7 +64,7 @@ public class FilePackageSetParserExtension implements PackageSetParserExtension 
       }
       else if (lexer.getTokenType() == ScopeTokenTypes.IDENTIFIER || lexer.getTokenType() == ScopeTokenTypes.INTEGER_LITERAL) {
         if (wasIdentifier) error(lexer, AnalysisScopeBundle.message("error.packageset.token.expectations", getTokenText(lexer)));
-        wasIdentifier = true;
+        wasIdentifier = lexer.getTokenType() == ScopeTokenTypes.IDENTIFIER;
         pattern.append(getTokenText(lexer));
       }
       else if (lexer.getTokenType() == ScopeTokenTypes.ASTERISK) {
