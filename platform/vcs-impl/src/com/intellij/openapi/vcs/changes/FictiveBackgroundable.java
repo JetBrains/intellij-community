@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -25,16 +26,22 @@ import org.jetbrains.annotations.Nullable;
 
 class FictiveBackgroundable extends Task.Backgroundable {
   private final Waiter myWaiter;
+  private final ModalityState myState;
 
   FictiveBackgroundable(@Nullable final Project project, @NotNull final Runnable runnable, final boolean cancellable, final String title,
                         final ModalityState state) {
     super(project, VcsBundle.message("change.list.manager.wait.lists.synchronization", title), cancellable, BackgroundFromStartOption.getInstance());
+    myState = state;
     myWaiter = new Waiter(project, runnable, state, VcsBundle.message("change.list.manager.wait.lists.synchronization", title), cancellable);
   }
 
   public void run(@NotNull final ProgressIndicator indicator) {
     myWaiter.run(indicator);
-    myWaiter.onSuccess();
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        myWaiter.onSuccess();
+      }
+    }, myState);
   }
 
   public void done() {
