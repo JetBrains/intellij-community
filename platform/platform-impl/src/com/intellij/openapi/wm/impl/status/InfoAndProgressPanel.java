@@ -33,8 +33,6 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.AsyncProcessIcon;
-import com.intellij.util.ui.BaseButtonBehavior;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
@@ -45,6 +43,7 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -79,17 +78,16 @@ public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
 
     myProgressIcon = new AsyncProcessIcon("Background process");
     myProgressIcon.setOpaque(true);
-    new BaseButtonBehavior(myProgressIcon) {
-      protected void execute(final MouseEvent e) {
-        triggerPopupShowing();
-      }
 
-      protected void pass(final MouseEvent e) {
-        if (myOriginals.size() == 1 && UIUtil.isCloseClick(e)) {
-          myOriginals.get(0).cancel();
+    myProgressIcon.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mousePressed(MouseEvent e) {
+        if (!myPopup.isShowing()) {
+          openProcessPopup();
         }
       }
-    };
+    });
+    
     myProgressIcon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
     StatusBarTooltipper.install(this, myProgressIcon, statusBar);
@@ -339,17 +337,14 @@ public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
     myOriginal2Inlines.put(original, inline);
 
     if (compact) {
-      new BaseButtonBehavior(inline.getComponent()) {
-        protected void execute(final MouseEvent e) {
-          triggerPopupShowing();
-        }
-
-        protected void pass(final MouseEvent e) {
-          if (UIUtil.isCloseClick(e)) {
-            inline.cancelRequest();
+      inline.getComponent().addMouseListener(new MouseAdapter() {
+        @Override
+        public void mousePressed(MouseEvent e) {
+          if (!myPopup.isShowing()) {
+            openProcessPopup();
           }
         }
-      };
+      });
     }
 
     return inline;
