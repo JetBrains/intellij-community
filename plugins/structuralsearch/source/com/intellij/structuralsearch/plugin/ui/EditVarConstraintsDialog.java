@@ -1,8 +1,10 @@
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.template.impl.Variable;
+import com.intellij.find.impl.RegExHelpPopup;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -20,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -33,12 +36,15 @@ import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.ui.components.labels.LinkListener;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -52,6 +58,8 @@ import java.util.regex.PatternSyntaxException;
  * Time: 1:52:18 PM
  */
 class EditVarConstraintsDialog extends DialogWrapper {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.structuralsearch.plugin.ui.EditVarConstraintsDialog");
+
   private JTextField maxoccurs;
   private JCheckBox applyWithinTypeHierarchy;
   private JCheckBox notRegexp;
@@ -84,6 +92,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
   private JPanel expressionConstraints;
   private JPanel occurencePanel;
   private JPanel textConstraintsPanel;
+  private JLabel myRegExHelpLabel;
 
   private static Project myProject;
 
@@ -516,6 +525,20 @@ class EditVarConstraintsDialog extends DialogWrapper {
     regexp = createComponent();
     regexprForExprType = createComponent();
     formalArgType = createComponent();
+    
+    myRegExHelpLabel = new LinkLabel("[Help]", null, new LinkListener() {
+      public void linkSelected(LinkLabel aSource, Object aLinkData) {
+        try {
+          final JBPopup helpPopup = RegExHelpPopup.createRegExHelpPopup();
+          helpPopup.showInCenterOf(mainForm);
+        }
+        catch (BadLocationException e) {
+          LOG.info(e);
+        }
+      }
+    });
+
+    myRegExHelpLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
   }
 
   private static EditorTextField createComponent() {
