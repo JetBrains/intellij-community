@@ -116,6 +116,7 @@ public class InspectionProfileTest extends TestCase {
                                                     "    </option>\n" +
                                                     "    <option name=\"IGNORE_DEPRECATED\" value=\"false\" />\n" +
                                                     "    <option name=\"IGNORE_JAVADOC_PERIOD\" value=\"false\" />\n" +
+                                                    "    <option name=\"IGNORE_DUPLICATED_THROWS\" value=\"false\" />\n" +
                                                     "    <option name=\"myAdditionalJavadocTags\" value=\"tag1,tag2 \" />\n" +
                                                     "  </inspection_tool>\n" +
                                                     "</inspections>");
@@ -152,6 +153,7 @@ public class InspectionProfileTest extends TestCase {
                                                     "    </option>\n" +
                                                     "    <option name=\"IGNORE_DEPRECATED\" value=\"false\" />\n" +
                                                     "    <option name=\"IGNORE_JAVADOC_PERIOD\" value=\"false\" />\n" +
+                                                    "    <option name=\"IGNORE_DUPLICATED_THROWS\" value=\"false\" />\n" +
                                                     "    <option name=\"myAdditionalJavadocTags\" value=\"tag1,tag2 \" />\n" +
                                                     "  </inspection_tool>\n" +
                                                     "</inspections>");
