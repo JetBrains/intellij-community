@@ -169,6 +169,10 @@ public class SignatureParsing {
 
   public static String parseClassOrTypeVariableElement(CharacterIterator signature) throws ClsFormatException {
     char variance = parseVariance(signature);
+    if (variance == '*') {
+      return decorateTypeText("*", variance);
+    }
+
     int arrayCount = 0;
     while (signature.current() == '[') {
       arrayCount++;
@@ -183,9 +187,6 @@ public class SignatureParsing {
         arrayCount--;
       }
       return decorateTypeText(ref, variance);
-    }
-    else if (variance == '*') {
-      return decorateTypeText("*", variance);
     }
     else {
       throw new ClsFormatException();
