@@ -46,7 +46,7 @@ import java.util.Collection;
  */
 public class PropertiesAnnotator implements Annotator {
 
-  public void annotate(PsiElement element, AnnotationHolder holder) {
+  public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     if (!(element instanceof Property)) return;
     final Property property = (Property)element;
     PropertiesFile propertiesFile = property.getContainingFile();
@@ -105,10 +105,11 @@ public class PropertiesAnnotator implements Annotator {
               }
 
               public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-                return property.isValid()
-                       && property.getManager().isInProject(property)
-                       && property.getContainingFile().getText().charAt(annotation.getStartOffset()) == '\\'
-                  ;
+                if (!property.isValid() || !property.getManager().isInProject(property)) return false;
+
+                String text = property.getContainingFile().getText();
+                int startOffset = annotation.getStartOffset();
+                return text.length() > startOffset && text.charAt(startOffset) == '\\';
               }
 
               public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
