@@ -29,10 +29,9 @@ import java.util.Map;
 public class ArtifactPointerManagerImpl extends ArtifactPointerManager {
   private final Map<String, ArtifactPointerImpl> myUnresolvedPointers = new HashMap<String, ArtifactPointerImpl>();
   private final Map<Artifact, ArtifactPointerImpl> myPointers = new HashMap<Artifact, ArtifactPointerImpl>();
-  private final Project myProject;
+  private ArtifactManager myArtifactManager;
 
   public ArtifactPointerManagerImpl(Project project) {
-    myProject = project;
     project.getMessageBus().connect().subscribe(ArtifactManager.TOPIC, new ArtifactAdapter() {
       @Override
       public void artifactRemoved(@NotNull Artifact artifact) {
@@ -73,6 +72,10 @@ public class ArtifactPointerManagerImpl extends ArtifactPointerManager {
     });
   }
 
+  public void setArtifactManager(ArtifactManager artifactManager) {
+    myArtifactManager = artifactManager;
+  }
+
   private void disposePointer(Artifact artifact) {
     final ArtifactPointerImpl pointer = myPointers.remove(artifact);
     if (pointer != null) {
@@ -82,9 +85,11 @@ public class ArtifactPointerManagerImpl extends ArtifactPointerManager {
   }
 
   public ArtifactPointer createPointer(@NotNull String name) {
-    final Artifact artifact = ArtifactManager.getInstance(myProject).findArtifact(name);
-    if (artifact != null) {
-      return createPointer(artifact);
+    if (myArtifactManager != null) {
+      final Artifact artifact = myArtifactManager.findArtifact(name);
+      if (artifact != null) {
+        return createPointer(artifact);
+      }
     }
 
     ArtifactPointerImpl pointer = myUnresolvedPointers.get(name);

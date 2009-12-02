@@ -65,11 +65,11 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
   };
   private Map<String, LocalFileSystem.WatchRequest> myWatchedOutputs = new HashMap<String, LocalFileSystem.WatchRequest>();
 
-  public ArtifactManagerImpl(Project project, VirtualFileManager virtualFileManager) {
+  public ArtifactManagerImpl(Project project) {
     myProject = project;
     myModel = new ArtifactManagerModel();
     myResolvingContext = new DefaultPackagingElementResolvingContext(myProject);
-    virtualFileManager.addVirtualFileListener(new ArtifactVirtualFileListener(myProject, this), myProject);
+    ((ArtifactPointerManagerImpl)ArtifactPointerManager.getInstance(project)).setArtifactManager(this);
   }
 
   @NotNull
@@ -225,6 +225,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
   }
 
   public void initComponent() {
+    VirtualFileManager.getInstance().addVirtualFileListener(new ArtifactVirtualFileListener(myProject, this), myProject);
     updateWatchedRoots();
   }
 
@@ -326,6 +327,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
     finally {
       myInsideCommit = false;
     }
+    updateWatchedRoots();
   }
 
   public Project getProject() {

@@ -15,7 +15,6 @@
  */
 package com.intellij.packaging.artifacts;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.packaging.elements.CompositePackagingElement;
@@ -41,7 +40,7 @@ public abstract class ArtifactManager implements ArtifactModel {
   };
 
   public static ArtifactManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, ArtifactManager.class);
+    return project.getComponent(ArtifactManager.class);
   }
 
   public abstract Artifact[] getSortedArtifacts();
