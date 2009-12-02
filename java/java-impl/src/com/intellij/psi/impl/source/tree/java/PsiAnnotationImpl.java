@@ -114,7 +114,8 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
     PsiElement member = parent.getParent();
     String[] elementTypeFields = AnnotationsHighlightUtil.getApplicableElementTypeFields(member);
     if (elementTypeFields == null) return null;
-    if (AnnotationsHighlightUtil.isAnnotationApplicableTo(this, true, elementTypeFields)) return (PsiAnnotationOwner)parent;
+    if (parent instanceof PsiAnnotationOwner
+        && AnnotationsHighlightUtil.isAnnotationApplicableTo(this, true, elementTypeFields)) return (PsiAnnotationOwner)parent;
 
     PsiAnnotationOwner typeElement;
     if (member instanceof PsiVariable) {

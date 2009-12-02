@@ -96,8 +96,9 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     Object value = originalExpression.getValue();
     if (!(value instanceof String)) return;
     if (!shouldCheck(originalExpression)) return;
-    final GlobalSearchScope scope = GlobalSearchScope.projectScope(originalExpression.getProject());
     final String stringToFind = (String)value;
+    if (stringToFind.length() == 0) return;
+    final GlobalSearchScope scope = GlobalSearchScope.projectScope(originalExpression.getProject());
     final PsiSearchHelper searchHelper = originalExpression.getManager().getSearchHelper();
     final List<String> words = StringUtil.getWordsIn(stringToFind);
     if (words.isEmpty()) return;
