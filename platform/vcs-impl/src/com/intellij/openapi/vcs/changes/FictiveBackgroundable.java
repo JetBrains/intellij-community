@@ -41,7 +41,7 @@ class FictiveBackgroundable extends Task.Backgroundable {
       public void run() {
         myWaiter.onSuccess();
       }
-    }, myState);
+    }, myState == null ? ModalityState.NON_MODAL : myState);
   }
 
   public void done() {
