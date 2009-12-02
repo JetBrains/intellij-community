@@ -109,9 +109,14 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
   }
 
   private void resetImpl() {
-    myModel.reset();
-    for (CodeStyleConfigurableWrapper panel : myPanels) {
-      panel.resetPanel();
+    if (myModel != null) {
+      myModel.reset();
+    }
+
+    if (myPanels != null) {
+      for (CodeStyleConfigurableWrapper panel : myPanels) {
+        panel.resetPanel();
+      }
     }
   }
 
