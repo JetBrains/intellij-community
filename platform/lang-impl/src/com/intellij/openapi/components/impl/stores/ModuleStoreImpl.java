@@ -66,31 +66,8 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
   }
 
   @Override
-  public String  initComponent(@NotNull Object component, boolean service) {
-    final String componentName = super.initComponent(component, service);
-
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode()) {
-      if (service && componentName != null) {
-        final TrackingPathMacroSubstitutor substitutor = getStateStorageManager().getMacroSubstitutor();
-        if (substitutor != null) {
-          final Collection<String> macros = substitutor.getUnknownMacros(componentName);
-          if (!macros.isEmpty()) {
-            Notifications.Bus.notify(new Notification("Load Error", "Component load error: undefined path variables!",
-                                                      String.format("<p><i>%s</i> %s undefined. <a href=\"\">Fix it!</a></p>",
-                                                                    StringUtil.join(macros, ", "),
-                                                                    macros.size() == 1 ? "is" : "are"), NotificationType.ERROR,
-                                                      new NotificationListener() {
-                                                        public void hyperlinkUpdate(@NotNull Notification notification,
-                                                                                    @NotNull HyperlinkEvent event) {
-                                                          ((ProjectEx)myModule.getProject()).checkUnknownMacros();
-                                                        }
-                                                      }), NotificationDisplayType.STICKY_BALLOON, myModule.getProject());
-          }
-        }
-      }
-    }
-
-    return componentName;
+  protected Project getProject() {
+    return myModule.getProject();
   }
 
   @Override
@@ -262,11 +239,6 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
       LOG.error(e);
       return null;
     }
-  }
-
-  @Override
-  public void reinitComponents(Set<String> componentNames, boolean reloadData) {
-    super.reinitComponents(componentNames, reloadData);
   }
 
   @Override

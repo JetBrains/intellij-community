@@ -419,19 +419,15 @@ public class PsiUtil {
 
   private static boolean mayShorten(@NotNull GrCodeReferenceElement ref) {
     GrCodeReferenceElement cur = (GrCodeReferenceElement)ref.copy();
-    while (true) {
-      final GrCodeReferenceElement qualifier = cur.getQualifier();
-      if (qualifier == null) {
-        return true;
-      }
-      if (!(qualifier.resolve() instanceof PsiClass)) {
-        final PsiClass correctResolved = (PsiClass)cur.resolve();
-        cur.setQualifier(null);
-        final PsiClass rawResolved = (PsiClass)cur.resolve();
-        return rawResolved == null || cur.getManager().areElementsEquivalent(correctResolved, rawResolved);
-      }
-      cur = qualifier;
+    final GrCodeReferenceElement qualifier = cur.getQualifier();
+    if (qualifier == null) {
+      return true;
     }
+    final PsiClass correctResolved = (PsiClass)cur.resolve();
+    cur.setQualifier(null);
+    final GroovyResolveResult[] results = cur.multiResolve(false);
+    return results.length == 0 || (results.length == 1 && cur.getManager().areElementsEquivalent(results[0].getElement(), correctResolved));
+
   }
 
   @Nullable

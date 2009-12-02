@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
@@ -194,7 +195,7 @@ public class ShowImplementationsAction extends AnAction {
     };
 
     int offset = editor == null ? 0 : editor.getCaretModel().getOffset();
-    final PsiElement[] handlerImplementations = handler.searchImplementations(element, offset, true, true);
+    final PsiElement[] handlerImplementations = handler.searchImplementations(element, offset, !(element instanceof PomTargetPsiElement), true);
     if (handlerImplementations.length > 0) return handlerImplementations;
 
     PsiFile psiFile = element.getContainingFile();

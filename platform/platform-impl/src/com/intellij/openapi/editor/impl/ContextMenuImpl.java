@@ -17,7 +17,6 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -27,6 +26,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.EditorMouseAdapter;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseMotionAdapter;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -49,17 +49,19 @@ public class ContextMenuImpl extends JPanel implements Disposable {
 
   private ActionGroup myActionGroup;
   private final JComponent myComponent;
-  private boolean myShowing = false;
+  private boolean myVisible = false;
+  private boolean myShow = false;
   private int myCurrentOpacity;
-  private Timer myShowTimer;
-  private Timer myHideTimer;
+  private Timer myTimer;
   private EditorImpl myEditor;
   private ContextMenuPanel myContextMenuPanel;
   private boolean myDisposed;
+  private JLayeredPane myLayeredPane;
 
-  public ContextMenuImpl(@NotNull final JScrollPane container, @NotNull final EditorImpl editor) {
+  public ContextMenuImpl(JLayeredPane layeredPane, @NotNull final JScrollPane container, @NotNull final EditorImpl editor) {
     setLayout(new BorderLayout(0, 0));
     myEditor = editor;
+    myLayeredPane = layeredPane;
 
     final ActionManager actionManager = ActionManager.getInstance();
 
@@ -106,26 +108,89 @@ public class ContextMenuImpl extends JPanel implements Disposable {
   }
 
   private void toggleContextToolbar(final boolean show) {
-    if (show) {
-      show();
+    final Component toolbar = myComponent.getComponent(0);
+    final int count = ((Container)toolbar).getComponentCount();
+    if (count == 0) {
+      return;
     }
-    else {
-      hide();
+
+    if (myShow != show) {
+      myShow = show;
+      restartTimer();
     }
+  }
+
+  private void restartTimer() {
+    if (myTimer != null && myTimer.isRunning()) {
+      myTimer.stop();
+    }
+
+    myTimer = new Timer(500, new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        if (myDisposed) return;
+
+        if (myTimer != null && myTimer.isRunning()) myTimer.stop();
+
+        myTimer = new Timer(50, new ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            if (myShow) {
+              if (myVisible) {
+                scheduleHide();
+                return;
+              }
+
+              if (myLayeredPane.getIndexOf(ContextMenuImpl.this) == -1) {
+                myCurrentOpacity = 0;
+                myLayeredPane.add(ContextMenuImpl.this, JLayeredPane.POPUP_LAYER);
+                ContextMenuImpl.this.setVisible(true);
+                myLayeredPane.revalidate();
+              }
+
+              myCurrentOpacity += 20;
+              if (myCurrentOpacity > 100) {
+                myCurrentOpacity = 100;
+                myVisible = true;
+                myTimer.stop();
+
+                scheduleHide();
+              }
+
+              repaint();
+            } else {
+              if (!myVisible) {
+                if (myTimer != null && myTimer.isRunning()) myTimer.stop();
+                return;
+              }
+
+              myCurrentOpacity -= 20;
+              if (myCurrentOpacity < 0) {
+                myCurrentOpacity = 0;
+                myVisible = false;
+                myLayeredPane.remove(ContextMenuImpl.this);
+                myLayeredPane.revalidate();
+              }
+
+              repaint();
+            }
+          }
+        });
+
+        myTimer.setRepeats(true);
+        myTimer.start();
+      }
+    });
+
+    myTimer.setRepeats(false);
+    myTimer.start();
   }
 
   public void dispose() {
     myDisposed = true;
     myEditor = null;
 
-    if (myHideTimer != null) {
-      myHideTimer.stop();
-      myHideTimer = null;
-    }
-
-    if (myShowTimer != null) {
-      myShowTimer.stop();
-      myShowTimer = null;
+    if (myTimer != null) {
+      myTimer.stop();
+      myTimer = null;
     }
 
   }
@@ -139,72 +204,12 @@ public class ContextMenuImpl extends JPanel implements Disposable {
     return file != null && file.isValid() && file.getFileSystem() == LocalFileSystem.getInstance();
   }
 
-  @SuppressWarnings({"deprecation"})
-  @Override
-  public void show() {
-    final Component toolbar = myComponent.getComponent(0);
-    final int count = ((Container)toolbar).getComponentCount();
-    if (count == 0) {
-      return;
-    }
-
-    if (!myShowing) {
-      //myCurrentOpacity = 0;
-
-      if (myHideTimer != null && myHideTimer.isRunning()) {
-        myHideTimer.stop();
-        myHideTimer = null;
-      }
-
-      super.show();
-      setOpaque(false);
-
-      if (myShowTimer == null || !myShowTimer.isRunning()) {
-        myShowing = true;
-
-        myShowTimer = new Timer(500, new ActionListener() {
-          public void actionPerformed(final ActionEvent e) {
-            if (myDisposed || myShowTimer == null) return;
-            myShowTimer.stop();
-
-            myShowTimer = new Timer(50, new ActionListener() {
-              public void actionPerformed(final ActionEvent e) {
-                if (myDisposed) return;
-
-                myCurrentOpacity += 20;
-                if (myCurrentOpacity > 100) {
-                  myCurrentOpacity = 100;
-                  myShowTimer.stop();
-
-                  scheduleHide();
-                }
-
-                repaint();
-              }
-            });
-
-            myShowTimer.setRepeats(true);
-            myShowTimer.start();
-          }
-        });
-
-        myShowTimer.setRepeats(false);
-        myShowTimer.start();
-
-      }
-    }
-    else {
-      scheduleHide();
-      super.show();
-    }
-  }
-
   private void scheduleHide() {
-    if (myHideTimer != null && myHideTimer.isRunning()) {
-      return;
+    if (myTimer != null && myTimer.isRunning()) {
+      myTimer.stop();
     }
 
-    myHideTimer = new Timer(1500, new ActionListener() {
+    myTimer = new Timer(1500, new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         if (myDisposed) return;
 
@@ -215,58 +220,16 @@ public class ContextMenuImpl extends JPanel implements Disposable {
             SwingUtilities.convertPointFromScreen(location, myComponent);
             if (!myComponent.getBounds().contains(location)) {
               toggleContextToolbar(false);
+            } else {
+              scheduleHide();
             }
           }
         }
       }
     });
 
-    myHideTimer.setRepeats(false);
-    myHideTimer.start();
-  }
-
-  @SuppressWarnings({"deprecation"})
-  @Override
-  public void hide() {
-    if (myShowing) {
-      if (myShowTimer != null && myShowTimer.isRunning()) {
-        myShowTimer.stop();
-        myShowTimer = null;
-      }
-
-      if (myHideTimer == null || !myHideTimer.isRunning()) {
-        myShowing = false;
-
-        myHideTimer = new Timer(700, new ActionListener() {
-          public void actionPerformed(final ActionEvent e) {
-            if (myDisposed || myHideTimer == null) return;
-            myHideTimer.stop();
-
-            myHideTimer = new Timer(50, new ActionListener() {
-              public void actionPerformed(final ActionEvent e) {
-                myCurrentOpacity -= 20;
-                if (myCurrentOpacity < 0) {
-                  myCurrentOpacity = 0;
-                  myHideTimer.stop();
-                  //ContextMenuImpl.super.hide();
-                }
-
-                repaint();
-              }
-            });
-
-            myHideTimer.setRepeats(true);
-            myHideTimer.start();
-          }
-        });
-
-        myHideTimer.setRepeats(false);
-        myHideTimer.start();
-      }
-    }
-    else {
-      //super.hide();
-    }
+    myTimer.setRepeats(false);
+    myTimer.start();
   }
 
   private ActionToolbar createToolbar(final ActionGroup group) {
