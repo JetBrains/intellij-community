@@ -20,6 +20,7 @@
 package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class SLRUCache<K, V> extends SLRUMap<K,V> {
   protected SLRUCache(final int protectedQueueSize, final int probationalQueueSize) {
@@ -40,6 +41,11 @@ public abstract class SLRUCache<K, V> extends SLRUMap<K,V> {
     put(key, value);
 
     return value;
+  }
+
+  @Nullable
+  public V getIfCached(K key) {
+    return super.get(key);
   }
 
 }

@@ -19,19 +19,50 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.containers.SLRUCache;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.*;
+import java.util.Locale;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class PersistentHashMapValueStorage {
-  private final DataOutputStream myAppender;
-  private RAReader myReader;
+  @Nullable
+  private RAReader myCompactionModeReader = null;
   private long mySize;
   private final File myFile;
+  private final String myPath;
   private boolean myCompactionMode = false;
 
+  private static final int CACHE_PROTECTED_QUEUE_SIZE = 10;
+  private static final int CACHE_PROBATIONAL_QUEUE_SIZE = 20;
+
+  private static final FileAccessorCache<DataOutputStream> ourAppendersCache = new FileAccessorCache<DataOutputStream>(CACHE_PROTECTED_QUEUE_SIZE, CACHE_PROBATIONAL_QUEUE_SIZE) {
+    @NotNull
+    public CacheValue<DataOutputStream> createValue(String path) {
+      try {
+        return new CachedAppender(new DataOutputStream(new BufferedOutputStream(new FileOutputStream(path, true))));
+      }
+      catch (FileNotFoundException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  };
+
+  private static final FileAccessorCache<RAReader> ourReadersCache = new FileAccessorCache<RAReader>(CACHE_PROTECTED_QUEUE_SIZE, CACHE_PROBATIONAL_QUEUE_SIZE) {
+    @NotNull
+    public CacheValue<RAReader> createValue(String path) {
+      return new CachedReader(new FileReader(new File(path)));
+    }
+  };
+
   public PersistentHashMapValueStorage(String path) throws IOException {
-    myAppender = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(path, true)));
+    myPath = SystemInfo.isFileSystemCaseSensitive? FileUtil.toSystemDependentName(path) : FileUtil.toSystemDependentName(path).toLowerCase(Locale.US);
+
     myFile = new File(path);
-    myReader = new FileReader(myFile);
     mySize = myFile.length();
 
     if (mySize == 0) {
@@ -42,9 +73,15 @@ public class PersistentHashMapValueStorage {
   public long appendBytes(byte[] data, long prevChunkAddress) throws IOException {
     assert !myCompactionMode;
     long result = mySize;
-    myAppender.writeLong(prevChunkAddress);
-    myAppender.writeInt(data.length);
-    myAppender.write(data);
+    final CacheValue<DataOutputStream> appender = ourAppendersCache.get(myPath);
+    try {
+      appender.get().writeLong(prevChunkAddress);
+      appender.get().writeInt(data.length);
+      appender.get().write(data);
+    }
+    finally {
+      appender.release();
+    }
     mySize += data.length + 8 + 4;
 
     return result;
@@ -64,20 +101,34 @@ public class PersistentHashMapValueStorage {
     int chunkCount = 0;
 
     byte[] headerBits = new byte[8 + 4];
-    while (chunk != 0) {
-      myReader.get(chunk, headerBits, 0, 12);
-      final long prevChunkAddress = Bits.getLong(headerBits, 0);
-      final int chunkSize = Bits.getInt(headerBits, 8);
-      final int off = size - bytesRead - chunkSize;
-      
-      checkPreconditions(result, chunkSize, off);
-      
-      myReader.get(chunk + 12, result, off, chunkSize);
-      chunk = prevChunkAddress;
-      bytesRead += chunkSize;
-      chunkCount++;
+    RAReader reader = myCompactionModeReader;
+    CacheValue<RAReader> readerHandle = null;
+    if (reader == null) {
+      readerHandle = ourReadersCache.get(myPath);
+      reader = readerHandle.get();
     }
-    
+
+    try {
+      while (chunk != 0) {
+        reader.get(chunk, headerBits, 0, 12);
+        final long prevChunkAddress = Bits.getLong(headerBits, 0);
+        final int chunkSize = Bits.getInt(headerBits, 8);
+        final int off = size - bytesRead - chunkSize;
+
+        checkPreconditions(result, chunkSize, off);
+
+        reader.get(chunk + 12, result, off, chunkSize);
+        chunk = prevChunkAddress;
+        bytesRead += chunkSize;
+        chunkCount++;
+      }
+    }
+    finally {
+      if (readerHandle != null) {
+        readerHandle.release();
+      }
+    }
+
     //assert bytesRead == size;
     if (bytesRead != size) {
       throw new IOException("Read from storage " + bytesRead + " bytes, but requested " + size + " bytes");
@@ -103,28 +154,34 @@ public class PersistentHashMapValueStorage {
   }
 
   public void force() {
-    try {
-      myAppender.flush();
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
+    final CacheValue<DataOutputStream> cached = ourAppendersCache.getIfCached(myPath);
+    if (cached != null) {
+      try {
+        cached.get().flush();
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+      finally {
+        cached.release();
+      }
     }
   }
 
   public void dispose() {
-    try {
-      myAppender.close();
-      myReader.dispose();
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
+    ourReadersCache.remove(myPath);
+    ourAppendersCache.remove(myPath);
+
+    if (myCompactionModeReader != null) {
+      myCompactionModeReader.dispose();
+      myCompactionModeReader = null;
     }
   }
 
   public void switchToCompactionMode(PagedFileStorage.StorageLock lock) {
-    myReader.dispose();
+    ourReadersCache.remove(myPath);
     try {
-      myReader = new MappedReader(myFile, lock);
+      myCompactionModeReader = new MappedReader(myFile, lock);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -183,5 +240,92 @@ public class PersistentHashMapValueStorage {
         throw new RuntimeException(e);
       }
     }
+  }
+
+  private static abstract class FileAccessorCache<T> extends SLRUCache<String, CacheValue<T>> {
+    private final Object myLock = new Object();
+    private FileAccessorCache(int protectedQueueSize, int probationalQueueSize) {
+      super(protectedQueueSize, probationalQueueSize);
+    }
+
+    @NotNull
+    public final CacheValue<T> get(String key) {
+      synchronized (myLock) {
+        final CacheValue<T> value = super.get(key);
+        value.allocate();
+        return value;
+      }
+    }
+
+    @Override
+    public CacheValue<T> getIfCached(String key) {
+      synchronized (myLock) {
+        final CacheValue<T> value = super.getIfCached(key);
+        if (value != null) {
+          value.allocate();
+        }
+        return value;
+      }
+    }
+
+    public boolean remove(String key) {
+      synchronized (myLock) {
+        return super.remove(key);
+      }
+    }
+
+    protected final void onDropFromCache(String key, CacheValue<T> value) {
+      value.release();
+    }
+  }
+
+  private static class CachedAppender extends CacheValue<DataOutputStream> {
+    private CachedAppender(DataOutputStream os) {
+      super(os);
+    }
+
+    protected void disposeAccessor(DataOutputStream os) {
+      try {
+        os.close();
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+
+  private static class CachedReader extends CacheValue<RAReader> {
+    private CachedReader(RAReader reader) {
+      super(reader);
+    }
+
+    protected void disposeAccessor(RAReader reader) {
+      reader.dispose();
+    }
+  }
+
+  private abstract static class CacheValue<T> {
+    private final T myFileAccessor;
+    private final AtomicInteger myRefCount = new AtomicInteger(1);
+
+    private CacheValue(T fileAccessor) {
+      myFileAccessor = fileAccessor;
+    }
+
+    public final void allocate() {
+      myRefCount.incrementAndGet();
+    }
+
+    public final void release() {
+      if (myRefCount.decrementAndGet() == 0) {
+        disposeAccessor(myFileAccessor);
+      }
+    }
+
+    public T get() {
+      return myFileAccessor;
+    }
+
+    protected abstract void disposeAccessor(T accesor);
   }
 }
