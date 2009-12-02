@@ -116,7 +116,9 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
     parametersToRemove.forEachDescending(new TIntProcedure() {
       public boolean execute(final int paramNum) {
         try {
-          exprs[paramNum].delete();
+          if (paramNum < exprs.length) {
+            exprs[paramNum].delete();
+          }
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
