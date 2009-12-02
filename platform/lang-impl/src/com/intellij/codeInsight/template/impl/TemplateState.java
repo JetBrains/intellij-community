@@ -536,8 +536,10 @@ public class TemplateState implements Disposable {
       new Runnable() {
         public void run() {
           BitSet calcedSegments = new BitSet();
+          int maxAttempts = (myTemplate.getVariableCount()+1)*3;
 
           do {
+            maxAttempts--;
             calcedSegments.clear();
             for (int i = myCurrentVariableNumber + 1; i < myTemplate.getVariableCount(); i++) {
               String variableName = myTemplate.getVariableNameAt(i);
@@ -565,7 +567,7 @@ public class TemplateState implements Disposable {
               }
             }
           }
-          while (!calcedSegments.isEmpty());
+          while (!calcedSegments.isEmpty() && maxAttempts >= 0);
         }
       }
     );

@@ -21,6 +21,7 @@ import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.CommonClassNames;
@@ -116,6 +117,7 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
   }
 
   public static boolean isValidJavaSdk(final Module module) {
+    if (ModuleRootManager.getInstance(module).getSourceRoots().length == 0) return true;
     return JavaPsiFacade.getInstance(module.getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, 
                                                                     module.getModuleWithLibrariesScope()) != null;
   }

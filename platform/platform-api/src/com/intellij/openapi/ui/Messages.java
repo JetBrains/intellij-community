@@ -43,7 +43,7 @@ import java.awt.event.ItemListener;
 
 public class Messages {
   private static TestDialog ourTestImplementation = TestDialog.DEFAULT;
-  private static final TestInputDialog ourTestInputImplementation = TestInputDialog.DEFAULT;
+  private static TestInputDialog ourTestInputImplementation = TestInputDialog.DEFAULT;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.Messages");
   protected static final String OK_BUTTON = CommonBundle.getOkButtonText();
@@ -55,10 +55,21 @@ public class Messages {
   public static TestDialog setTestDialog(TestDialog newValue) {
     Application application = ApplicationManager.getApplication();
     if (application != null) {
-      LOG.assertTrue(application.isUnitTestMode(), "This methos is available for tests only");
+      LOG.assertTrue(application.isUnitTestMode(), "This method is available for tests only");
     }
     TestDialog oldValue = ourTestImplementation;
     ourTestImplementation = newValue;
+    return oldValue;
+  }
+
+  @TestOnly
+  public static TestInputDialog setTestInputDialog(TestInputDialog newValue) {
+    Application application = ApplicationManager.getApplication();
+    if (application != null) {
+      LOG.assertTrue(application.isUnitTestMode(), "This method is available for tests only");
+    }
+    TestInputDialog oldValue = ourTestInputImplementation;
+    ourTestInputImplementation = newValue;
     return oldValue;
   }
 

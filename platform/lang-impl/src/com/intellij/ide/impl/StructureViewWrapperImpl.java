@@ -97,26 +97,19 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   private void checkUpdate() {
     if (myProject.isDisposed()) return;
 
-    Window mywindow = SwingUtilities.windowForComponent(myPanel);
-    if (mywindow != null && !mywindow.isActive()) return;
+    final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    if (SwingUtilities.isDescendingFrom(myPanel, owner)) return;
 
-    final KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-    final Window focusWindow = focusManager.getFocusedWindow();
+    final DataContext dataContext = DataManager.getInstance().getDataContext(owner);
+    if (dataContext.getData(myKey) == this) return;
+    if (PlatformDataKeys.PROJECT.getData(dataContext) != myProject) return;
 
-    if (focusWindow == mywindow) {
-      final Component owner = focusManager.getFocusOwner();
-      if (SwingUtilities.isDescendingFrom(myPanel, owner)) return;
-
-      final DataContext dataContext = DataManager.getInstance().getDataContext(owner);
-      if (dataContext.getData(myKey) == this) return;
-
-      final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
-      if (files != null && files.length == 1) {
-        setFile(files[0]);
-      }
-      else {
-        setFile(null);
-      }
+    final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    if (files != null && files.length == 1) {
+      setFile(files[0]);
+    }
+    else {
+      setFile(null);
     }
   }
 
