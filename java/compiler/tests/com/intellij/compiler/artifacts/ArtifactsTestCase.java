@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.roots.ui.configuration.artifacts.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.elements.CompositePackagingElement;
@@ -20,7 +21,6 @@ import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.artifacts.PlainArtifactType;
 import com.intellij.packaging.impl.elements.ManifestFileUtil;
 import com.intellij.packaging.ui.ArtifactEditor;
-import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.ManifestFileConfiguration;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PsiTestUtil;
@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -114,7 +115,41 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
     }.execute().getResultObject();
   }
 
-  protected class MockPackagingEditorContext implements ArtifactEditorContext {
+  public class MockPackagingEditorContext extends ArtifactEditorContextImpl {
+    public MockPackagingEditorContext(ArtifactsStructureConfigurableContext parent, final ArtifactEditorEx editor) {
+      super(parent, editor);
+    }
+
+    public void selectArtifact(@NotNull Artifact artifact) {
+    }
+
+    public void selectFacet(@NotNull Facet<?> facet) {
+    }
+
+    public void selectModule(@NotNull Module module) {
+    }
+
+    public void selectLibrary(@NotNull Library library) {
+    }
+
+    @Override
+    public void queueValidation() {
+    }
+
+    public List<Artifact> chooseArtifacts(List<? extends Artifact> artifacts, String title) {
+      return new ArrayList<Artifact>(artifacts);
+    }
+
+    public List<Module> chooseModules(List<Module> modules, String title) {
+      return modules;
+    }
+
+    public List<Library> chooseLibraries(List<Library> libraries, String title) {
+      return libraries;
+    }
+  }
+
+  public class MockArtifactsStructureConfigurableContext implements ArtifactsStructureConfigurableContext {
     private ModifiableArtifactModel myModifiableModel;
     private Map<Module, ModifiableRootModel> myModifiableRootModels = new HashMap<Module, ModifiableRootModel>();
     private Map<CompositePackagingElement<?>, ManifestFileConfiguration> myManifestFiles = new HashMap<CompositePackagingElement<?>, ManifestFileConfiguration>();
@@ -141,6 +176,10 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
       return model;
     }
 
+    public ArtifactEditorSettings getDefaultSettings() {
+      return new ArtifactEditorSettings();
+    }
+
     @NotNull
     public Project getProject() {
       return myProject;
@@ -152,6 +191,12 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
         return myModifiableModel;
       }
       return ArtifactManager.getInstance(myProject);
+    }
+
+    public void commitModel() {
+      if (myModifiableModel != null) {
+        myModifiableModel.commit();
+      }
     }
 
     @NotNull
@@ -166,9 +211,6 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
 
     public Library findLibrary(@NotNull String level, @NotNull String libraryName) {
       return ArtifactManager.getInstance(myProject).getResolvingContext().findLibrary(level, libraryName);
-    }
-
-    public void queueValidation() {
     }
 
     public ManifestFileConfiguration getManifestFile(CompositePackagingElement<?> element, ArtifactType artifactType) {
@@ -186,51 +228,34 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
     }
 
     public CompositePackagingElement<?> getRootElement(@NotNull Artifact artifact) {
-      throw new UnsupportedOperationException("'getRootElement' not implemented in " + getClass().getName());
+      return artifact.getRootElement();
+    }
+
+    public void editLayout(@NotNull Artifact artifact, Runnable action) {
+      final ModifiableArtifact modifiableArtifact = getOrCreateModifiableArtifactModel().getOrCreateModifiableArtifact(artifact);
+      modifiableArtifact.setRootElement(artifact.getRootElement());
+      action.run();
     }
 
     public ArtifactEditor getOrCreateEditor(Artifact artifact) {
       throw new UnsupportedOperationException("'getOrCreateEditor' not implemented in " + getClass().getName());
     }
 
-    public ArtifactEditor getThisArtifactEditor() {
-      throw new UnsupportedOperationException("'getThisArtifactEditor' not implemented in " + getClass().getName());
+    @NotNull
+    public Artifact getOriginalArtifact(@NotNull Artifact artifact) {
+      if (myModifiableModel != null) {
+        return myModifiableModel.getOriginalArtifact(artifact);
+      }
+      return artifact;
     }
 
-    public void selectArtifact(@NotNull Artifact artifact) {
-    }
-
-    public void selectFacet(@NotNull Facet<?> facet) {
-    }
-
-    public void selectModule(@NotNull Module module) {
-    }
-
-    public void selectLibrary(@NotNull Library library) {
-    }
-
-    public void editLayout(@NotNull Artifact artifact, Runnable runnable) {
+    public void queueValidation(Artifact artifact) {
     }
 
     @NotNull
-    public ArtifactType getArtifactType() {
-      throw new UnsupportedOperationException("'getArtifactType' not implemented in " + getClass().getName());
-    }
-
-    public List<Artifact> chooseArtifacts(List<? extends Artifact> artifacts, String title) {
-      throw new UnsupportedOperationException("'chooseArtifacts' not implemented in " + getClass().getName());
-    }
-
-    public List<Module> chooseModules(List<Module> modules, String title) {
-      throw new UnsupportedOperationException("'chooseModules' not implemented in " + getClass().getName());
-    }
-
-    public List<Library> chooseLibraries(List<Library> libraries, String title) {
-      throw new UnsupportedOperationException("'chooseLibraries' not implemented in " + getClass().getName());
-    }
-
-    public Artifact getArtifact() {
-      throw new UnsupportedOperationException("'getArtifact' not implemented in " + getClass().getName());
+    public ArtifactProjectStructureElement getOrCreateArtifactElement(@NotNull Artifact artifact) {
+      throw new UnsupportedOperationException("'getOrCreateArtifactElement' not implemented in " + getClass().getName());
     }
   }
+
 }

@@ -35,7 +35,7 @@ public abstract class PackagingValidationTestCase extends PackagingElementsTestC
     private Map<String, ArtifactProblemQuickFix[]> myQuickFixes = new THashMap<String, ArtifactProblemQuickFix[]>();
 
     public MockArtifactProblemsHolder() {
-      super(new MockPackagingEditorContext());
+      super(new MockPackagingEditorContext(new MockArtifactsStructureConfigurableContext(), null));
     }
 
     public void registerError(@NotNull String message, @Nullable List<PackagingElement<?>> pathToPlace, @NotNull ArtifactProblemQuickFix... quickFixes) {
