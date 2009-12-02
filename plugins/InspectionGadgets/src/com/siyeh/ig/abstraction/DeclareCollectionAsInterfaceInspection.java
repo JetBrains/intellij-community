@@ -229,7 +229,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
                 return;
             }
             final PsiType type = method.getReturnType();
-            if (!CollectionUtils.isCollectionClass(type)) {
+            if (type == null || !CollectionUtils.isCollectionClass(type)) {
                 return;
             }
             if (LibraryUtil.isOverrideOfLibraryMethod(method)) {
@@ -263,7 +263,10 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
             final PsiClass objectClass = javaLangObject.resolve();
             weaklingList.remove(objectClass);
             if (weaklingList.isEmpty()) {
-                registerError(nameElement, "java.util.Collection");
+                final String typeText = type.getCanonicalText();
+                final String interfaceText =
+                        CollectionUtils.getInterfaceForClass(typeText);
+                registerError(nameElement, interfaceText);
             } else {
                 final PsiClass weakling = weaklingList.get(0);
                 registerError(nameElement, weakling.getQualifiedName());
