@@ -595,7 +595,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     }
     // if refresh asynchronously, local changes would also be notified that they are dirty asynchronously,
     // and commit could be executed while not all changes are visible
-    final RefreshSession session = RefreshQueue.getInstance().createSession(false, true, new Runnable() {
+    final RefreshSession session = RefreshQueue.getInstance().createSession(true, true, new Runnable() {
       public void run() {
         if (project.isDisposed()) return;
         filterOutInvalid(toRefreshFiles);
