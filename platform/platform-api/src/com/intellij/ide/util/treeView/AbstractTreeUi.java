@@ -521,8 +521,17 @@ public class AbstractTreeUi {
     }
   }
 
-  private void initRootNodeNowIfNeeded(final TreeUpdatePass pass) {
-    if (myRootNodeWasInitialized) return;
+  private boolean initRootNodeNowIfNeeded(final TreeUpdatePass pass) {
+    boolean wasCleanedUp = false;
+    if (myRootNodeWasInitialized) {
+      Object root = getTreeStructure().getRootElement();
+      Object currentRoot = getElementFor(myRootNode);
+
+      if (Comparing.equal(root, currentRoot)) return false;
+
+      cleanUpNow();
+      wasCleanedUp = true;
+    }
 
     myRootNodeWasInitialized = true;
 
@@ -576,6 +585,8 @@ public class AbstractTreeUi {
       build.run();
       update.run();
     }
+
+    return wasCleanedUp;
   }
 
   private boolean isAutoExpand(NodeDescriptor descriptor) {
@@ -793,7 +804,8 @@ public class AbstractTreeUi {
   final void updateSubtreeNow(TreeUpdatePass pass, boolean canSmartExpand) {
     maybeSetBusyAndScheduleWaiterForReady(true);
 
-    initRootNodeNowIfNeeded(pass);
+    boolean consumed = initRootNodeNowIfNeeded(pass);
+    if (consumed) return;
 
     final DefaultMutableTreeNode node = pass.getNode();
 

@@ -51,7 +51,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
     myTreeBuilder = treeBuilder;
     final JTree tree = myTreeBuilder.getTree();
     final JComponent component = tree instanceof TreeTableTree ? ((TreeTableTree)tree).getTreeTable() : tree;
-    myUpdateQueue = new MergingUpdateQueue("UpdateQueue", 300, component.isShowing(), component) {
+    myUpdateQueue = new MergingUpdateQueue("UpdateQeue", 300, component.isShowing(), component) {
       @Override
       protected Alarm createAlarm(Alarm.ThreadToUse thread, Disposable parent) {
         return new Alarm(thread, parent) {
