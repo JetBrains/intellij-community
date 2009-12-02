@@ -88,7 +88,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
         IntroduceVariableBase.showChooser(editor, expressions, new Pass<PsiExpression>() {
           @Override
           public void pass(PsiExpression psiExpression) {
-            callback.pass(new PsiExpression[]{psiExpression});
+            callback.pass(new PsiElement[]{psiExpression});
           }
         });
         return;
