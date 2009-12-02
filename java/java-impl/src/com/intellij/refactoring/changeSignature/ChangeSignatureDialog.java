@@ -49,6 +49,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
@@ -132,6 +133,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     }
   }
 
+  @Nullable
   private CanonicalTypes.Type getReturnType() {
     if (myReturnTypeField != null) {
       try {
@@ -220,16 +222,6 @@ public class ChangeSignatureDialog extends RefactoringDialog {
       namePrompt.setText(RefactoringBundle.message("name.prompt"));
       panel.add(namePrompt);
       panel.add(myNameField);
-
-      JLabel typePrompt = new JLabel();
-      panel.add(typePrompt);
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory();
-      myReturnTypeCodeFragment = factory.createTypeCodeFragment(myMethod.getReturnTypeElement().getText(), myMethod.getParameterList(), true, true);
-      final Document document = PsiDocumentManager.getInstance(myProject).getDocument(myReturnTypeCodeFragment);
-      myReturnTypeField = new EditorTextField(document, myProject, StdFileTypes.JAVA);
-      typePrompt.setText(RefactoringBundle.message("changeSignature.return.type.prompt"));
-      panel.add(myReturnTypeField);
-
       final DocumentListener documentListener = new DocumentListener() {
         public void beforeDocumentChange(DocumentEvent event) {
         }
@@ -238,8 +230,21 @@ public class ChangeSignatureDialog extends RefactoringDialog {
           updateSignature();
         }
       };
-
       myNameField.addDocumentListener(documentListener);
+
+      JLabel typePrompt = new JLabel();
+      panel.add(typePrompt);
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory();
+      final PsiTypeElement typeElement = myMethod.getReturnTypeElement();
+      if (typeElement == null) {
+        LOG.assertTrue(false, myMethod.getClass().getName());
+        return panel;
+      }
+      myReturnTypeCodeFragment = factory.createTypeCodeFragment(typeElement.getText(), myMethod.getParameterList(), true, true);
+      final Document document = PsiDocumentManager.getInstance(myProject).getDocument(myReturnTypeCodeFragment);
+      myReturnTypeField = new EditorTextField(document, myProject, StdFileTypes.JAVA);
+      typePrompt.setText(RefactoringBundle.message("changeSignature.return.type.prompt"));
+      panel.add(myReturnTypeField);
       myReturnTypeField.addDocumentListener(documentListener);
     }
 
@@ -260,8 +265,8 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     JPanel subPanel = new JPanel(new BorderLayout());
     subPanel.add(createParametersPanel(), BorderLayout.CENTER);
 
-    if (myMethod.getContainingClass() != null
-        && !myMethod.getContainingClass().isInterface()) {
+    final PsiClass containingClass = myMethod.getContainingClass();
+    if (containingClass != null && !containingClass.isInterface()) {
       myVisibilityPanel = new VisibilityPanel(false, false);
       myVisibilityPanel.setVisibility(VisibilityUtil.getVisibilityModifier(myMethod.getModifierList()));
       myVisibilityPanel.addStateChangedListener(new VisibilityPanel.StateChanged() {
