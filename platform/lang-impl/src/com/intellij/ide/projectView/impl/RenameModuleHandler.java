@@ -33,13 +33,15 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.lang.TitledHandler;
 import com.intellij.refactoring.rename.RenameHandler;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
  */
-public class RenameModuleHandler implements RenameHandler {
+public class RenameModuleHandler implements RenameHandler, TitledHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.actions.RenameModuleHandler");
 
   public boolean isAvailableOnDataContext(DataContext dataContext) {
@@ -64,6 +66,10 @@ public class RenameModuleHandler implements RenameHandler {
                              Messages.getQuestionIcon(),
                              module.getName(),
                              new MyInputValidator(project, module));
+  }
+
+  public String getActionTitle() {
+    return RefactoringBundle.message("rename.module.title");
   }
 
   private static class MyInputValidator implements InputValidator {
