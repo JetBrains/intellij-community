@@ -236,8 +236,9 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
     for (String value : valueToFiles.keySet()) {
       if (progress != null){
         progress.setText2(InspectionsBundle.message("duplicate.property.value.progress.indicator.text", value));
-        if (progress.isCanceled()) throw new ProcessCanceledException();
+        progress.checkCanceled();
       }
+      if (value.length() == 0) continue;
       StringSearcher searcher = new StringSearcher(value, true, true);
       StringBuffer message = new StringBuffer();
       int duplicatesCount = 0;

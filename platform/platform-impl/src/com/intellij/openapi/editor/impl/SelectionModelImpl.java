@@ -536,10 +536,11 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
 
   public TextAttributes getTextAttributes() {
     if (myTextAttributes == null) {
-      myTextAttributes = new TextAttributes();
+      TextAttributes textAttributes = new TextAttributes();
       EditorColorsScheme scheme = myEditor.getColorsScheme();
-      myTextAttributes.setForegroundColor(scheme.getColor(EditorColors.SELECTION_FOREGROUND_COLOR));
-      myTextAttributes.setBackgroundColor(scheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR));
+      textAttributes.setForegroundColor(scheme.getColor(EditorColors.SELECTION_FOREGROUND_COLOR));
+      textAttributes.setBackgroundColor(scheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR));
+      myTextAttributes = textAttributes;
     }
 
     return myTextAttributes;

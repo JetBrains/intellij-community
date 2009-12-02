@@ -228,7 +228,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     if (header instanceof EditorSearchComponent) {
       final EditorSearchComponent searchComponent = (EditorSearchComponent)header;
       final String textInField = searchComponent.getTextInField();
-      if (!Comparing.equal(textInField, myFindInFileModel.getStringToFind())) {
+      if (!Comparing.equal(textInField, myFindInFileModel.getStringToFind()) && textInField.length() > 0) {
         FindModel patched = new FindModel();
         patched.copyFrom(myFindNextModel);
         patched.setStringToFind(textInField);
