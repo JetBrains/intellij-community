@@ -161,31 +161,8 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
   @Override
-  public String initComponent(@NotNull Object component, boolean service) {
-    final String componentName = super.initComponent(component, service);
-
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode()) {
-      if (service && componentName != null && myProject.isInitialized()) {
-        final TrackingPathMacroSubstitutor substitutor = getStateStorageManager().getMacroSubstitutor();
-        if (substitutor != null) {
-          final Collection<String> macros = substitutor.getUnknownMacros(componentName);
-          if (!macros.isEmpty()) {
-            Notifications.Bus.notify(new UnknownMacroNotification("Load Error", "Component load error: undefined path variables!",
-                                                      String.format("<p><i>%s</i> %s undefined. <a href=\"\">Fix it!</a></p>",
-                                                                    StringUtil.join(macros, ", "), macros.size() == 1 ? "is" : "are"),
-                                                      NotificationType.ERROR,
-                                                      new NotificationListener() {
-                                                        public void hyperlinkUpdate(@NotNull Notification notification,
-                                                                                    @NotNull HyperlinkEvent event) {
-                                                          myProject.checkUnknownMacros();
-                                                        }
-                                                      }, macros), NotificationDisplayType.STICKY_BALLOON, myProject);
-          }
-        }
-      }
-    }
-
-    return componentName;
+  protected Project getProject() {
+    return myProject;
   }
 
   public void setProjectFilePath(final String filePath) {
