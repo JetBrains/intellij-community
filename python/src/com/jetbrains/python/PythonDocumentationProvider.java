@@ -175,7 +175,7 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
         prolog_cat.addWith(TagSmall, $(PyBundle.message("QDOC.assigned.to.$0", element.getText())).add(BR));
         reassignment_marked = true;
       }
-      element = PyUtil.findAssignedValue((PyTargetExpression)element);
+      element = ((PyTargetExpression)element).findAssignedValue();
     }
     if (element instanceof PyReferenceExpression) {
       if (! reassignment_marked) {
@@ -183,7 +183,7 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
         prolog_cat.addWith(TagSmall, $(PyBundle.message("QDOC.assigned.to.$0", element.getText())).add(BR));
         reassignment_marked = true;
       }
-      element = PyUtil.followAssignmentsChain((PyReferenceExpression)element);
+      element = ((PyReferenceExpression)element).followAssignmentsChain();
     }
     // it may be a call to a standard wrapper
     if (element instanceof PyCallExpression) {

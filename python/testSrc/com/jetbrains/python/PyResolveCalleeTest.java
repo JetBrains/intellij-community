@@ -4,6 +4,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.ResolveTestCase;
 import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyFunction;
 
 import java.util.EnumSet;
 
@@ -29,7 +30,7 @@ public class PyResolveCalleeTest extends ResolveTestCase {
   public void testClassCall() throws Exception {
     PyCallExpression.PyMarkedFunction resolved = resolveCallee();
     assertNotNull(resolved.getFunction());
-    assertTrue(resolved.getFlags().equals(EnumSet.noneOf(PyCallExpression.Flag.class)));
+    assertTrue(resolved.getFlags().equals(EnumSet.noneOf(PyFunction.Flag.class)));
   }
 
   public void testDecoCall() throws Exception {
@@ -41,7 +42,7 @@ public class PyResolveCalleeTest extends ResolveTestCase {
   public void testDecoParamCall() throws Exception {
     PyCallExpression.PyMarkedFunction resolved = resolveCallee();
     assertNotNull(resolved.getFunction());
-    assertTrue(resolved.getFlags().equals(EnumSet.noneOf(PyCallExpression.Flag.class)));
+    assertTrue(resolved.getFlags().equals(EnumSet.noneOf(PyFunction.Flag.class)));
   }
 
   @Override

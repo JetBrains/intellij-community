@@ -87,7 +87,7 @@ public class PyCallExpressionHelper {
     PyFunction.Flag wrapped_flag = null;
     if (callee instanceof PyReferenceExpression) {
       PyReferenceExpression ref = (PyReferenceExpression)callee;
-      PsiElement resolved = PyUtil.followAssignmentsChain(ref);
+      PsiElement resolved = ref.followAssignmentsChain();
       if (resolved instanceof PyClass) resolved = ((PyClass)resolved).findMethodByName(PyNames.INIT, false); // class to constructor call
       else if (resolved instanceof PyCallExpression) {
         // is it a case of "foo = classmethod(foo)"?

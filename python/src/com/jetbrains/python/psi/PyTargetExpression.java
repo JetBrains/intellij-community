@@ -16,9 +16,14 @@
 
 package com.jetbrains.python.psi;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -34,4 +39,11 @@ public interface PyTargetExpression extends PyQualifiedExpression, PsiNamedEleme
   @Nullable
   PyExpression getQualifier();
   */
+/**
+ * Find the value that maps to this target expression in an enclosing assignment expression.
+ * Does not work with other expressions (e.g. if the target is in a 'for' loop).
+ * @return the expression assigned to target via an enclosing assignment expression, or null.
+ */
+@Nullable
+PyExpression findAssignedValue();
 }

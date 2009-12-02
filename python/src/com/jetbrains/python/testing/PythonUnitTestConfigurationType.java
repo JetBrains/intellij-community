@@ -15,6 +15,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import static com.jetbrains.python.testing.PythonUnitTestRunConfiguration.TestType;
@@ -91,7 +92,7 @@ public class PythonUnitTestConfigurationType implements LocatableConfigurationTy
 
   @Nullable
   private RunnerAndConfigurationSettings createConfigurationFromClass(Location location, PyElement element) {
-    PyClass pyClass = PyUtil.getElementOrParent(element, PyClass.class);
+    PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class, false); 
     if (pyClass == null || !PythonUnitTestUtil.isTestCaseClass(pyClass))  return null;
 
     final RunnerAndConfigurationSettings settings = makeConfigurationSettings(location, "tests from class");

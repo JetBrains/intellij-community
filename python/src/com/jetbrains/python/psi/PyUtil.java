@@ -350,31 +350,6 @@ public class PyUtil {
 
 
   /**
-   * Finds the first element to have given class, ascending to root.
-   * Is the same as {@code PsiTreeUtil.getParentOfType(element, requiredElementType, false);} please eschew.
-   * @param element where to start.
-   * @param requiredElementType what class to look for.
-   * @return the closest (grand)parent or the element itself.
-   */
-  @Nullable
-  @Deprecated
-  public static <T extends PyElement> T getElementOrParent(final PyElement element, final Class<T> requiredElementType) {
-    if (element == null) return null;
-    if (requiredElementType.isInstance(element)) {
-      //noinspection unchecked
-      return (T)element;
-    }
-
-    final PsiElement parent = element.getParent();
-    if (parent != null && requiredElementType.isInstance(parent)) {
-      //noinspection unchecked
-      return (T)parent;
-    }
-
-    return null;
-  }
-
-  /**
    * @param element             which to process
    * @param requiredElementType which type of container element is required
    * @return closest containing element of given type, or element itself, it it is of required type.
@@ -512,6 +487,7 @@ public class PyUtil {
   @NotNull
   public static PyClass[] getAllSuperClasses(@NotNull PyClass pyClass) {
     Set<PyClass> superClasses = new HashSet<PyClass>();
+    /* ZZZ
     List<PyClass> superClassesBuffer = new LinkedList<PyClass>();
     while (true) {
       final PyClass[] classes = pyClass.getSuperClasses();
@@ -532,6 +508,8 @@ public class PyUtil {
         break;
       }
     }
+    */
+    for (PyClass ancestor : pyClass.iterateAncestors()) superClasses.add(ancestor);
     return superClasses.toArray(new PyClass[superClasses.size()]);
   }
 
@@ -597,58 +575,6 @@ public class PyUtil {
    */
   public static void sure(boolean thing) {
     if (!thing) throw new IncorrectOperationException();
-  }
-
-  /**
-   * Goes through a chain of assignment statements until a non-assignment expression is encountered.
-   * <i>Note: will return null if the assignment chain ends in a target of a non-assignment statement such as 'for'.</i>
-   * @param start where to start to unfold the assignments chain
-   * @return value that is assigned to start element via a chain of definite assignments, or null.
-   */
-  @Nullable
-  public static PyElement followAssignmentsChain(PyReferenceExpression start) {
-    PyReferenceExpression seeker = start;
-    PyElement ret = null;
-    SEARCH:
-    while (seeker != null && ret == null) {
-      ResolveResult[] targets = seeker.multiResolve(false);
-      for (ResolveResult target : targets) {
-        PsiElement elt = target.getElement();
-        if (elt instanceof PyTargetExpression) {
-          PyExpression assigned_from = findAssignedValue((PyTargetExpression)elt);
-          if (assigned_from instanceof PyReferenceExpression) {
-            seeker = (PyReferenceExpression)assigned_from;
-            continue SEARCH;
-          }
-          else if (assigned_from != null) ret = assigned_from; 
-        }
-        else if (ret == null && elt instanceof PyElement) { // remember this result, but a further reference may be the next resolve result
-          ret = (PyElement)elt;
-        }
-      }
-      // all resolve results checked, reassignment not detected, nothing more to do
-      break;
-    }
-    return ret;
-  }
-
-  /**
-   * Given a target expression, find the value that maps to it in an enclosing assignment expression.
-   * Does not work with other expressions (e.g. if the taget is in a 'for' loop). 
-   * @param target for which we seek the value
-   * @return the expression assigned to target via an enclosing assignment expression, or null.
-   */
-  @Nullable
-  public static PyExpression findAssignedValue(PyTargetExpression target) {
-    PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(target, PyAssignmentStatement.class);
-    if (assignment != null) {
-      List<Pair<PyExpression, PyExpression>> mapping = assignment.getTargetsToValuesMapping();
-      for (Pair<PyExpression, PyExpression> pair : mapping) {
-        PyExpression assigned_to = pair.getFirst();
-        if (assigned_to == target) return pair.getSecond();
-      }
-    }
-    return null;
   }
 
   /**

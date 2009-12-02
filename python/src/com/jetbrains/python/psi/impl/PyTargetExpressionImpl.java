@@ -17,6 +17,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -130,5 +132,18 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
 
   public Icon getIcon(final int flags) {
     return Icons.FIELD_ICON; // for the rare cases it shows in structure view
+  }
+
+  @Nullable
+  public PyExpression findAssignedValue() {
+    PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(this, PyAssignmentStatement.class);
+    if (assignment != null) {
+      List<Pair<PyExpression, PyExpression>> mapping = assignment.getTargetsToValuesMapping();
+      for (Pair<PyExpression, PyExpression> pair : mapping) {
+        PyExpression assigned_to = pair.getFirst();
+        if (assigned_to == this) return pair.getSecond();
+      }
+    }
+    return null;
   }
 }

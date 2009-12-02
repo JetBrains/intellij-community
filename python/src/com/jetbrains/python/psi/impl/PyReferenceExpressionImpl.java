@@ -122,6 +122,33 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     return results.length >= 1 ? results[0].getElement() : null;
   }
 
+  @Nullable
+  public PyElement followAssignmentsChain() {
+    PyReferenceExpression seeker = this;
+    PyElement ret = null;
+    SEARCH:
+    while (ret == null) {
+      ResolveResult[] targets = seeker.multiResolve(false);
+      for (ResolveResult target : targets) {
+        PsiElement elt = target.getElement();
+        if (elt instanceof PyTargetExpression) {
+          PyExpression assigned_from = ((PyTargetExpression)elt).findAssignedValue();
+          if (assigned_from instanceof PyReferenceExpression) {
+            seeker = (PyReferenceExpression)assigned_from;
+            continue SEARCH;
+          }
+          else if (assigned_from != null) ret = assigned_from;
+        }
+        else if (ret == null && elt instanceof PyElement) { // remember this result, but a further reference may be the next resolve result
+          ret = (PyElement)elt;
+        }
+      }
+      // all resolve results checked, reassignment not detected, nothing more to do
+      break;
+    }
+    return ret;
+  }
+
 
   private static class ResultList extends ArrayList<RatedResolveResult> {
     // Allows to add non-null elements and discard nulls in a hassle-free way.
