@@ -842,10 +842,6 @@ public class SvnVcs extends AbstractVcs {
     return Arrays.<AnAction>asList(new ShowPropertiesDiffWithLocalAction());
   }
 
-  public void pathChanged(final File from, final File to) throws SVNException {
-    myChangeListListener.pathChanged(from, to);
-  }
-
   private String keyForVf(final VirtualFile vf) {
     return vf.getUrl();
   }

@@ -245,6 +245,8 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     SVNMoveClient mover = vcs.createMoveClient();
     long srcTime = src.lastModified();
     try {
+      // delete old??? (deleted in listener, but we could do it here)
+      final String list = SvnChangelistListener.getCurrentMapping(vcs.getProject(), src);
       if (isUndo(vcs)) {
         myUndoingMove = true;
         restoreFromUndoStorage(dst);
@@ -261,10 +263,11 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
         }
         // todo move back?
         mover.doMove(src, dst);
+        if (list != null) {
+          SvnChangelistListener.putUnderList(vcs.getProject(), list, dst);
+        }
       }
       dst.setLastModified(srcTime);
-      
-      vcs.pathChanged(src, dst);
     }
     catch (SVNException e) {
       addToMoveExceptions(vcs.getProject(), e);
