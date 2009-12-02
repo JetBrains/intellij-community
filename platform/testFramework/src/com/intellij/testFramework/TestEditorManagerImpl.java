@@ -66,7 +66,7 @@ import java.util.Map;
     return false;
   }
 
-  public void createSplitter(int orientation) {
+  public void createSplitter(int orientation, EditorWindow window) {
 
   }
 
