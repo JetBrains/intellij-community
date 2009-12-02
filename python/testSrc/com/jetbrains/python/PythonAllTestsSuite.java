@@ -12,8 +12,8 @@ public class PythonAllTestsSuite {
   public static final Class[] tests = {
     PythonLexerTest.class,
     PythonParsingTest.class,
-    IndentTest.class,
-    StatementPartsTest.class,
+    PyIndentTest.class,
+    PyStatementPartsTest.class,
     PythonHighlightingTest.class,
     PyStubsTest.class,
     PyResolveTest.class,
@@ -27,6 +27,7 @@ public class PythonAllTestsSuite {
     PyQuickDocTest.class,
     PythonInspectionsTest.class,
     PythonDemorganLawIntentionTest.class,
+    PyQuickFixTest.class,
     PySelectWordTest.class,
   };
 

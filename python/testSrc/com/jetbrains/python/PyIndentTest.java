@@ -12,7 +12,7 @@ import java.util.Calendar;
 /**
  * @author yole
  */
-public class IndentTest extends LightCodeInsightTestCase {
+public class PyIndentTest extends LightCodeInsightTestCase {
     private void doTest(String before, String after) throws Exception {
         final String name = getTestName(false);
 

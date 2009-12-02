@@ -10,7 +10,7 @@ import java.util.Map;
  * User: dcheryasov
  * Date: Mar 15, 2009 3:11:01 AM
  */
-public class StatementPartsTest extends MarkedTestCase {
+public class PyStatementPartsTest extends MarkedTestCase {
 
   protected String getTestDataPath() {
     return PythonTestUtil.getTestDataPath() + "/psi/parts/";

@@ -24,7 +24,7 @@ import java.util.List;
  * User: dcheryasov
  * Date: Nov 29, 2008 12:47:08 AM
  */
-public class QuickFixTest extends DaemonAnalyzerTestCase {
+public class PyQuickFixTest extends DaemonAnalyzerTestCase {
 
   public void testAddImport() throws Exception {
     doInspectionTest("AddImport.py", PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.NAME.add.import"), true, true);
@@ -56,7 +56,7 @@ public class QuickFixTest extends DaemonAnalyzerTestCase {
   }
 
   public void testRenameToSelf() throws Exception {
-    doInspectionTest("RenameToSelf.py", PyMethodParametersInspection.class, PyBundle.message("QFIX.rename.parameter.to.self"), true, true);
+    doInspectionTest("RenameToSelf.py", PyMethodParametersInspection.class, PyBundle.message("QFIX.rename.parameter.to.$0", "self"), true, true);
   }
 
   public void testAddFieldFromMethod() throws Exception {
