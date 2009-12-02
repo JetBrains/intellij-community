@@ -153,6 +153,9 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
             extends BaseInspectionVisitor {
 
         @Override public void visitVariable(@NotNull PsiVariable variable) {
+            if (isOnTheFly() && variable.hasModifierProperty(PsiModifier.PUBLIC)) {
+                return;
+            }
             if (ignoreLocalVariables && variable instanceof PsiLocalVariable) {
                 return;
             }
@@ -226,6 +229,9 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
             super.visitMethod(method);
             if (ignorePrivateMethodsAndFields &&
                     method.hasModifierProperty(PsiModifier.PRIVATE)) {
+                return;
+            }
+            if (isOnTheFly() && method.hasModifierProperty(PsiModifier.PUBLIC)) {
                 return;
             }
             final PsiType type = method.getReturnType();
