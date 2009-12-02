@@ -35,7 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Arrays;
 
 /**
  * @author Vladimir Kondratyev
@@ -79,6 +79,7 @@ public class TodoConfiguration implements ApplicationComponent, JDOMExternalizab
     return ApplicationManager.getApplication().getComponent(TodoConfiguration.class);
   }
 
+  @NotNull
   public String getComponentName() {
     return "TodoConfiguration";
   }
@@ -96,12 +97,28 @@ public class TodoConfiguration implements ApplicationComponent, JDOMExternalizab
     return myIndexPatterns;
   }
 
-  public void setTodoPatterns(TodoPattern[] patterns) {
-    TodoPattern[] oldPatterns = myTodoPatterns;
-    myTodoPatterns = patterns;
+  public void setTodoPatterns(TodoPattern[] todoPatterns) {
+    doSetTodoPatterns(todoPatterns, true);
+  }
+
+  private void doSetTodoPatterns(TodoPattern[] todoPatterns, final boolean shouldNotifyIndices) {
+    TodoPattern[] oldTodoPatterns = myTodoPatterns;
+    IndexPattern[] oldIndexPatterns = myIndexPatterns;
+
+    myTodoPatterns = todoPatterns;
     buildIndexPatterns();
-    myPropertyChangeMulticaster.getMulticaster().propertyChange(new PropertyChangeEvent(this, PROP_INDEX_PATTERNS, oldPatterns, patterns));
-    myPropertyChangeMulticaster.getMulticaster().propertyChange(new PropertyChangeEvent(this, PROP_TODO_PATTERNS, oldPatterns, patterns));
+
+    // only trigger index refresh actual index patterns have changed
+    if (shouldNotifyIndices && !Arrays.deepEquals(myIndexPatterns, oldIndexPatterns)) {
+      final PropertyChangeListener multicaster = myPropertyChangeMulticaster.getMulticaster();
+      multicaster.propertyChange(new PropertyChangeEvent(this, PROP_INDEX_PATTERNS, oldTodoPatterns, todoPatterns));
+    }
+
+    // only trigger gui and code daemon refresh when either the index patterns or presentation attributes have changed
+    if (!Arrays.deepEquals(myTodoPatterns, oldTodoPatterns)) {
+      final PropertyChangeListener multicaster = myPropertyChangeMulticaster.getMulticaster();
+      multicaster.propertyChange(new PropertyChangeEvent(this, PROP_TODO_PATTERNS, oldTodoPatterns, todoPatterns));
+    }
   }
 
   /**
@@ -109,8 +126,7 @@ public class TodoConfiguration implements ApplicationComponent, JDOMExternalizab
    *         <code>null</code> if there is no filter with <code>name</code>.
    */
   public TodoFilter getTodoFilter(String name) {
-    for (int i = 0; i < myTodoFilters.length; i++) {
-      TodoFilter filter = myTodoFilters[i];
+    for (TodoFilter filter : myTodoFilters) {
       if (filter.getName().equals(name)) {
         return filter;
       }
@@ -142,8 +158,8 @@ public class TodoConfiguration implements ApplicationComponent, JDOMExternalizab
   public void readExternal(Element element) throws InvalidDataException {
     ArrayList<TodoPattern> patternsList = new ArrayList<TodoPattern>();
     ArrayList<TodoFilter> filtersList = new ArrayList<TodoFilter>();
-    for (Iterator i = element.getChildren().iterator(); i.hasNext();) {
-      Element child = (Element)i.next();
+    for (Object o : element.getChildren()) {
+      Element child = (Element)o;
       if (ELEMENT_PATTERN.equals(child.getName())) {
         TodoPattern pattern = new TodoPattern();
         pattern.readExternal(child);
@@ -156,19 +172,17 @@ public class TodoConfiguration implements ApplicationComponent, JDOMExternalizab
         filtersList.add(filter);
       }
     }
-    setTodoPatterns(patternsList.toArray(new TodoPattern[patternsList.size()]));
+    doSetTodoPatterns(patternsList.toArray(new TodoPattern[patternsList.size()]), false);
     setTodoFilters(filtersList.toArray(new TodoFilter[filtersList.size()]));
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    for (int i = 0; i < myTodoPatterns.length; i++) {
-      TodoPattern pattern = myTodoPatterns[i];
+    for (TodoPattern pattern : myTodoPatterns) {
       Element child = new Element(ELEMENT_PATTERN);
       pattern.writeExternal(child);
       element.addContent(child);
     }
-    for (int i = 0; i < myTodoFilters.length; i++) {
-      TodoFilter filter = myTodoFilters[i];
+    for (TodoFilter filter : myTodoFilters) {
       Element child = new Element(ELEMENT_FILTER);
       filter.writeExternal(child, myTodoPatterns);
       element.addContent(child);

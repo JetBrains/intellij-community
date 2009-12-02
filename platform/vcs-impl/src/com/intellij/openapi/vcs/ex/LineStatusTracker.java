@@ -517,7 +517,7 @@ public class LineStatusTracker {
   @Nullable
   private Range getPrevRange(Range range) {
     int index = myRanges.indexOf(range);
-    if (index == 0) return null;
+    if (index <= 0) return null;
     return myRanges.get(index - 1);
   }
 
