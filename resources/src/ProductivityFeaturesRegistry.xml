@@ -215,13 +215,6 @@
       first-show="5"
       successive-show="7"
       />
-    <feature
-      id="editing.completion.completeStatement"
-      tip-file="CompleteMethod.html"
-      min-usage-count="5"
-      first-show="10"
-      successive-show="7"
-      />
   </group>
   
   <group id="editing">
