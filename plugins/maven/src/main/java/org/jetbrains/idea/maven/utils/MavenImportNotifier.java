@@ -30,6 +30,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.ProjectBundle;
 
 import javax.swing.*;
+import javax.swing.border.LineBorder;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
@@ -119,22 +120,15 @@ public class MavenImportNotifier extends SimpleProjectComponent {
     private JLabel myLabel;
 
     private NotifierPanel() {
-      super(new BorderLayout());
+      super(new GridBagLayout());
 
       setBackground(LightColors.YELLOW);
       setBorder(BorderFactory.createEmptyBorder(7, 15, 7, 15));
-      myLabel = new JLabel(MavenIcons.MAVEN_ICON);
-
-      add(myLabel, BorderLayout.WEST);
+      myLabel = new JLabel(MavenIcons.MAVEN_ICON, JLabel.LEFT);
 
       JComponent importChangedButton = createButton(ProjectBundle.message("maven.project.import.changed"), new Runnable() {
         public void run() {
           myMavenProjectsManager.performScheduledImport();
-        }
-      });
-      JComponent importAllButton = createButton(ProjectBundle.message("maven.project.import.all"), new Runnable() {
-        public void run() {
-          myMavenProjectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles();
         }
       });
       JComponent enableAutoImportButton = createButton(ProjectBundle.message("maven.project.import.enable.auto"), new Runnable() {
@@ -146,12 +140,23 @@ public class MavenImportNotifier extends SimpleProjectComponent {
       JPanel buttonsPanel = new JPanel();
       buttonsPanel.setOpaque(false);
       buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.X_AXIS));
+      buttonsPanel.add(myLabel);
       buttonsPanel.add(importChangedButton);
-      buttonsPanel.add(importAllButton);
       buttonsPanel.add(Box.createHorizontalStrut(10));
       buttonsPanel.add(enableAutoImportButton);
 
-      add(buttonsPanel, BorderLayout.EAST);
+      GridBagConstraints c = new GridBagConstraints();
+      c.fill = GridBagConstraints.HORIZONTAL;
+
+      c.gridx = 0;
+      c.anchor = GridBagConstraints.WEST;
+      c.weightx = 1;
+      add(myLabel, c);
+
+      c.gridx = 1;
+      c.weightx = 0;
+      c.anchor = GridBagConstraints.EAST;
+      add(buttonsPanel, c);
     }
 
     private JComponent createButton(String text, final Runnable action) {
@@ -174,9 +179,10 @@ public class MavenImportNotifier extends SimpleProjectComponent {
         s = ProjectBundle.message("maven.project.something.changed");
       }
       else {
-        s = ProjectBundle.message("maven.project.changed", projectsCount, projectsCount == 1 ? " has" : "s have");
+        s = ProjectBundle.message("maven.project.changed", projectsCount, projectsCount == 1 ? " is" : "s are");
       }
       myLabel.setText(s);
+      myLabel.setToolTipText(s);
     }
   }
 }

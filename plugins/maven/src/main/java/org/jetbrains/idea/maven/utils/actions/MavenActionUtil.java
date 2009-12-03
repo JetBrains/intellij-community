@@ -70,9 +70,11 @@ public class MavenActionUtil {
       MavenProject project = getProjectsManager(e).findProject(each);
       if (project != null) result.add(project);
     }
-    for (Module each : getModules(e)) {
-      MavenProject project = getProjectsManager(e).findProject(each);
-      if (project != null) result.add(project);
+    if (result.isEmpty()) {
+      for (Module each : getModules(e)) {
+        MavenProject project = getProjectsManager(e).findProject(each);
+        if (project != null) result.add(project);
+      }
     }
     return new ArrayList<MavenProject>(result);
   }
