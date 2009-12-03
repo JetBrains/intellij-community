@@ -33,7 +33,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.fs.IFile;
+import net.sf.cglib.core.CollectionUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -258,19 +260,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
       if (service && componentName != null && project.isInitialized()) {
         final TrackingPathMacroSubstitutor substitutor = getStateStorageManager().getMacroSubstitutor();
         if (substitutor != null) {
-          final Collection<String> macros = substitutor.getUnknownMacros(componentName);
-          if (!macros.isEmpty()) {
-            Notifications.Bus.notify(new UnknownMacroNotification("Load Error", "Component load error: undefined path variables!",
-                                                      String.format("<p><i>%s</i> %s undefined. <a href=\"\">Fix it!</a></p>",
-                                                                    StringUtil.join(macros, ", "), macros.size() == 1 ? "is" : "are"),
-                                                      NotificationType.ERROR,
-                                                      new NotificationListener() {
-                                                        public void hyperlinkUpdate(@NotNull Notification notification,
-                                                                                    @NotNull HyperlinkEvent event) {
-                                                          ((ProjectEx)project).checkUnknownMacros();
-                                                        }
-                                                      }, macros), NotificationDisplayType.STICKY_BALLOON, project);
-          }
+          StorageUtil.notifyUnknownMacros(substitutor, project, componentName);
         }
       }
     }

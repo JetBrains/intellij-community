@@ -231,19 +231,21 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
 
   private static class PathRenderer extends DefaultTableCellRenderer {
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-      String loc = value.toString().replace('\\', '/');
-      final int jarDelimIndex = loc.indexOf(JarFileSystem.JAR_SEPARATOR);
-      final VirtualFile path;
+      final Component rendererComponent = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+      if (value != null) {
+        String loc = value.toString().replace('\\', '/');
+        final int jarDelimIndex = loc.indexOf(JarFileSystem.JAR_SEPARATOR);
+        final VirtualFile path;
 
-      if (jarDelimIndex != -1) {
-        path = JarFileSystem.getInstance().findFileByPath(loc);
-      } else {
-        path = LocalFileSystem.getInstance().findFileByPath(loc);
+        if (jarDelimIndex != -1) {
+          path = JarFileSystem.getInstance().findFileByPath(loc);
+        } else {
+          path = LocalFileSystem.getInstance().findFileByPath(loc);
+        }
+
+        setForeground(path != null ? isSelected ? UIUtil.getTableSelectionForeground() : Color.black : new Color(210, 0, 0));
       }
-
-      setForeground(path != null ? isSelected ? UIUtil.getTableSelectionForeground() : Color.black : new Color(210, 0, 0));
-      return this;
+      return rendererComponent;
     }
   }
 

@@ -85,7 +85,7 @@ public class CreateMethodQuickFix implements LocalQuickFix {
   }
 
   @Nullable
-  public static CreateMethodQuickFix createFix(final PsiClass targetClass, @NonNls final String signature, @NonNls final String body) {
+  public static CreateMethodQuickFix createFix(@NotNull PsiClass targetClass, @NonNls final String signature, @NonNls final String body) {
     CreateMethodQuickFix fix = new CreateMethodQuickFix(targetClass, signature, body);
     try {
       fix.createMethod(targetClass.getProject());

@@ -36,7 +36,7 @@ public class MockProject extends MockComponentManager implements ProjectEx {
     return false;
   }
 
-  public void checkUnknownMacros() {
+  public void checkUnknownMacros(final boolean showDialog) {
   }
 
   @NotNull

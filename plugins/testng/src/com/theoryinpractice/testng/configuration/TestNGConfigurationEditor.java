@@ -37,6 +37,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -45,6 +46,7 @@ import com.intellij.ui.table.TableView;
 import com.theoryinpractice.testng.configuration.browser.*;
 import com.theoryinpractice.testng.model.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.testng.TestNG;
 
 import javax.swing.*;
@@ -417,6 +419,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
       }
     }
 
+    @Nullable
     protected GlobalSearchScope getSearchScope(Module[] modules) {
       if (modules == null || modules.length == 0) return null;
       GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(modules[0]);
@@ -426,8 +429,14 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
       return scope;
     }
 
+    @Nullable
     protected String selectListenerClass() {
-      TestListenerFilter filter = new TestListenerFilter(getSearchScope(config.getModules()), project);
+      final GlobalSearchScope searchScope = getSearchScope(config.getModules());
+      if (searchScope == null) {
+        Messages.showErrorDialog(panel, "Module is not selected", "Can't Browse Listeners");
+        return null;
+      }
+      final TestListenerFilter filter = new TestListenerFilter(searchScope, project);
 
       TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project).createWithInnerClassesScopeChooser("Choose Listener Class", filter.getScope(), filter, null);
       chooser.showDialog();
