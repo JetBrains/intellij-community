@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.TimedReference;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +52,7 @@ public class JarHandler implements FileSystemInterface {
   @NonNls private static final String JARS_FOLDER = "jars";
 
   private final Object lock = new Object();
-  private SoftReference<ZipFile> myZipFile = new SoftReference<ZipFile>(null);
+  private final TimedReference<ZipFile> myZipFile = new TimedReference<ZipFile>(null);
   private final JarFileSystemImpl myFileSystem;
   private final String myBasePath;
   private SoftReference<Map<String, EntryInfo>> myRelPathsToEntries = new SoftReference<Map<String, EntryInfo>>(null);
@@ -87,7 +88,7 @@ public class JarHandler implements FileSystemInterface {
   public VirtualFile markDirty() {
     synchronized (lock) {
       myRelPathsToEntries.clear();
-      myZipFile = new SoftReference<ZipFile>(null);
+      myZipFile.set(null);
 
       final NewVirtualFile root = (NewVirtualFile)
         JarFileSystem.getInstance().findFileByPath(myBasePath + JarFileSystem.JAR_SEPARATOR);
@@ -223,7 +224,7 @@ public class JarHandler implements FileSystemInterface {
     if (zip == null) {
       try {
         zip = new ZipFile(getMirrorFile(getOriginalFile()));
-        myZipFile = new SoftReference<ZipFile>(zip);
+        myZipFile.set(zip);
       }
       catch (IOException e) {
         return null;

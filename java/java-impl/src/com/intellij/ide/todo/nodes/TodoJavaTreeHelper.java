@@ -49,7 +49,8 @@ public class TodoJavaTreeHelper extends TodoTreeHelper {
   public PsiElement getSelectedElement(final Object userObject) {
     if (userObject instanceof TodoPackageNode) {
       TodoPackageNode descriptor = (TodoPackageNode)userObject;
-      return descriptor.getValue().getPackage();
+      final PackageElement packageElement = descriptor.getValue();
+      return packageElement != null ? packageElement.getPackage() : null;
     }
     return super.getSelectedElement(userObject);
   }

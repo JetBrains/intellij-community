@@ -21,6 +21,7 @@ import com.intellij.ide.dnd.DnDDragStartBean;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.CompositePackagingElementNode;
@@ -58,7 +59,9 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
     setRootVisible(true);
     setShowsRootHandles(false);
     setCellEditor(new LayoutTreeCellEditor());
-    DnDManager.getInstance().registerSource(this);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      DnDManager.getInstance().registerSource(this);
+    }
   }
 
   public void addSubtreeToUpdate(DefaultMutableTreeNode newNode) {
@@ -107,7 +110,9 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
   }
 
   public void dispose() {
-    DnDManager.getInstance().unregisterSource(this);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      DnDManager.getInstance().unregisterSource(this);
+    }
   }
 
   public LayoutTreeSelection getSelection() {
@@ -119,7 +124,7 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
     final SimpleNode node = getNodeFor(path);
     if (node instanceof PackagingElementNode) {
       final List<? extends PackagingElement<?>> elements = ((PackagingElementNode<?>)node).getPackagingElements();
-      if (elements.size() == 1) {
+      if (!elements.isEmpty()) {
         return elements.get(0);
       }
     }

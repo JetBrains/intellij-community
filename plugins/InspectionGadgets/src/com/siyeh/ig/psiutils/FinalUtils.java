@@ -167,9 +167,6 @@ public class FinalUtils {
         }
         final PsiField[] fields = aClass.getFields();
         for (PsiField aField : fields) {
-            if (!aField.hasModifierProperty(PsiModifier.STATIC)) {
-                continue;
-            }
             if (aField.equals(field)) {
                 continue;
             }
@@ -178,7 +175,9 @@ public class FinalUtils {
                 continue;
             }
             if (VariableAccessUtils.variableIsAssigned(field, expression)) {
-                if (assignedInInitializer) {
+                if (!aField.hasModifierProperty(PsiModifier.STATIC)) {
+                    return false;
+                } else if (assignedInInitializer) {
                     return false;
                 } else {
                     assignedInInitializer = true;

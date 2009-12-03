@@ -16,6 +16,9 @@
 
 package com.intellij.codeInsight.intention.impl.config;
 
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.IOException;
 
 /**
@@ -25,15 +28,17 @@ public class PlainTextDescriptor implements TextDescriptor {
   private final String myText;
   private final String myFileName;
 
-  public PlainTextDescriptor(final String text, final String fileName) {
+  public PlainTextDescriptor(@NotNull String text, @NonNls @NotNull String fileName) {
     myText = text;
     myFileName = fileName;
   }
 
+  @NotNull
   public String getText() throws IOException {
     return myText;
   }
 
+  @NotNull 
   public String getFileName() {
     return myFileName;
   }

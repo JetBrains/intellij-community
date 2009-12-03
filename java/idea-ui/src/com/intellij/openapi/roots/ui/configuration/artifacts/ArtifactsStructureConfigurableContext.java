@@ -56,4 +56,6 @@ public interface ArtifactsStructureConfigurableContext extends PackagingElementR
   ArtifactProjectStructureElement getOrCreateArtifactElement(@NotNull Artifact artifact);
 
   ModifiableRootModel getOrCreateModifiableRootModel(Module module);
+
+  ArtifactEditorSettings getDefaultSettings();
 }

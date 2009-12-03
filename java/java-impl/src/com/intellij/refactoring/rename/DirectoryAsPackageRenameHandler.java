@@ -26,12 +26,13 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.lang.TitledHandler;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
-public class DirectoryAsPackageRenameHandler implements RenameHandler {
+public class DirectoryAsPackageRenameHandler implements RenameHandler, TitledHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.DirectoryAsPackageRenameHandler");
 
   public boolean isAvailableOnDataContext(final DataContext dataContext) {
@@ -105,5 +106,9 @@ public class DirectoryAsPackageRenameHandler implements RenameHandler {
       }
       message.append(directory.getVirtualFile().getPresentableUrl());
     }
+  }
+
+  public String getActionTitle() {
+    return RefactoringBundle.message("rename.directory.title");
   }
 }

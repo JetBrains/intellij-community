@@ -23,10 +23,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.util.containers.ConcurrentHashMap;
 import org.intellij.plugins.intelliLang.Configuration;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
@@ -47,11 +47,11 @@ public class SubstitutedExpressionEvaluationHelper {
     myConfiguration = Configuration.getInstance();
   }
 
-  public Object computeExpression(final PsiExpression e, final boolean includeUncomputablesAsLiterals) {
-    return computeExpression(e, includeUncomputablesAsLiterals, null);
+  public Object computeExpression(final PsiExpression e, final List<PsiExpression> uncomputables) {
+    return computeExpression(e, myConfiguration.isUseDfaIfAvailable(), myConfiguration.isIncludeUncomputablesAsLiterals(), uncomputables);
   }
 
-  public Object computeExpression(final PsiExpression e, final boolean includeUncomputablesAsLiterals, final List<PsiExpression> uncomputables) {
+  public Object computeExpression(final PsiExpression e, final boolean useDfa, final boolean includeUncomputablesAsLiterals, final List<PsiExpression> uncomputables) {
     final ConcurrentMap<PsiElement, Object> map = new ConcurrentHashMap<PsiElement, Object>();
     //if (true) return myHelper.computeConstantExpression(e, false);
     return myHelper.computeExpression(e, false, new PsiConstantEvaluationHelper.AuxEvaluator() {
@@ -77,7 +77,8 @@ public class SubstitutedExpressionEvaluationHelper {
             if (substituted != null) return substituted;
             if (resolved instanceof PsiVariable) {
               resolvedType = ((PsiVariable)resolved).getType();
-              final Collection<PsiExpression> values = DfaUtil.getCachedVariableValues(((PsiVariable)resolved), o);
+              final Collection<PsiExpression> values =
+                !useDfa? Collections.<PsiExpression>emptyList() : DfaUtil.getCachedVariableValues(((PsiVariable)resolved), o);
               // return the first computed value as far as we do not support multiple injection
               for (PsiExpression value : values) {
                 final Object computedValue = auxEvaluator.computeExpression(value, this);
@@ -126,16 +127,4 @@ public class SubstitutedExpressionEvaluationHelper {
     return null;
   }
 
-  /**
-   * Computes the value for the passed expression.
-   *
-   * @param e           The expression whose value to compute
-   * @param nonConstant list that returns non-constant and non-substituted expressions
-   * @return the computed value, or null if the expression isn't compile time constant and not susbtituted
-   */
-  @Nullable
-  public static String computeExpression(@NotNull final PsiExpression e, @Nullable List<PsiExpression> nonConstant) {
-    final Object result = new SubstitutedExpressionEvaluationHelper(e.getProject()).computeExpression(e, false, nonConstant);
-    return result == null? null : String.valueOf(result);
-  }
 }

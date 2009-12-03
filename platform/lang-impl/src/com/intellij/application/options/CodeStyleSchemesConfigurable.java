@@ -109,9 +109,14 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
   }
 
   private void resetImpl() {
-    myModel.reset();
-    for (CodeStyleConfigurableWrapper panel : myPanels) {
-      panel.resetPanel();
+    if (myModel != null) {
+      myModel.reset();
+    }
+
+    if (myPanels != null) {
+      for (CodeStyleConfigurableWrapper panel : myPanels) {
+        panel.resetPanel();
+      }
     }
   }
 
@@ -263,12 +268,16 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
   }
 
   public boolean isModified() {
-    boolean schemeListModified = myModel.isSchemeListModified();
-    if (schemeListModified) {
-      myApplyCompleted = false;
-      myRevertCompleted = false;
+    if (myModel != null) {
+      boolean schemeListModified = myModel.isSchemeListModified();
+      if (schemeListModified) {
+        myApplyCompleted = false;
+        myRevertCompleted = false;
+      }
+      return schemeListModified;
     }
-    return schemeListModified;
+
+    return false;
   }
 
   public String getId() {

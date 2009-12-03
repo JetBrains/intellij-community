@@ -126,7 +126,9 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
       }
     };
     myNewClassName.getDocument().addDocumentListener(validateButtonsListener);
-
+    final PsiClass psiClass = myConstructors[0].getContainingClass();
+    LOG.assertTrue(psiClass != null);
+    myNewClassName.setText(psiClass.getName() + "Builder");
 
     return myWholePanel;
   }

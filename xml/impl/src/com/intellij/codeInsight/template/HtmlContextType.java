@@ -17,6 +17,7 @@ package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.lang.html.HTMLLanguage;
+import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiFile;
@@ -32,7 +33,7 @@ public class HtmlContextType extends FileTypeBasedContextType {
 
   @Override
   public boolean isInContext(@NotNull PsiFile file, int offset) {
-    return file.getLanguage() instanceof HTMLLanguage;
+    return file.getLanguage().isKindOf(HTMLLanguage.INSTANCE) || file.getLanguage().isKindOf(XHTMLLanguage.INSTANCE);
   }
 
   @Override

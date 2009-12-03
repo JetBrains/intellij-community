@@ -21,6 +21,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeComponent;
 import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeSelection;
+import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.CompositePackagingElementNode;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.ArtifactRootElement;
@@ -29,6 +30,8 @@ import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
 import com.intellij.packaging.ui.ArtifactEditorContext;
+
+import java.util.Collections;
 
 /**
  * @author nik
@@ -57,11 +60,11 @@ public class InlineArtifactAction extends DumbAwareAction {
     if (node == null || !(element instanceof ArtifactPackagingElement)) return;
 
     final CompositePackagingElement<?> parent = node.getParentElement(element);
-    if (parent == null) {
+    final CompositePackagingElementNode parentNode = node.getParentNode();
+    if (parent == null || parentNode == null) {
       return;
     }
-    if (!treeComponent.checkCanRemove(selection.getNodes())) return;
-    if (!treeComponent.checkCanAdd(null, parent, node)) return;
+    if (!treeComponent.checkCanModifyChildren(parent, parentNode, Collections.singletonList(node))) return;
 
     treeComponent.editLayout(new Runnable() {
       public void run() {

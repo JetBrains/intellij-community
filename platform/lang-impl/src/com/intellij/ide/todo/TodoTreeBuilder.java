@@ -103,7 +103,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
 
     myFileStatusListener = new MyFileStatusListener();
 
-    getUpdater().setDelay(1500);
+    setCanYieldUpdate(true);
   }
 
   /**

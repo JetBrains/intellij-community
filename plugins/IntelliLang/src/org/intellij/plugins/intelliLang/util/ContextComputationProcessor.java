@@ -95,7 +95,7 @@ public class ContextComputationProcessor {
     }
     else {
       final SmartList<PsiExpression> uncomputables = new SmartList<PsiExpression>();
-      final Object o = expression instanceof PsiExpression? myEvaluationHelper.computeExpression((PsiExpression)expression, true, uncomputables) : null;
+      final Object o = expression instanceof PsiExpression? myEvaluationHelper.computeExpression((PsiExpression)expression, uncomputables) : null;
       if (uncomputables.size() > 0) {
         unparsable.set(Boolean.TRUE);
       }

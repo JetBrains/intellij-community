@@ -174,6 +174,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("str", false, false, false, "java.lang.String"));
   }
 
+  public void testSubExpressionFromIntellijidearulezzz() throws Exception {
+    doTest(new MockIntroduceVariableHandler("str", false, false, false, "java.lang.String"));
+  }
+
   public void testSubPrimitiveLiteral() throws Exception {
     doTest(new MockIntroduceVariableHandler("str", false, false, false, "boolean"));
   }

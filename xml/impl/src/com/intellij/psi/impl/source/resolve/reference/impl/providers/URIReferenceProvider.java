@@ -139,10 +139,12 @@ public class URIReferenceProvider extends PsiReferenceProvider {
          )
       ) {
       if (!s.startsWith(XmlUtil.TAG_DIR_NS_PREFIX)) {
-        final boolean namespaceSoftRef = parent instanceof XmlAttribute &&
+        boolean namespaceSoftRef = parent instanceof XmlAttribute &&
           NAMESPACE_ATTR_NAME.equals(((XmlAttribute)parent).getName()) &&
           ((XmlAttribute)parent).getParent().getAttributeValue("schemaLocation") != null;
-
+        if (!namespaceSoftRef && parent instanceof XmlAttribute && ((XmlAttribute)parent).isNamespaceDeclaration()) {
+          namespaceSoftRef = parent.getContainingFile().getContext() != null;
+        }
         return getUrlReference(element, namespaceSoftRef);
       }
     }

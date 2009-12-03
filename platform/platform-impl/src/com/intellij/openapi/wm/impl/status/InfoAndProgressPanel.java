@@ -279,9 +279,11 @@ public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         Component comp = InfoAndProgressPanel.this;
-        int offset = comp.getHeight() / 2;
-        Point point = new Point(comp.getWidth() - offset, comp.getHeight() - offset);
-        balloon.show(new RelativePoint(comp, point), Balloon.Position.above);
+        if (comp.isShowing()) {
+          int offset = comp.getHeight() / 2;
+          Point point = new Point(comp.getWidth() - offset, comp.getHeight() - offset);
+          balloon.show(new RelativePoint(comp, point), Balloon.Position.above);
+        }
       }
     });
 

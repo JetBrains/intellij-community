@@ -77,6 +77,8 @@ public final class Configuration implements PersistentStateComponent<Element> {
   @NonNls private static final String SUBST_ANNOTATION_NAME = "SUBST_ANNOTATION";
   @NonNls private static final String ENTRY_NAME = "entry";
   @NonNls private static final String RESOLVE_REFERENCES = "RESOLVE_REFERENCES";
+  @NonNls private static final String USE_DFA_IF_AVAILABLE = "USE_DFA_IF_AVAILABLE";
+  @NonNls private static final String INCLUDE_UNCOMPUTABLES_AS_LITERALS = "INCLUDE_UNCOMPUTABLES_AS_LITERALS";
 
   private final Map<String, List<BaseInjection>> myInjections = new ConcurrentFactoryMap<String, List<BaseInjection>>() {
     @Override
@@ -94,6 +96,8 @@ public final class Configuration implements PersistentStateComponent<Element> {
   @NotNull private String mySubstAnnotation;
 
   private boolean myResolveReferences;
+  private boolean myIncludeUncomputablesAsLiterals;
+  private boolean myUseDfaIfAvailable;
 
   // cached annotation name pairs
   private Pair<String, ? extends Set<String>> myLanguageAnnotationPair;
@@ -144,9 +148,10 @@ public final class Configuration implements PersistentStateComponent<Element> {
     setLanguageAnnotation(JDOMExternalizerUtil.readField(element, LANGUAGE_ANNOTATION_NAME));
     setPatternAnnotation(JDOMExternalizerUtil.readField(element, PATTERN_ANNOTATION_NAME));
     setSubstAnnotation(JDOMExternalizerUtil.readField(element, SUBST_ANNOTATION_NAME));
-    final String resolveReferences = JDOMExternalizerUtil.readField(element, RESOLVE_REFERENCES);
-    setResolveReferences(resolveReferences == null || Boolean.parseBoolean(resolveReferences));
-    
+    setResolveReferences(readBoolean(element, RESOLVE_REFERENCES, true));
+    setUseDfaIfAvailable(readBoolean(element, USE_DFA_IF_AVAILABLE, true));
+    setIncludeUncomputablesAsLiterals(readBoolean(element, INCLUDE_UNCOMPUTABLES_AS_LITERALS, true));
+
     if (mergeWithOriginalAndCompile) {
       mergeWithDefaultConfiguration();
 
@@ -156,6 +161,12 @@ public final class Configuration implements PersistentStateComponent<Element> {
         }
       }
     }
+  }
+
+  private static boolean readBoolean(Element element, String key, boolean defValue) {
+    final String value = JDOMExternalizerUtil.readField(element, key);
+    if (value == null) return defValue;
+    return Boolean.parseBoolean(value);
   }
 
   private void mergeWithDefaultConfiguration() {
@@ -361,6 +372,22 @@ public final class Configuration implements PersistentStateComponent<Element> {
 
   public void setResolveReferences(final boolean resolveReferences) {
     myResolveReferences = resolveReferences;
+  }
+
+  public boolean isIncludeUncomputablesAsLiterals() {
+    return myIncludeUncomputablesAsLiterals;
+  }
+
+  public void setIncludeUncomputablesAsLiterals(boolean flag) {
+    myIncludeUncomputablesAsLiterals = flag;
+  }
+
+  public boolean isUseDfaIfAvailable() {
+    return myUseDfaIfAvailable;
+  }
+
+  public void setUseDfaIfAvailable(boolean flag) {
+    myUseDfaIfAvailable = flag;
   }
 
   @Nullable

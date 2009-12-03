@@ -190,7 +190,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     int offset = editor.getCaretModel().getOffset();
     Project project = psiFile.getProject();
     
-    for (IntentionAction action : IntentionManager.getInstance().getIntentionActions()) {
+    for (IntentionAction action : IntentionManager.getInstance().getAvailableIntentionActions()) {
       Pair<PsiFile,Editor> place = ShowIntentionActionsHandler.availableFor(psiFile, editor, action, psiElement);
       if (place != null) {
         List<IntentionAction> enableDisableIntentionAction = new ArrayList<IntentionAction>();

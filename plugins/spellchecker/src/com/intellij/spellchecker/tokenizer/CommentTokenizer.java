@@ -29,6 +29,8 @@ public class CommentTokenizer extends Tokenizer<PsiComment> {
   @Nullable
   @Override
   public Token[] tokenize(@NotNull PsiComment element) {
+    // doccomment chameleon expands as PsiComment inside PsiComment, avoid duplication
+    if (element.getParent() instanceof PsiComment) return null;
     return new Token[]{new Token<PsiComment>(element, element.getText(),false)};
   }
 

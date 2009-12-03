@@ -93,6 +93,12 @@ public class ConstantSubexpressionIntention extends MutablyNamedIntention {
             newExpression += '"' + StringUtil.escapeStringCharacters(
                     constantValue.toString()) + '"';
         } else if (constantValue != null) {
+            if (constantValue instanceof Number) {
+                final Number number = (Number) constantValue;
+                if (0 > number.doubleValue()) {
+                    newExpression += " ";
+                }
+            }
             newExpression += constantValue.toString();
         }
         replaceExpression(newExpression, expression);

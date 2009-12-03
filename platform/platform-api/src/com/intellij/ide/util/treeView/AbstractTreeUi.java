@@ -155,6 +155,8 @@ public class AbstractTreeUi {
   private Set<Object> myAutoExpandRoots = new HashSet<Object>();
   private final RegistryValue myAutoExpandDepth = Registry.get("ide.tree.autoExpandMaxDepth");
 
+  private Set<DefaultMutableTreeNode> myWillBeExpaned = new HashSet<DefaultMutableTreeNode>();
+
   protected void init(AbstractTreeBuilder builder,
                       JTree tree,
                       DefaultTreeModel treeModel,
@@ -521,8 +523,17 @@ public class AbstractTreeUi {
     }
   }
 
-  private void initRootNodeNowIfNeeded(final TreeUpdatePass pass) {
-    if (myRootNodeWasInitialized) return;
+  private boolean initRootNodeNowIfNeeded(final TreeUpdatePass pass) {
+    boolean wasCleanedUp = false;
+    if (myRootNodeWasInitialized) {
+      Object root = getTreeStructure().getRootElement();
+      Object currentRoot = getElementFor(myRootNode);
+
+      if (Comparing.equal(root, currentRoot)) return false;
+
+      cleanUpNow();
+      wasCleanedUp = true;
+    }
 
     myRootNodeWasInitialized = true;
 
@@ -576,9 +587,15 @@ public class AbstractTreeUi {
       build.run();
       update.run();
     }
+
+    return wasCleanedUp;
   }
 
   private boolean isAutoExpand(NodeDescriptor descriptor) {
+    return isAutoExpand(descriptor, true);
+  }
+
+  private boolean isAutoExpand(NodeDescriptor descriptor, boolean validate) {
     boolean autoExpand = false;
 
     if (descriptor != null) {
@@ -586,7 +603,9 @@ public class AbstractTreeUi {
     }
 
     Object element = getElementFromDescriptor(descriptor);
-    autoExpand = validateAutoExpand(autoExpand, element);
+    if (validate) {
+      autoExpand = validateAutoExpand(autoExpand, element);
+    }
 
     if (!autoExpand && !myTree.isRootVisible()) {
       if (element != null && element.equals(getTreeStructure().getRootElement())) return true;
@@ -605,8 +624,38 @@ public class AbstractTreeUi {
           autoExpand = false;
         }
       }
+
+      if (autoExpand) {
+        DefaultMutableTreeNode node = getNodeForElement(element, false);
+        if (isInVisibleAutoExpandChain(node)) {
+          autoExpand = true;
+        } else {
+          autoExpand = false;
+        }
+      }
     }
     return autoExpand;
+  }
+
+  private boolean isInVisibleAutoExpandChain(DefaultMutableTreeNode child) {
+    TreeNode eachParent = child;
+    while (eachParent != null) {
+
+      if (myRootNode == eachParent) return true;
+
+      NodeDescriptor eachDescriptor = getDescriptorFrom((DefaultMutableTreeNode)eachParent);
+      if (!isAutoExpand(eachDescriptor, false)) {
+        TreePath path = getPathFor(eachParent);
+        if (myWillBeExpaned.contains(path.getLastPathComponent()) || (myTree.isExpanded(path) && myTree.isVisible(path))) {
+          return true;
+        } else {
+          return false;
+        }
+      }
+      eachParent = eachParent.getParent();
+    }
+
+    return false;
   }
 
   private int getDistanceToAutoExpandRoot(Object element) {
@@ -793,7 +842,8 @@ public class AbstractTreeUi {
   final void updateSubtreeNow(TreeUpdatePass pass, boolean canSmartExpand) {
     maybeSetBusyAndScheduleWaiterForReady(true);
 
-    initRootNodeNowIfNeeded(pass);
+    boolean consumed = initRootNodeNowIfNeeded(pass);
+    if (consumed) return;
 
     final DefaultMutableTreeNode node = pass.getNode();
 
@@ -1024,6 +1074,12 @@ public class AbstractTreeUi {
 
           final boolean expanded = isExpanded(node, wasExpanded);
 
+          if (expanded) {
+            myWillBeExpaned.add(node);
+          } else {
+            myWillBeExpaned.remove(node);
+          }
+
           collectNodesToInsert(descriptor, elementToIndexMap, node, expanded, loadedChildren)
             .doWhenDone(new AsyncResult.Handler<ArrayList<TreeNode>>() {
               public void run(ArrayList<TreeNode> nodesToInsert) {
@@ -1033,7 +1089,7 @@ public class AbstractTreeUi {
                 removeFromUpdating(node);
 
                 if (node.getChildCount() > 0) {
-                  if (expanded) {
+                  if (expanded ) {
                     expand(node, canSmartExpand);
                   }
                 }
@@ -1047,7 +1103,11 @@ public class AbstractTreeUi {
 
                 processNodeActionsIfReady(node);
               }
-            });
+            }).doWhenProcessed(new Runnable() {
+            public void run() {
+              myWillBeExpaned.remove(node);
+            }
+          });
         }
       });
   }
