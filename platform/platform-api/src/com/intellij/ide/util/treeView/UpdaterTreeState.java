@@ -143,7 +143,9 @@ public class UpdaterTreeState {
   }
 
   public boolean restore(@Nullable DefaultMutableTreeNode actionNode) {
-    if (isProcessingNow() || !myCanRunRestore || myUi.hasNodesToUpdate()) return false;
+    if (isProcessingNow() || !myCanRunRestore || myUi.hasNodesToUpdate()) {
+      return false;
+    }
 
     invalidateToSelectWithRefsToParent(actionNode);
 
