@@ -262,6 +262,11 @@ public class PythonSdkType extends SdkType {
     //sdkModificator.commitChanges() must happen outside, and probably in a different thread.
   }
 
+  /**
+   * In which root type built-in skeletons are put.
+   */
+  public static final OrderRootType BUITLIN_ROOT_TYPE = OrderRootType.CLASSES;
+
   public static void setupSdkPaths(SdkModificator sdkModificator, ProgressIndicator indicator) {
     String sdk_path = sdkModificator.getHomePath();
     String bin_path = getInterpreterPath(sdk_path);
@@ -299,7 +304,7 @@ public class PythonSdkType extends SdkType {
         indicator.setText2("");
       }
       generateBuiltinStubs(sdk_path, stubs_path);
-      sdkModificator.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByPath(stubs_path), OrderRootType.SOURCES);
+      sdkModificator.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByPath(stubs_path), BUITLIN_ROOT_TYPE);
     }
     generateBinaryStubs(sdk_path, stubs_path, indicator);
   }

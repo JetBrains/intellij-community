@@ -75,7 +75,7 @@ public class ResolveImportUtil {
     return resolveForeignImport(importRef, resolveImportReference(source));
   }
 
-  /*
+  /**
    * Finds a named submodule file/dir under given root.
    */
   @Nullable

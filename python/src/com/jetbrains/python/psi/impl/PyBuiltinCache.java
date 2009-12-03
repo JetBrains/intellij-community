@@ -64,7 +64,7 @@ public class PyBuiltinCache {
       }
       if (sdk != null) {
         // dig out the builtins file, create an instance based on it
-        for (String url : sdk.getRootProvider().getUrls(OrderRootType.SOURCES)) {
+        for (String url : sdk.getRootProvider().getUrls(PythonSdkType.BUITLIN_ROOT_TYPE)) {
           if (url.contains(PythonSdkType.SKELETON_DIR_NAME)) {
             final String builtins_url = url + "/" + ((PythonSdkType)sdk.getSdkType()).getBuiltinsFileName();
             File builtins = new File(VfsUtil.urlToPath(builtins_url));
