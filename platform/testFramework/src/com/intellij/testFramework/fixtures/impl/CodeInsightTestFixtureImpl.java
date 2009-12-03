@@ -83,6 +83,7 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
@@ -1082,8 +1083,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NotNull
   public static List<HighlightInfo> instantiateAndRun(PsiFile file, Editor editor, int[] toIgnore, boolean allowDirt) {
     Project project = file.getProject();
-    FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, null);
-    assertTrue(!DumbServiceImpl.getInstance(project).isDumb());
+    ensureIndexesUpToDate(project);
     FileStatusMap fileStatusMap = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).getFileStatusMap();
     for (int ignoreId : toIgnore) {
       fileStatusMap.markFileUpToDate(editor.getDocument(), file, ignoreId);
@@ -1109,6 +1109,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     finally {
       fileStatusMap.allowDirt(true);
     }
+  }
+
+  private static void ensureIndexesUpToDate(Project project) {
+    FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, null);
+    FileBasedIndex.getInstance().ensureUpToDate(TodoIndex.NAME, project, null);
+    assertTrue(!DumbServiceImpl.getInstance(project).isDumb());
   }
 
   public String getTestDataPath() {

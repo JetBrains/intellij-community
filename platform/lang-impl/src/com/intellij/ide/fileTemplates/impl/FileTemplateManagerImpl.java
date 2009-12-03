@@ -597,9 +597,9 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     return getTemplateFromManager(templateName, myJ2eeTemplatesManager);
   }
 
-  private FileTemplate getTemplateFromManager(@NotNull @NonNls String templateName, @NotNull FileTemplateManagerImpl templatesManager) {
+  private static FileTemplate getTemplateFromManager(@NotNull @NonNls String templateName, @NotNull FileTemplateManagerImpl templatesManager) {
     String name = templateName;
-    String extension = myTypeManager.getExtension(name);
+    String extension = templatesManager.myTypeManager.getExtension(name);
     if (extension.length() > 0) {
       name = name.substring(0, name.length() - extension.length() - 1);
     }
@@ -612,24 +612,39 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     else {
       if (ApplicationManager.getApplication().isUnitTestMode() && templateName.endsWith("ForTest")) return null;
 
-      String message = templateNotFound(templateName, templatesManager);
+      String message = templatesManager.templateNotFoundMessage(templateName);
       LOG.error(message);
     }
     return null;
   }
 
-  private static String templateNotFound(String templateName, FileTemplateManagerImpl templatesManager) {
-    Collection<VirtualFile> defaultTemplates = templatesManager.getDefaultTemplates();
+  private String templateNotFoundMessage(String templateName) {
+    Collection<VirtualFile> defaultTemplates = getDefaultTemplates();
     @NonNls String message =
-      "Unable to find template '" + templateName + "' in " + templatesManager + " in '"+templatesManager.myDefaultTemplatesDir+"'" +
-      "\n" +
-      "Default templates are: ";
-    message += StringUtil.join(defaultTemplates, new Function<VirtualFile, String>() {
+      "Unable to find template '" + templateName + "' in " + this +
+      "\n   Default templates are: " + toString(defaultTemplates);
+    message+= "\n   Default template dir: '"+ myDefaultTemplatesDir+"'";
+    for (VirtualFile topDir : getTopTemplatesDir()) {
+      VirtualFile parentDir = myDefaultTemplatesDir.equals(".") ? topDir : topDir.findChild(myDefaultTemplatesDir);
+      if (parentDir == null) {
+        message += "\n   No templates in '" + topDir.getPath() + "'";
+      }
+      else {
+        message += "\n   " + parentDir.getPath() + ": " + toString(listDir(parentDir));
+      }
+    }
+
+    message += "\n   Deleted templates: " + myDeletedTemplatesManager.DELETED_DEFAULT_TEMPLATES;
+
+    return message;
+  }
+
+  private static String toString(Collection<VirtualFile> defaultTemplates) {
+    return StringUtil.join(defaultTemplates, new Function<VirtualFile, String>() {
       public String fun(VirtualFile virtualFile) {
         return virtualFile.getPresentableUrl();
       }
-    }, ",");
-    return message;
+    }, ", ");
   }
 
 
@@ -722,7 +737,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     if (file == null) {
       String message = "";
       for (FileTemplateManagerImpl child : ArrayUtil.append(myChildren,this)) {
-        message += templateNotFound(name, child) + "\n";
+        message += child.templateNotFoundMessage(name) + "\n";
       }
       LOG.error(message);
       return null;
