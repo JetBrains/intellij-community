@@ -56,12 +56,13 @@ public class PeriodicalTasksCloser implements ProjectManagerListener {
     return ServiceManager.getService(project, PeriodicalTasksCloser.class);
   }
 
-  public void register(final String name, final Runnable runnable) {
+  public boolean register(final String name, final Runnable runnable) {
     synchronized (ourLock) {
       if (Boolean.FALSE.equals(myStates.get(myProject))) {
-        return;
+        return false;
       }
       myInterrupters.add(new Pair<String, Runnable>(name, runnable));
+      return true;
     }
   }       
 
