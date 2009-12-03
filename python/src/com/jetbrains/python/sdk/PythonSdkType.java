@@ -7,6 +7,8 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetConfiguration;
 import com.intellij.facet.FacetManager;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -44,16 +46,6 @@ import java.util.regex.Pattern;
  */
 public class PythonSdkType extends SdkType {
   private static final Logger LOG = Logger.getInstance("#" + PythonSdkType.class.getName());
-
-  private Project myProjectForProgress; // used for progress-indicated path setup
-
-  /**
-   * Poor man's way to have setupSdkPaths run under a progress dialog, when possible.
-   * @param project project to pass to ProgressManager.run().
-   */
-  public void setProjectForProgress(Project project) {
-    myProjectForProgress = project;
-  }
 
   public static PythonSdkType getInstance() {
     return SdkType.findInstance(PythonSdkType.class);    
@@ -235,22 +227,17 @@ public class PythonSdkType extends SdkType {
   
   public void setupSdkPaths(final Sdk sdk) {
     final SdkModificator[] sdk_mod_holder = new SdkModificator[]{null};
-    if (myProjectForProgress != null) { // nice, progress-bar way
-      ProgressManager progman = ProgressManager.getInstance();
-      final Task.Modal setup_task = new Task.Modal(myProjectForProgress, "Setting up library files", false) {
+    ProgressManager progman = ProgressManager.getInstance();
+    final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+    final Task.Modal setup_task = new Task.Modal(project, "Setting up library files", false) {
 
-        public void run(@NotNull final ProgressIndicator indicator) {
-          sdk_mod_holder[0] = setupSdkPathsUnderProgress(sdk, indicator);
-        }
+      public void run(@NotNull final ProgressIndicator indicator) {
+        sdk_mod_holder[0] = setupSdkPathsUnderProgress(sdk, indicator);
+      }
 
-      };
-      progman.run(setup_task);
-      if (sdk_mod_holder[0] != null) sdk_mod_holder[0].commitChanges(); // commit in dispatch thread, not task's
-    }
-    else { // old, dull way
-      final SdkModificator modificator = setupSdkPathsUnderProgress(sdk, null);
-      if (modificator != null) modificator.commitChanges();
-    }
+    };
+    progman.run(setup_task);
+    if (sdk_mod_holder[0] != null) sdk_mod_holder[0].commitChanges(); // commit in dispatch thread, not task's
   }
 
 
