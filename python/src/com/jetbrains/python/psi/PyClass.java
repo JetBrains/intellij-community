@@ -68,7 +68,6 @@ public interface PyClass extends PsiNamedElement, PyStatement, NameDefiner, PyDo
   Iterable<PyClass> iterateAncestors();
 
   /**
-   * @param target
    * @param parent
    * @return True iff this and parent are the same or parent is one of our superclasses.
    */
