@@ -423,6 +423,12 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     FileUtil.delete(new File(getRepositoryPath(), relativePath));
   }
 
+  protected void setupJdkForModules(String... moduleNames) {
+    for (String each : moduleNames) {
+      setupJdkForModule(each);
+    }
+  }
+
   protected Sdk setupJdkForModule(String moduleName) {
     ModifiableRootModel m = ModuleRootManager.getInstance(getModule(moduleName)).getModifiableModel();
     Sdk sdk = createJdk("Java 1.5");

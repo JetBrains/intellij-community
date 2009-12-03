@@ -18,6 +18,7 @@ package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -66,11 +67,13 @@ public class RenameHandlerRegistry {
     final Map<String, RenameHandler> availableHandlers = new TreeMap<String, RenameHandler>();
     for (RenameHandler renameHandler : Extensions.getExtensions(RenameHandler.EP_NAME)) {
       if (renameHandler.isRenaming(dataContext)) {
+        if (ApplicationManager.getApplication().isUnitTestMode()) return renameHandler;
         availableHandlers.put(getHandlerTitle(renameHandler), renameHandler);
       }
     }
     for (RenameHandler renameHandler : myHandlers) {
       if (renameHandler.isRenaming(dataContext)) {
+        if (ApplicationManager.getApplication().isUnitTestMode()) return renameHandler;
         availableHandlers.put(getHandlerTitle(renameHandler), renameHandler);
       }
     }

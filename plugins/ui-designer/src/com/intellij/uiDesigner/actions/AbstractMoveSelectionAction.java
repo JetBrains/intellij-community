@@ -18,6 +18,7 @@ package com.intellij.uiDesigner.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Ref;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
@@ -27,14 +28,14 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.Point;
+import java.awt.*;
 import java.util.ArrayList;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-abstract class AbstractMoveSelectionAction extends AnAction{
+abstract class AbstractMoveSelectionAction extends AnAction implements DumbAware {
   private static final Logger LOG=Logger.getInstance("#com.intellij.uiDesigner.actions.MoveSelectionToRightAction");
 
   private final GuiEditor myEditor;

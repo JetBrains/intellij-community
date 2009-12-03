@@ -74,20 +74,17 @@ public class JavaClasspathConfigurationTest extends MavenImportingTestCase {
     assertModuleModuleDeps("m1", "m2", "m3");
     assertModuleModuleDeps("m2", "m3", "m4");
 
-    setupJdkForModule("m1");
-    setupJdkForModule("m2");
-    setupJdkForModule("m3");
-    setupJdkForModule("m4");
+    setupJdkForModules("m1", "m2", "m3", "m4");
 
     assertModuleClasspath("m1",
-                         getProjectPath() + "/m1/target/classes",
-                         getProjectPath() + "/m2/target/classes",
-                         getProjectPath() + "/m3/target/classes");
+                          getProjectPath() + "/m1/target/classes",
+                          getProjectPath() + "/m2/target/classes",
+                          getProjectPath() + "/m3/target/classes");
 
     assertModuleClasspath("m2",
-                         getProjectPath() + "/m2/target/classes",
-                         getProjectPath() + "/m3/target/classes",
-                         getProjectPath() + "/m4/target/classes");
+                          getProjectPath() + "/m2/target/classes",
+                          getProjectPath() + "/m3/target/classes",
+                          getProjectPath() + "/m4/target/classes");
   }
 
   public void testOptionalLibraryDependencies() throws Exception {
@@ -128,18 +125,17 @@ public class JavaClasspathConfigurationTest extends MavenImportingTestCase {
     assertModuleLibDeps("m1", "Maven: jmock:jmock:1.0");
     assertModuleLibDeps("m2", "Maven: jmock:jmock:1.0", "Maven: junit:junit:4.0");
 
-    setupJdkForModule("m1");
-    setupJdkForModule("m2");
+    setupJdkForModules("m1", "m2");
 
     assertModuleClasspath("m1",
-                         getProjectPath() + "/m1/target/classes",
-                         getProjectPath() + "/m2/target/classes",
-                         getRepositoryPath() + "/jmock/jmock/1.0/jmock-1.0.jar");
+                          getProjectPath() + "/m1/target/classes",
+                          getProjectPath() + "/m2/target/classes",
+                          getRepositoryPath() + "/jmock/jmock/1.0/jmock-1.0.jar");
 
     assertModuleClasspath("m2",
-                         getProjectPath() + "/m2/target/classes",
-                         getRepositoryPath() + "/jmock/jmock/1.0/jmock-1.0.jar",
-                         getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar");
+                          getProjectPath() + "/m2/target/classes",
+                          getRepositoryPath() + "/jmock/jmock/1.0/jmock-1.0.jar",
+                          getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar");
   }
 
   public void testDoNotChangeClasspathForRegularModules() throws Exception {
@@ -184,20 +180,18 @@ public class JavaClasspathConfigurationTest extends MavenImportingTestCase {
     assertModuleModuleDeps("user", "m1");
     assertModuleLibDeps("user");
 
-    setupJdkForModule("user");
-    setupJdkForModule("m1");
-    setupJdkForModule("m2");
+    setupJdkForModules("m1", "m2", "user");
 
     assertModuleClasspath("user",
-                         getProjectPath() + "/user/output",
-                         getProjectPath() + "/m1/target/classes",
-                         getProjectPath() + "/m2/target/classes",
-                         getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar");
+                          getProjectPath() + "/user/output",
+                          getProjectPath() + "/m1/target/classes",
+                          getProjectPath() + "/m2/target/classes",
+                          getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar");
 
     assertModuleClasspath("m1",
-                         getProjectPath() + "/m1/target/classes",
-                         getProjectPath() + "/m2/target/classes",
-                         getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar");
+                          getProjectPath() + "/m1/target/classes",
+                          getProjectPath() + "/m2/target/classes",
+                          getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar");
   }
 
   public void testDoNotIncludeProvidedAndTestTransitiveDependencies() throws Exception {
@@ -239,17 +233,72 @@ public class JavaClasspathConfigurationTest extends MavenImportingTestCase {
     assertModuleLibDeps("m1");
     assertModuleLibDeps("m2", "Maven: jmock:jmock:1.0", "Maven: junit:junit:4.0");
 
-    setupJdkForModule("m1");
-    setupJdkForModule("m2");
+    setupJdkForModules("m1", "m2");
 
     assertModuleClasspath("m1",
-                         getProjectPath() + "/m1/target/classes",
-                         getProjectPath() + "/m2/target/classes");
+                          getProjectPath() + "/m1/target/classes",
+                          getProjectPath() + "/m2/target/classes");
 
     assertModuleClasspath("m2",
-                         getProjectPath() + "/m2/target/classes",
-                         getRepositoryPath() + "/jmock/jmock/1.0/jmock-1.0.jar",
-                         getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar");
+                          getProjectPath() + "/m2/target/classes",
+                          getRepositoryPath() + "/jmock/jmock/1.0/jmock-1.0.jar",
+                          getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar");
+  }
+
+  public void testDoNotIncludeConflictingTransitiveDependenciesInTheClasspath() throws Exception {
+    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
+                                           "<artifactId>m1</artifactId>" +
+                                           "<version>1</version>" +
+
+                                           "<dependencies>" +
+                                           "  <dependency>" +
+                                           "    <groupId>test</groupId>" +
+                                           "    <artifactId>m2</artifactId>" +
+                                           "    <version>1</version>" +
+                                           "  </dependency>" +
+                                           "  <dependency>" +
+                                           "    <groupId>test</groupId>" +
+                                           "    <artifactId>m3</artifactId>" +
+                                           "    <version>1</version>" +
+                                           "  </dependency>" +
+                                           "</dependencies>");
+
+    VirtualFile m2 = createModulePom("m2", "<groupId>test</groupId>" +
+                                           "<artifactId>m2</artifactId>" +
+                                           "<version>1</version>" +
+
+                                           "<dependencies>" +
+                                           "  <dependency>" +
+                                           "    <groupId>junit</groupId>" +
+                                           "    <artifactId>junit</artifactId>" +
+                                           "    <version>4.0</version>" +
+                                           "  </dependency>" +
+                                           "</dependencies>");
+    VirtualFile m3 = createModulePom("m3", "<groupId>test</groupId>" +
+                                           "<artifactId>m3</artifactId>" +
+                                           "<version>1</version>" +
+
+                                           "<dependencies>" +
+                                           "  <dependency>" +
+                                           "    <groupId>junit</groupId>" +
+                                           "    <artifactId>junit</artifactId>" +
+                                           "    <version>4.5</version>" +
+                                           "  </dependency>" +
+                                           "</dependencies>");
+
+    importProjects(m1, m2, m3);
+    assertModules("m1", "m2", "m3");
+
+    assertModuleModuleDeps("m1", "m2", "m3");
+    assertModuleLibDeps("m1", "Maven: junit:junit:4.0");
+
+    setupJdkForModules("m1", "m2", "m3");
+
+    assertModuleClasspath("m1",
+                          getProjectPath() + "/m1/target/classes",
+                          getProjectPath() + "/m2/target/classes",
+                          getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar",
+                          getProjectPath() + "/m3/target/classes");
   }
 
   private void assertModuleClasspath(String moduleName, String... paths) throws CantRunException {

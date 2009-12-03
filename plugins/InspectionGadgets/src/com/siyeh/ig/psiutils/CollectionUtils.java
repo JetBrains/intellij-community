@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,22 +31,22 @@ public class CollectionUtils{
      * @noinspection StaticCollection
      */
     @NonNls private static final Set<String> s_collectionClassesRequiringCapacity =
-            new HashSet<String>(10);
+            new HashSet<String>();
     /**
      * @noinspection StaticCollection
      */
     @NonNls private static final Set<String> s_allCollectionClasses =
-            new HashSet<String>(10);
+            new HashSet<String>();
     /**
      * @noinspection StaticCollection
      */
     @NonNls private static final Set<String> s_allCollectionClassesAndInterfaces =
-            new HashSet<String>(10);
+            new HashSet<String>();
     /**
      * @noinspection StaticCollection
      */
     @NonNls private static final Map<String, String> s_interfaceForCollection =
-            new HashMap<String, String>(10);
+            new HashMap<String, String>();
 
     static {
         s_collectionClassesRequiringCapacity.add("java.util.BitSet");

@@ -38,8 +38,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
  *
  */
 public class CommandProcessorImpl extends CommandProcessorEx {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.impl.CommandProcessorImpl");
-
   private static class CommandDescriptor {
     public final Runnable myCommand;
     public final Project myProject;
@@ -97,8 +95,8 @@ public class CommandProcessorImpl extends CommandProcessorEx {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (project != null && project.isDisposed()) return;
 
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("executeCommand: " + command + ", name = " + name + ", groupId = " + groupId);
+    if (CommandLog.LOG.isDebugEnabled()) {
+      CommandLog.LOG.debug("executeCommand: " + command + ", name = " + name + ", groupId = " + groupId);
     }
 
     if (myCurrentCommand != null) {
@@ -127,8 +125,8 @@ public class CommandProcessorImpl extends CommandProcessorEx {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (project != null && project.isDisposed()) return null;
 
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("startCommand: name = " + name + ", groupId = " + groupId);
+    if (CommandLog.LOG.isDebugEnabled()) {
+      CommandLog.LOG.debug("startCommand: name = " + name + ", groupId = " + groupId);
     }
 
     if (myCurrentCommand != null) {
@@ -143,7 +141,7 @@ public class CommandProcessorImpl extends CommandProcessorEx {
 
   public void finishCommand(final Project project, final Object command, final Throwable throwable) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    LOG.assertTrue(myCurrentCommand != null, "no current command in progress");
+    CommandLog.LOG.assertTrue(myCurrentCommand != null, "no current command in progress");
     if (myCurrentCommand != command) return;
     final boolean failed;
     try {
@@ -160,7 +158,7 @@ public class CommandProcessorImpl extends CommandProcessorEx {
           throw (Error)throwable;
         }
         else if (throwable instanceof RuntimeException) throw (RuntimeException)throwable;
-        LOG.error(throwable);
+        CommandLog.LOG.error(throwable);
       }
       else {
         failed = false;
@@ -194,7 +192,7 @@ public class CommandProcessorImpl extends CommandProcessorEx {
           listener.beforeCommandFinished(event);
         }
         catch (Throwable e) {
-          LOG.error(e);
+          CommandLog.LOG.error(e);
         }
       }
     }
@@ -205,7 +203,7 @@ public class CommandProcessorImpl extends CommandProcessorEx {
           listener.commandFinished(event);
         }
         catch (Throwable e) {
-          LOG.error(e);
+          CommandLog.LOG.error(e);
         }
       }
     }
@@ -219,7 +217,7 @@ public class CommandProcessorImpl extends CommandProcessorEx {
   }
 
   public void leaveModal() {
-    LOG.assertTrue(myCurrentCommand == null);
+    CommandLog.LOG.assertTrue(myCurrentCommand == null);
     myCurrentCommand = myInterruptedCommands.pop();
     if (myCurrentCommand != null) {
       fireCommandStarted();
@@ -227,12 +225,12 @@ public class CommandProcessorImpl extends CommandProcessorEx {
   }
 
   public void setCurrentCommandName(String name) {
-    LOG.assertTrue(myCurrentCommand != null);
+    CommandLog.LOG.assertTrue(myCurrentCommand != null);
     myCurrentCommand.myName = name;
   }
 
   public void setCurrentCommandGroupId(Object groupId) {
-    LOG.assertTrue(myCurrentCommand != null);
+    CommandLog.LOG.assertTrue(myCurrentCommand != null);
     myCurrentCommand.myGroupId = groupId;
   }
 
@@ -317,7 +315,7 @@ public class CommandProcessorImpl extends CommandProcessorEx {
         listener.commandStarted(event);
       }
       catch (Throwable e) {
-        LOG.error(e);
+        CommandLog.LOG.error(e);
       }
     }
   }
@@ -328,7 +326,7 @@ public class CommandProcessorImpl extends CommandProcessorEx {
         listener.undoTransparentActionStarted();
       }
       catch (Throwable e) {
-        LOG.error(e);
+        CommandLog.LOG.error(e);
       }
     }
   }
@@ -339,7 +337,7 @@ public class CommandProcessorImpl extends CommandProcessorEx {
         listener.undoTransparentActionFinished();
       }
       catch (Throwable e) {
-        LOG.error(e);
+        CommandLog.LOG.error(e);
       }
     }
   }

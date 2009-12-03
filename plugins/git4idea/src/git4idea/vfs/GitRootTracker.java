@@ -308,7 +308,7 @@ public class GitRootTracker implements VcsListener {
    * @param directory the content root to check
    * @param rootSet   the mapped root set
    */
-  private static boolean hasUnmappedSubroots(final VirtualFile directory, final @Nullable HashSet<VirtualFile> rootSet) {
+  private static boolean hasUnmappedSubroots(final VirtualFile directory, final @NotNull HashSet<VirtualFile> rootSet) {
     VirtualFile[] children = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile[]>() {
       public VirtualFile[] compute() {
         return directory.isValid() ? directory.getChildren() : VirtualFile.EMPTY_ARRAY;
@@ -319,8 +319,8 @@ public class GitRootTracker implements VcsListener {
       if (!child.isDirectory()) {
         continue;
       }
-      if (child.getName().equals(".git") && (rootSet == null || !rootSet.contains(child.getParent()))) {
-        return true;
+      if (child.getName().equals(".git")) {
+        return !rootSet.contains(child.getParent());
       }
       if (hasUnmappedSubroots(child, rootSet)) {
         return true;

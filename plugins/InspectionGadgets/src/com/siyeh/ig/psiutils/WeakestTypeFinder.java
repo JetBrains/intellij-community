@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Bas Leijdekkers
+ * Copyright 2008-2009 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,9 +46,9 @@ public class WeakestTypeFinder {
         } else if (variableOrMethod instanceof PsiMethod) {
             final PsiMethod method = (PsiMethod) variableOrMethod;
             variableOrMethodType = method.getReturnType();
-          if (PsiType.VOID.equals(variableOrMethodType)) {
-            return Collections.EMPTY_LIST;
-          }
+            if (PsiType.VOID.equals(variableOrMethodType)) {
+                return Collections.EMPTY_LIST;
+            }
         } else {
             throw new IllegalArgumentException(
                     "PsiMethod or PsiVariable expected: " +
