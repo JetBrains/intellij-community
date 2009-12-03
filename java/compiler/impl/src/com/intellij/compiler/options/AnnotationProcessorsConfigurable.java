@@ -65,7 +65,7 @@ public class AnnotationProcessorsConfigurable implements Configurable{
   }
 
   public String getHelpTopic() {
-    return null;
+    return "reference.projectsettings.compiler.annotationProcessors";
   }
 
   public JComponent createComponent() {
