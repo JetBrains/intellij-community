@@ -44,8 +44,10 @@ public class PeriodicalTasksCloser implements ProjectManagerListener {
   private final static Object ourLock = new Object();
   private final List<Pair<String, Runnable>> myInterrupters;
   private final static Map<Project, Boolean> myStates = new HashMap<Project, Boolean>();
+  private final Project myProject;
 
   private PeriodicalTasksCloser(final Project project, final ProjectManager projectManager) {
+    myProject = project;
     myInterrupters = new ArrayList<Pair<String, Runnable>>();
     projectManager.addProjectManagerListener(project, this);
   }
@@ -55,7 +57,12 @@ public class PeriodicalTasksCloser implements ProjectManagerListener {
   }
 
   public void register(final String name, final Runnable runnable) {
-    myInterrupters.add(new Pair<String, Runnable>(name, runnable));
+    synchronized (ourLock) {
+      if (Boolean.FALSE.equals(myStates.get(myProject))) {
+        return;
+      }
+      myInterrupters.add(new Pair<String, Runnable>(name, runnable));
+    }
   }       
 
   public void projectOpened(Project project) {
@@ -81,7 +88,11 @@ public class PeriodicalTasksCloser implements ProjectManagerListener {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-        for (Pair<String, Runnable> pair : myInterrupters) {
+        final List<Pair<String, Runnable>> list;
+        synchronized (ourLock) {
+          list = myInterrupters;
+        }
+        for (Pair<String, Runnable> pair : list) {
           if (indicator != null) {
             indicator.setText(pair.getFirst());
             indicator.checkCanceled();
