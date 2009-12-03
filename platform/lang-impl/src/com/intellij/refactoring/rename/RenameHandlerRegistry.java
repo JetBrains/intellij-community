@@ -67,11 +67,13 @@ public class RenameHandlerRegistry {
     final Map<String, RenameHandler> availableHandlers = new TreeMap<String, RenameHandler>();
     for (RenameHandler renameHandler : Extensions.getExtensions(RenameHandler.EP_NAME)) {
       if (renameHandler.isRenaming(dataContext)) {
+        if (ApplicationManager.getApplication().isUnitTestMode()) return renameHandler;
         availableHandlers.put(getHandlerTitle(renameHandler), renameHandler);
       }
     }
     for (RenameHandler renameHandler : myHandlers) {
       if (renameHandler.isRenaming(dataContext)) {
+        if (ApplicationManager.getApplication().isUnitTestMode()) return renameHandler;
         availableHandlers.put(getHandlerTitle(renameHandler), renameHandler);
       }
     }
