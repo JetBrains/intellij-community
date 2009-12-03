@@ -19,6 +19,7 @@ package com.intellij.ui;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
@@ -42,16 +43,22 @@ public abstract class AutoScrollFromSourceHandler implements Disposable {
   public abstract void install();
 
   public ToggleAction createToggleAction() {
-    return new ToggleAction(UIBundle.message("autoscroll.from.source.action.name"),
-                            UIBundle.message("autoscroll.from.source.action.description"), IconLoader.getIcon("/general/autoscrollFromSource.png")) {
-      public boolean isSelected(AnActionEvent event) {
-        return isAutoScrollMode();
-      }
+    return new AutoScrollFromSourceAction();
+  }
 
-      public void setSelected(AnActionEvent event, boolean flag) {
-        setAutoScrollMode(flag);
-      }
-    };
+  private class AutoScrollFromSourceAction extends ToggleAction implements DumbAware {
+    public AutoScrollFromSourceAction() {
+      super(UIBundle.message("autoscroll.from.source.action.name"), UIBundle.message("autoscroll.from.source.action.description"),
+            IconLoader.getIcon("/general/autoscrollFromSource.png"));
+    }
+
+    public boolean isSelected(AnActionEvent event) {
+      return isAutoScrollMode();
+    }
+
+    public void setSelected(AnActionEvent event, boolean flag) {
+      setAutoScrollMode(flag);
+    }
   }
 }
 
