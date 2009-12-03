@@ -1,0 +1,2 @@
+class CChild extends C {
+}

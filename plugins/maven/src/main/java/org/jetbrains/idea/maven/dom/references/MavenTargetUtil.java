@@ -28,7 +28,7 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil;
 public class MavenTargetUtil {
   public static PsiElement getRefactorTarget(Editor editor, PsiFile file) {
     PsiElement target = getFindTarget(editor, file);
-    return target == null || !MavenDomUtil.isMavenFile(target) ? null : target;
+    return target == null || !MavenDomUtil.isMavenProperty(target) ? null : target;
   }
 
   public static PsiElement getFindTarget(Editor editor, PsiFile file) {
