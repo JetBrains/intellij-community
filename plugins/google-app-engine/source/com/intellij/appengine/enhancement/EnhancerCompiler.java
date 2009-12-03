@@ -102,7 +102,7 @@ public class EnhancerCompiler implements ClassPostProcessingCompiler {
     try {
       final AppEngineSdk sdk = facet.getSdk();
       if (!sdk.isValid()) {
-        throw new CantRunException("Valid App Engine SDK isn't specified for '" + facet.getName() + "' facet (module '" + facet.getModule() + "')");
+        throw new CantRunException("Valid App Engine SDK isn't specified for '" + facet.getName() + "' facet (module '" + facet.getModule().getName() + "')");
       }
 
       final JavaParameters javaParameters = new JavaParameters();
