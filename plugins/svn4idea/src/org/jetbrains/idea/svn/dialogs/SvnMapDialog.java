@@ -136,6 +136,11 @@ public class SvnMapDialog extends DialogWrapper {
     });
   }
 
+  @Override
+  protected String getHelpId() {
+    return "reference.vcs.svn.working.copies.information";
+  }
+
   private void subscribeToUpdates(final SvnVcs vcs) {
     if (myMessageBusConnection == null) {
       myMessageBusConnection = myProject.getMessageBus().connect(getDisposable());
