@@ -1815,18 +1815,25 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
   }
 
   public static void iterateIndexableFiles(final ContentIterator processor, Project project) {
+    if (project.isDisposed()) {
+      return;
+    }
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    // iterate associated libraries
-    final Module[] modules = ModuleManager.getInstance(project).getModules();
     // iterate project content
     projectFileIndex.iterateContent(processor);
 
+    if (project.isDisposed()) {
+      return;
+    }
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
 
     Set<VirtualFile> visitedRoots = new com.intellij.util.containers.HashSet<VirtualFile>();
     for (IndexedRootsProvider provider : Extensions.getExtensions(IndexedRootsProvider.EP_NAME)) {
       //important not to depend on project here, to support per-project background reindex
       // each client gives a project to FileBasedIndex
+      if (project.isDisposed()) {
+        return;
+      }
       final Set<String> rootsToIndex = provider.getRootsToIndex();
       for (String url : rootsToIndex) {
         final VirtualFile root = VirtualFileManager.getInstance().findFileByUrl(url);
@@ -1835,7 +1842,15 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
         }
       }
     }
-    for (Module module : modules) {
+
+    if (project.isDisposed()) {
+      return;
+    }
+    // iterate associated libraries
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
+      if (module.isDisposed()) {
+        return;
+      }
       OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
       for (OrderEntry orderEntry : orderEntries) {
         if (orderEntry instanceof LibraryOrderEntry || orderEntry instanceof JdkOrderEntry) {
