@@ -46,11 +46,11 @@ public class ProblemsHolder {
     myOnTheFly = onTheFly;
   }
 
-  public void registerProblem(PsiElement psiElement, @Nls String descriptionTemplate, LocalQuickFix... fixes) {
+  public void registerProblem(@NotNull PsiElement psiElement, @Nls String descriptionTemplate, LocalQuickFix... fixes) {
     registerProblem(psiElement, descriptionTemplate, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fixes);
   }
 
-  public void registerProblem(PsiElement psiElement,
+  public void registerProblem(@NotNull PsiElement psiElement,
                               String descriptionTemplate,
                               ProblemHighlightType highlightType,
                               LocalQuickFix... fixes) {
@@ -79,7 +79,7 @@ public class ProblemsHolder {
     return ArrayUtil.indexOf(myFile.getPsiRoots(), file) != -1;
   }
 
-  public void registerProblem(PsiReference reference, String descriptionTemplate, ProblemHighlightType highlightType) {
+  public void registerProblem(@NotNull PsiReference reference, String descriptionTemplate, ProblemHighlightType highlightType) {
     LocalQuickFix[] fixes = null;
     if (reference instanceof LocalQuickFixProvider) {
       fixes = ((LocalQuickFixProvider)reference).getQuickFixes();
@@ -89,7 +89,7 @@ public class ProblemsHolder {
                                                       myOnTheFly, fixes));
   }
 
-  public void registerProblem(PsiReference reference) {
+  public void registerProblem(@NotNull PsiReference reference) {
     assert reference instanceof EmptyResolveMessageProvider;
     registerProblem(reference, ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern(), ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
   }
