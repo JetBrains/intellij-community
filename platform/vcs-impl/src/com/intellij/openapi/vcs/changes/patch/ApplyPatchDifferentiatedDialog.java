@@ -159,6 +159,11 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     return "vcs.ApplyPatchDifferentiatedDialog";
   }
 
+  @Override
+  protected String getHelpId() {
+    return "reference.dialogs.vcs.patch.apply";
+  }
+
   private void setPathFileChangeDefault() {
     myRecentPathFileChange.set(new FilePresentation(myPatchFile.getText()));
   }
