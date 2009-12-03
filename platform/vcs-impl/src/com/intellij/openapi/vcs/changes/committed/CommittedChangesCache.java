@@ -224,13 +224,12 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
         }
         boolean zipSupported = zipper != null;
 
-        final List<VirtualFile> roots = myCachesHolder.getAllRootsUnderVcs(vcs);
+        final Map<VirtualFile, RepositoryLocation> map = myCachesHolder.getAllRootsUnderVcs(vcs);
 
-        for (VirtualFile root : roots) {
+        for (VirtualFile root : map.keySet()) {
           if (myProject.isDisposed())  return;
 
-          final RepositoryLocation location = myLocationCache.getLocation(vcs, new FilePathImpl(root), false);
-          if (location == null) continue;
+          final RepositoryLocation location = map.get(root);
 
           try {
             final List<CommittedChangeList> lists = getChanges(mySettings, root, vcs, myMaxCount, myCacheOnly, provider, location);

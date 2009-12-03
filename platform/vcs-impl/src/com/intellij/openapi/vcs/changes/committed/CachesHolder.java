@@ -50,8 +50,8 @@ public class CachesHolder {
   /**
    * Returns all paths that will be used to collect committed changes about. ideally, for one checkout there should be one file
    */
-  public List<VirtualFile> getAllRootsUnderVcs(final AbstractVcs vcs) {
-    final RootsCalculator calculator = new RootsCalculator(myProject, vcs);
+  public Map<VirtualFile, RepositoryLocation> getAllRootsUnderVcs(final AbstractVcs vcs) {
+    final RootsCalculator calculator = new RootsCalculator(myProject, vcs, myLocationCache);
     return calculator.getRoots();
   }
 
@@ -60,14 +60,12 @@ public class CachesHolder {
     for (AbstractVcs vcs : vcses) {
       final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
       if (provider instanceof CachingCommittedChangesProvider) {
-        final List<VirtualFile> roots = getAllRootsUnderVcs(vcs);
-        for (VirtualFile root : roots) {
-          final RepositoryLocation location = myLocationCache.getLocation(vcs, new FilePathImpl(root), false);
-          if (location != null) {
-            final ChangesCacheFile cacheFile = getCacheFile(vcs, root, location);
-            if (Boolean.TRUE.equals(consumer.fun(cacheFile))) {
-              return;
-            }
+        final Map<VirtualFile, RepositoryLocation> map = getAllRootsUnderVcs(vcs);
+        for (VirtualFile root : map.keySet()) {
+          final RepositoryLocation location = map.get(root);
+          final ChangesCacheFile cacheFile = getCacheFile(vcs, root, location);
+          if (Boolean.TRUE.equals(consumer.fun(cacheFile))) {
+            return;
           }
         }
       }
