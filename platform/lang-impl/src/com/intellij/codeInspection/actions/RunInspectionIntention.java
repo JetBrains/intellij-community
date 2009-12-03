@@ -24,7 +24,6 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -45,7 +44,7 @@ public class RunInspectionIntention implements IntentionAction {
   private final String myShortName;
   private final String myDisplayName;
 
-  public RunInspectionIntention(final LocalInspectionTool tool) {
+  public RunInspectionIntention(final InspectionProfileEntry tool) {
     myShortName = tool.getShortName();
     myDisplayName = tool.getDisplayName();
   }
