@@ -97,8 +97,8 @@ public class MavenProjectReader {
     Model model = modelWithValidity.model;
     List<Profile> activatedProfiles = applyProfiles(model, getBaseDir(file), activeProfiles);
     repairModelHeader(model);
-    resolveInheritance(generalSettings, model, file, activeProfiles, recursionGuard, locator,
-                       modelWithValidity.problems); // todo ????????? changing cached value
+    resolveInheritance(generalSettings, model, file, activeProfiles,
+                       recursionGuard, locator, modelWithValidity.problems); // todo ????????? changing cached value
     repairModelBody(model);
 
     return Pair.create(modelWithValidity, activatedProfiles);
@@ -206,7 +206,9 @@ public class MavenProjectReader {
     return result;
   }
 
-  private void collectProfilesFromSettingsFile(VirtualFile settingsFile, List<Profile> result, Collection<MavenProjectProblem> problems) {
+  private void collectProfilesFromSettingsFile(VirtualFile settingsFile,
+                                               List<Profile> result,
+                                               Collection<MavenProjectProblem> problems) {
     if (settingsFile == null) return;
     Element readResult = readXml(settingsFile, problems, MavenProjectProblem.ProblemType.SETTINGS_OR_PROFILES);
     List<Element> xmlProfiles = findChildrenByPath(readResult, "settings.profiles", "profile");
@@ -432,8 +434,8 @@ public class MavenProjectReader {
                                   final MavenProjectReaderProjectLocator locator,
                                   Collection<MavenProjectProblem> problems) {
     if (recursionGuard.contains(file)) {
-      problems.add(
-        createProblem(file, ProjectBundle.message("maven.project.problem.recursiveInheritance"), MavenProjectProblem.ProblemType.PARENT));
+      problems.add(createProblem(file, ProjectBundle.message("maven.project.problem.recursiveInheritance"),
+                                 MavenProjectProblem.ProblemType.PARENT));
       return;
     }
     recursionGuard.add(file);
@@ -444,8 +446,8 @@ public class MavenProjectReader {
       if (parent != null) {
         MavenId parentId = new MavenId(parent.getGroupId(), parent.getArtifactId(), parent.getVersion());
         if (parentId.equals(model.getGroupId(), model.getArtifactId(), model.getVersion())) {
-          problems.add(
-            createProblem(file, ProjectBundle.message("maven.project.problem.selfInheritance"), MavenProjectProblem.ProblemType.PARENT));
+          problems.add(createProblem(file, ProjectBundle.message("maven.project.problem.selfInheritance"),
+                                     MavenProjectProblem.ProblemType.PARENT));
           return;
         }
         parentDesc[0] = new MavenParentDesc(parentId, parent.getRelativePath());
@@ -482,8 +484,9 @@ public class MavenProjectReader {
 
       if (parentModelWithProblems == null) return; // no parent or parent not found;
       if (!parentModelWithProblems.second.problems.isEmpty()) {
-        problems.add(createProblem(parentModelWithProblems.first, ProjectBundle.message("maven.project.problem.parentHasProblems",
-                                                                                        new MavenId(parentModelWithProblems.second.model)),
+        problems.add(createProblem(parentModelWithProblems.first,
+                                   ProjectBundle.message("maven.project.problem.parentHasProblems",
+                                                         new MavenId(parentModelWithProblems.second.model)),
                                    MavenProjectProblem.ProblemType.PARENT));
       }
 
@@ -626,9 +629,7 @@ public class MavenProjectReader {
     }
   }
 
-  private Element readXml(final VirtualFile file,
-                          final Collection<MavenProjectProblem> problems,
-                          final MavenProjectProblem.ProblemType type) {
+  private Element readXml(final VirtualFile file, final Collection<MavenProjectProblem> problems, final MavenProjectProblem.ProblemType type) {
     final LinkedList<Element> stack = new LinkedList<Element>();
     final Element root = new Element("root");
 
