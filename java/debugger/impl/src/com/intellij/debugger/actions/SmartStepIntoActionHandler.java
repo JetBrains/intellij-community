@@ -102,7 +102,7 @@ public class SmartStepIntoActionHandler extends DebuggerActionHandler {
     final TextRange lineRange = new TextRange(startOffset, doc.getLineEndOffset(line));
     final int offset = CharArrayUtil.shiftForward(doc.getCharsSequence(), startOffset, " \t");
     PsiElement element = file.findElementAt(offset);
-    if (element != null) {
+    if (element != null && !(element instanceof PsiCompiledElement)) {
       do {
         final PsiElement parent = element.getParent();
         if (parent == null || (parent.getTextOffset() < lineRange.getStartOffset())) {

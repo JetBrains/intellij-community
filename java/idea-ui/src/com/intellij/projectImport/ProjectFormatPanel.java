@@ -20,6 +20,7 @@
  */
 package com.intellij.projectImport;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.components.StorageScheme;
 
@@ -31,10 +32,12 @@ public class ProjectFormatPanel {
   private JComboBox myStorageFormatCombo;
   private JPanel myWholePanel;
 
+  public static final String STORAGE_FORMAT_PROPERTY = "default.storage.format";
+
   public ProjectFormatPanel() {
     myStorageFormatCombo.insertItemAt(DIR_BASED, 0);
     myStorageFormatCombo.insertItemAt(FILE_BASED, 1);
-    myStorageFormatCombo.setSelectedItem(DIR_BASED);
+    myStorageFormatCombo.setSelectedItem(PropertiesComponent.getInstance().getOrInit(STORAGE_FORMAT_PROPERTY, DIR_BASED));
   }
 
 
@@ -49,5 +52,14 @@ public class ProjectFormatPanel {
   public void updateData(WizardContext context) {
     context.setProjectStorageFormat(
       FILE_BASED.equals(myStorageFormatCombo.getSelectedItem()) ? StorageScheme.DEFAULT : StorageScheme.DIRECTORY_BASED);
+    PropertiesComponent.getInstance().setValue(STORAGE_FORMAT_PROPERTY, isDefault() ? FILE_BASED : DIR_BASED);
+  }
+
+  public void setVisible(boolean visible) {
+    myWholePanel.setVisible(visible);
+  }
+
+  public boolean isDefault() {
+    return FILE_BASED.equals(myStorageFormatCombo.getSelectedItem());
   }
 }

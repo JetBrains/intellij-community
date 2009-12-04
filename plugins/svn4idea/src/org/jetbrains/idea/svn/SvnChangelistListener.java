@@ -18,12 +18,14 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListListener;
+import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
@@ -56,6 +58,21 @@ public class SvnChangelistListener implements ChangeListListener {
     for (String path : paths) {
       try {
         myClient.doRemoveFromChangelist(new File[]{new File(path)}, SVNDepth.EMPTY, null);
+      }
+      catch (SVNException e) {
+        LOG.info(e);
+      }
+    }
+  }
+
+  public void changesAdded(Collection<Change> changes, ChangeList toList) {
+    if (SvnChangeProvider.ourDefaultListName.equals(toList.getName())) {
+      return;
+    }
+    final List<String> paths = getPathsFromChanges(changes);
+    for (String path : paths) {
+      try {
+        myClient.doAddToChangelist(new File[]{new File(path)}, SVNDepth.EMPTY, toList.getName(), null);
       }
       catch (SVNException e) {
         LOG.info(e);
@@ -153,43 +170,56 @@ public class SvnChangelistListener implements ChangeListListener {
   public void changeListUpdateDone() {
   }
 
-  // just to have all work with CLs in one class
-  public void pathChanged(final File from, final File to) throws SVNException {
-    // everything under from must became under to
-    final Map<File, String> oldMappings = new HashMap<File, String>();
+  @Nullable
+  public static String getCurrentMapping(final Project project, final File file) {
+    final SvnVcs vcs = SvnVcs.getInstance(project);
+    final SVNChangelistClient client = vcs.createChangelistClient();
     try {
-      myClient.doGetChangeLists(from, null, SVNDepth.INFINITY, new ISVNChangelistHandler() {
+      final Ref<String> refResult = new Ref<String>();
+      final ISVNChangelistHandler handler = new ISVNChangelistHandler() {
         public void handle(final File path, final String changelistName) {
-          oldMappings.put(path, changelistName);
+          if (refResult.isNull() && Comparing.equal(path, file)) {
+            refResult.set(changelistName);
+          }
         }
-      });
+      };
+      if (file.exists()) {
+        client.doGetChangeLists(file, null, SVNDepth.EMPTY, handler);
+      } else if (file.getParentFile() != null) {
+        client.doGetChangeLists(file.getParentFile(), null, SVNDepth.IMMEDIATES, handler);
+      }
+      return refResult.get();
     }
     catch (SVNException e) {
       LOG.info(e);
     }
-    for (Map.Entry<File, String> entry : oldMappings.entrySet()) {
-      final File file = entry.getKey();
-      try {
-        myClient.doRemoveFromChangelist(new File[]{file}, SVNDepth.EMPTY, null);
-      }
-      catch (SVNException e) {
-        LOG.info(e);
-        if ((! SVNErrorCode.WC_NOT_DIRECTORY.equals(e.getErrorMessage().getErrorCode()) && (! SVNErrorCode.WC_NOT_FILE.equals(e.getErrorMessage().getErrorCode())))) {
-          throw e;
-        }
-      }
+    return null;
+  }
 
-      final String relativePath = file.getAbsolutePath().substring(from.getAbsolutePath().length());
-      final File newPath = new File(to, relativePath);
-
-      try {
-        myClient.doAddToChangelist(new File[]{newPath}, SVNDepth.EMPTY, entry.getValue(), null);
+  public static void putUnderList(final Project project, final String list, final File after) throws SVNException {
+    final SvnVcs vcs = SvnVcs.getInstance(project);
+    final SVNChangelistClient client = vcs.createChangelistClient();
+    try {
+      client.doAddToChangelist(new File[]{after}, SVNDepth.EMPTY, list, null);
+    }
+    catch (SVNException e) {
+      LOG.info(e);
+      if ((! SVNErrorCode.WC_NOT_DIRECTORY.equals(e.getErrorMessage().getErrorCode()) && (! SVNErrorCode.WC_NOT_FILE.equals(e.getErrorMessage().getErrorCode())))) {
+        throw e;
       }
-      catch (SVNException e) {
-        LOG.info(e);
-        if ((! SVNErrorCode.WC_NOT_DIRECTORY.equals(e.getErrorMessage().getErrorCode()) && (! SVNErrorCode.WC_NOT_FILE.equals(e.getErrorMessage().getErrorCode())))) {
-          throw e;
-        }
+    }
+  }
+
+  public static void removeFromList(final Project project, final File after) throws SVNException {
+    final SvnVcs vcs = SvnVcs.getInstance(project);
+    final SVNChangelistClient client = vcs.createChangelistClient();
+    try {
+      client.doRemoveFromChangelist(new File[]{after}, SVNDepth.EMPTY, null);
+    }
+    catch (SVNException e) {
+      LOG.info(e);
+      if ((! SVNErrorCode.WC_NOT_DIRECTORY.equals(e.getErrorMessage().getErrorCode()) && (! SVNErrorCode.WC_NOT_FILE.equals(e.getErrorMessage().getErrorCode())))) {
+        throw e;
       }
     }
   }

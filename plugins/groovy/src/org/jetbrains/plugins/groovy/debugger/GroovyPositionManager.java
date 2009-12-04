@@ -65,8 +65,6 @@ public class GroovyPositionManager implements PositionManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.PositionManagerImpl");
 
   private final DebugProcess myDebugProcess;
-  @NotNull
-  public static final Set<String> GROOVY_EXTENSIONS = new java.util.HashSet<String>(Arrays.asList("groovy", "gvy", "gy", "gsh"));
 
   public GroovyPositionManager(DebugProcess debugProcess) {
     myDebugProcess = debugProcess;
@@ -157,13 +155,22 @@ public class GroovyPositionManager implements PositionManager {
       public String compute() {
         GroovyPsiElement sourceImage = findReferenceTypeSourceImage(position);
         if (sourceImage instanceof GrTypeDefinition) {
-          return ((GrTypeDefinition)sourceImage).getQualifiedName();
+          return getClassNameForJvm((GrTypeDefinition)sourceImage);
         } else if (sourceImage == null) {
           return getScriptQualifiedName(position);
         }
         return null;
       }
     });
+  }
+
+  private static String getClassNameForJvm(final PsiClass typeDefinition) {
+    final PsiClass psiClass = typeDefinition.getContainingClass();
+    if (psiClass != null) {
+      return getClassNameForJvm(psiClass) + "$" + typeDefinition.getName();
+    }
+
+    return typeDefinition.getQualifiedName();
   }
 
   @Nullable
@@ -293,7 +300,7 @@ public class GroovyPositionManager implements PositionManager {
         final String scriptName = getScriptQualifiedName(position);
 
         if (sourceImage instanceof GrTypeDefinition) {
-          String qName = ((GrTypeDefinition)sourceImage).getQualifiedName();
+          String qName = getClassNameForJvm((GrTypeDefinition)sourceImage);
           if (qName != null) return myDebugProcess.getVirtualMachineProxy().classesByName(qName);
         } else if (sourceImage == null) {
           if (scriptName != null) return myDebugProcess.getVirtualMachineProxy().classesByName(scriptName);

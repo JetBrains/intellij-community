@@ -112,6 +112,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     public TIntObjectHashMap<Pair<Integer, Integer>> createValue(Integer key) {
       TIntObjectHashMap<Pair<Integer, Integer>> map = null;
       try {
+        ensureOutputStorageInitialized();
         map = myOutputRootsStorage.get(key);
       }
       catch (IOException e) {
@@ -384,6 +385,14 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       LOG.info(e);
       myOutputsToDelete.clear();
       FileUtil.delete(file);
+    }
+
+    ensureOutputStorageInitialized();
+  }
+
+  private void ensureOutputStorageInitialized() {
+    if (myOutputRootsStorage != null) {
+      return;
     }
     final File rootsFile = new File(CompilerPaths.getCompilerSystemDirectory(), OUTPUT_ROOTS_FILENAME);
     try {

@@ -1113,7 +1113,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
             target.y = 0;
           }
           else if (ToolWindowAnchor.BOTTOM == anchor) {
-            target.y = bounds.height;
+            target.y = bounds.height - 3;
           }
           else if (ToolWindowAnchor.LEFT == anchor) {
             target.x = 0;

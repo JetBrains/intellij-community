@@ -18,17 +18,18 @@ package com.intellij.testIntegration;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.navigation.GotoTargetHandler;
+import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-
-import org.jetbrains.annotations.NotNull;
 
 public class GotoTestOrCodeHandler extends GotoTargetHandler {
   protected String getFeatureUsedKey() {
@@ -75,7 +76,8 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
   protected String getChooserInFileTitleKey(PsiElement sourceElement) {
     if (TestFinderHelper.isTest(sourceElement)) {
       return "goto.test.subject.in.file.chooser.title";
-    } else {
+    }
+    else {
       return "goto.test.in.file.chooser.title";
     }
   }
@@ -83,8 +85,19 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
   protected String getChooserTitleKey(PsiElement sourceElement) {
     if (TestFinderHelper.isTest(sourceElement)) {
       return "goto.test.subject.chooser.title";
-    } else {
+    }
+    else {
       return "goto.test.chooser.title";
+    }
+  }
+
+  @Override
+  protected void navigateToElement(Navigatable element) {
+    if (element instanceof PsiElement) {
+      NavigationUtil.activateFileWithPsiElement((PsiElement)element);
+    }
+    else {
+      element.navigate(true);
     }
   }
 }

@@ -402,18 +402,26 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   public void notifyDoneProcessingChanges(final ChangeListListener dispatcher) {
     List<ChangeList> changedLists = new ArrayList<ChangeList>();
     final Map<LocalChangeListImpl, List<Change>> removedChanges = new HashMap<LocalChangeListImpl, List<Change>>();
+    final Map<LocalChangeListImpl, List<Change>> addedChanges = new HashMap<LocalChangeListImpl, List<Change>>();
       for (LocalChangeList list : myMap.values()) {
         final List<Change> removed = new ArrayList<Change>();
+        final List<Change> added = new ArrayList<Change>();
         final LocalChangeListImpl listImpl = (LocalChangeListImpl)list;
-        if (listImpl.doneProcessingChanges(removed)) {
+        if (listImpl.doneProcessingChanges(removed, added)) {
           changedLists.add(list);
         }
         if (! removed.isEmpty()) {
           removedChanges.put(listImpl, removed);
         }
+        if (! added.isEmpty()) {
+          addedChanges.put(listImpl, added);
+        }
       }
     for (Map.Entry<LocalChangeListImpl, List<Change>> entry : removedChanges.entrySet()) {
       dispatcher.changesRemoved(entry.getValue(), entry.getKey());
+    }
+    for (Map.Entry<LocalChangeListImpl, List<Change>> entry : addedChanges.entrySet()) {
+      dispatcher.changesAdded(entry.getValue(), entry.getKey());
     }
     for(ChangeList changeList: changedLists) {
       dispatcher.changeListChanged(changeList);

@@ -55,8 +55,6 @@ public class MavenPropertyRenameHandler extends PsiElementRenameHandler {
   }
 
   private PsiElement findTarget(DataContext context) {
-    PsiElement target = MavenTargetUtil.getRefactorTarget(PlatformDataKeys.EDITOR.getData(context),
-                                                          LangDataKeys.PSI_FILE.getData(context));
-    return isVetoed(target) ? null : target;
+    return MavenTargetUtil.getRefactorTarget(PlatformDataKeys.EDITOR.getData(context), LangDataKeys.PSI_FILE.getData(context));
   }
 }

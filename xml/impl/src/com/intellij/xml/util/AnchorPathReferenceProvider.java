@@ -55,7 +55,13 @@ public class AnchorPathReferenceProvider implements PathReferenceProvider {
       }
     }
     final int pos = elementText.indexOf('?', anchorOffset);
-    final String anchor = elementText.substring(anchorOffset + 1, pos == -1 ? range.getEndOffset() : pos);
+    final String anchor;
+    try {
+      anchor = elementText.substring(anchorOffset + 1, pos == -1 ? range.getEndOffset() : pos);
+    }
+    catch (StringIndexOutOfBoundsException e) {      
+      throw new RuntimeException(elementText, e);
+    }
     final AnchorReference anchorReference = new AnchorReference(anchor, fileReference, psiElement, anchorOffset + 1, soft);
     references.add(anchorReference);
     return false;

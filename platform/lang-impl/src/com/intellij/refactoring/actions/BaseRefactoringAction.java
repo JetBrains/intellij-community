@@ -17,6 +17,7 @@
 package com.intellij.refactoring.actions;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
@@ -51,8 +52,10 @@ public abstract class BaseRefactoringAction extends AnAction {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     final Editor editor = e.getData(PlatformDataKeys.EDITOR);
     final PsiElement[] elements = getPsiElementArray(dataContext);
+    int eventCount = IdeEventQueue.getInstance().getEventCount();
     RefactoringActionHandler handler = getHandler(dataContext);
     if (handler == null) return;
+    IdeEventQueue.getInstance().setEventCount(eventCount);
     if (editor != null) {
       final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (file == null) return;

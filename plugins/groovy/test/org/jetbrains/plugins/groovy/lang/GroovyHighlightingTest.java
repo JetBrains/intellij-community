@@ -20,6 +20,7 @@ import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilit
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection;
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialConditionalInspection;
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialIfInspection;
+import org.jetbrains.plugins.groovy.codeInspection.metrics.GroovyOverlyLongMethodInspection;
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection;
 import org.jetbrains.plugins.groovy.codeInspection.unassignedVariable.UnassignedVariableAccessInspection;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUnresolvedAccessInspection;
@@ -193,4 +194,8 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testEverythingAssignableToString() throws Exception {doTest(new GroovyAssignabilityCheckInspection());}
 
   public void testMethodCallWithDefaultParameters() throws Exception {doTest();}
+
+  public void testOverlyLongMethodInspection() throws Exception {
+    doTest(new GroovyOverlyLongMethodInspection());
+  }
 }

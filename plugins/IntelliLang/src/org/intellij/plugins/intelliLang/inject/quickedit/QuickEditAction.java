@@ -140,7 +140,7 @@ public class QuickEditAction implements IntentionAction {
         final RangeMarker rangeMarker = document.createGuardedBlock(curOffset, start);
         if (curOffset == 0) rangeMarker.setGreedyToLeft(true);
       }
-      curOffset = end + 1;
+      curOffset = end;
     }
     if (curOffset < text.length()) {
       document.createGuardedBlock(curOffset, text.length()).setGreedyToRight(true);

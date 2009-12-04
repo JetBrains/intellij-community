@@ -35,6 +35,7 @@ import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -94,7 +95,9 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
     }
 
 
-    removeParametersFromCall(callExpression.getArgumentList(), data.getParametersToRemove());
+    final PsiExpressionList argumentList = callExpression.getArgumentList();
+    LOG.assertTrue(argumentList != null, callExpression.getText());
+    removeParametersFromCall(argumentList, data.getParametersToRemove());
     return false;
   }
 
@@ -108,12 +111,14 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
     return false;
   }
 
-  private static void removeParametersFromCall(final PsiExpressionList argList, TIntArrayList parametersToRemove) {
+  private static void removeParametersFromCall(@NotNull final PsiExpressionList argList, TIntArrayList parametersToRemove) {
     final PsiExpression[] exprs = argList.getExpressions();
     parametersToRemove.forEachDescending(new TIntProcedure() {
       public boolean execute(final int paramNum) {
         try {
-          exprs[paramNum].delete();
+          if (paramNum < exprs.length) {
+            exprs[paramNum].delete();
+          }
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);

@@ -810,6 +810,11 @@ public class HighlightMethodUtil {
    *         instance method overrides static. see JLS 8.4.6.1, 8.4.6.2
    */
   public static HighlightInfo checkStaticMethodOverride(PsiMethod method) {
+    // constructors are not members and therefor don't override class methods
+    if (method.isConstructor()) {
+      return null;
+    }
+
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return null;
     PsiClass superClass = aClass.getSuperClass();

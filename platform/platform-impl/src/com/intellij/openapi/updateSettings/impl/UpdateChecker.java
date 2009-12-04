@@ -26,6 +26,9 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.reporter.ConnectionException;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -407,13 +410,17 @@ public final class UpdateChecker {
           result[0] = DownloadPatchResult.SUCCESS;
         }
         catch (final IOException e) {
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              Messages.showErrorDialog(e.getMessage(), "Failed to download patch file");
-            }
-          });
           LOG.info(e);
           result[0] = DownloadPatchResult.FAILED;
+
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              Notifications.Bus.notify(new Notification("Updater", 
+                                                        "Failed to download patch file",
+                                                        e.getMessage(),
+                                                        NotificationType.ERROR));
+            }
+          });
         }
       }
     }, IdeBundle.message("update.downloading.patch.progress.title"), true, null)) {
@@ -445,7 +452,8 @@ public final class UpdateChecker {
     InputStream in = null;
     OutputStream out = null;
 
-    String patchFileName = "jetbrains.patch.jar." + productCode;
+    String platform = System.getProperty("idea.platform.prefix", "idea");
+    String patchFileName = "jetbrains.patch.jar." + platform;
     File patchFile = new File(FileUtil.getTempDirectory(), patchFileName);
 
     try {

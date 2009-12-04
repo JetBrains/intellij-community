@@ -85,7 +85,7 @@ public abstract class FileEditorManagerEx extends FileEditorManager {
    */
   @NotNull public abstract VirtualFile[] getSiblings(VirtualFile file);
 
-  public abstract void createSplitter(int orientation);
+  public abstract void createSplitter(int orientation, @Nullable EditorWindow window);
 
   public abstract void changeSplitterOrientation();
 

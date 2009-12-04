@@ -73,6 +73,22 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("1", p.getVersion());
   }
 
+  public void testInvalidXmlCharData() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>");
+
+    assertProblems(readProject(myProjectPom, new NullProjectLocator()));
+
+    createProjectPom("<name>a" + new String(new byte[] {0x0}) +"a</name><fo" + new String(new byte[] {0x0}) + "o></foo>");
+
+    MavenProjectReaderResult result = readProject(myProjectPom, new NullProjectLocator());
+    assertProblems(result, "'pom.xml' has syntax errors");
+    org.apache.maven.project.MavenProject p = result.nativeMavenProject;
+
+    assertEquals("a0x0a", p.getName());
+  }
+
   public void testInvalidParentXml() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +

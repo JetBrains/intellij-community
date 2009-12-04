@@ -20,16 +20,14 @@ import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
 /**
-* @author peter
-*/
+ * @author peter
+ */
 public class GroovyAddImportAction extends ImportClassFixBase<GrReferenceElement> {
   public GroovyAddImportAction(GrReferenceElement ref) {
     super(ref);
@@ -37,15 +35,7 @@ public class GroovyAddImportAction extends ImportClassFixBase<GrReferenceElement
 
   @Override
   protected void bindReference(GrReferenceElement ref, PsiClass targetClass) {
-    if (PsiTreeUtil.getParentOfType(ref, GrImportStatement.class) != null) {
-      ref.bindToElement(targetClass);
-      return;
-    }
-
-    final PsiFile file = ref.getContainingFile();
-    if (file instanceof GroovyFileBase) {
-      ((GroovyFileBase)file).addImportForClass(targetClass);
-    }
+    ref.bindToElement(targetClass);
   }
 
   @Override

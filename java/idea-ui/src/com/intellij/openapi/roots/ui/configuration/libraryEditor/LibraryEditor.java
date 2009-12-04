@@ -42,6 +42,10 @@ public class LibraryEditor implements Disposable {
   }
 
   public void dispose() {
+    if (myModel != null) {
+      // dispose if wasn't committed
+      Disposer.dispose(myModel);
+    }
   }
 
   public String[] getUrls(OrderRootType rootType) {
@@ -96,7 +100,6 @@ public class LibraryEditor implements Disposable {
   public Library.ModifiableModel getModel() {
     if (myModel == null) {
       myModel = myLibrary.getModifiableModel();
-      Disposer.register(this, myModel);
     }
     return myModel;
   }

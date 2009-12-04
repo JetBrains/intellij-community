@@ -16,7 +16,6 @@
 
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.PathMacroSubstitutor;
@@ -30,7 +29,6 @@ import com.intellij.openapi.module.impl.ModuleImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Attribute;
@@ -39,7 +37,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -66,31 +63,8 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
   }
 
   @Override
-  public String  initComponent(@NotNull Object component, boolean service) {
-    final String componentName = super.initComponent(component, service);
-
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode()) {
-      if (service && componentName != null) {
-        final TrackingPathMacroSubstitutor substitutor = getStateStorageManager().getMacroSubstitutor();
-        if (substitutor != null) {
-          final Collection<String> macros = substitutor.getUnknownMacros(componentName);
-          if (!macros.isEmpty()) {
-            Notifications.Bus.notify(new Notification("Load Error", "Component load error: undefined path variables!",
-                                                      String.format("<p><i>%s</i> %s undefined. <a href=\"\">Fix it!</a></p>",
-                                                                    StringUtil.join(macros, ", "),
-                                                                    macros.size() == 1 ? "is" : "are"), NotificationType.ERROR,
-                                                      new NotificationListener() {
-                                                        public void hyperlinkUpdate(@NotNull Notification notification,
-                                                                                    @NotNull HyperlinkEvent event) {
-                                                          ((ProjectEx)myModule.getProject()).checkUnknownMacros();
-                                                        }
-                                                      }), NotificationDisplayType.STICKY_BALLOON, myModule.getProject());
-          }
-        }
-      }
-    }
-
-    return componentName;
+  protected Project getProject() {
+    return myModule.getProject();
   }
 
   @Override
@@ -108,18 +82,12 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
       final Collection<String> macros = substitutor.getUnknownMacros(null);
       if (!macros.isEmpty()) {
         final Project project = myModule.getProject();
-        StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
-          public void run() {
-            Notifications.Bus.notify(new UnknownMacroNotification("Load Error", String.format("Error loading module '%s':", myModule.getName()),
-                                                      String.format(
-                                                        "<p>Undefined Path Variable(s): <i>%s</i>. <a href=\"\">Fix it!</a></p>",
-                                                        StringUtil.join(macros, ", ")), NotificationType.ERROR, new NotificationListener() {
-                public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-                  ((ProjectEx)myModule.getProject()).checkUnknownMacros();
-                }
-              }, macros), NotificationDisplayType.STICKY_BALLOON, project);
-          }
-        });
+
+          StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
+            public void run() {
+              StorageUtil.notifyUnknownMacros(substitutor, project, null);
+            }
+          });
       }
     }
   }
@@ -262,11 +230,6 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
       LOG.error(e);
       return null;
     }
-  }
-
-  @Override
-  public void reinitComponents(Set<String> componentNames, boolean reloadData) {
-    super.reinitComponents(componentNames, reloadData);
   }
 
   @Override

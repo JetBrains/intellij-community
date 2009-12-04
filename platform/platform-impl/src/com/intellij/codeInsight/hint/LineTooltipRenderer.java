@@ -61,30 +61,13 @@ public class LineTooltipRenderer implements TooltipRenderer {
 
     //setup text
     myText = myText.replaceAll(String.valueOf(UIUtil.MNEMONIC), "");
-    final boolean [] expanded = new boolean[] { myCurrentWidth > 0 && dressDescription(editor)};
+    final boolean expanded = myCurrentWidth > 0 && dressDescription(editor);
 
     //pane
     final JEditorPane pane = initPane(myText);
     pane.setCaretPosition(0);
     final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
     final JComponent contentComponent = editor.getContentComponent();
-    // This listener makes hint transparent for mouse events. It means that hint is closed
-    // by MousePressed and this MousePressed goes into the underlying editor component.
-    pane.addMouseListener(new MouseAdapter() {
-      public void mouseReleased(final MouseEvent e) {
-        if (!myActiveLink) {
-          MouseEvent newMouseEvent = SwingUtilities.convertMouseEvent(e.getComponent(), e, contentComponent);
-          hintManager.hideAllHints();
-          contentComponent.dispatchEvent(newMouseEvent);
-        }
-      }
-
-      public void mouseExited(final MouseEvent e) {
-        if (!expanded[0]) {
-          hintManager.hideAllHints();
-        }
-      }
-    });
 
     final JComponent editorComponent = editor.getComponent();
     final JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
@@ -94,8 +77,8 @@ public class LineTooltipRenderer implements TooltipRenderer {
 
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(pane);
     scrollPane.setBorder(null);
-    int width = expanded[0] ? 3 * myCurrentWidth / 2 : pane.getPreferredSize().width;
-    int height = expanded[0] ? Math.max(pane.getPreferredSize().height, 150) : pane.getPreferredSize().height;
+    int width = expanded ? 3 * myCurrentWidth / 2 : pane.getPreferredSize().width;
+    int height = expanded ? Math.max(pane.getPreferredSize().height, 150) : pane.getPreferredSize().height;
 
     if (alignToRight) {
       p.x -= width;
@@ -166,7 +149,7 @@ public class LineTooltipRenderer implements TooltipRenderer {
           return;
         }
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          if (!expanded[0]) { // more -> less
+          if (!expanded) { // more -> less
             for (final TooltipLinkHandlerEP handlerEP : Extensions.getExtensions(TooltipLinkHandlerEP.EP_NAME)) {
               if (handlerEP.handleLink(e.getDescription(), editor, pane)) {
                 myText = convertTextOnLinkHandled(myText);
@@ -189,6 +172,25 @@ public class LineTooltipRenderer implements TooltipRenderer {
         }
       }
     });
+
+    // This listener makes hint transparent for mouse events. It means that hint is closed
+    // by MousePressed and this MousePressed goes into the underlying editor component.
+    pane.addMouseListener(new MouseAdapter() {
+      public void mouseReleased(final MouseEvent e) {
+        if (!myActiveLink) {
+          MouseEvent newMouseEvent = SwingUtilities.convertMouseEvent(e.getComponent(), e, contentComponent);
+          hint.hide();
+          contentComponent.dispatchEvent(newMouseEvent);
+        }
+      }
+
+      public void mouseExited(final MouseEvent e) {
+        if (!expanded) {
+          hint.hide();
+        }
+      }
+    });
+
     hintManager.showEditorHint(hint, editor, p,
                                HintManagerImpl.HIDE_BY_ANY_KEY | HintManagerImpl.HIDE_BY_TEXT_CHANGE | HintManagerImpl.HIDE_BY_OTHER_HINT |
                                HintManagerImpl.HIDE_BY_SCROLLING, 0, false);
@@ -260,9 +262,7 @@ public class LineTooltipRenderer implements TooltipRenderer {
 
     final LineTooltipRenderer lineTooltipRenderer = (LineTooltipRenderer)o;
 
-    if (myText != null ? !myText.equals(lineTooltipRenderer.myText) : lineTooltipRenderer.myText != null) return false;
-
-    return true;
+    return myText == null ? lineTooltipRenderer.myText == null : myText.equals(lineTooltipRenderer.myText);
   }
 
   public int hashCode() {

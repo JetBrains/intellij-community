@@ -68,7 +68,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
 
     myTree.addMouseListener(new PopupHandler() {
       public void invokePopup(final Component comp, final int x, final int y) {
-        final String id = getMenuId(getSelectedNodes(MavenProjectsStructure.CustomNode.class));
+        final String id = getMenuId(getSelectedNodes(MavenProjectsStructure.MavenSimpleNode.class));
         if (id != null) {
           final ActionGroup actionGroup = (ActionGroup)actionManager.getAction(id);
           if (actionGroup != null) {
@@ -78,9 +78,9 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
       }
 
       @Nullable
-      private String getMenuId(Collection<? extends MavenProjectsStructure.CustomNode> nodes) {
+      private String getMenuId(Collection<? extends MavenProjectsStructure.MavenSimpleNode> nodes) {
         String id = null;
-        for (MavenProjectsStructure.CustomNode node : nodes) {
+        for (MavenProjectsStructure.MavenSimpleNode node : nodes) {
           String menuId = node.getMenuId();
           if (menuId == null) {
             return null;
@@ -124,7 +124,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
   }
 
   private VirtualFile extractVirtualFile() {
-    for (MavenProjectsStructure.CustomNode each : getSelectedNodes(MavenProjectsStructure.CustomNode.class)) {
+    for (MavenProjectsStructure.MavenSimpleNode each : getSelectedNodes(MavenProjectsStructure.MavenSimpleNode.class)) {
       VirtualFile file = each.getVirtualFile();
       if (file != null) return file;
     }
@@ -138,7 +138,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
 
   private Object extractVirtualFiles() {
     final List<VirtualFile> files = new ArrayList<VirtualFile>();
-    for (MavenProjectsStructure.CustomNode each : getSelectedNodes(MavenProjectsStructure.CustomNode.class)) {
+    for (MavenProjectsStructure.MavenSimpleNode each : getSelectedNodes(MavenProjectsStructure.MavenSimpleNode.class)) {
       VirtualFile file = each.getVirtualFile();
       if (file != null) files.add(file);
     }
@@ -147,7 +147,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
 
   private Object extractNavigatables() {
     final List<Navigatable> navigatables = new ArrayList<Navigatable>();
-    for (MavenProjectsStructure.CustomNode each : getSelectedNodes(MavenProjectsStructure.CustomNode.class)) {
+    for (MavenProjectsStructure.MavenSimpleNode each : getSelectedNodes(MavenProjectsStructure.MavenSimpleNode.class)) {
       Navigatable navigatable = each.getNavigatable();
       if (navigatable != null) navigatables.add(navigatable);
     }
@@ -195,7 +195,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     return profiles;
   }
 
-  private <T extends MavenProjectsStructure.CustomNode> List<T> getSelectedNodes(Class<T> aClass) {
+  private <T extends MavenProjectsStructure.MavenSimpleNode> List<T> getSelectedNodes(Class<T> aClass) {
     return MavenProjectsStructure.getSelectedNodes(myTree, aClass);
   }
 
@@ -213,7 +213,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
   private MavenProjectsStructure.ProjectNode getContextProjectNode() {
     MavenProjectsStructure.ProjectNode projectNode = getSelectedProjectNode();
     if (projectNode != null) return projectNode;
-    return MavenProjectsStructure.getCommonProjectNode(getSelectedNodes(MavenProjectsStructure.CustomNode.class));
+    return MavenProjectsStructure.getCommonProjectNode(getSelectedNodes(MavenProjectsStructure.MavenSimpleNode.class));
   }
 
   private int getStandardGoalOrder(String goal) {

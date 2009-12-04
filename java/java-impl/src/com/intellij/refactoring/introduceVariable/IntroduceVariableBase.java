@@ -243,12 +243,18 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
   }
 
   public static PsiExpression getSelectedExpression(final Project project, final PsiFile file, final int startOffset, final int endOffset) {
+
+    final PsiElement elementAtStart = file.findElementAt(startOffset);
+    if (elementAtStart == null) return null;
+    final PsiElement elementAtEnd = file.findElementAt(endOffset - 1);
+    if (elementAtEnd == null) return null;
+
     PsiExpression tempExpr;
-    final PsiElement elementAt = PsiTreeUtil.findCommonParent(file.findElementAt(startOffset), file.findElementAt(endOffset - 1));
+    final PsiElement elementAt = PsiTreeUtil.findCommonParent(elementAtStart, elementAtEnd);
     if (PsiTreeUtil.getParentOfType(elementAt, PsiExpression.class, false) == null) return null;
     final PsiLiteralExpression literalExpression = PsiTreeUtil.getParentOfType(elementAt, PsiLiteralExpression.class);
 
-    final PsiLiteralExpression startLiteralExpression = PsiTreeUtil.getParentOfType(file.findElementAt(startOffset), PsiLiteralExpression.class);
+    final PsiLiteralExpression startLiteralExpression = PsiTreeUtil.getParentOfType(elementAtStart, PsiLiteralExpression.class);
     final PsiLiteralExpression endLiteralExpression = PsiTreeUtil.getParentOfType(file.findElementAt(endOffset), PsiLiteralExpression.class);
 
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
@@ -334,11 +340,12 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       tempExpr.putUserData(ElementToWorkOn.PARENT, parent);
 
       final String fakeInitializer = "intellijidearulezzz";
-      final PsiExpression toBeExpression = createReplacement(fakeInitializer, project, prefix, suffix, parent, rangeMarker);
+      final int[] refIdx = new int[1];
+      final PsiExpression toBeExpression = createReplacement(fakeInitializer, project, prefix, suffix, parent, rangeMarker, refIdx);
       toBeExpression.accept(errorsVisitor);
       if (hasErrors[0]) return null;
 
-      final PsiReferenceExpression refExpr = PsiTreeUtil.getParentOfType(toBeExpression.findElementAt(toBeExpression.getText().indexOf(fakeInitializer)), PsiReferenceExpression.class);
+      final PsiReferenceExpression refExpr = PsiTreeUtil.getParentOfType(toBeExpression.findElementAt(refIdx[0]), PsiReferenceExpression.class);
       assert refExpr != null;
       if (ReplaceExpressionUtil.isNeedParenthesis(refExpr.getNode(), tempExpr.getNode())) {
         return null;
@@ -602,14 +609,14 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       final PsiElement parent = expr1.getUserData(ElementToWorkOn.PARENT);
       final RangeMarker rangeMarker = expr1.getUserData(ElementToWorkOn.TEXT_RANGE);
 
-      return parent.replace(createReplacement(ref.getText(), project, prefix, suffix, parent, rangeMarker));
+      return parent.replace(createReplacement(ref.getText(), project, prefix, suffix, parent, rangeMarker, new int[1]));
     }
   }
 
   private static PsiExpression createReplacement(final String refText, final Project project,
                                                  final String prefix,
                                                  final String suffix,
-                                                 final PsiElement parent, final RangeMarker rangeMarker) {
+                                                 final PsiElement parent, final RangeMarker rangeMarker, int[] refIdx) {
     final String allText = parent.getContainingFile().getText();
     final TextRange parentRange = parent.getTextRange();
 
@@ -619,7 +626,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     String end = allText.substring(rangeMarker.getEndOffset(), parentRange.getEndOffset());
     if (StringUtil.stripQuotesAroundValue(end).trim().length() == 0 && suffix == null) end = "";
 
-    final String text = beg + (prefix != null ? prefix : "") + refText + (suffix != null ? suffix : "") + end;
+    final String start = beg + (prefix != null ? prefix : "");
+    refIdx[0] = start.length();
+    final String text = start + refText + (suffix != null ? suffix : "") + end;
     return JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText(text, parent);
   }
 

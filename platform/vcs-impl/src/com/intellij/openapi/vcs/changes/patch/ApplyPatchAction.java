@@ -162,7 +162,9 @@ public class ApplyPatchAction extends AnAction {
   private static ApplyPatchStatus showMergeDialog(Project project, VirtualFile file, CharSequence content, final String patchedContent,
                                                   final PatchMergeRequestFactory mergeRequestFactory) {
     CharSequence fileContent = LoadTextUtil.loadText(file);
-
+    if (fileContent == null || content == null) {
+      return ApplyPatchStatus.FAILURE;
+    }
     final MergeRequest request = mergeRequestFactory.createMergeRequest(fileContent.toString(), patchedContent, content.toString(), file,
                                                       project);
     DiffManager.getInstance().getDiffTool().show(request);

@@ -51,7 +51,10 @@ public class RenamePackagingElementAction extends DumbAwareAction {
   public void actionPerformed(AnActionEvent e) {
     final LayoutTreeSelection selection = myArtifactEditor.getLayoutTreeComponent().getSelection();
     final PackagingElementNode<?> node = selection.getNodeIfSingle();
-    if (node == null) return;
+    final PackagingElement<?> element = selection.getElementIfSingle();
+    if (node == null || element == null) return;
+    if (!myArtifactEditor.getLayoutTreeComponent().checkCanModify(element, node)) return;
+    
     final TreePath path = selection.getPath(node);
     myArtifactEditor.getLayoutTreeComponent().startRenaming(path);
   }

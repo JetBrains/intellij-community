@@ -4,33 +4,33 @@ import java.util.*;
 
 public class DeclareCollectionsAsInterfaceInspection
 {
-    private HashSet<String> m_setThree = new HashSet<String>(2);
-    private HashSet m_setOne = new HashSet(2);
-    private Set m_setTwo = new HashSet(2);
+    private HashMap<String, String> m_mapThree = new HashMap<String, String>(2);
+    private HashMap m_setOne = new HashMap(2);
+    private Map m_setTwo = new HashMap(2);
 
     public DeclareCollectionsAsInterfaceInspection()
     {
-        m_setOne.add("foo");
-        m_setTwo.add("bar");
+        m_setOne.put("foo", "foo");
+        m_setTwo.put("bar", "bar");
     }
 
     public void fooBar()
     {
-        final HashSet set1 = new HashSet(2);
-        final Set set2 = new HashSet(2);
-        set1.add("foo");
-        set2.add("bar");
+        final HashMap map1 = new HashMap(2);
+        final Map map2 = new HashMap(2);
+        map1.put("foo", "foo");
+        map2.put("bar", "bar");
     }
 
-    public void fooBaz(TreeSet set1, Set set2)
+    public void fooBaz(HashMap set1, Map set2)
     {
-        set1.add("foo");
-        set2.add("bar");
+        set1.put("foo", "foo");
+        set2.put("bar", "bar");
     }
 
-    public HashSet fooBaz()
+    public HashMap fooBaz()
     {
-        return new HashSet();
+        return new HashMap();
     }
 
     void writeContent() {
@@ -39,4 +39,12 @@ public class DeclareCollectionsAsInterfaceInspection
     }
 
     void processTemplate(Object o) {}
+
+    void foo() {
+        Object o = theRoad();
+    }
+
+    HashMap theRoad() {
+        return null;
+    }
 }

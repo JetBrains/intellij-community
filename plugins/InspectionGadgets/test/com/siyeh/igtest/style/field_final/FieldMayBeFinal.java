@@ -144,4 +144,13 @@ public class FieldMayBeFinal {
             }
         }
     }
+
+    static class StaticVariableModifiedInInstanceVariableInitializer {
+
+        private static int COUNT = 0; // <<<<<< highlights as "can be made final"
+
+        private final int count = COUNT++;
+
+    }
+
 }

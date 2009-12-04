@@ -16,15 +16,20 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.application.options.PathMacrosCollector;
+import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.components.PathMacroSubstitutor;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.StreamProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -36,14 +41,17 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.UniqueFileNamesProvider;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.fs.FileSystem;
 import com.intellij.util.io.fs.IFile;
 import org.jdom.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.HyperlinkEvent;
 import java.io.*;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Set;
 
@@ -55,6 +63,30 @@ public class StorageUtil {
   private static final boolean ourDumpChangedComponentStates = "true".equals(System.getProperty("log.externally.changed.component.states"));
 
   private StorageUtil() {
+  }
+
+  public static void notifyUnknownMacros(@NotNull final TrackingPathMacroSubstitutor substitutor, @NotNull final Project project, @Nullable final String componentName) {
+    Collection<String> macros = substitutor.getUnknownMacros(componentName);
+    if (!macros.isEmpty()) {
+      final UnknownMacroNotification[] notifications =
+        NotificationsManager.getNotificationsManager().getNotificationsOfType(UnknownMacroNotification.class, project);
+      for (final UnknownMacroNotification notification : notifications) {
+        macros = ContainerUtil.subtract(macros, notification.getMacros());
+      }
+
+      if (!macros.isEmpty()) {
+        Notifications.Bus.notify(new UnknownMacroNotification("Load Error", "Loading error: undefined path variables!",
+                                                              String.format("<p><i>%s</i> %s undefined. <a href=\"\">Fix it!</a></p>",
+                                                                            StringUtil.join(macros, ", "),
+                                                                            macros.size() == 1 ? "is" : "are"), NotificationType.ERROR,
+                                                              new NotificationListener() {
+                                                                public void hyperlinkUpdate(@NotNull Notification notification,
+                                                                                            @NotNull HyperlinkEvent event) {
+                                                                  ((ProjectEx)project).checkUnknownMacros(true);
+                                                                }
+                                                              }, macros), NotificationDisplayType.STICKY_BALLOON, project);
+      }
+    }
   }
 
   static void save(final IFile file, final byte[] text, final Object requestor) throws StateStorage.StateStorageException {

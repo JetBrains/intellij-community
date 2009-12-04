@@ -359,7 +359,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     return false;
   }
 
-  public void checkUnknownMacros() {
+  public void checkUnknownMacros(final boolean showDialog) {
     final IProjectStore stateStore = getStateStore();
 
     final TrackingPathMacroSubstitutor[] substitutors = stateStore.getSubstitutors();
@@ -369,7 +369,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     }
 
     if (!unknownMacros.isEmpty()) {
-      if (ProjectMacrosUtil.checkMacros(this, new HashSet<String>(unknownMacros))) {
+      if (!showDialog || ProjectMacrosUtil.checkMacros(this, new HashSet<String>(unknownMacros))) {
         final PathMacros pathMacros = PathMacros.getInstance();
         final Set<String> macros2invalidate = new HashSet<String>(unknownMacros);
         for (Iterator it = macros2invalidate.iterator(); it.hasNext();) {
@@ -387,12 +387,6 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
           }
 
           if (stateStore.isReloadPossible(components)) {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              public void run() {
-                stateStore.reinitComponents(components, true);
-              }
-            });
-
             for (final TrackingPathMacroSubstitutor substitutor : substitutors) {
               substitutor.invalidateUnknownMacros(macros2invalidate);
             }
@@ -402,6 +396,12 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
             for (final UnknownMacroNotification notification : notifications) {
               if (macros2invalidate.containsAll(notification.getMacros())) notification.expire();
             }
+
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              public void run() {
+                stateStore.reinitComponents(components, true);
+              }
+            });
           }
           else {
             if (Messages.showYesNoDialog(this, "Component could not be reloaded. Reload project?", "Configuration changed",

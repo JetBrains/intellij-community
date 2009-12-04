@@ -27,6 +27,7 @@ package com.intellij.refactoring.ui;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiClass;
 import com.intellij.refactoring.RefactoringBundle;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -52,12 +53,14 @@ public class ClassCellRenderer extends DefaultListCellRenderer {
           int index,
           boolean isSelected,
           boolean cellHasFocus) {
-    super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-
-    return customizeRenderer(this, value, myShowReadOnly);
+    final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+    if (value != null) {
+      return customizeRenderer(this, value, myShowReadOnly);
+    }
+    return rendererComponent;
   }
 
-  public static JLabel customizeRenderer(final JLabel cellRendererComponent, final Object value, final boolean showReadOnly) {
+  public static JLabel customizeRenderer(final JLabel cellRendererComponent, @NotNull final Object value, final boolean showReadOnly) {
     PsiClass aClass = (PsiClass) value;
     cellRendererComponent.setText(getClassText(aClass));
 
@@ -72,7 +75,7 @@ public class ClassCellRenderer extends DefaultListCellRenderer {
     return cellRendererComponent;
   }
 
-  private static String getClassText(PsiClass aClass) {
+  private static String getClassText(@NotNull PsiClass aClass) {
     String qualifiedName = aClass.getQualifiedName();
     if (qualifiedName != null) {
       return qualifiedName;

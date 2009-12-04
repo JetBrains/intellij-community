@@ -247,11 +247,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     if (invalidated == null || invalidated.isEmpty()) {
       // a hack here; but otherwise everything here should be refactored ;)
       if (invalidated.isEmpty() && invalidated.isEverythingDirty()) {
-        DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
-          public void run() {
-            VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-          }
-        });
+        VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
       }
       return;
     }

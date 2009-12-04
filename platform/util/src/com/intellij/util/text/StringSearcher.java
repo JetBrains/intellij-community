@@ -15,6 +15,7 @@
  */
 package com.intellij.util.text;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,6 +25,8 @@ import java.util.Arrays;
  *
  */
 public class StringSearcher {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.text.StringSearcher");
+
   private final String myPattern;
   private final char[] myPatternArray;
   private final int myPatternLength;
@@ -37,6 +40,7 @@ public class StringSearcher {
   }
 
   public StringSearcher(@NotNull String pattern, boolean caseSensitive, boolean forwardDirection) {
+    LOG.assertTrue(pattern.length() > 0);
     myPattern = pattern;
     myCaseSensitive = caseSensitive;
     myForwardDirection = forwardDirection;

@@ -17,10 +17,23 @@
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.lang.TitledHandler;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * @author dsl
@@ -49,17 +62,87 @@ public class RenameHandlerRegistry {
     return myDefaultElementRenameHandler.isAvailableOnDataContext(dataContext);
   }
 
+  @Nullable
   public RenameHandler getRenameHandler(DataContext dataContext) {
+    final Map<String, RenameHandler> availableHandlers = new TreeMap<String, RenameHandler>();
     for (RenameHandler renameHandler : Extensions.getExtensions(RenameHandler.EP_NAME)) {
-      if (renameHandler.isRenaming(dataContext)) return renameHandler;
+      if (renameHandler.isRenaming(dataContext)) {
+        if (ApplicationManager.getApplication().isUnitTestMode()) return renameHandler;
+        availableHandlers.put(getHandlerTitle(renameHandler), renameHandler);
+      }
     }
     for (RenameHandler renameHandler : myHandlers) {
-      if (renameHandler.isRenaming(dataContext)) return renameHandler;
+      if (renameHandler.isRenaming(dataContext)) {
+        if (ApplicationManager.getApplication().isUnitTestMode()) return renameHandler;
+        availableHandlers.put(getHandlerTitle(renameHandler), renameHandler);
+      }
+    }
+    if (availableHandlers.size() == 1) return availableHandlers.values().iterator().next();
+    if (availableHandlers.size() > 1) {
+      final String[] strings = availableHandlers.keySet().toArray(new String[availableHandlers.keySet().size()]);
+      final HandlersChooser chooser = new HandlersChooser(PlatformDataKeys.PROJECT.getData(dataContext), strings);
+      chooser.show();
+      if (chooser.isOK()) {
+        return availableHandlers.get(chooser.getSelection());
+      }
+      return null;
     }
     return myDefaultElementRenameHandler.isRenaming(dataContext) ? myDefaultElementRenameHandler : null;
   }
 
+  private static String getHandlerTitle(RenameHandler renameHandler) {
+    return renameHandler instanceof TitledHandler ? StringUtil.capitalize(((TitledHandler)renameHandler).getActionTitle().toLowerCase()) : renameHandler.toString();
+  }
+
   public void registerHandler(RenameHandler handler) {
     myHandlers.add(handler);
+  }
+
+  private static class HandlersChooser extends DialogWrapper {
+    private final String[] myRenamers;
+    private String mySelection;
+
+    protected HandlersChooser(Project project, String [] renamers) {
+      super(project);
+      myRenamers = renamers;
+      mySelection = renamers[0];
+      setTitle(RefactoringBundle.message("select.refactoring.title"));
+      init();
+    }
+
+    @Override
+    protected JComponent createNorthPanel() {
+      final JPanel radioPanel = new JPanel();
+      radioPanel.setLayout(new BoxLayout(radioPanel, BoxLayout.Y_AXIS));
+      final JLabel descriptionLabel = new JLabel(RefactoringBundle.message("what.would.you.like.to.do"));
+      descriptionLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
+      radioPanel.add(descriptionLabel);
+      final ButtonGroup bg = new ButtonGroup();
+      boolean selected = true;
+      for (final String renamer : myRenamers) {
+        final JRadioButton rb = new JRadioButton(renamer, selected);
+        final ActionListener listener = new ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            if (rb.isSelected()) {
+              mySelection = renamer;
+            }
+          }
+        };
+        rb.addActionListener(listener);
+        selected = false;
+        bg.add(rb);
+        radioPanel.add(rb);
+      }
+      return radioPanel;
+    }
+
+    public String getSelection() {
+      return mySelection;
+    }
+
+    @Override
+    protected JComponent createCenterPanel() {
+      return null;
+    }
   }
 }

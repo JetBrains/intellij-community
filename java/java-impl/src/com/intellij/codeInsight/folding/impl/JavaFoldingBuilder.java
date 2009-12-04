@@ -63,7 +63,7 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
       PsiImportStatementBase[] statements = importList.getAllImportStatements();
       if (statements.length > 1) {
         final TextRange rangeToFold = getRangeToFold(importList);
-        if (rangeToFold != null && rangeToFold.getEndOffset() > rangeToFold.getStartOffset()) {
+        if (rangeToFold != null && rangeToFold.getLength() > 1) {
           result.add(new FoldingDescriptor(importList, rangeToFold));
         }
       }
@@ -76,7 +76,7 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
     }
 
     TextRange range = getFileHeader(file);
-    if (range != null && document.getLineNumber(range.getEndOffset()) > document.getLineNumber(range.getStartOffset())) {
+    if (range != null && range.getLength() > 1 && document.getLineNumber(range.getEndOffset()) > document.getLineNumber(range.getStartOffset())) {
       result.add(new FoldingDescriptor(file, range));
     }
 
@@ -640,14 +640,14 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
     if (!allowOneLiners) {
       int startLine = document.getLineNumber(range.getStartOffset());
       int endLine = document.getLineNumber(range.getEndOffset() - 1);
-      if (startLine < endLine) {
+      if (startLine < endLine && range.getLength() > 1) {
         list.add(new FoldingDescriptor(elementToFold, range));
         return true;
       }
       return false;
     }
     else {
-      if (range.getEndOffset() - range.getStartOffset() > getPlaceholderText(elementToFold).length()) {
+      if (range.getLength() > getPlaceholderText(elementToFold).length()) {
         list.add(new FoldingDescriptor(elementToFold, range));
         return true;
       }

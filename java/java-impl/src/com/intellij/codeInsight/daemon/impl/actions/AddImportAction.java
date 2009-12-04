@@ -24,7 +24,7 @@ import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.hint.PriorityQuestionAction;
+import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -52,7 +52,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class AddImportAction implements PriorityQuestionAction {
+public class AddImportAction implements QuestionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.actions.AddImportAction");
 
   private final Project myProject;
@@ -245,9 +245,5 @@ public class AddImportAction implements PriorityQuestionAction {
 
   protected void bindReference(PsiReference ref, PsiClass targetClass) {
     ref.bindToElement(targetClass);
-  }
-
-  public int getPriority() {
-    return 10;
   }
 }

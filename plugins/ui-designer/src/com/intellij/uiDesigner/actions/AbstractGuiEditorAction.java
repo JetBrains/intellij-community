@@ -19,9 +19,10 @@ package com.intellij.uiDesigner.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public abstract class AbstractGuiEditorAction extends AnAction {
+public abstract class AbstractGuiEditorAction extends AnAction implements DumbAware {
   private final boolean myModifying;
 
   protected AbstractGuiEditorAction() {

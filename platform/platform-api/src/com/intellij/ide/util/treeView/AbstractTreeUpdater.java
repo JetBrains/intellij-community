@@ -46,12 +46,13 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
   private final MergingUpdateQueue myUpdateQueue;
 
   private long myUpdateCount;
+  private boolean myReleaseRequested;
 
   public AbstractTreeUpdater(AbstractTreeBuilder treeBuilder) {
     myTreeBuilder = treeBuilder;
     final JTree tree = myTreeBuilder.getTree();
     final JComponent component = tree instanceof TreeTableTree ? ((TreeTableTree)tree).getTreeTable() : tree;
-    myUpdateQueue = new MergingUpdateQueue("UpdateQueue", 300, component.isShowing(), component) {
+    myUpdateQueue = new MergingUpdateQueue("UpdateQeue", 300, component.isShowing(), component) {
       @Override
       protected Alarm createAlarm(Alarm.ThreadToUse thread, Disposable parent) {
         return new Alarm(thread, parent) {
@@ -96,13 +97,10 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
   }
 
   public synchronized void addSubtreeToUpdate(@NotNull TreeUpdatePass toAdd) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("addSubtreeToUpdate:" + toAdd.getNode());
-    }
+    if (myReleaseRequested) return;
 
     assert !toAdd.isExpired();
-
-
+    
     final AbstractTreeUi ui = myTreeBuilder.getUi();
 
     if (ui.isUpdatingNow(toAdd.getNode())) {
@@ -362,5 +360,13 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
         request.reject();
       }
     });
+  }
+
+  public void requestRelease() {
+    myReleaseRequested = true;
+
+    myNodeQueue.clear();
+    myUpdateQueue.cancelAllUpdates();
+    myUpdateQueue.deactivate();
   }
 }
