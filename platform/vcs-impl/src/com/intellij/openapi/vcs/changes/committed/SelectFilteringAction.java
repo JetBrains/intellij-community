@@ -56,10 +56,11 @@ public class SelectFilteringAction extends LabeledComboBoxAction {
   }
 
   protected void selectionChanged(final Object selection) {
+    if (selection == null) return;
     if (myPreviousSelection != null) {
         myBrowser.removeFilteringStrategy(myPreviousSelection);
     }
-    if (! ChangeListFilteringStrategy.NONE.equals(selection)) {
+    if (!ChangeListFilteringStrategy.NONE.equals(selection)) {
       myBrowser.setFilteringStrategy(selection.toString(), (ChangeListFilteringStrategy) selection);
     }
     myPreviousSelection = selection.toString();
