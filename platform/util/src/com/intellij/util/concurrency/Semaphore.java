@@ -15,15 +15,12 @@
  */
 package com.intellij.util.concurrency;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 
 public class Semaphore {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.concurrency.Semaphore");
-
   private static final class Sync extends AbstractQueuedSynchronizer {
     public int tryAcquireShared(int acquires) {
       return getState() == 0 ? 1 : -1;
@@ -69,6 +66,8 @@ public class Semaphore {
 
   public boolean waitFor(final long timeout)  {
     try {
+      if (sync.tryAcquireShared(1) >= 0) return true;
+
       return sync.tryAcquireSharedNanos(1, TimeUnit.MILLISECONDS.toNanos(timeout));
     }
     catch (InterruptedException e) {
