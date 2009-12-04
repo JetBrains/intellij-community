@@ -80,7 +80,7 @@ public class SlowlyClosingAlarm implements AtomicSectionsAware, Disposable {
     myLock = new Object();
     myFutureList = new ArrayList<Future<?>>();
     Disposer.register(project, this);
-    PeriodicalTasksCloser.getInstance(project).register(name, new Runnable() {
+    myDisposeStarted = ! PeriodicalTasksCloser.getInstance(project).register(name, new Runnable() {
       public void run() {
         waitAndInterrupt(ProgressManager.getInstance().getProgressIndicator());
       }

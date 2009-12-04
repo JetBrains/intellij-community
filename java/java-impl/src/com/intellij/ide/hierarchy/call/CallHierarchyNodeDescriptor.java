@@ -176,6 +176,10 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
     myReferences.add(reference);
   }
 
+  public boolean hasReference(PsiReference reference) {
+    return myReferences.contains(reference);
+  }
+
   public void navigate(boolean requestFocus) {
     if (!myNavigateToReference) {
       if (myElement instanceof Navigatable && ((Navigatable)myElement).canNavigate()) {

@@ -1489,6 +1489,18 @@ public class AbstractTreeUi {
         myInitialized.setDone();
       }
 
+
+      if (myUpdaterState != null && !myUpdaterState.isProcessingNow()) {
+        UpdaterTreeState oldState = myUpdaterState;
+        if (!myUpdaterState.restore(null)) {
+          setUpdaterState(oldState);
+        }
+
+        if (!isReady()) {
+          return;
+        }
+      }
+
       if (myTree.isShowing()) {
         if (getBuilder().isToEnsureSelectionOnFocusGained() && Registry.is("ide.tree.ensureSelectionOnFocusGained")) {
           TreeUtil.ensureSelection(myTree);
@@ -2868,7 +2880,11 @@ public class AbstractTreeUi {
           addNext(elementsToSelect, 0, new Runnable() {
             public void run() {
               if (getTree().isSelectionEmpty()) {
-                restoreSelection(currentElements);
+                processInnerChange(new Runnable() {
+                  public void run() {
+                    restoreSelection(currentElements);
+                  }
+                });
               }
               runDone(onDone);
             }

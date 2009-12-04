@@ -77,6 +77,10 @@ public class PaletteManager implements ProjectComponent {
   }
 
   public void projectClosed() {
+    if (myPaletteWindow != null) {
+      ToolWindowManager.getInstance(myProject).unregisterToolWindow(IdeBundle.message("toolwindow.palette"));
+      myPaletteWindow = null;
+    }
   }
 
   @NotNull

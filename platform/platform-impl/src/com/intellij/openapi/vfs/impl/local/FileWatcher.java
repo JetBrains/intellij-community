@@ -22,6 +22,7 @@ package com.intellij.openapi.vfs.impl.local;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,9 +33,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class FileWatcher {
   @NonNls public static final String PROPERTY_WATCHER_DISABLED = "filewatcher.disabled";
@@ -46,6 +45,7 @@ public class FileWatcher {
   @NonNls private static final String RESET_COMMAND = "RESET";
   @NonNls private static final String UNWATCHEABLE_COMMAND = "UNWATCHEABLE";
   @NonNls private static final String ROOTS_COMMAND = "ROOTS";
+  @NonNls private static final String REMAP_COMMAND = "REMAP";
   @NonNls private static final String EXIT_COMMAND = "EXIT";
 
   private final Object LOCK = new Object();
@@ -53,6 +53,7 @@ public class FileWatcher {
   private List<String> myDirtyRecursivePaths = new ArrayList<String>();
   private List<String> myDirtyDirs = new ArrayList<String>();
   private List<String> myManualWatchRoots = new ArrayList<String>();
+  private List<Pair<String, String>> myMapping = new ArrayList<Pair<String, String>>();
 
   private List<String> myRecursiveWatchRoots = new ArrayList<String>();
   private List<String> myFlatWatchRoots = new ArrayList<String>();
@@ -137,6 +138,8 @@ public class FileWatcher {
 
         if (isAlive()) {
           writeLine(ROOTS_COMMAND);
+          myMapping.clear();
+
           for (String path : recursive) {
             writeLine(path);
           }
@@ -255,6 +258,21 @@ public class FileWatcher {
 
             setManualWatchRoots(roots);
           }
+          else if (REMAP_COMMAND.equals(command)) {
+            Set<Pair<String, String>> pairs = new HashSet<Pair<String, String>>();
+            do {
+              final String pathA = readLine();
+              if (pathA == null || "#".equals(pathA)) break;
+              final String pathB = readLine();
+              if (pathB == null || "#".equals(pathB)) break;
+
+              pairs.add(new Pair<String, String>(ensureEndsWithSlash(pathA), ensureEndsWithSlash(pathB)));
+            }
+            while (true);
+
+            myMapping.clear();
+            myMapping.addAll(pairs);
+          }
           else {
             String path = readLine();
             if (path == null) {
@@ -283,6 +301,11 @@ public class FileWatcher {
         LOG.info("Watcher terminated and attempt to restart has failed. Exiting watching thread.", e);
       }
     }
+  }
+
+  private String ensureEndsWithSlash(String path) {
+    if (path.endsWith("/") || path.endsWith(File.separator)) return path;
+    return path + '/';
   }
 
   private void writeLine(String line) throws IOException {
@@ -342,31 +365,44 @@ public class FileWatcher {
       switch (changeKind) {
         case STATS:
         case CHANGE:
-          myDirtyPaths.add(path);
+          addPath(path, myDirtyPaths);
           break;
 
         case CREATE:
         case DELETE:
           final File parentFile = new File(path).getParentFile();
           if (parentFile != null) {
-            myDirtyPaths.add(parentFile.getPath());
+            addPath(parentFile.getPath(), myDirtyPaths);
           }
           else {
-            myDirtyPaths.add(path);
+            addPath(path, myDirtyPaths);
           }
           break;
 
         case DIRTY:
-          myDirtyDirs.add(path);
+          addPath(path, myDirtyDirs);
           break;
 
         case RECDIRTY:
-          myDirtyRecursivePaths.add(path);
+          addPath(path, myDirtyRecursivePaths);
           break;
 
         case RESET:
           reset();
           break;
+      }
+    }
+  }
+
+  private void addPath(String path, List<String> list) {
+    list.add(path);
+
+    for (Pair<String, String> map : myMapping) {
+      if (FileUtil.startsWith(path, map.getFirst())) {
+        list.add(map.getSecond() + path.substring(map.getFirst().length()));
+      }
+      else if (FileUtil.startsWith(path, map.getSecond())) {
+        list.add(map.getFirst() + path.substring(map.getSecond().length()));
       }
     }
   }

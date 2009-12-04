@@ -61,6 +61,9 @@ public class ModuleCompileScope extends FileIndexCompileScope {
     myProject = project;
     myScopeModules = new HashSet<Module>();
     for (Module module : modules) {
+      if (module == null) {
+        continue; // prevent NPE
+      }
       if (includeDependentModules) {
         buildScopeModulesSet(module);
       }

@@ -18,6 +18,9 @@ package com.intellij.application.options.pathMacros;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +43,11 @@ public class PathMacroConfigurable implements SearchableConfigurable {
 
   public void apply() throws ConfigurationException {
     myEditor.commit();
+
+    final Project[] projects = ProjectManager.getInstance().getOpenProjects();
+    for (Project project : projects) {
+      ((ProjectEx)project).checkUnknownMacros(false);
+    }
   }
 
   public void reset() {

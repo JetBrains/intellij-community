@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
-import static com.intellij.patterns.XmlPatterns.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
@@ -42,6 +41,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Set;
+
+import static com.intellij.patterns.XmlPatterns.*;
 
 /**
  * @author peter
@@ -80,7 +81,7 @@ public class DomSemContributor extends SemContributor {
       }
     });
 
-    final ElementPattern<XmlTag> nonRootTag = xmlTag().withParent(xmlTag());
+    final ElementPattern<XmlTag> nonRootTag = xmlTag().withParent(or(xmlTag(), xmlEntityRef().withParent(xmlTag())));
     registrar.registerSemElementProvider(DomManagerImpl.DOM_INDEXED_HANDLER_KEY, nonRootTag, new NullableFunction<XmlTag, IndexedElementInvocationHandler>() {
       public IndexedElementInvocationHandler fun(XmlTag tag) {
         final XmlTag parentTag = PhysicalDomParentStrategy.getParentTag(tag);

@@ -499,7 +499,9 @@ public class MavenIndex {
   }
 
   private Iterable<File> getAllDataDirs() {
-    return ContainerUtil.iterate(myDir.listFiles(), new Condition<File>() {
+    File[] children = myDir.listFiles();
+    if (children == null) return ContainerUtil.emptyIterable();
+    return ContainerUtil.iterate(children, new Condition<File>() {
       public boolean value(File file) {
         return file.getName().startsWith(DATA_DIR_PREFIX);
       }

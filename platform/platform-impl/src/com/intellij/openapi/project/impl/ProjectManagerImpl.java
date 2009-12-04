@@ -29,10 +29,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
-import com.intellij.openapi.components.impl.stores.IComponentStore;
-import com.intellij.openapi.components.impl.stores.IProjectStore;
-import com.intellij.openapi.components.impl.stores.UnknownMacroNotification;
-import com.intellij.openapi.components.impl.stores.XmlElementStorage;
+import com.intellij.openapi.components.impl.stores.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -399,19 +396,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           final TrackingPathMacroSubstitutor macroSubstitutor =
             ((ProjectEx)project).getStateStore().getStateStorageManager().getMacroSubstitutor();
           if (macroSubstitutor != null) {
-            final Collection<String> macros = macroSubstitutor.getUnknownMacros(null);
-            if (!macros.isEmpty()) {
-              Notifications.Bus.notify(new UnknownMacroNotification("Load Error", "Project loading error: undefined path variables!",
-                                                        String.format("<p><i>%s</i> %s undefined. <a href=\"\">Fix it!</a></p>",
-                                                                      StringUtil.join(macros, ", "), macros.size() == 1 ? "is" : "are"),
-                                                        NotificationType.ERROR,
-                                                        new NotificationListener() {
-                                                          public void hyperlinkUpdate(@NotNull Notification notification,
-                                                                                      @NotNull HyperlinkEvent event) {
-                                                            ((ProjectEx)project).checkUnknownMacros();
-                                                          }
-                                                        }, macros), NotificationDisplayType.STICKY_BALLOON, project);
-            }
+            StorageUtil.notifyUnknownMacros(macroSubstitutor, project, null);
           }
         }
       });

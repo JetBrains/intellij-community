@@ -49,4 +49,8 @@ public class XmlPatterns extends PlatformPatterns {
   public static XmlElementPattern.XmlTextPattern xmlText() {
     return new XmlElementPattern.XmlTextPattern();
   }
+
+  public static XmlElementPattern.XmlEntityRefPattern xmlEntityRef() {
+    return new XmlElementPattern.XmlEntityRefPattern();
+  }
 }
