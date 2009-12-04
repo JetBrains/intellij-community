@@ -69,7 +69,10 @@ public class EclipseClasspathWriter {
         outputPath = getRelativePath(output.getUrl());
       }
       else if (output == null) {
-        outputPath = getRelativePath(myModel.getModuleExtension(CompilerModuleExtension.class).getCompilerOutputUrl());
+        final String url = myModel.getModuleExtension(CompilerModuleExtension.class).getCompilerOutputUrl();
+        if (url != null) {
+          outputPath = getRelativePath(url);
+        }
       }
     }
     final Element orderEntry = addOrderEntry(EclipseXml.OUTPUT_KIND, outputPath, classpathElement, oldRoot);

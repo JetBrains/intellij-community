@@ -512,50 +512,56 @@ public class IdeEventQueue extends EventQueue {
     }
   }
 
+  private void fixStickyWindow(KeyboardFocusManager mgr, Window wnd, String resetMethod) {
+    Window showingWindow = wnd;
+
+    if (wnd != null && !wnd.isShowing()) {
+      while (showingWindow != null) {
+        if (showingWindow.isShowing()) break;
+        showingWindow = (Window)showingWindow.getParent();
+      }
+
+      if (showingWindow == null) {
+        final Frame[] allFrames = Frame.getFrames();
+        for (Frame each : allFrames) {
+          if (each.isShowing()) {
+            showingWindow = each;
+            break;
+          }
+        }
+      }
+
+
+      if (showingWindow != null && showingWindow != wnd) {
+        final Method setActive =
+          ReflectionUtil.findMethod(KeyboardFocusManager.class.getDeclaredMethods(), resetMethod, Window.class);
+        if (setActive != null) {
+          try {
+            setActive.setAccessible(true);
+            setActive.invoke(mgr, (Window)showingWindow);
+          }
+          catch (Exception exc) {
+            LOG.info(exc);
+          }
+        }
+      }
+    }
+  }
+
   private void fixStickyFocusedComponents(AWTEvent e) {
     if (!(e instanceof InputEvent)) return;
 
     final KeyboardFocusManager mgr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-    final Window wnd = mgr.getActiveWindow();
-    Window showingWindow = wnd;
 
     if (Registry.is("actionSystem.fixStickyFocusedWindows")) {
-      if (wnd != null && !wnd.isShowing()) {
-        while (showingWindow != null) {
-          if (showingWindow.isShowing()) break;
-          showingWindow = (Window)showingWindow.getParent();
-        }
-
-        if (showingWindow == null) {
-          final Frame[] allFrames = Frame.getFrames();
-          for (Frame each : allFrames) {
-            if (each.isShowing()) {
-              showingWindow = each;
-              break;
-            }
-          }
-        }
-
-
-        if (showingWindow != null && showingWindow != wnd) {
-          final Method setActive =
-            ReflectionUtil.findMethod(KeyboardFocusManager.class.getDeclaredMethods(), "setGlobalActiveWindow", Window.class);
-          if (setActive != null) {
-            try {
-              setActive.setAccessible(true);
-              setActive.invoke(mgr, (Window)showingWindow);
-            }
-            catch (Exception exc) {
-              LOG.info(exc);
-            }
-          }
-        }
-      }
+      fixStickyWindow(mgr, mgr.getActiveWindow(), "setGlobalActiveWindow");
+      fixStickyWindow(mgr, mgr.getFocusedWindow(), "setGlobalFocusedWindow");
     }
 
     if (Registry.is("actionSystem.fixNullFocusedComponent")) {
       final Component focusOwner = mgr.getFocusOwner();
       if (focusOwner == null) {
+        Window showingWindow = mgr.getActiveWindow();
         if (showingWindow != null) {
           final IdeFocusManager fm = IdeFocusManager.findInstanceByComponent(showingWindow);
           fm.doWhenFocusSettlesDown(new Runnable() {

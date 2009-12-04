@@ -100,7 +100,7 @@ public class InspectionsOptionsToolbarAction extends AnAction {
 
     result.add(new DisableInspectionAction(key));
 
-    final RunInspectionIntention runInspectionIntention = new RunInspectionIntention(key);
+    final RunInspectionIntention runInspectionIntention = new RunInspectionIntention(tool);
     result.add(new AnAction(runInspectionIntention.getText()) {
       public void actionPerformed(final AnActionEvent e) {
         final RefEntity[] selectedElements = tree.getSelectedElements();
