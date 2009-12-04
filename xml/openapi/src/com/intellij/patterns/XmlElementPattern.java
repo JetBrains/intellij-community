@@ -16,6 +16,7 @@
 package com.intellij.patterns;
 
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlEntityRef;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
@@ -48,6 +49,16 @@ public class XmlElementPattern<T extends XmlElement,Self extends XmlElementPatte
       super(new InitialPatternCondition<XmlText>(XmlText.class) {
         public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
           return o instanceof XmlText;
+        }
+      });
+    }
+  }
+
+  public static class XmlEntityRefPattern extends XmlElementPattern<XmlEntityRef, XmlEntityRefPattern> {
+    public XmlEntityRefPattern() {
+      super(new InitialPatternCondition<XmlEntityRef>(XmlEntityRef.class) {
+        public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
+          return o instanceof XmlEntityRef;
         }
       });
     }

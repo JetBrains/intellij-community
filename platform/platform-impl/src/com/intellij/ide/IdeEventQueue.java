@@ -606,7 +606,7 @@ public class IdeEventQueue extends EventQueue {
       }
     }
 
-    return consumed && Patches.REQUEST_FOCUS_MAY_ACTIVATE_APP;
+    return false;
   }
 
 

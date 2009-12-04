@@ -36,7 +36,7 @@ public class SelectFromMavenProjectsDialog extends DialogWrapper {
 
   public SelectFromMavenProjectsDialog(Project project,
                                        String title,
-                                       final Class<? extends MavenProjectsStructure.CustomNode> nodeClass,
+                                       final Class<? extends MavenProjectsStructure.MavenSimpleNode> nodeClass,
                                        NodeSelector selector) {
     super(project, false);
     myProject = project;
@@ -53,7 +53,7 @@ public class SelectFromMavenProjectsDialog extends DialogWrapper {
                                                                       MavenProjectsNavigator.getInstance(myProject),
                                                                       myTree) {
       @Override
-      protected Class<? extends CustomNode>[] getVisibleNodesClasses() {
+      protected Class<? extends MavenSimpleNode>[] getVisibleNodesClasses() {
         return new Class[]{nodeClass};
       }
 

@@ -710,6 +710,8 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     }
 
     public void checkUnknownMacros(TrackingPathMacroSubstitutor pathMacroSubstitutor) {
+      if (pathMacroSubstitutor == null) return;
+
       for (String componentName : myComponentStates.keySet()) {
         final Set<String> unknownMacros = StorageUtil.getMacroNames(myComponentStates.get(componentName));
         if (!unknownMacros.isEmpty()) {

@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -246,7 +247,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
       IFile[] children = myDir.exists() ? myDir.listFiles() : EMPTY_FILES;
       for (IFile child : children) {
         final String fileName = child.getName();
-        if (!myFileTypeManager.isFileIgnored(fileName)) {
+        if (!myFileTypeManager.isFileIgnored(fileName) && StringUtil.endsWithIgnoreCase(fileName, ".xml")) {
           currentNames.add(fileName);
         }
       }

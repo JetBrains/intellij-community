@@ -28,6 +28,7 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -40,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
  * @author spleaner
  */
 public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBeforeRun.MakeBeforeRunTask> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.options.CompileStepBeforeRun");
   public static final Key<MakeBeforeRunTask> ID = Key.create("Make");
   private static final Key<RunConfiguration> RUN_CONFIGURATION = Key.create("RUN_CONFIGURATION");
 
@@ -98,6 +100,14 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
           else {
             final Module[] modules = runConfiguration.getModules();
             if (modules.length > 0) {
+              for (Module module : modules) {
+                if (module == null) {
+                  LOG.assertTrue(
+                    false,
+                    "RunConfiguration should not return null modules. Configuration=" + runConfiguration.getName() + "; class=" + runConfiguration.getClass().getName()
+                  );
+                }
+              }
               scope = compilerManager.createModulesCompileScope(modules, true);
             }
             else {

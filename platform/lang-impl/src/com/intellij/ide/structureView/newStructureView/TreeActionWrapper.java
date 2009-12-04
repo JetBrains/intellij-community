@@ -21,8 +21,9 @@ import com.intellij.ide.util.treeView.smartTree.TreeAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.project.DumbAware;
 
-public class TreeActionWrapper extends ToggleAction{
+public class TreeActionWrapper extends ToggleAction implements DumbAware {
   private final TreeAction myAction;
   private final TreeActionsOwner myStructureView;
 

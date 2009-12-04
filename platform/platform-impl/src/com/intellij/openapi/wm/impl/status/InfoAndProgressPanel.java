@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -33,6 +34,7 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
@@ -87,7 +89,7 @@ public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
         }
       }
     });
-    
+
     myProgressIcon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
     StatusBarTooltipper.install(this, myProgressIcon, statusBar);
@@ -283,6 +285,15 @@ public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
           int offset = comp.getHeight() / 2;
           Point point = new Point(comp.getWidth() - offset, comp.getHeight() - offset);
           balloon.show(new RelativePoint(comp, point), Balloon.Position.above);
+        } else {
+          final JRootPane rootPane = SwingUtilities.getRootPane(comp);
+          if (rootPane != null && rootPane.isShowing()) {
+            final Container contentPane = rootPane.getContentPane();
+            final Rectangle bounds = contentPane.getBounds();
+            final Point target = UIUtil.getCenterPoint(bounds, new Dimension(1, 1));
+            target.y = bounds.height - 3;
+            balloon.show(new RelativePoint(contentPane, target), Balloon.Position.above);
+          }
         }
       }
     });

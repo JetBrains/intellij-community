@@ -21,6 +21,7 @@ import com.intellij.javaee.StandardResourceProvider;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.utils.MavenLog;
 
 public class MavenSchemaProvider implements StandardResourceProvider {
   public static final String MAVEN_PROJECT_SCHEMA_URL = "http://maven.apache.org/xsd/maven-4.0.0.xsd";
@@ -37,7 +38,12 @@ public class MavenSchemaProvider implements StandardResourceProvider {
 
   @NotNull
   public static VirtualFile getSchemaFile(@NotNull String url) {
-    return VfsUtil.findRelativeFile(ExternalResourceManager.getInstance().getResourceLocation(url), null);
+    String location = ExternalResourceManager.getInstance().getResourceLocation(url);
+    VirtualFile result = VfsUtil.findRelativeFile(location, null);
+    if (result == null) {
+      MavenLog.LOG.error("Cannot find a schema file for URL: " + url + " location: " + location);
+    }
+    return result;
   }
 }
 

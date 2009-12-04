@@ -93,7 +93,7 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
     myToolWindowPanel.setSecondComponent(myPropertyInspector);
     myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(UIDesignerBundle.message("toolwindow.ui.designer"),
                                                                                myToolWindowPanel,
-                                                                               ToolWindowAnchor.LEFT, myProject);
+                                                                               ToolWindowAnchor.LEFT, myProject, true);
     myToolWindow.setIcon(IconLoader.getIcon("/com/intellij/uiDesigner/icons/toolWindowUIDesigner.png"));
     myToolWindow.setAvailable(false, null);
   }

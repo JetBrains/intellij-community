@@ -170,7 +170,9 @@ public class JavadocEditor extends ModuleElementsEditor {
       setBorder(NO_FOCUS_BORDER);
 
       final TableItem tableItem = ((TableItem)value);
-      tableItem.getCellAppearance().customize(this);
+      if (tableItem != null) {
+        tableItem.getCellAppearance().customize(this);
+      }
     }
   }
 
