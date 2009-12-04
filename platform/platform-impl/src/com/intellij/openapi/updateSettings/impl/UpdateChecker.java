@@ -452,7 +452,8 @@ public final class UpdateChecker {
     InputStream in = null;
     OutputStream out = null;
 
-    String patchFileName = "jetbrains.patch.jar." + productCode;
+    String platform = System.getProperty("idea.platform.prefix", "idea");
+    String patchFileName = "jetbrains.patch.jar." + platform;
     File patchFile = new File(FileUtil.getTempDirectory(), patchFileName);
 
     try {
