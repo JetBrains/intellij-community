@@ -307,7 +307,12 @@ public class JavacCompiler extends ExternalCompiler {
           StringTokenizer optionsTokenizer = new StringTokenizer(options, " ", false);
           while (optionsTokenizer.hasMoreTokens()) {
             final String token = optionsTokenizer.nextToken();
-            additionalOptions.add("-A"+token);
+            if (token.startsWith("-A")) {
+              additionalOptions.add(token.substring("-A".length()));
+            }
+            else {
+              additionalOptions.add("-A" + token);
+            }
           }
         }
       }
