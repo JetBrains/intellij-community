@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -28,19 +29,15 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.apache.maven.model.*;
 import org.apache.maven.profiles.activation.*;
-import org.apache.maven.project.*;
+import org.apache.maven.project.InvalidProjectModelException;
+import org.apache.maven.project.JBMavenProjectHelper;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.project.ProjectBuildingException;
 import org.apache.maven.project.inheritance.DefaultModelInheritanceAssembler;
 import org.apache.maven.project.injection.DefaultProfileInjector;
-import org.apache.maven.project.interpolation.AbstractStringBasedModelInterpolator;
-import org.apache.maven.project.interpolation.ModelInterpolationException;
-import org.apache.maven.project.interpolation.StringSearchModelInterpolator;
-import org.apache.maven.project.path.DefaultPathTranslator;
-import org.apache.maven.project.path.PathTranslator;
 import org.apache.maven.project.validation.ModelValidationResult;
 import org.codehaus.plexus.context.ContextException;
 import org.codehaus.plexus.context.DefaultContext;
-import org.codehaus.plexus.personality.plexus.lifecycle.phase.InitializationException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,8 +97,8 @@ public class MavenProjectReader {
     Model model = modelWithValidity.model;
     List<Profile> activatedProfiles = applyProfiles(model, getBaseDir(file), activeProfiles);
     repairModelHeader(model);
-    resolveInheritance(generalSettings, model, file, activeProfiles,
-                       recursionGuard, locator, modelWithValidity.problems); // todo ????????? changing cached value
+    resolveInheritance(generalSettings, model, file, activeProfiles, recursionGuard, locator,
+                       modelWithValidity.problems); // todo ????????? changing cached value
     repairModelBody(model);
 
     return Pair.create(modelWithValidity, activatedProfiles);
@@ -209,9 +206,7 @@ public class MavenProjectReader {
     return result;
   }
 
-  private void collectProfilesFromSettingsFile(VirtualFile settingsFile,
-                                               List<Profile> result,
-                                               Collection<MavenProjectProblem> problems) {
+  private void collectProfilesFromSettingsFile(VirtualFile settingsFile, List<Profile> result, Collection<MavenProjectProblem> problems) {
     if (settingsFile == null) return;
     Element readResult = readXml(settingsFile, problems, MavenProjectProblem.ProblemType.SETTINGS_OR_PROFILES);
     List<Element> xmlProfiles = findChildrenByPath(readResult, "settings.profiles", "profile");
@@ -437,8 +432,8 @@ public class MavenProjectReader {
                                   final MavenProjectReaderProjectLocator locator,
                                   Collection<MavenProjectProblem> problems) {
     if (recursionGuard.contains(file)) {
-      problems.add(createProblem(file, ProjectBundle.message("maven.project.problem.recursiveInheritance"),
-                                 MavenProjectProblem.ProblemType.PARENT));
+      problems.add(
+        createProblem(file, ProjectBundle.message("maven.project.problem.recursiveInheritance"), MavenProjectProblem.ProblemType.PARENT));
       return;
     }
     recursionGuard.add(file);
@@ -449,8 +444,8 @@ public class MavenProjectReader {
       if (parent != null) {
         MavenId parentId = new MavenId(parent.getGroupId(), parent.getArtifactId(), parent.getVersion());
         if (parentId.equals(model.getGroupId(), model.getArtifactId(), model.getVersion())) {
-          problems.add(createProblem(file, ProjectBundle.message("maven.project.problem.selfInheritance"),
-                                     MavenProjectProblem.ProblemType.PARENT));
+          problems.add(
+            createProblem(file, ProjectBundle.message("maven.project.problem.selfInheritance"), MavenProjectProblem.ProblemType.PARENT));
           return;
         }
         parentDesc[0] = new MavenParentDesc(parentId, parent.getRelativePath());
@@ -487,9 +482,8 @@ public class MavenProjectReader {
 
       if (parentModelWithProblems == null) return; // no parent or parent not found;
       if (!parentModelWithProblems.second.problems.isEmpty()) {
-        problems.add(createProblem(parentModelWithProblems.first,
-                                   ProjectBundle.message("maven.project.problem.parentHasProblems",
-                                                         new MavenId(parentModelWithProblems.second.model)),
+        problems.add(createProblem(parentModelWithProblems.first, ProjectBundle.message("maven.project.problem.parentHasProblems",
+                                                                                        new MavenId(parentModelWithProblems.second.model)),
                                    MavenProjectProblem.ProblemType.PARENT));
       }
 
@@ -632,7 +626,9 @@ public class MavenProjectReader {
     }
   }
 
-  private Element readXml(final VirtualFile file, final Collection<MavenProjectProblem> problems, final MavenProjectProblem.ProblemType type) {
+  private Element readXml(final VirtualFile file,
+                          final Collection<MavenProjectProblem> problems,
+                          final MavenProjectProblem.ProblemType type) {
     final LinkedList<Element> stack = new LinkedList<Element>();
     final Element root = new Element("root");
 
@@ -687,7 +683,7 @@ public class MavenProjectReader {
       }
 
       public void textElement(CharSequence text, CharSequence physical, int startoffset, int endoffset) {
-        stack.getLast().addContent(text.toString());
+        stack.getLast().addContent(JDOMUtil.legalizeText(text.toString()));
       }
 
       public void attribute(CharSequence name, CharSequence value, int startoffset, int endoffset) {
