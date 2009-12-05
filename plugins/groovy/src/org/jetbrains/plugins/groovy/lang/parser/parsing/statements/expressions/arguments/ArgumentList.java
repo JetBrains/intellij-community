@@ -136,8 +136,10 @@ public class ArgumentList implements GroovyElementTypes {
         marker.rollbackTo();
         return false;
       }
-    } else if (mGSTRING_BEGIN.equals(builder.getTokenType()) ||
-            mLPAREN.equals(builder.getTokenType())) {
+    }
+    else if (mGSTRING_BEGIN.equals(builder.getTokenType()) ||
+             mLPAREN.equals(builder.getTokenType()) ||
+             mLCURLY.equals(builder.getTokenType())) {
       PrimaryExpression.parse(builder, parser);
       if (mCOLON.equals(builder.getTokenType())) {
         marker.done(ARGUMENT_LABEL);
