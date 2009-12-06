@@ -1148,7 +1148,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
           if (fileTypeId != null && fileTypeId.length() > 0) {
             FileType target = FileTypeManager.getInstance().getFileTypeByExtension(fileTypeId);
-            if (FileTypes.UNKNOWN == target || FileTypes.PLAIN_TEXT == target) {
+            if (FileTypes.UNKNOWN == target || FileTypes.PLAIN_TEXT == target || target.getDefaultExtension().length() == 0) {
               target = new TempFileType(fileTypeId);
             }
 
