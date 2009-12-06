@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
 
@@ -62,11 +63,13 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
    * The constructor from fields that is expected to be
    * accessed only from {@link git4idea.rebase.GitRebaseEditorService}.
    *
-   * @param service   the service object that has created this handler
-   * @param project   the context project
-   * @param root      the git repository root
+   * @param service the service object that has created this handler
+   * @param project the context project
+   * @param root    the git repository root
    */
-  public GitInteractiveRebaseEditorHandler(final GitRebaseEditorService service, final Project project, final VirtualFile root) {
+  public GitInteractiveRebaseEditorHandler(@NotNull final GitRebaseEditorService service,
+                                           @NotNull final Project project,
+                                           @NotNull final VirtualFile root) {
     myService = service;
     myProject = project;
     myRoot = root;

@@ -33,6 +33,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author Eugene Zhuravlev
@@ -46,6 +48,8 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
   private final KeyDescriptor<Key> myKeyDescriptor;
   private final ValueContainerExternalizer<Value> myValueContainerExternalizer;
   private final int myCacheSize;
+
+  private final Lock l = new ReentrantLock();
 
   public MapIndexStorage(File storageFile, final KeyDescriptor<Key> keyDescriptor, final DataExternalizer<Value> valueExternalizer,
                          final int cacheSize) throws IOException {
@@ -130,10 +134,16 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     myMap = map;
   }
 
-  public synchronized void flush() {
-    if (!myMap.isClosed()) {
-      myCache.clear();
-      myMap.force();
+  public void flush() {
+    l.lock();
+    try {
+      if (!myMap.isClosed()) {
+        myCache.clear();
+        myMap.force();
+      }
+    }
+    finally {
+      l.unlock();
     }
   }
 
@@ -183,7 +193,8 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     }
   }
 
-  public synchronized boolean processKeys(final Processor<Key> processor) throws StorageException {
+  public boolean processKeys(final Processor<Key> processor) throws StorageException {
+    l.lock();
     try {
       myCache.clear(); // this will ensure that all new keys are made into the map
       return myMap.processKeys(processor);
@@ -201,6 +212,9 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
       }
       throw e;
     }
+    finally {
+      l.unlock();
+    }
   }
 
   public Collection<Key> getKeys() throws StorageException {
@@ -210,7 +224,8 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
   }
 
   @NotNull
-  public synchronized ChangeTrackingValueContainer<Value> read(final Key key) throws StorageException {
+  public ChangeTrackingValueContainer<Value> read(final Key key) throws StorageException {
+    l.lock();
     try {
       return myCache.get(key);
     }
@@ -223,6 +238,9 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
         throw (StorageException)cause;
       }
       throw e;
+    }
+    finally {
+      l.unlock();
     }
   }
 

@@ -112,7 +112,7 @@ public class LineStatusTracker {
   }
 
   private void reinstallRanges(List<Range> ranges) {
-    removeHighlighters(ranges);
+    removeHighlighters();
     myRanges = ranges;
     addHighlighters();
   }
@@ -157,12 +157,10 @@ public class LineStatusTracker {
   }
 
 
-  private void removeHighlighters(Collection<Range> newRanges) {
+  private void removeHighlighters() {
     for (Range oldRange : myRanges) {
-      if (!newRanges.contains(oldRange)) {
-        removeHighlighter(oldRange.getHighlighter());
-        oldRange.setHighlighter(null);
-      }
+      removeHighlighter(oldRange.getHighlighter());
+      oldRange.setHighlighter(null);
     }
   }
 
@@ -260,7 +258,7 @@ public class LineStatusTracker {
       if (!myIsInitialized) return;
       LOG.assertTrue(!myIsReleased);
 
-      removeHighlighters(new ArrayList<Range>());
+      removeHighlighters();
       if (myDocumentListener != null) {
         myDocument.removeDocumentListener(myDocumentListener);
         myDocumentListener = null;
@@ -297,8 +295,10 @@ public class LineStatusTracker {
   }
 
   public void finishBulkUpdate() {
-    myBulkUpdate = false;
-    reinstallRanges();
+    if (myBulkUpdate) {
+      myBulkUpdate = false;
+      reinstallRanges();
+    }
   }
 
   private class MyDocumentListener extends DocumentAdapter {

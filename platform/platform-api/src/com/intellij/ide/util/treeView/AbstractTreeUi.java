@@ -558,9 +558,16 @@ public class AbstractTreeUi {
     boolean wasCleanedUp = false;
     if (myRootNodeWasInitialized) {
       Object root = getTreeStructure().getRootElement();
+      assert root != null : "Root element cannot be null";
+
       Object currentRoot = getElementFor(myRootNode);
 
       if (Comparing.equal(root, currentRoot)) return false;
+
+      Object rootAgain = getTreeStructure().getRootElement();
+      if (root != rootAgain && !root.equals(rootAgain)) {
+        assert false : "getRootElement() if called twice must return either root1 == root2 or root1.equals(root2)";
+      }
 
       cleanUpNow();
       wasCleanedUp = true;

@@ -19,14 +19,11 @@
  */
 package com.intellij.util.io;
 
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.SLRUCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class PersistentHashMapValueStorage {
@@ -60,8 +57,7 @@ public class PersistentHashMapValueStorage {
   };
 
   public PersistentHashMapValueStorage(String path) throws IOException {
-    myPath = SystemInfo.isFileSystemCaseSensitive? FileUtil.toSystemDependentName(path) : FileUtil.toSystemDependentName(path).toLowerCase(Locale.US);
-
+    myPath = path;
     myFile = new File(path);
     mySize = myFile.length();
 

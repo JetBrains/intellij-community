@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.util.ThreeState;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -34,8 +35,9 @@ public class DiffTree<OT, NT> {
   private final DiffTreeChangeBuilder<OT, NT> myConsumer;
   private final List<Ref<OT[]>> myOldChildrenLists = new ArrayList<Ref<OT[]>>();
   private final List<Ref<NT[]>> myNewChildrenLists = new ArrayList<Ref<NT[]>>();
+  private final List<ThreeState[]> myDeepStates = new ArrayList<ThreeState[]>();
 
-  private DiffTree(final FlyweightCapableTreeStructure<OT> oldTree,
+  public DiffTree(final FlyweightCapableTreeStructure<OT> oldTree,
                   final FlyweightCapableTreeStructure<NT> newTree,
                   final ShallowNodeComparator<OT, NT> comparator,
                   final DiffTreeChangeBuilder<OT, NT> consumer) {
@@ -50,13 +52,6 @@ public class DiffTree<OT, NT> {
     new DiffTree<OT, NT>(oldTree, newTree, comparator, consumer).build(oldTree.getRoot(), newTree.getRoot(), 0);
   }
 
-  private static enum CompareResult {
-    EQUAL, // 100% equal
-    DRILL_DOWN_NEEDED, // element types are equal, but elements are composite
-    TYPE_ONLY, // only element types are equal
-    NOT_EQUAL, // 100% different
-  }
-
   // TODO: disposeChildren
   private void build(OT oldN, NT newN, int level) {
     OT oldNode = myOldTree.prepareForGetChildren(oldN);
@@ -68,11 +63,11 @@ public class DiffTree<OT, NT> {
     }
 
     final Ref<OT[]> oldChildrenR = myOldChildrenLists.get(level);
-    int oldSize = myOldTree.getChildren(oldNode, oldChildrenR);
+    final int oldSize = myOldTree.getChildren(oldNode, oldChildrenR);
     final OT[] oldChildren = oldChildrenR.get();
 
     final Ref<NT[]> newChildrenR = myNewChildrenLists.get(level);
-    int newSize = myNewTree.getChildren(newNode, newChildrenR);
+    final int newSize = myNewTree.getChildren(newNode, newChildrenR);
     final NT[] newChildren = newChildrenR.get();
 
     if (Math.abs(oldSize - newSize) > CHANGE_PARENT_VERSUS_CHILDREN_THRESHOLD) {
@@ -86,103 +81,118 @@ public class DiffTree<OT, NT> {
       if (!comparator.hashcodesEqual(oldNode, newNode) || !comparator.typesEqual(oldNode, newNode)) {
         myConsumer.nodeReplaced(oldNode, newNode);
       }
+
       disposeLevel(oldChildren, oldSize, newChildren, newSize);
+
       return;
     }
 
-    while (oldSize > 0 && newSize > 0) {
-      OT oldChild1 = oldChildren[oldSize-1];
-      NT newChild1 = newChildren[newSize-1];
+    boolean walkedDeep = false;
 
-      CompareResult c11 = looksEqual(comparator, oldChild1, newChild1);
-
-      if (c11 != CompareResult.EQUAL && c11 != CompareResult.DRILL_DOWN_NEEDED) {
-        break;
+    ThreeState[] deeps;
+    if (oldSize == newSize) {
+      while (myDeepStates.size() <= level) myDeepStates.add(new ThreeState[oldSize]);
+      deeps = myDeepStates.get(level);
+      if (deeps.length < oldSize) {
+        deeps = new ThreeState[oldSize];
+        myDeepStates.set(level, deeps);
       }
-      if (c11 == CompareResult.DRILL_DOWN_NEEDED) {
-        build(oldChild1, newChild1, level + 1);
+      else {
+        Arrays.fill(deeps, 0, oldSize, null);
       }
-      oldSize--;
-      newSize--;
+    }
+    else {
+      deeps = null;
     }
 
-    int oldIndex = 0;
-    int newIndex = 0;
-    while (oldIndex < oldSize || newIndex < newSize) {
-      OT oldChild1 = oldIndex < oldSize ? oldChildren[oldIndex] : null;
-      OT oldChild2 = oldIndex < oldSize-1 ? oldChildren[oldIndex+1] : null;
-      NT newChild1 = newIndex < newSize ? newChildren[newIndex] : null;
-      NT newChild2 = newIndex < newSize-1 ? newChildren[newIndex+1] : null;
+    int start = 0;
+    while (start < oldSize && start < newSize) {
+      OT oldChild = oldChildren[start];
+      NT newChild = newChildren[start];
+      if (!comparator.typesEqual(oldChild, newChild)) break;
+      final ThreeState dp = comparator.deepEqual(oldChild, newChild);
+      if (deeps != null) deeps[start] = dp;
 
-      CompareResult c11 = looksEqual(comparator, oldChild1, newChild1);
-
-      if (c11 == CompareResult.EQUAL || c11 == CompareResult.DRILL_DOWN_NEEDED) {
-        if (c11 == CompareResult.DRILL_DOWN_NEEDED) {
-          build(oldChild1, newChild1, level+1);
+      if (dp != ThreeState.YES) {
+        if (!comparator.hashcodesEqual(oldChild, newChild)) break;
+        if (dp == ThreeState.UNSURE) {
+          build(oldChild, newChild, level + 1);
+          walkedDeep = true;
         }
-        oldIndex++;
-        newIndex++;
-        continue;
+        else if (dp == ThreeState.NO) {
+          myConsumer.nodeReplaced(oldChild, newChild);
+        }
       }
-      CompareResult c12 = looksEqual(comparator, oldChild1, newChild2);
-      CompareResult c21 = looksEqual(comparator, oldChild2, newChild1);
-      if (c11 == CompareResult.TYPE_ONLY) {
-        if (c21 == CompareResult.EQUAL || c21 == CompareResult.DRILL_DOWN_NEEDED) {
-          myConsumer.nodeDeleted(oldNode, oldChild1);
-          oldIndex++;
-          continue;
+
+      start++;
+    }
+
+    int oldEnd = oldSize - 1;
+    int newEnd = newSize - 1;
+
+    if (oldSize == newSize && start == newSize) {
+      disposeLevel(oldChildren, oldSize, newChildren, newSize);
+      return; // No changes at all at this level
+    }
+
+    while (oldEnd >= start && newEnd >= start) {
+      OT oldChild = oldChildren[oldEnd];
+      NT newChild = newChildren[newEnd];
+      if (!comparator.typesEqual(oldChild, newChild)) break;
+      final ThreeState dp = comparator.deepEqual(oldChild, newChild);
+      if (deeps != null) deeps[oldEnd] = dp;
+      if (dp != ThreeState.YES) {
+        if (!comparator.hashcodesEqual(oldChild, newChild)) break;
+        if (dp == ThreeState.UNSURE) {
+          build(oldChild, newChild, level + 1);
+          walkedDeep = true;
         }
-        else if (c12 == CompareResult.EQUAL || c12 == CompareResult.DRILL_DOWN_NEEDED) {
-          myConsumer.nodeInserted(oldNode, newChild1, newIndex);
-          newIndex++;
-          continue;
+        else if (dp == ThreeState.NO) {
+          myConsumer.nodeReplaced(oldChild, newChild);
+        }
+      }
+
+      oldEnd--;
+      newEnd--;
+    }
+
+    if (oldSize == newSize) {
+      for (int i = start; i <= newEnd; i++) {
+        final OT oldChild = oldChildren[i];
+        final NT newChild = newChildren[i];
+
+        if (comparator.typesEqual(oldChild, newChild)) {
+          final ThreeState de = deeps[i];
+          if (de == ThreeState.UNSURE) {
+            build(oldChild, newChild, level + 1);
+          }
+          else if (de == ThreeState.NO || de == null) {
+            myConsumer.nodeReplaced(oldChild, newChild);
+          }
         }
         else {
-          myConsumer.nodeReplaced(oldChild1, newChild1);
-          oldIndex++;
-          newIndex++;
-          continue;
+          myConsumer.nodeReplaced(oldChild, newChild);
         }
       }
-      if (c12 == CompareResult.EQUAL || c12 == CompareResult.DRILL_DOWN_NEEDED || c12 == CompareResult.TYPE_ONLY) {
-        myConsumer.nodeInserted(oldNode, newChild1, newIndex);
-        newIndex++;
-        continue;
+    }
+    else {
+      if (!walkedDeep && start == 0 && newEnd == newSize - 1 && oldEnd == oldSize - 1 && start < oldEnd && start < newEnd) {
+        myConsumer.nodeReplaced(oldNode, newNode);
+        disposeLevel(oldChildren, oldSize, newChildren, newSize);
+        return;
       }
 
-      if (c21 == CompareResult.EQUAL || c21 == CompareResult.DRILL_DOWN_NEEDED || c21 == CompareResult.TYPE_ONLY) {
-        myConsumer.nodeDeleted(oldNode, oldChild1);
-        oldIndex++;
-        continue;
+      for (int i = start; i <= oldEnd; i++) {
+        final OT oldChild = oldChildren[i];
+        myConsumer.nodeDeleted(oldNode, oldChild);
       }
 
-      if (oldChild1 == null) {
-        myConsumer.nodeInserted(oldNode, newChild1, newIndex);
-        newIndex++;
-        continue;
+      for (int i = start; i <= newEnd; i++) {
+        myConsumer.nodeInserted(oldNode, newChildren[i], i);
       }
-      if (newChild1 == null) {
-        myConsumer.nodeDeleted(oldNode, oldChild1);
-        oldIndex++;
-        continue;
-      }
-      myConsumer.nodeReplaced(oldChild1, newChild1);
-      oldIndex++;
-      newIndex++;
     }
 
     disposeLevel(oldChildren, oldSize, newChildren, newSize);
-  }
-
-  private CompareResult looksEqual(ShallowNodeComparator<OT, NT> comparator, OT oldChild1, NT newChild1) {
-    if (oldChild1 == null || newChild1 == null) {
-      return oldChild1 == newChild1 ? CompareResult.EQUAL : CompareResult.NOT_EQUAL;
-    }
-    if (!comparator.typesEqual(oldChild1, newChild1)) return CompareResult.NOT_EQUAL;
-    ThreeState ret = comparator.deepEqual(oldChild1, newChild1);
-    if (ret == ThreeState.UNSURE) return CompareResult.DRILL_DOWN_NEEDED;
-    if (ret == ThreeState.YES) return CompareResult.EQUAL;
-    return CompareResult.TYPE_ONLY;
   }
 
   private void disposeLevel(final OT[] oldChildren, final int oldSize, final NT[] newChildren, final int newSize) {

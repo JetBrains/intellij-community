@@ -62,7 +62,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="mpr.lib"
 				OutputFile="$(OutDir)\fsnotifier.exe"
-				LinkIncremental="2"
+				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				SubSystem="1"
 				TargetMachine="1"

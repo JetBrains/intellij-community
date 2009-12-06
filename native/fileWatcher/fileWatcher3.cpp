@@ -25,11 +25,27 @@ struct WatchRootInfo {
 	bool bFailed;
 };
 
+struct WatchRoot {
+	char *path;
+	WatchRoot *next;
+};
+
 const int ROOT_COUNT = 26;
 
 WatchRootInfo watchRootInfos[ROOT_COUNT];
 
+WatchRoot *firstWatchRoot = NULL;
+
 CRITICAL_SECTION csOutput;
+
+void NormalizeSlashes(char *path, char slash)
+{
+	for(char *p=path; *p; p++)
+		if (*p == '\\' || *p == '/') 
+			*p = slash;
+}
+
+// -- Watchable root checks ---------------------------------------------------
 
 bool IsNetworkDrive(const char *name) 
 {
@@ -46,22 +62,6 @@ bool IsNetworkDrive(const char *name)
     );
 
     return result == NO_ERROR;
-}
-
-bool IsSubstedDrive(const char* name) 
-{
-    char deviceName[3] = {name[0], name[1], 0};
-    const int BUF_SIZE = 1024;
-    char targetPath[BUF_SIZE];
-
-    DWORD result = QueryDosDeviceA(deviceName, targetPath, BUF_SIZE);
-    if (result == 0) {
-        return false;
-    }
-    else {
-        bool result = (targetPath[0] == '\\' && targetPath[1] == '?' && targetPath[2] == '?');
-        return result;
-    }
 }
 
 bool IsUnwatchableFS(const char *path)
@@ -89,16 +89,87 @@ bool IsWatchable(const char *path)
 {
 	if (IsNetworkDrive(path))
 		return false;
-	if (IsSubstedDrive(path))
-		return false;
 	if (IsUnwatchableFS(path))
 		return false;
 	return true;
 }
 
+// -- Substed drive checks ----------------------------------------------------
+
+void PrintRemapForSubstDrive(char driveLetter) 
+{
+    const int BUF_SIZE = 1024;
+    char targetPath[BUF_SIZE];
+
+	char rootPath[8];
+	sprintf_s(rootPath, 8, "%c:", driveLetter);
+
+    DWORD result = QueryDosDeviceA(rootPath, targetPath, BUF_SIZE);
+    if (result == 0) {
+        return;
+    }
+    else 
+	{
+        if (targetPath[0] == '\\' && targetPath[1] == '?' && targetPath[2] == '?' && targetPath[3] == '\\')
+		{
+			// example path: \??\C:\jetbrains\idea
+			NormalizeSlashes(targetPath, '/');
+			printf("%c:\n%s\n", driveLetter, targetPath+4);
+		}
+    }
+}
+
+void PrintRemapForSubstDrives()
+{
+	for(int i=0; i<ROOT_COUNT; i++)
+	{
+		if (watchRootInfos [i].bUsed)
+		{
+			PrintRemapForSubstDrive(watchRootInfos [i].driveLetter);
+		}
+	}
+}
+
+// -- Mount point enumeration -------------------------------------------------
+
 const int BUFSIZE = 1024;
 
-void PrintMountPointsForVolume(HANDLE hVol, const char* volumePath, char *Buf)
+void PrintDirectoryReparsePoint(const char *path)
+{
+	int size = strlen(path)+2;
+	char *directory = (char *) malloc(size);
+	strcpy_s(directory, size, path);
+	NormalizeSlashes(directory, '\\');
+	if (directory [strlen(directory)-1] != '\\')
+		strcat_s(directory, size, "\\");
+		
+	char volumeName[_MAX_PATH];
+	int rc = GetVolumeNameForVolumeMountPointA(directory, volumeName, sizeof(volumeName));
+	if (rc)
+	{
+		char volumePathNames[_MAX_PATH];
+		DWORD returnLength;
+		rc = GetVolumePathNamesForVolumeNameA(volumeName, volumePathNames, sizeof(volumePathNames), &returnLength);
+		if (rc)
+		{
+			char *p = volumePathNames;
+			while(*p)
+			{
+				if (_stricmp(p, directory))   // if it's not the path we've already found
+				{
+					NormalizeSlashes(directory, '/');
+					NormalizeSlashes(p, '/');
+					puts(directory);
+					puts(p);
+				}
+				p += strlen(p)+1;
+			}
+		}
+	}
+	free(directory);
+}
+
+bool PrintMountPointsForVolume(HANDLE hVol, const char* volumePath, char *Buf)
 {
     HANDLE hPt;                  // handle for mount point scan
     char Path[BUFSIZE];          // string buffer for mount points
@@ -112,7 +183,7 @@ void PrintMountPointsForVolume(HANDLE hVol, const char* volumePath, char *Buf)
     // mount points, which are implemented using reparse points. 
 
     if (! (dwSysFlags & FILE_SUPPORTS_REPARSE_POINTS)) {
-       return;
+       return true;
     } 
 
     // Start processing mount points on this volume. 
@@ -124,23 +195,27 @@ void PrintMountPointsForVolume(HANDLE hVol, const char* volumePath, char *Buf)
 
     // Shall we error out?
     if (hPt == INVALID_HANDLE_VALUE) {
-        return;
+		return GetLastError() != ERROR_ACCESS_DENIED;
     } 
 
     // Process the volume mount point.
+	char *buf = new char[MAX_PATH];
     do {
-		printf("%s%s\n", volumePath, Path);
+		strcpy_s(buf, MAX_PATH, volumePath);
+		strcat_s(buf, MAX_PATH, Path);
+		PrintDirectoryReparsePoint(buf);
     } while (FindNextVolumeMountPointA(hPt, Path, BUFSIZE));
 
     FindVolumeMountPointClose(hPt);
+	return true;
 }
 
-void PrintMountPoints(const char *path)
+bool PrintMountPoints(const char *path)
 {
 	char volumeUniqueName[128];
 	BOOL res = GetVolumeNameForVolumeMountPointA(path, volumeUniqueName, 128);
 	if (!res) {
-        return;
+        return false;
     }
    
     char buf[BUFSIZE];            // buffer for unique volume identifiers
@@ -151,17 +226,58 @@ void PrintMountPoints(const char *path)
 
     // Shall we error out?
     if (hVol == INVALID_HANDLE_VALUE) {
-        return;
+        return false;
     }
 
-    do {
+    bool success = true;
+	do {
        if (!strcmp(buf, volumeUniqueName)) {
-		   PrintMountPointsForVolume(hVol, path, buf);
+		   success = PrintMountPointsForVolume(hVol, path, buf);
+		   if (!success) break;
 	   }
     } while (FindNextVolumeA(hVol, buf, BUFSIZE));
 
     FindVolumeClose(hVol);
+	return success;
 }
+
+// -- Searching for mount points in watch roots (fallback) --------------------
+
+void PrintDirectoryReparsePoints(const char *path)
+{
+	char *const buf = _strdup(path);
+	while(strchr(buf, '/'))
+	{
+		DWORD attributes = GetFileAttributesA(buf);
+		if (attributes == INVALID_FILE_ATTRIBUTES)
+			break;
+		if (attributes & FILE_ATTRIBUTE_REPARSE_POINT)
+		{
+			PrintDirectoryReparsePoint(buf);
+		}
+		char *pSlash = strrchr(buf, '/');
+		if (pSlash)
+		{
+			*pSlash = '\0';
+		}
+	}
+	free(buf);
+}
+
+// This is called if we got an ERROR_ACCESS_DENIED when trying to enumerate all mount points for volume.
+// In this case, we walk the directory tree up from each watch root, and look at each parent directory 
+// to check whether it's a reparse point.
+void PrintWatchRootReparsePoints()
+{
+	WatchRoot *pWatchRoot = firstWatchRoot;
+	while(pWatchRoot)
+	{
+		PrintDirectoryReparsePoints(pWatchRoot->path);
+		pWatchRoot = pWatchRoot->next;
+	}
+}
+
+// -- Watcher thread ----------------------------------------------------------
 
 void PrintChangeInfo(char *rootPath, FILE_NOTIFY_INFORMATION *info)
 {
@@ -253,6 +369,8 @@ DWORD WINAPI WatcherThread(void *param)
 	return 0;
 }
 
+// -- Roots update ------------------------------------------------------------
+
 void MarkAllRootsUnused()
 {
 	for(int i=0; i<ROOT_COUNT; i++)
@@ -306,19 +424,52 @@ void UpdateRoots()
 	}
 	EnterCriticalSection(&csOutput);
 	fprintf(stdout, "%s", infoBuffer);
+	puts("#\nREMAP");
+	PrintRemapForSubstDrives();
+	bool printedMountPoints = true;
 	for(int i=0; i<ROOT_COUNT; i++)
 	{
 		if (watchRootInfos [i].bUsed)
 		{
 			char rootPath[8];
 			sprintf_s(rootPath, 8, "%c:\\", watchRootInfos [i].driveLetter);
-			PrintMountPoints(rootPath);
+			if (!PrintMountPoints(rootPath))
+				printedMountPoints = false;
 		}
+	}
+	if (!printedMountPoints)
+	{
+		PrintWatchRootReparsePoints();
 	}
 	puts("#");
 	fflush(stdout);
 	LeaveCriticalSection(&csOutput);
 }
+
+void AddWatchRoot(const char *path)
+{
+	WatchRoot *watchRoot = (WatchRoot *) malloc(sizeof(WatchRoot));
+	watchRoot->next = NULL;
+	watchRoot->path = _strdup(path);
+	watchRoot->next = firstWatchRoot;
+	firstWatchRoot = watchRoot;
+}
+
+void FreeWatchRootsList()
+{
+	WatchRoot *pWatchRoot = firstWatchRoot;
+	WatchRoot *pNext;
+	while(pWatchRoot)
+	{
+		pNext = pWatchRoot->next;
+		free(pWatchRoot->path);
+		free(pWatchRoot);
+		pWatchRoot=pNext;
+	}
+	firstWatchRoot = NULL;
+}
+
+// -- Main - filewatcher protocol ---------------------------------------------
 
 int _tmain(int argc, _TCHAR* argv[])
 {
@@ -340,6 +491,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		if (!strcmp(buffer, "ROOTS"))
 		{
 			MarkAllRootsUnused();
+			FreeWatchRootsList();
 			bool failed = false;
 			while(true)
 			{
@@ -351,10 +503,14 @@ int _tmain(int argc, _TCHAR* argv[])
 				if (buffer [0] == '#')
 					break;
 				int driveLetterPos = 0;
+				char *pDriveLetter = buffer;
+				if (*pDriveLetter == '|')
+					pDriveLetter++;
+
+				AddWatchRoot(pDriveLetter);
+
 				_strupr_s(buffer, sizeof(buffer)-1);
-				char driveLetter = buffer[0];
-				if (driveLetter == '|')
-					driveLetter = buffer[1];
+				char driveLetter = *pDriveLetter;
 				if (driveLetter >= 'A' && driveLetter <= 'Z')
 				{
 					watchRootInfos [driveLetter-'A'].bUsed = true;

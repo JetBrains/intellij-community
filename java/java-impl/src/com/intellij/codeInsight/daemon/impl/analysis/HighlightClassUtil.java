@@ -666,7 +666,11 @@ public class HighlightClassUtil {
       return null;
     }
     PsiElement grand = parent.getParent();
-    if (!(grand instanceof PsiClass) || ((PsiClass)grand).getExtendsList() != parent) {
+    if (!(grand instanceof PsiClass)) {
+      return null;
+    }
+    PsiClass aClass = (PsiClass)grand;
+    if (aClass.getExtendsList() != parent || aClass instanceof PsiTypeParameter) {
       return null;
     }
     if (!(resolved instanceof PsiClass)) {
@@ -677,7 +681,6 @@ public class HighlightClassUtil {
     if (!PsiUtil.isInnerClass(base)) return null;
     PsiClass baseClass = base.getContainingClass();
 
-    PsiClass aClass = (PsiClass)grand;
     if (!hasEnclosingInstanceInScope(baseClass, extendRef, true) && !qualifiedNewCalledInConstructors(aClass, baseClass)) {
       String description = JavaErrorMessages.message("no.enclosing.instance.in.scope", HighlightUtil.formatClass(baseClass));
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, extendRef, description);
