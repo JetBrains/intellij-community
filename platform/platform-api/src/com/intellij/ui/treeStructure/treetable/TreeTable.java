@@ -299,10 +299,19 @@ public class TreeTable extends Table {
     boolean editResult = super.editCellAt(row, column, e);
     if (e instanceof MouseEvent && isTreeColumn(column)){
       MouseEvent me = (MouseEvent)e;
+      int y = me.getY();
+
+      if (getRowHeight() != myTree.getRowHeight()) {
+        // fix y if row heights are not equal
+        // [todo]: review setRowHeight to synchronize heights correctly!
+        final Rectangle tableCellRect = getCellRect(row, column, true);
+        y = Math.min(y - tableCellRect.y, myTree.getRowHeight() - 1) + row * myTree.getRowHeight();
+      }
+
       MouseEvent newEvent = new MouseEvent(myTree, me.getID(),
         me.getWhen(), me.getModifiers(),
         me.getX() - getCellRect(0, column, true).x,
-        me.getY(), me.getClickCount(),
+        y, me.getClickCount(),
         me.isPopupTrigger()
       );
       myTree.dispatchEvent(newEvent);
@@ -317,7 +326,7 @@ public class TreeTable extends Table {
           MouseEvent.MOUSE_RELEASED,
           me.getWhen(), me.getModifiers(),
           me.getX() - getCellRect(0, column, true).x,
-          me.getY()- getCellRect(0, column, true).y, me.getClickCount(),
+          y - getCellRect(0, column, true).y, me.getClickCount(),
           me.isPopupTrigger()
         );
         myTree.dispatchEvent(newME2);

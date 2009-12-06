@@ -3866,7 +3866,8 @@ public class AbstractTreeUi {
     }
 
     if (!isUnitTestingMode() && passthrough) {
-      LOG.error("Pass-through mode for TreeUi is allowed only for unit test mode");
+      // TODO: this assertion should be restored back as soon as possible [JamTreeTableView should be rewritten, etc]
+      //LOG.error("Pass-through mode for TreeUi is allowed only for unit test mode");
     }
   }
 
