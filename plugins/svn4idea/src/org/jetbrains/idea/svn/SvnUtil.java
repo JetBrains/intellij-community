@@ -33,6 +33,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.dialogs.LockDialog;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
 import org.tmatesoft.svn.core.SVNException;
@@ -443,11 +444,11 @@ public class SvnUtil {
 
   @Nullable
   public static SVNURL getBranchForUrl(final SvnVcs vcs, final VirtualFile vcsRoot, final String urlPath) {
-    final SvnBranchConfiguration configuration;
+    final SvnBranchConfigurationNew configuration;
     try {
       final SVNURL url = SVNURL.parseURIEncoded(urlPath);
       configuration = SvnBranchConfigurationManager.getInstance(vcs.getProject()).get(vcsRoot);
-      return (configuration == null) ? null : configuration.getWorkingBranch(vcs.getProject(), url);
+      return (configuration == null) ? null : configuration.getWorkingBranch(url);
     }
     catch (SVNException e) {
       return null;

@@ -23,6 +23,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 
 import java.io.File;
 import java.util.*;
@@ -71,7 +72,7 @@ public class SvnBranchMapperManager implements PersistentStateComponent<SvnBranc
     ApplicationManager.getApplication().getMessageBus().syncPublisher(WC_ROOTS_CHANGED).rootsChanged(url, roots);
   }
 
-  public void notifyBranchesChanged(final Project project, final VirtualFile vcsRoot, final SvnBranchConfiguration configuration) {
+  public void notifyBranchesChanged(final Project project, final VirtualFile vcsRoot, final SvnBranchConfigurationNew configuration) {
     final Map<String, String> map = configuration.getUrl2FileMappings(project, vcsRoot);
     if (map != null) {
       for (Map.Entry<String, String> entry : map.entrySet()) {

@@ -23,6 +23,8 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.branchConfig.InfoStorage;
+import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
 import org.jetbrains.idea.svn.integrate.SvnBranchItem;
@@ -104,7 +106,7 @@ public class WcInfoLoader {
     if (wcRoot == null) {
       return null;
     }
-    final SvnBranchConfiguration configuration;
+    final SvnBranchConfigurationNew configuration;
     try {
       configuration = SvnBranchConfigurationManager.getInstance(myProject).get(wcRoot);
     }
@@ -123,7 +125,7 @@ public class WcInfoLoader {
                                                                          branchRoot);
   }
 
-  private String createBranchesList(final String url, final SvnBranchConfiguration configuration,
+  private static String createBranchesList(final String url, final SvnBranchConfigurationNew configuration,
                                                              final List<WCInfoWithBranches.Branch> items) {
     String result = null;
     final String trunkUrl = configuration.getTrunkUrl();
@@ -132,9 +134,8 @@ public class WcInfoLoader {
     } else if (trunkUrl != null) {
       result = trunkUrl;
     }
-    final Map<String,List<SvnBranchItem>> branchMap = configuration.getLoadedBranchMap(myProject);
-    for (Map.Entry<String, List<SvnBranchItem>> entry : branchMap.entrySet()) {
-      for (SvnBranchItem branchItem : entry.getValue()) {
+    for(String branchUrl: configuration.getBranchUrls()) {
+      for (SvnBranchItem branchItem : configuration.getBranches(branchUrl)) {
         if (! SVNPathUtil.isAncestor(branchItem.getUrl(), url)) {
           items.add(new WCInfoWithBranches.Branch(branchItem.getUrl()));
         } else {

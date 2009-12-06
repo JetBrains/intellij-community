@@ -16,21 +16,27 @@
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigManager;
+import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.dialogs.BranchConfigurationDialog;
 import org.jetbrains.idea.svn.integrate.SvnBranchItem;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
@@ -53,7 +59,7 @@ public class SelectBranchPopup {
   }
 
   public interface BranchSelectedCallback {
-    void branchSelected(Project project, SvnBranchConfiguration configuration, String url, long revision);
+    void branchSelected(Project project, SvnBranchConfigurationNew configuration, String url, long revision);
   }
 
   public static void show(Project project, VirtualFile file, BranchSelectedCallback callback, final String title) {
@@ -72,7 +78,7 @@ public class SelectBranchPopup {
   }
 
   public static void showForBranchRoot(Project project, VirtualFile vcsRoot, BranchSelectedCallback callback, final String title) {
-    final SvnBranchConfiguration configuration;
+    final SvnBranchConfigurationNew configuration;
     try {
       configuration = SvnBranchConfigurationManager.getInstance(project).get(vcsRoot);
     }
@@ -97,13 +103,13 @@ public class SelectBranchPopup {
   private static class BranchBasesPopupStep extends BaseListPopupStep<String> {
     protected final Project myProject;
     private final VirtualFile myVcsRoot;
-    private final SvnBranchConfiguration myConfiguration;
+    private final SvnBranchConfigurationNew myConfiguration;
     private final boolean myTopLevel;
     private BranchSelectedCallback myCallback;
 
     private static final String REFRESH_MESSAGE = SvnBundle.message("refresh.branches.item");
 
-    protected BranchBasesPopupStep(final Project project, final VirtualFile vcsRoot, final SvnBranchConfiguration configuration, boolean topLevel,
+    protected BranchBasesPopupStep(final Project project, final VirtualFile vcsRoot, final SvnBranchConfigurationNew configuration, boolean topLevel,
                                    final BranchSelectedCallback callback) {
       myProject = project;
       myVcsRoot = vcsRoot;
@@ -113,7 +119,7 @@ public class SelectBranchPopup {
     }
 
     public BranchBasesPopupStep(final Project project, final VirtualFile vcsRoot,
-                                final SvnBranchConfiguration configuration, final BranchSelectedCallback callback, final List<String> items,
+                                final SvnBranchConfigurationNew configuration, final BranchSelectedCallback callback, final List<String> items,
                                 final String title) {
       this(project, vcsRoot, configuration, true, callback);
       init(title, items, null);
@@ -167,13 +173,40 @@ public class SelectBranchPopup {
 
     @Nullable
     private List<SvnBranchItem> loadBranches(final String selectedBranchesHolder, final boolean cached) {
-      try {
-        return cached ? myConfiguration.getBranches(selectedBranchesHolder, myProject, true, true) :
-            myConfiguration.reloadBranches(selectedBranchesHolder, myProject, myVcsRoot);
+      if (cached) {
+        return myConfiguration.getBranches(selectedBranchesHolder);
       }
-      catch (SVNException e) {
-        Messages.showErrorDialog(myProject, e.getMessage(), SvnBundle.message("compare.with.branch.list.error"));
-        return null;
+
+      final List<SvnBranchItem> result = new ArrayList<SvnBranchItem>();
+      final ProgressManager pm = ProgressManager.getInstance();
+
+      final boolean wasCanceled = ! pm.runProcessWithProgressSynchronously(new Runnable() {
+        public void run() {
+          final ProgressIndicator pi = pm.getProgressIndicator();
+          final Semaphore s = new Semaphore();
+          s.down();
+          final Ref<Boolean> completedRef = new Ref<Boolean>();
+          final SvnBranchConfigManager manager = SvnBranchConfigurationManager.getInstance(myProject).getSvnBranchConfigManager();
+          manager.reloadBranches(myVcsRoot, selectedBranchesHolder, new Consumer<List<SvnBranchItem>>() {
+            public void consume(final List<SvnBranchItem> svnBranchItems) {
+              result.addAll(svnBranchItems);
+              completedRef.set(true);
+              s.up();
+            }
+          });
+          while (true) {
+            s.waitFor(500);
+            if (Boolean.TRUE.equals(completedRef.get())) break;
+            pi.checkCanceled();
+          }
+        }
+      }, SvnBundle.message("compare.with.branch.progress.loading.branches"), true, myProject);
+
+
+      if (wasCanceled) {
+        return myConfiguration.getBranches(selectedBranchesHolder);
+      } else {
+        return result;
       }
     }
 
