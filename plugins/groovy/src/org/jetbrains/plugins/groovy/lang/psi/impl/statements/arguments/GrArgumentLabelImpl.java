@@ -35,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
@@ -62,8 +63,15 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
     return new PsiMultiReference(otherReferences.length == 0 ? thisReference : ArrayUtil.mergeArrays(thisReference, otherReferences, PsiReference.class), this);
   }
 
+  @Nullable
   public String getName() {
-    return getNameElement().getText();
+    final PsiElement element = getNameElement();
+    if (element instanceof GrExpression) {
+      return null;
+    }
+    else {
+      return GrStringUtil.removeQuotes(element.getText());
+    }
   }
 
   public PsiElement getElement() {

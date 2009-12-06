@@ -404,7 +404,9 @@ public class GroovyAnnotator implements Annotator {
       public int computeHashCode(GrNamedArgument arg) {
         final GrArgumentLabel label = arg.getLabel();
         if (label == null) return 0;
-        return label.getName().hashCode();
+        final String name = label.getName();
+        if (name == null) return 0;
+        return name.hashCode();
       }
 
       public boolean equals(GrNamedArgument arg1, GrNamedArgument arg2) {
@@ -413,8 +415,12 @@ public class GroovyAnnotator implements Annotator {
         if (label1 == null || label2 == null) {
           return label1 == null && label2 == null;
         }
-
-        return label1.getName().equals(label2.getName());
+        final String name1 = label1.getName();
+        final String name2 = label2.getName();
+        if (name1 == null || name2 == null) {
+          return name1 == null && name2 == null;
+        }
+        return name1.equals(name2);
       }
     });
 
@@ -1090,9 +1096,24 @@ public class GroovyAnnotator implements Annotator {
       for (GrNamedArgument arg : args) {
         final GrArgumentLabel label = arg.getLabel();
         if (label == null) continue;
-        final PsiElement resolved = label.resolve();
-        if (resolved == null) {
-          holder.createWarningAnnotation(label, GroovyBundle.message("no.such.property", label.getName()));
+        if (label.getName() == null) {
+          final PsiElement nameElement = label.getNameElement();
+          if (nameElement instanceof GrExpression) {
+            final PsiType stringType =
+              JavaPsiFacade.getElementFactory(arg.getProject()).createTypeFromText(CommonClassNames.JAVA_LANG_STRING, arg);
+            if (!TypesUtil.isAssignable(stringType, ((GrExpression)nameElement).getType(), arg.getManager(), arg.getResolveScope())) {
+              holder.createWarningAnnotation(nameElement, GroovyBundle.message("property.name.expected"));
+            }
+          }
+          else {
+            holder.createWarningAnnotation(nameElement, GroovyBundle.message("property.name.expected"));
+          }
+        }
+        else {
+          final PsiElement resolved = label.resolve();
+          if (resolved == null) {
+            holder.createWarningAnnotation(label, GroovyBundle.message("no.such.property", label.getName()));
+          }
         }
       }
     }
