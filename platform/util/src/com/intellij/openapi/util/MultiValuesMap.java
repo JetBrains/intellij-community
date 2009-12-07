@@ -71,7 +71,7 @@ public class MultiValuesMap<K, V>{
   }
 
   public void remove(K key, V value) {
-    if (myBaseMap.get(key) == null) return;
+    if (!myBaseMap.containsKey(key)) return;
     final Collection<V> values = myBaseMap.get(key);
     values.remove(value);
     if (values.isEmpty()) {
