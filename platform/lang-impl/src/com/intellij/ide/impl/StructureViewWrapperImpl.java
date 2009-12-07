@@ -156,6 +156,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   }
 
   public void rebuild() {
+    if (myProject.isDisposed()) return;
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     boolean hadFocus = ToolWindowId.STRUCTURE_VIEW.equals(ToolWindowManager.getInstance(myProject).getActiveToolWindowId());
@@ -203,7 +204,11 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
       }
       else {
         FileEditor editor = FileEditorManager.getInstance(myProject).getSelectedEditor(file);
-        if (editor == null) editor = crteateTempFileEditor(file);
+        boolean needDisposeEditor = false;
+        if (editor == null) {
+          editor = createTempFileEditor(file);
+          needDisposeEditor = true;
+        }
         if (editor != null && editor.isValid()) {
           final StructureViewBuilder structureViewBuilder = editor.getStructureViewBuilder();
           if (structureViewBuilder != null) {
@@ -219,6 +224,9 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
             myStructureView.centerSelectedRow();
           }
         }
+        if (needDisposeEditor && editor != null) {
+          Disposer.dispose(editor);
+        }
       }
     }
 
@@ -231,7 +239,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   }
 
   @Nullable
-  private FileEditor crteateTempFileEditor(VirtualFile file) {
+  private FileEditor createTempFileEditor(VirtualFile file) {
     FileEditorProviderManager editorProviderManager = FileEditorProviderManager.getInstance();
     final FileEditorProvider[] providers = editorProviderManager.getProviders(myProject, file);
     for (FileEditorProvider provider : providers) {
