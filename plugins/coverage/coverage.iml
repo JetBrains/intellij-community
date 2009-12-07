@@ -33,7 +33,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../community/plugins/testng/lib/testng-jdk15.jar!/" />
+          <root url="jar://$APPLICATION_HOME_DIR$/community/plugins/testng/lib/testng-jdk15.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
