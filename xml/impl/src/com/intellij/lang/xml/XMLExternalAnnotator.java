@@ -22,6 +22,7 @@ import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -36,7 +37,7 @@ public class XMLExternalAnnotator implements ExternalAnnotator, Validator.Valida
   private AnnotationHolder myHolder;
 
   public void annotate(PsiFile file, AnnotationHolder holder) {
-    if (!(file instanceof XmlFile)) return;
+    if (!(file instanceof XmlFile) || file.getViewProvider() instanceof TemplateLanguageFileViewProvider) return;
     
     myHolder = holder;
     final XmlDocument document = ((XmlFile)file).getDocument();
