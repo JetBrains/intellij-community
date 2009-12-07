@@ -27,6 +27,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,6 +66,7 @@ public class GenerateTestMethodAction extends BaseGenerateAction {
     public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
       try {
         PsiMethod method = generateDummyMethod(editor, file);
+        if (method == null) return;
 
         PsiClass targetClass = findTargetClass(editor, file);
         TestIntegrationUtils.runTestMethodTemplate(TestIntegrationUtils.MethodKind.TEST,
@@ -80,6 +82,7 @@ public class GenerateTestMethodAction extends BaseGenerateAction {
       }
     }
 
+    @Nullable
     private PsiMethod generateDummyMethod(Editor editor, PsiFile file) throws IncorrectOperationException {
       List<GenerationInfo> members = new ArrayList<GenerationInfo>();
 

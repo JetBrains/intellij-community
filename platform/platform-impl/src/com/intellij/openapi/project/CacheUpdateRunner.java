@@ -50,8 +50,9 @@ class CacheUpdateRunner {
   }
 
   public void processFiles(final ProgressIndicator indicator, boolean processInReadAction) {
-    FileContentQueue queue = new FileContentQueue();
     try {
+      indicator.checkCanceled();
+      FileContentQueue queue = new FileContentQueue();
       Collection<VirtualFile> files = mySession.getFilesToUpdate();
       final double total = files.size();
       queue.queue(files, indicator);

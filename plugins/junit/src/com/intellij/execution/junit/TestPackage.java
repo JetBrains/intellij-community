@@ -67,6 +67,29 @@ public class TestPackage extends TestObject {
     if (aPackage == null) throw CantRunException.packageNotFound(packageName);
     final TestClassFilter filter = getClassFilter(aPackage);
     final ExecutionException[] exception = new ExecutionException[1];
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        try {
+          myConfiguration.configureClasspath(myJavaParameters);
+        }
+        catch (CantRunException e) {
+          exception[0] = e;
+        }
+      }
+    });
+    if (exception[0] != null) {
+      throw exception[0];
+    }
+
+    try {
+      myTempFile = File.createTempFile("idea_junit", ".tmp");
+      myTempFile.deleteOnExit();
+      myJavaParameters.getProgramParametersList().add("@" + myTempFile.getAbsolutePath());
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+
     findTestsWithProgress(new FindCallback() {
       public void found(@NotNull final Collection<PsiClass> classes, final boolean isJunit4) {
         addClassesListToJavaParameters(classes, new Function<PsiElement, String>() {
@@ -86,27 +109,6 @@ public class TestPackage extends TestObject {
         }, packageName, false, isJunit4);
       }
     }, filter);
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        try {
-          myConfiguration.configureClasspath(myJavaParameters);
-        }
-        catch (CantRunException e) {
-          exception[0] = e;
-        }
-      }
-    });
-    if (exception[0] != null) {
-      throw exception[0];
-    }
-    try {
-      myTempFile = File.createTempFile("idea_junit", ".tmp");
-      myTempFile.deleteOnExit();
-      myJavaParameters.getProgramParametersList().add("@" + myTempFile.getAbsolutePath());
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
   }
 
   private TestClassFilter getClassFilter(final PsiPackage aPackage) throws JUnitUtil.NoJUnitException {

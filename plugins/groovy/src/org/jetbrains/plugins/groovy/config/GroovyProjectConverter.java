@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NonNls;
 public class GroovyProjectConverter extends ProjectConverter {
   @NonNls private static final String GRAILS_TESTS_RUN_CONFIGURATION_TYPE = "GrailsTestsRunConfigurationType";
   @NonNls private static final String GANT_SCRIPT_RUN_CONFIGURATION = "GantScriptRunConfiguration";
+  @NonNls private static final String GRAILS_RUN_CONFIGURATION_TYPE = "GrailsRunConfigurationType";
 
   @Override
   public ConversionProcessor<ModuleSettings> createModuleFileConverter() {
@@ -42,8 +43,10 @@ public class GroovyProjectConverter extends ProjectConverter {
           if (GRAILS_TESTS_RUN_CONFIGURATION_TYPE.equals(confType) || GANT_SCRIPT_RUN_CONFIGURATION.equals(confType)) {
             return true;
           }
+          if (GRAILS_RUN_CONFIGURATION_TYPE.equals(confType) && "Grails Application".equals(element.getAttributeValue("factoryName"))) {
+            return true;
+          }
         }
-
         return false;
       }
 
@@ -55,10 +58,15 @@ public class GroovyProjectConverter extends ProjectConverter {
           if (wasGrails || GANT_SCRIPT_RUN_CONFIGURATION.equals(confType)) {
             if ("true".equals(element.getAttributeValue("default"))) {
               element.detach();
-            } else {
-              element.setAttribute("type", wasGrails ? "GrailsRunConfigurationType" : "GroovyScriptRunConfiguration");
-              element.setAttribute("factoryName", wasGrails ? "Grails Application" : "Groovy Script");
             }
+            else {
+              element.setAttribute("type", wasGrails ? GRAILS_RUN_CONFIGURATION_TYPE : "GroovyScriptRunConfiguration");
+              element.setAttribute("factoryName", wasGrails ? "Grails" : "Groovy Script");
+            }
+          }
+          else if (GRAILS_RUN_CONFIGURATION_TYPE.equals(confType) &&
+                   "Grails Application".equals(element.getAttributeValue("factoryName"))) {
+            element.setAttribute("factoryName", "Grails");
           }
         }
 

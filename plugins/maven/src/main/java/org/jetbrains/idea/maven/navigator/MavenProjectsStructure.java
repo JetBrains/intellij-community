@@ -678,6 +678,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     private void updateProject() {
       setErrorLevel(myMavenProject.getProblems().isEmpty() ? ErrorLevel.NONE : ErrorLevel.ERROR);
+      myLifecycleNode.updateGoalsList();
       myPluginsNode.updatePlugins(myMavenProject);
       myDependenciesNode.updateDependencies(myMavenProject);
 
@@ -885,6 +886,10 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     @Override
     public String getName() {
       return message("view.node.lifecycle");
+    }
+
+    public void updateGoalsList() {
+      childrenChanged();
     }
   }
 

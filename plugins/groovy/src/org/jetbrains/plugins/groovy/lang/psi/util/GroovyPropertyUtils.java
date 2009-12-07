@@ -155,10 +155,11 @@ public class GroovyPropertyUtils {
     }
   }
 
+  @Nullable
   public static String getPropertyName(PsiMethod accessor) {
     if (isSimplePropertyGetter(accessor)) return getPropertyNameByGetter(accessor);
     if (isSimplePropertySetter(accessor)) return getPropertyNameBySetter(accessor);
-    return accessor.getName();
+    return null;
   }
 
   public static boolean isGetterName(@NotNull String name) {

@@ -61,7 +61,8 @@ class Context {
       if (!type.isAssignableFrom(superType) || !superType?.isAssignableFrom(type)) {
         NON_ASSIGNABLE_TYPES.add(pair)
         return false
-      } else {
+      }
+      else {
         ASSIGNABLE_TYPES.add(pair)
         return true
       }
@@ -95,7 +96,8 @@ class Context {
         }
         return false
       }
-    } else {
+    }
+    else {
       addFilter {PsiElement elem, fqn -> elem?.getContainingFile()?.getFileType() instanceof GroovyFileType}
     }
 
@@ -134,6 +136,9 @@ class Context {
           }
           return false
         }
+        if (!args.ctype) {
+          addFilter getClassTypeFilter("java.lang.Object")
+        }
         break
 
     // handling closure scope
@@ -152,8 +157,7 @@ class Context {
             def parent = closParent.getParent()
             if (parent instanceof GrArgumentList) {
               return parent.getParent() instanceof GrMethodCallExpression
-            }
-            else {
+            } else {
               return parent instanceof GrMethodCallExpression
             }
           }
