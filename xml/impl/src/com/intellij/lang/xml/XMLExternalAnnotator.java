@@ -17,14 +17,11 @@ package com.intellij.lang.xml;
 
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.ide.highlighter.XHtmlFileType;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.ExternalAnnotator;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -40,11 +37,6 @@ public class XMLExternalAnnotator implements ExternalAnnotator, Validator.Valida
 
   public void annotate(PsiFile file, AnnotationHolder holder) {
     if (!(file instanceof XmlFile)) return;
-    VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile != null &&
-        XHtmlFileType.INSTANCE.equals(virtualFile.getFileType()) &&
-        file.getViewProvider() instanceof TemplateLanguageFileViewProvider) return;
-
     myHolder = holder;
     final XmlDocument document = ((XmlFile)file).getDocument();
     if (document == null) return;
