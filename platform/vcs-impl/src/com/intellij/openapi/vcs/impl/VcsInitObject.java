@@ -18,7 +18,8 @@ package com.intellij.openapi.vcs.impl;
 public enum VcsInitObject {
   CHANGE_LIST_MANAGER(100),
   MAPPINGS(10),
-  COMMITTED_CHANGES_CACHE(200);
+  COMMITTED_CHANGES_CACHE(200),
+  REMOTE_REVISIONS_CACHE(300);
 
   private final int myOrder;
 

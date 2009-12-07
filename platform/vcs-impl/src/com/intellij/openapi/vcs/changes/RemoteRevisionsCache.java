@@ -25,6 +25,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ui.RemoteStatusChangeNodeDecorator;
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
+import com.intellij.openapi.vcs.impl.VcsInitObject;
 import com.intellij.openapi.vcs.update.UpdateFilesHelper;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.util.Consumer;
@@ -89,11 +91,12 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
       }
     }, "Finishing \"changed on server\" update");
     if ((! myProject.isDefault()) && VcsConfiguration.getInstance(myProject).CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND) {
-      DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
-        public void run() {
-          myControlledCycle.start();
-        }
-      });
+      ((ProjectLevelVcsManagerImpl) myVcsManager).addInitializationRequest(VcsInitObject.REMOTE_REVISIONS_CACHE,
+                                                                           new Runnable() {
+                                                                             public void run() {
+                                                                               myControlledCycle.start();
+                                                                             }
+                                                                           });
     }
   }
 
