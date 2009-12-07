@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.util.objectTree;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.Equality;
@@ -22,6 +23,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
@@ -268,6 +270,21 @@ public final class ObjectTree<T> {
 
   public int size() {
     return myObject2NodeMap.size();
+  }
+
+  @Nullable
+  public <D extends Disposable> D findRegisteredObject(@NotNull T parentDisposable, @NotNull D object) {
+    synchronized (treeLock) {
+      ObjectNode<T> parentNode = getNode(parentDisposable);
+      if (parentNode == null) return null;
+      for (ObjectNode<T> node : parentNode.getChildren()) {
+        T nodeObject = node.getObject();
+        if (nodeObject.equals(object)) {
+          return (D)nodeObject;
+        }
+      }
+      return null;
+    }
   }
 
   private static class MyTHashSet<T> extends THashSet<T> {
