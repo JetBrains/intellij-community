@@ -20,11 +20,13 @@
  */
 package com.intellij.refactoring.inlineSuperClass;
 
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.inline.JavaInlineActionHandler;
@@ -42,6 +44,7 @@ public class InlineSuperClassRefactoringHandler extends JavaInlineActionHandler 
 
   public boolean canInlineElement(PsiElement element) {
     if (!(element instanceof PsiClass)) return false;
+    if (element.getLanguage() != StdLanguages.JAVA) return false;
     Collection<PsiClass> inheritors = ClassInheritorsSearch.search((PsiClass)element).findAll();
     return inheritors.size() > 0;
   }
