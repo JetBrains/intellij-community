@@ -13,7 +13,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../lib/trilead-ssh2-build213.jar!/" />
+          <root url="jar://$APPLICATION_HOME_DIR$/community/plugins/cvs/lib/trilead-ssh2-build213.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
