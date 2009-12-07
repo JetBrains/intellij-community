@@ -51,7 +51,7 @@ public abstract class LanguageFileType implements FileType{
   }
 
   /**
-   * Lower level API for customizing language's file syntax highlighting in editor component. Delegates to {@link #getHighlighter(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile)} by default.
+   * Lower level API for customizing language's file syntax highlighting in editor component.
    * @param project The project in which the highligher will work, or null if the highlighter is not tied to any project.
    * @param virtualFile The file to be highlighted
    * @param colors color scheme highlighter shall be initialized with.
