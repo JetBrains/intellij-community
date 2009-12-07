@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -202,6 +203,7 @@ public class InjectedLanguageUtil {
     if (injectedManager == null) return null; //for tests
 
     for (PsiElement current = element; current != null && current != hostPsiFile; current = current.getParent()) {
+      ProgressManager.checkCanceled();
       if ("EL".equals(current.getLanguage().getID())) break;
       ParameterizedCachedValue<Places,PsiElement> data = current.getUserData(INJECTED_PSI_KEY);
       Places places;
