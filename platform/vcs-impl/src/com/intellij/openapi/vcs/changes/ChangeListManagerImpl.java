@@ -310,7 +310,20 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         if (updateUnversionedFiles && !wasEverythingDirty) {
           composite.cleanScope(adjustedScope);
         }
-        actualUpdate(wasEverythingDirty, composite, builder, adjustedScope, vcs, changeListWorker, gate);
+        
+        try {
+          actualUpdate(wasEverythingDirty, composite, builder, adjustedScope, vcs, changeListWorker, gate);
+        }
+        catch (Throwable t) {
+          LOG.info(t);
+          if (t instanceof Error) {
+            throw (Error) t;
+          } else if (t instanceof RuntimeException) {
+            throw (RuntimeException) t;
+          }
+          throw new RuntimeException(t);
+        }
+
         if (myUpdateException != null) break;
       }
 

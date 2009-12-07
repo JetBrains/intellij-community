@@ -15,6 +15,7 @@
  */
 package git4idea.changes;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -35,6 +36,7 @@ import java.util.Set;
  * Git repository change provider
  */
 public class GitChangeProvider implements ChangeProvider {
+  private static final Logger LOG = Logger.getInstance("#git4idea.changes.GitChangeProvider");
   /**
    * the project
    */
@@ -56,7 +58,11 @@ public class GitChangeProvider implements ChangeProvider {
                          final ChangelistBuilder builder,
                          final ProgressIndicator progress,
                          final ChangeListManagerGate addGate) throws VcsException {
-    Collection<VirtualFile> roots = GitUtil.gitRootsForPaths(dirtyScope.getAffectedContentRoots());
+    final Collection<VirtualFile> affected = dirtyScope.getAffectedContentRoots();
+    Collection<VirtualFile> roots = GitUtil.gitRootsForPaths(affected);
+    if (roots.size() != affected.size()) {
+      LOG.info("affected content roots size: " + affected.size() + " roots size: " + roots.size());
+    }
 
     final MyNonChangedHolder holder = new MyNonChangedHolder(myProject, dirtyScope.getDirtyFilesNoExpand());
 
