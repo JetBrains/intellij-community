@@ -232,6 +232,11 @@ public class MavenProjectsManagerWatcher {
     scheduleUpdateAll(true, false);
   }
 
+  private void onSettingsXmlChange() {
+    myGeneralSettings.localRepositoryChanged();
+    // onSettingsChange() will be called indirectly by pathsChanged listener on GeneralSettings object
+  }
+
   private class MyRootChangesListener implements ModuleRootListener {
     public void beforeRootsChange(ModuleRootEvent event) {
     }
@@ -332,7 +337,7 @@ public class MavenProjectsManagerWatcher {
       // can not be started since the window has already been closed.
       if (areFileSetsInitialised()) {
         if (settingsHaveChanged) {
-          onSettingsChange();
+          onSettingsXmlChange();
         }
         else {
           filesToUpdate.removeAll(filesToRemove);

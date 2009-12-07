@@ -446,6 +446,69 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/value1"));
   }
 
+  public void testUpdatingProjectsOnSettingsXmlCreationAndDeletion() throws Exception {
+    deleteSettingsXml();
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>");
+
+    importProject();
+    assertUnorderedElementsAreEqual(myProjectsTree.getAvailableProfiles());
+
+    updateSettingsXml("<profiles>" +
+                      "  <profile>" +
+                      "    <id>one</id>" +
+                      "  </profile>" +
+                      "</profiles>");
+    waitForReadingCompletion();
+    assertUnorderedElementsAreEqual(myProjectsTree.getAvailableProfiles(), "one");
+
+    deleteSettingsXml();
+    waitForReadingCompletion();
+    assertUnorderedElementsAreEqual(myProjectsTree.getAvailableProfiles());
+  }
+
+  public void testUpdatingMavenPathsWhenSettingsChanges() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>");
+
+    File repo1 = new File(myDir, "localRepo1");
+    updateSettingsXml("<localRepository>" + repo1.getPath() + "</localRepository>");
+
+    waitForReadingCompletion();
+    assertEquals(repo1, getMavenGeneralSettings().getEffectiveLocalRepository());
+
+    File repo2 = new File(myDir, "localRepo2");
+    updateSettingsXml("<localRepository>" + repo2.getPath() + "</localRepository>");
+
+    waitForReadingCompletion();
+    assertEquals(repo2, getMavenGeneralSettings().getEffectiveLocalRepository());
+  }
+
+  public void testResolvingEnvVariableInRepositoryPath() throws Exception {
+    String temp = System.getenv("TMP");
+    updateSettingsXml("<localRepository>${env.TEMP}/tmpRepo</localRepository>");
+
+    File repo = new File(temp + "/tmpRepo").getCanonicalFile();
+    assertEquals(repo.getPath(), getMavenGeneralSettings().getEffectiveLocalRepository().getPath());
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>junit</groupId>" +
+                  "    <artifactId>junit</artifactId>" +
+                  "    <version>4.0</version>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+    
+    assertModuleLibDep("project", "Maven: junit:junit:4.0",
+                       "jar://" + FileUtil.toSystemIndependentName(repo.getPath()) + "/junit/junit/4.0/junit-4.0.jar!/");
+  }
+
   public void testUpdatingProjectsOnProfilesXmlChange() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
