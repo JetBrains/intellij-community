@@ -64,7 +64,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
   private final Map<String,String> myExternalResourcesMap = new HashMap<String, String>(1);
   private boolean myStopOnUnDeclaredResource;
   @NonNls
-  public static final String FILE_PREFIX = "file://";
+  public static final String HONOUR_ALL_SCHEMA_LOCATIONS_PROPERTY_KEY = "idea.xml.honour.all.schema.locations";
   private final ValidateXmlActionHandler.ErrorReporter myErrorReporter;
 
   public XmlResourceResolver(XmlFile _xmlFile, Project _project, final ValidateXmlActionHandler.ErrorReporter errorReporter) {
