@@ -35,7 +35,7 @@ public class PyDefinitionsAnnotator extends PyAnnotator {
     ASTNode name_node =  node.getNameNode();
     if (name_node != null) {
       Annotation ann = getHolder().createInfoAnnotation(name_node, null);
-      if (PyNames.UnderscoredNames.contains(node.getName())) {
+      if (PyNames.UnderscoredAttributes.contains(node.getName())) {
         ann.setTextAttributes(PyHighlighter.PY_PREDEFINED_DEFINITION);
       }
       else ann.setTextAttributes(PyHighlighter.PY_FUNC_DEFINITION);

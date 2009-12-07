@@ -243,7 +243,7 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
               // above could have not worked because inheritance is not searched down to 'object'.
               // for well-known methods, copy built-in doc string.
               // TODO: also handle predefined __xxx__ that are not part of 'object'.
-              if (PyNames.UnderscoredNames.contains(meth_name)) {
+              if (PyNames.UnderscoredAttributes.contains(meth_name)) {
                 PyClassType objtype = PyBuiltinCache.getInstance(fun).getObjectType(); // old- and new-style classes share the __xxx__ stuff
                 if (objtype != null) {
                   PyClass objcls = objtype.getPyClass();

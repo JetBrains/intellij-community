@@ -505,21 +505,6 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       }
     }
 
-    /* TODO: move to a contributor that handles 'def' targets
-    // if we're expanding a "__", include predefined __names__
-    String name = getName();
-    if (name != null && name.startsWith("__")) {
-      List<LookupElement> result = processor.getResultList();
-      LookupElementFactory factory = LookupElementFactory.getInstance();
-      for (String s : PyNames.UnderscoredNames) {
-        LookupItem item = (LookupItem)factory.createLookupElement(s);
-        item.setAttribute(item.TAIL_TEXT_ATTR, " | predefined");
-        item.setIcon(PyIcons.PREDEFINED);
-        result.add(item);
-      }
-      ret.addAll(result);
-    }
-    */
     ret.addAll(processor.getResultList());
     return ret.toArray();
   }

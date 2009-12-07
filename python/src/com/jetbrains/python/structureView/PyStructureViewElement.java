@@ -113,7 +113,7 @@ public class PyStructureViewElement implements StructureViewTreeElement {
       else {
         String name = element.getName();
         if (name != null && name.startsWith("__")) {
-          if (PyNames.UnderscoredNames.contains(name)) {
+          if (PyNames.UnderscoredAttributes.contains(name)) {
             vis = Visibility.PREDEFINED;
           }
           else {

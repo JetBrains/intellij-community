@@ -21,7 +21,7 @@ import com.jetbrains.python.psi.resolve.PyResolveUtil;
 public class PyBuiltinAnnotator extends PyAnnotator {
   @Override
   public void visitPyReferenceExpression(PyReferenceExpression node) {
-    if (PyNames.UnderscoredNames.contains(node.getName())) {
+    if (PyNames.UnderscoredAttributes.contains(node.getName())) {
       // things like __len__
       if (
         (node.getQualifier() != null) // foo.__len__
