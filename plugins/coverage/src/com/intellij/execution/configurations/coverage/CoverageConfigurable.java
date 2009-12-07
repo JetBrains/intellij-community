@@ -24,6 +24,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunJavaConfiguration;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.util.JreVersionDetector;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
@@ -36,6 +37,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.classFilter.ClassFilterEditor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -54,6 +56,8 @@ import java.util.List;
  * @author ven
  */
 public class CoverageConfigurable<T extends ModuleBasedConfiguration & RunJavaConfiguration> extends SettingsEditor<T> {
+  private static final Logger LOG = Logger.getInstance("#" + CoverageConfigurable.class.getName());
+
   private final JreVersionDetector myVersionDetector = new JreVersionDetector();
   Project myProject;
   private MyClassFilterEditor myClassFilterEditor;
@@ -169,7 +173,7 @@ public class CoverageConfigurable<T extends ModuleBasedConfiguration & RunJavaCo
     configuration.setMergeWithPreviousResults(myMergeDataCheckbox.isSelected());
     configuration.setCoveragePatterns(myClassFilterEditor.getFilters());
     configuration.setSuiteToMergeWith((String)myMergedCoverageSuiteCombo.getSelectedItem());
-    configuration.setCoverageRunner(((CoverageRunnerItem)myCoverageRunnerCb.getSelectedItem()).getRunner());
+    configuration.setCoverageRunner(getSelectedRunner());
     configuration.setTrackPerTestCoverage(myTrackPerTestCoverageCb.isSelected());
     configuration.setSampling(mySamplingRb.isSelected());
     configuration.setTrackTestFolders(myTrackTestSourcesCb.isSelected());
@@ -201,7 +205,7 @@ public class CoverageConfigurable<T extends ModuleBasedConfiguration & RunJavaCo
     });
     myCoverageRunnerCb.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        final CoverageRunner runner = ((CoverageRunnerItem)myCoverageRunnerCb.getSelectedItem()).getRunner();
+        final CoverageRunner runner = getSelectedRunner();
         enableTracingPanel(runner != null && runner.isCoverageByTestApplicable());
         myTrackPerTestCoverageCb.setEnabled(myTracingRb.isSelected() && canHavePerTestCoverage() && runner != null && runner.isCoverageByTestApplicable());
       }
@@ -223,7 +227,7 @@ public class CoverageConfigurable<T extends ModuleBasedConfiguration & RunJavaCo
 
     ActionListener samplingListener = new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        final CoverageRunner runner = ((CoverageRunnerItem)myCoverageRunnerCb.getSelectedItem()).getRunner();
+        final CoverageRunner runner = getSelectedRunner();
         myTrackPerTestCoverageCb.setEnabled(canHavePerTestCoverage() && myTracingRb.isSelected() && runner != null && runner.isCoverageByTestApplicable());
       }
     };
@@ -269,7 +273,7 @@ public class CoverageConfigurable<T extends ModuleBasedConfiguration & RunJavaCo
         myMergeDataCheckbox.setEnabled(isCoverageEnabled);
         UIUtil.setEnabled(myRunnerPanel, isCoverageEnabled, true);
         myMergedCoverageSuiteCombo.setEnabled(isCoverageEnabled && myMergeDataCheckbox.isSelected());
-        final CoverageRunner runner = ((CoverageRunnerItem)myCoverageRunnerCb.getSelectedItem()).getRunner();
+        final CoverageRunner runner = getSelectedRunner();
         enableTracingPanel(isCoverageEnabled && runner != null && runner.isCoverageByTestApplicable());
         myTrackPerTestCoverageCb.setEnabled(myTracingRb.isSelected() && isCoverageEnabled && canHavePerTestCoverage() && runner != null && runner.isCoverageByTestApplicable());
       }
@@ -279,6 +283,15 @@ public class CoverageConfigurable<T extends ModuleBasedConfiguration & RunJavaCo
     myCoverageNotSupportedLabel.setIcon(UIUtil.getOptionPanelWarningIcon());
     result.add(myCoverageNotSupportedLabel);
     return result;
+  }
+
+  @Nullable
+  private CoverageRunner getSelectedRunner() {
+    final CoverageRunnerItem runnerItem = (CoverageRunnerItem)myCoverageRunnerCb.getSelectedItem();
+    if (runnerItem == null) {
+      LOG.debug("Available runners: " + myCoverageRunnerCb.getModel().getSize());
+    }
+    return runnerItem != null ? runnerItem.getRunner() : null;
   }
 
   private void enableTracingPanel(final boolean enabled) {
