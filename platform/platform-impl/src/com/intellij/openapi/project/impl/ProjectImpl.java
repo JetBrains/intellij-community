@@ -225,7 +225,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   @Nullable
   @NonNls
   public String getLocation() {
-    return getStateStore().getLocation();
+    return isDisposed() ? null : getStateStore().getLocation();
   }
 
   @Deprecated
