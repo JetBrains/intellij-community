@@ -226,7 +226,8 @@ public class FilePatchInProgress implements Strippable {
         final ApplyPatchForBaseRevisionTexts texts = ApplyPatchForBaseRevisionTexts
           .create(project, myPatchInProgress.getCurrentBase(), new FilePathImpl(myPatchInProgress.getCurrentBase()),
                   myPatchInProgress.getPatch());
-        if (texts != null) {
+        if ((texts != null) &&
+            (ApplyPatchStatus.SUCCESS.equals(texts.getStatus()) || ApplyPatchStatus.ALREADY_APPLIED.equals(texts.getStatus()))) {
           return new MergedDiffRequestPresentable(project, texts,
                   myPatchInProgress.getCurrentBase(), myPatchInProgress.getPatch().getAfterVersionId());
         }
