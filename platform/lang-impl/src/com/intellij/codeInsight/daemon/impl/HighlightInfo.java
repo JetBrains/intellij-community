@@ -386,12 +386,13 @@ public class HighlightInfo {
 
     @Nullable
     public List<IntentionAction> getOptions(@NotNull PsiElement element) {
-      if (myOptions == null && myKey != null) {
-        List<IntentionAction> options = IntentionManager.getInstance().getStandardIntentionOptions(myKey, element);
+      final HighlightDisplayKey displayKey = myKey;
+      if (myOptions == null && displayKey != null) {
+        List<IntentionAction> options = IntentionManager.getInstance().getStandardIntentionOptions(displayKey, element);
         InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile();
-        InspectionProfileEntry tool = profile.getInspectionTool(myKey.toString(), element);
+        InspectionProfileEntry tool = profile.getInspectionTool(displayKey.toString(), element);
         if (!(tool instanceof LocalInspectionToolWrapper)) {
-          HighlightDisplayKey key = HighlightDisplayKey.findById(myKey.toString());
+          HighlightDisplayKey key = HighlightDisplayKey.findById(displayKey.toString());
           if (key != null) {
             tool = profile.getInspectionTool(key.toString(), element);
           }
