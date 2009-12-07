@@ -167,7 +167,7 @@ private def layoutMac(Map args, String home, Paths paths) {
     replacefilter(token: "@@jdk_req@@", value: args.jdk_req)
   }
 
-  def root = isEap() ? "${version}-${args.buildNumbder}.app" : "IntelliJ IDEA ${version}.app"
+  def root = isEap() ? "${version}-${args.buildNumbder}.app" : "IntelliJ IDEA ${version} CE.app"
 
   ant.zip(zipfile: "$paths.artifacts/idea${args.buildNumber}.mac.zip") {
     [paths.distAll, paths.distMac].each {
