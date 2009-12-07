@@ -37,6 +37,7 @@ public class XMLExternalAnnotator implements ExternalAnnotator, Validator.Valida
 
   public void annotate(PsiFile file, AnnotationHolder holder) {
     if (!(file instanceof XmlFile)) return;
+    
     myHolder = holder;
     final XmlDocument document = ((XmlFile)file).getDocument();
     if (document == null) return;
