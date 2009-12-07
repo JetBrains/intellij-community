@@ -19,14 +19,14 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.importProject.LibraryDescriptor;
 import com.intellij.ide.util.importProject.ModuleDescriptor;
 import com.intellij.ide.util.importProject.ModuleInsight;
+import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.ide.util.projectWizard.SourcePathsBuilder;
-import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
@@ -307,6 +307,6 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
 
   @Override
   public boolean isSuitableSdk(final Sdk sdk) {
-    return sdk.getSdkType() instanceof JavaSdkType;
+    return sdk.getSdkType() == JavaSdk.getInstance();
   }
 }
