@@ -51,11 +51,8 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
 
     for (VirtualFile root : topLevelContentRoots) {
       final Module module = ModuleUtil.findModuleForFile(root, myProject);
-      if (module != null) {
+      if (module != null) { // Some people exclude module's content roots...
         modules.add(module);
-      }
-      else {
-        LOG.error("Cannot find module for file, which is reported as content root. Path: " + root.getPresentableUrl());
       }
     }
 
