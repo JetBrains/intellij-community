@@ -6,8 +6,10 @@ import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
@@ -17,7 +19,10 @@ import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author yole
@@ -98,35 +103,33 @@ public class PyLineMarkerProvider implements LineMarkerProvider {
   }
 
   private static void collectOverridingMethods(final Set<PyFunction> functions, final Collection<LineMarkerInfo> result) {
-    final Map<PyClass, Collection<PyFunction>> candidates = new HashMap<PyClass, Collection<PyFunction>>();
-    final Set<PyFunction> overridden = new HashSet<PyFunction>();
-    // group up the methods by class
+    Set<PyClass> classes = new HashSet<PyClass>();
+    final MultiMap<PyClass, PyFunction> candidates = new MultiMap<PyClass, PyFunction>();
     for(PyFunction function: functions) {
       PyClass pyClass = function.getContainingClass();
       if (pyClass != null && function.getName() != null) {
-        Collection<PyFunction> methods = candidates.get(pyClass);
-        if (methods == null) {
-          methods = new ArrayList<PyFunction>();
-          candidates.put(pyClass, methods);
-        }
-        methods.add(function);
+        classes.add(pyClass);
+        candidates.putValue(pyClass, function);
       }
     }
-    // for every class, ascend ancestry levels and see if a function is defined 
-    for (PyClass pyClass : candidates.keySet()) {
-      for (PyClass granny : pyClass.iterateAncestors()) {
-        for (PyFunction func : candidates.get(pyClass)) {
-          final String func_name = func.getName();
-          assert func_name != null;
-          if (granny.findMethodByName(func_name, false) != null) {
-            overridden.add(func);
+    final Set<PyFunction> overridden = new HashSet<PyFunction>();
+    for(final PyClass pyClass: classes) {
+      PyClassInheritorsSearch.search(pyClass, true).forEach(new Processor<PyClass>() {
+        public boolean process(final PyClass inheritor) {
+          for (Iterator<PyFunction> it = candidates.get(pyClass).iterator(); it.hasNext();) {
+            PyFunction func = it.next();
+            if (inheritor.findMethodByName(func.getName(), false) != null) {
+              overridden.add(func);
+              it.remove();
+            }
           }
+          return !candidates.isEmpty();
         }
-      }
+      });
+      if (candidates.isEmpty()) break;
     }
-
     for(PyFunction func: overridden) {
-      result.add(new LineMarkerInfo<PyFunction>(func, func.getTextOffset(), OVERRIDDEN_ICON, Pass.UPDATE_OVERRIDEN_MARKERS, null,
+      result.add(new LineMarkerInfo(func, func.getTextOffset(), OVERRIDDEN_ICON, Pass.UPDATE_OVERRIDEN_MARKERS, null,
                                     ourOverridingMethodNavigator));
     }
   }
