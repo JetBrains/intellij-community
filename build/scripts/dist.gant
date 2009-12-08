@@ -103,24 +103,25 @@ boolean isEap() {
 private def patchPropertiesFile(String where) {
   ant.echo(file: "$where/bin/idea.properties", append: "true", message:
            isEap() ?
-           """
+"""
 
-          #-----------------------------------------------------------------------
-          # Change to 'disabled' if you need not to receive instant visual notifications about
-          # fatal errors that happen to IDEA or plugins installed.
-          #-----------------------------------------------------------------------
-          idea.fatal.error.notification=enabled
-          """
+#-----------------------------------------------------------------------
+# Change to 'disabled' if you need not to receive instant visual notifications about
+# fatal errors that happen to IDEA or plugins installed.
+#-----------------------------------------------------------------------
+idea.fatal.error.notification=enabled
+"""
 
-           :
-             """
+ :
 
-         #-----------------------------------------------------------------------
-         # Change to 'eanbled' if you need to receive instant visual notifications about
-         # fatal errors that happen to IDEA or plugins installed.
-         #-----------------------------------------------------------------------
-         idea.fatal.error.notification=disabled
-             """
+"""
+
+#-----------------------------------------------------------------------
+# Change to 'eanbled' if you need to receive instant visual notifications about
+# fatal errors that happen to IDEA or plugins installed.
+#-----------------------------------------------------------------------
+idea.fatal.error.notification=disabled
+"""
   )
 }
 
