@@ -156,10 +156,10 @@ private def layoutMac(Map args, String home, Paths paths) {
     fileset(dir: "$home/build/conf/mac")
   }
 
+  def version = isEap() ? p("component.version.codename") : p("component.version.major") + "." +  p("component.version.minor")
+
   ant.replace(file: "${paths.distMac}/Contents/Info.plist") {
     replacefilter(token: "@@build@@", value: args.buildNumber)
-
-    def version = isEap() ? p("component.version.codename") : p("component.version.major") + "." +  p("component.version.minor")
 
     replacefilter(token: "@@version@@", value: version)
     replacefilter(token: "@@vmoptions@@", value: args.vmoptions + " -Xverify:none -XX:+UseCompressedOOPS")
