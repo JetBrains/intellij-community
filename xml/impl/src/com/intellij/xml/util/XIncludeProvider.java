@@ -16,6 +16,8 @@
 package com.intellij.xml.util;
 
 import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.include.FileIncludeInfo;
 import com.intellij.psi.impl.include.FileIncludeProvider;
@@ -38,7 +40,8 @@ public class XIncludeProvider extends FileIncludeProvider {
 
   @Override
   public boolean acceptFile(VirtualFile file) {
-    return file.getFileType() == XmlFileType.INSTANCE;
+    FileType fileType = file.getFileType();
+    return fileType == XmlFileType.INSTANCE && !ProjectUtil.isProjectOrWorkspaceFile(file, fileType);
   }
 
   @NotNull
