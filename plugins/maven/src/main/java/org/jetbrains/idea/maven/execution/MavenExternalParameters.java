@@ -120,7 +120,7 @@ public class MavenExternalParameters {
     encodeCoreAndRunnerSettings(coreSettings, runnerSettings, list);
 
     if (runnerSettings.isSkipTests()) {
-      addProperty(list, "maven.test.skip", "true");
+      addProperty(list, "skipTests", "true");
     }
 
     for (Map.Entry<String, String> entry : runnerSettings.getMavenProperties().entrySet()) {
