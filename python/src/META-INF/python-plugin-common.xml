@@ -116,6 +116,12 @@
     <runnableScriptFilter implementation="com.jetbrains.python.testing.PythonUnitTestRunnableScriptFilter"/>
   </extensions>
 
+  <project-components>
+    <component>
+      <implementation-class>com.jetbrains.python.PythonPsiManager</implementation-class>
+    </component>
+  </project-components>
+
   <actions>
     <action
         id="Devmode.DumpPsi"
