@@ -40,7 +40,7 @@ public class MessageViewImpl implements MessageView {
   public MessageViewImpl(final Project project, final StartupManager startupManager, final ToolWindowManager toolWindowManager) {
     final Runnable runnable = new Runnable() {
       public void run() {
-        myToolWindow = toolWindowManager.registerToolWindow(ToolWindowId.MESSAGES_WINDOW, true, ToolWindowAnchor.BOTTOM, project);
+        myToolWindow = toolWindowManager.registerToolWindow(ToolWindowId.MESSAGES_WINDOW, true, ToolWindowAnchor.BOTTOM, project, true);
         myToolWindow.setIcon(IconLoader.getIcon("/general/toolWindowMessages.png"));
         new ContentManagerWatcher(myToolWindow, getContentManager());
         for (Runnable postponedRunnable : myPostponedRunnables) {

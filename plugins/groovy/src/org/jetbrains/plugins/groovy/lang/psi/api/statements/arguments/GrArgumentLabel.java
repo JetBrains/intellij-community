@@ -33,6 +33,7 @@ public interface GrArgumentLabel extends GroovyPsiElement, PsiReference {
   @NotNull
   PsiElement getNameElement();
 
+  @Nullable
   String getName();
 
   @Nullable

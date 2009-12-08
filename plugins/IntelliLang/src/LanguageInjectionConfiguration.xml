@@ -36,6 +36,26 @@
     <place><![CDATA[groovyElement().methodCallParameter(0, psiMethod().withName("query").definedInClass("groovy.sql.Sql"))]]></place>
     <place><![CDATA[groovyElement().methodCallParameter(0, psiMethod().withName("rows").definedInClass("groovy.sql.Sql"))]]></place>
   </injection>
+  <injection language="Groovy" injector-id="groovy">
+    <display-name>GroovyShell (groovy.lang)</display-name>
+    <place><![CDATA[groovyElement().methodCallParameter(0, psiMethod().withName("evaluate").withParameters("java.lang.String").definedInClass("groovy.lang.GroovyShell"))]]></place>
+    <place><![CDATA[groovyElement().methodCallParameter(0, psiMethod().withName("evaluate").withParameters("java.lang.String", "java.lang.String").definedInClass("groovy.lang.GroovyShell"))]]></place>
+    <place><![CDATA[groovyElement().methodCallParameter(0, psiMethod().withName("evaluate").withParameters("java.lang.String", "java.lang.String", "java.lang.String").definedInClass("groovy.lang.GroovyShell"))]]></place>
+    <place><![CDATA[groovyElement().methodCallParameter(0, psiMethod().withName("parse").withParameters("java.lang.String").definedInClass("groovy.lang.GroovyShell"))]]></place>
+    <place><![CDATA[groovyElement().methodCallParameter(0, psiMethod().withName("parse").withParameters("java.lang.String", "java.lang.String").definedInClass("groovy.lang.GroovyShell"))]]></place>
+    <place><![CDATA[groovyElement().methodCallParameter(0, psiMethod().withName("run").withParameters("java.lang.String", "java.lang.String", "java.lang.String[]").definedInClass("groovy.lang.GroovyShell"))]]></place>
+    <place><![CDATA[groovyElement().methodCallParameter(0, psiMethod().withName("run").withParameters("java.lang.String", "java.lang.String", "java.util.List").definedInClass("groovy.lang.GroovyShell"))]]></place>
+  </injection>
+  <injection language="Groovy" injector-id="java">
+    <display-name>GroovyShell (groovy.lang)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("evaluate").withParameters("java.lang.String").definedInClass("groovy.lang.GroovyShell"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("evaluate").withParameters("java.lang.String", "java.lang.String").definedInClass("groovy.lang.GroovyShell"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("evaluate").withParameters("java.lang.String", "java.lang.String", "java.lang.String").definedInClass("groovy.lang.GroovyShell"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("parse").withParameters("java.lang.String").definedInClass("groovy.lang.GroovyShell"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("parse").withParameters("java.lang.String", "java.lang.String").definedInClass("groovy.lang.GroovyShell"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("run").withParameters("java.lang.String", "java.lang.String", "java.lang.String[]").definedInClass("groovy.lang.GroovyShell"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("run").withParameters("java.lang.String", "java.lang.String", "java.util.List").definedInClass("groovy.lang.GroovyShell"))]]></place>
+  </injection>
   <injection language="SQL" injector-id="java">
     <display-name>BatchSqlUpdate (org.springframework.jdbc.object)</display-name>
     <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("BatchSqlUpdate").withParameters("javax.sql.DataSource", "java.lang.String").definedInClass("org.springframework.jdbc.object.BatchSqlUpdate"))]]></place>
@@ -333,6 +353,11 @@
   <injection language="SQL" injector-id="xml">
     <display-name>sql|select|insert|update|delete|statement</display-name>
     <place><![CDATA[xmlTag().withLocalName(string().matches("sql|select|insert|update|delete|statement")).withNamespace(string().matches("http://ibatis.apache.org/dtd/sql-map-2.dtd"))]]></place>
+    <apply-to-subtags />
+  </injection>
+  <injection language="SQL" injector-id="xml">
+    <display-name>iBatis3: sql|select|insert|update|delete</display-name>
+    <place><![CDATA[xmlTag().withLocalName(string().matches("sql|select|insert|update|delete")).withNamespace(string().matches("http://ibatis.apache.org/dtd/ibatis-3-mapper.dtd"))]]></place>
     <apply-to-subtags />
   </injection>
   <injection language="CSS" injector-id="xml">

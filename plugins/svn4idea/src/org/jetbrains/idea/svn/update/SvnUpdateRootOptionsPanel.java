@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.FilePath;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.actions.SelectBranchPopup;
+import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.dialogs.SelectLocationDialog;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
@@ -125,7 +126,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
       return;
     }
     SelectBranchPopup.show(myVcs.getProject(), myRoot.getVirtualFile(), new SelectBranchPopup.BranchSelectedCallback() {
-      public void branchSelected(final Project project, final SvnBranchConfiguration configuration, final String url, final long revision) {
+      public void branchSelected(final Project project, final SvnBranchConfigurationNew configuration, final String url, final long revision) {
         recalculateUrl(url);
         myBranchField.setText(SVNPathUtil.tail(url));
       }

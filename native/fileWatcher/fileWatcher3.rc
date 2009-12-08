@@ -73,7 +73,7 @@ BEGIN
             VALUE "FileDescription", "File System Notification Processor"
             VALUE "FileVersion", "1, 0, 0, 1"
             VALUE "InternalName", "fsnotifier"
-            VALUE "LegalCopyright", "Copyright (C) 2008 JetBrains, Inc."
+            VALUE "LegalCopyright", "Copyright (C) 2008-09 JetBrains, Inc."
             VALUE "OriginalFilename", "fsnotifier.exe"
             VALUE "ProductName", "IntelliJ IDEA"
             VALUE "ProductVersion", "1, 0, 0, 1"

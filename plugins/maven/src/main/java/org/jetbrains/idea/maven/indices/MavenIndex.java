@@ -18,8 +18,10 @@ package org.jetbrains.idea.maven.indices;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.*;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -397,7 +399,10 @@ public class MavenIndex {
       myUpdateTimestamp = System.currentTimeMillis();
 
       oldData.close();
-      FileUtil.delete(getDataDir(oldDataDir));
+      for (File each : getAllDataDirs()) {
+        if (each.getName().equals(newDataDirName)) continue;
+        FileUtil.delete(each);
+      }
     }
   }
 
@@ -491,6 +496,16 @@ public class MavenIndex {
 
   private String findAvailableDataDirName() {
     return MavenIndices.findAvailableDir(myDir, DATA_DIR_PREFIX, 100).getName();
+  }
+
+  private Iterable<File> getAllDataDirs() {
+    File[] children = myDir.listFiles();
+    if (children == null) return ContainerUtil.emptyIterable();
+    return ContainerUtil.iterate(children, new Condition<File>() {
+      public boolean value(File file) {
+        return file.getName().startsWith(DATA_DIR_PREFIX);
+      }
+    });
   }
 
   public synchronized void addArtifact(final File artifactFile) {
@@ -709,7 +724,7 @@ public class MavenIndex {
       IOException[] exceptions = new IOException[1];
 
       try {
-        myIndexer.removeIndexingContext(context, false);
+        if (context!= null) myIndexer.removeIndexingContext(context, false);
       }
       catch (IOException e) {
         MavenLog.LOG.info(e);

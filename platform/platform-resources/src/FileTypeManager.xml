@@ -443,7 +443,7 @@
         <keywords4/>
       </highlighting>
     </filetype>
-    <filetype binary="false" default_extension="aj" extensions="aj" description="AspecJ files" name="AspectJ" icon="/fileTypes/javaScript.png">
+    <filetype binary="false" default_extension="aj" extensions="aj" description="AspectJ files" name="AspectJ" icon="/fileTypes/javaScript.png">
       <highlighting>
         <options>
           <option name="LINE_COMMENT" value="//"/>

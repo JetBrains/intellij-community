@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -33,7 +34,6 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.AsyncProcessIcon;
-import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -45,6 +45,7 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -79,17 +80,16 @@ public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
 
     myProgressIcon = new AsyncProcessIcon("Background process");
     myProgressIcon.setOpaque(true);
-    new BaseButtonBehavior(myProgressIcon) {
-      protected void execute(final MouseEvent e) {
-        triggerPopupShowing();
-      }
 
-      protected void pass(final MouseEvent e) {
-        if (myOriginals.size() == 1 && UIUtil.isCloseClick(e)) {
-          myOriginals.get(0).cancel();
+    myProgressIcon.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mousePressed(MouseEvent e) {
+        if (!myPopup.isShowing()) {
+          openProcessPopup();
         }
       }
-    };
+    });
+
     myProgressIcon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
     StatusBarTooltipper.install(this, myProgressIcon, statusBar);
@@ -281,9 +281,20 @@ public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         Component comp = InfoAndProgressPanel.this;
-        int offset = comp.getHeight() / 2;
-        Point point = new Point(comp.getWidth() - offset, comp.getHeight() - offset);
-        balloon.show(new RelativePoint(comp, point), Balloon.Position.above);
+        if (comp.isShowing()) {
+          int offset = comp.getHeight() / 2;
+          Point point = new Point(comp.getWidth() - offset, comp.getHeight() - offset);
+          balloon.show(new RelativePoint(comp, point), Balloon.Position.above);
+        } else {
+          final JRootPane rootPane = SwingUtilities.getRootPane(comp);
+          if (rootPane != null && rootPane.isShowing()) {
+            final Container contentPane = rootPane.getContentPane();
+            final Rectangle bounds = contentPane.getBounds();
+            final Point target = UIUtil.getCenterPoint(bounds, new Dimension(1, 1));
+            target.y = bounds.height - 3;
+            balloon.show(new RelativePoint(contentPane, target), Balloon.Position.above);
+          }
+        }
       }
     });
 
@@ -339,17 +350,14 @@ public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
     myOriginal2Inlines.put(original, inline);
 
     if (compact) {
-      new BaseButtonBehavior(inline.getComponent()) {
-        protected void execute(final MouseEvent e) {
-          triggerPopupShowing();
-        }
-
-        protected void pass(final MouseEvent e) {
-          if (UIUtil.isCloseClick(e)) {
-            inline.cancelRequest();
+      inline.getComponent().addMouseListener(new MouseAdapter() {
+        @Override
+        public void mousePressed(MouseEvent e) {
+          if (!myPopup.isShowing()) {
+            openProcessPopup();
           }
         }
-      };
+      });
     }
 
     return inline;

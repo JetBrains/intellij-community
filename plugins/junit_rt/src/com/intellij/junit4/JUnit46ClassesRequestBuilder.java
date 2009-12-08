@@ -20,20 +20,23 @@
  */
 package com.intellij.junit4;
 
-import org.junit.runner.Computer;
+import org.junit.internal.builders.AllDefaultPossibilitiesBuilder;
 import org.junit.runner.Request;
-import org.junit.runners.Suite;
+import org.junit.runner.Runner;
 import org.junit.runners.model.InitializationError;
-import org.junit.runners.model.RunnerBuilder;
 
 public class JUnit46ClassesRequestBuilder {
-  
+  private JUnit46ClassesRequestBuilder() {}
+
   public static Request getClassesRequest(final String suiteName, Class[] classes) {
-    return Request.classes(new Computer() {
-      public Suite getSuite(final RunnerBuilder builder, Class[] classes) throws InitializationError {
-        return new IdeaSuite(builder, classes, suiteName);
-      }
-    }, classes);
+    try {
+      final AllDefaultPossibilitiesBuilder builder = new AllDefaultPossibilitiesBuilder(true);
+      final Runner suite = new IdeaSuite(builder, classes, suiteName);
+      return Request.runner(suite);
+    }
+    catch (InitializationError e) {
+      throw new RuntimeException(e);
+    }
   }
 
 }

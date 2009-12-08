@@ -89,11 +89,11 @@ public class IncrementalSearchHandler {
       EditorActionManager actionManager = EditorActionManager.getInstance();
 
       TypedAction typedAction = actionManager.getTypedAction();
-      typedAction.setupHandler(new IncrementalSearchHandler.MyTypedHandler(typedAction.getHandler()));
+      typedAction.setupHandler(new MyTypedHandler(typedAction.getHandler()));
 
-      actionManager.setActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE, new IncrementalSearchHandler.BackSpaceHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE)));
-      actionManager.setActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_UP, new IncrementalSearchHandler.UpHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)));
-      actionManager.setActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN, new IncrementalSearchHandler.DownHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)));
+      actionManager.setActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE, new BackSpaceHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE)));
+      actionManager.setActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_UP, new UpHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)));
+      actionManager.setActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN, new DownHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)));
     }
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.incremental.search");
@@ -203,36 +203,12 @@ public class IncrementalSearchHandler {
     return false;
   }
 
-  static class CharArrayBackedCharSequence implements CharSequence {
-    private final char[] array;
-    private final int from;
-    private final int end;
-
-    CharArrayBackedCharSequence(char[] _array, int _from, int _end) {
-      array = _array;
-      from = _from;
-      end = _end;
-    }
-
-    public int length() {
-      return end - from;
-    }
-
-    public char charAt(int index) {
-      return array[from+index];
-    }
-
-    public CharSequence subSequence(int start, int end) {
-      return new CharArrayBackedCharSequence(array,start+from,start+end);
-    }
-
-  }
   private static void updatePosition(Editor editor, PerHintSearchData data, boolean nothingIfFailed, boolean searchBack) {
     final String prefix = data.label.getText();
     int matchLength = prefix.length();
     int index;
 
-    if (matchLength == 0){
+    if (matchLength == 0) {
       index = data.searchStart;
     }
     else {
@@ -242,51 +218,51 @@ public class IncrementalSearchHandler {
       final boolean caseSensitive = detectSmartCaseSensitive(prefix);
 
       if (acceptableRegExp(prefix)) {
-        final @NonNls StringBuffer buf = new StringBuffer(prefix.length());
+        @NonNls final StringBuffer buf = new StringBuffer(prefix.length());
         final int len = prefix.length();
 
-        for(int i=0;i<len;++i) {
+        for (int i = 0; i < len; ++i) {
           final char ch = prefix.charAt(i);
 
           // bother only * withing text
-          if (ch=='*' && i!=0 && i!=len-1) {
+          if (ch == '*' && i != 0 && i != len - 1) {
             buf.append("\\w");
           }
-          else if ("{}[].+^$*()?".indexOf(ch)!=-1) {
+          else if ("{}[].+^$*()?".indexOf(ch) != -1) {
             // do not bother with other metachars
             buf.append('\\');
           }
           buf.append(ch);
         }
 
-        Pattern pattern;
-
         try {
-          pattern = Pattern.compile(buf.toString(),(caseSensitive)? 0 : Pattern.CASE_INSENSITIVE);
+          Pattern pattern = Pattern.compile(buf.toString(), caseSensitive ? 0 : Pattern.CASE_INSENSITIVE);
           Matcher matcher = pattern.matcher(text);
           if (searchBack) {
             int lastStart = -1;
             int lastEnd = -1;
 
-            while(matcher.find() && matcher.start() < data.searchStart) {
+            while (matcher.find() && matcher.start() < data.searchStart) {
               lastStart = matcher.start();
               lastEnd = matcher.end();
             }
 
             index = lastStart;
             matchLength = lastEnd - lastStart;
-          } else if(matcher.find(data.searchStart) ||
-                    !nothingIfFailed && matcher.find(0)
-                   ) {
+          }
+          else if (matcher.find(data.searchStart) || !nothingIfFailed && matcher.find(0)) {
             index = matcher.start();
             matchLength = matcher.end() - matcher.start();
-          } else {
+          }
+          else {
             index = -1;
           }
-        } catch(PatternSyntaxException ex) {
+        }
+        catch (PatternSyntaxException ex) {
           index = -1; // let the user to make the garbage pattern
         }
-      } else {
+      }
+      else {
         StringSearcher searcher = new StringSearcher(prefix, caseSensitive, !searchBack);
 
         if (searchBack) {
@@ -294,27 +270,28 @@ public class IncrementalSearchHandler {
         }
         else {
           index = searcher.scan(text.subSequence(data.searchStart, length));
-          index = (index < 0) ? -1 : index + data.searchStart;
+          index = index < 0 ? -1 : index + data.searchStart;
         }
-        if (index < 0 && !nothingIfFailed){
+        if (index < 0 && !nothingIfFailed) {
           index = searcher.scan(text);
         }
       }
     }
 
     if (nothingIfFailed && index < 0) return;
-    if (data.segmentHighlighter != null){
+    if (data.segmentHighlighter != null) {
       editor.getMarkupModel().removeHighlighter(data.segmentHighlighter);
       data.segmentHighlighter = null;
     }
-    if (index < 0){
+    if (index < 0) {
       data.label.setForeground(Color.red);
     }
-    else{
+    else {
       data.label.setForeground(Color.black);
-      if (matchLength > 0){
+      if (matchLength > 0) {
         TextAttributes attributes = editor.getColorsScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-        data.segmentHighlighter = editor.getMarkupModel().addRangeHighlighter(index, index + matchLength, HighlighterLayer.LAST + 1, attributes, HighlighterTargetArea.EXACT_RANGE);
+        data.segmentHighlighter = editor.getMarkupModel()
+          .addRangeHighlighter(index, index + matchLength, HighlighterLayer.LAST + 1, attributes, HighlighterTargetArea.EXACT_RANGE);
       }
       data.ignoreCaretMove = true;
       editor.getCaretModel().moveToOffset(index);
@@ -446,7 +423,7 @@ public class IncrementalSearchHandler {
 
     public boolean isEnabled(Editor editor, DataContext dataContext) {
       PerEditorSearchData data = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
-      return (data != null && data.hint != null) || myOriginalHandler.isEnabled(editor, dataContext);
+      return data != null && data.hint != null || myOriginalHandler.isEnabled(editor, dataContext);
     }
   }
 
@@ -477,7 +454,7 @@ public class IncrementalSearchHandler {
 
     public boolean isEnabled(Editor editor, DataContext dataContext) {
       PerEditorSearchData data = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
-      return (data != null && data.hint != null) || myOriginalHandler.isEnabled(editor, dataContext);
+      return data != null && data.hint != null || myOriginalHandler.isEnabled(editor, dataContext);
     }
   }
 }

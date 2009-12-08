@@ -137,7 +137,7 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
         rc = delegate.tryJoinLines(doc, psiFile, start, end);
         if (rc != -1) break;
       }
-      PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(doc);
+      docManager.doPostponedOperationsAndUnblockDocument(doc);
 
       if (rc != -1) {
         if (caretRestoreOffset == -1) caretRestoreOffset = rc;
@@ -185,6 +185,7 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
       }
 
       if (prevLineCount < doc.getLineCount()) {
+        docManager.doPostponedOperationsAndUnblockDocument(doc);
         end = doc.getLineEndOffset(startLine) + doc.getLineSeparatorLength(startLine);
         start = end - doc.getLineSeparatorLength(startLine);
         int addedLinesCount = doc.getLineCount() - prevLineCount - 1;

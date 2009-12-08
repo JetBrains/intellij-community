@@ -26,6 +26,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -34,13 +35,13 @@ public class ConflictsUtil {
   private ConflictsUtil() {
   }
 
-  @Nullable
-  public static PsiMember getContainer(PsiElement place) {
+  @NotNull
+  public static PsiElement getContainer(PsiElement place) {
     PsiElement parent = place;
     while (true) {
       if (parent instanceof PsiMember && !(parent instanceof PsiTypeParameter))
-        return (PsiMember)parent;
-      if (parent instanceof PsiFile) return null;
+        return parent;
+      if (parent instanceof PsiFile) return parent;
       parent = parent.getParent();
     }
   }

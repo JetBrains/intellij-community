@@ -20,6 +20,7 @@ package org.jetbrains.idea.maven.execution;
 
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.SortedList;
@@ -112,7 +113,7 @@ public class MavenRunnerSettings implements Cloneable {
 
     SortedList<Sdk> sorted = new SortedList<Sdk>(new Comparator<Sdk>() {
       public int compare(Sdk o1, Sdk o2) {
-        return o2.getVersionString().compareTo(o1.getVersionString());
+        return Comparing.compare(o2.getVersionString(), o1.getVersionString());
       }
     });
     sorted.addAll(definedJdks);

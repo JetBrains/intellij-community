@@ -37,12 +37,20 @@ public class UpdaterTreeState {
 
   private boolean myCanRunRestore = true;
 
+  private WeakHashMap<Object, Object> myAdjustmentCause2Adjustment = new WeakHashMap<Object, Object>();
+
   public UpdaterTreeState(AbstractTreeUi ui) {
+    this(ui, false);
+  }
+
+  public UpdaterTreeState(AbstractTreeUi ui, boolean isEmpty) {
     myUi = ui;
 
-    final JTree tree = myUi.getTree();
-    putAll(addPaths(tree.getSelectionPaths()), myToSelect);
-    putAll(addPaths(tree.getExpandedDescendants(new TreePath(tree.getModel().getRoot()))), myToExpand);
+    if (!isEmpty) {
+      final JTree tree = myUi.getTree();
+      putAll(addPaths(tree.getSelectionPaths()), myToSelect);
+      putAll(addPaths(tree.getExpandedDescendants(new TreePath(tree.getModel().getRoot()))), myToExpand);
+    }
   }
 
   private static void putAll(final Set<Object> source, final Map<Object, Object> target) {
@@ -135,7 +143,9 @@ public class UpdaterTreeState {
   }
 
   public boolean restore(@Nullable DefaultMutableTreeNode actionNode) {
-    if (isProcessingNow() || !myCanRunRestore || myUi.hasNodesToUpdate()) return false;
+    if (isProcessingNow() || !myCanRunRestore || myUi.hasNodesToUpdate()) {
+      return false;
+    }
 
     invalidateToSelectWithRefsToParent(actionNode);
 
@@ -192,7 +202,7 @@ public class UpdaterTreeState {
             if (!children.contains(eachToSelect)) {
               toSelect.remove();
               if (!myToSelect.containsKey(readyElement) && !myUi.getSelectedElements().contains(eachToSelect)) {
-                addAdjustedSelection(eachToSelect, Condition.FALSE);
+                addAdjustedSelection(eachToSelect, Condition.FALSE, null);
               }
             }
           }
@@ -257,7 +267,7 @@ public class UpdaterTreeState {
               if (myUi.isInStructure(o) && !adjusted.get(o).value(o)) {
                 hangByParent.add(o);
               } else {
-                addAdjustedSelection(o, adjusted.get(o));
+                addAdjustedSelection(o, adjusted.get(o), null);
               }
               return null;
             }
@@ -278,7 +288,12 @@ public class UpdaterTreeState {
 
     ActionCallback result = new ActionCallback(elements.size());
     for (Iterator<Object> iterator = elements.iterator(); iterator.hasNext();) {
-      processHangByParent(iterator.next()).notify(result);
+      Object hangElement = iterator.next();
+      if (!myAdjustmentCause2Adjustment.containsKey(hangElement)) {
+        processHangByParent(hangElement).notify(result);
+      } else {
+        result.setDone();
+      }
     }
     return result;
   }
@@ -329,8 +344,11 @@ public class UpdaterTreeState {
     myToSelect.put(element, element);
   }
 
-  public void addAdjustedSelection(final Object element, Condition isExpired) {
+  public void addAdjustedSelection(final Object element, Condition isExpired, @Nullable Object adjustmentCause) {
     myAdjustedSelection.put(element, isExpired);
+    if (adjustmentCause != null) {
+      myAdjustmentCause2Adjustment.put(adjustmentCause, element);
+    }
   }
 
   @Override
@@ -347,5 +365,10 @@ public class UpdaterTreeState {
     if (!isProcessingNow()) {
       myUi.maybeReady();
     }
+  }
+
+  public void removeFromSelection(Object element) {
+    myToSelect.remove(element);
+    myAdjustedSelection.remove(element);
   }
 }

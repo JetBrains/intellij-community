@@ -344,8 +344,6 @@
     <applicationService serviceInterface="com.intellij.packaging.elements.PackagingElementFactory"
                         serviceImplementation="com.intellij.packaging.impl.elements.PackagingElementFactoryImpl"/>
 
-    <projectService serviceInterface="com.intellij.packaging.artifacts.ArtifactManager"
-                    serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactManagerImpl"/>
     <projectService serviceInterface="com.intellij.packaging.artifacts.ArtifactPointerManager"
                     serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactPointerManagerImpl"/>
     <projectService serviceInterface="com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinder"
@@ -987,7 +985,7 @@
 
     <renameHandler implementation="com.intellij.refactoring.rename.DirectoryAsPackageRenameHandler"/>
     <rename.inplace.resolveSnapshotProvider
-            language="Java"
+            language="JAVA"
             implementationClass="com.intellij.refactoring.rename.inplace.JavaResolveSnapshotProvider"
     />
     <updateAddedFileProcessor implementation="com.intellij.psi.impl.file.JavaUpdateAddedFileProcessor"/>

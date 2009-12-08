@@ -301,6 +301,10 @@ public class ContainerUtil {
     };
   }
 
+  public static <T> Iterable<T> iterate(T[] arrays, final Condition<? super T> condition) {
+    return iterate(Arrays.asList(arrays), condition);
+  }
+
   public static <T> Iterable<T> iterate(final Collection<? extends T> collection, final Condition<? super T> condition) {
     if (collection.isEmpty()) return emptyIterable();
     return new Iterable<T>() {

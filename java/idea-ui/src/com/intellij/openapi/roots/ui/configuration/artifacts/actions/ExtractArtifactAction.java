@@ -21,6 +21,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeComponent;
 import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeSelection;
+import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.packaging.artifacts.ArtifactPointerManager;
 import com.intellij.packaging.artifacts.ModifiableArtifact;
@@ -50,8 +51,10 @@ public class ExtractArtifactAction extends LayoutTreeActionBase {
     final LayoutTreeSelection selection = treeComponent.getSelection();
     final CompositePackagingElement<?> parent = selection.getCommonParentElement();
     if (parent == null) return;
+    final PackagingElementNode<?> parentNode = selection.getNodes().get(0).getParentNode();
+    if (parentNode == null) return;
 
-    if (!treeComponent.checkCanRemove(selection.getNodes())) {
+    if (!treeComponent.checkCanModifyChildren(parent, parentNode, selection.getNodes())) {
       return;
     }
 

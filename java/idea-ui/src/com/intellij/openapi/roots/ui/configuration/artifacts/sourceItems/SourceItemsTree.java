@@ -24,6 +24,7 @@ import com.intellij.ide.dnd.DnDSource;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorImpl;
 import com.intellij.openapi.roots.ui.configuration.artifacts.SimpleDnDAwareTree;
@@ -60,7 +61,9 @@ public class SourceItemsTree implements DnDSource, Disposable{
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     Disposer.register(this, myBuilder);
-    DnDManager.getInstance().registerSource(this, myTree);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      DnDManager.getInstance().registerSource(this, myTree);
+    }
     PopupHandler.installPopupHandler(myTree, createPopupGroup(), ActionPlaces.UNKNOWN, ActionManager.getInstance());
   }
 
@@ -95,7 +98,9 @@ public class SourceItemsTree implements DnDSource, Disposable{
   }
 
   public void dispose() {
-    DnDManager.getInstance().unregisterSource(this, myTree);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      DnDManager.getInstance().unregisterSource(this, myTree);
+    }
   }
 
   private DefaultMutableTreeNode[] getSelectedTreeNodes() {

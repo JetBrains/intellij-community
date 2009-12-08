@@ -69,9 +69,9 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     }
 
     if (elements.length == 1) {
-      Navigatable descriptor = EditSourceUtil.getDescriptor(elements[0]);
+      Navigatable descriptor = elements[0] instanceof Navigatable ? (Navigatable) elements[0] : EditSourceUtil.getDescriptor(elements[0]);
       if (descriptor != null && descriptor.canNavigate()) {
-        descriptor.navigate(true);
+        navigateToElement(descriptor);
       }
     }
     else {
@@ -103,9 +103,9 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
           if (ids == null || ids.length == 0) return;
           Object[] selectedElements = list.getSelectedValues();
           for (Object element : selectedElements) {
-            Navigatable descriptor = EditSourceUtil.getDescriptor((PsiElement)element);
+            Navigatable descriptor = element instanceof Navigatable ? (Navigatable) element : EditSourceUtil.getDescriptor((PsiElement)element);
             if (descriptor != null && descriptor.canNavigate()) {
-              descriptor.navigate(true);
+              navigateToElement(descriptor);
             }
           }
         }
@@ -119,6 +119,10 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
           setMovable(true).
           createPopup().showInBestPositionFor(editor);
     }
+  }
+
+  protected void navigateToElement(Navigatable descriptor) {
+    descriptor.navigate(true);
   }
 
   protected boolean shouldSortResult() {

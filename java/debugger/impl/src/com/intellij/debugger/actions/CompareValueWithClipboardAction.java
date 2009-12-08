@@ -16,10 +16,10 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -29,6 +29,7 @@ import java.awt.datatransfer.Transferable;
  * @author Jeka
  */
 public class CompareValueWithClipboardAction extends BaseValueAction {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.actions.CompareValueWithClipboardAction");
   protected void processText(final Project project, final String text) {
     DiffManager.getInstance().getDiffTool().show(new ClipboardSelectionContents(text, project));
   }
@@ -65,16 +66,16 @@ public class CompareValueWithClipboardAction extends BaseValueAction {
       return DebuggerBundle.message("diff.clipboard.vs.value.dialog.title");
     }
 
-    @Nullable
     private static DiffContent createClipboardContent() {
       Transferable content = CopyPasteManager.getInstance().getContents();
-      String text;
+      String text = "";
       try {
         text = (String) (content.getTransferData(DataFlavor.stringFlavor));
-      } catch (Exception e) {
-        return null;
       }
-      return text != null ? new SimpleContent(text) : null;
+      catch (Exception e) {
+        LOG.info(e);
+      }
+      return new SimpleContent(text);
     }
   }
 }

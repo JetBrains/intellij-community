@@ -74,13 +74,17 @@ public class CollectHighlightsUtil {
     final PsiElementVisitor visitor = new PsiRecursiveElementVisitor() {
       int offset = currentOffset;
       @Override public void visitElement(PsiElement element) {
+        ProgressManager.checkCanceled();
         for (Condition<PsiElement> filter : filters) {
           if (!filter.value(element)) return;
         }
 
         PsiElement child = element.getFirstChild();
-        if (child != null) {
-          ProgressManager.checkCanceled();
+        if (child == null) {
+          // leaf element
+          offset += element.getTextLength();
+        }
+        else {
           // composite element
           while (child != null) {
             if (offset > endOffset) break;
@@ -91,10 +95,6 @@ public class CollectHighlightsUtil {
 
             child = child.getNextSibling();
           }
-        }
-        else {
-          // leaf element
-          offset += element.getTextLength();
         }
       }
     };

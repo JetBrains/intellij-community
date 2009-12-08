@@ -799,6 +799,8 @@ public class LibraryTableEditor implements Disposable, LibraryEditorListener {
       super(parent, true);
       setTitle(myLibraryTableProvider.getLibraryTablePresentation().getLibraryTableEditorTitle());
       init();
+      
+      Disposer.register(getDisposable(), LibraryTableEditor.this);
     }
 
     @SuppressWarnings({"RefusedBequest"})
@@ -838,11 +840,6 @@ public class LibraryTableEditor implements Disposable, LibraryEditorListener {
       }
       commitChanges();
       super.doOKAction();
-      ApplicationManager.getApplication().invokeLater(new Runnable(){
-        public void run() {
-          Disposer.dispose(LibraryTableEditor.this);
-        }
-      });
     }
 
     protected JComponent createNorthPanel() {

@@ -156,6 +156,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     myComponentHint.setShouldDelay(delay);
 
     HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
+
     PriorityQuestionAction action = new PriorityQuestionAction() {
       public boolean execute() {
         showPopup();
@@ -163,7 +164,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
       }
 
       public int getPriority() {
-        return 0;
+        return -10;
       }
     };
     if (hintManager.canShowQuestionAction(action)) {

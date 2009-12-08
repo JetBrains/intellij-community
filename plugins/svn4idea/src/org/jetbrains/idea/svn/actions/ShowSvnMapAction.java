@@ -16,16 +16,16 @@
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.dialogs.SvnMapDialog;
 
-public class ShowSvnMapAction extends AnAction {
+public class ShowSvnMapAction extends AnAction implements DumbAware {
   @Override
   public void update(final AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
-    final Project project = (Project) dataContext.getData(PlatformDataKeys.PROJECT.getName());
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
 
     final Presentation presentation = e.getPresentation();
     presentation.setVisible(project != null);
@@ -37,8 +37,7 @@ public class ShowSvnMapAction extends AnAction {
   }
 
   public void actionPerformed(final AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
-    final Project project = (Project) dataContext.getData(PlatformDataKeys.PROJECT.getName());
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) {
       return;
     }

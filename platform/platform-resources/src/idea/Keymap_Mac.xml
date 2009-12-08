@@ -408,5 +408,13 @@
     <action id="EditorScrollDown"/>  <!-- Disables meta down -->
     <action id="FindWordAtCaret"/> <!-- Disables meta F3 -->
 
+    <action id="$Undo">
+      <keyboard-shortcut first-keystroke="meta Z"/> <!-- Disables alt backspace -->
+    </action>
+
+    <action id="QuickChangeScheme">
+      <keyboard-shortcut first-keystroke="control BACK_QUOTE"/>
+    </action>
+
   </keymap>
 </component>

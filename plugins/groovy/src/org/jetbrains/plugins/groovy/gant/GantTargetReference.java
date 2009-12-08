@@ -62,7 +62,8 @@ public class GantTargetReference implements PsiPolyVariantReference {
     ArrayList<ResolveResult> res = new ArrayList<ResolveResult>();
     final GroovyFile groovyFile = (GroovyFile)file;
     for (GrArgumentLabel label : GantUtils.getScriptTargets(groovyFile)) {
-      if (label.getName().equals(myRefExpr.getName())) {
+      final String name = label.getName();
+      if (name != null && name.equals(myRefExpr.getName())) {
         res.add(new GroovyResolveResultImpl(label, true));
       }
     }
@@ -128,7 +129,9 @@ public class GantTargetReference implements PsiPolyVariantReference {
       final GroovyFile groovyFile = (GroovyFile)file;
       for (GrArgumentLabel label : GantUtils.getScriptTargets(groovyFile)) {
         String name = label.getName();
-        pageProperties.add(LookupElementBuilder.create(name).setIcon(GantIcons.GANT_TASK));
+        if (name != null) {
+          pageProperties.add(LookupElementBuilder.create(name).setIcon(GantIcons.GANT_TASK));
+        }
       }
       for (String taskName : AntTasksProvider.getInstance(file.getProject()).getAntTasks()) {
         final String name = StringUtil.decapitalize(taskName);
@@ -139,6 +142,7 @@ public class GantTargetReference implements PsiPolyVariantReference {
   }
 
 
+  @NotNull
   public Object[] getVariants() {
     GrExpression qualifier = myRefExpr.getQualifierExpression();
     if (qualifier == null && !(myRefExpr.getParent() instanceof GrReferenceExpression)) {

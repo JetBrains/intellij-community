@@ -46,12 +46,13 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
   private final MergingUpdateQueue myUpdateQueue;
 
   private long myUpdateCount;
+  private boolean myReleaseRequested;
 
   public AbstractTreeUpdater(AbstractTreeBuilder treeBuilder) {
     myTreeBuilder = treeBuilder;
     final JTree tree = myTreeBuilder.getTree();
     final JComponent component = tree instanceof TreeTableTree ? ((TreeTableTree)tree).getTreeTable() : tree;
-    myUpdateQueue = new MergingUpdateQueue("UpdateQueue", 300, component.isShowing(), component) {
+    myUpdateQueue = new MergingUpdateQueue("UpdateQeue", 300, component.isShowing(), component) {
       @Override
       protected Alarm createAlarm(Alarm.ThreadToUse thread, Disposable parent) {
         return new Alarm(thread, parent) {
@@ -96,13 +97,10 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
   }
 
   public synchronized void addSubtreeToUpdate(@NotNull TreeUpdatePass toAdd) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("addSubtreeToUpdate:" + toAdd.getNode());
-    }
+    if (myReleaseRequested) return;
 
     assert !toAdd.isExpired();
-
-
+    
     final AbstractTreeUi ui = myTreeBuilder.getUi();
 
     if (ui.isUpdatingNow(toAdd.getNode())) {
@@ -112,17 +110,17 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
       for (Iterator<TreeUpdatePass> iterator = myNodeQueue.iterator(); iterator.hasNext();) {
         final TreeUpdatePass passInQueue = iterator.next();
 
-
         if (passInQueue == toAdd) {
-          return;
+          toAdd.expire();
+          break;
         }
         else if (passInQueue.getNode() == toAdd.getNode()) {
           toAdd.expire();
-          return;
+          break;
         }
         else if (toAdd.getNode().isNodeAncestor(passInQueue.getNode())) {
           toAdd.expire();
-          return;
+          break;
         }
         else if (passInQueue.getNode().isNodeAncestor(toAdd.getNode())) {
           iterator.remove();
@@ -151,7 +149,10 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
     }
 
 
-    if (toAdd.isExpired()) return;
+    if (toAdd.isExpired()) {
+      requeueViewUpdateIfNeeded();
+      return;
+    }
 
 
     myNodeQueue.add(toAdd);
@@ -159,6 +160,16 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
     myUpdateCount = newUpdateCount;
     toAdd.setUpdateStamp(myUpdateCount);
 
+    requeueViewUpdate();
+  }
+
+  private void requeueViewUpdateIfNeeded() {
+    if (myUpdateQueue.isEmpty() && !myNodeQueue.isEmpty()) {
+      requeueViewUpdate();
+    }
+  }
+
+  private void requeueViewUpdate() {
     queue(new Update("ViewUpdate") {
       public boolean isExpired() {
         return myTreeBuilder.isDisposed();
@@ -167,16 +178,18 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
       public void run() {
         if (myTreeBuilder.getTreeStructure().hasSomethingToCommit()) {
           myTreeBuilder.getTreeStructure().commit();
-          queue(this);
+          requeueViewUpdateIfNeeded();
           return;
         }
         try {
           performUpdate();
         }
         catch (ProcessCanceledException e) {
+          requeueViewUpdateIfNeeded();
           throw e;
         }
         catch (RuntimeException e) {
+          requeueViewUpdateIfNeeded();
           LOG.error(myTreeBuilder.getClass().getName(), e);
         }
       }
@@ -347,5 +360,13 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
         request.reject();
       }
     });
+  }
+
+  public void requestRelease() {
+    myReleaseRequested = true;
+
+    myNodeQueue.clear();
+    myUpdateQueue.cancelAllUpdates();
+    myUpdateQueue.deactivate();
   }
 }

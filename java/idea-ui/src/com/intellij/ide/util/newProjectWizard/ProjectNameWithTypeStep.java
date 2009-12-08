@@ -169,7 +169,7 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
           myModuleNameChangedByUser = true;
         }
         String path = getDefaultBaseDir(wizardContext);
-        if (!Comparing.strEqual(myModuleName.getText().trim(), myNamePathComponent.getNameValue())) {
+        if (path.length() > 0 && !Comparing.strEqual(myModuleName.getText().trim(), myNamePathComponent.getNameValue())) {
           path += "/" + myModuleName.getText();
         }
         if (!myContentRootChangedByUser) {
@@ -251,8 +251,10 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
       final Project project = wizardContext.getProject();
       assert project != null;
       final VirtualFile baseDir = project.getBaseDir();
-      assert baseDir != null;
-      return baseDir.getPath();
+      if (baseDir != null) {
+        return baseDir.getPath();
+      }
+      return "";
     }
   }
 

@@ -164,6 +164,7 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
   public void testspecial$map5() throws Throwable { doTest(); }
   public void testspecial$map6() throws Throwable { doTest(); }
   public void testspecial$map7() throws Throwable { doTest(); }
+  public void testspecial$map8() throws Throwable { doTest(); }
   public void testspecial$paren13() throws Throwable { doTest(); }
   public void testtypecast$castToObject() throws Throwable { doTest(); }
   public void testtypecast$una1() throws Throwable { doTest(); }

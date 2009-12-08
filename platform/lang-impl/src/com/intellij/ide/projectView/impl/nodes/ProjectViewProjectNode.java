@@ -22,10 +22,12 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +50,13 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
     Set<Module> modules = new LinkedHashSet<Module>(topLevelContentRoots.size());
 
     for (VirtualFile root : topLevelContentRoots) {
-      modules.add(ModuleUtil.findModuleForFile(root, myProject));
+      final Module module = ModuleUtil.findModuleForFile(root, myProject);
+      if (module != null) {
+        modules.add(module);
+      }
+      else {
+        LOG.error("Cannot find module for file, which is reported as content root. Path: " + root.getPresentableUrl());
+      }
     }
 
     ArrayList<AbstractTreeNode> nodes = new ArrayList<AbstractTreeNode>();
@@ -121,6 +129,14 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
 
   protected AbstractTreeNode createModuleGroup(final Module module)
     throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+    final VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
+    if (roots.length == 1) {
+      final PsiDirectory psi = PsiManager.getInstance(myProject).findDirectory(roots[0]);
+      if (psi != null) {
+        return createTreeNode(PsiDirectoryNode.class, myProject, psi, getSettings());
+      }
+    }
+
     return createTreeNode(ProjectViewModuleNode.class, getProject(), module, getSettings());
   }
 

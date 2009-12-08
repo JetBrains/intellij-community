@@ -126,7 +126,7 @@ public class OldReferenceResolver {
           if (subj.getParent() != parameterList) return;
           int index = parameterList.getParameterIndex((PsiParameter)subj);
           if (index < 0) return;
-          if (index < parameters.length) {
+          if (index < myActualArgs.length) {
             PsiExpression actualArg = myActualArgs[index];
             int copyingSafetyLevel = RefactoringUtil.verifySafeCopyExpression(actualArg);
             if (copyingSafetyLevel == RefactoringUtil.EXPR_COPY_PROHIBITED) {

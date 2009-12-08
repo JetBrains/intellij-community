@@ -1080,42 +1080,27 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   private class MyFilterComponent extends FilterComponent {
-    private final TreeExpansionMonitor<DefaultMutableTreeNode> myExpansionMonitor = TreeExpansionMonitor.install(myTree);
-
     public MyFilterComponent() {
       super(INSPECTION_FILTER_HISTORY, 10);
       setHistory(Arrays.asList("\"New in 9\""));
     }
 
     public void filter() {
-      final String filter = getFilter();
-      if (filter != null && filter.length() > 0) {
-        if (!myExpansionMonitor.isFreeze()) {
-          myExpansionMonitor.freeze();
-        }
-      }
       filterTree(getFilter());
-      TreeUtil.expandAll(myTree);
-      if (filter == null || filter.length() == 0) {
-        TreeUtil.collapseAll(myTree, 0);
-        myExpansionMonitor.restore();
-      }
     }
 
     protected void onlineFilter() {
       if (mySelectedProfile == null) return;
       final String filter = getFilter();
       if (filter != null && filter.length() > 0) {
-        if (!myExpansionMonitor.isFreeze()) {
-          myExpansionMonitor.freeze();
-        }
+        mySelectedProfile.getExpandedNodes().saveVisibleState(myTree);
       }
       fillTreeData(filter, true);
       reloadModel();
       TreeUtil.expandAll(myTree);
       if (filter == null || filter.length() == 0) {
         TreeUtil.collapseAll(myTree, 0);
-        myExpansionMonitor.restore();
+        restoreTreeState();
       }
     }
   }

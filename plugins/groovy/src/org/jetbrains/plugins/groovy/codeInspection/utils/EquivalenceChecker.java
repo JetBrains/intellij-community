@@ -621,7 +621,15 @@ public class EquivalenceChecker {
         }
         final String name2 = label2.getName();
         final GrExpression expression2 = arg2.getExpression();
-        if (name1.equals(name2) && expressionsAreEquivalent(expression1, expression2)) {
+        if (name1 == null) {
+          if (name2 == null &&
+              expressionsAreEquivalent(((GrExpression)label1.getNameElement()), (GrExpression)label2.getNameElement()) &&
+              expressionsAreEquivalent(expression1, expression2)) {
+            found = true;
+            break;
+          }
+        }
+        else if (name1.equals(name2) && expressionsAreEquivalent(expression1, expression2)) {
           found = true;
           break;
         }
@@ -836,11 +844,11 @@ public class EquivalenceChecker {
     if (exp instanceof GrAssignmentExpression) {
       return ASSIGNMENT_EXPRESSION;
     }
-    if (exp instanceof GrBinaryExpression) {
-      return BINARY_EXPRESSION;
-    }
     if (exp instanceof GrRangeExpression) {
       return RANGE_EXPRESSION;
+    }
+    if (exp instanceof GrBinaryExpression) {
+      return BINARY_EXPRESSION;
     }
     if (exp instanceof GrElvisExpression) {
       return ELVIS_EXPRESSION;

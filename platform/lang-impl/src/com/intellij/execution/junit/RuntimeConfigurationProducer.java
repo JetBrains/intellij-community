@@ -50,7 +50,7 @@ public abstract class RuntimeConfigurationProducer implements Comparable {
 
     if (result.myConfiguration != null) {
       final PsiElement psiElement = result.getSourceElement();
-      final Location<PsiElement> _location = PsiLocation.fromPsiElement(psiElement);
+      final Location<PsiElement> _location = PsiLocation.fromPsiElement(psiElement, location != null ? location.getModule() : null);
       if (_location != null) {
         // replace with existing configuration if any
         final ConfigurationType type = result.myConfiguration.getType();

@@ -39,6 +39,8 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class StaticMethodOnlyUsedInOneClassInspection
         extends BaseInspection {
 
@@ -134,15 +136,13 @@ public class StaticMethodOnlyUsedInOneClassInspection
                 final PsiClass superClass;
                 if (interfaces.length == 1) {
                     superClass = interfaces[0];
-                    registerMethodError(method, superClass,
-                            Boolean.valueOf(false));
+                    registerMethodError(method, superClass, Boolean.FALSE);
                 } else {
                     superClass = usageClass.getSuperClass();
                     if (superClass == null) {
                         return;
                     }
-                    registerMethodError(method, superClass,
-                            Boolean.valueOf(true));
+                    registerMethodError(method, superClass, Boolean.TRUE);
                 }
             } else {
                 registerMethodError(method, usageClass);
@@ -159,13 +159,15 @@ public class StaticMethodOnlyUsedInOneClassInspection
             final PsiElement element = reference.getElement();
             final PsiClass usageClass =
                     ClassUtils.getContainingClass(element);
+          synchronized (this) {
             if (this.usageClass != null &&
                     !this.usageClass.equals(usageClass)) {
                 this.usageClass = null;
                 return false;
             }
             this.usageClass = usageClass;
-            return true;
+          }
+          return true;
         }
 
         /**
@@ -195,23 +197,23 @@ public class StaticMethodOnlyUsedInOneClassInspection
                     query.forEach(UsageProcessor.this);
                 }
             }, null);
+          synchronized (this) {
             return usageClass;
+          }
         }
 
         private static class FindUsagesCostProcessor
                 implements Processor<PsiFile> {
 
-            private int counter = 0;
-            private boolean costTooHigh = true;
+            private final AtomicInteger counter = new AtomicInteger();
+            private volatile boolean costTooHigh = false;
 
             public boolean process(PsiFile psiFile) {
-                counter++;
-                if (counter < 10) {
-                    costTooHigh = false;
-                    return true;
-                }
+              if (counter.incrementAndGet() >= 10) {
                 costTooHigh = true;
                 return false;
+              }
+                return true;
             }
 
             public boolean isCostTooHigh() {

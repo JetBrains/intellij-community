@@ -229,7 +229,12 @@ public class MavenProjectsManagerWatcher {
 
   private void onSettingsChange() {
     myEmbeddersManager.reset();
-    scheduleUpdateAll(true, true);
+    scheduleUpdateAll(true, false);
+  }
+
+  private void onSettingsXmlChange() {
+    myGeneralSettings.localRepositoryChanged();
+    // onSettingsChange() will be called indirectly by pathsChanged listener on GeneralSettings object
   }
 
   private class MyRootChangesListener implements ModuleRootListener {
@@ -332,7 +337,7 @@ public class MavenProjectsManagerWatcher {
       // can not be started since the window has already been closed.
       if (areFileSetsInitialised()) {
         if (settingsHaveChanged) {
-          onSettingsChange();
+          onSettingsXmlChange();
         }
         else {
           filesToUpdate.removeAll(filesToRemove);
@@ -358,6 +363,7 @@ public class MavenProjectsManagerWatcher {
 
       filesToUpdate = new ArrayList<VirtualFile>();
       filesToRemove = new ArrayList<VirtualFile>();
+      settingsHaveChanged = false;
     }
 
     private void clearLists() {

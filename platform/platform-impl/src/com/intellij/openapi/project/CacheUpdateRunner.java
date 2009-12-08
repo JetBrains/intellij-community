@@ -50,8 +50,9 @@ class CacheUpdateRunner {
   }
 
   public void processFiles(final ProgressIndicator indicator, boolean processInReadAction) {
-    FileContentQueue queue = new FileContentQueue();
     try {
+      indicator.checkCanceled();
+      FileContentQueue queue = new FileContentQueue();
       Collection<VirtualFile> files = mySession.getFilesToUpdate();
       final double total = files.size();
       queue.queue(files, indicator);
@@ -59,20 +60,27 @@ class CacheUpdateRunner {
       Consumer<VirtualFile> progressUpdater = new Consumer<VirtualFile>() {
         // need set here to handle queue.pushbacks after checkCancelled() in order
         // not to count the same file several times
-        Set<VirtualFile> processed = new THashSet<VirtualFile>();
+        final Set<VirtualFile> processed = new THashSet<VirtualFile>();
 
         public void consume(VirtualFile virtualFile) {
           indicator.checkCanceled();
-          indicator.setFraction(processed.size() / total);
           processed.add(virtualFile);
-          indicator.setText2(virtualFile.getPresentableUrl());
+          indicator.setFraction(processed.size() / total);
+          if (virtualFile.isValid()) {
+            indicator.setText2(virtualFile.getPresentableUrl());
+          }
+          else {
+            indicator.setText2("");
+          }
         }
       };
 
       while (!myProject.isDisposed()) {
         indicator.checkCanceled();
         // todo wait for the user...
-        if (processSomeFilesWhileUserIsInactive(queue, progressUpdater, mySession, processInReadAction)) break;
+        if (processSomeFilesWhileUserIsInactive(queue, progressUpdater, mySession, processInReadAction)) {
+          break;
+        }
       }
 
       if (myProject.isDisposed()) {
@@ -125,14 +133,13 @@ class CacheUpdateRunner {
             }
 
             try {
-              Runnable action = new Runnable() {
+              final Runnable action = new Runnable() {
                 public void run() {
                   innerIndicator.checkCanceled();
-                  VirtualFile file = fileContent.getVirtualFile();
 
-                  if (!file.isValid()) return;
                   if (myProject.isDisposed()) return;
 
+                  final VirtualFile file = fileContent.getVirtualFile();
                   progressUpdater.consume(file);
                   session.processFile(fileContent);
                 }

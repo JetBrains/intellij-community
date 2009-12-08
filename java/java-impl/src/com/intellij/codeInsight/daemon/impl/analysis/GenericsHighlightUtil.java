@@ -1178,8 +1178,7 @@ public class GenericsHighlightUtil {
         if (parameterList != null && parameterList.getTypeArguments().length > 0) {
           final String message = JavaErrorMessages.message("generics.select.static.class.from.parameterized.type",
                                                            HighlightUtil.formatClass((PsiClass)resolved));
-          return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                 parameterList, message);
+          return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, parameterList, message);
         }
       }
     }
@@ -1190,6 +1189,34 @@ public class GenericsHighlightUtil {
     if (superClass instanceof PsiTypeParameter) {
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, toHighlight,
                                                JavaErrorMessages.message("class.cannot.inherit.from.its.type.parameter"));
+    }
+    return null;
+  }
+
+  public static HighlightInfo checkTopLevelMethodCallIntersectionTypeMaximalUpperBound(PsiMethodCallExpression methodCall,
+                                                                                       PsiReferenceExpression expression) {
+    PsiElement parent = methodCall.getParent();
+    if (parent instanceof PsiExpression) return null;
+    PsiType type = expression.getType();
+    if (!(type instanceof PsiIntersectionType)) {
+      return null;
+    }
+    PsiType[] conjuncts = ((PsiIntersectionType)type).getConjuncts();
+    PsiType lub = conjuncts[0];
+    for (int i = 1; i < conjuncts.length; i++) {
+      PsiType conjunct = conjuncts[i];
+      PsiType bound = GenericsUtil.getLeastUpperBound(lub, conjunct, methodCall.getManager());
+      if (bound == null || !TypeConversionUtil.isAssignable(lub, bound) || !TypeConversionUtil.isAssignable(conjunct, bound)) {
+        PsiMethod method = methodCall.resolveMethod();
+        if (method == null) return null;
+        String message = JavaErrorMessages.message("failed.to.find.unique.maximal.instance", 
+                                                   HighlightUtil.formatMethod(method),
+                  HighlightUtil.formatType(lub), HighlightUtil.formatType(conjunct));
+
+
+        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, message);
+      }
+      lub = bound;
     }
     return null;
   }

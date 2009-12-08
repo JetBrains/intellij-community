@@ -522,4 +522,6 @@
                   serviceImplementation="com.intellij.openapi.vcs.changes.ui.WolfChangesFileNameDecorator"/>
 
   <filePasteProvider implementation="com.intellij.ide.FileListPasteProvider"/>
+
+  <definitionsSearch implementation="com.intellij.pom.PomDefinitionSearch"/>
 </extensions>

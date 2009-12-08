@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -159,7 +160,7 @@ public class SvnVcs extends AbstractVcs {
   }
 
   public SvnVcs(final Project project, MessageBus bus, SvnConfiguration svnConfiguration, final ChangeListManager changeListManager,
-                final VcsDirtyScopeManager vcsDirtyScopeManager, final StartupManager startupManager) {
+                final VcsDirtyScopeManager vcsDirtyScopeManager) {
     super(project, VCS_NAME);
     LOG.debug("ct");
     myConfiguration = svnConfiguration;
@@ -196,26 +197,6 @@ public class SvnVcs extends AbstractVcs {
         }
       };
     }
-
-    // do one time after project loaded
-    startupManager.runWhenProjectIsInitialized(new DumbAwareRunnable() {
-      public void run() {
-        postStartup();
-
-        // for IDEA, it takes 2 minutes - and anyway this can be done in background, no sence...
-        // once it could be mistaken about copies for 2 minutes on start...
-
-        /*if (! myMapping.getAllWcInfos().isEmpty()) {
-          invokeRefreshSvnRoots();
-          return;
-        }
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-          public void run() {
-            myCopiesRefreshManager.getCopiesRefresh().ensureInit();
-          }
-        }, SvnBundle.message("refreshing.working.copies.roots.progress.text"), true, myProject);*/
-      }
-    });
 
     myFrameStateListener = new MyFrameStateListener(changeListManager, vcsDirtyScopeManager);
   }
@@ -348,9 +329,10 @@ public class SvnVcs extends AbstractVcs {
 
   @Override
   public void activate() {
+    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     if (! myProject.isDefault()) {
       ChangeListManager.getInstance(myProject).addChangeListListener(myChangeListListener);
-      ProjectLevelVcsManager.getInstance(myProject).addVcsListener(myVcsListener);
+      vcsManager.addVcsListener(myVcsListener);
     }
     
     SvnApplicationSettings.getInstance().svnActivated();
@@ -358,6 +340,45 @@ public class SvnVcs extends AbstractVcs {
     // this will initialize its inner listener for committed changes upload
     LoadedRevisionsCache.getInstance(myProject);
     FrameStateManager.getInstance().addListener(myFrameStateListener);
+
+    // do one time after project loaded
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
+      public void run() {
+        postStartup();
+
+        // for IDEA, it takes 2 minutes - and anyway this can be done in background, no sence...
+        // once it could be mistaken about copies for 2 minutes on start...
+
+        /*if (! myMapping.getAllWcInfos().isEmpty()) {
+          invokeRefreshSvnRoots();
+          return;
+        }
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+          public void run() {
+            myCopiesRefreshManager.getCopiesRefresh().ensureInit();
+          }
+        }, SvnBundle.message("refreshing.working.copies.roots.progress.text"), true, myProject);*/
+      }
+    });
+
+    pingRootsForAuth();
+  }
+
+  public void pingRootsForAuth() {
+    if (! myProject.isDefault()) {
+      final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+      final VirtualFile[] files = vcsManager.getRootsUnderVcs(this);
+      Arrays.sort(files, FilePathComparator.getInstance());
+      final SVNStatusClient client = createStatusClient();
+      for (VirtualFile root : files) {
+        try {
+          client.doStatus(new File(root.getPath()), true);
+        }
+        catch (SVNException e) {
+          //
+        }
+      }
+    }
   }
 
   @Override
@@ -840,10 +861,6 @@ public class SvnVcs extends AbstractVcs {
   @Override
   public List<AnAction> getAdditionalActionsForLocalChange() {
     return Arrays.<AnAction>asList(new ShowPropertiesDiffWithLocalAction());
-  }
-
-  public void pathChanged(final File from, final File to) throws SVNException {
-    myChangeListListener.pathChanged(from, to);
   }
 
   private String keyForVf(final VirtualFile vf) {

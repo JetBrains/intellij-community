@@ -61,7 +61,9 @@ public class Settings implements Configurable {
   @Nullable
   @NonNls
   public String getHelpTopic() {
-    return "IntelliLang.Configuration";
+    final Configurable child = mySettingsUI == null? null : mySettingsUI.getSelectedChild();
+    final String topic = child != null ? child.getHelpTopic() : null;
+    return topic != null? topic : "IntelliLang.Configuration";
   }
 
   public JComponent createComponent() {

@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -165,7 +166,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
         if (myPathMacroSubstitutor != null) {
           myPathMacroSubstitutor.expandPaths(element);
 
-          final Set<String> unknownMacros = PathMacrosCollector.getMacroNames(element);
+          final Set<String> unknownMacros = StorageUtil.getMacroNames(element);
           myPathMacroSubstitutor.addUnknownMacros(componentName, unknownMacros);
         }
 
@@ -185,6 +186,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
 
   public boolean hasState(final Object component, final String componentName, final Class<?> aClass, final boolean reloadData) throws StateStorageException {
     if (!myDir.exists()) return false;
+    if (reloadData) myStorageData = null;
     return true;
   }
 
@@ -245,7 +247,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
       IFile[] children = myDir.exists() ? myDir.listFiles() : EMPTY_FILES;
       for (IFile child : children) {
         final String fileName = child.getName();
-        if (!myFileTypeManager.isFileIgnored(fileName)) {
+        if (!myFileTypeManager.isFileIgnored(fileName) && StringUtil.endsWithIgnoreCase(fileName, ".xml")) {
           currentNames.add(fileName);
         }
       }

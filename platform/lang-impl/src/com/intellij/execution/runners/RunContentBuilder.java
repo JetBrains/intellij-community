@@ -271,14 +271,14 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
     myUi.removeContent(content, true);
   }
 
-  private class MyRunContentDescriptor extends RunContentDescriptor {
+  private static class MyRunContentDescriptor extends RunContentDescriptor {
     private final boolean myReuseProhibited;
-    private final Disposable[] myAdditionalDisposables;
+    private final Disposable myAdditionalDisposable;
 
-    public MyRunContentDescriptor(final RunProfile profile, final ExecutionResult executionResult, final boolean reuseProhibited, final JComponent component, final Disposable... additionalDisposables) {
+    public MyRunContentDescriptor(final RunProfile profile, final ExecutionResult executionResult, final boolean reuseProhibited, final JComponent component, @NotNull Disposable additionalDisposable) {
       super(executionResult.getExecutionConsole(), executionResult.getProcessHandler(), component, profile.getName(), profile.getIcon());
       myReuseProhibited = reuseProhibited;
-      myAdditionalDisposables = additionalDisposables;
+      myAdditionalDisposable = additionalDisposable;
     }
 
     public boolean isContentReuseProhibited() {
@@ -286,9 +286,7 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
     }
 
     public void dispose() {
-      for (final Disposable disposable : myAdditionalDisposables) {
-        Disposer.dispose(disposable);
-      }
+      Disposer.dispose(myAdditionalDisposable);
       super.dispose();
     }
   }

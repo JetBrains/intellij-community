@@ -143,7 +143,10 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
                 if (toStringMethod == null) {
                     // a toString() method is missing
                     if (log.isDebugEnabled()) log.debug("Class does not overwrite toString() method: " + clazz.getQualifiedName());
-                    holder.registerProblem(clazz.getNameIdentifier(), "Class '" + clazz.getName() + "' does not overwrite toString() method", ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fix);
+                  PsiIdentifier element = clazz.getNameIdentifier();
+                  if (element != null) {
+                    holder.registerProblem(element, "Class '" + clazz.getName() + "' does not overwrite toString() method", ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fix);
+                  }
                 }
             }
         };

@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.IconLoader;
@@ -34,7 +35,7 @@ import org.jetbrains.idea.svn.dialogs.RepositoryBrowserDialog;
 import javax.swing.*;
 import java.awt.*;
 
-public class BrowseRepositoryAction extends AnAction {
+public class BrowseRepositoryAction extends AnAction implements DumbAware {
   public static final String REPOSITORY_BROWSER_TOOLWINDOW = "SVN Repositories";
 
   public void actionPerformed(AnActionEvent e) {

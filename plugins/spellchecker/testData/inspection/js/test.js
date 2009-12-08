@@ -15,6 +15,7 @@
  */
 
 /*some <TYPO descr="Typo: In word 'commments'">commments</TYPO> */
+/**some <TYPO descr="Typo: In word 'commments'">commments</TYPO> */
 function  test<TYPO descr="Typo: In word 'Fuunction'">Fuunction</TYPO>(){
   var <TYPO descr="Typo: In word 'upddate'">upddate</TYPO> = "test variable";
 }

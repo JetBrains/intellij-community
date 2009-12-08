@@ -80,6 +80,8 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private ContentManager myContentManager;
   private EditorAdapter myEditorAdapter;
 
+  private final VcsInitialization myInitialization;
+
   @NonNls private static final String ELEMENT_MAPPING = "mapping";
   @NonNls private static final String ATTRIBUTE_DIRECTORY = "directory";
   @NonNls private static final String ATTRIBUTE_VCS = "vcs";
@@ -107,9 +109,10 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
     myDefaultVcsRootPolicy = DefaultVcsRootPolicy.getInstance(project);
 
-    myMappings = new NewMappings(myProject, myEventDispatcher);
-    myMappingsToRoots = new MappingsToRoots(myMappings, myProject);
     myBackgroundableActionHandlerMap = new HashMap<VcsBackgroundableActions, BackgroundableActionEnabledHandler>();
+    myInitialization = new VcsInitialization(myProject);
+    myMappings = new NewMappings(myProject, myEventDispatcher, this);
+    myMappingsToRoots = new MappingsToRoots(myMappings, myProject);
   }
 
   public void initComponent() {
@@ -560,15 +563,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     if (haveNonEmptyMappings || !defaultProject) {
       myMappingsLoaded = true;
     }
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
-      public void run() {
-        DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
-          public void run() {
-            myMappings.setDirectoryMappings(mappingsList);
-          }
-        });
-      }
-    });
+    myMappings.setDirectoryMappings(mappingsList);
   }
 
   public void writeDirectoryMappings(final Element element) {
@@ -632,5 +627,13 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       myBackgroundableActionHandlerMap.put(action, result);
     }
     return result;
+  }
+
+  public void addInitializationRequest(final VcsInitObject vcsInitObject, final Runnable runnable) {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        myInitialization.add(vcsInitObject, runnable);
+      }
+    });
   }
 }

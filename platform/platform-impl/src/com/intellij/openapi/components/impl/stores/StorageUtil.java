@@ -15,15 +15,21 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
+import com.intellij.application.options.PathMacrosCollector;
+import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.components.PathMacroSubstitutor;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.StreamProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -32,18 +38,20 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.UniqueFileNamesProvider;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.fs.FileSystem;
 import com.intellij.util.io.fs.IFile;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.JDOMException;
+import org.jdom.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.HyperlinkEvent;
 import java.io.*;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Set;
 
@@ -55,6 +63,30 @@ public class StorageUtil {
   private static final boolean ourDumpChangedComponentStates = "true".equals(System.getProperty("log.externally.changed.component.states"));
 
   private StorageUtil() {
+  }
+
+  public static void notifyUnknownMacros(@NotNull final TrackingPathMacroSubstitutor substitutor, @NotNull final Project project, @Nullable final String componentName) {
+    Collection<String> macros = substitutor.getUnknownMacros(componentName);
+    if (!macros.isEmpty()) {
+      final UnknownMacroNotification[] notifications =
+        NotificationsManager.getNotificationsManager().getNotificationsOfType(UnknownMacroNotification.class, project);
+      for (final UnknownMacroNotification notification : notifications) {
+        macros = ContainerUtil.subtract(macros, notification.getMacros());
+      }
+
+      if (!macros.isEmpty()) {
+        Notifications.Bus.notify(new UnknownMacroNotification("Load Error", "Loading error: undefined path variables!",
+                                                              String.format("<p><i>%s</i> %s undefined. <a href=\"\">Fix it!</a></p>",
+                                                                            StringUtil.join(macros, ", "),
+                                                                            macros.size() == 1 ? "is" : "are"), NotificationType.ERROR,
+                                                              new NotificationListener() {
+                                                                public void hyperlinkUpdate(@NotNull Notification notification,
+                                                                                            @NotNull HyperlinkEvent event) {
+                                                                  ((ProjectEx)project).checkUnknownMacros(true);
+                                                                }
+                                                              }, macros), NotificationDisplayType.STICKY_BALLOON, project);
+      }
+    }
   }
 
   static void save(final IFile file, final byte[] text, final Object requestor) throws StateStorage.StateStorageException {
@@ -185,6 +217,41 @@ public class StorageUtil {
     }
   }
 
+  @NotNull
+  public static Set<String> getMacroNames(@NotNull final Element e) {
+    return PathMacrosCollector.getMacroNames(e, new NotNullFunction<Object, Boolean>() {
+      @NotNull
+      public Boolean fun(Object o) {
+        if (o instanceof Attribute) {
+          final Attribute attribute = (Attribute)o;
+          final Element parent = attribute.getParent();
+          if (("value".equals(attribute.getName()) || "name".equals(attribute.getName())) && parent != null && "env".equals(parent.getName())) {
+            return false; // do not proceed environment variables from run configurations
+          }
+
+           // do not proceed macros in searchConfigurations (structural search)
+          if (parent != null && ("replaceConfiguration".equals(parent.getName())
+                                 || "searchConfiguration".equals(parent.getName()))) return false;
+        }
+
+        return true;
+      }
+    }, new NotNullFunction<Object, Boolean>() {
+      @NotNull
+      public Boolean fun(Object o) {
+        if (o instanceof Attribute) {
+          // process run configuration's options recursively
+          final Element parent = ((Attribute)o).getParent();
+          if (parent != null && "option".equals(parent.getName())) {
+            final Element grandParent = parent.getParentElement();
+            return grandParent != null && "configuration".equals(grandParent.getName());
+          }
+        }
+
+        return false;
+      }
+    });
+  }
 
   @Nullable
   public static Document loadDocument(final byte[] bytes) {

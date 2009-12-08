@@ -45,6 +45,8 @@ public interface CommonClassNames {
   @NonNls String JAVA_UTIL_PROPERTIES = "java.util.Properties";
   @NonNls String JAVA_UTIL_PROPERTY_RESOURCE_BUNDLE = "java.util.PropertyResourceBundle";
   @NonNls String JAVA_UTIL_DATE = "java.util.Date";
+  @NonNls String JAVA_SQL_DATE = "java.sql.Date";
+  @NonNls String JAVA_UTIL_CALENDAR = "java.util.Calendar";
   @NonNls String JAVA_UTIL_DICTIONARY = "java.util.Dictionary";
   @NonNls String JAVA_UTIL_COMPARATOR = "java.util.Comparator";
 

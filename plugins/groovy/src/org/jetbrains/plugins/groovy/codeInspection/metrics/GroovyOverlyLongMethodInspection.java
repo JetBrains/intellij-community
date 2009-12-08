@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.codeInspection.metrics;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
 public class GroovyOverlyLongMethodInspection extends GroovyMethodMetricInspection {
@@ -48,16 +49,18 @@ public class GroovyOverlyLongMethodInspection extends GroovyMethodMetricInspecti
   }
 
   private class Visitor extends BaseInspectionVisitor {
-    public void visitMethod(GrMethod grMethod) {
-      super.visitMethod(grMethod);
+    public void visitMethod(GrMethod method) {
+      super.visitMethod(method);
       final int limit = getLimit();
       final StatementCountVisitor visitor = new StatementCountVisitor();
-      grMethod.accept(visitor);
+      final GrOpenBlock block = method.getBlock();
+      if (block == null) return;
+      block.accept(visitor);
       final int statementCount = visitor.getStatementCount();
       if (statementCount <= limit) {
         return;
       }
-      registerMethodError(grMethod, statementCount, limit);
+      registerMethodError(method, statementCount, limit);
     }
   }
 }

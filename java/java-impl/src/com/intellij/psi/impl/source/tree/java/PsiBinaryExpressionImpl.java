@@ -17,8 +17,8 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.resolve.JavaResolveCache;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -29,6 +29,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements PsiBinaryExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiBinaryExpressionImpl");
@@ -59,16 +60,29 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
   private static PsiType doGetType(PsiBinaryExpressionImpl param) {
     PsiExpression lOperand = param.getLOperand();
     PsiExpression rOperand = param.getROperand();
-    PsiType result;
-    if (rOperand == null) {
-      result = null;
+    if (rOperand == null) return null;
+
+    if (lOperand instanceof PsiBinaryExpressionImpl && !JavaResolveCache.getInstance(param.getProject()).isTypeCached(lOperand)) {
+      // cache all intermediate expression types from bottom up
+      PsiBinaryExpressionImpl topLevel = param;
+      PsiElement element = param;
+      while (element instanceof PsiBinaryExpressionImpl) {
+        topLevel = (PsiBinaryExpressionImpl)element;
+        element = element.getParent();
+      }
+      topLevel.accept(new JavaRecursiveElementWalkingVisitor() {
+        @Override
+        protected void elementFinished(PsiElement element) {
+          if (element instanceof PsiExpression) {
+            ProgressManager.checkCanceled();
+            ((PsiExpression)element).getType();
+          }
+        }
+      });
     }
-    else {
-      PsiType rType = rOperand.getType();
-      PsiType lType = lOperand.getType();
-      result = TypeConversionUtil.calcTypeForBinaryExpression(lType, rType, SourceTreeToPsiMap.psiElementToTree(param.getOperationSign()).getElementType());
-    }
-    return result;
+    PsiType rType = rOperand.getType();
+    PsiType lType = lOperand.getType();
+    return calcTypeForBinaryExpression(lType, rType, param.getOperationSign().getNode().getElementType());
   }
 
   private static final Function<PsiBinaryExpressionImpl,PsiType> MY_TYPE_EVALUATOR = new Function<PsiBinaryExpressionImpl, PsiType>() {
@@ -129,5 +143,51 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
     return "PsiBinaryExpression:" + getText();
   }
 
+  @Nullable
+  public static PsiType calcTypeForBinaryExpression(PsiType lType, PsiType rType, IElementType sign) {
+    if (sign == JavaTokenType.PLUS) {
+      // evaluate right argument first, since '+-/*%' is left associative and left operand tends to be bigger
+      if (rType == null) return null;
+      if (rType.equalsToText("java.lang.String")) {
+        return rType;
+      }
+      if (lType == null) return null;
+      if (lType.equalsToText("java.lang.String")) {
+        return lType;
+      }
+      return TypeConversionUtil.unboxAndBalanceTypes(lType, rType);
+    }
+    if (sign == JavaTokenType.MINUS || sign == JavaTokenType.ASTERISK || sign == JavaTokenType.DIV || sign == JavaTokenType.PERC) {
+      if (lType == null && rType == null) return null;
+      return TypeConversionUtil.unboxAndBalanceTypes(lType, rType);
+    }
+    if (sign == JavaTokenType.LTLT || sign == JavaTokenType.GTGT || sign == JavaTokenType.GTGTGT) {
+      if (PsiType.BYTE.equals(lType) || PsiType.CHAR.equals(lType) || PsiType.SHORT.equals(lType)) {
+        return PsiType.INT;
+      }
+      return lType;
+    }
+    if (sign == JavaTokenType.EQEQ ||
+        sign == JavaTokenType.NE ||
+        sign == JavaTokenType.LT ||
+        sign == JavaTokenType.GT ||
+        sign == JavaTokenType.LE ||
+        sign == JavaTokenType.GE ||
+        sign == JavaTokenType.OROR ||
+        sign == JavaTokenType.ANDAND) {
+      return PsiType.BOOLEAN;
+    }
+    if (sign == JavaTokenType.OR || sign == JavaTokenType.XOR || sign == JavaTokenType.AND) {
+      if (lType instanceof PsiClassType) lType = PsiPrimitiveType.getUnboxedType(lType);
+      if (rType instanceof PsiClassType) rType = PsiPrimitiveType.getUnboxedType(rType);
+
+      if (lType == null && rType == null) return null;
+      if (PsiType.BOOLEAN.equals(lType) || PsiType.BOOLEAN.equals(rType)) return PsiType.BOOLEAN;
+      if (PsiType.LONG.equals(lType) || PsiType.LONG.equals(rType)) return PsiType.LONG;
+      return PsiType.INT;
+    }
+    LOG.error("Unknown token: "+sign);
+    return null;
+  }
 }
 

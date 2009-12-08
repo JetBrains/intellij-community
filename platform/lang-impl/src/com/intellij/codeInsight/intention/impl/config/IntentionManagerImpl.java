@@ -26,23 +26,23 @@ import com.intellij.codeInspection.actions.RunInspectionIntention;
 import com.intellij.codeInspection.ex.DisableInspectionToolAction;
 import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
 import com.intellij.codeInspection.ex.EditInspectionToolsSettingsInSuppressedPlaceIntention;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -51,7 +51,7 @@ import java.util.List;
 public class IntentionManagerImpl extends IntentionManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl");
 
-  private final List<IntentionAction> myActions = Collections.synchronizedList(new ArrayList<IntentionAction>());
+  private final List<IntentionAction> myActions = ContainerUtil.createEmptyCOWList();
   private final IntentionManagerSettings mySettings;
 
   private final Alarm myInitActionsAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
@@ -108,7 +108,7 @@ public class IntentionManagerImpl extends IntentionManager {
     return new IntentionActionWrapper(intentionActionBean,categories);
   }
 
-  public void registerIntentionAndMetaData(IntentionAction action, String... category) {
+  public void registerIntentionAndMetaData(@NotNull IntentionAction action, @NotNull String... category) {
     registerIntentionAndMetaData(action, category, getDescriptionDirectoryName(action));
   }
 
@@ -132,12 +132,12 @@ public class IntentionManagerImpl extends IntentionManager {
     mySettings.registerIntentionMetaData(action, category, descriptionDirectoryName);
   }
 
-  public void registerIntentionAndMetaData(final IntentionAction action,
-                                           final String[] category,
-                                           final String description,
-                                           final String exampleFileExtension,
-                                           final String[] exampleTextBefore,
-                                           final String[] exampleTextAfter) {
+  public void registerIntentionAndMetaData(@NotNull final IntentionAction action,
+                                           @NotNull final String[] category,
+                                           @NotNull final String description,
+                                           @NotNull final String exampleFileExtension,
+                                           @NotNull final String[] exampleTextBefore,
+                                           @NotNull final String[] exampleTextAfter) {
     addAction(action);
 
     IntentionActionMetaData metaData = new IntentionActionMetaData(action, category,
@@ -148,20 +148,21 @@ public class IntentionManagerImpl extends IntentionManager {
   }
 
   @Override
-  public void unregisterIntention(IntentionAction intentionAction) {
+  public void unregisterIntention(@NotNull IntentionAction intentionAction) {
     myActions.remove(intentionAction);
     mySettings.unregisterMetaData(intentionAction);
   }
 
-  private static TextDescriptor[] mapToDescriptors(String[] texts, String fileName) {
+  private static TextDescriptor[] mapToDescriptors(String[] texts, @NonNls String fileName) {
     TextDescriptor[] result = new TextDescriptor[texts.length];
     for (int i = 0; i < texts.length; i++) {
-      result [i] = new PlainTextDescriptor(texts [i], fileName);
+      result [i] = new PlainTextDescriptor(texts[i], fileName);
     }
     return result;
   }
 
-  public List<IntentionAction> getStandardIntentionOptions(@NotNull final HighlightDisplayKey displayKey, final PsiElement context) {
+  @NotNull
+  public List<IntentionAction> getStandardIntentionOptions(@NotNull final HighlightDisplayKey displayKey, @NotNull final PsiElement context) {
     List<IntentionAction> options = new ArrayList<IntentionAction>(9);
     options.add(new EditInspectionToolsSettingsAction(displayKey));
     options.add(new RunInspectionIntention(displayKey));
@@ -169,7 +170,8 @@ public class IntentionManagerImpl extends IntentionManager {
     return options;
   }
 
-  public LocalQuickFix convertToFix(final IntentionAction action) {
+  @NotNull
+  public LocalQuickFix convertToFix(@NotNull final IntentionAction action) {
     if (action instanceof LocalQuickFix) {
       return (LocalQuickFix)action;
     }
@@ -196,12 +198,24 @@ public class IntentionManagerImpl extends IntentionManager {
     };
   }
 
-  public void addAction(IntentionAction action) {
+  public void addAction(@NotNull IntentionAction action) {
     myActions.add(action);
   }
 
+  @NotNull
   public IntentionAction[] getIntentionActions() {
     return myActions.toArray(new IntentionAction[myActions.size()]);
   }
 
+  @NotNull
+  @Override
+  public IntentionAction[] getAvailableIntentionActions() {
+    List<IntentionAction> list = new ArrayList<IntentionAction>(myActions.size());
+    for (IntentionAction action : myActions) {
+      if (mySettings.isEnabled(action)) {
+        list.add(action);
+      }
+    }
+    return list.toArray(new IntentionAction[list.size()]);
+  }
 }

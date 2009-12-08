@@ -871,6 +871,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   @NotNull
   public String getComponentName() {
+    if ("Idea".equals(System.getProperty("idea.platform.prefix"))) {
+      return "CommunityFileTypes";
+    }
     return "FileTypeManager";
   }
 

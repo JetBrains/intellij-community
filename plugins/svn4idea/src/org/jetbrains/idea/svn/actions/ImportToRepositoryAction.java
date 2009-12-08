@@ -19,19 +19,16 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import org.jetbrains.idea.svn.dialogs.ImportDialog;
 
 /**
- * Created by IntelliJ IDEA.
- * User: alex
- * Date: 08.07.2005
- * Time: 21:44:21
- * To change this template use File | Settings | File Templates.
+ * @author alex
  */
-public class ImportToRepositoryAction extends AnAction {
+public class ImportToRepositoryAction extends AnAction implements DumbAware {
   @Override
   public void update(final AnActionEvent e) {
     super.update(e);

@@ -40,6 +40,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import git4idea.GitUtil;
@@ -273,33 +274,42 @@ public class GitRootTracker implements VcsListener {
     if (!hasInvalidRoots) {
       // all roots are correct
       if (myNotificationPosted.compareAndSet(true, false)) {
-        if (myNotification != null) {
-          if (!myNotification.isExpired()) {
-            myNotification.expire();
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          public void run() {
+            if (myNotification != null) {
+              if (!myNotification.isExpired()) {
+                myNotification.expire();
+              }
+
+              myNotification = null;
+            }
           }
-
-          myNotification = null;
-        }
+        });
       }
-      return;
     }
+    else if (myNotificationPosted.compareAndSet(false, true)) {
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        public void run() {
+          myNotification = new Notification(GIT_INVALID_ROOTS_ID, GitBundle.getString("root.tracker.message.title"),
+                                            GitBundle.getString("root.tracker.message"), NotificationType.ERROR,
+                                            new NotificationListener() {
+                                              public void hyperlinkUpdate(@NotNull Notification notification,
+                                                                          @NotNull HyperlinkEvent event) {
+                                                if (fixRoots()) {
+                                                  notification.expire();
+                                                }
+                                              }
+                                            });
 
-    if (myNotificationPosted.compareAndSet(false, true)) {
-      myNotification = new Notification(GIT_INVALID_ROOTS_ID, GitBundle.getString("root.tracker.message.title"),
-                                        GitBundle.getString("root.tracker.message"), NotificationType.ERROR,
-                                        new NotificationListener() {
-                                          public void hyperlinkUpdate(@NotNull Notification notification,
-                                                                      @NotNull HyperlinkEvent event) {
-                                            if (fixRoots()) {
-                                              notification.expire();
-                                            }
-                                          }
-                                        });
-
-      Notifications.Bus.notify(myNotification, myProject);
+          Notifications.Bus.notify(myNotification, myProject);
+        }
+      });
     }
-    myMulticaster.gitRootsChanged();
-
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      public void run() {
+        myMulticaster.gitRootsChanged();
+      }
+    });
   }
 
   /**
@@ -308,7 +318,7 @@ public class GitRootTracker implements VcsListener {
    * @param directory the content root to check
    * @param rootSet   the mapped root set
    */
-  private static boolean hasUnmappedSubroots(final VirtualFile directory, final @Nullable HashSet<VirtualFile> rootSet) {
+  private static boolean hasUnmappedSubroots(final VirtualFile directory, final @NotNull HashSet<VirtualFile> rootSet) {
     VirtualFile[] children = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile[]>() {
       public VirtualFile[] compute() {
         return directory.isValid() ? directory.getChildren() : VirtualFile.EMPTY_ARRAY;
@@ -319,8 +329,8 @@ public class GitRootTracker implements VcsListener {
       if (!child.isDirectory()) {
         continue;
       }
-      if (child.getName().equals(".git") && (rootSet == null || !rootSet.contains(child.getParent()))) {
-        return true;
+      if (child.getName().equals(".git")) {
+        return !rootSet.contains(child.getParent());
       }
       if (hasUnmappedSubroots(child, rootSet)) {
         return true;

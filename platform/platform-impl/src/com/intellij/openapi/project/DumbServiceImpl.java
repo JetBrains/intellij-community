@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.util.concurrency.Semaphore;
@@ -85,11 +86,20 @@ public class DumbServiceImpl extends DumbService {
   }
 
   public void queueCacheUpdate(Collection<CacheUpdater> updaters) {
+    scheduleCacheUpdate(updaters, false);
+  }
+
+  public void queueCacheUpdateInDumbMode(Collection<CacheUpdater> updaters) {
+    scheduleCacheUpdate(updaters, true);
+  }
+
+  private void scheduleCacheUpdate(Collection<CacheUpdater> updaters, boolean forceDumbMode) {
     // prevent concurrent modifications
     final CacheUpdateRunner runner = new CacheUpdateRunner(myProject, new ArrayList<CacheUpdater>(updaters));
 
     final Application application = ApplicationManager.getApplication();
-    if (application.isDispatchThread() && !myDumb && application.isWriteAccessAllowed()) {
+    if (!forceDumbMode && application.isDispatchThread() && !myDumb && application.isWriteAccessAllowed()) {
+      // if there are not so many files to process, process them on the spot without entering dumb mode
       ProgressIndicator indicator = new EmptyProgressIndicator();
       final int size = runner.queryNeededFiles(indicator);
       if (size < 50) {
@@ -160,14 +170,19 @@ public class DumbServiceImpl extends DumbService {
 
   @Override
   public BalloonHandler showDumbModeNotification(final String message) {
+    final BalloonHandler emptyBalloonHandler = new BalloonHandler() {
+      public void hide() {
+      }
+    };
     if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      return new BalloonHandler() {
-        public void hide() {
-        }
-      };
+      return emptyBalloonHandler;
     }
 
-    StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getIdeFrame(myProject).getStatusBar();
+    final IdeFrame ideFrame = WindowManager.getInstance().getIdeFrame(myProject);
+    if (ideFrame == null) {
+      return emptyBalloonHandler;
+    }
+    StatusBarEx statusBar = (StatusBarEx)ideFrame.getStatusBar();
     HyperlinkListener listener = new HyperlinkListener() {
       public void hyperlinkUpdate(HyperlinkEvent e) {
         if (e.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;

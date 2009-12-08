@@ -15,8 +15,10 @@
  */
 package com.intellij.find;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.util.text.StringSearcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +28,8 @@ import org.jetbrains.annotations.Nullable;
  * operations.
  */
 public class FindModel extends UserDataHolderBase implements Cloneable {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.find.FindModel");
+
   private String myStringToFind = "";
   private String myStringToReplace = "";
   private boolean isSearchHighlighters = false;
@@ -125,6 +129,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @param s the string to find.
    */
   public void setStringToFind(@NotNull String s) {
+    LOG.assertTrue(s.length() > 0);
     myStringToFind = s;
   }
 

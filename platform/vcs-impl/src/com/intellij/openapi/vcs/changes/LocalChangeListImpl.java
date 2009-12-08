@@ -179,18 +179,16 @@ public class LocalChangeListImpl extends LocalChangeList {
     return false;
   }
 
-  synchronized boolean doneProcessingChanges(final List<Change> removedChanges) {
+  synchronized boolean doneProcessingChanges(final List<Change> removedChanges, final List<Change> addedChanges) {
     boolean changesDetected = (myChanges.size() != myChangesBeforeUpdate.size());
 
-    if (! changesDetected) {
-      for (Change newChange : myChanges) {
-        Change oldChange = findOldChange(newChange);
-        if (oldChange == null) {
-          changesDetected = true;
-          break;
-        }
+    for (Change newChange : myChanges) {
+      Change oldChange = findOldChange(newChange);
+      if (oldChange == null) {
+        addedChanges.add(newChange);
       }
     }
+    changesDetected |= (! addedChanges.isEmpty());
     final List<Change> removed = new ArrayList<Change>(myChangesBeforeUpdate);
     // since there are SAME objects...
     removed.removeAll(myChanges);

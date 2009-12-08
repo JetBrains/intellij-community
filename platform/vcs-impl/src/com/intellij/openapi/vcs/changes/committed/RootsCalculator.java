@@ -17,14 +17,12 @@ package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsDirectoryMapping;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class RootsCalculator {
   private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.committed.RootsCalculator");
@@ -32,14 +30,16 @@ public class RootsCalculator {
   private final AbstractVcs myVcs;
   private final ProjectLevelVcsManager myPlManager;
   private VirtualFile[] myContentRoots;
+  private final RepositoryLocationCache myLocationCache;
 
-  public RootsCalculator(final Project project, final AbstractVcs vcs) {
+  public RootsCalculator(final Project project, final AbstractVcs vcs, final RepositoryLocationCache locationCache) {
     myProject = project;
+    myLocationCache = locationCache;
     myPlManager = ProjectLevelVcsManager.getInstance(myProject);
     myVcs = vcs;
   }
 
-  public List<VirtualFile> getRoots() {
+  public Map<VirtualFile, RepositoryLocation> getRoots() {
     myContentRoots = myPlManager.getRootsUnderVcs(myVcs);
 
     List<VirtualFile> roots = new ArrayList<VirtualFile>();
@@ -59,13 +59,22 @@ public class RootsCalculator {
         }
       }
     }
-    for (VirtualFile contentRoot : myContentRoots) {
-      roots.add(contentRoot);
+    roots.addAll(Arrays.asList(myContentRoots));
+    final Map<VirtualFile, RepositoryLocation> result = new HashMap<VirtualFile, RepositoryLocation>();
+    for (Iterator<VirtualFile> iterator = roots.iterator(); iterator.hasNext();) {
+      final VirtualFile vf = iterator.next();
+      final RepositoryLocation location = myLocationCache.getLocation(myVcs, new FilePathImpl(vf), false);
+      if (location != null) {
+        result.put(vf, location);
+      } else {
+        iterator.remove();
+      }
     }
     roots = myVcs.filterUniqueRoots(roots, IntoSelfVirtualFileConvertor.getInstance());
+    result.keySet().retainAll(roots);
 
     logRoots(roots);
-    return roots;
+    return result;
   }
 
   private void logRoots(final List<VirtualFile> roots) {

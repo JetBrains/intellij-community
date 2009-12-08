@@ -25,6 +25,8 @@ public class BuildNumber implements Comparable<BuildNumber> {
   private final String myProductCode;
   private final int myBaselineVersion;
   private final int myBuildNumber;
+  private static final String BUILD_NUMBER = "__BUILD_NUMBER__";
+  private static final int TOP_BASELINE_VERSION = 94;
 
   public BuildNumber(String productCode, int baselineVersion, int buildNumber) {
     myProductCode = productCode;
@@ -63,7 +65,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
   public static BuildNumber fromString(String version) {
     if (version == null) return null;
 
-    if ("__BUILD_NUMBER__".equals(version)) return new BuildNumber("IU", 92, Integer.MAX_VALUE);
+    if (BUILD_NUMBER.equals(version)) return new BuildNumber("IU", TOP_BASELINE_VERSION, Integer.MAX_VALUE);
 
     String code = version;
     int productSeparator = code.indexOf('-');
@@ -88,25 +90,10 @@ public class BuildNumber implements Comparable<BuildNumber> {
         throw new RuntimeException("Unparseable version number: " + version);
       }
 
-      if ("SNAPSHOT".equals(code) || "__BUILD_NUMBER__".equals(code)) {
-        buildNumber = Integer.MAX_VALUE;
-      }
-      else {
-        try {
-          buildNumber = Integer.parseInt(code);
-        }
-        catch (NumberFormatException e) {
-          throw new RuntimeException("Unparseable version number: " + version);
-        }
-      }
+      buildNumber = parseBuildNumber(version, code);
     }
     else {
-      try {
-        buildNumber = Integer.parseInt(code);
-      }
-      catch (NumberFormatException e) {
-        throw new RuntimeException("Unparseable version number: " + version);
-      }
+      buildNumber = parseBuildNumber(version, code);
 
       if (buildNumber <= 2000) {
         // it's probably a baseline, not a build number
@@ -117,6 +104,18 @@ public class BuildNumber implements Comparable<BuildNumber> {
     }
 
     return new BuildNumber(productCode, baselineVersion, buildNumber);
+  }
+
+  private static int parseBuildNumber(String version, String code) {
+    if ("SNAPSHOT".equals(code) || BUILD_NUMBER.equals(code)) {
+      return Integer.MAX_VALUE;
+    }
+    try {
+      return Integer.parseInt(code);
+    }
+    catch (NumberFormatException e) {
+      throw new RuntimeException("Unparseable version number: " + version);
+    }
   }
 
   @Override
@@ -165,6 +164,9 @@ public class BuildNumber implements Comparable<BuildNumber> {
 
   // See http://www.jetbrains.net/confluence/display/IDEADEV/Build+Number+Ranges for historic build ranges
   private static int getBaseLineForHistoricBuilds(int bn) {
+    if (bn == Integer.MAX_VALUE) {
+      return TOP_BASELINE_VERSION; // SNAPSHOTS
+    }
     if (bn >= 10000) {
       return 88; // Maia, 9x builds
     }

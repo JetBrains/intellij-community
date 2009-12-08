@@ -85,7 +85,8 @@ public class AnchorElementInfoFactory implements SmartPointerElementInfoFactory 
           @Override
           public void visitElement(PsiElement element) {
             super.visitElement(element);
-            final String rangeText = element.getTextRange().substring(docText);
+            TextRange elementRange = element.getTextRange();
+            final String rangeText = docText.length() <= elementRange.getEndOffset() ? "(IOOBE: "+docText.length()+" is out of "+elementRange+")" : elementRange.substring(docText);
             final String elemText = element.getText();
             if (!rangeText.equals(elemText)) {
               throw new AssertionError("PSI text doesn't equal to the document's one: element" + element + "\ndocText=" + rangeText + "\npsiText" + elemText);

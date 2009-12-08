@@ -153,6 +153,9 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
             extends BaseInspectionVisitor {
 
         @Override public void visitVariable(@NotNull PsiVariable variable) {
+            if (isOnTheFly() && variable.hasModifierProperty(PsiModifier.PUBLIC)) {
+                return;
+            }
             if (ignoreLocalVariables && variable instanceof PsiLocalVariable) {
                 return;
             }
@@ -228,8 +231,11 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
                     method.hasModifierProperty(PsiModifier.PRIVATE)) {
                 return;
             }
+            if (isOnTheFly() && method.hasModifierProperty(PsiModifier.PUBLIC)) {
+                return;
+            }
             final PsiType type = method.getReturnType();
-            if (!CollectionUtils.isCollectionClass(type)) {
+            if (type == null || !CollectionUtils.isCollectionClass(type)) {
                 return;
             }
             if (LibraryUtil.isOverrideOfLibraryMethod(method)) {
@@ -263,7 +269,10 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
             final PsiClass objectClass = javaLangObject.resolve();
             weaklingList.remove(objectClass);
             if (weaklingList.isEmpty()) {
-                registerError(nameElement, "java.util.Collection");
+                final String typeText = type.getCanonicalText();
+                final String interfaceText =
+                        CollectionUtils.getInterfaceForClass(typeText);
+                registerError(nameElement, interfaceText);
             } else {
                 final PsiClass weakling = weaklingList.get(0);
                 registerError(nameElement, weakling.getQualifiedName());

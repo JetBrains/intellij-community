@@ -18,21 +18,29 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.notification.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.fs.IFile;
+import net.sf.cglib.core.CollectionUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.HyperlinkEvent;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.*;
@@ -192,6 +200,8 @@ abstract class ComponentStoreImpl implements IComponentStore {
       throw new InvalidComponentDataException(e);
     }
 
+    validateUnusedMacros(componentName, true);
+
     return componentName;
   }
 
@@ -237,6 +247,26 @@ abstract class ComponentStoreImpl implements IComponentStore {
     return defaultsStorage.getState(component, componentName, Element.class, null);
   }
 
+  @Nullable
+  protected Project getProject() {
+    return null;
+  }
+
+  private void validateUnusedMacros(@Nullable final String componentName, final boolean service) {
+    final Project project = getProject();
+    if (project == null) return;
+
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode()) {
+      if (service && componentName != null && project.isInitialized()) {
+        final TrackingPathMacroSubstitutor substitutor = getStateStorageManager().getMacroSubstitutor();
+        if (substitutor != null) {
+          StorageUtil.notifyUnknownMacros(substitutor, project, componentName);
+        }
+      }
+    }
+
+  }
+
   private <T> String initPersistentComponent(@NotNull final PersistentStateComponent<T> component, final boolean reloadData) {
     final String name = getComponentName(component);
 
@@ -270,6 +300,8 @@ abstract class ComponentStoreImpl implements IComponentStore {
     if (state != null) {
       component.loadState(state);
     }
+
+    validateUnusedMacros(name, true);
 
     return name;
   }

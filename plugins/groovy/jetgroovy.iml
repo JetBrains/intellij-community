@@ -31,6 +31,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="java-impl" />
+    <orderEntry type="module" module-name="copyright" />
   </component>
 </module>
 

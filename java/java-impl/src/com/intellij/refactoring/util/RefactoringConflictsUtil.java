@@ -242,7 +242,6 @@ public class RefactoringConflictsUtil {
             PsiElement container;
             if (usageFile instanceof PsiJavaFile) {
               container = ConflictsUtil.getContainer(element);
-              if (container == null) container = usageFile;
             }
             else {
               container = usageFile;

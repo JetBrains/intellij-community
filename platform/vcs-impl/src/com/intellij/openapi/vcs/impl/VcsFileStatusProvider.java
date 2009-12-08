@@ -32,6 +32,8 @@ import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+
 /**
  * @author yole
  */
@@ -45,7 +47,7 @@ public class VcsFileStatusProvider implements FileStatusProvider {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.VcsFileStatusProvider");
 
-  private VcsFileStatusProvider(final Project project,
+  public VcsFileStatusProvider(final Project project,
                                final FileStatusManagerImpl fileStatusManager,
                                final ProjectLevelVcsManager vcsManager,
                                ChangeListManager changeListManager,

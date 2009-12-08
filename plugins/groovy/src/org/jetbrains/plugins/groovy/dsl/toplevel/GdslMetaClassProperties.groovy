@@ -2,7 +2,7 @@ package org.jetbrains.plugins.groovy.dsl.toplevel
 
 import org.jetbrains.plugins.groovy.dsl.ClassDescriptor
 import org.jetbrains.plugins.groovy.dsl.GroovyDslExecutor
-import org.jetbrains.plugins.groovy.dsl.ScriptDescriptor
+import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ClassScope
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ClosureScope
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ScriptScope
 
@@ -41,6 +41,7 @@ class GdslMetaClassProperties {
    */
   Closure ClosureScope = {Map args -> return new ClosureScope(args)}
   Closure ScriptScope = {Map args -> return new ScriptScope(args)}
+  Closure ClassScope = {Map args -> return new ClassScope(args)}
 
 
 }

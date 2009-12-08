@@ -23,6 +23,8 @@
   </vendor>
   <depends>com.intellij.properties</depends>
 
+  <depends optional="true" config-file="groovy-copyright.xml">com.intellij.copyright</depends>
+
   <extensionPoints>
     <extensionPoint name="libraryManager" interface="org.jetbrains.plugins.groovy.config.AbstractGroovyLibraryManager"/>
 
@@ -77,8 +79,6 @@
 
     <projectService serviceInterface="org.jetbrains.plugins.groovy.gant.GantSettings" serviceImplementation="org.jetbrains.plugins.groovy.gant.GantSettings"/>
     <projectService serviceInterface="org.jetbrains.plugins.groovy.gradle.GradleSettings" serviceImplementation="org.jetbrains.plugins.groovy.gradle.GradleSettings"/>
-
-    <concatenationAwareInjector implementation="org.jetbrains.plugins.groovy.GroovyInjector"/>
 
     <colorSettingsPage implementation="org.jetbrains.plugins.groovy.highlighter.GroovyColorsAndFontsPage"/>
     <frameworkSupport implementation="org.jetbrains.plugins.groovy.config.GroovyFacetSupportProvider"/>

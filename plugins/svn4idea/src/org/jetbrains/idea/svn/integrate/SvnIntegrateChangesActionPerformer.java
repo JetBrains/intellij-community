@@ -24,6 +24,7 @@ import org.jetbrains.idea.svn.SvnBranchConfiguration;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.SelectBranchPopup;
+import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 
@@ -39,7 +40,7 @@ public class SvnIntegrateChangesActionPerformer implements SelectBranchPopup.Bra
     myMergerFactory = mergerFactory;
   }
 
-  public void branchSelected(final Project project, final SvnBranchConfiguration configuration, final String url, final long revision) {
+  public void branchSelected(final Project project, final SvnBranchConfigurationNew configuration, final String url, final long revision) {
     onBranchSelected(url, null, null);
   }
 

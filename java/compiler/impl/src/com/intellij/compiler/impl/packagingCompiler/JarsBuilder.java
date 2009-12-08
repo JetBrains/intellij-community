@@ -50,7 +50,6 @@ public class JarsBuilder {
   private final FileFilter myFileFilter;
   private final CompileContext myContext;
   private Map<JarInfo, File> myBuiltJars;
-  private Set<File> myJarsToDelete;
 
   public JarsBuilder(Set<JarInfo> jarsToBuild, FileFilter fileFilter, CompileContext context) {
     DependentJarsEvaluator evaluator = new DependentJarsEvaluator();
@@ -71,28 +70,30 @@ public class JarsBuilder {
     }
 
     myBuiltJars = new HashMap<JarInfo, File>();
-    for (JarInfo jar : sortedJars) {
-      myContext.getProgressIndicator().checkCanceled();
-      buildJar(jar);
+    try {
+      for (JarInfo jar : sortedJars) {
+        myContext.getProgressIndicator().checkCanceled();
+        buildJar(jar);
+      }
+
+      myContext.getProgressIndicator().setText(CompilerBundle.message("packaging.compiler.message.copying.archives"));
+      copyJars(writtenPaths);
+    }
+    finally {
+      deleteTemporaryJars();
     }
 
-    myContext.getProgressIndicator().setText(CompilerBundle.message("packaging.compiler.message.copying.archives"));
-    copyJars(writtenPaths);
-
-    deleteTemporaryJars();
 
     return true;
   }
 
   private void deleteTemporaryJars() {
-    for (File file : myJarsToDelete) {
+    for (File file : myBuiltJars.values()) {
       FileUtil.delete(file);
     }
   }
 
   private void copyJars(final Set<String> writtenPaths) throws IOException {
-    myJarsToDelete = new HashSet<File>(myBuiltJars.values());
-
     for (Map.Entry<JarInfo, File> entry : myBuiltJars.entrySet()) {
       File fromFile = entry.getValue();
       boolean first = true;

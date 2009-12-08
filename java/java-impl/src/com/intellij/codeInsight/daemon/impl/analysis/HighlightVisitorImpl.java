@@ -768,8 +768,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
     else {
       PsiElement parent = expression.getParent();
-      if (parent instanceof PsiMethodCallExpression && ((PsiMethodCallExpression)parent).getMethodExpression() == expression) {
-        myHolder.addAll(HighlightMethodUtil.checkMethodCall((PsiMethodCallExpression)parent, myResolveHelper));
+      PsiMethodCallExpression methodCall;
+
+      if (parent instanceof PsiMethodCallExpression && (methodCall = (PsiMethodCallExpression)parent).getMethodExpression() == expression) {
+        myHolder.addAll(HighlightMethodUtil.checkMethodCall(methodCall, myResolveHelper));
+        if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkTopLevelMethodCallIntersectionTypeMaximalUpperBound(methodCall, expression));
       }
     }
 

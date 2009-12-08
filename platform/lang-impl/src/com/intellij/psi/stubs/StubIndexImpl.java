@@ -25,7 +25,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -53,7 +52,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 
 @State(
@@ -70,11 +68,6 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   private final Map<StubIndexKey<?,?>, MyIndex<?>> myIndices = new HashMap<StubIndexKey<?,?>, MyIndex<?>>();
   private final TObjectIntHashMap<ID<?, ?>> myIndexIdToVersionMap = new TObjectIntHashMap<ID<?, ?>>();
 
-  public static final int OK = 1;
-  public static final int NEED_REBUILD = 2;
-  public static final int REBUILD_IN_PROGRESS = 3;
-  private final AtomicInteger myRebuildStatus = new AtomicInteger(OK);
-
   private StubIndexState myPreviouslyRegistered;
 
   public StubIndexImpl() throws IOException {
@@ -85,7 +78,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       needRebuild |= registerIndexer(extension);
     }
     if (needRebuild) {
-      myRebuildStatus.set(NEED_REBUILD);
+      requestRebuild();
     }
     dropUnregisteredIndices();
   }
@@ -165,8 +158,6 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
   public <Key, Psi extends PsiElement> Collection<Psi> get(@NotNull final StubIndexKey<Key, Psi> indexKey, @NotNull final Key key, final Project project,
                                                            final GlobalSearchScope scope) {
-    checkRebuild(project);
-
     FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, scope);
 
     final PersistentFS fs = (PersistentFS)ManagingFS.getInstance();
@@ -284,27 +275,17 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     return stub.getStubType();
   }
 
-  private void forceRebuild(Throwable e, Project project) {
+  private static void forceRebuild(Throwable e, Project project) {
     LOG.info(e);
-    myRebuildStatus.set(NEED_REBUILD);
-    checkRebuild(project);
+    requestRebuild();
+    FileBasedIndex.getInstance().scheduleRebuild(StubUpdatingIndex.INDEX_ID, e);
   }
 
-  private void checkRebuild(@NotNull Project project) {
-    if (myRebuildStatus.compareAndSet(NEED_REBUILD, REBUILD_IN_PROGRESS)) {
-      StubUpdatingIndex.scheduleStubIndicesRebuild(new Runnable() {
-        public void run() {
-          myRebuildStatus.compareAndSet(REBUILD_IN_PROGRESS, OK);
-        }
-      }, project);
-    }
-    if (myRebuildStatus.get() == REBUILD_IN_PROGRESS) {
-      throw new ProcessCanceledException();
-    }
+  private static void requestRebuild() {
+    FileBasedIndex.getInstance().requestRebuild(StubUpdatingIndex.INDEX_ID);
   }
 
   public <K> Collection<K> getAllKeys(final StubIndexKey<K, ?> indexKey, @NotNull Project project) {
-    checkRebuild(project);
     FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, GlobalSearchScope.allScope(project));
 
     final MyIndex<K> index = (MyIndex<K>)myIndices.get(indexKey);
@@ -415,7 +396,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     }
     catch (StorageException e) {
       LOG.info(e);
-      myRebuildStatus.set(NEED_REBUILD);
+      requestRebuild();
     }
   }
 

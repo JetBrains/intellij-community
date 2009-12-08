@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import javax.swing.*;
 public class EnumSwitchStatementWhichMissesCasesInspection
         extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
@@ -37,6 +38,7 @@ public class EnumSwitchStatementWhichMissesCasesInspection
     /** @noinspection PublicField*/
     public boolean ignoreSwitchStatementsWithDefault = false;
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         final PsiSwitchStatement switchStatement =
@@ -55,6 +57,7 @@ public class EnumSwitchStatementWhichMissesCasesInspection
                 switchStatementTypeText);
     }
 
+    @Override
     @Nullable
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(
@@ -63,6 +66,7 @@ public class EnumSwitchStatementWhichMissesCasesInspection
                 this, "ignoreSwitchStatementsWithDefault");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new EnumSwitchStatementWhichMissesCasesVisitor();
     }
@@ -86,18 +90,12 @@ public class EnumSwitchStatementWhichMissesCasesInspection
                 return false;
             }
             final PsiType type = expression.getType();
-            if (type == null) {
-                return false;
-            }
-            if (!(type instanceof PsiClassType)) {
+            if (type == null || !(type instanceof PsiClassType)) {
                 return false;
             }
             final PsiClassType classType = (PsiClassType)type;
             final PsiClass aClass = classType.resolve();
-            if (aClass == null) {
-                return false;
-            }
-            if (!aClass.isEnum()) {
+            if (aClass == null || !aClass.isEnum()) {
                 return false;
             }
             final PsiCodeBlock body = statement.getBody();
@@ -120,10 +118,10 @@ public class EnumSwitchStatementWhichMissesCasesInspection
             final PsiField[] fields = aClass.getFields();
             int numEnums = 0;
             for (final PsiField field : fields) {
-                final PsiType fieldType = field.getType();
-                if (fieldType.equals(type)) {
-                    numEnums++;
+                if (!(field instanceof PsiEnumConstant)) {
+                    continue;
                 }
+                numEnums++;
             }
             return numEnums != numCases;
         }

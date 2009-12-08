@@ -92,7 +92,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   private ArtifactValidationManagerImpl myValidationManager;
 
   public ArtifactEditorImpl(final @NotNull ArtifactsStructureConfigurableContext context, @NotNull Artifact artifact, @NotNull ArtifactEditorSettings settings) {
-    myContext = new ArtifactEditorContextImpl(context, this);
+    myContext = createArtifactEditorContext(context);
     myOriginalArtifact = artifact;
     myProject = context.getProject();
     mySubstitutionParameters.setTypesToShowContent(settings.getTypesToShowContent());
@@ -116,6 +116,10 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     setOutputPath(outputPath);
     myValidationManager = new ArtifactValidationManagerImpl(this);
     updateShowContentCheckbox();
+  }
+
+  protected ArtifactEditorContextImpl createArtifactEditorContext(ArtifactsStructureConfigurableContext parentContext) {
+    return new ArtifactEditorContextImpl(parentContext, this);
   }
 
   private ActionGroup createShowSpecificContentOptionsGroup() {
@@ -237,7 +241,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   }
 
   private void onShowContentSettingsChanged() {
-    ((ArtifactsStructureConfigurableContextImpl)myContext.getParent()).getDefaultSettings().setTypesToShowContent(mySubstitutionParameters.getTypesToSubstitute());
+    myContext.getParent().getDefaultSettings().setTypesToShowContent(mySubstitutionParameters.getTypesToSubstitute());
   }
 
   public void updateShowContentCheckbox() {

@@ -179,7 +179,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     final UpToDateLineNumberProvider getUpToDateLineNumber = new UpToDateLineNumberProviderImpl(
       editor.getDocument(),
       project,
-      upToDateContent, file);
+      upToDateContent);
 
     editor.getGutter().closeAllAnnotations();
 

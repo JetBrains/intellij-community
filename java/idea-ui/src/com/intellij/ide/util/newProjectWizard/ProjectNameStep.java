@@ -16,8 +16,8 @@
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.highlighter.ModuleFileType;
+import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.util.newProjectWizard.modes.WizardMode;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -26,7 +26,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.components.StorageScheme;
+import com.intellij.projectImport.ProjectFormatPanel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -45,10 +45,7 @@ public class ProjectNameStep extends ModuleWizardStep {
   protected final WizardContext myWizardContext;
   protected final StepSequence mySequence;
   protected final WizardMode myMode;
-  private static final String DIR_BASED = ".idea (directory based)";
-  private static final String FILE_BASED = ".ipr (file based)";
-  private final JComboBox myStorageFormatCombo = new JComboBox();
-
+  private ProjectFormatPanel myFormatPanel = new ProjectFormatPanel();
 
   public ProjectNameStep(WizardContext wizardContext, StepSequence sequence, final WizardMode mode) {
     myWizardContext = wizardContext;
@@ -71,21 +68,11 @@ public class ProjectNameStep extends ModuleWizardStep {
     myPanel = new JPanel(new GridBagLayout());
     myPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEtchedBorder(), BorderFactory.createEmptyBorder(10, 10, 10, 10)));
     myPanel.add(myNamePathComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 4, 0, 0), 0, 0));
-    JPanel projectFileFormatPanel = new JPanel(new BorderLayout());
-    myPanel.add(projectFileFormatPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(2, 6, 0, 0), 0, 0));
+
+    myPanel.add(myFormatPanel.getPanel(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(2, 0, 0, 0), 0, 0));
 
     myNamePathComponent.setVisible(myWizardContext.getProject() == null);
-    projectFileFormatPanel.setVisible(myWizardContext.getProject() == null);
-
-    final JLabel label = new JLabel("Project storage format:");
-    label.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 4));
-    projectFileFormatPanel.add(label, BorderLayout.WEST);
-    projectFileFormatPanel.add(myStorageFormatCombo, BorderLayout.CENTER);
-    myStorageFormatCombo.insertItemAt(DIR_BASED, 0);
-    myStorageFormatCombo.insertItemAt(FILE_BASED, 1);
-
-    myStorageFormatCombo.setSelectedItem(DIR_BASED);
-
+    myFormatPanel.setVisible(myWizardContext.getProject() == null);
     myAdditionalContentPanel = new JPanel(new GridBagLayout());
     myPanel.add(myAdditionalContentPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
   }
@@ -100,14 +87,10 @@ public class ProjectNameStep extends ModuleWizardStep {
     myWizardContext.setProjectFileDirectory(projectFileDirectory);
     final ProjectBuilder moduleBuilder = myMode.getModuleBuilder();
     myWizardContext.setProjectBuilder(moduleBuilder);
-    myWizardContext.setProjectStorageFormat(getSelectedProjectStorageFormat());
+    myFormatPanel.updateData(myWizardContext);
     if (moduleBuilder instanceof SourcePathsBuilder) {
       ((SourcePathsBuilder)moduleBuilder).setContentEntryPath(projectFileDirectory);
     }
-  }
-
-  private StorageScheme getSelectedProjectStorageFormat() {
-    return FILE_BASED.equals(myStorageFormatCombo.getSelectedItem()) ? StorageScheme.DEFAULT : StorageScheme.DIRECTORY_BASED;
   }
 
   public Icon getIcon() {
@@ -124,7 +107,7 @@ public class ProjectNameStep extends ModuleWizardStep {
 
   public String getProjectFilePath() {
     if (myWizardContext.getProject() == null) {
-      if (getSelectedProjectStorageFormat() == StorageScheme.DEFAULT) {
+      if (myFormatPanel.isDefault()) {
         return getProjectFileDirectory() + "/" + myNamePathComponent.getNameValue() + ProjectFileType.DOT_DEFAULT_EXTENSION;
       }
       else {

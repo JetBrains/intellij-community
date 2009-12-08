@@ -24,6 +24,7 @@ import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.ex.WeakKeymapManagerListener;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TestableUi;
 import com.intellij.openapi.util.Comparing;
@@ -564,7 +565,7 @@ public final class InternalDecorator extends JPanel implements TestableUi, TypeS
       .setToolTipText(getToolTipTextByAction(HIDE_ACTIVE_SIDE_WINDOW_ACTION_ID, UIBundle.message("tool.window.hideSide.action.name")));
   }
 
-  private final class ChangeAnchorAction extends AnAction {
+  private final class ChangeAnchorAction extends AnAction implements DumbAware {
     private final ToolWindowAnchor myAnchor;
 
     public ChangeAnchorAction(final String title, final ToolWindowAnchor anchor) {
@@ -577,7 +578,7 @@ public final class InternalDecorator extends JPanel implements TestableUi, TypeS
     }
   }
 
-  private final class HideAction extends AnAction {
+  private final class HideAction extends AnAction implements DumbAware {
     @NonNls public static final String HIDE_ACTIVE_WINDOW_ACTION_ID = InternalDecorator.HIDE_ACTIVE_WINDOW_ACTION_ID;
 
     public HideAction() {
@@ -595,7 +596,7 @@ public final class InternalDecorator extends JPanel implements TestableUi, TypeS
     }
   }
 
-  private final class HideSideAction extends AnAction {
+  private final class HideSideAction extends AnAction implements DumbAware {
     @NonNls public static final String HIDE_ACTIVE_SIDE_WINDOW_ACTION_ID = InternalDecorator.HIDE_ACTIVE_SIDE_WINDOW_ACTION_ID;
 
     public HideSideAction() {
@@ -613,7 +614,7 @@ public final class InternalDecorator extends JPanel implements TestableUi, TypeS
     }
   }
 
-  private final class TogglePinnedModeAction extends ToggleAction {
+  private final class TogglePinnedModeAction extends ToggleAction implements DumbAware {
     public TogglePinnedModeAction() {
       copyFrom(ActionManager.getInstance().getAction(TOGGLE_PINNED_MODE_ACTION_ID));
     }
@@ -627,7 +628,7 @@ public final class InternalDecorator extends JPanel implements TestableUi, TypeS
     }
   }
 
-  private final class ToggleDockModeAction extends ToggleAction {
+  private final class ToggleDockModeAction extends ToggleAction implements DumbAware {
     public ToggleDockModeAction() {
       copyFrom(ActionManager.getInstance().getAction(TOGGLE_DOCK_MODE_ACTION_ID));
     }
@@ -646,7 +647,7 @@ public final class InternalDecorator extends JPanel implements TestableUi, TypeS
     }
   }
 
-  private final class ToggleFloatingModeAction extends ToggleAction {
+  private final class ToggleFloatingModeAction extends ToggleAction implements DumbAware {
     public ToggleFloatingModeAction() {
       copyFrom(ActionManager.getInstance().getAction(TOGGLE_FLOATING_MODE_ACTION_ID));
     }
@@ -665,7 +666,7 @@ public final class InternalDecorator extends JPanel implements TestableUi, TypeS
     }
   }
 
-  private final class ToggleSideModeAction extends ToggleAction {
+  private final class ToggleSideModeAction extends ToggleAction implements DumbAware {
     public ToggleSideModeAction() {
       copyFrom(ActionManager.getInstance().getAction(TOGGLE_SIDE_MODE_ACTION_ID));
     }
@@ -684,7 +685,7 @@ public final class InternalDecorator extends JPanel implements TestableUi, TypeS
     }
   }
 
-  private final class ToggleContentUiTypeAction extends ToggleAction {
+  private final class ToggleContentUiTypeAction extends ToggleAction implements DumbAware {
     private ToggleContentUiTypeAction() {
       copyFrom(ActionManager.getInstance().getAction(TOGGLE_CONTENT_UI_TYPE_ACTION_ID));
     }

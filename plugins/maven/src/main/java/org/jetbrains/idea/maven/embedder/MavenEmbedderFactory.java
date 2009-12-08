@@ -164,8 +164,19 @@ public class MavenEmbedderFactory {
     return new File(new File(userHome, DOT_M2_DIR), MavenConstants.SETTINGS_XML);
   }
 
-  @Nullable
+  @NotNull
   public static File resolveLocalRepository(@Nullable String mavenHome, @Nullable String userSettings, @Nullable String override) {
+    File result = doResolveLocalRepository(mavenHome, userSettings, override);
+    try {
+      return result.getCanonicalFile();
+    }
+    catch (IOException e) {
+      return result;
+    }
+  }
+
+  @NotNull
+  private static File doResolveLocalRepository(String mavenHome, String userSettings, String override) {
     if (!StringUtil.isEmpty(override)) {
       return new File(override);
     }
@@ -194,7 +205,7 @@ public class MavenEmbedderFactory {
       FileInputStream is = new FileInputStream(file);
       try {
         JDOMReader reader = new JDOMReader(is);
-        return reader.getChildText(reader.getRootElement(), LOCAL_REPOSITORY_TAG);
+        return expandProperties(reader.getChildText(reader.getRootElement(), LOCAL_REPOSITORY_TAG));
       }
       finally {
         is.close();
@@ -203,6 +214,15 @@ public class MavenEmbedderFactory {
     catch (IOException ignore) {
       return null;
     }
+  }
+
+  private static String expandProperties(String text) {
+    if (StringUtil.isEmptyOrSpaces(text)) return text;
+    Properties props = collectSystemProperties();
+    for (Map.Entry<Object, Object> each : props.entrySet()) {
+      text = text.replace("${" + each.getKey() + "}", (CharSequence)each.getValue());
+    }
+    return text;
   }
 
   public static List<String> getBasicPhasesList() {

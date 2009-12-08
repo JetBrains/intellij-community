@@ -65,7 +65,7 @@ public class AnnotationProcessorsConfigurable implements Configurable{
   }
 
   public String getHelpTopic() {
-    return null;
+    return "reference.projectsettings.compiler.annotationProcessors";
   }
 
   public JComponent createComponent() {
@@ -263,7 +263,7 @@ public class AnnotationProcessorsConfigurable implements Configurable{
     public String getColumnName(int column) {
       switch (column) {
         case ProcessorTableRow.NAME_COLUMN: return "Processor FQ Name";
-        case ProcessorTableRow.OPTIONS_COLUMN : return "Processor Run Options";
+        case ProcessorTableRow.OPTIONS_COLUMN : return "Processor Run Options (space-separated \"key=value\" pairs)";
       }
       return super.getColumnName(column);
     }

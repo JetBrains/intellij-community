@@ -7,6 +7,10 @@
   
   <project-components>
     <component>
+      <interface-class>com.intellij.packaging.artifacts.ArtifactManager</interface-class>
+      <implementation-class>com.intellij.packaging.impl.artifacts.ArtifactManagerImpl</implementation-class>
+    </component>
+    <component>
       <interface-class>com.intellij.compiler.CompilerConfiguration</interface-class>
       <implementation-class>com.intellij.compiler.CompilerConfigurationImpl</implementation-class>
       <skipForDummyProject/>

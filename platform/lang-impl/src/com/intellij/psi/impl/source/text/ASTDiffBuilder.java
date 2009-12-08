@@ -27,15 +27,19 @@ import com.intellij.pom.tree.events.impl.ChangeInfoImpl;
 import com.intellij.pom.tree.events.impl.ReplaceChangeInfoImpl;
 import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
-import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.util.diff.DiffTreeChangeBuilder;
 import org.jetbrains.annotations.NotNull;
 
 public class ASTDiffBuilder implements DiffTreeChangeBuilder<ASTNode, ASTNode> {
+  public static boolean DEBUG = false;
   private final TreeChangeEventImpl myEvent;
   private final PsiFileImpl myFile;
   private final PsiManagerEx myPsiManager;
@@ -54,8 +58,9 @@ public class ASTDiffBuilder implements DiffTreeChangeBuilder<ASTNode, ASTNode> {
       BlockSupportImpl.replaceFileElement(myFile, (FileElement)oldNode, (FileElement)newNode, myPsiManager);
     }
     else {
+      final ASTNode parent = oldNode.getTreeParent();
+
       TreeUtil.ensureParsed(oldNode);
-      transformNewChameleon(oldNode, newNode);
 
       ((TreeElement)newNode).rawRemove();
       ((TreeElement)oldNode).rawReplaceWithList((TreeElement)newNode);
@@ -68,18 +73,10 @@ public class ASTDiffBuilder implements DiffTreeChangeBuilder<ASTNode, ASTNode> {
       if (!(newNode instanceof FileElement)) {
         ((CompositeElement)newNode.getTreeParent()).subtreeChanged();
       }
-    }
-  }
 
-  private static void transformNewChameleon(final ASTNode oldNode, ASTNode newNode) {
-    if (newNode instanceof LazyParseableElement) {
-      final FileElement dummyRoot = new DummyHolder(
-          oldNode.getPsi().getManager(),
-          oldNode.getPsi().getContainingFile(),
-          SharedImplUtil.findCharTableByTree(oldNode)
-      ).getTreeElement();
-      dummyRoot.rawAddChildren((TreeElement)newNode);
-      TreeUtil.ensureParsed(newNode);
+      if (DEBUG) {
+        DebugUtil.checkTreeStructure(parent);
+      }
     }
   }
 
@@ -97,11 +94,11 @@ public class ASTDiffBuilder implements DiffTreeChangeBuilder<ASTNode, ASTNode> {
     myEvent.addElementaryChange(child, ChangeInfoImpl.create(ChangeInfo.REMOVED, child));
     ((TreeElement)child).rawRemove();
     ((CompositeElement)parent).subtreeChanged();
+
+    DebugUtil.checkTreeStructure(parent);
   }
 
   public void nodeInserted(@NotNull final ASTNode oldParent, @NotNull ASTNode node, final int pos) {
-    transformNewChameleon(oldParent, node);
-
     ASTNode anchor = null;
     for (int i = 0; i < pos; i++) {
       anchor = anchor == null ? oldParent.getFirstChildNode() : anchor.getTreeNext();
@@ -123,6 +120,8 @@ public class ASTDiffBuilder implements DiffTreeChangeBuilder<ASTNode, ASTNode> {
     myEvent.addElementaryChange(node, ChangeInfoImpl.create(ChangeInfo.ADD, node));
     ((TreeElement)node).clearCaches();
     ((CompositeElement)oldParent).subtreeChanged();
+
+    DebugUtil.checkTreeStructure(oldParent);
   }
 
   public TreeChangeEventImpl getEvent() {

@@ -26,6 +26,9 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.reporter.ConnectionException;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -40,6 +43,9 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.util.io.UrlConnectionUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.text.DateFormatUtil;
@@ -47,6 +53,7 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -165,7 +172,7 @@ public final class UpdateChecker {
     for (Object plugin : document.getRootElement().getChildren("plugin")) {
       Element pluginElement = (Element)plugin;
       final String pluginId = pluginElement.getAttributeValue("id");
-      final String pluginUrl = pluginElement.getAttributeValue("url");
+      String pluginUrl = pluginElement.getAttributeValue("url");
       final String pluginVersion = pluginElement.getAttributeValue("version");
       if (pluginId == null) {
         LOG.info("plugin id should not be null");
@@ -179,14 +186,26 @@ public final class UpdateChecker {
         continue;
       }
 
+
+      if (!pluginUrl.startsWith(HttpFileSystem.PROTOCOL)) {
+        final HttpFileSystem fileSystem = HttpFileSystem.getInstance();
+        final VirtualFile hostFile = fileSystem.findFileByPath(VfsUtil.urlToPath(host));
+        LOG.assertTrue(hostFile != null);
+        final VirtualFile pluginByRelativePath = findPluginByRelativePath(hostFile.getParent(), pluginUrl, fileSystem);
+        if (pluginByRelativePath != null) {
+          pluginUrl = pluginByRelativePath.getUrl();
+        }
+      }
+
+      final String finalPluginUrl = pluginUrl;
       ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
           try {
             final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
             if (progressIndicator != null) {
-              progressIndicator.setText(pluginUrl);
+              progressIndicator.setText(finalPluginUrl);
             }
-            final PluginDownloader uploader = new PluginDownloader(pluginId, pluginUrl, pluginVersion);
+            final PluginDownloader uploader = new PluginDownloader(pluginId, finalPluginUrl, pluginVersion);
             if (uploader.prepareToInstall()) {
               downloaded.add(uploader);
             }
@@ -198,6 +217,34 @@ public final class UpdateChecker {
       }, IdeBundle.message("update.uploading.plugin.progress.title"), true, null);
     }
     return success;
+  }
+
+  @Nullable
+  public static VirtualFile findPluginByRelativePath(VirtualFile hostFile, @NotNull @NonNls String relPath, final HttpFileSystem fileSystem) {
+    if (relPath.length() == 0) return hostFile;
+    int index = relPath.indexOf('/');
+    if (index < 0) index = relPath.length();
+    String name = relPath.substring(0, index);
+
+    VirtualFile child;
+    if (name.equals(".")) {
+      child = hostFile;
+    }
+    else if (name.equals("..")) {
+      child = hostFile.getParent();
+    }
+    else {
+      child = fileSystem.findFileByPath(hostFile.getPath() + "/" + name);
+    }
+
+    if (child == null) return null;
+
+    if (index < relPath.length()) {
+      return findPluginByRelativePath(child, relPath.substring(index + 1), fileSystem);
+    }
+    else {
+      return child;
+    }
   }
 
   @Nullable
@@ -363,13 +410,17 @@ public final class UpdateChecker {
           result[0] = DownloadPatchResult.SUCCESS;
         }
         catch (final IOException e) {
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              Messages.showErrorDialog(e.getMessage(), "Failed to download patch file");
-            }
-          });
           LOG.info(e);
           result[0] = DownloadPatchResult.FAILED;
+
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              Notifications.Bus.notify(new Notification("Updater", 
+                                                        "Failed to download patch file",
+                                                        e.getMessage(),
+                                                        NotificationType.ERROR));
+            }
+          });
         }
       }
     }, IdeBundle.message("update.downloading.patch.progress.title"), true, null)) {
@@ -401,7 +452,8 @@ public final class UpdateChecker {
     InputStream in = null;
     OutputStream out = null;
 
-    String patchFileName = "jetbrains.patch.jar." + productCode;
+    String platform = System.getProperty("idea.platform.prefix", "idea");
+    String patchFileName = "jetbrains.patch.jar." + platform;
     File patchFile = new File(FileUtil.getTempDirectory(), patchFileName);
 
     try {

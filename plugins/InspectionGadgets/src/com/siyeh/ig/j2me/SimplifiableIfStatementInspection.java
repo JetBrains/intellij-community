@@ -251,6 +251,9 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
                     (PsiIfStatement)element.getParent();
             final String newStatement =
                     calculateReplacementStatement(ifStatement);
+            if ("".equals(newStatement)) {
+                return;
+            }
             if (ifStatement.getElseBranch() == null) {
                 final PsiElement nextStatement =
                         PsiTreeUtil.skipSiblingsForward(ifStatement,

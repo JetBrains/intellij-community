@@ -53,6 +53,9 @@ public class AdvancedSettingsUI implements Configurable {
   private JPanel myLanguageAnnotationPanel;
   private JPanel myPatternAnnotationPanel;
   private JPanel mySubstAnnotationPanel;
+  private JCheckBox myAnalyzeReferencesCheckBox;
+  private JCheckBox myUseDataflowAnalysisIfCheckBox;
+  private JCheckBox myIncludeUncomputableOperandsAsCheckBox;
 
   private final ReferenceEditorWithBrowseButton myAnnotationField;
   private final ReferenceEditorWithBrowseButton myPatternField;
@@ -126,6 +129,15 @@ public class AdvancedSettingsUI implements Configurable {
     if (!mySubstField.getText().equals(myConfiguration.getSubstAnnotationClass())) {
       return true;
     }
+    if (myConfiguration.isResolveReferences() != myAnalyzeReferencesCheckBox.isSelected()) {
+      return true;
+    }
+    if (myConfiguration.isUseDfaIfAvailable() != myUseDataflowAnalysisIfCheckBox.isSelected()) {
+      return true;
+    }
+    if (myConfiguration.isIncludeUncomputablesAsLiterals() != myIncludeUncomputableOperandsAsCheckBox.isSelected()) {
+      return true;
+    }
     return false;
   }
 
@@ -144,6 +156,10 @@ public class AdvancedSettingsUI implements Configurable {
     myConfiguration.setLanguageAnnotation(myAnnotationField.getText());
     myConfiguration.setPatternAnnotation(myPatternField.getText());
     myConfiguration.setSubstAnnotation(mySubstField.getText());
+
+    myConfiguration.setResolveReferences(myAnalyzeReferencesCheckBox.isSelected());
+    myConfiguration.setUseDfaIfAvailable(myUseDataflowAnalysisIfCheckBox.isSelected());
+    myConfiguration.setIncludeUncomputablesAsLiterals(myIncludeUncomputableOperandsAsCheckBox.isSelected());
   }
 
   public void reset() {
@@ -154,6 +170,10 @@ public class AdvancedSettingsUI implements Configurable {
     myNoInstrumentation.setSelected(myConfiguration.getInstrumentation() == Configuration.InstrumentationType.NONE);
     myAssertInstrumentation.setSelected(myConfiguration.getInstrumentation() == Configuration.InstrumentationType.ASSERT);
     myExceptionInstrumentation.setSelected(myConfiguration.getInstrumentation() == Configuration.InstrumentationType.EXCEPTION);
+
+    myAnalyzeReferencesCheckBox.setSelected(myConfiguration.isResolveReferences());
+    myUseDataflowAnalysisIfCheckBox.setSelected(myConfiguration.isUseDfaIfAvailable());
+    myIncludeUncomputableOperandsAsCheckBox.setSelected(myConfiguration.isIncludeUncomputablesAsLiterals());
   }
 
   public void disposeUIResources() {
@@ -169,7 +189,7 @@ public class AdvancedSettingsUI implements Configurable {
   }
 
   public String getHelpTopic() {
-    return null;
+    return "reference.settings.injection.advanced";
   }
 
   private static class BrowseClassListener implements ActionListener {

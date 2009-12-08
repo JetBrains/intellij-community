@@ -18,6 +18,7 @@ package org.jetbrains.generate.tostring;
 import com.intellij.codeInsight.generation.PsiElementClassMember;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.ide.util.MemberChooserBuilder;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,6 +30,7 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.TabbedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -204,7 +206,8 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
             settingsButton.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
                     final TemplatesPanel ui = new TemplatesPanel();
-                    Configurable composite = new TabbedConfigurable() {
+                  Disposable disposable = Disposer.newDisposable();
+                  Configurable composite = new TabbedConfigurable(disposable) {
                         protected List<Configurable> createConfigurables() {
                             List<Configurable> res = new ArrayList<Configurable>();
                             res.add(new GenerateToStringConfigurable());
@@ -237,6 +240,7 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
                             ui.selectItem(TemplatesManager.getInstance().getDefaultTemplate());
                         }
                     });
+                  Disposer.dispose(disposable);
                 }
             });
 

@@ -23,6 +23,7 @@ import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileTypes.FileTypeConsumer;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,7 +32,7 @@ import com.intellij.psi.PsiManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-public class ResourceBundleEditorProvider extends FileTypeFactory implements FileEditorProvider {
+public class ResourceBundleEditorProvider extends FileTypeFactory implements FileEditorProvider, DumbAware {
   private static final ResourceBundleFileType RESOURCE_BUNDLE_FILE_TYPE = new ResourceBundleFileType();
 
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file){

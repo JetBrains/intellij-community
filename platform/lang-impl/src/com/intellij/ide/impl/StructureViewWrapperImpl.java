@@ -35,14 +35,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
-import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.Alarm;
-import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -98,26 +97,19 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   private void checkUpdate() {
     if (myProject.isDisposed()) return;
 
-    Window mywindow = SwingUtilities.windowForComponent(myPanel);
-    if (mywindow != null && !mywindow.isActive()) return;
+    final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    if (SwingUtilities.isDescendingFrom(myPanel, owner)) return;
 
-    final KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-    final Window focusWindow = focusManager.getFocusedWindow();
+    final DataContext dataContext = DataManager.getInstance().getDataContext(owner);
+    if (dataContext.getData(myKey) == this) return;
+    if (PlatformDataKeys.PROJECT.getData(dataContext) != myProject) return;
 
-    if (focusWindow == mywindow) {
-      final Component owner = focusManager.getFocusOwner();
-      if (owner instanceof IdeRootPane) return;
-
-      final DataContext dataContext = DataManager.getInstance().getDataContext(owner);
-      if (dataContext.getData(myKey) == this) return;
-
-      final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
-      if (files != null && files.length == 1) {
-        setFile(files[0]);
-      }
-      else {
-        setFile(null);
-      }
+    final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    if (files != null && files.length == 1) {
+      setFile(files[0]);
+    }
+    else {
+      setFile(null);
     }
   }
 
@@ -164,10 +156,10 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   }
 
   public void rebuild() {
+    if (myProject.isDisposed()) return;
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    boolean hadFocus = myStructureView != null && IJSwingUtilities.hasFocus2(myStructureView.getComponent()) ||
-                       myModuleStructureComponent != null && IJSwingUtilities.hasFocus2(myModuleStructureComponent);
+    boolean hadFocus = ToolWindowId.STRUCTURE_VIEW.equals(ToolWindowManager.getInstance(myProject).getActiveToolWindowId());
 
     if (myStructureView != null) {
       myStructureView.storeState();
@@ -204,7 +196,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
             if (hadFocus) {
               JComponent focusedComponent = IdeFocusTraversalPolicy.getPreferredFocusedComponent(myModuleStructureComponent);
               if (focusedComponent != null) {
-                focusedComponent.requestFocus();
+                IdeFocusManager.getInstance(myProject).requestFocus(focusedComponent, true);
               }
             }
           }
@@ -212,7 +204,11 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
       }
       else {
         FileEditor editor = FileEditorManager.getInstance(myProject).getSelectedEditor(file);
-        if (editor == null) editor = crteateTempFileEditor(file);
+        boolean needDisposeEditor = false;
+        if (editor == null) {
+          editor = createTempFileEditor(file);
+          needDisposeEditor = true;
+        }
         if (editor != null && editor.isValid()) {
           final StructureViewBuilder structureViewBuilder = editor.getStructureViewBuilder();
           if (structureViewBuilder != null) {
@@ -221,12 +217,15 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
             if (hadFocus) {
               JComponent focusedComponent = IdeFocusTraversalPolicy.getPreferredFocusedComponent(myStructureView.getComponent());
               if (focusedComponent != null) {
-                focusedComponent.requestFocus();
+                IdeFocusManager.getInstance(myProject).requestFocus(focusedComponent, true);
               }
             }
             myStructureView.restoreState();
             myStructureView.centerSelectedRow();
           }
+        }
+        if (needDisposeEditor && editor != null) {
+          Disposer.dispose(editor);
         }
       }
     }
@@ -240,7 +239,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   }
 
   @Nullable
-  private FileEditor crteateTempFileEditor(VirtualFile file) {
+  private FileEditor createTempFileEditor(VirtualFile file) {
     FileEditorProviderManager editorProviderManager = FileEditorProviderManager.getInstance();
     final FileEditorProvider[] providers = editorProviderManager.getProviders(myProject, file);
     for (FileEditorProvider provider : providers) {

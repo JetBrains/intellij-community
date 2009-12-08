@@ -504,11 +504,11 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
             final ArrayList<String> names1 = rootModel.processOrder(new RootPolicy<ArrayList<String>>() {
               public ArrayList<String> visitModuleOrderEntry(ModuleOrderEntry moduleOrderEntry, ArrayList<String> strings) {
                 final Module module = moduleOrderEntry.getModule();
-                if (module != null) {
+                if (module != null && !module.isDisposed()) {
                   strings.add(module.getName());
                 } else {
                   final Module moduleToBeRenamed = moduleModel.getModuleToBeRenamed(moduleOrderEntry.getModuleName());
-                  if (moduleToBeRenamed != null) {
+                  if (moduleToBeRenamed != null && !moduleToBeRenamed.isDisposed()) {
                     strings.add(moduleToBeRenamed.getName());
                   }
                 }

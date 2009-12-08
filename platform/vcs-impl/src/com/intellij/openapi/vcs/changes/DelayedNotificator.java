@@ -62,6 +62,14 @@ public class DelayedNotificator {
       });
     }
 
+    public void changesAdded(final Collection<Change> changes, final ChangeList toList) {
+      myService.execute(new Runnable() {
+        public void run() {
+          myDispatcher.getMulticaster().changesAdded(changes, toList);
+        }
+      });
+    }
+
     public void changeListRemoved(final ChangeList list) {
       myService.execute(new Runnable() {
         public void run() {

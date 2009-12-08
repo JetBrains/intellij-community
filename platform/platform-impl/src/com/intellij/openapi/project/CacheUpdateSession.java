@@ -29,7 +29,7 @@ import java.util.*;
 
 public class CacheUpdateSession {
   private static final Logger LOG = Logger.getInstance("#" + CacheUpdateSession.class.getName());
-  private static final Key<Boolean> FILED_TO_INDEX = Key.create(CacheUpdateSession.class.getSimpleName() + ".FAILED_TO_INDEX");
+  private static final Key<Boolean> FAILED_TO_INDEX = Key.create(CacheUpdateSession.class.getSimpleName() + ".FAILED_TO_INDEX");
   private final Collection<VirtualFile> myFilesToUpdate;
   private final List<Pair<CacheUpdater, Collection<VirtualFile>>> myUpdatersWithFiles =
     new ArrayList<Pair<CacheUpdater, Collection<VirtualFile>>>();
@@ -69,6 +69,7 @@ public class CacheUpdateSession {
 
   public void processFile(FileContent content) {
     VirtualFile file = content.getVirtualFile();
+    boolean isValid = file.isValid();
 
     Iterator<Pair<CacheUpdater, Collection<VirtualFile>>> it = myUpdatersWithFiles.iterator();
     while (it.hasNext()) {
@@ -79,7 +80,7 @@ public class CacheUpdateSession {
       if (!eachFiles.contains(file)) continue;
 
       try {
-        if (!Boolean.TRUE.equals(file.getUserData(FILED_TO_INDEX))) {
+        if (isValid && !Boolean.TRUE.equals(file.getUserData(FAILED_TO_INDEX))) {
           eachUpdater.processFile(content);
         }
       }
@@ -88,7 +89,7 @@ public class CacheUpdateSession {
       }
       catch (Throwable e) {
         LOG.error("Error while indexing " + file.getPresentableUrl() + "\n" + "To reindex this file IDEA has to be restarted", e);
-        file.putUserData(FILED_TO_INDEX, Boolean.TRUE);
+        file.putUserData(FAILED_TO_INDEX, Boolean.TRUE);
       }
       eachFiles.remove(file);
 

@@ -42,7 +42,7 @@ public abstract class IntentionManager  {
    */
   @Deprecated
   public static IntentionManager getInstance(Project project) {
-    return ServiceManager.getService(IntentionManager.class);
+    return getInstance();
   }
 
   public static IntentionManager getInstance() {
@@ -54,14 +54,24 @@ public abstract class IntentionManager  {
    *
    * @param action the intention action to register.
    */
-  public abstract void addAction(IntentionAction action);
+  public abstract void addAction(@NotNull IntentionAction action);
 
   /**
    * Returns all registered intention actions.
    *
    * @return array of registered actions.
    */
+  @NotNull
   public abstract IntentionAction[] getIntentionActions();
+
+  /**
+   * Returns all registered intention actions which are available now
+   * (not disabled via Settings|Intentions or Alt-Enter|Disable intention quick fix)
+   *
+   * @return array of actions.
+   */
+  @NotNull
+  public abstract IntentionAction[] getAvailableIntentionActions();
 
   /**
    * Registers an intention action which can be enabled or disabled through the "Intention
@@ -79,25 +89,32 @@ public abstract class IntentionManager  {
    * @param category the name of the category or categories under which the intention will be shown
    *                 in the "Intention Settings" dialog.
    */
-  public abstract void registerIntentionAndMetaData(IntentionAction action, String... category);
+  public abstract void registerIntentionAndMetaData(@NotNull IntentionAction action, @NotNull String... category);
 
   /**
-   * @deprecated custom directory name causes problem with internationalization of inspection descriptions.
+   * @deprecated custom directory name causes problem with internationalization of intention descriptions.
+   * Register intention class via extension point {@link IntentionManager.EP_INTENTION_ACTIONS} instead.
    */
   @Deprecated
-  public abstract void registerIntentionAndMetaData(IntentionAction action, String[] category, String descriptionDirectoryName);
+  public abstract void registerIntentionAndMetaData(@NotNull IntentionAction action,
+                                                    @NotNull String[] category,
+                                                    @NotNull String descriptionDirectoryName);
 
-  public abstract void registerIntentionAndMetaData(IntentionAction action, String[] category,
-                                                    String description, String exampleFileExtension,
-                                                    String[] exampleTextBefore, String[] exampleTextAfter);
+  public abstract void registerIntentionAndMetaData(@NotNull IntentionAction action,
+                                                    @NotNull String[] category,
+                                                    @NotNull String description,
+                                                    @NotNull String exampleFileExtension,
+                                                    @NotNull String[] exampleTextBefore,
+                                                    @NotNull String[] exampleTextAfter);
 
-  public abstract void unregisterIntention(IntentionAction intentionAction);
+  public abstract void unregisterIntention(@NotNull IntentionAction intentionAction);
 
   /**
    * @return actions used as additional options for the given problem.
    * E.g. actions for suppress the problem via comment, javadoc or annotation,
    * and edit corresponding inspection settings.   
    */
+  @NotNull
   public abstract List<IntentionAction> getStandardIntentionOptions(@NotNull HighlightDisplayKey displayKey, @NotNull PsiElement context);
 
   /**
@@ -105,5 +122,6 @@ public abstract class IntentionManager  {
    * @param action action to convert.
    * @return quick fix instance.
    */
-  public abstract LocalQuickFix convertToFix(IntentionAction action);
+  @NotNull
+  public abstract LocalQuickFix convertToFix(@NotNull IntentionAction action);
 }

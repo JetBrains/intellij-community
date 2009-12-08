@@ -134,6 +134,10 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
     myCurrentIcon = new BlinkIconWrapper(icon, false);
     setIcon(myCurrentIcon);
 
+    if (manager.count(getProject()) == 0) {
+      cancelPopup();
+    }
+
     repaint();
   }
 

@@ -17,8 +17,6 @@
 package com.intellij.util.indexing;
 
 import com.intellij.AppTopics;
-import com.intellij.concurrency.Job;
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.*;
@@ -38,7 +36,6 @@ import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -72,7 +69,6 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.io.*;
@@ -118,7 +114,6 @@ public class FileBasedIndex implements ApplicationComponent {
   private final Map<Document, PsiFile> myTransactionMap = new HashMap<Document, PsiFile>();
 
   private static final int ALREADY_PROCESSED = 0x02;
-  private static final String USE_MULTITHREADED_INDEXING = "fileIndex.multithreaded";
   private @Nullable String myConfigPath;
   private @Nullable String mySystemPath;
   private final boolean myIsUnitTestMode;
@@ -197,8 +192,14 @@ public class FileBasedIndex implements ApplicationComponent {
 
       private void rebuildAllndices() {
         for (ID<?, ?> indexId : myIndices.keySet()) {
-          requestRebuild(indexId);
+          try {
+            clearIndex(indexId);
+          }
+          catch (StorageException e) {
+            LOG.info(e);
+          }
         }
+        scheduleIndexRebuild(true);
       }
     });
 
@@ -545,7 +546,7 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
 
-  private boolean isUpToDateCheckEnabled() {
+  private static boolean isUpToDateCheckEnabled() {
     final Integer value = myUpToDateCheckState.get();
     return value == null || value.intValue() == 0;
   }
@@ -825,64 +826,10 @@ public class FileBasedIndex implements ApplicationComponent {
     return result;
   }
 
-  public interface AllValuesProcessor<V> {
-    void process(final int inputId, V value);
-  }
-
-  public <K, V> void processAllValues(final ID<K, V> indexId, final AllValuesProcessor<V> processor, @NotNull Project project) {
-    try {
-      ensureUpToDate(indexId, project, null);
-      final UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
-      if (index == null) {
-        return;
-      }
-      final Ref<StorageException> storageEx = new Ref<StorageException>(null);
-      index.processAllKeys(new Processor<K>() {
-        public boolean process(K dataKey) {
-          try {
-            final ValueContainer<V> container = index.getData(dataKey);
-            for (final Iterator<V> it = container.getValueIterator(); it.hasNext();) {
-              final V value = it.next();
-              for (final ValueContainer.IntIterator inputsIt = container.getInputIdsIterator(value); inputsIt.hasNext();) {
-                processor.process(inputsIt.next(), value);
-              }
-            }
-            return true;
-          }
-          catch (StorageException e) {
-            storageEx.set(e);
-            return false;
-          }
-        }
-      });
-      final StorageException ex = storageEx.get();
-      if (ex != null) {
-        throw ex;
-      }
-    }
-    catch (StorageException e) {
-      scheduleRebuild(indexId, e);
-    }
-    catch (RuntimeException e) {
-      final Throwable cause = e.getCause();
-      if (cause instanceof StorageException || cause instanceof IOException) {
-        scheduleRebuild(indexId, e);
-      }
-      else {
-        throw e;
-      }
-    }
-  }
-
-  private <K> void scheduleRebuild(final ID<K, ?> indexId, final Throwable e) {
-    requestRebuild(indexId);
+  public <K> void scheduleRebuild(final ID<K, ?> indexId, final Throwable e) {
     LOG.info(e);
+    requestRebuild(indexId);
     checkRebuild(indexId, false);
-  }
-
-  @TestOnly
-  public boolean isIndexReady(final ID<?, ?> indexId) {
-    return myRebuildStatus.get(indexId).get() == OK;
   }
 
   private void checkRebuild(final ID<?, ?> indexId, final boolean cleanupOnly) {
@@ -894,11 +841,7 @@ public class FileBasedIndex implements ApplicationComponent {
           try {
             clearIndex(indexId);
             if (!cleanupOnly) {
-              for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-                UnindexedFilesUpdater updater =
-                  new UnindexedFilesUpdater(project, FileBasedIndex.this);
-                DumbServiceImpl.getInstance(project).queueCacheUpdate(Collections.<CacheUpdater>singleton(updater));
-              }
+              scheduleIndexRebuild(false);
             }
           }
           catch (StorageException e) {
@@ -931,6 +874,19 @@ public class FileBasedIndex implements ApplicationComponent {
 
     if (myRebuildStatus.get(indexId).get() == REBUILD_IN_PROGRESS) {
       throw new ProcessCanceledException();
+    }
+  }
+
+  private void scheduleIndexRebuild(boolean forceDumbMode) {
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      final Set<CacheUpdater> updatersToRun = Collections.<CacheUpdater>singleton(new UnindexedFilesUpdater(project, this));
+      final DumbServiceImpl service = DumbServiceImpl.getInstance(project);
+      if (forceDumbMode) {
+        service.queueCacheUpdateInDumbMode(updatersToRun);
+      }
+      else {
+        service.queueCacheUpdate(updatersToRun);
+      }
     }
   }
 
@@ -1193,9 +1149,6 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
 
     PsiFile psiFile = null;
 
-    final Ref<ProcessCanceledException> pce = Ref.create(null);
-
-    final List<Runnable> tasks = new ArrayList<Runnable>();
     for (final ID<?, ?> indexId : myIndices.keySet()) {
       if (shouldIndexFile(file, indexId)) {
         if (fc == null) {
@@ -1219,48 +1172,19 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
           fc.putUserData(PROJECT, project);
         }
 
-        final FileContent _fc = fc;
-        tasks.add(new Runnable() {
-          public void run() {
-            try {
-              ProgressManager.checkCanceled();
-              updateSingleIndex(indexId, file, _fc);
-            }
-            catch (ProcessCanceledException e) {
-              pce.set(e);
-            }
-            catch (StorageException e) {
-              requestRebuild(indexId);
-              LOG.info(e);
-            }
-          }
-        });
-      }
-    }
-
-    if (tasks.size() > 0) {
-      if (Registry.get(USE_MULTITHREADED_INDEXING).asBoolean() && !myIsUnitTestMode) {
-        final Job<Object> job = JobScheduler.getInstance().createJob("IndexJob", Job.DEFAULT_PRIORITY / 2);
         try {
-          for (Runnable task : tasks) {
-            job.addTask(task);
-          }
-          job.scheduleAndWaitForResults();
+          ProgressManager.checkCanceled();
+          updateSingleIndex(indexId, file, fc);
         }
-        catch (Throwable throwable) {
-          LOG.info(throwable);
+        catch (ProcessCanceledException e) {
+          myChangedFilesCollector.scheduleForUpdate(file);
+          throw e;
         }
-      }
-      else {
-        for (Runnable task : tasks) {
-          task.run();
+        catch (StorageException e) {
+          requestRebuild(indexId);
+          LOG.info(e);
         }
       }
-    }
-
-    if (!pce.isNull()) {
-      myChangedFilesCollector.scheduleForUpdate(file);
-      throw pce.get();
     }
 
     if (psiFile != null) {
@@ -1608,7 +1532,9 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
     public Collection<VirtualFile> getAllFilesToUpdate() {
       r.lock();
       try {
-        if (myFilesToUpdate.isEmpty())  return Collections.EMPTY_LIST;
+        if (myFilesToUpdate.isEmpty()) {
+          return Collections.emptyList();
+        }
         return new ArrayList<VirtualFile>(myFilesToUpdate);
       }
       finally {
@@ -1834,18 +1760,25 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
   }
 
   public static void iterateIndexableFiles(final ContentIterator processor, Project project) {
+    if (project.isDisposed()) {
+      return;
+    }
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    // iterate associated libraries
-    final Module[] modules = ModuleManager.getInstance(project).getModules();
     // iterate project content
     projectFileIndex.iterateContent(processor);
 
+    if (project.isDisposed()) {
+      return;
+    }
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
 
     Set<VirtualFile> visitedRoots = new com.intellij.util.containers.HashSet<VirtualFile>();
     for (IndexedRootsProvider provider : Extensions.getExtensions(IndexedRootsProvider.EP_NAME)) {
       //important not to depend on project here, to support per-project background reindex
       // each client gives a project to FileBasedIndex
+      if (project.isDisposed()) {
+        return;
+      }
       final Set<String> rootsToIndex = provider.getRootsToIndex();
       for (String url : rootsToIndex) {
         final VirtualFile root = VirtualFileManager.getInstance().findFileByUrl(url);
@@ -1854,7 +1787,15 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
         }
       }
     }
-    for (Module module : modules) {
+
+    if (project.isDisposed()) {
+      return;
+    }
+    // iterate associated libraries
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
+      if (module.isDisposed()) {
+        return;
+      }
       OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
       for (OrderEntry orderEntry : orderEntries) {
         if (orderEntry instanceof LibraryOrderEntry || orderEntry instanceof JdkOrderEntry) {

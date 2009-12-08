@@ -137,7 +137,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
             }
           }
           if (!levels.isEmpty()) {
-            if (Messages.showOkCancelDialog(myWholePanel, "Undefined severities detected: " +
+            if (Messages.showYesNoDialog(myWholePanel, "Undefined severities detected: " +
                                                           StringUtil.join(levels, ", ") +
                                                           ". Do you want to create them?", "Warning", Messages.getWarningIcon()) ==
                 DialogWrapper.OK_EXIT_CODE) {
@@ -287,9 +287,11 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
   }
 
   public void apply() throws ConfigurationException {
-    for (String name : myPanels.keySet()) {
-      if (myDeletedProfiles.contains(name)) {
+    for (final Iterator<String> it = myPanels.keySet().iterator(); it.hasNext();) {
+      final String name = it.next();
+      if (myDeletedProfiles.remove(name)) {
         deleteProfile(name);
+        it.remove();
       } else {
         myPanels.get(name).apply();
       }

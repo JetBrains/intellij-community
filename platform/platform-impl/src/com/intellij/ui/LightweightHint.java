@@ -226,4 +226,9 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
       hide();
     }
   }
+
+  @Override
+  public String toString() {
+    return getComponent().toString();
+  }
 }

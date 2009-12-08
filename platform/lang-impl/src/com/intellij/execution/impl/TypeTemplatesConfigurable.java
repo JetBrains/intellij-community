@@ -35,10 +35,10 @@ class TypeTemplatesConfigurable implements Configurable {
   private final Configurable[] myConfigurables;
   private TabbedPaneWrapper myTabbedPane;
 
-  public TypeTemplatesConfigurable(final ConfigurationType type, final RunManagerImpl runManager) {
+  public TypeTemplatesConfigurable(final ConfigurationType type, final RunManagerImpl runManager, Project project) {
     myType = type;
     myConfigurables = new Configurable[getFactories().length];
-    myTabbedPane = new TabbedPaneWrapper();
+    myTabbedPane = new TabbedPaneWrapper(project);
     final ConfigurationFactory[] factories = getFactories();
     for (int i = 0; i < factories.length; i++) {
       final ConfigurationFactory factory = factories[i];
@@ -103,7 +103,7 @@ class TypeTemplatesConfigurable implements Configurable {
     final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
     return factories.length == 1
            ? new TemplateConfigurable(runManager.getConfigurationTemplate(factories[0]))
-           : new TypeTemplatesConfigurable(type, runManager);
+           : new TypeTemplatesConfigurable(type, runManager, project);
   }
 
   private static class TemplateConfigurable extends SettingsEditorConfigurable<RunnerAndConfigurationSettingsImpl> {

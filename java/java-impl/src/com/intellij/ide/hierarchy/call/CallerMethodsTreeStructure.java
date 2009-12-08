@@ -70,11 +70,18 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
               if (originalClass.isInheritor(superClass, true)) {
                 return true;
               }
-            } if (qualifier != null) {
+            }
+            if (qualifier != null && !methodToFind.hasModifierProperty(PsiModifier.STATIC)) {
               final PsiType qualifierType = qualifier.getType();
-              if (qualifierType == null) return true;
-              if (!TypeConversionUtil.isAssignable(qualifierType, originalType)) {
-                return true;
+              if (qualifierType instanceof PsiClassType && !TypeConversionUtil.isAssignable(qualifierType, originalType) && methodToFind != method) {
+                final PsiClass psiClass = ((PsiClassType)qualifierType).resolve();
+                if (psiClass != null) {
+                  final PsiMethod callee = psiClass.findMethodBySignature(methodToFind, true);
+                  if (callee != null && !methodsToFind.contains(callee)) {
+                    // skip sibling methods
+                    return true;
+                  }
+                }
               }
             }
           }
@@ -108,7 +115,7 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
               d = new CallHierarchyNodeDescriptor(myProject, descriptor, element, false, true);
               methodToDescriptorMap.put(key, d);
             }
-            else {
+            else if (!d.hasReference(reference)) {
               d.incrementUsageCount();
             }
             d.addReference(reference);

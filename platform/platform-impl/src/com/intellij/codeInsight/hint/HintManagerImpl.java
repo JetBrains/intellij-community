@@ -67,10 +67,13 @@ public class HintManagerImpl extends HintManager implements Disposable {
   private Editor myLastEditor = null;
   private final Alarm myHideAlarm = new Alarm();
 
-  public boolean canShowQuestionAction(PriorityQuestionAction action) {
+  private static int getPriority(QuestionAction action) {
+    return action instanceof PriorityQuestionAction ? ((PriorityQuestionAction)action).getPriority() : 0;
+  }
+
+  public boolean canShowQuestionAction(QuestionAction action) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    return !(myQuestionAction instanceof PriorityQuestionAction) ||
-           ((PriorityQuestionAction)myQuestionAction).getPriority() <= action.getPriority();
+    return myQuestionAction == null || getPriority(myQuestionAction) <= getPriority(action);
   }
 
   public interface ActionToIgnore {
@@ -244,7 +247,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
       hideAllHints();
     }
 
-    if (!editor.getContentComponent().isShowing()) return;
+    if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().isShowing()) return;
 
     updateLastEditor(editor);
 
@@ -338,13 +341,18 @@ public class HintManagerImpl extends HintManager implements Disposable {
   }
 
   private static void doShowInGivenLocation(final LightweightHint hint, final Editor editor, final Point p) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
     JLayeredPane layeredPane = editor.getComponent().getRootPane().getLayeredPane();
     Dimension size = hint.getComponent().getPreferredSize();
     if(layeredPane.getWidth() < p.x + size.width) {
       p.x = Math.max(0, layeredPane.getWidth() - size.width);
     }
-    if (!hint.isVisible()) hint.show(layeredPane, p.x, p.y, editor.getContentComponent());
-    else hint.setLocation(p.x, p.y);
+    if (hint.isVisible()) {
+      hint.setLocation(p.x, p.y);
+    }
+    else {
+      hint.show(layeredPane, p.x, p.y, editor.getContentComponent());
+    }
   }
 
   public static void adjustEditorHintPosition(final LightweightHint hint, final Editor editor, final Point p) {

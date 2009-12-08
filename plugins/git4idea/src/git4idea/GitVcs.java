@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
+import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.RevisionSelector;
@@ -43,6 +44,7 @@ import git4idea.changes.GitChangeProvider;
 import git4idea.changes.GitCommittedChangeListProvider;
 import git4idea.changes.GitOutgoingChangesProvider;
 import git4idea.checkin.GitCheckinEnvironment;
+import git4idea.checkin.GitCommitAndPushExecutor;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitVcsConfigurable;
@@ -170,6 +172,8 @@ public class GitVcs extends AbstractVcs {
 
   private final TreeDiffProvider myTreeDiffProvider;
 
+  private GitCommitAndPushExecutor myCommitAndPushExecutor;
+
   public static GitVcs getInstance(@NotNull Project project) {
     return (GitVcs)ProjectLevelVcsManager.getInstance(project).findVcsByName(NAME);
   }
@@ -199,6 +203,7 @@ public class GitVcs extends AbstractVcs {
     myCommittedChangeListProvider = new GitCommittedChangeListProvider(myProject);
     myOutgoingChangesProvider = new GitOutgoingChangesProvider(myProject);
     myTreeDiffProvider = new GitTreeDiffProvider(myProject);
+    myCommitAndPushExecutor = new GitCommitAndPushExecutor(gitCheckinEnvironment);
   }
 
   /**
@@ -646,5 +651,10 @@ public class GitVcs extends AbstractVcs {
   @Override
   protected TreeDiffProvider getTreeDiffProviderImpl() {
     return myTreeDiffProvider;
+  }
+
+  @Override
+  public List<CommitExecutor> getCommitExecutors() {
+    return Collections.<CommitExecutor>singletonList(myCommitAndPushExecutor);
   }
 }

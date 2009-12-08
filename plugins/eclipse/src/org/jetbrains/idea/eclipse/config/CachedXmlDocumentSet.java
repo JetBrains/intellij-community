@@ -22,13 +22,13 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.JDOMCompare;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Document;
 import org.jdom.JDOMException;
 import org.jdom.output.EclipseJDOMUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.eclipse.util.JDOMCompare;
 
 import java.io.*;
 import java.util.HashSet;

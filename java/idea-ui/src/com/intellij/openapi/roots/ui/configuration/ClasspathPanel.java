@@ -896,7 +896,7 @@ public class ClasspathPanel extends JPanel {
       if (columnIndex == EXPORT_COLUMN) {
         item.setExported(((Boolean)aValue).booleanValue());
       }
-      else if (columnIndex == SCOPE_COLUMN) {
+      else if (columnIndex == SCOPE_COLUMN && aValue instanceof DependencyScope) {
         item.setScope((DependencyScope) aValue);
       }
     }

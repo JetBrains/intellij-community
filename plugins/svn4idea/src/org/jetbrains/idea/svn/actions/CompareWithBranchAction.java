@@ -27,6 +27,7 @@ import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
@@ -38,6 +39,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.status.SvnDiffEditor;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -50,8 +52,8 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
-import org.tmatesoft.svn.util.SVNLogType;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -62,7 +64,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class CompareWithBranchAction extends AnAction {
+public class CompareWithBranchAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.actions.CompareWithBranchAction");
 
   public void actionPerformed(AnActionEvent e) {
@@ -71,7 +73,7 @@ public class CompareWithBranchAction extends AnAction {
     final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
 
     SelectBranchPopup.show(project, virtualFile, new SelectBranchPopup.BranchSelectedCallback() {
-      public void branchSelected(final Project project, final SvnBranchConfiguration configuration, final String url, final long revision) {
+      public void branchSelected(final Project project, final SvnBranchConfigurationNew configuration, final String url, final long revision) {
         new CompareWithBranchOperation(project, virtualFile, configuration).compareWithBranch(url, revision);
       }
     }, SvnBundle.message("compare.with.branch.popup.title"));
@@ -99,9 +101,9 @@ public class CompareWithBranchAction extends AnAction {
   private class CompareWithBranchOperation {
     private final Project myProject;
     private final VirtualFile myVirtualFile;
-    private final SvnBranchConfiguration myConfiguration;
+    private final SvnBranchConfigurationNew myConfiguration;
 
-    public CompareWithBranchOperation(final Project project, final VirtualFile virtualFile, final SvnBranchConfiguration config) {
+    public CompareWithBranchOperation(final Project project, final VirtualFile virtualFile, final SvnBranchConfigurationNew config) {
       myProject = project;
       myVirtualFile = virtualFile;
       myConfiguration = config;

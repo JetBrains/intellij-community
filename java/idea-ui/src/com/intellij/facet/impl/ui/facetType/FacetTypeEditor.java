@@ -24,6 +24,7 @@ import com.intellij.facet.impl.autodetecting.FacetAutodetectingManager;
 import com.intellij.facet.ui.DefaultFacetSettingsEditor;
 import com.intellij.facet.ui.FacetEditor;
 import com.intellij.facet.ui.MultipleFacetSettingsEditor;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -31,6 +32,7 @@ import com.intellij.openapi.options.UnnamedConfigurableGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.TabbedPaneWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,6 +52,7 @@ public class FacetTypeEditor extends UnnamedConfigurableGroup {
   private MultipleFacetSettingsEditor myAllFacetsEditor;
   private List<Configurable> myCurrentConfigurables;
   private TabbedPaneWrapper myTabbedPane;
+  private final Disposable myDisposable = Disposer.newDisposable();
 
   public <C extends FacetConfiguration> FacetTypeEditor(@NotNull Project project, final StructureConfigurableContext context, @NotNull FacetType<?, C> facetType) {
     myProject = project;
@@ -87,6 +90,12 @@ public class FacetTypeEditor extends UnnamedConfigurableGroup {
     return null;
   }
 
+  @Override
+  public void disposeUIResources() {
+    Disposer.dispose(myDisposable);
+    super.disposeUIResources();
+  }
+
   public JComponent createComponent() {
     MultipleFacetSettingsEditor allFacetsEditor = createAllFacetsEditor();
     if (myAllFacetsEditor != null) {
@@ -106,7 +115,7 @@ public class FacetTypeEditor extends UnnamedConfigurableGroup {
       return myCurrentConfigurables.get(0).createComponent();
     }
 
-    myTabbedPane = new TabbedPaneWrapper();
+    myTabbedPane = new TabbedPaneWrapper(myDisposable);
     for (Configurable configurable : myCurrentConfigurables) {
       myTabbedPane.addTab(configurable.getDisplayName(), configurable.getIcon(), configurable.createComponent(), null);
     }

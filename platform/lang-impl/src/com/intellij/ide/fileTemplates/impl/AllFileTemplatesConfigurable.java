@@ -538,7 +538,9 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
   }
 
   private void fireListChanged() {
-    myCurrentTab.fireDataChanged();
+    if (myCurrentTab != null) {
+      myCurrentTab.fireDataChanged();
+    }
     if (myMainPanel != null) {
       myMainPanel.revalidate();
     }
