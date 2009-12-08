@@ -17,7 +17,6 @@
 package com.intellij.mock;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
@@ -25,7 +24,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.*;
+import com.intellij.psi.impl.PsiCachedValuesFactory;
+import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.PsiModificationTrackerImpl;
+import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.cache.impl.CompositeCacheManager;
 import com.intellij.psi.impl.file.impl.FileManager;
@@ -35,9 +37,9 @@ import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.CachedValuesManagerImpl;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.CachedValuesManagerImpl;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,11 +49,8 @@ import java.util.List;
 import java.util.Map;
 
 public class MockPsiManager extends PsiManagerEx {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.mock.MockPsiManager");
-  
   private final Project myProject;
   private final Map<VirtualFile,PsiDirectory> myDirectories = new THashMap<VirtualFile, PsiDirectory>();
-  private final Map<VirtualFile,PsiFile> myFiles = new THashMap<VirtualFile, PsiFile>();
   private CachedValuesManagerImpl myCachedValuesManager;
   private MockFileManager myMockFileManager;
   private PsiModificationTrackerImpl myPsiModificationTracker;
@@ -76,11 +75,11 @@ public class MockPsiManager extends PsiManagerEx {
   }
 
   public PsiFile findFile(@NotNull VirtualFile file) {
-    return myFiles.get(file);
+    return null;
   }
   
-  public
   @Nullable
+  public
   FileViewProvider findViewProvider(@NotNull VirtualFile file) {
     return null;
   }
@@ -159,6 +158,7 @@ public class MockPsiManager extends PsiManagerEx {
 
 
   public void dropResolveCaches() {
+    myMockFileManager.cleanupForNextTest();
   }
 
   public boolean isInProject(@NotNull PsiElement element) {
