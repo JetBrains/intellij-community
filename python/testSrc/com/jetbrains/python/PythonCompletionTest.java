@@ -40,4 +40,12 @@ public class PythonCompletionTest extends LightCodeInsightTestCase{
   public void testFuncParamsStar() throws Exception {
     doTest();
   }
+
+  public void testPredefinedMethodName() throws Exception {
+    doTest();
+  }
+
+  public void testPredefinedMethodNot() throws Exception {
+    doTest();
+  }
 }
