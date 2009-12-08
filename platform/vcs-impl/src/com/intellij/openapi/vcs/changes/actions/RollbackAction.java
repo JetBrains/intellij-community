@@ -47,6 +47,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 public class RollbackAction extends AnAction implements DumbAware {
@@ -128,7 +129,20 @@ public class RollbackAction extends AnAction implements DumbAware {
     private boolean myChangesSet;
 
     public ChangesCheckHelper(final Project project, final AnActionEvent e) {
-      final Change[] changes = e.getData(VcsDataKeys.CHANGES);
+      Change[] changes = e.getData(VcsDataKeys.CHANGES);
+      if (changes == null) {
+        final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+        if (files != null) {
+          final ChangeListManager clManager = ChangeListManager.getInstance(project);
+          final List<Change> changesList = new LinkedList<Change>();
+          for (VirtualFile vf : files) {
+            changesList.addAll(clManager.getChangesIn(vf));
+          }
+          if (! changesList.isEmpty()) {
+            changes = changesList.toArray(new Change[changesList.size()]);
+          }
+        }
+      }
       myChangesSet = changes != null && changes.length > 0;
       if (myChangesSet) {
         if (ChangesUtil.allChangesInOneList(project, changes)) {
