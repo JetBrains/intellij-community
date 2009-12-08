@@ -98,18 +98,32 @@ public class DumbServiceImpl extends DumbService {
     final CacheUpdateRunner runner = new CacheUpdateRunner(myProject, new ArrayList<CacheUpdater>(updaters));
 
     final Application application = ApplicationManager.getApplication();
-    if (!forceDumbMode && !myDumb && application.isDispatchThread()) {
+    if (!forceDumbMode && !myDumb && application.isReadAccessAllowed()) {
       // if there are not so many files to process, process them on the spot without entering dumb mode
       final ProgressIndicator currentIndicator = ProgressManager.getInstance().getProgressIndicator();
-      final ProgressIndicator indicator = currentIndicator != null? currentIndicator : new EmptyProgressIndicator();
-      final int size = runner.queryNeededFiles(indicator);
-      if (size < 50) {
-        // if not that many files found, process them on the spot, avoiding entering dumb mode
-        if (size > 0) {
-          runner.processFiles(indicator, false);
+      final ProgressIndicator indicator;
+      if (currentIndicator != null) {
+        indicator = currentIndicator;
+        currentIndicator.pushState();
+      }
+      else {
+        indicator = new EmptyProgressIndicator();
+      }
+      try {
+        final int size = runner.queryNeededFiles(indicator);
+        if (size < 50) {
+          // if not that many files found, process them on the spot, avoiding entering dumb mode
+          if (size > 0) {
+            runner.processFiles(indicator, false);
+          }
+          runner.updatingDone();
+          return;
         }
-        runner.updatingDone();
-        return;
+      }
+      finally {
+        if (currentIndicator != null) {
+          currentIndicator.popState();
+        }
       }
     }
 
