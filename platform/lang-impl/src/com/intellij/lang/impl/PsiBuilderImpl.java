@@ -1106,7 +1106,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         f = ArrayList.class.getDeclaredField("elementData");
         f.setAccessible(true);
       } catch(NoSuchFieldException e) {
-        LOG.error(e);
+        // IBM J9 does not have the field
         f = null;
       }
       ourElementDataField = f;
@@ -1137,6 +1137,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
 
     private void initCachedField() {
+      if (ourElementDataField == null) return;
       try {
         cachedElementData = (Object[])ourElementDataField.get(this);
       }
