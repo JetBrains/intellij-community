@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.psi.PyStatementList;
 import com.jetbrains.python.psi.PyTryExceptStatement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,9 +25,12 @@ public class PyWithTryExceptSurrounder extends PyStatementSurrounder {
   protected TextRange surroundStatement(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement[] elements)
     throws IncorrectOperationException {
     PyTryExceptStatement tryStatement = PythonLanguage.getInstance().getElementGenerator()
-      .createFromText(project, PyTryExceptStatement.class, "try:\n    \nexcept Exception:\n");
+      .createFromText(project, PyTryExceptStatement.class, "try:\n    pass\nexcept:\n    pass");
     final PsiElement parent = elements[0].getParent();
-    tryStatement.getTryPart().addRange(elements[0], elements[elements.length - 1]);
+    final PyStatementList statementList = tryStatement.getTryPart().getStatementList();
+    assert statementList != null;
+    statementList.addRange(elements[0], elements[elements.length - 1]);
+    statementList.getFirstChild().delete();
     tryStatement = (PyTryExceptStatement)parent.addBefore(tryStatement, elements[0]);
     parent.deleteChildRange(elements[0], elements[elements.length - 1]);
 

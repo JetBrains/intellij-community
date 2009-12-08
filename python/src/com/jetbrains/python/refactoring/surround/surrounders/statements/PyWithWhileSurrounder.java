@@ -8,6 +8,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyStatementList;
 import com.jetbrains.python.psi.PyWhileStatement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +28,9 @@ public class PyWithWhileSurrounder extends PyStatementSurrounder{
     PyWhileStatement whileStatement =
       PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyWhileStatement.class, "while True:\n    ");
     final PsiElement parent = elements[0].getParent();
-    whileStatement.addRange(elements[0], elements[elements.length - 1]);
+    final PyStatementList statementList = whileStatement.getWhilePart().getStatementList();
+    assert statementList != null;
+    statementList.addRange(elements[0], elements[elements.length - 1]);
     whileStatement = (PyWhileStatement) parent.addBefore(whileStatement, elements[0]);
     parent.deleteChildRange(elements[0], elements[elements.length - 1]);
 
@@ -34,7 +38,9 @@ public class PyWithWhileSurrounder extends PyStatementSurrounder{
     if (whileStatement == null) {
       return null;
     }
-    return whileStatement.getTextRange();
+    final PyExpression condition = whileStatement.getWhilePart().getCondition();
+    assert condition != null;
+    return condition.getTextRange();
   }
 
   public String getTemplateDescription() {

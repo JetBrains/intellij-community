@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 public class PyStatementSurroundDescriptor implements SurroundDescriptor {
   private static Surrounder[] SURROUNDERS =
     {new PyWithIfSurrounder(), new PyWithIfElseSurrounder(), new PyWithWhileSurrounder(), new PyWithWhileElseSurrounder(),
-      new PyWithReturnSurrounder(), new PyWithTryExceptSurrounder(), new PyWithTryFinnalySurrounder()};
+      new PyWithReturnSurrounder(), new PyWithTryExceptSurrounder(), new PyWithTryFinallySurrounder()};
 
   @NotNull
   public PsiElement[] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {

@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
  * Date: Aug 28, 2009
  * Time: 6:52:06 PM
  */
-public class PyWithTryFinnalySurrounder extends PyStatementSurrounder {
+public class PyWithTryFinallySurrounder extends PyStatementSurrounder {
   @Override
   @Nullable
   protected TextRange surroundStatement(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement[] elements)

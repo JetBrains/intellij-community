@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.PyIfStatement;
+import com.jetbrains.python.psi.PyStatementList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +27,9 @@ public class PyWithIfSurrounder extends PyStatementSurrounder {
     PyIfStatement ifStatement =
       PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyIfStatement.class, "if True:\n    ");
     final PsiElement parent = elements[0].getParent();
-    ifStatement.getIfPart().addRange(elements[0], elements[elements.length - 1]);
+    final PyStatementList statementList = ifStatement.getIfPart().getStatementList();
+    assert statementList != null;
+    statementList.addRange(elements[0], elements[elements.length - 1]);
     ifStatement = (PyIfStatement) parent.addBefore(ifStatement, elements[0]);
     parent.deleteChildRange(elements[0], elements[elements.length - 1]);
 
@@ -34,7 +37,7 @@ public class PyWithIfSurrounder extends PyStatementSurrounder {
     if (ifStatement == null) {
       return null;
     }
-    return ifStatement.getTextRange();
+    return ifStatement.getIfPart().getCondition().getTextRange();
   }
 
   public String getTemplateDescription() {
