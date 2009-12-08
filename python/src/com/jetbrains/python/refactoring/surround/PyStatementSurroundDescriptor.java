@@ -15,9 +15,15 @@ import org.jetbrains.annotations.NotNull;
  * Time: 7:09:36 PM
  */
 public class PyStatementSurroundDescriptor implements SurroundDescriptor {
-  private static Surrounder[] SURROUNDERS =
-    {new PyWithIfSurrounder(), new PyWithIfElseSurrounder(), new PyWithWhileSurrounder(), new PyWithWhileElseSurrounder(),
-      new PyWithReturnSurrounder(), new PyWithTryExceptSurrounder(), new PyWithTryFinallySurrounder()};
+  private static Surrounder[] SURROUNDERS = {
+    new PyWithIfSurrounder(),
+    // new PyWithIfElseSurrounder(),
+    new PyWithWhileSurrounder(),
+    //new PyWithWhileElseSurrounder(),
+    new PyWithReturnSurrounder(),
+    new PyWithTryExceptSurrounder(),
+    new PyWithTryFinallySurrounder()
+  };
 
   @NotNull
   public PsiElement[] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {

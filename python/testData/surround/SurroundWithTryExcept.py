@@ -1,3 +1,2 @@
 def foo():
-    <selection>print "hello"</selection>
-    
+    <selection>print "hello"</selection>    

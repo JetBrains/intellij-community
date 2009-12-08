@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class PythonFormattingModelBuilder implements FormattingModelBuilder {
-  private static final boolean DUMP_FORMATTING_AST = true;
+  private static final boolean DUMP_FORMATTING_AST = false;
 
   @NotNull
   public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
@@ -24,7 +24,9 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilder {
     }
     final PyBlock block = new PyBlock((PythonLanguage)PythonFileType.INSTANCE.getLanguage(),
                                       element.getNode(), null, Indent.getNoneIndent(), null, settings);
-    FormattingModelDumper.dumpFormattingModel(block, 2, System.out);
+    if (DUMP_FORMATTING_AST) {
+      FormattingModelDumper.dumpFormattingModel(block, 2, System.out);
+    }
     return FormattingModelProvider.createFormattingModelForPsiFile(element.getContainingFile(), block, settings);
   }
 
