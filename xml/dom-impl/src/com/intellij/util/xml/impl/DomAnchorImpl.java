@@ -176,7 +176,7 @@ public abstract class DomAnchorImpl<T extends DomElement> {
       if (parent == null) return null;
 
       final List<? extends DomElement> list = myDescr.getValues(parent);
-      if (list.size() <= myIndex) return null;
+      if (myIndex < 0 || myIndex >= list.size()) return null;
 
       return (T)list.get(myIndex);
     }
