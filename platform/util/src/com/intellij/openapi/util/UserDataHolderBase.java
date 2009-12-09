@@ -128,7 +128,8 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
     ConcurrentMap<Key, Object> map = myUserMap;
     if (map == null) {
       synchronized (MAP_LOCK) {
-        if (myUserMap == null) {
+        map = myUserMap;
+        if (map == null) {
           myUserMap = map = createDataMap();
         }
       }
