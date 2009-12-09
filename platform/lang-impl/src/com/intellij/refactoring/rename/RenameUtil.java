@@ -87,11 +87,13 @@ public class RenameUtil {
     if (searchForTextOccurences && searchForInComments != null) {
       String stringToSearch = ElementDescriptionUtil.getElementDescription(searchForInComments, NonCodeSearchDescriptionLocation.NON_JAVA);
 
-      final String stringToReplace = getStringToReplace(element, newName, true, processor);
-      addTextOccurence(searchForInComments, result, projectScope, stringToSearch, stringToReplace);
+      if (stringToSearch.length() > 0) {
+        final String stringToReplace = getStringToReplace(element, newName, true, processor);
+        addTextOccurence(searchForInComments, result, projectScope, stringToSearch, stringToReplace);
+      }
 
-      Pair<String, String> additionalStringToSearch = processor.getTextOccurrenceSearchStrings(searchForInComments, newName);
-      if (additionalStringToSearch != null) {
+      final Pair<String, String> additionalStringToSearch = processor.getTextOccurrenceSearchStrings(searchForInComments, newName);
+      if (additionalStringToSearch != null && additionalStringToSearch.first.length() > 0) {
         addTextOccurence(searchForInComments, result, projectScope, additionalStringToSearch.first, additionalStringToSearch.second);
       }
     }
