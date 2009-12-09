@@ -156,9 +156,8 @@ public class MockPsiManager extends PsiManagerEx {
     return false;
   }
 
-
   public void dropResolveCaches() {
-    myMockFileManager.cleanupForNextTest();
+    getFileManager().cleanupForNextTest();
   }
 
   public boolean isInProject(@NotNull PsiElement element) {
