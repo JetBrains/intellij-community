@@ -15,43 +15,43 @@
  */
 package com.intellij.compiler.actions;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author nik
- */
-public class BuildArtifactActionGroup extends ActionGroup {
-  public BuildArtifactActionGroup() {
-    super("Build Artifact", true);
+* @author nik
+*/
+public class BuildAllArtifactsAction extends AnAction {
+  public BuildAllArtifactsAction() {
+    super("Build All Artifacts", "Build all configured artifacts", null);
   }
 
-  @NotNull
-  public AnAction[] getChildren(@Nullable AnActionEvent e) {
-    if (e == null) return EMPTY_ARRAY;
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
-    if (project == null) return EMPTY_ARRAY;
+  @Override
+  public void update(AnActionEvent e) {
+    e.getPresentation().setEnabled(e.getData(PlatformDataKeys.PROJECT) != null);
+  }
 
-    final Artifact[] artifacts = ArtifactManager.getInstance(project).getSortedArtifacts();
-    List<AnAction> actions = new ArrayList<AnAction>();
-    for (Artifact artifact : artifacts) {
+  @Override
+  public void actionPerformed(AnActionEvent e) {
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    if (project == null) return;
+
+    List<Artifact> toBuild = new ArrayList<Artifact>();
+    for (Artifact artifact : ArtifactManager.getInstance(project).getSortedArtifacts()) {
       if (!StringUtil.isEmpty(artifact.getOutputPath())) {
-        actions.add(new BuildArtifactAction(project, artifact));
+        toBuild.add(artifact);
       }
     }
-    if (actions.size() > 1) {
-      actions.add(0, new BuildAllArtifactsAction());
-      actions.add(1, Separator.getInstance());
-    }
-    return actions.toArray(new AnAction[actions.size()]);
+    CompilerManager.getInstance(project).make(ArtifactCompileScope.createArtifactsScope(project, toBuild), null);
   }
-
 }
