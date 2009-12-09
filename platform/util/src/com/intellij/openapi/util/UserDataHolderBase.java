@@ -19,6 +19,7 @@ package com.intellij.openapi.util;
 import com.intellij.util.containers.LockPoolSynchronizedMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
@@ -43,12 +44,13 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
     }
   }
 
+  @TestOnly
   public String getUserDataString() {
     final ConcurrentMap<Key, Object> userMap = myUserMap;
     if (userMap == null) {
       return "";
     }
-    final Map copyableMap = (Map)userMap.get(COPYABLE_USER_MAP_KEY);
+    final Map copyableMap = getUserData(COPYABLE_USER_MAP_KEY);
     if (copyableMap == null) {
       return userMap.toString();
     }
@@ -92,7 +94,7 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
     return getCopyableUserDataImpl(key);
   }
 
-  protected <T> T getCopyableUserDataImpl(Key<T> key) {
+  protected final <T> T getCopyableUserDataImpl(Key<T> key) {
     Map map = getUserData(COPYABLE_USER_MAP_KEY);
     return map == null ? null : (T)map.get(key);
   }
@@ -101,7 +103,7 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
     putCopyableUserDataImpl(key, value);
   }
 
-  protected <T> void putCopyableUserDataImpl(Key<T> key, T value) {
+  protected final <T> void putCopyableUserDataImpl(Key<T> key, T value) {
     synchronized (COPYABLE_MAP_LOCK) {
       Map<Key, Object> copyMap = getUserData(COPYABLE_USER_MAP_KEY);
       if (copyMap == null) {
@@ -122,17 +124,16 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
     }
   }
 
-
   private ConcurrentMap<Key, Object> getOrCreateMap() {
-    if (myUserMap == null) {
+    ConcurrentMap<Key, Object> map = myUserMap;
+    if (map == null) {
       synchronized (MAP_LOCK) {
         if (myUserMap == null) {
-          myUserMap = createDataMap();
+          myUserMap = map = createDataMap();
         }
       }
     }
-
-    return myUserMap;
+    return map;
   }
 
   public <T> boolean replace(@NotNull Key<T> key, @Nullable T oldValue, @Nullable T newValue) {

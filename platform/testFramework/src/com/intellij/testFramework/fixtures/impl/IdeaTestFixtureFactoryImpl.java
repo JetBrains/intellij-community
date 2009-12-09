@@ -77,7 +77,7 @@ public class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
   }
 
   public CodeInsightTestFixture createCodeInsightFixture(IdeaProjectTestFixture projectFixture) {
-    return new CodeInsightTestFixtureImpl(projectFixture, new TempDirTestFixtureImpl());
+    return createCodeInsightFixture(projectFixture, new TempDirTestFixtureImpl());
   }
 
   public CodeInsightTestFixture createCodeInsightFixture(IdeaProjectTestFixture projectFixture, TempDirTestFixture tempDirFixture) {
