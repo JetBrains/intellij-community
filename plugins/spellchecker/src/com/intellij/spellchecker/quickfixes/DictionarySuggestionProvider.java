@@ -37,7 +37,7 @@ public class DictionarySuggestionProvider implements NameSuggestionProvider {
 
   public SuggestedNameInfo getSuggestedNames(PsiElement element, PsiElement nameSuggestionContext, List<String> result) {
     assert result != null;
-    if (!active) {
+    if (!active || nameSuggestionContext==null) {
       return null;
     }
     String text = nameSuggestionContext.getText();
