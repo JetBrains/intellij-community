@@ -63,9 +63,6 @@ public class OldReferenceResolver {
     myProject = myContext.getProject();
     myManager = myContext.getManager();
 
-    if (myActualArgs.length < myMethodToReplaceIn.getParameterList().getParametersCount()) {
-      LOG.debug(myContext.getText() + "\n-----\n" + myMethodToReplaceIn.getText());
-    }
     PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
     PsiExpression instanceRef;
     if (myContext instanceof PsiMethodCallExpression) {
