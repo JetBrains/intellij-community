@@ -18,8 +18,11 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.apache.maven.model.Build;
 import org.apache.maven.model.Parent;
+import org.apache.maven.model.Profile;
 import org.apache.maven.model.Resource;
 import org.jetbrains.idea.maven.MavenTestCase;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
@@ -80,7 +83,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
     assertProblems(readProject(myProjectPom, new NullProjectLocator()));
 
-    createProjectPom("<name>a" + new String(new byte[] {0x0}) +"a</name><fo" + new String(new byte[] {0x0}) + "o></foo>");
+    createProjectPom("<name>a" + new String(new byte[]{0x0}) + "a</name><fo" + new String(new byte[]{0x0}) + "o></foo>");
 
     MavenProjectReaderResult result = readProject(myProjectPom, new NullProjectLocator());
     assertProblems(result, "'pom.xml' has syntax errors");
@@ -967,6 +970,136 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertEquals("xxx", p.getBuild().getFinalName());
   }
 
+
+  public void testInheritingParentProfiles() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>parent</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>profileFromParent</id>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    VirtualFile module = createModulePom("module",
+                                         "<groupId>test</groupId>" +
+                                         "<artifactId>module</artifactId>" +
+                                         "<version>1</version>" +
+
+                                         "<parent>" +
+                                         "  <groupId>test</groupId>" +
+                                         "  <artifactId>parent</artifactId>" +
+                                         "  <version>1</version>" +
+                                         "</parent>" +
+
+                                         "<profiles>" +
+                                         "  <profile>" +
+                                         "    <id>profileFromChild</id>" +
+                                         "  </profile>" +
+                                         "</profiles>");
+
+    org.apache.maven.project.MavenProject p = readProject(module);
+    assertOrderedElementsAreEqual(ContainerUtil.map(p.getModel().getProfiles(), new Function<Profile, Object>() {
+      public Object fun(Profile profile) {
+        return profile.getId();
+      }
+    }), "profileFromChild", "profileFromParent");
+  }
+
+  public void testCorrectlyCollectProfilesFromDifferentSources() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>parent</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>profile</id>" +
+                     "    <properties><prop>parent</prop></properties>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    VirtualFile parentProfiles = createProfilesXml("<profile>" +
+                                                   "  <id>profile</id>" +
+                                                   "  <properties><prop>parentProfiles</prop></properties>" +
+                                                   "</profile>");
+
+    VirtualFile module = createModulePom("module",
+                                         "<groupId>test</groupId>" +
+                                         "<artifactId>module</artifactId>" +
+                                         "<version>1</version>" +
+
+                                         "<parent>" +
+                                         "  <groupId>test</groupId>" +
+                                         "  <artifactId>parent</artifactId>" +
+                                         "  <version>1</version>" +
+                                         "</parent>" +
+
+                                         "<profiles>" +
+                                         "  <profile>" +
+                                         "    <id>profile</id>" +
+                                         "    <properties><prop>pom</prop></properties>" +
+                                         "  </profile>" +
+                                         "</profiles>");
+
+    updateSettingsXml("<profiles>" +
+                      "  <profile>" +
+                      "    <id>profile</id>" +
+                      "    <properties><prop>settings</prop></properties>" +
+                      "  </profile>" +
+                      "</profiles>");
+
+    VirtualFile profiles = createProfilesXml("module",
+                                             "<profile>" +
+                                             "  <id>profile</id>" +
+                                             "  <properties><prop>profiles</prop></properties>" +
+                                             "</profile>");
+
+    org.apache.maven.project.MavenProject p = readProject(module);
+    assertEquals(1, p.getModel().getProfiles().size());
+    assertEquals("pom", p.getModel().getProfiles().get(0).getProperties().getProperty("prop"));
+    assertEquals("pom", p.getModel().getProfiles().get(0).getSource());
+
+    createModulePom("module",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>module</artifactId>" +
+                    "<version>1</version>" +
+
+                    "<parent>" +
+                    "  <groupId>test</groupId>" +
+                    "  <artifactId>parent</artifactId>" +
+                    "  <version>1</version>" +
+                    "</parent>");
+
+    p = readProject(module);
+    assertEquals(1, p.getModel().getProfiles().size());
+    assertEquals("profiles", p.getModel().getProfiles().get(0).getProperties().getProperty("prop"));
+    assertEquals("profiles.xml", p.getModel().getProfiles().get(0).getSource());
+
+    profiles.delete(this);
+
+    p = readProject(module);
+    assertEquals(1, p.getModel().getProfiles().size());
+    assertEquals("parent", p.getModel().getProfiles().get(0).getProperties().getProperty("prop"));
+    assertEquals("pom", p.getModel().getProfiles().get(0).getSource());
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>parent</artifactId>" +
+                     "<version>1</version>");
+
+    p = readProject(module);
+    assertEquals(1, p.getModel().getProfiles().size());
+    assertEquals("parentProfiles", p.getModel().getProfiles().get(0).getProperties().getProperty("prop"));
+    assertEquals("profiles.xml", p.getModel().getProfiles().get(0).getSource());
+
+    parentProfiles.delete(null);
+
+    p = readProject(module);
+    assertEquals(1, p.getModel().getProfiles().size());
+    assertEquals("settings", p.getModel().getProfiles().get(0).getProperties().getProperty("prop"));
+    assertEquals("settings.xml", p.getModel().getProfiles().get(0).getSource());
+  }
+
   public void testActivatingProfilesByOS() throws Exception {
     createProjectPom("<name>${prop1}</name>" +
                      "<packaging>${prop2}</packaging>" +
@@ -1015,6 +1148,36 @@ public class MavenProjectReaderTest extends MavenTestCase {
                      "    <id>two</id>" +
                      "    <activation>" +
                      "      <jdk>(,1.5)</jdk>" +
+                     "    </activation>" +
+                     "    <properties>" +
+                     "      <prop2>value2</prop2>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
+    assertEquals("value1", p.getName());
+    assertEquals("${prop2}", p.getPackaging());
+  }
+
+  public void testActivatingProfilesByStrictJdkVersion() throws Exception {
+    createProjectPom("<name>${prop1}</name>" +
+                     "<packaging>${prop2}</packaging>" +
+
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>one</id>" +
+                     "    <activation>" +
+                     "      <jdk>1.6</jdk>" +
+                     "    </activation>" +
+                     "    <properties>" +
+                     "      <prop1>value1</prop1>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "  <profile>" +
+                     "    <id>two</id>" +
+                     "    <activation>" +
+                     "      <jdk>1.5</jdk>" +
                      "    </activation>" +
                      "    <properties>" +
                      "      <prop2>value2</prop2>" +

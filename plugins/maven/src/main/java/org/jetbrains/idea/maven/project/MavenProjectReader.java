@@ -55,7 +55,12 @@ import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 public class MavenProjectReader {
   private static final String UNKNOWN = MavenId.UNKNOWN_VALUE;
 
+  private static final String PROFILE_FROM_POM = "pom";
+  private static final String PROFILE_FROM_PROFILES_XML = "profiles.xml";
+  private static final String PROFILE_FROM_SETTINGS_XML = "settings.xml";
+
   private final Map<VirtualFile, ModelWithProblems> myRawModelsAndProblemsCache = new THashMap<VirtualFile, ModelWithProblems>();
+  private Pair<List<Profile>, Collection<MavenProjectProblem>> mySettingsProfilesWithProblemsCache;
 
   public MavenProjectReaderResult readProject(MavenGeneralSettings generalSettings,
                                               VirtualFile file,
@@ -88,23 +93,28 @@ public class MavenProjectReader {
                                                                     List<String> activeProfiles,
                                                                     Set<VirtualFile> recursionGuard,
                                                                     MavenProjectReaderProjectLocator locator) {
-    ModelWithProblems modelWithValidity = myRawModelsAndProblemsCache.get(file);
-    if (modelWithValidity == null) {
-      modelWithValidity = doReadProjectModel(file, generalSettings, false);
-      myRawModelsAndProblemsCache.put(file, modelWithValidity);
+    ModelWithProblems cachedModelWithValidity = myRawModelsAndProblemsCache.get(file);
+    if (cachedModelWithValidity == null) {
+      cachedModelWithValidity = doReadProjectModel(file, false);
+      myRawModelsAndProblemsCache.put(file, cachedModelWithValidity);
     }
 
-    Model model = modelWithValidity.model;
-    List<Profile> activatedProfiles = applyProfiles(model, getBaseDir(file), activeProfiles);
+    // todo modifying cached model and problems here??????
+    Model model = cachedModelWithValidity.model;
+    Collection<MavenProjectProblem> problems = cachedModelWithValidity.problems;
+
     repairModelHeader(model);
-    resolveInheritance(generalSettings, model, file, activeProfiles,
-                       recursionGuard, locator, modelWithValidity.problems); // todo ????????? changing cached value
+    resolveInheritance(generalSettings, model, file, activeProfiles, recursionGuard, locator, problems);
+    addSettingsProfiles(generalSettings, model, problems);
+
+    List<Profile> activatedProfiles = applyProfiles(model, getBaseDir(file), activeProfiles);
+
     repairModelBody(model);
 
-    return Pair.create(modelWithValidity, activatedProfiles);
+    return Pair.create(new ModelWithProblems(model, problems), activatedProfiles);
   }
 
-  private ModelWithProblems doReadProjectModel(VirtualFile file, MavenGeneralSettings generalSettings, boolean headerOnly) {
+  private ModelWithProblems doReadProjectModel(VirtualFile file, boolean headerOnly) {
     Model result = new Model();
     LinkedHashSet<MavenProjectProblem> problems = createProblemsList();
 
@@ -140,7 +150,7 @@ public class MavenProjectReader {
     result.setBuild(new Build());
     readModelAndBuild(result, result.getBuild(), xmlProject);
 
-    result.setProfiles(collectProfiles(generalSettings, file, xmlProject, problems));
+    result.setProfiles(collectProfiles(file, xmlProject, problems));
     return new ModelWithProblems(result, problems);
   }
 
@@ -182,12 +192,11 @@ public class MavenProjectReader {
     return result;
   }
 
-  private List<Profile> collectProfiles(MavenGeneralSettings generalSettings,
-                                        VirtualFile projectFile,
+  private List<Profile> collectProfiles(VirtualFile projectFile,
                                         Element xmlProject,
                                         Collection<MavenProjectProblem> problems) {
     List<Profile> result = new ArrayList<Profile>();
-    collectProfiles(findChildrenByPath(xmlProject, "profiles", "profile"), result);
+    collectProfiles(findChildrenByPath(xmlProject, "profiles", "profile"), result, PROFILE_FROM_POM);
 
     VirtualFile profilesFile = MavenUtil.findProfilesXmlFile(projectFile);
     if (profilesFile != null) {
@@ -196,14 +205,27 @@ public class MavenProjectReader {
       Element rootElement = findChildByPath(profilesFileElement, "profiles");
       if (rootElement == null) rootElement = findChildByPath(profilesFileElement, "profilesXml.profiles");
       List<Element> xmlProfiles = collectChildren(rootElement, "profile");
-      collectProfiles(xmlProfiles, result);
-    }
-
-    for (VirtualFile each : generalSettings.getEffectiveSettingsFiles()) {
-      collectProfilesFromSettingsFile(each, result, problems);
+      collectProfiles(xmlProfiles, result, PROFILE_FROM_PROFILES_XML);
     }
 
     return result;
+  }
+
+  private void addSettingsProfiles(MavenGeneralSettings generalSettings, Model model, Collection<MavenProjectProblem> problems) {
+    if (mySettingsProfilesWithProblemsCache == null) {
+      List<Profile> settingsProfiles = new ArrayList<Profile>();
+      Collection<MavenProjectProblem> settingsProblems = createProblemsList();
+      for (VirtualFile each : generalSettings.getEffectiveSettingsFiles()) {
+        collectProfilesFromSettingsFile(each, settingsProfiles, settingsProblems);
+      }
+      mySettingsProfilesWithProblemsCache = Pair.create(settingsProfiles, settingsProblems);
+    }
+
+    List<Profile> modelProfiles = model.getProfiles();
+    for (Profile each : mySettingsProfilesWithProblemsCache.first) {
+      addProfileIfDoesNotExist(each, modelProfiles);
+    }
+    problems.addAll(mySettingsProfilesWithProblemsCache.second);
   }
 
   private void collectProfilesFromSettingsFile(VirtualFile settingsFile,
@@ -212,16 +234,18 @@ public class MavenProjectReader {
     if (settingsFile == null) return;
     Element readResult = readXml(settingsFile, problems, MavenProjectProblem.ProblemType.SETTINGS_OR_PROFILES);
     List<Element> xmlProfiles = findChildrenByPath(readResult, "settings.profiles", "profile");
-    collectProfiles(xmlProfiles, result);
+    collectProfiles(xmlProfiles, result, PROFILE_FROM_SETTINGS_XML);
   }
 
-  private void collectProfiles(List<Element> xmlProfiles, List<Profile> result) {
+  private void collectProfiles(List<Element> xmlProfiles, List<Profile> result, String source) {
     for (Element each : xmlProfiles) {
       String id = findChildValueByPath(each, "id");
       if (isEmptyOrSpaces(id)) continue;
 
       Profile profile = new Profile();
       profile.setId(id);
+      profile.setSource(source);
+      if (!addProfileIfDoesNotExist(profile, result)) continue;
 
       Element xmlActivation = findChildByPath(each, "activation");
       if (xmlActivation != null) {
@@ -261,9 +285,15 @@ public class MavenProjectReader {
 
       profile.setBuild(new BuildBase());
       readModelAndBuild(profile, profile.getBuild(), each);
-
-      result.add(profile);
     }
+  }
+
+  private boolean addProfileIfDoesNotExist(Profile profile, List<Profile> result) {
+    for (Profile each : result) {
+      if (Comparing.equal(each.getId(), profile.getId())) return false;
+    }
+    result.add(profile);
+    return true;
   }
 
   private void collectProperties(Element xmlProperties, ModelBase mavenModelBase) {
@@ -463,7 +493,7 @@ public class MavenProjectReader {
           @Override
           @Nullable
           protected Pair<VirtualFile, ModelWithProblems> processRelativeParent(VirtualFile parentFile) {
-            Model parentModel = doReadProjectModel(parentFile, generalSettings, true).model;
+            Model parentModel = doReadProjectModel(parentFile, true).model;
             MavenId parentId = parentDesc[0].getParentId();
             if (!parentId.equals(new MavenId(parentModel))) return null;
 
@@ -483,14 +513,20 @@ public class MavenProjectReader {
         }.process(generalSettings, file, parentDesc[0]);
 
       if (parentModelWithProblems == null) return; // no parent or parent not found;
+
+      Model parentModel = parentModelWithProblems.second.model;
       if (!parentModelWithProblems.second.problems.isEmpty()) {
         problems.add(createProblem(parentModelWithProblems.first,
-                                   ProjectBundle.message("maven.project.problem.parentHasProblems",
-                                                         new MavenId(parentModelWithProblems.second.model)),
+                                   ProjectBundle.message("maven.project.problem.parentHasProblems", new MavenId(parentModel)),
                                    MavenProjectProblem.ProblemType.PARENT));
       }
 
-      new DefaultModelInheritanceAssembler().assembleModelInheritance(model, parentModelWithProblems.second.model);
+      new DefaultModelInheritanceAssembler().assembleModelInheritance(model, parentModel);
+
+      List<Profile> profiles = model.getProfiles();
+      for (Profile each : parentModel.getProfiles()) {
+        addProfileIfDoesNotExist(each, profiles);
+      }
     }
     finally {
       recursionGuard.remove(file);
@@ -518,7 +554,11 @@ public class MavenProjectReader {
   }
 
   private LinkedHashSet<MavenProjectProblem> createProblemsList() {
-    return new LinkedHashSet<MavenProjectProblem>();
+    return createProblemsList(Collections.<MavenProjectProblem>emptySet());
+  }
+
+  private LinkedHashSet<MavenProjectProblem> createProblemsList(Collection<MavenProjectProblem> copyThis) {
+    return new LinkedHashSet<MavenProjectProblem>(copyThis);
   }
 
   public MavenProjectReaderResult resolveProject(MavenGeneralSettings generalSettings,
@@ -629,7 +669,9 @@ public class MavenProjectReader {
     }
   }
 
-  private Element readXml(final VirtualFile file, final Collection<MavenProjectProblem> problems, final MavenProjectProblem.ProblemType type) {
+  private Element readXml(final VirtualFile file,
+                          final Collection<MavenProjectProblem> problems,
+                          final MavenProjectProblem.ProblemType type) {
     final LinkedList<Element> stack = new LinkedList<Element>();
     final Element root = new Element("root");
 
