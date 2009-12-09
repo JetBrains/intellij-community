@@ -366,18 +366,22 @@ public class SvnVcs extends AbstractVcs {
 
   public void pingRootsForAuth() {
     if (! myProject.isDefault()) {
-      final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
-      final VirtualFile[] files = vcsManager.getRootsUnderVcs(this);
-      Arrays.sort(files, FilePathComparator.getInstance());
-      final SVNStatusClient client = createStatusClient();
-      for (VirtualFile root : files) {
-        try {
-          client.doStatus(new File(root.getPath()), true);
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        public void run() {
+          final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+          final VirtualFile[] files = vcsManager.getRootsUnderVcs(SvnVcs.this);
+          Arrays.sort(files, FilePathComparator.getInstance());
+          final SVNStatusClient client = createStatusClient();
+          for (VirtualFile root : files) {
+            try {
+              client.doStatus(new File(root.getPath()), true);
+            }
+            catch (SVNException e) {
+              //
+            }
+          }
         }
-        catch (SVNException e) {
-          //
-        }
-      }
+      });
     }
   }
 
