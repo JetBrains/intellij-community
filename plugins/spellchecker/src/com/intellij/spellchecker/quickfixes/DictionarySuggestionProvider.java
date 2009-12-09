@@ -29,6 +29,7 @@ import java.util.TreeSet;
 
 
 public class DictionarySuggestionProvider implements NameSuggestionProvider {
+  
   private boolean active;
 
   public void setActive(boolean active) {
