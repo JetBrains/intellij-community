@@ -12,9 +12,7 @@ import com.intellij.facet.FacetTypeRegistry;
 import com.intellij.facet.ui.FacetBasedFrameworkSupportProvider;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurableBase;
-import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
-import com.intellij.ide.util.frameworkSupport.FrameworkVersion;
+import com.intellij.ide.util.frameworkSupport.*;
 import com.intellij.javaee.JavaeePersistenceDescriptorsConstants;
 import com.intellij.javaee.appServerIntegrations.ApplicationServer;
 import com.intellij.javaee.artifact.JavaeeArtifactUtil;
@@ -77,6 +75,7 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
 
   @Nullable
   private VirtualFile createFileFromTemplate(final String templateName, final VirtualFile parent, final String fileName) {
+    parent.refresh(false, false);
     final FileTemplate template = FileTemplateManager.getInstance().getJ2eeTemplate(templateName);
     try {
       final String text = template.getText(FileTemplateManager.getInstance().getDefaultProperties());
@@ -202,20 +201,36 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
   @NotNull
   @Override
   public FrameworkSupportConfigurableBase createConfigurable(@NotNull FrameworkSupportModel model) {
-    return new AppEngineSupportConfigurable();
+    return new AppEngineSupportConfigurable(model);
   }
 
-  private class AppEngineSupportConfigurable extends FrameworkSupportConfigurableBase {
+  private class AppEngineSupportConfigurable extends FrameworkSupportConfigurableBase implements FrameworkSupportModelListener {
     private JPanel myMainPanel;
     private AppEngineSdkEditor mySdkEditor;
     private JComboBox myPersistenceApiComboBox;
     private JPanel mySdkPanel;
 
-    private AppEngineSupportConfigurable() {
+    private AppEngineSupportConfigurable(FrameworkSupportModel model) {
       super(AppEngineSupportProvider.this);
       mySdkEditor = new AppEngineSdkEditor(null, true);
       mySdkPanel.add(LabeledComponent.create(mySdkEditor.getMainComponent(), "AppEngine SDK:"), BorderLayout.CENTER);
       PersistenceApiComboboxUtil.setComboboxModel(myPersistenceApiComboBox, true);
+      if (model.isFrameworkSelected(JPA_PROVIDER_ID)) {
+        myPersistenceApiComboBox.setSelectedItem(PersistenceApi.JPA.getName());
+      }
+      model.addFrameworkListener(this);
+    }
+
+    public void frameworkSelected(@NotNull FrameworkSupportProvider provider) {
+      if (provider.getId().equals(JPA_PROVIDER_ID)) {
+        myPersistenceApiComboBox.setSelectedItem(PersistenceApi.JPA.getName());
+      }
+    }
+
+    public void frameworkUnselected(@NotNull FrameworkSupportProvider provider) {
+      if (provider.getId().equals(JPA_PROVIDER_ID)) {
+        myPersistenceApiComboBox.setSelectedItem(PersistenceApiComboboxUtil.NONE_ITEM);
+      }
     }
 
     @Override
