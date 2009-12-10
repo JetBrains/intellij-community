@@ -21,6 +21,7 @@ public class PythonModuleBuilder extends ModuleBuilder implements SourcePathsBui
   private List<Pair<String, String>> mySourcePaths;
   private String myContentRootPath;
   private Sdk mySdk;
+  private List<Runnable> mySdkChangedListeners = new ArrayList<Runnable>();
 
   public void setupRootModel(final ModifiableRootModel rootModel) throws ConfigurationException {
     if (mySdk != null) {
@@ -66,7 +67,20 @@ public class PythonModuleBuilder extends ModuleBuilder implements SourcePathsBui
     mySourcePaths.add(sourcePathInfo);
   }
 
+  public Sdk getSdk() {
+    return mySdk;
+  }
+
   public void setSdk(final Sdk sdk) {
-    mySdk = sdk;
+    if (mySdk != sdk) {
+      mySdk = sdk;
+      for (Runnable runnable : mySdkChangedListeners) {
+        runnable.run();
+      }
+    }
+  }
+
+  public void addSdkChangedListener(Runnable runnable) {
+    mySdkChangedListeners.add(runnable);
   }
 }
