@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -64,23 +65,21 @@ public class PyBuiltinCache {
       }
       if (sdk != null) {
         // dig out the builtins file, create an instance based on it
-        for (String url : sdk.getRootProvider().getUrls(PythonSdkType.BUITLIN_ROOT_TYPE)) {
+        final String[] urls = sdk.getRootProvider().getUrls(PythonSdkType.BUITLIN_ROOT_TYPE);
+        for (String url : urls) {
           if (url.contains(PythonSdkType.SKELETON_DIR_NAME)) {
             final String builtins_url = url + "/" + ((PythonSdkType)sdk.getSdkType()).getBuiltinsFileName();
             File builtins = new File(VfsUtil.urlToPath(builtins_url));
             if (builtins.isFile() && builtins.canRead()) {
-              try {
-                VirtualFile builtins_vfile = VfsUtil.findFileByURL(new URL(builtins_url));
-                if (builtins_vfile != null) {
-                  PsiFile builtins_psifile = PsiManager.getInstance(project).findFile(builtins_vfile);
-                  if (builtins_psifile instanceof PyFile) {
-                    instance = new PyBuiltinCache((PyFile)builtins_psifile);
-                    ourInstanceCache.put(instance_key, instance);
-                    return instance;
-                  }
+              VirtualFile builtins_vfile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(builtins);
+              if (builtins_vfile != null) {
+                PsiFile builtins_psifile = PsiManager.getInstance(project).findFile(builtins_vfile);
+                if (builtins_psifile instanceof PyFile) {
+                  instance = new PyBuiltinCache((PyFile)builtins_psifile);
+                  ourInstanceCache.put(instance_key, instance);
+                  return instance;
                 }
               }
-              catch (MalformedURLException ignored) {}
             }
           }
         }
