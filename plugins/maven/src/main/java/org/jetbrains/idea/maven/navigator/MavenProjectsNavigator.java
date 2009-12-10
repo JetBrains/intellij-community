@@ -292,10 +292,10 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
     }
 
     @Override
-    public void profilesChanged(final List<String> profiles) {
+    public void profilesChanged() {
       scheduleStructureRequest(new Runnable() {
         public void run() {
-          myStructure.setActiveProfiles(profiles);
+          myStructure.updateProfiles();
         }
       });
     }

@@ -649,7 +649,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                                      "<version>1</version>");
 
     importProjects(p1, p2);
-    myProjectsManager.setActiveProfiles(Arrays.asList("one", "two"));
+    myProjectsManager.setExplicitProfiles(Arrays.asList("one", "two"));
     myProjectsManager.setIgnoredFilesPaths(Arrays.asList(p1.getPath()));
     myProjectsManager.setIgnoredFilesPatterns(Arrays.asList("*.xxx"));
 
@@ -670,7 +670,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
 
     assertUnorderedElementsAreEqual(myProjectsManager.getProjectsTreeForTests().getManagedFilesPaths(),
                                     p1.getPath(), p3.getPath());
-    assertUnorderedElementsAreEqual(myProjectsManager.getActiveProfiles(), "three");
+    assertUnorderedElementsAreEqual(myProjectsManager.getExplicitProfiles(), "three");
     assertUnorderedElementsAreEqual(myProjectsManager.getIgnoredFilesPaths(), p1.getPath());
     assertUnorderedElementsAreEqual(myProjectsManager.getIgnoredFilesPatterns(), "*.zzz");
 

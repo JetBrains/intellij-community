@@ -101,11 +101,15 @@ public class MavenProject {
 
     if (updateLastReadStamp) newState.myLastReadStamp++;
 
-    newState.myActiveProfilesIds = readerResult.activeProfiles;
+    org.apache.maven.project.MavenProject nativeMavenProject = readerResult.nativeMavenProject;
+
     newState.myReadingProblems = readerResult.readingProblems;
     newState.myLocalRepository = readerResult.localRepository;
 
-    org.apache.maven.project.MavenProject nativeMavenProject = readerResult.nativeMavenProject;
+    Collection<Profile> activeProfiles = collectActivateProfiles(nativeMavenProject);
+    
+    newState.myActiveProfilesIds = collectProfilesIds(activeProfiles);
+
     Model model = nativeMavenProject.getModel();
 
     newState.myMavenId = new MavenId(model.getGroupId(),
@@ -136,8 +140,8 @@ public class MavenProject {
 
     doSetResolvedAttributes(newState, readerResult, resetArtifacts);
 
-    newState.myModulesPathsAndNames = collectModulePathsAndNames(model, getDirectory(), newState.myActiveProfilesIds);
-    List<String> newProfiles = collectProfilesIds(model);
+    newState.myModulesPathsAndNames = collectModulePathsAndNames(model, getDirectory(), activeProfiles);
+    Collection<String> newProfiles = collectProfilesIds(model.getProfiles());
     if (resetProfiles || newState.myProfilesIds == null) {
       newState.myProfilesIds = newProfiles;
     }
@@ -180,7 +184,7 @@ public class MavenProject {
     newUnresolvedArtifacts.addAll(readerResult.unresolvedArtifactIds);
     newRepositories.addAll(convertRepositories(model.getRepositories()));
     newDependencies.addAll(convertArtifacts(nativeMavenProject.getArtifacts(), state.myLocalRepository));
-    newPlugins.addAll(collectPlugins(model, state.myActiveProfilesIds));
+    newPlugins.addAll(collectPlugins(model, collectActivateProfiles(nativeMavenProject)));
     newExtensions.addAll(convertArtifacts(nativeMavenProject.getExtensionArtifacts(), state.myLocalRepository));
 
     state.myUnresolvedArtifactIds = newUnresolvedArtifacts;
@@ -236,13 +240,11 @@ public class MavenProject {
     return result;
   }
 
-  private static List<MavenPlugin> collectPlugins(Model mavenModel, List<String> activeProfilesIds) {
+  private static List<MavenPlugin> collectPlugins(Model mavenModel, Collection<Profile> activeProfiles) {
     List<MavenPlugin> result = new ArrayList<MavenPlugin>();
     collectPlugins(mavenModel.getBuild(), result);
-    for (Profile profile : collectActiveProfiles(mavenModel, activeProfilesIds)) {
-      if (activeProfilesIds.contains(profile.getId())) {
-        collectPlugins(profile.getBuild(), result);
-      }
+    for (Profile profile : activeProfiles) {
+      collectPlugins(profile.getBuild(), result);
     }
     return result;
   }
@@ -250,7 +252,7 @@ public class MavenProject {
   private static void collectPlugins(BuildBase build, List<MavenPlugin> result) {
     if (build == null) return;
 
-    List<Plugin> plugins = (List<Plugin>)build.getPlugins();
+    List<Plugin> plugins = build.getPlugins();
     if (plugins == null) return;
 
     for (Plugin each : plugins) {
@@ -258,21 +260,19 @@ public class MavenProject {
     }
   }
 
-  private static Map<String, String> collectModulePathsAndNames(Model mavenModel,
-                                                                String baseDir,
-                                                                List<String> activeProfilesIds) {
+  private static Map<String, String> collectModulePathsAndNames(Model mavenModel, String baseDir, Collection<Profile> activeProfiles) {
     String basePath = baseDir + "/";
     Map<String, String> result = new LinkedHashMap<String, String>();
-    for (Map.Entry<String, String> each : collectModulesRelativePathsAndNames(mavenModel, activeProfilesIds).entrySet()) {
+    for (Map.Entry<String, String> each : collectModulesRelativePathsAndNames(mavenModel, activeProfiles).entrySet()) {
       result.put(new Path(basePath + each.getKey()).getPath(), each.getValue());
     }
     return result;
   }
 
-  private static Map<String, String> collectModulesRelativePathsAndNames(Model mavenModel, List<String> activeProfilesIds) {
+  private static Map<String, String> collectModulesRelativePathsAndNames(Model mavenModel, Collection<Profile> activeProfiles) {
     LinkedHashMap<String, String> result = new LinkedHashMap<String, String>();
     addModulesToList(mavenModel.getModules(), result);
-    for (Profile profile : collectActiveProfiles(mavenModel, activeProfilesIds)) {
+    for (Profile profile : activeProfiles) {
       addModulesToList(profile.getModules(), result);
     }
     return result;
@@ -293,27 +293,20 @@ public class MavenProject {
     }
   }
 
-  private static List<Profile> collectActiveProfiles(Model mavenModel, List<String> activeProfilesIds) {
-    List<Profile> result = new ArrayList<Profile>(activeProfilesIds.size());
-    for (Profile each : collectProfiles(mavenModel)) {
-      if (activeProfilesIds.contains(each.getId())) result.add(each);
-    }
-    return result;
+  private static Collection<Profile> collectActivateProfiles(org.apache.maven.project.MavenProject nativeMavenProject) {
+    Collection<Profile> activatedProfiles  = nativeMavenProject.getActiveProfiles();
+    return activatedProfiles == null ? Collections.<Profile>emptySet() : activatedProfiles;
   }
 
-  private static List<String> collectProfilesIds(Model mavenModel) {
-    List<Profile> profiles = collectProfiles(mavenModel);
+  private static Collection<String> collectProfilesIds(Collection<Profile> profiles) {
+    if (profiles == null) return Collections.emptyList();
+    
     Set<String> result = new THashSet<String>(profiles.size());
     for (Profile each : profiles) {
       String id = each.getId();
       if (id != null) result.add(id);
     }
-    return new ArrayList<String>(result);
-  }
-
-  private static List<Profile> collectProfiles(Model mavenModel) {
-    List<Profile> profiles = mavenModel.getProfiles();
-    return profiles == null ? Collections.<Profile>emptyList() : profiles;
+    return result;
   }
 
   public long getLastReadStamp() {
@@ -349,7 +342,7 @@ public class MavenProject {
     return !myState.myReadingProblems.isEmpty();
   }
 
-  public List<String> getActiveProfilesIds() {
+  public Collection<String> getActiveProfilesIds() {
     return myState.myActiveProfilesIds;
   }
 
@@ -424,7 +417,7 @@ public class MavenProject {
   }
 
   public MavenProjectChanges read(MavenGeneralSettings generalSettings,
-                                  List<String> profiles,
+                                  Collection<String> profiles,
                                   MavenProjectReader reader,
                                   MavenProjectReaderProjectLocator locator) {
     return set(reader.readProject(generalSettings, myFile, profiles, locator), true, false, true);
@@ -604,7 +597,7 @@ public class MavenProject {
     return myState.myModulesPathsAndNames;
   }
 
-  public List<String> getProfilesIds() {
+  public Collection<String> getProfilesIds() {
     return myState.myProfilesIds;
   }
 
@@ -846,12 +839,12 @@ public class MavenProject {
 
     Map<String, String> myModulesPathsAndNames;
 
-    List<String> myProfilesIds;
+    Collection<String> myProfilesIds;
 
     Model myStrippedMavenModel;
     List<MavenRemoteRepository> myRemoteRepositories;
 
-    List<String> myActiveProfilesIds;
+    Collection<String> myActiveProfilesIds;
     Collection<MavenProjectProblem> myReadingProblems;
     Set<MavenId> myUnresolvedArtifactIds;
     File myLocalRepository;

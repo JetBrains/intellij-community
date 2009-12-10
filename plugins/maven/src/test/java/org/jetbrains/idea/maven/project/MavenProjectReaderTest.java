@@ -1101,92 +1101,61 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
   public void testActivatingProfilesByOS() throws Exception {
-    createProjectPom("<name>${prop1}</name>" +
-                     "<packaging>${prop2}</packaging>" +
-
-                     "<profiles>" +
+    createProjectPom("<profiles>" +
                      "  <profile>" +
                      "    <id>one</id>" +
                      "    <activation>" +
                      "      <os><family>windows</family></os>" +
                      "    </activation>" +
-                     "    <properties>" +
-                     "      <prop1>value1</prop1>" +
-                     "    </properties>" +
                      "  </profile>" +
                      "  <profile>" +
                      "    <id>two</id>" +
                      "    <activation>" +
                      "      <os><family>unix</family></os>" +
                      "    </activation>" +
-                     "    <properties>" +
-                     "      <prop2>value2</prop2>" +
-                     "    </properties>" +
                      "  </profile>" +
                      "</profiles>");
 
-    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
-    assertEquals("value1", p.getName());
-    assertEquals("${prop2}", p.getPackaging());
+    assertActiveProfiles("one");
   }
 
   public void testActivatingProfilesByJdk() throws Exception {
-    createProjectPom("<name>${prop1}</name>" +
-                     "<packaging>${prop2}</packaging>" +
-
-                     "<profiles>" +
+    createProjectPom("<profiles>" +
                      "  <profile>" +
                      "    <id>one</id>" +
                      "    <activation>" +
                      "      <jdk>[1.5,)</jdk>" +
                      "    </activation>" +
-                     "    <properties>" +
-                     "      <prop1>value1</prop1>" +
-                     "    </properties>" +
                      "  </profile>" +
                      "  <profile>" +
                      "    <id>two</id>" +
                      "    <activation>" +
                      "      <jdk>(,1.5)</jdk>" +
                      "    </activation>" +
-                     "    <properties>" +
-                     "      <prop2>value2</prop2>" +
-                     "    </properties>" +
                      "  </profile>" +
                      "</profiles>");
 
-    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
-    assertEquals("value1", p.getName());
-    assertEquals("${prop2}", p.getPackaging());
+    assertActiveProfiles("one");
   }
 
   public void testActivatingProfilesByStrictJdkVersion() throws Exception {
-    createProjectPom("<name>${prop1}</name>" +
-
-                     "<profiles>" +
+    createProjectPom("<profiles>" +
                      "  <profile>" +
                      "    <id>one</id>" +
                      "    <activation>" +
                      "      <jdk>1.4</jdk>" +
                      "    </activation>" +
-                     "    <properties>" +
-                     "      <prop1>value</prop1>" +
-                     "    </properties>" +
                      "  </profile>" +
                      "</profiles>");
 
-    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
-    assertEquals("${prop1}", p.getName());
+    assertActiveProfiles();
   }
 
   public void testActivatingProfilesByProperty() throws Exception {
     System.setProperty("maven.test.property", "foo");
     MavenEmbedderFactory.resetSystemPropertiesCacheInTests();
 
-    createProjectPom("<name>${prop1}</name>" +
-                     "<packaging>${prop2}</packaging>" +
-
-                     "<profiles>" +
+    createProjectPom("<profiles>" +
                      "  <profile>" +
                      "    <id>one</id>" +
                      "    <activation>" +
@@ -1195,9 +1164,6 @@ public class MavenProjectReaderTest extends MavenTestCase {
                      "        <value>foo</value>" +
                      "      </property>" +
                      "    </activation>" +
-                     "    <properties>" +
-                     "      <prop1>value1</prop1>" +
-                     "    </properties>" +
                      "  </profile>" +
                      "  <profile>" +
                      "    <id>two</id>" +
@@ -1207,24 +1173,16 @@ public class MavenProjectReaderTest extends MavenTestCase {
                      "        <value>bar</value>" +
                      "      </property>" +
                      "    </activation>" +
-                     "    <properties>" +
-                     "      <prop2>value2</prop2>" +
-                     "    </properties>" +
                      "  </profile>" +
                      "</profiles>");
 
-    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
-    assertEquals("value1", p.getName());
-    assertEquals("${prop2}", p.getPackaging());
+    assertActiveProfiles("one");
   }
 
   public void testActivatingProfilesByEnvProperty() throws Exception {
     String value = MavenUtil.getEnvProperties().getProperty("TMP");
 
-    createProjectPom("<name>${prop1}</name>" +
-                     "<packaging>${prop2}</packaging>" +
-
-                     "<profiles>" +
+    createProjectPom("<profiles>" +
                      "  <profile>" +
                      "    <id>one</id>" +
                      "    <activation>" +
@@ -1233,9 +1191,6 @@ public class MavenProjectReaderTest extends MavenTestCase {
                      "        <value>" + value + "</value>" +
                      "      </property>" +
                      "    </activation>" +
-                     "    <properties>" +
-                     "      <prop1>value1</prop1>" +
-                     "    </properties>" +
                      "  </profile>" +
                      "  <profile>" +
                      "    <id>two</id>" +
@@ -1245,24 +1200,16 @@ public class MavenProjectReaderTest extends MavenTestCase {
                      "        <value>ffffff</value>" +
                      "      </property>" +
                      "    </activation>" +
-                     "    <properties>" +
-                     "      <prop2>value2</prop2>" +
-                     "    </properties>" +
                      "  </profile>" +
                      "</profiles>");
 
-    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
-    assertEquals("value1", p.getName());
-    assertEquals("${prop2}", p.getPackaging());
+    assertActiveProfiles("one");
   }
 
   public void testActivatingProfilesByFile() throws Exception {
     createProjectSubFile("dir/file.txt");
 
-    createProjectPom("<name>${prop1}</name>" +
-                     "<packaging>${prop2}</packaging>" +
-
-                     "<profiles>" +
+    createProjectPom("<profiles>" +
                      "  <profile>" +
                      "    <id>one</id>" +
                      "    <activation>" +
@@ -1270,9 +1217,6 @@ public class MavenProjectReaderTest extends MavenTestCase {
                      "        <exists>${basedir}/dir/file.txt</exists>" +
                      "      </file>" +
                      "    </activation>" +
-                     "    <properties>" +
-                     "      <prop1>value1</prop1>" +
-                     "    </properties>" +
                      "  </profile>" +
                      "  <profile>" +
                      "    <id>two</id>" +
@@ -1281,15 +1225,140 @@ public class MavenProjectReaderTest extends MavenTestCase {
                      "        <missing>${basedir}/dir/file.txt</missing>" +
                      "      </file>" +
                      "    </activation>" +
-                     "    <properties>" +
-                     "      <prop2>value2</prop2>" +
-                     "    </properties>" +
                      "  </profile>" +
                      "</profiles>");
 
-    org.apache.maven.project.MavenProject p = readProject(myProjectPom);
-    assertEquals("value1", p.getName());
-    assertEquals("${prop2}", p.getPackaging());
+    assertActiveProfiles("one");
+  }
+
+  public void testActivateDefaultProfileEventIfThereAreExplicitOnesButAbsent() throws Exception {
+    createProjectPom("<profiles>" +
+                     "  <profile>" +
+                     "    <id>default</id>" +
+                     "    <activation>" +
+                     "      <activeByDefault>true</activeByDefault>" +
+                     "    </activation>" +
+                     "  </profile>" +
+                     "  <profile>" +
+                     "    <id>explicit</id>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    assertActiveProfiles(Arrays.asList("foofoofoo"), "default");
+  }
+
+  public void testDoNotActivateDefaultProfileIfThereAreActivatedImplicit() throws Exception {
+    createProjectPom("<profiles>" +
+                     "  <profile>" +
+                     "    <id>default</id>" +
+                     "    <activation>" +
+                     "      <activeByDefault>true</activeByDefault>" +
+                     "    </activation>" +
+                     "  </profile>" +
+                     "  <profile>" +
+                     "    <id>implicit</id>" +
+                     "    <activation>" +
+                     "      <jdk>[1.5,)</jdk>" +
+                     "    </activation>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    assertActiveProfiles("implicit");
+  }
+
+  public void testActivatingImplicitProfilesEventWhenThereAreExplicitOnes() throws Exception {
+    createProjectPom("<profiles>" +
+                     "  <profile>" +
+                     "    <id>explicit</id>" +
+                     "  </profile>" +
+                     "  <profile>" +
+                     "    <id>implicit</id>" +
+                     "    <activation>" +
+                     "      <jdk>[1.5,)</jdk>" +
+                     "    </activation>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    assertActiveProfiles(Arrays.asList("explicit"), "explicit", "implicit");
+  }
+
+  public void testAlwaysActivatingActiveProfilesInSettingsXml() throws Exception {
+    updateSettingsXml("<activeProfiles>" +
+                      "  <activeProfile>settings</activeProfile>" +
+                      "</activeProfiles>");
+
+    createProjectPom("<profiles>" +
+                     "  <profile>" +
+                     "    <id>explicit</id>" +
+                     "  </profile>" +
+                     "  <profile>" +
+                     "    <id>settings</id>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    assertActiveProfiles("settings");
+    assertActiveProfiles(Arrays.asList("explicit"), "explicit", "settings");
+  }
+
+  public void testAlwaysActivatingActiveProfilesInProfilesXml() throws Exception {
+    createFullProfilesXml("<?xml version=\"1.0\"?>" +
+                          "<profilesXml>" +
+                          "  <activeProfiles>" +
+                          "    <activeProfile>profiles</activeProfile>" +
+                          "  </activeProfiles>" +
+                          "</profilesXml>");
+
+    createProjectPom("<profiles>" +
+                     "  <profile>" +
+                     "    <id>explicit</id>" +
+                     "  </profile>" +
+                     "  <profile>" +
+                     "    <id>profiles</id>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    assertActiveProfiles("profiles");
+    assertActiveProfiles(Arrays.asList("explicit"), "explicit", "profiles");
+  }
+
+  public void testActivatingBothActiveProfilesInSettingsXmlAndImplicitProfiles() throws Exception {
+    updateSettingsXml("<activeProfiles>" +
+                      "  <activeProfile>settings</activeProfile>" +
+                      "</activeProfiles>");
+
+    createProjectPom("<profiles>" +
+                     "  <profile>" +
+                     "    <id>implicit</id>" +
+                     "    <activation>" +
+                     "      <jdk>[1.5,)</jdk>" +
+                     "    </activation>" +
+                     "  </profile>" +
+                     "  <profile>" +
+                     "    <id>settings</id>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    assertActiveProfiles("settings", "implicit");
+  }
+
+  public void testDoNotActivateDefaultProfilesWhenThereAreActiveProfilesInSettingsXml() throws Exception {
+    updateSettingsXml("<activeProfiles>" +
+                      "  <activeProfile>settings</activeProfile>" +
+                      "</activeProfiles>");
+
+    createProjectPom("<profiles>" +
+                     "  <profile>" +
+                     "    <id>default</id>" +
+                     "    <activation>" +
+                     "      <activeByDefault>true</activeByDefault>" +
+                     "    </activation>" +
+                     "  </profile>" +
+                     "  <profile>" +
+                     "    <id>settings</id>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    assertActiveProfiles("settings");
   }
 
   private org.apache.maven.project.MavenProject readProject(VirtualFile file, String... profiles) {
@@ -1340,6 +1409,19 @@ public class MavenProjectReaderTest extends MavenTestCase {
       actualProblems.add(each.getDescription());
     }
     assertOrderedElementsAreEqual(actualProblems, expectedProblems);
+  }
+
+  private void assertActiveProfiles(String... expected) {
+    assertActiveProfiles(Collections.<String>emptyList(), expected);
+  }
+
+  private void assertActiveProfiles(List<String> explicitProfiles, String... expected) {
+    org.apache.maven.project.MavenProject p = readProject(myProjectPom, explicitProfiles.toArray(new String[explicitProfiles.size()]));
+    assertUnorderedElementsAreEqual(ContainerUtil.map((List<Profile>)p.getActiveProfiles(), new Function<Profile, String>() {
+      public String fun(Profile profile) {
+        return profile.getId();
+      }
+    }), expected);
   }
 
   private static class NullProjectLocator implements MavenProjectReaderProjectLocator {

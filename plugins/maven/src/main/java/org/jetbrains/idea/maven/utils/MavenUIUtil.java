@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.idea.maven.project.MavenProfileState;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -38,7 +39,7 @@ public class MavenUIUtil {
     final AnAction action = actionManager.getAction(actionId);
     if (action != null) {
       final Presentation presentation = new Presentation();
-      final AnActionEvent event = new AnActionEvent(e, DataManager.getInstance().getDataContext(), "", presentation, actionManager, 0);
+      final AnActionEvent event = new AnActionEvent(e, DataManager.getInstance().getDataContext(e.getComponent()), "", presentation, actionManager, 0);
       action.update(event);
       if (presentation.isEnabled()) {
         action.actionPerformed(event);
@@ -85,7 +86,9 @@ public class MavenUIUtil {
         panel.setBackground(selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground());
         panel.setForeground(foreground);
 
-        checkbox.setSelected(handler.isSelected(userObject));
+        CheckBoxState state = handler.getState(userObject);
+        checkbox.setSelected(state !=  CheckBoxState.UNCHECKED);
+        checkbox.setEnabled(state != CheckBoxState.PARTIAL);
         checkbox.setBackground(UIUtil.getTreeTextBackground());
         checkbox.setForeground(foreground);
 
@@ -128,6 +131,10 @@ public class MavenUIUtil {
 
     boolean isVisible(Object userObject);
 
-    boolean isSelected(Object userObject);
+    CheckBoxState getState(Object userObject);
+  }
+
+  public enum CheckBoxState {
+    CHECKED, UNCHECKED, PARTIAL
   }
 }
