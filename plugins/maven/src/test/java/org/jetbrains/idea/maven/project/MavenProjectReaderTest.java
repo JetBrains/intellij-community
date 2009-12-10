@@ -1162,32 +1162,21 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
   public void testActivatingProfilesByStrictJdkVersion() throws Exception {
     createProjectPom("<name>${prop1}</name>" +
-                     "<packaging>${prop2}</packaging>" +
 
                      "<profiles>" +
                      "  <profile>" +
                      "    <id>one</id>" +
                      "    <activation>" +
-                     "      <jdk>1.6</jdk>" +
+                     "      <jdk>1.4</jdk>" +
                      "    </activation>" +
                      "    <properties>" +
-                     "      <prop1>value1</prop1>" +
-                     "    </properties>" +
-                     "  </profile>" +
-                     "  <profile>" +
-                     "    <id>two</id>" +
-                     "    <activation>" +
-                     "      <jdk>1.5</jdk>" +
-                     "    </activation>" +
-                     "    <properties>" +
-                     "      <prop2>value2</prop2>" +
+                     "      <prop1>value</prop1>" +
                      "    </properties>" +
                      "  </profile>" +
                      "</profiles>");
 
     org.apache.maven.project.MavenProject p = readProject(myProjectPom);
-    assertEquals("value1", p.getName());
-    assertEquals("${prop2}", p.getPackaging());
+    assertEquals("${prop1}", p.getName());
   }
 
   public void testActivatingProfilesByProperty() throws Exception {
