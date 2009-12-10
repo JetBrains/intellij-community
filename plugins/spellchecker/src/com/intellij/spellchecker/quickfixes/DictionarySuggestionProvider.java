@@ -29,6 +29,7 @@ import java.util.TreeSet;
 
 
 public class DictionarySuggestionProvider implements NameSuggestionProvider {
+  
   private boolean active;
 
   public void setActive(boolean active) {
@@ -37,7 +38,7 @@ public class DictionarySuggestionProvider implements NameSuggestionProvider {
 
   public SuggestedNameInfo getSuggestedNames(PsiElement element, PsiElement nameSuggestionContext, List<String> result) {
     assert result != null;
-    if (!active) {
+    if (!active || nameSuggestionContext==null) {
       return null;
     }
     String text = nameSuggestionContext.getText();
