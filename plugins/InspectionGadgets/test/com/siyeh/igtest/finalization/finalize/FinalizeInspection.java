@@ -1,4 +1,4 @@
-package com.siyeh.igtest.finalization;
+package com.siyeh.igtest.finalization.finalize;
 
 public class FinalizeInspection
 {
@@ -10,6 +10,12 @@ public class FinalizeInspection
     protected void finalize() throws Throwable
     {
         super.finalize();
+    }
+    
+    class X {
+        @Override
+        protected void finalize() throws Throwable {
+        }
     }
 
 }
