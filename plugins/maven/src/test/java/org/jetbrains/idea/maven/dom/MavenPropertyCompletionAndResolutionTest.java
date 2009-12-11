@@ -23,6 +23,7 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProfilesModel;
 import org.jetbrains.idea.maven.dom.model.MavenDomSettingsModel;
 import org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
@@ -380,8 +381,6 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
   }
 
   public void testResolutionWithProfiles() throws Exception {
-    importProjectWithProfiles("two");
-
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -403,12 +402,72 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
 
                      "<name>${<caret>foo}</name>");
 
+    readWithProfiles("two");
+
+    assertResolved(myProjectPom, findTag(myProjectPom, "project.profiles[1].properties.foo"));
+  }
+
+  public void testResolutionWithDefaultProfiles() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>one</id>" +
+                     "    <properties>" +
+                     "      <foo>value</foo>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "  <profile>" +
+                     "    <id>two</id>" +
+                     "    <activation>" +
+                     "      <activeByDefault>true</activeByDefault>" +
+                     "    </activation>" +
+                     "    <properties>" +
+                     "      <foo>value</foo>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "</profiles>" +
+
+                     "<name>${<caret>foo}</name>");
+
+    readProjects();
+
+    assertResolved(myProjectPom, findTag(myProjectPom, "project.profiles[1].properties.foo"));
+  }
+
+  public void testResolutionWithTriggeredProfiles() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>one</id>" +
+                     "    <properties>" +
+                     "      <foo>value</foo>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "  <profile>" +
+                     "    <id>two</id>" +
+                     "    <activation>" +
+                     "      <jdk>[1.5,)</jdk>" +
+                     "    </activation>" +
+                     "    <properties>" +
+                     "      <foo>value</foo>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "</profiles>" +
+
+                     "<name>${<caret>foo}</name>");
+
+    readProjects();
+
     assertResolved(myProjectPom, findTag(myProjectPom, "project.profiles[1].properties.foo"));
   }
 
   public void testResolvingToProfilesBeforeModelsProperties() throws Exception {
-    importProjectWithProfiles("one");
-
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -428,6 +487,8 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
 
                      "<name>${<caret>foo}</name>");
 
+    readWithProfiles("one");
+
     assertResolved(myProjectPom, findTag(myProjectPom, "project.profiles[0].properties.foo"));
   }
 
@@ -446,13 +507,14 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
                                              "    </properties>" +
                                              "  </profile>" +
                                              "</profiles>");
-    importProjectWithProfiles("two");
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
                      "<name>${<caret>foo}</name>");
+
+    readWithProfiles("two");
 
     assertResolved(myProjectPom, findTag(profiles, "settings.profiles[1].properties.foo", MavenDomSettingsModel.class));
   }
@@ -502,13 +564,14 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
                                              "    <foo>value</foo>" +
                                              "  </properties>" +
                                              "</profile>");
-    importProjectWithProfiles("two");
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
                      "<name>${<caret>foo}</name>");
+
+    readWithProfiles("two");
 
     assertResolved(myProjectPom, findTag(profiles, "profilesXml.profiles[1].properties.foo", MavenDomProfilesModel.class));
   }
@@ -526,13 +589,14 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
                                                      "    <foo>value</foo>" +
                                                      "  </properties>" +
                                                      "</profile>");
-    importProjectWithProfiles("two");
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
                      "<name>${<caret>foo}</name>");
+
+    readWithProfiles("two");
 
     assertResolved(myProjectPom, findTag(profiles, "profiles[1].properties.foo", MavenDomProfiles.class));
   }
@@ -601,8 +665,6 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
   }
 
   public void testCompletion() throws Exception {
-    importProjectWithProfiles("one");
-
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -677,6 +739,8 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
                       "  </profile>" +
                       "</profiles>");
 
+    readWithProfiles("one");
+
     List<String> variants = getCompletionVariants(myProjectPom);
     assertInclude(variants, "pomProp", "pomProfilesProp", "profilesXmlProp");
     assertInclude(variants,
@@ -747,5 +811,10 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
                      "<name>${<<caret>/name>");
 
     assertCompletionVariantsDoNotInclude(myProjectPom, "project.groupId");
+  }
+
+  private void readWithProfiles(String... profiles) {
+    myProjectsManager.setExplicitProfiles(Arrays.asList(profiles));
+    waitForReadingCompletion();
   }
 }

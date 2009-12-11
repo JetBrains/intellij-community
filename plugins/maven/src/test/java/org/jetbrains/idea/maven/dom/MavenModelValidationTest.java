@@ -102,8 +102,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
                      "</project>");
     updateSettingsXml("<<<");
 
-    myProjectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles();
-    waitForReadingCompletion();
+    readProjects();
 
     VfsUtil.saveText(myProjectPom,
                      "<<error descr=\"'settings.xml' has syntax errors\">project</error>>" +
@@ -125,8 +124,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
                      "</project>");
     createProfilesXml("<<<");
 
-    myProjectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles();
-    waitForReadingCompletion();
+    readProjects();
 
     VfsUtil.saveText(myProjectPom,
                      "<<error descr=\"'profiles.xml' has syntax errors\">project</error>>" +
@@ -151,8 +149,8 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
                      "    <version>1</version>" +
                      "  </parent>" +
                      "</project>");
-    myProjectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles();
-    waitForReadingCompletion();
+
+    readProjects();
 
     VfsUtil.saveText(myProjectPom,
                      "<project>" +
@@ -189,8 +187,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
                      "    <relativePath>parent/pom.xml</relativePath>" +
                      "  </parent>" +
                      "</project>");
-    myProjectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles();
-    waitForReadingCompletion();
+    readProjects();
 
     VfsUtil.saveText(myProjectPom,
                      "<project>" +
@@ -217,8 +214,8 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
                      "  <version>1</version>" +
                      "  <" +
                      "</project>");
-    myProjectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles();
-    waitForReadingCompletion();
+
+    readProjects();
 
     VfsUtil.saveText(myProjectPom,
                      "<project>" +
@@ -249,8 +246,8 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
                      "    </dependency>" +
                      "  </dependencies>" +
                      "</project>");
-    myProjectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles();
-    waitForReadingCompletion();
+
+    readProjects();
 
     VfsUtil.saveText(myProjectPom,
                      "<project>" +

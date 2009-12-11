@@ -905,8 +905,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertSources("project");
     assertModuleLibDeps("project");
 
-    myProjectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles();
-    waitForReadingCompletion();
+    readProjects();
     myProjectsManager.waitForResolvingCompletion();
     myProjectsManager.performScheduledImport();
 
