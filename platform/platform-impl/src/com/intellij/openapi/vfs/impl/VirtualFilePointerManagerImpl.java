@@ -177,7 +177,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   @NotNull
-  private VirtualFilePointer create(VirtualFile file, String url, @NotNull final Disposable parentDisposable, VirtualFilePointerListener listener) {
+  private VirtualFilePointer create(VirtualFile file, @NotNull String url, @NotNull final Disposable parentDisposable, VirtualFilePointerListener listener) {
     if (file != null && file.getFileSystem() != LocalFileSystem.getInstance() && file.getFileSystem() != JarFileSystem.getInstance()) {
       // we are unable to track alien file systems for now
       return new IdentityVirtualFilePointer(file);
@@ -253,7 +253,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     return path;
   }
 
-  private synchronized VirtualFilePointerImpl getOrCreate(VirtualFile file, String url, Disposable parentDisposable, VirtualFilePointerListener listener, String path) {
+  private synchronized VirtualFilePointerImpl getOrCreate(VirtualFile file, @NotNull String url, Disposable parentDisposable, VirtualFilePointerListener listener, String path) {
     TreeMap<String, VirtualFilePointerImpl> urlToPointer = myUrlToPointerMaps.get(listener);
     if (urlToPointer == null) {
       urlToPointer = new TreeMap<String, VirtualFilePointerImpl>(COMPARATOR);
