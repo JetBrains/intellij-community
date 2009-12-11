@@ -16,7 +16,6 @@
 package com.intellij.internal.psiView;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Icons;
 
@@ -24,8 +23,9 @@ import javax.swing.*;
 
 /**
  * @author yole
+ * @author Konstantin Bulenkov
  */
-public class PsiViewerMethodExtension implements PsiViewerExtension {
+public class PsiViewerMethodExtension extends JavaPsiViewerExtension {
   public String getName() {
     return "Java Method";
   }
@@ -35,6 +35,6 @@ public class PsiViewerMethodExtension implements PsiViewerExtension {
   }
 
   public PsiElement createElement(Project project, String text) {
-    return JavaPsiFacade.getInstance(project).getElementFactory().createMethodFromText(text, null);
+    return getFactory(project).createMethodFromText(text, null);
   }
 }
