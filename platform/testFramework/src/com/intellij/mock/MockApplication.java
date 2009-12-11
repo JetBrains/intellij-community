@@ -256,4 +256,8 @@ public class MockApplication extends MockComponentManager implements Application
 
   public void assertIsDispatchThread(@Nullable final JComponent component) {
   }
+
+  public boolean tryRunReadAction(@NotNull Runnable runnable) {
+    return false;
+  }
 }
