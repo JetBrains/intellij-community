@@ -18,8 +18,10 @@
 
 package org.jetbrains.idea.maven.execution;
 
+import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -94,7 +96,7 @@ public class MavenRunnerSettings implements Cloneable {
   public List<Pair<String, String>> collectJdkNamesAndDescriptions() {
     List<Pair<String, String>> result = new ArrayList<Pair<String, String>>();
 
-    for (Sdk projectJdk : getDefinedJdks()) {
+    for (Sdk projectJdk : ProjectJdkTable.getInstance().getSdksOfType(getSdkType())) {
       String name = projectJdk.getName();
       result.add(new Pair<String, String>(name, name));
     }
@@ -105,25 +107,14 @@ public class MavenRunnerSettings implements Cloneable {
     return result;
   }
 
-  public String getDefaultJdkName() {
-    List<Sdk> definedJdks = getDefinedJdks();
-    if (definedJdks.isEmpty()) {
-      return USE_INTERNAL_JAVA;
-    }
-
-    SortedList<Sdk> sorted = new SortedList<Sdk>(new Comparator<Sdk>() {
-      public int compare(Sdk o1, Sdk o2) {
-        return Comparing.compare(o2.getVersionString(), o1.getVersionString());
-      }
-    });
-    sorted.addAll(definedJdks);
-    return sorted.get(0).getName();
+  private SdkType getSdkType() {
+    return JavaSdk.getInstance();
   }
 
-  private List<Sdk> getDefinedJdks() {
-    ProjectJdkTable table = ProjectJdkTable.getInstance();
-    List<Sdk> definedJdks = table.getSdksOfType(table.getDefaultSdkType());
-    return definedJdks;
+  public String getDefaultJdkName() {
+    Sdk recent = ProjectJdkTable.getInstance().findMostRecentSdkOfType(getSdkType());
+    if (recent == null) return USE_INTERNAL_JAVA;
+    return recent.getName();
   }
 
   public boolean equals(final Object o) {

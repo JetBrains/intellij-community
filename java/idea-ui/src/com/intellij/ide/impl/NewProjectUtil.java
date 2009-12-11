@@ -81,24 +81,15 @@ public class NewProjectUtil {
 
       final Sdk jdk = dialog.getNewProjectJdk();
       if (jdk != null) {
-        final String versionString = jdk.getVersionString();
-        if (versionString != null) { //jdk is valid
-          CommandProcessor.getInstance().executeCommand(newProject, new Runnable() {
-            public void run() {
-              ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                public void run() {
-                  final ProjectRootManagerEx projectRootManager = (ProjectRootManagerEx)ProjectRootManager.getInstance(newProject);
-                  projectRootManager.setProjectJdk(jdk);
-                  final LanguageLevel languageLevel = getDefaultLanguageLevel(versionString);
-                  final LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(newProject);
-                  if (projectExtension.getLanguageLevel().compareTo(languageLevel) > 0) {
-                    projectExtension.setLanguageLevel(languageLevel);
-                  }
-                }
-              });
-            }
-          }, null, null);
-        }
+        CommandProcessor.getInstance().executeCommand(newProject, new Runnable() {
+          public void run() {
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              public void run() {
+                applyJdkToProject(newProject, jdk);
+              }
+            });
+          }
+        }, null, null);
       }
 
       final String compileOutput = dialog.getNewCompileOutput();
@@ -170,6 +161,19 @@ public class NewProjectUtil {
     }
   }
 
+  public static void applyJdkToProject(@NotNull Project project, @NotNull Sdk jdk) {
+    String versionString = jdk.getVersionString();
+    if (versionString == null) return;
+
+    ProjectRootManagerEx rootManager = ProjectRootManagerEx.getInstanceEx(project);
+    rootManager.setProjectJdk(jdk);
+    LanguageLevel level = getDefaultLanguageLevel(versionString);
+    LanguageLevelProjectExtension ext = LanguageLevelProjectExtension.getInstance(project);
+    if (level.compareTo(ext.getLanguageLevel()) < 0) {
+      ext.setLanguageLevel(level);
+    }
+  }
+
   public static void closePreviousProject(final Project projectToClose) {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     if (openProjects.length > 0) {
@@ -182,7 +186,10 @@ public class NewProjectUtil {
     }
   }
 
-  public static LanguageLevel getDefaultLanguageLevel(@NotNull String versionString) {
+  private static LanguageLevel getDefaultLanguageLevel(@NotNull String versionString) {
+    if (isOfVersionOrHigher(versionString, "1.7") || isOfVersionOrHigher(versionString, "7.0")) {
+      return LanguageLevel.JDK_1_7;
+    }
     if (isOfVersionOrHigher(versionString, "1.6") || isOfVersionOrHigher(versionString, "6.0")) {
       return LanguageLevel.JDK_1_6;
     }
