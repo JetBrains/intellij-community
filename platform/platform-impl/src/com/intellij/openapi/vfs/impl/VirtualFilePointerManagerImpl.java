@@ -178,21 +178,21 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
   @NotNull
   private VirtualFilePointer create(VirtualFile file, @NotNull String url, @NotNull final Disposable parentDisposable, VirtualFilePointerListener listener) {
-    if (file != null && file.getFileSystem() != LocalFileSystem.getInstance() && file.getFileSystem() != JarFileSystem.getInstance()) {
-      // we are unable to track alien file systems for now
-      return new IdentityVirtualFilePointer(file);
+    String protocol;
+    VirtualFileSystem fileSystem;
+    if (file == null) {
+      protocol = VirtualFileManager.extractProtocol(url);
+      fileSystem = myVirtualFileManager.getFileSystem(protocol);
     }
-
-    String protocol = VirtualFileManager.extractProtocol(url);
-    VirtualFileSystem fileSystem = myVirtualFileManager.getFileSystem(protocol);
-    if (fileSystem == null) {
-      // this pointer will never be alive
-      return new NullVirtualFilePointer(url);
+    else {
+      protocol = null;
+      fileSystem = file.getFileSystem();
     }
     if (fileSystem != LocalFileSystem.getInstance() && fileSystem != JarFileSystem.getInstance()) {
       // we are unable to track alien file systems for now
-      VirtualFile found = VirtualFileManager.getInstance().findFileByUrl(url);
-      return found == null ? new NullVirtualFilePointer(url) : new IdentityVirtualFilePointer(found);
+      VirtualFile found = fileSystem == null ? null : file != null ? file : VirtualFileManager.getInstance().findFileByUrl(url);
+      // if file is null, this pointer will never be alive
+      return getOrCreateIdentity(url, found);
     }
 
     String path;
@@ -218,6 +218,16 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       register(parentDisposable, pointer);
     }
 
+    return pointer;
+  }
+
+  private final Map<String, IdentityVirtualFilePointer> myUrlToIdentity = new THashMap<String, IdentityVirtualFilePointer>();
+  private IdentityVirtualFilePointer getOrCreateIdentity(@NotNull String url, VirtualFile found) {
+    IdentityVirtualFilePointer pointer = myUrlToIdentity.get(url);
+    if (pointer == null) {
+      pointer = new IdentityVirtualFilePointer(found, url);
+      myUrlToIdentity.put(url, pointer);
+    }
     return pointer;
   }
 
