@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util.projectWizard;
 
+import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.ide.util.newProjectWizard.SourcePathsStep;
 import com.intellij.ide.util.newProjectWizard.SupportForFrameworksStep;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
@@ -92,7 +93,7 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
   public ModuleWizardStep createProjectJdkStep(final WizardContext wizardContext) {
     return new ProjectJdkStep(wizardContext){
       public boolean isStepVisible() {
-        return com.intellij.ide.util.newProjectWizard.AddModuleWizard.getNewProjectJdk(wizardContext) == null;
+        return AddModuleWizard.getNewProjectJdk(wizardContext) == null;
       }
     };
   }
