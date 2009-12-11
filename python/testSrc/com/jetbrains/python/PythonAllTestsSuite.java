@@ -20,7 +20,7 @@ public class PythonAllTestsSuite {
     PyMultiFileResolveTest.class,
     PyResolveCalleeTest.class,
     PyToJavaResolveTest.class,
-    PyAssignmentTrackingTest.class,
+    PyAssignmentMappingTest.class,
     PythonCompletionTest.class,
     PyInheritorsSearchTest.class,
     PyParameterInfoTest.class,

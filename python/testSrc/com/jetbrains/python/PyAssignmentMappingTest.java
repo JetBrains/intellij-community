@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Tests assignment mapping and tracking.
+ * Tests assignment mapping.
  * User: dcheryasov
  * Date: Dec 11, 2009 2:13:51 AM
  */
