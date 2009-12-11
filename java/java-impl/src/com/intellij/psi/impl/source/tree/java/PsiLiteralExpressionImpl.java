@@ -85,44 +85,39 @@ public class PsiLiteralExpressionImpl extends ExpressionPsiElement implements Ps
       try {
         if (text.startsWith(HEXPREFIX) || text.startsWith(HEXPREFIX2)) {
           // should fit in 32 bits
-          if (textLength <= 9) return Integer.valueOf(text.substring(2), 16);
-          final Long value = parseDigits(text.substring(2), 4, 32);
-          return value == null ? null : Integer.valueOf(value.intValue());
+          final long value = parseDigits(text.substring(2), 4, 32);
+          return Integer.valueOf((int)value);
         }
         if (StringUtil.startsWithChar(text, '0')) {
           // should fit in 32 bits
-          if (textLength <= 12) return Integer.valueOf(text, 8);
-          final Long value = parseDigits(text, 3, 32);
-          return value == null ? null : Integer.valueOf(value.intValue());
+          final long value = parseDigits(text, 3, 32);
+          return Integer.valueOf((int)value);
         }
         final long l = Long.parseLong(text, 10);
         if (text.equals(_2_IN_31)) return Integer.valueOf((int)l);
         long converted = (int)l;
         return l == converted ? Integer.valueOf((int)l) : null;
       }
-      catch (Exception e) {
+      catch (NumberFormatException e) {
         return null;
       }
     }
     if (i == LONG_LITERAL) {
       if (StringUtil.endsWithChar(text, 'L') || StringUtil.endsWithChar(text, 'l')) {
         text = text.substring(0, textLength - 1);
-        textLength = text.length();
       }
       try {
         if (text.startsWith(HEXPREFIX) || text.startsWith(HEXPREFIX2)) {
-          if (textLength <= 17) return Long.valueOf(text.substring(2), 16);
           return parseDigits(text.substring(2), 4, 64);
         }
         if (StringUtil.startsWithChar(text, '0')) {
           // should fit in 64 bits
-          if (textLength <= 23) return Long.valueOf(text, 8);
           return parseDigits(text, 3, 64);
         }
         if (_2_IN_63.equals(text)) return Long.valueOf(-1L << 63);
         return Long.valueOf(text, 10);
       }
-      catch (Exception e) {
+      catch (NumberFormatException e) {
         return null;
       }
     }
@@ -130,7 +125,7 @@ public class PsiLiteralExpressionImpl extends ExpressionPsiElement implements Ps
       try {
         return Float.valueOf(text);
       }
-      catch (Exception e) {
+      catch (NumberFormatException e) {
         return null;
       }
     }
@@ -138,7 +133,7 @@ public class PsiLiteralExpressionImpl extends ExpressionPsiElement implements Ps
       try {
         return Double.valueOf(text);
       }
-      catch (Exception e) {
+      catch (NumberFormatException e) {
         return null;
       }
     }
@@ -154,7 +149,7 @@ public class PsiLiteralExpressionImpl extends ExpressionPsiElement implements Ps
       boolean success = parseStringCharacters(text, chars, null);
       if (!success) return null;
       if (chars.length() != 1) return null;
-      return new Character(chars.charAt(0));
+      return Character.valueOf(chars.charAt(0));
     }
     if (i == STRING_LITERAL) {
       if (StringUtil.endsWithChar(text, '\"')) {
@@ -184,16 +179,24 @@ public class PsiLiteralExpressionImpl extends ExpressionPsiElement implements Ps
   }
 
   // convert text to number according to radix specified
-  // if number is more than maxbits bits long, return null
-  private static Long parseDigits(String text, int bitsInRadix, int maxBits) {
+  // if number is more than maxbits bits long, throws NumberFormatException
+  private static long parseDigits(String text, int bitsInRadix, int maxBits) throws NumberFormatException {
     final int radix = 1 << bitsInRadix;
     int textLength = text.length();
-    long integer = Long.parseLong(text.substring(0, textLength - 1), radix);
-    final int lastDigit = Character.digit(text.charAt(textLength - 1), radix);
-    if ((integer & (-1L << maxBits - 4)) != 0) return null;
+    if (textLength == 0) {
+      throw new NumberFormatException(text);
+    }
+    long integer = textLength == 1 ? 0 : Long.parseLong(text.substring(0, textLength - 1), radix);
+    if ((integer & (-1L << (maxBits - bitsInRadix))) != 0) {
+      throw new NumberFormatException(text);
+    }
+    int lastDigit = Character.digit(text.charAt(textLength - 1), radix);
+    if (lastDigit == -1) {
+      throw new NumberFormatException(text);
+    }
     integer <<= bitsInRadix;
     integer |= lastDigit;
-    return Long.valueOf(integer);
+    return integer;
   }
 
   public String getParsingError() {
