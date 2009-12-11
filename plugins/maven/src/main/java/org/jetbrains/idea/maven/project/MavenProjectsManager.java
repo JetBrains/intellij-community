@@ -151,9 +151,9 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     doInit(false);
   }
 
-  private void initNew(List<VirtualFile> files, List<String> profiles) {
+  private void initNew(List<VirtualFile> files, List<String> explicitProfiles) {
     myState.originalFiles = MavenUtil.collectPaths(files);
-    myState.activeProfiles = profiles;
+    myState.activeProfiles = explicitProfiles;
     doInit(true);
   }
 
@@ -202,7 +202,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
   private void applyTreeToState() {
     myState.originalFiles = myProjectsTree.getManagedFilesPaths();
-    myState.activeProfiles = myProjectsTree.getActiveProfiles();
+    myState.activeProfiles = new ArrayList<String>(myProjectsTree.getExplicitProfiles());
     myState.ignoredFiles = new THashSet<String>(myProjectsTree.getIgnoredFilesPaths());
     myState.ignoredPathMasks = myProjectsTree.getIgnoredFilesPatterns();
   }
@@ -470,18 +470,23 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     return myProjectsTree.isManagedFile(f);
   }
 
-  public List<String> getActiveProfiles() {
+  public Collection<String> getExplicitProfiles() {
     if (!isInitialized()) return Collections.emptyList();
-    return myProjectsTree.getActiveProfiles();
+    return myProjectsTree.getExplicitProfiles();
   }
 
-  public List<String> getAvailableProfiles() {
+  public void setExplicitProfiles(Collection<String> profiles) {
+    myWatcher.setExplicitProfiles(profiles);
+  }
+
+  public Collection<String> getAvailableProfiles() {
     if (!isInitialized()) return Collections.emptyList();
     return myProjectsTree.getAvailableProfiles();
   }
 
-  public void setActiveProfiles(List<String> profiles) {
-    myWatcher.setActiveProfiles(profiles);
+  public Collection<Pair<String, MavenProfileState>> getProfilesWithStates() {
+    if (!isInitialized()) return Collections.emptyList();
+    return myProjectsTree.getProfilesWithStates();
   }
 
   public boolean hasProjects() {

@@ -79,7 +79,7 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
     }
   }
 
-  private List<TextEditorHighlightingPass> getPasses(int[] passesToIgnore) {
+  public List<TextEditorHighlightingPass> getPasses(int[] passesToIgnore) {
     if (myProject.isDisposed()) return Collections.emptyList();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     renewFile();

@@ -306,11 +306,19 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   private VirtualFile createProfilesFile(VirtualFile dir, String xml, boolean oldStyle) throws IOException {
+    return createProfilesFile(dir, createValidProfiles(xml, oldStyle));
+  }
+
+  protected VirtualFile createFullProfilesXml(String content) throws IOException {
+    return createProfilesFile(myProjectRoot, content);
+  }
+
+  private VirtualFile createProfilesFile(VirtualFile dir, String content) throws IOException {
     VirtualFile f = dir.findChild("profiles.xml");
     if (f == null) {
       f = dir.createChildData(null, "profiles.xml");
     }
-    setFileContent(f, createValidProfiles(xml, oldStyle));
+    setFileContent(f, content);
     return f;
   }
 

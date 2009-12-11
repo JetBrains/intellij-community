@@ -47,6 +47,7 @@ import org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -208,7 +209,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
 
   @Nullable
   private <T> T processProfilesProperties(MavenDomProfiles profilesDom, MavenProject mavenProjectOrNull, PropertyProcessor<T> processor) {
-    List<String> activePropfiles = mavenProjectOrNull == null ? null : mavenProjectOrNull.getActiveProfilesIds();
+    Collection<String> activePropfiles = mavenProjectOrNull == null ? null : mavenProjectOrNull.getActiveProfilesIds();
     for (MavenDomProfile each : profilesDom.getProfiles()) {
       XmlTag idTag = each.getId().getXmlTag();
       if (idTag == null) continue;

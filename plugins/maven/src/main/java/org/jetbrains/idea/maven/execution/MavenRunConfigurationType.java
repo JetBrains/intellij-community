@@ -41,6 +41,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import javax.swing.*;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -158,7 +159,7 @@ public class MavenRunConfigurationType implements LocatableConfigurationType {
 
     VirtualFile f = ((PsiFile)l.getPsiElement()).getVirtualFile();
     List<String> goals = ((MavenGoalLocation)l).getGoals();
-    List<String> profiles = MavenProjectsManager.getInstance(l.getProject()).getActiveProfiles();
+    Collection<String> profiles = MavenProjectsManager.getInstance(l.getProject()).getExplicitProfiles();
 
     return new MavenRunnerParameters(true, f.getParent().getPath(), goals, profiles);
   }

@@ -45,9 +45,8 @@ public class PersistentRangeMarker extends RangeMarkerImpl {
     }
   }
 
-  public void documentChanged(DocumentEvent e) {
-    if (!isValid()) return;
-
+  @Override
+  protected void changedUpdateImpl(DocumentEvent e) {
     DocumentEventImpl event = (DocumentEventImpl)e;
     if (event.isWholeTextReplaced()){
       myStartLine = event.translateLineViaDiffStrict(myStartLine);
@@ -70,7 +69,7 @@ public class PersistentRangeMarker extends RangeMarkerImpl {
       }
     }
     else{
-      super.documentChanged(e);
+      super.changedUpdateImpl(e);
       if (isValid()){
         storeLinesAndCols();
       }

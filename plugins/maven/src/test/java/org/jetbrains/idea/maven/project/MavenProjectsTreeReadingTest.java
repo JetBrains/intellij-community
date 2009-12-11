@@ -1924,24 +1924,24 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                       "</profile>");
 
     updateAll(Arrays.asList("one", "two"), myProjectPom);
-    assertUnorderedElementsAreEqual(myTree.getActiveProfiles(), "one", "two");
+    assertUnorderedElementsAreEqual(myTree.getExplicitProfiles(), "one", "two");
 
     deleteProfilesXml();
     update(myProjectPom);
-    assertUnorderedElementsAreEqual(myTree.getActiveProfiles(), "one");
+    assertUnorderedElementsAreEqual(myTree.getExplicitProfiles(), "one");
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>");
 
     update(myProjectPom);
-    assertUnorderedElementsAreEqual(myTree.getActiveProfiles());
+    assertUnorderedElementsAreEqual(myTree.getExplicitProfiles());
 
     createProfilesXml("<profile>" +
                       "  <id>two</id>" +
                       "</profile>");
     update(myProjectPom);
-    assertUnorderedElementsAreEqual(myTree.getActiveProfiles(), "two");
+    assertUnorderedElementsAreEqual(myTree.getExplicitProfiles(), "two");
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -1952,7 +1952,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                      "  </profile>" +
                      "</profiles>");
     update(myProjectPom);
-    assertUnorderedElementsAreEqual(myTree.getActiveProfiles(), "one", "two");
+    assertUnorderedElementsAreEqual(myTree.getExplicitProfiles(), "one", "two");
   }
 
   public void testDeletingAndRestoringActiveProfilesWhenProjectDeletes() throws Exception {
@@ -1983,11 +1983,11 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                                     "</profiles>");
 
     updateAll(Arrays.asList("one", "two"), myProjectPom);
-    assertUnorderedElementsAreEqual(myTree.getActiveProfiles(), "one", "two");
+    assertUnorderedElementsAreEqual(myTree.getExplicitProfiles(), "one", "two");
 
     m.delete(this);
     deleteProject(m);
-    assertUnorderedElementsAreEqual(myTree.getActiveProfiles(), "one");
+    assertUnorderedElementsAreEqual(myTree.getExplicitProfiles(), "one");
 
     m = createModulePom("m",
                         "<groupId>test</groupId>" +
@@ -2000,7 +2000,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                         "  </profile>" +
                         "</profiles>");
     update(m);
-    assertUnorderedElementsAreEqual(myTree.getActiveProfiles(), "one", "two");
+    assertUnorderedElementsAreEqual(myTree.getExplicitProfiles(), "one", "two");
   }
 
   public void testOutputPathsAreBasedOnTargetPathWhenResolving() throws Exception {
@@ -2020,8 +2020,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
     MavenEmbeddersManager embeddersManager = new MavenEmbeddersManager(getMavenGeneralSettings());
     try {
-      myTree.resolve(project, getMavenGeneralSettings(), embeddersManager, NULL_MAVEN_CONSOLE, EMPTY_MAVEN_PROCESS,
-                     null);
+      myTree.resolve(project, getMavenGeneralSettings(), embeddersManager, NULL_MAVEN_CONSOLE, EMPTY_MAVEN_PROCESS, null);
     }
     finally {
       embeddersManager.release();

@@ -313,8 +313,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
                   "  </profile>" +
                   "</profiles>");
 
-    List<String> result = getMavenProject().getProfilesIds();
-    assertOrderedElementsAreEqual(result, "one");
+    assertOrderedElementsAreEqual(getMavenProject().getProfilesIds(), "one");
   }
 
   public void testCollectingRepositories() throws Exception {

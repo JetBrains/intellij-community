@@ -185,7 +185,7 @@ public class MavenKeymapExtension implements KeymapExtension {
       MavenRunnerParameters params = new MavenRunnerParameters(true,
                                                                myMavenProject.getDirectory(),
                                                                Arrays.asList(myGoal),
-                                                               MavenActionUtil.getProjectsManager(e).getActiveProfiles());
+                                                               MavenActionUtil.getProjectsManager(e).getExplicitProfiles());
       MavenRunConfigurationType.runConfiguration(MavenActionUtil.getProject(e), params, e.getDataContext(), null);
     }
 
