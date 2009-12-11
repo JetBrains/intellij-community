@@ -171,7 +171,7 @@ public class UnscrambleDialog extends DialogWrapper{
   }
 
   protected Action[] createActions(){
-    return new Action[]{new NormalizeTextAction(), getOKAction(), getCancelAction(), getHelpAction()};
+    return new Action[]{createNormalizeTextAction(), getOKAction(), getCancelAction(), getHelpAction()};
   }
 
   private void createLogFileChooser() {
@@ -241,9 +241,13 @@ public class UnscrambleDialog extends DialogWrapper{
     myStacktraceEditorPanel.setText(trace);
   }
 
+  public Action createNormalizeTextAction() {
+    return new NormalizeTextAction();
+  }
+
   private final class NormalizeTextAction extends AbstractAction {
     public NormalizeTextAction(){
-      putValue(Action.NAME, IdeBundle.message("unscramble.normalize.button"));
+      putValue(NAME, IdeBundle.message("unscramble.normalize.button"));
       putValue(DEFAULT_ACTION, Boolean.FALSE);
     }
 
@@ -254,7 +258,7 @@ public class UnscrambleDialog extends DialogWrapper{
 
   }
 
-  static String normalizeText(@NonNls String text) {
+  public static String normalizeText(@NonNls String text) {
     StringBuilder builder = new StringBuilder(text.length());
 
     text = text.replaceAll("(\\S[ \\t\\x0B\\f\\r]+)(at\\s+)", "$1\n$2");
