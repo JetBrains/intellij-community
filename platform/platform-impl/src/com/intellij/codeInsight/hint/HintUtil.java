@@ -139,5 +139,10 @@ public class HintUtil {
         super.setText(" " + s + " ");
       }
     }
+
+    @Override
+    public String toString() {
+      return "Hint: '" + getText() + "'";
+    }
   }
 }

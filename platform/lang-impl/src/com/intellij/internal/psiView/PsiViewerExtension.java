@@ -17,8 +17,10 @@
 package com.intellij.internal.psiView;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -32,4 +34,7 @@ public interface PsiViewerExtension {
   String getName();
   Icon getIcon();
   PsiElement createElement(Project project, String text);
+
+  @NotNull
+  FileType getDefaultFileType();
 }

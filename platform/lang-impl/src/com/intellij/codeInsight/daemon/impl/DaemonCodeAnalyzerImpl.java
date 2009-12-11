@@ -519,11 +519,20 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     markup.putUserData(MARKERS_IN_EDITOR_DOCUMENT_KEY, lineMarkers);
   }
 
-  public synchronized void setLastIntentionHint(IntentionHintComponent hintComponent) {
+  public synchronized void setLastIntentionHint(Project project, PsiFile file, Editor editor, ShowIntentionsPass.IntentionsInfo intentions, boolean hasToRecreate) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    hideLastIntentionHint();
+    IntentionHintComponent hintComponent = IntentionHintComponent.showIntentionHint(project, file, editor, intentions, false);
+    if (hasToRecreate) {
+      hintComponent.recreate();
+    }
+    myLastIntentionHint = hintComponent;
+  }
+
+  public synchronized void hideLastIntentionHint() {
     if (myLastIntentionHint != null && myLastIntentionHint.isVisible()) {
       myLastIntentionHint.hide();
     }
-    myLastIntentionHint = hintComponent;
   }
 
   public synchronized IntentionHintComponent getLastIntentionHint() {

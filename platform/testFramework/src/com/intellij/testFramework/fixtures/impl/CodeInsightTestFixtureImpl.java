@@ -1098,8 +1098,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         public void run() {
           for (TextEditorHighlightingPass pass : passes) {
             pass.collectInformation(progress);
-          }
-          for (TextEditorHighlightingPass pass : passes) {
             pass.applyInformationToEditor();
           }
         }

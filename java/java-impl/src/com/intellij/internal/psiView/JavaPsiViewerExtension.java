@@ -15,26 +15,23 @@
  */
 package com.intellij.internal.psiView;
 
+import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.util.Icons;
-
-import javax.swing.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElementFactory;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * @author yole
  * @author Konstantin Bulenkov
  */
-public class PsiViewerExpressionExtension extends JavaPsiViewerExtension {
-  public String getName() {
-    return "Java Expression";
+public abstract class JavaPsiViewerExtension implements PsiViewerExtension{
+  @NotNull
+  public FileType getDefaultFileType() {
+    return JavaFileType.INSTANCE;
   }
 
-  public Icon getIcon() {
-    return Icons.CLASS_INITIALIZER;
-  }
-
-  public PsiElement createElement(Project project, String text) {
-    return getFactory(project).createExpressionFromText(text, null);
+  protected static PsiElementFactory getFactory(Project project) {
+    return JavaPsiFacade.getElementFactory(project);
   }
 }
