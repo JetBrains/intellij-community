@@ -552,8 +552,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
 
   private boolean processClassesByName(PsiScopeProcessor processor, ResolveState state, PsiElement place, GlobalSearchScope scope, String className) {
     final PsiClass[] classes = findClassesByName(className, scope);
-    if (!processClasses(processor, state, place, classes)) return true;
-    return false;
+    return !processClasses(processor, state, place, classes);
   }
 
   private boolean processClasses(PsiScopeProcessor processor, ResolveState state, PsiElement place, PsiClass[] classes) {
@@ -599,7 +598,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
 
   private class PackageAnnotationValueProvider implements CachedValueProvider<PsiModifierList> {
     @NonNls private static final String PACKAGE_INFO_FILE = "package-info.java";
-    private final Object[] OOCB_DEPENDENCY = new Object[] { PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT };
+    private final Object[] OOCB_DEPENDENCY = { PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT };
 
     public Result<PsiModifierList> compute() {
       List<PsiModifierList> list = new ArrayList<PsiModifierList>();
