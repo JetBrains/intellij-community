@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Bas Leijdekkers
+ * Copyright 2008-2009 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,7 +130,7 @@ public class VariableNotUsedInsideIfInspection extends BaseInspection {
             final PsiReferenceExpression referenceExpression =
                     (PsiReferenceExpression) expression;
             final PsiElement target = referenceExpression.resolve();
-            if (!(target instanceof PsiLocalVariable)) {
+            if (!(target instanceof PsiVariable)) {
                 return;
             }
             final PsiVariable variable = (PsiVariable) target;
@@ -151,17 +151,17 @@ public class VariableNotUsedInsideIfInspection extends BaseInspection {
                 }
                 final PsiStatement lastStatement =
                         statements[statements.length - 1];
-                if (lastStatement instanceof PsiReturnStatement ||
-                        lastStatement instanceof PsiThrowStatement) {
-                    return true;
-                }
+                return statementExits(lastStatement);
             } else {
-                if (context instanceof PsiReturnStatement ||
-                        context instanceof PsiThrowStatement) {
-                    return true;
-                }
+                return statementExits(context);
             }
-            return false;
+        }
+
+        private static boolean statementExits(PsiElement context) {
+            return context instanceof PsiReturnStatement ||
+                   context instanceof PsiThrowStatement ||
+                   context instanceof PsiBreakStatement ||
+                   context instanceof PsiContinueStatement;
         }
     }
 }
