@@ -124,13 +124,7 @@ public class GroovyCompletionData extends CompletionData {
 
   private void registerBuiltInTypesAsArgumentCompletion() {
     AndFilter filter = new AndFilter(new BuiltInTypeAsArgumentFilter(), new NotFilter(new ThrowsFilter()));
-    LeftNeighbour afterDotFilter = new LeftNeighbour(new TextFilter("."));
-    CompletionVariant variant = new CompletionVariant(new AndFilter(new NotFilter(afterDotFilter), filter));
-    variant.includeScopeClass(LeafPsiElement.class);
-    for (String completion : BUILT_IN_TYPES) {
-      variant.addCompletion(completion, TailType.SPACE);
-    }
-    registerVariant(variant);
+    registerStandardCompletion(filter, BUILT_IN_TYPES);
   }
 
   private void registerSimpleExprsCompletion() {
@@ -193,7 +187,7 @@ public class GroovyCompletionData extends CompletionData {
    * @param keywords - Keywords to be completed
    */
   private void registerStandardCompletion(ElementFilter filter, String... keywords) {
-    LeftNeighbour afterDotFilter = new LeftNeighbour(new TextFilter("."));
+    LeftNeighbour afterDotFilter = new LeftNeighbour(new TextFilter(".", ".&"));
     CompletionVariant variant = new CompletionVariant(new AndFilter(new NotFilter(afterDotFilter), filter));
     variant.setItemProperty(LookupItem.HIGHLIGHTED_ATTR, "");
     variant.includeScopeClass(LeafPsiElement.class);

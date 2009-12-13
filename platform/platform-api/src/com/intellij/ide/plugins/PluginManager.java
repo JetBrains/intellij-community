@@ -699,11 +699,11 @@ public class PluginManager {
             ourBuildNumber = BuildNumber.fromString(new String(FileUtil.loadFileText(buildTxtFile)).trim());
           }
           else {
-            ourBuildNumber = BuildNumber.fromString("92.SNAPSHOT");
+            ourBuildNumber = BuildNumber.fromString("94.SNAPSHOT");
           }
         }
         catch (IOException e) {
-          ourBuildNumber = BuildNumber.fromString("92.SNAPSHOT");
+          ourBuildNumber = BuildNumber.fromString("94.SNAPSHOT");
         }
       }
     }

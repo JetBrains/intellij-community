@@ -40,8 +40,9 @@ class DiffRangeMarker extends RangeMarkerImpl {
     if (myListener != null) InvalidRangeDispatcher.addClient(document);
   }
 
-  public void documentChanged(DocumentEvent e) {
-    super.documentChanged(e);
+  @Override
+  protected void changedUpdateImpl(DocumentEvent e) {
+    super.changedUpdateImpl(e);
     if (!isValid() && myListener != null) InvalidRangeDispatcher.notify(e.getDocument(), myListener);
   }
 

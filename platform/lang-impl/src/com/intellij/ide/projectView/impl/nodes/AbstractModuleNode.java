@@ -58,6 +58,9 @@ public abstract class AbstractModuleNode extends ProjectViewNode<Module> {
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {
+    Module module = getValue();
+    if (module == null) return false;
+
     final VirtualFile testee;
     if (file.getFileSystem() instanceof JarFileSystem) {
       testee = JarFileSystem.getInstance().getVirtualFileForJar(file);
@@ -66,8 +69,7 @@ public abstract class AbstractModuleNode extends ProjectViewNode<Module> {
     else {
       testee = file;
     }
-    
-    for (VirtualFile root : ModuleRootManager.getInstance(getValue()).getContentRoots()) {
+    for (VirtualFile root : ModuleRootManager.getInstance(module).getContentRoots()) {
       if (VfsUtil.isAncestor(root, testee, false)) return true;
     }
     return false;

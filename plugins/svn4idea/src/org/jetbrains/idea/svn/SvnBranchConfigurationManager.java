@@ -16,36 +16,29 @@
 
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.messages.MessageBus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.branchConfig.*;
 import org.jetbrains.idea.svn.integrate.SvnBranchItem;
 import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
-import org.tmatesoft.svn.core.wc.SVNLogClient;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author yole
@@ -59,31 +52,16 @@ import java.util.Map;
     )}
 )
 public class SvnBranchConfigurationManager implements PersistentStateComponent<SvnBranchConfigurationManager.ConfigurationBean> {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnBranchConfigurationManager");
   private final Project myProject;
 
   public SvnBranchConfigurationManager(final Project project) {
     myProject = project;
+    myBunch = new NewRootBunch(project);
   }
 
   public static SvnBranchConfigurationManager getInstance(Project project) {
     return ServiceManager.getService(project, SvnBranchConfigurationManager.class);
-  }
-
-  /**
-   * Gets the instance of the component if the project wasn't disposed. If the project was
-   * disposed, throws ProcessCanceledException. Should only be used for calling from background
-   * threads (for example, committed changes refresh thread).
-   *
-   * @param project the project for which the component instance should be retrieved.
-   * @return component instance
-   */
-  public static SvnBranchConfigurationManager getInstanceChecked(final Project project) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<SvnBranchConfigurationManager>() {
-      public SvnBranchConfigurationManager compute() {
-        if (project.isDisposed()) throw new ProcessCanceledException();
-        return getInstance(project);
-      }
-    });
   }
 
   public static class ConfigurationBean {
@@ -100,109 +78,20 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
   }
 
   private ConfigurationBean myConfigurationBean = new ConfigurationBean();
+  private final SvnBranchConfigManager myBunch;
 
-  @NonNls private static final String DEFAULT_TRUNK_NAME = "trunk";
-  @NonNls private static final String DEFAULT_BRANCHES_NAME = "branches";
-  @NonNls private static final String DEFAULT_TAGS_NAME = "tags";
-
-  public SvnBranchConfiguration get(@NotNull final VirtualFile vcsRoot) throws VcsException {
-    SvnBranchConfiguration configuration = myConfigurationBean.myConfigurationMap.get(vcsRoot.getPath());
-    if (configuration == null) {
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        final Ref<VcsException> exceptionRef = new Ref<VcsException>();
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-          public void run() {
-            try {
-              ProgressManager.getInstance().getProgressIndicator().setText(
-                SvnBundle.message("loading.data.for.root.text", vcsRoot.getPresentableUrl()));
-              final SvnBranchConfiguration loadedConfiguration = load(vcsRoot);
-              setConfiguration(vcsRoot, loadedConfiguration, false);
-            }
-            catch (VcsException e) {
-              exceptionRef.set(e);
-            }
-          }
-        }, SvnBundle.message("loading.default.branches.configuration.text"), false, myProject);
-        if (! exceptionRef.isNull()) {
-          // set empty configuration... to do not repeat forever when invoked in cycle
-          setConfiguration(vcsRoot, new SvnBranchConfiguration(), true);
-          throw exceptionRef.get();
-        }
-        configuration = myConfigurationBean.myConfigurationMap.get(vcsRoot.getPath());
-      } else {
-        configuration = load(vcsRoot);
-        setConfiguration(vcsRoot, configuration, false);
-      }
-    }
-    return configuration;
+  public SvnBranchConfigurationNew get(@NotNull final VirtualFile vcsRoot) throws VcsException {
+    return myBunch.getConfig(vcsRoot);
   }
 
-  private SvnBranchConfiguration load(VirtualFile vcsRoot) throws VcsException {
-    try {
-      SVNURL baseUrl = null;
-      final SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
-      File rootFile = new File(vcsRoot.getPath());
-      wcAccess.open(rootFile, false, 0);
-      try {
-        SVNEntry entry = wcAccess.getEntry(rootFile, false);
-        if (entry != null) {
-          baseUrl = entry.getSVNURL();
-        }
-        else {
-          throw new VcsException("Directory is not a working copy: " + vcsRoot.getPresentableUrl());
-        }
-      }
-      finally {
-        wcAccess.close();
-      }
-
-      final SvnBranchConfiguration result = new SvnBranchConfiguration();
-      result.setTrunkUrl(baseUrl.toString());
-      while(true) {
-        final String s = SVNPathUtil.tail(baseUrl.getPath());
-        if (s.equalsIgnoreCase(DEFAULT_TRUNK_NAME) || s.equalsIgnoreCase(DEFAULT_BRANCHES_NAME) || s.equalsIgnoreCase(DEFAULT_TAGS_NAME)) {
-          final SVNURL rootPath = baseUrl.removePathTail();
-          SVNLogClient client = SvnVcs.getInstance(myProject).createLogClient();
-          client.doList(rootPath, SVNRevision.UNDEFINED, SVNRevision.HEAD, false, new ISVNDirEntryHandler() {
-            public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
-              if (("".equals(dirEntry.getRelativePath())) || (! SVNNodeKind.DIR.equals(dirEntry.getKind()))) {
-                // do not use itself or files
-                return;
-              }
-
-              if (dirEntry.getName().toLowerCase().endsWith(DEFAULT_TRUNK_NAME)) {
-                result.setTrunkUrl(rootPath.appendPath(dirEntry.getName(), false).toString());
-              }
-              else {
-                result.getBranchUrls().add(rootPath.appendPath(dirEntry.getName(), false).toString());
-              }
-            }
-          });
-
-          break;
-        }
-        if (SVNPathUtil.removeTail(baseUrl.getPath()).length() == 0) {
-          break;
-        }
-        baseUrl = baseUrl.removePathTail();
-      }
-      return result;
-    }
-    catch (SVNException e) {
-      throw new VcsException(e);
-    }
+  public SvnBranchConfigManager getSvnBranchConfigManager() {
+    return myBunch;
   }
 
-  public void setConfiguration(VirtualFile vcsRoot, SvnBranchConfiguration configuration, final boolean underProgress) {
-    final String key = vcsRoot.getPath();
-    final SvnBranchConfiguration oldConfiguration = myConfigurationBean.myConfigurationMap.get(key);
-    if ((oldConfiguration == null) || (oldConfiguration.getBranchMap().isEmpty()) || (oldConfiguration.urlsMissing(configuration))) {
-      configuration.loadBranches(myProject, underProgress);
-    } else {
-      configuration.setBranchMap(oldConfiguration.getBranchMap());
-    }
+  public void setConfiguration(final VirtualFile vcsRoot, final SvnBranchConfigurationNew configuration) {
+    myBunch.updateForRoot(vcsRoot, new InfoStorage<SvnBranchConfigurationNew>(configuration, InfoReliability.setByUser),
+                          new BranchesPreloader(myProject, myBunch, vcsRoot));
 
-    myConfigurationBean.myConfigurationMap.put(key, configuration);
     SvnBranchMapperManager.getInstance().notifyBranchesChanged(myProject, vcsRoot, configuration);
 
     final MessageBus messageBus = myProject.getMessageBus();
@@ -213,29 +102,88 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
     final ConfigurationBean result = new ConfigurationBean();
     result.myVersion = myConfigurationBean.myVersion;
     final UrlSerializationHelper helper = new UrlSerializationHelper(SvnVcs.getInstance(myProject));
-    for (Map.Entry<String, SvnBranchConfiguration> entry : myConfigurationBean.myConfigurationMap.entrySet()) {
-      final SvnBranchConfiguration configuration = entry.getValue();
-      if ((! myConfigurationBean.mySupportsUserInfoFilter) || configuration.isUserinfoInUrl()) {
-        result.myConfigurationMap.put(entry.getKey(), helper.prepareForSerialization(configuration));
-      } else {
-        result.myConfigurationMap.put(entry.getKey(), entry.getValue());
+
+    for (VirtualFile root : myBunch.getMapCopy().keySet()) {
+      final String key = root.getPath();
+      final SvnBranchConfigurationNew configOrig = myBunch.getConfig(root);
+      final SvnBranchConfiguration configuration = new SvnBranchConfiguration();
+      configuration.setTrunkUrl(configOrig.getTrunkUrl());
+      configuration.setUserinfoInUrl(configOrig.isUserinfoInUrl());
+      configuration.setBranchUrls(configOrig.getBranchUrls());
+      final HashMap<String, List<SvnBranchItem>> map = new HashMap<String, List<SvnBranchItem>>();
+      final Map<String, InfoStorage<List<SvnBranchItem>>> origMap = configOrig.getBranchMap();
+      for (String origKey : origMap.keySet()) {
+        map.put(origKey, origMap.get(origKey).getValue());
       }
+      configuration.setBranchMap(map);
+      result.myConfigurationMap.put(key, helper.prepareForSerialization(configuration));
     }
     result.mySupportsUserInfoFilter = true;
     return result;
+  }
+
+  private static class BranchesPreloader implements PairConsumer<SvnBranchConfigurationNew, SvnBranchConfigurationNew> {
+    private final Project myProject;
+    private final VirtualFile myRoot;
+    private final SvnBranchConfigManager myBunch;
+    private boolean myAll;
+
+    public BranchesPreloader(Project project, @NotNull final SvnBranchConfigManager bunch, VirtualFile root) {
+      myBunch = bunch;
+      myProject = project;
+      myRoot = root;
+    }
+
+    public void consume(final SvnBranchConfigurationNew prev, final SvnBranchConfigurationNew next) {
+      final Set<String> oldUrls = (prev == null) ? Collections.<String>emptySet() : new HashSet<String>(prev.getBranchUrls());
+      final Application application = ApplicationManager.getApplication();
+      for (String newBranchUrl : next.getBranchUrls()) {
+        if (myAll || (! oldUrls.contains(newBranchUrl))) {
+          application.executeOnPooledThread(new NewRootBunch.BranchesLoadRunnable(myProject, myBunch, newBranchUrl,
+                                                                                  InfoReliability.defaultValues, myRoot, null));
+        }
+      }
+    }
+
+    public void setAll(boolean all) {
+      myAll = all;
+    }
   }
 
   public void loadState(final ConfigurationBean object) {
     final UrlSerializationHelper helper = new UrlSerializationHelper(SvnVcs.getInstance(myProject));
     final Map<String, SvnBranchConfiguration> map = object.myConfigurationMap;
     final Map<String, SvnBranchConfiguration> newMap = new HashMap<String, SvnBranchConfiguration>(map.size(), 1);
+    final LocalFileSystem lfs = LocalFileSystem.getInstance();
+
     for (Map.Entry<String, SvnBranchConfiguration> entry : map.entrySet()) {
       final SvnBranchConfiguration configuration = entry.getValue();
-      if ((! myConfigurationBean.mySupportsUserInfoFilter) || configuration.isUserinfoInUrl()) {
-        newMap.put(entry.getKey(), helper.afterDeserialization(entry.getKey(), configuration));
-      } else {
-        newMap.put(entry.getKey(), entry.getValue());
+      final VirtualFile root = lfs.refreshAndFindFileByIoFile(new File(entry.getKey()));
+      if (root == null) {
+        LOG.info("root not found: " + entry.getKey());
+        continue;
       }
+
+      final SvnBranchConfiguration configToConvert;
+      if ((! myConfigurationBean.mySupportsUserInfoFilter) || configuration.isUserinfoInUrl()) {
+        configToConvert = helper.afterDeserialization(entry.getKey(), configuration);
+      } else {
+        configToConvert = configuration;
+      }
+      final SvnBranchConfigurationNew newConfig = new SvnBranchConfigurationNew();
+      newConfig.setTrunkUrl(configToConvert.getTrunkUrl());
+      newConfig.setUserinfoInUrl(configToConvert.isUserinfoInUrl());
+      final Map<String, List<SvnBranchItem>> oldMap = configToConvert.getBranchMap();
+      for (String branchUrl : configToConvert.getBranchUrls()) {
+        List<SvnBranchItem> items = oldMap.get(branchUrl);
+        items = ((items == null) || (items.isEmpty())) ? new ArrayList<SvnBranchItem>() : items;
+        newConfig.addBranches(branchUrl, new InfoStorage<List<SvnBranchItem>>(items,
+            (items.isEmpty()) ? InfoReliability.defaultValues : InfoReliability.setByUser));
+      }
+
+      final BranchesPreloader branchesPreloader = new BranchesPreloader(myProject, myBunch, root);
+      branchesPreloader.setAll(true);
+      myBunch.updateForRoot(root, new InfoStorage<SvnBranchConfigurationNew>(newConfig, InfoReliability.setByUser), branchesPreloader);
     }
     object.myConfigurationMap.clear();
     object.myConfigurationMap.putAll(newMap);

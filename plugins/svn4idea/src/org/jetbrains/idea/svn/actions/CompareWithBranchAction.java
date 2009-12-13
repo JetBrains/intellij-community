@@ -39,6 +39,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.status.SvnDiffEditor;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -72,7 +73,7 @@ public class CompareWithBranchAction extends AnAction implements DumbAware {
     final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
 
     SelectBranchPopup.show(project, virtualFile, new SelectBranchPopup.BranchSelectedCallback() {
-      public void branchSelected(final Project project, final SvnBranchConfiguration configuration, final String url, final long revision) {
+      public void branchSelected(final Project project, final SvnBranchConfigurationNew configuration, final String url, final long revision) {
         new CompareWithBranchOperation(project, virtualFile, configuration).compareWithBranch(url, revision);
       }
     }, SvnBundle.message("compare.with.branch.popup.title"));
@@ -100,9 +101,9 @@ public class CompareWithBranchAction extends AnAction implements DumbAware {
   private class CompareWithBranchOperation {
     private final Project myProject;
     private final VirtualFile myVirtualFile;
-    private final SvnBranchConfiguration myConfiguration;
+    private final SvnBranchConfigurationNew myConfiguration;
 
-    public CompareWithBranchOperation(final Project project, final VirtualFile virtualFile, final SvnBranchConfiguration config) {
+    public CompareWithBranchOperation(final Project project, final VirtualFile virtualFile, final SvnBranchConfigurationNew config) {
       myProject = project;
       myVirtualFile = virtualFile;
       myConfiguration = config;

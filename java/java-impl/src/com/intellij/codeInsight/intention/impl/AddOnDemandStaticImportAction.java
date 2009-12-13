@@ -25,8 +25,11 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import gnu.trove.TIntArrayList;
+import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,20 +46,29 @@ public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction
 
   public boolean isAvailable(@NotNull Project project, Editor editor, @Nullable PsiElement element) {
     if (element == null || !PsiUtil.isLanguageLevel5OrHigher(element)) return false;
-    if (element instanceof PsiIdentifier && element.getParent() instanceof PsiReferenceExpression) {
-      PsiReferenceExpression refExpr = (PsiReferenceExpression)element.getParent();
-      if (refExpr.getParent() instanceof PsiReferenceExpression &&
-          isParameterizedReference((PsiReferenceExpression)refExpr.getParent())) return false;
-
-      PsiElement resolved = refExpr.resolve();
-      if (resolved instanceof PsiClass) {
-        String text = CodeInsightBundle.message("intention.add.on.demand.static.import.text", ((PsiClass)resolved).getQualifiedName());
-        setText(text);
-        return true;
-      }
+    if (!(element instanceof PsiIdentifier) || !(element.getParent() instanceof PsiReferenceExpression)) {
+      return false;
     }
+    PsiReferenceExpression refExpr = (PsiReferenceExpression)element.getParent();
+    if (refExpr.getParent() instanceof PsiReferenceExpression &&
+        isParameterizedReference((PsiReferenceExpression)refExpr.getParent())) return false;
 
-    return false;
+    PsiElement resolved = refExpr.resolve();
+    if (!(resolved instanceof PsiClass)) {
+      return false;
+    }
+    PsiClass psiClass = (PsiClass)resolved;
+    PsiFile file = refExpr.getContainingFile();
+    if (!(file instanceof PsiJavaFile)) return false;
+    PsiImportList importList = ((PsiJavaFile)file).getImportList();
+    if (importList == null) return false;
+    for (PsiImportStaticStatement statement : importList.getImportStaticStatements()) {
+      PsiClass staticResolve = statement.resolveTargetClass();
+      if (psiClass == staticResolve) return false; //already imported
+    }
+    String text = CodeInsightBundle.message("intention.add.on.demand.static.import.text", psiClass.getQualifiedName());
+    setText(text);
+    return true;
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
@@ -69,23 +81,26 @@ public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction
     ((PsiJavaFile)file).getImportList().add(importStaticStatement);
 
     PsiFile[] roots = file.getPsiRoots();
-    for (PsiFile root : roots) {
-      root.accept(new JavaRecursiveElementWalkingVisitor() {
+    for (final PsiFile root : roots) {
+      PsiElement copy = root.copy();
+      final PsiManager manager = root.getManager();
+
+      final TIntArrayList expressionToDequalifyOffsets = new TIntArrayList();
+      copy.accept(new JavaRecursiveElementWalkingVisitor() {
+        int delta = 0;
         @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
           if (isParameterizedReference(expression)) return;
           PsiExpression qualifierExpression = expression.getQualifierExpression();
           if (qualifierExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifierExpression).isReferenceTo(aClass)) {
             try {
-              PsiReferenceExpression copy = (PsiReferenceExpression)expression.copy();
-              PsiElement resolved = copy.resolve();
-              copy.getQualifierExpression().delete();
-              PsiManager manager = expression.getManager();
-              if (manager.areElementsEquivalent(copy.resolve(), resolved)) {
-                qualifierExpression.delete();
-                HighlightManager.getInstance(project).addRangeHighlight(editor, expression.getTextRange().getStartOffset(),
-                                                                        expression.getTextRange().getEndOffset(),
-                                                                        EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES),
-                                                                        false, null);
+              PsiElement resolved = expression.resolve();
+              if (resolved == null) return;
+              int end = expression.getTextRange().getEndOffset();
+              qualifierExpression.delete();
+              delta += end - expression.getTextRange().getEndOffset();
+              PsiElement after = expression.resolve();
+              if (manager.areElementsEquivalent(after, resolved)) {
+                expressionToDequalifyOffsets.add(expression.getTextRange().getStartOffset() + delta);
               }
             }
             catch (IncorrectOperationException e) {
@@ -93,6 +108,22 @@ public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction
             }
           }
           super.visitElement(expression);
+        }
+      });
+
+      expressionToDequalifyOffsets.forEachDescending(new TIntProcedure() {
+        public boolean execute(int offset) {
+          PsiReferenceExpression expression = PsiTreeUtil.findElementOfClassAtOffset(root, offset, PsiReferenceExpression.class, false);
+          PsiExpression qualifierExpression = expression.getQualifierExpression();
+          if (qualifierExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifierExpression).isReferenceTo(aClass)) {
+            qualifierExpression.delete();
+            HighlightManager.getInstance(project)
+              .addRangeHighlight(editor, expression.getTextRange().getStartOffset(), expression.getTextRange().getEndOffset(),
+                                 EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES),
+                                 false, null);
+          }
+
+          return true;
         }
       });
     }

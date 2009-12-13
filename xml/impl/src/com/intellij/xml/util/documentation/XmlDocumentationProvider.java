@@ -152,7 +152,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
       }
 
       String doc = generateDoc(processor.result, name, typeName, processor.version);
-      if (doc != null) {
+      if (doc != null && originalElement != null) {
         doc += generateHtmlAdditionalDocTemplate(originalElement);
       }
       return doc;

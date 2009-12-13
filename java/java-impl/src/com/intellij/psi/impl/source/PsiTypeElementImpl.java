@@ -163,15 +163,16 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     }
   };
   public PsiType getTypeNoResolve(@NotNull PsiElement context) {
-    try {
+    PsiFile file = getContainingFile();
+    String text;
+    if (PsiUtil.getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_1_7)) {
       String combinedAnnos = StringUtil.join(getAnnotations(), ANNOTATION_TEXT, " ");
-      String text = combinedAnnos.length() == 0 ? getText().trim() : combinedAnnos + " " + getText().trim();
-      return JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeFromText(text, context);
+      text = combinedAnnos.length() == 0 ? getText().trim() : combinedAnnos + " " + getText().trim();
     }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
+    else {
+      text = getText().trim();
     }
-    return getType();
+    return JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeFromText(text, context);
   }
 
   @NotNull

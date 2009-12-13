@@ -65,6 +65,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
@@ -1090,15 +1091,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
     fileStatusMap.allowDirt(allowDirt);
     try {
-      TextEditorHighlightingPassRegistrarEx registrar = TextEditorHighlightingPassRegistrarEx.getInstanceEx(project);
-      final List<TextEditorHighlightingPass> passes = registrar.instantiatePasses(file, editor, toIgnore);
+      TextEditorBackgroundHighlighter highlighter = (TextEditorBackgroundHighlighter)TextEditorProvider.getInstance().getTextEditor(editor).getBackgroundHighlighter();
+      final List<TextEditorHighlightingPass> passes = highlighter.getPasses(toIgnore);
       final ProgressIndicator progress = new DaemonProgressIndicator();
       ProgressManager.getInstance().runProcess(new Runnable() {
         public void run() {
           for (TextEditorHighlightingPass pass : passes) {
             pass.collectInformation(progress);
-          }
-          for (TextEditorHighlightingPass pass : passes) {
             pass.applyInformationToEditor();
           }
         }

@@ -107,6 +107,50 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     return file instanceof PsiJavaFile && ((PsiJavaFile)file).getPackageName().equals(packageName);
   }
 
+  private static enum Domination {
+    DOMINATES, DOMINATED_BY, EQUAL
+  }
+
+  private Domination dominates(PsiClass aClass, boolean accessible, String fqName, ClassCandidateInfo info) {
+    final PsiClass otherClass = info.getElement();
+    assert otherClass != null;
+    String otherQName = otherClass.getQualifiedName();
+    if (fqName.equals(otherQName)) {
+      return Domination.DOMINATED_BY;
+    }
+    final PsiClass containingclass1 = aClass.getContainingClass();
+    final PsiClass containingclass2 = otherClass.getContainingClass();
+    if (containingclass1 != null && containingclass2 != null && containingclass2.isInheritor(containingclass1, true)) {
+      //shadowing
+      return Domination.DOMINATED_BY;
+    }
+
+    boolean infoAccessible = info.isAccessible();
+    if (infoAccessible && !accessible) {
+      return Domination.DOMINATED_BY;
+    }
+    if (!infoAccessible && accessible) {
+      return Domination.DOMINATES;
+    }
+
+    // single import wins over on-demand
+    boolean myOnDemand = isOnDemand(myCurrentFileContext, aClass);
+    boolean otherOnDemand = isOnDemand(info.getCurrentFileResolveScope(), otherClass);
+    if (myOnDemand && !otherOnDemand) return Domination.DOMINATED_BY;
+    if (!myOnDemand && otherOnDemand) {
+      return Domination.DOMINATES;
+    }
+
+    // everything wins over class from default package
+    boolean isDefault = StringUtil.getPackageName(fqName).length() == 0;
+    boolean otherDefault = otherQName != null && StringUtil.getPackageName(otherQName).length() == 0;
+    if (isDefault && !otherDefault) return Domination.DOMINATED_BY;
+    if (!isDefault && otherDefault) {
+      return Domination.DOMINATES;
+    }
+    return Domination.EQUAL;
+  }
+
   public boolean execute(PsiElement element, ResolveState state) {
     if (!(element instanceof PsiClass)) return true;
     final PsiClass aClass = (PsiClass)element;
@@ -123,32 +167,12 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
       if (fqName != null) {
         for (int i = myCandidates.size()-1; i>=0; i--) {
           ClassCandidateInfo info = myCandidates.get(i);
-          final PsiClass otherClass = info.getElement();
-          assert otherClass != null;
-          if (fqName.equals(otherClass.getQualifiedName())) {
-            return true;
-          }
-          final PsiClass containingclass1 = aClass.getContainingClass();
-          final PsiClass containingclass2 = otherClass.getContainingClass();
-          if (containingclass1 != null && containingclass2 != null && containingclass2.isInheritor(containingclass1, true)) {
-            //shadowing
-            return true;
-          }
 
-          boolean infoAccessible = info.isAccessible();
-          if (infoAccessible && !accessible) {
+          Domination domination = dominates(aClass, accessible, fqName, info);
+          if (domination == Domination.DOMINATED_BY) {
             return true;
           }
-          if (!infoAccessible && accessible) {
-            myCandidates.remove(i);
-            continue;
-          }
-
-          // single import wins over on-demand
-          boolean myOnDemand = isOnDemand(myCurrentFileContext, aClass);
-          boolean otherOnDemand = isOnDemand(info.getCurrentFileResolveScope(), otherClass);
-          if (myOnDemand && !otherOnDemand) return true;
-          if (!myOnDemand && otherOnDemand) {
+          else if (domination == Domination.DOMINATES) {
             myCandidates.remove(i);
           }
         }

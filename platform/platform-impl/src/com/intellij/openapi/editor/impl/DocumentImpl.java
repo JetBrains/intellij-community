@@ -124,7 +124,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   public DocumentImpl(CharSequence chars) {
     this();
     assertValidSeparators(chars);
-    setChars(chars);
+    myText.setText(chars);
+    DocumentEvent event = new DocumentEventImpl(this, 0, null, null, -1, true);
+    myLineSet.documentCreated(event);
   }
 
   public char[] getRawChars() {
@@ -134,12 +136,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   @NotNull
   public char[] getChars() {
     return CharArrayUtil.fromSequence(getCharsSequence());
-  }
-
-  private void setChars(CharSequence chars) {
-    myText.replaceText(chars);
-    DocumentEvent event = new DocumentEventImpl(this, 0, null, null, -1, true);
-    myLineSet.documentCreated(event);
   }
 
   @NotNull
@@ -720,11 +716,11 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
         replaceString(0, getTextLength(), text, LocalTimeCounter.currentTime(), true);
       }
     };
-    if ((CommandProcessor.getInstance()).isUndoTransparentActionInProgress()) {
+    if (CommandProcessor.getInstance().isUndoTransparentActionInProgress()) {
       runnable.run();
     }
     else {
-      CommandProcessor.getInstance().executeCommand(runnable, "file text set", DocCommandGroupId.noneGroupId(this));
+      CommandProcessor.getInstance().executeCommand(null, runnable, "", DocCommandGroupId.noneGroupId(this));
     }
 
     clearLineModificationFlags();

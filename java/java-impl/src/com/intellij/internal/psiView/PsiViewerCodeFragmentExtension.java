@@ -16,7 +16,6 @@
 package com.intellij.internal.psiView;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Icons;
 
@@ -24,8 +23,9 @@ import javax.swing.*;
 
 /**
  * @author yole
+ * @author Konstantin Bulenkov
  */
-public class PsiViewerCodeFragmentExtension implements PsiViewerExtension {
+public class PsiViewerCodeFragmentExtension extends JavaPsiViewerExtension {
   public String getName() {
     return "Java Code Block";
   }
@@ -35,6 +35,6 @@ public class PsiViewerCodeFragmentExtension implements PsiViewerExtension {
   }
 
   public PsiElement createElement(Project project, String text) {
-    return JavaPsiFacade.getElementFactory(project).createCodeBlockFromText(text, null);
+    return getFactory(project).createCodeBlockFromText(text, null);
   }
 }

@@ -187,14 +187,14 @@ public class MavenProjectsManagerWatcher {
     return EditorFactory.getInstance().getEventMulticaster();
   }
 
-  public synchronized void addManagedFilesWithProfiles(List<VirtualFile> files, List<String> profiles) {
-    myProjectsTree.addManagedFilesWithProfiles(files, profiles);
+  public synchronized void addManagedFilesWithProfiles(List<VirtualFile> files, List<String> explicitProfiles) {
+    myProjectsTree.addManagedFilesWithProfiles(files, explicitProfiles);
     scheduleUpdateAll(true);
   }
 
   @TestOnly
-  public synchronized void resetManagedFilesAndProfilesInTests(List<VirtualFile> files, List<String> profiles) {
-    myProjectsTree.resetManagedFilesAndProfiles(files, profiles);
+  public synchronized void resetManagedFilesAndProfilesInTests(List<VirtualFile> files, List<String> explicitProfiles) {
+    myProjectsTree.resetManagedFilesAndProfiles(files, explicitProfiles);
     scheduleUpdateAll(true);
   }
 
@@ -203,8 +203,8 @@ public class MavenProjectsManagerWatcher {
     scheduleUpdateAll(true);
   }
 
-  public synchronized void setActiveProfiles(List<String> profiles) {
-    myProjectsTree.setActiveProfiles(profiles);
+  public synchronized void setExplicitProfiles(Collection<String> profiles) {
+    myProjectsTree.setExplicitProfiles(profiles);
     scheduleUpdateAll(true);
   }
 
@@ -230,6 +230,11 @@ public class MavenProjectsManagerWatcher {
   private void onSettingsChange() {
     myEmbeddersManager.reset();
     scheduleUpdateAll(true, false);
+  }
+
+  private void onSettingsXmlChange() {
+    myGeneralSettings.localRepositoryChanged();
+    // onSettingsChange() will be called indirectly by pathsChanged listener on GeneralSettings object
   }
 
   private class MyRootChangesListener implements ModuleRootListener {
@@ -332,7 +337,7 @@ public class MavenProjectsManagerWatcher {
       // can not be started since the window has already been closed.
       if (areFileSetsInitialised()) {
         if (settingsHaveChanged) {
-          onSettingsChange();
+          onSettingsXmlChange();
         }
         else {
           filesToUpdate.removeAll(filesToRemove);

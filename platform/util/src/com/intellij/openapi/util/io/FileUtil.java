@@ -572,6 +572,14 @@ public class FileUtil {
   }
 
   public static void copyDir(File fromDir, File toDir, boolean copySystemFiles) throws IOException {
+    copyDir(fromDir, toDir, copySystemFiles ? null : new FileFilter() {
+      public boolean accept(File file) {
+        return !file.getName().startsWith(".");
+      }
+    });
+  }
+
+  public static void copyDir(File fromDir, File toDir, final @Nullable FileFilter filter) throws IOException {
     toDir.mkdirs();
     if (isAncestor(fromDir, toDir, true)) {
       LOG.error(fromDir.getAbsolutePath() + " is ancestor of " + toDir + ". Can't copy to itself.");
@@ -581,11 +589,11 @@ public class FileUtil {
     if(files == null) throw new IOException(CommonBundle.message("exception.directory.is.invalid", fromDir.getPath()));
     if(!fromDir.canRead()) throw new IOException(CommonBundle.message("exception.directory.is.not.readable", fromDir.getPath()));
     for (File file : files) {
-      if (!copySystemFiles && file.getName().startsWith(".")) {
+      if (filter != null && !filter.accept(file)) {
         continue;
       }
       if (file.isDirectory()) {
-        copyDir(file, new File(toDir, file.getName()), copySystemFiles);
+        copyDir(file, new File(toDir, file.getName()), filter);
       }
       else {
         copy(file, new File(toDir, file.getName()));

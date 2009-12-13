@@ -56,7 +56,7 @@ public class XsltCodeInsightUtil {
     }
 
     @Nullable
-    public static XmlTag getTemplateTag(PsiElement location, boolean isExpression, boolean requireName) {
+    public static XmlTag getTemplateTag(@NotNull PsiElement location, boolean isExpression, boolean requireName) {
         PsiElement p = isExpression ? location.getContainingFile().getContext() : location;
         while ((p = PsiTreeUtil.getParentOfType(p, XmlTag.class)) != null) {
             final XmlTag _p = ((XmlTag)p);
@@ -66,18 +66,18 @@ public class XsltCodeInsightUtil {
     }
 
     @Nullable
-    public static XmlTag getTemplateTag(PsiElement location, boolean isExpression) {
+    public static XmlTag getTemplateTag(@NotNull PsiElement location, boolean isExpression) {
         return getTemplateTag(location, isExpression, false);
     }
 
     @Nullable
-    public static XsltTemplate getTemplate(PsiElement location, boolean isExpression) {
+    public static XsltTemplate getTemplate(@NotNull PsiElement location, boolean isExpression) {
         final XmlTag templateTag = getTemplateTag(location, isExpression);
         return templateTag != null ? XsltElementFactory.getInstance().wrapElement(templateTag, XsltTemplate.class) : null;
     }
 
     @Nullable
-    public static PsiElement findFirstRealTagChild(XmlTag xmlTag) {
+    public static PsiElement findFirstRealTagChild(@NotNull XmlTag xmlTag) {
         final PsiElement[] child = new PsiElement[1];
         xmlTag.processElements(new PsiElementProcessor() {
             public boolean execute(PsiElement element) {

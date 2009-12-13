@@ -50,14 +50,14 @@ import java.util.*;
 public class RenameProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameProcessor");
 
-  private final LinkedHashMap<PsiElement, String> myAllRenames = new LinkedHashMap<PsiElement, String>();
+  protected final LinkedHashMap<PsiElement, String> myAllRenames = new LinkedHashMap<PsiElement, String>();
 
   private PsiElement myPrimaryElement;
   private String myNewName = null;
 
   private boolean mySearchInComments;
   private boolean mySearchTextOccurrences;
-  private boolean myForceShowPreview;
+  protected boolean myForceShowPreview;
 
   private String myCommandName;
 

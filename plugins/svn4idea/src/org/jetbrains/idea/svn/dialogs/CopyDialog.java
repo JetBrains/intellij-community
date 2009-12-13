@@ -36,6 +36,7 @@ import org.jetbrains.idea.svn.SvnBranchConfiguration;
 import org.jetbrains.idea.svn.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.update.SvnRevisionPanel;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
@@ -84,7 +85,7 @@ public class CopyDialog extends DialogWrapper {
   private JLabel myErrorLabel;
 
   @NonNls private static final String HELP_ID = "vcs.subversion.branch";
-  private SvnBranchConfiguration myBranchConfiguration;
+  private SvnBranchConfigurationNew myBranchConfiguration;
   private final VirtualFile mySrcVirtualFile;
 
   public CopyDialog(final Project project, boolean canBeParent, File file) {

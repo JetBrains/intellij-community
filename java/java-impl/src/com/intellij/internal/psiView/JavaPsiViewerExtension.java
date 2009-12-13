@@ -13,42 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vfs.impl;
+package com.intellij.internal.psiView;
 
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElementFactory;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author cdr
+ * @author Konstantin Bulenkov
  */
-class NullVirtualFilePointer implements VirtualFilePointer {
-  private final String myUrl;
-
-  NullVirtualFilePointer(@NotNull String url) {
-    myUrl = url;
-  }
-
+public abstract class JavaPsiViewerExtension implements PsiViewerExtension{
   @NotNull
-  public String getFileName() {
-    return getUrl();
+  public FileType getDefaultFileType() {
+    return JavaFileType.INSTANCE;
   }
 
-  public VirtualFile getFile() {
-    return null;
-  }
-
-  @NotNull
-  public String getUrl() {
-    return myUrl;
-  }
-
-  @NotNull
-  public String getPresentableUrl() {
-    return getUrl();
-  }
-
-  public boolean isValid() {
-    return true;
+  protected static PsiElementFactory getFactory(Project project) {
+    return JavaPsiFacade.getElementFactory(project);
   }
 }

@@ -46,7 +46,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
   protected abstract DocumentEvent beforeChangedUpdate(int offset, CharSequence oldString, CharSequence newString, boolean wholeTextReplaced);
   protected abstract void afterChangedUpdate(DocumentEvent event, long newModificationStamp);
 
-  public void replaceText(CharSequence chars) {
+  public void setText(CharSequence chars) {
     myOriginalSequence = chars;
     myArray = null;
     myCount = chars.length();

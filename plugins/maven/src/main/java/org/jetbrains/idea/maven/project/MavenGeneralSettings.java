@@ -119,10 +119,14 @@ public class MavenGeneralSettings implements Cloneable {
       if (!Comparing.equal(this.localRepository, localRepository)) {
         this.localRepository = localRepository;
 
-        myEffectiveLocalRepositoryCache = null;
-        firePathChanged();
+        localRepositoryChanged();
       }
     }
+  }
+
+  public void localRepositoryChanged() {
+    myEffectiveLocalRepositoryCache = null;
+    firePathChanged();
   }
 
   @NotNull

@@ -29,6 +29,7 @@ import org.jetbrains.idea.svn.SvnBranchMapperManager;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.actions.SelectBranchPopup;
+import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
 import org.jetbrains.idea.svn.integrate.IntegratedSelectedOptionsDialog;
 import org.jetbrains.idea.svn.integrate.WorkingCopyInfo;
@@ -108,7 +109,7 @@ public class SvnMergeInfoRootPanelManual {
         final VirtualFile vf = SvnUtil.getVirtualFile(myInfo.getPath());
         if (vf != null) {
           SelectBranchPopup.show(myProject, vf, new SelectBranchPopup.BranchSelectedCallback() {
-            public void branchSelected(final Project project, final SvnBranchConfiguration configuration, final String url, final long revision) {
+            public void branchSelected(final Project project, final SvnBranchConfigurationNew configuration, final String url, final long revision) {
               refreshSelectedBranch(url);
               calculateBranchPathByBranch(mySelectedBranch.getUrl(), null);
               myListener.run();

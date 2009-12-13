@@ -78,11 +78,12 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
       myIsReleased = true;
     }
 
-    public void documentChanged(DocumentEvent e) {
+    @Override
+    protected void changedUpdateImpl(DocumentEvent e) {
       if (myIsReleased) return;
       int startBefore = getStartOffset();
       int endBefore = getEndOffset();
-      super.documentChanged(e);
+      super.changedUpdateImpl(e);
 
       if (!isValid()) {
         myLastSelectionStart = myEditor.getCaretModel().getOffset();

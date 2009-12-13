@@ -101,23 +101,30 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     return isExpandToRight;
   }
 
-  public void documentChanged(DocumentEvent e) {
+  public final void documentChanged(DocumentEvent e) {
     int oldStart = myStart;
     int oldEnd = myEnd;
-    if (isValid && (myStart > myEnd || myStart < 0 || myEnd > myDocument.getTextLength() - e.getNewLength() + e.getOldLength())) {
+    int docLength = myDocument.getTextLength();
+    if (!isValid) {
+      LOG.error("Invalid range marker "+ (isExpandToLeft ? "[" : "(") + oldStart + ", " + oldEnd + (isExpandToRight ? "]" : ")") +
+                ". Event = " + e + ". Doc length=" + docLength + "; "+getClass());
+      return;
+    }
+    if (myStart > myEnd || myStart < 0 || myEnd > docLength - e.getNewLength() + e.getOldLength()) {
       LOG.error("RangeMarker" + (isExpandToLeft ? "[" : "(") + oldStart + ", " + oldEnd + (isExpandToRight ? "]" : ")") +
-                " is invalid before update. Event = " + e + ". Result[" + myStart + ", " + myEnd + "], doc length=" + myDocument.getTextLength());
+                " is invalid before update. Event = " + e + ". Doc length=" + docLength + "; "+getClass());
       isValid = false;
+      return;
     }
     changedUpdateImpl(e);
-    if (isValid && (myStart > myEnd || myStart < 0 || myEnd > myDocument.getTextLength())) {
+    if (isValid && (myStart > myEnd || myStart < 0 || myEnd > docLength)) {
       LOG.error("RangeMarker" + (isExpandToLeft ? "[" : "(") + oldStart + ", " + oldEnd + (isExpandToRight ? "]" : ")") +
-                " update failed. Event = " + e + ". Result[" + myStart + ", " + myEnd + "], doc length=" + myDocument.getTextLength());
+                " update failed. Event = " + e + ". Result[" + myStart + ", " + myEnd + "], doc length=" + docLength + "; "+getClass());
       isValid = false;
     }
   }
 
-  private void changedUpdateImpl(DocumentEvent e) {
+  protected void changedUpdateImpl(DocumentEvent e) {
     if (!isValid) return;
 
     // Process if one point.
