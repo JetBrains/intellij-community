@@ -87,7 +87,7 @@ public class QuickEditEditor {
     }
 
     public Object getData(String s) {
-      if (LangDataKeys.EDITOR.getName().equals(s)) {
+      if (LangDataKeys.EDITOR.is(s)) {
         return myEditor;
       }
       return null;

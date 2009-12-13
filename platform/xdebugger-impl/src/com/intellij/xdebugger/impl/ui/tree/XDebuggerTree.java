@@ -127,7 +127,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider {
 
   @Nullable
   public Object getData(@NonNls final String dataId) {
-    if (XDEBUGGER_TREE_KEY.getName().equals(dataId)) {
+    if (XDEBUGGER_TREE_KEY.is(dataId)) {
       return this;
     }
     return null;

@@ -341,7 +341,7 @@ public class FileStructureDialog extends DialogWrapper {
         return selectedElement instanceof Navigatable ? selectedElement : myNavigatable;
       }
 
-      if (OpenFileDescriptor.NAVIGATE_IN_EDITOR.getName().equals(dataId)) return myEditor;
+      if (OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) return myEditor;
 
       return getDataImpl(dataId);
     }

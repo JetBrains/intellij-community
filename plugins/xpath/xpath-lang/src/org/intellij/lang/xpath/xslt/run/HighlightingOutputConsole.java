@@ -93,7 +93,7 @@ public class HighlightingOutputConsole extends AdditionalTabComponent implements
 
     @Nullable
     public Object getData(@NonNls String dataId) {
-        if (dataId.equals(LangDataKeys.EDITOR.getName())) {
+        if (LangDataKeys.EDITOR.is(dataId)) {
             return getEditor();
         }
         return null;

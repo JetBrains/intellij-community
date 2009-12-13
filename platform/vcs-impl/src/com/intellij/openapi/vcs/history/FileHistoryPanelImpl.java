@@ -1107,7 +1107,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     else if (VcsDataConstants.VCS_FILE_REVISIONS.equals(dataId)) {
       return getSelectedRevisions();
     }
-    else if (VcsDataKeys.CHANGES.getName().equals(dataId)) {
+    else if (VcsDataKeys.CHANGES.is(dataId)) {
       return getChanges();
     }
     else if (VcsDataConstants.VCS_VIRTUAL_FILE.equals(dataId)) {

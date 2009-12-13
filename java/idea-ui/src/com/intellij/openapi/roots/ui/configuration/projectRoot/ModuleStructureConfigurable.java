@@ -546,7 +546,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
     @Nullable
     public Object getData(@NonNls String dataId) {
-      if (DataKeys.MODULE_CONTEXT_ARRAY.getName().equals(dataId)){
+      if (DataKeys.MODULE_CONTEXT_ARRAY.is(dataId)){
         final TreePath[] paths = myTree.getSelectionPaths();
         if (paths != null) {
           ArrayList<Module> modules = new ArrayList<Module>();
@@ -562,7 +562,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
           return !modules.isEmpty() ? modules.toArray(new Module[modules.size()]) : null;
         }
       }
-      if (DataKeys.MODULE_CONTEXT.getName().equals(dataId)){
+      if (DataKeys.MODULE_CONTEXT.is(dataId)){
         return getSelectedModule();
       }
       if (DataConstantsEx.MODIFIABLE_MODULE_MODEL.equals(dataId)){

@@ -92,7 +92,7 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
 
   public Object getData(Collection<AbstractTreeNode> selected, String dataId) {
     if (selected != null) {
-      if (dataId.equals(Form.DATA_KEY.getName())) {
+      if (Form.DATA_KEY.is(dataId)) {
         List<Form> result = new ArrayList<Form>();
         for(AbstractTreeNode node: selected) {
           if (node.getValue() instanceof Form) {

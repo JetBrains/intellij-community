@@ -641,7 +641,7 @@ public class ShowUsagesAction extends AnAction {
     }
 
     public Object getData(@NonNls String dataId) {
-      if (LangDataKeys.PSI_ELEMENT.getName().equals(dataId)) {
+      if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
         final int[] selected = getSelectedRows();
         if (selected.length == 1) {
           final Object at = getValueAt(selected[0], 0);

@@ -52,7 +52,7 @@ public class RunContentDescriptor {
     myComponent.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, new DataProvider() {
 
       public Object getData(@NonNls final String dataId) {
-        if (RunContentManager.RUN_CONTENT_DESCRIPTOR.getName().equals(dataId)) {
+        if (RunContentManager.RUN_CONTENT_DESCRIPTOR.is(dataId)) {
           return RunContentDescriptor.this;
         }
         return null;

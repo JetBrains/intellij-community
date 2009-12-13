@@ -77,7 +77,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
     if (dataId.equals(DataConstants.PSI_FILE)) {
       return getPsiFile(e, file);
     }
-    if (LangDataKeys.IDE_VIEW.getName().equals(dataId)) {
+    if (LangDataKeys.IDE_VIEW.is(dataId)) {
       final PsiFile psiFile = PsiManager.getInstance(e.getProject()).findFile(file);
       final PsiDirectory psiDirectory = psiFile != null ? psiFile.getParent() : null;
       if (psiDirectory != null && psiDirectory.isPhysical()) {
