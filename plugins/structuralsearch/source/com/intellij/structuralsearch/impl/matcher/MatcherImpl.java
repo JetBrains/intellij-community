@@ -4,6 +4,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -45,6 +46,7 @@ import java.util.*;
  * This class makes program structure tree matching:
  */
 public class MatcherImpl {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.structuralsearch.impl.matcher.MatcherImpl");
   // project being worked on
   private Project project;
 
@@ -489,8 +491,12 @@ public class MatcherImpl {
           break;
         }
 
-        Runnable task = tasks.removeFirst();
-        task.run();
+        final Runnable task = tasks.removeFirst();
+        try {
+          task.run();
+        } catch (Throwable th) {
+          LOG.error(th);
+        }
       }
 
       if (ended) clearSchedule();
