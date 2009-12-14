@@ -20,6 +20,7 @@ import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.application.CvsInfo;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDate;
 import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -61,6 +62,7 @@ public class CvsRootOnFileSystem extends CvsRootProvider {
 
   private static File getCommonRoot(File nearestRoot, CvsConnectionSettings cvsRoot) {
     File result = nearestRoot;
+    if (result.getParentFile() == null) return result;
     while (cvsRoot.equals(getCvsRootFor(result.getParentFile()))) {
       if (result.getParentFile() == null) return result;
       result = result.getParentFile();
@@ -68,7 +70,7 @@ public class CvsRootOnFileSystem extends CvsRootProvider {
     return result;
   }
 
-  private static CvsConnectionSettings getCvsRootFor(File file) {
+  private static CvsConnectionSettings getCvsRootFor(@NotNull File file) {
     return getCvsEntriesManager().getCvsConnectionSettingsFor(file);
   }
 
