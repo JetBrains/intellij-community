@@ -141,7 +141,28 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
   }
 
 
-  public void findConflicts(IntroduceParameterData data, UsageInfo[] usages, MultiMap<PsiElement, String> conflicts) {
+  public void findConflicts(IntroduceParameterData data, UsageInfo[] usages, final MultiMap<PsiElement, String> conflicts) {
+    final int parametersCount = data.getMethodToReplaceIn().getParameterList().getParametersCount();
+    for (UsageInfo usage : usages) {
+      if (!isMethodUsage(usage)) continue;
+      final PsiElement element = usage.getElement();
+      final PsiCall call = RefactoringUtil.getCallExpressionByMethodReference(element);
+      final PsiExpressionList argList = call.getArgumentList();
+      if (argList != null) {
+        final int actualParamLength = argList.getExpressions().length;
+        if (actualParamLength < parametersCount) {
+          conflicts.putValue(call, "Incomplete call(" + call.getText() +"): " + parametersCount + " parameters expected but only " + actualParamLength + " found");
+        }
+        data.getParametersToRemove().forEach(new TIntProcedure() {
+          public boolean execute(int paramNum) {
+            if (paramNum >= actualParamLength) {
+              conflicts.putValue(call, "Incomplete call(" + call.getText() +"): expected to delete the " + paramNum + " parameter but only " + actualParamLength + " parameters found");
+            }
+            return true;
+          }
+        });
+      }
+    }
   }
 
   public boolean processChangeMethodSignature(IntroduceParameterData data, UsageInfo usage, UsageInfo[] usages) throws IncorrectOperationException {

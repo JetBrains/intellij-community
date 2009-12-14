@@ -74,12 +74,15 @@ public class ListTemplatesHandler implements CodeInsightActionHandler{
     lookup.addLookupListener(
       new LookupAdapter() {
         public void itemSelected(LookupEvent event) {
-          final TemplateImpl template = (TemplateImpl)event.getItem().getObject();
-          new WriteCommandAction(project) {
-            protected void run(Result result) throws Throwable {
-              ((TemplateManagerImpl) TemplateManager.getInstance(project)).startTemplateWithPrefix(editor, template, null);
-            }
-          }.execute();
+          final LookupElement lookupElement = event.getItem();
+          if (lookupElement != null) {
+            final TemplateImpl template = (TemplateImpl)lookupElement.getObject();
+            new WriteCommandAction(project) {
+              protected void run(Result result) throws Throwable {
+                ((TemplateManagerImpl) TemplateManager.getInstance(project)).startTemplateWithPrefix(editor, template, null);
+              }
+            }.execute();
+          }
         }
       }
     );
@@ -90,7 +93,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler{
     return true;
   }
 
-  private String getPrefix(Document document, int offset) {
+  private static String getPrefix(Document document, int offset) {
     CharSequence chars = document.getCharsSequence();
     int start = offset;
     while(true){
@@ -102,7 +105,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler{
     return chars.subSequence(start, offset).toString();
   }
 
-  private boolean isInPrefix(final char c) {
+  private static boolean isInPrefix(final char c) {
     return Character.isJavaIdentifierPart(c) || c == '.';
   }
 }

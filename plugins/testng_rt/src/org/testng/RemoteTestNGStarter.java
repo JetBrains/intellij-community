@@ -75,7 +75,7 @@ public class RemoteTestNGStarter {
 
     RemoteTestNG testNG= new RemoteTestNG();
     testNG.configure(commandLineArgs);
-
+    testNG.initializeSuitesAndJarFile();
     testNG.run();
   }
 }

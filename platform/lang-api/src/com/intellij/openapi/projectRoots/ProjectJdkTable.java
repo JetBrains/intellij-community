@@ -16,6 +16,7 @@
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.util.Condition;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +37,12 @@ public abstract class ProjectJdkTable {
   public abstract Sdk[] getAllJdks();
 
   public abstract List<Sdk> getSdksOfType(SdkType type);
+
+  @Nullable
+  public abstract Sdk findMostRecentSdkOfType(SdkType type);
+
+  @Nullable
+  public abstract Sdk findMostRecentSdk(Condition<Sdk> condition);
 
   public abstract void addJdk(Sdk jdk);
 

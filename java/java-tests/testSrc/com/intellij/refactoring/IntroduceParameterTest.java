@@ -166,7 +166,7 @@ public class IntroduceParameterTest extends LightCodeInsightTestCase {
   }
 
   public void testParameterJavaDocBeforeVararg() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, true, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, true, false, "Incomplete call(method()): 1 parameters expected but only 0 found");
   }
 
   public void testIncorrectScope() throws Exception {
@@ -230,7 +230,8 @@ public class IntroduceParameterTest extends LightCodeInsightTestCase {
   }
 
   public void testIncompleteEnumDefinition() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false, false, false);
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false, false, false, "Incomplete call(Root()): 2 parameters expected but only 0 found\n" +
+                                                                                                      "Incomplete call(Root()): expected to delete the 1 parameter but only 0 parameters found");
   }
 
   private void doTestThroughHandler() throws Exception {

@@ -38,6 +38,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
@@ -304,30 +305,14 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
       return projectJdk;
     }
     if (context.getProject() == null) {
-      final Sdk[] projectJdks = getSuitableSdks(context);
-      Arrays.sort(projectJdks, new Comparator<Sdk>() {
-        public int compare(final Sdk o1, final Sdk o2) {
-          final String version1 = o1.getVersionString();
-          final String version2 = o2.getVersionString();
-          return version1 != null && version2 != null ? version1.compareToIgnoreCase(version2) : 0;
+      @Nullable final ProjectBuilder projectBuilder = context.getProjectBuilder();
+      return ProjectJdkTable.getInstance().findMostRecentSdk(new Condition<Sdk>() {
+        public boolean value(Sdk sdk) {
+          return projectBuilder == null || projectBuilder.isSuitableSdk(sdk);
         }
       });
-      if (projectJdks.length > 0) {
-        return projectJdks[projectJdks.length - 1];
-      }
     }
     return null;
-  }
-
-  private static Sdk[] getSuitableSdks(final WizardContext context) {
-    @Nullable final ProjectBuilder projectBuilder = context.getProjectBuilder();
-    final List<Sdk> result = new ArrayList<Sdk>();
-    for(Sdk sdk: ProjectJdkTable.getInstance().getAllJdks()) {
-      if (projectBuilder == null || projectBuilder.isSuitableSdk(sdk)) {
-        result.add(sdk);
-      }
-    }
-    return result.toArray(new Sdk[result.size()]);
   }
 
   @Nullable
