@@ -17,12 +17,12 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.impl.GenericNotifier;
+import com.intellij.openapi.vcs.impl.GenericNotifierImpl;
 import org.jetbrains.annotations.NotNull;
 
 // todo be done
 // todo : two kinds. positive: either into common proxy, or into system properties 
-public class SvnProxyAuthenticationNotifier extends GenericNotifier<String, String> {
+public class SvnProxyAuthenticationNotifier extends GenericNotifierImpl<String, String> {
   public SvnProxyAuthenticationNotifier(Project project, @NotNull String groupId, @NotNull String title, @NotNull NotificationType type) {
     super(project, groupId, title, type);
   }

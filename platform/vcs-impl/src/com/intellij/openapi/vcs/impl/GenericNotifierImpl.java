@@ -1,20 +1,34 @@
+/*
+ * Copyright 2000-2009 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-public abstract class GenericNotifier<T, Key> {
+public abstract class GenericNotifierImpl<T, Key> {
+  private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.GenericNotifier");
   private final Project myProject;
   @NotNull
   private final String myGroupId; //+- here
@@ -24,12 +38,10 @@ public abstract class GenericNotifier<T, Key> {
   private final NotificationType myType;
   @NotNull
   private final Map<Key, MyNotification<T>> myState;
-  @NotNull
-  private final Map<Key, Boolean> myWasCancelled;
   private final MyListener myListener;
   private final Object myLock;
 
-  protected GenericNotifier(final Project project, @NotNull String groupId, @NotNull String title, final @NotNull NotificationType type) {
+  protected GenericNotifierImpl(final Project project, @NotNull String groupId, @NotNull String title, final @NotNull NotificationType type) {
     myGroupId = groupId;
     myTitle = title;
     myType = type;
@@ -37,7 +49,6 @@ public abstract class GenericNotifier<T, Key> {
     myState = new HashMap<Key, MyNotification<T>>();
     myListener = new MyListener();
     myLock = new Object();
-    myWasCancelled = new HashMap<Key, Boolean>();
   }
 
   protected abstract boolean ask(final T obj);
@@ -46,33 +57,20 @@ public abstract class GenericNotifier<T, Key> {
   @NotNull
   protected abstract String getNotificationContent(final T obj);
 
-  protected Set<Key> canceledKeySet() {
+  protected Collection<Key> getAllCurrentKeys() {
     synchronized (myLock) {
-      return new HashSet<Key>(myWasCancelled.keySet());
+      return new ArrayList<Key>(myState.keySet());
     }
   }
 
-  public void triggerAsk(final Key key) {
+  public void clear() {
+    final List<MyNotification<T>> notifications;
     synchronized (myLock) {
-      myWasCancelled.put(key, true);
+      notifications = new ArrayList<MyNotification<T>>(myState.values());
+      myState.clear();
     }
-  }
-
-  /**
-   * @return true === ask interactively. otherwise queue notification
-   */
-  public boolean retrieveTicket(final T obj) {
-    synchronized (myLock) {
-      final Key key = getKey(obj);
-      final Boolean value = myWasCancelled.get(key);
-      if (value == null) {
-        myWasCancelled.put(key, false);
-        return true;
-      }
-      if (value) {
-        myWasCancelled.put(key, false);
-      }
-      return value;
+    for (MyNotification<T> notification : notifications) {
+      notification.expire();
     }
   }
 
@@ -89,6 +87,19 @@ public abstract class GenericNotifier<T, Key> {
     Notifications.Bus.notify(notification, myProject);
   }
 
+  public void removeLazyNotificationByKey(final Key key) {
+    final MyNotification<T> notification;
+    synchronized (myLock) {
+      notification = myState.get(key);
+      if (notification != null) {
+        myState.remove(key);
+      }
+    }
+    if (notification != null) {
+      notification.expire();
+    }
+  }
+
   public void removeLazyNotification(final T obj) {
     final MyNotification<T> notification;
     synchronized (myLock) {
@@ -96,7 +107,6 @@ public abstract class GenericNotifier<T, Key> {
       notification = myState.get(key);
       if (notification != null) {
         myState.remove(key);
-        myWasCancelled.remove(key);
       }
     }
     if (notification != null) {
@@ -114,7 +124,6 @@ public abstract class GenericNotifier<T, Key> {
           synchronized (myLock) {
             final Key key = getKey(obj);
             myState.remove(key);
-            myWasCancelled.remove(key);
           }
           notification.expire();
         }
@@ -138,5 +147,9 @@ public abstract class GenericNotifier<T, Key> {
     public T getObj() {
       return myObj;
     }
+  }
+
+  private static void log(final String s) {
+    LOG.debug(s);
   }
 }

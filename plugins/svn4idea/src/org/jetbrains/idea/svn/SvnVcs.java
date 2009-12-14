@@ -24,7 +24,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -133,6 +132,9 @@ public class SvnVcs extends AbstractVcs {
   public static final Topic<Runnable> ROOTS_RELOADED = new Topic<Runnable>("ROOTS_RELOADED", Runnable.class);
   private VcsListener myVcsListener;
 
+  private final RootsToWorkingCopies myRootsToWorkingCopies;
+  private final SvnAuthenticationNotifier myAuthNotifier;
+
   static {
     SvnHttpAuthMethodsDefaultChecker.check();
 
@@ -163,6 +165,8 @@ public class SvnVcs extends AbstractVcs {
                 final VcsDirtyScopeManager vcsDirtyScopeManager) {
     super(project, VCS_NAME);
     LOG.debug("ct");
+    myRootsToWorkingCopies = new RootsToWorkingCopies(myProject);
+    myAuthNotifier = new SvnAuthenticationNotifier(this);
     myConfiguration = svnConfiguration;
 
     dumpFileStatus(FileStatus.ADDED);
@@ -361,36 +365,24 @@ public class SvnVcs extends AbstractVcs {
       }
     });
 
-    pingRootsForAuth();
+    vcsManager.addVcsListener(myRootsToWorkingCopies);
   }
 
-  public void pingRootsForAuth() {
-    if (! myProject.isDefault()) {
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        public void run() {
-          final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
-          final VirtualFile[] files = vcsManager.getRootsUnderVcs(SvnVcs.this);
-          Arrays.sort(files, FilePathComparator.getInstance());
-          final SVNStatusClient client = createStatusClient();
-          for (VirtualFile root : files) {
-            try {
-              client.doStatus(new File(root.getPath()), true);
-            }
-            catch (SVNException e) {
-              //
-            }
-          }
-        }
-      });
-    }
+  public RootsToWorkingCopies getRootsToWorkingCopies() {
+    return myRootsToWorkingCopies;
+  }
+
+  public SvnAuthenticationNotifier getAuthNotifier() {
+    return myAuthNotifier;
   }
 
   @Override
   public void deactivate() {
     FrameStateManager.getInstance().removeListener(myFrameStateListener);
 
+    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     if (myVcsListener != null) {
-      ProjectLevelVcsManager.getInstance(myProject).removeVcsListener(myVcsListener);
+      vcsManager.removeVcsListener(myVcsListener);
     }
     
     VirtualFileManager.getInstance().removeVirtualFileListener(myEntriesFileListener);
@@ -402,6 +394,9 @@ public class SvnVcs extends AbstractVcs {
     if (myChangeListListener != null && (! myProject.isDefault())) {
       ChangeListManager.getInstance(myProject).removeChangeListListener(myChangeListListener);
     }
+    vcsManager.removeVcsListener(myRootsToWorkingCopies);
+    myRootsToWorkingCopies.clear();
+    myAuthNotifier.clear();
   }
 
   public VcsShowConfirmationOption getAddConfirmation() {

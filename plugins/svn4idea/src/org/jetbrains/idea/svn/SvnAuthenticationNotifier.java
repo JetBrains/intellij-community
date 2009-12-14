@@ -16,55 +16,114 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.impl.GenericNotifier;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
+import com.intellij.openapi.vcs.impl.GenericNotifierImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNAuthenticationException;
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNWCClient;
 
-import java.util.Set;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 
-public class SvnAuthenticationNotifier extends GenericNotifier<SvnAuthenticationNotifier.AuthenticationRequest, Pair<String, SVNURL>> {
+public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthenticationNotifier.AuthenticationRequest, SVNURL> {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnAuthenticationNotifier");
-  private final static ReentranceDefence ourDefence = new ReentranceDefence();
 
   private static final String ourGroupId = "Subversion";
   private final SvnVcs myVcs;
+  private final RootsToWorkingCopies myRootsToWorkingCopies;
 
   public SvnAuthenticationNotifier(final SvnVcs svnVcs) {
     super(svnVcs.getProject(), ourGroupId, "Not Logged To Subversion", NotificationType.ERROR);
     myVcs = svnVcs;
+    myRootsToWorkingCopies = myVcs.getRootsToWorkingCopies();
   }
 
   @Override
   protected boolean ask(final AuthenticationRequest obj) {
-    triggerAsk(getKey(obj));
-    return obj.validate();
+    final Ref<Boolean> resultRef = new Ref<Boolean>();
+    final boolean done = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      public void run() {
+        final boolean result = interactiveValidation(obj.myProject, obj.getUrl());
+        log("ask result for: " + obj.getUrl() + " is: " + result);
+        resultRef.set(result);
+        if (result) {
+          onStateChangedToSuccess(obj);
+        }
+      }
+    }, "Checking authorization state", true, myVcs.getProject());
+    return done && Boolean.TRUE.equals(resultRef.get());
+  }
+
+  private void onStateChangedToSuccess(final AuthenticationRequest obj) {
+    final List<SVNURL> outdatedRequests = new LinkedList<SVNURL>();
+    final Collection<SVNURL> keys = getAllCurrentKeys();
+    for (SVNURL key : keys) {
+      final SVNURL commonURLAncestor = SVNURLUtil.getCommonURLAncestor(key, obj.getUrl());
+      if ((! StringUtil.isEmptyOrSpaces(commonURLAncestor.getHost())) && (! StringUtil.isEmptyOrSpaces(commonURLAncestor.getPath()))) {
+        if (passiveValidation(myVcs.getProject(), key)) {
+          outdatedRequests.add(key);
+        }
+      }
+    }
+    log("on state changed ");
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        for (SVNURL key : outdatedRequests) {
+          removeLazyNotificationByKey(key);
+        }
+      }
+    }, ModalityState.NON_MODAL);
+  }
+
+  @Override
+  public void ensureNotify(AuthenticationRequest obj) {
+    ChangesViewBalloonProblemNotifier.showMe(myVcs.getProject(), "You are not authenticated to '" + obj.getRealm() + "'." +
+      "To login, see pending notifications.", MessageType.ERROR);
+    super.ensureNotify(obj);
   }
 
   @NotNull
   @Override
-  protected Pair<String, SVNURL> getKey(final AuthenticationRequest obj) {
-    final Set<Pair<String,SVNURL>> keys = canceledKeySet();
-    for (Pair<String, SVNURL> key : keys) {
-      if (! key.getFirst().equals(obj.getKind())) continue;
-      final SVNURL commonURLAncestor = SVNURLUtil.getCommonURLAncestor(key.getSecond(), obj.getUrl());
-      if (key.getSecond().equals(commonURLAncestor)) {
-        return key;
-      }
+  public SVNURL getKey(final AuthenticationRequest obj) {
+    // !!! wc's URL
+    return obj.getWcUrl();
+  }
+
+  @Nullable
+  public SVNURL getWcUrl(final AuthenticationRequest obj) {
+    if (obj.isOutsideCopies()) return null;
+    if (obj.getWcUrl() != null) return obj.getWcUrl();
+
+    final WorkingCopy copy = myRootsToWorkingCopies.getMatchingCopy(obj.getUrl());
+    if (copy != null) {
+      obj.setOutsideCopies(false);
+      obj.setWcUrl(copy.getUrl());
+    } else {
+      obj.setOutsideCopies(true);
     }
-    return new Pair<String, SVNURL>(obj.getKind(), obj.getUrl());
+    return copy == null ? null : copy.getUrl();
   }
 
   @NotNull
   @Override
   protected String getNotificationContent(AuthenticationRequest obj) {
-    return "Not logged to Subversion '" + obj.getRealm() + "' (" + obj.getUrl().toDecodedString() + ") + <a href=\"\">Click to fix.</a>";
+    return "<a href=\"\">Click to fix.</a> Not logged to Subversion '" + obj.getRealm() + "' (" + obj.getUrl().toDecodedString() + ")";
   }
 
   public static class AuthenticationRequest {
@@ -73,11 +132,30 @@ public class SvnAuthenticationNotifier extends GenericNotifier<SvnAuthentication
     private final SVNURL myUrl;
     private final String myRealm;
 
+    private SVNURL myWcUrl;
+    private boolean myOutsideCopies;
+
     public AuthenticationRequest(Project project, String kind, SVNURL url, String realm) {
       myProject = project;
       myKind = kind;
       myUrl = url;
       myRealm = realm;
+    }
+
+    public boolean isOutsideCopies() {
+      return myOutsideCopies;
+    }
+
+    public void setOutsideCopies(boolean outsideCopies) {
+      myOutsideCopies = outsideCopies;
+    }
+
+    public SVNURL getWcUrl() {
+      return myWcUrl;
+    }
+
+    public void setWcUrl(SVNURL wcUrl) {
+      myWcUrl = wcUrl;
     }
 
     public String getKind() {
@@ -91,19 +169,46 @@ public class SvnAuthenticationNotifier extends GenericNotifier<SvnAuthentication
     public String getRealm() {
       return myRealm;
     }
+  }
+  
+  static void log(final Throwable t) {
+    LOG.debug(t);
+  }
 
-    public boolean validate() {
-      final SvnVcs vcs = SvnVcs.getInstance(myProject);
-      try {
-        vcs.createWCClient().doInfo(myUrl, SVNRevision.UNDEFINED, SVNRevision.HEAD);
-      } catch (SVNAuthenticationException e) {
-        LOG.debug(e);
-        return false;
-      } catch (SVNException e) {
-        LOG.info(e);
+  static void log(final String s) {
+    LOG.debug(s);
+  }
+
+  public static boolean passiveValidation(final Project project, final SVNURL url) {
+    final SvnConfiguration configuration = SvnConfiguration.getInstance(project);
+    final ISVNAuthenticationManager passiveManager = configuration.getPassiveAuthenticationManager();
+    return validationImpl(project, url, configuration, passiveManager);
+  }
+
+  public static boolean interactiveValidation(final Project project, final SVNURL url) {
+    final SvnConfiguration configuration = SvnConfiguration.getInstance(project);
+    final ISVNAuthenticationManager passiveManager = configuration.getInteractiveManager(SvnVcs.getInstance(project));
+    return validationImpl(project, url, configuration, passiveManager);
+  }
+
+  private static boolean validationImpl(final Project project, final SVNURL url,
+                                        final SvnConfiguration configuration, final ISVNAuthenticationManager manager) {
+    try {
+      new SVNWCClient(manager, configuration.getOptions(project)).doInfo(url, SVNRevision.UNDEFINED, SVNRevision.HEAD);
+    } catch (SVNAuthenticationException e) {
+      log(e);
+      return false;
+    } catch (SVNCancelException e) {
+      log(e); // auth canceled
+      return false;
+    } catch (SVNException e) {
+      if (e.getErrorMessage().getErrorCode().isAuthentication()) {
+        log(e);
         return false;
       }
+      LOG.info("some other exc", e);
       return true;
     }
+    return true;
   }
 }
