@@ -61,6 +61,10 @@ public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
                                                        SVNErrorMessage errorMessage,
                                                        final SVNAuthentication previousAuth,
                                                        final boolean authMayBeStored) {
+    if (ApplicationManager.getApplication().isUnitTestMode() && ISVNAuthenticationManager.USERNAME.equals(kind)) {
+      final String userName = previousAuth != null && previousAuth.getUserName() != null ? previousAuth.getUserName() : SystemProperties.getUserName();
+      return new SVNUserNameAuthentication(userName, false);
+    }
     final SvnAuthenticationNotifier.AuthenticationRequest obj =
       new SvnAuthenticationNotifier.AuthenticationRequest(myProject, kind, url, realm);
     final SVNURL wcUrl = myAuthenticationNotifier.getWcUrl(obj);
