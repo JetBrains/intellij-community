@@ -19,11 +19,14 @@
  */
 package com.intellij.openapi.util.process;
 
+import com.intellij.openapi.diagnostic.Logger;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
 
 public abstract class InterruptibleProcess extends InterruptibleActivity {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.process.InterruptibleProcess");
   private final Process myProcess;
   private final InputStream myInputStream;
   private final InputStream myErrorStream;
@@ -69,7 +72,7 @@ public abstract class InterruptibleProcess extends InterruptibleActivity {
       myExitCode = myProcess.waitFor();
     }
     catch (InterruptedException e) {
-      throw new RuntimeException(e);
+      LOG.debug(e);
     }
   }
 
