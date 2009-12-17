@@ -553,17 +553,24 @@ public class CodeStyleImportsPanel extends JPanel {
       }
     };
     if (areStaticImportsEnabled()) {
-      result.fixColumnWidthToHeader(0);
-      result.fixColumnWidthToHeader(2);
+      fixColumnWidthToHeader(result, 0);
+      fixColumnWidthToHeader(result, 2);
       result.getColumnModel().getColumn(1).setCellRenderer(packageRenderer);
       result.getColumnModel().getColumn(0).setCellRenderer(new BooleanTableCellRenderer());
       result.getColumnModel().getColumn(2).setCellRenderer(new BooleanTableCellRenderer());
     }
     else {
-      result.fixColumnWidthToHeader(1);
+      fixColumnWidthToHeader(result, 1);
       result.getColumnModel().getColumn(0).setCellRenderer(packageRenderer);
       result.getColumnModel().getColumn(1).setCellRenderer(new BooleanTableCellRenderer());
     }
+  }
+
+  private static void fixColumnWidthToHeader(Table result, int columnIdx) {
+    final TableColumn column = result.getColumnModel().getColumn(columnIdx);
+    final int width = result.getTableHeader().getFontMetrics(result.getTableHeader().getFont()).stringWidth(result.getColumnName(columnIdx)) + 6;
+    column.setMinWidth(width);
+    column.setMaxWidth(width);
   }
 
   private void updateButtons(){
