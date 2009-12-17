@@ -1016,8 +1016,8 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
         return myIdeView;
       }
       if (DataConstants.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
-        final List<Module> modules = getSelectedElements(Module.class);
-        if (!modules.isEmpty()) {
+        final Module[] modules = getSelectedModules();
+        if (modules != null) {
           return myDeleteModuleProvider;
         }
         final LibraryOrderEntry orderEntry = getSelectedLibrary();
@@ -1135,6 +1135,7 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
       }, title, null);
     }
 
+    @Nullable
     private Module[] getSelectedModules() {
       final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
       if (viewPane == null) return null;
