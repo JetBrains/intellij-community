@@ -5,11 +5,11 @@ import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.ide.util.newProjectWizard.SupportForFrameworksStep;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.util.IconLoader;
+import com.jetbrains.python.PythonModuleTypeBase;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class PythonModuleType extends ModuleType<PythonModuleBuilder> {
+public class PythonModuleType extends PythonModuleTypeBase<PythonModuleBuilder> {
   @NonNls public static final String PYTHON_MODULE = "PYTHON_MODULE";
   private final Icon myBigIcon = IconLoader.getIcon("/com/jetbrains/python/python_24.png");
   private final Icon myOpenIcon = IconLoader.getIcon("/com/jetbrains/python/pythonOpen.png");

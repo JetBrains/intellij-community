@@ -96,6 +96,33 @@
     <lang.refactoringSupport language="Python" implementationClass="com.jetbrains.python.refactoring.RefactoringProvider"/>
     <codeInsight.gotoSuper language="Python" implementationClass="com.jetbrains.python.codeInsight.PyGotoSuperHandler"/>
     <gotoDeclarationHandler implementation="com.jetbrains.python.codeInsight.PyBreakContinueGotoProvider" order="FIRST"/>
+
+    <!-- Django -->
+    <annotator language="Python" implementationClass="com.jetbrains.django.annotator.ViewMethodAnnotator"/>
+    <configurationType implementation="com.jetbrains.django.run.DjangoServerRunConfigurationType"/>
+
+    <lang.substitutor language="XHTML" implementationClass="com.jetbrains.django.lang.template.DjangoTemplateLanguageProvider"/>
+    <lang.substitutor language="HTML" implementationClass="com.jetbrains.django.lang.template.DjangoTemplateLanguageProvider"/>
+    <lang.substitutor language="XML" implementationClass="com.jetbrains.django.lang.template.DjangoTemplateLanguageProvider"/>
+
+    <lang.parserDefinition language="DjangoTemplate"
+                           implementationClass="com.jetbrains.django.lang.template.parsing.DjangoTemplateParserDefinition"/>
+    <lang.fileViewProviderFactory language="DjangoTemplate"
+                                  implementationClass="com.jetbrains.django.lang.template.DjangoTemplateFileProviderFactory"/>
+    <lang.ast.factory language="DjangoTemplate" implementationClass="com.jetbrains.django.lang.template.psi.impl.DjangoASTFactory"/>
+
+    <lang.syntaxHighlighterFactory key="DjangoTemplate"
+                                   implementationClass="com.jetbrains.django.lang.template.highlighting.DjangoTemplateHighlighterFactory"/>
+
+    <completion.contributor language="DjangoTemplate"
+                            implementationClass="com.jetbrains.django.completion.DjangoNameCompletionContributor"/>
+
+    <psi.referenceContributor implementation="com.jetbrains.django.ref.ViewMethodReferenceContributor"/>
+
+    <inspectionToolProvider implementation="com.jetbrains.django.inspection.DjangoInspectionToolProvider"/>
+
+    <moduleService serviceInterface="com.jetbrains.django.model.TemplateManager"
+                   serviceImplementation="com.jetbrains.django.model.TemplateManager"/>
   </extensions>
 
   <extensionPoints>
@@ -114,6 +141,9 @@
     <pyOverridingMethodsSearch implementation="com.jetbrains.python.psi.search.PyOverridingMethodsSearchExecutor"/>
     <runnableScriptFilter implementation="com.jetbrains.python.testing.pytest.PyTestRunnableScriptFilter"/>
     <runnableScriptFilter implementation="com.jetbrains.python.testing.PythonUnitTestRunnableScriptFilter"/>
+
+    <!-- Django -->
+    <unresolvedReferenceQuickFixProvider implementation="com.jetbrains.django.ref.DjangoViewReferenceQuickFixProvider"/>
   </extensions>
 
   <project-components>
@@ -159,5 +189,11 @@
       <reference ref="CompareFileWithEditor"/>
     </group>
 
+    <action id="Django.RunManageTaskAction" class="com.jetbrains.django.actions.RunManageTaskAction"
+            text="Run manage.py task..."
+            description="Runs manage.py task">
+
+      <add-to-group group-id="ToolsMenu" anchor="first"/>
+    </action>
   </actions>
 </idea-plugin>
