@@ -71,6 +71,14 @@ public class PythonCommandLineState extends CommandLineState {
 
     commandLine.setExePath(myConfig.getInterpreterPath());
 
+    buildCommandLineParameters(commandLine);
+
+    commandLine.setEnvParams(myConfig.getEnvs());
+    commandLine.setPassParentEnvs(myConfig.isPassParentEnvs());
+    return commandLine;
+  }
+
+  protected void buildCommandLineParameters(GeneralCommandLine commandLine) {
     commandLine.getParametersList().addParametersString(myConfig.getInterpreterOptions());
 
     if (!StringUtil.isEmptyOrSpaces(myConfig.getScriptName())) {
@@ -82,9 +90,5 @@ public class PythonCommandLineState extends CommandLineState {
     if (!StringUtil.isEmptyOrSpaces(myConfig.getWorkingDirectory())) {
       commandLine.setWorkDirectory(myConfig.getWorkingDirectory());
     }
-
-    commandLine.setEnvParams(myConfig.getEnvs());
-    commandLine.setPassParentEnvs(myConfig.isPassParentEnvs());
-    return commandLine;
   }
 }
