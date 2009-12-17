@@ -37,7 +37,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.Indent;
-import com.intellij.psi.templateLanguages.MultiplePsiFilesPerDocumentFileCommentProvider;
+import com.intellij.psi.templateLanguages.MultipleLangCommentProvider;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
@@ -224,7 +224,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
 
     final FileViewProvider viewProvider = file.getViewProvider();
 
-    for (MultiplePsiFilesPerDocumentFileCommentProvider provider : MultiplePsiFilesPerDocumentFileCommentProvider.EP_NAME.getExtensions()) {
+    for (MultipleLangCommentProvider provider : MultipleLangCommentProvider.EP_NAME.getExtensions()) {
       if (provider.canProcess(file, viewProvider)) {
         return provider.getLineCommenter(file, editor, lineStartLanguage, lineEndLanguage);
       }

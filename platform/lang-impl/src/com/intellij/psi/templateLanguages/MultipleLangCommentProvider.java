@@ -26,8 +26,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Roman.Chernyatchik
  */
-public interface MultiplePsiFilesPerDocumentFileCommentProvider {
-  ExtensionPointName<MultiplePsiFilesPerDocumentFileCommentProvider> EP_NAME = ExtensionPointName.create("com.intellij.multiLangCommenter");
+public interface MultipleLangCommentProvider {
+  ExtensionPointName<MultipleLangCommentProvider> EP_NAME = ExtensionPointName.create("com.intellij.multiLangCommenter");
 
   @Nullable
   Commenter getLineCommenter(PsiFile file, Editor editor,
