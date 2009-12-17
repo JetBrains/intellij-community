@@ -88,7 +88,7 @@ public class MavenPropertyFindUsagesTest extends MavenDomTestCase {
                      "  <f<caret>oo>value</foo>" +
                      "</properties>");
 
-    assertSearchResultsContain(myProjectPom, findTag("project.name"));
+    assertSearchResultsInclude(myProjectPom, findTag("project.name"));
   }
 
   public void testFindUsagesForEnvProperty() throws Exception {
@@ -98,7 +98,7 @@ public class MavenPropertyFindUsagesTest extends MavenDomTestCase {
                      "<name>${env.<caret>TEMP}</name>" +
                      "<description>${env.TEMP}</description>");
 
-    assertSearchResultsContain(myProjectPom, findTag("project.name"), findTag("project.description"));
+    assertSearchResultsInclude(myProjectPom, findTag("project.name"), findTag("project.description"));
   }
 
   public void testFindUsagesForSystemProperty() throws Exception {
@@ -108,7 +108,7 @@ public class MavenPropertyFindUsagesTest extends MavenDomTestCase {
                      "<name>${use<caret>r.home}</name>" +
                      "<description>${user.home}</description>");
 
-    assertSearchResultsContain(myProjectPom, findTag("project.name"), findTag("project.description"));
+    assertSearchResultsInclude(myProjectPom, findTag("project.name"), findTag("project.description"));
   }
 
   public void testFindUsagesForSystemPropertyInFilteredResources() throws Exception {
@@ -132,7 +132,7 @@ public class MavenPropertyFindUsagesTest extends MavenDomTestCase {
                                          "foo=abc${user<caret>.home}abc");
 
     List<PsiElement> result = search(f);
-    assertInclude(result, findTag("project.name"), MavenDomUtil.findPropertyValue(myProject, f, "foo"));
+    assertContain(result, findTag("project.name"), MavenDomUtil.findPropertyValue(myProject, f, "foo"));
   }
 
   public void testHighlightingFromTag() throws Exception {

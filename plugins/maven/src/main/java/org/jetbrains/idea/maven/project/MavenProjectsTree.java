@@ -1013,7 +1013,7 @@ public class MavenProjectsTree {
     embedder.clearCachesFor(mavenProject);
 
     try {
-      for (MavenPlugin each : mavenProject.getPlugins()) {
+      for (MavenPlugin each : mavenProject.getDeclaredPlugins()) {
         process.checkCanceled();
         process.setText(ProjectBundle.message("maven.downloading.pom.plugins", mavenProject.getDisplayName()));
         embedder.resolvePlugin(each, nativeMavenProject);
@@ -1026,6 +1026,7 @@ public class MavenProjectsTree {
   }
 
   public void resolveFolders(final MavenProject mavenProject,
+                             final MavenGeneralSettings generalSettings,
                              final MavenImportingSettings importingSettings,
                              final MavenEmbeddersManager embeddersManager,
                              final MavenConsole console,
@@ -1043,6 +1044,7 @@ public class MavenProjectsTree {
                        process.setText2("");
 
                        Pair<Boolean, MavenProjectChanges> resolveResult = mavenProject.resolveFolders(embedder,
+                                                                                                      generalSettings,
                                                                                                       importingSettings,
                                                                                                       new MavenProjectReader(),
                                                                                                       console);
