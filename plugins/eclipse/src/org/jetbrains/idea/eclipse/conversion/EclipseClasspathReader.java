@@ -335,27 +335,17 @@ public class EclipseClasspathReader {
         url = VfsUtil.pathToUrl(relativePath);
       } else if (new File(path).exists()) {
         url = VfsUtil.pathToUrl(path);
-      } else if (path.indexOf('/') < path.length() - 1){
-        final String relativeToOtherModule = path.substring(path.indexOf('/', 1) + 1);
-        final Module otherModule = ModuleManager.getInstance(myProject).findModuleByName(path.substring(1, path.indexOf('/', 1)));
-        if (otherModule != null) {
-          final VirtualFile[] contentRoots = ModuleRootManager.getInstance(otherModule).getContentRoots();
-          for (VirtualFile contentRoot : contentRoots) {
-            final File relativeToOtherModuleFile = new File(contentRoot.getPath(), relativeToOtherModule);
-            if (relativeToOtherModuleFile.exists()) {
-              url = VfsUtil.pathToUrl(relativeToOtherModuleFile.getPath());
-              break;
-            }
-          }
+      }
+      else {
+        final String rootPath = getRootPath(path);
+        final String relativeToRootPath = getRelativeToRootPath(path);
 
-        } else if (myCurrentRoots != null) {
-          for (String currentRoot : myCurrentRoots) {
-            final File relativeToOtherModuleFile = new File(currentRoot, relativeToOtherModule);
-            if (relativeToOtherModuleFile.exists()) {
-              url = VfsUtil.pathToUrl(relativeToOtherModuleFile.getPath());
-              break;
-            }
-          }
+        final Module otherModule = ModuleManager.getInstance(myProject).findModuleByName(rootPath);
+        if (otherModule != null) {
+          url = relativeToOtherModule(otherModule, relativeToRootPath);
+        }
+        else if (myCurrentRoots != null) {
+          url = relativeToContentRoots(myCurrentRoots, rootPath, relativeToRootPath);
         }
       }
     }
@@ -376,6 +366,59 @@ public class EclipseClasspathReader {
       }
     }
     return url;
+  }
+
+  /**
+   * @param path path in format /module_root/relative_path
+   * @return module_root
+   */
+  @NotNull
+  private static String getRootPath(String path) {
+    int secondSlIdx = path.indexOf('/', 1);
+    return secondSlIdx > 1 ? path.substring(1, secondSlIdx) : path.substring(1);
+  }
+
+  /**
+   * @param path path in format /module_root/relative_path
+   * @return relative_path or null if /module_root
+   */
+  @Nullable
+  private static String getRelativeToRootPath(String path) {
+    final int secondSlIdx = path.indexOf('/', 1);
+    return secondSlIdx != -1 && secondSlIdx + 1 < path.length() ? path.substring(secondSlIdx + 1) : null;
+  }
+
+  @Nullable
+  private static String relativeToContentRoots(final @NotNull List<String> currentRoots,
+                                               final @NotNull String rootPath,
+                                               final @Nullable String relativeToRootPath) {
+    for (String currentRoot : currentRoots) {
+      if (currentRoot.endsWith(rootPath)) { //rootPath = content_root <=> applicable root: abs_path/content_root
+        if (relativeToRootPath == null) {
+          return VfsUtil.pathToUrl(currentRoot);
+        }
+        final File relativeToOtherModuleFile = new File(currentRoot, relativeToRootPath);
+        if (relativeToOtherModuleFile.exists()) {
+          return VfsUtil.pathToUrl(relativeToOtherModuleFile.getPath());
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static String relativeToOtherModule(final @NotNull Module otherModule, final @Nullable String relativeToOtherModule) {
+    final VirtualFile[] contentRoots = ModuleRootManager.getInstance(otherModule).getContentRoots();
+    for (VirtualFile contentRoot : contentRoots) {
+      if (relativeToOtherModule == null) {
+        return contentRoot.getUrl();
+      }
+      final File relativeToOtherModuleFile = new File(contentRoot.getPath(), relativeToOtherModule);
+      if (relativeToOtherModuleFile.exists()) {
+        return VfsUtil.pathToUrl(relativeToOtherModuleFile.getPath());
+      }
+    }
+    return null;
   }
 
   @Nullable
