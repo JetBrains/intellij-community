@@ -242,7 +242,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       List children = deleted.getChildren();
       for (final Object aChildren : children) {
         Element child = (Element)aChildren;
-        myDeletedTemplates.add(new TemplateKey(child.getAttributeValue(NAME), child.getAttributeValue(GROUP)));
+        myDeletedTemplates.add(new TemplateKey(child.getAttributeValue(GROUP), child.getAttributeValue(NAME)));
       }
     }
 
