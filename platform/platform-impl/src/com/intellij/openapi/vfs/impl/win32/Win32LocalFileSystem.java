@@ -32,6 +32,22 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem");
 
+  private static boolean ourIsAvailable;
+
+  static {
+    try {
+      System.loadLibrary("IdeaWin32");
+      ourIsAvailable = true;
+    }
+    catch (Throwable e) {
+      ourIsAvailable = false;
+    }
+  }
+
+  public static boolean isAvailable() {
+    return ourIsAvailable;
+  }
+
   private static final ThreadLocal<Win32LocalFileSystem> THREAD_LOCAL = new ThreadLocal<Win32LocalFileSystem>() {
     @Override
     protected Win32LocalFileSystem initialValue() {

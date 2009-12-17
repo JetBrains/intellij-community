@@ -97,12 +97,12 @@ public class MoveChangesDialog extends DialogWrapper {
     return myTreeList;
   }
 
-  public List<Change> getSelectedChanges() {
-    return myTreeList.getSelectedChanges();
+  public Collection<Change> getIncludedChanges() {
+    return myTreeList.getIncludedChanges();
   }
 
   @Override
   public boolean isOKActionEnabled() {
-    return !getSelectedChanges().isEmpty();
+    return !getIncludedChanges().isEmpty();
   }
 }
