@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.application;
 
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
 import java.util.Set;
 
 public abstract class PathMacros {
@@ -34,6 +37,14 @@ public abstract class PathMacros {
   public abstract Set<String> getUserMacroNames();
 
   public abstract Set<String> getSystemMacroNames();
+
+  public abstract Collection<String> getIgnoredMacroNames();
+
+  public abstract void setIgnoredMacroNames(@NotNull final Collection<String> names);
+
+  public abstract void addIgnoredMacro(@NotNull final String name);
+
+  public abstract boolean isIgnoredMacroName(@NotNull final String macro);
 
   public abstract void removeAllMacros();
 }

@@ -375,7 +375,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
         for (Iterator it = macros2invalidate.iterator(); it.hasNext();) {
           final String macro = (String)it.next();
           final String value = pathMacros.getValue(macro);
-          if (null == value || value.trim().length() == 0) {
+          if ((null == value || value.trim().length() == 0) && !pathMacros.isIgnoredMacroName(macro)) {
             it.remove();
           }
         }

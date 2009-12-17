@@ -151,7 +151,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
         final List<SettingsWrapper> settings = getSettings();
         final List<SettingsWrapper> toRemove = new ArrayList<SettingsWrapper>();
 
-        for (int i = min; i <= max; i++) {
+        for (int i = min; i <= max && i < settings.size(); i++) {
           toRemove.add(settings.get(i));
         }
 
