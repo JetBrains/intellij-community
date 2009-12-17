@@ -497,7 +497,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       Element element = (Element)o1;
 
       TemplateImpl template = readTemplateFromElement(isDefault, groupName, element);
-      boolean doNotRegister = isDefault && (myDeletedTemplates.contains(TemplateKey.keyOf(template)) || myTemplates.containsKey(template.getKey()));
+      boolean doNotRegister = isDefault && (myDeletedTemplates.contains(TemplateKey.keyOf(template)) || myTemplatesById.containsKey(template.getId()));
 
       if(!doNotRegister) {
         created.put(template.getKey(), template);
