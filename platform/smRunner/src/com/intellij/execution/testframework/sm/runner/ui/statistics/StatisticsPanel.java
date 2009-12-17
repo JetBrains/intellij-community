@@ -158,7 +158,7 @@ public class StatisticsPanel implements DataProvider {
   }
 
   public Object getData(@NonNls final String dataId) {
-    if (SM_TEST_RUNNER_STATISTICS.getName().equals(dataId)) {
+    if (SM_TEST_RUNNER_STATISTICS.is(dataId)) {
       return this;
     }
     return TestsUIUtil.getData(getSelectedItem(), dataId, myFrameworkRunningModel);

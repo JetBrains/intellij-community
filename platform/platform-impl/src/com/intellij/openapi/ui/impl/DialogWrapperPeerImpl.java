@@ -906,7 +906,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
       public Object getData(@NonNls String dataId) {
         final DialogWrapper wrapper = myDialogWrapper.get();
-        return PlatformDataKeys.UI_DISPOSABLE.getName().equals(dataId) ? wrapper.getDisposable() : null;
+        return PlatformDataKeys.UI_DISPOSABLE.is(dataId) ? wrapper.getDisposable() : null;
       }
     }
 

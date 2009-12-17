@@ -82,10 +82,10 @@ public class RepositoryChangesBrowser extends ChangesBrowser implements DataProv
       return myUseCase;
     }
 
-    else if (VcsDataKeys.SELECTED_CHANGES.getName().equals(dataId)) {
+    else if (VcsDataKeys.SELECTED_CHANGES.is(dataId)) {
       final List<Change> list = myViewer.getSelectedChanges();
       return list.toArray(new Change [list.size()]);
-    } else if (VcsDataKeys.CHANGE_LEAD_SELECTION.getName().equals(dataId)) {
+    } else if (VcsDataKeys.CHANGE_LEAD_SELECTION.is(dataId)) {
       final Change highestSelection = myViewer.getHighestLeadSelection();
       return (highestSelection == null) ? new Change[]{} : new Change[] {highestSelection};
     } else {

@@ -75,13 +75,13 @@ public class GridCellImpl implements GridCell, Disposable {
     myTabs = new JBTabsImpl(myContext.getProject(), myContext.getActionManager(), myContext.getFocusManager(), container).setDataProvider(new DataProvider() {
       @Nullable
       public Object getData(@NonNls final String dataId) {
-        if (ViewContext.CONTENT_KEY.getName().equals(dataId)) {
+        if (ViewContext.CONTENT_KEY.is(dataId)) {
           TabInfo target = myTabs.getTargetInfo();
           if (target != null) {
             return new Content[]{getContentFor(target)};
           }
         }
-        else if (ViewContext.CONTEXT_KEY.getName().equals(dataId)) {
+        else if (ViewContext.CONTEXT_KEY.is(dataId)) {
           return myContext;
         }
 
@@ -250,10 +250,10 @@ public class GridCellImpl implements GridCell, Disposable {
 
     @Nullable
     public Object getData(@NonNls final String dataId) {
-      if (ViewContext.CONTENT_KEY.getName().equals(dataId)) {
+      if (ViewContext.CONTENT_KEY.is(dataId)) {
         return new Content[]{myContent};
       }
-      else if (ViewContext.CONTEXT_KEY.getName().equals(dataId)) {
+      else if (ViewContext.CONTEXT_KEY.is(dataId)) {
         return myContext;
       }
       return null;
