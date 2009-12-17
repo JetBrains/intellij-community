@@ -102,16 +102,18 @@ public class RootsToWorkingCopies implements VcsListener {
     WorkingCopy workingCopy = null;
     try {
       final File workingCopyRoot = SVNWCUtil.getWorkingCopyRoot(new File(root.getPath()), true);
-      SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
-      try {
+      if (workingCopyRoot != null) {
+        SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
+        try {
           wcAccess.probeOpen(workingCopyRoot, false, 0);
           SVNEntry entry = wcAccess.getVersionedEntry(workingCopyRoot, false);
           final SVNURL url = entry.getSVNURL();
           if (url != null) {
-              workingCopy = new WorkingCopy(workingCopyRoot, url);
+            workingCopy = new WorkingCopy(workingCopyRoot, url);
           }
-      } finally {
+        } finally {
           wcAccess.close();
+        }
       }
     }
     catch (SVNException e) {
