@@ -49,7 +49,7 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   public abstract VirtualFile findFileByIoFile(IFile file);
 
   @Nullable
-  public abstract VirtualFile refreshAndFindFileByIoFile(File file);
+  public abstract VirtualFile refreshAndFindFileByIoFile(@NotNull File file);
 
   @Nullable
   public abstract VirtualFile refreshAndFindFileByIoFile(final IFile ioFile);
