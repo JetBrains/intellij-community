@@ -1209,7 +1209,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
         return true;
       }
     }
-    return false;
+    return fromLoader != null? fromLoader.visibleClasses().contains(refType) : false;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
