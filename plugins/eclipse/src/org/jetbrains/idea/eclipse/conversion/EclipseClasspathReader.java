@@ -29,6 +29,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
@@ -296,6 +297,14 @@ public class EclipseClasspathReader {
     Library lib = tablesRegistrar.getLibraryTable().getLibraryByName(name);
     if (lib == null) {
       lib = tablesRegistrar.getLibraryTable(myProject).getLibraryByName(name);
+    }
+    if (lib == null) {
+      for (LibraryTable table : tablesRegistrar.getCustomLibraryTables()) {
+        lib = table.getLibraryByName(name);
+        if (lib != null) {
+          break;
+        }
+      }
     }
     if (lib != null) {
       rootModel.addLibraryEntry(lib).setExported(exported);
