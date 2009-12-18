@@ -47,9 +47,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.util.Function;
-import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -264,6 +264,8 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
           final Element classpathElement = JDOMUtil.loadDocument(classpathFile).getRootElement();
           classpathReader.readClasspath(rootModel, unknownLibraries, unknownJdks, usedVariables, refsToModules,
                                                                   getParameters().converterOptions.testPattern, classpathElement);
+        } else {
+          EclipseClasspathReader.setupOutput(rootModel, path + "/bin");
         }
         ClasspathStorage.setStorageType(rootModel,
                                       getParameters().linkConverted ? EclipseClasspathStorageProvider.ID : ClasspathStorage.DEFAULT_STORAGE);

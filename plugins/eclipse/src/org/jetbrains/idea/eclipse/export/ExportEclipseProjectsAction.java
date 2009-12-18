@@ -39,10 +39,7 @@ import org.jetbrains.idea.eclipse.EclipseBundle;
 import org.jetbrains.idea.eclipse.EclipseXml;
 import org.jetbrains.idea.eclipse.IdeaXml;
 import org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider;
-import org.jetbrains.idea.eclipse.conversion.ConversionException;
-import org.jetbrains.idea.eclipse.conversion.DotProjectFileHelper;
-import org.jetbrains.idea.eclipse.conversion.EclipseClasspathWriter;
-import org.jetbrains.idea.eclipse.conversion.EclipseUserLibrariesHelper;
+import org.jetbrains.idea.eclipse.conversion.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -115,7 +112,7 @@ public class ExportEclipseProjectsAction extends AnAction implements DumbAware {
             EclipseJDOMUtil.output(new Document(classpathEleemnt), classpathFile, project);
 
             final Element ideaSpecific = new Element(IdeaXml.COMPONENT_TAG);
-            if (classpathWriter.writeIDEASpecificClasspath(ideaSpecific)) {
+            if (IdeaSpecificSettings.writeIDEASpecificClasspath(ideaSpecific, model)) {
               final File emlFile = new File(storageRoot, module.getName() + EclipseXml.IDEA_SETTINGS_POSTFIX);
               if (!FileUtil.createIfDoesntExist(emlFile)) continue;
               EclipseJDOMUtil.output(new Document(ideaSpecific), emlFile, project);
