@@ -15,16 +15,20 @@
  */
 package git4idea.vfs;
 
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsVFSListener;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.GitFileUtils;
 import git4idea.i18n.GitBundle;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -71,25 +75,42 @@ public class GitVFSListener extends VcsVFSListener {
    * {@inheritDoc}
    */
   protected void performAdding(final Collection<VirtualFile> addedFiles, final Map<VirtualFile, VirtualFile> copyFromMap) {
-    Map<VirtualFile, List<VirtualFile>> sortedFiles;
+    final Map<VirtualFile, List<VirtualFile>> sortedFiles;
     try {
       sortedFiles = GitUtil.sortFilesByGitRoot(addedFiles, true);
     }
     catch (VcsException e) {
-      ((GitVcs)myVcs).showMessages(e.getMessage());
+      gitVcs().showMessages(e.getMessage());
       return;
     }
-    // note that copied files are not processed because they are included into added files.
-    for (Map.Entry<VirtualFile, List<VirtualFile>> e : sortedFiles.entrySet()) {
-      try {
-        final VirtualFile root = e.getKey();
-        GitFileUtils.addFiles(myProject, root, e.getValue());
-        GitUtil.markFilesDirty(myProject, e.getValue());
+    gitVcs().runInBackground(new Task.Backgroundable(myProject, GitBundle.getString("add.adding")) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        // note that copied files are not processed because they are included into added files.
+        for (Map.Entry<VirtualFile, List<VirtualFile>> e : sortedFiles.entrySet()) {
+          try {
+            final VirtualFile root = e.getKey();
+            indicator.setText(root.getPresentableUrl());
+            GitFileUtils.addFiles(myProject, root, e.getValue());
+            GitUtil.markFilesDirty(myProject, e.getValue());
+          }
+          catch (final VcsException ex) {
+            UIUtil.invokeLaterIfNeeded(new Runnable() {
+              public void run() {
+                gitVcs().showMessages(ex.getMessage());
+              }
+            });
+          }
+        }
       }
-      catch (VcsException ex) {
-        ((GitVcs)myVcs).showMessages(ex.getMessage());
-      }
-    }
+    });
+  }
+
+  /**
+   * @return casted vcs instance
+   */
+  private GitVcs gitVcs() {
+    return ((GitVcs)myVcs);
   }
 
   /**
@@ -98,25 +119,34 @@ public class GitVFSListener extends VcsVFSListener {
    * @param addedFiles the added files
    */
   private void performAdding(Collection<FilePath> addedFiles) {
-    Map<VirtualFile, List<FilePath>> sortedFiles;
+    final Map<VirtualFile, List<FilePath>> sortedFiles;
     try {
       sortedFiles = GitUtil.sortFilePathsByGitRoot(addedFiles, true);
     }
     catch (VcsException e) {
-      ((GitVcs)myVcs).showMessages(e.getMessage());
+      gitVcs().showMessages(e.getMessage());
       return;
     }
-    // note that copied files are not processed because they are included into added files.
-    for (Map.Entry<VirtualFile, List<FilePath>> e : sortedFiles.entrySet()) {
-      try {
-        final VirtualFile root = e.getKey();
-        GitFileUtils.addPaths(myProject, root, e.getValue());
-        GitUtil.markFilesDirty(myProject, e.getValue());
+    gitVcs().runInBackground(new Task.Backgroundable(myProject, GitBundle.getString("add.adding")) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        for (Map.Entry<VirtualFile, List<FilePath>> e : sortedFiles.entrySet()) {
+          try {
+            final VirtualFile root = e.getKey();
+            indicator.setText(root.getPresentableUrl());
+            GitFileUtils.addPaths(myProject, root, e.getValue());
+            GitUtil.markFilesDirty(myProject, e.getValue());
+          }
+          catch (final VcsException ex) {
+            UIUtil.invokeLaterIfNeeded(new Runnable() {
+              public void run() {
+                gitVcs().showMessages(ex.getMessage());
+              }
+            });
+          }
+        }
       }
-      catch (VcsException ex) {
-        ((GitVcs)myVcs).showMessages(ex.getMessage());
-      }
-    }
+    });
   }
 
   /**
@@ -144,24 +174,34 @@ public class GitVFSListener extends VcsVFSListener {
    * {@inheritDoc}
    */
   protected void performDeletion(final List<FilePath> filesToDelete) {
-    Map<VirtualFile, List<FilePath>> sortedFiles;
+    final Map<VirtualFile, List<FilePath>> sortedFiles;
     try {
       sortedFiles = GitUtil.sortFilePathsByGitRoot(filesToDelete, true);
     }
     catch (VcsException e) {
-      ((GitVcs)myVcs).showMessages(e.getMessage());
+      gitVcs().showMessages(e.getMessage());
       return;
     }
-    for (Map.Entry<VirtualFile, List<FilePath>> e : sortedFiles.entrySet()) {
-      try {
-        final VirtualFile root = e.getKey();
-        GitFileUtils.delete(myProject, root, e.getValue());
-        GitUtil.markFilesDirty(myProject, e.getValue());
+    gitVcs().runInBackground(new Task.Backgroundable(myProject, GitBundle.getString("remove.removing")) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        for (Map.Entry<VirtualFile, List<FilePath>> e : sortedFiles.entrySet()) {
+          try {
+            final VirtualFile root = e.getKey();
+            indicator.setText(root.getPresentableUrl());
+            GitFileUtils.delete(myProject, root, e.getValue());
+            GitUtil.markFilesDirty(myProject, e.getValue());
+          }
+          catch (final VcsException ex) {
+            UIUtil.invokeLaterIfNeeded(new Runnable() {
+              public void run() {
+                gitVcs().showMessages(ex.getMessage());
+              }
+            });
+          }
+        }
       }
-      catch (VcsException ex) {
-        ((GitVcs)myVcs).showMessages(ex.getMessage());
-      }
-    }
+    });
   }
 
   /**
