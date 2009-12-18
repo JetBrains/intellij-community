@@ -39,8 +39,10 @@ public class GitMergeTool extends BasicAction {
    * {@inheritDoc}
    */
   @Override
-  public void perform(@NotNull Project project, GitVcs vcs, @NotNull List<VcsException> exceptions, @NotNull VirtualFile[] affectedFiles)
-    throws VcsException {
+  public boolean perform(@NotNull Project project,
+                         GitVcs vcs,
+                         @NotNull List<VcsException> exceptions,
+                         @NotNull VirtualFile[] affectedFiles) {
     saveAll();
     // ensure that all selected files actually has unresolved conflicts
     ChangeListManager changes = ChangeListManager.getInstance(project);
@@ -48,11 +50,14 @@ public class GitMergeTool extends BasicAction {
       Change change = changes.getChange(file);
       if (change != null && change.getFileStatus() != FileStatus.MERGED_WITH_CONFLICTS) {
         File f = new File(file.getPath());
-        throw new VcsException(GitBundle.message("merge.is.not.needed", f.getAbsolutePath()));
+        //noinspection ThrowableInstanceNeverThrown
+        exceptions.add(new VcsException(GitBundle.message("merge.is.not.needed", f.getAbsolutePath())));
+        return true;
       }
     }
     // perform merge
     AbstractVcsHelper.getInstance(project).showMergeDialog(Arrays.asList(affectedFiles), vcs.getMergeProvider());
+    return false;
   }
 
   /**
