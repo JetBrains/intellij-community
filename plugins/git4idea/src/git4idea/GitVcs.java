@@ -20,6 +20,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.progress.BackgroundTaskQueue;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
@@ -80,6 +82,9 @@ public class GitVcs extends AbstractVcs {
    * Vcs name
    */
   @NonNls public static final String NAME = "Git";
+  /**
+   * The git vcs key
+   */
   private static final VcsKey ourKey = createKey(NAME);
   /**
    * change provider
@@ -156,11 +161,11 @@ public class GitVcs extends AbstractVcs {
   /**
    * The dispatcher object for root events
    */
-  private EventDispatcher<GitRootsListener> myRootListeners = EventDispatcher.create(GitRootsListener.class);
+  private final EventDispatcher<GitRootsListener> myRootListeners = EventDispatcher.create(GitRootsListener.class);
   /**
    * The dispatcher object for git configuration events
    */
-  private EventDispatcher<GitConfigListener> myConfigListeners = EventDispatcher.create(GitConfigListener.class);
+  private final EventDispatcher<GitConfigListener> myConfigListeners = EventDispatcher.create(GitConfigListener.class);
   /**
    * Tracker for ignored files
    */
@@ -169,6 +174,10 @@ public class GitVcs extends AbstractVcs {
    * Configuration file tracker
    */
   private GitConfigTracker myConfigTracker;
+  /**
+   * The queue that is used to schedule background task from actions
+   */
+  private final BackgroundTaskQueue myTaskQueue;
 
   private final TreeDiffProvider myTreeDiffProvider;
 
@@ -204,6 +213,16 @@ public class GitVcs extends AbstractVcs {
     myOutgoingChangesProvider = new GitOutgoingChangesProvider(myProject);
     myTreeDiffProvider = new GitTreeDiffProvider(myProject);
     myCommitAndPushExecutor = new GitCommitAndPushExecutor(gitCheckinEnvironment);
+    myTaskQueue = new BackgroundTaskQueue(myProject, GitBundle.getString("task.queue.title"));
+  }
+
+  /**
+   * Run task in background using the common queue (per project)
+   *
+   * @param task the task to run
+   */
+  public void runInBackground(Task.Backgroundable task) {
+    myTaskQueue.run(task);
   }
 
   /**
@@ -638,6 +657,7 @@ public class GitVcs extends AbstractVcs {
   }
 
   private final GitOutgoingChangesProvider myOutgoingChangesProvider;
+
   @Override
   protected VcsOutgoingChangesProvider getOutgoingProviderImpl() {
     return myOutgoingChangesProvider;
