@@ -548,7 +548,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           myHolder.add(HighlightNamesUtil.highlightMethodName(method, element, false));
         }
       }
-      catch (IndexNotReadyException e) {
+      catch (IndexNotReadyException ignored) {
       }
     }
     else if (parent instanceof PsiImportStatement && ((PsiImportStatement)parent).isOnDemand()) {
@@ -772,7 +772,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
       if (parent instanceof PsiMethodCallExpression && (methodCall = (PsiMethodCallExpression)parent).getMethodExpression() == expression) {
         myHolder.addAll(HighlightMethodUtil.checkMethodCall(methodCall, myResolveHelper));
-        if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkTopLevelMethodCallIntersectionTypeMaximalUpperBound(methodCall, expression));
       }
     }
 

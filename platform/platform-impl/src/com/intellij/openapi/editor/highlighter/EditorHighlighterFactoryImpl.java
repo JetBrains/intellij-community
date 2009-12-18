@@ -79,11 +79,13 @@ public class EditorHighlighterFactoryImpl extends EditorHighlighterFactory {
 
   @Nullable
   private static LanguageFileType substituteFileType(Language language, VirtualFile vFile, Project project) {
-    final Language substLanguage = LanguageSubstitutors.INSTANCE.substituteLanguage(language, vFile, project);
-    if (substLanguage != language) {
-      final FileType fileType = substLanguage.getAssociatedFileType();
-      if (fileType instanceof LanguageFileType) {
-        return (LanguageFileType) fileType;
+    if (vFile != null && project != null) {
+      final Language substLanguage = LanguageSubstitutors.INSTANCE.substituteLanguage(language, vFile, project);
+      if (substLanguage != language) {
+        final FileType fileType = substLanguage.getAssociatedFileType();
+        if (fileType instanceof LanguageFileType) {
+          return (LanguageFileType) fileType;
+        }
       }
     }
     return null;
