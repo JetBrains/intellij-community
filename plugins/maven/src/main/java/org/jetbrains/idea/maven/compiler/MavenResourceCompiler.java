@@ -147,7 +147,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
           MavenProject mavenProject = mavenProjectManager.findProject(eachModule);
           if (mavenProject == null) continue;
 
-          Properties properties = loadFilters(context, mavenProject);
+          Properties properties = loadPropertiesAndFilters(context, mavenProject);
 
           List<String> nonFilteredExtensions = collectNonFilteredExtensions(mavenProject);
           String escapeString = mavenProject.findPluginConfigurationValue("org.apache.maven.plugins",
@@ -202,8 +202,10 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
     return sorted.hashCode();
   }
 
-  private static Properties loadFilters(CompileContext context, MavenProject mavenProject) {
+  private static Properties loadPropertiesAndFilters(CompileContext context, MavenProject mavenProject) {
     Properties properties = new Properties();
+    properties.putAll(mavenProject.getProperties());
+    
     for (String each : mavenProject.getFilters()) {
       try {
         FileInputStream in = new FileInputStream(each);
@@ -509,7 +511,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
     private LightVirtualFile myFile;
 
     private FakeProcessingItem() {
-      myFile = new LightVirtualFile("fooBar");
+      myFile = new LightVirtualFile(this.getClass().getName());
     }
 
     @NotNull
@@ -523,52 +525,50 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
   }
 
   private static class MyValididtyState implements ValidityState {
-    private final TimestampValidityState myTimestampState;
+    private final long mySourceFileTimestamp;
     private volatile long myOutputFileTimestamp;
     private final boolean myFiltered;
     private final long myPropertiesHashCode;
     private final String myEscapeString;
 
     public static MyValididtyState load(DataInput in) throws IOException {
-      return new MyValididtyState(TimestampValidityState.load(in), in.readLong(), in.readBoolean(), in.readLong(), in.readUTF());
-    }
-
-    public MyValididtyState(long sourceFileTimestamp,
-                            long outputFileTimestamp,
-                            boolean isFiltered,
-                            long propertiesHashCode,
-                            String escapeString) {
-      this(new TimestampValidityState(sourceFileTimestamp), outputFileTimestamp, isFiltered, propertiesHashCode, escapeString);
+      return new MyValididtyState(in.readLong(), in.readLong(), in.readBoolean(), in.readLong(), in.readUTF());
     }
 
     public void setOutputFileTimestamp(long outputFileTimestamp) {
       myOutputFileTimestamp = outputFileTimestamp;
     }
 
-    private MyValididtyState(TimestampValidityState timestampState,
+    private MyValididtyState(long sourceFileTimestamp,
                              long outputFileTimestamp,
                              boolean isFiltered,
                              long propertiesHashCode,
                              String escapeString) {
-      myTimestampState = timestampState;
+      mySourceFileTimestamp = sourceFileTimestamp;
       myOutputFileTimestamp = outputFileTimestamp;
       myFiltered = isFiltered;
       myPropertiesHashCode = propertiesHashCode;
       myEscapeString = escapeString;
     }
 
+    @Override
+    public String toString() {
+      return mySourceFileTimestamp + " " + myOutputFileTimestamp + " " + myFiltered + " " + myPropertiesHashCode + " " + myEscapeString;
+    }
+
     public boolean equalsTo(ValidityState otherState) {
       if (!(otherState instanceof MyValididtyState)) return false;
-      MyValididtyState state = (MyValididtyState)otherState;
-      return myTimestampState.equalsTo(state.myTimestampState)
-             && myOutputFileTimestamp == state.myOutputFileTimestamp
-             && myFiltered == state.myFiltered
-             && myPropertiesHashCode == state.myPropertiesHashCode
-             && Comparing.strEqual(myEscapeString, state.myEscapeString);
+      MyValididtyState that = (MyValididtyState)otherState;
+
+      return mySourceFileTimestamp == that.mySourceFileTimestamp
+             && myOutputFileTimestamp == that.myOutputFileTimestamp
+             && myFiltered == that.myFiltered
+             && myPropertiesHashCode == that.myPropertiesHashCode
+             && Comparing.strEqual(myEscapeString, that.myEscapeString);
     }
 
     public void save(DataOutput out) throws IOException {
-      myTimestampState.save(out);
+      out.writeLong(mySourceFileTimestamp);
       out.writeLong(myOutputFileTimestamp);
       out.writeBoolean(myFiltered);
       out.writeLong(myPropertiesHashCode);
