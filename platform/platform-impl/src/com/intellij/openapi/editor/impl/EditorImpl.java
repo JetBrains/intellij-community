@@ -2269,22 +2269,30 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int columnNumber = pos.column;
     int lineNumber = pos.line;
 
-    if (lineNumber >= myDocument.getLineCount()) {
-      lineNumber = myDocument.getLineCount() - 1;
-    }
-    if (!mySettings.isVirtualSpace()) {
-      if (lineNumber >= 0) {
-        int lineEndOffset = myDocument.getLineEndOffset(lineNumber);
-        int lineEndColumnNumber = calcColumnNumber(lineEndOffset, lineNumber);
-        if (columnNumber > lineEndColumnNumber) {
-          columnNumber = lineEndColumnNumber;
-        }
-      }
-    }
     if (lineNumber < 0) {
       lineNumber = 0;
       columnNumber = 0;
     }
+
+    final int totalLines = myDocument.getLineCount();
+    if (totalLines <= 0) {
+      getCaretModel().moveToOffset(0);
+      return;
+    }
+
+    if (lineNumber >= totalLines) {
+      moveCaretToScreenPos(x, logicalLineToY(totalLines - 1));
+      return;
+    }
+
+    if (!mySettings.isVirtualSpace()) {
+      int lineEndOffset = myDocument.getLineEndOffset(lineNumber);
+      int lineEndColumnNumber = calcColumnNumber(lineEndOffset, lineNumber);
+      if (columnNumber > lineEndColumnNumber) {
+        columnNumber = lineEndColumnNumber;
+      }
+    }
+
     if (!mySettings.isCaretInsideTabs()) {
       int offset = logicalPositionToOffset(new LogicalPosition(lineNumber, columnNumber));
       CharSequence text = myDocument.getCharsSequence();

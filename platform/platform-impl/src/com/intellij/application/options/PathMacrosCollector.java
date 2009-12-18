@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.PathMacroMap;
 import com.intellij.util.NotNullFunction;
 import org.jdom.Element;
@@ -57,6 +58,8 @@ public class PathMacrosCollector extends PathMacroMap {
     collector.substitute(root, true, false, filter, recursiveFilter);
     final HashSet<String> result = new HashSet<String>(collector.myMacroMap.keySet());
     result.removeAll(ourSystemMacroNames);
+    result.removeAll(PathMacrosImpl.getToolMacroNames());
+    result.removeAll(PathMacros.getInstance().getIgnoredMacroNames());
     return result;
   }
 

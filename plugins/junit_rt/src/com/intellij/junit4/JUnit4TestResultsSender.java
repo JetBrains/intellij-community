@@ -55,8 +55,16 @@ public class JUnit4TestResultsSender extends RunListener {
   }
 
   public synchronized void testIgnored(Description description) throws Exception {
-    final Ignore ignoredAnnotation = (Ignore)description.getAnnotation(Ignore.class);
-    final String val = ignoredAnnotation != null ? ignoredAnnotation.value() : null;
+    String val = null;
+    try {
+      final Ignore ignoredAnnotation = (Ignore)description.getAnnotation(Ignore.class);
+      if (ignoredAnnotation != null) {
+        val = ignoredAnnotation.value();
+      }
+    }
+    catch (NoSuchMethodError ignored) {
+      //junit < 4.4
+    }
     testStarted(description);
       stopMeter(description);
       prepareIgnoredPacket(description, val).send();

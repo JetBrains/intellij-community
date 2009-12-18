@@ -16,6 +16,7 @@
 
 package com.intellij.ide.macro;
 
+import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.DataManagerImpl;
@@ -86,6 +87,8 @@ public final class MacroManager {
   }
 
   private void registerMacro(Macro macro) {
+    assert PathMacrosImpl.getToolMacroNames().contains(macro.getName()) : "Macro '" + macro.getName() + "' should be registered in PathMacros!";
+
     myMacrosMap.put(macro.getName(), macro);
   }
 

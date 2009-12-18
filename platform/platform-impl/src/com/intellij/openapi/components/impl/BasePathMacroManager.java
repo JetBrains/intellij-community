@@ -167,11 +167,9 @@ public class BasePathMacroManager extends PathMacroManager {
     }
 
     public Collection<String> getUnknownMacros(final String componentName) {
-      if (componentName == null) {
-        return Collections.unmodifiableSet(myMacroToComponentNames.keySet());
-      } else {
-        return Collections.unmodifiableSet(myComponentNameToMacros.get(componentName));
-      }
+      final Set<String> result = new HashSet<String>();
+      result.addAll(componentName == null ? myMacroToComponentNames.keySet() : myComponentNameToMacros.get(componentName));
+      return Collections.unmodifiableCollection(result);
     }
 
     public void addUnknownMacros(final String componentName, final Collection<String> unknownMacros) {

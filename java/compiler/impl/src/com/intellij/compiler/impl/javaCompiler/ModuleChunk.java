@@ -56,8 +56,10 @@ public class ModuleChunk extends Chunk<Module> {
     super(chunk.getNodes());
     myContext = context;
     for (final Module module : chunk.getNodes()) {
-      final List<VirtualFile> set = moduleToFilesMap.get(module);
-      myModuleToFilesMap.put(module, set == null ? Collections.<VirtualFile>emptyList() : set);
+      final List<VirtualFile> files = moduleToFilesMap.get(module);
+      // Important!!! Collections in the myModuleToFilesMap must be modifiable copies of the corresponding collections
+      // from the moduleToFilesMap. This is needed to support SourceTransforming compilers
+      myModuleToFilesMap.put(module, files == null ? Collections.<VirtualFile>emptyList() : new ArrayList<VirtualFile>(files));
     }
   }
 

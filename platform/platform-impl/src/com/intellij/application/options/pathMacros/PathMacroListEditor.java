@@ -16,12 +16,17 @@
 package com.intellij.application.options.pathMacros;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.text.StringTokenizer;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author dsl
@@ -32,6 +37,7 @@ public class PathMacroListEditor {
   JButton myRemoveButton;
   JButton myEditButton;
   JScrollPane myScrollPane;
+  private JTextField myIgnoredVariables;
   private PathMacroTable myPathMacroTable;
 
   public PathMacroListEditor() {
@@ -56,12 +62,39 @@ public class PathMacroListEditor {
         myPathMacroTable.editMacro();
       }
     });
+
+    fillIgnoredVariables();
+  }
+
+  private void fillIgnoredVariables() {
+    final Collection<String> ignored = PathMacros.getInstance().getIgnoredMacroNames();
+    myIgnoredVariables.setText(StringUtil.join(ignored, ";"));
+  }
+
+  private boolean isIgnoredModified() {
+    final Collection<String> ignored = PathMacros.getInstance().getIgnoredMacroNames();
+    return !parseIgnoredVariables().equals(ignored);
+  }
+
+  private Collection<String> parseIgnoredVariables() {
+    final String s = myIgnoredVariables.getText();
+    final List<String> ignored = new ArrayList<String>();
+    final StringTokenizer st = new StringTokenizer(s, ";");
+    while (st.hasMoreElements()) {
+      ignored.add(st.nextElement().trim());
+    }
+
+    return ignored;
   }
 
   public void commit() throws ConfigurationException {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         myPathMacroTable.commit();
+
+        final Collection<String> ignored = parseIgnoredVariables();
+        final PathMacros instance = PathMacros.getInstance();
+        instance.setIgnoredMacroNames(ignored);
       }
     });
   }
@@ -72,10 +105,11 @@ public class PathMacroListEditor {
 
   public void reset() {
     myPathMacroTable.reset();
+    fillIgnoredVariables();
   }
 
   public boolean isModified() {
-    return myPathMacroTable.isModified();
+    return myPathMacroTable.isModified() || isIgnoredModified();
   }
 
   private void createUIComponents() {
