@@ -45,6 +45,7 @@ import org.jetbrains.idea.maven.dom.MavenPropertyResolver;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenResource;
+import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -150,10 +151,9 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
           Properties properties = loadFilters(context, mavenProject);
 
           List<String> nonFilteredExtensions = collectNonFilteredExtensions(mavenProject);
-          String escapeString = mavenProject.findPluginConfigurationValue("org.apache.maven.plugins",
-                                                                          "maven-resources-plugin",
-                                                                          "escapeString");
-          if (escapeString == null) escapeString = "\\";
+          String escapeString = MavenJDOMUtil.findChildValueByPath(mavenProject.getPluginConfiguration("org.apache.maven.plugins",
+                                                                                                    "maven-resources-plugin"),
+                                                                "escapeString", "\\");
 
           long propertiesHashCode = calculateHashCode(properties);
 
@@ -179,18 +179,12 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
 
   private static List<String> collectNonFilteredExtensions(MavenProject mavenProject) {
     List<String> result = new ArrayList<String>(Arrays.asList("jpg", "jpeg", "gif", "bmp", "png"));
-    Element extensionsElement = mavenProject.findPluginConfigurationElement("org.apache.maven.plugins",
-                                                                            "maven-resources-plugin",
-                                                                            "nonFilteredFileExtensions");
-    if (extensionsElement != null) {
-      for (Element each : (Iterable<? extends Element>)extensionsElement.getChildren("nonFilteredFileExtension")) {
-        String value = each.getValue();
-        if (!StringUtil.isEmptyOrSpaces(value)) {
-          result.add(value);
-        }
-      }
-    }
+    Element config = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin");
+    if (config == null) return result;
 
+    for (String each : MavenJDOMUtil.findChildrenValuesByPath(config, "nonFilteredFileExtensions", "nonFilteredFileExtension")) {
+      result.add(each);
+    }
     return result;
   }
 

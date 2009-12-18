@@ -924,7 +924,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     public void updatePlugins(MavenProject mavenProject) {
-      List<MavenPlugin> plugins = mavenProject.getPlugins();
+      List<MavenPlugin> plugins = mavenProject.getDeclaredPlugins();
+
       for (PluginNode each : new ArrayList<PluginNode>(myPluginNodes)) {
         if (plugins.contains(each.getPlugin())) {
           each.updatePlugin();

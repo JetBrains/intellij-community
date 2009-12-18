@@ -424,6 +424,17 @@ public abstract class MavenTestCase extends UsefulTestCase {
     }
   }
 
+  protected <T> void assertContain(List<? extends T> actual, T... expected) {
+    List<T> expectedList = Arrays.asList(expected);
+    assertTrue("expected: " + expectedList + "\n" + "actual: " + actual.toString(), actual.containsAll(expectedList));
+  }
+
+  protected <T> void assertDoNotContain(List<T> actual, T... expected) {
+    List<T> actualCopy = new ArrayList<T>(actual);
+    actualCopy.removeAll(Arrays.asList(expected));
+    assertTrue(actual.toString(), actualCopy.size() == actual.size());
+  }
+
   protected boolean ignore() {
     System.out.println("Ignored: " + getClass().getSimpleName() + "." + getName());
     return true;

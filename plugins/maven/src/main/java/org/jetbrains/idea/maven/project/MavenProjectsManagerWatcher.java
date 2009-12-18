@@ -136,7 +136,7 @@ public class MavenProjectsManagerWatcher {
     getDocumentEventMulticaster().addDocumentListener(myDocumentListener,myBusConnection);
 
     final MavenGeneralSettings.Listener mySettingsPathsChangesListener = new MavenGeneralSettings.Listener() {
-      public void pathChanged() {
+      public void pathsChanged() {
         updateSettingsFilePointers();
         onSettingsChange();
       }

@@ -15,7 +15,9 @@
  */
 package org.jetbrains.idea.maven.utils;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.indices.IndicesBundle;
@@ -124,7 +126,8 @@ public class MavenArtifactUtil {
 
       InputStream is = jar.getInputStream(entry);
       try {
-        return new MavenPluginInfo(is);
+        byte[] bytes = FileUtil.loadBytes(is);
+        return new MavenPluginInfo(bytes);
       }
       finally {
         is.close();
