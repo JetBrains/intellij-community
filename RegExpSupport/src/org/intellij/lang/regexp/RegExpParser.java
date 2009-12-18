@@ -18,13 +18,19 @@ package org.intellij.lang.regexp;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.StringEscapesTokenTypes;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings({ "RedundantIfStatement" })
-class RegExpParser implements PsiParser {
+public class RegExpParser implements PsiParser {
+  private boolean myAllowDanglingMetacharacters;
+
+  public void setAllowDanglingMetacharacters(boolean allowDanglingMetacharacters) {
+    myAllowDanglingMetacharacters = allowDanglingMetacharacters;
+  }
+
     @NotNull
     public ASTNode parse(IElementType root, PsiBuilder builder) {
 //        builder.setDebugMode(true);
@@ -123,6 +129,10 @@ class RegExpParser implements PsiParser {
 
         if (builder.getTokenType() == RegExpTT.LBRACE) {
             builder.advanceLexer();
+            if (builder.getTokenType() != RegExpTT.NUMBER && myAllowDanglingMetacharacters) {
+                marker.done(RegExpTT.CHARACTER);
+                return true;
+            }
             checkMatches(builder, RegExpTT.NUMBER, "Number expected");
             if (builder.getTokenType() == RegExpTT.RBRACE) {
                 builder.advanceLexer();
@@ -157,7 +167,7 @@ class RegExpParser implements PsiParser {
         return true;
     }
 
-    private void parseQuantifierType(PsiBuilder builder) {
+    private static void parseQuantifierType(PsiBuilder builder) {
         if (builder.getTokenType() == RegExpTT.PLUS) {
             builder.advanceLexer();
         } else if (builder.getTokenType() == RegExpTT.QUEST) {
@@ -344,14 +354,19 @@ class RegExpParser implements PsiParser {
         } else if (type == RegExpTT.CLASS_BEGIN) {
             marker.drop();
             return parseClass(builder);
-        } else {
+        }
+        else if (type == RegExpTT.LBRACE && myAllowDanglingMetacharacters) {
+            builder.advanceLexer();
+            marker.done(RegExpElementTypes.CHAR);
+        }
+        else {
             marker.drop();
             return null;
         }
         return marker;
     }
 
-    private void parseProperty(PsiBuilder builder) {
+    private static void parseProperty(PsiBuilder builder) {
         checkMatches(builder, RegExpTT.PROPERTY, "'\\p' expected");
 
         checkMatches(builder, RegExpTT.LBRACE, "Character category expected");

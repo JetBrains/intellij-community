@@ -26,9 +26,12 @@ import com.intellij.psi.StringEscapesTokenTypes;
     // as well, but is currently unfinished as it requires to tweak more places than just the lexer. 
     private boolean xmlSchemaMode;
 
-    _RegExLexer(boolean xmlSchemaMode) {
+    private boolean allowDanglingMetacharacters;
+
+    _RegExLexer(boolean xmlSchemaMode, boolean allowDanglingMetacharacters) {
       this((java.io.Reader)null);
-      this.xmlSchemaMode = xmlSchemaMode;      
+      this.xmlSchemaMode = xmlSchemaMode;
+      this.allowDanglingMetacharacters = allowDanglingMetacharacters;
     }
 
     private void yypushstate(int state) {
@@ -157,7 +160,12 @@ HEX_CHAR=[0-9a-fA-F]
   ","                 { return RegExpTT.COMMA;  }
 
   {RBRACE}            { yypopstate(); return RegExpTT.RBRACE; }
-  {ANY}               { return RegExpTT.BAD_CHARACTER; }
+  {ANY}               { if (allowDanglingMetacharacters) {
+                          yypopstate(); yypushback(1); 
+                        } else {
+                          return RegExpTT.BAD_CHARACTER;
+                        }
+                      }
 }
 
 "-"                   { return RegExpTT.MINUS; }
