@@ -19,7 +19,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.VcsDirtyScope;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
@@ -165,7 +168,7 @@ class ChangeCollector {
               if (c.getBeforeRevision() != null) {
                 addToPaths(rootPath, paths, c.getBeforeRevision().getFile());
               }
-            case MODIFICATION:  
+            case MODIFICATION:
             default:
               // do nothing
           }
@@ -277,6 +280,7 @@ class ChangeCollector {
     handler.setSilent(true);
     handler.setNoSSH(true);
     handler.setStdoutSuppressed(true);
+    handler.endOptions();
     handler.addRelativePaths(dirtyPaths);
     // run handler and collect changes
     parseFiles(handler.run());
