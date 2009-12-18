@@ -29,7 +29,9 @@ import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.EventObject;
 import java.util.Iterator;
 import java.util.List;
 
@@ -111,6 +113,15 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
       });
 
       displayTypeColumn.setCellEditor(new ComboBoxTableRenderer<NotificationDisplayType>(NotificationDisplayType.values()) {
+        @Override
+        public boolean isCellEditable(EventObject event) {
+          if (event instanceof MouseEvent) {
+              return ((MouseEvent)event).getClickCount() >= 1;
+          }
+
+          return false;
+        }
+
         @Override
         protected String getTextFor(@NotNull NotificationDisplayType value) {
           return value.getTitle();
