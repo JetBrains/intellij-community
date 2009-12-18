@@ -424,6 +424,12 @@ public abstract class GitHandler {
     }
   }
 
+  /**
+   * Add file path parameters. The parameters are made relative to the working directory
+   *
+   * @param files a parameters to add
+   * @throws IllegalArgumentException if some path is not under root.
+   */
   public void addRelativePathsForFiles(@NotNull final Collection<File> files) {
     checkNotStarted();
     for (File file : files) {

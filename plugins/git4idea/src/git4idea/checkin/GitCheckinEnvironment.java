@@ -417,6 +417,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       try {
         GitSimpleHandler handler = new GitSimpleHandler(project, root, GitHandler.RM);
         handler.addParameters("--ignore-unmatch");
+        handler.endOptions();
         handler.addRelativePaths(removed);
         handler.setNoSSH(true);
         handler.run();

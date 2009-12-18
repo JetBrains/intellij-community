@@ -46,6 +46,7 @@ public class GitFileUtils {
    */
   public static String delete(Project project, VirtualFile root, List<FilePath> files) throws VcsException {
     GitSimpleHandler handler = new GitSimpleHandler(project, root, GitHandler.RM);
+    handler.endOptions();
     handler.addRelativePaths(files);
     handler.setNoSSH(true);
     return handler.run();
@@ -62,6 +63,7 @@ public class GitFileUtils {
    */
   public static String deleteFiles(Project project, VirtualFile root, List<VirtualFile> files) throws VcsException {
     GitSimpleHandler handler = new GitSimpleHandler(project, root, GitHandler.RM);
+    handler.endOptions();
     handler.addRelativeFiles(files);
     handler.setNoSSH(true);
     return handler.run();
@@ -91,6 +93,7 @@ public class GitFileUtils {
    */
   public static String addFiles(Project project, VirtualFile root, Collection<VirtualFile> files) throws VcsException {
     GitSimpleHandler handler = new GitSimpleHandler(project, root, GitHandler.ADD);
+    handler.endOptions();
     handler.addRelativeFiles(files);
     handler.setNoSSH(true);
     return handler.run();
@@ -120,6 +123,7 @@ public class GitFileUtils {
    */
   public static String addPaths(Project project, VirtualFile root, Collection<FilePath> files) throws VcsException {
     GitSimpleHandler handler = new GitSimpleHandler(project, root, GitHandler.ADD);
+    handler.endOptions();
     handler.addRelativePaths(files);
     handler.setNoSSH(true);
     return handler.run();
