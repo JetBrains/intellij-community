@@ -33,10 +33,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.packageDependencies.DependencyValidationManager;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
-import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.Icons;
 import com.intellij.util.containers.Convertor;
@@ -124,6 +121,28 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     processScopes();
 
     loadStateOrder();
+  }
+
+  @Override
+  protected void checkApply(Set<MyNode> rootNodes, String prefix, String title) throws ConfigurationException {
+    super.checkApply(rootNodes, prefix, title);
+    final Set<String> predefinedScopes = new HashSet<String>();
+    for (CustomScopesProvider scopesProvider : myProject.getExtensions(CustomScopesProvider.CUSTOM_SCOPES_PROVIDER)) {
+      for (NamedScope namedScope : scopesProvider.getCustomScopes()) {
+        predefinedScopes.add(namedScope.getName());
+      }
+    }
+    for (MyNode rootNode : rootNodes) {
+      for (int i = 0; i < rootNode.getChildCount(); i++) {
+        final MyNode node = (MyNode)rootNode.getChildAt(i);
+        final NamedConfigurable scopeConfigurable = node.getConfigurable();
+        final String name = scopeConfigurable.getDisplayName();
+        if (predefinedScopes.contains(name)) {
+          selectNodeInTree(node);
+          throw new ConfigurationException("Scope name equals to predefined one", ProjectBundle.message("rename.scope.title"));
+        }
+      }
+    }
   }
 
   @Override
