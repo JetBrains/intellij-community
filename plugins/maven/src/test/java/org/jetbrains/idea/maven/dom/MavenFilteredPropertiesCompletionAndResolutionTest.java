@@ -252,7 +252,7 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
                                          "foo=${xxx}");
     filter = createProjectSubFile("filters/filter.properties", "xx<caret>x=1");
 
-    assertSearchResultsContain(filter, MavenDomUtil.findPropertyValue(myProject, f, "foo"));
+    assertSearchResultsInclude(filter, MavenDomUtil.findPropertyValue(myProject, f, "foo"));
   }
 
   public void testCompletionAfterOpenBrace() throws Exception {

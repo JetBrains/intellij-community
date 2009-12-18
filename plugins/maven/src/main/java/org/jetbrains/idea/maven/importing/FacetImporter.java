@@ -21,7 +21,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
-import org.jdom.Element;
 import org.jetbrains.idea.maven.project.*;
 
 import java.io.File;
@@ -32,10 +31,6 @@ import java.util.Map;
 
 public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE extends FacetConfiguration, FACET_TYPE_TYPE extends FacetType<FACET_TYPE, FACET_CONFIG_TYPE>>
   extends MavenImporter {
-
-
-  protected final String myPluginGroupID;
-  protected final String myPluginArtifactID;
   protected final FACET_TYPE_TYPE myFacetType;
   protected final String myDefaultFacetName;
 
@@ -43,8 +38,7 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
                        String pluginArtifactID,
                        FACET_TYPE_TYPE type,
                        String defaultFacetName) {
-    myPluginGroupID = pluginGroupID;
-    myPluginArtifactID = pluginArtifactID;
+    super(pluginGroupID, pluginArtifactID);
     myFacetType = type;
     myDefaultFacetName = defaultFacetName;
   }
@@ -172,45 +166,4 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
   protected String getTargetExtension(MavenProject p) {
     return p.getPackaging();
   }
-
-  protected String findConfigValue(MavenProject p, String path) {
-    return findConfigValue(p, path, null);
-  }
-
-  protected String findConfigValue(MavenProject p, String path, String defaultValue) {
-    String result = p.findPluginConfigurationValue(myPluginGroupID, myPluginArtifactID, path);
-    return result == null ? defaultValue : result;
-  }
-
-  protected Element findConfigElement(MavenProject p, String path) {
-    return p.findPluginConfigurationElement(myPluginGroupID, myPluginArtifactID, path);
-  }
-
-  protected Element findConfigElementForArtifact(MavenProject project, MavenArtifact artifact, String path, String configName) {
-    Element element = findConfigElement(project, path);
-    if (element == null) return null;
-
-    for (Element eachChild : (Iterable<Element>)element.getChildren(configName)) {
-      String groupId = findChildElementValue(eachChild, "groupId", null);
-      String artifactId = findChildElementValue(eachChild, "artifactId", null);
-      String classifier = findChildElementValue(eachChild, "classifier", null);
-
-      if (groupId == null || artifactId == null) continue;
-
-      if (groupId.equals(artifact.getGroupId()) && artifactId.equals(artifact.getArtifactId())) {
-        if (classifier == null || classifier.equals(artifact.getClassifier())) {
-          return eachChild;
-        }
-      }
-    }
-
-    return null;
-  }
-
-  protected String findChildElementValue(Element parent, String childName, String defaultValue) {
-    if (parent == null) return defaultValue;
-    Element child = parent.getChild(childName);
-    return child == null ? defaultValue : child.getValue();
-  }
-
 }

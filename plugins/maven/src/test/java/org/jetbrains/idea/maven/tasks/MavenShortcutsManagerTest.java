@@ -16,7 +16,6 @@
 package org.jetbrains.idea.maven.tasks;
 
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 
@@ -196,12 +195,12 @@ public class MavenShortcutsManagerTest extends MavenImportingTestCase {
 
   private void assertKeymapContains(VirtualFile pomFile, String goal) {
     String id = myShortcutsManager.getActionId(pomFile.getPath(), goal);
-    assertTrue("Action " + id + " not found among: \n" + StringUtil.join(getProjectActions(), "\n"), getProjectActions().contains(id));
+    assertContain(getProjectActions(), id);
   }
 
   private void assertKeymapDoesNotContain(VirtualFile pomFile, String goal) {
     String id = myShortcutsManager.getActionId(pomFile.getPath(), goal);
-    assertFalse(getProjectActions().contains(id));
+    assertDoNotContain(getProjectActions(), id);
   }
 
   private List<String> getProjectActions() {

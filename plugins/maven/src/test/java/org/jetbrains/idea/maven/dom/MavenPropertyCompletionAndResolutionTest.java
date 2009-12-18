@@ -742,16 +742,16 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     readWithProfiles("one");
 
     List<String> variants = getCompletionVariants(myProjectPom);
-    assertInclude(variants, "pomProp", "pomProfilesProp", "profilesXmlProp");
-    assertInclude(variants,
+    assertContain(variants, "pomProp", "pomProfilesProp", "profilesXmlProp");
+    assertContain(variants,
                   "parentPomProp",
                   "parentPomProfilesProp",
                   "parentProfilesXmlProp");
-    assertInclude(variants, "artifactId", "project.artifactId", "pom.artifactId");
-    assertInclude(variants, "basedir", "project.basedir", "pom.basedir");
-    assertInclude(variants, "settingsXmlProp");
-    assertInclude(variants, "settings.localRepository");
-    assertInclude(variants, "user.home", "env.TEMP");
+    assertContain(variants, "artifactId", "project.artifactId", "pom.artifactId");
+    assertContain(variants, "basedir", "project.basedir", "pom.basedir");
+    assertContain(variants, "settingsXmlProp");
+    assertContain(variants, "settings.localRepository");
+    assertContain(variants, "user.home", "env.TEMP");
   }
 
   public void testDoNotIncludeCollectionPropertiesInCompletion() throws Exception {
@@ -789,8 +789,8 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
                      "<name>${pro<caret></name>");
 
     List<String> variants = getCompletionVariants(myProjectPom);
-    assertInclude(variants, "project.groupId");
-    assertDoNotInclude(variants, "groupId");
+    assertContain(variants, "project.groupId");
+    assertDoNotContain(variants, "groupId");
   }
   
   public void testCompletingAfterOpenBraceAndSomeTextWithDot() throws Exception {
@@ -800,8 +800,8 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
                      "<name>${project.g<caret></name>");
 
     List<String> variants = getCompletionVariants(myProjectPom);
-    assertInclude(variants, "project.groupId");
-    assertDoNotInclude(variants, "groupId", "project.name");
+    assertContain(variants, "project.groupId");
+    assertDoNotContain(variants, "groupId", "project.name");
   }
 
   public void testDoNotCompleteAfterNonWordCharacter() throws Exception {

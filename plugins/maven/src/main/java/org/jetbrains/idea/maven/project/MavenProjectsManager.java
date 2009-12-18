@@ -682,6 +682,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
           MavenProject each = it.next();
           Object message = it.hasNext() ? null : FORCE_IMPORT_MESSAGE;
           myFoldersResolvingProcessor.scheduleTask(new MavenProjectsProcessorFoldersResolvingTask(each,
+                                                                                                  getGeneralSettings(), 
                                                                                                   getImportingSettings(),
                                                                                                   myProjectsTree,
                                                                                                   message));
