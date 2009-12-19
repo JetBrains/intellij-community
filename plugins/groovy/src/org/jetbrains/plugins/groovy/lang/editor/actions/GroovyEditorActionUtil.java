@@ -45,19 +45,13 @@ public class GroovyEditorActionUtil {
   }
 
   public static boolean isPlainStringLiteral(ASTNode node) {
-    if (!(node.getPsi() instanceof GrLiteral)) {
-      return false;
-    }
     String text = node.getText();
-    return text.length() < 3 && text.equals("''") || text.length() > 3 && !text.substring(0, 3).equals("'''");
+    return text.length() < 3 && text.equals("''") || text.length() > 3 && !text.startsWith("'''");
   }
 
   public static boolean isPlainGString(ASTNode node) {
-    if (!(node.getPsi() instanceof GrLiteral)) {
-      return false;
-    }
     String text = node.getText();
-    return text.length() < 3 && text.equals("\"\"") || text.length() > 3 && !text.substring(0, 3).equals("\"\"\"");
+    return text.length() < 3 && text.equals("\"\"") || text.length() > 3 && !text.startsWith("\"\"\"");
   }
 
   public static boolean isMultilineStringElement(ASTNode node) {
