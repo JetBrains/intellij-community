@@ -26,6 +26,10 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(true);
   }
 
+  public void testSubscribedAssignmentLHS() throws Exception {
+    doTest(true);
+  }
+
   public void testConditionalParenLambda() throws Exception {
     doTest(true);
   }

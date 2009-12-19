@@ -257,6 +257,11 @@ public class ExpressionParsing extends Parsing {
             else {
               checkMatches(PyTokenTypes.RBRACKET, message("PARSE.expected.rbracket"));
               expr.done(PyElementTypes.SUBSCRIPTION_EXPRESSION);
+              if (first_identifier_is_target) {
+                recast_first_identifier = true; // subscription is always a reference
+                expr.rollbackTo();
+                break;
+              }
             }
           }
           expr = expr.precede();
@@ -265,6 +270,7 @@ public class ExpressionParsing extends Parsing {
           expr.drop();
           break;
         }
+        recast_first_identifier = false; // it is true only after a break; normal flow always unsets it.
       }
     }
     while (recast_first_identifier);
