@@ -210,6 +210,7 @@ public class ExpressionParsing extends Parsing {
   public boolean parseMemberExpression(PsiBuilder builder, boolean isTargetExpression) {
     // in sequence a.b.... .c all members but last are always references, and the last may be target.
     boolean recast_first_identifier = false;
+    boolean recast_qualifier = false;
     do {
       boolean first_identifier_is_target = isTargetExpression && ! recast_first_identifier;
       PsiBuilder.Marker expr = builder.mark();
@@ -229,7 +230,7 @@ public class ExpressionParsing extends Parsing {
           else recast_first_identifier = false; 
           builder.advanceLexer();
           checkMatches(PyTokenTypes.IDENTIFIER, message("PARSE.expected.name"));
-          if (isTargetExpression && builder.getTokenType() != PyTokenTypes.DOT) {
+          if (isTargetExpression && ! recast_qualifier && builder.getTokenType() != PyTokenTypes.DOT) {
             expr.done(PyElementTypes.TARGET_EXPRESSION);
           }
           else {
@@ -257,8 +258,9 @@ public class ExpressionParsing extends Parsing {
             else {
               checkMatches(PyTokenTypes.RBRACKET, message("PARSE.expected.rbracket"));
               expr.done(PyElementTypes.SUBSCRIPTION_EXPRESSION);
-              if (first_identifier_is_target) {
+              if (isTargetExpression && ! recast_qualifier) {
                 recast_first_identifier = true; // subscription is always a reference
+                recast_qualifier = true; // recast non-first qualifiers too
                 expr.rollbackTo();
                 break;
               }
@@ -271,6 +273,7 @@ public class ExpressionParsing extends Parsing {
           break;
         }
         recast_first_identifier = false; // it is true only after a break; normal flow always unsets it.
+        // recast_qualifier is untouched, it remembers whether qualifiers were already recast 
       }
     }
     while (recast_first_identifier);
