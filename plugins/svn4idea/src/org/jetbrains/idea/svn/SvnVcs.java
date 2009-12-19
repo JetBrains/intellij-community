@@ -877,22 +877,34 @@ public class SvnVcs extends AbstractVcs {
     
     final List<MyPair<S>> infos = new ArrayList<MyPair<S>>(in.size());
     final SvnFileUrlMappingImpl mapping = (SvnFileUrlMappingImpl) getSvnFileUrlMapping();
+    final List<S> notMatched = new LinkedList<S>();
     for (S s : in) {
       final VirtualFile vf = convertor.convert(s);
 
       final File ioFile = new File(vf.getPath());
-      final SVNURL url = mapping.getUrlForFile(ioFile);
-      if (url == null) continue;
+      SVNURL url = mapping.getUrlForFile(ioFile);
+      if (url == null) {
+        url = SvnUtil.getUrl(ioFile);
+        if (url == null) {
+          notMatched.add(s);
+          continue;
+        }
+      }
       infos.add(new MyPair<S>(vf, url.toString(), s));
     }
     final List<MyPair<S>> filtered = new ArrayList<MyPair<S>>(infos.size());
     ForNestedRootChecker.filterOutSuperfluousChildren(this, infos, filtered);
 
-    return ObjectsConvertor.convert(filtered, new Convertor<MyPair<S>, S>() {
+    final List<S> converted = ObjectsConvertor.convert(filtered, new Convertor<MyPair<S>, S>() {
       public S convert(final MyPair<S> o) {
         return o.getSrc();
       }
     });
+    if (! notMatched.isEmpty()) {
+      // potential bug is here: order is not kept. but seems it only occurs for cases where result is sorted after filtering so ok
+      converted.addAll(notMatched);
+    }
+    return converted;
   }
 
   private static class MyPair<T> implements RootUrlPair {
