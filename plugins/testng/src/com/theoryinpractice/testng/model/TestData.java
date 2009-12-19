@@ -54,6 +54,7 @@ public class TestData implements Cloneable
   public TestSearchScope.Wrapper TEST_SEARCH_SCOPE;
   public Map<String, String> TEST_PROPERTIES = new HashMap<String, String>();
   public List<String> TEST_LISTENERS = new ArrayList<String>();
+  public boolean USE_DEFAULT_REPORTERS = false;
   public String PROPERTIES_FILE;
 
   public TestData() {
@@ -111,7 +112,8 @@ public class TestData implements Cloneable
           && Comparing.equal(WORKING_DIRECTORY, data.WORKING_DIRECTORY)
           && Comparing.equal(OUTPUT_DIRECTORY, data.OUTPUT_DIRECTORY)
           && Comparing.equal(VM_PARAMETERS, data.VM_PARAMETERS)
-          && Comparing.equal(PARAMETERS, data.PARAMETERS);
+          && Comparing.equal(PARAMETERS, data.PARAMETERS)
+          && USE_DEFAULT_REPORTERS == data.USE_DEFAULT_REPORTERS;
     }
   }
 
@@ -125,7 +127,8 @@ public class TestData implements Cloneable
         Comparing.hashcode(WORKING_DIRECTORY) ^
         Comparing.hashcode(OUTPUT_DIRECTORY) ^
         Comparing.hashcode(VM_PARAMETERS) ^
-        Comparing.hashcode(PARAMETERS);
+        Comparing.hashcode(PARAMETERS) ^
+        Comparing.hashcode(USE_DEFAULT_REPORTERS);
   }
 
   @Override
@@ -138,6 +141,8 @@ public class TestData implements Cloneable
 
     data.TEST_LISTENERS = new ArrayList<String>();
     data.TEST_LISTENERS.addAll(TEST_LISTENERS);
+
+    data.USE_DEFAULT_REPORTERS = USE_DEFAULT_REPORTERS;
 
     data.setScope(getScope());
     return data;

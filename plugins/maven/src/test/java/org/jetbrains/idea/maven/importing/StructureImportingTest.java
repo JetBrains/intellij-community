@@ -629,7 +629,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
                   "</build>");
 
     assertModules("project");
-    assertEquals(LanguageLevel.JDK_1_4, getLanguageLevelForProject());
+    assertEquals(LanguageLevel.JDK_1_4, getLanguageLevelForModule());
   }
 
   public void testLanguageLevel6() throws Exception {
@@ -650,7 +650,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
                   "</build>");
 
     assertModules("project");
-    assertEquals(LanguageLevel.JDK_1_6, getLanguageLevelForProject());
+    assertEquals(LanguageLevel.JDK_1_6, getLanguageLevelForModule());
   }
 
   public void testLanguageLevelWhenCompilerPluginIsNotSpecified() throws Exception {
@@ -659,7 +659,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
                   "<version>1</version>");
 
     assertModules("project");
-    assertNull(getLanguageLevelForProject());
+    assertNull(getLanguageLevelForModule());
   }
 
   public void testLanguageLevelWhenConfigurationIsNotSpecified() throws Exception {
@@ -677,10 +677,10 @@ public class StructureImportingTest extends MavenImportingTestCase {
                   "</build>");
 
     assertModules("project");
-    assertNull(getLanguageLevelForProject());
+    assertNull(getLanguageLevelForModule());
   }
 
-  public void testLanguageLevelWhenSourseLanguageLevelIsNotSpecified() throws Exception {
+  public void testLanguageLevelWhenSourceLanguageLevelIsNotSpecified() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -697,10 +697,10 @@ public class StructureImportingTest extends MavenImportingTestCase {
                   "</build>");
 
     assertModules("project");
-    assertNull(getLanguageLevelForProject());
+    assertNull(getLanguageLevelForModule());
   }
 
-  private LanguageLevel getLanguageLevelForProject() {
+  private LanguageLevel getLanguageLevelForModule() {
     return LanguageLevelModuleExtension.getInstance(getModule("project")).getLanguageLevel();
   }
 

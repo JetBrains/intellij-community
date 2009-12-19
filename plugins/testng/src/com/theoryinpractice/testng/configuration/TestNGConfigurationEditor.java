@@ -96,6 +96,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
   private JList listenersTable;
   private JButton removeListener;
   private LabeledComponent<JComboBox> annotationType;
+  private JCheckBox myUseDefaultReportersCheckBox;
   private final CommonJavaParameters commonJavaParameters = new CommonJavaParameters();
   private ArrayList<Map.Entry> propertiesList;
   private TestNGListenersTableModel listenerModel;
@@ -230,6 +231,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     propertiesTableModel.setParameterList(propertiesList);
 
     listenerModel.setListenerList(data.TEST_LISTENERS);
+    myUseDefaultReportersCheckBox.setSelected(data.USE_DEFAULT_REPORTERS);
 
 
     annotationType.getComponent().setSelectedItem(data.ANNOTATION_TYPE);
@@ -261,6 +263,8 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
 
     data.TEST_LISTENERS.clear();
     data.TEST_LISTENERS.addAll(listenerModel.getListenerList());
+
+    data.USE_DEFAULT_REPORTERS = myUseDefaultReportersCheckBox.isSelected();
 
     data.setEnvs(envVariablesComponent.getEnvs());
     data.PASS_PARENT_ENVS = envVariablesComponent.isPassParentEnvs();

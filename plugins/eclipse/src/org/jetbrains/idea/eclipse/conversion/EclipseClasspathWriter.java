@@ -30,7 +30,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -38,7 +37,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
-import com.intellij.pom.java.LanguageLevel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -307,111 +305,6 @@ public class EclipseClasspathWriter {
       kind[0] = EclipseXml.VAR_KIND;
     }
     return (leaveLeadingSlash ? "/" : "") + stripped;
-  }
-
-  public boolean writeIDEASpecificClasspath(final Element root) throws WriteExternalException {
-
-    boolean isModified = false;
-
-    final CompilerModuleExtension compilerModuleExtension = myModel.getModuleExtension(CompilerModuleExtension.class);
-
-    if (compilerModuleExtension.getCompilerOutputPathForTests() != null) {
-      final Element pathElement = new Element(IdeaXml.OUTPUT_TEST_TAG);
-      pathElement.setAttribute(IdeaXml.URL_ATTR, compilerModuleExtension.getCompilerOutputUrlForTests());
-      root.addContent(pathElement);
-      isModified = true;
-    }
-    if (compilerModuleExtension.isCompilerOutputPathInherited()) {
-      root.setAttribute(IdeaXml.INHERIT_COMPILER_OUTPUT_ATTR, String.valueOf(true));
-      isModified = true;
-    }
-    if (compilerModuleExtension.isExcludeOutput()) {
-      root.addContent(new Element(IdeaXml.EXCLUDE_OUTPUT_TAG));
-      isModified = true;
-    }
-
-    final LanguageLevelModuleExtension languageLevelModuleExtension = myModel.getModuleExtension(LanguageLevelModuleExtension.class);
-    final LanguageLevel languageLevel = languageLevelModuleExtension.getLanguageLevel();
-    if (languageLevel != null) {
-      languageLevelModuleExtension.writeExternal(root);
-      isModified = true;
-    }
-
-    for (ContentEntry entry : myModel.getContentEntries()) {
-      final Element contentEntryElement = new Element(IdeaXml.CONTENT_ENTRY_TAG);
-      contentEntryElement.setAttribute(IdeaXml.URL_ATTR, entry.getUrl());
-      root.addContent(contentEntryElement);
-      for (SourceFolder sourceFolder : entry.getSourceFolders()) {
-        if (sourceFolder.isTestSource()) {
-          Element element = new Element(IdeaXml.TEST_FOLDER_TAG);
-          contentEntryElement.addContent(element);
-          element.setAttribute(IdeaXml.URL_ATTR, sourceFolder.getUrl());
-          isModified = true;
-        }
-      }
-
-      final VirtualFile entryFile = entry.getFile();
-      for (ExcludeFolder excludeFolder : entry.getExcludeFolders()) {
-        final String exludeFolderUrl = excludeFolder.getUrl();
-        final VirtualFile excludeFile = excludeFolder.getFile();
-        if (entryFile == null || excludeFile == null || VfsUtil.isAncestor(entryFile, excludeFile, false)) {
-          Element element = new Element(IdeaXml.EXCLUDE_FOLDER_TAG);
-          contentEntryElement.addContent(element);
-          element.setAttribute(IdeaXml.URL_ATTR, exludeFolderUrl);
-          isModified = true;
-        }
-      }
-    }
-
-    for (OrderEntry entry : myModel.getOrderEntries()) {
-      if (entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).isModuleLevel()) {
-        final Element element = new Element("lib");
-        element.setAttribute("name", entry.getPresentableName());
-        final DependencyScope scope = ((LibraryOrderEntry)entry).getScope();
-        element.setAttribute("scope", scope.name());
-        final String[] urls = entry.getUrls(OrderRootType.SOURCES);
-        if (urls.length > 1) {
-          for (int i = 0; i < urls.length - 1; i++) {
-            Element srcElement = new Element("srcroot");
-            srcElement.setAttribute("url", urls[i]);
-            element.addContent(srcElement);
-          }
-        }
-
-        for (String srcUrl : entry.getUrls(OrderRootType.SOURCES)) {
-          appendModuleRelatedRoot(element, srcUrl, "relative-module-src");
-        }
-        for (String classesUrl : entry.getUrls(OrderRootType.CLASSES)) {
-          appendModuleRelatedRoot(element, classesUrl, "relative-module-cls");
-        }
-        if (!element.getChildren().isEmpty() || !scope.equals(DependencyScope.COMPILE)) root.addContent(element);
-      }
-    }
-
-    PathMacroManager.getInstance(myModel.getModule()).collapsePaths(root);
-
-    return isModified;
-  }
-
-  private boolean appendModuleRelatedRoot(Element element, String classesUrl, final String rootMame) {
-    VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(classesUrl);
-    if (file != null) {
-      if (file.getFileSystem() instanceof JarFileSystem) {
-        file = JarFileSystem.getInstance().getVirtualFileForJar(file);
-        assert file != null;
-      }
-      final Module module = ModuleUtil.findModuleForFile(file, myModel.getProject());
-      if (module != null && module != myModel.getModule()) {
-        final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
-        if (contentRoots.length > 0 && VfsUtil.isAncestor(contentRoots[0], file, false)) {
-          final Element clsElement = new Element(rootMame);
-          clsElement.setAttribute("project-related", PathMacroManager.getInstance(module.getProject()).collapsePath(classesUrl));
-          element.addContent(clsElement);
-          return true;
-        }
-      }
-    }
-    return false;
   }
 
 

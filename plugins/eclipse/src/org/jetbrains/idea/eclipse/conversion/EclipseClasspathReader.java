@@ -32,9 +32,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -153,9 +151,7 @@ public class EclipseClasspathReader {
     }
 
     else if (kind.equals(EclipseXml.OUTPUT_KIND)) {
-      final CompilerModuleExtension compilerModuleExtension = rootModel.getModuleExtension(CompilerModuleExtension.class);
-      compilerModuleExtension.setCompilerOutputPath(VfsUtil.pathToUrl(myRootPath + "/" + path));
-      compilerModuleExtension.inheritCompilerOutputPath(false);
+      setupOutput(rootModel, myRootPath + "/" + path);
     }
 
     else if (kind.equals(EclipseXml.LIB_KIND)) {
@@ -275,6 +271,12 @@ public class EclipseClasspathReader {
     else {
       throw new ConversionException("Unknown classpathentry/@kind: " + kind);
     }
+  }
+
+  public static void setupOutput(ModifiableRootModel rootModel, final String path) {
+    final CompilerModuleExtension compilerModuleExtension = rootModel.getModuleExtension(CompilerModuleExtension.class);
+    compilerModuleExtension.setCompilerOutputPath(VfsUtil.pathToUrl(path));
+    compilerModuleExtension.inheritCompilerOutputPath(false);
   }
 
   private static void setLibraryEntryExported(ModifiableRootModel rootModel, boolean exported, Library library) {
@@ -485,109 +487,4 @@ public class EclipseClasspathReader {
     return url;
   }
 
-  public static void readIDEASpecific(final Element root, ModifiableRootModel model) throws InvalidDataException {
-    PathMacroManager.getInstance(model.getModule()).expandPaths(root);
-
-    model.getModuleExtension(LanguageLevelModuleExtension.class).readExternal(root);
-
-    final CompilerModuleExtension compilerModuleExtension = model.getModuleExtension(CompilerModuleExtension.class);
-    final Element testOutputElement = root.getChild(IdeaXml.OUTPUT_TEST_TAG);
-    if (testOutputElement != null) {
-      compilerModuleExtension.setCompilerOutputPathForTests(testOutputElement.getAttributeValue(IdeaXml.URL_ATTR));
-    }
-
-    final String inheritedOutput = root.getAttributeValue(IdeaXml.INHERIT_COMPILER_OUTPUT_ATTR);
-    if (inheritedOutput != null && Boolean.valueOf(inheritedOutput).booleanValue()) {
-      compilerModuleExtension.inheritCompilerOutputPath(true);
-    }
-
-    compilerModuleExtension.setExcludeOutput(root.getChild(IdeaXml.EXCLUDE_OUTPUT_TAG) != null);
-
-    final List entriesElements = root.getChildren(IdeaXml.CONTENT_ENTRY_TAG);
-    if (!entriesElements.isEmpty()) {
-      for (Object o : entriesElements) {
-        readContentEntry((Element)o, model.addContentEntry(((Element)o).getAttributeValue(IdeaXml.URL_ATTR)));
-      }
-    } else {
-      final ContentEntry[] entries = model.getContentEntries();
-      if (entries.length > 0) {
-        readContentEntry(root, entries[0]);
-      }
-    }
-
-    for (Object o : root.getChildren("lib")) {
-      Element libElement = (Element)o;
-      final String libName = libElement.getAttributeValue("name");
-      final Library libraryByName = model.getModuleLibraryTable().getLibraryByName(libName);
-      if (libraryByName != null) {
-        final LibraryOrderEntry libraryOrderEntry = model.findLibraryOrderEntry(libraryByName);
-        if (libraryOrderEntry != null) {
-          final String scopeAttribute = libElement.getAttributeValue("scope");
-          libraryOrderEntry.setScope(scopeAttribute == null ? DependencyScope.COMPILE : DependencyScope.valueOf(scopeAttribute));
-        }
-        final Library.ModifiableModel modifiableModel = libraryByName.getModifiableModel();
-        for (Object r : libElement.getChildren("srcroot")) {
-          modifiableModel.addRoot(((Element)r).getAttributeValue("url"), OrderRootType.SOURCES);
-        }
-        replaceModuleRelatedRoots(model.getProject(), modifiableModel, libElement, OrderRootType.SOURCES, "relative-module-src");
-        replaceModuleRelatedRoots(model.getProject(), modifiableModel, libElement, OrderRootType.CLASSES, "relative-module-cls");
-        modifiableModel.commit();
-      } else { //try to replace everywhere
-        final Library[] libraries = model.getModuleLibraryTable().getLibraries();
-        for (Library library : libraries) {
-          final Library.ModifiableModel modifiableModel = library.getModifiableModel();
-          replaceModuleRelatedRoots(model.getProject(), modifiableModel, libElement, OrderRootType.SOURCES, "relative-module-src");
-          replaceModuleRelatedRoots(model.getProject(), modifiableModel, libElement, OrderRootType.CLASSES, "relative-module-cls");
-          modifiableModel.commit();
-        }
-      }
-    }
-  }
-
-  private static void replaceModuleRelatedRoots(final Project project, final Library.ModifiableModel modifiableModel, final Element libElement,
-                                                final OrderRootType orderRootType, final String relativeModuleName) {
-    final List<String> urls = new ArrayList<String>(Arrays.asList(modifiableModel.getUrls(orderRootType)));
-    for (Object r : libElement.getChildren(relativeModuleName)) {
-      final String root = PathMacroManager.getInstance(project).expandPath(((Element)r).getAttributeValue("project-related"));
-      for (Iterator<String> iterator = urls.iterator(); iterator.hasNext();) {
-        String url = iterator.next();
-        if (root.contains(VfsUtil.urlToPath(url))) {
-          iterator.remove();
-          modifiableModel.removeRoot(url, orderRootType);
-          modifiableModel.addRoot(root, orderRootType);
-          break;
-        }
-      }
-    }
-  }
-
-  private static void readContentEntry(Element root, ContentEntry entry) {
-    for (Object o : root.getChildren(IdeaXml.TEST_FOLDER_TAG)) {
-      final String url = ((Element)o).getAttributeValue(IdeaXml.URL_ATTR);
-      SourceFolder folderToBeTest = null;
-      for (SourceFolder folder : entry.getSourceFolders()) {
-        if (Comparing.strEqual(folder.getUrl(), url)) {
-          folderToBeTest = folder;
-          break;
-        }
-      }
-      if (folderToBeTest != null) {
-        entry.removeSourceFolder(folderToBeTest);
-      }
-      entry.addSourceFolder(url, true);
-    }
-
-    final String url = entry.getUrl();
-    for (Object o : root.getChildren(IdeaXml.EXCLUDE_FOLDER_TAG)) {
-      final String excludeUrl = ((Element)o).getAttributeValue(IdeaXml.URL_ATTR);
-      try {
-        if (FileUtil.isAncestor(new File(url), new File(excludeUrl), false)) { //check if it is excluded manually
-          entry.addExcludeFolder(excludeUrl);
-        }
-      }
-      catch (IOException e) {
-        //ignore
-      }
-    }
-  }
 }
