@@ -43,6 +43,7 @@ public class SshConnectionUtil {
 
       if (password == null) {
         SshPasswordDialog sshPasswordDialog = new SshPasswordDialog(CvsBundle.message("propmt.text.enter.private.key.password.for", cvsRoot));
+        sshPasswordDialog.setAdditionalText(CvsBundle.message("prompt.path.to.private.key", settings.PATH_TO_PPK));
         sshPasswordDialog.show();
         if (!sshPasswordDialog.isOK()) return false;
         password = sshPasswordDialog.getPassword();
