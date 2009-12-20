@@ -41,9 +41,12 @@ import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
 import org.jetbrains.plugins.groovy.gant.GantUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrShiftExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunner;
@@ -80,10 +83,9 @@ public class GradleScriptType extends GroovyScriptType {
       pp = pp.getParent();
       parent = parent.getParent();
     }
-    if (pp != null && parent instanceof GrMethodCallExpression && PsiUtil.isMethodCall((GrMethodCallExpression)parent, "createTask")) {
-      final GrExpression[] arguments = ((GrMethodCallExpression)parent).getArgumentList().getExpressionArguments();
-      if (arguments.length > 0 && arguments[0] instanceof GrLiteral && ((GrLiteral)arguments[0]).getValue() instanceof String) {
-        String target = (String)((GrLiteral)arguments[0]).getValue();
+    if (pp != null) {
+      String target = getTaskTarget(parent);
+      if (target != null) {
         configuration.scriptParams = target;
         configuration.setName(configuration.getName() + "." + target);
       }
@@ -93,6 +95,37 @@ public class GradleScriptType extends GroovyScriptType {
     if (runTask != null) {
       runTask.setEnabled(false);
     }
+  }
+
+  private String getTaskTarget(PsiElement parent) {
+    String target = null;
+    if (isCreateTaskMethod(parent)) {
+      final GrExpression[] arguments = ((GrMethodCallExpression)parent).getArgumentList().getExpressionArguments();
+      if (arguments.length > 0 && arguments[0] instanceof GrLiteral && ((GrLiteral)arguments[0]).getValue() instanceof String) {
+        target = (String)((GrLiteral)arguments[0]).getValue();
+      }
+    }
+    else if (parent instanceof GrApplicationStatement) {
+      PsiElement shiftExpression = parent.getChildren()[1].getChildren()[0];
+      if (shiftExpression instanceof GrShiftExpressionImpl) {
+        PsiElement shiftiesChild = shiftExpression.getChildren()[0];
+        if (shiftiesChild instanceof GrReferenceExpression) {
+          target = shiftiesChild.getText();
+        }
+        else if (shiftiesChild instanceof GrMethodCallExpression) {
+          target = shiftiesChild.getChildren()[0].getText();
+        }
+      }
+      else if (shiftExpression instanceof GrMethodCallExpression) {
+        target = shiftExpression.getChildren()[0].getText();
+      }
+    }
+    
+    return target;
+  }
+
+  private boolean isCreateTaskMethod(PsiElement parent) {
+    return parent instanceof GrMethodCallExpression && PsiUtil.isMethodCall((GrMethodCallExpression)parent, "createTask");
   }
 
   @Override
