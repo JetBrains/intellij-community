@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SshSharedConnection {
   private final static int CHECK_GRANULARITY = 10000;
@@ -38,13 +39,13 @@ public class SshSharedConnection {
   private final ConnectionSettings myConnectionSettings;
 
   private final Object myLock;
-  private boolean myValid;
+  private AtomicBoolean myValid;
 
   private final ThrowableComputable<Connection, AuthenticationException> myConnectionFactory;
   private final List<Cell> myQueue;
 
   public SshSharedConnection(final String repository, final ConnectionSettings connectionSettings, final SshAuthentication authentication) {
-    myValid = true;
+    myValid = new AtomicBoolean(true);
     myRepository = repository;
     myConnectionSettings = connectionSettings;
     myLock = new Object();
@@ -56,16 +57,12 @@ public class SshSharedConnection {
           return SshConnectionUtils.openConnection(connectionSettings, authentication);
         }
         catch (AuthenticationException e) {
-          synchronized (myLock) {
-            // todo +-
-            myValid = false;
-          }
+          // todo +-
+          myValid.set(false);
           throw e;
         } catch (IOException e) {
           // todo +-
-          synchronized (myLock) {
-            myValid = false;
-          }
+          myValid.set(false);
           throw new AuthenticationException(e.getMessage(), e);
         }
       }
@@ -74,9 +71,7 @@ public class SshSharedConnection {
   }
 
   public boolean isValid() {
-    synchronized (myLock) {
-      return myValid;
-    }
+    return myValid.get();
   }
 
   @Nullable
@@ -136,11 +131,10 @@ public class SshSharedConnection {
     }
   }
 
-  private static class Cell {
+  private class Cell {
     private final static int SESSIONS_PER_CONNECTION = 8;
     private final ConnectionLifeCycle myConnectionLifeCycle;
     private final LinkedList<IConnection> mySessions;
-    private final Object myLock;
     private final Consumer<SshSessionConnection> myCloseListener;
     private final String myRepository;
 
@@ -150,7 +144,6 @@ public class SshSharedConnection {
     private Cell(final ThrowableComputable<Connection, AuthenticationException> factory, final String repository) {
       myConnectionLifeCycle = new ConnectionLifeCycle(CHECK_GRANULARITY, factory);
       myRepository = repository;
-      myLock = new Object();
       mySessions = new LinkedList<IConnection>();
 
       myCloseListener = new Consumer<SshSessionConnection>() {
