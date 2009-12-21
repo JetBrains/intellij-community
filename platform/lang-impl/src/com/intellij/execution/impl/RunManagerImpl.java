@@ -231,7 +231,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     setBeforeRunTasks(configuration, tasks);
   }
 
-  void checkRecentsLimit() {    
+  void checkRecentsLimit() {
     while (getTempConfigurations().length > getConfig().getRecentsLimit()) {
       for (Iterator<Map.Entry<String, RunnerAndConfigurationSettingsImpl>> it = myConfigurations.entrySet().iterator(); it.hasNext();) {
         Map.Entry<String, RunnerAndConfigurationSettingsImpl> entry = it.next();
@@ -351,7 +351,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
           continue;
         }
       }
-      
+
       addConfigurationElement(parentNode, runnerAndConfigurationSettings);
     }
 
@@ -440,17 +440,33 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   public void readExternal(final Element parentNode) throws InvalidDataException {
     clear();
 
+    final Comparator<Element> comparator = new Comparator<Element>() {
+      public int compare(Element a, Element b) {
+        final boolean aDefault = Boolean.valueOf(a.getAttributeValue("default", "false"));
+        final boolean bDefault = Boolean.valueOf(b.getAttributeValue("default", "false"));
+        return aDefault == bDefault ? 0 : aDefault ? -1 : 1;
+      }
+    };
+
     final List children = parentNode.getChildren();
+    final List<Element> sortedElements = new ArrayList<Element>();
     for (final Object aChildren : children) {
       final Element element = (Element)aChildren;
-      if (loadConfiguration(element, false) == null && Comparing.strEqual(element.getName(), CONFIGURATION)) {
+      if (Comparing.strEqual(element.getName(), CONFIGURATION)) {
+        sortedElements.add(element);
+      }
+    }
+
+    Collections.sort(sortedElements, comparator); // ensure templates are loaded first!
+
+    for (final Element element : sortedElements) {
+      if (loadConfiguration(element, false) == null) {
         if (myUnloadedElements == null) myUnloadedElements = new ArrayList<Element>(2);
         myUnloadedElements.add(element);
       }
     }
 
     myOrder.readExternal(parentNode);
-
     mySelectedConfig = parentNode.getAttributeValue(SELECTED_ATTR);
   }
 
@@ -551,7 +567,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   @Nullable
   private static ConfigurationFactory findFactoryOfTypeByName(final ConfigurationType type, final String factoryName) {
     if (factoryName == null) return null;
-    
+
     if (type instanceof UnknownConfigurationType) {
       return type.getConfigurationFactories()[0];
     }
