@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContaine
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NonNls;
@@ -211,11 +212,22 @@ public class GroovyFacetEditor {
 
   @Nullable
   private static AbstractGroovyLibraryManager findManager(VirtualFile dir) {
-    for (AbstractGroovyLibraryManager manager : AbstractGroovyLibraryManager.EP_NAME.getExtensions()) {
+    if (GroovyUtils.getFilesInDirectoryByPattern(dir.getPath() + "/lib", "groovy.*\\.jar").length == 0) {
+      return null;
+    }
+
+    final String name = dir.getName();
+
+    final AbstractGroovyLibraryManager[] managers = AbstractGroovyLibraryManager.EP_NAME.getExtensions();
+    for (final AbstractGroovyLibraryManager manager : managers) {
+      if (StringUtil.startsWithIgnoreCase(name, manager.getLibraryPrefix())) {
+        return manager;
+      }
+    }
+
+    for (final AbstractGroovyLibraryManager manager : managers) {
       if (manager.isSDKHome(dir)) {
-        if (GroovyUtils.getFilesInDirectoryByPattern(dir.getPath() + "/lib", "groovy.*\\.jar").length > 0) {
-          return manager;
-        }
+        return manager;
       }
     }
     return null;
