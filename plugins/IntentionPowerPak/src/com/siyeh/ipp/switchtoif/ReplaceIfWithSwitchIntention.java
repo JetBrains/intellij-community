@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,7 +99,8 @@ public class ReplaceIfWithSwitchIntention extends Intention {
                             (PsiReferenceExpression)label;
                     final PsiElement referent = reference.resolve();
                     if (referent instanceof PsiEnumConstant) {
-                        final PsiEnumConstant constant = (PsiEnumConstant)referent;
+                        final PsiEnumConstant constant =
+                                (PsiEnumConstant)referent;
                         final String constantName = constant.getName();
                         ifBranch.addCondition(constantName);
                     } else {
@@ -137,17 +138,15 @@ public class ReplaceIfWithSwitchIntention extends Intention {
             }
         }
 
-        @NonNls final StringBuilder switchStatementBuffer =
+        @NonNls final StringBuilder switchStatementText =
                 new StringBuilder(1024);
-        switchStatementBuffer.append("switch(");
-        switchStatementBuffer.append(caseExpression.getText());
-        switchStatementBuffer.append(')');
-        switchStatementBuffer.append('{');
+        switchStatementText.append("switch(");
+        switchStatementText.append(caseExpression.getText());
+        switchStatementText.append(')');
+        switchStatementText.append('{');
         for (IfStatementBranch branch : branches) {
             boolean hasConflicts = false;
-            for (Object branche1 : branches) {
-                final IfStatementBranch testBranch =
-                        (IfStatementBranch)branche1;
+            for (IfStatementBranch testBranch : branches) {
                 if (branch.topLevelDeclarationsConfictWith(testBranch)) {
                     hasConflicts = true;
                 }
@@ -158,7 +157,7 @@ public class ReplaceIfWithSwitchIntention extends Intention {
                 final List<String> comments = branch.getComments();
                 final List<String> statementComments =
                         branch.getStatementComments();
-                dumpDefaultBranch(switchStatementBuffer, comments,
+                dumpDefaultBranch(switchStatementText, comments,
                         branchStatement, statementComments,
                         hasConflicts,
                         breaksNeedRelabeled, labelString);
@@ -167,26 +166,31 @@ public class ReplaceIfWithSwitchIntention extends Intention {
                 final List<String> comments = branch.getComments();
                 final List<String> statementComments =
                         branch.getStatementComments();
-                dumpBranch(switchStatementBuffer,
+                dumpBranch(switchStatementText,
                         comments, conditions, statementComments,
                         branchStatement, hasConflicts, breaksNeedRelabeled,
                         labelString);
             }
         }
-        switchStatementBuffer.append('}');
-        final String switchStatementString = switchStatementBuffer.toString();
+        switchStatementText.append('}');
+        final JavaPsiFacade psiFacade =
+                JavaPsiFacade.getInstance(element.getProject());
+        final PsiElementFactory factory = psiFacade.getElementFactory();
         if (breaksNeedRelabeled) {
-            final int length = switchStatementBuffer.length();
-            final StringBuilder out = new StringBuilder(length);
+            final StringBuilder out = new StringBuilder();
             out.append(labelString);
             out.append(':');
             termReplace(out, breakTarget, statementToReplace,
-                    switchStatementString);
-            final String newStatement = out.toString();
-            replaceStatement(newStatement, breakTarget);
+                    switchStatementText);
+            final String newStatementText = out.toString();
+            final PsiStatement newStatement =
+                    factory.createStatementFromText(newStatementText, element);
+            breakTarget.replace(newStatement);
         } else {
-            replaceStatement(switchStatementString,
-                    statementToReplace);
+            final PsiStatement newStatement =
+                    factory.createStatementFromText(
+                            switchStatementText.toString(), element);
+            statementToReplace.replace(newStatement);
         }
     }
 
@@ -258,7 +262,7 @@ public class ReplaceIfWithSwitchIntention extends Intention {
 
     private static void termReplace(
             StringBuilder out, PsiElement target,
-            PsiElement replace, String stringToReplaceWith) {
+            PsiElement replace, StringBuilder stringToReplaceWith) {
         if (target.equals(replace)) {
             out.append(stringToReplaceWith);
         } else if (target.getChildren().length == 0) {
