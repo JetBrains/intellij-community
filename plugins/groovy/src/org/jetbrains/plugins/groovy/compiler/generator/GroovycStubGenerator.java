@@ -24,9 +24,9 @@ import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -47,7 +47,6 @@ import java.util.List;
  * @author peter
  */
 public class GroovycStubGenerator extends GroovyCompilerBase {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.compiler.generator.GroovycStubGenerator");
 
   public GroovycStubGenerator(Project project) {
     super(project);
@@ -55,8 +54,26 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
 
   @Override
   public void compile(CompileContext compileContext, Chunk<Module> moduleChunk, VirtualFile[] virtualFiles, OutputSink sink) {
+    if (!GroovyCompilerConfiguration.getInstance(myProject).isUseGroovycStubs()) {
+      return;
+    }
+
     final CompileScope scope = compileContext.getCompileScope();
-    if (scope.getFiles(StdFileTypes.JAVA, true).length == 0) {
+    final VirtualFile[] javaFiles = scope.getFiles(StdFileTypes.JAVA, true);
+    if (javaFiles.length == 0) {
+      return;
+    }
+
+    boolean hasJava = false;
+    for (VirtualFile javaFile : javaFiles) {
+      final Module module = ModuleUtil.findModuleForFile(javaFile, myProject);
+      if (module != null && moduleChunk.containsNode(module)) {
+        hasJava = true;
+        break;
+      }
+    }
+
+    if (!hasJava) {
       return;
     }
 
@@ -103,7 +120,6 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
 
     if (!hasJava) {
       //always pass groovyc stub generator at least 1 java file, or it won't generate stubs
-      //todo not needed anymore with groovy 1.7?
       toCompile.add(createMockJavaFile(rootPath));
     }
 
