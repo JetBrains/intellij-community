@@ -19,17 +19,16 @@ import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
-import com.intellij.notification.*;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
-import com.intellij.openapi.components.impl.stores.*;
+import com.intellij.openapi.components.impl.stores.IComponentStore;
+import com.intellij.openapi.components.impl.stores.IProjectStore;
+import com.intellij.openapi.components.impl.stores.StorageUtil;
+import com.intellij.openapi.components.impl.stores.XmlElementStorage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -45,7 +44,6 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
@@ -66,7 +64,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -597,7 +594,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         for (String component : components) {
           message += component + "\n";
         }
-        message += "Shutdown IDEA?";
+
+        final boolean canRestart = ApplicationManager.getApplication().isRestartCapable();
+        message += "Would you like to " + (canRestart ? "restart " : "shutdown ");
+        message += ApplicationNamesInfo.getInstance().getProductName() + "?";
 
         if (Messages.showYesNoDialog(message,
                                      "Application Configuration Reload", Messages.getQuestionIcon()) == 0) {
@@ -607,9 +607,13 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
               ((XmlElementStorage)stateStorage).disableSaving();
             }
           }
-          ApplicationManagerEx.getApplicationEx().exit(true);
+          if (canRestart) {
+            ApplicationManagerEx.getApplicationEx().restart();
+          }
+          else {
+            ApplicationManagerEx.getApplicationEx().exit(true);
+          }
         }
-
       }
 
       return reloadOk[0];
