@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.util.containers.SoftHashMap;
 import com.intellij.util.net.HttpConfigurable;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -60,11 +61,14 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
     }
 
   private static class PersistentAuthenticationProviderProxy implements ISVNAuthenticationProvider, IPersistentAuthenticationProvider {
+    private final Map<SvnAuthWrapperEqualable, Long> myRewritePreventer;
+    private static final long ourRefreshInterval = 6000 * 1000;
     private final ISVNAuthenticationProvider myDelegate;
     private Project myProject;
 
     private PersistentAuthenticationProviderProxy(final ISVNAuthenticationProvider delegate) {
       myDelegate = delegate;
+      myRewritePreventer = new SoftHashMap<SvnAuthWrapperEqualable, Long>();
     }
 
     public void setProject(Project project) {
@@ -83,7 +87,13 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
 
     public void saveAuthentication(final SVNAuthentication auth, final String kind, final String realm) throws SVNException {
       try {
-        ((IPersistentAuthenticationProvider) myDelegate).saveAuthentication(auth, kind, realm);
+        final SvnAuthWrapperEqualable newKey = new SvnAuthWrapperEqualable(auth);
+        final Long recent = myRewritePreventer.get(newKey);
+        final long currTime = System.currentTimeMillis();
+        if (recent == null || ((recent != null) && ((currTime - recent.longValue()) > ourRefreshInterval))) {
+          ((IPersistentAuthenticationProvider) myDelegate).saveAuthentication(auth, kind, realm);
+          myRewritePreventer.put(newKey, currTime);
+        }
       }
       catch (final SVNException e) {
         // show notification so that user was aware his credentials were not saved
@@ -279,5 +289,26 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
           }
       }
       return null;
+  }
+
+  private static class SvnAuthWrapperEqualable extends Wrapper<SVNAuthentication> {
+    private SvnAuthWrapperEqualable(SVNAuthentication svnAuthentication) {
+      super(svnAuthentication);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == null) return false;
+      if (this == obj) return true;
+      if (obj instanceof SvnAuthWrapperEqualable) {
+        return SvnAuthEquals.equals(this.getT(), ((SvnAuthWrapperEqualable) obj).getT());
+      }
+      return false;
+    }
+
+    @Override
+    public int hashCode() {
+      return SvnAuthEquals.hashCode(getT());
+    }
   }
 }
