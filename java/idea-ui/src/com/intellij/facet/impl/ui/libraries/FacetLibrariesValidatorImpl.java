@@ -76,7 +76,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
 
     ModuleRootModel rootModel = myContext.getRootModel();
     List<VirtualFile> roots = collectRoots(rootModel);
-    RequiredLibrariesInfo.RequiredClassesNotFoundInfo info = myRequiredLibraries.checkLibraries(VfsUtil.toVirtualFileArray(roots));
+    RequiredLibrariesInfo.RequiredClassesNotFoundInfo info = myRequiredLibraries.checkLibraries(VfsUtil.toVirtualFileArray(roots), false);
     if (info == null) {
       return ValidationResult.OK;
     }
@@ -184,7 +184,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
       myPanel.apply();
       final LibraryCompositionSettings settings = myPanel.getLibraryCompositionSettings();
       final LibrariesContainer librariesContainer = myContext.getLibrariesContainer();
-      if (settings.downloadFiles(myMirrorsMap, librariesContainer, myPanel.getMainPanel())) {
+      if (settings.downloadFiles(myMirrorsMap, librariesContainer, myPanel.getMainPanel(), false)) {
         ModifiableRootModel rootModel = myContext.getModifiableRootModel();
         if (rootModel == null) {
           final ModifiableRootModel model = ModuleRootManager.getInstance(myContext.getModule()).getModifiableModel();

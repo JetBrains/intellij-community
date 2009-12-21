@@ -43,12 +43,12 @@ public class RequiredLibrariesInfo {
     myLibraryInfos.add(lib);
   }
 
-  public @Nullable RequiredClassesNotFoundInfo checkLibraries(VirtualFile[] libraryFiles) {
+  public @Nullable RequiredClassesNotFoundInfo checkLibraries(VirtualFile[] libraryFiles, boolean all) {
     List<LibraryInfo> infos = new ArrayList<LibraryInfo>();
     List<String> classes = new ArrayList<String>();
 
     for (LibraryInfo info : myLibraryInfos) {
-      boolean notFound = false;
+      boolean notFound = all && info.getRequiredClasses().length == 0;
       for (String className : info.getRequiredClasses()) {
         if (!LibraryUtil.isClassAvailableInLibrary(libraryFiles, className)) {
           classes.add(className);
