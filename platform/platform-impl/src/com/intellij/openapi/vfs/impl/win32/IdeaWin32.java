@@ -13,9 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.openapi.vfs.impl.win32;
 
-package com.intellij.execution.junit2.segments;
+/**
+ * @author Dmitry Avdeev
+ */
+public class IdeaWin32 {
 
-public interface PacketConsumer extends PacketReader {
-  String getPrefix();
+    public native FileInfo getInfo(String path);
+
+    public native FileInfo[] listChildren(String path); 
 }

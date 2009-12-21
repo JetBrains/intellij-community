@@ -434,11 +434,11 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
   }
 
   public Object getData(@NonNls String dataId) {
-    if (PlatformDataKeys.PROJECT.getName().equals(dataId)) {
+    if (PlatformDataKeys.PROJECT.is(dataId)) {
       return myProject;
-    } else if (VcsDataKeys.VCS_VIRTUAL_FILE.getName().equals(dataId)) {
+    } else if (VcsDataKeys.VCS_VIRTUAL_FILE.is(dataId)) {
       return myFile;
-    } else if (VcsDataKeys.VCS_FILE_REVISION.getName().equals(dataId)) {
+    } else if (VcsDataKeys.VCS_FILE_REVISION.is(dataId)) {
       return myList.getSelectedObject();
     }
     return null;

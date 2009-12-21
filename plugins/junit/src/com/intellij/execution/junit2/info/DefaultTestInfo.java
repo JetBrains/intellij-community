@@ -24,7 +24,7 @@ class DefaultTestInfo extends ClassBasedInfo {
     super(DisplayTestInfoExtractor.CLASS_FULL_NAME);
   }
 
-  public void readPacketFrom(final ObjectReader reader) {
+  public void readFrom(final ObjectReader reader) {
     reader.readInt(); //TODO remove test count from packet
     readClass(reader);
   }

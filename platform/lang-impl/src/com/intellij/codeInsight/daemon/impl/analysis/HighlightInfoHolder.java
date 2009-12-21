@@ -37,8 +37,6 @@ public class HighlightInfoHolder {
   private final PsiFile myContextFile;
   private final HighlightInfoFilter[] myFilters;
   private int myErrorCount;
-  private int myWarningCount;
-  private int myInfoCount;
   private final List<HighlightInfo> myInfos = new ArrayList<HighlightInfo>(5);
 
   public HighlightInfoHolder(@NotNull PsiFile contextFile, @NotNull HighlightInfoFilter... filters) {
@@ -53,12 +51,6 @@ public class HighlightInfoHolder {
     if (severity == HighlightSeverity.ERROR) {
       myErrorCount++;
     }
-    else if (severity == HighlightSeverity.WARNING) {
-      myWarningCount++;
-    }
-    else if (severity == HighlightSeverity.INFORMATION) {
-      myInfoCount++;
-    }
 
     return myInfos.add(info);
   }
@@ -72,25 +64,11 @@ public class HighlightInfoHolder {
 
   public void clear() {
     myErrorCount = 0;
-    myWarningCount = 0;
-    myInfoCount = 0;
     myInfos.clear();
   }
 
   public boolean hasErrorResults() {
     return myErrorCount != 0;
-  }
-
-  public boolean hasInfoResults() {
-    return myInfoCount != 0;
-  }
-
-  public boolean hasWarningResults() {
-    return myWarningCount != 0;
-  }
-
-  public int getErrorCount() {
-    return myErrorCount;
   }
 
   public boolean addAll(Collection<? extends HighlightInfo> highlightInfos) {

@@ -14,29 +14,26 @@
  * limitations under the License.
  */
 
-package com.intellij.execution.junit2;
+package com.intellij.execution.junit2.states;
 
-public class NewChildEvent extends TestEvent {
-  private final TestProxy myChild;
+import com.intellij.execution.junit2.states.Statistics;
 
-  public TestProxy getChild() {
-    return myChild;
+public class CumulativeStatistics extends Statistics {
+  private int myMemoryUsage = 0;
+  private boolean myIsEmpty = true;
+  public CumulativeStatistics() {
   }
 
-  public NewChildEvent(final TestProxy parent, final TestProxy child) {
-    super(parent);
-    myChild = child;
+  public void add(final Statistics statistics) {
+    myTime += statistics.getTime();
+    myMemoryUsage += statistics.getMemoryUsage();
+    if (myIsEmpty)
+      myBeforeMemory = statistics.getBeforeMemory();
+    myAfterMemory = statistics.getAfterMemory();
+    myIsEmpty = false;
   }
 
-  public boolean equals(final Object obj) {
-    return super.equals(obj) && ((NewChildEvent) obj).myChild == myChild;
-  }
-
-  public int hashCode() {
-    return super.hashCode() ^ myChild.hashCode();
-  }
-
-  public TestProxy getTestSubtree() {
-    return getSource();
+  public int getMemoryUsage() {
+    return myMemoryUsage;
   }
 }

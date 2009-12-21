@@ -23,16 +23,19 @@ import org.apache.maven.model.PluginExecution;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
-import static org.jetbrains.idea.maven.project.MavenId.append;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.jetbrains.idea.maven.project.MavenId.append;
+
 public class MavenPlugin implements Serializable {
   private String myGroupId;
   private String myArtifactId;
   private String myVersion;
+
+  private boolean myDefault;
 
   private Element myConfiguration;
   private List<Execution> myExecutions = new ArrayList<Execution>();
@@ -42,10 +45,12 @@ public class MavenPlugin implements Serializable {
   protected MavenPlugin() {
   }
 
-  public MavenPlugin(Plugin plugin) {
+  public MavenPlugin(Plugin plugin, boolean isDefault) {
     myGroupId = plugin.getGroupId();
     myArtifactId = plugin.getArtifactId();
     myVersion = plugin.getVersion();
+
+    myDefault = isDefault;
 
     Xpp3Dom config = (Xpp3Dom)plugin.getConfiguration();
     myConfiguration = config == null ? null : xppToElement(config);
@@ -89,6 +94,10 @@ public class MavenPlugin implements Serializable {
     return new MavenId(myGroupId, myArtifactId, myVersion);
   }
 
+  public boolean isDefault() {
+    return myDefault;
+  }
+
   @Nullable
   public Element getConfigurationElement() {
     return myConfiguration;
@@ -124,6 +133,7 @@ public class MavenPlugin implements Serializable {
 
     MavenPlugin that = (MavenPlugin)o;
 
+    if (myDefault != that.myDefault) return false;
     if (myGroupId != null ? !myGroupId.equals(that.myGroupId) : that.myGroupId != null) return false;
     if (myArtifactId != null ? !myArtifactId.equals(that.myArtifactId) : that.myArtifactId != null) return false;
     if (myVersion != null ? !myVersion.equals(that.myVersion) : that.myVersion != null) return false;
@@ -136,7 +146,8 @@ public class MavenPlugin implements Serializable {
 
   @Override
   public int hashCode() {
-    int result = myGroupId != null ? myGroupId.hashCode() : 0;
+    int result = myDefault ? 1 : 0;
+    result = 31 * result + (myGroupId != null ? myGroupId.hashCode() : 0);
     result = 31 * result + (myArtifactId != null ? myArtifactId.hashCode() : 0);
     result = 31 * result + (myVersion != null ? myVersion.hashCode() : 0);
     result = 31 * result + (myConfiguration != null ? JDOMUtil.getTreeHash(myConfiguration) : 0);

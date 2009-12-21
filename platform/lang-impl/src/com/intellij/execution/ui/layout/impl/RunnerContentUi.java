@@ -144,13 +144,13 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     myTabs = new JBTabsImpl(myProject, myActionManager, myFocusManager, this)
         .setDataProvider(new DataProvider() {
           public Object getData(@NonNls final String dataId) {
-            if (ViewContext.CONTENT_KEY.getName().equals(dataId)) {
+            if (ViewContext.CONTENT_KEY.is(dataId)) {
               TabInfo info = myTabs.getTargetInfo();
               if (info != null) {
                 return getGridFor(info).getData(dataId);
               }
             }
-            else if (ViewContext.CONTEXT_KEY.getName().equals(dataId)) {
+            else if (ViewContext.CONTEXT_KEY.is(dataId)) {
               return RunnerContentUi.this;
             }
             return null;
@@ -720,7 +720,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
     @Nullable
     public Object getData(@NonNls final String dataId) {
-      if (KEY.getName().equals(dataId)) {
+      if (KEY.is(dataId)) {
         return RunnerContentUi.this;
       }
       else {

@@ -55,7 +55,7 @@ class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTestFixtu
       if (dataId.equals(DataConstants.PROJECT)) {
         return getProject();
       }
-      else if (dataId.equals(DataConstants.EDITOR) || dataId.equals(OpenFileDescriptor.NAVIGATE_IN_EDITOR.getName())) {
+      else if (dataId.equals(DataConstants.EDITOR) || OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
         return FileEditorManager.getInstance(getProject()).getSelectedTextEditor();
       }
       else {

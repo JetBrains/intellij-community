@@ -482,7 +482,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
       final Object element = parentElement.getValue();
       return (element instanceof PsiElement) && ((PsiElement)element).isValid()? element : null;
     }
-    else if (CompareFiles.DIFF_REQUEST.getName().equals(dataId)) {
+    else if (CompareFiles.DIFF_REQUEST.is(dataId)) {
       PsiElement primary = getActivePanel().getSelectedElement();
       PsiElement secondary = getInactivePanel().getSelectedElement();
       if (primary != null && secondary != null &&

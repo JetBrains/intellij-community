@@ -17,12 +17,9 @@
 package com.intellij.execution.junit2.ui.model;
 
 import com.intellij.execution.junit.JUnitConfiguration;
-import com.intellij.execution.junit2.TestProgress;
 import com.intellij.execution.junit2.TestProxy;
-import com.intellij.execution.junit2.TestingStatus;
-import com.intellij.execution.junit2.segments.DispatchListener;
-import com.intellij.execution.junit2.segments.PacketExtractorBase;
 import com.intellij.execution.junit2.ui.Animator;
+import com.intellij.execution.junit2.ui.TestProgress;
 import com.intellij.execution.junit2.ui.TestProxyClient;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.testframework.AbstractTestProxy;
@@ -47,7 +44,6 @@ import java.awt.event.FocusEvent;
 public class JUnitRunningModel implements TestFrameworkRunningModel {
   private final TestProgress myProgress;
   private final TestProxy myRoot;
-  private final TestingStatus myStatus;
   private final JUnitConsoleProperties myProperties;
   private final MyTreeSelectionListener myTreeListener = new MyTreeSelectionListener();
   private JTree myTreeView;
@@ -55,22 +51,16 @@ public class JUnitRunningModel implements TestFrameworkRunningModel {
 
   private final JUnitListenersNotifier myNotifier = new JUnitListenersNotifier();
   private final Animator myAnimator;
-  private PacketExtractorBase myPacketExtractor;
 
-  public JUnitRunningModel(final TestProxy root, final TestingStatus status, final JUnitConsoleProperties properties) {
+  public JUnitRunningModel(final TestProxy root, final JUnitConsoleProperties properties) {
     myRoot = root;
-    myStatus = status;
     myProperties = properties;
-
     myRoot.setEventsConsumer(myNotifier);
-
     myProgress = new TestProgress(this);
-    myStatus.setListener(myNotifier);
-
     Disposer.register(this, myTreeListener);
     Disposer.register(this, new Disposable() {
       public void dispose() {
-        myNotifier.onDispose(JUnitRunningModel.this);
+        myNotifier.fireDisposed(JUnitRunningModel.this);
       }
     });
     myAnimator = new Animator(this);
@@ -79,8 +69,6 @@ public class JUnitRunningModel implements TestFrameworkRunningModel {
   public TestTreeBuilder getTreeBuilder() {
     return myTreeBuilder;
   }
-
-  public TestingStatus getStatus() { return myStatus; }
 
   public void attachToTree(final TestTreeView treeView) {
     myTreeBuilder = new TestTreeBuilder(treeView, this, myProperties);
@@ -112,7 +100,7 @@ public class JUnitRunningModel implements TestFrameworkRunningModel {
 
   public void selectAndNotify(final AbstractTestProxy testProxy) {
     selectTest((TestProxy)testProxy);
-    myNotifier.onTestSelected((TestProxy)testProxy);
+    myNotifier.fireTestSelected((TestProxy)testProxy);
   }
 
   public Project getProject() {
@@ -136,7 +124,7 @@ public class JUnitRunningModel implements TestFrameworkRunningModel {
     myTreeView.collapsePath(path);
   }
 
-  public DispatchListener getNotifier() {
+  public JUnitListenersNotifier getNotifier() {
     return myNotifier;
   }
 
@@ -147,7 +135,7 @@ public class JUnitRunningModel implements TestFrameworkRunningModel {
   }
 
   public boolean isRunning() {
-    return getStatus().isRunning();
+    return myRoot.isInProgress();
   }
 
   private TestTreeStructure getStructure() {
@@ -163,7 +151,7 @@ public class JUnitRunningModel implements TestFrameworkRunningModel {
   }
 
   public void onUIBuilt() {
-    myNotifier.onTestSelected(myRoot);
+    myNotifier.fireTestSelected(myRoot);
   }
 
   private TreePath pathToTest(final TestProxy test, final boolean expandIfCollapsed) {
@@ -181,16 +169,6 @@ public class JUnitRunningModel implements TestFrameworkRunningModel {
     return getStructure().getFilter().shouldAccept(test);
   }
 
-  public void attachTo(final PacketExtractorBase packetExtractor) {
-    myPacketExtractor = packetExtractor;
-    myPacketExtractor.setDispatchListener(myNotifier);
-    Disposer.register(this, new Disposable() {
-      public void dispose() {
-        myPacketExtractor.setDispatchListener(DispatchListener.DEAF);
-      }
-    });
-  }
-
   public JUnitConfiguration getConfiguration() {
     return myProperties.getConfiguration();
   }
@@ -200,14 +178,14 @@ public class JUnitRunningModel implements TestFrameworkRunningModel {
     public void valueChanged(final TreeSelectionEvent e) {
       final TestProxy test = TestProxyClient.from(e.getPath());
       if (myTreeView.isFocusOwner())
-        myNotifier.onTestSelected(test);
+        myNotifier.fireTestSelected(test);
     }
 
     public void focusGained(final FocusEvent e) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
               if (!myTreeBuilder.isDisposed()) {
-                myNotifier.onTestSelected((TestProxy)getTreeView().getSelectedTest());
+                myNotifier.fireTestSelected((TestProxy)getTreeView().getSelectedTest());
               }
             }
           });

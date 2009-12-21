@@ -15,7 +15,7 @@
  */
 package com.intellij.rt.execution.junit;
 
-import com.intellij.rt.execution.junit.segments.OutputObjectRegistryEx;
+import com.intellij.rt.execution.junit.segments.OutputObjectRegistry;
 import com.intellij.rt.execution.junit.segments.Packet;
 
 public class ExceptionPacketFactory implements PacketFactory {
@@ -27,7 +27,7 @@ public class ExceptionPacketFactory implements PacketFactory {
     myAssertion = assertion;
   }
 
-  public Packet createPacket(OutputObjectRegistryEx registry, Object test) {
+  public Packet createPacket(OutputObjectRegistry registry, Object test) {
     return registry.createPacket().
         setTestState(test, myState).
         addThrowable(myAssertion);

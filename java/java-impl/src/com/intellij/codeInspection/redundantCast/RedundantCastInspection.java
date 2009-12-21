@@ -24,22 +24,19 @@
  */
 package com.intellij.codeInspection.redundantCast;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.miscGenerics.GenericsInspectionToolBase;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiParenthesizedExpression;
-import com.intellij.psi.PsiTypeCastExpression;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.*;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class RedundantCastInspection extends GenericsInspectionToolBase {
@@ -55,17 +52,24 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
   public ProblemDescriptor[] getDescriptions(PsiElement where, InspectionManager manager, boolean isOnTheFly) {
     List<PsiTypeCastExpression> redundantCasts = RedundantCastUtil.getRedundantCastsInside(where);
     if (redundantCasts.isEmpty()) return null;
-    ProblemDescriptor[] descriptions = new ProblemDescriptor[redundantCasts.size()];
-    for (int i = 0; i < redundantCasts.size(); i++) {
-      descriptions[i] = createDescription(redundantCasts.get(i), manager, isOnTheFly);
+    List<ProblemDescriptor> descriptions = new ArrayList<ProblemDescriptor>(redundantCasts.size());
+    for (PsiTypeCastExpression redundantCast : redundantCasts) {
+      ProblemDescriptor descriptor = createDescription(redundantCast, manager, isOnTheFly);
+      if (descriptor != null) {
+        descriptions.add(descriptor);
+      }
     }
-    return descriptions;
+    if (descriptions.isEmpty()) return null;
+    return descriptions.toArray(new ProblemDescriptor[descriptions.size()]);
   }
 
-  private ProblemDescriptor createDescription(PsiTypeCastExpression cast, InspectionManager manager, boolean onTheFly) {
+  private ProblemDescriptor createDescription(@NotNull PsiTypeCastExpression cast, @NotNull InspectionManager manager, boolean onTheFly) {
+    PsiExpression operand = cast.getOperand();
+    PsiTypeElement castType = cast.getCastType();
+    if (operand == null || castType == null) return null;
     String message = InspectionsBundle.message("inspection.redundant.cast.problem.descriptor",
-                                               "<code>" + cast.getOperand().getText() + "</code>", "<code>#ref</code> #loc");
-    return manager.createProblemDescriptor(cast.getCastType(), message, myQuickFixAction, ProblemHighlightType.LIKE_UNUSED_SYMBOL, onTheFly);
+                                               "<code>" + operand.getText() + "</code>", "<code>#ref</code> #loc");
+    return manager.createProblemDescriptor(castType, message, myQuickFixAction, ProblemHighlightType.LIKE_UNUSED_SYMBOL, onTheFly);
   }
 
 
@@ -76,8 +80,7 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
     }
 
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      if (ReadonlyStatusHandler.getInstance(project)
-        .ensureFilesWritable(PsiUtilBase.getVirtualFile(descriptor.getPsiElement())).hasReadonlyFiles()) return;
+      if (!CodeInsightUtilBase.preparePsiElementForWrite(descriptor.getPsiElement())) return;
       PsiElement castTypeElement = descriptor.getPsiElement();
       PsiTypeCastExpression cast = castTypeElement == null ? null : (PsiTypeCastExpression)castTypeElement.getParent();
       if (cast != null) {

@@ -30,6 +30,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -40,6 +41,7 @@ import java.util.Set;
 public class RedundantCastUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.redundantCast.RedundantCastUtil");
 
+  @NotNull
   public static List<PsiTypeCastExpression> getRedundantCastsInside(PsiElement where) {
     MyCollectingVisitor visitor = new MyCollectingVisitor();
     where.acceptChildren(visitor);
@@ -85,7 +87,7 @@ public class RedundantCastUtil {
       // avoid multiple visit
     }
 
-    protected void addToResults(PsiTypeCastExpression typeCast){
+    protected void addToResults(@NotNull PsiTypeCastExpression typeCast){
       if (!isTypeCastSemantical(typeCast)) {
         myFoundCasts.add(typeCast);
       }
@@ -107,7 +109,7 @@ public class RedundantCastUtil {
       }
     }
 
-    protected void addToResults(PsiTypeCastExpression typeCast){
+    protected void addToResults(@NotNull PsiTypeCastExpression typeCast){
       if (!isTypeCastSemantical(typeCast)) {
         isRedundant = true;
       }

@@ -189,7 +189,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
       if (dataId.equals(DataConstants.PROJECT)) {
         return myProject;
       }
-      else if (dataId.equals(DataConstants.EDITOR) || dataId.equals(OpenFileDescriptor.NAVIGATE_IN_EDITOR.getName())) {
+      else if (dataId.equals(DataConstants.EDITOR) || OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
         return FileEditorManager.getInstance(myProject).getSelectedTextEditor();
       }
       else {

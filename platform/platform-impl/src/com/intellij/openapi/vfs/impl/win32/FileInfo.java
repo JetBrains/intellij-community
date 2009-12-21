@@ -13,26 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.openapi.vfs.impl.win32;
 
-package com.intellij.execution.junit2.info;
+/**
+ * @author Dmitry Avdeev
+ */
+public class FileInfo {
 
-import com.intellij.execution.junit2.segments.PacketReader;
+    static {
+        initIDs();
+    }
 
-abstract class TestInfoImpl implements TestInfo, PacketReader {
-  private int myTestCount;
+    private static native void initIDs();
+    
+    public String name;
+    public int attributes;
+    public long timestamp;
 
-  public boolean shouldRun() {
-    return false;
-  }
-
-  public int getTestsCount() {
-    return myTestCount;
-  }
-
-  public void setTestCount(final int testCount) {
-    myTestCount = testCount;
-  }
-
-  public void onFinished() {
-  }
+    public String toString() {
+        return name;
+    }
 }
