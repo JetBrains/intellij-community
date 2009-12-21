@@ -113,7 +113,8 @@ public class LibraryCompositionSettings {
     return myTitle;
   }
 
-  public boolean downloadFiles(final @NotNull LibraryDownloadingMirrorsMap mirrorsMap, @NotNull LibrariesContainer librariesContainer, final @NotNull JComponent parent) {
+  public boolean downloadFiles(final @NotNull LibraryDownloadingMirrorsMap mirrorsMap, @NotNull LibrariesContainer librariesContainer, final @NotNull JComponent parent,
+                               boolean all) {
     if (myDownloadLibraries) {
       RequiredLibrariesInfo requiredLibraries = new RequiredLibrariesInfo(getLibraryInfos());
 
@@ -123,7 +124,7 @@ public class LibraryCompositionSettings {
         roots.addAll(Arrays.asList(librariesContainer.getLibraryFiles(library, OrderRootType.CLASSES)));
       }
       VirtualFile[] jars = VfsUtil.toVirtualFileArray(roots);
-      RequiredLibrariesInfo.RequiredClassesNotFoundInfo info = requiredLibraries.checkLibraries(jars);
+      RequiredLibrariesInfo.RequiredClassesNotFoundInfo info = requiredLibraries.checkLibraries(jars, all);
       if (info != null) {
         LibraryDownloadInfo[] downloadingInfos = LibraryDownloader.getDownloadingInfos(info.getLibraryInfos());
         if (downloadingInfos.length > 0) {

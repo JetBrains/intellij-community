@@ -56,6 +56,8 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.CompilerMessage;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -137,7 +139,9 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
 
     try {
       File fileWithParameters = File.createTempFile("toCompile", "");
-      fillFileWithGroovycParameters(toCompile, fileWithParameters, outputDir, patchers, getMainOutput(compileContext, module, tests));
+      final VirtualFile finalOutputDir = getMainOutput(compileContext, module, tests);
+      LOG.assertTrue(finalOutputDir != null, "No output directory for module " + module.getName() + (tests ? " tests" : " production"));
+      fillFileWithGroovycParameters(toCompile, fileWithParameters, outputDir, patchers, finalOutputDir);
 
       commandLine.addParameter(forStubs ? "stubs" : "groovyc");
       commandLine.addParameter(fileWithParameters.getPath());
@@ -206,6 +210,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     }
   }
 
+  @Nullable
   protected static VirtualFile getMainOutput(CompileContext compileContext, Module module, boolean tests) {
     return tests ? compileContext.getModuleOutputDirectoryForTests(module) : compileContext.getModuleOutputDirectory(module);
   }
@@ -222,7 +227,8 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     return CompilerMessageCategory.ERROR;
   }
 
-  private void fillFileWithGroovycParameters(List<VirtualFile> virtualFiles, File f, VirtualFile outputDir, final List<String> patchers, VirtualFile finalOutputDir) {
+  private void fillFileWithGroovycParameters(List<VirtualFile> virtualFiles, File f, VirtualFile outputDir, final List<String> patchers,
+                                             @NotNull VirtualFile finalOutputDir) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Running groovyc on: " + virtualFiles.toString());
     }

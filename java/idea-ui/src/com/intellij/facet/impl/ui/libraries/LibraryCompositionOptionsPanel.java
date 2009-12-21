@@ -152,7 +152,7 @@ public class LibraryCompositionOptionsPanel {
     Library[] libraries = myLibrariesContainer.getAllLibraries();
     for (Library library : libraries) {
       RequiredLibrariesInfo.RequiredClassesNotFoundInfo info =
-        requiredLibraries.checkLibraries(myLibrariesContainer.getLibraryFiles(library, OrderRootType.CLASSES));
+        requiredLibraries.checkLibraries(myLibrariesContainer.getLibraryFiles(library, OrderRootType.CLASSES), false);
       if (info == null || info.getLibraryInfos().length < libraryInfos.length) {
         suitableLibraries.add(library);
       }
@@ -192,14 +192,14 @@ public class LibraryCompositionOptionsPanel {
   }
 
   private void updateAll() {
-    String missingJarsText = "";
+    String missingJarsText;
     List<VirtualFile> roots = new ArrayList<VirtualFile>();
     roots.addAll(myAddedJars);
     for (Library library : myUsedLibraries) {
       roots.addAll(Arrays.asList(myLibrariesContainer.getLibraryFiles(library, OrderRootType.CLASSES)));
     }
     RequiredLibrariesInfo.RequiredClassesNotFoundInfo info = new RequiredLibrariesInfo(myLibraryCompositionSettings.getLibraryInfos()).checkLibraries(
-      VfsUtil.toVirtualFileArray(roots));
+      VfsUtil.toVirtualFileArray(roots), false);
     if (info != null) {
       missingJarsText = ProjectBundle.message("label.text.libraries.are.missing", info.getMissingJarsText());
     }
