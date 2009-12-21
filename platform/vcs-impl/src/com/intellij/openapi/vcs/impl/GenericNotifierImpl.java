@@ -131,6 +131,14 @@ public abstract class GenericNotifierImpl<T, Key> {
     }
   }
 
+  @Nullable
+  protected T getObj(final Key key) {
+    synchronized (myLock) {
+      final MyNotification<T> notification = myState.get(key);
+      return notification == null ? null : notification.getObj();
+    }
+  }
+
   protected static class MyNotification<T> extends Notification {
     private T myObj;
 
