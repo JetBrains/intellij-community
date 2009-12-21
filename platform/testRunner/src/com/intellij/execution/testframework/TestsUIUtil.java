@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.testframework;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Location;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
@@ -23,10 +24,15 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -89,5 +95,23 @@ public class TestsUIUtil {
     final Icon icon = IconLoader.getIcon(fullIconName);
     LOG.assertTrue(icon != null, fullIconName);
     return icon;
+  }
+
+  public static void notifyByBalloon(@NotNull final Project project, final AbstractTestProxy root, final TestConsoleProperties properties,
+                                     @NotNull final Filter filter) {
+    if (project.isDisposed()) return;
+    final int failed = root != null ? filter.select(root.getAllTests()).size() : -1;
+    if (properties == null) return;
+    final String testRunDebugId = properties.isDebug() ? ToolWindowId.DEBUG : ToolWindowId.RUN;
+    final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+    if (!Comparing.strEqual(toolWindowManager.getActiveToolWindowId(), testRunDebugId)) {
+      toolWindowManager
+        .notifyByBalloon(testRunDebugId, failed == -1 ? MessageType.WARNING : (failed > 0 ? MessageType.ERROR : MessageType.INFO),
+                         failed == -1
+                         ? ExecutionBundle.message("test.not.started.progress.text")
+                         : (failed > 0
+                            ? failed + " " + ExecutionBundle.message("junit.runing.info.tests.failed.label")
+                            : ExecutionBundle.message("junit.runing.info.tests.passed.label")), null, null);
+    }
   }
 }

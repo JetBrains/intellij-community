@@ -34,7 +34,6 @@ import com.intellij.execution.testframework.ToolbarPanel;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.testframework.ui.TestStatusLine;
 import com.intellij.execution.testframework.ui.TestsOutputConsolePrinter;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -52,7 +51,7 @@ import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-class ConsolePanel extends TestResultsPanel implements Disposable {
+public class ConsolePanel extends TestResultsPanel {
   @NonNls private static final String PROPORTION_PROPERTY = "test_tree_console_proprtion";
   private static final float DEFAULT_PROPORTION = 0.2f;
 
@@ -134,10 +133,6 @@ class ConsolePanel extends TestResultsPanel implements Disposable {
   public void dispose() {
     stopStartingProgress();
     myPrinter = null;
-  }
-
-  public void attachToModel(final JUnitRunningModel model) {
-    getTreeView().attachToModel(model);
   }
 
   private static class StartingProgress implements Runnable {

@@ -13,11 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.rt.execution.junit.segments;
 
-/**
- * @noinspection HardCodedStringLiteral
- */
-public interface PoolOfKnownObjects {
-  String DEFAULT_INPUT_CONSUMER = "K1";
+package com.intellij.execution.junit2.segments;
+
+import com.intellij.openapi.diagnostic.Logger;
+
+public class TestingStatus {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.segments.TestingStatus");
+
+  
+
 }

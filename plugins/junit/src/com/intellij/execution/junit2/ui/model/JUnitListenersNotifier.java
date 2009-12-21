@@ -16,8 +16,8 @@
 
 package com.intellij.execution.junit2.ui.model;
 
-import com.intellij.execution.junit2.TestEvent;
-import com.intellij.execution.junit2.TestEventsConsumer;
+import com.intellij.execution.junit2.events.TestEvent;
+import com.intellij.execution.junit2.events.TestEventsConsumer;
 import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.segments.DispatchListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,7 +30,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class JUnitListenersNotifier implements JUnitListener, TestEventsConsumer, DispatchListener, Runnable {
+public class JUnitListenersNotifier implements TestEventsConsumer, DispatchListener, Runnable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.ui.model.JUnitListenersNotifier");
 
   private final ArrayList<JUnitListener> myListeners = new ArrayList<JUnitListener>();
@@ -53,7 +53,7 @@ public class JUnitListenersNotifier implements JUnitListener, TestEventsConsumer
     this(!ApplicationManager.getApplication().isUnitTestMode());
   }
 
-  public void onTestSelected(final TestProxy test) {
+  public void fireTestSelected(final TestProxy test) {
 //    MEASURER.start(ON_TEST_SELECTED);
     final JUnitListener[] listeners = getListeners();
     for (final JUnitListener listener : listeners) {
@@ -62,15 +62,11 @@ public class JUnitListenersNotifier implements JUnitListener, TestEventsConsumer
 //    MEASURER.stop(ON_TEST_SELECTED);
   }
 
-  public void onDispose(final JUnitRunningModel model) {
+  public void fireDisposed(final JUnitRunningModel model) {
     final JUnitListener[] listeners = getListeners();
     for (final JUnitListener listener : listeners) {
       listener.onDispose(model);
     }
-  }
-
-  public void onTestChanged(final TestEvent event) {
-    LOG.assertTrue(false);
   }
 
   private void dispatchTestEvent(final TestEvent event) {
@@ -80,7 +76,7 @@ public class JUnitListenersNotifier implements JUnitListener, TestEventsConsumer
     }
   }
 
-  public void onRunnerStateChanged(final StateEvent event) {
+  public void fireRunnerStateChanged(final StateEvent event) {
 //    if (!event.isRunning()) MEASURER.printAll();
     final JUnitListener[] listeners = getListeners();
     for (final JUnitListener listener : listeners) {
@@ -92,7 +88,7 @@ public class JUnitListenersNotifier implements JUnitListener, TestEventsConsumer
     }
   }
 
-  public void onEventsDispatched(final List<TestEvent> events) {
+  public void fireEventsDispatched(final List<TestEvent> events) {
 //    MEASURER.start(PACKET_DISPATCH);
     final JUnitListener[] listeners = getListeners();
     for (final JUnitListener listener : listeners) {
@@ -105,6 +101,14 @@ public class JUnitListenersNotifier implements JUnitListener, TestEventsConsumer
     return myListeners.toArray(new JUnitListener[myListeners.size()]);
   }
 
+  public void addListener(@NotNull JUnitListener listener) {
+    myListeners.add(listener);
+  }
+
+  public void removeListener(final JUnitListener listener) {
+    myListeners.remove(listener);
+  }
+
   public void onEvent(final TestEvent event) {
 //    MEASURER.start(ON_EVENT);
     if (myEventsQueue.isEmpty() && myDeferEvents) {
@@ -113,14 +117,6 @@ public class JUnitListenersNotifier implements JUnitListener, TestEventsConsumer
     }
     myEventsQueue.add(event);
 //    MEASURER.stop(ON_EVENT);
-  }
-
-  public void addListener(@NotNull JUnitListener listener) {
-    myListeners.add(listener);
-  }
-
-  public void removeListener(final JUnitListener listener) {
-    myListeners.remove(listener);
   }
 
   public void onStarted() {
@@ -149,7 +145,7 @@ public class JUnitListenersNotifier implements JUnitListener, TestEventsConsumer
       dispatchTestEvent(event);
     }
 //    MEASURER.stop(DISPATCH_SINGLES);
-    onEventsDispatched(filteredEvents);
+    fireEventsDispatched(filteredEvents);
     //System.out.println("duration = " + (System.currentTimeMillis() - start));
   }
 
