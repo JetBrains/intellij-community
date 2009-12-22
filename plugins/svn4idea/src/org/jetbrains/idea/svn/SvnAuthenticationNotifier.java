@@ -73,7 +73,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
   }
 
   private void onStateChangedToSuccess(final AuthenticationRequest obj) {
-    final List<SVNURL> outdatedRequests = new LinkedList<SVNURL>();
+    /*final List<SVNURL> outdatedRequests = new LinkedList<SVNURL>();
     final Collection<SVNURL> keys = getAllCurrentKeys();
     for (SVNURL key : keys) {
       final SVNURL commonURLAncestor = SVNURLUtil.getCommonURLAncestor(key, obj.getUrl());
@@ -91,7 +91,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
           removeLazyNotificationByKey(key);
         }
       }
-    }, ModalityState.NON_MODAL);
+    }, ModalityState.NON_MODAL);    */
   }
 
   @Override
@@ -197,7 +197,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
 
   private static boolean validationImpl(final Project project, final SVNURL url,
                                         final SvnConfiguration configuration, final ISVNAuthenticationManager manager,
-                                        final boolean checkWrite, final String realm, final String kind) {
+                                        final boolean checkWrite, final String realm, final String kind/*, final boolean passive*/) {
     SvnInteractiveAuthenticationProvider.clearCallState();
     try {
       new SVNWCClient(manager, configuration.getOptions(project)).doInfo(url, SVNRevision.UNDEFINED, SVNRevision.HEAD);
@@ -217,24 +217,27 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     if (! checkWrite) {
       return true;
     }
+    /*if (passive) {
+      return SvnInteractiveAuthenticationProvider.wasCalled();
+    }*/
 
     if (SvnInteractiveAuthenticationProvider.wasCalled() && SvnInteractiveAuthenticationProvider.wasCancelled()) return false;
     if (SvnInteractiveAuthenticationProvider.wasCalled()) return true;
 
     final SvnVcs svnVcs = SvnVcs.getInstance(project);
-    if (svnVcs.getAuthNotifier().getObj(url) != null) return false;
 
     final SvnInteractiveAuthenticationProvider provider = new SvnInteractiveAuthenticationProvider(svnVcs);
     final SVNAuthentication svnAuthentication = provider.requestClientAuthentication(kind, url, realm, null, null, true);
     if (svnAuthentication != null) {
-      try {
+      configuration.acknowledge(kind, realm, svnAuthentication);
+      /*try {
         configuration.getAuthenticationManager(svnVcs).acknowledgeAuthentication(true, kind, realm, null, svnAuthentication);
       }
       catch (SVNException e) {
         LOG.info(e);
         // acknowledge at least in runtime
         configuration.acknowledge(kind, realm, svnAuthentication);
-      }
+      }*/
       return true;
     }
     return false;
