@@ -72,6 +72,7 @@ public class TextSplitter {
     List<CheckArea> results = new ArrayList<CheckArea>();
     String[] pieces = text.substring(i).split(WORD_SPLITTER);
     for (String s : pieces) {
+//      ProgressManager.checkCanceled();
       if (s.length() > 0) {
         int p1 = text.indexOf(s, i);
         TextRange range = TextRange.from(p1, s.length());
