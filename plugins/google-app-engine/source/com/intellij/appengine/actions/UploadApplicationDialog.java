@@ -18,7 +18,7 @@ public class UploadApplicationDialog extends DialogWrapper {
     super(project, true);
     setTitle("Upload Application");
     setModal(true);
-    AppEngineUtil.setupAppEngineArtifactCombobox(project, myArtifactComboBox);
+    AppEngineUtil.setupAppEngineArtifactCombobox(project, myArtifactComboBox, true);
     setOKButtonText("Upload");
     init();
   }

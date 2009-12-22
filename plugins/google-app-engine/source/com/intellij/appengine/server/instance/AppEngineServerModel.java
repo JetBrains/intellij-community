@@ -1,8 +1,11 @@
 package com.intellij.appengine.server.instance;
 
+import com.intellij.appengine.facet.AppEngineFacet;
+import com.intellij.appengine.util.AppEngineUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.javaee.deployment.DeploymentProvider;
 import com.intellij.javaee.run.configuration.CommonModel;
@@ -60,8 +63,14 @@ public class AppEngineServerModel implements ServerModel {
   }
 
   public void checkConfiguration() throws RuntimeConfigurationException {
-    if (myArtifactPointer == null || myArtifactPointer.getArtifact() == null) {
+    Artifact artifact;
+    if (myArtifactPointer == null || (artifact = myArtifactPointer.getArtifact()) == null) {
       throw new RuntimeConfigurationError("Artifact isn't specified");
+    }
+
+    final AppEngineFacet facet = AppEngineUtil.findAppEngineFacet(myCommonModel.getProject(), artifact);
+    if (facet == null) {
+      throw new RuntimeConfigurationWarning("App Engine facet not found in '" + artifact.getName() + "' artifact");
     }
   }
 

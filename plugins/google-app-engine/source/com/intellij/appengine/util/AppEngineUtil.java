@@ -23,6 +23,7 @@ import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -37,7 +38,7 @@ public class AppEngineUtil {
   private AppEngineUtil() {
   }
 
-  public static void setupAppEngineArtifactCombobox(Project project, final JComboBox comboBox) {
+  public static void setupAppEngineArtifactCombobox(@NotNull Project project, final @NotNull JComboBox comboBox, final boolean withAppEngineFacetOnly) {
     comboBox.setRenderer(new DefaultListCellRenderer() {
       @Override
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -52,18 +53,19 @@ public class AppEngineUtil {
     });
 
     comboBox.removeAllItems();
-    for (Artifact artifact : collectAllArtifacts(project)) {
+    for (Artifact artifact : collectWebArtifacts(project, withAppEngineFacetOnly)) {
       comboBox.addItem(artifact);
     }
   }
 
-  public static List<Artifact> collectAllArtifacts(@NotNull Project project) {
+  public static List<Artifact> collectWebArtifacts(@NotNull Project project, final boolean withAppEngineFacetOnly) {
     final List<Artifact> artifacts = new ArrayList<Artifact>();
     for (Artifact artifact : ArtifactManager.getInstance(project).getArtifactsByType(WebArtifactUtil.getInstance().getExplodedWarArtifactType())) {
-      if (findAppEngineFacet(project, artifact) != null) {
+      if (!withAppEngineFacetOnly || findAppEngineFacet(project, artifact) != null) {
         artifacts.add(artifact);
       }
     }
+    Collections.sort(artifacts, ArtifactManager.ARTIFACT_COMPARATOR);
     return artifacts;
   }
 
