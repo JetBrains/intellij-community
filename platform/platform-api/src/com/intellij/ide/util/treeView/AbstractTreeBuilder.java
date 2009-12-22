@@ -183,14 +183,16 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   /**
-   * @deprecated @see queueUpdateFrom
+   * @deprecated
+   * @see #queueUpdateFrom
    */
   public void updateFromRoot() {
     queueUpdate();
   }
 
   /**
-   * @deprecated @see queueUpdateFrom
+   * @deprecated
+   * @see #queueUpdateFrom
    */
   protected ActionCallback updateFromRootCB() {
    return queueUpdate();

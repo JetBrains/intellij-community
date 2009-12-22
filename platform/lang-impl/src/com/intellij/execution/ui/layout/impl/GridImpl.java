@@ -387,9 +387,9 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
 
   @Nullable
   public Object getData(@NonNls final String dataId) {
-    if (ViewContext.CONTEXT_KEY.getName().equals(dataId)) {
+    if (ViewContext.CONTEXT_KEY.is(dataId)) {
       return myViewContext;
-    } else if (ViewContext.CONTENT_KEY.getName().equals(dataId)) {
+    } else if (ViewContext.CONTENT_KEY.is(dataId)) {
       List<Content> contents = getContents();
       return contents.toArray(new Content[contents.size()]);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.siyeh.ipp.comment;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -33,11 +32,13 @@ public class ChangeToCStyleCommentIntention extends Intention {
     private static final Class<PsiWhiteSpace>[] WHITESPACE_CLASS =
             new Class[]{PsiWhiteSpace.class};
 
+    @Override
     @NotNull
     protected PsiElementPredicate getElementPredicate() {
         return new EndOfLineCommentPredicate();
     }
 
+    @Override
     public void processIntention(PsiElement element)
             throws IncorrectOperationException {
         PsiComment firstComment = (PsiComment) element;
@@ -51,12 +52,12 @@ public class ChangeToCStyleCommentIntention extends Intention {
             assert prevComment != null;
             firstComment = (PsiComment)prevComment;
         }
-        final PsiManager manager = element.getManager();
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-        final StringBuilder buffer =
-                new StringBuilder(getCommentContents(firstComment));
-        final List<PsiElement> commentsToDelete = new ArrayList<PsiElement>();
+        final JavaPsiFacade psiFacade =
+                JavaPsiFacade.getInstance(element.getProject());
+        final PsiElementFactory factory = psiFacade.getElementFactory();
+        final List<PsiComment> multiLineComments = new ArrayList<PsiComment>();
         PsiElement nextComment = firstComment;
+        String whiteSpace = null;
         while (true) {
             nextComment = PsiTreeUtil.skipSiblingsForward(nextComment,
                     WHITESPACE_CLASS);
@@ -64,28 +65,52 @@ public class ChangeToCStyleCommentIntention extends Intention {
                 break;
             }
             assert nextComment != null;
-            final PsiElement prevSibling = nextComment.getPrevSibling();
-            assert prevSibling != null;
-            final String whiteSpace = prevSibling.getText();
-            buffer.append(whiteSpace);
-            buffer.append(getCommentContents((PsiComment)nextComment));
-            commentsToDelete.add(nextComment);
+            if (whiteSpace == null) {
+                final PsiElement prevSibling = nextComment.getPrevSibling();
+                assert prevSibling != null;
+                final String text = prevSibling.getText();
+                whiteSpace = getIndent(text);
+            }
+            multiLineComments.add((PsiComment)nextComment);
         }
-        final String text = StringUtil.replace(buffer.toString(), "*/", "* /");
         final String newCommentString;
-        if (text.indexOf('\n') >= 0) {
-            newCommentString = "/*\n" + text + "\n*/";
+        if (multiLineComments.isEmpty()) {
+            final String text = getCommentContents(firstComment);
+            newCommentString = "/* " + text + " */";
         } else {
-            newCommentString = "/*" + text + "*/";
+            final StringBuilder text = new StringBuilder();
+            text.append("/*\n");
+            text.append(whiteSpace);
+            text.append(getCommentContents(firstComment));
+            for (PsiComment multiLineComment : multiLineComments) {
+                text.append('\n');
+                text.append(whiteSpace);
+                text.append(getCommentContents(multiLineComment));
+            }
+            text.append('\n');
+            text.append(whiteSpace);
+            text.append("*/");
+            newCommentString = text.toString();
         }
         final PsiComment newComment =
                 factory.createCommentFromText(newCommentString, element);
-        final PsiElement insertedElement = firstComment.replace(newComment);
-        final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
-        codeStyleManager.reformat(insertedElement);
-        for (PsiElement commentToDelete : commentsToDelete) {
+        firstComment.replace(newComment);
+        for (PsiElement commentToDelete : multiLineComments) {
             commentToDelete.delete();
         }
+    }
+
+    private static String getIndent(String whitespace) {
+        for (int i = whitespace.length() - 1; i >= 0; i--) {
+            final char c = whitespace.charAt(i);
+            if (c == '\n') {
+                if (i == whitespace.length() - 1) {
+                    return "";
+                }
+                return whitespace.substring(i + 1);
+            }
+        }
+        return whitespace;
     }
 
     private static boolean isEndOfLineComment(PsiElement element) {
@@ -99,6 +124,6 @@ public class ChangeToCStyleCommentIntention extends Intention {
 
     private static String getCommentContents(@NotNull PsiComment comment) {
         final String text = comment.getText();
-        return text.substring(2);
+        return StringUtil.replace(text.substring(2), "*/", "* /").trim();
     }
 }

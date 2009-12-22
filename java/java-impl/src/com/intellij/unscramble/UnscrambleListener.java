@@ -18,48 +18,31 @@ package com.intellij.unscramble;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.wm.IdeFrame;
 
-import java.awt.*;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
 import java.util.regex.Pattern;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class UnscrambleListener extends ApplicationAdapter {
-  private static final int MAX_STACKTRACE_SIZE = 15 * 1024; //15Kb
+  private static final int MAX_STACKTRACE_SIZE = 100 * 1024;
   private String stacktrace = null;
 
   @Override
   public void applicationActivated(IdeFrame ideFrame) {
-    final String clipboard = getClipboardContents();
+    final String clipboard = AnalyzeStacktraceUtil.getTextInClipboard();
     if (clipboard != null && clipboard.length() < MAX_STACKTRACE_SIZE && !clipboard.equals(stacktrace)) {
       stacktrace = clipboard;
       if (isStacktrace(stacktrace)) {
-        new UnscrambleDialog(ideFrame.getProject()).doOKAction();
+        final UnscrambleDialog dialog = new UnscrambleDialog(ideFrame.getProject());
+        dialog.createNormalizeTextAction().actionPerformed(null);
+        dialog.doOKAction();
       }
     }
   }
 
   @Override
   public void applicationDeactivated(IdeFrame ideFrame) {
-    stacktrace = getClipboardContents();
-  }
-
-  public static String getClipboardContents() {
-    String result = "";
-    try {
-      final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-      final Transferable contents = clipboard.getContents(null);
-      final boolean hasTransferableText = (contents != null) && contents.isDataFlavorSupported(DataFlavor.stringFlavor);
-      if (hasTransferableText) {
-        result = (String)contents.getTransferData(DataFlavor.stringFlavor);
-      }
-    }
-    catch (Exception e) {//
-    }
-    return result;
+    stacktrace = AnalyzeStacktraceUtil.getTextInClipboard();
   }
 
   private static final Pattern STACKTRACE_LINE =
@@ -69,6 +52,7 @@ public class UnscrambleListener extends ApplicationAdapter {
     int linesCount = 0;
     for (String line : stacktrace.split("\n")) {
       line = line.trim();
+      if (line.length() == 0) continue;
       if (line.endsWith("\r")) {
         line = line.substring(0, line.length() - 1);
       }

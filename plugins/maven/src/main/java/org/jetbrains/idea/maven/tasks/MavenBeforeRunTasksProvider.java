@@ -118,7 +118,7 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
                   true,
                   projectAndGoal.first.getDirectory(),
                   Collections.singletonList(projectAndGoal.second),
-                  MavenProjectsManager.getInstance(project).getActiveProfiles());
+                  MavenProjectsManager.getInstance(project).getExplicitProfiles());
 
                 result[0] = MavenRunner.getInstance(project).runBatch(Collections.singletonList(params),
                                                                       null,

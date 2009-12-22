@@ -15,7 +15,7 @@
  */
 package com.intellij.rt.execution.junit;
 
-import com.intellij.rt.execution.junit.segments.OutputObjectRegistryEx;
+import com.intellij.rt.execution.junit.segments.OutputObjectRegistry;
 import com.intellij.rt.execution.junit.segments.Packet;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;
 import junit.framework.ComparisonFailure;
@@ -75,7 +75,7 @@ public class ComparisonDetailsExtractor extends ExceptionPacketFactory {
     }
   }
 
-  public Packet createPacket(OutputObjectRegistryEx registry, Object test) {
+  public Packet createPacket(OutputObjectRegistry registry, Object test) {
     Packet packet = super.createPacket(registry, test);
     packet.
         addLimitedString(myExpected).

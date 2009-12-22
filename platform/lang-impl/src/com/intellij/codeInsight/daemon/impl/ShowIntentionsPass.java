@@ -95,6 +95,11 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     public boolean isEmpty() {
       return intentionsToShow.isEmpty() && errorFixesToShow.isEmpty() && inspectionFixesToShow.isEmpty() && guttersToShow.isEmpty();
     }
+
+    @Override
+    public String toString() {
+      return "Intentions: " + intentionsToShow + "; Errors: " + errorFixesToShow + "; Inspection fixes: " + inspectionFixesToShow + "; Gutters: " + guttersToShow;
+    }
   }
 
   ShowIntentionsPass(@NotNull Project project, @NotNull Editor editor, int passId) {
@@ -109,7 +114,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   }
 
   public void doCollectInformation(ProgressIndicator progress) {
-    if (!myEditor.getContentComponent().hasFocus()) return;
+    if (!ApplicationManager.getApplication().isUnitTestMode() && !myEditor.getContentComponent().hasFocus()) return;
     TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
     if (state == null || state.isFinished()) {
       DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
@@ -121,7 +126,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   public void doApplyInformationToEditor() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    if (!myEditor.getContentComponent().hasFocus()) return;
+    if (!ApplicationManager.getApplication().isUnitTestMode() && !myEditor.getContentComponent().hasFocus()) return;
 
     // do not show intentions if caret is outside visible area
     LogicalPosition caretPos = myEditor.getCaretModel().getLogicalPosition();
@@ -131,11 +136,8 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
     TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
     if (myShowBulb && (state == null || state.isFinished()) && !HintManager.getInstance().hasShownHintsThatWillHideByOtherHint()) {
-      IntentionHintComponent hintComponent = IntentionHintComponent.showIntentionHint(myProject, myFile, myEditor, myIntentionsInfo, false);
-      if (myHasToRecreate) {
-        hintComponent.recreate();
-      }
-      ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).setLastIntentionHint(hintComponent);
+      DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
+      codeAnalyzer.setLastIntentionHint(myProject, myFile, myEditor, myIntentionsInfo, myHasToRecreate);
     }
   }
 

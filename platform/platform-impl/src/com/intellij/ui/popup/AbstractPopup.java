@@ -377,6 +377,9 @@ public class AbstractPopup implements JBPopup {
       else if (window instanceof JDialog) {
         layeredPane = ((JDialog)window).getLayeredPane();
       }
+      else if (window instanceof JWindow) {
+        layeredPane = ((JWindow)window).getLayeredPane();
+      }
       else {
         throw new IllegalStateException("cannot find parent window: project=" + myProject + "; window=" + window);
       }

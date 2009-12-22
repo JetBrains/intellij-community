@@ -24,14 +24,16 @@ import org.jetbrains.annotations.NotNull;
  */
 class IdentityVirtualFilePointer implements VirtualFilePointer {
   private final VirtualFile myFile;
+  private final String myUrl;
 
-  IdentityVirtualFilePointer(@NotNull VirtualFile file) {
+  IdentityVirtualFilePointer(VirtualFile file, @NotNull String url) {
     myFile = file;
+    myUrl = url;
   }
 
   @NotNull
   public String getFileName() {
-    return myFile.getName();
+    return getUrl();
   }
 
   public VirtualFile getFile() {
@@ -40,7 +42,7 @@ class IdentityVirtualFilePointer implements VirtualFilePointer {
 
   @NotNull
   public String getUrl() {
-    return myFile.getUrl();
+    return myUrl;
   }
 
   @NotNull
@@ -49,6 +51,6 @@ class IdentityVirtualFilePointer implements VirtualFilePointer {
   }
 
   public boolean isValid() {
-    return myFile.isValid();
+    return myFile == null || myFile.isValid();
   }
 }

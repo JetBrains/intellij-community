@@ -150,6 +150,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     myUpdateAlarm.cancelAllRequests();
     myUpdateAlarm.addRequest(new Runnable() {
       public void run() {
+        if (myProject.isDisposed()) return;
         rebuild();
       }
     }, 300, ModalityState.stateForComponent(myPanel));

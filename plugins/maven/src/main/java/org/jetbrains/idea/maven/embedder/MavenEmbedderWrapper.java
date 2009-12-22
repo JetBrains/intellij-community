@@ -175,7 +175,7 @@ public class MavenEmbedderWrapper {
   }
 
   public MavenExecutionResult resolveProject(@NotNull final VirtualFile file,
-                                             @NotNull final List<String> activeProfiles) throws MavenProcessCanceledException {
+                                             @NotNull final Collection<String> activeProfiles) throws MavenProcessCanceledException {
     return doExecute(new Executor<MavenExecutionResult>() {
       public MavenExecutionResult execute() throws Exception {
         //loadSettings();
@@ -336,7 +336,7 @@ public class MavenEmbedderWrapper {
 
   @NotNull
   public MavenExecutionResult execute(@NotNull final VirtualFile file,
-                                      @NotNull final List<String> activeProfiles,
+                                      @NotNull final Collection<String> activeProfiles,
                                       @NotNull final List<String> goals)
     throws MavenProcessCanceledException {
     return doExecute(new Executor<MavenExecutionResult>() {
@@ -351,7 +351,7 @@ public class MavenEmbedderWrapper {
     });
   }
 
-  private MavenExecutionRequest createRequest(VirtualFile virtualFile, List<String> profiles, List<String> goals) {
+  private MavenExecutionRequest createRequest(VirtualFile virtualFile, Collection<String> profiles, List<String> goals) {
     Properties executionProperties = getExecutionProperties();
 
     DefaultEventDispatcher dispatcher = new DefaultEventDispatcher();
@@ -375,9 +375,9 @@ public class MavenEmbedderWrapper {
     return MavenEmbedderFactory.collectSystemProperties();
   }
 
-  private ProfileManager createProfileManager(List<String> activeProfiles, Properties executionProperties) {
+  private ProfileManager createProfileManager(Collection<String> activeProfiles, Properties executionProperties) {
     ProfileManager profileManager = new DefaultProfileManager(getContainer(), executionProperties);
-    profileManager.explicitlyActivate(activeProfiles);
+    profileManager.explicitlyActivate(new ArrayList<String>(activeProfiles));
     return profileManager;
   }
 

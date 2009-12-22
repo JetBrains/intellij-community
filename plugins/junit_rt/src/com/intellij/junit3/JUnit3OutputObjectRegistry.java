@@ -20,14 +20,14 @@
  */
 package com.intellij.junit3;
 
-import com.intellij.rt.execution.junit.segments.OutputObjectRegistryEx;
+import com.intellij.rt.execution.junit.segments.OutputObjectRegistry;
 import com.intellij.rt.execution.junit.segments.Packet;
 import com.intellij.rt.execution.junit.segments.PacketProcessor;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
-public class JUnit3OutputObjectRegistry extends OutputObjectRegistryEx {
+public class JUnit3OutputObjectRegistry extends OutputObjectRegistry {
   public JUnit3OutputObjectRegistry(PacketProcessor mainTransport, PacketProcessor auxilaryTransport) {
     super(mainTransport, auxilaryTransport);
   }

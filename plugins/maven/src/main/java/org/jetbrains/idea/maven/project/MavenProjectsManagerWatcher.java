@@ -136,7 +136,7 @@ public class MavenProjectsManagerWatcher {
     getDocumentEventMulticaster().addDocumentListener(myDocumentListener,myBusConnection);
 
     final MavenGeneralSettings.Listener mySettingsPathsChangesListener = new MavenGeneralSettings.Listener() {
-      public void pathChanged() {
+      public void pathsChanged() {
         updateSettingsFilePointers();
         onSettingsChange();
       }
@@ -187,14 +187,14 @@ public class MavenProjectsManagerWatcher {
     return EditorFactory.getInstance().getEventMulticaster();
   }
 
-  public synchronized void addManagedFilesWithProfiles(List<VirtualFile> files, List<String> profiles) {
-    myProjectsTree.addManagedFilesWithProfiles(files, profiles);
+  public synchronized void addManagedFilesWithProfiles(List<VirtualFile> files, List<String> explicitProfiles) {
+    myProjectsTree.addManagedFilesWithProfiles(files, explicitProfiles);
     scheduleUpdateAll(true);
   }
 
   @TestOnly
-  public synchronized void resetManagedFilesAndProfilesInTests(List<VirtualFile> files, List<String> profiles) {
-    myProjectsTree.resetManagedFilesAndProfiles(files, profiles);
+  public synchronized void resetManagedFilesAndProfilesInTests(List<VirtualFile> files, List<String> explicitProfiles) {
+    myProjectsTree.resetManagedFilesAndProfiles(files, explicitProfiles);
     scheduleUpdateAll(true);
   }
 
@@ -203,8 +203,8 @@ public class MavenProjectsManagerWatcher {
     scheduleUpdateAll(true);
   }
 
-  public synchronized void setActiveProfiles(List<String> profiles) {
-    myProjectsTree.setActiveProfiles(profiles);
+  public synchronized void setExplicitProfiles(Collection<String> profiles) {
+    myProjectsTree.setExplicitProfiles(profiles);
     scheduleUpdateAll(true);
   }
 

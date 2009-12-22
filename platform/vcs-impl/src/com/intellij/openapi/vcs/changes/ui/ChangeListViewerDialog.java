@@ -107,7 +107,7 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
   }
 
   public Object getData(@NonNls final String dataId) {
-    if (VcsDataKeys.CHANGES.getName().equals(dataId)) {
+    if (VcsDataKeys.CHANGES.is(dataId)) {
       return myChanges;
     }
     return null;

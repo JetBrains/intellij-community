@@ -15,10 +15,7 @@
  */
 package com.intellij.compiler.actions;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.Artifact;
@@ -50,6 +47,11 @@ public class BuildArtifactActionGroup extends ActionGroup {
         actions.add(new BuildArtifactAction(project, artifact));
       }
     }
+    if (actions.size() > 1) {
+      actions.add(0, new BuildAllArtifactsAction());
+      actions.add(1, Separator.getInstance());
+    }
     return actions.toArray(new AnAction[actions.size()]);
   }
+
 }

@@ -2581,7 +2581,7 @@ public class JBTabsImpl extends JComponent
       if (value != null) return value;
     }
 
-    return NAVIGATION_ACTIONS_KEY.getName().equals(dataId) ? this : null;
+    return NAVIGATION_ACTIONS_KEY.is(dataId) ? this : null;
   }
 
 

@@ -244,14 +244,14 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
 
   @Nullable
   public Object getData(@NonNls String dataId) {
-    if (PlatformDataKeys.NAVIGATABLE.getName().equals(dataId)) {
+    if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
       final Project project = myVCS.getProject();
       if (project == null || project.isDefault()) {
         return null;
       }
       final VirtualFile vcsFile = getSelectedVcsFile();
       return vcsFile != null ? new OpenFileDescriptor(project, vcsFile) : null;
-    } else if (PlatformDataKeys.PROJECT.getName().equals(dataId)) {
+    } else if (PlatformDataKeys.PROJECT.is(dataId)) {
       return myVCS.getProject();
     }
     return null;

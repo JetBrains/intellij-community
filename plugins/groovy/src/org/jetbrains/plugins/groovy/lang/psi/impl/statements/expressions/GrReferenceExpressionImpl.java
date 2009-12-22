@@ -59,6 +59,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -105,18 +106,14 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   public String getReferenceName() {
     PsiElement nameElement = getReferenceNameElement();
     if (nameElement != null) {
-      if (nameElement.getNode().getElementType() == GroovyElementTypes.mSTRING_LITERAL)
-        return getValueText(nameElement);
+      if (nameElement.getNode().getElementType() == GroovyElementTypes.mSTRING_LITERAL ||
+          nameElement.getNode().getElementType() == GroovyElementTypes.mGSTRING_LITERAL) {
+        return GrStringUtil.removeQuotes(nameElement.getText());
+      }
+
       return nameElement.getText();
     }
     return null;
-  }
-
-  private static String getValueText(PsiElement stringNameElement) {
-    final String text = stringNameElement.getText();
-    final char firstChar = text.charAt(0);
-    if (text.charAt(text.length() - 1) == firstChar) return text.substring(1, text.length() - 1);
-    return text.substring(1);
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {

@@ -504,7 +504,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                   "    <version>4.0</version>" +
                   "  </dependency>" +
                   "</dependencies>");
-    
+
     assertModuleLibDep("project", "Maven: junit:junit:4.0",
                        "jar://" + FileUtil.toSystemIndependentName(repo.getPath()) + "/junit/junit/4.0/junit-4.0.jar!/");
   }
@@ -649,7 +649,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                                      "<version>1</version>");
 
     importProjects(p1, p2);
-    myProjectsManager.setActiveProfiles(Arrays.asList("one", "two"));
+    myProjectsManager.setExplicitProfiles(Arrays.asList("one", "two"));
     myProjectsManager.setIgnoredFilesPaths(Arrays.asList(p1.getPath()));
     myProjectsManager.setIgnoredFilesPatterns(Arrays.asList("*.xxx"));
 
@@ -670,7 +670,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
 
     assertUnorderedElementsAreEqual(myProjectsManager.getProjectsTreeForTests().getManagedFilesPaths(),
                                     p1.getPath(), p3.getPath());
-    assertUnorderedElementsAreEqual(myProjectsManager.getActiveProfiles(), "three");
+    assertUnorderedElementsAreEqual(myProjectsManager.getExplicitProfiles(), "three");
     assertUnorderedElementsAreEqual(myProjectsManager.getIgnoredFilesPaths(), p1.getPath());
     assertUnorderedElementsAreEqual(myProjectsManager.getIgnoredFilesPatterns(), "*.zzz");
 
@@ -912,5 +912,89 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
 
     assertSources("project", "src/main/java");
     assertModuleLibDeps("project", "Maven: junit:junit:4.0");
+  }
+
+  public void testScheduleReimportWhenPluginConfigurationChangesInTagName() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>group</groupId>" +
+                  "      <artifactId>id</artifactId>" +
+                  "      <version>1</version>" +
+                  "      <configuration>" +
+                  "        <foo>value</foo>" +
+                  "      </configuration>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    myProjectsManager.performScheduledImport();
+    assertFalse(myProjectsManager.hasScheduledImports());
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <groupId>group</groupId>" +
+                     "      <artifactId>id</artifactId>" +
+                     "      <version>1</version>" +
+                     "      <configuration>" +
+                     "        <bar>value</bar>" +
+                     "      </configuration>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+    myProjectsManager.waitForResolvingCompletion();
+
+    assertTrue(myProjectsManager.hasScheduledImports());
+  }
+
+  public void testScheduleReimportWhenPluginConfigurationChangesInValue() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>group</groupId>" +
+                  "      <artifactId>id</artifactId>" +
+                  "      <version>1</version>" +
+                  "      <configuration>" +
+                  "        <foo>value</foo>" +
+                  "      </configuration>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    myProjectsManager.performScheduledImport();
+    assertFalse(myProjectsManager.hasScheduledImports());
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <groupId>group</groupId>" +
+                     "      <artifactId>id</artifactId>" +
+                     "      <version>1</version>" +
+                     "      <configuration>" +
+                     "        <foo>value2</foo>" +
+                     "      </configuration>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+    myProjectsManager.waitForResolvingCompletion();
+
+    assertTrue(myProjectsManager.hasScheduledImports());
   }
 }

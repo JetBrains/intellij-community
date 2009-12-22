@@ -15,7 +15,7 @@
  */
 package com.intellij.junit3;
 
-import com.intellij.rt.execution.junit.segments.OutputObjectRegistryEx;
+import com.intellij.rt.execution.junit.segments.OutputObjectRegistry;
 import com.intellij.rt.execution.junit.segments.PoolOfDelimiters;
 import com.intellij.rt.execution.junit.segments.Packet;
 import junit.framework.Test;
@@ -48,7 +48,7 @@ public class TreeSender {
     return testCases;
   }
 
-  public static void sendSuite(OutputObjectRegistryEx registry, Test suite) {
+  public static void sendSuite(OutputObjectRegistry registry, Test suite) {
     Packet packet = registry.createPacket();
     packet.addString(PoolOfDelimiters.TREE_PREFIX);
     sendNode(suite, packet);

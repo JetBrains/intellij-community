@@ -148,7 +148,8 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     myProcessor = new SchemeProcessor<TemplateGroup>() {
       public TemplateGroup readScheme(final Document schemeContent)
           throws InvalidDataException, IOException, JDOMException {
-        return readTemplateFile(schemeContent, schemeContent.getRootElement().getAttributeValue("group"), false, false);
+        return readTemplateFile(schemeContent, schemeContent.getRootElement().getAttributeValue("group"), false, false,
+                                getClass().getClassLoader());
       }
 
 
@@ -242,7 +243,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       List children = deleted.getChildren();
       for (final Object aChildren : children) {
         Element child = (Element)aChildren;
-        myDeletedTemplates.add(new TemplateKey(child.getAttributeValue(NAME), child.getAttributeValue(GROUP)));
+        myDeletedTemplates.add(new TemplateKey(child.getAttributeValue(GROUP), child.getAttributeValue(NAME)));
       }
     }
 
@@ -459,7 +460,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
           String templateName = getDefaultTemplateName(defTemplate);
           InputStream inputStream = DecodeDefaultsUtil.getDefaultsInputStream(provider, defTemplate);
           if (inputStream != null) {
-            readDefTemplateFile(inputStream, templateName);
+            readDefTemplateFile(inputStream, templateName, provider.getClass().getClassLoader());
           }
         }
       }
@@ -473,11 +474,20 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
   }
 
   public void readDefTemplateFile(InputStream inputStream, String defGroupName) throws JDOMException, InvalidDataException, IOException {
-    readTemplateFile(JDOMUtil.loadDocument(inputStream), defGroupName, true, true);
+    readDefTemplateFile(inputStream, defGroupName, getClass().getClassLoader());
+  }
+
+  public void readDefTemplateFile(InputStream inputStream, String defGroupName, ClassLoader classLoader) throws JDOMException, InvalidDataException, IOException {
+    readTemplateFile(JDOMUtil.loadDocument(inputStream), defGroupName, true, true, classLoader);
   }
 
   @Nullable
   public TemplateGroup readTemplateFile(Document document, @NonNls String defGroupName, boolean isDefault, boolean registerTemplate) throws InvalidDataException {
+    return readTemplateFile(document, defGroupName, isDefault, registerTemplate, getClass().getClassLoader()  );
+  }
+
+  @Nullable
+  public TemplateGroup readTemplateFile(Document document, @NonNls String defGroupName, boolean isDefault, boolean registerTemplate, ClassLoader classLoader) throws InvalidDataException {
     if (document == null) {
       throw new InvalidDataException();
     }
@@ -496,8 +506,8 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     for (final Object o1 : root.getChildren(TEMPLATE)) {
       Element element = (Element)o1;
 
-      TemplateImpl template = readTemplateFromElement(isDefault, groupName, element);
-      boolean doNotRegister = isDefault && (myDeletedTemplates.contains(TemplateKey.keyOf(template)) || myTemplates.containsKey(template.getKey()));
+      TemplateImpl template = readTemplateFromElement(isDefault, groupName, element, classLoader);
+      boolean doNotRegister = isDefault && (myDeletedTemplates.contains(TemplateKey.keyOf(template)) || myTemplatesById.containsKey(template.getId()));
 
       if(!doNotRegister) {
         created.put(template.getKey(), template);
@@ -531,8 +541,10 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
 
   }
 
-  private TemplateImpl readTemplateFromElement(final boolean isDefault, final String groupName, final Element element) throws
-                                                                                                                       InvalidDataException {
+  private TemplateImpl readTemplateFromElement(final boolean isDefault,
+                                               final String groupName,
+                                               final Element element,
+                                               ClassLoader classLoader) throws InvalidDataException {
     String name = element.getAttributeValue(NAME);
     String value = element.getAttributeValue(VALUE);
     String description;
@@ -540,7 +552,10 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     String key = element.getAttributeValue(KEY);
     String id = element.getAttributeValue(ID);
     if (resourceBundle != null && key != null) {
-      ResourceBundle bundle = ResourceBundle.getBundle(resourceBundle);
+      if (classLoader == null) {
+        classLoader = getClass().getClassLoader();
+      }
+      ResourceBundle bundle = ResourceBundle.getBundle(resourceBundle, Locale.getDefault(), classLoader);
       description = bundle.getString(key);
     }
     else {
@@ -582,7 +597,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
 
     for (final Object o1 : root.getChildren(TEMPLATE)) {
 
-      addTemplateById(readTemplateFromElement(false, null, (Element)o1));
+      addTemplateById(readTemplateFromElement(false, null, (Element)o1, getClass().getClassLoader()));
     }
 
 

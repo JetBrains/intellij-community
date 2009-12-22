@@ -28,6 +28,7 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 import java.util.Stack;
@@ -59,7 +60,7 @@ public class MavenPropertyResolver {
 
     collectPropertiesFromDOM(projectDom.getProperties(), result);
 
-    List<String> activePropfiles = project.getActiveProfilesIds();
+    Collection<String> activePropfiles = project.getActiveProfilesIds();
     for (MavenDomProfile each : projectDom.getProfiles().getProfiles()) {
       XmlTag idTag = each.getId().getXmlTag();
       if (idTag == null || !activePropfiles.contains(idTag.getValue().getText())) continue;
