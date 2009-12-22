@@ -31,7 +31,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class MavenArtifactDownloader {
-  private final static ExecutorService EXECUTOR = new ThreadPoolExecutor(0, 5, 60, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(5));
+  //private final static ExecutorService EXECUTOR = new ThreadPoolExecutor(0, 5, 60, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(5));
 
   private final MavenEmbedderWrapper myEmbedder;
   private final MavenProgressIndicator myProgress;
@@ -112,7 +112,7 @@ public class MavenArtifactDownloader {
                         final boolean downloadJavadoc,
                         final Map<MavenId, Set<MavenRemoteRepository>> libraryArtifacts,
                         final List<File> downloadedFiles) throws MavenProcessCanceledException {
-    List<Future<?>> futures = new ArrayList<Future<?>>();
+    //List<Future<?>> futures = new ArrayList<Future<?>>();
 
     List<String> classifiers = new ArrayList<String>(2);
     if (downloadSources) classifiers.add(MavenConstants.CLASSIFIER_SOURCES);
@@ -125,32 +125,32 @@ public class MavenArtifactDownloader {
         myProgress.checkCanceled();
 
         for (final String eachClassifier : classifiers) {
-          futures.add(EXECUTOR.submit(new Runnable() {
-            public void run() {
-              try {
+          //futures.add(EXECUTOR.submit(new Runnable() {
+          //  public void run() {
+          //    try {
                 myProgress.checkCanceled();
                 myProgress.setFraction(((double)downloaded.getAndIncrement()) / total);
 
                 Artifact a = myEmbedder.resolve(eachEntry.getKey(), MavenConstants.TYPE_JAR, eachClassifier,
                                                 new ArrayList<MavenRemoteRepository>(eachEntry.getValue()));
                 if (a.isResolved()) downloadedFiles.add(a.getFile());
-              }
-              catch (MavenProcessCanceledException ignore) {
-              }
-            }
-          }));
+              //}
+              //catch (MavenProcessCanceledException ignore) {
+              //}
+            //}
+          //}));
         }
       }
     }
     finally {
-      for (Future<?> each : futures) {
-        try {
-          each.get();
-        }
-        catch (Exception e) {
-          MavenLog.LOG.error(e);
-        }
-      }
+      //for (Future<?> each : futures) {
+      //  try {
+      //    each.get();
+      //  }
+      //  catch (Exception e) {
+      //    MavenLog.LOG.error(e);
+      //  }
+      //}
     }
   }
 }
