@@ -154,7 +154,7 @@ public class ActionsTreeUtil {
 
     for (int i = 0; i < children.length; i++) {
       AnAction action = children[i];
-
+      LOG.assertTrue(action != null, groupName + " contains null actions");
       if (action instanceof ActionGroup) {
         Group subGroup = createGroup((ActionGroup)action, getName(action), null, null, ignore, filtered, normalizeSeparators);
         if (subGroup.getSize() > 0) {
