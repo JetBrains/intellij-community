@@ -192,7 +192,11 @@ class ProjectBuilder {
 
   private def chunkOutput(ModuleChunk chunk) {
     String currentOut = outputs[chunk]
-    if (currentOut == null) binding.project.error("Module ${chunk.name} haven't yet been built");
+    if (currentOut == null) {
+      binding.project.warning("Dependency module ${chunk.name} haven't yet been built, now building it");
+      makeChunk(chunk)
+      currentOut = outputs[chunk]
+    }
 
     outputs[chunk] = zipIfNecessary(currentOut, chunk)
 
@@ -220,7 +224,11 @@ class ProjectBuilder {
   }
 
   private String chunkTestOutput(ModuleChunk chunk) {
-    if (testOutputs[chunk] == null) binding.project.error("Tests for module ${chunk.name} haven't yet been built");
+    if (testOutputs[chunk] == null) {
+      binding.project.warning("Dependency module ${chunk.name} tests haven't yet been built, now building it");
+      makeChunkTests(chunk)
+    }
+
     testOutputs[chunk] = zipIfNecessary(testOutputs[chunk], chunk)
     testOutputs[chunk]
   }
