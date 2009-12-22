@@ -328,14 +328,14 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
 
     if (element instanceof PsiMethod){
       final PsiMethod psiMethod = (PsiMethod)element;
-      if (psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        if (options.isImplementingMethods){
-          processOverridingMethods(psiMethod, processor, options);
+      boolean isAbstract = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+        public Boolean compute() {
+          return psiMethod.hasModifierProperty(PsiModifier.ABSTRACT);
         }
+      });
+      if (isAbstract && options.isImplementingMethods || options.isOverridingMethods) {
+        processOverridingMethods(psiMethod, processor, options);
       }
-      else if (options.isOverridingMethods){
-          processOverridingMethods(psiMethod, processor, options);
-        }
     }
 
     if (!ThrowSearchUtil.isSearchable(element) && options.isSearchForTextOccurences && options.searchScope instanceof GlobalSearchScope) {
@@ -343,15 +343,13 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     }
   }
 
-  private static void processOverridingMethods(final PsiMethod psiMethod,
-                                               final Processor<UsageInfo> processor, final FindUsagesOptions options) {
+  private static void processOverridingMethods(PsiMethod psiMethod, final Processor<UsageInfo> processor, final FindUsagesOptions options) {
     OverridingMethodsSearch.search(psiMethod, options.searchScope, options.isCheckDeepInheritance).forEach(new PsiElementProcessorAdapter<PsiMethod>(
       new PsiElementProcessor<PsiMethod>() {
       public boolean execute(PsiMethod element) {
         addResult(processor, element.getNavigationElement(), options, null);
         return true;
       }
-
     }));
   }
 
