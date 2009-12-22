@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
-package com.intellij.execution.junit2;
+package com.intellij.execution.junit2.states;
 
+import com.intellij.execution.junit2.TestProxy;
+import com.intellij.execution.junit2.TestProxyListener;
+import com.intellij.execution.junit2.states.CumulativeStatistics;
 import com.intellij.execution.junit2.states.Statistics;
 import com.intellij.execution.junit2.states.TestState;
 import com.intellij.execution.testframework.AbstractTestProxy;

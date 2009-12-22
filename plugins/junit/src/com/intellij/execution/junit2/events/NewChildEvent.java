@@ -14,31 +14,32 @@
  * limitations under the License.
  */
 
-package com.intellij.execution.junit2.ui.model;
+package com.intellij.execution.junit2.events;
 
-import com.intellij.execution.junit2.events.TestEvent;
 import com.intellij.execution.junit2.TestProxy;
+import com.intellij.execution.junit2.events.TestEvent;
 
-import java.util.List;
+public class NewChildEvent extends TestEvent {
+  private final TestProxy myChild;
 
-public abstract class JUnitAdapter implements JUnitListener {
-
-  public void onTestSelected(final TestProxy test) {
+  public TestProxy getChild() {
+    return myChild;
   }
 
-  public final void onDispose(final JUnitRunningModel model) {
-    model.removeListener(this);
-    doDispose();
+  public NewChildEvent(final TestProxy parent, final TestProxy child) {
+    super(parent);
+    myChild = child;
   }
 
-  protected void doDispose() {}
-
-  public void onTestChanged(final TestEvent event) {
+  public boolean equals(final Object obj) {
+    return super.equals(obj) && ((NewChildEvent) obj).myChild == myChild;
   }
 
-  public void onRunnerStateChanged(final StateEvent event) {
+  public int hashCode() {
+    return super.hashCode() ^ myChild.hashCode();
   }
 
-  public void onEventsDispatched(final List<TestEvent> events) {
+  public TestProxy getTestSubtree() {
+    return getSource();
   }
 }

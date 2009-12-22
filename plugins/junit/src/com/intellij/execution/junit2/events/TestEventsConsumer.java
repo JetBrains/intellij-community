@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.junit2.segments;
 
-public interface DeferedActionsQueue {
-  void addLast(Runnable runnable);
+package com.intellij.execution.junit2.events;
 
-  void setDispactchListener(DispatchListener listener);
+public interface TestEventsConsumer {
+  void onEvent(TestEvent event);
 }

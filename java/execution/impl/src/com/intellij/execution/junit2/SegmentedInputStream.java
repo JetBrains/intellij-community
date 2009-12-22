@@ -62,21 +62,22 @@ public class SegmentedInputStream extends InputStream {
     while (true) {
       nextByte = readNext();
       if (nextByte != SegmentedStream.SPECIAL_SYMBOL) break;
-      final boolean packetRead = readControlSequence();
-      if (!packetRead) break;
+      final Integer packetRead = readControlSequence();
+      if (packetRead != null) break;
     }
     return nextByte;
   }
 
-  private boolean readControlSequence() throws IOException {
+  private Integer readControlSequence() throws IOException {
     for (int idx = 1; idx < SegmentedStream.MARKER_PREFIX.length(); idx++) {
-      if (readNext() != SegmentedStream.MARKER_PREFIX.charAt(idx)) {
-        return false;
+      final int readAhead = readNext();
+      if (readAhead != SegmentedStream.MARKER_PREFIX.charAt(idx)) {
+        return readAhead;
       }
     }
     final char[] marker = readMarker();
     if(myEventsDispatcher != null) myEventsDispatcher.processPacket(decode(marker));
-    return true;
+    return null;
   }
 
   public void setEventsDispatcher(final PacketProcessor eventsDispatcher) {
@@ -127,11 +128,11 @@ public class SegmentedInputStream extends InputStream {
         mySourceStream.pushBack(b);
         return 1;
       }
-      final boolean packetRead = readControlSequence();
-      if (!packetRead) {
+      final Integer packetRead = readControlSequence();
+      if (packetRead != null) {
         // push back quoted slash
         mySourceStream.pushBack(b);
-        mySourceStream.pushBack(b);
+        mySourceStream.pushBack(packetRead);
         return 1;
       }
     }

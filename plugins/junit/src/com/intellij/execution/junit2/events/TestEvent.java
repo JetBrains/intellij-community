@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package com.intellij.execution.junit2;
+package com.intellij.execution.junit2.events;
 
+import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.testframework.AbstractTestProxy;
 
 public class TestEvent {

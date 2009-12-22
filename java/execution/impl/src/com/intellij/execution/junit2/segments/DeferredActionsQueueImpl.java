@@ -19,7 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 
 import java.awt.*;
 
-public class DeferedActionsQueueImpl implements DeferedActionsQueue {
+public class DeferredActionsQueueImpl implements DeferredActionsQueue {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.segments.DeferedActionsQueueImpl");
   private DispatchListener myListener = DispatchListener.DEAF;
   private int myCounter = 0;

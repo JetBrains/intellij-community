@@ -14,25 +14,20 @@
  * limitations under the License.
  */
 
-package com.intellij.execution.junit2.info;
+package com.intellij.execution.junit2.events;
 
-import com.intellij.execution.junit2.segments.PacketReader;
+import com.intellij.execution.junit2.TestProxy;
+import com.intellij.execution.junit2.events.TestEvent;
+import com.intellij.execution.testframework.AbstractTestProxy;
 
-abstract class TestInfoImpl implements TestInfo, PacketReader {
-  private int myTestCount;
-
-  public boolean shouldRun() {
-    return false;
+public class StateChangedEvent extends TestEvent {
+  public StateChangedEvent(final TestProxy test) {
+    super(test);
   }
 
-  public int getTestsCount() {
-    return myTestCount;
-  }
-
-  public void setTestCount(final int testCount) {
-    myTestCount = testCount;
-  }
-
-  public void onFinished() {
+  public AbstractTestProxy getTestSubtree() {
+    final TestProxy test = getSource();
+    final AbstractTestProxy parent = test.getParent();
+    return parent != null ? parent : test;
   }
 }

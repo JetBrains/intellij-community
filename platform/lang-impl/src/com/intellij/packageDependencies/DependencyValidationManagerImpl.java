@@ -284,6 +284,9 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     String toScope = ruleElement.getAttributeValue(TO_SCOPE_KEY);
     String denyRule = ruleElement.getAttributeValue(IS_DENY_KEY);
     if (fromScope == null || toScope == null || denyRule == null) return null;
-    return new DependencyRule(getScope(fromScope), getScope(toScope), Boolean.valueOf(denyRule).booleanValue());
+    final NamedScope fromNamedScope = getScope(fromScope);
+    final NamedScope toNamedScope = getScope(toScope);
+    if (fromNamedScope == null || toNamedScope == null) return null;
+    return new DependencyRule(fromNamedScope, toNamedScope, Boolean.valueOf(denyRule).booleanValue());
   }
 }

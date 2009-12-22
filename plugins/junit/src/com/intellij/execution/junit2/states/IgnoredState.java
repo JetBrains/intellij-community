@@ -27,7 +27,7 @@ public class IgnoredState extends ReadableState {
   private TestProxy myPeformedTest;
   private String myIgnoredMessage;
 
-  void initializeFrom(final ObjectReader reader) {
+  public void initializeFrom(final ObjectReader reader) {
     myPeformedTest = reader.readObject();
     myIgnoredMessage = reader.readLimitedString();
   }

@@ -29,7 +29,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
@@ -58,10 +57,7 @@ import java.util.*;
  */
 
 public class IdeEventQueue extends EventQueue {
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue");
-
-  private static final boolean DEBUG = LOG.isDebugEnabled();
 
   /**
    * Adding/Removing of "idle" listeners should be thread safe.
@@ -128,7 +124,7 @@ public class IdeEventQueue extends EventQueue {
   private final Set<EventDispatcher> myDispatchers = new LinkedHashSet<EventDispatcher>();
   private final Set<EventDispatcher> myPostprocessors = new LinkedHashSet<EventDispatcher>();
 
-  private Set<Runnable> myReady = new HashSet<Runnable>();
+  private final Set<Runnable> myReady = new HashSet<Runnable>();
   private boolean myKeyboardBusy;
 
   private static class IdeEventQueueHolder {
@@ -360,8 +356,6 @@ public class IdeEventQueue extends EventQueue {
   */
 
   public void dispatchEvent(final AWTEvent e) {
-    long t = 0;
-
     boolean wasInputEvent = myIsInInputEvent;
     myIsInInputEvent = e instanceof InputEvent || e instanceof InputMethodEvent || e instanceof WindowEvent || e instanceof ActionEvent;
     AWTEvent oldEvent = myCurrentEvent;
@@ -382,13 +376,6 @@ public class IdeEventQueue extends EventQueue {
 
       if (e instanceof KeyEvent) {
         maybeReady();
-      }
-
-      if (DEBUG) {
-        final long processTime = System.currentTimeMillis() - t;
-        if (processTime > 100) {
-          LOG.debug("Long event: " + processTime + "ms - " + toDebugString(e));
-        }
       }
     }
   }
@@ -512,7 +499,7 @@ public class IdeEventQueue extends EventQueue {
     }
   }
 
-  private void fixStickyWindow(KeyboardFocusManager mgr, Window wnd, String resetMethod) {
+  private static void fixStickyWindow(KeyboardFocusManager mgr, Window wnd, String resetMethod) {
     Window showingWindow = wnd;
 
     if (wnd != null && !wnd.isShowing()) {
@@ -548,7 +535,7 @@ public class IdeEventQueue extends EventQueue {
     }
   }
 
-  private void fixStickyFocusedComponents(AWTEvent e) {
+  private static void fixStickyFocusedComponents(AWTEvent e) {
     if (!(e instanceof InputEvent)) return;
 
     final KeyboardFocusManager mgr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
@@ -760,7 +747,7 @@ public class IdeEventQueue extends EventQueue {
   }
 
   private void flushReady() {
-    if (myReady.size() == 0 || !isReady()) return;
+    if (myReady.isEmpty() || !isReady()) return;
 
     Runnable[] ready = myReady.toArray(new Runnable[myReady.size()]);
     myReady.clear();
