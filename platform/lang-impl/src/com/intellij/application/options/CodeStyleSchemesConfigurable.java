@@ -146,8 +146,10 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
   }
 
   private boolean isSomeSchemeModified() {
-    for (CodeStyleConfigurableWrapper panel : myPanels) {
-      if (panel.isPanelModified()) return true;
+    if (myPanels != null) {
+      for (CodeStyleConfigurableWrapper panel : myPanels) {
+        if (panel.isPanelModified()) return true;
+      }
     }
 
     return false;
