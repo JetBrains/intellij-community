@@ -226,8 +226,8 @@ public class MavenRootModelAdapter {
     Library.ModifiableModel libraryModel = provider.getLibraryModel(library);
 
     setUrl(libraryModel, OrderRootType.CLASSES, artifact, null);
-    setUrl(libraryModel, OrderRootType.SOURCES, artifact, MavenConstants.SOURCES_CLASSIFIER);
-    setUrl(libraryModel, JavadocOrderRootType.getInstance(), artifact, MavenConstants.JAVADOC_CLASSIFIER);
+    setUrl(libraryModel, OrderRootType.SOURCES, artifact, MavenConstants.CLASSIFIER_SOURCES);
+    setUrl(libraryModel, JavadocOrderRootType.getInstance(), artifact, MavenConstants.CLASSIFIER_JAVADOC);
 
     LibraryOrderEntry e = myRootModel.addLibraryEntry(library);
     e.setExported(isExportable);
@@ -265,8 +265,8 @@ public class MavenRootModelAdapter {
     String path = classes.substring(0, dotPos);
 
     String jarSuffix = ".jar" + JarFileSystem.JAR_SEPARATOR;
-    String sourcesPath = path + "-" + MavenConstants.SOURCES_CLASSIFIER + jarSuffix;
-    String javadocPath = path + "-" + MavenConstants.JAVADOC_CLASSIFIER + jarSuffix;
+    String sourcesPath = path + "-" + MavenConstants.CLASSIFIER_SOURCES + jarSuffix;
+    String javadocPath = path + "-" + MavenConstants.CLASSIFIER_JAVADOC + jarSuffix;
 
     for (String each : library.getUrls(OrderRootType.SOURCES)) {
       if (!FileUtil.pathsEqual(each, sourcesPath)) return true;
