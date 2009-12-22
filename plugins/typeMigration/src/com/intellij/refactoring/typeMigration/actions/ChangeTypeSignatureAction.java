@@ -26,6 +26,8 @@ public class ChangeTypeSignatureAction extends BaseRefactoringAction {
       return false;
     }
 
+    if (elements.length > 1) return false;
+
     for (PsiElement element : elements) {
       if (!(element instanceof PsiMethod || element instanceof PsiVariable)) {
         return false;
