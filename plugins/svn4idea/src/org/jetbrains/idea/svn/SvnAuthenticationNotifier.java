@@ -28,11 +28,13 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
 import com.intellij.openapi.vcs.impl.GenericNotifierImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.dialogs.SvnInteractiveAuthenticationProvider;
 import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
@@ -59,7 +61,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     final Ref<Boolean> resultRef = new Ref<Boolean>();
     final boolean done = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
-        final boolean result = interactiveValidation(obj.myProject, obj.getUrl());
+        final boolean result = interactiveValidation(obj.myProject, obj.getUrl(), obj.getRealm(), obj.getKind());
         log("ask result for: " + obj.getUrl() + " is: " + result);
         resultRef.set(result);
         if (result) {
@@ -76,7 +78,8 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     for (SVNURL key : keys) {
       final SVNURL commonURLAncestor = SVNURLUtil.getCommonURLAncestor(key, obj.getUrl());
       if ((! StringUtil.isEmptyOrSpaces(commonURLAncestor.getHost())) && (! StringUtil.isEmptyOrSpaces(commonURLAncestor.getPath()))) {
-        if (passiveValidation(myVcs.getProject(), key)) {
+        final AuthenticationRequest currObj = getObj(key);
+        if ((currObj != null) && passiveValidation(myVcs.getProject(), key, true, currObj.getRealm(), currObj.getKind())) {
           outdatedRequests.add(key);
         }
       }
@@ -179,20 +182,22 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     LOG.debug(s);
   }
 
-  public static boolean passiveValidation(final Project project, final SVNURL url) {
+  public static boolean passiveValidation(final Project project, final SVNURL url, final boolean checkWrite,
+                                          final String realm, final String kind) {
     final SvnConfiguration configuration = SvnConfiguration.getInstance(project);
     final ISVNAuthenticationManager passiveManager = configuration.getPassiveAuthenticationManager();
-    return validationImpl(project, url, configuration, passiveManager);
+    return validationImpl(project, url, configuration, passiveManager, checkWrite, realm, kind);
   }
 
-  public static boolean interactiveValidation(final Project project, final SVNURL url) {
+  public static boolean interactiveValidation(final Project project, final SVNURL url, final String realm, final String kind) {
     final SvnConfiguration configuration = SvnConfiguration.getInstance(project);
     final ISVNAuthenticationManager passiveManager = configuration.getInteractiveManager(SvnVcs.getInstance(project));
-    return validationImpl(project, url, configuration, passiveManager);
+    return validationImpl(project, url, configuration, passiveManager, true, realm, kind);
   }
 
   private static boolean validationImpl(final Project project, final SVNURL url,
-                                        final SvnConfiguration configuration, final ISVNAuthenticationManager manager) {
+                                        final SvnConfiguration configuration, final ISVNAuthenticationManager manager,
+                                        final boolean checkWrite, final String realm, final String kind) {
     try {
       new SVNWCClient(manager, configuration.getOptions(project)).doInfo(url, SVNRevision.UNDEFINED, SVNRevision.HEAD);
     } catch (SVNAuthenticationException e) {
@@ -207,8 +212,26 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
         return false;
       }
       LOG.info("some other exc", e);
+    }
+    if ((! checkWrite) || configuration.haveCredentialsFor(kind, realm)) {
       return true;
     }
-    return true;
+    final SvnVcs svnVcs = SvnVcs.getInstance(project);
+    if (svnVcs.getAuthNotifier().getObj(url) != null) return false;
+
+    final SvnInteractiveAuthenticationProvider provider = new SvnInteractiveAuthenticationProvider(svnVcs);
+    final SVNAuthentication svnAuthentication = provider.requestClientAuthentication(kind, url, realm, null, null, true);
+    if (svnAuthentication != null) {
+      try {
+        configuration.getAuthenticationManager(svnVcs).acknowledgeAuthentication(true, kind, realm, null, svnAuthentication);
+      }
+      catch (SVNException e) {
+        LOG.info(e);
+        // acknowledge at least in runtime
+        configuration.acknowledge(kind, realm, svnAuthentication);
+      }
+      return true;
+    }
+    return false;
   }
 }

@@ -244,7 +244,7 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
       }
       catch (AuthenticationException e) {
         if (! root.isOffline()) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
+          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
             public void run() {
               final LoginPerformer.MyForRootProvider performer =
                 new LoginPerformer.MyForRootProvider(Collections.singletonList(root), new Consumer<VcsException>() {
@@ -257,6 +257,7 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
               performer.loginAll(ModalityContextImpl.NON_MODAL);
             }
           });
+          return;
         }
         throw root.processException(new CommandException(e, "Authentication problem"));
       }

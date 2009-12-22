@@ -443,4 +443,12 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
       }, "button.text.clear.authentication.cache", false, myProject);
     }
   }
+  
+  public boolean haveCredentialsFor(final String kind, final String realm) {
+    return RUNTIME_AUTH_CACHE.getData(kind, realm) != null;
+  }
+
+  public void acknowledge(final String kind, final String realm, final Object object) {
+    RUNTIME_AUTH_CACHE.putData(kind, realm, object);
+  }
 }

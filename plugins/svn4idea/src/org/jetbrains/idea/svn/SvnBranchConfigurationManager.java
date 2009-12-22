@@ -150,7 +150,7 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
           final WorkingCopy wcRoot = rootsToWorkingCopies.getWcRoot(myRoot);
           if (wcRoot == null) return;
 
-          final boolean validated = SvnAuthenticationNotifier.passiveValidation(myProject, wcRoot.getUrl());
+          final boolean validated = SvnAuthenticationNotifier.passiveValidation(myProject, wcRoot.getUrl(), false, null, null);
           if (! validated) return;
 
           for (String newBranchUrl : next.getBranchUrls()) {

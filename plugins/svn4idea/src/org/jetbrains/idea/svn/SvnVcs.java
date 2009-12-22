@@ -166,8 +166,8 @@ public class SvnVcs extends AbstractVcs {
     super(project, VCS_NAME);
     LOG.debug("ct");
     myRootsToWorkingCopies = new RootsToWorkingCopies(myProject);
-    myAuthNotifier = new SvnAuthenticationNotifier(this);
     myConfiguration = svnConfiguration;
+    myAuthNotifier = new SvnAuthenticationNotifier(this);
 
     dumpFileStatus(FileStatus.ADDED);
     dumpFileStatus(FileStatus.DELETED);
