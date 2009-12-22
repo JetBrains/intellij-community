@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -254,7 +255,7 @@ public class ActionsTreeUtil {
         group.addQuickList(quickList);
       } else if (SearchUtil.isComponentHighlighted(quickList.getDisplayName(), filter, forceFiltering, null)) {
         group.addQuickList(quickList);
-      } else if (filtered == null && filter == null) {
+      } else if (filtered == null && StringUtil.isEmpty(filter)) {
         group.addQuickList(quickList);
       }
     }
@@ -390,7 +391,7 @@ public class ActionsTreeUtil {
     final Group otherGroup = createOtherGroup(filtered, mainGroup, keymap);
     mainGroup.addGroup(otherGroup);
     mainGroup.addGroup(createPluginsActionsGroup(filtered, otherGroup));
-    if (filter != null || filtered != null) {
+    if (!StringUtil.isEmpty(filter) || filtered != null) {
       final ArrayList list = mainGroup.getChildren();
       for (Iterator i = list.iterator(); i.hasNext();) {
         final Object o = i.next();

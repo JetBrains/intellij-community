@@ -74,6 +74,7 @@ public class CollectHighlightsUtil {
     final PsiElementVisitor visitor = new PsiRecursiveElementVisitor() {
       int offset = currentOffset;
       @Override public void visitElement(PsiElement element) {
+        ProgressManager.checkCanceled();
         for (Condition<PsiElement> filter : filters) {
           if (!filter.value(element)) return;
         }
@@ -84,7 +85,6 @@ public class CollectHighlightsUtil {
           offset += element.getTextLength();
         }
         else {
-          ProgressManager.checkCanceled();
           // composite element
           while (child != null) {
             if (offset > endOffset) break;

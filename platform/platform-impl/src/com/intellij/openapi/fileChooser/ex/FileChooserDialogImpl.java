@@ -369,10 +369,10 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     public Object getData(String dataId) {
       if (DataConstants.VIRTUAL_FILE_ARRAY.equals(dataId)) {
         return getSelectedFiles();
-      } else if (KEY.getName().equals(dataId)) {
+      } else if (KEY.is(dataId)) {
         return FileChooserDialogImpl.this;
       }
-      else if (FileSystemTree.DATA_KEY.getName().equals(dataId)) {
+      else if (FileSystemTree.DATA_KEY.is(dataId)) {
         return myFileSystemTree;
       }
       return myChooserDescriptor.getUserData(dataId);

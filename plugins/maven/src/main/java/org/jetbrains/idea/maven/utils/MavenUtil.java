@@ -130,6 +130,8 @@ public class MavenUtil {
   }
 
   public static void runWhenInitialized(final Project project, final Runnable r) {
+    if (project.isDisposed()) return;
+
     if (isNoBackgroundMode()) {
       r.run();
       return;

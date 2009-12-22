@@ -46,7 +46,7 @@ public class RunBuildAction extends MavenAction {
     if (!perform) return true;
 
     MavenRunnerParameters params = new MavenRunnerParameters(
-      true, project.getDirectory(), goals, MavenActionUtil.getProjectsManager(e).getActiveProfiles());
+      true, project.getDirectory(), goals, MavenActionUtil.getProjectsManager(e).getExplicitProfiles());
     MavenRunConfigurationType.runConfiguration(MavenActionUtil.getProject(e), params, e.getDataContext(), null);
 
     return true;

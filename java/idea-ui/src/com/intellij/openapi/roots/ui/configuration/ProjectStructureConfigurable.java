@@ -519,9 +519,9 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
 
     @Nullable
     public Object getData(@NonNls final String dataId) {
-      if (KEY.getName().equals(dataId)) {
+      if (KEY.is(dataId)) {
         return ProjectStructureConfigurable.this;
-      } else if (History.KEY.getName().equals(dataId)) {
+      } else if (History.KEY.is(dataId)) {
         return getHistory();
       } else {
         return null;

@@ -58,8 +58,7 @@ public class BuiltInTypeFilter implements ElementFilter {
         ASTNode node = prevSibling.getNode();
         return !GroovyTokenTypes.DOTS.contains(node.getElementType());
       } else {
-        return !(previous != null &&
-            GroovyTokenTypes.mAT.equals(previous.getNode().getElementType()));
+        return true;
       }
     }
     if (PsiImplUtil.realPrevious(context.getParent().getPrevSibling()) instanceof GrModifierList) {

@@ -15,13 +15,25 @@
  */
 package org.jetbrains.idea.maven.compiler;
 
+import com.intellij.compiler.CompilerManagerImpl;
+import com.intellij.compiler.CompilerWorkspaceConfiguration;
+import com.intellij.compiler.impl.ModuleCompileScope;
+import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
+import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class ResourceFilteringTest extends MavenImportingTestCase {
   public void testBasic() throws Exception {
@@ -114,7 +126,7 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
 
     assertResult("target/classes/file.bmp", "value=${project.version}");
   }
-  
+
   public void testCustomNonFilteredExtensions() throws Exception {
     createProjectSubFile("resources/file.bmp", "value=${project.version}");
     createProjectSubFile("resources/file.xxx", "value=${project.version}");
@@ -239,7 +251,7 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
     assertResult("target/classes/file1.properties", "value=project");
     assertResult("target/classes/file2.properties", "value=${project.artifactId}");
   }
-  
+
 
   public void testEscapingSpecialCharsInProperties() throws Exception {
     createProjectSubFile("resources/file.txt", "value=${foo}");
@@ -414,7 +426,7 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
     assertResult("target/classes/file.properties", "value=${project.version}");
   }
 
-  public void testUpdatingWhenPropertiesAreChanged() throws Exception {
+  public void testUpdatingWhenPropertiesInFiltersAreChanged() throws Exception {
     VirtualFile filter = createProjectSubFile("filters/filter.properties", "xxx=1");
     createProjectSubFile("resources/file.properties", "value=${xxx}");
 
@@ -439,6 +451,127 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
     VfsUtil.saveText(filter, "xxx=2");
     compileModules("project");
     assertResult("target/classes/file.properties", "value=2");
+  }
+
+  public void testUpdatingWhenPropertiesAreChanged() throws Exception {
+    createProjectSubFile("resources/file.properties", "value=${foo}");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<properties>" +
+                  "  <foo>val1</foo>" +
+                  "</properties>" +
+
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>resources</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+    compileModules("project");
+    assertResult("target/classes/file.properties", "value=val1");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<properties>" +
+                  "  <foo>val2</foo>" +
+                  "</properties>" +
+
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>resources</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+    compileModules("project");
+    assertResult("target/classes/file.properties", "value=val2");
+  }
+
+  public void testUpdatingWhenPropertiesInModelAreChanged() throws Exception {
+    createProjectSubFile("resources/file.properties", "value=${project.name}");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<name>val1</name>" +
+
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>resources</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+    compileModules("project");
+    assertResult("target/classes/file.properties", "value=val1");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<name>val2</name>" +
+
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>resources</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+    compileModules("project");
+    assertResult("target/classes/file.properties", "value=val2");
+  }
+
+  public void testUpdatingWhenProfilesAreChanged() throws Exception {
+    createProjectSubFile("resources/file.properties", "value=${foo}");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>one</id>" +
+                     "    <properties>" +
+                     "      <foo>val1</foo>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "  <profile>" +
+                     "    <id>two</id>" +
+                     "    <properties>" +
+                     "      <foo>val2</foo>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "</profiles>" +
+
+                     "<build>" +
+                     "  <resources>" +
+                     "    <resource>" +
+                     "      <directory>resources</directory>" +
+                     "      <filtering>true</filtering>" +
+                     "    </resource>" +
+                     "  </resources>" +
+                     "</build>");
+    importProjectWithProfiles("one");
+    compileModules("project");
+    assertResult("target/classes/file.properties", "value=val1");
+
+    myProjectsManager.setExplicitProfiles(Arrays.asList("two"));
+    scheduleResolveAll();
+    resolveDependenciesAndImport();
+    compileModules("project");
+    assertResult("target/classes/file.properties", "value=val2");
   }
 
   public void testSameFileInSourcesAndTestSources() throws Exception {

@@ -23,10 +23,10 @@ import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.ui.PrintableTestProxy;
 import com.intellij.execution.ui.ConsoleViewContentType;
 
-class SkippedState extends ReadableState {
+public class SkippedState extends ReadableState {
   private TestProxy myPeformedTest;
 
-  void initializeFrom(final ObjectReader reader) {
+  public void initializeFrom(final ObjectReader reader) {
     myPeformedTest = reader.readObject();
   }
 

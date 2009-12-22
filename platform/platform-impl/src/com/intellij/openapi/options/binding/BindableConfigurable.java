@@ -26,7 +26,7 @@ import javax.swing.*;
  */
 public abstract class BindableConfigurable implements UnnamedConfigurable {
 
-  private ControlBinder myBinder;
+  protected ControlBinder myBinder;
 
   protected BindableConfigurable(ControlBinder binder) {
     myBinder = binder;

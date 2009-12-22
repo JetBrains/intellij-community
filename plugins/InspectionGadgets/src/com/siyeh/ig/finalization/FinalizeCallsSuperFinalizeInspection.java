@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,13 @@
  */
 package com.siyeh.ig.finalization;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiParameterList;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,7 +29,10 @@ import javax.swing.*;
 public class FinalizeCallsSuperFinalizeInspection extends BaseInspection {
 
     @SuppressWarnings("PublicField")
-    public boolean m_ignoreForObjectSubclasses = false;
+    public boolean ignoreObjectSubclasses = false;
+
+    @SuppressWarnings("PublicField")
+    public boolean ignoreTrivialFinalizers = true;
 
     @NotNull
     public String getID(){
@@ -55,9 +56,14 @@ public class FinalizeCallsSuperFinalizeInspection extends BaseInspection {
     }
 
     public JComponent createOptionsPanel(){
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+        final MultipleCheckboxOptionsPanel optionsPanel =
+                new MultipleCheckboxOptionsPanel(this);
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
                 "finalize.doesnt.call.super.ignore.option"),
-                this, "m_ignoreForObjectSubclasses");
+                "ignoreObjectSubclasses");
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "ignore.trivial.finalizers.option"), "ignoreTrivialFinalizers");
+        return optionsPanel;
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -80,7 +86,7 @@ public class FinalizeCallsSuperFinalizeInspection extends BaseInspection {
             if(containingClass == null){
                 return;
             }
-            if(m_ignoreForObjectSubclasses){
+            if(ignoreObjectSubclasses){
                 final PsiClass superClass = containingClass.getSuperClass();
                 if(superClass != null){
                     final String superClassName = superClass.getQualifiedName();
@@ -99,7 +105,40 @@ public class FinalizeCallsSuperFinalizeInspection extends BaseInspection {
             if(visitor.isCallToSuperFinalizeFound()){
                 return;
             }
+            if(ignoreTrivialFinalizers && isTrivial(method)){
+                return;
+            }
             registerMethodError(method);
+        }
+
+        private boolean isTrivial(PsiMethod method) {
+            final PsiCodeBlock body = method.getBody();
+            if (body == null) {
+                return true;
+            }
+            final PsiStatement[] statements = body.getStatements();
+            if (statements.length == 0) {
+                return true;
+            }
+            final Project project = method.getProject();
+            final JavaPsiFacade psiFacade =
+                    JavaPsiFacade.getInstance(project);
+            final PsiConstantEvaluationHelper evaluationHelper =
+                    psiFacade.getConstantEvaluationHelper();
+            for (PsiStatement statement : statements) {
+                if (!(statement instanceof PsiIfStatement)) {
+                    return false;
+                }
+                final PsiIfStatement ifStatement =
+                        (PsiIfStatement) statement;
+                final PsiExpression condition = ifStatement.getCondition();
+                final Object result =
+                        evaluationHelper.computeConstantExpression(condition);
+                if (result == null || !result.equals(Boolean.FALSE)) {
+                    return false;
+                }
+            }
+            return true;
         }
     }
 }

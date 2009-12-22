@@ -18,9 +18,9 @@ package com.intellij.execution.junit2.states;
 
 import com.intellij.execution.junit2.segments.ObjectReader;
 
-abstract class ReadableState extends TestState {
+public abstract class ReadableState extends TestState {
 
-  abstract void initializeFrom(ObjectReader reader);
+  public abstract void initializeFrom(ObjectReader reader);
 
   public int getMagnitude() {
     return myMagnitude;

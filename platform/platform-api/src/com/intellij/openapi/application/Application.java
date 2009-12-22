@@ -276,8 +276,7 @@ public interface Application extends ComponentManager {
   Future<?> executeOnPooledThread(Runnable action);
 
   /**
-   * Checks if application is currently disposing (but not yet disposed completely) 
-   * @return
+   * @return true if application is currently disposing (but not yet disposed completely)
    */
   boolean isDisposeInProgress();
 

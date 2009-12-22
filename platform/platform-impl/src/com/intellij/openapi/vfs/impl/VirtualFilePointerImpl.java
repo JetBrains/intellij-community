@@ -44,7 +44,7 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
   private static final Key<Throwable> KILL_TRACE = Key.create("KILL_TRACE");
   private static final boolean TRACE_CREATION = /*true || */LOG.isDebugEnabled();
 
-  VirtualFilePointerImpl(VirtualFile file, String url, VirtualFileManager virtualFileManager, VirtualFilePointerListener listener, @NotNull Disposable parentDisposable) {
+  VirtualFilePointerImpl(VirtualFile file, @NotNull String url, @NotNull VirtualFileManager virtualFileManager, VirtualFilePointerListener listener, @NotNull Disposable parentDisposable) {
     myFile = file;
     myUrl = url;
     myVirtualFileManager = virtualFileManager;
@@ -96,7 +96,7 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
   }
 
   private void checkDisposed() {
-    if (disposed) throw new MyEx("Already disposed: "+toString(), getUserData(CREATE_TRACE), getUserData(KILL_TRACE));
+    if (disposed) throw new MyException("Already disposed: "+toString(), getUserData(CREATE_TRACE), getUserData(KILL_TRACE));
   }
 
   public void throwNotDisposedError(String msg) throws RuntimeException {
@@ -111,11 +111,11 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
     return ++useCount;
   }
 
-  private static class MyEx extends RuntimeException {
+  private static class MyException extends RuntimeException {
     private final Throwable e1;
     private final Throwable e2;
 
-    private MyEx(String message, Throwable e1, Throwable e2) {
+    private MyException(String message, Throwable e1, Throwable e2) {
       super(message);
       this.e1 = e1;
       this.e2 = e2;
@@ -142,20 +142,16 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
 
   public boolean isValid() {
     update();
-
-    return isFileRetrieved();
-  }
-
-  private boolean isFileRetrieved() {
-    return !disposed && myFile != null; // && myFile.isValid();
+    return !disposed && myFile != null;
   }
 
   void update() {
+    if (disposed) return;
     long fsModCount = myVirtualFileManager.getModificationCount();
     if (myLastUpdated == fsModCount) return;
     myLastUpdated = fsModCount;
 
-    if (!isFileRetrieved()) {
+    if (myFile == null) {
       LOG.assertTrue(myUrl != null);
       myFile = myVirtualFileManager.findFileByUrl(myUrl);
       if (myFile != null) {
@@ -175,7 +171,7 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
 
   public void dispose() {
     if (disposed) {
-      throw new MyEx("Punching the dead horse.\nurl="+toString(), getUserData(CREATE_TRACE), getUserData(KILL_TRACE));
+      throw new MyException("Punching the dead horse.\nurl="+toString(), getUserData(CREATE_TRACE), getUserData(KILL_TRACE));
     }
     if (--useCount == 0) {
       if (TRACE_CREATION) {

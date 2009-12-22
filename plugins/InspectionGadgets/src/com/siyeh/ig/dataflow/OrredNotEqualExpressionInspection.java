@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.dataflow;
 
+import com.intellij.openapi.util.Pair;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -26,6 +27,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class OrredNotEqualExpressionInspection extends BaseInspection {
 
@@ -91,8 +93,6 @@ public class OrredNotEqualExpressionInspection extends BaseInspection {
     private static class OrredNotEqualExpressionVisitor
             extends BaseInspectionVisitor {
 
-        private static final PsiReferenceExpression[] EMPTY_ARRAY = {};
-
         @Override
         public void visitBinaryExpression(PsiBinaryExpression expression) {
             final IElementType tokenType = expression.getOperationTokenType();
@@ -101,47 +101,61 @@ public class OrredNotEqualExpressionInspection extends BaseInspection {
             }
             final PsiExpression lhs = expression.getLOperand();
             final PsiExpression rhs = expression.getROperand();
-            final PsiReferenceExpression[] lhsReferences = getReferences(lhs);
-            final PsiReferenceExpression[] rhsReferences = getReferences(rhs);
-            for (PsiReferenceExpression lhsReference : lhsReferences) {
-                for (PsiReferenceExpression rhsReference : rhsReferences) {
-                    if (lhsReference.resolve() == rhsReference.resolve()) {
-                        registerError(expression);
-                    }
-                }
+            final Pair<PsiReferenceExpression, PsiExpression> pair1 =
+                    getReferenceExpressionPair(lhs);
+            final Pair<PsiReferenceExpression, PsiExpression> pair2 =
+                    getReferenceExpressionPair(rhs);
+            if (pair1 == null || pair2 == null) {
+                return;
+            }
+            final PsiExpression expression1 = pair1.getSecond();
+            final PsiExpression expression2 = pair2.getSecond();
+            if (expression1 == null || expression2 == null) {
+                return;
+            }
+            final Project project = expression1.getProject();
+            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+            final PsiConstantEvaluationHelper constantEvaluationHelper =
+                    psiFacade.getConstantEvaluationHelper();
+            final Object constant1 =
+                    constantEvaluationHelper.computeConstantExpression(expression1);
+            final Object constant2 =
+                    constantEvaluationHelper.computeConstantExpression(expression2);
+            if (constant1 == null || constant2 == null || constant1 == constant2) {
+                return;
+            }
+            final PsiReferenceExpression referenceExpression1 = pair1.getFirst();
+            final PsiReferenceExpression referenceExpression2 = pair2.getFirst();
+            if (referenceExpression1.resolve() == referenceExpression2.resolve()) {
+                registerError(expression);
             }
         }
 
-        private PsiReferenceExpression[] getReferences(
-                PsiExpression expression) {
+        @Nullable
+        private static Pair<PsiReferenceExpression, PsiExpression>
+        getReferenceExpressionPair(PsiExpression expression) {
             if (!(expression instanceof PsiBinaryExpression)) {
-                return EMPTY_ARRAY;
+                return null;
             }
             final PsiBinaryExpression binaryExpression =
                     (PsiBinaryExpression) expression;
             final IElementType tokenType =
                     binaryExpression.getOperationTokenType();
             if (JavaTokenType.NE != tokenType) {
-                return EMPTY_ARRAY;
+                return null;
             }
             final PsiExpression lhs = binaryExpression.getLOperand();
             final PsiExpression rhs = binaryExpression.getROperand();
             if (lhs instanceof PsiReferenceExpression) {
                 final PsiReferenceExpression lref =
                         (PsiReferenceExpression) lhs;
-                if (rhs instanceof PsiReferenceExpression) {
-                    final PsiReferenceExpression rref =
-                            (PsiReferenceExpression) rhs;
-                    return new PsiReferenceExpression[] {lref, rref};
-                } else {
-                    return new PsiReferenceExpression[] {lref};
-                }
+                return new Pair(lref, rhs);
             } else if (rhs instanceof PsiReferenceExpression) {
                 final PsiReferenceExpression rref =
                         (PsiReferenceExpression) rhs;
-                return new PsiReferenceExpression[] {rref};
+                return new Pair(rref, lhs);
             }
-            return EMPTY_ARRAY;
+            return null;
         }
     }
 }

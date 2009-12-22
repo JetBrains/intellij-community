@@ -24,8 +24,13 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.*;
@@ -79,7 +84,7 @@ public class PsiViewerDialog extends DialogWrapper {
   private final JList myRefs;
   private static String REFS_CACHE = "References Resolve Cache";
 
-  private Editor myEditor;
+  private EditorEx myEditor;
   private String myLastParsedText = null;
 
   private JCheckBox myShowWhiteSpacesBox;
@@ -187,7 +192,7 @@ public class PsiViewerDialog extends DialogWrapper {
     final List<Presentation> items = new ArrayList<Presentation>();
     final EditorFactory editorFactory = EditorFactory.getInstance();
     final Document document = editorFactory.createDocument("");
-    myEditor = editorFactory.createEditor(document, myProject);
+    myEditor = (EditorEx)editorFactory.createEditor(document, myProject);
     myEditor.getSettings().setFoldingOutlineShown(false);
     document.addDocumentListener(myEditorListener);
     myEditor.getSelectionModel().addSelectionListener(myEditorListener);
@@ -297,6 +302,8 @@ public class PsiViewerDialog extends DialogWrapper {
     }
     myTextSplit.setDividerLocation(settings.textDividerLocation);
     myTreeSplit.setDividerLocation(settings.treeDividerLocation);
+
+    updateEditor();
     super.init();
   }
 
@@ -392,7 +399,7 @@ public class PsiViewerDialog extends DialogWrapper {
   }
 
   @Nullable
-  private PsiElement getPsiElement(DefaultMutableTreeNode node) {
+  private static PsiElement getPsiElement(DefaultMutableTreeNode node) {
     if (node.getUserObject() instanceof ViewerNodeDescriptor) {
       ViewerNodeDescriptor descriptor = (ViewerNodeDescriptor)node.getUserObject();
       Object elementObject = descriptor.getElement();
@@ -706,7 +713,18 @@ public class PsiViewerDialog extends DialogWrapper {
     public void actionPerformed(AnActionEvent e) {
       updatePresentation(e.getPresentation());
       updateDialectsCombo();
+      updateEditor();
     }
+  }
+
+  private FileType getFileType() {
+    Object handler = getHandler();
+    return handler instanceof FileType ? (FileType)handler :
+      handler instanceof PsiViewerExtension ? ((PsiViewerExtension)handler).getDefaultFileType() : PlainTextFileType.INSTANCE;
+  }
+
+  private void updateEditor() {
+    myEditor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, getFileType()));
   }
 
   private class EditorListener implements CaretListener, SelectionListener, DocumentListener {

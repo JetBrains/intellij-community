@@ -15,11 +15,13 @@
  */
 package org.jetbrains.idea.maven.embedder;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import gnu.trove.THashSet;
 import org.apache.maven.settings.MavenSettingsBuilder;
 import org.apache.maven.settings.RuntimeInfo;
 import org.apache.maven.settings.Settings;
@@ -29,46 +31,43 @@ import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.PlexusContainerException;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
-import org.jetbrains.idea.maven.utils.JDOMReader;
 import org.jetbrains.idea.maven.utils.MavenConstants;
+import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.regex.Pattern;
 
 public class MavenEmbedderFactory {
-  @NonNls private static final String PROP_MAVEN_HOME = "maven.home";
-  @NonNls private static final String PROP_USER_HOME = "user.home";
-  @NonNls private static final String ENV_M2_HOME = "M2_HOME";
+  private static final String PROP_MAVEN_HOME = "maven.home";
+  private static final String PROP_USER_HOME = "user.home";
+  private static final String ENV_M2_HOME = "M2_HOME";
 
-  @NonNls private static final String M2_DIR = "m2";
-  @NonNls private static final String BIN_DIR = "bin";
-  @NonNls private static final String DOT_M2_DIR = ".m2";
-  @NonNls private static final String CONF_DIR = "conf";
-  @NonNls private static final String LIB_DIR = "lib";
-  @NonNls private static final String M2_CONF_FILE = "m2.conf";
+  private static final String M2_DIR = "m2";
+  private static final String BIN_DIR = "bin";
+  private static final String DOT_M2_DIR = ".m2";
+  private static final String CONF_DIR = "conf";
+  private static final String LIB_DIR = "lib";
+  private static final String M2_CONF_FILE = "m2.conf";
 
-  @NonNls private static final String REPOSITORY_DIR = "repository";
+  private static final String REPOSITORY_DIR = "repository";
 
-  @NonNls private static final String LOCAL_REPOSITORY_TAG = "localRepository";
-
-  @NonNls private static final String[] basicPhases = {"clean", "validate", "compile", "test", "package", "install", "deploy", "site"};
-  @NonNls private static final String[] phases = {"clean", "validate", "generate-sources", "process-sources", "generate-resources",
-    "process-resources", "compile", "process-classes", "generate-test-sources", "process-test-sources", "generate-test-resources",
-    "process-test-resources", "test-compile", "test", "package", "pre-integration-test", "integration-test", "post-integration-test",
-    "verify", "install", "site", "deploy"};
+  private static final List<String> PHASES =
+    Arrays.asList("clean", "validate", "generate-sources", "process-sources", "generate-resources",
+                  "process-resources", "compile", "process-classes", "generate-test-sources", "process-test-sources",
+                  "generate-test-resources",
+                  "process-test-resources", "test-compile", "test", "package", "pre-integration-test", "integration-test",
+                  "post-integration-test",
+                  "verify", "install", "site", "deploy");
+  private static final List<String> BASIC_PHASES =
+    Arrays.asList("clean", "validate", "compile", "test", "package", "install", "deploy", "site");
 
   private static volatile Properties mySystemPropertiesCache;
   private static final String SUPER_POM_PATH = "org/apache/maven/project/" + MavenConstants.SUPER_POM_XML;
@@ -164,8 +163,19 @@ public class MavenEmbedderFactory {
     return new File(new File(userHome, DOT_M2_DIR), MavenConstants.SETTINGS_XML);
   }
 
-  @Nullable
+  @NotNull
   public static File resolveLocalRepository(@Nullable String mavenHome, @Nullable String userSettings, @Nullable String override) {
+    File result = doResolveLocalRepository(mavenHome, userSettings, override);
+    try {
+      return result.getCanonicalFile();
+    }
+    catch (IOException e) {
+      return result;
+    }
+  }
+
+  @NotNull
+  private static File doResolveLocalRepository(String mavenHome, String userSettings, String override) {
     if (!StringUtil.isEmpty(override)) {
       return new File(override);
     }
@@ -189,28 +199,32 @@ public class MavenEmbedderFactory {
     return new File(new File(System.getProperty(PROP_USER_HOME), DOT_M2_DIR), REPOSITORY_DIR);
   }
 
-  private static String getRepositoryFromSettings(File file) {
+  @Nullable
+  private static String getRepositoryFromSettings(final File file) {
     try {
-      FileInputStream is = new FileInputStream(file);
-      try {
-        JDOMReader reader = new JDOMReader(is);
-        return reader.getChildText(reader.getRootElement(), LOCAL_REPOSITORY_TAG);
-      }
-      finally {
-        is.close();
-      }
+      byte[] bytes = FileUtil.loadFileBytes(file);
+      return expandProperties(MavenJDOMUtil.findChildValueByPath(MavenJDOMUtil.read(bytes, null), "localRepository", null));
     }
-    catch (IOException ignore) {
+    catch (IOException e) {
       return null;
     }
   }
 
+  private static String expandProperties(String text) {
+    if (StringUtil.isEmptyOrSpaces(text)) return text;
+    Properties props = collectSystemProperties();
+    for (Map.Entry<Object, Object> each : props.entrySet()) {
+      text = text.replace("${" + each.getKey() + "}", (CharSequence)each.getValue());
+    }
+    return text;
+  }
+
   public static List<String> getBasicPhasesList() {
-    return Arrays.asList(basicPhases);
+    return BASIC_PHASES;
   }
 
   public static List<String> getPhasesList() {
-    return Arrays.asList(phases);
+    return PHASES;
   }
 
   public static MavenEmbedderWrapper createEmbedder(MavenGeneralSettings generalSettings) {

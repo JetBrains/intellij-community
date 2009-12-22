@@ -38,8 +38,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
 
 /**
  * User: anna
@@ -79,14 +79,18 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
       myStepsPanel.setVisible(false);
     }
     else {
-      myStepsPanel.setLayout(new GridLayout(myStepsBeforeLaunch.size(), 1));
+      List<StepBeforeLaunchRow> stepsRows = new ArrayList<StepBeforeLaunchRow>();
       for (BeforeRunTaskProvider<BeforeRunTask> provider : providers) {
         final BeforeRunTask task = myStepsBeforeLaunch.get(provider.getId());
         if (task != null) {
           final StepBeforeLaunchRow stepRow = new StepBeforeLaunchRow(runConfiguration, provider, task);
           myStepBeforeLaunchRows.put(provider.getId(), stepRow);
-          myStepsPanel.add(stepRow);
+          stepsRows.add(stepRow);
         }
+      }
+      myStepsPanel.setLayout(new GridLayout(stepsRows.size(), 1));
+      for (StepBeforeLaunchRow stepRow : stepsRows) {
+        myStepsPanel.add(stepRow);
       }
     }
 

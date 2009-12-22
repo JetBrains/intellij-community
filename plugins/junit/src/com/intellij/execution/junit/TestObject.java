@@ -19,7 +19,12 @@ package com.intellij.execution.junit;
 import com.intellij.ExtensionPoints;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.junit2.TestProxy;
+import com.intellij.execution.junit2.segments.DeferredActionsQueue;
+import com.intellij.execution.junit2.segments.DeferredActionsQueueImpl;
+import com.intellij.execution.junit2.segments.DispatchListener;
 import com.intellij.execution.junit2.ui.JUnitTreeConsoleView;
+import com.intellij.execution.junit2.ui.TestsPacketsReceiver;
 import com.intellij.execution.junit2.ui.actions.RerunFailedTestsAction;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
@@ -28,7 +33,9 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.*;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -38,21 +45,19 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.IDEAJUnitListener;
 import com.intellij.rt.execution.junit.JUnitStarter;
 import com.intellij.util.Function;
+import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -187,7 +192,7 @@ public abstract class TestObject implements JavaCommandLine {
                               : ProjectRootManager.getInstance(myProject).getProjectJdk());
     }
 
-    JavaSdkUtil.addRtJar(myJavaParameters.getClassPath());
+    myJavaParameters.getClassPath().add(JavaSdkUtil.getIdeaRtJarPath());
     myJavaParameters.getClassPath().add(PathUtil.getJarPathForClass(JUnitStarter.class));
     myJavaParameters.getProgramParametersList().add(JUnitStarter.IDE_VERSION + JUnitStarter.VERSION);
     for (RunConfigurationExtension ext : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
@@ -229,20 +234,73 @@ public abstract class TestObject implements JavaCommandLine {
   }
 
   public ExecutionResult execute(final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
+    final JUnitProcessHandler handler = JUnitProcessHandler.runJava(getJavaParameters(), myProject);
+    for(final RunConfigurationExtension ext: Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
+      ext.handleStartProcess(myConfiguration, handler);
+    }
     final JUnitConsoleProperties consoleProperties = new JUnitConsoleProperties(myConfiguration);
     final JUnitTreeConsoleView consoleView = new JUnitTreeConsoleView(consoleProperties, getRunnerSettings(), getConfigurationSettings());
     consoleView.initUI();
-    final ProcessHandler handler = startProcess(consoleView);
     consoleView.attachToProcess(handler);
+
+    final TestsPacketsReceiver packetsReceiver = new TestsPacketsReceiver(consoleView) {
+      @Override
+      public void notifyStart(TestProxy root) {
+        super.notifyStart(root);
+        handler.getOut().setDispatchListener(getModel().getNotifier());
+        Disposer.register(getModel(), new Disposable() {
+          public void dispose() {
+            handler.getOut().setDispatchListener(DispatchListener.DEAF);
+          }
+        });
+        consoleView.attachToModel(getModel());
+      }
+    };
+
+    final DeferredActionsQueue queue = new DeferredActionsQueueImpl();
+    handler.getOut().setPacketDispatcher(packetsReceiver, queue);
+    handler.getErr().setPacketDispatcher(packetsReceiver, queue);
+
+    handler.addProcessListener(new ProcessAdapter() {
+      @Override
+      public void processTerminated(ProcessEvent event) {
+        handler.removeProcessListener(this);
+        if (myTempFile != null) {
+          FileUtil.delete(myTempFile);
+        }
+        IJSwingUtilities.invoke(new Runnable() {
+          public void run() {
+            packetsReceiver.checkTerminated();
+            final JUnitRunningModel model = packetsReceiver.getModel();
+            TestsUIUtil.notifyByBalloon(myProject, model != null ? model.getRoot() : null, consoleProperties,
+                                        Filter.DEFECTIVE_LEAF.and(JavaAwareFilter.METHOD(myProject)));
+          }
+        });
+      }
+
+      @Override
+      public void onTextAvailable(final ProcessEvent event, final Key outputType) {
+        final String text = event.getText();
+        final ConsoleViewContentType consoleViewType = ConsoleViewContentType.getConsoleViewType(outputType);
+        final TestProxy currentTest = packetsReceiver.getCurrentTest();
+        if (currentTest != null) {
+          currentTest.onOutput(text, consoleViewType);
+        }
+        else {
+          consoleView.getPrinter().onNewAvailable(new ExternalOutput(text, consoleViewType));
+        }
+      }
+    });
+
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return new DefaultExecutionResult(null, handler);
     }
 
-    RerunFailedTestsAction rerunFailedTestsAction = new RerunFailedTestsAction(consoleView.getComponent());
+    final RerunFailedTestsAction rerunFailedTestsAction = new RerunFailedTestsAction(consoleView.getComponent());
     rerunFailedTestsAction.init(consoleProperties, myRunnerSettings, myConfigurationSettings);
     rerunFailedTestsAction.setModelProvider(new Getter<TestFrameworkRunningModel>() {
       public TestFrameworkRunningModel get() {
-        return consoleView.getModel();
+        return packetsReceiver.getModel();
       }
     });
 
@@ -251,41 +309,8 @@ public abstract class TestObject implements JavaCommandLine {
     return result;
   }
 
-  private ProcessHandler startProcess(final JUnitTreeConsoleView consoleView) throws ExecutionException {
-    final JUnitProcessHandler handler = JUnitProcessHandler.runJava(getJavaParameters(), myProject);
-    for(RunConfigurationExtension ext: Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
-        ext.handleStartProcess(myConfiguration, handler);
-      }
-    handler.addProcessListener(new ProcessAdapter() {
-      public void processTerminated(final ProcessEvent event) {
-        if (myTempFile != null) {
-          myTempFile.delete();
-        }
-        
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            if (myProject.isDisposed()) return;
-            final JUnitRunningModel model = consoleView.getModel();
-            final int failed = model != null ? Filter.DEFECTIVE_LEAF.and(JavaAwareFilter.METHOD(myProject)).select(model.getRoot().getAllTests()).size() : -1;
 
-            final TestConsoleProperties properties = consoleView.getProperties();
-            if (properties == null) return;
-            final String testRunDebugId = properties.isDebug() ? ToolWindowId.DEBUG : ToolWindowId.RUN;
-            final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-            if (!Comparing.strEqual(toolWindowManager.getActiveToolWindowId(), testRunDebugId)) {
-              toolWindowManager.notifyByBalloon(testRunDebugId,
-                                                                       failed == -1 ? MessageType.WARNING : (failed > 0 ? MessageType.ERROR : MessageType.INFO),
-                                                                       failed == -1 ? ExecutionBundle.message("test.not.started.progress.text") : (failed > 0 ? failed + " " + ExecutionBundle.message("junit.runing.info.tests.failed.label") :  ExecutionBundle.message("junit.runing.info.tests.passed.label")) , null, null);
-            }
-          }
-        });
-      }
-    });
-    return handler;
-  }
-
-
-   protected <T> void addClassesListToJavaParameters(Collection<? extends T> elements, Function<T, String> nameFunction, String packageName,
+  protected <T> void addClassesListToJavaParameters(Collection<? extends T> elements, Function<T, String> nameFunction, String packageName,
                                                 boolean createTempFile,
                                                 boolean junit4) {
     try {

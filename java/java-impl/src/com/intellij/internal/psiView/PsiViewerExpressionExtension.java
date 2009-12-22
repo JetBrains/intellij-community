@@ -16,7 +16,6 @@
 package com.intellij.internal.psiView;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Icons;
 
@@ -24,8 +23,9 @@ import javax.swing.*;
 
 /**
  * @author yole
+ * @author Konstantin Bulenkov
  */
-public class PsiViewerExpressionExtension implements PsiViewerExtension {
+public class PsiViewerExpressionExtension extends JavaPsiViewerExtension {
   public String getName() {
     return "Java Expression";
   }
@@ -35,6 +35,6 @@ public class PsiViewerExpressionExtension implements PsiViewerExtension {
   }
 
   public PsiElement createElement(Project project, String text) {
-    return JavaPsiFacade.getElementFactory(project).createExpressionFromText(text, null);
+    return getFactory(project).createExpressionFromText(text, null);
   }
 }

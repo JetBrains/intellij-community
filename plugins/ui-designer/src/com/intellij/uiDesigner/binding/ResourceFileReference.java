@@ -24,12 +24,13 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -59,11 +60,11 @@ public class ResourceFileReference extends ReferenceInForm {
   }
 
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
-    if (!(element instanceof PsiPlainTextFile)) {
+    if (!(element instanceof PsiFile)) { //should be icon file or nested form
       throw new IncorrectOperationException();
     }
 
-    updateRangeText(FormEditingUtil.buildResourceName((PsiPlainTextFile) element));
+    updateRangeText(FormEditingUtil.buildResourceName((PsiFile)element));
     return myFile;
   }
 

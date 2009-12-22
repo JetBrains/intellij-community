@@ -170,12 +170,10 @@ public class GroovyEnterHandler implements EnterHandlerDelegate {
 
     // For simple String literals like 'abcdef'
     if (mSTRING_LITERAL == node.getElementType()) {
-      if (GroovyEditorActionUtil.isPlainStringLiteral(node.getTreeParent())) {
+      if (GroovyEditorActionUtil.isPlainStringLiteral(node)) {
         String text = node.getText();
         String innerText = text.equals("''") ? "" : text.substring(1, text.length() - 1);
-        PsiElement literal = stringElement.getParent();
-        if (!(literal instanceof GrLiteral)) return false;
-        TextRange literalRange = literal.getTextRange();
+        TextRange literalRange = stringElement.getTextRange();
         document.replaceString(literalRange.getStartOffset(), literalRange.getEndOffset(), "'''" + innerText + "'''");
         editor.getCaretModel().moveToOffset(caretOffset + 2);
         EditorModificationUtil.insertStringAtCaret(editor, "\n");
@@ -196,8 +194,13 @@ public class GroovyEnterHandler implements EnterHandlerDelegate {
 
     if (GroovyEditorActionUtil.GSTRING_TOKENS.contains(node.getElementType())) {
       PsiElement parent = stringElement.getParent();
-      while (parent != null && !(parent instanceof GrLiteral)) {
-        parent = parent.getParent();
+      if (node.getElementType() == mGSTRING_LITERAL) {
+        parent = stringElement;
+      }
+      else {
+        while (parent != null && !(parent instanceof GrLiteral)) {
+          parent = parent.getParent();
+        }
       }
       if (parent == null || parent.getLastChild() instanceof PsiErrorElement) return false;
       if (GroovyEditorActionUtil.isPlainGString(parent.getNode())) {

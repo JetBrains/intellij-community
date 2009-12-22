@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -328,9 +329,10 @@ public class SvnVcs extends AbstractVcs {
 
   @Override
   public void activate() {
+    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     if (! myProject.isDefault()) {
       ChangeListManager.getInstance(myProject).addChangeListListener(myChangeListListener);
-      ProjectLevelVcsManager.getInstance(myProject).addVcsListener(myVcsListener);
+      vcsManager.addVcsListener(myVcsListener);
     }
     
     SvnApplicationSettings.getInstance().svnActivated();
@@ -358,6 +360,25 @@ public class SvnVcs extends AbstractVcs {
         }, SvnBundle.message("refreshing.working.copies.roots.progress.text"), true, myProject);*/
       }
     });
+
+    pingRootsForAuth();
+  }
+
+  public void pingRootsForAuth() {
+    if (! myProject.isDefault()) {
+      final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+      final VirtualFile[] files = vcsManager.getRootsUnderVcs(this);
+      Arrays.sort(files, FilePathComparator.getInstance());
+      final SVNStatusClient client = createStatusClient();
+      for (VirtualFile root : files) {
+        try {
+          client.doStatus(new File(root.getPath()), true);
+        }
+        catch (SVNException e) {
+          //
+        }
+      }
+    }
   }
 
   @Override

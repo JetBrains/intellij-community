@@ -3,16 +3,18 @@ package org.jetbrains.idea.maven.importing;
 import com.intellij.openapi.module.Module;
 import org.jdom.Element;
 import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 
 import java.util.List;
 import java.util.Map;
 
 public class GroovyImporter extends MavenImporter {
-  private static final String ourPluginGroupID = "org.codehaus.groovy.maven";
-  private static final String ourPluginArtifactID = "gmaven-plugin";
+  public GroovyImporter() {
+    super("org.codehaus.groovy.maven", "gmaven-plugin");
+  }
 
   public boolean isApplicable(MavenProject project) {
-    return project.findPlugin(ourPluginGroupID, ourPluginArtifactID) != null;
+    return project.findPlugin(myPluginGroupID, myPluginArtifactID) != null;
   }
 
   @Override
@@ -40,34 +42,14 @@ public class GroovyImporter extends MavenImporter {
     collectSourceOrTestFolders(mavenProject, "testCompile", "src/test/groovy", result);
   }
 
-  protected static Element findGoalConfigNode(MavenProject p, String goal, String path) {
-    return p.findPluginGoalConfigurationElement(ourPluginGroupID, ourPluginArtifactID, goal, path);
-  }
-
-
   private void collectSourceOrTestFolders(MavenProject mavenProject, String goal, String defaultDir, List<String> result) {
-    Element sourcesElement = findGoalConfigNode(mavenProject, goal, "sources");
-    if (sourcesElement == null) {
+    Element sourcesElement = getGoalConfig(mavenProject, goal);
+    List<String> dirs = MavenJDOMUtil.findChildrenValuesByPath(sourcesElement, "sources", "fileset.directory");
+    if (dirs.isEmpty()) {
       result.add(mavenProject.getDirectory() + "/" + defaultDir);
       return;
     }
-
-    for (Element each : (Iterable<? extends Element>)sourcesElement.getChildren("fileset")) {
-      String dir = findChildElementValue(each, "directory", null);
-      if (dir == null) continue;
-      result.add(dir);
-    }
-  }
-
-  private static String findChildElementValue(Element parent, String childName, String defaultValue) {
-    if (parent == null) return defaultValue;
-    Element child = parent.getChild(childName);
-    return child == null ? defaultValue : child.getValue();
-  }
-
-
-  private static String findGoalConfigValue(MavenProject p, String goal, String path) {
-    return p.findPluginGoalConfigurationValue(ourPluginGroupID, ourPluginArtifactID, goal, path);
+    result.addAll(dirs);
   }
 
   @Override

@@ -107,7 +107,7 @@ public class MavenTasksManager extends SimpleProjectComponent implements Persist
         parametersList.add(new MavenRunnerParameters(true,
                                                      file.getParent().getPath(),
                                                      Arrays.asList(each.getGoal()),
-                                                     myProjectsManager.getActiveProfiles()));
+                                                     myProjectsManager.getExplicitProfiles()));
       }
     }
     return myRunner.runBatch(parametersList, null, null, TasksBundle.message("maven.tasks.executing"), context.getProgressIndicator());

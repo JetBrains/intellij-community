@@ -16,7 +16,7 @@
 package com.intellij.junit4;
 
 import com.intellij.rt.execution.junit.*;
-import com.intellij.rt.execution.junit.segments.OutputObjectRegistryEx;
+import com.intellij.rt.execution.junit.segments.OutputObjectRegistry;
 import com.intellij.rt.execution.junit.segments.Packet;
 import com.intellij.rt.execution.junit.segments.PacketProcessor;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;
@@ -27,12 +27,12 @@ import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunListener;
 
 public class JUnit4TestResultsSender extends RunListener {
-  private final OutputObjectRegistryEx myRegistry;
+  private final OutputObjectRegistry myRegistry;
   private final PacketProcessor myErr;
   private TestMeter myCurrentTestMeter;
   private Description myCurrentTest;
 
-  public JUnit4TestResultsSender(OutputObjectRegistryEx packetFactory, PacketProcessor segmentedErr) {
+  public JUnit4TestResultsSender(OutputObjectRegistry packetFactory, PacketProcessor segmentedErr) {
     myRegistry = packetFactory;
     myErr = segmentedErr;
   }

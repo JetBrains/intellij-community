@@ -125,7 +125,7 @@ public class DaemonListeners implements Disposable {
         }
 
         stopDaemon(true);
-        myDaemonCodeAnalyzer.setLastIntentionHint(null);
+        myDaemonCodeAnalyzer.hideLastIntentionHint();
       }
     }, this);
 

@@ -133,9 +133,9 @@ public class PropertyUtil {
 
     for (PsiMethod method : methods) {
       if (filterMethods(method)) continue;
-      if (acceptSetters && PropertyUtil.isSimplePropertySetter(method)||
-          acceptGetters && PropertyUtil.isSimplePropertyGetter(method)) {
-        map.put(PropertyUtil.getPropertyName(method), method);
+      if (acceptSetters && isSimplePropertySetter(method)||
+          acceptGetters && isSimplePropertyGetter(method)) {
+        map.put(getPropertyName(method), method);
       }
     }
     return map;
@@ -146,8 +146,7 @@ public class PropertyUtil {
     if(method.hasModifierProperty(PsiModifier.STATIC) || !method.hasModifierProperty(PsiModifier.PUBLIC)) return true;
 
     final String className = method.getContainingClass().getQualifiedName();
-    if (className != null && className.equals(CommonClassNames.JAVA_LANG_OBJECT)) return true;
-    return false;
+    return className != null && className.equals(CommonClassNames.JAVA_LANG_OBJECT);
   }
 
   @NotNull
@@ -157,7 +156,7 @@ public class PropertyUtil {
     final ArrayList<PsiMethod> list = new ArrayList<PsiMethod>(psiMethods.length);
     for (PsiMethod method : psiMethods) {
       if (filterMethods(method)) continue;
-      if (PropertyUtil.isSimplePropertySetter(method)) {
+      if (isSimplePropertySetter(method)) {
         list.add(method);
       }
     }
@@ -172,7 +171,7 @@ public class PropertyUtil {
       final PsiMethod[] psiMethods = psiClass.findMethodsByName(name, true);
       for (PsiMethod method : psiMethods) {
         if (filterMethods(method)) continue;
-        if (PropertyUtil.isSimplePropertyGetter(method)) {
+        if (isSimplePropertyGetter(method)) {
           list.add(method);
         }
       }
@@ -292,7 +291,7 @@ public class PropertyUtil {
     return StringUtil.getPropertyName(methodName);
   }
 
-  public static String suggestGetterName(@NotNull String propertyName, @Nullable PsiType propertyType) {
+  public static String suggestGetterName(@NonNls @NotNull String propertyName, @Nullable PsiType propertyType) {
     return suggestGetterName(propertyName, propertyType, null);
   }
 
@@ -314,8 +313,7 @@ public class PropertyUtil {
   }
 
   private static boolean isBoolean(@Nullable PsiType propertyType) {
-    return PsiType.BOOLEAN.equals(propertyType) ||
-           propertyType != null && CommonClassNames.JAVA_LANG_BOOLEAN.equals(propertyType.getCanonicalText());
+    return PsiType.BOOLEAN.equals(propertyType);
   }
 
   @NonNls
@@ -324,7 +322,7 @@ public class PropertyUtil {
     return new String[] { "is" + str, "get" + str };
   }
 
-  public static String suggestSetterName(String propertyName) {
+  public static String suggestSetterName(@NonNls String propertyName) {
     @NonNls StringBuffer name = new StringBuffer(StringUtil.capitalizeWithJavaBeanConvention(propertyName));
     name.insert(0, "set");
     return name.toString();

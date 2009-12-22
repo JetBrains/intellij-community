@@ -238,13 +238,13 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
       else {
         return myTreeExpander;
       }
-    } else if (VcsDataKeys.UPDATE_VIEW_SELECTED_PATH.getName().equals(dataId)) {
+    } else if (VcsDataKeys.UPDATE_VIEW_SELECTED_PATH.is(dataId)) {
       return mySelectedUrl;
-    } else if (VcsDataKeys.UPDATE_VIEW_FILES_ITERABLE.getName().equals(dataId)) {
+    } else if (VcsDataKeys.UPDATE_VIEW_FILES_ITERABLE.is(dataId)) {
       return myTreeIterable;
-    } else if (VcsDataKeys.LABEL_BEFORE.getName().equals(dataId)) {
+    } else if (VcsDataKeys.LABEL_BEFORE.is(dataId)) {
       return myBefore;
-    }  else if (VcsDataKeys.LABEL_AFTER.getName().equals(dataId)) {
+    }  else if (VcsDataKeys.LABEL_AFTER.is(dataId)) {
       return myAfter;
     }
 

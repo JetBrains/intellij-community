@@ -276,7 +276,8 @@ public class TemplateState implements Disposable {
       myTemplateRange = myDocument.createRangeMarker(caretOffset, caretOffset + template.getTemplateText().length());
     }
     else {
-      preprocessTemplate(PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument), myEditor.getCaretModel().getOffset(), myTemplate.getTemplateText());
+      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
+      preprocessTemplate(file, myEditor.getCaretModel().getOffset(), myTemplate.getTemplateText());
       int caretOffset = myEditor.getCaretModel().getOffset();
       myTemplateRange = myDocument.createRangeMarker(caretOffset, caretOffset);
     }
@@ -924,6 +925,7 @@ public class TemplateState implements Disposable {
           }
           style.reformatText(file, myTemplateRange.getStartOffset(), myTemplateRange.getEndOffset());
           PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
+          PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myDocument);
 
           if (rangeMarker != null && rangeMarker.isValid()) {
             //[ven] TODO: [max] correct javadoc reformatting to eliminate isValid() check!!!

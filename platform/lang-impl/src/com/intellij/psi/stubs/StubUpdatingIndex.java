@@ -22,15 +22,11 @@ package com.intellij.psi.stubs;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IFileElementType;
@@ -43,7 +39,6 @@ import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -209,56 +204,6 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       });
     }
     return new MyIndex(indexId, owner, storage, getIndexer());
-  }
-
-  /**
-   * Schedules asynchronous rebuild
-   * @param finishCallback
-   */
-  public static void scheduleStubIndicesRebuild(@Nullable final Runnable finishCallback, @NotNull final Project project) {
-    final Runnable rebuildRunnable = new Runnable() {
-      public void run() {
-        final StubIndexImpl stubIndex = (StubIndexImpl)StubIndexImpl.getInstance();
-        final Collection<StubIndexKey> allIndexKeys = stubIndex.getAllStubIndexKeys();
-        try {
-          for (StubIndexKey key : allIndexKeys) {
-            stubIndex.getWriteLock(key).lock();
-          }
-          stubIndex.clearAllIndices();
-          final Map<StubIndexKey, Map<Object, TIntArrayList>> empty = Collections.emptyMap();
-          FileBasedIndex.getInstance().processAllValues(INDEX_ID, new FileBasedIndex.AllValuesProcessor<SerializedStubTree>() {
-            public void process(final int inputId, final SerializedStubTree value) {
-              final Map<StubIndexKey, Map<Object, TIntArrayList>> stubTree = new StubTree((PsiFileStub)value.getStub()).indexStubTree();
-              updateStubIndices(getAffectedIndices(empty, stubTree), inputId, empty, stubTree);
-            }
-          }, project);
-        }
-        finally {
-          for (StubIndexKey key : allIndexKeys) {
-            stubIndex.getWriteLock(key).unlock();
-          }
-          if (finishCallback != null) {
-            finishCallback.run();
-          }
-        }
-      }
-    };
-
-    final Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode()) {
-      rebuildRunnable.run();
-    }
-    else {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          new Task.Modal(null, "Updating index", false) {
-            public void run(@NotNull final ProgressIndicator indicator) {
-              rebuildRunnable.run();
-            }
-          }.queue();
-        }
-      });
-    }
   }
 
   private static void updateStubIndices(final Collection<StubIndexKey> indexKeys, final int inputId, final Map<StubIndexKey, Map<Object, TIntArrayList>> oldStubTree, final Map<StubIndexKey, Map<Object, TIntArrayList>> newStubTree) {

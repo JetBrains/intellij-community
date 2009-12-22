@@ -226,9 +226,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           }
         });
         if (fileSet.isEmpty()) {
-          for (PsiFile psiFile : psiFiles) {
-            fileSet.add(psiFile);
-          }
+          fileSet.addAll(Arrays.asList(psiFiles));
         }
         else {
           for (PsiFile psiFile : psiFiles) {
@@ -253,7 +251,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       final AtomicBoolean pceThrown = new AtomicBoolean(false);
 
       final int size = fileSet.size();
-      boolean completed = JobUtil.invokeConcurrentlyUnderMyProgress(fileSet, new Processor<PsiFile>() {
+      boolean completed = JobUtil.invokeConcurrentlyUnderMyProgress(new ArrayList<PsiFile>(fileSet), new Processor<PsiFile>() {
         public boolean process(final PsiFile file) {
           if (file instanceof PsiBinaryFile) return true;
           ApplicationManager.getApplication().runReadAction(new Runnable() {

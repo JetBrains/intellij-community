@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.util.Key;
@@ -61,6 +62,10 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     myAttributesMap = new HashMap<IElementType, TextAttributes>();
     myHighlighter = highlighter;
     mySegments = new SegmentArrayWithData();
+  }
+
+  public boolean isPlain() {
+    return myHighlighter instanceof PlainSyntaxHighlighter;
   }
 
   @Nullable

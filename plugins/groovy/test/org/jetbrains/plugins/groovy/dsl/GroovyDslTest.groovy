@@ -85,6 +85,17 @@ public class GroovyDslTest extends CompletionTestBase {
 """)
   }
 
+  public void testClassContext() throws Throwable {
+    doCustomTest( """
+     def ctx = context(scope: classScope(name: /.*WsSecurityConfig/))
+     
+     contributor ctx, {
+       property name: "auxWsProperty", type: "java.lang.String"
+     }
+    """
+    )
+  }
+
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     moduleBuilder.addLibraryJars("GROOVY", TestUtils.getMockGroovyLibraryHome(), TestUtils.GROOVY_JAR);

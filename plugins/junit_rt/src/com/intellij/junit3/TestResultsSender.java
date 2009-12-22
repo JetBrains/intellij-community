@@ -16,7 +16,7 @@
 package com.intellij.junit3;
 
 import com.intellij.rt.execution.junit.*;
-import com.intellij.rt.execution.junit.segments.OutputObjectRegistryEx;
+import com.intellij.rt.execution.junit.segments.OutputObjectRegistry;
 import com.intellij.rt.execution.junit.segments.Packet;
 import com.intellij.rt.execution.junit.segments.PacketProcessor;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;
@@ -26,12 +26,12 @@ import junit.framework.Test;
 import junit.framework.TestListener;
 
 public class TestResultsSender implements TestListener {
-  private final OutputObjectRegistryEx myRegistry;
+  private final OutputObjectRegistry myRegistry;
   private final PacketProcessor myErr;
   private TestMeter myCurrentTestMeter;
   private Test myCurrentTest;
 
-  public TestResultsSender(OutputObjectRegistryEx packetFactory, PacketProcessor segmentedErr) {
+  public TestResultsSender(OutputObjectRegistry packetFactory, PacketProcessor segmentedErr) {
     myRegistry = packetFactory;
     myErr = segmentedErr;
   }

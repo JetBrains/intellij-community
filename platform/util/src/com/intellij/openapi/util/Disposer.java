@@ -16,7 +16,6 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.objectTree.ObjectNode;
 import com.intellij.openapi.util.objectTree.ObjectTree;
 import com.intellij.openapi.util.objectTree.ObjectTreeAction;
 import com.intellij.util.ReflectionUtil;
@@ -134,14 +133,6 @@ public class Disposer {
    */
   @Nullable
   public static <T extends Disposable> T findRegisteredObject(@NotNull Disposable parentDisposable, @NotNull T object) {
-    ObjectNode<Disposable> parentNode = getTree().getNode(parentDisposable);
-    if (parentNode == null) return null;
-    for (ObjectNode<Disposable> node : parentNode.getChildren()) {
-      Disposable nodeObject = node.getObject();
-      if (nodeObject.equals(object)) {
-        return (T)nodeObject;
-      }
-    }
-    return null;
+    return ourTree.findRegisteredObject(parentDisposable, object);
   }
 }

@@ -20,15 +20,11 @@ import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlComment;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.xml.XmlProlog;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.*;
 import com.intellij.xml.util.XmlUtil;
-import org.jetbrains.annotations.NonNls;
-
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -104,19 +100,19 @@ public class InspectionUtil {
         final List<SuppressIntentionAction> actions = new ArrayList<SuppressIntentionAction>(4);
 
         actions.add(new SuppressInspectionAction(inspection.getID(), "Suppress for Instruction") {
-            protected XmlTag getAnchor(PsiElement element) {
+            protected XmlTag getAnchor(@NotNull PsiElement element) {
                 return PsiTreeUtil.getContextOfType(element, XmlTag.class, isXPath);
             }
         });
 
         actions.add(new SuppressInspectionAction(inspection.getID(), "Suppress for Template") {
-            protected XmlTag getAnchor(PsiElement element) {
+            protected XmlTag getAnchor(@NotNull PsiElement element) {
                 return XsltCodeInsightUtil.getTemplateTag(element, isXPath);
             }
         });
 
         actions.add(new SuppressInspectionAction(inspection.getID(), "Suppress for Stylesheet") {
-            protected XmlTag getAnchor(PsiElement element) {
+            protected XmlTag getAnchor(@NotNull PsiElement element) {
                 final XmlDocument document = PsiTreeUtil.getContextOfType(element, XmlDocument.class, isXPath);
                 assert document != null;
                 return document.getRootTag();
@@ -124,7 +120,7 @@ public class InspectionUtil {
         });
 
         actions.add(new SuppressInspectionAction(ALL_ID, "Suppress all for Stylesheet") {
-            protected XmlTag getAnchor(PsiElement element) {
+            protected XmlTag getAnchor(@NotNull PsiElement element) {
                 final XmlDocument document = PsiTreeUtil.getContextOfType(element, XmlDocument.class, isXPath);
                 assert document != null;
                 return document.getRootTag();

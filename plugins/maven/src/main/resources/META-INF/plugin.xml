@@ -184,15 +184,15 @@
       <keyboard-shortcut first-keystroke="DELETE" keymap="$default"/>
     </action>
 
-    <action id="Maven.OpenProfilesXml"
-            class="org.jetbrains.idea.maven.project.actions.OpenOrCreateProfilesXmlAction"
-            text="Open profiles.xml"
-            description="Open profiles.xml for selected projects"/>
-
     <action id="Maven.OpenSettingsXml"
             class="org.jetbrains.idea.maven.project.actions.OpenOrCreateSettingsXmlAction"
             text="Open settings.xml"
             description="Open Maven settings.xml"/>
+
+    <action id="Maven.OpenProfilesXml"
+            class="org.jetbrains.idea.maven.project.actions.OpenOrCreateProfilesXmlAction"
+            text="Open profiles.xml"
+            description="Open profiles.xml for selected projects"/>
 
     <action id="Maven.IgnoreProjects"
             class="org.jetbrains.idea.maven.project.actions.ToggleIgnoredProjectsAction"
@@ -304,8 +304,8 @@
       <reference id="Maven.IgnoreProjects"/>
       <reference id="Maven.RemoveManagedFiles"/>
       <separator/>
-      <reference id="Maven.OpenProfilesXml"/>
       <reference id="Maven.OpenSettingsXml"/>
+      <reference id="Maven.OpenProfilesXml"/>
       <separator/>
     </group>
 
