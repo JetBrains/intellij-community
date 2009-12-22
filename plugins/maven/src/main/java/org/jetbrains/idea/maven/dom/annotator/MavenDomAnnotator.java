@@ -34,6 +34,8 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectProblem;
 
+import java.util.Arrays;
+
 public class MavenDomAnnotator implements DomElementsAnnotator {
   public void annotate(DomElement element, DomElementAnnotationHolder holder) {
     if (element instanceof MavenDomProjectModel) {
@@ -53,7 +55,7 @@ public class MavenDomAnnotator implements DomElementsAnnotator {
     if (mavenProject != null) {
       for (MavenProjectProblem each : mavenProject.getProblems()) {
         MavenProjectProblem.ProblemType type = each.getType();
-        if (!ArrayUtil.contains(type, types)) continue;
+        if (!Arrays.asList(types).contains(type)) continue;
         VirtualFile problemFile = each.findFile();
 
         LocalQuickFix[] fixes = LocalQuickFix.EMPTY_ARRAY;
