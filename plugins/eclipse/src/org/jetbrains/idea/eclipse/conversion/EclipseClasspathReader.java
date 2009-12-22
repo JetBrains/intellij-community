@@ -44,6 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.EclipseXml;
 import org.jetbrains.idea.eclipse.IdeaXml;
+import org.jetbrains.idea.eclipse.config.EclipseModuleManager;
 import org.jetbrains.idea.eclipse.util.ErrorLog;
 
 import java.io.File;
@@ -199,8 +200,10 @@ public class EclipseClasspathReader {
         clsPath = null;
       }
       usedVariables.add(clsVar);
-      final String url = PathMacroManager.getInstance(rootModel.getModule()).expandPath(getVariableRelatedPath(clsVar, clsPath));
-      modifiableModel.addRoot(getUrl(url), OrderRootType.CLASSES);
+
+      final String url = getUrl(PathMacroManager.getInstance(rootModel.getModule()).expandPath(getVariableRelatedPath(clsVar, clsPath)));
+      EclipseModuleManager.getInstance(rootModel.getModule()).registerEclipseVariablePath(url, path);
+      modifiableModel.addRoot(url, OrderRootType.CLASSES);
 
       final String srcPathAttr = element.getAttributeValue(EclipseXml.SOURCEPATH_ATTR);
       if (srcPathAttr != null) {
@@ -218,8 +221,9 @@ public class EclipseClasspathReader {
           srcPath = null;
         }
         usedVariables.add(srcVar);
-        final String srcUrl = PathMacroManager.getInstance(rootModel.getModule()).expandPath(getVariableRelatedPath(srcVar, srcPath));
-        modifiableModel.addRoot(getUrl(srcUrl), OrderRootType.SOURCES);
+        final String srcUrl = getUrl(PathMacroManager.getInstance(rootModel.getModule()).expandPath(getVariableRelatedPath(srcVar, srcPath)));
+        EclipseModuleManager.getInstance(rootModel.getModule()).registerEclipseSrcVariablePath(srcUrl, srcPathAttr);
+        modifiableModel.addRoot(srcUrl, OrderRootType.SOURCES);
       }
 
       final List<String> docPaths = getJavadocAttribute(element);
