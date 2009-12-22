@@ -112,7 +112,7 @@ public class MavenArtifactDownloader {
                         final boolean downloadJavadoc,
                         final Map<MavenId, Set<MavenRemoteRepository>> libraryArtifacts,
                         final List<File> downloadedFiles) throws MavenProcessCanceledException {
-    List<Future<?>> futures = new ArrayList<Future<?>>();
+    List<Future> futures = new ArrayList<Future>();
 
     List<String> classifiers = new ArrayList<String>(2);
     if (downloadSources) classifiers.add(MavenConstants.CLASSIFIER_SOURCES);
@@ -143,7 +143,7 @@ public class MavenArtifactDownloader {
       }
     }
     finally {
-      for (Future<?> each : futures) {
+      for (Future each : futures) {
         try {
           each.get();
         }
