@@ -114,6 +114,10 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
   }
 
   public GenerationItem[] getGenerationItems(CompileContext context) {
+    if (GroovyCompilerConfiguration.getInstance(myProject).isUseGroovycStubs()) {
+      return new GenerationItem[0];
+    }
+
     myContext = context;
 
     List<GenerationItem> generationItems = new ArrayList<GenerationItem>();

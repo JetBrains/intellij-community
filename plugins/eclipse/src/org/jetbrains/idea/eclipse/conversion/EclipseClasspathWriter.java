@@ -20,8 +20,6 @@
  */
 package org.jetbrains.idea.eclipse.conversion;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -30,7 +28,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -42,6 +39,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.EclipseXml;
 import org.jetbrains.idea.eclipse.IdeaXml;
+import org.jetbrains.idea.eclipse.config.EclipseModuleManager;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -107,27 +105,29 @@ public class EclipseClasspathWriter {
             setExported(orderEntry, libraryOrderEntry);
           }
           else {
-            final Project project = myModel.getModule().getProject();
-            final String[] kind = new String[]{EclipseXml.LIB_KIND};
-            String relativeClassPath = getRelativePath(files[0], kind);
-
-            final String[] srcFiles = libraryOrderEntry.getUrls(OrderRootType.SOURCES);
-            final String relativePath;
-            if (srcFiles.length == 0) {
-              relativePath = null;
+            final String eclipseVariablePath = EclipseModuleManager.getInstance(libraryOrderEntry.getOwnerModule()).getEclipseVariablePath(files[0]);
+            final Element orderEntry;
+            if (eclipseVariablePath != null) {
+              orderEntry = addOrderEntry(EclipseXml.VAR_KIND, eclipseVariablePath, classpathRoot, oldRoot);
             }
             else {
-              final String[] srcKind = new String[1];
-              final boolean replaceVarsInSrc = Comparing.strEqual(kind[0], EclipseXml.VAR_KIND);
-              relativePath = getRelativePath(srcFiles[srcFiles.length - 1], srcKind, replaceVarsInSrc, project, getContentRoot());
-              if (replaceVarsInSrc && srcKind[0] == null) {
-                kind[0] = EclipseXml.LIB_KIND;
-                relativeClassPath = getRelativePath(files[0], kind, false, project, getContentRoot());
-              }
+              orderEntry = addOrderEntry(EclipseXml.LIB_KIND, getRelativePath(files[0]), classpathRoot, oldRoot);
             }
 
-            final Element orderEntry = addOrderEntry(kind[0], relativeClassPath, classpathRoot, oldRoot);
-            setOrRemoveAttribute(orderEntry, EclipseXml.SOURCEPATH_ATTR, relativePath);
+            final String srcRelativePath;
+            final String eclipseSrcVariablePath;
+
+            final String[] srcFiles = libraryOrderEntry.getUrls(OrderRootType.SOURCES);
+            if (srcFiles.length == 0) {
+              srcRelativePath = null;
+              eclipseSrcVariablePath = null;
+            }
+            else {
+              final String lastSourceRoot = srcFiles[srcFiles.length - 1];
+              srcRelativePath = getRelativePath(lastSourceRoot);
+              eclipseSrcVariablePath = EclipseModuleManager.getInstance(libraryOrderEntry.getOwnerModule()).getEclipseSrcVariablePath(lastSourceRoot);
+            }
+            setOrRemoveAttribute(orderEntry, EclipseXml.SOURCEPATH_ATTR, eclipseSrcVariablePath != null ? eclipseSrcVariablePath : srcRelativePath);
 
             //clear javadocs before write new
             final List children = new ArrayList(orderEntry.getChildren(EclipseXml.ATTRIBUTES_TAG));
@@ -179,19 +179,9 @@ public class EclipseClasspathWriter {
     }
   }
 
-  private String getRelativePath(String srcFile, String[] kind) {
-    return getRelativePath(srcFile, kind, true, myModel.getModule().getProject(), getContentRoot());
-  }
-
   private String getRelativePath(String url) {
-    return getRelativePath(url, new String[1]);
-  }
-
-  public static String getRelativePath(final String url,
-                                       String[] kind,
-                                       boolean replaceVars,
-                                       final Project project,
-                                       final VirtualFile contentRoot) {
+    final Project project = myModel.getModule().getProject();
+    final VirtualFile contentRoot = getContentRoot();
     final VirtualFile projectBaseDir = contentRoot != null ? contentRoot.getParent() : project.getBaseDir();
     assert projectBaseDir != null;
     VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
@@ -219,7 +209,7 @@ public class EclipseClasspathWriter {
         return "/" + VfsUtil.getRelativePath(file, projectBaseDir, '/');
       }
       else {
-        return replaceVars ? stripIDEASpecificPrefix(url, kind) : ProjectRootManagerImpl.extractLocalPath(url);
+        return ProjectRootManagerImpl.extractLocalPath(url);
       }
     }
     else {
@@ -234,7 +224,7 @@ public class EclipseClasspathWriter {
         return url.substring(projectUrl.length()); //leading /
       }
 
-      return replaceVars ? stripIDEASpecificPrefix(url, kind) : ProjectRootManagerImpl.extractLocalPath(url);
+      return ProjectRootManagerImpl.extractLocalPath(url);
     }
   }
 
@@ -290,23 +280,6 @@ public class EclipseClasspathWriter {
       attrElement.setAttribute("value", javadocPath);
     }
   }
-
-  private static String stripIDEASpecificPrefix(String path, String[] kind) {
-    String stripped = StringUtil
-      .strip(ProjectRootManagerImpl.extractLocalPath(PathMacroManager.getInstance(ApplicationManager.getApplication()).collapsePath(path)),
-             new CharFilter() {
-               public boolean accept(final char ch) {
-                 return ch != '$';
-               }
-             });
-    boolean leaveLeadingSlash = false;
-    if (!Comparing.strEqual(stripped, ProjectRootManagerImpl.extractLocalPath(path))) {
-      leaveLeadingSlash = kind[0] == null;
-      kind[0] = EclipseXml.VAR_KIND;
-    }
-    return (leaveLeadingSlash ? "/" : "") + stripped;
-  }
-
 
   private static Element addOrderEntry(String kind, String path, Element classpathRoot, Element oldRoot) {
     if (oldRoot != null) {

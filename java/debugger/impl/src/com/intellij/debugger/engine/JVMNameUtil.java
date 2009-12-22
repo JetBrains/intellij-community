@@ -20,8 +20,10 @@ import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
@@ -213,8 +215,12 @@ public class JVMNameUtil {
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("error.class.not.loaded", getDisplayName(process)));
     }
 
-    public String getDisplayName(DebugProcessImpl debugProcess) {
-      return getSourcePositionClassDisplayName(debugProcess, mySourcePosition);
+    public String getDisplayName(final DebugProcessImpl debugProcess) {
+      return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+        public String compute() {
+          return getSourcePositionClassDisplayName(debugProcess, mySourcePosition);
+        }
+      });
     }
   }
 

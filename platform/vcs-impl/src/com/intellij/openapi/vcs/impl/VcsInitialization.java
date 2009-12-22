@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.vcs.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
@@ -26,10 +28,15 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class VcsInitialization {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.VcsInitialization");
+
   private final Project myProject;
   private final List<Pair<VcsInitObject, Runnable>> myList;
+  private final Object myLock;
+  private boolean myInitStarted;
 
-  public VcsInitialization(Project project) {
+  public VcsInitialization(final Project project) {
+    myLock = new Object();
     myProject = project;
     myList = new LinkedList<Pair<VcsInitObject, Runnable>>();
 
@@ -41,16 +48,28 @@ public class VcsInitialization {
   }
 
   public void add(final VcsInitObject vcsInitObject, final Runnable runnable) {
-    myList.add(new Pair<VcsInitObject, Runnable>(vcsInitObject, runnable));
+    synchronized (myLock) {
+      if (myInitStarted) {
+        LOG.info("Registering startup activity AFTER initialization ", new Throwable());
+        // post startup are normally called on awt thread
+        ApplicationManager.getApplication().invokeLater(runnable);
+      }
+      myList.add(new Pair<VcsInitObject, Runnable>(vcsInitObject, runnable));
+    }
   }
 
   public void execute() {
-    Collections.sort(myList, new Comparator<Pair<VcsInitObject, Runnable>>() {
+    final List<Pair<VcsInitObject, Runnable>> list;
+    synchronized (myLock) {
+      list = myList;
+      myInitStarted = true; // list would not be modified starting from this point
+    }
+    Collections.sort(list, new Comparator<Pair<VcsInitObject, Runnable>>() {
       public int compare(Pair<VcsInitObject, Runnable> o1, Pair<VcsInitObject, Runnable> o2) {
         return new Integer(o1.getFirst().getOrder()).compareTo(new Integer(o2.getFirst().getOrder()));
       }
     });
-    for (Pair<VcsInitObject, Runnable> pair : myList) {
+    for (Pair<VcsInitObject, Runnable> pair : list) {
       pair.getSecond().run();
     }
   }

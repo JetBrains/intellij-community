@@ -19,6 +19,8 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -84,7 +86,16 @@ public abstract class GenericNotifierImpl<T, Key> {
       notification = new MyNotification<T>(myGroupId, myTitle, getNotificationContent(obj), myType, myListener, obj);
       myState.put(key, notification);
     }
-    Notifications.Bus.notify(notification, myProject);
+    final Application application = ApplicationManager.getApplication();
+    if (application.isDispatchThread()) {
+      Notifications.Bus.notify(notification, myProject);
+    } else {
+      application.invokeLater(new Runnable() {
+        public void run() {
+          Notifications.Bus.notify(notification, myProject);
+        }
+      });
+    }
   }
 
   public void removeLazyNotificationByKey(final Key key) {
@@ -128,6 +139,14 @@ public abstract class GenericNotifierImpl<T, Key> {
           notification.expire();
         }
       }
+    }
+  }
+
+  @Nullable
+  protected T getObj(final Key key) {
+    synchronized (myLock) {
+      final MyNotification<T> notification = myState.get(key);
+      return notification == null ? null : notification.getObj();
     }
   }
 
