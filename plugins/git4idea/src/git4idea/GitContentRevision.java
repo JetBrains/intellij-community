@@ -24,7 +24,7 @@ import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.commands.GitHandler;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,7 +69,7 @@ public class GitContentRevision implements ContentRevision {
       return null;
     }
     VirtualFile root = GitUtil.getGitRoot(myFile);
-    GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitHandler.SHOW);
+    GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitCommand.SHOW);
     h.setCharset(myCharset);
     h.setNoSSH(true);
     h.setSilent(true);
@@ -126,7 +126,8 @@ public class GitContentRevision implements ContentRevision {
     }
   }
 
-  public static ContentRevision createRevision(final VirtualFile file, final VcsRevisionNumber revisionNumber, final Project project) throws VcsException {
+  public static ContentRevision createRevision(final VirtualFile file, final VcsRevisionNumber revisionNumber, final Project project)
+    throws VcsException {
     final FilePathImpl filePath = new FilePathImpl(file);
     if (revisionNumber != null) {
       return new GitContentRevision(filePath, (GitRevisionNumber)revisionNumber, project);

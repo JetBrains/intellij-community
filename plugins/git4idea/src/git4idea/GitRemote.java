@@ -21,7 +21,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.commands.GitHandler;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
 import git4idea.config.GitConfigUtil;
@@ -159,7 +159,7 @@ public final class GitRemote {
    * @throws VcsException in case of git error
    */
   public static List<GitRemote> list(Project project, VirtualFile root) throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitHandler.REMOTE);
+    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.REMOTE);
     handler.setNoSSH(true);
     handler.setSilent(true);
     handler.addParameters("-v");
@@ -222,7 +222,7 @@ public final class GitRemote {
    */
   @Nullable
   public static GitRemote find(Project project, VirtualFile root, String name) throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitHandler.REMOTE);
+    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.REMOTE);
     handler.setNoSSH(true);
     handler.setSilent(true);
     handler.ignoreErrorCode(1);
@@ -281,7 +281,7 @@ public final class GitRemote {
    * @throws VcsException if there is a problem with running git
    */
   public Info localInfo(Project project, VirtualFile root) throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitHandler.REMOTE);
+    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.REMOTE);
     handler.setNoSSH(true);
     handler.setSilent(true);
     handler.addParameters("show", "-n", myName);

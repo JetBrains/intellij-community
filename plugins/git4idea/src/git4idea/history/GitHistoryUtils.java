@@ -28,7 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.StringTokenizer;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.*;
-import git4idea.commands.GitHandler;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +62,7 @@ public class GitHistoryUtils {
   @Nullable
   public static VcsRevisionNumber getCurrentRevision(final Project project, FilePath filePath) throws VcsException {
     filePath = getLastCommitName(project, filePath);
-    GitSimpleHandler h = new GitSimpleHandler(project, GitUtil.getGitRoot(filePath), GitHandler.LOG);
+    GitSimpleHandler h = new GitSimpleHandler(project, GitUtil.getGitRoot(filePath), GitCommand.LOG);
     h.setNoSSH(true);
     h.setSilent(true);
     h.addParameters("-n1", "--pretty=format:%H%n%ct%n");
@@ -95,7 +95,7 @@ public class GitHistoryUtils {
       return new ItemLatestState(getCurrentRevision(project, filePath), true, false);
     }
     filePath = getLastCommitName(project, filePath);
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.LOG);
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
     h.setNoSSH(true);
     h.setSilent(true);
     h.addParameters("-n1", "--pretty=format:%H%n%ct", "--name-status", t.getFullName());
@@ -128,7 +128,7 @@ public class GitHistoryUtils {
     // adjust path using change manager
     path = getLastCommitName(project, path);
     final VirtualFile root = GitUtil.getGitRoot(path);
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.LOG);
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);
     h.addParameters("-M", "--follow", "--name-only",

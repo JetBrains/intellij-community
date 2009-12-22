@@ -436,14 +436,14 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
               r.remoteBranch = b.getTrackedBranchName(project, root);
               if (r.remote != null) {
                 if (fetchData && !r.remote.equals(".")) {
-                  GitLineHandler fetch = new GitLineHandler(project, root, GitHandler.FETCH);
+                  GitLineHandler fetch = new GitLineHandler(project, root, GitCommand.FETCH);
                   fetch.addParameters(r.remote, "-v");
                   Collection<VcsException> exs = GitHandlerUtil.doSynchronouslyWithExceptions(fetch);
                   exceptions.addAll(exs);
                 }
                 GitBranch tracked = b.tracked(project, root);
                 assert tracked != null : "Tracked branch cannot be null here";
-                GitSimpleHandler unmerged = new GitSimpleHandler(project, root, GitHandler.LOG);
+                GitSimpleHandler unmerged = new GitSimpleHandler(project, root, GitCommand.LOG);
                 unmerged.addParameters("--pretty=format:%H", r.branch + ".." + tracked.getFullName());
                 unmerged.setNoSSH(true);
                 unmerged.setStdoutSuppressed(true);
@@ -453,7 +453,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
                     r.remoteCommits++;
                   }
                 }
-                GitSimpleHandler toPush = new GitSimpleHandler(project, root, GitHandler.LOG);
+                GitSimpleHandler toPush = new GitSimpleHandler(project, root, GitCommand.LOG);
                 toPush.addParameters("--pretty=format:%H%x20%ct%x20%at%x20%s%n%P", tracked.getFullName() + ".." + r.branch);
                 toPush.setNoSSH(true);
                 toPush.setStdoutSuppressed(true);
@@ -530,7 +530,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
       manager.runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
           for (Root r : rootsToPush) {
-            GitLineHandler h = new GitLineHandler(project, r.root, GitHandler.PUSH);
+            GitLineHandler h = new GitLineHandler(project, r.root, GitCommand.PUSH);
             String src = r.commitToPush != null ? r.commitToPush : r.branch;
             h.addParameters("-v", r.remote, src + ":" + r.remoteBranch);
             GitPushUtils.trackPushRejectedAsError(h, "Rejected push (" + r.root.getPresentableUrl() + "): ");

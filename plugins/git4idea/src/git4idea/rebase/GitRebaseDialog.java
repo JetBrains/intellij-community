@@ -22,7 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import git4idea.GitBranch;
 import git4idea.GitTag;
-import git4idea.commands.GitHandler;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.config.GitConfigUtil;
 import git4idea.i18n.GitBundle;
@@ -156,7 +156,7 @@ public class GitRebaseDialog extends DialogWrapper {
   }
 
   public GitLineHandler handler() {
-    GitLineHandler h = new GitLineHandler(myProject, gitRoot(), GitHandler.REBASE);
+    GitLineHandler h = new GitLineHandler(myProject, gitRoot(), GitCommand.REBASE);
     h.setNoSSH(true);
     if (myInteractiveCheckBox.isSelected() && myInteractiveCheckBox.isEnabled()) {
       h.addParameters("-i");

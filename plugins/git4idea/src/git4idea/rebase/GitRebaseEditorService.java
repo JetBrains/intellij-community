@@ -18,6 +18,7 @@ package git4idea.rebase;
 import com.intellij.ide.XmlRpcServer;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ServiceManager;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitLineHandler;
 import git4idea.commands.ScriptGenerator;
@@ -194,7 +195,7 @@ public class GitRebaseEditorService implements ApplicationComponent {
    * @param editorNo the editor number
    */
   public void configureHandler(GitLineHandler h, int editorNo) {
-    h.setEnvironment(GitHandler.GIT_EDITOR_ENV, getEditorCommand());
+    h.setEnvironment(GitCommand.GIT_EDITOR_ENV, getEditorCommand());
     h.setEnvironment(GitRebaseEditorMain.IDEA_REBASE_HANDER_NO, Integer.toString(editorNo));
   }
 
@@ -212,7 +213,15 @@ public class GitRebaseEditorService implements ApplicationComponent {
      */
     @SuppressWarnings({"UnusedDeclaration"})
     public int editCommits(int handlerNo, String path) {
-      return getHandler(handlerNo).editCommits(path);
+      GitRebaseEditorHandler editor = getHandler(handlerNo);
+      GitHandler handler = editor.getHandler();
+      handler.suspendWriteLock();
+      try {
+        return editor.editCommits(path);
+      }
+      finally {
+        handler.resumeWriteLock();
+      }
     }
   }
 }

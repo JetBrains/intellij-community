@@ -18,7 +18,7 @@ package git4idea;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.commands.GitHandler;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
 import git4idea.config.GitConfigUtil;
@@ -92,7 +92,7 @@ public class GitBranch extends GitReference {
    */
   @Nullable
   public static GitBranch current(Project project, VirtualFile root) throws VcsException {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.BRANCH);
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.BRANCH);
     h.setNoSSH(true);
     h.setSilent(true);
     h.addParameters("--no-color");
@@ -130,7 +130,7 @@ public class GitBranch extends GitReference {
       // no need to run handler
       return;
     }
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitHandler.BRANCH);
+    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.BRANCH);
     handler.setNoSSH(true);
     handler.setSilent(true);
     handler.addParameters("--no-color");
@@ -297,7 +297,7 @@ public class GitBranch extends GitReference {
   @Nullable
   public GitRevisionNumber getMergeBase(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitBranch branch)
     throws VcsException {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.MERGE_BASE);
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.MERGE_BASE);
     h.setNoSSH(true);
     h.setSilent(true);
     h.addParameters(this.getFullName(), branch.getFullName());

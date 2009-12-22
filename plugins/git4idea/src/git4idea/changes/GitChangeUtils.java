@@ -28,7 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
-import git4idea.commands.GitHandler;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
 import org.jetbrains.annotations.NonNls;
@@ -54,15 +54,15 @@ public class GitChangeUtils {
   /**
    * Parse changes from lines
    *
-   * @param project        the context project
-   * @param root        the git root
+   * @param project the context project
+   * @param root    the git root
    * @return a set of unmerged files
    * @throws VcsException if the input format does not matches expected format
    */
   public static List<VirtualFile> unmergedFiles(Project project, VirtualFile root) throws VcsException {
     HashSet<VirtualFile> unmerged = new HashSet<VirtualFile>();
     String rootPath = root.getPath();
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.LS_FILES);
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LS_FILES);
     h.setNoSSH(true);
     h.setSilent(true);
     h.addParameters("--unmerged");
@@ -80,9 +80,10 @@ public class GitChangeUtils {
       file.refresh(false, false);
       unmerged.add(file);
     }
-    if(unmerged.size() == 0) {
+    if (unmerged.size() == 0) {
       return Collections.emptyList();
-    } else {
+    }
+    else {
       ArrayList<VirtualFile> rc = new ArrayList<VirtualFile>(unmerged.size());
       rc.addAll(unmerged);
       Collections.sort(rc, GitUtil.VIRTUAL_FILE_COMPARATOR);
@@ -217,7 +218,7 @@ public class GitChangeUtils {
   @SuppressWarnings({"SameParameterValue"})
   public static GitRevisionNumber loadRevision(final Project project, final VirtualFile vcsRoot, @NonNls final String revisionNumber)
     throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(project, vcsRoot, GitHandler.REV_LIST);
+    GitSimpleHandler handler = new GitSimpleHandler(project, vcsRoot, GitCommand.REV_LIST);
     handler.addParameters("--timestamp", "--max-count=1", revisionNumber);
     handler.endOptions();
     handler.setNoSSH(true);
@@ -255,7 +256,7 @@ public class GitChangeUtils {
    * @throws VcsException in case of problem with running git
    */
   public static CommittedChangeList getRevisionChanges(Project project, VirtualFile root, String revisionName) throws VcsException {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.SHOW);
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.SHOW);
     h.setNoSSH(true);
     h.setSilent(true);
     h.addParameters("--name-status", "--no-abbrev", "-M", "--pretty=format:" + COMMITTED_CHANGELIST_FORMAT, "--encoding=UTF-8",
@@ -332,7 +333,7 @@ public class GitChangeUtils {
             continue;
           }
         }
-        GitSimpleHandler diffHandler = new GitSimpleHandler(project, root, GitHandler.DIFF);
+        GitSimpleHandler diffHandler = new GitSimpleHandler(project, root, GitCommand.DIFF);
         diffHandler.setNoSSH(true);
         diffHandler.setSilent(true);
         diffHandler.addParameters("--name-status", "-M", parentRevision.getRev(), thisRevision.getRev());

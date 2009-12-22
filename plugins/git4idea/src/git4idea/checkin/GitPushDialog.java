@@ -27,7 +27,7 @@ import com.intellij.util.containers.HashMap;
 import git4idea.GitBranch;
 import git4idea.GitRemote;
 import git4idea.GitTag;
-import git4idea.commands.GitHandler;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.config.GitConfigUtil;
 import git4idea.i18n.GitBundle;
@@ -152,7 +152,7 @@ public class GitPushDialog extends DialogWrapper {
    * @return a prepared handler for push operation
    */
   public GitLineHandler handler() {
-    GitLineHandler h = new GitLineHandler(myProject, getGitRoot(), GitHandler.PUSH);
+    GitLineHandler h = new GitLineHandler(myProject, getGitRoot(), GitCommand.PUSH);
     String policy = (String)myPushPolicy.getSelectedItem();
     if (PUSH_POLICY_ALL.equals(policy)) {
       h.addParameters("--all");

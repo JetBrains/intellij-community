@@ -33,7 +33,7 @@ import git4idea.GitBranch;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.changes.GitChangeUtils;
-import git4idea.commands.GitHandler;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitLineHandler;
 import git4idea.commands.GitLineHandlerAdapter;
@@ -390,26 +390,28 @@ public abstract class GitBaseRebaseProcess {
                         VirtualFile root,
                         RebaseConflictDetector rebaseConflictDetector,
                         final String action) {
-    GitLineHandler rh = new GitLineHandler(myProject, root, GitHandler.REBASE);
+    GitLineHandler rh = new GitLineHandler(myProject, root, GitCommand.REBASE);
     // ignore failure for abort
     rh.ignoreErrorCode(1);
     rh.addParameters(action);
     rebaseConflictDetector.reset();
     rh.addLineListener(rebaseConflictDetector);
-    if(!"--abort".equals(action)) {
+    if (!"--abort".equals(action)) {
       configureRebaseEditor(root, rh);
     }
     try {
-    GitHandlerUtil.doSynchronouslyWithExceptions(rh, progressIndicator);
-    } finally {
+      GitHandlerUtil.doSynchronouslyWithExceptions(rh, progressIndicator);
+    }
+    finally {
       cleanupHandler(root, rh);
     }
   }
 
   /**
    * Configure rebase editor
+   *
    * @param root the vcs root
-   * @param h the handler to configure
+   * @param h    the handler to configure
    */
   @SuppressWarnings({"UnusedDeclaration"})
   protected void configureRebaseEditor(VirtualFile root, GitLineHandler h) {

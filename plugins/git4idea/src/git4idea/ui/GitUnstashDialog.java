@@ -134,7 +134,7 @@ public class GitUnstashDialog extends DialogWrapper {
     });
     myClearButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        GitLineHandler h = new GitLineHandler(myProject, getGitRoot(), GitHandler.STASH);
+        GitLineHandler h = new GitLineHandler(myProject, getGitRoot(), GitCommand.STASH);
         h.setNoSSH(true);
         h.addParameters("clear");
         GitHandlerUtil.doSynchronously(h, GitBundle.getString("unstash.clearing.stashes"), h.printableCommandLine());
@@ -173,7 +173,7 @@ public class GitUnstashDialog extends DialogWrapper {
       }
 
       private GitSimpleHandler dropHandler(String stash) {
-        GitSimpleHandler h = new GitSimpleHandler(myProject, getGitRoot(), GitHandler.STASH);
+        GitSimpleHandler h = new GitSimpleHandler(myProject, getGitRoot(), GitCommand.STASH);
         h.setNoSSH(true);
         h.addParameters("drop", stash);
         return h;
@@ -286,7 +286,7 @@ public class GitUnstashDialog extends DialogWrapper {
   private void refreshStashList() {
     final DefaultListModel listModel = (DefaultListModel)myStashList.getModel();
     listModel.clear();
-    GitSimpleHandler h = new GitSimpleHandler(myProject, getGitRoot(), GitHandler.STASH);
+    GitSimpleHandler h = new GitSimpleHandler(myProject, getGitRoot(), GitCommand.STASH);
     h.setSilent(true);
     h.setNoSSH(true);
     h.addParameters("list");
@@ -323,7 +323,7 @@ public class GitUnstashDialog extends DialogWrapper {
    * @return unstash handler
    */
   private GitLineHandler handler(boolean escaped) {
-    GitLineHandler h = new GitLineHandler(myProject, getGitRoot(), GitHandler.STASH);
+    GitLineHandler h = new GitLineHandler(myProject, getGitRoot(), GitCommand.STASH);
     h.setNoSSH(true);
     String branch = myBranchTextField.getText();
     if (branch.length() == 0) {

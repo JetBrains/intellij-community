@@ -15,6 +15,8 @@
  */
 package git4idea.rebase;
 
+import git4idea.commands.GitHandler;
+
 /**
  * The interface
  */
@@ -26,4 +28,9 @@ public interface GitRebaseEditorHandler {
    * @return the exit code to be returned from editor
    */
   int editCommits(String path);
+
+  /**
+   * @return the handler for the git process
+   */
+  GitHandler getHandler();
 }

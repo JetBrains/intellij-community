@@ -23,7 +23,7 @@ import com.intellij.ui.DocumentAdapter;
 import git4idea.GitBranch;
 import git4idea.GitTag;
 import git4idea.GitVcs;
-import git4idea.commands.GitHandler;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitVcsSettings;
@@ -276,7 +276,7 @@ public class GitCheckoutDialog extends DialogWrapper {
     if (branch.length() == 0) {
       return null;
     }
-    GitSimpleHandler h = new GitSimpleHandler(myProject, gitRoot(), GitHandler.BRANCH);
+    GitSimpleHandler h = new GitSimpleHandler(myProject, gitRoot(), GitCommand.BRANCH);
     h.setNoSSH(true);
     if (myTrackBranchCheckBox.isSelected()) {
       h.addParameters("--track");
@@ -295,7 +295,7 @@ public class GitCheckoutDialog extends DialogWrapper {
    * @return a handler that checkouts branch
    */
   public GitLineHandler checkoutHandler() {
-    GitLineHandler h = new GitLineHandler(myProject, gitRoot(), GitHandler.CHECKOUT);
+    GitLineHandler h = new GitLineHandler(myProject, gitRoot(), GitCommand.CHECKOUT);
     h.setNoSSH(true);
     final String newBranch = myNewBranchName.getText();
     if (newBranch.length() == 0) {

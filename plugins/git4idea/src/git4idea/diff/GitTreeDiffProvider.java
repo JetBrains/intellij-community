@@ -23,7 +23,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranchesSearcher;
 import git4idea.changes.GitChangeUtils;
-import git4idea.commands.GitHandler;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
 
@@ -45,7 +45,7 @@ public class GitTreeDiffProvider implements TreeDiffProvider {
       final GitBranchesSearcher searcher = new GitBranchesSearcher(myProject, vcsRoot, true);
       if (searcher.getLocal() == null || searcher.getRemote() == null) return Collections.emptyList();
 
-      GitSimpleHandler handler = new GitSimpleHandler(myProject, vcsRoot, GitHandler.DIFF);
+      GitSimpleHandler handler = new GitSimpleHandler(myProject, vcsRoot, GitCommand.DIFF);
       handler.addParameters("--name-status", "--diff-filter=ADCMRUX", "-M", "HEAD..." + searcher.getRemote().getFullName());
       handler.setNoSSH(true);
       handler.setSilent(true);

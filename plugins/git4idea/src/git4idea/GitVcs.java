@@ -47,7 +47,7 @@ import git4idea.changes.GitCommittedChangeListProvider;
 import git4idea.changes.GitOutgoingChangesProvider;
 import git4idea.checkin.GitCheckinEnvironment;
 import git4idea.checkin.GitCommitAndPushExecutor;
-import git4idea.commands.GitHandler;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitVcsConfigurable;
 import git4idea.config.GitVcsSettings;
@@ -69,6 +69,8 @@ import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Git VCS implementation
@@ -178,6 +180,10 @@ public class GitVcs extends AbstractVcs {
    * The queue that is used to schedule background task from actions
    */
   private final BackgroundTaskQueue myTaskQueue;
+  /**
+   * The command read/write lock
+   */
+  private final ReadWriteLock myCommandLock = new ReentrantReadWriteLock(true);
 
   private final TreeDiffProvider myTreeDiffProvider;
 
@@ -214,6 +220,13 @@ public class GitVcs extends AbstractVcs {
     myTreeDiffProvider = new GitTreeDiffProvider(myProject);
     myCommitAndPushExecutor = new GitCommitAndPushExecutor(gitCheckinEnvironment);
     myTaskQueue = new BackgroundTaskQueue(myProject, GitBundle.getString("task.queue.title"));
+  }
+
+  /**
+   * @return the command lock
+   */
+  public ReadWriteLock getCommandLock() {
+    return myCommandLock;
   }
 
   /**
@@ -575,7 +588,7 @@ public class GitVcs extends AbstractVcs {
    */
   public static String version(Project project) throws VcsException {
     final String s;
-    GitSimpleHandler h = new GitSimpleHandler(project, new File("."), GitHandler.VERSION);
+    GitSimpleHandler h = new GitSimpleHandler(project, new File("."), GitCommand.VERSION);
     h.setNoSSH(true);
     h.setSilent(true);
     s = h.run();

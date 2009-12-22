@@ -18,7 +18,7 @@ package git4idea.actions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.commands.GitHandler;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
 import git4idea.rebase.GitInteractiveRebaseEditorHandler;
@@ -61,7 +61,7 @@ public abstract class GitAbstractRebaseResumeAction extends GitRebaseActionBase 
         return null;
       }
     }
-    GitLineHandler h = new GitLineHandler(project, root, GitHandler.REBASE);
+    GitLineHandler h = new GitLineHandler(project, root, GitCommand.REBASE);
     h.addParameters(getOptionName());
     return h;
   }

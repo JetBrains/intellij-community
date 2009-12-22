@@ -22,7 +22,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitVcs;
 import git4idea.actions.BasicAction;
-import git4idea.commands.GitHandler;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitLineHandler;
 import git4idea.config.GitVersion;
@@ -98,7 +98,7 @@ public class GitCheckoutProvider implements CheckoutProvider {
    * @return a handler for clone operation
    */
   public static GitLineHandler clone(Project project, final String url, final File directory, final String name, final String originName) {
-    GitLineHandler handler = new GitLineHandler(project, directory, GitHandler.CLONE);
+    GitLineHandler handler = new GitLineHandler(project, directory, GitCommand.CLONE);
     if (VERBOSE_CLONE_SUPPORTED.isLessOrEqual(GitVcs.getInstance(project).version())) {
       handler.addParameters("-v");
     }

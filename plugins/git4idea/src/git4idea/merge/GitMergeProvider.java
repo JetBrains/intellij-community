@@ -29,8 +29,8 @@ import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitFileUtils;
-import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
 import git4idea.i18n.GitBundle;
@@ -208,7 +208,7 @@ public class GitMergeProvider implements MergeProvider2 {
           Map<String, Conflict> cs = new HashMap<String, Conflict>();
           VirtualFile root = e.getKey();
           List<VirtualFile> files = e.getValue();
-          GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitHandler.LS_FILES);
+          GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitCommand.LS_FILES);
           h.setNoSSH(true);
           h.setStdoutSuppressed(true);
           h.addParameters("--exclude-standard", "--unmerged", "-t", "-z");
@@ -270,7 +270,7 @@ public class GitMergeProvider implements MergeProvider2 {
      * @param files the files to describe
      */
     public void collectConflicts(VirtualFile root, List<VirtualFile> files) {
-      GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitHandler.LS_FILES);
+      GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitCommand.LS_FILES);
       h.setNoSSH(true);
       h.addParameters("-t", "--exclude-standard", "--unmerged");
       h.endOptions();

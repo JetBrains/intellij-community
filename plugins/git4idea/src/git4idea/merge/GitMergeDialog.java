@@ -21,7 +21,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitVcs;
-import git4idea.commands.GitHandler;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.i18n.GitBundle;
@@ -148,7 +148,7 @@ public class GitMergeDialog extends DialogWrapper {
   private void updateBranches() {
     try {
       VirtualFile root = getSelectedRoot();
-      GitSimpleHandler handler = new GitSimpleHandler(myProject, root, GitHandler.BRANCH);
+      GitSimpleHandler handler = new GitSimpleHandler(myProject, root, GitCommand.BRANCH);
       handler.setNoSSH(true);
       handler.setSilent(true);
       handler.addParameters("--no-color", "-a", "--no-merged");
@@ -172,7 +172,7 @@ public class GitMergeDialog extends DialogWrapper {
       throw new IllegalStateException("The handler could be retrieved only if dialog was completed successfully.");
     }
     VirtualFile root = (VirtualFile)myGitRoot.getSelectedItem();
-    GitLineHandler h = new GitLineHandler(myProject, root, GitHandler.MERGE);
+    GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.MERGE);
     // ignore merge failure
     h.ignoreErrorCode(1);
     h.setNoSSH(true);
