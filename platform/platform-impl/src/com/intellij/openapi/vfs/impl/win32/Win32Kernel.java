@@ -15,16 +15,6 @@
  */
 package com.intellij.openapi.vfs.impl.win32;
 
-import com.intellij.util.ArrayUtil;
-import com.sun.jna.Library;
-import com.sun.jna.Native;
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
-import com.sun.jna.examples.win32.W32API;
-import com.sun.jna.win32.StdCallLibrary;
-import com.sun.jna.win32.W32APIFunctionMapper;
-import com.sun.jna.win32.W32APITypeMapper;
-
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,62 +25,38 @@ import java.util.Map;
  */
 public class Win32Kernel {
 
-  private static final int MAX_PATH = 0x00000104;
+  public static final int FILE_ATTRIBUTE_DIRECTORY = 0x0010;
+  public static final int FILE_ATTRIBUTE_READONLY =  0x0001;
 
-  public static final int FILE_ATTRIBUTE_DIRECTORY = 0x00000010;
-  public static final int FILE_ATTRIBUTE_READONLY = 0x0001;
+  private IdeaWin32 myKernel = new IdeaWin32();
 
-  private static W32API.HANDLE INVALID_HANDLE_VALUE = new W32API.HANDLE(Pointer.createConstant(0xFFFFFFFFl));
-
-  private static Kernel32 myKernel = (Kernel32)Native.loadLibrary("kernel32", Kernel32.class, new HashMap<Object, Object>() {
-        {
-          put(Library.OPTION_TYPE_MAPPER, W32APITypeMapper.UNICODE);
-          put(Library.OPTION_FUNCTION_MAPPER, W32APIFunctionMapper.UNICODE);
-        }});
-
-  private final WIN32_FIND_DATA myData = new WIN32_FIND_DATA();
+  private Map<String, FileInfo> myCache = new HashMap<String, FileInfo>();
 
   void clearCache() {
     myCache.clear();
   }
 
-  private static class FileInfo {
-    private FileInfo(WIN32_FIND_DATA data) {
-      this.dwFileAttributes = data.dwFileAttributes;
-      this.ftLastWriteTime = data.ftLastWriteTime.toLong();
-    }
-
-    int dwFileAttributes;
-    long ftLastWriteTime;
-  }
-
-  private Map<String, FileInfo> myCache = new HashMap<String, FileInfo>();
-
   public String[] list(String absolutePath) {
 
-    ArrayList<String> list = new ArrayList<String>();
-    WIN32_FIND_DATA data = myData;
-    W32API.HANDLE hFind = myKernel.FindFirstFile(absolutePath.replace('/', '\\') + "\\*", data);
-    if (hFind.equals(INVALID_HANDLE_VALUE)) return new String[0];
-    try {
-      do {
-        String name = Native.toString(data.cFileName);
-        if (name.equals(".")) {
-          myCache.put(absolutePath, new FileInfo(data));
-          continue;
-        }
-        else if (name.equals("..")) {
-          continue;
-        }
-        myCache.put(absolutePath + "/" + name, new FileInfo(data));
-        list.add(name);
+    FileInfo[] fileInfos = myKernel.listChildren(absolutePath.replace('/', '\\') + "\\*.*");
+    if (fileInfos == null) {
+      return new String[0];
+    }
+    ArrayList<String> names = new ArrayList<String>(fileInfos.length);
+    for (int i = 0, fileInfosLength = fileInfos.length; i < fileInfosLength; i++) {
+      FileInfo info = fileInfos[i];
+      if (info.name.equals(".")) {
+        myCache.put(absolutePath, info);
+        continue;
       }
-      while (myKernel.FindNextFile(hFind, data));
+      else if (info.name.equals("..")) {
+        continue;
+      }
+      myCache.put(absolutePath + "/" + info.name, info);
+      names.add(info.name);
     }
-    finally {
-      myKernel.FindClose(hFind);
-    }
-    return ArrayUtil.toStringArray(list);
+
+    return names.toArray(new String[names.size()]);
   }
 
   public boolean exists(String path) {
@@ -105,91 +71,30 @@ public class Win32Kernel {
 
   public boolean isDirectory(String path) throws FileNotFoundException {
     FileInfo data = getInfo(path);
-    return (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+    return (data.attributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
   }
 
   public boolean isWritable(String path) throws FileNotFoundException {
     FileInfo fileInfo = getInfo(path);
     myCache.remove(path);
-    return (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_READONLY) == 0;
+    return (fileInfo.attributes & FILE_ATTRIBUTE_READONLY) == 0;
   }
 
   public long getTimeStamp(String path) throws FileNotFoundException {
-    return getInfo(path).ftLastWriteTime;
+    long timestamp = getInfo(path).timestamp;
+    return timestamp / 10000 - 11644473600000l;
   }
 
   private FileInfo getInfo(String path) throws FileNotFoundException {
     FileInfo info = myCache.get(path);
     if (info == null) {
-      WIN32_FIND_DATA data = myData;
-      W32API.HANDLE handle = myKernel.FindFirstFile(path.replace('/', '\\'), data);
-      if (handle.equals(INVALID_HANDLE_VALUE)) {
+
+      info = myKernel.getInfo(path.replace('/', '\\'));
+      if (info == null) {
         throw new FileNotFoundException(path);
       }
-      myKernel.FindClose(handle);
-      info = new FileInfo(data);
       myCache.put(path, info);
     }
     return info;
-  }
-
-  public void release() throws Throwable {
-    myData.release();
-  }
-
-  public interface Kernel32 extends StdCallLibrary {
-
-    W32API.HANDLE FindFirstFile(String lpFileName, WIN32_FIND_DATA lpFindFileData);
-
-    boolean FindNextFile(W32API.HANDLE hFindFile, WIN32_FIND_DATA lpFindFileData);
-
-    boolean FindClose(W32API.HANDLE hFindFile);
-  }
-
-  public static class FILETIME extends Structure implements Structure.ByValue {
-
-    public int dwLowDateTime;
-    public int dwHighDateTime;
-
-    private static long l(int i) {
-      if (i >= 0) {
-        return i;
-      }
-      else {
-        return ((long)i & 0x7FFFFFFFl) + 0x80000000l;
-      }
-    }
-
-    public long toLong() {
-      return (((long)dwHighDateTime << 32) + l(dwLowDateTime)) / 10000 - 11644473600000l;
-    }
-  }
-
-  @SuppressWarnings({"UnusedDeclaration"})
-  public static class WIN32_FIND_DATA extends Structure {
-
-    public int dwFileAttributes;
-
-    public FILETIME ftCreationTime;
-
-    public FILETIME ftLastAccessTime;
-
-    public FILETIME ftLastWriteTime;
-
-    public int nFileSizeHigh;
-
-    public int nFileSizeLow;
-
-    public int dwReserved0;
-
-    public int dwReserved1;
-
-    public char[] cFileName = new char[MAX_PATH];
-
-    public char[] cAlternateFileName = new char[14];
-
-    public void release() throws Throwable {
-      finalize();
-    }
   }
 }
