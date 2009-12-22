@@ -31,16 +31,12 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class MavenArtifactDownloader {
-  private final static ExecutorService EXECUTOR;
+  private final static ExecutorService EXECUTOR = new ThreadPoolExecutor(0, 5, 60, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(5));
 
   private final MavenEmbedderWrapper myEmbedder;
   private final MavenProgressIndicator myProgress;
   private final MavenProjectsTree myProjectsTree;
   private final List<MavenProject> myMavenProjects;
-
-  static {
-    EXECUTOR = new ThreadPoolExecutor(0, 5, 60, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(5));
-  }
 
   public static void download(MavenProjectsTree projectsTree,
                               List<MavenProject> mavenProjects,
@@ -116,7 +112,7 @@ public class MavenArtifactDownloader {
                         final boolean downloadJavadoc,
                         final Map<MavenId, Set<MavenRemoteRepository>> libraryArtifacts,
                         final List<File> downloadedFiles) throws MavenProcessCanceledException {
-    List<Future<?>> futures = new ArrayList<Future<?>>();
+    List<Future> futures = new ArrayList<Future>();
 
     List<String> classifiers = new ArrayList<String>(2);
     if (downloadSources) classifiers.add(MavenConstants.CLASSIFIER_SOURCES);
@@ -147,7 +143,7 @@ public class MavenArtifactDownloader {
       }
     }
     finally {
-      for (Future<?> each : futures) {
+      for (Future each : futures) {
         try {
           each.get();
         }
