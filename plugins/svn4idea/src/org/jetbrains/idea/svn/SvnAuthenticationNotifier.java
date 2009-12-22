@@ -198,6 +198,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
   private static boolean validationImpl(final Project project, final SVNURL url,
                                         final SvnConfiguration configuration, final ISVNAuthenticationManager manager,
                                         final boolean checkWrite, final String realm, final String kind) {
+    SvnInteractiveAuthenticationProvider.clearCallState();
     try {
       new SVNWCClient(manager, configuration.getOptions(project)).doInfo(url, SVNRevision.UNDEFINED, SVNRevision.HEAD);
     } catch (SVNAuthenticationException e) {
@@ -213,9 +214,13 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
       }
       LOG.info("some other exc", e);
     }
-    if ((! checkWrite) || configuration.haveCredentialsFor(kind, realm)) {
+    if (! checkWrite) {
       return true;
     }
+
+    if (SvnInteractiveAuthenticationProvider.wasCalled() && SvnInteractiveAuthenticationProvider.wasCancelled()) return false;
+    if (SvnInteractiveAuthenticationProvider.wasCalled()) return true;
+
     final SvnVcs svnVcs = SvnVcs.getInstance(project);
     if (svnVcs.getAuthNotifier().getObj(url) != null) return false;
 

@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNURL;
@@ -32,9 +33,24 @@ import java.lang.reflect.InvocationTargetException;
 public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationProvider {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.dialogs.SvnInteractiveAuthenticationProvider");
   private final Project myProject;
+  private static ThreadLocal<MyCallState> myCallState = new ThreadLocal<MyCallState>();
+  private final SvnVcs myVcs;
 
   public SvnInteractiveAuthenticationProvider(final SvnVcs vcs) {
+    myVcs = vcs;
     myProject = vcs.getProject();
+  }
+
+  public static void clearCallState() {
+    myCallState.set(null);
+  }
+
+  public static boolean wasCalled() {
+    return myCallState.get() != null && myCallState.get().isWasCalled();
+  }
+
+  public static boolean wasCancelled() {
+    return myCallState.get() != null && myCallState.get().isWasCancelled();
   }
 
   public SVNAuthentication requestClientAuthentication(String kind,
@@ -43,6 +59,12 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
                                                        SVNErrorMessage errorMessage,
                                                        final SVNAuthentication previousAuth,
                                                        final boolean authMayBeStored) {
+    final MyCallState callState = new MyCallState(true, false);
+    myCallState.set(callState);
+    // once we came here, we don't know _correct_ auth todo +-
+    final SvnConfiguration configuration = SvnConfiguration.getInstance(myProject);
+    configuration.clearCredentials(kind, realm);
+
     final SVNAuthentication[] result = new SVNAuthentication[1];
     Runnable command = null;
 
@@ -146,6 +168,7 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
       }
       log("3 authentication result: " + result[0]);
     }
+    callState.setWasCancelled(result[0] == null);
     return result[0];
   }
 
@@ -156,5 +179,27 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
 
   private void log(final String s) {
     LOG.debug(s);
+  }
+
+  public static class MyCallState {
+    private boolean myWasCalled;
+    private boolean myWasCancelled;
+
+    public MyCallState(boolean wasCalled, boolean wasCancelled) {
+      myWasCalled = wasCalled;
+      myWasCancelled = wasCancelled;
+    }
+
+    public boolean isWasCalled() {
+      return myWasCalled;
+    }
+
+    public boolean isWasCancelled() {
+      return myWasCancelled;
+    }
+
+    public void setWasCancelled(boolean wasCancelled) {
+      myWasCancelled = wasCancelled;
+    }
   }
 }
