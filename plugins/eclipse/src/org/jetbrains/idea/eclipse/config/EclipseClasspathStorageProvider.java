@@ -206,7 +206,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
           element = null;
         }
 
-        if (element != null || model.getSourceRoots().length > 0) {
+        if (element != null || model.getSourceRoots().length > 0 || model.getOrderEntries().length > 2) {
           classpathWriter.writeClasspath(classpathElement, element);
           fileSet.write(new Document(classpathElement), EclipseXml.CLASSPATH_FILE);
         }

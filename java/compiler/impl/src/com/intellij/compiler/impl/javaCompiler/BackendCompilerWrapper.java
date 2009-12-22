@@ -730,8 +730,7 @@ public class BackendCompilerWrapper {
     if (paths == null || paths.isEmpty()) {
       return;
     }
-    final String prefix = packagePrefix != null && packagePrefix.length() > 0 ? packagePrefix.replace('.', '/') + "/" : "";
-    final String filePath = "/" + prefix + VfsUtil.getRelativePath(srcFile, sourceRoot, '/');
+    final String filePath = "/" + calcPackagePath(srcFile, sourceRoot, packagePrefix);
     for (final CompiledClass cc : paths) {
       myCompileContext.getProgressIndicator().checkCanceled();
       if (LOG.isDebugEnabled()) {
@@ -766,6 +765,18 @@ public class BackendCompilerWrapper {
         }
       }
     }
+  }
+
+  /**
+   *
+   * @param srcFile
+   * @param sourceRoot
+   * @param packagePrefix
+   * @return A 'package'-path to a given src file relative to a specified root. "/" slashes must be used
+   */
+  protected String calcPackagePath(VirtualFile srcFile, VirtualFile sourceRoot, String packagePrefix) {
+    final String prefix = packagePrefix != null && packagePrefix.length() > 0 ? packagePrefix.replace('.', '/') + "/" : "";
+    return prefix + VfsUtil.getRelativePath(srcFile, sourceRoot, '/');
   }
 
   @Nullable

@@ -17,13 +17,15 @@
 package org.jetbrains.idea.eclipse.config;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.module.ModuleServiceManager;
-import org.jetbrains.annotations.NotNull;
 
-public class EclipseModuleManager implements ModuleComponent{
+import java.util.HashMap;
+import java.util.Map;
 
+public class EclipseModuleManager {
   private CachedXmlDocumentSet myDocumentSet;
+  private Map<String, String> myEclipseVariablePaths = new HashMap<String, String>();
+  private static final String SRC_PREFIX = "src:";
 
   public EclipseModuleManager(Module module) {}
 
@@ -39,18 +41,19 @@ public class EclipseModuleManager implements ModuleComponent{
     myDocumentSet = documentSet;
   }
 
-  public void projectOpened() {}
-
-  public void projectClosed() {}
-
-  public void moduleAdded() {}
-
-  @NotNull
-  public String getComponentName() {
-    return "EclipseModuleManager";
+  public void registerEclipseVariablePath(String path, String var) {
+    myEclipseVariablePaths.put(path, var);
   }
 
-  public void initComponent() {}
+  public void registerEclipseSrcVariablePath(String path, String var) {
+    myEclipseVariablePaths.put(SRC_PREFIX + path, var);
+  }
 
-  public void disposeComponent() {}
+  public String getEclipseVariablePath(String path) {
+    return myEclipseVariablePaths.get(path);
+  }
+
+  public String getEclipseSrcVariablePath(String path) {
+    return myEclipseVariablePaths.get(SRC_PREFIX + path);
+  }
 }
