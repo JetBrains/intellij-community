@@ -83,7 +83,9 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
     combo.setRenderer(new DefaultListCellRenderer() {
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        setText(((ScopeDescriptor)value).getDisplay());
+        if (value instanceof ScopeDescriptor) {
+          setText(((ScopeDescriptor)value).getDisplay());
+        }
         return this;
       }
     });
