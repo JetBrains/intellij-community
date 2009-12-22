@@ -30,7 +30,7 @@ import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.commands.GitHandler;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
@@ -69,7 +69,7 @@ public class GitInit extends DumbAwareAction {
                                GitBundle.getString("init.error.title"));
       return;
     }
-    GitLineHandler h = new GitLineHandler(project, root, GitHandler.INIT);
+    GitLineHandler h = new GitLineHandler(project, root, GitCommand.INIT);
     h.setNoSSH(true);
     GitHandlerUtil.doSynchronously(h, GitBundle.getString("initializing.title"), h.printableCommandLine());
     if (!h.errors().isEmpty()) {

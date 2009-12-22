@@ -28,7 +28,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
-import git4idea.commands.GitHandler;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
 
@@ -130,7 +130,7 @@ class ChangeCollector {
   }
 
   private void updateIndex() throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(myProject, myVcsRoot, GitHandler.UPDATE_INDEX);
+    GitSimpleHandler handler = new GitSimpleHandler(myProject, myVcsRoot, GitCommand.UPDATE_INDEX);
     handler.addParameters("--refresh", "--ignore-missing");
     handler.setSilent(true);
     handler.setNoSSH(true);
@@ -220,7 +220,7 @@ class ChangeCollector {
     if (dirtyPaths.isEmpty()) {
       return;
     }
-    GitSimpleHandler handler = new GitSimpleHandler(myProject, myVcsRoot, GitHandler.DIFF);
+    GitSimpleHandler handler = new GitSimpleHandler(myProject, myVcsRoot, GitCommand.DIFF);
     handler.addParameters("--name-status", "--diff-filter=ADCMRUX", "-M", "HEAD");
     handler.setNoSSH(true);
     handler.setSilent(true);
@@ -236,7 +236,7 @@ class ChangeCollector {
       if (!GitChangeUtils.isHeadMissing(ex)) {
         throw ex;
       }
-      handler = new GitSimpleHandler(myProject, myVcsRoot, GitHandler.LS_FILES);
+      handler = new GitSimpleHandler(myProject, myVcsRoot, GitCommand.LS_FILES);
       handler.addParameters("--cached");
       handler.setNoSSH(true);
       handler.setSilent(true);
@@ -267,7 +267,7 @@ class ChangeCollector {
       return;
     }
     // prepare handler
-    GitSimpleHandler handler = new GitSimpleHandler(myProject, myVcsRoot, GitHandler.LS_FILES);
+    GitSimpleHandler handler = new GitSimpleHandler(myProject, myVcsRoot, GitCommand.LS_FILES);
     handler.addParameters("-v", "--unmerged");
     handler.setSilent(true);
     handler.setNoSSH(true);
@@ -275,7 +275,7 @@ class ChangeCollector {
     // run handler and collect changes
     parseFiles(handler.run());
     // prepare handler
-    handler = new GitSimpleHandler(myProject, myVcsRoot, GitHandler.LS_FILES);
+    handler = new GitSimpleHandler(myProject, myVcsRoot, GitCommand.LS_FILES);
     handler.addParameters("-v", "--others", "--exclude-standard");
     handler.setSilent(true);
     handler.setNoSSH(true);
