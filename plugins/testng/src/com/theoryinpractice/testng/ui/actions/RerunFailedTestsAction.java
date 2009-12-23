@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 public class RerunFailedTestsAction extends AbstractRerunFailedTestsAction {
@@ -36,6 +37,7 @@ public class RerunFailedTestsAction extends AbstractRerunFailedTestsAction {
   @Override
   public MyRunProfile getRunProfile() {
     final TestNGConfiguration configuration = (TestNGConfiguration)getModel().getProperties().getConfiguration();
+    final List<AbstractTestProxy> failedTests = getFailedTests(configuration.getProject());
     return new MyRunProfile(configuration) {
       @NotNull
       public Module[] getModules() {
@@ -43,10 +45,11 @@ public class RerunFailedTestsAction extends AbstractRerunFailedTestsAction {
       }
 
       public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
+
         return new TestNGRunnableState(env, configuration) {
           protected void fillTestObjects(final Map<PsiClass, Collection<PsiMethod>> classes, final Project project, boolean is15)
             throws CantRunException {
-            for (AbstractTestProxy proxy : getFailedTests(configuration.getProject())) {
+            for (AbstractTestProxy proxy : failedTests) {
               final Location location = proxy.getLocation(project);
               if (location != null) {
                 final PsiElement element = location.getPsiElement();
