@@ -100,8 +100,7 @@ public class InspectionsOptionsToolbarAction extends AnAction {
 
     result.add(new DisableInspectionAction(key));
 
-    final RunInspectionIntention runInspectionIntention = new RunInspectionIntention(tool);
-    result.add(new AnAction(runInspectionIntention.getText()) {
+    result.add(new AnAction(InspectionsBundle.message("run.inspection.on.file.intention.text")) {
       public void actionPerformed(final AnActionEvent e) {
         final RefEntity[] selectedElements = tree.getSelectedElements();
 
@@ -111,7 +110,7 @@ public class InspectionsOptionsToolbarAction extends AnAction {
         } else {
           psiElement = null;
         }
-        runInspectionIntention.rerunInspection(tool, (InspectionManagerEx)InspectionManagerEx.getInstance(myView.getProject()), myView.getScope(),
+        RunInspectionIntention.rerunInspection(tool, (InspectionManagerEx)InspectionManagerEx.getInstance(myView.getProject()), myView.getScope(),
                                                psiElement);
       }
     });
