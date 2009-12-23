@@ -55,6 +55,7 @@ public class ConversionRunner {
     myProcessWorkspaceFile = myWorkspaceConverter != null && myContext.getWorkspaceFile().exists()
                              && myWorkspaceConverter.isConversionNeeded(myContext.getWorkspaceSettings());
 
+    myModulesFilesToProcess.clear();
     if (myModuleFileConverter != null) {
       for (File moduleFile : myContext.getModuleFiles()) {
         if (moduleFile.exists() && myModuleFileConverter.isConversionNeeded(myContext.getModuleSettings(moduleFile))) {
