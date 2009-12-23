@@ -117,7 +117,7 @@
     <completion.contributor language="DjangoTemplate"
                             implementationClass="com.jetbrains.django.completion.DjangoNameCompletionContributor"/>
 
-    <psi.referenceContributor implementation="com.jetbrains.django.ref.ViewMethodReferenceContributor"/>
+    <psi.referenceContributor implementation="com.jetbrains.django.ref.DjangoReferenceContributor"/>
 
     <inspectionToolProvider implementation="com.jetbrains.django.inspection.DjangoInspectionToolProvider"/>
 
