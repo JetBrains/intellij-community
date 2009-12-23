@@ -41,7 +41,7 @@ public class VariantsProcessor implements PsiScopeProcessor {
   }
 
   protected static LookupElementBuilder setItemNotice(final LookupElementBuilder item, String notice) {
-    return item.setTailText(notice);
+    return item.setTypeText(notice);
   }
 
   public LookupElement[] getResult() {
@@ -86,7 +86,7 @@ public class VariantsProcessor implements PsiScopeProcessor {
                 final PyFromImportStatement from_import = (PyFromImportStatement)maybe_from_import;
                 PyReferenceExpression src = from_import.getImportSource();
                 if (src != null) {
-                  lookup_item = setItemNotice(lookup_item, " | " + src.getName());
+                  lookup_item = setItemNotice(lookup_item, src.getName());
                 }
               }
             }
