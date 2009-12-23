@@ -22,9 +22,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.xml.XmlDoctype;
 import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlProlog;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.options.XmlOptions;
@@ -39,7 +39,7 @@ public class UpdateJspxFileCopyright extends UpdateJspFileCopyright {
   protected void scanFile() {
     logger.debug("updating " + getFile().getVirtualFile());
 
-    XmlDocument doc = ((JspFile)getFile()).getDocument();
+    XmlDocument doc = ((XmlFile)getFile()).getDocument();
     XmlProlog xmlProlog = doc.getProlog();
     if (xmlProlog == null) {
       return;
