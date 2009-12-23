@@ -88,9 +88,15 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
           stepsRows.add(stepRow);
         }
       }
-      myStepsPanel.setLayout(new GridLayout(stepsRows.size(), 1));
-      for (StepBeforeLaunchRow stepRow : stepsRows) {
-        myStepsPanel.add(stepRow);
+
+      if (!stepsRows.isEmpty()) {
+        myStepsPanel.setLayout(new GridLayout(stepsRows.size(), 1));
+        for (StepBeforeLaunchRow stepRow : stepsRows) {
+          myStepsPanel.add(stepRow);
+        }
+      }
+      else {
+        myStepsPanel.setVisible(false);
       }
     }
 
