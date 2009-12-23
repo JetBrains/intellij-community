@@ -31,7 +31,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class MavenArtifactDownloader {
-  private final static ExecutorService EXECUTOR = new ThreadPoolExecutor(0, 5, 60, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(5));
+  private final static ThreadPoolExecutor EXECUTOR = new ThreadPoolExecutor(5, Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
 
   private final MavenEmbedderWrapper myEmbedder;
   private final MavenProgressIndicator myProgress;
