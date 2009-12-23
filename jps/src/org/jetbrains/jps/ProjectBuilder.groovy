@@ -174,7 +174,7 @@ class ProjectBuilder {
     if (processed.contains(chunkOrModule)) return
     processed << chunkOrModule
     
-    chunkOrModule.classpath.each {
+    chunkOrModule.getClasspath(test).each {
       if (it instanceof Module) {
         transitiveClasspath(it, test, set, processed)
       }

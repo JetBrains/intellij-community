@@ -8,6 +8,7 @@ class Module extends LazyInitializeableObject implements ClasspathItem {
   String name;
 
   List<ClasspathItem> classpath = []
+  List<ClasspathItem> testclasspath = []
   List sourceRoots = []
   List testRoots = []
   List excludes = []
@@ -23,6 +24,10 @@ class Module extends LazyInitializeableObject implements ClasspathItem {
       def meta = new InitializingExpando()
       meta.classpath = {Object[] arg ->
         arg.each { classpath << project.resolve(it) }
+      }
+
+      meta.testclasspath = {Object[] arg ->
+        arg.each { testclasspath << project.resolve(it) }
       }
 
       meta.src = {Object[] arg ->
@@ -51,7 +56,7 @@ class Module extends LazyInitializeableObject implements ClasspathItem {
   }
 
   def String toString() {
-    return "module ${name}, classpath: ${classpath}, sources: ${sourceRoots}, excludes: $excludes"
+    return "module ${name}"
   }
 
   def getAt(String key) {
@@ -90,5 +95,12 @@ class Module extends LazyInitializeableObject implements ClasspathItem {
     else {
       return [project.builder.moduleOutput(this)]
     }
+  }
+
+  def List<String> getClasspath(boolean tests) {
+    if (tests) {
+      return [classpath, testclasspath].flatten()
+    }
+    return classpath
   }
 }

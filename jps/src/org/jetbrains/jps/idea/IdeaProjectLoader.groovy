@@ -122,6 +122,7 @@ public class IdeaProjectLoader {
         if ("NewModuleRootManager" == componentTag.attribute("name")) {
           componentTag.orderEntry.each {Node entryTag ->
             String type = attr(entryTag, "type")
+            String scope = attr(entryTag, "scope")
             switch (type) {
               case "module":
                 def moduleName = entryTag.attribute("module-name")
@@ -130,13 +131,23 @@ public class IdeaProjectLoader {
                   project.warning("Cannot resolve module $moduleName in $currentModuleName")
                 }
                 else {
-                  classpath module
+                  if (scope == "TEST") {
+                    testclasspath module
+                  }
+                  else {
+                    classpath module
+                  }
                 }
                 break
 
               case "module-library":
                 def moduleLibrary = loadLibrary(project, "moduleLibrary#${libraryCount++}", entryTag.library.first(), projectBasePath, moduleBasePath)
-                classpath moduleLibrary
+                if (scope == "TEST") {
+                  testclasspath moduleLibrary
+                }
+                else {
+                  classpath moduleLibrary
+                }
                 break;
 
               case "library":
@@ -148,7 +159,12 @@ public class IdeaProjectLoader {
                       project.warning("Cannot resolve library $name in $currentModuleName")
                     }
                     else {
-                      classpath library
+                      if (scope == "TEST") {
+                        testclasspath library
+                      }
+                      else {
+                        classpath library
+                      }
                     }
                     break
 
