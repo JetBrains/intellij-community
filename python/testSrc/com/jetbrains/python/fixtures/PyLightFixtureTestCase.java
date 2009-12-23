@@ -53,7 +53,7 @@ public abstract class PyLightFixtureTestCase extends UsefulTestCase {
     return ourPyDescriptor;
   }
 
-  private static class PyLightProjectDescriptor implements LightProjectDescriptor {
+  protected static class PyLightProjectDescriptor implements LightProjectDescriptor {
     public ModuleType getModuleType() {
       return EmptyModuleType.getInstance();
     }
