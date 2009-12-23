@@ -288,7 +288,10 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private void loadApplicationComponents() {
     final IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
     for (IdeaPluginDescriptor plugin : plugins) {
-      if (PluginManager.shouldSkipPlugin(plugin)) continue;
+      if (PluginManager.shouldSkipPlugin(plugin)) {
+        LOG.warn("Plugin \"" + plugin.getName() + "\" was skipped");
+        continue;
+      }
       loadComponentsConfiguration(plugin.getAppComponents(), plugin, false);
     }
   }
