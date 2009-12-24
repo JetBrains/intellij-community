@@ -1,8 +1,8 @@
 package com.jetbrains.python;
 
-import org.jetbrains.annotations.NonNls;
-import com.intellij.util.PathUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.PathUtil;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 
@@ -23,4 +23,8 @@ public class PythonHelpersLocator {
       }
       return new File(jarPath);
     }
+
+  public static String getHelperPath(String scriptName) {
+    return new File(getHelpersRoot(), scriptName).getAbsolutePath();
+  }
 }

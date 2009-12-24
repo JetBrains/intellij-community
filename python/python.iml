@@ -32,6 +32,7 @@
     <orderEntry type="module" module-name="xml-openapi" />
     <orderEntry type="library" name="OroMatcher" level="project" />
     <orderEntry type="module" module-name="xml" />
+    <orderEntry type="module" module-name="xdebugger-api" />
   </component>
   <component name="copyright">
     <Base>
