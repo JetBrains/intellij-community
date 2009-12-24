@@ -181,7 +181,7 @@ public class SrcFileAnnotator implements Disposable {
   private SoftReference<TIntIntHashMap> doGetLineMapping(final long date, boolean oldToNew) {
     VirtualFile f = getVirtualFile();
 
-    byte[] oldContent = LocalHistory.getByteContent(myProject, f, new FileRevisionTimestampComparator() {
+    byte[] oldContent = LocalHistory.getInstance().getByteContent(f, new FileRevisionTimestampComparator() {
       public boolean isSuitable(long revisionTimestamp) {
         return revisionTimestamp < date;
       }
