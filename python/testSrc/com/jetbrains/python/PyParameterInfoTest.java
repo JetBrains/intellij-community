@@ -4,12 +4,12 @@ import com.intellij.lang.parameterInfo.CreateParameterInfoContext;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
 import com.intellij.lang.parameterInfo.UpdateParameterInfoContext;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.HashSet;
+import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.psi.PyArgumentList;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +25,7 @@ import java.util.Set;
  * <br/>User: dcheryasov
  * Date: Jul 14, 2009 3:42:44 AM
  */
-public class PyParameterInfoTest extends MarkedTestCase {
+public class PyParameterInfoTest extends LightMarkedTestCase {
   protected String getTestDataPath() {
     return PythonTestUtil.getTestDataPath()+ "/paramInfo/";
   }
@@ -247,7 +247,7 @@ public class PyParameterInfoTest extends MarkedTestCase {
    * @throws Exception if it fails
    */
   private Collector feignCtrlP(int offset) throws Exception {
-    Collector collector = new Collector(getProject(), getFile(), offset);
+    Collector collector = new Collector(myFixture.getProject(), myFixture.getFile(), offset);
     PyParameterInfoHandler handler = new PyParameterInfoHandler();
     collector.setParameterOwner(handler.findElementForParameterInfo(collector)); // finds arglist, sets items to show
     if (collector.getParameterOwner() != null) {
