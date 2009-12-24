@@ -2,7 +2,7 @@ package com.jetbrains.python;
 
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.ResolveTestCase;
+import com.jetbrains.python.fixtures.PyResolveTestCase;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyFunction;
 
@@ -13,7 +13,7 @@ import java.util.EnumSet;
  * User: dcheryasov
  * Date: Aug 21, 2008
  */
-public class PyResolveCalleeTest extends ResolveTestCase {
+public class PyResolveCalleeTest extends PyResolveTestCase {
 
   private PyCallExpression.PyMarkedFunction resolveCallee() throws Exception {
     PsiReference ref = configureByFile(getTestName(false) + ".py");
