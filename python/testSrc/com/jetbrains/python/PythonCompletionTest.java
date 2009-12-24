@@ -4,17 +4,15 @@
  */
 package com.jetbrains.python;
 
-import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
-import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 
-public class PythonCompletionTest extends LightCodeInsightTestCase{
+public class PythonCompletionTest extends PyLightFixtureTestCase {
 
   private void doTest() throws Exception {
     final String testName = getTestName(true);
-    configureByFile(testName + ".py");
-    new CodeCompletionHandlerBase(CompletionType.BASIC).invoke(getProject(), getEditor(), getFile());
-    checkResultByFile(testName + ".after.py");
+    myFixture.configureByFile(testName + ".py");
+    myFixture.completeBasic();
+    myFixture.checkResultByFile(testName + ".after.py");
   }
 
   protected String getTestDataPath() {
