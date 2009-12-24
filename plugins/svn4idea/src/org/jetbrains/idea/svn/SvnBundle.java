@@ -35,6 +35,10 @@ public class SvnBundle {
     return CommonBundle.message(getBundle(), key, params);
   }
 
+  public static String getString(@PropertyKey(resourceBundle = BUNDLE)String key) {
+    return getBundle().getString(key);
+  }
+
   private static ResourceBundle getBundle() {
     ResourceBundle bundle = null;
     if (ourBundle != null) bundle = ourBundle.get();

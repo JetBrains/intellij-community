@@ -17,8 +17,8 @@
 
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
-import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -52,9 +52,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public class SvnFileSystemListener implements LocalFileOperationsHandler, CommandListener {
+public class SvnFileSystemListener extends CommandAdapter implements LocalFileOperationsHandler {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnFileSystemListener");
-  private LocalFileSystem myLfs;
+  private final LocalFileSystem myLfs;
 
   private static class AddedFileInfo {
     private final Project myProject;
@@ -138,7 +138,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     File srcFile = new File(file.getPath());
     File destFile = new File(new File(toDir.getPath()), copyName);
     final boolean dstDirUnderControl = SVNWCUtil.isVersionedDirectory(destFile.getParentFile());
-    if ((! dstDirUnderControl) && !isPendingAdd(toDir)) {
+    if (! dstDirUnderControl && !isPendingAdd(toDir)) {
       return null;
     }
 
@@ -167,7 +167,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     final String srcUUID = helper.getRepositoryUUID(srcDir);
     final String dstUUID = helper.getRepositoryUUID(dstDir);
 
-    return (srcUUID != null) && (dstUUID != null) && (srcUUID.equals(dstUUID));
+    return srcUUID != null && dstUUID != null && srcUUID.equals(dstUUID);
   }
 
   private class UUIDHelper {
@@ -184,7 +184,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     public String getRepositoryUUID(final VirtualFile dir) {
       try {
         final SVNInfo info1 = myWcClient.doInfo(new File(dir.getPath()), SVNRevision.WORKING);
-        if ((info1 == null) || (info1.getRepositoryUUID() == null)) {
+        if (info1 == null || info1.getRepositoryUUID() == null) {
           // go deeper if current parent was added (if parent was added, it theoretically could NOT know its repo UUID)
           final VirtualFile parent = dir.getParent();
           if (parent == null) {
@@ -333,14 +333,12 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     if (!SVNWCUtil.isVersionedDirectory(ioFile.getParentFile())) {
       return false;
     }
-    else {
-        try {
-        if (SVNWCUtil.isWorkingCopyRoot(ioFile)) {
-          return false;
-        }
-        } catch (SVNException e) {
-            //
-        }
+    try {
+      if (SVNWCUtil.isWorkingCopyRoot(ioFile)) {
+        return false;
+      }
+    } catch (SVNException e) {
+        //
     }
 
     SVNStatus status = getFileStatus(ioFile);
@@ -352,7 +350,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
         status.getContentsStatus() == SVNStatusType.STATUS_EXTERNAL) {
       return false;
     } else if (status.getContentsStatus() == SVNStatusType.STATUS_IGNORED) {
-      if (vcs != null && (file.getParent() != null)) {
+      if (vcs != null && file.getParent() != null) {
         if (! isUndoOrRedo(vcs.getProject())) {
           putIgnoreInfo(file, vcs, ioFile);
         }
@@ -437,7 +435,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
    * deleted: 'undo' mode: try to revert non-recursively, if kind is the same, otherwise do nothing, return false.
    * anything else: return false.
    */
-  private boolean createItem(VirtualFile dir, String name, boolean directory, final boolean recursive) throws IOException {
+  private boolean createItem(VirtualFile dir, String name, boolean directory, final boolean recursive) {
     SvnVcs vcs = getVCS(dir);
     if (vcs == null) {
       return false;
@@ -464,7 +462,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     else if (status.getContentsStatus() == SVNStatusType.STATUS_DELETED) {
       SVNNodeKind kind = status.getKind();
       // kind differs.
-      if ((directory && kind != SVNNodeKind.DIR) || (!directory && kind != SVNNodeKind.FILE)) {
+      if (directory && kind != SVNNodeKind.DIR || !directory && kind != SVNNodeKind.FILE) {
         return false;
       }
       try {
@@ -505,9 +503,6 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     myIgnoredInfo.remove(project);
   }
 
-  public void beforeCommandFinished(CommandEvent event) {
-  }
-
   public void commandFinished(CommandEvent event) {
     final Project project = event.getProject();
     if (project == null) return;
@@ -515,22 +510,22 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
   }
 
   void commandFinished(final Project project) {
-    if (myAddedFiles.size() > 0) {
+    if (!myAddedFiles.isEmpty()) {
       processAddedFiles(project);
     }
-    if (myDeletedFiles.size() > 0) {
+    if (!myDeletedFiles.isEmpty()) {
       processDeletedFiles(project);
     }
     processMovedFiles(project);
 
     final List<VcsException> exceptionList = myMoveExceptions.get(project);
-    if ((exceptionList != null) && (! exceptionList.isEmpty())) {
+    if (exceptionList != null && ! exceptionList.isEmpty()) {
       AbstractVcsHelper.getInstance(project).showErrors(exceptionList, SvnBundle.message("move.files.errors.title"));
     }
 
     dealWithIgnorePatterns(project);
 
-    if (myFilesToRefresh.size() > 0) {
+    if (!myFilesToRefresh.isEmpty()) {
       refreshFiles(project);
     }
   }
@@ -558,7 +553,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
       final SelectIgnorePatternsToRemoveOnDeleteDialog dialog = new SelectIgnorePatternsToRemoveOnDeleteDialog(project, map);
       dialog.show();
       final Collection<IgnoredFileInfo> result = dialog.getResult();
-      if ((dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) && (! result.isEmpty())) {
+      if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE && ! result.isEmpty()) {
         final List<VcsException> exceptions = new ArrayList<VcsException>(0);
 
         final Runnable deletePatterns = new Runnable() {
@@ -611,10 +606,10 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     myFilesToRefresh.clear();
   }
 
-  private void filterOutInvalid(final Collection<VirtualFile> files) {
+  private static void filterOutInvalid(final Collection<VirtualFile> files) {
     for (Iterator<VirtualFile> iterator = files.iterator(); iterator.hasNext();) {
       final VirtualFile file = iterator.next();
-      if ((! file.isValid()) || (! file.exists())) {
+      if (! file.isValid() || ! file.exists()) {
         LOG.info("Refresh root is not valid: " + file.getPath());
         iterator.remove();
       }
@@ -650,7 +645,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
         }
       }
     }
-    if (addedVFiles.size() == 0) return;
+    if (addedVFiles.isEmpty()) return;
     final VcsShowConfirmationOption.Value value = vcs.getAddConfirmation().getValue();
     if (value != VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) {
       final AbstractVcsHelper vcsHelper = AbstractVcsHelper.getInstance(project);
@@ -661,10 +656,10 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
       else {
         final String singleFilePrompt;
         if (addedVFiles.size() == 1 && addedVFiles.get(0).isDirectory()) {
-          singleFilePrompt = SvnBundle.message("confirmation.text.add.dir");
+          singleFilePrompt = SvnBundle.getString("confirmation.text.add.dir");
         }
         else {
-          singleFilePrompt = SvnBundle.message("confirmation.text.add.file");
+          singleFilePrompt = SvnBundle.getString("confirmation.text.add.file");
         }
         filesToProcess = vcsHelper.selectFilesToProcess(addedVFiles, SvnBundle.message("confirmation.title.add.multiple.files"),
                                                         null,
@@ -685,8 +680,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
                   protected void executeInternal() throws VcsException {
                     try {
                       // not recursive
-                      final SVNCopySource[] copySource = new SVNCopySource[]
-                          {new SVNCopySource(SVNRevision.WORKING, SVNRevision.WORKING, copyFrom)};
+                      final SVNCopySource[] copySource = {new SVNCopySource(SVNRevision.WORKING, SVNRevision.WORKING, copyFrom)};
                       copyClient.doCopy(copySource, ioFile, false, true, true);
                     }
                     catch (SVNException e) {
@@ -725,7 +719,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
         deletedFiles.add(filePath);
       }
     }
-    if (deletedFiles.size() == 0 || myUndoingMove) return;
+    if (deletedFiles.isEmpty() || myUndoingMove) return;
     SvnVcs vcs = SvnVcs.getInstance(project);
     final VcsShowConfirmationOption.Value value = vcs.getDeleteConfirmation().getValue();
     if (value != VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) {
@@ -738,15 +732,15 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
 
         final String singleFilePrompt;
         if (deletedFiles.size() == 1 && deletedFiles.get(0).isDirectory()) {
-          singleFilePrompt = SvnBundle.message("confirmation.text.delete.dir");
+          singleFilePrompt = SvnBundle.getString("confirmation.text.delete.dir");
         }
         else {
-          singleFilePrompt = SvnBundle.message("confirmation.text.delete.file");
+          singleFilePrompt = SvnBundle.getString("confirmation.text.delete.file");
         }
         final Collection<FilePath> files = vcsHelper
           .selectFilePathsToProcess(deletedFiles, SvnBundle.message("confirmation.title.delete.multiple.files"), null,
                                     SvnBundle.message("confirmation.title.delete.file"), singleFilePrompt, vcs.getDeleteConfirmation());
-        filesToProcess = (files == null) ? null : new ArrayList<FilePath>(files);
+        filesToProcess = files == null ? null : new ArrayList<FilePath>(files);
       }
       if (filesToProcess != null) {
         List<VcsException> exceptions = new ArrayList<VcsException>();
@@ -795,12 +789,6 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
         iterator.remove();
       }
     }
-  }
-
-  public void undoTransparentActionStarted() {
-  }
-
-  public void undoTransparentActionFinished() {
   }
 
   @Nullable

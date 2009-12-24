@@ -142,4 +142,5 @@ public class CommonBundle {
   public static String getApplyButtonText() {
     return CommonBundle.message("button.apply");
   }
+
 }

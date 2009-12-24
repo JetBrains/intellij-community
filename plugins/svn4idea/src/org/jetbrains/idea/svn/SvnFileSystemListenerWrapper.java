@@ -15,11 +15,13 @@
  */
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileOperationsHandler;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -66,13 +68,13 @@ public class SvnFileSystemListenerWrapper {
     }
 
     public void start(final Project project) {
-      if ((! myInCommand) && (project != null)) {
+      if (!myInCommand && project != null) {
         myDelegate.commandStarted(project);
       }
     }
 
     public void finish(final Project project) {
-      if ((! myInCommand) && (project != null)) {
+      if (! myInCommand && project != null) {
         myDelegate.commandFinished(project);
       }
     }
@@ -115,7 +117,7 @@ public class SvnFileSystemListenerWrapper {
     }
 
     @Nullable
-    private Project getProject(Object[] args) {
+    private static Project getProject(Object[] args) {
       for (Object arg : args) {
         if (arg instanceof VirtualFile) {
           return ProjectLocator.getInstance().guessProjectForFile((VirtualFile) arg);
@@ -128,7 +130,7 @@ public class SvnFileSystemListenerWrapper {
       final Project project = getProject(args);
       if (project != null) {
         final Pair<String, Object[]> pair = myStarted.get(project);
-        if ((pair != null) && method.getName().equals(pair.getFirst()) && Arrays.equals(args, pair.getSecond())) {
+        if (pair != null && method.getName().equals(pair.getFirst()) && Arrays.equals(args, pair.getSecond())) {
           myMarker.finish(project);
         }
       }
@@ -136,13 +138,18 @@ public class SvnFileSystemListenerWrapper {
       return "boolean".equals(method.getReturnType().getName()) ? Boolean.TRUE : null;
     }
 
-    public void register(final Method method, final Object[] args) {
+    private void register(final Method method, final Object[] args) {
       final Object[] newArr = new Object[args.length];
       System.arraycopy(args, 0, newArr, 0, args.length);
       final Project project = getProject(args);
       if (project != null) {
         myMarker.start(project);
         myStarted.put(project, new Pair<String, Object[]>(method.getName(), newArr));
+        Disposer.register(project, new Disposable() {
+          public void dispose() {
+            myStarted.remove(project);
+          }
+        });
       }
     }
   }
@@ -160,11 +167,9 @@ public class SvnFileSystemListenerWrapper {
     }
 
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-      if ("afterDone".equals(method.getName())) {
-        if (args.length == 1) {
-          ((ThrowableConsumer<LocalFileOperationsHandler, IOException>) args[0]).consume(myParentProxy);
-          return null;
-        }
+      if ("afterDone".equals(method.getName()) && args.length == 1) {
+        ((ThrowableConsumer<LocalFileOperationsHandler, IOException>)args[0]).consume(myParentProxy);
+        return null;
       }
 
       if (LocalFileOperationsHandler.class.equals(method.getDeclaringClass())) {
@@ -172,7 +177,8 @@ public class SvnFileSystemListenerWrapper {
       }
       if ("equals".equals(method.getName())) {
         return args[0].equals(this);
-      } else if ("hashCode".equals(method.getName())) {
+      }
+      else if ("hashCode".equals(method.getName())) {
         return 1;
       }
       return method.invoke(myDelegate, args);
