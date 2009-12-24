@@ -3,47 +3,32 @@
  */
 package com.jetbrains.python;
 
-import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubUpdatingIndex;
-import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 
+import java.io.IOException;
 import java.util.List;
 
-public class PyStubsTest extends CodeInsightTestCase {
-  private VirtualFile myRootDir;
+public class PyStubsTest extends PyLightFixtureTestCase {
   private static final String PARSED_ERROR_MSG = "Operations should have been performed on stubs but caused file to be parsed";
 
-  protected void setUp() throws Exception {
-    myRunCommandForTest = false;
-    super.setUp();
-    prepareRoots();
+  @Override
+  protected String getTestDataPath() {
+    return PythonTestUtil.getTestDataPath() + "/stubs/";
   }
 
-  private void assertNotParsed(PyFile file) {
+  private static void assertNotParsed(PyFile file) {
     assertNull(PARSED_ERROR_MSG, ((PyFileImpl)file).getTreeElement());
-  }
-
-  private void prepareRoots() throws Exception {
-    new WriteAction() {
-      protected void run(final Result result) throws Throwable {
-        String root = PythonTestUtil.getTestDataPath() + "/stubs/";
-        myRootDir = PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete, false);
-        PsiTestUtil.addSourceContentToRoots(myModule, myRootDir);
-        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-      }
-    }.execute();
   }
 
   public void testStubStructure() throws Exception {
@@ -152,7 +137,7 @@ public class PyStubsTest extends CodeInsightTestCase {
     assertEquals(1, children.length);
     assertSame(pyClass, children[0]);
 
-    new WriteCommandAction(myProject, fileImpl) {
+    new WriteCommandAction(myFixture.getProject(), fileImpl) {
       protected void run(final Result result) throws Throwable {
         pyClass.setName("RenamedClass");
         assertEquals("RenamedClass", pyClass.getName());
@@ -162,7 +147,7 @@ public class PyStubsTest extends CodeInsightTestCase {
     StubElement fileStub = fileImpl.getStub();
     assertNull("There should be no stub if file holds tree element", fileStub);
     
-    FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, getProject(), null);
+    FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, myFixture.getProject(), null);
     fileImpl.unloadContent();
     assertNull(fileImpl.getTreeElement()); // Test unload successed.
 
@@ -177,10 +162,10 @@ public class PyStubsTest extends CodeInsightTestCase {
     return getTestFile(getTestName(false) + ".py");
   }
 
-  private PyFile getTestFile(final String fileName) {
-    VirtualFile sourceFile = myRootDir.findChild(fileName);
+  private PyFile getTestFile(final String fileName) throws IOException {
+    VirtualFile sourceFile = myFixture.copyFileToProject(fileName);
     assert sourceFile != null;
-    PsiFile psiFile = myPsiManager.findFile(sourceFile);
+    PsiFile psiFile = myFixture.getPsiManager().findFile(sourceFile);
     return (PyFile)psiFile;
   }
 }
