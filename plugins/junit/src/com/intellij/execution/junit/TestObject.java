@@ -187,7 +187,7 @@ public abstract class TestObject implements JavaCommandLine {
                               : ProjectRootManager.getInstance(myProject).getProjectJdk());
     }
 
-    JavaSdkUtil.addRtJar(myJavaParameters.getClassPath());
+    myJavaParameters.getClassPath().add(JavaSdkUtil.getIdeaRtJarPath());
     myJavaParameters.getClassPath().add(PathUtil.getJarPathForClass(JUnitStarter.class));
     myJavaParameters.getProgramParametersList().add(JUnitStarter.IDE_VERSION + JUnitStarter.VERSION);
     for (RunConfigurationExtension ext : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {

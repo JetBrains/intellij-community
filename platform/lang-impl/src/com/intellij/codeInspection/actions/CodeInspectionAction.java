@@ -86,9 +86,11 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     profiles.setRenderer(new DefaultListCellRenderer() {
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        final Profile profile = (Profile)value;
-        setText(profile.getName());
-        setIcon(profile.isLocal() ? Profile.LOCAL_PROFILE : Profile.PROJECT_PROFILE);
+        if (value instanceof Profile) {
+          final Profile profile = (Profile)value;
+          setText(profile.getName());
+          setIcon(profile.isLocal() ? Profile.LOCAL_PROFILE : Profile.PROJECT_PROFILE);
+        }
         return rendererComponent;
       }
     });

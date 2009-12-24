@@ -261,7 +261,8 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     lineStart = CharArrayUtil.shiftForward(chars, lineStart, " \t");
     boolean commented;
     if (prefix != null) {
-      commented = CharArrayUtil.regionMatches(chars, lineStart, prefix);
+      commented = CharArrayUtil.regionMatches(chars, lineStart, prefix) ||
+                  prefix.endsWith(" ") && CharArrayUtil.regionMatches(chars, lineStart, prefix.trim()+"\n");
       if (commented) {
         myStartOffsets[line - myStartLine] = lineStart;
         myEndOffsets[line - myStartLine] = -1;
@@ -404,9 +405,12 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     String prefix = commenter.getLineCommentPrefix();
     if (prefix != null) {
       CharSequence chars = myDocument.getCharsSequence();
-      assert CharArrayUtil.regionMatches(chars, startOffset, prefix);
+      boolean skipNewLine = false;
+      boolean commented = CharArrayUtil.regionMatches(chars, startOffset, prefix) ||
+                          (skipNewLine = (prefix.endsWith(" ") && CharArrayUtil.regionMatches(chars, startOffset, prefix.trim() + "\n")));
+      assert commented;
       int position = 0;//text.indexOf(prefix);
-      myDocument.deleteString(position + startOffset , position + startOffset + prefix.length());
+      myDocument.deleteString(position + startOffset , position + startOffset + (skipNewLine? prefix.trim().length():prefix.length()));
       return;
     }
     String text = myDocument.getCharsSequence().subSequence(startOffset, endOffset).toString();

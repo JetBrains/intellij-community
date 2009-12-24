@@ -114,6 +114,10 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
   private static String getValueText(PsiElement stringNameElement) {
     final String text = stringNameElement.getText();
+    if (text.length() < 2) {
+      return "";
+    }
+
     final char firstChar = text.charAt(0);
     if (text.charAt(text.length() - 1) == firstChar) return text.substring(1, text.length() - 1);
     return text.substring(1);

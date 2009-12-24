@@ -1192,33 +1192,5 @@ public class GenericsHighlightUtil {
     }
     return null;
   }
-
-  public static HighlightInfo checkTopLevelMethodCallIntersectionTypeMaximalUpperBound(PsiMethodCallExpression methodCall,
-                                                                                       PsiReferenceExpression expression) {
-    PsiElement parent = methodCall.getParent();
-    if (parent instanceof PsiExpression) return null;
-    PsiType type = expression.getType();
-    if (!(type instanceof PsiIntersectionType)) {
-      return null;
-    }
-    PsiType[] conjuncts = ((PsiIntersectionType)type).getConjuncts();
-    PsiType lub = conjuncts[0];
-    for (int i = 1; i < conjuncts.length; i++) {
-      PsiType conjunct = conjuncts[i];
-      PsiType bound = GenericsUtil.getLeastUpperBound(lub, conjunct, methodCall.getManager());
-      if (bound == null || !TypeConversionUtil.isAssignable(lub, bound) || !TypeConversionUtil.isAssignable(conjunct, bound)) {
-        PsiMethod method = methodCall.resolveMethod();
-        if (method == null) return null;
-        String message = JavaErrorMessages.message("failed.to.find.unique.maximal.instance", 
-                                                   HighlightUtil.formatMethod(method),
-                  HighlightUtil.formatType(lub), HighlightUtil.formatType(conjunct));
-
-
-        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, message);
-      }
-      lub = bound;
-    }
-    return null;
-  }
 }
 
