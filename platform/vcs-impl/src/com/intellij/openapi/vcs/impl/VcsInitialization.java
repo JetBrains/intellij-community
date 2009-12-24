@@ -53,6 +53,7 @@ public class VcsInitialization {
         LOG.info("Registering startup activity AFTER initialization ", new Throwable());
         // post startup are normally called on awt thread
         ApplicationManager.getApplication().invokeLater(runnable);
+        return;
       }
       myList.add(new Pair<VcsInitObject, Runnable>(vcsInitObject, runnable));
     }
