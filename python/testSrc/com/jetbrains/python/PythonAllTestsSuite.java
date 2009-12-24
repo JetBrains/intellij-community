@@ -19,7 +19,6 @@ public class PythonAllTestsSuite {
     PyResolveTest.class,
     PyMultiFileResolveTest.class,
     PyResolveCalleeTest.class,
-    PyToJavaResolveTest.class,
     PyAssignmentMappingTest.class,
     PythonCompletionTest.class,
     PyInheritorsSearchTest.class,
@@ -30,6 +29,7 @@ public class PythonAllTestsSuite {
     PythonDemorganLawIntentionTest.class,
     PyQuickFixTest.class,
     PySelectWordTest.class,
+    PySurroundWithTest.class
   };
 
   public static TestSuite suite() {
