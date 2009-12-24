@@ -9,10 +9,10 @@ import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.ResolveTestCase;
+import com.jetbrains.python.fixtures.PyResolveTestCase;
 import com.jetbrains.python.psi.*;
 
-public class PyResolveTest extends ResolveTestCase {
+public class PyResolveTest extends PyResolveTestCase {
   private PsiElement resolve() throws Exception {
     PsiReference ref = configureByFile(getTestName(false) + ".py");
     return ref.resolve();
