@@ -167,6 +167,10 @@ class ProjectBuilder {
     set.addAll(moduleCompileClasspath(chunk, test))
     set.add(chunkOutput(chunk))
 
+    if (test) {
+      set.add(chunkTestOutput(chunk))
+    }
+
     return set.asList()
   }
 
