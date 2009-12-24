@@ -87,10 +87,10 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
     }
 
     @NotNull
-    static List<LocalQuickFix> proposeImportFixes(final PyElement node, String ref_text) {
+    static Collection<LocalQuickFix> proposeImportFixes(final PyElement node, String ref_text) {
       PsiFile exisitng_import_file = null; // if there's a matching existing import, this it the file it imports
       ImportFromExistingFix fix = null;
-      List<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>(2);
+      Collection<LocalQuickFix> fixes = new HashSet<LocalQuickFix>(2);
       Set<String> seen_file_names = new HashSet<String>(); // true import names
       // maybe the name is importable via some existing 'import foo' statement, and only needs a qualifier.
       // walk up collecting all such statements and analyzing
@@ -279,10 +279,10 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
         }
         // look in other imported modules for this whole name
         if (! ref_in_import) {
-          List<LocalQuickFix> import_fixes = proposeImportFixes(node, ref_text);
+          Collection<LocalQuickFix> import_fixes = proposeImportFixes(node, ref_text);
           if (import_fixes.size() > 0) {
             actions.addAll(import_fixes);
-            Object first_action = import_fixes.get(0);
+            Object first_action = import_fixes.iterator().next();
             if (first_action instanceof HintAction) {
               hint_action = ((HintAction)first_action);
             }

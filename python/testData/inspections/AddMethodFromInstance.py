@@ -4,4 +4,4 @@ class A:
 
 
 a = A()
-a.<warning descr="Unresolved attribute reference 'y' for class 'A'">y</warning>()
+a.<caret><warning descr="Unresolved attribute reference 'y' for class 'A'">y</warning>()
