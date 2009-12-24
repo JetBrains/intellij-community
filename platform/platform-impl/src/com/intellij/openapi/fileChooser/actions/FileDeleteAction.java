@@ -17,7 +17,10 @@ package com.intellij.openapi.fileChooser.actions;
 
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.actions.DeleteAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.fileChooser.ex.FileChooserKeys;
 
 public class FileDeleteAction extends DeleteAction {
   public FileDeleteAction() {
@@ -28,4 +31,16 @@ public class FileDeleteAction extends DeleteAction {
     return new VirtualFileDeleteProvider();
   }
 
+  @Override
+  public void update(AnActionEvent event) {
+    Presentation presentation = event.getPresentation();
+    final Boolean available = event.getData(FileChooserKeys.DELETE_ACTION_AVAILABLE);
+    if (available != null && !available) {
+      presentation.setEnabled(false);
+      presentation.setVisible(false);
+      return;
+    }
+
+    super.update(event);
+  }
 }
