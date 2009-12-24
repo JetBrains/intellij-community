@@ -23,10 +23,12 @@ public abstract class PyLightFixtureTestCase extends UsefulTestCase {
   private static final PyLightProjectDescriptor ourPyDescriptor = new PyLightProjectDescriptor();
 
   protected CodeInsightTestFixture myFixture;
+  private static boolean ourPlatformPrefixInitialized;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    initPlatformPrefix();
     IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
     TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor());
     final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
@@ -66,4 +68,19 @@ public abstract class PyLightFixtureTestCase extends UsefulTestCase {
     }
   }
 
+  public static void initPlatformPrefix() {
+    if (!ourPlatformPrefixInitialized) {
+      ourPlatformPrefixInitialized = true;
+      boolean isIDEA = true;
+      try {
+        PyLightFixtureTestCase.class.getClassLoader().loadClass("com.intellij.openapi.project.impl.IdeaProjectManagerImpl");
+      }
+      catch (ClassNotFoundException e) {
+        isIDEA = false;
+      }
+      if (!isIDEA) {
+        System.setProperty("idea.platform.prefix", "Python");
+      }
+    }
+  }
 }
