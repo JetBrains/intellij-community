@@ -93,13 +93,15 @@ public abstract class LightMarkedTestCase extends PyLightFixtureTestCase {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         try {
-          myFile = myFixture.configureByText(fileName, text.toString());
+          myFile = myFixture.addFileToProject(fileName, text.toString());
+          myFixture.configureFromExistingVirtualFile(myFile.getVirtualFile());
         }
         catch (IOException e) {
           throw new RuntimeException(e);
         }
       }
-    });    for (Map.Entry<String, Integer> entry : offsets.entrySet()) {
+    });
+    for (Map.Entry<String, Integer> entry : offsets.entrySet()) {
       result.put(entry.getKey(), myFile.findElementAt(entry.getValue()));
     }
     return result;
