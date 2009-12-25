@@ -1086,7 +1086,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public static List<HighlightInfo> instantiateAndRun(PsiFile file, Editor editor, int[] toIgnore, boolean allowDirt) {
     Project project = file.getProject();
     ensureIndexesUpToDate(project);
-    FileStatusMap fileStatusMap = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).getFileStatusMap();
+    DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
+    FileStatusMap fileStatusMap = codeAnalyzer.getFileStatusMap();
     for (int ignoreId : toIgnore) {
       fileStatusMap.markFileUpToDate(editor.getDocument(), file, ignoreId);
     }
@@ -1108,6 +1109,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
     finally {
       fileStatusMap.allowDirt(true);
+      codeAnalyzer.clearPasses();
     }
   }
 
