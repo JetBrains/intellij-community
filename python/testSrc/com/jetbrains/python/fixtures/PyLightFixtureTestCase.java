@@ -6,6 +6,8 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
@@ -53,6 +55,11 @@ public abstract class PyLightFixtureTestCase extends UsefulTestCase {
   @Nullable
   protected LightProjectDescriptor getProjectDescriptor() {
     return ourPyDescriptor;
+  }
+
+  protected PsiReference findReferenceBySignature(final String signature) {
+    int pos = PsiDocumentManager.getInstance(myFixture.getProject()).getDocument(myFixture.getFile()).getText().indexOf(signature);
+    return myFixture.getFile().findReferenceAt(pos);
   }
 
   protected static class PyLightProjectDescriptor implements LightProjectDescriptor {
