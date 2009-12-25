@@ -33,16 +33,24 @@ public class TestClassesFilter {
 
     for (String groupName : filters.keySet()) {
       List<String> filterList = filters.get(groupName);
-      ArrayList<Pattern> patterns = new ArrayList<Pattern>();
-      myPatterns.put(groupName, patterns);
-      for (String aFilter : filterList) {
-        String filter = aFilter.trim();
-        if (filter.length() == 0) continue;
-        filter = filter.replaceAll("\\*", ".\\*");
-        Pattern pattern = Pattern.compile(filter);
-        myAllPatterns.add(pattern);
-        patterns.add(pattern);
-      }
+      addPatterns(groupName, filterList);
+    }
+  }
+
+  TestClassesFilter(List<String> filterList) {
+    addPatterns("", filterList);
+  }
+
+  private void addPatterns(String groupName, List<String> filterList) {
+    ArrayList<Pattern> patterns = new ArrayList<Pattern>();
+    myPatterns.put(groupName, patterns);
+    for (String aFilter : filterList) {
+      String filter = aFilter.trim();
+      if (filter.length() == 0) continue;
+      filter = filter.replaceAll("\\*", ".\\*");
+      Pattern pattern = Pattern.compile(filter);
+      myAllPatterns.add(pattern);
+      patterns.add(pattern);
     }
   }
 

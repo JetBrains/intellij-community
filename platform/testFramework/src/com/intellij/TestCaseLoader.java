@@ -25,6 +25,7 @@
 package com.intellij;
 
 import com.intellij.idea.Bombed;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestRunnerUtil;
 import junit.framework.Test;
@@ -57,12 +58,19 @@ public class TestCaseLoader {
         }
       }
 
+      myTestGroupName = System.getProperty("idea.test.group");
     }
     else {
-      myTestClassesFilter = TestClassesFilter.EMPTY_CLASSES_FILTER;
+      String patterns = System.getProperty("idea.test.patterns");
+      if (patterns != null) {
+        myTestClassesFilter = new TestClassesFilter(StringUtil.split(patterns, ";"));
+      }
+      else {
+        myTestClassesFilter = TestClassesFilter.EMPTY_CLASSES_FILTER;
+      }
+      myTestGroupName = "";
     }
 
-    myTestGroupName = System.getProperty("idea.test.group");
 
     System.out.println("Using test group: [" + (myTestGroupName == null ? "" :  myTestGroupName) + "]");
   }
