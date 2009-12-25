@@ -501,10 +501,16 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   public void renameElementAtCaret(final String newName) throws Exception {
     assertInitialized();
+    final PsiElement element = TargetElementUtilBase.findTargetElement(getCompletionEditor(), TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED |
+                                                                                        TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
+    assert element != null : "element not found in file " + myFile.getName() + " at caret position, offset " +
+                             myEditor.getCaretModel().getOffset();
+    renameElement(element, newName);
+  }
+
+  public void renameElement(final PsiElement element, final String newName) throws Exception {
     new WriteCommandAction.Simple(myProjectFixture.getProject()) {
       protected void run() throws Exception {
-        PsiElement element = TargetElementUtilBase.findTargetElement(getCompletionEditor(), TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED | TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
-        assert element != null: "element not found in file " + myFile.getName() + " at caret position, offset " + myEditor.getCaretModel().getOffset();
         final PsiElement substitution = RenamePsiElementProcessor.forElement(element).substituteElementToRename(element, myEditor);
         new RenameProcessor(myProjectFixture.getProject(), substitution, newName, false, false).run();
      }
