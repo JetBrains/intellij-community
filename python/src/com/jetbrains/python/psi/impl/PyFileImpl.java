@@ -68,6 +68,16 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     return fname;
   }
 
+  public PyFunction findTopLevelFunction(String name) {
+    final List<PyFunction> functions = getTopLevelFunctions();
+    for (PyFunction function : functions) {
+      if (name.equals(function.getName())) {
+        return function;
+      }
+    }
+    return null;
+  }
+
   public Icon getIcon(int flags) {
     return PythonFileType.INSTANCE.getIcon();
   }

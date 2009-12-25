@@ -36,5 +36,8 @@ public interface PyFile extends PyElement, PsiFile, PyDocStringOwner {
   @return an URL of file, maybe bogus if virtual file is not present.
   */
   @NotNull
-  String getUrl(); 
+  String getUrl();
+
+  @Nullable
+  PyFunction findTopLevelFunction(String name);
 }
