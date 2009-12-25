@@ -31,6 +31,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -63,6 +65,7 @@ import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
 import com.intellij.xml.impl.schema.TypeDescriptor;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
+import com.intellij.xml.index.IndexedRelevantResource;
 import com.intellij.xml.index.XmlNamespaceIndex;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -239,16 +242,21 @@ public class XmlUtil {
     return xmlFile == null ? findXmlFile(base, location) : xmlFile;
   }
 
-  public static Collection<XmlFile> findNSFilesByURI(String namespace, final Project project) {
-    final Collection<VirtualFile> files = XmlNamespaceIndex.getFilesByNamespace(namespace, project);
-    final ArrayList<XmlFile> list = new ArrayList<XmlFile>(files.size());
-    for (VirtualFile file : files) {
-      final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-      if (psiFile instanceof XmlFile) {
-        list.add((XmlFile)psiFile);
+  @Nullable
+  public static XmlFile findNamespaceByLocation(PsiFile base, @NotNull String nsLocation) {
+    final String location = ExternalResourceManager.getInstance().getResourceLocation(nsLocation, base.getProject());
+    return findXmlFile(base, location);
+  }
+
+  public static Collection<XmlFile> findNSFilesByURI(String namespace, final Project project, Module module) {
+    final List<IndexedRelevantResource<String,String>> resources = XmlNamespaceIndex.getResourcesByNamespace(namespace, project, module);
+    final PsiManager psiManager = PsiManager.getInstance(project);
+    return ContainerUtil.mapNotNull(resources, new NullableFunction<IndexedRelevantResource<String, String>, XmlFile>() {
+      public XmlFile fun(IndexedRelevantResource<String, String> stringStringIndexedRelevantResource) {
+        PsiFile file = psiManager.findFile(stringStringIndexedRelevantResource.getFile());
+        return file instanceof XmlFile ? (XmlFile)file : null;
       }
-    }
-    return list;
+    });
   }
 
   @Nullable
