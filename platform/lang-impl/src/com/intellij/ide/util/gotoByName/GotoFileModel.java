@@ -70,7 +70,15 @@ public class GotoFileModel extends ContributorsBasedGotoByModel{
     if (item instanceof PsiFile) {
       final PsiFile file = (PsiFile)item;
       final Set<FileType> types = getFileTypes();
-      return types == null || types.contains(file.getFileType());
+      // if language substitutors are used, PsiFile.getFileType() can be different from
+      // PsiFile.getVirtualFile().getFileType()
+      if (types != null) {
+        if (types.contains(file.getFileType())) return true;
+        VirtualFile vFile = file.getVirtualFile();
+        if (vFile != null && types.contains(vFile.getFileType())) return true;
+        return false;
+      }
+      return true;
     }
     else {
       return super.acceptItem(item);
