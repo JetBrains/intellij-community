@@ -824,7 +824,6 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       final List<FilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
 
       int selectedIdx = 0;
-      int idx = 0;
       final ArrayList<DiffRequestPresentable> diffRequestPresentables = new ArrayList<DiffRequestPresentable>(changes.size());
       if (! selectedChanges.isEmpty()) {
         final FilePatchInProgress.PatchChange c = selectedChanges.get(0);
@@ -836,13 +835,11 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
             diffRequestPresentables.add(diffRequestPresentable);
           }
           if (change.equals(c)) {
-            selectedIdx = idx;
+            selectedIdx = diffRequestPresentables.size() - 1;
           }
-          ++ idx;
         }
       }
       if (diffRequestPresentables.isEmpty()) return;
-      selectedIdx = (selectedIdx >= diffRequestPresentables.size()) ? 0 : selectedIdx;
       ShowDiffAction.showDiffImpl(myProject, diffRequestPresentables, selectedIdx, ShowDiffAction.DiffExtendUIFactory.NONE, false);
     }
   }
