@@ -139,6 +139,7 @@ public class AbstractPopup implements JBPopup {
   };
 
   private JTextField mySpeedSearchPatternField;
+  private boolean myNativePopup;
 
 
   AbstractPopup() {
@@ -611,7 +612,9 @@ public class AbstractPopup implements JBPopup {
 
     myRequestorComponent = owner;
 
-    myPopup = getFactory(myForcedHeavyweight || myResizable).getPopup(myOwner, myContent, targetBounds.x, targetBounds.y);
+    PopupComponent.Factory factory = getFactory(myForcedHeavyweight || myResizable);
+    myNativePopup = factory.isNativePopup();
+    myPopup = factory.getPopup(myOwner, myContent, targetBounds.x, targetBounds.y);
 
     if (myResizable) {
       final JRootPane root = myContent.getRootPane();
@@ -996,7 +999,7 @@ public class AbstractPopup implements JBPopup {
         ((Graphics2D)capture.getGraphics()).drawImage(shadow, null, null);
       }
       catch (Exception e) {
-        e.printStackTrace();
+        LOG.info(e);
       }
       if (capture != null) g.drawImage(capture, 0, 0, null);
     }
@@ -1092,6 +1095,10 @@ public class AbstractPopup implements JBPopup {
 
   public boolean isPersistent() {
     return !myCancelOnClickOutside && !myCancelOnWindow;
+  }
+
+  public boolean isNativePopup() {
+    return myNativePopup;
   }
 
   public void setUiVisible(final boolean visible) {
