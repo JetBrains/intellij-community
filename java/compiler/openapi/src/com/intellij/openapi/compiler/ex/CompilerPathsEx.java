@@ -90,6 +90,9 @@ public class CompilerPathsEx extends CompilerPaths {
     final Set<String> outputPaths = new OrderedSet<String>((TObjectHashingStrategy<String>)TObjectHashingStrategy.CANONICAL);
     for (Module module : modules) {
       final CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
+      if (compilerModuleExtension == null) {
+        continue;
+      }
       String outputPathUrl = compilerModuleExtension.getCompilerOutputUrl();
       if (outputPathUrl != null) {
         outputPaths.add(VirtualFileManager.extractPath(outputPathUrl).replace('/', File.separatorChar));
