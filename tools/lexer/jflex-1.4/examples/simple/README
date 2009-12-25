@@ -1,0 +1,29 @@
+This directory contains a scanner for a toy programming language.
+
+It is the example from the JLex website with some small modifications,
+to make it a bit more readable.
+
+It does nothing really useful, because there is no parser for the
+toy programming language. It's just a demonstatration how a small simple
+scanner looks like.
+
+files:
+
+YYtoken.java:
+  the tokens returned by the scanner
+
+Utility.java:
+  small class collecting some utility functions
+
+simple.flex:
+  the example specification
+
+test.txt:
+  sample input
+
+output.good:
+  output matching the sample input from test.txt
+
+Makefile: (for Unix only)
+  make          to generate scanner and run test
+  make clean    to remove generated files

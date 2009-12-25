@@ -1,0 +1,18 @@
+This directory contains a small example of a scanner for binary files.
+
+The example tries to detect if an input file is a java class file by
+checking if the first 4 bytes contain the magic number 0xCAFEBABE.
+It uses a custom Reader class that copies bytes to characters one to
+one. The characters the scanner gets to read are the bytes from the
+input stream without any conversion. Many thanks to Stephen Ostermiller
+for providing the custom Reader class, the original version of that
+class is available from http://www.smo.f2s.com/utils/
+
+See the JFlex manual for details on how to scan binaries and how
+this is different from scanning text files.
+
+Files:
+binary.flex                 the scanner spec
+StraightStreamReader.java   the custom reader class (by Stephen Ostermiller)
+Makefile                    rules for make to compile and run the example
+README                      this file

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+    <classpathentry kind="src" path="src"/>
+    <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+    <classpathentry kind="var" path="ECLIPSE_HOME/plugins/org.apache.ant_1.5.2/ant.jar"/>
+    <classpathentry kind="var"
+        path="ECLIPSE_HOME/plugins/org.junit_3.8.1/junit.jar" sourcepath="ECLIPSE_HOME/plugins/org.junit_3.8.1/src.jar"/>
+    <classpathentry kind="output" path="classes"/>
+</classpath>

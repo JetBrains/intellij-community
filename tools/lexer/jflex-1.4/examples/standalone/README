@@ -1,0 +1,20 @@
+This is a small example of a standalone text substitution scanner.
+
+It reads a name after the keyword name and replaces all occurences
+of "hello" by "hello <name> !". 
+
+sample.inp
+  contains a sample input for the scanner
+
+standalone.flex
+  the lexical specification for the scanner
+
+build.xml
+  ant build file
+
+to run the example use ant or type:
+
+jflex standalone.flex
+javac Subst.java
+java Subst sample.inp
+
