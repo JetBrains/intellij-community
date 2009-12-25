@@ -82,6 +82,7 @@ import com.intellij.util.Chunk;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
@@ -93,6 +94,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class CompileDriver {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompileDriver");
@@ -685,7 +687,12 @@ public class CompileDriver {
 
           //RefreshQueue.getInstance().refresh(false, true, null, outputsToRefresh.toArray(new VirtualFile[outputsToRefresh.size()]));
           try {
-            latch.await(); // wait until all threads are refreshed
+            while (latch.getCount() > 0) {
+              latch.await(500, TimeUnit.MILLISECONDS); // wait until all threads are refreshed
+              if (progressIndicator.isCanceled()) {
+                return ExitStatus.CANCELLED;
+              }
+            }
           }
           catch (InterruptedException e) {
             LOG.info(e);
@@ -700,7 +707,19 @@ public class CompileDriver {
         CompilerUtil.ourRefreshTime += initialRefreshTime;
       }
 
-      DumbService.getInstance(myProject).waitForSmartMode();
+      //DumbService.getInstance(myProject).waitForSmartMode();
+      final Semaphore semaphore = new Semaphore();
+      semaphore.down();
+      DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
+        public void run() {
+          semaphore.up();
+        }
+      });
+      while (!semaphore.waitFor(500)) {
+        if (context.getProgressIndicator().isCanceled()) {
+          return ExitStatus.CANCELLED;
+        }
+      }
 
       if (needRecalcOutputDirs) {
         context.recalculateOutputDirs();
