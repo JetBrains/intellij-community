@@ -134,7 +134,13 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
   }
 
   public VirtualFile getFile(@NonNls String path) {
-    return getSourceRoot().findFileByRelativePath(path);
+    final VirtualFile sourceRoot = getSourceRoot();
+    final VirtualFile result = sourceRoot.findFileByRelativePath(path);
+    if (result == null) {
+      sourceRoot.refresh(false, true);
+      return sourceRoot.findFileByRelativePath(path);
+    }
+    return result;
   }
 
   @NotNull
