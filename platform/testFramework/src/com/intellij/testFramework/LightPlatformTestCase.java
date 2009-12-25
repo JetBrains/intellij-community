@@ -84,8 +84,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -189,7 +191,12 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         }
 
         LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectFile);
-        ourProject = ProjectManagerEx.getInstanceEx().newProject(FileUtil.getNameWithoutExtension(projectFile), projectFile.getPath(), false, false);
+
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        new Throwable(projectFile.getPath()).printStackTrace(new PrintStream(buffer));
+
+        ourProject = PlatformTestCase.createProject(projectFile, buffer.toString());
+
         if (!ourHaveShutdownHook) {
           ourHaveShutdownHook = true;
           registerShutdownHook();
