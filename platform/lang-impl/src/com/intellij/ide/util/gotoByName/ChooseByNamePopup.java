@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.statistics.StatisticsInfo;
@@ -161,17 +162,21 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   private void cleanupUI() {
     JLayeredPane layeredPane = null;
     try {
-      // Return focus back to the previous focused component if we need to do it and
-      // previous focused componen is showing.
-      if (
-        myPreviouslyFocusedComponent instanceof JComponent &&
-        myPreviouslyFocusedComponent.isShowing()
-      ){
-        final JComponent _component = (JComponent)myPreviouslyFocusedComponent;
-        LayoutFocusTraversalPolicyExt.setOverridenDefaultComponent(_component);
-      }
-      if (myPreviouslyFocusedComponent != null) {
-        myPreviouslyFocusedComponent.requestFocus();
+      // check if the currently focused component was changed already, so we could leave focus intact
+      final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+      if (SwingUtilities.isDescendingFrom(owner, myTextField)) {
+        // Return focus back to the previous focused component if we need to do it and
+        // previous focused componen is showing.
+        if (
+          myPreviouslyFocusedComponent instanceof JComponent &&
+          myPreviouslyFocusedComponent.isShowing()
+        ){
+          final JComponent _component = (JComponent)myPreviouslyFocusedComponent;
+          LayoutFocusTraversalPolicyExt.setOverridenDefaultComponent(_component);
+        }
+        if (myPreviouslyFocusedComponent != null) {
+          myPreviouslyFocusedComponent.requestFocus();
+        }
       }
 
       final JRootPane rootPane = myTextFieldPanel.getRootPane();

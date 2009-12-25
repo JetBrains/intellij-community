@@ -217,11 +217,11 @@ public class CompilerManagerImpl extends CompilerManager {
   }
 
   public void compile(@NotNull Module module, CompileStatusNotification callback, final boolean trackDependencies) {
-    compile(createModuleCompileScope(module, false), callback, trackDependencies);
+    new CompileDriver(myProject).compile(createModuleCompileScope(module, false), new ListenerNotificator(callback), trackDependencies, true);
   }
 
   public void compile(@NotNull CompileScope scope, CompileStatusNotification callback, final boolean trackDependencies) {
-    new CompileDriver(myProject).compile(scope, new ListenerNotificator(callback), trackDependencies);
+    new CompileDriver(myProject).compile(scope, new ListenerNotificator(callback), trackDependencies, false);
   }
 
   public void make(CompileStatusNotification callback) {

@@ -150,6 +150,7 @@ public interface JBPopup extends Disposable, LightweightWindow {
 
   boolean isModalContext();
 
+  boolean isNativePopup();
   void setUiVisible(boolean visible);
 
   @Nullable
