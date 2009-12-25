@@ -18,7 +18,8 @@ package com.intellij.execution.junit2.ui.model;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.junit2.TestProgress;
+import com.intellij.execution.junit2.segments.ObjectReader;
+import com.intellij.execution.junit2.ui.TestProgress;
 import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.info.TestInfo;
 import com.intellij.execution.junit2.states.NotFailedState;
@@ -58,7 +59,7 @@ public class SpecialNode extends TestProxy {
     updateName();
   }
 
-  private static class MyTestInfo implements TestInfo {
+  private static class MyTestInfo extends TestInfo {
     private String myName = TESTS_IN_PROGRESS;
 
     public String getComment() {
@@ -75,6 +76,10 @@ public class SpecialNode extends TestProxy {
 
     public int getTestsCount() {
       return 0;
+    }
+
+    @Override
+    public void readFrom(ObjectReader reader) {
     }
 
     public Location getLocation(final Project project) {

@@ -14,18 +14,13 @@
  * limitations under the License.
  */
 
-package com.intellij.execution.junit2;
+package com.intellij.execution.junit2.events;
 
-import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.junit2.TestProxy;
+import com.intellij.execution.junit2.events.TestEvent;
 
-public class StateChangedEvent extends TestEvent {
-  public StateChangedEvent(final TestProxy test) {
+public class StatisticsChanged extends TestEvent {
+  public StatisticsChanged(final TestProxy test) {
     super(test);
-  }
-
-  public AbstractTestProxy getTestSubtree() {
-    final TestProxy test = getSource();
-    final AbstractTestProxy parent = test.getParent();
-    return parent != null ? parent : test;
   }
 }

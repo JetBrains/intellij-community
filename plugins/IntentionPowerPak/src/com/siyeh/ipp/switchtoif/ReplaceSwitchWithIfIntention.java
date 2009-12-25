@@ -17,7 +17,6 @@ package com.siyeh.ipp.switchtoif;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
@@ -34,26 +33,25 @@ import java.util.Set;
 
 public class ReplaceSwitchWithIfIntention extends Intention {
 
+    @Override
     @NotNull
     public PsiElementPredicate getElementPredicate() {
         return new SwitchPredicate();
     }
 
-    public void processIntention(PsiElement element)
+    @Override
+    public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
-        final PsiJavaToken switchToken =
-                (PsiJavaToken)element;
+        final PsiJavaToken switchToken = (PsiJavaToken)element;
         final PsiSwitchStatement switchStatement =
                 (PsiSwitchStatement)switchToken.getParent();
         if (switchStatement == null) {
             return;
         }
-        final PsiManager manager = switchStatement.getManager();
         final PsiExpression switchExpression = switchStatement.getExpression();
         if (switchExpression == null) {
             return;
         }
-        final CodeStyleManager codeStyleMgr = manager.getCodeStyleManager();
         final String declarationString;
         final boolean hadSideEffects;
         final String expressionText;
@@ -154,12 +152,12 @@ public class ReplaceSwitchWithIfIntention extends Intention {
                 }
             }
         }
-        final StringBuilder ifStatementBuffer = new StringBuilder();
+        final StringBuilder ifStatementText = new StringBuilder();
         String breakLabel = null;
         if (renameBreaks) {
             breakLabel = CaseUtil.findUniqueLabel(switchStatement, "Label");
-            ifStatementBuffer.append(breakLabel);
-            ifStatementBuffer.append(':');
+            ifStatementText.append(breakLabel);
+            ifStatementText.append(':');
         }
         boolean firstBranch = true;
         SwitchStatementBranch defaultBranch = null;
@@ -171,7 +169,7 @@ public class ReplaceSwitchWithIfIntention extends Intention {
                 final List<PsiElement> bodyElements = branch.getBodyElements();
                 final Set<PsiLocalVariable> pendingVariableDeclarations =
                         branch.getPendingVariableDeclarations();
-                dumpBranch(ifStatementBuffer, expressionText,
+                dumpBranch(ifStatementText, expressionText,
                         caseValues, bodyElements, firstBranch,
                         renameBreaks, breakLabel,
                         pendingVariableDeclarations);
@@ -183,7 +181,7 @@ public class ReplaceSwitchWithIfIntention extends Intention {
                     defaultBranch.getBodyElements();
             final Set<PsiLocalVariable> pendingVariableDeclarations =
                     defaultBranch.getPendingVariableDeclarations();
-            dumpDefaultBranch(ifStatementBuffer, bodyElements,
+            dumpDefaultBranch(ifStatementText, bodyElements,
                     firstBranch, renameBreaks, breakLabel,
                     pendingVariableDeclarations);
         }
@@ -191,34 +189,29 @@ public class ReplaceSwitchWithIfIntention extends Intention {
         final PsiElementFactory factory = psiFacade.getElementFactory();
         if (hadSideEffects) {
             final PsiStatement declarationStatement =
-                    factory.createStatementFromText(declarationString, null);
-            final String ifStatementString = ifStatementBuffer.toString();
+                    factory.createStatementFromText(declarationString,
+                            switchStatement);
             final PsiStatement ifStatement =
-                    factory.createStatementFromText(ifStatementString, null);
-            PsiElement ifElement = switchStatement.replace(ifStatement);
-            ifElement = codeStyleMgr.reformat(ifElement);
+                    factory.createStatementFromText(ifStatementText.toString(),
+                            switchStatement);
+            final PsiElement ifElement = switchStatement.replace(ifStatement);
             final PsiElement parent = ifElement.getParent();
             assert parent != null;
-            final PsiElement declarationElement =
-                    parent.addBefore(declarationStatement, ifElement);
-            codeStyleMgr.reformat(declarationElement);
-            codeStyleMgr.reformat(parent);
+            parent.addBefore(declarationStatement, ifElement);
         } else {
-            final String ifStatementString = ifStatementBuffer.toString();
             final PsiStatement newStatement =
-                    factory.createStatementFromText(ifStatementString, null);
-            final PsiElement replacedStatement =
-                    switchStatement.replace(newStatement);
-            codeStyleMgr.reformat(replacedStatement);
+                    factory.createStatementFromText(ifStatementText.toString(),
+                            switchStatement);
+            switchStatement.replace(newStatement);
         }
     }
 
-    private String getCaseValueText(PsiExpression value) {
+    private static String getCaseValueText(PsiExpression value) {
         if (value == null) {
             return "";
         }
         if (value instanceof PsiParenthesizedExpression) {
-            PsiParenthesizedExpression parenthesizedExpression =
+            final PsiParenthesizedExpression parenthesizedExpression =
                     (PsiParenthesizedExpression) value;
             final PsiExpression expression =
                     parenthesizedExpression.getExpression();
@@ -227,20 +220,20 @@ public class ReplaceSwitchWithIfIntention extends Intention {
         if (!(value instanceof PsiReferenceExpression)) {
             return value.getText();
         }
-        PsiReferenceExpression referenceExpression =
+        final PsiReferenceExpression referenceExpression =
                 (PsiReferenceExpression) value;
         final PsiElement target = referenceExpression.resolve();
         final String text = referenceExpression.getText();
         if (!(target instanceof PsiEnumConstant)) {
             return value.getText();
         }
-        PsiEnumConstant enumConstant = (PsiEnumConstant) target;
+        final PsiEnumConstant enumConstant = (PsiEnumConstant) target;
         final PsiClass aClass = enumConstant.getContainingClass();
         if (aClass == null) {
             return value.getText();
         }
         final String name = aClass.getQualifiedName();
-        return name + "." + text;
+        return name + '.' + text;
     }
 
     private static void dumpBranch(@NonNls StringBuilder ifStatementString,

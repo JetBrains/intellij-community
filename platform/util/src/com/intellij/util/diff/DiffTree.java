@@ -75,9 +75,13 @@ public class DiffTree<OT, NT> {
     int newSize = myNewTree.getChildren(newNode, newChildrenR);
     final NT[] newChildren = newChildrenR.get();
 
+    compareLevel(level, oldNode, oldSize, oldChildren, newNode, newSize, newChildren);
+    disposeLevel(oldChildren, oldSize, newChildren, newSize);
+  }
+
+  private void compareLevel(int level, OT oldNode, int oldSize, OT[] oldChildren, NT newNode, int newSize, NT[] newChildren) {
     if (Math.abs(oldSize - newSize) > CHANGE_PARENT_VERSUS_CHILDREN_THRESHOLD) {
       myConsumer.nodeReplaced(oldNode, newNode);
-      disposeLevel(oldChildren, oldSize, newChildren, newSize);
       return;
     }
 
@@ -86,7 +90,6 @@ public class DiffTree<OT, NT> {
       if (!comparator.hashcodesEqual(oldNode, newNode) || !comparator.typesEqual(oldNode, newNode)) {
         myConsumer.nodeReplaced(oldNode, newNode);
       }
-      disposeLevel(oldChildren, oldSize, newChildren, newSize);
       return;
     }
 
@@ -170,8 +173,6 @@ public class DiffTree<OT, NT> {
       oldIndex++;
       newIndex++;
     }
-
-    disposeLevel(oldChildren, oldSize, newChildren, newSize);
   }
 
   private CompareResult looksEqual(ShallowNodeComparator<OT, NT> comparator, OT oldChild1, NT newChild1) {

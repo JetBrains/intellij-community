@@ -62,7 +62,7 @@ public class TestRootImpl implements TestRoot {
       setClassName(className);
     }
 
-    public void readPacketFrom(final ObjectReader reader) {
+    public void readFrom(final ObjectReader reader) {
     }
   }
 }

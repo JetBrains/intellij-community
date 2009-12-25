@@ -59,7 +59,6 @@ import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -203,22 +202,11 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
   }
 
   protected void assertCompletionVariantsInclude(VirtualFile f, String... expected) throws IOException {
-    assertInclude(getCompletionVariants(f), expected);
-  }
-
-  protected <T> void assertInclude(List<? extends T> actual, T... expected) throws IOException {
-    List<T> expectedList = Arrays.asList(expected);
-    assertTrue("expected: " + expectedList + "\n" + "actual: " + actual.toString(), actual.containsAll(expectedList));
-  }
-
-  protected void assertDoNotInclude(List<String> actual, String... expected) throws IOException {
-    List<String> actualCopy = new ArrayList<String>(actual);
-    actualCopy.removeAll(Arrays.asList(expected));
-    assertTrue(actual.toString(), actualCopy.size() == actual.size());
+    assertContain(getCompletionVariants(f), expected);
   }
 
   protected void assertCompletionVariantsDoNotInclude(VirtualFile f, String... expected) throws IOException {
-    assertDoNotInclude(getCompletionVariants(f), expected);
+    assertDoNotContain(getCompletionVariants(f), expected);
   }
 
   protected List<String> getCompletionVariants(VirtualFile f) throws IOException {
@@ -327,8 +315,8 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
     assertUnorderedElementsAreEqual(search(file), expected);
   }
 
-  protected void assertSearchResultsContain(VirtualFile file, PsiElement... expected) throws IOException {
-    assertInclude(search(file), expected);
+  protected void assertSearchResultsInclude(VirtualFile file, PsiElement... expected) throws IOException {
+    assertContain(search(file), expected);
   }
 
   protected List<PsiElement> search(VirtualFile file) throws IOException {

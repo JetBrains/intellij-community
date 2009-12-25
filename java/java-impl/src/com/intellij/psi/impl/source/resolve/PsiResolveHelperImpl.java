@@ -123,13 +123,12 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return processor.getCandidates();
   }
 
-  private static Pair<PsiType, ConstraintType> inferTypeForMethodTypeParameterInner(
-                                                 final PsiTypeParameter typeParameter,
-                                                 final PsiParameter[] parameters,
-                                                 PsiExpression[] arguments,
-                                                 PsiSubstitutor partialSubstitutor,
-                                                 PsiElement parent,
-                                                 final boolean forCompletion) {
+  private static Pair<PsiType, ConstraintType> inferTypeForMethodTypeParameterInner(final PsiTypeParameter typeParameter,
+                                                                                    final PsiParameter[] parameters,
+                                                                                    PsiExpression[] arguments,
+                                                                                    PsiSubstitutor partialSubstitutor,
+                                                                                    PsiElement parent,
+                                                                                    final boolean forCompletion) {
     PsiWildcardType wildcardToCapture = null;
     PsiType lowerBound = PsiType.NULL;
     PsiType upperBound = PsiType.NULL;
@@ -418,50 +417,47 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
                                              isContraVariantPosition, languageLevel);
     }
 
-    if (param instanceof PsiClassType) {
-      PsiManager manager = typeParam.getManager();
-      if (arg instanceof PsiPrimitiveType) {
-        arg = ((PsiPrimitiveType)arg).getBoxedType(typeParam);
-        if (arg == null) return null;
-      }
-
-      JavaResolveResult paramResult = ((PsiClassType)param).resolveGenerics();
-      PsiClass paramClass = (PsiClass)paramResult.getElement();
-      if (typeParam == paramClass) {
-        if (arg == null ||
-            arg.getDeepComponentType() instanceof PsiPrimitiveType ||
-            arg instanceof PsiIntersectionType ||
-            PsiUtil.resolveClassInType(arg) != null) {
-          PsiType bound = intersectAllExtends(typeParam, arg);
-          return new Pair<PsiType, ConstraintType>(bound, ConstraintType.SUPERTYPE);
-        }
-        return null;
-      }
-      if (paramClass == null) return null;
-
-      if (arg instanceof PsiClassType) {
-        JavaResolveResult argResult = ((PsiClassType)arg).resolveGenerics();
-        PsiClass argClass = (PsiClass)argResult.getElement();
-        if (argClass == null) return null;
-
-        PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-        PsiType patternType = factory.createType(typeParam);
-        if (isContraVariantPosition) {
-          PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(paramClass, argClass, argResult.getSubstitutor());
-          if (substitutor == null) return null;
-          arg = factory.createType(paramClass, substitutor, languageLevel);
-        }
-        else {
-          PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(argClass, paramClass, paramResult.getSubstitutor());
-          if (substitutor == null) return null;
-          param = factory.createType(argClass, substitutor, languageLevel);
-        }
-
-        return getSubstitutionForTypeParameterInner(param, arg, patternType, ConstraintType.SUPERTYPE, 0);
-      }
+    if (!(param instanceof PsiClassType)) return null;
+    PsiManager manager = typeParam.getManager();
+    if (arg instanceof PsiPrimitiveType) {
+      arg = ((PsiPrimitiveType)arg).getBoxedType(typeParam);
+      if (arg == null) return null;
     }
 
-    return null;
+    JavaResolveResult paramResult = ((PsiClassType)param).resolveGenerics();
+    PsiClass paramClass = (PsiClass)paramResult.getElement();
+    if (typeParam == paramClass) {
+      if (arg == null ||
+          arg.getDeepComponentType() instanceof PsiPrimitiveType ||
+          arg instanceof PsiIntersectionType ||
+          PsiUtil.resolveClassInType(arg) != null) {
+        PsiType bound = intersectAllExtends(typeParam, arg);
+        return new Pair<PsiType, ConstraintType>(bound, ConstraintType.SUPERTYPE);
+      }
+      return null;
+    }
+    if (paramClass == null) return null;
+
+    if (!(arg instanceof PsiClassType)) return null;
+
+    JavaResolveResult argResult = ((PsiClassType)arg).resolveGenerics();
+    PsiClass argClass = (PsiClass)argResult.getElement();
+    if (argClass == null) return null;
+
+    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    PsiType patternType = factory.createType(typeParam);
+    if (isContraVariantPosition) {
+      PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(paramClass, argClass, argResult.getSubstitutor());
+      if (substitutor == null) return null;
+      arg = factory.createType(paramClass, substitutor, languageLevel);
+    }
+    else {
+      PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(argClass, paramClass, paramResult.getSubstitutor());
+      if (substitutor == null) return null;
+      param = factory.createType(argClass, substitutor, languageLevel);
+    }
+
+    return getSubstitutionForTypeParameterInner(param, arg, patternType, ConstraintType.SUPERTYPE, 0);
   }
 
   private static PsiType intersectAllExtends(PsiTypeParameter typeParam, PsiType arg) {
@@ -594,10 +590,10 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
   }
 
   private static Pair<PsiType, ConstraintType> inferMethodTypeParameterFromParent(PsiElement parent,
-                                                     PsiMethodCallExpression methodCall,
-                                                     final PsiTypeParameter typeParameter,
-                                                     PsiSubstitutor substitutor,
-                                                     final boolean forCompletion) {
+                                                                                  PsiMethodCallExpression methodCall,
+                                                                                  final PsiTypeParameter typeParameter,
+                                                                                  PsiSubstitutor substitutor,
+                                                                                  final boolean forCompletion) {
     Pair<PsiType, ConstraintType> constraint = null;
     PsiType expectedType = null;
 
@@ -633,6 +629,17 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       returnType = ((PsiMethod)typeParameter.getOwner()).getReturnType();
 
       constraint = getSubstitutionForTypeParameterConstraint(typeParameter, returnType, expectedType, false, PsiUtil.getLanguageLevel(parent));
+
+      if (constraint != null) {
+        PsiType guess = constraint.getFirst();
+        if (guess != null && !guess.equals(PsiType.NULL) && constraint.getSecond() == ConstraintType.SUPERTYPE && guess instanceof PsiIntersectionType) {
+          for (PsiType conjuct : ((PsiIntersectionType)guess).getConjuncts()) {
+            if (!conjuct.isAssignableFrom(expectedType)) {
+              return FAILED_INFERENCE;
+            }
+          }
+        }
+      }
     }
 
     final Pair<PsiType, ConstraintType> result;

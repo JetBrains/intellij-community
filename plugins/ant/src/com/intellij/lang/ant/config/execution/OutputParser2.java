@@ -86,14 +86,9 @@ final class OutputParser2 extends OutputParser implements PacketProcessor, Input
                                           final ProgressIndicator progress,
                                           final AntBuildFile buildFile) {
     OutputParser2 parser = new OutputParser2(myProject, handler, errorView, progress, buildFile.getName());
-    DeferedActionsQueue queue = new DeferedActionsQueueImpl();
-    attach(parser, handler.getOut(), queue);
-    attach(parser, handler.getErr(), queue);
+    DeferredActionsQueue queue = new DeferredActionsQueueImpl();
+    handler.getOut().setPacketDispatcher(parser, queue);
+    handler.getErr().setPacketDispatcher(parser, queue);
     return parser;
-  }
-
-  private static void attach(OutputParser2 parser, PacketExtractorBase packetExtractorBase, DeferedActionsQueue queue) {
-    packetExtractorBase.setFulfilledWorkGate(queue);
-    packetExtractorBase.setPacketProcessor(parser);
   }
 }

@@ -18,6 +18,9 @@ package com.intellij.execution.junit2.ui;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.junit2.*;
+import com.intellij.execution.junit2.events.NewChildEvent;
+import com.intellij.execution.junit2.events.StateChangedEvent;
+import com.intellij.execution.junit2.events.TestEvent;
 import com.intellij.execution.junit2.ui.model.CompletionEvent;
 import com.intellij.execution.junit2.ui.model.JUnitAdapter;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;

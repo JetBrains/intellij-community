@@ -110,7 +110,7 @@ public class ITNReporter extends ErrorReportSubmitter {
           if (pluginId != null) {
             final IdeaPluginDescriptor ideaPluginDescriptor = ApplicationManager.getApplication().getPlugin(pluginId);
             if (ideaPluginDescriptor != null && !ideaPluginDescriptor.isBundled()) {
-              descBuilder.append("Plugin version: ").append(ideaPluginDescriptor.getVersion()).append("\n");
+              descBuilder.append("Plugin ").append(ideaPluginDescriptor.getName()).append(" version: ").append(ideaPluginDescriptor.getVersion()).append("\n");
             }
           }
         }

@@ -25,8 +25,8 @@ import com.intellij.ide.IdeBundle;
  */
 public class MavenLibraryUtil {
   @NonNls private static final String[] MAVEN_MIRRORS = {
-    "http://www.ibiblio.org/maven2/",
     "http://repo1.maven.org/maven2/",
+    "http://www.ibiblio.org/maven2/",
   };
   private static final RemoteRepositoryInfo MAVEN = new RemoteRepositoryInfo("maven", IdeBundle.message("maven.repository.presentable.name"), MAVEN_MIRRORS);
 

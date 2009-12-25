@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.updateSettings.impl;
 
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -50,8 +49,6 @@ public class UpdateSettings implements PersistentStateComponent<Element> {
   public boolean CHECK_NEEDED = true;
   public String CHECK_PERIOD = UpdateSettingsConfigurable.WEEKLY;
   public long LAST_TIME_CHECKED = 0;
-
-  public String CURRENT_UPDATE_CHANNEL = ApplicationInfo.getInstance().getDefaultUpdateChannel();
 
   public static UpdateSettings getInstance() {
     return ServiceManager.getService(UpdateSettings.class);

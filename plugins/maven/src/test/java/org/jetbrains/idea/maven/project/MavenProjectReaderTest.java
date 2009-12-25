@@ -1341,7 +1341,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertActiveProfiles("settings", "implicit");
   }
 
-  public void testDoNotActivateDefaultProfilesWhenThereAreActiveProfilesInSettingsXml() throws Exception {
+  public void testDoNotActivateDefaultProfilesWhenThereAreOlwaysOnProfilesInPomXml() throws Exception {
     updateSettingsXml("<activeProfiles>" +
                       "  <activeProfile>settings</activeProfile>" +
                       "</activeProfiles>");
@@ -1359,6 +1359,53 @@ public class MavenProjectReaderTest extends MavenTestCase {
                      "</profiles>");
 
     assertActiveProfiles("settings");
+  }
+
+  public void testActivateDefaultProfilesWhenThereAreActiveProfilesInSettingsXml() throws Exception {
+    updateSettingsXml("<profiles>" +
+                      "  <profile>" +
+                      "    <id>settings</id>" +
+                      "  </profile>" +
+                      "</profiles>" +
+                      "<activeProfiles>" +
+                      "  <activeProfile>settings</activeProfile>" +
+                      "</activeProfiles>");
+
+    createProjectPom("<profiles>" +
+                     "  <profile>" +
+                     "    <id>default</id>" +
+                     "    <activation>" +
+                     "      <activeByDefault>true</activeByDefault>" +
+                     "    </activation>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    assertActiveProfiles("default", "settings");
+  }
+
+  public void testActivateDefaultProfilesWhenThereAreActiveProfilesInProfilesXml() throws Exception {
+    createFullProfilesXml("<?xml version=\"1.0\"?>" +
+                          "<profilesXml>" +
+                          "  <profiles>" +
+                          "    <profile>" +
+                          "      <id>profiles</id>" +
+                          "    </profile>" +
+                          "  </profiles>" +
+                          "  <activeProfiles>" +
+                          "    <activeProfile>profiles</activeProfile>" +
+                          "  </activeProfiles>" +
+                          "</profilesXml>");
+
+    createProjectPom("<profiles>" +
+                     "  <profile>" +
+                     "    <id>default</id>" +
+                     "    <activation>" +
+                     "      <activeByDefault>true</activeByDefault>" +
+                     "    </activation>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    assertActiveProfiles("default", "profiles");
   }
 
   private org.apache.maven.project.MavenProject readProject(VirtualFile file, String... profiles) {

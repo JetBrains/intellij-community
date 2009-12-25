@@ -30,7 +30,7 @@ class TestCaseInfo extends ClassBasedInfo {
     super(DisplayTestInfoExtractor.CLASS_FULL_NAME);
   }
 
-  public void readPacketFrom(final ObjectReader reader) {
+  public void readFrom(final ObjectReader reader) {
     myMethod = reader.readLimitedString();
     readClass(reader);
   }

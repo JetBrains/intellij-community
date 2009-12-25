@@ -23,10 +23,11 @@ public class MavenConstants {
   public static final String SETTINGS_XML = "settings.xml";
 
   public static final String TYPE_JAR = "jar";
+  public static final String TYPE_TEST_JAR = "test-jar";
   public static final String TYPE_WAR = "war";
 
-  public static final String JAVADOC_CLASSIFIER = "javadoc";
-  public static final String SOURCES_CLASSIFIER = "sources";
+  public static final String CLASSIFIER_JAVADOC = "javadoc";
+  public static final String CLASSIFIER_SOURCES = "sources";
 
   public static final String SCOPE_COMPILE = "compile";
   public static final String SCOPE_PROVIDEED = "provided";

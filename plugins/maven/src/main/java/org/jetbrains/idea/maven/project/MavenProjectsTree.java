@@ -1013,7 +1013,7 @@ public class MavenProjectsTree {
     embedder.clearCachesFor(mavenProject);
 
     try {
-      for (MavenPlugin each : mavenProject.getPlugins()) {
+      for (MavenPlugin each : mavenProject.getDeclaredPlugins()) {
         process.checkCanceled();
         process.setText(ProjectBundle.message("maven.downloading.pom.plugins", mavenProject.getDisplayName()));
         embedder.resolvePlugin(each, nativeMavenProject);
@@ -1026,6 +1026,7 @@ public class MavenProjectsTree {
   }
 
   public void resolveFolders(final MavenProject mavenProject,
+                             final MavenGeneralSettings generalSettings,
                              final MavenImportingSettings importingSettings,
                              final MavenEmbeddersManager embeddersManager,
                              final MavenConsole console,
@@ -1043,6 +1044,7 @@ public class MavenProjectsTree {
                        process.setText2("");
 
                        Pair<Boolean, MavenProjectChanges> resolveResult = mavenProject.resolveFolders(embedder,
+                                                                                                      generalSettings,
                                                                                                       importingSettings,
                                                                                                       new MavenProjectReader(),
                                                                                                       console);
@@ -1054,6 +1056,8 @@ public class MavenProjectsTree {
   }
 
   public void downloadArtifacts(MavenProject mavenProject,
+                                boolean downloadSources,
+                                boolean downloadJavadoc,
                                 MavenEmbeddersManager embeddersManager,
                                 MavenConsole console,
                                 MavenProgressIndicator process) throws MavenProcessCanceledException {
@@ -1061,7 +1065,7 @@ public class MavenProjectsTree {
     embedder.customizeForResolve(console, process);
 
     try {
-      MavenArtifactDownloader.download(this, Collections.singletonList(mavenProject), true, embedder, process);
+      MavenArtifactDownloader.download(this, Collections.singletonList(mavenProject), downloadSources, downloadJavadoc, embedder, process);
       fireArtifactsDownloaded(mavenProject);
     }
     finally {
@@ -1078,13 +1082,8 @@ public class MavenProjectsTree {
     embedder.customizeForResolve(console, process);
 
     try {
-      Artifact artifact = embedder.createArtifact(id.getGroupId(),
-                                                  id.getArtifactId(),
-                                                  id.getVersion(),
-                                                  MavenConstants.TYPE_JAR,
-                                                  null);
+      Artifact artifact = embedder.resolve(id, MavenConstants.TYPE_JAR, null, mavenProject.getRemoteRepositories());
       artifact.setScope(Artifact.SCOPE_COMPILE);
-      embedder.resolve(artifact, mavenProject.getRemoteRepositories());
       return new MavenArtifact(artifact, mavenProject.getLocalRepository());
     }
     finally {

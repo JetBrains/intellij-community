@@ -349,6 +349,9 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
           if (projectWithChanges.first.hasUnresolvedPlugins()) {
             schedulePluginsResolving(projectWithChanges.first, nativeMavenProject);
           }
+          scheduleArtifactsDownloading(Collections.singleton(projectWithChanges.first),
+                                       getImportingSettings().shouldDownloadSourcesAutomatically(),
+                                       getImportingSettings().shouldDownloadJavadocAutomatically());
           scheduleForNextImport(projectWithChanges);
         }
         processMessage(message);
@@ -682,6 +685,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
           MavenProject each = it.next();
           Object message = it.hasNext() ? null : FORCE_IMPORT_MESSAGE;
           myFoldersResolvingProcessor.scheduleTask(new MavenProjectsProcessorFoldersResolvingTask(each,
+                                                                                                  getGeneralSettings(), 
                                                                                                   getImportingSettings(),
                                                                                                   myProjectsTree,
                                                                                                   message));
@@ -704,14 +708,21 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     });
   }
 
-  public void scheduleArtifactsDownloading(final Collection<MavenProject> projects) {
+  public void scheduleArtifactsDownloading(final Collection<MavenProject> projects, final boolean sources, final boolean javadoc) {
+    if (!sources && !javadoc) return;
+
     runWhenFullyOpen(new Runnable() {
       public void run() {
         for (MavenProject each : projects) {
-          myArtifactsDownloadingProcessor.scheduleTask(new MavenProjectsProcessorArtifactsDownloadingTask(each, myProjectsTree));
+          myArtifactsDownloadingProcessor.scheduleTask(
+            new MavenProjectsProcessorArtifactsDownloadingTask(each, myProjectsTree, sources, javadoc));
         }
       }
     });
+  }
+
+  public void scheduleArtifactsDownloading(final Collection<MavenProject> projects) {
+    scheduleArtifactsDownloading(projects, true, true);
   }
 
   public void scheduleArtifactsDownloadingForAllProjects() {

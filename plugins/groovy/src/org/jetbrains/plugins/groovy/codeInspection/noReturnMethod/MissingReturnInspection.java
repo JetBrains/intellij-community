@@ -84,7 +84,30 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
   }
 
   private static void check(GrCodeBlock block, ProblemsHolder holder, boolean mustReturnValue) {
-    if ((mustReturnValue || hasReturnStatements(block)) && !alwaysReturns(block)) {
+    final Ref<Boolean> always = new Ref<Boolean>(true);
+    final Ref<Boolean> sometimes = new Ref<Boolean>(false);
+    ControlFlowUtils.visitAllExitPoints(block, new ControlFlowUtils.ExitPointVisitor() {
+      public boolean visit(Instruction instruction) {
+        if (instruction instanceof MaybeReturnInstruction) {
+          if (((MaybeReturnInstruction)instruction).mayReturnValue()) {
+            sometimes.set(true);
+          }
+          else {
+            always.set(false);
+          }
+          return true;
+        }
+        final PsiElement element = instruction.getElement();
+        if (element instanceof GrReturnStatement || element instanceof GrThrowStatement || element instanceof GrAssertStatement) {
+          sometimes.set(true);
+        }
+        else {
+          always.set(false);
+        }
+        return true;
+      }
+    });
+    if ((mustReturnValue && !sometimes.get()) || (sometimes.get() && !always.get())) {
       addNoReturnMessage(block, holder);
     }
   }
@@ -99,29 +122,6 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
     holder.registerProblem(lastChild, GroovyInspectionBundle.message("no.return.message"));
   }
 
-  private static boolean hasReturnStatements(GrCodeBlock block) {
-    class Visitor extends GroovyRecursiveElementVisitor {
-      private boolean myFound = false;
-
-      public boolean isFound() {
-        return myFound;
-      }
-
-      public void visitReturnStatement(GrReturnStatement returnStatement) {
-        if (returnStatement.getReturnValue() != null) myFound = true;
-      }
-
-      public void visitElement(GroovyPsiElement element) {
-        if (!myFound) {
-          super.visitElement(element);
-        }
-      }
-    }
-    Visitor visitor = new Visitor();
-    block.accept(visitor);
-    return visitor.isFound();
-  }
-
   @NonNls
   @NotNull
   public String getShortName() {
@@ -130,27 +130,5 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
 
   public boolean isEnabledByDefault() {
     return true;
-  }
-
-  public static boolean alwaysReturns(GrCodeBlock block) {
-    final Ref<Boolean> always = new Ref<Boolean>(true);
-    ControlFlowUtils.visitAllExitPoints(block, new ControlFlowUtils.ExitPointVisitor() {
-      public boolean visit(Instruction instruction) {
-        if (instruction instanceof MaybeReturnInstruction) {
-          if (!((MaybeReturnInstruction)instruction).mayReturnValue()) {
-            always.set(false);
-            return false;
-          }
-          return true;
-        }
-        final PsiElement element = instruction.getElement();
-        if (!(element instanceof GrReturnStatement || element instanceof GrThrowStatement || element instanceof GrAssertStatement)) {
-          always.set(false);
-          return false;
-        }
-        return true;
-      }
-    });
-    return always.get();
   }
 }

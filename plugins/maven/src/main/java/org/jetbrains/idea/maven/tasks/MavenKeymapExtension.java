@@ -147,7 +147,7 @@ public class MavenKeymapExtension implements KeymapExtension {
     LinkedHashSet<String> result = new LinkedHashSet<String>(); // may contains similar plugins or somethig
     result.addAll(MavenEmbedderFactory.getPhasesList());
 
-    for (MavenPlugin each : project.getPlugins()) {
+    for (MavenPlugin each : project.getDeclaredPlugins()) {
       collectGoals(project.getLocalRepository(), each, result);
     }
 

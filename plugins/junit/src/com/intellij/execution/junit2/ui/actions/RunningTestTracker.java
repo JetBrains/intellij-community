@@ -16,8 +16,8 @@
 
 package com.intellij.execution.junit2.ui.actions;
 
-import com.intellij.execution.junit2.StateChangedEvent;
-import com.intellij.execution.junit2.TestEvent;
+import com.intellij.execution.junit2.events.StateChangedEvent;
+import com.intellij.execution.junit2.events.TestEvent;
 import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.ui.model.JUnitAdapter;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;

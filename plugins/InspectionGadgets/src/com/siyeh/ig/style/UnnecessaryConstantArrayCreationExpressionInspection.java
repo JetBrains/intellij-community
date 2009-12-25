@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Bas Leijdekkers
+ * Copyright 2008-2009 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,11 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.InspectionGadgetsBundle;
-import com.intellij.psi.PsiArrayInitializerExpression;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNewExpression;
-import com.intellij.psi.PsiVariable;
 import com.intellij.openapi.project.Project;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.util.IncorrectOperationException;
@@ -32,18 +29,21 @@ import org.jetbrains.annotations.Nullable;
 public class UnnecessaryConstantArrayCreationExpressionInspection
         extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "unnecessary.constant.array.creation.expression.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "unnecessary.constant.array.creation.expression.problem.descriptor");
     }
 
+    @Override
     @Nullable
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new UnnecessaryConstantArrayCreationExpressionFix();
@@ -58,6 +58,7 @@ public class UnnecessaryConstantArrayCreationExpressionInspection
                     "unnecessary.constant.array.creation.expression.quickfix");
         }
 
+        @Override
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement element = descriptor.getPsiElement();
@@ -74,6 +75,7 @@ public class UnnecessaryConstantArrayCreationExpressionInspection
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new UnnecessaryConstantArrayCreationExpressionVisitor();
     }
@@ -81,6 +83,7 @@ public class UnnecessaryConstantArrayCreationExpressionInspection
     private static class UnnecessaryConstantArrayCreationExpressionVisitor
             extends BaseInspectionVisitor {
 
+        @Override
         public void visitArrayInitializerExpression(
                 PsiArrayInitializerExpression expression) {
             super.visitArrayInitializerExpression(expression);
@@ -92,7 +95,27 @@ public class UnnecessaryConstantArrayCreationExpressionInspection
             if (!(grandParent instanceof PsiVariable)) {
                 return;
             }
+            final PsiVariable variable = (PsiVariable)grandParent;
+            if (hasGenericTypeParameters(variable)) {
+                return;
+            }
             registerError(parent);
+        }
+
+        private static boolean hasGenericTypeParameters(PsiVariable variable) {
+            final PsiType type = variable.getType();
+            final PsiType componentType = type.getDeepComponentType();
+            if (!(componentType instanceof PsiClassType)) {
+                return false;
+            }
+            final PsiClassType classType = (PsiClassType)componentType;
+            final PsiType[] parameterTypes = classType.getParameters();
+            for (PsiType parameterType : parameterTypes) {
+                if (parameterType != null) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }

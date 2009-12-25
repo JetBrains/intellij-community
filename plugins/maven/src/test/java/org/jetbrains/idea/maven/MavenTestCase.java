@@ -375,7 +375,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   private void setFileContent(VirtualFile file, String content) throws IOException {
-    file.setBinaryContent(content.getBytes(), -1, file.getTimeStamp() + 1000);
+    file.setBinaryContent(content.getBytes(), file.getModificationStamp() + 4000, file.getTimeStamp() + 4000);
   }
 
   protected void assertPathEquals(String expected, String actual) {
@@ -422,6 +422,17 @@ public abstract class MavenTestCase extends UsefulTestCase {
       U actualElement = actualList.get(i);
       assertTrue(s, expectedElement.equals(actualElement));
     }
+  }
+
+  protected <T> void assertContain(List<? extends T> actual, T... expected) {
+    List<T> expectedList = Arrays.asList(expected);
+    assertTrue("expected: " + expectedList + "\n" + "actual: " + actual.toString(), actual.containsAll(expectedList));
+  }
+
+  protected <T> void assertDoNotContain(List<T> actual, T... expected) {
+    List<T> actualCopy = new ArrayList<T>(actual);
+    actualCopy.removeAll(Arrays.asList(expected));
+    assertTrue(actual.toString(), actualCopy.size() == actual.size());
   }
 
   protected boolean ignore() {

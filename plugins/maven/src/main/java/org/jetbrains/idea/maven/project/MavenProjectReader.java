@@ -15,16 +15,11 @@
  */
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.impl.source.parsing.xml.XmlBuilder;
-import com.intellij.psi.impl.source.parsing.xml.XmlBuilderDriver;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.apache.maven.model.*;
@@ -42,6 +37,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.embedder.*;
+import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenUtil;
@@ -83,7 +79,7 @@ public class MavenProjectReader {
                                         Collections.singletonList(model.getBuild().getTestSourceDirectory()),
                                         Collections.singletonList(model.getBuild().getScriptSourceDirectory()));
 
-    return new MavenProjectReaderResult(readResult.first.problems, Collections.EMPTY_SET,
+    return new MavenProjectReaderResult(generalSettings, readResult.first.problems, Collections.EMPTY_SET,
                                         generalSettings.getEffectiveLocalRepository(), mavenProject);
   }
 
@@ -123,32 +119,32 @@ public class MavenProjectReader {
     LinkedHashSet<MavenProjectProblem> problems = createProblemsList();
     Set<String> alwaysOnProfiles = new THashSet<String>();
 
-    Element xmlProject = readXml(file, problems, MavenProjectProblem.ProblemType.SYNTAX).getChild("project");
-    if (xmlProject == null) {
+    Element xmlProject = readXml(file, problems, MavenProjectProblem.ProblemType.SYNTAX);
+    if (xmlProject == null || !"project".equals(xmlProject.getName())) {
       return new RawModelReadResult(result, problems, alwaysOnProfiles);
     }
 
-    result.setModelVersion(findChildValueByPath(xmlProject, "modelVersion"));
-    result.setGroupId(findChildValueByPath(xmlProject, "groupId"));
-    result.setArtifactId(findChildValueByPath(xmlProject, "artifactId"));
-    result.setVersion(findChildValueByPath(xmlProject, "version"));
+    result.setModelVersion(MavenJDOMUtil.findChildValueByPath(xmlProject, "modelVersion"));
+    result.setGroupId(MavenJDOMUtil.findChildValueByPath(xmlProject, "groupId"));
+    result.setArtifactId(MavenJDOMUtil.findChildValueByPath(xmlProject, "artifactId"));
+    result.setVersion(MavenJDOMUtil.findChildValueByPath(xmlProject, "version"));
 
     if (headerOnly) return new RawModelReadResult(result, problems, alwaysOnProfiles);
 
-    result.setPackaging(findChildValueByPath(xmlProject, "packaging"));
-    result.setName(findChildValueByPath(xmlProject, "name"));
+    result.setPackaging(MavenJDOMUtil.findChildValueByPath(xmlProject, "packaging"));
+    result.setName(MavenJDOMUtil.findChildValueByPath(xmlProject, "name"));
 
-    if (hasChildByPath(xmlProject, "parent")) {
+    if (MavenJDOMUtil.hasChildByPath(xmlProject, "parent")) {
       Parent parent = new Parent();
 
-      String groupId = findChildValueByPath(xmlProject, "parent.groupId");
-      String artifactId = findChildValueByPath(xmlProject, "parent.artifactId");
-      String version = findChildValueByPath(xmlProject, "parent.version");
+      String groupId = MavenJDOMUtil.findChildValueByPath(xmlProject, "parent.groupId");
+      String artifactId = MavenJDOMUtil.findChildValueByPath(xmlProject, "parent.artifactId");
+      String version = MavenJDOMUtil.findChildValueByPath(xmlProject, "parent.version");
 
       parent.setGroupId(groupId);
       parent.setArtifactId(artifactId);
       parent.setVersion(version);
-      parent.setRelativePath(findChildValueByPath(xmlProject, "parent.relativePath"));
+      parent.setRelativePath(MavenJDOMUtil.findChildValueByPath(xmlProject, "parent.relativePath"));
 
       result.setParent(parent);
     }
@@ -160,26 +156,26 @@ public class MavenProjectReader {
   }
 
   private void readModelAndBuild(ModelBase mavenModelBase, BuildBase mavenBuildBase, Element xmlModel) {
-    mavenModelBase.setModules(findChildrenValuesByPath(xmlModel, "modules", "module"));
-    collectProperties(findChildByPath(xmlModel, "properties"), mavenModelBase);
+    mavenModelBase.setModules(MavenJDOMUtil.findChildrenValuesByPath(xmlModel, "modules", "module"));
+    collectProperties(MavenJDOMUtil.findChildByPath(xmlModel, "properties"), mavenModelBase);
 
-    Element xmlBuild = findChildByPath(xmlModel, "build");
+    Element xmlBuild = MavenJDOMUtil.findChildByPath(xmlModel, "build");
     if (xmlBuild == null) return;
 
-    mavenBuildBase.setFinalName(findChildValueByPath(xmlBuild, "finalName"));
-    mavenBuildBase.setDefaultGoal(findChildValueByPath(xmlBuild, "defaultGoal"));
-    mavenBuildBase.setDirectory(findChildValueByPath(xmlBuild, "directory"));
-    mavenBuildBase.setResources(collectResources(findChildrenByPath(xmlBuild, "resources", "resource")));
-    mavenBuildBase.setTestResources(collectResources(findChildrenByPath(xmlBuild, "testResources", "testResource")));
+    mavenBuildBase.setFinalName(MavenJDOMUtil.findChildValueByPath(xmlBuild, "finalName"));
+    mavenBuildBase.setDefaultGoal(MavenJDOMUtil.findChildValueByPath(xmlBuild, "defaultGoal"));
+    mavenBuildBase.setDirectory(MavenJDOMUtil.findChildValueByPath(xmlBuild, "directory"));
+    mavenBuildBase.setResources(collectResources(MavenJDOMUtil.findChildrenByPath(xmlBuild, "resources", "resource")));
+    mavenBuildBase.setTestResources(collectResources(MavenJDOMUtil.findChildrenByPath(xmlBuild, "testResources", "testResource")));
 
     if (mavenBuildBase instanceof Build) {
       Build mavenBuild = (Build)mavenBuildBase;
 
-      mavenBuild.setSourceDirectory(findChildValueByPath(xmlBuild, "sourceDirectory"));
-      mavenBuild.setTestSourceDirectory(findChildValueByPath(xmlBuild, "testSourceDirectory"));
-      mavenBuild.setScriptSourceDirectory(findChildValueByPath(xmlBuild, "scriptSourceDirectory"));
-      mavenBuild.setOutputDirectory(findChildValueByPath(xmlBuild, "outputDirectory"));
-      mavenBuild.setTestOutputDirectory(findChildValueByPath(xmlBuild, "testOutputDirectory"));
+      mavenBuild.setSourceDirectory(MavenJDOMUtil.findChildValueByPath(xmlBuild, "sourceDirectory"));
+      mavenBuild.setTestSourceDirectory(MavenJDOMUtil.findChildValueByPath(xmlBuild, "testSourceDirectory"));
+      mavenBuild.setScriptSourceDirectory(MavenJDOMUtil.findChildValueByPath(xmlBuild, "scriptSourceDirectory"));
+      mavenBuild.setOutputDirectory(MavenJDOMUtil.findChildValueByPath(xmlBuild, "outputDirectory"));
+      mavenBuild.setTestOutputDirectory(MavenJDOMUtil.findChildValueByPath(xmlBuild, "testOutputDirectory"));
     }
   }
 
@@ -187,11 +183,11 @@ public class MavenProjectReader {
     List<Resource> result = new ArrayList<Resource>();
     for (Element each : xmlResources) {
       Resource r = new Resource();
-      r.setDirectory(findChildValueByPath(each, "directory"));
-      r.setFiltering("true".equals(findChildValueByPath(each, "filtering")));
-      r.setTargetPath(findChildValueByPath(each, "targetPath"));
-      r.setIncludes(findChildrenValuesByPath(each, "includes", "include"));
-      r.setExcludes(findChildrenValuesByPath(each, "excludes", "exclude"));
+      r.setDirectory(MavenJDOMUtil.findChildValueByPath(each, "directory"));
+      r.setFiltering("true".equals(MavenJDOMUtil.findChildValueByPath(each, "filtering")));
+      r.setTargetPath(MavenJDOMUtil.findChildValueByPath(each, "targetPath"));
+      r.setIncludes(MavenJDOMUtil.findChildrenValuesByPath(each, "includes", "include"));
+      r.setExcludes(MavenJDOMUtil.findChildrenValuesByPath(each, "excludes", "exclude"));
       result.add(r);
     }
     return result;
@@ -202,13 +198,13 @@ public class MavenProjectReader {
                                         Collection<MavenProjectProblem> problems,
                                         Collection<String> alwaysOnProfiles) {
     List<Profile> result = new ArrayList<Profile>();
-    collectProfiles(findChildrenByPath(xmlProject, "profiles", "profile"), result, PROFILE_FROM_POM);
+    collectProfiles(MavenJDOMUtil.findChildrenByPath(xmlProject, "profiles", "profile"), result, PROFILE_FROM_POM);
 
     VirtualFile profilesFile = MavenUtil.findProfilesXmlFile(projectFile);
     if (profilesFile != null) {
       collectProfilesFromSettingsXmlOrProfilesXml(profilesFile,
                                                   "profilesXml",
-                                                  false,
+                                                  true,
                                                   PROFILE_FROM_PROFILES_XML,
                                                   result,
                                                   alwaysOnProfiles,
@@ -230,7 +226,7 @@ public class MavenProjectReader {
       for (VirtualFile each : generalSettings.getEffectiveSettingsFiles()) {
         collectProfilesFromSettingsXmlOrProfilesXml(each,
                                                     "settings",
-                                                    true,
+                                                    false,
                                                     PROFILE_FROM_SETTINGS_XML,
                                                     settingsProfiles,
                                                     alwaysOnProfiles,
@@ -248,28 +244,29 @@ public class MavenProjectReader {
 
   private void collectProfilesFromSettingsXmlOrProfilesXml(VirtualFile profilesFile,
                                                            String rootElementName,
-                                                           boolean isStrictRoot,
+                                                           boolean wrapRootIfNecessary,
                                                            String profilesSource,
                                                            List<Profile> result,
                                                            Collection<String> alwaysOnProfiles,
                                                            Collection<MavenProjectProblem> problems) {
-    Element fileElement = readXml(profilesFile, problems, MavenProjectProblem.ProblemType.SETTINGS_OR_PROFILES);
+    Element rootElement = readXml(profilesFile, problems, MavenProjectProblem.ProblemType.SETTINGS_OR_PROFILES);
+    if (rootElement == null) return;
 
-    Element rootElement = findChildByPath(fileElement, rootElementName);
-    if (rootElement == null && !isStrictRoot) rootElement = fileElement;
+    if (wrapRootIfNecessary && !rootElementName.equals(rootElement.getName())) {
+      Element wrapper = new Element(rootElementName);
+      wrapper.addContent(rootElement);
+      rootElement = wrapper;
+    }
 
-    List<Element> xmlProfiles = findChildrenByPath(rootElement, "profiles", "profile");
+    List<Element> xmlProfiles = MavenJDOMUtil.findChildrenByPath(rootElement, "profiles", "profile");
     collectProfiles(xmlProfiles, result, profilesSource);
 
-    List<Element> activeProfiles = findChildrenByPath(rootElement, "activeProfiles", "activeProfile");
-    for (Element each : activeProfiles) {
-      alwaysOnProfiles.add(each.getText());
-    }
+    alwaysOnProfiles.addAll(MavenJDOMUtil.findChildrenValuesByPath(rootElement, "activeProfiles", "activeProfile"));
   }
 
   private void collectProfiles(List<Element> xmlProfiles, List<Profile> result, String source) {
     for (Element each : xmlProfiles) {
-      String id = findChildValueByPath(each, "id");
+      String id = MavenJDOMUtil.findChildValueByPath(each, "id");
       if (isEmptyOrSpaces(id)) continue;
 
       Profile profile = new Profile();
@@ -277,36 +274,36 @@ public class MavenProjectReader {
       profile.setSource(source);
       if (!addProfileIfDoesNotExist(profile, result)) continue;
 
-      Element xmlActivation = findChildByPath(each, "activation");
+      Element xmlActivation = MavenJDOMUtil.findChildByPath(each, "activation");
       if (xmlActivation != null) {
         Activation activation = new Activation();
-        activation.setActiveByDefault("true".equals(findChildValueByPath(xmlActivation, "activeByDefault")));
+        activation.setActiveByDefault("true".equals(MavenJDOMUtil.findChildValueByPath(xmlActivation, "activeByDefault")));
 
-        Element xmlOS = findChildByPath(xmlActivation, "os");
+        Element xmlOS = MavenJDOMUtil.findChildByPath(xmlActivation, "os");
         if (xmlOS != null) {
           ActivationOS activationOS = new ActivationOS();
-          activationOS.setName(findChildValueByPath(xmlOS, "name"));
-          activationOS.setFamily(findChildValueByPath(xmlOS, "family"));
-          activationOS.setArch(findChildValueByPath(xmlOS, "arch"));
-          activationOS.setVersion(findChildValueByPath(xmlOS, "version"));
+          activationOS.setName(MavenJDOMUtil.findChildValueByPath(xmlOS, "name"));
+          activationOS.setFamily(MavenJDOMUtil.findChildValueByPath(xmlOS, "family"));
+          activationOS.setArch(MavenJDOMUtil.findChildValueByPath(xmlOS, "arch"));
+          activationOS.setVersion(MavenJDOMUtil.findChildValueByPath(xmlOS, "version"));
           activation.setOs(activationOS);
         }
 
-        activation.setJdk(findChildValueByPath(xmlActivation, "jdk"));
+        activation.setJdk(MavenJDOMUtil.findChildValueByPath(xmlActivation, "jdk"));
 
-        Element xmlProperty = findChildByPath(xmlActivation, "property");
+        Element xmlProperty = MavenJDOMUtil.findChildByPath(xmlActivation, "property");
         if (xmlProperty != null) {
           ActivationProperty activationProperty = new ActivationProperty();
-          activationProperty.setName(findChildValueByPath(xmlProperty, "name"));
-          activationProperty.setValue(findChildValueByPath(xmlProperty, "value"));
+          activationProperty.setName(MavenJDOMUtil.findChildValueByPath(xmlProperty, "name"));
+          activationProperty.setValue(MavenJDOMUtil.findChildValueByPath(xmlProperty, "value"));
           activation.setProperty(activationProperty);
         }
 
-        Element xmlFile = findChildByPath(xmlActivation, "file");
+        Element xmlFile = MavenJDOMUtil.findChildByPath(xmlActivation, "file");
         if (xmlFile != null) {
           ActivationFile activationFile = new ActivationFile();
-          activationFile.setExists(findChildValueByPath(xmlFile, "exists"));
-          activationFile.setMissing(findChildValueByPath(xmlFile, "missing"));
+          activationFile.setExists(MavenJDOMUtil.findChildValueByPath(xmlFile, "exists"));
+          activationFile.setMissing(MavenJDOMUtil.findChildValueByPath(xmlFile, "missing"));
           activation.setFile(activationFile);
         }
 
@@ -341,46 +338,53 @@ public class MavenProjectReader {
   }
 
   private List<Profile> applyProfiles(Model model, File basedir, Collection<String> explicitProfiles, Collection<String> alwaysOnProfiles) {
-    List<Profile> activated = new ArrayList<Profile>();
+    List<Profile> activatedPom = new ArrayList<Profile>();
+    List<Profile> activatedExternal = new ArrayList<Profile>();
     List<Profile> activeByDefault = new ArrayList<Profile>();
 
     List<Profile> rawProfiles = model.getProfiles();
-    List<Profile> expandedProfiles = null;
+    List<Profile> expandedProfilesCache = null;
 
     for (int i = 0; i < rawProfiles.size(); i++) {
       Profile eachRawProfile = rawProfiles.get(i);
 
-      if (explicitProfiles.contains(eachRawProfile.getId())
-        || alwaysOnProfiles.contains(eachRawProfile.getId())) {
-        activated.add(eachRawProfile);
-        continue;
-      }
+      boolean shouldAdd = explicitProfiles.contains(eachRawProfile.getId()) || alwaysOnProfiles.contains(eachRawProfile.getId());
 
       Activation activation = eachRawProfile.getActivation();
-      if (activation == null) continue;
+      if (activation != null) {
+        if (activation.isActiveByDefault()) {
+          activeByDefault.add(eachRawProfile);
+        }
 
-      if (activation.isActiveByDefault()) {
-        activeByDefault.add(eachRawProfile);
-      }
+        // expand only if necessary
+        if (expandedProfilesCache == null) expandedProfilesCache = expandProperties(model, basedir).getProfiles();
+        Profile eachExpandedProfile = expandedProfilesCache.get(i);
 
-      // expand only if necessary
-      if (expandedProfiles == null) expandedProfiles = expandProperties(model, basedir).getProfiles();
-      Profile eachExpandedProfile = expandedProfiles.get(i);
-
-      for (ProfileActivator eachActivator : getProfileActivators()) {
-        try {
-          if (eachActivator.canDetermineActivation(eachExpandedProfile) && eachActivator.isActive(eachExpandedProfile)) {
-            activated.add(eachRawProfile);
-            break;
+        for (ProfileActivator eachActivator : getProfileActivators()) {
+          try {
+            if (eachActivator.canDetermineActivation(eachExpandedProfile) && eachActivator.isActive(eachExpandedProfile)) {
+              shouldAdd = true;
+              break;
+            }
+          }
+          catch (ProfileActivationException e) {
+            MavenLog.LOG.warn(e);
           }
         }
-        catch (ProfileActivationException e) {
-          MavenLog.LOG.warn(e);
+      }
+
+      if (shouldAdd) {
+        if (PROFILE_FROM_POM.equals(eachRawProfile.getSource())) {
+          activatedPom.add(eachRawProfile);
+        }
+        else {
+          activatedExternal.add(eachRawProfile);
         }
       }
     }
 
-    List<Profile> activatedProfiles = activated.isEmpty() ? activeByDefault : activated;
+    List<Profile> activatedProfiles = new ArrayList<Profile>(activatedPom.isEmpty() ? activeByDefault : activatedPom);
+    activatedProfiles.addAll(activatedExternal);
 
     for (Profile each : activatedProfiles) {
       new DefaultProfileInjector().inject(each, model);
@@ -626,7 +630,7 @@ public class MavenProjectReader {
       mavenProject = readProject(generalSettings, file, explicitProfiles, locator).nativeMavenProject;
     }
 
-    return new MavenProjectReaderResult(problems, unresolvedArtifactsIds, embedder.getLocalRepositoryFile(), mavenProject);
+    return new MavenProjectReaderResult(generalSettings, problems, unresolvedArtifactsIds, embedder.getLocalRepositoryFile(), mavenProject);
   }
 
   private Pair<MavenProject, Set<MavenId>> doResolveProject(MavenEmbedderWrapper embedder,
@@ -666,6 +670,7 @@ public class MavenProjectReader {
   }
 
   public MavenProjectReaderResult generateSources(MavenEmbedderWrapper embedder,
+                                                  MavenGeneralSettings generalSettings,
                                                   MavenImportingSettings importingSettings,
                                                   VirtualFile file,
                                                   Collection<String> profiles,
@@ -683,7 +688,11 @@ public class MavenProjectReader {
       MavenProject project = result.getMavenProject();
       if (project == null) return null;
 
-      return new MavenProjectReaderResult(problems, result.getUnresolvedArtifactIds(), embedder.getLocalRepositoryFile(), project);
+      return new MavenProjectReaderResult(generalSettings,
+                                          problems,
+                                          result.getUnresolvedArtifactIds(),
+                                          embedder.getLocalRepositoryFile(),
+                                          project);
     }
     catch (MavenProcessCanceledException e) {
       throw e;
@@ -698,120 +707,16 @@ public class MavenProjectReader {
   private Element readXml(final VirtualFile file,
                           final Collection<MavenProjectProblem> problems,
                           final MavenProjectProblem.ProblemType type) {
-    final LinkedList<Element> stack = new LinkedList<Element>();
-    final Element root = new Element("root");
-
-    String text = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      public String compute() {
-        if (!file.isValid()) return null;
-        try {
-          return VfsUtil.loadText(file);
-        }
-        catch (IOException e) {
-          MavenLog.LOG.warn("Cannot read the pom file: " + e);
-          problems.add(createProblem(file, e.getMessage(), type));
-        }
-        return null;
-      }
-    });
-    if (text == null) return root;
-
-    XmlBuilderDriver driver = new XmlBuilderDriver(text);
-    XmlBuilder builder = new XmlBuilder() {
-      public void doctype(@Nullable CharSequence publicId, @Nullable CharSequence systemId, int startOffset, int endOffset) {
+    return MavenJDOMUtil.read(file, new MavenJDOMUtil.ErrorHandler() {
+      public void onReadError(IOException e) {
+        MavenLog.LOG.warn("Cannot read the pom file: " + e);
+        problems.add(createProblem(file, e.getMessage(), type));
       }
 
-      public ProcessingOrder startTag(CharSequence localName, String namespace, int startoffset, int endoffset, int headerEndOffset) {
-        String name = localName.toString();
-        if (StringUtil.isEmptyOrSpaces(name)) return ProcessingOrder.TAGS;
-
-        Element newElement = new Element(name);
-
-        Element parent = stack.isEmpty() ? root : stack.getLast();
-        parent.addContent(newElement);
-        stack.addLast(newElement);
-
-        return ProcessingOrder.TAGS_AND_TEXTS;
-      }
-
-      public void endTag(CharSequence localName, String namespace, int startoffset, int endoffset) {
-        String name = localName.toString();
-        if (isEmptyOrSpaces(name)) return;
-
-        int index = -1;
-        for (int i = stack.size() - 1; i >= 0; i--) {
-          if (stack.get(i).getName().equals(name)) {
-            index = i;
-            break;
-          }
-        }
-        if (index == -1) return;
-        while (stack.size() > index) {
-          stack.removeLast();
-        }
-      }
-
-      public void textElement(CharSequence text, CharSequence physical, int startoffset, int endoffset) {
-        stack.getLast().addContent(JDOMUtil.legalizeText(text.toString()));
-      }
-
-      public void attribute(CharSequence name, CharSequence value, int startoffset, int endoffset) {
-      }
-
-      public void entityRef(CharSequence ref, int startOffset, int endOffset) {
-      }
-
-      public void error(String message, int startOffset, int endOffset) {
+      public void onSyntaxError() {
         problems.add(createSyntaxProblem(file, type));
       }
-    };
-
-    driver.build(builder);
-    return root;
-  }
-
-  private Element findChildByPath(Element element, String path) {
-    List<String> parts = StringUtil.split(path, ".");
-    Element current = element;
-    for (String each : parts) {
-      current = current.getChild(each);
-      if (current == null) break;
-    }
-    return current;
-  }
-
-  private boolean hasChildByPath(Element element, String path) {
-    return findChildValueByPath(element, path) != null;
-  }
-
-  private String findChildValueByPath(Element element, String path) {
-    Element child = findChildByPath(element, path);
-    return child == null ? null : child.getText();
-  }
-
-  private List<Element> findChildrenByPath(Element element, String path, String childrenName) {
-    return collectChildren(findChildByPath(element, path), childrenName);
-  }
-
-  private List<Element> collectChildren(Element container, String childrenName) {
-    if (container == null) return Collections.emptyList();
-
-    List<Element> result = new ArrayList<Element>();
-    for (Element each : (Iterable<? extends Element>)container.getChildren(childrenName)) {
-      result.add(each);
-    }
-    return result;
-  }
-
-  private List<String> findChildrenValuesByPath(Element element, String path, String childrenName) {
-    List<String> result = new ArrayList<String>();
-    for (Element each : findChildrenByPath(element, path, childrenName)) {
-      String value = each.getValue();
-      if (!StringUtil.isEmptyOrSpaces(value)) {
-        result.add(value);
-      }
-    }
-    return result;
+    });
   }
 
   private static class RawModelReadResult {

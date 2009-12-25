@@ -18,7 +18,7 @@ package com.intellij.junit4;
 import com.intellij.rt.execution.junit.DeafStream;
 import com.intellij.rt.execution.junit.IDEAJUnitListener;
 import com.intellij.rt.execution.junit.IdeaTestRunner;
-import com.intellij.rt.execution.junit.segments.OutputObjectRegistryEx;
+import com.intellij.rt.execution.junit.segments.OutputObjectRegistry;
 import com.intellij.rt.execution.junit.segments.Packet;
 import com.intellij.rt.execution.junit.segments.PoolOfDelimiters;
 import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
@@ -36,7 +36,7 @@ import java.util.Iterator;
 /** @noinspection UnusedDeclaration*/
 public class JUnit4IdeaTestRunner implements IdeaTestRunner {
   private RunListener myTestsListener;
-  private OutputObjectRegistryEx myRegistry;
+  private OutputObjectRegistry myRegistry;
 
   private static void sendNode(Description test, Packet packet) {
     final ArrayList children = test.getChildren();
@@ -46,7 +46,7 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
     }
   }
 
-  public static void sendTree(OutputObjectRegistryEx registry, Description suite) {
+  public static void sendTree(OutputObjectRegistry registry, Description suite) {
     Packet packet = registry.createPacket();
     packet.addString(PoolOfDelimiters.TREE_PREFIX);
     sendNode(suite, packet);

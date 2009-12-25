@@ -16,8 +16,8 @@
 
 package com.intellij.execution.junit2.ui.model;
 
-import com.intellij.execution.junit2.NewChildEvent;
-import com.intellij.execution.junit2.TestEvent;
+import com.intellij.execution.junit2.events.NewChildEvent;
+import com.intellij.execution.junit2.events.TestEvent;
 import com.intellij.execution.junit2.TestProxy;
 
 public class TreeCollapser extends JUnitAdapter {

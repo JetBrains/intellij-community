@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 
-package com.intellij.execution.junit2;
+package com.intellij.execution.junit2.ui;
 
+import com.intellij.execution.junit2.TestProxy;
+import com.intellij.execution.junit2.events.NewChildEvent;
+import com.intellij.execution.junit2.events.StateChangedEvent;
+import com.intellij.execution.junit2.events.TestEvent;
 import com.intellij.execution.junit2.ui.model.JUnitAdapter;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
 import com.intellij.execution.testframework.Filter;
@@ -28,7 +32,7 @@ import javax.swing.*;
 import org.jetbrains.annotations.NonNls;
 
 public class TestProgress extends DefaultBoundedRangeModel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.TestProgress");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.ui.TestProgress");
   private int myProblemsCounter = 0;
   private TestProxy myCurrentState = null;
   private final MyJUnitListener myListener = new MyJUnitListener();

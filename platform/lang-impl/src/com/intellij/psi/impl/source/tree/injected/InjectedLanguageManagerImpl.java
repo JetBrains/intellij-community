@@ -40,7 +40,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ConcurrentHashMap;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -274,7 +273,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
     return InjectedLanguageUtil.findInjectedElementNoCommitWithOffset(hostFile, hostDocumentOffset);
   }
 
-  private final Map<Class,MultiHostInjector[]> myInjectorsClone = new THashMap<Class, MultiHostInjector[]>();
+  private final Map<Class,MultiHostInjector[]> myInjectorsClone = new HashMap<Class, MultiHostInjector[]>();
   @TestOnly
   public void pushInjectors() {
     assert myInjectorsClone.isEmpty() : myInjectorsClone;

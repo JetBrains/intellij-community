@@ -17,6 +17,7 @@
 package com.intellij.execution.junit2;
 
 import com.intellij.execution.Location;
+import com.intellij.execution.junit2.events.*;
 import com.intellij.execution.junit2.info.TestInfo;
 import com.intellij.execution.junit2.segments.InputConsumer;
 import com.intellij.execution.junit2.states.Statistics;
@@ -35,7 +36,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-public class TestProxy extends CompositePrintable implements PrintableTestProxy, InputConsumer, ChangingPrintable, TestProxyParent {
+public class TestProxy extends CompositePrintable implements PrintableTestProxy, InputConsumer, ChangingPrintable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.TestProxy");
 
   private final TestInfo myInfo;

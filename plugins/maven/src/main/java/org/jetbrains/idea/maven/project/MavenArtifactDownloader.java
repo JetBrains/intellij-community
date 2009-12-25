@@ -21,13 +21,18 @@ import gnu.trove.THashMap;
 import org.apache.maven.artifact.Artifact;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.utils.MavenConstants;
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
+import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class MavenArtifactDownloader {
+  private final static ThreadPoolExecutor EXECUTOR = new ThreadPoolExecutor(5, Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
+
   private final MavenEmbedderWrapper myEmbedder;
   private final MavenProgressIndicator myProgress;
   private final MavenProjectsTree myProjectsTree;
@@ -35,10 +40,10 @@ public class MavenArtifactDownloader {
 
   public static void download(MavenProjectsTree projectsTree,
                               List<MavenProject> mavenProjects,
-                              boolean demand,
-                              MavenEmbedderWrapper embedder,
+                              boolean downloadSources,
+                              boolean downloadJavadoc, MavenEmbedderWrapper embedder,
                               MavenProgressIndicator p) throws MavenProcessCanceledException {
-    new MavenArtifactDownloader(projectsTree, mavenProjects, embedder, p).download(demand);
+    new MavenArtifactDownloader(projectsTree, mavenProjects, embedder, p).download(downloadSources, downloadJavadoc);
   }
 
   private MavenArtifactDownloader(MavenProjectsTree projectsTree,
@@ -51,13 +56,12 @@ public class MavenArtifactDownloader {
     myProgress = p;
   }
 
-  private void download(boolean demand) throws MavenProcessCanceledException {
+  private void download(boolean downloadSources, boolean downloadJavadoc) throws MavenProcessCanceledException {
     List<File> downloadedFiles = new ArrayList<File>();
     try {
-      Map<MavenArtifact, Set<MavenRemoteRepository>> artifacts = collectArtifactsToDownload();
+      Map<MavenId, Set<MavenRemoteRepository>> artifacts = collectArtifactsToDownload();
 
-      download(MavenConstants.SOURCES_CLASSIFIER, artifacts, downloadedFiles);
-      download(MavenConstants.JAVADOC_CLASSIFIER, artifacts, downloadedFiles);
+      download(downloadSources, downloadJavadoc, artifacts, downloadedFiles);
     }
     finally {
       scheduleFilesRefresh(downloadedFiles);
@@ -80,21 +84,23 @@ public class MavenArtifactDownloader {
     }
   }
 
-  private Map<MavenArtifact, Set<MavenRemoteRepository>> collectArtifactsToDownload() {
-    Map<MavenArtifact, Set<MavenRemoteRepository>> result = new THashMap<MavenArtifact, Set<MavenRemoteRepository>>();
+  private Map<MavenId, Set<MavenRemoteRepository>> collectArtifactsToDownload() {
+    Map<MavenId, Set<MavenRemoteRepository>> result = new THashMap<MavenId, Set<MavenRemoteRepository>>();
 
-    for (MavenProject each : myMavenProjects) {
-      List<MavenRemoteRepository> repositories = each.getRemoteRepositories();
+    for (MavenProject eachProject : myMavenProjects) {
+      List<MavenRemoteRepository> repositories = eachProject.getRemoteRepositories();
 
-      for (MavenArtifact eachDependency : each.getDependencies()) {
-        if (!each.isSupportedDependency(eachDependency)) continue;
+      for (MavenArtifact eachDependency : eachProject.getDependencies()) {
         if (Artifact.SCOPE_SYSTEM.equalsIgnoreCase(eachDependency.getScope())) continue;
         if (myProjectsTree.findProject(eachDependency.getMavenId()) != null) continue;
+        if (!eachProject.isSupportedDependency(eachDependency)) continue;
+        if (!eachDependency.isResolved()) continue;
 
-        Set<MavenRemoteRepository> registeredRepositories = result.get(eachDependency);
+        MavenId depId = eachDependency.getMavenId();
+        Set<MavenRemoteRepository> registeredRepositories = result.get(depId);
         if (registeredRepositories == null) {
           registeredRepositories = new LinkedHashSet<MavenRemoteRepository>();
-          result.put(eachDependency, registeredRepositories);
+          result.put(depId, registeredRepositories);
         }
         registeredRepositories.addAll(repositories);
       }
@@ -102,26 +108,49 @@ public class MavenArtifactDownloader {
     return result;
   }
 
-  private void download(String classifier,
-                        Map<MavenArtifact, Set<MavenRemoteRepository>> libraryArtifacts,
-                        List<File> downloadedFiles) throws MavenProcessCanceledException {
-    myProgress.setText(ProjectBundle.message("maven.downloading.artifact", classifier));
+  private void download(final boolean downloadSources,
+                        final boolean downloadJavadoc,
+                        final Map<MavenId, Set<MavenRemoteRepository>> libraryArtifacts,
+                        final List<File> downloadedFiles) throws MavenProcessCanceledException {
+    List<Future> futures = new ArrayList<Future>();
 
-    int step = 0;
-    for (Map.Entry<MavenArtifact, Set<MavenRemoteRepository>> eachEntry : libraryArtifacts.entrySet()) {
-      MavenArtifact eachArtifact = eachEntry.getKey();
+    List<String> classifiers = new ArrayList<String>(2);
+    if (downloadSources) classifiers.add(MavenConstants.CLASSIFIER_SOURCES);
+    if (downloadJavadoc) classifiers.add(MavenConstants.CLASSIFIER_JAVADOC);
 
-      myProgress.checkCanceled();
-      myProgress.setFraction(((double)step++) / libraryArtifacts.size());
-      myProgress.setText2(eachArtifact.toString());
+    final AtomicInteger downloaded = new AtomicInteger();
+    final int total = libraryArtifacts.size() * classifiers.size();
+    try {
+      for (final Map.Entry<MavenId, Set<MavenRemoteRepository>> eachEntry : libraryArtifacts.entrySet()) {
+        myProgress.checkCanceled();
 
-      Artifact a = myEmbedder.createArtifact(eachArtifact.getGroupId(),
-                                             eachArtifact.getArtifactId(),
-                                             eachArtifact.getVersion(),
-                                             MavenConstants.TYPE_JAR,
-                                             classifier);
-      myEmbedder.resolve(a, new ArrayList<MavenRemoteRepository>(eachEntry.getValue()));
-      if (a.isResolved()) downloadedFiles.add(a.getFile());
+        for (final String eachClassifier : classifiers) {
+          futures.add(EXECUTOR.submit(new Runnable() {
+            public void run() {
+              try {
+                myProgress.checkCanceled();
+                myProgress.setFraction(((double)downloaded.getAndIncrement()) / total);
+
+                Artifact a = myEmbedder.resolve(eachEntry.getKey(), MavenConstants.TYPE_JAR, eachClassifier,
+                                                new ArrayList<MavenRemoteRepository>(eachEntry.getValue()));
+                if (a.isResolved()) downloadedFiles.add(a.getFile());
+              }
+              catch (MavenProcessCanceledException ignore) {
+              }
+            }
+          }));
+        }
+      }
+    }
+    finally {
+      for (Future each : futures) {
+        try {
+          each.get();
+        }
+        catch (Exception e) {
+          MavenLog.LOG.error(e);
+        }
+      }
     }
   }
 }

@@ -138,7 +138,7 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
     return myConsole;
   }
 
-  protected TestsOutputConsolePrinter getPrinter() {
+  public TestsOutputConsolePrinter getPrinter() {
     return myPrinter;
   }
 
