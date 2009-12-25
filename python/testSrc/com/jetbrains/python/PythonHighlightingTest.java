@@ -63,7 +63,7 @@ public class PythonHighlightingTest extends PyLightFixtureTestCase {
   }
 
   public void testContinueInFinallyBlock() throws Exception {
-    doTest();
+    doTest(false, false);
   }
 
   public void testReturnWithArgumentsInGenerator() throws Exception {
