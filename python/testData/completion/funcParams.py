@@ -1,4 +1,4 @@
-def foo(uno, dos, tres): 
+def foo(auno, dos, tres):
   pass
 
-foo(un<caret>)
+foo(aun<caret>)

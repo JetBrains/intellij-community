@@ -1,4 +1,4 @@
-def foo(boo1, *boo2, **boo3): 
+def foo(xboo1, *boo2, **boo3):
   pass
 
-foo(boo1=)
+foo(xboo1=)
