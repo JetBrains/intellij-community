@@ -8,7 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="python" />
-    <orderEntry type="library" name="JUnit3" level="project" />
     <orderEntry type="module" module-name="testFramework" />
     <orderEntry type="module" module-name="python-ide" scope="RUNTIME" />
     <orderEntry type="module" module-name="platform-ultimate" scope="RUNTIME" />
