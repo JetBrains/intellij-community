@@ -28,7 +28,6 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -54,10 +53,6 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
 
   @Override
   public void compile(CompileContext compileContext, Chunk<Module> moduleChunk, VirtualFile[] virtualFiles, OutputSink sink) {
-    if (!GroovyCompilerConfiguration.getInstance(myProject).isUseGroovycStubs()) {
-      return;
-    }
-
     final CompileScope scope = compileContext.getCompileScope();
     final VirtualFile[] javaFiles = scope.getFiles(StdFileTypes.JAVA, true);
     if (javaFiles.length == 0) {
@@ -77,19 +72,18 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
       return;
     }
 
-    boolean hasGroovy = false;
     final ExcludedEntriesConfiguration excluded = GroovyCompilerConfiguration.getExcludeConfiguration(myProject);
+
     List<VirtualFile> total = new ArrayList<VirtualFile>();
     for (final VirtualFile virtualFile : virtualFiles) {
       if (!excluded.isExcluded(virtualFile)) {
-        total.add(virtualFile);
         if (virtualFile.getFileType() == GroovyFileType.GROOVY_FILE_TYPE) {
-          hasGroovy = true;
+          total.add(virtualFile);
         }
       }
     }
 
-    if (!hasGroovy) {
+    if (total.isEmpty()) {
       return;
     }
 
@@ -99,29 +93,9 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
   @Override
   protected void compileFiles(CompileContext compileContext, Module module,
                               final List<VirtualFile> toCompile, OutputSink sink, boolean tests) {
-    boolean hasGroovy = false;
-    boolean hasJava = false;
-    for (final VirtualFile file : toCompile) {
-      if (file.getFileType() == StdFileTypes.JAVA) {
-        hasJava = true;
-      }
-      if (file.getFileType() == GroovyFileType.GROOVY_FILE_TYPE) {
-        hasGroovy = true;
-      }
-    }
-
-    if (!hasGroovy) {
-      return;
-    }
-
     final String rootPath = CompilerPaths.getGeneratedDataDirectory(myProject) + "/groovyStubs/";
     final File outDir = new File(rootPath + myProject.getLocationHash() + "/" + module.getName() + "/" + (tests ? "tests" : "production") + "/");
     outDir.mkdirs();
-
-    if (!hasJava) {
-      //always pass groovyc stub generator at least 1 java file, or it won't generate stubs
-      toCompile.add(createMockJavaFile(rootPath));
-    }
 
     final VirtualFile tempOutput = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(outDir);
     assert tempOutput != null;
@@ -129,20 +103,20 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
 
     ((CompileContextEx)compileContext).assignModule(tempOutput, module, tests);
 
-    runGroovycCompiler(compileContext, module, toCompile, true, tempOutput, sink, tests);
-  }
-
-  private VirtualFile createMockJavaFile(final String rootPath) {
-    return new WriteCommandAction<VirtualFile>(myProject) {
-      protected void run(Result<VirtualFile> result) throws Throwable {
-        final VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(rootPath));
-        final String sampleClassName = "$$$VeryEmptyJavaClass$$$";
-        assert root != null;
-        final VirtualFile sampleClass = root.findOrCreateChildData(this, sampleClassName + ".java");
-        VfsUtil.saveText(sampleClass, "public class " + sampleClassName + " {}");
-        result.setResult(sampleClass);
+    if (GroovyCompilerConfiguration.getInstance(myProject).isUseGroovycStubs()) {
+      runGroovycCompiler(compileContext, module, toCompile, true, tempOutput, sink, tests);
+    } else {
+      final GroovyToJavaGenerator generator = new GroovyToJavaGenerator(myProject, compileContext);
+      for (VirtualFile file : toCompile) {
+        final String outPath = tempOutput.getPath();
+        final List<String> relPaths = generator.generateItems(file, tempOutput);
+        final List<String> fullPaths = new ArrayList<String>();
+        for (String relPath : relPaths) {
+          fullPaths.add(outPath + "/" + relPath);
+        }
+        addStubsToCompileScope(fullPaths, compileContext, module);
       }
-    }.execute().getResultObject();
+    }
   }
 
   private void cleanDirectory(final VirtualFile dir) {
@@ -167,11 +141,6 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
         }
       }
     }.execute();
-  }
-
-  @Override
-  public boolean isCompilableFile(VirtualFile file, CompileContext context) {
-    return super.isCompilableFile(file, context) || StdFileTypes.JAVA == file.getFileType();
   }
 
   @NotNull

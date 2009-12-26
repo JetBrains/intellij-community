@@ -192,14 +192,11 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
 
       List<OutputItem> outputItems = processHandler.getSuccessfullyCompiled();
       if (forStubs) {
-        List<VirtualFile> stubFiles = new ArrayList<VirtualFile>();
+        List<String> outputPaths = new ArrayList<String>();
         for (final OutputItem outputItem : outputItems) {
-          final File stub = new File(outputItem.getOutputPath());
-          CompilerUtil.refreshIOFile(stub);
-          final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(stub);
-          ContainerUtil.addIfNotNull(file, stubFiles);
+          outputPaths.add(outputItem.getOutputPath());
         }
-        ((CompileContextEx)compileContext).addScope(new FileSetCompileScope(stubFiles, new Module[]{module}));
+        addStubsToCompileScope(outputPaths, compileContext, module);
         outputItems = Collections.emptyList();
       }
 
@@ -208,6 +205,17 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     catch (ExecutionException e) {
       LOG.error(e);
     }
+  }
+
+  protected static void addStubsToCompileScope(List<String> outputPaths, CompileContext compileContext, Module module) {
+    List<VirtualFile> stubFiles = new ArrayList<VirtualFile>();
+    for (String outputPath : outputPaths) {
+      final File stub = new File(outputPath);
+      CompilerUtil.refreshIOFile(stub);
+      final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(stub);
+      ContainerUtil.addIfNotNull(file, stubFiles);
+    }
+    ((CompileContextEx)compileContext).addScope(new FileSetCompileScope(stubFiles, new Module[]{module}));
   }
 
   @Nullable

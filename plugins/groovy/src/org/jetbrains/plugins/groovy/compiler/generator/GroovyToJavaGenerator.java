@@ -68,6 +68,7 @@ import java.util.*;
  * @author: Dmitry.Krasilschikov
  * @date: 03.05.2007
  */
+//todo it's not actually a compiler anymore, remove all the implements'
 public class GroovyToJavaGenerator implements SourceGeneratingCompiler, CompilationStatusListener {
   private static final Map<String, String> typesToInitialValues = new HashMap<String, String>();
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.compiler.generator.GroovyToJavaGenerator");
@@ -106,19 +107,18 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
   };
 
   private static final CharSequence PREFIX_SEPARATOR = "/";
-  private CompileContext myContext;
+  private final CompileContext myContext;
   private final Project myProject;
 
-  public GroovyToJavaGenerator(Project project) {
+  public GroovyToJavaGenerator(Project project, CompileContext context) {
     myProject = project;
+    myContext = context;
   }
 
   public GenerationItem[] getGenerationItems(CompileContext context) {
     if (GroovyCompilerConfiguration.getInstance(myProject).isUseGroovycStubs()) {
       return new GenerationItem[0];
     }
-
-    myContext = context;
 
     List<GenerationItem> generationItems = new ArrayList<GenerationItem>();
     GenerationItem item;
@@ -222,7 +222,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
   }
 
   //virtualFile -> PsiFile
-  private List<String> generateItems(final VirtualFile item, final VirtualFile outputRootDirectory) {
+  public List<String> generateItems(final VirtualFile item, final VirtualFile outputRootDirectory) {
     ProgressIndicator indicator = getProcessIndicator();
     if (indicator != null) indicator.setText("Generating stubs for " + item.getName() + "...");
 
