@@ -32,7 +32,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
@@ -42,7 +42,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDef
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
-import static org.jetbrains.plugins.groovy.lang.psi.impl.types.GrCodeReferenceElementImpl.ReferenceKind.*;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
@@ -53,6 +52,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+
+import static org.jetbrains.plugins.groovy.lang.psi.impl.types.GrCodeReferenceElementImpl.ReferenceKind.*;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -103,7 +104,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
 
   @Nullable
   public PsiElement resolve() {
-    ResolveResult[] results = getManager().getResolveCache().resolveWithCaching(this, RESOLVER, false, false);
+    ResolveResult[] results = getManager().getResolveCache().resolveWithCaching(this, RESOLVER, true, false);
     return results.length == 1 ? results[0].getElement() : null;
   }
 
@@ -122,8 +123,17 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
     } else if (parent instanceof GrImportStatement) {
       final GrImportStatement importStatement = (GrImportStatement) parent;
       if (importStatement.isStatic()) {
-        return importStatement.isOnDemand() ? CLASS_FQ : STATIC_MEMBER_FQ;
-      } else {
+        if (importStatement.isOnDemand()) {
+          if (getQualifier() != null) {
+            return CLASS_FQ;
+          }
+          return CLASS;
+        }
+        else {
+          return STATIC_MEMBER_FQ;
+        }
+      }
+      else {
         return forCompletion || importStatement.isOnDemand() ? CLASS_OR_PACKAGE_FQ : CLASS_FQ;
       }
     }
@@ -139,6 +149,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
     return CLASS;
   }
 
+  @Nullable
   public String getCanonicalText() {
     PsiElement resolved = resolve();
     if (resolved instanceof PsiClass) {
@@ -150,7 +161,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
     if (getKind(false) == STATIC_MEMBER_FQ) {
       final GrCodeReferenceElement qualifier = getQualifier();
       if (qualifier != null) {
-        final String qualifierText = getQualifier().getCanonicalText();
+        final String qualifierText = qualifier.getCanonicalText();
         if (qualifierText != null) {
           return qualifierText + "." + getReferenceName();
         }
@@ -179,6 +190,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
     return getManager().areElementsEquivalent(element, resolve());
   }
 
+  @NotNull
   public Object[] getVariants() {
     if (isClassReferenceForNew()) {
       return getVariantsForNewExpression();
@@ -194,7 +206,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
   }
 
   private Object[] getVariantsForNewExpression() {
-    final Object[] classVariants = getVariantsImpl(ReferenceKind.CLASS_OR_PACKAGE);
+    final Object[] classVariants = getVariantsImpl(CLASS_OR_PACKAGE);
     List<Object> result = new ArrayList<Object>();
     for (Object variant : classVariants) {
       if (variant instanceof PsiClass) {
@@ -217,7 +229,6 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
   }
 
   private Object[] getVariantsImpl(ReferenceKind kind) {
-    PsiManager manager = getManager();
     switch (kind) {
       case STATIC_MEMBER_FQ: {
         final GrCodeReferenceElement qualifier = getQualifier();
@@ -272,6 +283,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
       }
 
       case CLASS_OR_PACKAGE:
+      case CLASS_IN_QUALIFIED_NEW:
       case CLASS: {
         GrCodeReferenceElement qualifier = getQualifier();
         if (qualifier != null) {
@@ -334,7 +346,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
           JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
           if (kind == CLASS_OR_PACKAGE_FQ || kind == CLASS_FQ) {
             final PsiFile file = ref.getContainingFile();
-            if (qName.indexOf('.') > 0 || file instanceof GroovyFileBase && ((GroovyFileBase)file).getPackageName().length() == 0) {
+            if (qName.indexOf('.') > 0 || file instanceof GroovyFile && ((GroovyFile)file).getPackageName().length() == 0) {
               PsiClass aClass = facade.findClass(qName, ref.getResolveScope());
               if (aClass != null) {
                 boolean isAccessible = PsiUtil.isAccessible(ref, aClass);

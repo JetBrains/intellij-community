@@ -63,11 +63,11 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
               if (aPackage != null) {
                 if (!aPackage.processDeclarations(processor, state, lastParent, place)) return false;
               }
-            } else {
-              PsiClass clazz = facade.findClass(qName, getResolveScope());
-              if (clazz != null) {
-                if (!processAllMembers(processor, clazz)) return false;
-
+            }
+            else {
+              final PsiElement resolved = ref.resolve();
+              if (resolved instanceof PsiClass) {
+                if (!processAllMembers(processor, (PsiClass)resolved)) return false;
               }
             }
           }
