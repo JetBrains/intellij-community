@@ -57,8 +57,8 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
   private static final Icon IMPLEMENTED_INTERFACE_MARKER_RENDERER = IMPLEMENTED_METHOD_MARKER_RENDERER;
   private static final Icon SUBCLASSED_CLASS_MARKER_RENDERER = OVERRIDEN_METHOD_MARKER_RENDERER;
 
-  private final DaemonCodeAnalyzerSettings myDaemonSettings;
-  private final EditorColorsManager myColorsManager;
+  protected final DaemonCodeAnalyzerSettings myDaemonSettings;
+  protected final EditorColorsManager myColorsManager;
 
   public JavaLineMarkerProvider(DaemonCodeAnalyzerSettings daemonSettings, EditorColorsManager colorsManager) {
     myDaemonSettings = daemonSettings;
@@ -119,7 +119,7 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
     return null;
   }
 
-  private static int getCategory(PsiElement element) {
+  protected static int getCategory(PsiElement element) {
     if (element instanceof PsiField) return 1;
     if (element instanceof PsiClass || element instanceof PsiClassInitializer) return 2;
     if (element instanceof PsiMethod) {
