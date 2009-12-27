@@ -39,7 +39,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
-import org.jetbrains.plugins.groovy.gant.GantUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -195,19 +194,18 @@ public class GradleScriptType extends GroovyScriptType {
   public GlobalSearchScope patchResolveScope(@NotNull GroovyFile file, @NotNull GlobalSearchScope baseScope) {
     final Module module = ModuleUtil.findModuleForPsiElement(file);
     if (module != null) {
-      final String sdkHome = GantUtils.getSdkHomeFromClasspath(module);
-      if (sdkHome != null) {
+      if (GradleLibraryManager.getSdkHomeFromClasspath(module) != null) {
         return baseScope;
       }
     }
 
-    final GradleSettings gantSettings = GradleSettings.getInstance(file.getProject());
-    final VirtualFile home = gantSettings.getSdkHome();
+    final GradleSettings gradleSettings = GradleSettings.getInstance(file.getProject());
+    final VirtualFile home = gradleSettings.getSdkHome();
     if (home == null) {
       return baseScope;
     }
 
-    final List<VirtualFile> files = gantSettings.getClassRoots();
+    final List<VirtualFile> files = gradleSettings.getClassRoots();
     if (files.isEmpty()) {
       return baseScope;
     }

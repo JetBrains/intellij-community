@@ -85,16 +85,25 @@ public class GradleLibraryManager extends AbstractGroovyLibraryManager {
   @Nullable
   public static VirtualFile getSdkHome(@Nullable Module module, @NotNull Project project) {
     if (module != null) {
-      final VirtualFile gradleJar = findGradleJar(ModuleRootManager.getInstance(module).getFiles(OrderRootType.CLASSES));
-      if (gradleJar != null) {
-        final VirtualFile parent = gradleJar.getParent();
-        if (parent != null && "lib".equals(parent.getName())) {
-          return parent.getParent();
-        }
+      final VirtualFile cpHome = getSdkHomeFromClasspath(module);
+      if (cpHome != null) {
+        return cpHome;
       }
     }
 
     return GradleSettings.getInstance(project).getSdkHome();
+  }
+
+  @Nullable
+  public static VirtualFile getSdkHomeFromClasspath(Module module) {
+    final VirtualFile gradleJar = findGradleJar(ModuleRootManager.getInstance(module).getFiles(OrderRootType.CLASSES));
+    if (gradleJar != null) {
+      final VirtualFile parent = gradleJar.getParent();
+      if (parent != null && "lib".equals(parent.getName())) {
+        return parent.getParent();
+      }
+    }
+    return null;
   }
 
   @Nullable
