@@ -104,8 +104,11 @@ public class LibrariesUtil {
         File realFile = new File(jarPath);
         if (realFile.exists()) {
           File parentFile = realFile.getParentFile();
-          if (parentFile != null && "lib".equals(parentFile.getName())) {
-            return parentFile.getParent();
+          if (parentFile != null) {
+            if ("lib".equals(parentFile.getName())) {
+              return parentFile.getParent();
+            }
+            return parentFile.getPath();
           }
         }
       }

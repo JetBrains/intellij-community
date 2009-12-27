@@ -33,7 +33,7 @@ import java.io.File;
  */
 public class GroovyLibraryManager extends AbstractGroovyLibraryManager {
   public boolean managesLibrary(@NotNull Library library, LibrariesContainer container) {
-    return GroovyConfigUtils.isGroovyLibrary(container.getLibraryFiles(library, OrderRootType.CLASSES));
+    return LibrariesUtil.getGroovyLibraryHome(container.getLibraryFiles(library, OrderRootType.CLASSES)) != null;
   }
 
   @Nls
