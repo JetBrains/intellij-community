@@ -102,10 +102,20 @@ public class GrStringUtil {
 
   public static String removeQuotes(String s) {
     if (s.startsWith(TRIPLE_QUOTES) || s.startsWith(TRIPLE_DOUBLE_QUOTES)) {
-      return s.substring(3, s.length() - 3);
+      if (s.endsWith(s.substring(0, 3))) {
+        return s.substring(3, s.length() - 3);
+      }
+      else {
+        return s.substring(3);
+      }
     }
     else if (s.startsWith(QUOTE) || s.startsWith(DOUBLE_QUOTES)) {
-      return s.substring(1, s.length() - 1);
+      if (s.endsWith(s.substring(0, 1))) {
+        return s.substring(1, s.length() - 1);
+      }
+      else {
+        return s.substring(1);
+      }
     }
     return s;
   }
