@@ -35,11 +35,7 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jan 26, 2005
- * Time: 1:00:32 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class XMLParserDefinition implements ParserDefinition {
   @NotNull

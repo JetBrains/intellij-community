@@ -22,12 +22,8 @@ import com.intellij.psi.impl.cache.impl.BaseFilterLexer;
 import com.intellij.psi.impl.cache.impl.id.LexerBasedIdIndexer;
 
 /**
- * Created by IntelliJ IDEA.
-* User: Maxim.Mossienko
-* Date: 11.02.2009
-* Time: 20:34:27
-* To change this template use File | Settings | File Templates.
-*/
+ * @author Maxim.Mossienko
+ */
 public class PropertiesIdIndexer extends LexerBasedIdIndexer {
   protected Lexer createLexer(final BaseFilterLexer.OccurrenceConsumer consumer) {
     final PropertiesFilterLexer propsLexer =

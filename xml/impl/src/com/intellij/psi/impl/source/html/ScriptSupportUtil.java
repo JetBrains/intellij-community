@@ -32,16 +32,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Jul 1, 2005
- * Time: 11:17:05 PM
- * To change this template use File | Settings | File Templates.
+ * @author Maxim.Mossienko
  */
 public class ScriptSupportUtil {
   private static final Key<XmlTag[]> CachedScriptTagsKey = Key.create("script tags");
   private static final ThreadLocal<String> ProcessingDeclarationsFlag = new ThreadLocal<String>();
   private static final @NonNls String SCRIPT_TAG = "script";
+
+  private ScriptSupportUtil() {
+  }
 
   public static void clearCaches(XmlFile element) {
     element.putUserData(CachedScriptTagsKey,null);

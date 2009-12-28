@@ -22,11 +22,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.sun.jdi.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lex
- * Date: Mar 24, 2004
- * Time: 11:10:41 PM
- * To change this template use File | Settings | File Templates.
+ * @author lex
  */
 public class AssignmentEvaluator implements Evaluator{
   private final Evaluator myLeftEvaluator;

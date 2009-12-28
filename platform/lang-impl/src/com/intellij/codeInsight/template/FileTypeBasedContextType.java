@@ -20,15 +20,11 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lesya
- * Date: Jul 28, 2008
- * Time: 4:53:26 PM
- * To change this template use File | Settings | File Templates.
+ * @author lesya
  */
 public abstract class FileTypeBasedContextType extends TemplateContextType {
   private final LanguageFileType myFileType;

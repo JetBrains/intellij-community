@@ -24,11 +24,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Jul 22, 2005
- * Time: 4:35:13 PM
- * To change this template use File | Settings | File Templates.
+ * @author Maxim.Mossienko
  */
 public class NamedObjectDescriptor implements PsiWritableMetaData, PsiMetaData {
   private XmlTag myDcl;

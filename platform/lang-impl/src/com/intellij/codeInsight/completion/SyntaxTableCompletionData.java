@@ -22,11 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.TrueFilter;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Oct 14, 2004
- * Time: 4:28:39 PM
- * To change this template use File | Settings | File Templates.
+ * @author Maxim.Mossienko
  */
 public class SyntaxTableCompletionData extends CompletionData{
   private final SyntaxTable mySyntaxTable;

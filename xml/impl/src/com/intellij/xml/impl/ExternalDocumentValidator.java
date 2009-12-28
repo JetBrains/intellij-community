@@ -52,11 +52,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: maxim
- * Date: 21.01.2005
- * Time: 0:07:51
- * To change this template use File | Settings | File Templates.
+ * @author maxim
  */
 public class ExternalDocumentValidator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.impl.ExternalDocumentValidator");

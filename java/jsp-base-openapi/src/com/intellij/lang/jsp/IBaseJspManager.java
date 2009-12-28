@@ -15,18 +15,14 @@
  */
 package com.intellij.lang.jsp;
 
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.PsiFile;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: 20.04.2009
- * Time: 17:07:57
- * To change this template use File | Settings | File Templates.
+ * @author Maxim.Mossienko
  */
 public interface IBaseJspManager {
   XmlNSDescriptor getActionsLibrary(@NotNull PsiFile containingFile);

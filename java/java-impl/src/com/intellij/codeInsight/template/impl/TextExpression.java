@@ -22,11 +22,7 @@ import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TextResult;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim
- * Date: Nov 7, 2006
- * Time: 12:17:39 AM
- * To change this template use File | Settings | File Templates.
+ * @author Maxim
  */
 public class TextExpression extends Expression {
   private final String myString;

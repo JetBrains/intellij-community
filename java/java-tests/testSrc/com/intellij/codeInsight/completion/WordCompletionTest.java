@@ -11,11 +11,7 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Oct 14, 2004
- * Time: 4:39:37 PM
- * To change this template use File | Settings | File Templates.
+ * @author Maxim.Mossienko
  */
 public class WordCompletionTest extends CompletionTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/word/";

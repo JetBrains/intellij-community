@@ -46,11 +46,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lex
- * Date: Apr 12, 2004
- * Time: 4:28:52 PM
- * To change this template use File | Settings | File Templates.
+ * @author lex
  */
 public class StatementEvaluationDialog extends EvaluationDialog{
   private final JPanel myPanel;
@@ -79,7 +75,7 @@ public class StatementEvaluationDialog extends EvaluationDialog{
 
     splitter.setFirstComponent(editorPanel);
 
-    final EvaluationDialog.MyEvaluationPanel evaluationPanel = getEvaluationPanel();
+    final MyEvaluationPanel evaluationPanel = getEvaluationPanel();
     final JPanel ep = new JPanel(new BorderLayout());
     final JLabel resultLabel = new JLabel(DebuggerBundle.message("label.evaluate.dialog.result"));
     ep.add(resultLabel, BorderLayout.NORTH);
@@ -166,6 +162,9 @@ public class StatementEvaluationDialog extends EvaluationDialog{
   private void updateSwitchButton(Document document) {
     PsiDocumentManager.getInstance(getProject()).commitDocument(document);
     PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
+    if (psiFile == null) {
+      return;
+    }
     PsiElement[] children = psiFile.getChildren();
     int nonWhite = 0;
     for (PsiElement child : children) {
@@ -215,7 +214,7 @@ public class StatementEvaluationDialog extends EvaluationDialog{
 
   private class SwitchAction extends AbstractAction {
     public SwitchAction() {
-      putValue(Action.NAME, DebuggerBundle.message("action.evaluate.statement.dialog.switch.mode.description"));
+      putValue(NAME, DebuggerBundle.message("action.evaluate.statement.dialog.switch.mode.description"));
     }
 
     public void actionPerformed(ActionEvent e) {

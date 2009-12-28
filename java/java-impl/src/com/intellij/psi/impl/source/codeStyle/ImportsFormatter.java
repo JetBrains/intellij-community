@@ -30,13 +30,8 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lesya
- * Date: Jul 21, 2005
- * Time: 7:42:23 PM
- * To change this template use File | Settings | File Templates.
+ * @author lesya
  */
-
 public class ImportsFormatter extends XmlRecursiveElementVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.ImportsFormatter");
   
@@ -59,7 +54,7 @@ public class ImportsFormatter extends XmlRecursiveElementVisitor {
     }
   }
 
-  private boolean isPageDirectiveTag(final XmlTag tag) {
+  private static boolean isPageDirectiveTag(final XmlTag tag) {
     return PAGE_DIRECTIVE.equals(tag.getName());
   }
 
@@ -134,7 +129,7 @@ public class ImportsFormatter extends XmlRecursiveElementVisitor {
     }
   }
 
-  private ASTNode findValueToken(final ASTNode node) {
+  private static ASTNode findValueToken(final ASTNode node) {
     ASTNode child = node.getFirstChildNode();
     while (child != null){
       if (child.getElementType() == XmlElementType.XML_ATTRIBUTE_VALUE_TOKEN) return child;
@@ -143,7 +138,7 @@ public class ImportsFormatter extends XmlRecursiveElementVisitor {
     return null;
   }
 
-  private boolean isImportAttribute(final XmlAttribute attribute) {
+  private static boolean isImportAttribute(final XmlAttribute attribute) {
     return IMPORT_ATT.equals(attribute.getName());
   }
 

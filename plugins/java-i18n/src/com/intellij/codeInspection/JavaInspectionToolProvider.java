@@ -22,11 +22,7 @@ import com.intellij.codeInspection.i18n.InvalidPropertyKeyInspection;
 import com.intellij.lang.properties.UnusedMessageFormatParameterInspection;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: 11.02.2009
- * Time: 17:54:45
- * To change this template use File | Settings | File Templates.
+ * @author Maxim.Mossienko
  */
 public class JavaInspectionToolProvider implements InspectionToolProvider {
   public Class[] getInspectionClasses() {

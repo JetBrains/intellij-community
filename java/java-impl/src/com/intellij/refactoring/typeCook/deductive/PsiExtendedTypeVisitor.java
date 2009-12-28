@@ -20,13 +20,9 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeVisitorEx;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
- * Date: Dec 27, 2004
- * Time: 7:20:09 PM
- * To change this template use File | Settings | File Templates.
+ * @author db
  */
-public abstract class PsiExtendedTypeVisitor <X> extends PsiTypeVisitorEx<X> {
+public abstract class PsiExtendedTypeVisitor<X> extends PsiTypeVisitorEx<X> {
   public X visitClassType(final PsiClassType classType) {
     super.visitClassType(classType);
     final PsiClassType.ClassResolveResult result = classType.resolveGenerics();

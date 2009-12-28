@@ -21,11 +21,7 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: pti
- * Date: Mar 29, 2005
- * Time: 9:23:39 PM
- * To change this template use File | Settings | File Templates.
+ * @author pti
  */
 public class WelcomeScrollablePanel extends JPanel implements Scrollable{
 

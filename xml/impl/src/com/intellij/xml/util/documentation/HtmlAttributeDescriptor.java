@@ -18,11 +18,7 @@ package com.intellij.xml.util.documentation;
 import java.util.Arrays;
 
 /**
- * Created by IntelliJ IDEA.
- * User: maxim
- * Date: 24.12.2004
- * Time: 23:54:11
- * To change this template use File | Settings | File Templates.
+ * @author maxim
  */
 class HtmlAttributeDescriptor extends EntityDescriptor {
   private String myType;

@@ -15,17 +15,12 @@
  */
 package com.intellij.debugger.engine;
 
-import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RunProfileState;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lex
- * Date: Feb 26, 2004
- * Time: 4:11:18 PM
- * To change this template use File | Settings | File Templates.
+ * @author lex
  */
 public class DebugProcessAdapterImpl implements DebugProcessListener {
   //executed in manager thread

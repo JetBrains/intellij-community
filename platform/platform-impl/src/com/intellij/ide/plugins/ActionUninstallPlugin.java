@@ -25,15 +25,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 
 import java.io.IOException;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lloix
- * Date: May 24, 2006
- * Time: 3:19:45 PM
- * To change this template use File | Settings | File Templates.
+ * @author lloix
  */
 public class ActionUninstallPlugin extends AnAction implements DumbAware {
   final private static String promptTitle = IdeBundle.message("title.plugin.uninstall");
@@ -95,7 +90,7 @@ public class ActionUninstallPlugin extends AnAction implements DumbAware {
       //  not empty - issue warning instead of simple prompt.
       ArrayList<IdeaPluginDescriptorImpl> dependant = host.getDependentList(pluginDescriptor);
       if (dependant.size() > 0) {
-        message = MessageFormat.format(IdeBundle.message("several.plugins.depend.on.0.continue.to.remove"), pluginDescriptor.getName());
+        message = IdeBundle.message("several.plugins.depend.on.0.continue.to.remove", pluginDescriptor.getName());
         actualDelete = (Messages.showYesNoDialog(host.getMainPanel(), message, promptTitle, Messages.getQuestionIcon()) == 0);
       }
 

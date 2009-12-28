@@ -12,16 +12,15 @@ import java.lang.ref.SoftReference;
 import java.util.ResourceBundle;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lesya
- * Date: Sep 5, 2005
- * Time: 3:20:59 PM
- * To change this template use File | Settings | File Templates.
+ * @author lesya
  */
 public class JavaCvsSrcBundle {
   private static Reference<ResourceBundle> ourBundle;
 
   @NonNls protected static final String PATH_TO_BUNDLE = "org.netbeans.lib.cvsclient.JavaCvsSrcBundle";
+
+  private JavaCvsSrcBundle() {
+  }
 
   public static String message(@PropertyKey(resourceBundle = PATH_TO_BUNDLE)String key, Object... params) {
     return CommonBundle.message(getBundle(), key, params);

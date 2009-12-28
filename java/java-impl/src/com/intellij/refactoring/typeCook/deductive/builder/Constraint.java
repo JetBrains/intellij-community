@@ -15,16 +15,12 @@
  */
 package com.intellij.refactoring.typeCook.deductive.builder;
 
-import com.intellij.psi.PsiType;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiType;
 import com.intellij.refactoring.typeCook.deductive.resolver.Binding;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
- * Date: Jul 20, 2004
- * Time: 6:00:28 PM
- * To change this template use File | Settings | File Templates.
+ * @author db
  */
 public abstract class Constraint {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeCook.deductive.builder.Constraint");

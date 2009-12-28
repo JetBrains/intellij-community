@@ -29,11 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: 06.02.2009
- * Time: 21:13:07
- * To change this template use File | Settings | File Templates.
+ * @author Maxim.Mossienko
  */
 public class JavaCreatePropertyFix extends CreatePropertyFix {
   public JavaCreatePropertyFix() {}

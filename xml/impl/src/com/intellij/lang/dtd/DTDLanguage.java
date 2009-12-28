@@ -23,11 +23,7 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jan 24, 2005
- * Time: 10:53:26 AM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class DTDLanguage extends Language {
 

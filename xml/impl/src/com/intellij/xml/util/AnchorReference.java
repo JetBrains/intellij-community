@@ -26,6 +26,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferen
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -39,11 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Apr 15, 2005
- * Time: 6:01:35 PM
- * To change this template use File | Settings | File Templates.
+ * @author Maxim.Mossienko
  */
 class AnchorReference implements PsiReference, EmptyResolveMessageProvider {
   private final String myAnchor;
@@ -123,7 +120,7 @@ class AnchorReference implements PsiReference, EmptyResolveMessageProvider {
     if (file != null) {
       CachedValue<Map<String, XmlTag>> value = file.getUserData(ourCachedIdsKey);
       if (value == null) {
-        value = file.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<Map<String, XmlTag>>() {
+        value = CachedValuesManager.getManager(file.getProject()).createCachedValue(new CachedValueProvider<Map<String, XmlTag>>() {
           public Result<Map<String, XmlTag>> compute() {
             final Map<String,XmlTag> resultMap = new HashMap<String, XmlTag>();
             XmlDocument document = HtmlUtil.getRealXmlDocument(file.getDocument());

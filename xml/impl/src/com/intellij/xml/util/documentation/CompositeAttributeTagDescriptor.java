@@ -16,18 +16,12 @@
 package com.intellij.xml.util.documentation;
 
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.xml.util.documentation.HtmlAttributeDescriptor;
 
-import java.util.List;
 import java.util.LinkedList;
-import java.util.Iterator;
+import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: maxim
- * Date: 24.12.2004
- * Time: 23:53:45
- * To change this template use File | Settings | File Templates.
+ * @author maxim
  */
 class CompositeAttributeTagDescriptor extends HtmlAttributeDescriptor {
   List<HtmlAttributeDescriptor> attributes = new LinkedList<HtmlAttributeDescriptor>();
@@ -36,9 +30,7 @@ class CompositeAttributeTagDescriptor extends HtmlAttributeDescriptor {
     if (tag == null) return null;
     String contextName = tag.getName();
 
-    for (Iterator<HtmlAttributeDescriptor> iterator = attributes.iterator(); iterator.hasNext();) {
-      HtmlAttributeDescriptor attributeDescriptor = iterator.next();
-
+    for (final HtmlAttributeDescriptor attributeDescriptor : attributes) {
       if (attributeDescriptor.isValidParentTagName(contextName)) {
         return attributeDescriptor;
       }

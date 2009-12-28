@@ -20,11 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 /**
- * Created by IntelliJ IDEA.
- * User: alex
- * Date: 08.06.2005
- * Time: 22:29:32
- * To change this template use File | Settings | File Templates.
+ * @author alex
  */
 public class SvnRevisionNumber implements VcsRevisionNumber {
   @NotNull
@@ -58,6 +54,7 @@ public class SvnRevisionNumber implements VcsRevisionNumber {
     return myRevision.getID() == rev.getID() ? 0 : myRevision.getID() > rev.getID() ? 1 : -1;
   }
 
+  @NotNull
   public SVNRevision getRevision() {
     return myRevision;
   }

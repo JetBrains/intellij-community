@@ -27,11 +27,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * User: ven
- * Date: Apr 10, 2003
- * Time: 8:52:53 PM
- * To change this template use Options | File Templates.
+ * @author ven
  */
 public class CollapseSelectionHandler implements CodeInsightActionHandler {
   private static final String ourPlaceHolderText = "...";

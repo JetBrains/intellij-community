@@ -20,11 +20,7 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * User: ven
- * Date: Jul 14, 2004
- * Time: 4:45:46 PM
- * To change this template use File | Settings | File Templates.
+ * @author ven
  */
 public interface ExpectedTypeInfo {
   int TYPE_STRICTLY = 0;
@@ -35,19 +31,19 @@ public interface ExpectedTypeInfo {
   PsiMethod getCalledMethod();
 
   @NotNull
-  PsiType getType ();
+  PsiType getType();
 
-  PsiType getDefaultType ();
+  PsiType getDefaultType();
 
   int getKind();
 
-  boolean equals (ExpectedTypeInfo info);
+  boolean equals(ExpectedTypeInfo info);
 
   String toString();
 
   ExpectedTypeInfo[] intersect(ExpectedTypeInfo info);
 
-  boolean isArrayTypeInfo ();
+  boolean isArrayTypeInfo();
 
   TailType getTailType();
 

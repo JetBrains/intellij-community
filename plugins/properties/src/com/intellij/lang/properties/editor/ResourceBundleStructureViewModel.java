@@ -28,11 +28,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Feb 10, 2005
- * Time: 3:13:23 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class ResourceBundleStructureViewModel implements PropertiesGroupingStructureViewModel {
   private final Project myProject;
