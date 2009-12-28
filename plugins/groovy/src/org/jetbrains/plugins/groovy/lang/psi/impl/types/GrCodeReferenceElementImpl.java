@@ -113,7 +113,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
     if (parent instanceof GrCodeReferenceElement) {
       ReferenceKind parentKind = ((GrCodeReferenceElementImpl) parent).getKind(forCompletion);
       if (parentKind == CLASS) return CLASS_OR_PACKAGE;
-      else if (parentKind == STATIC_MEMBER_FQ) return CLASS;
+      else if (parentKind == STATIC_MEMBER_FQ) return CLASS_FQ;
       else if (parentKind == CLASS_FQ) return CLASS_OR_PACKAGE_FQ;
       return parentKind;
     } else if (parent instanceof GrPackageDefinition) {
@@ -123,15 +123,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
     } else if (parent instanceof GrImportStatement) {
       final GrImportStatement importStatement = (GrImportStatement) parent;
       if (importStatement.isStatic()) {
-        if (importStatement.isOnDemand()) {
-          if (getQualifier() != null) {
-            return CLASS_FQ;
-          }
-          return CLASS;
-        }
-        else {
-          return STATIC_MEMBER_FQ;
-        }
+        return importStatement.isOnDemand() ? CLASS_FQ : STATIC_MEMBER_FQ;
       }
       else {
         return forCompletion || importStatement.isOnDemand() ? CLASS_OR_PACKAGE_FQ : CLASS_FQ;
