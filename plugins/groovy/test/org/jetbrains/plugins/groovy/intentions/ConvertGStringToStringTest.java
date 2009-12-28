@@ -38,4 +38,8 @@ public class ConvertGStringToStringTest extends GrIntentionTestCase {
   public void testEscaping() throws Exception {
     doTest("Convert to String", true);
   }
+
+  public void testSlashBeforeNewLine() throws Exception {
+    doTest("Convert to String", true);
+  }
 }
