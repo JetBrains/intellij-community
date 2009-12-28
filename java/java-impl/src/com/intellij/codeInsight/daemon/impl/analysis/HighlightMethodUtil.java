@@ -186,24 +186,29 @@ public class HighlightMethodUtil {
     PsiMethod method = methodSignature.getMethod();
     for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
       PsiMethod superMethod = superMethodSignature.getMethod();
-      // strange things happen when super method is from Object and method from interface
-      if (superMethod.hasModifierProperty(PsiModifier.FINAL)) {
-        String message = JavaErrorMessages.message("final.method.override",
-                                                   HighlightUtil.formatMethod(method),
-                                                   HighlightUtil.formatMethod(superMethod),
-                                                   HighlightUtil.formatClass(superMethod.getContainingClass()));
-        TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(method);
-        HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                                      textRange,
-                                                                      message);
-        IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(superMethod, PsiModifier.FINAL, false, true);
-        QuickFixAction.registerQuickFixAction(errorResult, fix);
-        return errorResult;
-      }
+      HighlightInfo info = checkSuperMethodIsFinal(method, superMethod);
+      if (info != null) return info;
     }
     return null;
   }
 
+  private static HighlightInfo checkSuperMethodIsFinal(PsiMethod method, PsiMethod superMethod) {
+    // strange things happen when super method is from Object and method from interface
+    if (superMethod.hasModifierProperty(PsiModifier.FINAL)) {
+      String message = JavaErrorMessages.message("final.method.override",
+                                                 HighlightUtil.formatMethod(method),
+                                                 HighlightUtil.formatMethod(superMethod),
+                                                 HighlightUtil.formatClass(superMethod.getContainingClass()));
+      TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(method);
+      HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
+                                                                    textRange,
+                                                                    message);
+      IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(superMethod, PsiModifier.FINAL, false, true);
+      QuickFixAction.registerQuickFixAction(errorResult, fix);
+      return errorResult;
+    }
+    return null;
+  }
 
   public static HighlightInfo checkMethodIncompatibleThrows(MethodSignatureBackedByPsiMethod methodSignature,
                                                             List<HierarchicalMethodSignature> superMethodSignatures,
@@ -822,19 +827,24 @@ public class HighlightMethodUtil {
                             ? null
                             : MethodSignatureUtil.findMethodBySignature(superClass, method, true);
 
-    HighlightInfo highlightInfo = checkStaticMethodOverride(aClass, method, superClass, superMethod);
+    boolean isStatic = method.hasModifierProperty(PsiModifier.STATIC);
+    HighlightInfo highlightInfo = checkStaticMethodOverride(aClass, method, isStatic,superClass, superMethod);
     if (highlightInfo != null) return highlightInfo;
+    if (!isStatic) {
+      // all methods in interface are instance, so no possible errors in this case
+      return null;
+    }
     PsiClass[] interfaces = aClass.getInterfaces();
     for (PsiClass aInterfaces : interfaces) {
-      superClass = aInterfaces;
-      superMethod = MethodSignatureUtil.findMethodBySignature(superClass, method, true);
-      highlightInfo = checkStaticMethodOverride(aClass, method, superClass, superMethod);
-      if (highlightInfo != null) return highlightInfo;
-    }
-    return highlightInfo;
+        superClass = aInterfaces;
+        superMethod = MethodSignatureUtil.findMethodBySignature(superClass, method, true);
+        highlightInfo = checkStaticMethodOverride(aClass, method, true, superClass, superMethod);
+        if (highlightInfo != null) return highlightInfo;
+      }
+    return null;
   }
 
-  private static HighlightInfo checkStaticMethodOverride(PsiClass aClass, PsiMethod method, PsiClass superClass, PsiMethod superMethod) {
+  private static HighlightInfo checkStaticMethodOverride(PsiClass aClass, PsiMethod method, boolean isMethodStatic, PsiClass superClass, PsiMethod superMethod) {
     if (superMethod == null) return null;
     PsiManager manager = superMethod.getManager();
     PsiModifierList superModifierList = superMethod.getModifierList();
@@ -844,7 +854,6 @@ public class HighlightMethodUtil {
         && !JavaPsiFacade.getInstance(manager.getProject()).arePackagesTheSame(aClass, superClass)) {
       return null;
     }
-    boolean isMethodStatic = modifierList.hasModifierProperty(PsiModifier.STATIC);
     boolean isSuperMethodStatic = superModifierList.hasModifierProperty(PsiModifier.STATIC);
     if (isMethodStatic != isSuperMethodStatic) {
       TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(method);
@@ -875,6 +884,8 @@ public class HighlightMethodUtil {
       int accessLevel = PsiUtil.getAccessLevel(modifierList);
       String accessModifier = PsiUtil.getAccessModifier(accessLevel);
       HighlightInfo info = isWeaker(method, modifierList, accessModifier, accessLevel, superMethod, true);
+      if (info != null) return info;
+      info = checkSuperMethodIsFinal(method, superMethod);
       if (info != null) return info;
     }
     return null;
