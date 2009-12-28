@@ -198,8 +198,12 @@ public class ArtifactUtil {
   public static String getDefaultArtifactOutputPath(@NotNull String artifactName, final @NotNull Project project) {
     final CompilerProjectExtension extension = CompilerProjectExtension.getInstance(project);
     if (extension == null) return null;
-    final String outputUrl = extension.getCompilerOutputUrl();
-    if (outputUrl == null) return null;
+    String outputUrl = extension.getCompilerOutputUrl();
+    if (outputUrl == null || outputUrl.length() == 0) {
+      final VirtualFile baseDir = project.getBaseDir();
+      if (baseDir == null) return null;
+      outputUrl = baseDir.getUrl() + "/out";
+    }
     return VfsUtil.urlToPath(outputUrl) + "/artifacts/" + FileUtil.sanitizeFileName(artifactName);
   }
 
