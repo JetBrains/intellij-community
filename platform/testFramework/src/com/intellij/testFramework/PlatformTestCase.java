@@ -23,8 +23,8 @@ import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
@@ -614,10 +614,10 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   public Object getData(String dataId) {
-    if (dataId.equals(DataConstants.PROJECT)) {
+    if (PlatformDataKeys.PROJECT.is(dataId)) {
       return myProject;
     }
-    else if (dataId.equals(DataConstants.EDITOR)) {
+    else if (PlatformDataKeys.EDITOR.is(dataId)) {
       return FileEditorManager.getInstance(myProject).getSelectedTextEditor();
     }
     else {

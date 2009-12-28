@@ -22,7 +22,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
-import com.intellij.openapi.vcs.VcsDataConstants;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
@@ -104,16 +103,16 @@ public class VcsContextWrapper implements VcsContext {
   }
 
   public File getSelectedIOFile() {
-    File file = (File)myContext.getData(VcsDataConstants.IO_FILE);
+    File file = VcsDataKeys.IO_FILE.getData(myContext);
     if (file != null) return file;
-    File[] files = (File[])myContext.getData(VcsDataConstants.IO_FILE_ARRAY);
+    File[] files = VcsDataKeys.IO_FILE_ARRAY.getData(myContext);
     if (files == null) return null;
     if (files.length == 0) return null;
     return files[0];
   }
 
   public File[] getSelectedIOFiles() {
-    File[] files = (File[])myContext.getData(VcsDataConstants.IO_FILE_ARRAY);
+    File[] files = VcsDataKeys.IO_FILE_ARRAY.getData(myContext);
     if (files != null && files.length > 0) return files;
     File file = getSelectedIOFile();
     if (file != null) return new File[]{file};
@@ -125,11 +124,7 @@ public class VcsContextWrapper implements VcsContext {
   }
 
   public Refreshable getRefreshableDialog() {
-    final Object dataFromContext = myContext.getData(Refreshable.PANEL);
-    if (dataFromContext != null) {
-      return ((Refreshable)dataFromContext);
-    }
-    return null;
+    return Refreshable.PANEL_KEY.getData(myContext);
   }
 
   public FilePath[] getSelectedFilePaths() {

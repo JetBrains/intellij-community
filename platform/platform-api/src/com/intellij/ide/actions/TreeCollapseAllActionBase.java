@@ -23,17 +23,17 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 19, 2004
- * Time: 7:38:56 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public abstract class TreeCollapseAllActionBase extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     TreeExpander expander = getExpander(e.getDataContext());
-    if (expander == null) return;
-    if (!expander.canCollapse()) return;
+    if (expander == null) {
+      return;
+    }
+    if (!expander.canCollapse()) {
+      return;
+    }
     expander.collapseAll();
   }
 

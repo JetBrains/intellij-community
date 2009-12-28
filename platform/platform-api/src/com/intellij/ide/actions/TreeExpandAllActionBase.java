@@ -23,11 +23,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 19, 2004
- * Time: 7:41:17 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public abstract class TreeExpandAllActionBase extends AnAction implements DumbAware {
   protected abstract TreeExpander getExpander(DataContext dataContext);

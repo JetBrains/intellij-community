@@ -48,7 +48,7 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware {
     List<Change> changesToLocal = new ArrayList<Change>();
     for(Change change: changes) {
       ContentRevision afterRevision = change.getAfterRevision();
-      if (isValidAfterRevision(afterRevision)) {
+      if (afterRevision != null && isValidAfterRevision(afterRevision)) {
         changesToLocal.add(new Change(afterRevision, CurrentContentRevision.create(afterRevision.getFile())));
       }
     }
@@ -63,7 +63,7 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware {
     Change[] changes = e.getData(VcsDataKeys.CHANGES);
 
     e.getPresentation().setEnabled(project != null && changes != null &&
-                                   (! CommittedChangesBrowserUseCase.IN_AIR.equals(e.getDataContext().getData(CommittedChangesBrowserUseCase.CONTEXT_NAME))) &&
+                                   (! CommittedChangesBrowserUseCase.IN_AIR.equals(CommittedChangesBrowserUseCase.DATA_KEY.getData(e.getDataContext()))) &&
                                    anyHasAfterRevision(changes));
   }
 

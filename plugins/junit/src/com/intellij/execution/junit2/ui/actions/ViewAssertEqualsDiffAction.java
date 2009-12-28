@@ -27,24 +27,29 @@ import javax.swing.*;
 
 public class ViewAssertEqualsDiffAction extends AnAction {
   @NonNls public static final String ACTION_ID = "openAssertEqualsDiff";
+
   public void actionPerformed(final AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
-    final AbstractTestProxy testProxy = (AbstractTestProxy)dataContext.getData(AbstractTestProxy.DATA_CONSTANT);
-    final ComparisonFailureState state = (ComparisonFailureState)((TestProxy)testProxy).getState();
-    state.openDiff(PlatformDataKeys.PROJECT.getData(dataContext));
+    final AbstractTestProxy testProxy = AbstractTestProxy.DATA_KEY.getData(e.getDataContext());
+    if (testProxy != null) {
+      final ComparisonFailureState state = (ComparisonFailureState)((TestProxy)testProxy).getState();
+      state.openDiff(PlatformDataKeys.PROJECT.getData(e.getDataContext()));
+    }
   }
 
   public void update(final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     final boolean enabled;
     final DataContext dataContext = e.getDataContext();
-    if (dataContext.getData(DataConstants.PROJECT) == null) enabled = false;
+    if (PlatformDataKeys.PROJECT.getData(dataContext) == null) {
+      enabled = false;
+    }
     else {
-      final AbstractTestProxy test = (AbstractTestProxy)dataContext.getData(AbstractTestProxy.DATA_CONSTANT);
+      final AbstractTestProxy test = AbstractTestProxy.DATA_KEY.getData(dataContext);
       if (test instanceof TestProxy) {
         final TestState state = ((TestProxy)test).getState();
         enabled = state instanceof ComparisonFailureState;
-      } else {
+      }
+      else {
         enabled = false;
       }
     }

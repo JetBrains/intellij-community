@@ -24,11 +24,7 @@ import java.lang.ref.SoftReference;
 import java.util.ResourceBundle;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 01.09.2005
- * Time: 14:37:13
- * To change this template use File | Settings | File Templates.
+ * @author yole
  */
 public class JavadocBundle {
   private static Reference<ResourceBundle> ourBundle;
@@ -38,7 +34,7 @@ public class JavadocBundle {
   private JavadocBundle() {
   }
 
-  public static String message(@PropertyKey(resourceBundle = BUNDLE)String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = BUNDLE) String key, Object... params) {
     return CommonBundle.message(getBundle(), key, params);
   }
 

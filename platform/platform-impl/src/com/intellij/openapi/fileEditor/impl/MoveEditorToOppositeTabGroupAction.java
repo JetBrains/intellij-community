@@ -16,10 +16,9 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
 /**
@@ -35,7 +34,7 @@ public class MoveEditorToOppositeTabGroupAction extends AnAction implements Dumb
     if (vFile == null || project == null){
       return;
     }
-    final EditorWindow window = (EditorWindow)dataContext.getData(DataConstantsEx.EDITOR_WINDOW);
+    final EditorWindow window = EditorWindow.DATA_KEY.getData(dataContext);
     if (window != null) {
       final EditorWindow[] siblings = window.findSiblings ();
       if (siblings != null && siblings.length == 1) {
@@ -50,7 +49,7 @@ public class MoveEditorToOppositeTabGroupAction extends AnAction implements Dumb
     final Presentation presentation = e.getPresentation();
     final DataContext dataContext = e.getDataContext();
     final VirtualFile vFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
-    final EditorWindow window = (EditorWindow)dataContext.getData(DataConstantsEx.EDITOR_WINDOW);
+    final EditorWindow window = EditorWindow.DATA_KEY.getData(dataContext);
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
       presentation.setVisible(isEnabled(vFile, window));
     }

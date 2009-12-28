@@ -22,7 +22,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -473,7 +472,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   public boolean processAction(final InputEvent e, ActionProcessor processor) {
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    final Project project = (Project)myContext.getDataContext().getData(DataConstants.PROJECT);
+    final Project project = PlatformDataKeys.PROJECT.getData(myContext.getDataContext());
     final boolean dumb = project != null && DumbService.getInstance(project).isDumb();
     List<AnActionEvent> nonDumbAwareAction = new ArrayList<AnActionEvent>();
     for (final AnAction action : myContext.getActions()) {
@@ -502,7 +501,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
       ((DataManagerImpl.MyDataContext)myContext.getDataContext()).setEventCount(IdeEventQueue.getInstance().getEventCount());
       actionManager.fireBeforeActionPerformed(action, actionEvent.getDataContext(), actionEvent);
-      Component component = (Component)actionEvent.getDataContext().getData(DataConstantsEx.CONTEXT_COMPONENT);
+      Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(actionEvent.getDataContext());
       if (component != null && !component.isShowing()) {
         return true;
       }

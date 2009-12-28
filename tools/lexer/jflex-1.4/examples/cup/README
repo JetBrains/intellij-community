@@ -1,0 +1,30 @@
+A small JFlex+Cup example
+
+It comes from a short article series in the Linux Gazette by Richard
+A. Sevenich and Christopher Lopes, titled "Compiler Construction
+Tools". The article series starts at
+
+http://www.linuxgazette.com/issue39/sevenich.html
+
+Small changes and updates to newest JFlex+Cup versions by Gerwin Klein
+
+
+To compile:
+>jflex lcalc.flex
+>java java_cup.Main < ycalc.cup
+>javac Main.java
+
+To run:
+>java Main test.txt
+
+
+Files:
+
+Main.java       demo of a main program
+Makefile        makefile to compile and test the example
+README          this file
+lcalc.flex      the lexer spec
+output.good     how the output should look like for the test
+ycalc.cup       the parser spec
+test.txt        sample input for testing
+

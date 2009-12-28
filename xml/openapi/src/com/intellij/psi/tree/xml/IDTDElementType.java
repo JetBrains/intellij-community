@@ -20,13 +20,9 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 
 /**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: Sep 9, 2004
- * Time: 8:11:22 PM
- * To change this template use File | Settings | File Templates.
+ * @author ik
  */
-public class IDTDElementType extends IElementType{
+public class IDTDElementType extends IElementType {
   public IDTDElementType(@NonNls String debugName) {
     super(debugName, StdFileTypes.DTD.getLanguage());
   }

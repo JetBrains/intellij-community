@@ -27,15 +27,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Nov 9, 2005
- * Time: 8:10:06 PM
- * To change this template use File | Settings | File Templates.
+ * @author Maxim.Mossienko
  */
 public class CustomizingReferenceProvider extends PsiReferenceProvider implements CustomizableReferenceProvider {
   private final CustomizableReferenceProvider myProvider;
-  private @Nullable Map<CustomizableReferenceProvider.CustomizationKey, Object> myOptions;
+  private @Nullable Map<CustomizationKey, Object> myOptions;
 
   public CustomizingReferenceProvider(@NotNull CustomizableReferenceProvider provider) {
     myProvider = provider;
@@ -43,7 +39,7 @@ public class CustomizingReferenceProvider extends PsiReferenceProvider implement
   
   public <Option> void addCustomization(CustomizableReferenceProvider.CustomizationKey<Option> key, Option value) {
     if (myOptions == null) {
-      myOptions = new HashMap<CustomizableReferenceProvider.CustomizationKey, Object>(5);
+      myOptions = new HashMap<CustomizationKey, Object>(5);
     }
     myOptions.put(key,value);
   }
@@ -56,7 +52,7 @@ public class CustomizingReferenceProvider extends PsiReferenceProvider implement
     return referencesByElement;
   }
 
-  public void setOptions(@Nullable Map<CustomizableReferenceProvider.CustomizationKey, Object> options) {
+  public void setOptions(@Nullable Map<CustomizationKey, Object> options) {
     myOptions = options;  // merge ?
   }
 

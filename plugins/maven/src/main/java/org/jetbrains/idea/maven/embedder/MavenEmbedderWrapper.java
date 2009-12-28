@@ -51,13 +51,12 @@ import org.apache.maven.monitor.event.EventDispatcher;
 import org.apache.maven.plugin.PluginManager;
 import org.apache.maven.profiles.DefaultProfileManager;
 import org.apache.maven.profiles.ProfileManager;
-import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.*;
+import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.artifact.ProjectArtifactFactory;
 import org.apache.maven.project.interpolation.AbstractStringBasedModelInterpolator;
 import org.apache.maven.project.interpolation.ModelInterpolationException;
 import org.apache.maven.project.interpolation.ModelInterpolator;
-import org.apache.maven.project.interpolation.StringSearchModelInterpolator;
 import org.apache.maven.project.path.DefaultPathTranslator;
 import org.apache.maven.project.path.PathTranslator;
 import org.apache.maven.settings.Mirror;
@@ -72,6 +71,7 @@ import org.codehaus.plexus.component.repository.exception.ComponentLookupExcepti
 import org.codehaus.plexus.personality.plexus.lifecycle.phase.InitializationException;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
@@ -292,6 +292,30 @@ public class MavenEmbedderWrapper {
     });
   }
 
+  public Artifact resolve(@NotNull final MavenId id,
+                          @NotNull final String type,
+                          @Nullable final String classifier,
+                          @NotNull final List<MavenRemoteRepository> remoteRepositories)
+    throws MavenProcessCanceledException {
+    return doExecute(new Executor<Artifact>() {
+      public Artifact execute() throws Exception {
+        Artifact artifact = getComponent(ArtifactFactory.class).createArtifactWithClassifier(id.getGroupId(),
+                                                                                             id.getArtifactId(),
+                                                                                             id.getVersion(),
+                                                                                             type,
+                                                                                             classifier);
+        try {
+          getComponent(ArtifactResolver.class).resolve(artifact, convertRepositories(remoteRepositories), myLocalRepository);
+          return artifact;
+        }
+        catch (Exception e) {
+          MavenLog.LOG.info(e);
+        }
+        return artifact;
+      }
+    });
+  }
+
   private List<ArtifactRepository> convertRepositories(List<MavenRemoteRepository> repositories) {
     List<ArtifactRepository> result = new ArrayList<ArtifactRepository>();
     for (MavenRemoteRepository each : repositories) {
@@ -324,14 +348,6 @@ public class MavenEmbedderWrapper {
         return true;
       }
     });
-  }
-
-  public Artifact createArtifact(String groupId, String artifactId, String version, String type, String classifier) {
-    return getComponent(ArtifactFactory.class).createArtifactWithClassifier(groupId,
-                                                                            artifactId,
-                                                                            version,
-                                                                            type,
-                                                                            classifier);
   }
 
   @NotNull

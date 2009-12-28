@@ -26,6 +26,7 @@ import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubTree;
@@ -46,7 +47,7 @@ public abstract class PsiAnchor {
   public abstract int getEndOffset();
 
   public static PsiAnchor create(final PsiElement element) {
-    if (element instanceof PsiCompiledElement || element instanceof PsiFile) {
+    if (element instanceof PsiFile) {
       return new HardReference(element);
     }
 
@@ -55,7 +56,7 @@ public abstract class PsiAnchor {
       return new HardReference(element);
     }
 
-    if (element instanceof StubBasedPsiElement && element.isPhysical() && ((PsiFileImpl)file).getContentElementType() instanceof IStubFileElementType) {
+    if (element instanceof StubBasedPsiElement && element.isPhysical() && (element instanceof PsiCompiledElement || ((PsiFileImpl)file).getContentElementType() instanceof IStubFileElementType)) {
       final StubBasedPsiElement elt = (StubBasedPsiElement)element;
       if (elt.getStub() != null || elt.getElementType().shouldCreateStub(element.getNode())) {
         return new StubIndexReference(file, calcStubIndex((StubBasedPsiElement)element));
@@ -225,12 +226,17 @@ public abstract class PsiAnchor {
     public PsiElement retrieve() {
       return ApplicationManager.getApplication().runReadAction(new NullableComputable<PsiElement>() {
         public PsiElement compute() {
-          PsiFileImpl fileImpl = (PsiFileImpl)myFile;
+          PsiFileWithStubSupport fileImpl = (PsiFileWithStubSupport)myFile;
           StubTree tree = fileImpl.getStubTree();
 
           boolean foreign = (tree == null);
           if (foreign) {
-            tree = fileImpl.calcStubTree();
+            if (fileImpl instanceof PsiFileImpl) {
+              tree = ((PsiFileImpl)fileImpl).calcStubTree();
+            }
+            else {
+              return null;
+            }
           }
 
           StubElement stub = tree.getPlainList().get(myIndex);

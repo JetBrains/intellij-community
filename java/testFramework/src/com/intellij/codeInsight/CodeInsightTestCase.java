@@ -555,7 +555,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   }
 
   public Object getData(String dataId) {
-    return dataId.equals(DataConstants.EDITOR) ? myEditor : super.getData(dataId);
+    return PlatformDataKeys.EDITOR.is(dataId) ? myEditor : super.getData(dataId);
   }
 
   protected VirtualFile getVirtualFile(@NonNls String filePath) {

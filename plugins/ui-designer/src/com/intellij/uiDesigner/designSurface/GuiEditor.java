@@ -200,6 +200,8 @@ public final class GuiEditor extends JPanel implements DataProvider {
 
   @NonNls private static final String ourHelpID = "guiDesigner.uiTour.workspace";
 
+  public static final DataKey<GuiEditor> DATA_KEY = DataKey.create(GuiEditor.class.getName());
+
   /**
    * @param file file to be edited
    * @throws java.lang.IllegalArgumentException
@@ -457,7 +459,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
   }
 
   public Object getData(final String dataId) {
-    if (DataConstants.HELP_ID.equals(dataId)) {
+    if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return ourHelpID;
     }
 
@@ -467,15 +469,13 @@ public final class GuiEditor extends JPanel implements DataProvider {
       return null;
     }
 
-    if (DataConstants.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
+    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       return myDeleteProvider;
     }
 
-    if (
-      DataConstants.COPY_PROVIDER.equals(dataId) ||
-      DataConstants.CUT_PROVIDER.equals(dataId) ||
-      DataConstants.PASTE_PROVIDER.equals(dataId)
-    ) {
+    if (PlatformDataKeys.COPY_PROVIDER.is(dataId) ||
+        PlatformDataKeys.CUT_PROVIDER.is(dataId) ||
+        PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
       return myCutCopyPasteSupport;
     }
 

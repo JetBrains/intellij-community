@@ -323,13 +323,13 @@ public class CvsOperationExecutor {
 
     public void update(AnActionEvent e) {
       super.update(e);
-      Object data = e.getDataContext().getData(ErrorTreeView.CURRENT_EXCEPTION_DATA);
+      Object data = ErrorTreeView.CURRENT_EXCEPTION_DATA_KEY.getData(e.getDataContext());
       e.getPresentation().setEnabled(data instanceof CvsException);
 
     }
 
     public void actionPerformed(AnActionEvent e) {
-      Object data = e.getDataContext().getData(ErrorTreeView.CURRENT_EXCEPTION_DATA);
+      Object data = ErrorTreeView.CURRENT_EXCEPTION_DATA_KEY.getData(e.getDataContext());
       CvsConfigurationsListEditor.reconfigureCvsRoot(((CvsException)data).getCvsRoot(), myProject);
     }
   }

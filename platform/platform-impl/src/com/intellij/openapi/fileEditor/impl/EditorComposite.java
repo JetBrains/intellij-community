@@ -16,13 +16,13 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -386,13 +386,13 @@ public abstract class EditorComposite implements Disposable {
     }
 
     public final Object getData(String dataId){
-      if (DataConstants.FILE_EDITOR.equals(dataId)) {
+      if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
         return getSelectedEditor();
       }
-      else if(DataConstants.VIRTUAL_FILE.equals(dataId)){
+      else if(PlatformDataKeys.VIRTUAL_FILE.is(dataId)){
         return myFile.isValid() ? myFile : null;
       }
-      else if(DataConstants.VIRTUAL_FILE_ARRAY.equals(dataId)){
+      else if(PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)){
         return myFile.isValid() ? new VirtualFile[] {myFile} : null;
       }
       else{

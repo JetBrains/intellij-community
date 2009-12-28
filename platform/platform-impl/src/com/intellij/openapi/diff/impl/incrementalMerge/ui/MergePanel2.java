@@ -16,7 +16,10 @@
 package com.intellij.openapi.diff.impl.incrementalMerge.ui;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.actions.NextDiffAction;
@@ -73,7 +76,7 @@ public class MergePanel2 implements DiffViewer {
   private final DividersRepainter myDividersRepainter = new DividersRepainter();
   private StatusUpdater myStatusUpdater;
   private final DialogBuilder myBuilder;
-  private MergePanel2.MyDataProvider myProvider;
+  private MyDataProvider myProvider;
 
   public MergePanel2(DialogBuilder builder, Disposable parent) {
     ArrayList<EditorPlace> editorPlaces = new ArrayList<EditorPlace>();
@@ -400,7 +403,7 @@ public class MergePanel2 implements DiffViewer {
 
   private class MyDataProvider extends GenericDataProvider {
     public Object getData(String dataId) {
-      if (FocusDiffSide.FOCUSED_DIFF_SIDE.equals(dataId)) {
+      if (FocusDiffSide.DATA_KEY.is(dataId)) {
         int index = getFocusedEditorIndex();
         if (index < 0) return null;
         switch (index) {
@@ -412,7 +415,7 @@ public class MergePanel2 implements DiffViewer {
             return new BranchFocusedSide(FragmentSide.SIDE2);
         }
       }
-      else if (DataConstants.DIFF_VIEWER.equals(dataId)) return MergePanel2.this;
+      else if (PlatformDataKeys.DIFF_VIEWER.is(dataId)) return MergePanel2.this;
       return super.getData(dataId);
     }
 
@@ -460,7 +463,7 @@ public class MergePanel2 implements DiffViewer {
   }
 
   public static MergePanel2 fromDataContext(DataContext dataContext) {
-    DiffViewer diffComponent = (DiffViewer)dataContext.getData(DataConstants.DIFF_VIEWER);
+    DiffViewer diffComponent = PlatformDataKeys.DIFF_VIEWER.getData(dataContext);
     return diffComponent instanceof MergePanel2 ? (MergePanel2)diffComponent : null;
   }
 

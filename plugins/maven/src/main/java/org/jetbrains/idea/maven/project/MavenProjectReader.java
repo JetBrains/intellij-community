@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.apache.maven.model.*;
@@ -337,46 +338,53 @@ public class MavenProjectReader {
   }
 
   private List<Profile> applyProfiles(Model model, File basedir, Collection<String> explicitProfiles, Collection<String> alwaysOnProfiles) {
-    List<Profile> activated = new ArrayList<Profile>();
+    List<Profile> activatedPom = new ArrayList<Profile>();
+    List<Profile> activatedExternal = new ArrayList<Profile>();
     List<Profile> activeByDefault = new ArrayList<Profile>();
 
     List<Profile> rawProfiles = model.getProfiles();
-    List<Profile> expandedProfiles = null;
+    List<Profile> expandedProfilesCache = null;
 
     for (int i = 0; i < rawProfiles.size(); i++) {
       Profile eachRawProfile = rawProfiles.get(i);
 
-      if (explicitProfiles.contains(eachRawProfile.getId())
-          || alwaysOnProfiles.contains(eachRawProfile.getId())) {
-        activated.add(eachRawProfile);
-        continue;
-      }
+      boolean shouldAdd = explicitProfiles.contains(eachRawProfile.getId()) || alwaysOnProfiles.contains(eachRawProfile.getId());
 
       Activation activation = eachRawProfile.getActivation();
-      if (activation == null) continue;
+      if (activation != null) {
+        if (activation.isActiveByDefault()) {
+          activeByDefault.add(eachRawProfile);
+        }
 
-      if (activation.isActiveByDefault()) {
-        activeByDefault.add(eachRawProfile);
-      }
+        // expand only if necessary
+        if (expandedProfilesCache == null) expandedProfilesCache = expandProperties(model, basedir).getProfiles();
+        Profile eachExpandedProfile = expandedProfilesCache.get(i);
 
-      // expand only if necessary
-      if (expandedProfiles == null) expandedProfiles = expandProperties(model, basedir).getProfiles();
-      Profile eachExpandedProfile = expandedProfiles.get(i);
-
-      for (ProfileActivator eachActivator : getProfileActivators()) {
-        try {
-          if (eachActivator.canDetermineActivation(eachExpandedProfile) && eachActivator.isActive(eachExpandedProfile)) {
-            activated.add(eachRawProfile);
-            break;
+        for (ProfileActivator eachActivator : getProfileActivators()) {
+          try {
+            if (eachActivator.canDetermineActivation(eachExpandedProfile) && eachActivator.isActive(eachExpandedProfile)) {
+              shouldAdd = true;
+              break;
+            }
+          }
+          catch (ProfileActivationException e) {
+            MavenLog.LOG.warn(e);
           }
         }
-        catch (ProfileActivationException e) {
-          MavenLog.LOG.warn(e);
+      }
+
+      if (shouldAdd) {
+        if (PROFILE_FROM_POM.equals(eachRawProfile.getSource())) {
+          activatedPom.add(eachRawProfile);
+        }
+        else {
+          activatedExternal.add(eachRawProfile);
         }
       }
     }
 
-    List<Profile> activatedProfiles = activated.isEmpty() ? activeByDefault : activated;
+    List<Profile> activatedProfiles = new ArrayList<Profile>(activatedPom.isEmpty() ? activeByDefault : activatedPom);
+    activatedProfiles.addAll(activatedExternal);
 
     for (Profile each : activatedProfiles) {
       new DefaultProfileInjector().inject(each, model);

@@ -16,52 +16,51 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class CloseAllEditorsButActiveAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
     FileEditorManagerEx fileEditorManager=FileEditorManagerEx.getInstanceEx(project);
     VirtualFile selectedFile;
-    final EditorWindow window = (EditorWindow)dataContext.getData(DataConstantsEx.EDITOR_WINDOW);
+    final EditorWindow window = e.getData(EditorWindow.DATA_KEY);
     if (window != null){
-      selectedFile = (VirtualFile)dataContext.getData(DataConstants.VIRTUAL_FILE);
+      selectedFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
       final VirtualFile[] files = window.getFiles();
-      for (int i = 0; i < files.length; i++) {
-        VirtualFile file = files[i];
-        if (file != selectedFile){
+      for (final VirtualFile file : files) {
+        if (file != selectedFile) {
           window.closeFile(file);
         }
       }
       return;
     }
     selectedFile = fileEditorManager.getSelectedFiles()[0];
-    VirtualFile[] siblings = fileEditorManager.getSiblings(selectedFile);
-    for(int i=0;i<siblings.length;i++){
-      if(selectedFile!=siblings[i]){
-        fileEditorManager.closeFile(siblings[i]);
+    final VirtualFile[] siblings = fileEditorManager.getSiblings(selectedFile);
+    for (final VirtualFile sibling : siblings) {
+      if (selectedFile != sibling) {
+        fileEditorManager.closeFile(sibling);
       }
     }
   }
 
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
-    final DataContext dataContext = event.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = event.getData(PlatformDataKeys.PROJECT);
     if (project == null) {
       presentation.setEnabled(false);
       return;
     }
     FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
     VirtualFile selectedFile;
-    final EditorWindow window = (EditorWindow)dataContext.getData(DataConstantsEx.EDITOR_WINDOW);
+    final EditorWindow window = event.getData(EditorWindow.DATA_KEY);
     if (window != null){
       presentation.setEnabled(window.getFiles().length > 1);
       return;

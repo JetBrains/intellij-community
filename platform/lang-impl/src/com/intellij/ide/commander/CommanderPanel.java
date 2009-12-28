@@ -18,7 +18,10 @@ package com.intellij.ide.commander;
 
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
-import com.intellij.ide.*;
+import com.intellij.ide.CopyPasteDelegator;
+import com.intellij.ide.DeleteProvider;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeView;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
@@ -31,9 +34,7 @@ import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -117,8 +118,8 @@ public class CommanderPanel extends JPanel {
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SLASH, SystemInfo.isMac ? KeyEvent.META_MASK : KeyEvent.CTRL_MASK), JComponent.WHEN_FOCUSED);
 
-    myList.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), ACTION_DRILL_DOWN);
-    myList.getInputMap(JComponent.WHEN_FOCUSED)
+    myList.getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), ACTION_DRILL_DOWN);
+    myList.getInputMap(WHEN_FOCUSED)
       .put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, SystemInfo.isMac ? KeyEvent.META_MASK : KeyEvent.CTRL_MASK), ACTION_DRILL_DOWN);
     myList.getActionMap().put(ACTION_DRILL_DOWN, new AbstractAction() {
       public void actionPerformed(final ActionEvent e) {
@@ -132,9 +133,9 @@ public class CommanderPanel extends JPanel {
         }
       }
     });
-    myList.getInputMap(JComponent.WHEN_FOCUSED)
+    myList.getInputMap(WHEN_FOCUSED)
       .put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, SystemInfo.isMac ? KeyEvent.META_MASK : KeyEvent.CTRL_MASK), ACTION_GO_UP);
-    myList.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0), ACTION_GO_UP);
+    myList.getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0), ACTION_GO_UP);
     myList.getActionMap().put(ACTION_GO_UP, new AbstractAction() {
       public void actionPerformed(final ActionEvent e) {
         goUp();
@@ -351,7 +352,7 @@ public class CommanderPanel extends JPanel {
   private static Object getValueAtIndex(AbstractTreeNode node) {
     if (node == null) return null;
     Object value = node.getValue();
-    if (value instanceof TreeElement) {
+    if (value instanceof StructureViewTreeElement) {
       return ((StructureViewTreeElement)value).getValue();
     }
     return value;
@@ -419,46 +420,46 @@ public class CommanderPanel extends JPanel {
   public final Object getDataImpl(final String dataId) {
     if (myBuilder == null) return null;
     final Object selectedValue = getSelectedValue();
-    if (DataConstants.PSI_ELEMENT.equals(dataId)) {
+    if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
       final PsiElement selectedElement = getSelectedElement();
       return selectedElement != null && selectedElement.isValid() ? selectedElement : null;
     }
-    if (DataConstants.PSI_ELEMENT_ARRAY.equals(dataId)) {
+    if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       return filterInvalidElements(getSelectedElements());
     }
-    else if (DataConstantsEx.PASTE_TARGET_PSI_ELEMENT.equals(dataId)) {
+    else if (LangDataKeys.PASTE_TARGET_PSI_ELEMENT.is(dataId)) {
       final AbstractTreeNode parentNode = myBuilder.getParentNode();
       final Object element = parentNode != null ? parentNode.getValue() : null;
       return element instanceof PsiElement && ((PsiElement)element).isValid() ? element : null;
     }
-    else if (DataConstants.NAVIGATABLE_ARRAY.equals(dataId)) {
+    else if (PlatformDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       return getNavigatables();
     }
-    else if (DataConstants.COPY_PROVIDER.equals(dataId)) {
+    else if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
       return myCopyPasteDelegator != null ? myCopyPasteDelegator.getCopyProvider() : null;
     }
-    else if (DataConstants.CUT_PROVIDER.equals(dataId)) {
+    else if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
       return myCopyPasteDelegator != null ? myCopyPasteDelegator.getCutProvider() : null;
     }
-    else if (DataConstants.PASTE_PROVIDER.equals(dataId)) {
+    else if (PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
       return myCopyPasteDelegator != null ? myCopyPasteDelegator.getPasteProvider() : null;
     }
-    else if (DataConstants.IDE_VIEW.equals(dataId)) {
+    else if (LangDataKeys.IDE_VIEW.is(dataId)) {
       return myIdeView;
     }
-    else if (DataConstants.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
+    else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       return myDeleteElementProvider;
     }
-    else if (DataConstants.MODULE.equals(dataId)) {
+    else if (LangDataKeys.MODULE.is(dataId)) {
       return selectedValue instanceof Module ? selectedValue : null;
     }
-    else if (DataConstantsEx.MODULE_GROUP_ARRAY.equals(dataId)) {
+    else if (ModuleGroup.ARRAY_DATA_KEY.is(dataId)) {
       return selectedValue instanceof ModuleGroup ? new ModuleGroup[]{(ModuleGroup)selectedValue} : null;
     }
-    else if (DataConstantsEx.LIBRARY_GROUP_ARRAY.equals(dataId)) {
+    else if (LibraryGroupElement.ARRAY_DATA_KEY.is(dataId)) {
       return selectedValue instanceof LibraryGroupElement ? new LibraryGroupElement[]{(LibraryGroupElement)selectedValue} : null;
     }
-    else if (DataConstantsEx.NAMED_LIBRARY_ARRAY.equals(dataId)) {
+    else if (NamedLibraryElement.ARRAY_DATA_KEY.is(dataId)) {
       return selectedValue instanceof NamedLibraryElement ? new NamedLibraryElement[]{(NamedLibraryElement)selectedValue} : null;
     }
 

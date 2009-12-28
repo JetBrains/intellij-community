@@ -24,11 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 /**
-* Created by IntelliJ IDEA.
-* User: Maxim.Mossienko
-* Date: 13.04.2009
-* Time: 18:02:30
-* To change this template use File | Settings | File Templates.
+* @author Maxim.Mossienko
 */
 public class PsiBackedSmartStepIntoVariant<T extends PsiNamedElement & NavigationItem> extends XSmartStepIntoVariant {
   private final T myElement;

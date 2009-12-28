@@ -16,21 +16,17 @@
 
 package com.intellij.lang.jsp;
 
-import com.intellij.lang.Language;
 import com.intellij.lang.DependentLanguage;
+import com.intellij.lang.Language;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 
 /**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: Dec 12, 2005
- * Time: 7:40:40 PM
- * To change this template use File | Settings | File Templates.
+ * @author ik
  */
 public interface JspxFileViewProvider extends TemplateLanguageFileViewProvider {
   Language JAVA_HOLDER_METHOD_TREE_LANGUAGE = new JavaHolderMethodTreeLanguage();
 
-  public static class JavaHolderMethodTreeLanguage extends Language implements DependentLanguage{
+  class JavaHolderMethodTreeLanguage extends Language implements DependentLanguage{
     public JavaHolderMethodTreeLanguage() {
       super("JAVA_HOLDER_METHOD_TREE", "");
     }

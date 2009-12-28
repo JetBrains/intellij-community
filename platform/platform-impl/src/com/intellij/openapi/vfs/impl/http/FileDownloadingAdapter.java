@@ -25,7 +25,13 @@ public class FileDownloadingAdapter implements FileDownloadingListener {
   public void fileDownloaded(final VirtualFile localFile) {
   }
 
-  public void errorOccured(@NotNull final String errorMessage) {
+  public void errorOccurred(@NotNull final String errorMessage) {
+  }
+
+  public void downloadingStarted() {
+  }
+
+  public void downloadingCancelled() {
   }
 
   public void progressMessageChanged(final boolean indeterminate, @NotNull final String message) {

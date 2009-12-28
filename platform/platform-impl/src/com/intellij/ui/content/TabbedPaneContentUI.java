@@ -16,14 +16,13 @@
 package com.intellij.ui.content;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.PopupHandler;
-import com.intellij.ui.TabbedPaneWrapper;
-import com.intellij.ui.TabbedPaneImpl;
 import com.intellij.ui.TabbedPane;
-import com.intellij.ui.content.tabs.TabbedContentAction;
+import com.intellij.ui.TabbedPaneImpl;
+import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
+import com.intellij.ui.content.tabs.TabbedContentAction;
 import com.intellij.util.IJSwingUtilities;
 
 import javax.swing.*;
@@ -149,7 +148,7 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
           return;
         }
         final Content content = myManager.getContent(index);
-        if (content.isCloseable()) {
+        if (content != null && content.isCloseable()) {
           myManager.removeContent(content, true);
         }
       }
@@ -201,7 +200,7 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
         return new MyModelListener();
       }
 
-      private class MyModelListener extends JTabbedPane.ModelListener {
+      private class MyModelListener extends ModelListener {
         public void stateChanged(ChangeEvent e) {
           Content content = getSelectedContent();
           if (content != null) {
@@ -271,10 +270,10 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
       }
 
       public Object getData(String dataId) {
-        if (DataConstantsEx.CONTENT_MANAGER.equals(dataId)) {
+        if (PlatformDataKeys.CONTENT_MANAGER.is(dataId)) {
           return myManager;
         }
-        if (DataConstantsEx.NONEMPTY_CONTENT_MANAGER.equals(dataId) && myManager.getContentCount() > 1) {
+        if (PlatformDataKeys.NONEMPTY_CONTENT_MANAGER.is(dataId) && myManager.getContentCount() > 1) {
           return myManager;
         }
         return null;

@@ -36,8 +36,8 @@ import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.*;
-import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
@@ -451,10 +451,10 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
     }
 
     public Object getData(String dataId) {
-      if (DataConstants.PROJECT.equals(dataId)){
+      if (PlatformDataKeys.PROJECT.is(dataId)){
         return myProject;
       }
-      if (DataConstants.MODULE_CONTEXT.equals(dataId)){
+      if (LangDataKeys.MODULE_CONTEXT.is(dataId)){
         final TreePath selectionPath = myTree.getLeadSelectionPath();
         if (selectionPath != null && selectionPath.getLastPathComponent() instanceof DefaultMutableTreeNode){
           DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
@@ -463,8 +463,8 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
           }
         }
       }
-      if (DataConstants.HELP_ID.equals(dataId)) {
-        return ModulesDependenciesPanel.ourHelpID;
+      if (PlatformDataKeys.HELP_ID.is(dataId)) {
+        return ourHelpID;
       }
       return null;
     }

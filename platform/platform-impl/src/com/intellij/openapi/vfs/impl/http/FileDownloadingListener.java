@@ -25,7 +25,11 @@ public interface FileDownloadingListener {
 
   void fileDownloaded(final VirtualFile localFile);
 
-  void errorOccured(@NotNull String errorMessage);
+  void errorOccurred(@NotNull String errorMessage);
+
+  void downloadingStarted();
+
+  void downloadingCancelled();
 
   void progressMessageChanged(final boolean indeterminate, @NotNull String message);
 

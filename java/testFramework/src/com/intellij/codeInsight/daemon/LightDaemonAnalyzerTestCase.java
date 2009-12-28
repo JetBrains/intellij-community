@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeHighlighting.Pass;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.editor.Editor;
@@ -46,7 +47,8 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
 
   @Override
   protected void tearDown() throws Exception {
-    DaemonCodeAnalyzer.getInstance(getProject()).projectClosed();
+    DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
+    codeAnalyzer.projectClosed();
 
     super.tearDown();
   }

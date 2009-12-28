@@ -19,15 +19,11 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.embedder.CustomArtifact;
-import static org.jetbrains.idea.maven.project.MavenId.append;
 import org.jetbrains.idea.maven.utils.MavenConstants;
 
 import java.io.File;
@@ -35,6 +31,8 @@ import java.io.Serializable;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.jetbrains.idea.maven.project.MavenId.append;
 
 public class MavenArtifact implements Serializable {
   private String myGroupId;
@@ -148,10 +146,10 @@ public class MavenArtifact implements Serializable {
   }
 
   public String getRelativePath() {
-    return getRelativePathForClassifier(null);
+    return getRelativePathForExtraArtifact(null);
   }
 
-  public String getRelativePathForClassifier(String extraClassifier) {
+  public String getRelativePathForExtraArtifact(String extraArtifactClassifier) {
     StringBuilder result = new StringBuilder();
     result.append(myGroupId.replace('.', '/'));
     result.append('/');
@@ -162,17 +160,20 @@ public class MavenArtifact implements Serializable {
     result.append(myArtifactId);
     result.append('-');
     result.append(myVersion);
-    if (!StringUtil.isEmptyOrSpaces(myClassifier)) {
-      result.append('-');
-      result.append(myClassifier);
-    }
 
-    if (!StringUtil.isEmptyOrSpaces(extraClassifier)) {
+    if (!StringUtil.isEmptyOrSpaces(extraArtifactClassifier)) {
+      if (MavenConstants.TYPE_TEST_JAR.equals(myType)) {
+        result.append("-test");
+      }
       result.append('-');
-      result.append(extraClassifier);
+      result.append(extraArtifactClassifier);
       result.append(".jar");
     }
     else {
+      if (!StringUtil.isEmptyOrSpaces(myClassifier)) {
+        result.append('-');
+        result.append(myClassifier);
+      }
       result.append(".");
       result.append(myExtension);
     }
@@ -180,17 +181,25 @@ public class MavenArtifact implements Serializable {
   }
 
   public String getUrl() {
-    return getUrlForClassifier(null);
+    return getUrlForExtraArtifact(null);
   }
 
-  public String getUrlForClassifier(String extraClassifier) {
+  public String getUrlForExtraArtifact(String extraArtifactClassifier) {
     String path = getPath();
 
-    if (!StringUtil.isEmptyOrSpaces(extraClassifier)) {
-      int dotPos = path.lastIndexOf(".");
-      if (dotPos != -1) {// sometimes path doesn't contain '.'; but i can't find any reason.
-        String withoutExtension = path.substring(0, dotPos);
-        path = MessageFormat.format("{0}-{1}.jar", withoutExtension, extraClassifier);
+    if (!StringUtil.isEmptyOrSpaces(extraArtifactClassifier)) {
+      int repoEnd = path.lastIndexOf(getRelativePath());
+
+      if (repoEnd == -1) {
+        // unknown path format: try to add a classified at the end of the filename
+        int dotPos = path.lastIndexOf(".");
+        if (dotPos != -1) {// sometimes path doesn't contain '.'; but i can't find any reason why.
+          String withoutExtension = path.substring(0, dotPos);
+          path = MessageFormat.format("{0}-{1}.jar", withoutExtension, extraArtifactClassifier);
+        }
+      } else {
+        String repoPath = path.substring(0, repoEnd);
+        path = repoPath + getRelativePathForExtraArtifact(extraArtifactClassifier);
       }
     }
     return VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, path) + JarFileSystem.JAR_SEPARATOR;

@@ -18,8 +18,8 @@ package com.intellij.packageDependencies.ui;
 
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -114,7 +114,7 @@ public abstract class UsagesPanel extends JPanel implements Disposable, DataProv
   @Nullable
   @NonNls
   public Object getData(@NonNls String dataId) {
-    if (dataId.equals(DataConstants.HELP_ID)) {
+    if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return "ideaInterface.find";
     }
     return null;

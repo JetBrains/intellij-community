@@ -17,7 +17,8 @@ package com.intellij.lang.properties.structureView;
 
 import com.intellij.lang.properties.editor.PropertiesGroupingStructureViewComponent;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 
@@ -33,10 +34,10 @@ public class PropertiesFileStructureViewComponent extends PropertiesGroupingStru
   }
 
   public Object getData(String dataId) {
-    if (dataId.equals(DataConstants.VIRTUAL_FILE)) {
+    if (PlatformDataKeys.VIRTUAL_FILE.is(dataId)) {
       return myPropertiesFile.getVirtualFile();
     }
-    if (dataId.equals(DataConstants.PSI_ELEMENT)) {
+    if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
       return myPropertiesFile;
     }
     return super.getData(dataId);

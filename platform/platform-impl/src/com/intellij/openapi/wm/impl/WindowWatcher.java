@@ -16,7 +16,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -87,7 +87,8 @@ public final class WindowWatcher implements PropertyChangeListener{
       final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myFocusedWindow));
       for (Iterator i = myFocusedWindows.iterator(); i.hasNext();) {
         final Window w = (Window)i.next();
-        if (project==DataManager.getInstance().getDataContext(w).getData(DataConstants.PROJECT)) {
+        final DataContext dataContext = DataManager.getInstance().getDataContext(w);
+        if (project == PlatformDataKeys.PROJECT.getData(dataContext)) {
           i.remove();
         }
       }
@@ -293,7 +294,8 @@ public final class WindowWatcher implements PropertyChangeListener{
           continue outer;
         }
       }
-      if (project==DataManager.getInstance().getDataContext(window).getData(DataConstants.PROJECT)) {
+      final DataContext dataContext = DataManager.getInstance().getDataContext(window);
+      if (project == PlatformDataKeys.PROJECT.getData(dataContext)) {
         return window;
       }
     }

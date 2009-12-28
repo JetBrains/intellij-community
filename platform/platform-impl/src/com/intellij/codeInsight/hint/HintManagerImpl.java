@@ -375,7 +375,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
   public Point getHintPosition(LightweightHint hint, Editor editor, short constraint) {
     LogicalPosition pos = editor.getCaretModel().getLogicalPosition();
     final DataContext dataContext = ((EditorEx)editor).getDataContext();
-    final Rectangle dominantArea = (Rectangle)dataContext.getData(DataConstants.DOMINANT_HINT_AREA_RECTANGLE);
+    final Rectangle dominantArea = PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.getData(dataContext);
 
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
     if (dominantArea == null) {
@@ -741,6 +741,9 @@ public class HintManagerImpl extends HintManager implements Disposable {
   private static class EditorHintListenerHolder {
     private static final EditorHintListener ourEditorHintPublisher =
         ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorHintListener.TOPIC);
+
+    private EditorHintListenerHolder() {
+    }
   }
 
   private static EditorHintListener getPublisher() {

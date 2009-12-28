@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author Vladislav.Kaznacheev
- */
 public class MavenImportingSettings implements Cloneable {
   private static final String PROCESS_RESOURCES_PHASE = "process-resources";
   public static final String[] UPDATE_FOLDERS_PHASES = new String[]{
@@ -44,6 +41,9 @@ public class MavenImportingSettings implements Cloneable {
   private boolean createModuleGroups = false;
   private boolean useMavenOutput = true;
   private String updateFoldersOnImportPhase = UPDATE_FOLDERS_DEFAULT_PHASE;
+
+  private boolean downloadSourcesAutomatically = false;
+  private boolean downloadJavadocAutomatically = false;
 
   private List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
 
@@ -107,6 +107,22 @@ public class MavenImportingSettings implements Cloneable {
     this.updateFoldersOnImportPhase = updateFoldersOnImportPhase;
   }
 
+  public boolean shouldDownloadSourcesAutomatically() {
+    return downloadSourcesAutomatically;
+  }
+
+  public void setDownloadSourcesAutomatically(boolean Value) {
+    this.downloadSourcesAutomatically = Value;
+  }
+
+  public boolean shouldDownloadJavadocAutomatically() {
+    return downloadJavadocAutomatically;
+  }
+
+  public void setDownloadJavadocAutomatically(boolean value) {
+    this.downloadJavadocAutomatically = value;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -114,9 +130,11 @@ public class MavenImportingSettings implements Cloneable {
 
     MavenImportingSettings that = (MavenImportingSettings)o;
 
-    if (importAutomatically != that.importAutomatically) return false;
     if (createModuleGroups != that.createModuleGroups) return false;
     if (createModulesForAggregators != that.createModulesForAggregators) return false;
+    if (importAutomatically != that.importAutomatically) return false;
+    if (downloadJavadocAutomatically != that.downloadJavadocAutomatically) return false;
+    if (downloadSourcesAutomatically != that.downloadSourcesAutomatically) return false;
     if (lookForNested != that.lookForNested) return false;
     if (useMavenOutput != that.useMavenOutput) return false;
     if (!dedicatedModuleDir.equals(that.dedicatedModuleDir)) return false;
@@ -138,6 +156,8 @@ public class MavenImportingSettings implements Cloneable {
     result = 31 * result + (createModuleGroups ? 1 : 0);
     result = 31 * result + (useMavenOutput ? 1 : 0);
     result = 31 * result + (updateFoldersOnImportPhase != null ? updateFoldersOnImportPhase.hashCode() : 0);
+    result = 31 * result + (downloadSourcesAutomatically ? 1 : 0);
+    result = 31 * result + (downloadJavadocAutomatically ? 1 : 0);
     return result;
   }
 

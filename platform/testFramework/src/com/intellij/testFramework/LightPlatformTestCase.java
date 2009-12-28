@@ -30,8 +30,8 @@ import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -84,8 +84,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -189,7 +191,12 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         }
 
         LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectFile);
-        ourProject = ProjectManagerEx.getInstanceEx().newProject(FileUtil.getNameWithoutExtension(projectFile), projectFile.getPath(), false, false);
+
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        new Throwable(projectFile.getPath()).printStackTrace(new PrintStream(buffer));
+
+        ourProject = PlatformTestCase.createProject(projectFile, buffer.toString());
+
         if (!ourHaveShutdownHook) {
           ourHaveShutdownHook = true;
           registerShutdownHook();
@@ -508,7 +515,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   public Object getData(String dataId) {
-    if (dataId.equals(DataConstants.PROJECT)) {
+    if (PlatformDataKeys.PROJECT.is(dataId)) {
       return ourProject;
     }
     return null;

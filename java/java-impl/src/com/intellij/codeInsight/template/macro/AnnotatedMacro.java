@@ -19,6 +19,7 @@ package com.intellij.codeInsight.template.macro;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.*;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
@@ -28,17 +29,14 @@ import com.intellij.psi.search.searches.AnnotatedMembersSearch;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
-* Created by IntelliJ IDEA.
-* User: Maxim.Mossienko
-* Date: 11.06.2009
-* Time: 0:20:54
-* To change this template use File | Settings | File Templates.
-*/
+ * @author Maxim.Mossienko
+ */
 public class AnnotatedMacro implements Macro {
 
   @NonNls
@@ -55,7 +53,8 @@ public class AnnotatedMacro implements Macro {
     return "";
   }
 
-  private Query<PsiMember> findAnnotated(ExpressionContext context, Expression[] params) {
+  @Nullable
+  private static Query<PsiMember> findAnnotated(ExpressionContext context, Expression[] params) {
     if (params == null || params.length == 0) return null;
     PsiManager instance = PsiManager.getInstance(context.getProject());
 
@@ -94,8 +93,10 @@ public class AnnotatedMacro implements Macro {
       Set<LookupElement> set = new LinkedHashSet<LookupElement>();
       final String secondParamValue = params.length > 1 ? params[1].calculateResult(context).toString() : null;
       final boolean isShortName = secondParamValue != null && !Boolean.valueOf(secondParamValue);
-      final PsiClass findInClass =
-        secondParamValue != null ? JavaPsiFacade.getInstance(context.getProject()).findClass(secondParamValue) : null;
+      final Project project = context.getProject();
+      final PsiClass findInClass = secondParamValue != null
+                                   ? JavaPsiFacade.getInstance(project).findClass(secondParamValue, GlobalSearchScope.allScope(project))
+                                   : null;
 
       for (PsiMember object : query.findAll()) {
         if (findInClass != null && !object.getContainingClass().equals(findInClass)) continue;

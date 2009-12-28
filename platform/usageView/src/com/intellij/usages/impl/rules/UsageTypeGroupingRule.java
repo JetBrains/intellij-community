@@ -32,11 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 17, 2004
- * Time: 9:34:53 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class UsageTypeGroupingRule implements UsageGroupingRule {
   public UsageGroup groupUsage(Usage usage) {

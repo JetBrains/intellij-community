@@ -46,11 +46,7 @@ import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.MethodExitRequest;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lex
- * Date: Feb 25, 2004
- * Time: 4:39:03 PM
- * To change this template use File | Settings | File Templates.
+ * @author lex
  */
 public class DebugProcessEvents extends DebugProcessImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.DebugProcessEvents");

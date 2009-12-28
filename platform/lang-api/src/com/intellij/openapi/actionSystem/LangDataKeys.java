@@ -18,6 +18,7 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.IdeView;
 import com.intellij.lang.Language;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
@@ -27,13 +28,25 @@ import com.intellij.psi.PsiFile;
  * @author yole
  */
 public class LangDataKeys extends PlatformDataKeys {
-  public static final DataKey<Module> MODULE = DataKey.create(DataConstants.MODULE);
-  public static final DataKey<Module> MODULE_CONTEXT = DataKey.create(DataConstants.MODULE_CONTEXT);
-  public static final DataKey<Module[]> MODULE_CONTEXT_ARRAY = DataKey.create(DataConstants.MODULE_CONTEXT_ARRAY);
-  public static final DataKey<PsiElement> PSI_ELEMENT = DataKey.create(DataConstants.PSI_ELEMENT);
-  public static final DataKey<PsiFile> PSI_FILE = DataKey.create(DataConstants.PSI_FILE);
-  public static final DataKey<Language> LANGUAGE = DataKey.create(DataConstants.LANGUAGE);
-  public static final DataKey<PsiElement[]> PSI_ELEMENT_ARRAY = DataKey.create(DataConstants.PSI_ELEMENT_ARRAY);
-  public static final DataKey<IdeView> IDE_VIEW = DataKey.create(DataConstants.IDE_VIEW);
+  public static final DataKey<Module> MODULE = DataKey.create("module");
+  /**
+   * Returns module if module node is selected (in module view)
+   */
+  public static final DataKey<Module> MODULE_CONTEXT = DataKey.create("context.Module");
+  public static final DataKey<Module[]> MODULE_CONTEXT_ARRAY = DataKey.create("context.Module.Array");
+  public static final DataKey<ModifiableModuleModel> MODIFIABLE_MODULE_MODEL = DataKey.create("modifiable.module.model");
+
+  public static final DataKey<PsiElement> PSI_ELEMENT = DataKey.create("psi.Element");
+  public static final DataKey<PsiFile> PSI_FILE = DataKey.create("psi.File");
+  public static final DataKey<Language> LANGUAGE = DataKey.create("Language");
+  public static final DataKey<PsiElement[]> PSI_ELEMENT_ARRAY = DataKey.create("psi.Element.array");
+
+  /**
+   * Returns {@link com.intellij.ide.IdeView} (one of project, packages, commander or favorites view).
+   */
+  public static final DataKey<IdeView> IDE_VIEW = DataKey.create("IDEView");
   public static final DataKey<Condition<AnAction>> PRESELECT_NEW_ACTION_CONDITION = DataKey.create("newElementAction.preselect.id");
+
+  public static final DataKey<PsiElement> TARGET_PSI_ELEMENT = DataKey.create("psi.TargetElement");
+  public static final DataKey<PsiElement> PASTE_TARGET_PSI_ELEMENT = DataKey.create("psi.pasteTargetElement");
 }

@@ -14,16 +14,10 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 03.08.2006
- * Time: 15:31:45
- */
 package com.intellij.uiDesigner.projectView;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -44,6 +38,9 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @author yole
+ */
 public class FormMoveProvider implements MoveAction.MoveProvider, RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.projectView.FormMoveProvider");
 
@@ -70,7 +67,7 @@ public class FormMoveProvider implements MoveAction.MoveProvider, RefactoringAct
       filesToMove [i] = forms [i].getFormFiles() [0];
     }
 
-    final PsiElement initialTargetElement = (PsiElement)dataContext.getData(DataConstantsEx.TARGET_PSI_ELEMENT);
+    final PsiElement initialTargetElement = LangDataKeys.TARGET_PSI_ELEMENT.getData(dataContext);
     MoveClassesOrPackagesImpl.doMove(project, classesToMove, initialTargetElement, new FormMoveCallback(filesToMove, classesToMove));
   }
 

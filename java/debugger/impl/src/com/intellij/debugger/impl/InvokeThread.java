@@ -22,11 +22,7 @@ import com.sun.jdi.VMDisconnectedException;
 import java.util.concurrent.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lex
- * Date: Mar 19, 2004
- * Time: 11:42:03 AM
- * To change this template use File | Settings | File Templates.
+ * @author lex
  */
 public abstract class InvokeThread<E extends PrioritizedTask> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.InvokeThread");
@@ -47,7 +43,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
           try {
             wait();
           }
-          catch (InterruptedException e) {
+          catch (InterruptedException ignore) {
           }
         }
       }

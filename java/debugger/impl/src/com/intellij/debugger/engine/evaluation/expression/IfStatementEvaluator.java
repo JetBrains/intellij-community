@@ -15,18 +15,13 @@
  */
 package com.intellij.debugger.engine.evaluation.expression;
 
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.sun.jdi.BooleanValue;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lex
- * Date: Apr 20, 2004
- * Time: 5:03:47 PM
- * To change this template use File | Settings | File Templates.
+ * @author lex
  */
 public class IfStatementEvaluator implements Evaluator {
   private final Evaluator myConditionEvaluator;

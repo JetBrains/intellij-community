@@ -14,15 +14,8 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 23.10.2006
- * Time: 18:13:58
- */
 package com.intellij.openapi.vcs;
 
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
@@ -35,16 +28,20 @@ import org.jetbrains.annotations.NonNls;
 import java.io.File;
 import java.util.List;
 
+/**
+ * @author yole
+ */
 public interface VcsDataKeys {
-  DataKey<File[]> IO_FILE_ARRAY = DataKey.create(VcsDataConstants.IO_FILE_ARRAY);
-  DataKey<File> IO_FILE = DataKey.create(VcsDataConstants.IO_FILE);
-  DataKey<VcsFileRevision> VCS_FILE_REVISION = DataKey.create(VcsDataConstants.VCS_FILE_REVISION);
-  DataKey<VcsFileRevision[]> VCS_FILE_REVISIONS = DataKey.create(VcsDataConstants.VCS_FILE_REVISIONS);
-  DataKey<VirtualFile> VCS_VIRTUAL_FILE = DataKey.create(VcsDataConstants.VCS_VIRTUAL_FILE);
-  DataKey<FilePath> FILE_PATH = DataKey.create(VcsDataConstants.FILE_PATH);
-  DataKey<FilePath[]> FILE_PATH_ARRAY = DataKey.create(VcsDataConstants.FILE_PATH_ARRAY);
-  DataKey<ChangeList[]> CHANGE_LISTS = DataKey.create(DataConstants.CHANGE_LISTS);
-  DataKey<Change[]> CHANGES = DataKey.create(DataConstants.CHANGES);
+  DataKey<File[]> IO_FILE_ARRAY = DataKey.create("IO_FILE_ARRAY");
+  DataKey<File> IO_FILE = DataKey.create("IO_FILE");
+  DataKey<VcsFileRevision> VCS_FILE_REVISION = DataKey.create("VCS_FILE_REVISION");
+  DataKey<VcsFileRevision[]> VCS_FILE_REVISIONS = DataKey.create("VCS_FILE_REVISIONS");
+  DataKey<VirtualFile> VCS_VIRTUAL_FILE = DataKey.create("VCS_VIRTUAL_FILE");
+  DataKey<FilePath> FILE_PATH = DataKey.create("FILE_PATH");
+  DataKey<FilePath[]> FILE_PATH_ARRAY = DataKey.create("FILE_PATH_ARRAY");
+  DataKey<Object> FILE_HISTORY_PANEL = DataKey.create("FILE_HISTORY_PANEL");
+  DataKey<ChangeList[]> CHANGE_LISTS = DataKey.create("vcs.ChangeList");
+  DataKey<Change[]> CHANGES = DataKey.create("vcs.Change");
   DataKey<Change[]> CHANGES_WITH_MOVED_CHILDREN = DataKey.create("ChangeListView.ChangesWithDetails");
   DataKey<Change[]> SELECTED_CHANGES_IN_DETAILS = DataKey.create("ChangeListView.SelectedChangesWithMovedSubtrees");
   @NonNls DataKey<List<Change>> CHANGES_IN_LIST_KEY = DataKey.create("ChangeListView.ChangesInList");

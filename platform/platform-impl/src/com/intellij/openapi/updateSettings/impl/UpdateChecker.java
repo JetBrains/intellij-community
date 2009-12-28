@@ -308,7 +308,7 @@ public final class UpdateChecker {
     Product product = findProduct(root, productCode);
     if (product == null) return null;
 
-    UpdateChannel channel = product.findUpdateChannelById(UpdateSettings.getInstance().CURRENT_UPDATE_CHANNEL);
+    UpdateChannel channel = product.findUpdateChannelById(ApplicationInfo.getInstance().getDefaultUpdateChannel());
     if (channel != null) return channel;
 
     for (UpdateChannel c : product.getChannels()) {

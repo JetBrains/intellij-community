@@ -21,11 +21,7 @@ import com.sun.jdi.ReferenceType;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lex
- * Date: Apr 2, 2004
- * Time: 8:49:42 PM
- * To change this template use File | Settings | File Templates.
+ * @author lex
  */
 public interface VirtualMachineProxy {
   List<ReferenceType> allClasses();

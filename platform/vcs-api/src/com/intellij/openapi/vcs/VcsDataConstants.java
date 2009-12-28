@@ -15,15 +15,17 @@
  */
 package com.intellij.openapi.vcs;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
-@Deprecated
+/**
+ * @deprecated use {@link com.intellij.openapi.vcs.VcsDataKeys} instead
+ */
+@SuppressWarnings({"UnusedDeclaration"})
 public interface VcsDataConstants {
-  String IO_FILE_ARRAY = "IO_FILE_ARRAY";
-  String IO_FILE = "IO_FILE";
-  String VCS_FILE_REVISION = "VCS_FILE_REVISION";
-  String VCS_FILE_REVISIONS = "VCS_FILE_REVISIONS";
-  String VCS_VIRTUAL_FILE = "VCS_VIRTUAL_FILE";
-  String FILE_PATH = "FILE_PATH";
-  String FILE_PATH_ARRAY = "FILE_PATH_ARRAY";
-  String FILE_HISTORY_PANEL = "FILE_HISTORY_PANEL";
+  String IO_FILE_ARRAY = VcsDataKeys.IO_FILE_ARRAY.getName();
+  String IO_FILE = VcsDataKeys.IO_FILE.getName();
+  String VCS_FILE_REVISION = VcsDataKeys.VCS_FILE_REVISION.getName();
+  String VCS_FILE_REVISIONS = VcsDataKeys.VCS_FILE_REVISIONS.getName();
+  String VCS_VIRTUAL_FILE = VcsDataKeys.VCS_VIRTUAL_FILE.getName();
+  String FILE_PATH = VcsDataKeys.FILE_PATH.getName();
+  String FILE_PATH_ARRAY = VcsDataKeys.FILE_PATH_ARRAY.getName();
+  String FILE_HISTORY_PANEL = VcsDataKeys.FILE_HISTORY_PANEL.getName();
 }

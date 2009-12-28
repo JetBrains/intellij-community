@@ -102,8 +102,10 @@ public class FileTreeTable extends AbstractFileTreeTable<Charset> {
         Presentation templatePresentation = changeAction.getTemplatePresentation();
         final JComponent comboComponent = changeAction.createCustomComponent(templatePresentation);
 
-        DataContext dataContext = SimpleDataContext.getSimpleContext(DataConstants.VIRTUAL_FILE, myVirtualFile, SimpleDataContext.getProjectContext(getProject()));
-        AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, templatePresentation, ActionManager.getInstance(), 0);
+        DataContext dataContext = SimpleDataContext
+          .getSimpleContext(PlatformDataKeys.VIRTUAL_FILE.getName(), myVirtualFile, SimpleDataContext.getProjectContext(getProject()));
+        AnActionEvent event =
+          new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, templatePresentation, ActionManager.getInstance(), 0);
         changeAction.update(event);
         editorComponent = comboComponent;
         comboComponent.addComponentListener(new ComponentAdapter() {

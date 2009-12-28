@@ -23,16 +23,10 @@ import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.Cursor;
-import java.awt.Point;
-import java.awt.Rectangle;
+import java.awt.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 02.11.2005
- * Time: 20:10:59
- * To change this template use File | Settings | File Templates.
+ * @author yole
  */
 public class GridInsertProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.GridInsertProcessor");

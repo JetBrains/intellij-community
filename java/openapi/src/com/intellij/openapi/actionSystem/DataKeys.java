@@ -31,9 +31,9 @@ public final class DataKeys extends LangDataKeys {
   }
 
   @Deprecated
-  public static final DataKey<ChangeList[]> CHANGE_LISTS = DataKey.create(DataConstants.CHANGE_LISTS);
+  public static final DataKey<ChangeList[]> CHANGE_LISTS = DataKey.create("vcs.ChangeList");
   @Deprecated
-  public static final DataKey<Change[]> CHANGES = DataKey.create(DataConstants.CHANGES);
+  public static final DataKey<Change[]> CHANGES = DataKey.create("vcs.Change");
 
 }
 

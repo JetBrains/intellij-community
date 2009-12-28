@@ -16,10 +16,10 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.projectImport.ProjectFormatPanel;
 
 import javax.swing.*;
@@ -42,9 +42,11 @@ public class MavenImportingSettingsForm {
   private JCheckBox myCreateGroupsCheckBox;
   private JComboBox myUpdateFoldersOnImportPhaseComboBox;
   private JCheckBox myUseMavenOutputCheckBox;
+  private JCheckBox myDownloadSourcesCheckBox;
+  private JCheckBox myDownloadJavadocCheckBox;
 
   public MavenImportingSettingsForm(boolean isImportStep) {
-    if(!isImportStep){
+    if (!isImportStep) {
       mySearchRecursivelyCheckBox.setVisible(false);
       myProjectFormatLabel.setVisible(false);
       myProjectFormatComboBox.setVisible(false);
@@ -60,7 +62,7 @@ public class MavenImportingSettingsForm {
     mySeparateModulesDirCheckBox.addActionListener(listener);
 
     mySeparateModulesDirChooser.addBrowseFolderListener(ProjectBundle.message("maven.import.title.module.dir"), "", null,
-                                               new FileChooserDescriptor(false, true, false, false, false, false));
+                                                        new FileChooserDescriptor(false, true, false, false, false, false));
 
     myUpdateFoldersOnImportPhaseComboBox.setModel(new DefaultComboBoxModel(MavenImportingSettings.UPDATE_FOLDERS_PHASES));
   }
@@ -94,9 +96,12 @@ public class MavenImportingSettingsForm {
     data.setCreateModulesForAggregators(myCreateModulesForAggregators.isSelected());
     data.setCreateModuleGroups(myCreateGroupsCheckBox.isSelected());
 
+    data.setUseMavenOutput(myUseMavenOutputCheckBox.isSelected());
+
     data.setUpdateFoldersOnImportPhase((String)myUpdateFoldersOnImportPhaseComboBox.getSelectedItem());
 
-    data.setUseMavenOutput(myUseMavenOutputCheckBox.isSelected());
+    data.setDownloadSourcesAutomatically(myDownloadSourcesCheckBox.isSelected());
+    data.setDownloadJavadocAutomatically(myDownloadJavadocCheckBox.isSelected());
   }
 
   public void setData(MavenImportingSettings data) {
@@ -109,9 +114,12 @@ public class MavenImportingSettingsForm {
     myCreateModulesForAggregators.setSelected(data.isCreateModulesForAggregators());
     myCreateGroupsCheckBox.setSelected(data.isCreateModuleGroups());
 
+    myUseMavenOutputCheckBox.setSelected(data.isUseMavenOutput());
+
     myUpdateFoldersOnImportPhaseComboBox.setSelectedItem(data.getUpdateFoldersOnImportPhase());
 
-    myUseMavenOutputCheckBox.setSelected(data.isUseMavenOutput());
+    myDownloadSourcesCheckBox.setSelected(data.shouldDownloadSourcesAutomatically());
+    myDownloadJavadocCheckBox.setSelected(data.shouldDownloadJavadocAutomatically());
 
     updateControls();
   }

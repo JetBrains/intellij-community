@@ -34,13 +34,8 @@ import org.jetbrains.annotations.NonNls;
 import java.util.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 31.01.2003
- * Time: 17:38:14
- * To change this template use Options | File Templates.
+ * @author ik
  */
-
 public class CompletionVariant {
   protected static final TailType DEFAULT_TAIL_TYPE = TailType.SPACE;
 

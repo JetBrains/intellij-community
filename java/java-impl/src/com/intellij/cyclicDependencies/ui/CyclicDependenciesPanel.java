@@ -388,7 +388,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
   @Nullable
   @NonNls
   public Object getData(@NonNls String dataId) {
-    if (dataId.equals(DataConstants.HELP_ID)) {
+    if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return "dependency.viewer.tool.window";
     }
     return null;
@@ -497,7 +497,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
   private static class MyTree extends Tree implements DataProvider {
     public Object getData(String dataId) {
       PackageDependenciesNode node = getSelectedNode();
-      if (DataConstants.NAVIGATABLE.equals(dataId)) {
+      if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
         return node;
       }
       return null;

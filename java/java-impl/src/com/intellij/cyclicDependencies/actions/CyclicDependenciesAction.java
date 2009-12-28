@@ -48,7 +48,7 @@ public class CyclicDependenciesAction extends AnAction{
   public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     presentation.setEnabled(
-      getInspectionScope(event.getDataContext()) != null || event.getDataContext().getData(DataConstants.PSI_FILE) != null);
+      getInspectionScope(event.getDataContext()) != null || event.getData(LangDataKeys.PSI_FILE) != null);
   }
 
   public void actionPerformed(AnActionEvent e) {
@@ -82,7 +82,7 @@ public class CyclicDependenciesAction extends AnAction{
   }
 
 
-  private AnalysisScope getInspectionScope(final DataContext dataContext) {
+  private static AnalysisScope getInspectionScope(final DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
 
@@ -91,19 +91,19 @@ public class CyclicDependenciesAction extends AnAction{
     return scope != null && scope.getScopeType() != AnalysisScope.INVALID ? scope : null;
   }
 
-  private AnalysisScope getInspectionScopeImpl(DataContext dataContext) {
+  private static AnalysisScope getInspectionScopeImpl(DataContext dataContext) {
     //Possible scopes: package, project, module.
     Project projectContext = PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext);
     if (projectContext != null) {
       return new AnalysisScope(projectContext);
     }
 
-    Module moduleContext = (Module)dataContext.getData(DataConstants.MODULE_CONTEXT);
+    Module moduleContext = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
     if (moduleContext != null) {
       return new AnalysisScope(moduleContext);
     }
 
-    Module [] modulesArray = (Module[])dataContext.getData(DataConstants.MODULE_CONTEXT_ARRAY);
+    Module [] modulesArray = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
     if (modulesArray != null) {
       return new AnalysisScope(modulesArray);
     }
@@ -117,7 +117,7 @@ public class CyclicDependenciesAction extends AnAction{
     else if (psiTarget instanceof PsiPackage) {
       PsiPackage pack = (PsiPackage)psiTarget;
       PsiDirectory[] dirs = pack.getDirectories(GlobalSearchScope.projectScope(pack.getProject()));
-      if (dirs == null || dirs.length == 0) return null;
+      if (dirs.length == 0) return null;
       return new JavaAnalysisScope(pack, LangDataKeys.MODULE.getData(dataContext));
     } else if (psiTarget != null){
       return null;
@@ -127,12 +127,20 @@ public class CyclicDependenciesAction extends AnAction{
     return getProjectScope(dataContext);
   }
 
-  private AnalysisScope getProjectScope(DataContext dataContext) {
-    return new AnalysisScope(PlatformDataKeys.PROJECT.getData(dataContext));
+  private static AnalysisScope getProjectScope(DataContext dataContext) {
+    final Project data = PlatformDataKeys.PROJECT.getData(dataContext);
+    if (data == null) {
+      return null;
+    }
+    return new AnalysisScope(data);
   }
 
-  private AnalysisScope getModuleScope(DataContext dataContext) {
-    return new AnalysisScope(LangDataKeys.MODULE.getData(dataContext));
+  private static AnalysisScope getModuleScope(DataContext dataContext) {
+    final Module data = LangDataKeys.MODULE.getData(dataContext);
+    if (data == null) {
+      return null;
+    }
+    return new AnalysisScope(data);
   }
 
   private class ProjectModuleOrPackageDialog extends DialogWrapper {

@@ -1,0 +1,63 @@
+This directory contains the source code for JFlex.
+
+For your convenience, the following generated lexer and parser files
+are included in the distribution:
+
+JFlex/LexScan.java  (lexer, generated from src/LexScan.flex)
+JFlex/LexParse.java (parser, generated from src/LexParse.cup)
+JFlex/sym.java      (parser symbols, generated from src/LexParse.cup)
+
+
+Dependencies:
+If you just want to compile the JFlex sources, no further tools are
+necessary.  If you want to compile the ant task, you need the ant
+classes in you class path, if you want to compile the unit tests, you
+need the junit classes in yor class path.
+
+To build everything from scratch:
+In class path:
+junit.jar    >= 3.8.1     [http://www.junit.org/]
+ant.jar      >= 1.4       [optional, http://ant.apache.org/]
+In ant lib dir:
+java_cup.jar >= 0.10l     [http://www.cs.princeton.edu/~appel/modern/java/CUP/]
+JFlex.jar    >= 1.4pre1   [http://www.jflex.de/]
+
+
+Dir contents:
+build.xml:
+  for use with the ant build tool [http://ant.apache.org/]
+  
+  Useful targets are:
+  jar:   recompiles all JFlex classes, generates lexer+parser 
+         only if necessary, zips up all compiled classes in
+         ../lib/JFlex.jar
+
+  build: cleans up everything and does a completely new build
+
+  realclean: deletes generated, temporary and *.class files
+ 
+manifest:
+  jar manifest file for JFlex.jar
+
+skeleton:
+  a skeleton file matching exactly the precompiled scanner skeleton.
+  Can be used together with the --skel option 
+
+skeleton.nested:
+  a skeleton file that supports nested input streams (see the manual 
+  for the API). Can be used together with the --skel option
+
+JFlex:
+  source files of package JFlex
+
+JFlex/gui:
+  source files of package JFlex.gui
+
+JFlex/anttask
+  source files of the JFlex Ant task (contributed by Rafal Mantiuk)
+  
+JFlex/test
+  unit tests for JFlex
+
+java_cup/runtime:
+  CUP v0.10k runtime classes, used by JFlex   

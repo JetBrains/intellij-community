@@ -15,10 +15,10 @@
  */
 package com.intellij.usages.impl;
 
+import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageViewSettings;
-import com.intellij.usageView.UsageViewBundle;
 import com.intellij.util.SystemProperties;
 
 import javax.swing.*;
@@ -28,11 +28,7 @@ import java.util.Enumeration;
 import java.util.TooManyListenersException;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 22, 2004
- * Time: 4:51:52 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 class ExporterToTextFile implements com.intellij.ide.ExporterToTextFile {
   private final UsageViewImpl myUsageView;

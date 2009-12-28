@@ -1084,7 +1084,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
 
   public Object getData(String dataId) {
     VcsFileRevision firstSelectedRevision = getFirstSelectedRevision();
-    if (DataConstants.NAVIGATABLE.equals(dataId)) {
+    if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
       List selectedItems = getSelection();
       if (selectedItems.size() != 1) return null;
       if (!myHistorySession.isContentAvailable(firstSelectedRevision)) {
@@ -1098,29 +1098,29 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
         return null;
       }
     }
-    else if (DataConstants.PROJECT.equals(dataId)) {
+    else if (PlatformDataKeys.PROJECT.is(dataId)) {
       return myProject;
     }
-    else if (VcsDataConstants.VCS_FILE_REVISION.equals(dataId)) {
+    else if (VcsDataKeys.VCS_FILE_REVISION.is(dataId)) {
       return firstSelectedRevision;
     }
-    else if (VcsDataConstants.VCS_FILE_REVISIONS.equals(dataId)) {
+    else if (VcsDataKeys.VCS_FILE_REVISIONS.is(dataId)) {
       return getSelectedRevisions();
     }
     else if (VcsDataKeys.CHANGES.is(dataId)) {
       return getChanges();
     }
-    else if (VcsDataConstants.VCS_VIRTUAL_FILE.equals(dataId)) {
+    else if (VcsDataKeys.VCS_VIRTUAL_FILE.is(dataId)) {
       if (firstSelectedRevision == null) return null;
       return createVirtualFileForRevision(firstSelectedRevision);
     }
-    else if (VcsDataConstants.FILE_PATH.equals(dataId)) {
+    else if (VcsDataKeys.FILE_PATH.is(dataId)) {
       return myFilePath;
     }
-    else if (VcsDataConstants.IO_FILE.equals(dataId)) {
+    else if (VcsDataKeys.IO_FILE.is(dataId)) {
       return myFilePath.getIOFile();
     }
-    else if (DataConstants.VIRTUAL_FILE.equals(dataId)) {
+    else if (PlatformDataKeys.VIRTUAL_FILE.is(dataId)) {
       if (getVirtualFile() == null) return null;
       if (getVirtualFile().isValid()) {
         return getVirtualFile();
@@ -1129,7 +1129,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
         return null;
       }
     }
-    else if (VcsDataConstants.FILE_HISTORY_PANEL.equals(dataId)) {
+    else if (VcsDataKeys.FILE_HISTORY_PANEL.is(dataId)) {
       return this;
     }
     else {

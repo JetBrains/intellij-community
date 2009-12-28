@@ -22,8 +22,8 @@ package com.intellij.ide.projectView.actions;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.Messages;
@@ -42,7 +42,7 @@ public class MoveModulesToSubGroupAction extends MoveModulesToGroupAction {
 
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Module[] modules = (Module[])dataContext.getData(DataConstants.MODULE_CONTEXT_ARRAY);
+    final Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
     final String[] newGroup;
     if (myModuleGroup != null) {
       String message = IdeBundle.message("prompt.specify.name.of.module.subgroup", myModuleGroup.presentableText(), whatToMove(modules));

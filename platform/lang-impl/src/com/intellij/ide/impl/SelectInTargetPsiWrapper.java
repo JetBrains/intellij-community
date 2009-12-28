@@ -41,6 +41,8 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
     if (myProject.isDisposed()) return false;
 
     VirtualFile virtualFile = context.getVirtualFile();
+    if (!virtualFile.isValid()) return false;
+
     final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
     final PsiFileSystemItem psiFile;
     if (document != null) {

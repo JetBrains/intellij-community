@@ -19,11 +19,7 @@ import com.intellij.debugger.DebuggerBundle;
 import com.sun.jdi.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lex
- * Date: Apr 8, 2004
- * Time: 4:38:36 PM
- * To change this template use File | Settings | File Templates.
+ * @author lex
  */
 public class EvaluateExceptionUtil {
   public static final EvaluateException INCONSISTEND_DEBUG_INFO = createEvaluateException(DebuggerBundle.message("evaluation.error.inconsistent.debug.info"));
@@ -37,6 +33,9 @@ public class EvaluateExceptionUtil {
   public static final EvaluateException ARRAY_WAS_COLLECTED = createEvaluateException(DebuggerBundle.message("evaluation.error.array.collected"));
   public static final EvaluateException THREAD_WAS_RESUMED = createEvaluateException(DebuggerBundle.message("evaluation.error.thread.resumed"));
   public static final EvaluateException DEBUG_INFO_UNAVAILABLE = createEvaluateException(DebuggerBundle.message("evaluation.error.debug.info.unavailable"));
+
+  private EvaluateExceptionUtil() {
+  }
 
   public static EvaluateException createEvaluateException(Throwable th) {
     return createEvaluateException(null, th);

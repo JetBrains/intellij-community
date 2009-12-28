@@ -24,25 +24,21 @@ import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jan 24, 2005
- * Time: 11:00:06 AM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class HTMLLanguage extends XMLLanguage {
 
   public static final HTMLLanguage INSTANCE = new HTMLLanguage();
 
   private HTMLLanguage() {
-    super("HTML", "text/html","text/htmlh");
+    super("HTML", "text/html", "text/htmlh");
     SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExplicitExtension(this, new SingleLazyInstanceSyntaxHighlighterFactory() {
       @NotNull
       protected SyntaxHighlighter createHighlighter() {
         return new HtmlFileHighlighter();
       }
     });
-    
+
   }
 
   public XmlPsiPolicy getPsiPolicy() {

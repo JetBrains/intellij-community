@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.DumbAware;
@@ -41,7 +40,7 @@ public abstract class SplitAction extends AnAction implements DumbAware {
   public void actionPerformed(final AnActionEvent event) {
     final Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());
     final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
-    final EditorWindow window = (EditorWindow)event.getDataContext().getData(DataConstantsEx.EDITOR_WINDOW);
+    final EditorWindow window = EditorWindow.DATA_KEY.getData(event.getDataContext());
 
     fileEditorManager.createSplitter(myOrientation, window);
   }

@@ -18,17 +18,10 @@ package com.intellij.openapi.progress.util;
 import com.intellij.openapi.project.Project;
 
 import javax.swing.*;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.LinkedList;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lex
- * Date: Apr 19, 2004
- * Time: 5:10:44 PM
- * To change this template use File | Settings | File Templates.
+ * @author lex
  */
 public class ProgressWindowWithNotification extends ProgressWindow {
   private final LinkedList<ProgressIndicatorListener> myListeners = new LinkedList<ProgressIndicatorListener>();
@@ -51,15 +44,13 @@ public class ProgressWindowWithNotification extends ProgressWindow {
 
   public void cancel() {
     super.cancel();
-    for (Iterator<ProgressIndicatorListener> iterator = myListeners.iterator(); iterator.hasNext();) {
-      ProgressIndicatorListener progressIndicatorListener = iterator.next();
+    for (final ProgressIndicatorListener progressIndicatorListener : myListeners) {
       progressIndicatorListener.cancelled();
     }
   }
 
   public synchronized void stop() {
-    for (Iterator<ProgressIndicatorListener> iterator = myListeners.iterator(); iterator.hasNext();) {
-      ProgressIndicatorListener progressIndicatorListener = iterator.next();
+    for (final ProgressIndicatorListener progressIndicatorListener : myListeners) {
       progressIndicatorListener.stopped();
     }
     super.stop();

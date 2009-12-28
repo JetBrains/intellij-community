@@ -23,15 +23,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Feb 17, 2005
- * Time: 4:22:50 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class UI {
   private static final Map<String, Color> ourColors = new HashMap<String, Color>();
+
+  private UI() {
+  }
 
   static {
     ourColors.put("panel.border.color", new Color(102, 101, 84));
@@ -43,11 +42,11 @@ public class UI {
     ourColors.put("link.pressed.foreground", new Color(240, 0, 0));
     ourColors.put("link.visited.foreground", new Color(128, 0, 128));
 
-    ourColors.put("bar.separator.foreground", UI.getColor("panel.separator.color"));
+    ourColors.put("bar.separator.foreground", getColor("panel.separator.color"));
     ourColors.put("bar.selected.separator.foreground", new Color(232, 231, 228));
     ourColors.put("bar.background", UIUtil.getPanelBackground());
     ourColors.put("bar.hover.background", UIUtil.getTreeSelectionBackground());
-    ourColors.put("bar.selected.background", UI.getColor("panel.custom.background"));
+    ourColors.put("bar.selected.background", getColor("panel.custom.background"));
     ourColors.put("bar.hover.frame.foreground", UIUtil.getTreeSelectionBackground().darker());
 
     ourColors.put("popup.selected.background", UIUtil.getTreeSelectionBackground());
@@ -65,7 +64,7 @@ public class UI {
 
     ourColors.put("toolbar.background", UIUtil.getPanelBackgound());
     ourColors.put("toolbar.hover.background", UIUtil.getTreeSelectionBackground());
-    ourColors.put("toolbar.selected.background", UI.getColor("panel.custom.background"));
+    ourColors.put("toolbar.selected.background", getColor("panel.custom.background"));
     ourColors.put("toolbar.hover.frame.foreground", UIUtil.getTreeSelectionBackground().darker());
 
     ourColors.put("speedsearch.background", new Color(244, 249, 181));

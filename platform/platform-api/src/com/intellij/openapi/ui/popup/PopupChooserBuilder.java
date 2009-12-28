@@ -16,8 +16,8 @@
 
 package com.intellij.openapi.ui.popup;
 
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.InplaceButton;
@@ -428,7 +428,7 @@ public class PopupChooserBuilder {
 
     @Nullable
     public Object getData(@NonNls String dataId) {
-      if (dataId.equals(DataConstants.SELECTED_ITEM)){
+      if (PlatformDataKeys.SELECTED_ITEM.is(dataId)){
         return myList.getSelectedValue();
       }
       return null;

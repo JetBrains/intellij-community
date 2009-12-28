@@ -37,10 +37,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.PopupHandler;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
-import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -360,7 +360,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     final TreePath path = myTree.getLeadSelectionPath();
     if (path == null) return;
     if (!(path.getLastPathComponent()instanceof MessageNode)) return;
-    if (getData(DataConstants.NAVIGATABLE_ARRAY) == null) return;
+    if (getData(PlatformDataKeys.NAVIGATABLE_ARRAY.getName()) == null) return;
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
     ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.ANT_MESSAGES_POPUP, group);
@@ -377,7 +377,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
 
   @Nullable
   public Object getData(String dataId) {
-    if (DataConstants.NAVIGATABLE.equals(dataId)) {
+    if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
       MessageNode item = getSelectedItem();
       if (item == null) return null;
       if (isValid(item.getFile())) {
@@ -589,7 +589,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     }
 
     public Object getData(String dataId) {
-      if (DataConstants.COPY_PROVIDER.equals(dataId)) {
+      if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
         return new CopyProvider() {
           public boolean isCopyEnabled(DataContext dataContext) {
             return getSelectionPath() != null;

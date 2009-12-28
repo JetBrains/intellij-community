@@ -22,7 +22,6 @@ import javax.swing.*;
 /**
  * User: lesya
  */
-
 public class SshPasswordDialog extends DialogWrapper{
   private JPasswordField myPasswordField;
   private JCheckBox myStoreCheckbox;

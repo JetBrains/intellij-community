@@ -16,7 +16,7 @@
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -34,8 +34,8 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import com.intellij.refactoring.listeners.RefactoringListenerManager;
 import com.intellij.ui.*;
-import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
@@ -738,10 +738,10 @@ public class DynamicToolWindowWrapper {
 
     @Nullable
     public Object getData(@NonNls String dataId) {
-      if (DataConstantsEx.PSI_ELEMENT.equals(dataId)) {
+      if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
         return getSelectedElement();
 
-      } else if (DataConstantsEx.PSI_FILE.equals(dataId)) {
+      } else if (LangDataKeys.PSI_FILE.is(dataId)) {
         final PsiElement element = getSelectedElement();
 
         if (element == null) return null;

@@ -860,7 +860,7 @@ public final class InternalDecorator extends JPanel implements TestableUi, TypeS
       final AnActionEvent event =
         new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, myAction.getTemplatePresentation(), ActionManager.getInstance(), 0);
       actionManager.fireBeforeActionPerformed(myAction, dataContext, event);
-      final Component component = ((Component)dataContext.getData(DataConstants.CONTEXT_COMPONENT));
+      final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
       if (component != null && !component.isShowing()) {
         return;
       }

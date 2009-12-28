@@ -25,18 +25,16 @@ import com.sun.jdi.request.EventRequest;
 import java.util.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lex
- * Date: Feb 24, 2004
- * Time: 8:04:01 PM
- * To change this template use File | Settings | File Templates.
+ * @author lex
  */
 public class SuspendManagerImpl implements SuspendManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.SuspendManager");
 
   private final LinkedList<SuspendContextImpl> myEventContexts  = new LinkedList<SuspendContextImpl>();
-  // contexts, paused at breakpoint or another debugger event requests. Note that thread, explicitly paused by user is not considered as
-  // "paused at breakpoint" and JDI prohibits data queries on its stackframes 
+  /**
+   * contexts, paused at breakpoint or another debugger event requests. Note that thread, explicitly paused by user is not considered as
+   * "paused at breakpoint" and JDI prohibits data queries on its stackframes
+   */
   private final LinkedList<SuspendContextImpl> myPausedContexts = new LinkedList<SuspendContextImpl>();
   private final Set<ThreadReferenceProxyImpl>  myFrozenThreads  = Collections.synchronizedSet(new HashSet<ThreadReferenceProxyImpl>());
 

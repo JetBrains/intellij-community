@@ -28,11 +28,7 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Feb 21, 2005
- * Time: 7:14:29 PM
- * To change this template use File | Settings | File Templates.
+ * @author cdr
  */
 public class DocumentFragmentTooltipRenderer implements TooltipRenderer {
   private final DocumentFragment myDocumentFragment;

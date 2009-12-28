@@ -24,14 +24,8 @@ import java.io.InputStreamReader;
 import java.util.Stack;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lesya
- * Date: Jul 13, 2005
- * Time: 11:05:20 PM
- * To change this template use File | Settings | File Templates.
+ * @author lesya
  */
-
-
 public class CvsConflictsParser {
   private static final String RIGHT = "<<<<<<<";
   private static final String LEFT = "=======";

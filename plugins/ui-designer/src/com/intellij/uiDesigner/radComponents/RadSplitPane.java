@@ -15,7 +15,6 @@
  */
 package com.intellij.uiDesigner.radComponents;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.UIFormXmlConstants;
@@ -38,8 +37,6 @@ import java.awt.event.MouseEvent;
  * @author Vladimir Kondratyev
  */
 public final class RadSplitPane extends RadContainer {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.radComponents.RadSplitPane");
-
   public static class Factory extends RadComponentFactory {
     public RadComponent newInstance(Module module, Class aClass, String id) {
       return new RadSplitPane(module, aClass, id);
@@ -63,7 +60,7 @@ public final class RadSplitPane extends RadContainer {
   }
 
   private static boolean isEmptySplitComponent(final Component component) {
-    return component == null || ((JComponent)component).getClientProperty(RadComponent.CLIENT_PROP_RAD_COMPONENT) == null;
+    return component == null || ((JComponent)component).getClientProperty(CLIENT_PROP_RAD_COMPONENT) == null;
   }
 
   private boolean isLeft(Point pnt) {
@@ -137,7 +134,7 @@ public final class RadSplitPane extends RadContainer {
                                    final String position) {
     if (sideComponent instanceof JComponent) {
       RadComponent radSideComponent = createSnapshotComponent(context, (JComponent) sideComponent);
-      if (sideComponent != null) {
+      if (radSideComponent != null) {
         radSideComponent.setCustomLayoutConstraints(position);
         addComponent(radSideComponent);
       }
@@ -147,7 +144,7 @@ public final class RadSplitPane extends RadContainer {
   private class RadSplitPaneLayoutManager extends RadLayoutManager {
 
     @Nullable public String getName() {
-      return null;  //To change body of implemented methods use File | Settings | File Templates.
+      return null;
     }
 
     public void writeChildConstraints(final XmlWriter writer, final RadComponent child) {

@@ -24,11 +24,7 @@ import java.lang.ref.SoftReference;
 import java.util.ResourceBundle;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lesya
- * Date: Sep 2, 2005
- * Time: 5:11:42 PM
- * To change this template use File | Settings | File Templates.
+ * @author lesya
  */
 public class EditorBundle {
   private static Reference<ResourceBundle> ourBundle;

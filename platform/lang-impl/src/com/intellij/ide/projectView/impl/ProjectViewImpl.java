@@ -36,7 +36,6 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -156,7 +155,9 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
   private final Map<String, AbstractProjectViewPane> myId2Pane = new LinkedHashMap<String, AbstractProjectViewPane>();
   private final Collection<AbstractProjectViewPane> myUninitializedPanes = new THashSet<AbstractProjectViewPane>();
 
-  static final String PROJECT_VIEW_DATA_CONSTANT = "com.intellij.ide.projectView.impl.ProjectViewImpl";
+  static final DataKey<ProjectViewImpl> DATA_KEY = DataKey.create("com.intellij.ide.projectView.impl.ProjectViewImpl");
+  @Deprecated static final String PROJECT_VIEW_DATA_CONSTANT = DATA_KEY.getName();
+
   private DefaultActionGroup myActionGroup;
   private final Runnable myTreeChangeListener;
   private String mySavedPaneId = ProjectViewPane.ID;
@@ -755,7 +756,7 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
       }
     }
     if (title == null) {
-      final PsiElement element = (PsiElement)myDataProvider.getData(DataConstants.PSI_ELEMENT);
+      final PsiElement element = (PsiElement)myDataProvider.getData(LangDataKeys.PSI_ELEMENT.getName());
       if (element != null) {
         PsiFile file = element.getContainingFile();
         if (file != null) {
@@ -977,20 +978,20 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
         if (paneSpecificData != null) return paneSpecificData;
       }
       
-      if (DataConstants.PSI_ELEMENT.equals(dataId)) {
+      if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
         if (currentProjectViewPane == null) return null;
         final PsiElement[] elements = currentProjectViewPane.getSelectedPSIElements();
         return elements.length == 1 ? elements[0] : null;
       }
-      if (DataConstants.PSI_ELEMENT_ARRAY.equals(dataId)) {
+      if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
         if (currentProjectViewPane == null) {
           return null;
         }
         PsiElement[] elements = currentProjectViewPane.getSelectedPSIElements();
         return elements.length == 0 ? null : elements;
       }
-      if (DataConstants.VIRTUAL_FILE_ARRAY.equals(dataId)) {
-        PsiElement[] psiElements = (PsiElement[])getData(DataConstants.PSI_ELEMENT_ARRAY);
+      if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+        PsiElement[] psiElements = (PsiElement[])getData(LangDataKeys.PSI_ELEMENT_ARRAY.getName());
         if (psiElements == null) return null;
         Set<VirtualFile> files = new LinkedHashSet<VirtualFile>();
         for (PsiElement element : psiElements) {
@@ -1000,22 +1001,22 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
         }
         return files.size() > 0 ? VfsUtil.toVirtualFileArray(files) : null;
       }
-      if (DataConstantsEx.TARGET_PSI_ELEMENT.equals(dataId)) {
+      if (LangDataKeys.TARGET_PSI_ELEMENT.is(dataId)) {
         return null;
       }
-      if (DataConstants.CUT_PROVIDER.equals(dataId)) {
+      if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
         return myCopyPasteDelegator.getCutProvider();
       }
-      if (DataConstants.COPY_PROVIDER.equals(dataId)) {
+      if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
         return myCopyPasteDelegator.getCopyProvider();
       }
-      if (DataConstants.PASTE_PROVIDER.equals(dataId)) {
+      if (PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
         return myCopyPasteDelegator.getPasteProvider();
       }
-      if (DataConstants.IDE_VIEW.equals(dataId)) {
+      if (LangDataKeys.IDE_VIEW.is(dataId)) {
         return myIdeView;
       }
-      if (DataConstants.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
+      if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
         final List<Module> modules = getSelectedElements(Module.class);
         if (!modules.isEmpty()) {
           return myDeleteModuleProvider;
@@ -1034,17 +1035,17 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
         }
         return myDeletePSIElementProvider;
       }
-      if (DataConstants.HELP_ID.equals(dataId)) {
+      if (PlatformDataKeys.HELP_ID.is(dataId)) {
         return HelpID.PROJECT_VIEWS;
       }
-      if (PROJECT_VIEW_DATA_CONSTANT.equals(dataId)) {
+      if (ProjectViewImpl.DATA_KEY.is(dataId)) {
         return ProjectViewImpl.this;
       }
-      if (DataConstants.PROJECT_CONTEXT.equals(dataId)) {
+      if (PlatformDataKeys.PROJECT_CONTEXT.is(dataId)) {
         Object selected = getSelectedNodeElement();
         return selected instanceof Project ? selected : null;
       }
-      if (DataConstants.MODULE_CONTEXT.equals(dataId)) {
+      if (LangDataKeys.MODULE_CONTEXT.is(dataId)) {
         Object selected = getSelectedNodeElement();
         if (selected instanceof Module) {
           return !((Module)selected).isDisposed() ? selected : null;
@@ -1060,18 +1061,18 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
         }
       }
 
-      if (DataConstants.MODULE_CONTEXT_ARRAY.equals(dataId)) {
+      if (LangDataKeys.MODULE_CONTEXT_ARRAY.is(dataId)) {
         return getSelectedModules();
       }
-      if (DataConstantsEx.MODULE_GROUP_ARRAY.equals(dataId)) {
+      if (ModuleGroup.ARRAY_DATA_KEY.is(dataId)) {
         final List<ModuleGroup> selectedElements = getSelectedElements(ModuleGroup.class);
         return selectedElements.isEmpty() ? null : selectedElements.toArray(new ModuleGroup[selectedElements.size()]);
       }
-      if (DataConstantsEx.LIBRARY_GROUP_ARRAY.equals(dataId)) {
+      if (LibraryGroupElement.ARRAY_DATA_KEY.is(dataId)) {
         final List<LibraryGroupElement> selectedElements = getSelectedElements(LibraryGroupElement.class);
         return selectedElements.isEmpty() ? null : selectedElements.toArray(new LibraryGroupElement[selectedElements.size()]);
       }
-      if (DataConstantsEx.NAMED_LIBRARY_ARRAY.equals(dataId)) {
+      if (NamedLibraryElement.ARRAY_DATA_KEY.is(dataId)) {
         final List<NamedLibraryElement> selectedElements = getSelectedElements(NamedLibraryElement.class);
         return selectedElements.isEmpty() ? null : selectedElements.toArray(new NamedLibraryElement[selectedElements.size()]);
       }

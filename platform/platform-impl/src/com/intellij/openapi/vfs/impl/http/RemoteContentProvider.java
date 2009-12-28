@@ -37,7 +37,7 @@ public abstract class RemoteContentProvider {
   public interface DownloadingCallback {
     void finished(@Nullable FileType fileType);
 
-    void errorOccured(@NotNull String errorMessage);
+    void errorOccurred(@NotNull String errorMessage, boolean cancelled);
 
     void setProgressText(@NotNull String text, boolean indeterminate);
 

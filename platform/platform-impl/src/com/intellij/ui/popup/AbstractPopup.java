@@ -18,7 +18,6 @@ package com.intellij.ui.popup;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.JBAwtEventQueue;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -365,7 +364,7 @@ public class AbstractPopup implements JBPopup {
   }
 
   private RelativePoint relativePointByQuickSearch(final DataContext dataContext) {
-    Rectangle dominantArea = (Rectangle)dataContext.getData(DataConstants.DOMINANT_HINT_AREA_RECTANGLE);
+    Rectangle dominantArea = PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.getData(dataContext);
 
     if (dominantArea != null) {
       final Component focusedComponent = getWndManager().getFocusedComponent(myProject);
@@ -394,7 +393,7 @@ public class AbstractPopup implements JBPopup {
     assert editor.getComponent().isShowing() : "Editor must be showing on the screen";
 
     DataContext context = ((EditorEx)editor).getDataContext();
-    Rectangle dominantArea = (Rectangle)context.getData(DataConstants.DOMINANT_HINT_AREA_RECTANGLE);
+    Rectangle dominantArea = PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.getData(context);
     if (dominantArea != null && !myRequestFocus) {
       final JLayeredPane layeredPane = editor.getContentComponent().getRootPane().getLayeredPane();
       show(relativePointWithDominantRectangle(layeredPane, dominantArea));
@@ -1108,7 +1107,7 @@ public class AbstractPopup implements JBPopup {
         final Window window = getPopupWindow();
         if (window != null) {
           myRestoreWindowSize = window.getSize();
-          window.hide();
+          window.setVisible(true);
         }
       }
     }

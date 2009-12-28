@@ -22,15 +22,15 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.lang.properties.PropertiesReferenceManager;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.lang.properties.PropertiesFileType;
+import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileStatusNotification;
@@ -294,7 +294,7 @@ public final class PreviewFormAction extends AnAction{
       LOG.assertTrue(defaultRunner != null);
       defaultRunner.execute(DefaultRunExecutor.getRunExecutorInstance(), new ExecutionEnvironment(profile, new DataContext() {   // IDEADEV-3596
         public Object getData(String dataId) {
-          if (dataId.equals(DataConstants.PROJECT)) {
+          if (PlatformDataKeys.PROJECT.is(dataId)) {
             return module.getProject();
           }
           return dataContext.getData(dataId);

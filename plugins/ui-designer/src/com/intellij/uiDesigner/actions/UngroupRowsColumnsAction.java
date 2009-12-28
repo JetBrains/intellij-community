@@ -16,13 +16,13 @@
 
 package com.intellij.uiDesigner.actions;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.uiDesigner.CaptionSelection;
 import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.jgoodies.forms.layout.FormLayout;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
@@ -35,7 +35,7 @@ public class UngroupRowsColumnsAction extends RowColumnAction {
   @Override
   public void update(final AnActionEvent e) {
     super.update(e);
-    CaptionSelection selection = e.getData(CaptionSelection.DATA_KEY);
+    CaptionSelection selection = CaptionSelection.DATA_KEY.getData(e.getDataContext());
     if (selection != null) {
       e.getPresentation().setEnabled(selection.getContainer() != null &&
         selection.getContainer().getLayout() instanceof FormLayout &&

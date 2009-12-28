@@ -15,10 +15,8 @@
  */
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiInvalidElementAccessException;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.ArrayUtil;
@@ -26,11 +24,15 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public abstract class ClsRepositoryPsiElement<T extends StubElement> extends ClsElementImpl {
+public abstract class ClsRepositoryPsiElement<T extends StubElement> extends ClsElementImpl implements StubBasedPsiElement<T> {
   private final T myStub;
 
   protected ClsRepositoryPsiElement(final T stub) {
     myStub = stub;
+  }
+
+  public IStubElementType getElementType() {
+    return myStub.getStubType();
   }
 
   public PsiElement getParent() {

@@ -35,11 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: mike
- * Date: May 11, 2006
- * Time: 3:48:48 PM
- * To change this template use File | Settings | File Templates.
+ * @author mike
  */
 public class HippieWordCompletionHandler implements CodeInsightActionHandler {
   private static final Key<CompletionState> KEY_STATE = new Key<CompletionState>("HIPPIE_COMPLETION_STATE");

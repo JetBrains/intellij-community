@@ -15,16 +15,12 @@
  */
 package com.intellij.psi.impl.source.parsing;
 
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.source.ParsingContext;
 import com.intellij.util.CharTable;
-import com.intellij.pom.java.LanguageLevel;
 
 /**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 07.06.2004
- * Time: 18:45:17
- * To change this template use File | Settings | File Templates.
+ * @author ik
  */
 public class JavaParsingContext extends ParsingContext {
   private final DeclarationParsing myDeclarationParsing;

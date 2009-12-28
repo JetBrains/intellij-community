@@ -37,7 +37,10 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileAdapter;
+import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.util.EditorPopupHandler;
@@ -281,10 +284,10 @@ class TextEditorComponent extends JPanel implements DataProvider{
       if (o != null) return o;
     }
 
-    if (dataId.equals(DataConstants.EDITOR)) {
+    if (PlatformDataKeys.EDITOR.is(dataId)) {
       return e;
     }
-    if (dataId.equals(DataConstants.VIRTUAL_FILE)) {
+    if (PlatformDataKeys.VIRTUAL_FILE.is(dataId)) {
       return myFile.isValid()? myFile : null;  // fix for SCR 40329
     }
     return null;

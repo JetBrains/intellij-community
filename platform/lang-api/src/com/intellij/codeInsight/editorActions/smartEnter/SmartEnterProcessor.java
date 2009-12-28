@@ -31,11 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Sep 5, 2003
- * Time: 3:31:23 PM
- * To change this template use Options | File Templates.
+ * @author max
  */
 public abstract class SmartEnterProcessor {
   public abstract boolean process(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile psiFile);

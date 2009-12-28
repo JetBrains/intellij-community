@@ -20,11 +20,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.vfs.VirtualFile;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lesya
- * Date: Feb 23, 2005
- * Time: 7:19:02 PM
- * To change this template use File | Settings | File Templates.
+ * @author lesya
  */
 public interface StructureViewWrapper {
   boolean selectCurrentElement(FileEditor fileEditor, VirtualFile file, boolean requestFocus);

@@ -27,6 +27,7 @@ import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryConfiguration;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.SettingsEditor;
@@ -40,10 +41,12 @@ import org.jetbrains.annotations.Nullable;
  * @author spleaner
  */
 public abstract class GenericProgramRunner<Settings extends JDOMExternalizable> implements ProgramRunner<Settings> {
+
   /**
    * @see com.intellij.execution.ui.RunContentDescriptor#myContent
    */
-  @NonNls public static final String CONTENT_TO_REUSE = "contentToReuse";
+  public static final DataKey<RunContentDescriptor> CONTENT_TO_REUSE_DATA_KEY = DataKey.create("contentToReuse");
+  @Deprecated @NonNls public static final String CONTENT_TO_REUSE = CONTENT_TO_REUSE_DATA_KEY.getName();
 
   @Nullable
   public Settings createConfigurationData(final ConfigurationInfoProvider settingsProvider) {

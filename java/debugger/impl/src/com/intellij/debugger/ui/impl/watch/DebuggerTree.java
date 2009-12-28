@@ -22,7 +22,6 @@ package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
-import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -44,6 +43,7 @@ import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.render.ChildrenBuilder;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.debugger.ui.tree.render.NodeRendererSettingsListener;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -66,6 +66,8 @@ import java.util.List;
 public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.DebuggerTree");
   protected static final Key<Rectangle> VISIBLE_RECT = Key.create("VISIBLE_RECT");
+
+  public static final DataKey<DebuggerTree> DATA_KEY = DataKey.create("DebuggerTree"); 
 
   private final Project myProject;
   protected final NodeManagerImpl myNodeManager;
@@ -182,7 +184,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
   }
 
   public Object getData(String dataId) {
-    if (DebuggerActions.DEBUGGER_TREE.equals(dataId)) {
+    if (DebuggerTree.DATA_KEY.is(dataId)) {
       return this;
     }
     return null;

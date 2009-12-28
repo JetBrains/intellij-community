@@ -18,7 +18,7 @@ package com.intellij.cvsSupport2.cvsBrowser.ui;
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContextAdapter;
-import com.intellij.cvsSupport2.actions.cvsContext.CvsDataConstants;
+import com.intellij.cvsSupport2.actions.cvsContext.CvsDataKeys;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsLightweightFile;
 import com.intellij.cvsSupport2.changeBrowser.CvsRepositoryLocation;
 import com.intellij.cvsSupport2.checkout.CheckoutAction;
@@ -37,8 +37,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -94,7 +94,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
     return result;
   }
 
-  private class EditSourceAction extends AnAction {
+  private static class EditSourceAction extends AnAction {
     public EditSourceAction() {
       super(ActionsBundle.actionText("EditSource"),
             ActionsBundle.actionDescription("EditSource"),
@@ -205,18 +205,18 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
   }
 
   public Object getData(String dataId) {
-    if (DataConstants.NAVIGATABLE.equals(dataId)) {
+    if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
       VirtualFile cvsVirtualFile = getCvsVirtualFile();
       if (cvsVirtualFile == null || !cvsVirtualFile.isValid()) return null;
       return new OpenFileDescriptor(myProject, cvsVirtualFile);
     }
-    else if (DataConstants.PROJECT.equals(dataId)) {
+    else if (PlatformDataKeys.PROJECT.is(dataId)) {
       return myProject;
     }
-    else if (CvsDataConstants.CVS_ENVIRONMENT.equals(dataId)) {
+    else if (CvsDataKeys.CVS_ENVIRONMENT.is(dataId)) {
       return myCvsRootConfiguration;
     }
-    else if (CvsDataConstants.CVS_LIGHT_FILE.equals(dataId)) {
+    else if (CvsDataKeys.CVS_LIGHT_FILE.is(dataId)) {
       return getCvsLightFile();
     }
     else {

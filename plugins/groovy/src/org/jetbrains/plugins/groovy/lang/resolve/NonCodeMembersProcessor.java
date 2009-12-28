@@ -22,11 +22,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.scope.PsiScopeProcessor;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Medvedev
- * Date: Apr 1, 2009
- * Time: 7:20:45 PM
- * To change this template use File | Settings | File Templates.
+ * @author Maxim.Medvedev
  */
 public interface NonCodeMembersProcessor {
   ExtensionPointName<NonCodeMembersProcessor> EP_NAME = ExtensionPointName.create("org.intellij.groovy.nonCodeProcessor");

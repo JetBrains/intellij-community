@@ -31,11 +31,7 @@ import gnu.trove.THashMap;
 import java.util.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: Oct 6, 2004
- * Time: 11:11:40 PM
- * To change this template use File | Settings | File Templates.
+ * @author ik
  */
 public class TreeChangeEventImpl implements TreeChangeEvent{
   private final Map<ASTNode, TreeChange> myChangedElements = new THashMap<ASTNode, TreeChange>();
