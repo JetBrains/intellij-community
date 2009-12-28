@@ -350,7 +350,9 @@ public class CompositeElement extends TreeElement {
     // up
     while (cur != this) {
       CompositeElement parent = cur.getTreeParent();
-      parent.myCachedLength -= cur.getCachedLength();
+      int curLength = cur.getCachedLength();
+      LOG.assertTrue(curLength != NOT_CACHED, cur);
+      parent.myCachedLength -= curLength;
 
       TreeElement next = cur.getTreeNext();
       if (next != null) {
@@ -358,6 +360,7 @@ public class CompositeElement extends TreeElement {
         return next;
       }
 
+      LOG.assertTrue(parent.lastChild == cur, parent);
       parent.myCachedLength = -parent.myCachedLength + NOT_CACHED;
 
       cur = parent;
