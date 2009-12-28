@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor;
 import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination;
@@ -124,7 +125,7 @@ public class GroovyMoveClassTest extends LightCodeInsightFixtureTestCase {
     final PsiClass[] classes = new PsiClass[classNames.length];
     for (int i = 0; i < classes.length; i++) {
       String className = classNames[i];
-      classes[i] = JavaPsiFacade.getInstance(getProject()).findClass(className);
+      classes[i] = JavaPsiFacade.getInstance(getProject()).findClass(className, GlobalSearchScope.allScope(getProject()));
       assertNotNull("Class " + className + " not found", classes[i]);
     }
 
@@ -216,16 +217,19 @@ public class GroovyMoveClassTest extends LightCodeInsightFixtureTestCase {
   private static byte[] contentsToByteArray(File f) throws IOException {
     int b;
     final FileReader fileReader = new FileReader(f);
-    ArrayList<Byte> bytes = new ArrayList<Byte>();
-    while ((b = fileReader.read()) >= 0) {
-      bytes.add((byte)b);
+    try {
+      ArrayList<Byte> bytes = new ArrayList<Byte>();
+      while ((b = fileReader.read()) >= 0) {
+        bytes.add((byte)b);
+      }
+      final byte[] res = new byte[bytes.size()];
+      for (int i = 0; i < res.length; i++) {
+        res[i] = bytes.get(i);
+      }
+      return res;
     }
-    final byte[] res = new byte[bytes.size()];
-    for (int i = 0; i < res.length; i++) {
-      res[i] = bytes.get(i);
+    finally {
+      fileReader.close();
     }
-    return res;
   }
-
-
 }

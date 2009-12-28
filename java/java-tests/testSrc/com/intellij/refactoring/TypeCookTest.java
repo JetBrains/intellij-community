@@ -8,6 +8,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.typeCook.Settings;
 import com.intellij.refactoring.typeCook.deductive.builder.ReductionSystem;
 import com.intellij.refactoring.typeCook.deductive.builder.SystemBuilder;
@@ -663,7 +664,7 @@ public class TypeCookTest extends MultiFileTestCase {
   }
 
   private void performAction(String className, String rootDir, final boolean cookObjects) throws Exception {
-    PsiClass aClass = myJavaFacade.findClass(className);
+    PsiClass aClass = myJavaFacade.findClass(className, GlobalSearchScope.allScope(myProject));
 
     assertNotNull("Class " + className + " not found", aClass);
 
@@ -736,8 +737,12 @@ public class TypeCookTest extends MultiFileTestCase {
     PrintWriter writer;
     if (!patternFile.exists()) {
       writer = new PrintWriter(new FileOutputStream(patternFile));
-      writer.print(itemRepr);
-      writer.close();
+      try {
+        writer.print(itemRepr);
+      }
+      finally {
+        writer.close();
+      }
 
       System.out.println("Pattern not found, file " + patternName + " created.");
 
@@ -747,10 +752,14 @@ public class TypeCookTest extends MultiFileTestCase {
     File graFile = new File(FileUtil.getTempDirectory() + File.separator + rootDir + File.separator + itemName);
 
     writer = new PrintWriter(new FileOutputStream(graFile));
+    try {
+      writer.print(itemRepr);
+    }
+    finally {
+      writer.close();
+    }
 
-    writer.print(itemRepr);
 
-    writer.close();
 
     LocalFileSystem.getInstance().refreshAndFindFileByIoFile(graFile);
     FileDocumentManager.getInstance().saveAllDocuments();

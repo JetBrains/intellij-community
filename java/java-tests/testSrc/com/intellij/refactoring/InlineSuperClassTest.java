@@ -9,6 +9,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.inlineSuperClass.InlineSuperClassRefactoringProcessor;
 
 public class InlineSuperClassTest extends MultiFileTestCase {
@@ -33,14 +34,14 @@ public class InlineSuperClassTest extends MultiFileTestCase {
     try {
       doTest(new PerformAction() {
         public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
-          PsiClass aClass = myJavaFacade.findClass("Test");
+          PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.allScope(myProject));
 
-          if (aClass == null) aClass = myJavaFacade.findClass("p.Test");
+          if (aClass == null) aClass = myJavaFacade.findClass("p.Test", GlobalSearchScope.allScope(myProject));
           assertNotNull("Class Test not found", aClass);
 
-          PsiClass superClass = myJavaFacade.findClass("Super");
+          PsiClass superClass = myJavaFacade.findClass("Super", GlobalSearchScope.allScope(myProject));
 
-          if (superClass == null) superClass = myJavaFacade.findClass("p1.Super");
+          if (superClass == null) superClass = myJavaFacade.findClass("p1.Super", GlobalSearchScope.allScope(myProject));
           assertNotNull("Class Super not found", superClass);
 
           new InlineSuperClassRefactoringProcessor(getProject(), superClass, aClass).run();
@@ -162,10 +163,12 @@ public class InlineSuperClassTest extends MultiFileTestCase {
   public void testMultipleSubclasses() throws Exception {
     doTest(new PerformAction() {
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
-        PsiClass superClass = myJavaFacade.findClass("Super");
-        if (superClass == null) superClass = myJavaFacade.findClass("p1.Super");
+        PsiClass superClass = myJavaFacade.findClass("Super", GlobalSearchScope.allScope(myProject));
+        if (superClass == null) superClass = myJavaFacade.findClass("p1.Super", GlobalSearchScope.allScope(myProject));
         assertNotNull("Class Super not found", superClass);
-        new InlineSuperClassRefactoringProcessor(getProject(), superClass, myJavaFacade.findClass("Test"), myJavaFacade.findClass("Test1")).run();
+        new InlineSuperClassRefactoringProcessor(getProject(), superClass,
+                                                 myJavaFacade.findClass("Test", GlobalSearchScope.allScope(myProject)),
+                                                 myJavaFacade.findClass("Test1", GlobalSearchScope.allScope(myProject))).run();
       }
     });
   }

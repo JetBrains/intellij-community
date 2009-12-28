@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.memberPushDown.PushDownProcessor;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
@@ -38,10 +39,10 @@ public class PushDownMultifileTest extends MultiFileTestCase {
     try {
       doTest(new PerformAction() {
         public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
-          final PsiClass srcClass = myJavaFacade.findClass("a.A");
+          final PsiClass srcClass = myJavaFacade.findClass("a.A", GlobalSearchScope.allScope(myProject));
           assertTrue("Source class not found", srcClass != null);
 
-          final PsiClass targetClass = myJavaFacade.findClass("b.B");
+          final PsiClass targetClass = myJavaFacade.findClass("b.B", GlobalSearchScope.allScope(myProject));
           assertTrue("Target class not found", targetClass != null);
 
           final PsiMethod[] methods = srcClass.getMethods();
@@ -85,10 +86,10 @@ public class PushDownMultifileTest extends MultiFileTestCase {
     try {
       doTest(new PerformAction() {
         public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
-          final PsiClass srcClass = myJavaFacade.findClass("a.A");
+          final PsiClass srcClass = myJavaFacade.findClass("a.A", GlobalSearchScope.allScope(myProject));
           assertTrue("Source class not found", srcClass != null);
 
-          final PsiClass targetClass = myJavaFacade.findClass("b.B");
+          final PsiClass targetClass = myJavaFacade.findClass("b.B", GlobalSearchScope.allScope(myProject));
           assertTrue("Target class not found", targetClass != null);
 
           final PsiField[] fields = srcClass.getFields();
