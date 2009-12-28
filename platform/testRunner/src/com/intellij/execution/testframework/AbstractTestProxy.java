@@ -21,6 +21,7 @@
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.Location;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NonNls;
@@ -28,7 +29,8 @@ import org.jetbrains.annotations.NonNls;
 import java.util.List;
 
 public interface AbstractTestProxy {
-  @NonNls String DATA_CONSTANT = "testProxy";
+  DataKey<AbstractTestProxy> DATA_KEY = DataKey.create("testProxy");
+  @Deprecated @NonNls String DATA_CONSTANT = DATA_KEY.getName();
 
   boolean isInProgress();
 

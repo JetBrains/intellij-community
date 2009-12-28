@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 public interface DiffToolbar {
   /**
    * An action can access diff view via {@link com.intellij.openapi.actionSystem.DataContext}.
-   * @see com.intellij.openapi.actionSystem.DataConstants#DIFF_VIEWER
+   * @see com.intellij.openapi.actionSystem.PlatformDataKeys#DIFF_VIEWER
    * @see AnAction#update(com.intellij.openapi.actionSystem.AnActionEvent)
    * @see AnAction#actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent)
    * @see com.intellij.openapi.actionSystem.DataContext

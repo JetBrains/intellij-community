@@ -42,8 +42,7 @@ public abstract class AbstractIntegrateChangesAction<T extends SelectedCommitted
 
   public final void update(final AnActionEvent e) {
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-    final CommittedChangesBrowserUseCase useCase = (CommittedChangesBrowserUseCase) e.getDataContext().
-      getData(CommittedChangesBrowserUseCase.CONTEXT_NAME);
+    final CommittedChangesBrowserUseCase useCase = CommittedChangesBrowserUseCase.DATA_KEY.getData(e.getDataContext());
     final Presentation presentation = e.getPresentation();
 
     if ((project == null) || (myCheckUseCase) && ((useCase == null) || (! CommittedChangesBrowserUseCase.COMMITTED.equals(useCase)))) {

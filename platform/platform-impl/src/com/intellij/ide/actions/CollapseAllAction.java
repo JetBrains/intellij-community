@@ -17,10 +17,10 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 
 public class CollapseAllAction extends TreeCollapseAllActionBase {
   protected TreeExpander getExpander(DataContext dataContext) {
-    return (TreeExpander)dataContext.getData(DataConstantsEx.TREE_EXPANDER);
+    return PlatformDataKeys.TREE_EXPANDER.getData(dataContext);
   }
 }

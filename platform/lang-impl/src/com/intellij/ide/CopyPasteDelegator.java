@@ -17,8 +17,8 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -128,7 +128,7 @@ public abstract class CopyPasteDelegator implements CopyPasteSupport {
       final PsiElement[] elements = PsiCopyPasteManager.getInstance().getElements(isCopied);
       if (elements == null) return false;
       try {
-        PsiElement target = (PsiElement)dataContext.getData(DataConstantsEx.PASTE_TARGET_PSI_ELEMENT);
+        PsiElement target = LangDataKeys.PASTE_TARGET_PSI_ELEMENT.getData(dataContext);
         if (isCopied[0]) {
           PsiDirectory targetDirectory = target instanceof PsiDirectory ? (PsiDirectory)target : null;
           if (targetDirectory == null && target instanceof PsiDirectoryContainer) {
@@ -180,7 +180,7 @@ public abstract class CopyPasteDelegator implements CopyPasteSupport {
         return false;
       }
 
-      Object target = dataContext.getData(DataConstantsEx.PASTE_TARGET_PSI_ELEMENT);
+      Object target = LangDataKeys.PASTE_TARGET_PSI_ELEMENT.getData(dataContext);
       if (target == null) {
         return false;
       }

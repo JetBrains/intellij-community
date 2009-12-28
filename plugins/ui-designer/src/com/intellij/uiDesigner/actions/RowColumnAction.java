@@ -44,7 +44,7 @@ public abstract class RowColumnAction extends AnAction {
 
   public void actionPerformed(final AnActionEvent e) {
     GuiEditor editor = FormEditingUtil.getEditorFromContext(e.getDataContext());
-    CaptionSelection selection = (CaptionSelection) e.getDataContext().getData(CaptionSelection.class.getName());
+    CaptionSelection selection = CaptionSelection.DATA_KEY.getData(e.getDataContext());
     if (editor == null || selection == null || !editor.ensureEditable()) {
       return;
     }
@@ -57,7 +57,7 @@ public abstract class RowColumnAction extends AnAction {
 
   public void update(final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
-    CaptionSelection selection = (CaptionSelection) e.getDataContext().getData(CaptionSelection.class.getName());
+    CaptionSelection selection = CaptionSelection.DATA_KEY.getData(e.getDataContext());
     if (selection == null) {
       presentation.setEnabled(false);
     }

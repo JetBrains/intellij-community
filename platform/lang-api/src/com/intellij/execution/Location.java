@@ -15,6 +15,7 @@
  */
 package com.intellij.execution;
 
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -28,7 +29,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Iterator;
 
 public abstract class Location<E extends PsiElement> {
-  @NonNls public static final String LOCATION = "Location";
+  public static final DataKey<Location<?>> DATA_KEY = DataKey.create("Location");
+  @Deprecated @NonNls public static final String LOCATION = DATA_KEY.getName();
 
   @NotNull public abstract E getPsiElement();
   @NotNull public abstract Project getProject();

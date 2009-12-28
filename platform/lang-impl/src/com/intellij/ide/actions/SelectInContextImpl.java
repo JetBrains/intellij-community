@@ -18,7 +18,10 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.FileEditorProvider;
 import com.intellij.ide.SelectInContext;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -74,7 +77,7 @@ abstract class SelectInContextImpl implements SelectInContext {
       return null;
     }
 
-    SelectInContext selectInContext = (SelectInContext)dataContext.getData(SelectInContext.DATA_CONTEXT_ID);
+    SelectInContext selectInContext = SelectInContext.DATA_KEY.getData(dataContext);
     if (selectInContext == null) {
       selectInContext = createPsiContext(event);
     }
@@ -146,7 +149,7 @@ abstract class SelectInContextImpl implements SelectInContext {
       return (JComponent)source;
     }
     else {
-      return safeCast(event.getDataContext().getData(DataConstants.CONTEXT_COMPONENT), JComponent.class);
+      return safeCast(PlatformDataKeys.CONTEXT_COMPONENT.getData(event.getDataContext()), JComponent.class);
     }
   }
 
@@ -220,8 +223,11 @@ abstract class SelectInContextImpl implements SelectInContext {
     public FileEditorProvider getFileEditorProvider() {
       return new FileEditorProvider() {
         public FileEditor openFileEditor() {
-          final FileEditor[] fileEditors =
-            FileEditorManager.getInstance(getProject()).openFile(myElementToSelect.getContainingFile().getVirtualFile(), false);
+          final VirtualFile file = myElementToSelect.getContainingFile().getVirtualFile();
+          if (file == null) {
+            return null;
+          }
+          final FileEditor[] fileEditors = FileEditorManager.getInstance(getProject()).openFile(file, false);
           return fileEditors.length > 0 ? fileEditors[0] : null;
         }
       };

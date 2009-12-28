@@ -19,8 +19,8 @@ import com.intellij.ide.dnd.DnDDragStartBean;
 import com.intellij.ide.palette.PaletteItem;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ResourceFileUtil;
 import com.intellij.openapi.project.Project;
@@ -46,7 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -365,13 +365,13 @@ public final class ComponentItem implements Cloneable, PaletteItem {
   }
 
   @Nullable public Object getData(Project project, String dataId) {
-    if (dataId.equals(DataConstants.PSI_ELEMENT)) {
+    if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
       return JavaPsiFacade.getInstance(project).findClass(myClassName, GlobalSearchScope.allScope(project));
     }
-    if (dataId.equals(getClass().getName())) {
+    if (getClass().getName().equals(dataId)) {
       return this;
     }
-    if (dataId.equals(GroupItem.class.getName())) {
+    if (GroupItem.DATA_KEY.is(dataId)) {
       return Palette.getInstance(project).findGroup(this);
     }
     return null;

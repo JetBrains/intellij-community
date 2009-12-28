@@ -19,7 +19,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.dataRules.*;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -242,13 +241,13 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
   }
 
   private void registerRules() {
-    myDataConstantToRuleMap.put(DataConstants.COPY_PROVIDER, new CopyProviderRule());
-    myDataConstantToRuleMap.put(DataConstants.CUT_PROVIDER, new CutProviderRule());
-    myDataConstantToRuleMap.put(DataConstants.PASTE_PROVIDER, new PasteProviderRule());
-    myDataConstantToRuleMap.put(DataConstants.FILE_TEXT, new FileTextRule());
-    myDataConstantToRuleMap.put(DataConstants.FILE_EDITOR, new FileEditorRule());
-    myDataConstantToRuleMap.put(DataConstants.NAVIGATABLE_ARRAY, new NavigatableArrayRule());
-    myDataConstantToRuleMap.put(DataConstants.EDITOR_EVEN_IF_INACTIVE, new InactiveEditorRule());
+    myDataConstantToRuleMap.put(PlatformDataKeys.COPY_PROVIDER.getName(), new CopyProviderRule());
+    myDataConstantToRuleMap.put(PlatformDataKeys.CUT_PROVIDER.getName(), new CutProviderRule());
+    myDataConstantToRuleMap.put(PlatformDataKeys.PASTE_PROVIDER.getName(), new PasteProviderRule());
+    myDataConstantToRuleMap.put(PlatformDataKeys.FILE_TEXT.getName(), new FileTextRule());
+    myDataConstantToRuleMap.put(PlatformDataKeys.FILE_EDITOR.getName(), new FileEditorRule());
+    myDataConstantToRuleMap.put(PlatformDataKeys.NAVIGATABLE_ARRAY.getName(), new NavigatableArrayRule());
+    myDataConstantToRuleMap.put(PlatformDataKeys.EDITOR_EVEN_IF_INACTIVE.getName(), new InactiveEditorRule());
   }
 
   @NotNull
@@ -286,7 +285,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
       }
 
       Component _component = myRef.get();
-      if (DataConstants.IS_MODAL_CONTEXT.equals(dataId)) {
+      if (PlatformDataKeys.IS_MODAL_CONTEXT.is(dataId)) {
         if (_component != null) {
           return IdeKeyEventDispatcher.isModalContext(_component) ? Boolean.TRUE : Boolean.FALSE;
         }
@@ -294,13 +293,13 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
           return null;
         }
       }
-      else if (DataConstants.CONTEXT_COMPONENT.equals(dataId)) {
+      else if (PlatformDataKeys.CONTEXT_COMPONENT.is(dataId)) {
         return _component;
       }
-      else if (DataConstantsEx.MODALITY_STATE.equals(dataId)) {
+      else if (PlatformDataKeys.MODALITY_STATE.is(dataId)) {
         return _component != null ? ModalityState.stateForComponent(_component) : ModalityState.NON_MODAL;
       }
-      else if (DataConstants.EDITOR.equals(dataId)) {
+      else if (PlatformDataKeys.EDITOR.is(dataId)) {
         Editor editor = (Editor)DataManagerImpl.this.getData(dataId, _component);
         return validateEditor(editor);
       }

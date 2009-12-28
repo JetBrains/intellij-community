@@ -16,8 +16,8 @@
 
 package com.intellij.execution.junit2.ui;
 
-import com.intellij.execution.junit2.events.TestEvent;
 import com.intellij.execution.junit2.TestProxy;
+import com.intellij.execution.junit2.events.TestEvent;
 import com.intellij.execution.junit2.ui.actions.TestContext;
 import com.intellij.execution.junit2.ui.model.JUnitAdapter;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
@@ -88,7 +88,7 @@ class StatisticsPanel extends JPanel implements DataProvider{
   public Object getData(final String dataId) {
     if (myModel == null) return null;
     final TestProxy selectedTest = myChildInfo.getTestAt(myTable.getSelectedRow());
-    if (TestContext.TEST_CONTEXT.equals(dataId)) {
+    if (TestContext.DATA_KEY.is(dataId)) {
       return new TestContext(myModel, selectedTest);
     }
     return TestsUIUtil.getData(selectedTest, dataId, myModel);

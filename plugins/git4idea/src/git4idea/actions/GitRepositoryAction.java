@@ -57,7 +57,7 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
       }
     });
     DataContext dataContext = e.getDataContext();
-    final Project project = (Project)dataContext.getData(PlatformDataKeys.PROJECT.getName());
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return;
     }
@@ -156,7 +156,7 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
     super.update(e);
     Presentation presentation = e.getPresentation();
     DataContext dataContext = e.getDataContext();
-    Project project = (Project)dataContext.getData(PlatformDataKeys.PROJECT.getName());
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       presentation.setEnabled(false);
       presentation.setVisible(false);

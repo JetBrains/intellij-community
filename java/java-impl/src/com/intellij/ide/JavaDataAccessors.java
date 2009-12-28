@@ -15,8 +15,11 @@
  */
 package com.intellij.ide;
 
-import com.intellij.psi.*;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPackage;
 
 public class JavaDataAccessors {
   public static final DataAccessor<PsiPackage> FILE_PACKAGE = new DataAccessor<PsiPackage>() {
@@ -27,7 +30,6 @@ public class JavaDataAccessors {
       return JavaDirectoryService.getInstance().getPackage(containingDirectory);
     }
   };
-  public static final DataAccessor<PsiJavaFile> PSI_JAVA_FILE = DataAccessor.SubClassDataAccessor.create(DataAccessors.PSI_FILE, PsiJavaFile.class);
 
   private JavaDataAccessors() {
   }

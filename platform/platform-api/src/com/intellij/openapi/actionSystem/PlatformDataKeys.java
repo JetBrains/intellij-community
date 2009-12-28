@@ -17,7 +17,7 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.*;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diff.DiffViewer;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -32,31 +32,61 @@ import java.awt.*;
 /**
  * @author yole
  */
-@SuppressWarnings({"deprecation"})
 public class PlatformDataKeys {
-  public static final DataKey<Project> PROJECT = DataKey.create(DataConstants.PROJECT);
-  public static final DataKey<Editor> EDITOR = DataKey.create(DataConstants.EDITOR);
-  public static final DataKey<Editor> EDITOR_EVEN_IF_INACTIVE = DataKey.create(DataConstants.EDITOR_EVEN_IF_INACTIVE);
-  public static final DataKey<Navigatable> NAVIGATABLE = DataKey.create(DataConstants.NAVIGATABLE);
-  public static final DataKey<Navigatable[]> NAVIGATABLE_ARRAY = DataKey.create(DataConstants.NAVIGATABLE_ARRAY);
-  public static final DataKey<VirtualFile> VIRTUAL_FILE = DataKey.create(DataConstants.VIRTUAL_FILE);
-  public static final DataKey<VirtualFile[]> VIRTUAL_FILE_ARRAY = DataKey.create(DataConstants.VIRTUAL_FILE_ARRAY);
-  public static final DataKey<FileEditor> FILE_EDITOR = DataKey.create(DataConstants.FILE_EDITOR);
-  public static final DataKey<String> FILE_TEXT = DataKey.create(DataConstants.FILE_TEXT);
-  public static final DataKey<Boolean> IS_MODAL_CONTEXT = DataKey.create(DataConstants.IS_MODAL_CONTEXT);
-  public static final DataKey<DiffViewer> DIFF_VIEWER = DataKey.create(DataConstants.DIFF_VIEWER);
-  public static final DataKey<String> HELP_ID = DataKey.create(DataConstants.HELP_ID);
-  public static final DataKey<Project> PROJECT_CONTEXT = DataKey.create(DataConstants.PROJECT_CONTEXT);
-  public static final DataKey<Component> CONTEXT_COMPONENT = DataKey.create(DataConstants.CONTEXT_COMPONENT);
-  public static final DataKey<CopyProvider> COPY_PROVIDER = DataKey.create(DataConstants.COPY_PROVIDER);
-  public static final DataKey<CutProvider> CUT_PROVIDER = DataKey.create(DataConstants.CUT_PROVIDER);
-  public static final DataKey<PasteProvider> PASTE_PROVIDER = DataKey.create(DataConstants.PASTE_PROVIDER);
-  public static final DataKey<DeleteProvider> DELETE_ELEMENT_PROVIDER = DataKey.create(DataConstants.DELETE_ELEMENT_PROVIDER);
-  public static final DataKey<ContentManager> CONTENT_MANAGER = DataKey.create(DataConstantsEx.CONTENT_MANAGER);
+  public static final DataKey<Project> PROJECT = DataKey.create("project");
+  public static final DataKey<Editor> EDITOR = DataKey.create("editor");
+
+  /**
+   * Returns com.intellij.openapi.editor.Editor even if foces currently is in find bar
+   */
+  public static final DataKey<Editor> EDITOR_EVEN_IF_INACTIVE = DataKey.create("editor.even.if.inactive");
+  public static final DataKey<Navigatable> NAVIGATABLE = DataKey.create("Navigatable");
+  public static final DataKey<Navigatable[]> NAVIGATABLE_ARRAY = DataKey.create("NavigatableArray");
+  public static final DataKey<VirtualFile> VIRTUAL_FILE = DataKey.create("virtualFile");
+  public static final DataKey<VirtualFile[]> VIRTUAL_FILE_ARRAY = DataKey.create("virtualFileArray");
+  public static final DataKey<FileEditor> FILE_EDITOR = DataKey.create("fileEditor");
+
+  /**
+   *  Returns the text of currently selected file/file revision
+   */
+  public static final DataKey<String> FILE_TEXT = DataKey.create("fileText");
+
+  /**
+   * Returns Boolean.TRUE if action is executed in modal context and
+   * Boolean.FALSE if action is executed not in modal context. If context
+   * is unknown then the value of this data constant is <code>null</code>.
+   */
+  public static final DataKey<Boolean> IS_MODAL_CONTEXT = DataKey.create("isModalContext");
+  public static final DataKey<DiffViewer> DIFF_VIEWER = DataKey.create("diffViewer");
+
+  /**
+   * Returns help id (String)
+   */
+  public static final DataKey<String> HELP_ID = DataKey.create("helpId");
+
+  /**
+   * Returns project if project node is selected (in project view)
+   */
+  public static final DataKey<Project> PROJECT_CONTEXT = DataKey.create("context.Project");
+
+  /**
+   * Returns java.awt.Component currently in focus, DataContext should be retreived for
+   */
+  public static final DataKey<Component> CONTEXT_COMPONENT = DataKey.create("contextComponent");
+  public static final DataKey<CopyProvider> COPY_PROVIDER = DataKey.create("copyProvider");
+  public static final DataKey<CutProvider> CUT_PROVIDER = DataKey.create("cutProvider");
+  public static final DataKey<PasteProvider> PASTE_PROVIDER = DataKey.create("pasteProvider");
+  public static final DataKey<DeleteProvider> DELETE_ELEMENT_PROVIDER = DataKey.create("deleteElementProvider");
+  public static final DataKey<Object> SELECTED_ITEM = DataKey.create("selectedItem");
+  public static final DataKey<Rectangle> DOMINANT_HINT_AREA_RECTANGLE = DataKey.create("dominant.hint.rectangle");
+  public static final DataKey<ContentManager> CONTENT_MANAGER = DataKey.create("contentManager");
   public static final DataKey<ToolWindow> TOOL_WINDOW = DataKey.create("TOOL_WINDOW");
-  public static final DataKey<TreeExpander> TREE_EXPANDER = DataKey.create(DataConstantsEx.TREE_EXPANDER);
-  public static final DataKey<ExporterToTextFile> EXPORTER_TO_TEXT_FILE = DataKey.create(DataConstants.EXPORTER_TO_TEXT_FILE);
-  public static final DataKey<VirtualFile> PROJECT_FILE_DIRECTORY = DataKey.create(DataConstantsEx.PROJECT_FILE_DIRECTORY);
+  public static final DataKey<TreeExpander> TREE_EXPANDER = DataKey.create("treeExpander");
+  public static final DataKey<ExporterToTextFile> EXPORTER_TO_TEXT_FILE = DataKey.create("exporterToTextFile");
+  public static final DataKey<VirtualFile> PROJECT_FILE_DIRECTORY = DataKey.create("context.ProjectFileDirectory");
   public static final DataKey<Disposable> UI_DISPOSABLE = DataKey.create("ui.disposable");
 
+  public static final DataKey<ContentManager> NONEMPTY_CONTENT_MANAGER = DataKey.create("nonemptyContentManager");
+  public static final DataKey<ModalityState> MODALITY_STATE = DataKey.create("ModalityState");
+  public static final DataKey<Boolean> SOURCE_NAVIGATION_LOCKED = DataKey.create("sourceNavigationLocked");
 }

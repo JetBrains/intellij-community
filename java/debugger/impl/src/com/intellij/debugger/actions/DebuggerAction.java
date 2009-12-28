@@ -45,12 +45,12 @@ public abstract class DebuggerAction extends AnAction {
 
   @Nullable
   public static DebuggerTree getTree(DataContext dataContext){
-    return (DebuggerTree)dataContext.getData(DebuggerActions.DEBUGGER_TREE);
+    return DebuggerTree.DATA_KEY.getData(dataContext);
   }
 
   @Nullable
   public static DebuggerTreePanel getPanel(DataContext dataContext){
-    return (DebuggerTreePanel)dataContext.getData(DebuggerActions.DEBUGGER_TREE_PANEL);
+    return DebuggerTreePanel.DATA_KEY.getData(dataContext);
   }
 
   @Nullable
@@ -80,11 +80,11 @@ public abstract class DebuggerAction extends AnAction {
     if (paths == null || paths.length == 0) {
       return EMPTY_TREE_NODE_ARRAY;
     }
-    List<Object> nodes = new ArrayList<Object>(paths.length);
+    List<DebuggerTreeNodeImpl> nodes = new ArrayList<DebuggerTreeNodeImpl>(paths.length);
     for (TreePath path : paths) {
       Object component = path.getLastPathComponent();
       if (component instanceof DebuggerTreeNodeImpl) {
-        nodes.add(component);
+        nodes.add((DebuggerTreeNodeImpl) component);
       }
     }
     return nodes.toArray(new DebuggerTreeNodeImpl[nodes.size()]);

@@ -16,8 +16,8 @@
 package com.intellij.refactoring.wrapreturnvalue;
 
 import com.intellij.ide.util.SuperMethodWarningUtil;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
@@ -42,7 +42,7 @@ class WrapReturnValueHandler implements RefactoringActionHandler {
                        DataContext dataContext){
         final ScrollingModel scrollingModel = editor.getScrollingModel();
         scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE);
-        final PsiElement element = (PsiElement) dataContext.getData(DataConstants.PSI_ELEMENT);
+        final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
         PsiMethod selectedMethod = null;
         if(element instanceof PsiMethod){
             selectedMethod = (PsiMethod) element;

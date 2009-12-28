@@ -286,7 +286,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   private void updateModel() {
     DataContext context = DataManager.getInstance().getDataContext();
 
-    if (context.getData(DataConstants.IDE_VIEW) == myIdeView || context.getData(DataConstants.PROJECT) != myProject || isNodePopupShowing()) {
+    if (LangDataKeys.IDE_VIEW.getData(context) == myIdeView || PlatformDataKeys.PROJECT.getData(context) != myProject || isNodePopupShowing()) {
       scheduleModelUpdate();
       return;
     }
@@ -617,10 +617,10 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
 
   @Nullable
   public Object getData(String dataId) {
-    if (dataId.equals(DataConstants.PROJECT)) {
+    if (PlatformDataKeys.PROJECT.is(dataId)) {
       return !myProject.isDisposed() ? myProject : null;
     }
-    if (dataId.equals(DataConstants.MODULE)) {
+    if (LangDataKeys.MODULE.is(dataId)) {
       final Module module = getSelectedElement(Module.class);
       if (module != null && !module.isDisposed()) return module;
       final PsiElement element = getSelectedElement(PsiElement.class);
@@ -629,7 +629,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       }
       return null;
     }
-    if (dataId.equals(DataConstants.MODULE_CONTEXT)) {
+    if (LangDataKeys.MODULE_CONTEXT.is(dataId)) {
       final PsiDirectory directory = getSelectedElement(PsiDirectory.class);
       if (directory != null) {
         final VirtualFile dir = directory.getVirtualFile();
@@ -639,17 +639,17 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       }
       return null;
     }
-    if (dataId.equals(DataConstants.PSI_ELEMENT)) {
+    if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
       final PsiElement element = getSelectedElement(PsiElement.class);
       return element != null && element.isValid() ? element : null;
     }
-    if (dataId.equals(DataConstants.PSI_ELEMENT_ARRAY)) {
+    if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       final PsiElement element = getSelectedElement(PsiElement.class);
       return element != null && element.isValid() ? new PsiElement[]{element} : null;
     }
 
-    if (dataId.equals(DataConstants.VIRTUAL_FILE_ARRAY)) {
-      PsiElement[] psiElements = (PsiElement[])getData(DataConstants.PSI_ELEMENT_ARRAY);
+    if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+      PsiElement[] psiElements = (PsiElement[])getData(LangDataKeys.PSI_ELEMENT_ARRAY.getName());
       if (psiElements == null) return null;
       Set<VirtualFile> files = new LinkedHashSet<VirtualFile>();
       for (PsiElement element : psiElements) {
@@ -660,23 +660,23 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       return files.size() > 0 ? VfsUtil.toVirtualFileArray(files) : null;
     }
 
-    if (dataId.equals(DataConstants.CONTEXT_COMPONENT)) {
+    if (PlatformDataKeys.CONTEXT_COMPONENT.is(dataId)) {
       return this;
     }
-    if (DataConstants.CUT_PROVIDER.equals(dataId)) {
+    if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
       return myCopyPasteDelegator.getCutProvider();
     }
-    if (DataConstants.COPY_PROVIDER.equals(dataId)) {
+    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
       return myCopyPasteDelegator.getCopyProvider();
     }
-    if (DataConstants.PASTE_PROVIDER.equals(dataId)) {
+    if (PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
       return myCopyPasteDelegator.getPasteProvider();
     }
-    if (DataConstants.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
+    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       return getSelectedElement(Module.class) != null ? myDeleteModuleProvider : new DeleteHandler.DefaultDeleteProvider();
     }
 
-    if (DataConstants.IDE_VIEW.equals(dataId)) {
+    if (LangDataKeys.IDE_VIEW.is(dataId)) {
       return myIdeView;
     }
 

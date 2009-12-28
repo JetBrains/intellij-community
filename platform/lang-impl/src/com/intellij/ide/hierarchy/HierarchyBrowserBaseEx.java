@@ -55,6 +55,7 @@ import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.List;
 
 public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implements OccurenceNavigator {
 
@@ -74,7 +75,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
   private boolean myCachedIsValidBase = false;
 
-  private final java.util.List<Runnable> myRunOnDisposeList = new ArrayList<Runnable>();
+  private final List<Runnable> myRunOnDisposeList = new ArrayList<Runnable>();
   private final HashMap<String, OccurenceNavigator> myOccurrenceNavigators = new HashMap<String, OccurenceNavigator>();
 
   private static final OccurenceNavigator EMPTY_NAVIGATOR = new OccurenceNavigator() {
@@ -401,7 +402,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     if (getBrowserDataKey().equals(dataId)) {
       return this;
     }
-    else if (DataConstants.HELP_ID.equals(dataId)) {
+    else if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return HELP_ID;
     }
     return super.getData(dataId);

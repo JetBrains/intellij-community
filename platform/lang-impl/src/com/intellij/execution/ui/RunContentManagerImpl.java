@@ -15,7 +15,10 @@
  */
 package com.intellij.execution.ui;
 
-import com.intellij.execution.*;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.Executor;
+import com.intellij.execution.ExecutorRegistry;
+import com.intellij.execution.TerminateRemoteProcessDialog;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -23,9 +26,9 @@ import com.intellij.execution.runners.GenericProgramRunner;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,7 +48,6 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.ui.content.*;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.IconUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -132,7 +134,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       public Object getData(String dataId) {
         myInsideGetData ++;
         try {
-          if(DataConstants.HELP_ID.equals(dataId)) {
+          if(PlatformDataKeys.HELP_ID.is(dataId)) {
             return executor.getHelpId();
           }
           else {
@@ -182,10 +184,8 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
         if (contentManager != null && content != null) {
           contentManager.setSelectedContent(content);
 
-          if (content != null) {
-            final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(requestor.getToolWindowId());
-            toolWindow.show(null);
-          }
+          final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(requestor.getToolWindowId());
+          toolWindow.show(null);
         }
       }
     });
@@ -312,7 +312,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   @Nullable
   public RunContentDescriptor getReuseContent(final Executor requestor, DataContext dataContext) {
     if(ApplicationManager.getApplication().isUnitTestMode()) return null;
-    RunContentDescriptor runContentDescriptor = (RunContentDescriptor)dataContext.getData(GenericProgramRunner.CONTENT_TO_REUSE);
+    RunContentDescriptor runContentDescriptor = GenericProgramRunner.CONTENT_TO_REUSE_DATA_KEY.getData(dataContext);
 
     if(runContentDescriptor != null) return runContentDescriptor;
 
@@ -594,7 +594,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
                 wait(2000);
               }
             }
-            catch (InterruptedException e) {
+            catch (InterruptedException ignore) {
             }
           }
         }

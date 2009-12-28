@@ -15,9 +15,8 @@
  */
 package com.intellij.ide.impl.dataRules;
 
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -27,9 +26,9 @@ import com.intellij.openapi.vfs.VirtualFile;
  */
 public class ProjectFileDirectoryRule implements GetDataRule {
   public Object getData(DataProvider dataProvider) {
-    VirtualFile dir = (VirtualFile)dataProvider.getData(DataConstantsEx.PROJECT_FILE_DIRECTORY);
+    VirtualFile dir = PlatformDataKeys.PROJECT_FILE_DIRECTORY.getData(dataProvider);
     if (dir == null) {
-      final Project project = (Project)dataProvider.getData(DataConstants.PROJECT);
+      final Project project = PlatformDataKeys.PROJECT.getData(dataProvider);
       if (project != null) {
         dir = project.getBaseDir();
       }

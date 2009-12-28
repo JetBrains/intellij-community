@@ -65,11 +65,11 @@ public class CvsContextWrapper implements CvsContext {
 
 
   public Collection<String> getDeletedFileNames() {
-    return (Collection<String>)myContext.getData(CvsDataConstants.DELETED_FILE_NAMES);
+    return CvsDataKeys.DELETED_FILE_NAMES.getData(myContext);
   }
 
   public String getFileToRestore() {
-    return (String)myContext.getData(CvsDataConstants.FILE_TO_RESTORE);
+    return CvsDataKeys.FILE_TO_RESTORE.getData(myContext);
   }
 
   public File getSomeSelectedFile() {
@@ -88,11 +88,11 @@ public class CvsContextWrapper implements CvsContext {
   }
 
   public CvsLightweightFile getCvsLightweightFile() {
-    return (CvsLightweightFile)myContext.getData(CvsDataConstants.CVS_LIGHT_FILE);
+    return CvsDataKeys.CVS_LIGHT_FILE.getData(myContext);
   }
 
   public CvsLightweightFile[] getSelectedLightweightFiles() {
-    CvsLightweightFile[] files = (CvsLightweightFile[])myContext.getData(CvsDataConstants.CVS_LIGHT_FILES);
+    CvsLightweightFile[] files = CvsDataKeys.CVS_LIGHT_FILES.getData(myContext);
     if (files != null && files.length > 0) return files;
     CvsLightweightFile file = getCvsLightweightFile();
     if (file != null) {
@@ -104,11 +104,11 @@ public class CvsContextWrapper implements CvsContext {
   }
 
   public CvsEnvironment getEnvironment() {
-    return (CvsEnvironment)myContext.getData(CvsDataConstants.CVS_ENVIRONMENT);
+    return CvsDataKeys.CVS_ENVIRONMENT.getData(myContext);
   }
 
   public Collection<AddedFileInfo> getAllFilesToAdd() {
-    return (Collection<AddedFileInfo>)myContext.getData(CvsDataConstants.FILES_TO_ADD);
+    return CvsDataKeys.FILES_TO_ADD.getData(myContext);
   }
 
   public Project getProject() {

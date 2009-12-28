@@ -164,13 +164,13 @@ public abstract class ChooseByNameBase{
     }
 
     public Object getData(String dataId) {
-      if (dataId.equals(DataConstants.HELP_ID)) {
+      if (PlatformDataKeys.HELP_ID.is(dataId)) {
         return myModel.getHelpId();
       }
       if (!myListIsUpToDate) {
         return null;
       }
-      if (dataId.equals(DataConstants.PSI_ELEMENT)) {
+      if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
         Object element = getChosenElement();
 
         if (element instanceof PsiElement) {
@@ -181,7 +181,7 @@ public abstract class ChooseByNameBase{
           return ((DataProvider)element).getData(dataId);
         }
       }
-      else if (dataId.equals(DataConstants.PSI_ELEMENT_ARRAY)) {
+      else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
         final List<Object> chosenElements = getChosenElements();
         if (chosenElements != null) {
           List<PsiElement> result = new ArrayList<PsiElement>();
@@ -193,7 +193,7 @@ public abstract class ChooseByNameBase{
           return result.toArray(new PsiElement[result.size()]);
         }
       }
-      else if (dataId.equals(DataConstants.DOMINANT_HINT_AREA_RECTANGLE)) {
+      else if (PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.is(dataId)) {
         return getBounds();
       }
       return null;
@@ -470,7 +470,7 @@ public abstract class ChooseByNameBase{
       if (element instanceof PsiElement) {
         myTextFieldPanel.updateHint((PsiElement)element);
       } else if (element instanceof DataProvider) {
-        final Object o = ((DataProvider)element).getData(DataConstants.PSI_ELEMENT);
+        final Object o = ((DataProvider)element).getData(LangDataKeys.PSI_ELEMENT.getName());
         if (o instanceof PsiElement) {
           myTextFieldPanel.updateHint((PsiElement)o);
         }

@@ -32,6 +32,9 @@ import com.intellij.util.ImageLoader;
 import org.jetbrains.annotations.NotNull;
 
 public class DiffUtil {
+  private DiffUtil() {
+  }
+
   public static void initDiffFrame(FrameWrapper frameWrapper, final DiffPanelImpl diffPanel) {
     Project project = diffPanel.getProject();
     frameWrapper.setComponent(diffPanel.getComponent());
@@ -43,7 +46,7 @@ public class DiffUtil {
   }
 
   public static FocusDiffSide getFocusDiffSide(DataContext dataContext) {
-    return (FocusDiffSide)dataContext.getData(FocusDiffSide.FOCUSED_DIFF_SIDE);
+    return FocusDiffSide.DATA_KEY.getData(dataContext);
   }
 
   public static String[] convertToLines(@NotNull String text) {

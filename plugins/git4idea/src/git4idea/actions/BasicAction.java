@@ -16,7 +16,6 @@
 package git4idea.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
@@ -155,15 +154,14 @@ public abstract class BasicAction extends DumbAwareAction {
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     Presentation presentation = e.getPresentation();
-    DataContext dataContext = e.getDataContext();
-    Project project = (Project)dataContext.getData(PlatformDataKeys.PROJECT.getName());
+    Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) {
       presentation.setEnabled(false);
       presentation.setVisible(false);
       return;
     }
 
-    VirtualFile[] vFiles = (VirtualFile[])dataContext.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY.getName());
+    VirtualFile[] vFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
     if (vFiles == null || vFiles.length == 0) {
       presentation.setEnabled(false);
       presentation.setVisible(true);

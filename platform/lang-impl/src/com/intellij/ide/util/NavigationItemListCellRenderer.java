@@ -19,8 +19,8 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.EffectType;
@@ -97,8 +97,9 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
                                    .isProblemFile(PsiUtilBase.getVirtualFile((PsiElement)element));
 
         if (element instanceof PsiElement || element instanceof DataProvider) {
-          final PsiElement psiElement = element instanceof PsiElement ? (PsiElement)element : (PsiElement) ((DataProvider)element).getData(
-            DataConstants.PSI_ELEMENT);
+          final PsiElement psiElement = element instanceof PsiElement
+                                        ? (PsiElement)element
+                                        : LangDataKeys.PSI_ELEMENT.getData((DataProvider) element);
           if (psiElement != null) {
             final Project project = psiElement.getProject();
 

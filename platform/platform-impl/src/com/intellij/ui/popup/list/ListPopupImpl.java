@@ -15,8 +15,8 @@
  */
 package com.intellij.ui.popup.list;
 
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -409,7 +409,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     }
 
     public Object getData(String dataId) {
-       if (dataId.equals(DataConstants.SELECTED_ITEM)){
+       if (PlatformDataKeys.SELECTED_ITEM.is(dataId)){
         return myList.getSelectedValue();
       }
       return null;

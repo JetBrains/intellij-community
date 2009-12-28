@@ -120,8 +120,7 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    for (int i = 0; i < myMacros.size(); i++) {
-      ActionMacro macro = myMacros.get(i);
+    for (ActionMacro macro : myMacros) {
       Element macroElement = new Element(ELEMENT_MACRO);
       macro.writeExternal(macroElement);
       element.addContent(macroElement);
@@ -132,6 +131,7 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
     return ApplicationManager.getApplication().getComponent(ActionMacroManager.class);
   }
 
+  @NotNull
   public String getComponentName() {
     return "ActionMacroManager";
   }
@@ -270,8 +270,7 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
     HashSet<String> registeredIds = new HashSet<String>(); // to prevent exception if 2 or more targets have the same name
 
     ActionMacro[] macros = getAllMacros();
-    for (int i = 0; i < macros.length; i++) {
-      final ActionMacro macro = macros[i];
+    for (final ActionMacro macro : macros) {
       String actionId = macro.getActionId();
 
       if (!registeredIds.contains(actionId)) {
@@ -285,8 +284,7 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
 
     // unregister Tool actions
     String[] oldIds = myActionManager.getActionIds(ActionMacro.MACRO_ACTION_PREFIX);
-    for (int i = 0; i < oldIds.length; i++) {
-      String oldId = oldIds[i];
+    for (final String oldId : oldIds) {
       myActionManager.unregisterAction(oldId);
     }
   }
@@ -330,13 +328,13 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
     }
 
     public void actionPerformed(AnActionEvent e) {
-      ActionMacroManager.getInstance().playMacro(myMacro);
+      getInstance().playMacro(myMacro);
     }
 
     public void update(AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setEnabled(!ActionMacroManager.getInstance().isPlaying() &&
-                                     e.getDataContext().getData(DataConstants.EDITOR) != null);
+      e.getPresentation().setEnabled(!getInstance().isPlaying() &&
+                                     PlatformDataKeys.EDITOR.getData(e.getDataContext()) != null);
     }
   }
 

@@ -78,6 +78,8 @@ import java.util.List;
 public final class PropertyInspectorTable extends Table implements DataProvider{
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.propertyInspector.PropertyInspectorTable");
 
+  public static final DataKey<PropertyInspectorTable> DATA_KEY = DataKey.create(PropertyInspectorTable.class.getName());
+
   private static final Color SYNTETIC_PROPERTY_BACKGROUND = new Color(230,230,230);
   private static final Color SYNTETIC_SUBPROPERTY_BACKGROUND = new Color(240,240,240);
 
@@ -213,7 +215,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     if(getClass().getName().equals(dataId)){
       return this;
     }
-    else if(DataConstants.PSI_ELEMENT.equals(dataId)){
+    else if(LangDataKeys.PSI_ELEMENT.is(dataId)){
       final IntrospectedProperty introspectedProperty = getSelectedIntrospectedProperty();
       if(introspectedProperty == null){
         return null;
@@ -230,16 +232,16 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
 
       return PropertyUtil.findPropertySetter(aClass, introspectedProperty.getName(), false, true);
     }
-    else if (DataConstants.PSI_FILE.equals(dataId) && myEditor != null) {
+    else if (LangDataKeys.PSI_FILE.is(dataId) && myEditor != null) {
       return PsiManager.getInstance(myEditor.getProject()).findFile(myEditor.getFile());
     }
-    else if (GuiEditor.class.getName().equals(dataId)) {
+    else if (GuiEditor.DATA_KEY.is(dataId)) {
       return myEditor;
     }
-    else if (DataConstants.FILE_EDITOR.equals(dataId)) {
+    else if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
       return UIDesignerToolWindowManager.getInstance(myProject).getActiveFormFileEditor();
     }
-    else if (DataConstants.HELP_ID.equals(dataId)) {
+    else if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return ourHelpID;
     }
     else {

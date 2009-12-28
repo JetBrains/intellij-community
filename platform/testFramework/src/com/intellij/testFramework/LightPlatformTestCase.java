@@ -30,8 +30,8 @@ import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -515,7 +515,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   public Object getData(String dataId) {
-    if (dataId.equals(DataConstants.PROJECT)) {
+    if (PlatformDataKeys.PROJECT.is(dataId)) {
       return ourProject;
     }
     return null;

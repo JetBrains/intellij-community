@@ -20,6 +20,8 @@
  */
 package com.intellij.debugger.actions;
 
+import com.intellij.debugger.ui.impl.DebuggerTreePanel;
+import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import org.jetbrains.annotations.NonNls;
 
@@ -30,8 +32,8 @@ public interface DebuggerActions extends XDebuggerActions {
   @NonNls String INSPECT_PANEL_POPUP = "Debugger.InspectPanelPopup";
   @NonNls String THREADS_PANEL_POPUP = "Debugger.ThreadsPanelPopup";
   @NonNls String WATCH_PANEL_POPUP = "Debugger.WatchesPanelPopup";
-  @NonNls String DEBUGGER_TREE = "DebuggerTree";
-  @NonNls String DEBUGGER_TREE_PANEL = "DebuggerPanel";
+  @Deprecated @NonNls String DEBUGGER_TREE = DebuggerTree.DATA_KEY.getName();
+  @Deprecated @NonNls String DEBUGGER_TREE_PANEL = DebuggerTreePanel.DATA_KEY.getName();
   @NonNls String REMOVE_WATCH = "Debugger.RemoveWatch";
   @NonNls String NEW_WATCH = "Debugger.NewWatch";
   @NonNls String ADD_TO_WATCH = "Debugger.AddToWatch";

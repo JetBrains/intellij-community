@@ -24,7 +24,6 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
@@ -43,7 +42,7 @@ public class MoveModulesToGroupAction extends AnAction {
   public void update(AnActionEvent e) {
     Presentation presentation = getTemplatePresentation();
     final DataContext dataContext = e.getDataContext();
-    final Module[] modules = (Module[])dataContext.getData(DataConstants.MODULE_CONTEXT_ARRAY);
+    final Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
 
     String description = IdeBundle.message("message.move.modules.to.group", whatToMove(modules), myModuleGroup.presentableText());
     presentation.setDescription(description);
@@ -55,7 +54,7 @@ public class MoveModulesToGroupAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Module[] modules = (Module[])dataContext.getData(DataConstants.MODULE_CONTEXT_ARRAY);
+    final Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
     doMove(modules, myModuleGroup, dataContext);
   }
 
@@ -63,7 +62,7 @@ public class MoveModulesToGroupAction extends AnAction {
     Project project = modules[0].getProject();
     for (final Module module : modules) {
       ModifiableModuleModel model = dataContext != null
-                                    ? (ModifiableModuleModel)dataContext.getData(DataConstantsEx.MODIFIABLE_MODULE_MODEL)
+                                    ? LangDataKeys.MODIFIABLE_MODULE_MODEL.getData(dataContext)
                                     : null;
       if (model != null){
         model.setModuleGroupPath(module, group == null ? null : group.getGroupPath());

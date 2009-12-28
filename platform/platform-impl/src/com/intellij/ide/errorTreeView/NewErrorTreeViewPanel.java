@@ -20,7 +20,6 @@ import com.intellij.ide.actions.*;
 import com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration;
 import com.intellij.ide.errorTreeView.impl.ErrorViewTextExporter;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -54,7 +53,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   private ErrorViewStructure myErrorViewStructure;
   private ErrorViewTreeBuilder myBuilder;
 
-  public static interface ProcessController {
+  public interface ProcessController {
     void stopProcess();
 
     boolean isProcessStopped();
@@ -160,20 +159,20 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   }
 
   public Object getData(String dataId) {
-    if (DataConstants.NAVIGATABLE.equals(dataId)) {
+    if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
       final NavigatableMessageElement selectedMessageElement = getSelectedMessageElement();
       return selectedMessageElement != null? selectedMessageElement.getNavigatable() : null;
     }
-    else if (DataConstants.HELP_ID.equals(dataId)) {
+    else if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return myHelpId;
     }
-    else if (DataConstantsEx.TREE_EXPANDER.equals(dataId)) {
+    else if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
       return myTreeExpander;
     }
-    else if (DataConstants.EXPORTER_TO_TEXT_FILE.equals(dataId)) {
+    else if (PlatformDataKeys.EXPORTER_TO_TEXT_FILE.is(dataId)) {
       return myExporterToTextFile;
     }
-    else if (CURRENT_EXCEPTION_DATA.equals(dataId)) {
+    else if (CURRENT_EXCEPTION_DATA_KEY.is(dataId)) {
       NavigatableMessageElement selectedMessageElement = getSelectedMessageElement();
       return selectedMessageElement != null? selectedMessageElement.getData() : null;
     }
@@ -287,7 +286,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
       return;
     }
     DefaultActionGroup group = new DefaultActionGroup();
-    if (getData(DataConstants.NAVIGATABLE) != null) {
+    if (getData(PlatformDataKeys.NAVIGATABLE.getName()) != null) {
       group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
     }
     addExtraPopupMenuActions(group);

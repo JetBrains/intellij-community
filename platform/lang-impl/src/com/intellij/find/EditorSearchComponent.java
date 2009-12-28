@@ -26,7 +26,6 @@ import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.SelectionModel;
@@ -88,7 +87,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
 
   @Nullable
   public Object getData(@NonNls final String dataId) {
-    if (DataConstants.EDITOR_EVEN_IF_INACTIVE.equals(dataId)) {
+    if (PlatformDataKeys.EDITOR_EVEN_IF_INACTIVE.is(dataId)) {
       return myEditor;
     }
     return null;

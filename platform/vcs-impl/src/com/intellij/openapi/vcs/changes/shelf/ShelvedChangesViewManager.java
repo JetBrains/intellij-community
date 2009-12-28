@@ -48,9 +48,9 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -329,7 +329,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       return path1.compareToIgnoreCase(path2);
     }
 
-    private String getPath(final Object patch) {
+    private static String getPath(final Object patch) {
       String path = null;
       if (patch instanceof ShelvedBinaryFile) {
         final ShelvedBinaryFile binaryFile = (ShelvedBinaryFile) patch;
@@ -433,8 +433,8 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     }
 
     private List<ShelvedChangeList> getLists(final DataContext dataContext) {
-      final ShelvedChangeList[] shelved = (ShelvedChangeList[])dataContext.getData(SHELVED_CHANGELIST_KEY.getName());
-      final ShelvedChangeList[] recycled = (ShelvedChangeList[])dataContext.getData(SHELVED_RECYCLED_CHANGELIST_KEY.getName());
+      final ShelvedChangeList[] shelved = SHELVED_CHANGELIST_KEY.getData(dataContext);
+      final ShelvedChangeList[] recycled = SHELVED_RECYCLED_CHANGELIST_KEY.getData(dataContext);
 
       final List<ShelvedChangeList> shelvedChangeLists = (shelved == null && recycled == null) ?
                                                          Collections.<ShelvedChangeList>emptyList() : new ArrayList<ShelvedChangeList>();
@@ -450,7 +450,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
 
   private class MyChangesDeleteProvider implements DeleteProvider {
     public void deleteElement(DataContext dataContext) {
-      final ShelvedChangeList[] shelved = (ShelvedChangeList[])dataContext.getData(SHELVED_CHANGELIST_KEY.getName());
+      final ShelvedChangeList[] shelved = SHELVED_CHANGELIST_KEY.getData(dataContext);
       if (shelved == null || (shelved.length != 1)) return;
       final List<ShelvedChange> changes = SHELVED_CHANGE_KEY.getData(dataContext);
       final List<ShelvedBinaryFile> binaryFiles = SHELVED_BINARY_FILE_KEY.getData(dataContext);
@@ -475,9 +475,11 @@ public class ShelvedChangesViewManager implements ProjectComponent {
           patches.add(change.loadFilePatch());
         }
         catch (IOException e) {
+          //noinspection ThrowableInstanceNeverThrown
           exceptions.add(new VcsException(e));
         }
         catch (PatchSyntaxException e) {
+          //noinspection ThrowableInstanceNeverThrown
           exceptions.add(new VcsException(e));
         }
       }
@@ -492,7 +494,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     }
 
     public boolean canDeleteElement(DataContext dataContext) {
-      final ShelvedChangeList[] shelved = (ShelvedChangeList[])dataContext.getData(SHELVED_CHANGELIST_KEY.getName());
+      final ShelvedChangeList[] shelved = SHELVED_CHANGELIST_KEY.getData(dataContext);
       if (shelved == null || (shelved.length != 1)) return false;
       final List<ShelvedChange> changes = SHELVED_CHANGE_KEY.getData(dataContext);
       if (changes != null && (! changes.isEmpty())) return true;

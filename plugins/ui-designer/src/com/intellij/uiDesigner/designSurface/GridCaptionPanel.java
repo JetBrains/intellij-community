@@ -252,13 +252,13 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
   }
 
   @Nullable public Object getData(String dataId) {
-    if (dataId.equals(GuiEditor.class.getName())) {
+    if (GuiEditor.DATA_KEY.is(dataId)) {
       return myEditor;
     }
-    if (dataId.equals(CaptionSelection.class.getName())) {
+    if (CaptionSelection.DATA_KEY.is(dataId)) {
       return new CaptionSelection(mySelectedContainer, myIsRow, getSelectedCells(null), mySelectionModel.getLeadSelectionIndex());
     }
-    if (dataId.equals(DataConstants.DELETE_ELEMENT_PROVIDER)) {
+    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       return myDeleteProvider;
     }
     return myEditor.getData(dataId);

@@ -107,12 +107,12 @@ public class ToggleFieldBreakpointAction extends AnAction {
     else if(DebuggerAction.isContextView(event)) {
       presentation.setText(DebuggerBundle.message("action.add.field.watchpoint.text"));
       Project project = event.getData(PlatformDataKeys.PROJECT);
-      if(place != null) {
+      if(project != null && place != null) {
         Document document = PsiDocumentManager.getInstance(project).getDocument(place.getFile());
         if (document != null) {
           final int offset = place.getOffset();
           final BreakpointManager breakpointManager = (DebuggerManagerEx.getInstanceEx(project)).getBreakpointManager();
-          final Breakpoint fieldBreakpoint = offset >= 0 ? (FieldBreakpoint)breakpointManager.findBreakpoint(document, offset, FieldBreakpoint.CATEGORY) : null;
+          final Breakpoint fieldBreakpoint = offset >= 0 ? breakpointManager.findBreakpoint(document, offset, FieldBreakpoint.CATEGORY) : null;
           if (fieldBreakpoint != null) {
             presentation.setEnabled(false);
             return;
@@ -147,7 +147,7 @@ public class ToggleFieldBreakpointAction extends AnAction {
     }
 
     if(DebuggerAction.isContextView(event)) {
-      DebuggerTree tree = (DebuggerTree)dataContext.getData(DebuggerActions.DEBUGGER_TREE);
+      DebuggerTree tree = DebuggerTree.DATA_KEY.getData(dataContext);
       if(tree != null && tree.getSelectionPath() != null) {
         DebuggerTreeNodeImpl node = ((DebuggerTreeNodeImpl)tree.getSelectionPath().getLastPathComponent());
         if(node != null && node.getDescriptor() instanceof FieldDescriptorImpl) {

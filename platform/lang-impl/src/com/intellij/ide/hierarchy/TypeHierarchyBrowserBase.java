@@ -39,7 +39,8 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
 
   private final MyDeleteProvider myDeleteElementProvider = new MyDeleteProvider();
 
-  public static final String TYPE_HIERARCHY_BROWSER_DATA_KEY = "com.intellij.ide.hierarchy.TypeHierarchyBrowserBase";
+  public static final DataKey<TypeHierarchyBrowserBase> DATA_KEY = DataKey.create("com.intellij.ide.hierarchy.TypeHierarchyBrowserBase");
+  @Deprecated public static final String TYPE_HIERARCHY_BROWSER_DATA_KEY = DATA_KEY.getName();
 
   public TypeHierarchyBrowserBase(final Project project, final PsiElement element) {
     super(project, element);
@@ -70,7 +71,7 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
 
   @NotNull
   protected String getBrowserDataKey() {
-    return TYPE_HIERARCHY_BROWSER_DATA_KEY;
+    return DATA_KEY.getName();
   }
 
   @NotNull
@@ -79,7 +80,7 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   }
 
   public final Object getData(final String dataId) {
-    if (DataConstants.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
+    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       return myDeleteElementProvider;
     }
     return super.getData(dataId);
@@ -123,7 +124,7 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   protected static class BaseOnThisTypeAction extends BaseOnThisElementAction {
 
     public BaseOnThisTypeAction() {
-      super("", IdeActions.ACTION_TYPE_HIERARCHY, TYPE_HIERARCHY_BROWSER_DATA_KEY);
+      super("", IdeActions.ACTION_TYPE_HIERARCHY, DATA_KEY.getName());
     }
 
     @Override

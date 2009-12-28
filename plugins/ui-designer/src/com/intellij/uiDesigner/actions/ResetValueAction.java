@@ -17,12 +17,12 @@ package com.intellij.uiDesigner.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.propertyInspector.Property;
+import com.intellij.uiDesigner.propertyInspector.PropertyInspector;
 import com.intellij.uiDesigner.propertyInspector.PropertyInspectorTable;
 import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
-import com.intellij.uiDesigner.propertyInspector.PropertyInspector;
+import com.intellij.uiDesigner.radComponents.RadComponent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +34,7 @@ public class ResetValueAction extends AbstractGuiEditorAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.ResetValueAction");
 
   protected void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
-    final PropertyInspectorTable inspector = (PropertyInspectorTable)e.getDataContext().getData(PropertyInspectorTable.class.getName());
+    final PropertyInspectorTable inspector = PropertyInspectorTable.DATA_KEY.getData(e.getDataContext());
     assert inspector != null;
     final Property property = inspector.getSelectedProperty();
     assert property != null;
@@ -66,7 +66,7 @@ public class ResetValueAction extends AbstractGuiEditorAction {
   }
 
   protected void update(final GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
-    PropertyInspectorTable inspector = (PropertyInspectorTable)e.getDataContext().getData(PropertyInspectorTable.class.getName());
+    PropertyInspectorTable inspector = PropertyInspectorTable.DATA_KEY.getData(e.getDataContext());
     if (inspector != null) {
       final Property selectedProperty = inspector.getSelectedProperty();
       //noinspection unchecked

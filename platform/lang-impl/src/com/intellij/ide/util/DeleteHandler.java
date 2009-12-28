@@ -22,8 +22,8 @@ import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -51,23 +51,28 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class DeleteHandler {
+  private DeleteHandler() {
+  }
+
   public static class DefaultDeleteProvider implements DeleteProvider {
     public boolean canDeleteElement(DataContext dataContext) {
-      if (dataContext.getData(DataConstants.PROJECT) == null) return false;
+      if (PlatformDataKeys.PROJECT.getData(dataContext) == null) {
+        return false;
+      }
       final PsiElement[] elements = getPsiElements(dataContext);
-      return elements != null && DeleteHandler.shouldEnableDeleteAction(elements);
+      return elements != null && shouldEnableDeleteAction(elements);
     }
 
     @Nullable
-    private PsiElement[] getPsiElements(DataContext dataContext) {
-      PsiElement[] elements = (PsiElement[])dataContext.getData(DataConstants.PSI_ELEMENT_ARRAY);
+    private static PsiElement[] getPsiElements(DataContext dataContext) {
+      PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
       if (elements == null) {
-        final Object data = dataContext.getData(DataConstants.PSI_ELEMENT);
+        final Object data = LangDataKeys.PSI_ELEMENT.getData(dataContext);
         if (data != null) {
           elements = new PsiElement[]{(PsiElement)data};
         }
         else {
-          final Object data1 = dataContext.getData(DataConstants.PSI_FILE);
+          final Object data1 = LangDataKeys.PSI_FILE.getData(dataContext);
           if (data1 != null) {
             elements = new PsiElement[]{(PsiFile)data1};
           }

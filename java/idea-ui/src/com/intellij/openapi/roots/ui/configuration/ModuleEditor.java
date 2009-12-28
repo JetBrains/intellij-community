@@ -17,8 +17,8 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleConfigurationEditor;
@@ -556,7 +556,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     }
 
     public Object getData(String dataId) {
-      if (dataId.equals(DataConstants.MODULE_CONTEXT)) {
+      if (LangDataKeys.MODULE_CONTEXT.is(dataId)) {
         return getModule();
       }
       return null;

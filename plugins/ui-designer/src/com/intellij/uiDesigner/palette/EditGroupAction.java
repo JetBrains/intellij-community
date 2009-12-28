@@ -32,7 +32,7 @@ import java.util.ArrayList;
 public class EditGroupAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-    GroupItem groupToBeEdited = (GroupItem)e.getDataContext().getData(GroupItem.class.getName());
+    GroupItem groupToBeEdited = GroupItem.DATA_KEY.getData(e.getDataContext());
     if (groupToBeEdited == null || project == null) return;
 
     // Ask group name
@@ -64,7 +64,7 @@ public class EditGroupAction extends AnAction {
 
   @Override public void update(AnActionEvent e) {
     Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-    GroupItem groupItem = (GroupItem) e.getDataContext().getData(GroupItem.class.getName());
+    GroupItem groupItem = GroupItem.DATA_KEY.getData(e.getDataContext());
     e.getPresentation().setEnabled(project != null && groupItem != null && !groupItem.isReadOnly());
   }
 }

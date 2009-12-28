@@ -15,39 +15,36 @@
  */
 package com.intellij.testFramework;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.ide.DataManager;
+import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.injected.editor.EditorWindow;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.injected.editor.EditorWindow;
-import com.intellij.injected.editor.DocumentWindow;
-import com.intellij.ide.DataManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -385,16 +382,16 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   }
 
   public Object getData(String dataId) {
-    if (dataId.equals(DataConstants.EDITOR)) {
+    if (PlatformDataKeys.EDITOR.is(dataId)) {
       return myEditor;
     }
-    if (dataId.equals(AnActionEvent.injectedId(DataConstants.EDITOR))) {
+    if (dataId.equals(AnActionEvent.injectedId(PlatformDataKeys.EDITOR.getName()))) {
       return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(getEditor(), getFile());
     }
-    if (dataId.equals(DataConstants.PSI_FILE)) {
+    if (LangDataKeys.PSI_FILE.is(dataId)) {
       return myFile;
     }
-    if (dataId.equals(AnActionEvent.injectedId(DataConstants.PSI_FILE))) {
+    if (dataId.equals(AnActionEvent.injectedId(LangDataKeys.PSI_FILE.getName()))) {
       Editor editor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(getEditor(), getFile());
       return editor instanceof EditorWindow ? ((EditorWindow)editor).getInjectedFile() : getFile();
     }
@@ -464,10 +461,18 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     return new DataContext() {
       @Nullable
       public Object getData(@NonNls String dataId) {
-        if (dataId.equals(DataConstants.EDITOR)) return getEditor();
-        if (dataId.equals(DataConstants.PROJECT)) return getProject();
-        if (dataId.equals(DataConstants.PSI_FILE)) return getFile();
-        if (dataId.equals(DataConstants.PSI_ELEMENT)) return getFile().findElementAt(getEditor().getCaretModel().getOffset());
+        if (PlatformDataKeys.EDITOR.is(dataId)) {
+          return getEditor();
+        }
+        if (PlatformDataKeys.PROJECT.is(dataId)) {
+          return getProject();
+        }
+        if (LangDataKeys.PSI_FILE.is(dataId)) {
+          return getFile();
+        }
+        if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
+          return getFile().findElementAt(getEditor().getCaretModel().getOffset());
+        }
         return defaultContext.getData(dataId);
       }
     };

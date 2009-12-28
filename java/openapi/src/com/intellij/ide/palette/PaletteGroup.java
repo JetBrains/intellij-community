@@ -49,7 +49,7 @@ public interface PaletteGroup {
    * Returns the data for the specified data constant.
    *
    * @param project the project in the context of which data is requested.
-   * @param dataId  the data constant id (see {@link com.intellij.openapi.actionSystem.DataConstants}).
+   * @param dataId  the data constant id (see {@link com.intellij.openapi.actionSystem.PlatformDataKeys}).
    * @return the data item, or null if no data is available for this constant.
    */
   @Nullable Object getData(Project project, String dataId);

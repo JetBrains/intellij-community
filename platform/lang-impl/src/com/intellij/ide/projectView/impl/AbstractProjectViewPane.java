@@ -31,10 +31,10 @@ import com.intellij.ide.projectView.impl.nodes.AbstractProjectNode;
 import com.intellij.ide.projectView.impl.nodes.ModuleGroupNode;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -212,7 +212,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   public Object getData(String dataId) {
-    if (DataConstants.NAVIGATABLE_ARRAY.equals(dataId)) {
+    if (PlatformDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       TreePath[] paths = getSelectionPaths();
       if (paths == null) return null;
       final ArrayList<Navigatable> navigatables = new ArrayList<Navigatable>();
@@ -545,7 +545,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     public void dragGestureRecognized(DragGestureEvent dge) {
       if ((dge.getDragAction() & DnDConstants.ACTION_COPY_OR_MOVE) == 0) return;
       DataContext dataContext = DataManager.getInstance().getDataContext();
-      ProjectView projectView = (ProjectView)dataContext.getData(ProjectViewImpl.PROJECT_VIEW_DATA_CONSTANT);
+      ProjectView projectView = ProjectViewImpl.DATA_KEY.getData(dataContext);
       if (projectView == null) return;
 
       final AbstractProjectViewPane currentPane = projectView.getCurrentProjectViewPane();

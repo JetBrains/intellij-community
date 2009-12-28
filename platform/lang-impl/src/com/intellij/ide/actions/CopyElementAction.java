@@ -17,7 +17,6 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -32,6 +31,9 @@ public class CopyElementAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    if (project == null) {
+      return;
+    }
 
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       public void run() {
@@ -41,7 +43,7 @@ public class CopyElementAction extends AnAction {
     final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     PsiElement[] elements;
 
-    PsiDirectory defaultTargetDirectory = null;
+    PsiDirectory defaultTargetDirectory;
     if (editor != null) {
       PsiElement aElement = getTargetElement(editor, project);
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
@@ -52,7 +54,7 @@ public class CopyElementAction extends AnAction {
       }
       defaultTargetDirectory = file.getContainingDirectory();
     } else {
-      Object element = dataContext.getData(DataConstantsEx.TARGET_PSI_ELEMENT);
+      PsiElement element = LangDataKeys.TARGET_PSI_ELEMENT.getData(dataContext);
       defaultTargetDirectory = element instanceof PsiDirectory ? (PsiDirectory)element : null;
       elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     }
@@ -90,6 +92,10 @@ public class CopyElementAction extends AnAction {
     }
 
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    if (project == null) {
+      return;
+
+    }
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
 
     PsiElement element = getTargetElement(editor, project);

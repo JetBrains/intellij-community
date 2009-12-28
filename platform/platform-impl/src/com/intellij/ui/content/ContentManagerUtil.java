@@ -17,12 +17,14 @@ package com.intellij.ui.content;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 
 public class ContentManagerUtil {
+  private ContentManagerUtil() {
+  }
+
   /**
    * This is utility method. It returns <code>ContentManager</code> from the current context.
    */
@@ -49,7 +51,7 @@ public class ContentManagerUtil {
       return null;
     }
 
-    final ContentManager fromContext = (ContentManager)dataContext.getData(DataConstantsEx.CONTENT_MANAGER);
+    final ContentManager fromContext = PlatformDataKeys.CONTENT_MANAGER.getData(dataContext);
     if (fromContext != null) return fromContext;
 
     return toolWindow != null ? toolWindow.getContentManager() : null;
