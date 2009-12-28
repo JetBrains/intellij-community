@@ -17,15 +17,15 @@ package com.intellij.openapi.fileEditor.impl.http;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorLocation;
-import com.intellij.openapi.fileEditor.FileEditorState;
-import com.intellij.openapi.fileEditor.FileEditorStateLevel;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorState;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
-import com.intellij.openapi.project.Project;
+import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
@@ -33,22 +33,25 @@ import java.beans.PropertyChangeListener;
 /**
  * @author nik
  */
-public class HttpFileEditor extends UserDataHolderBase implements FileEditor {
-  private final HttpVirtualFile myVirtualFile;
-  private final DownloadRemoteFilePanel myDownloadPanel;
+public class HttpFileEditor implements NavigatableFileEditor {
+  private final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
+  private final RemoteFilePanel myPanel;
 
   public HttpFileEditor(final Project project, final HttpVirtualFile virtualFile) {
-    myVirtualFile = virtualFile;
-    myDownloadPanel = new DownloadRemoteFilePanel(project, virtualFile);
+    myPanel = new RemoteFilePanel(project, virtualFile);
   }
 
   @NotNull
   public JComponent getComponent() {
-    return myDownloadPanel.getMainPanel();
+    return myPanel.getMainPanel();
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myDownloadPanel.getMainPanel();
+    final TextEditor textEditor = myPanel.getFileEditor();
+    if (textEditor != null) {
+      return textEditor.getPreferredFocusedComponent();
+    }
+    return myPanel.getMainPanel();
   }
 
   @NotNull
@@ -58,10 +61,18 @@ public class HttpFileEditor extends UserDataHolderBase implements FileEditor {
 
   @NotNull
   public FileEditorState getState(@NotNull final FileEditorStateLevel level) {
+    final TextEditor textEditor = myPanel.getFileEditor();
+    if (textEditor != null) {
+      return textEditor.getState(level);
+    }
     return new TextEditorState();
   }
 
   public void setState(@NotNull final FileEditorState state) {
+    final TextEditor textEditor = myPanel.getFileEditor();
+    if (textEditor != null) {
+      textEditor.setState(state);
+    }
   }
 
   public boolean isModified() {
@@ -73,32 +84,79 @@ public class HttpFileEditor extends UserDataHolderBase implements FileEditor {
   }
 
   public void selectNotify() {
-    myDownloadPanel.showNotify();
+    myPanel.selectNotify();
   }
 
   public void deselectNotify() {
-    myDownloadPanel.hideNotify();
+    myPanel.deselectNotify();
   }
 
   public void addPropertyChangeListener(@NotNull final PropertyChangeListener listener) {
+    myPanel.addPropertyChangeListener(listener);
   }
 
   public void removePropertyChangeListener(@NotNull final PropertyChangeListener listener) {
+    myPanel.removePropertyChangeListener(listener);
   }
 
   public BackgroundEditorHighlighter getBackgroundHighlighter() {
+    final TextEditor textEditor = myPanel.getFileEditor();
+    if (textEditor != null) {
+      return textEditor.getBackgroundHighlighter();
+    }
     return null;
   }
 
+  public boolean canNavigateTo(@NotNull Navigatable navigatable) {
+    final TextEditor textEditor = myPanel.getFileEditor();
+    if (textEditor != null) {
+      return textEditor.canNavigateTo(navigatable);
+    }
+    return false;
+  }
+
+  public void navigateTo(@NotNull Navigatable navigatable) {
+    final TextEditor textEditor = myPanel.getFileEditor();
+    if (textEditor != null) {
+      textEditor.navigateTo(navigatable);
+    }
+  }
+
+  public <T> T getUserData(@NotNull Key<T> key) {
+    final TextEditor textEditor = myPanel.getFileEditor();
+    if (textEditor != null) {
+      return textEditor.getUserData(key);
+    }
+    return myUserDataHolder.getUserData(key);
+  }
+
+  public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+    final TextEditor textEditor = myPanel.getFileEditor();
+    if (textEditor != null) {
+      textEditor.putUserData(key, value);
+    }
+    else {
+      myUserDataHolder.putUserData(key, value);
+    }
+  }
+
   public FileEditorLocation getCurrentLocation() {
+    final TextEditor textEditor = myPanel.getFileEditor();
+    if (textEditor != null) {
+      return textEditor.getCurrentLocation();
+    }
     return null;
   }
 
   public StructureViewBuilder getStructureViewBuilder() {
+    final TextEditor textEditor = myPanel.getFileEditor();
+    if (textEditor != null) {
+      return textEditor.getStructureViewBuilder();
+    }
     return null;
   }
 
   public void dispose() {
-    myDownloadPanel.dispose();
+    myPanel.dispose();
   }
 }

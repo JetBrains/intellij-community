@@ -19,13 +19,11 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorPolicy;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.FileEditorState;
-import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
-import com.intellij.openapi.vfs.impl.http.RemoteFileInfo;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,12 +37,7 @@ public class HttpFileEditorProvider implements FileEditorProvider {
 
   @NotNull
   public FileEditor createEditor(@NotNull final Project project, @NotNull final VirtualFile file) {
-    HttpVirtualFile virtualFile = (HttpVirtualFile)file;
-    RemoteFileInfo remoteFileInfo = virtualFile.getFileInfo();
-    if (remoteFileInfo.isDownloaded()) {
-      return TextEditorProvider.getInstance().createEditor(project, file);
-    }
-    return new HttpFileEditor(project, virtualFile); 
+    return new HttpFileEditor(project, (HttpVirtualFile)file); 
   }
 
   public void disposeEditor(@NotNull final FileEditor editor) {

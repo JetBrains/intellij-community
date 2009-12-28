@@ -13,25 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vfs.impl.http;
+package com.intellij.openapi.fileEditor.impl.http;
 
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import org.jetbrains.annotations.NotNull;
-import com.intellij.openapi.vfs.VirtualFile;
 
 /**
  * @author nik
-*/
-public interface FileDownloadingListener {
+ */
+public abstract class RemoteFileEditorActionProvider {
+  public static final ExtensionPointName<RemoteFileEditorActionProvider> EP_NAME = ExtensionPointName.create("com.intellij.http.fileEditorActionProvider");
 
-  void fileDownloaded(final VirtualFile localFile);
+  @NotNull
+  public abstract AnAction[] createToolbarActions(@NotNull Project project, @NotNull HttpVirtualFile file);
 
-  void errorOccurred(@NotNull String errorMessage);
-
-  void downloadingStarted();
-
-  void downloadingCancelled();
-
-  void progressMessageChanged(final boolean indeterminate, @NotNull String message);
-
-  void progressFractionChanged(double fraction);
 }

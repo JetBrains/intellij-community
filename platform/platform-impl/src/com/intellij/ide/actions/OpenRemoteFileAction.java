@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -40,11 +41,11 @@ public class OpenRemoteFileAction extends AnAction implements DumbAware {
   public void actionPerformed(final AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
     String defaultUrl = "http://localhost:8080/index.html";
-    String url = Messages.showInputDialog(project, "URL", "Open Remote File", null, defaultUrl, null);
+    String url = Messages.showInputDialog(project, "URL:", "Open Remote File", null, defaultUrl, null);
     if (url != null) {
       VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
       if (file == null) {
-        Messages.showErrorDialog(project, "Cannot find file '" + url + "'", "Cannot Open File");
+        Messages.showErrorDialog(project, "Cannot find file '" + url + "'", CommonBundle.getErrorTitle());
       }
       else {
         FileEditorManager.getInstance(project).openFile(file, true);

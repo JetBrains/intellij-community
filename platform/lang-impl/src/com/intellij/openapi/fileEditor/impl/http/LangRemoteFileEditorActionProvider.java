@@ -13,25 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vfs.impl.http;
+package com.intellij.openapi.fileEditor.impl.http;
 
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import org.jetbrains.annotations.NotNull;
-import com.intellij.openapi.vfs.VirtualFile;
 
 /**
  * @author nik
-*/
-public interface FileDownloadingListener {
-
-  void fileDownloaded(final VirtualFile localFile);
-
-  void errorOccurred(@NotNull String errorMessage);
-
-  void downloadingStarted();
-
-  void downloadingCancelled();
-
-  void progressMessageChanged(final boolean indeterminate, @NotNull String message);
-
-  void progressFractionChanged(double fraction);
+ */
+public class LangRemoteFileEditorActionProvider extends RemoteFileEditorActionProvider {
+  @NotNull
+  @Override
+  public AnAction[] createToolbarActions(@NotNull Project project, @NotNull HttpVirtualFile file) {
+    return new AnAction[] {new JumpFromRemoteFileToLocalAction(file, project)};
+  }
 }

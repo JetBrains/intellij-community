@@ -15,23 +15,9 @@
  */
 package com.intellij.openapi.vfs.impl.http;
 
-import org.jetbrains.annotations.NotNull;
-import com.intellij.openapi.vfs.VirtualFile;
-
 /**
  * @author nik
-*/
-public interface FileDownloadingListener {
-
-  void fileDownloaded(final VirtualFile localFile);
-
-  void errorOccurred(@NotNull String errorMessage);
-
-  void downloadingStarted();
-
-  void downloadingCancelled();
-
-  void progressMessageChanged(final boolean indeterminate, @NotNull String message);
-
-  void progressFractionChanged(double fraction);
+ */
+public enum RemoteFileState {
+  DOWNLOADING_NOT_STARTED, DOWNLOADING_IN_PROGRESS, DOWNLOADED, ERROR_OCCURRED
 }

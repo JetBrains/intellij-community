@@ -13,36 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vfs.impl.http;
+package com.intellij.openapi.fileEditor.impl.http;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileTypes.FileType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
 
 /**
  * @author nik
  */
-public abstract class RemoteContentProvider {
+public abstract class LocalFileFinder {
+  public static final ExtensionPointName<LocalFileFinder> EP_NAME = ExtensionPointName.create("com.intellij.http.localFileFinder");
 
-  public abstract boolean canProvideContent(@NotNull String url);
-
-  public abstract void saveContent(final String url, @NotNull File targetFile, @NotNull DownloadingCallback callback);
-
-  public abstract boolean isUpToDate(@NotNull String url, @NotNull VirtualFile local);
-
-
-  public interface DownloadingCallback {
-    void finished(@Nullable FileType fileType);
-
-    void errorOccurred(@NotNull String errorMessage, boolean cancelled);
-
-    void setProgressText(@NotNull String text, boolean indeterminate);
-
-    void setProgressFraction(double fraction);
-
-    boolean isCancelled();
-  }
+  @Nullable 
+  public abstract VirtualFile findLocalFile(@NotNull String url, @NotNull Project project);
 }
