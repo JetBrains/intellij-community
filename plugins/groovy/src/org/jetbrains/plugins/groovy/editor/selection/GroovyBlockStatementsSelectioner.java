@@ -19,9 +19,8 @@ package org.jetbrains.plugins.groovy.editor.selection;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 
 import java.util.List;
 
@@ -31,14 +30,14 @@ import java.util.List;
 public class GroovyBlockStatementsSelectioner extends GroovyBasicSelectioner {
 
   public boolean canSelect(PsiElement e) {
-    return e instanceof GrOpenBlock;
+    return e instanceof GrCodeBlock;
   }
 
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
     List<TextRange> result = super.select(e, editorText, cursorOffset, editor);
 
-    if (e instanceof GrOpenBlock) {
-      GrOpenBlock block = ((GrOpenBlock) e);
+    if (e instanceof GrCodeBlock) {
+      GrCodeBlock block = ((GrCodeBlock) e);
       GrStatement[] statements = block.getStatements();
 
       if (statements.length > 0) {
