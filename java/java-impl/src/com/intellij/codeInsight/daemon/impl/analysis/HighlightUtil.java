@@ -1871,7 +1871,7 @@ public class HighlightUtil {
 
         HighlightInfo info = HighlightInfo.createHighlightInfo(type, refName, description);
 
-        UnresolvedReferenceQuickFixProvider.registerFixes(ref, new QuickFixActionRegistrarImpl(info), PsiJavaCodeReferenceElement.class);
+        UnresolvedReferenceQuickFixProvider.registerReferenceFixes(ref, new QuickFixActionRegistrarImpl(info));
         return info;
       }
 

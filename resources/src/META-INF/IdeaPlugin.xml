@@ -18,9 +18,6 @@
     <xi:include href="/META-INF/VcsExtensionPoints.xml" xpointer="xpointer(/extensionPoints/*)"/>
     <xi:include href="/META-INF/LangExtensionPoints.xml" xpointer="xpointer(/extensionPoints/*)"/>
 
-    <extensionPoint name="codeInsight.unresolvedReferenceQuickFixProvider"
-                    interface="com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider"/>
-
     <extensionPoint name="codeInsight.changeVariableTypeQuickFixProvider"
                     interface="com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider"/>
 

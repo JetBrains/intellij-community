@@ -25,15 +25,16 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class UnresolvedReferenceQuickFixProvider<T extends PsiReference> {
 
-  public static <T extends PsiReference> void registerFixes(T ref, QuickFixActionRegistrar registrar, Class<T> refClass) {
+  public static <T extends PsiReference> void registerReferenceFixes(T ref, QuickFixActionRegistrar registrar) {
 
     final boolean dumb = DumbService.getInstance(ref.getElement().getProject()).isDumb();
     UnresolvedReferenceQuickFixProvider[] fixProviders = Extensions.getExtensions(EXTENSION_NAME);
+    Class<? extends PsiReference> referenceClass = ref.getClass();
     for (UnresolvedReferenceQuickFixProvider each : fixProviders) {
       if (dumb && !(each instanceof DumbAware)) {
         continue;
       }
-      if (refClass.equals(each.getReferenceClass())) {
+      if (referenceClass.isAssignableFrom(each.getReferenceClass())) {
         each.registerFixes(ref, registrar);
       }
     }
