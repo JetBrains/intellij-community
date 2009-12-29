@@ -111,6 +111,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     myEventDispatcher.removeListener(listener);
   }
 
+  @Nullable
   public Module getModule() {
     final Module[] all = myModulesProvider.getModules();
     for (Module each : all) {
@@ -121,8 +122,11 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   }
 
   public ModifiableRootModel getModifiableRootModel() {
-    if (myModifiableRootModel == null){
-      myModifiableRootModel = ((ModuleRootManagerImpl)ModuleRootManager.getInstance(getModule())).getModifiableModel(new UIRootConfigurationAccessor(myProject));
+    if (myModifiableRootModel == null) {
+      final Module module = getModule();
+      if (module != null) {
+        myModifiableRootModel = ((ModuleRootManagerImpl)ModuleRootManager.getInstance(module)).getModifiableModel(new UIRootConfigurationAccessor(myProject));
+      }
     }
     return myModifiableRootModel;
   }
@@ -138,9 +142,12 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
 
   public ModifiableRootModel getModifiableRootModelProxy() {
     if (myModifiableRootModelProxy == null) {
-      myModifiableRootModelProxy = (ModifiableRootModel)Proxy.newProxyInstance(
-        getClass().getClassLoader(), new Class[]{ModifiableRootModel.class}, new ModifiableRootModelInvocationHandler(getModifiableRootModel())
-      );
+      final ModifiableRootModel rootModel = getModifiableRootModel();
+      if (rootModel != null) {
+        myModifiableRootModelProxy = (ModifiableRootModel)Proxy.newProxyInstance(
+          getClass().getClassLoader(), new Class[]{ModifiableRootModel.class}, new ModifiableRootModelInvocationHandler(rootModel)
+        );
+      }
     }
     return myModifiableRootModelProxy;
   }
