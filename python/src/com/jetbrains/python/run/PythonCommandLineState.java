@@ -40,7 +40,11 @@ public class PythonCommandLineState extends CommandLineState {
 
   @Override
   public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
-    final ProcessHandler processHandler = startProcess();
+    return execute(null);
+  }
+
+  public ExecutionResult execute(CommandLinePatcher patcher) throws ExecutionException {
+    final ProcessHandler processHandler = startProcess(patcher);
     final ConsoleView console = createAndAttachConsole(getConfig().getProject(), processHandler);
 
     return new DefaultExecutionResult(console, processHandler, createActions(console, processHandler));
@@ -59,7 +63,14 @@ public class PythonCommandLineState extends CommandLineState {
   }
 
   protected OSProcessHandler startProcess() throws ExecutionException {
+    return startProcess(null);
+  }
+
+  protected OSProcessHandler startProcess(CommandLinePatcher patcher) throws ExecutionException {
     GeneralCommandLine commandLine = generateCommandLine();
+    if (patcher != null) {
+      patcher.patchCommandLine(commandLine);
+    }
 
     final OSProcessHandler processHandler = new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString());
     ProcessTerminatedListener.attach(processHandler);

@@ -2,10 +2,12 @@ package com.jetbrains.python;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
+import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.psi.PyAssignmentStatement;
 import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.PySubscriptionExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
+
 import java.util.List;
 import java.util.Map;
 
@@ -14,7 +16,7 @@ import java.util.Map;
  * User: dcheryasov
  * Date: Dec 11, 2009 2:13:51 AM
  */
-public class PyAssignmentMappingTest extends MarkedTestCase {
+public class PyAssignmentMappingTest extends LightMarkedTestCase {
 
   public String getTestDataPath() {
     return PythonTestUtil.getTestDataPath() + "/psi/assignment/";

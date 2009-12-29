@@ -1,1 +1,1 @@
-a = 4; b = 5<warning descr="Trailing semicolon in the statement">;</warning>
+a = 4; b = 5<caret><warning descr="Trailing semicolon in the statement">;</warning>

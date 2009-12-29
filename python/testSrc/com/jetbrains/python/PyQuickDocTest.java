@@ -5,6 +5,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.psi.PyDocStringOwner;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
@@ -17,7 +18,7 @@ import java.util.Map;
  * User: dcheryasov
  * Date: Jun 7, 2009 12:31:07 PM
  */
-public class PyQuickDocTest extends MarkedTestCase {
+public class PyQuickDocTest extends LightMarkedTestCase {
   private PythonDocumentationProvider myProvider;
 
   @Override

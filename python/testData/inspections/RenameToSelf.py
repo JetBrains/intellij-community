@@ -1,3 +1,3 @@
 class A:
-  def foo(slf): # Rename to 'self'
+  def foo(<caret>slf): # Rename to 'self'
     pass

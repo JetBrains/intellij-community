@@ -21,7 +21,7 @@ public class PythonLanguage extends Language {
   private final IFileElementType ELTYPE_FILE = new IStubFileElementType(this) {
     @Override
     public int getStubVersion() {
-      return 2;
+      return 3;
     }
   };
   private final Set<Class<? extends PyAnnotator>> _annotators = new CopyOnWriteArraySet<Class<? extends PyAnnotator>>();

@@ -1085,5 +1085,6 @@ if __name__ == "__main__":
       outfile.close()
     except:
       sys.stderr.write("Failed to process " + name + " while " + action + "\n")
-      raise
+      # Please don't add a 'raise' here. If we fail to process one module, it's not a sufficient reason
+      # to cancel processing the remaining ones.
       continue

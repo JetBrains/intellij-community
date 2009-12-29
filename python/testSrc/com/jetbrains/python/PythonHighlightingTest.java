@@ -1,11 +1,11 @@
 package com.jetbrains.python;
 
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
@@ -14,7 +14,7 @@ import java.awt.*;
  * Test highlighting added by annotators.
  * @author yole
  */
-public class PythonHighlightingTest extends DaemonAnalyzerTestCase {
+public class PythonHighlightingTest extends PyLightFixtureTestCase {
   @NonNls
   protected String getTestDataPath() {
     return PythonTestUtil.getTestDataPath() + "/highlighting/";
@@ -63,7 +63,7 @@ public class PythonHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testContinueInFinallyBlock() throws Exception {
-    doTest();
+    doTest(false, false);
   }
 
   public void testReturnWithArgumentsInGenerator() throws Exception {
@@ -101,11 +101,11 @@ public class PythonHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   private void doTest() throws Exception {
-    doTest(getTestName(true) + PyNames.DOT_PY, true, true);
+    myFixture.testHighlighting(true, true, false, getTestName(true) + PyNames.DOT_PY);
   }
 
   private void doTest(boolean checkWarnings, boolean checkInfos) throws Exception {
-    doTest(getTestName(true) + PyNames.DOT_PY, checkWarnings, checkInfos);
+    myFixture.testHighlighting(checkWarnings, checkInfos, false, getTestName(true) + PyNames.DOT_PY);
   }
 
 }

@@ -5,4 +5,4 @@ class A:
 
 class B(A):
     def foo(self):
-        return self.<warning descr="Unresolved attribute reference 'x' for class 'B'">x</warning>
+        return self.<caret><warning descr="Unresolved attribute reference 'x' for class 'B'">x</warning>

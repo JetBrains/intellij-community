@@ -2,7 +2,7 @@ package com.jetbrains.python;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.testFramework.ResolveTestCase;
+import com.jetbrains.python.fixtures.PyResolveTestCase;
 import com.jetbrains.python.psi.PyArgumentList;
 import com.jetbrains.python.psi.PyDecorator;
 import com.jetbrains.python.psi.PyExpression;
@@ -13,7 +13,7 @@ import com.jetbrains.python.psi.PyFunction;
  * User: dcheryasov
  * Date: Dec 28, 2008 3:50:23 AM
  */
-public class PyDecoratorTest extends ResolveTestCase {
+public class PyDecoratorTest extends PyResolveTestCase {
   private PsiElement find() throws Exception {
     PsiReference ref = configureByFile(getTestName(false) + ".py");
     return ref.getElement();

@@ -1,6 +1,7 @@
 package com.jetbrains.python;
 
 import com.intellij.psi.PsiElement;
+import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.psi.*;
 
 import java.util.Map;
@@ -10,7 +11,7 @@ import java.util.Map;
  * User: dcheryasov
  * Date: Mar 15, 2009 3:11:01 AM
  */
-public class PyStatementPartsTest extends MarkedTestCase {
+public class PyStatementPartsTest extends LightMarkedTestCase {
 
   protected String getTestDataPath() {
     return PythonTestUtil.getTestDataPath() + "/psi/parts/";

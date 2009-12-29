@@ -7,12 +7,13 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="testFramework-java" />
     <orderEntry type="module" module-name="python" />
-    <orderEntry type="module" module-name="codeInsight-tests" />
-    <orderEntry type="library" name="JUnit3" level="project" />
-    <orderEntry type="module" module-name="idea" />
-    <orderEntry type="module" module-name="idea-tests" />
+    <orderEntry type="module" module-name="testFramework" />
+    <orderEntry type="module" module-name="python-ide" scope="RUNTIME" />
+    <orderEntry type="module" module-name="platform-ultimate" scope="RUNTIME" />
+    <orderEntry type="module" module-name="resources-en" scope="RUNTIME" />
+    <orderEntry type="module" module-name="xdebugger-impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="python-py" scope="RUNTIME" />
   </component>
 </module>
 

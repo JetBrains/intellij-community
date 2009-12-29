@@ -1,15 +1,17 @@
-package com.jetbrains.python;
+package com.jetbrains.python.fixtures;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -19,7 +21,8 @@ import java.util.regex.Pattern;
  * User: dcheryasov
  * Date: Mar 14, 2009 11:57:52 PM
  */
-public abstract class MarkedTestCase extends PsiTestCase {
+public abstract class LightMarkedTestCase extends PyLightFixtureTestCase {
+  protected PsiFile myFile;
 
   /**
    * Marker "as expected", any alphanumeric sting in angle brackets.
@@ -67,7 +70,7 @@ public abstract class MarkedTestCase extends PsiTestCase {
    * @return mapping of markers to the PSI elements
    * @throws Exception
    */
-  protected Map<String, PsiElement> configureByFileText(String fileText, String fileName, @NonNls String markerRegexp)
+  protected Map<String, PsiElement> configureByFileText(String fileText, final String fileName, @NonNls String markerRegexp)
   throws Exception
   {
     // build a map of marks to positions, and the text with marks stripped
@@ -75,7 +78,7 @@ public abstract class MarkedTestCase extends PsiTestCase {
     Matcher mat = pat.matcher(fileText);
     int rest_index = 0; // from here on fileText is not yet looked at
     Map<String, Integer> offsets = new HashMap<String, Integer>();
-    StringBuffer text = new StringBuffer();
+    final StringBuffer text = new StringBuffer();
     while (mat.find(rest_index)) {
       String mark = mat.group();
       CharSequence prev_part = fileText.subSequence(rest_index, mat.start());
@@ -87,7 +90,17 @@ public abstract class MarkedTestCase extends PsiTestCase {
 
     // create a file and map marks to PSI elements
     Map<String, PsiElement> result = new HashMap<String, PsiElement>();
-    myFile = createFile(myModule, fileName, text.toString());
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        try {
+          myFile = myFixture.addFileToProject(fileName, text.toString());
+          myFixture.configureFromExistingVirtualFile(myFile.getVirtualFile());
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
     for (Map.Entry<String, Integer> entry : offsets.entrySet()) {
       result.put(entry.getKey(), myFile.findElementAt(entry.getValue()));
     }

@@ -1,16 +1,15 @@
 package com.jetbrains.python;
 
-import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.testFramework.PsiTestUtil;
+import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.psi.*;
 
 /**
  * @author yole
  */
-public class PyMultiFileResolveTest extends CodeInsightTestCase {
+public class PyMultiFileResolveTest extends PyLightFixtureTestCase {
   public void testSimple() throws Exception {
     PsiElement element = doResolve();
     assertTrue(element instanceof PyFile);
@@ -111,15 +110,18 @@ public class PyMultiFileResolveTest extends CodeInsightTestCase {
   private PsiFile prepareFile() throws Exception {
     String testName = getTestName(true);
     String fileName = getTestName(false) + ".py";
-    String root = PythonTestUtil.getTestDataPath() + "/resolve/multiFile/" + testName;
-    VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete, false);
-    PsiTestUtil.addSourceContentToRoots(myModule, rootDir);
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    myFixture.copyDirectoryToProject(testName, "");
+    PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
 
-    VirtualFile sourceFile = rootDir.findChild(fileName);
+    VirtualFile sourceFile = myFixture.findFileInTempDir(fileName);
     assert sourceFile != null;
-    PsiFile psiFile = myPsiManager.findFile(sourceFile);
+    PsiFile psiFile = myFixture.getPsiManager().findFile(sourceFile);
     return psiFile;
+  }
+
+  @Override
+  protected String getTestDataPath() {
+    return PythonTestUtil.getTestDataPath() + "/resolve/multiFile/";
   }
 
   private PsiElement doResolve() throws Exception {
@@ -137,7 +139,7 @@ public class PyMultiFileResolveTest extends CodeInsightTestCase {
   }
 
   private int findMarkerOffset(final PsiFile psiFile) {
-    Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
+    Document document = PsiDocumentManager.getInstance(myFixture.getProject()).getDocument(psiFile);
     assert document != null;
     int offset = -1;
     for (int i=1; i<document.getLineCount(); i++) {

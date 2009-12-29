@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.facet.PythonFacetSettings;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -34,7 +35,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.util.Collections;
 import java.util.List;
 import java.util.TreeSet;
@@ -351,57 +354,29 @@ public class PythonSdkType extends SdkType {
     return getPythonBinaryPath(sdkHome).getPath();
   }
 
-  /**
-   * Copies a number of resources as files to a temporary directory.
-   * @param resourceNames each file created will have the same name as the resource it's created from.
-   * @return the temporary directory
-   * @throws IOException if anything goes wrong.
-   */
-  private static File copyResourcesToTempDir(final String... resourceNames) throws IOException {
-    final File tempdir = FileUtil.createTempDirectory("pycharm", "");
-    for (final String resourceName : resourceNames) {
-      final String text = FileUtil.loadTextAndClose(new InputStreamReader(PythonSdkType.class.getResourceAsStream(resourceName)));
-      File target = new File(tempdir.getCanonicalPath(), resourceName);
-      FileWriter out = new FileWriter(target);
-      out.write(text);
-      out.close();
-    }
-    return tempdir;
-  }
-
-
   private final static String GENERATOR3 = "generator3.py";
   private final static String FIND_BINARIES = "find_binaries.py"; 
 
   public static void generateBuiltinStubs(String sdkPath, final String stubsRoot) {
     new File(stubsRoot).mkdirs();
+
+    GeneralCommandLine commandLine = new GeneralCommandLine();
+    commandLine.setExePath(getInterpreterPath(sdkPath));    // python
+    commandLine.addParameter(PythonHelpersLocator.getHelperPath(GENERATOR3));
+
+    commandLine.addParameter("-d");
+    commandLine.addParameter(stubsRoot); // -d stubs_root
+    commandLine.addParameter("-b"); // for builtins
+    commandLine.addParameter("-u"); // for update-only mode
     try {
-
-      final File tempDir = copyResourcesToTempDir(GENERATOR3, "pyparsing.py", "pyparsing_py3.py");
-
-      GeneralCommandLine commandLine = new GeneralCommandLine();
-      commandLine.setExePath(getInterpreterPath(sdkPath));    // python
-
-      commandLine.addParameter(tempDir.getAbsolutePath() + File.separatorChar + GENERATOR3);
-
-      commandLine.addParameter("-d"); commandLine.addParameter(stubsRoot); // -d stubs_root
-      commandLine.addParameter("-b"); // for builtins
-      commandLine.addParameter("-u"); // for update-only mode
-      try {
-        final OSProcessHandler handler = new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString());
-        handler.startNotify();
-        handler.waitFor();
-        handler.destroyProcess();
-      }
-      catch (ExecutionException e) {
-        LOG.error(e);
-      }
-      FileUtil.delete(tempDir);
+      final OSProcessHandler handler = new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString());
+      handler.startNotify();
+      handler.waitFor();
+      handler.destroyProcess();
     }
-    catch (IOException e) {
+    catch (ExecutionException e) {
       LOG.error(e);
     }
-
   }
 
   /**
@@ -412,64 +387,50 @@ public class PythonSdkType extends SdkType {
    * @param indicator ProgressIndicator to update, or null.
    */
   public static void generateBinaryStubs(final String sdkPath, final String stubsRoot, ProgressIndicator indicator) {
-    if (!new File(stubsRoot).exists()) return; 
+    if (!new File(stubsRoot).exists()) return;
     if (indicator != null) {
       indicator.setText("Generating skeletons of binary libs");
     }
-    try {
-      final int RUN_TIMEOUT = 10*1000; // 10 seconds per call is plenty enough; anything more is clearly wrong.
-      final String bin_path = getInterpreterPath(sdkPath);
+    final int RUN_TIMEOUT = 10 * 1000; // 10 seconds per call is plenty enough; anything more is clearly wrong.
+    final String bin_path = getInterpreterPath(sdkPath);
 
-      final File tempDir = copyResourcesToTempDir(GENERATOR3, FIND_BINARIES, "pyparsing.py", "pyparsing_py3.py");
+    final ProcessOutput run_result =
+      SdkUtil.getProcessOutput(sdkPath, new String[]{bin_path, PythonHelpersLocator.getHelperPath(FIND_BINARIES)});
 
-
-      try {
-        final ProcessOutput run_result = SdkUtil.getProcessOutput(
-          sdkPath, new String[] {bin_path, tempDir.getPath() + File.separatorChar + FIND_BINARIES}
-        );
-
-        if (run_result.getExitCode() == 0) {
-          for (String line : run_result.getStdoutLines()) {
-            // line = "mod_name path"
-            int cutpos = line.indexOf(' ');
-            String modname = line.substring(0, cutpos);
-            String mod_fname = modname.replace(".", File.separator); // "a.b.c" -> "a/b/c", no ext
-            String fname = line.substring(cutpos+1);
-            //String ext = fname.substring(fname.lastIndexOf('.')); // no way ext is absent
-            // check if it's fresh
-            File f_orig = new File(fname);
-            File f_skel = new File(stubsRoot + File.separator + mod_fname + ".py");
-            if (f_orig.lastModified() >= f_skel.lastModified()) {
-              // stale skeleton, rebuild
-              if (indicator != null) {
-                indicator.setText2(modname);
-              }
-              LOG.info("Skeleton for " + modname);
-              final ProcessOutput gen_result = SdkUtil.getProcessOutput(sdkPath,
-                new String[] {bin_path, tempDir.getPath() + File.separatorChar + GENERATOR3, "-d", stubsRoot, modname}, RUN_TIMEOUT
-              );
-              if (gen_result.getExitCode() != 0) {
-                StringBuffer sb = new StringBuffer("Skeleton for ");
-                sb.append(modname).append(" failed. stderr: --");
-                for (String err_line : gen_result.getStderrLines()) sb.append(err_line).append("\n");
-                sb.append("--");
-                LOG.warn(sb.toString());
-              }
-            }
+    if (run_result.getExitCode() == 0) {
+      for (String line : run_result.getStdoutLines()) {
+        // line = "mod_name path"
+        int cutpos = line.indexOf(' ');
+        String modname = line.substring(0, cutpos);
+        String mod_fname = modname.replace(".", File.separator); // "a.b.c" -> "a/b/c", no ext
+        String fname = line.substring(cutpos + 1);
+        //String ext = fname.substring(fname.lastIndexOf('.')); // no way ext is absent
+        // check if it's fresh
+        File f_orig = new File(fname);
+        File f_skel = new File(stubsRoot + File.separator + mod_fname + ".py");
+        if (f_orig.lastModified() >= f_skel.lastModified()) {
+          // stale skeleton, rebuild
+          if (indicator != null) {
+            indicator.setText2(modname);
+          }
+          LOG.info("Skeleton for " + modname);
+          final ProcessOutput gen_result = SdkUtil
+            .getProcessOutput(sdkPath, new String[]{bin_path, PythonHelpersLocator.getHelperPath(GENERATOR3), "-d", stubsRoot, modname},
+                              RUN_TIMEOUT);
+          if (gen_result.getExitCode() != 0) {
+            StringBuffer sb = new StringBuffer("Skeleton for ");
+            sb.append(modname).append(" failed. stderr: --");
+            for (String err_line : gen_result.getStderrLines()) sb.append(err_line).append("\n");
+            sb.append("--");
+            LOG.warn(sb.toString());
           }
         }
-        else {
-          StringBuffer sb = new StringBuffer();
-          for (String err_line : run_result.getStderrLines()) sb.append(err_line).append("\n");
-          LOG.error("failed to run " + FIND_BINARIES + ", exit code " + run_result.getExitCode() + ", stderr '" + sb.toString() + "'");
-        }
-      }
-      finally {
-        FileUtil.delete(tempDir);
       }
     }
-    catch (IOException e) {
-      LOG.error(e);
+    else {
+      StringBuffer sb = new StringBuffer();
+      for (String err_line : run_result.getStderrLines()) sb.append(err_line).append("\n");
+      LOG.error("failed to run " + FIND_BINARIES + ", exit code " + run_result.getExitCode() + ", stderr '" + sb.toString() + "'");
     }
   }
 
