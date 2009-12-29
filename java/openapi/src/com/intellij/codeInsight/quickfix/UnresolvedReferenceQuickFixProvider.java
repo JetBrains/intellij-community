@@ -15,14 +15,35 @@
  */
 package com.intellij.codeInsight.quickfix;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.psi.PsiReference;
+import org.jetbrains.annotations.NotNull;
 
-public interface UnresolvedReferenceQuickFixProvider {
-  ExtensionPointName<UnresolvedReferenceQuickFixProvider> EXTENSION_NAME =
+public abstract class UnresolvedReferenceQuickFixProvider<T extends PsiReference> {
+
+  public static <T extends PsiReference> void registerFixes(T ref, QuickFixActionRegistrar registrar, Class<T> refClass) {
+
+    final boolean dumb = DumbService.getInstance(ref.getElement().getProject()).isDumb();
+    UnresolvedReferenceQuickFixProvider[] fixProviders = Extensions.getExtensions(EXTENSION_NAME);
+    for (UnresolvedReferenceQuickFixProvider each : fixProviders) {
+      if (dumb && !(each instanceof DumbAware)) {
+        continue;
+      }
+      if (refClass.equals(each.getReferenceClass())) {
+        each.registerFixes(ref, registrar);
+      }
+    }
+  }
+
+  private static final ExtensionPointName<UnresolvedReferenceQuickFixProvider> EXTENSION_NAME =
       ExtensionPointName.create("com.intellij.codeInsight.unresolvedReferenceQuickFixProvider");
 
+  public abstract void registerFixes(T ref, QuickFixActionRegistrar registrar);
 
-  void registerFixes(PsiJavaCodeReferenceElement ref, QuickFixActionRegistrar registrar);
+  @NotNull
+  public abstract Class<T> getReferenceClass();
 }
