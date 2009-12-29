@@ -21,6 +21,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiReference;
+import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class UnresolvedReferenceQuickFixProvider<T extends PsiReference> {
@@ -34,7 +35,7 @@ public abstract class UnresolvedReferenceQuickFixProvider<T extends PsiReference
       if (dumb && !(each instanceof DumbAware)) {
         continue;
       }
-      if (referenceClass.isAssignableFrom(each.getReferenceClass())) {
+      if (ReflectionCache.isAssignable(each.getReferenceClass(), referenceClass)) {
         each.registerFixes(ref, registrar);
       }
     }
