@@ -30,6 +30,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageViewSettings;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.UsageGroupingRule;
 import org.jetbrains.annotations.NotNull;
@@ -43,26 +44,25 @@ public class MethodGroupingRule implements UsageGroupingRule {
   private static final Logger LOG = Logger.getInstance("#com.intellij.usages.impl.rules.MethodGroupingRule");
 
   public UsageGroup groupUsage(Usage usage) {
-    if (usage instanceof PsiElementUsage) {
-      PsiElement psiElement = ((PsiElementUsage)usage).getElement();
-      if (psiElement.getContainingFile() instanceof PsiJavaFile) {
-        PsiElement containingMethod = psiElement;
-        do {
-          containingMethod = PsiTreeUtil.getParentOfType(containingMethod, PsiMethod.class, true);
-          if (containingMethod == null || ((PsiMethod)containingMethod).getContainingClass().getQualifiedName() != null) break;
-        }
-        while (true);
+    if (!(usage instanceof PsiElementUsage)) return null;
+    PsiElement psiElement = ((PsiElementUsage)usage).getElement();
+    if (psiElement.getContainingFile() instanceof PsiJavaFile) {
+      PsiElement containingMethod = psiElement;
+      do {
+        containingMethod = PsiTreeUtil.getParentOfType(containingMethod, PsiMethod.class, true);
+        if (containingMethod == null || ((PsiMethod)containingMethod).getContainingClass().getQualifiedName() != null) break;
+      }
+      while (true);
 
-        if (containingMethod != null) {
-          return new MethodUsageGroup((PsiMethod)containingMethod);
-        }
+      if (containingMethod != null) {
+        return new MethodUsageGroup((PsiMethod)containingMethod);
       }
     }
     return null;
   }
 
   private static class MethodUsageGroup implements UsageGroup, TypeSafeDataProvider {
-    private final SmartPsiElementPointer myMethodPointer;
+    private final SmartPsiElementPointer<PsiMethod> myMethodPointer;
     private final String myName;
     private Icon myIcon;
 
@@ -142,8 +142,14 @@ public class MethodGroupingRule implements UsageGroupingRule {
       if (!(usageGroup instanceof MethodUsageGroup)) {
         LOG.error("MethodUsageGroup expected but " + usageGroup.getClass() + " found");
       }
+      MethodUsageGroup other = (MethodUsageGroup)usageGroup;
+      PsiMethod myMethod = myMethodPointer.getElement();
+      PsiMethod otherMethod = other.myMethodPointer.getElement();
+      if (myMethod != null && otherMethod != null && myMethod != otherMethod && !UsageViewSettings.getInstance().IS_SORT_MEMBERS_ALPHABETICALLY) {
+        return myMethod.getTextOffset() < otherMethod.getTextOffset() ? -1 : 1;
+      }
 
-      return myName.compareTo(((MethodUsageGroup)usageGroup).myName);
+      return myName.compareTo(other.myName);
     }
 
     public void calcData(final DataKey key, final DataSink sink) {
