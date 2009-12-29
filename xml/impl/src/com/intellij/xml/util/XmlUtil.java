@@ -32,7 +32,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -100,9 +99,9 @@ public class XmlUtil {
   @NonNls public static final String JSP_URI = "http://java.sun.com/JSP/Page";
   @NonNls public static final String ANY_URI = "http://www.intellij.net/ns/any";
 
-  @NonNls private static final String JSTL_CORE_URI = "http://java.sun.com/jsp/jstl/core";
-  @NonNls private static final String JSTL_CORE_URI2 = "http://java.sun.com/jstl/core";
-  @NonNls private static final String JSTL_CORE_URI3 = "http://java.sun.com/jstl/core_rt";
+  @NonNls public static final String JSTL_CORE_URI = "http://java.sun.com/jsp/jstl/core";
+  @NonNls public static final String JSTL_CORE_URI2 = "http://java.sun.com/jstl/core";
+  @NonNls public static final String JSTL_CORE_URI3 = "http://java.sun.com/jstl/core_rt";
   @NonNls public static final String[] JSTL_CORE_URIS = {JSTL_CORE_URI, JSTL_CORE_URI2, JSTL_CORE_URI3};
 
   @NonNls public static final String JSF_HTML_URI = "http://java.sun.com/jsf/html";
@@ -137,6 +136,7 @@ public class XmlUtil {
       "http://java.sun.com/j2ee/dtds/web-app_2_2.dtd"};
   @NonNls public static final String FACELETS_URI = "http://java.sun.com/jsf/facelets";
   @NonNls public static final String JSTL_FUNCTIONS_URI = "http://java.sun.com/jsp/jstl/functions";
+  @NonNls public static final String JSTL_FUNCTIONS_URI2 = "http://java.sun.com/jstl/functions";
   @NonNls public static final String JSTL_FN_FACELET_URI = "com.sun.facelets.tag.jstl.fn.JstlFnLibrary";
   @NonNls public static final String JSTL_CORE_FACELET_URI = "com.sun.facelets.tag.jstl.core.JstlCoreLibrary";
   @NonNls public static final String TARGET_NAMESPACE_ATTR_NAME = "targetNamespace";
