@@ -19,16 +19,29 @@ package com.jetbrains.python.psi;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 02.06.2005
- * Time: 22:31:15
- * To change this template use File | Settings | File Templates.
+ * Describes "from ... import" statements.
  */
 public interface PyFromImportStatement extends PyStatement {
   boolean isStarImport();
-  @Nullable
-  PyReferenceExpression getImportSource();
+
+  /**
+   * Returns a reference the module from which import is required.
+   * @return reference to module. If the 'from' reference is relative and consists entirely of dots, null is returned.
+   */
+  @Nullable PyReferenceExpression getImportSource();
+
+  /**
+   * @return elements that constitute the "import" clause
+   */
   PyImportElement[] getImportElements();
+
+  /**
+   * @return the star in "from ... import *"
+   */
   @Nullable PyStarImportElement getStarImportElement();
+
+  /**
+   * @return number of dots in relative "from" clause, or 0 in absolute import.
+   */
+  int getRelativeLevel();
 }

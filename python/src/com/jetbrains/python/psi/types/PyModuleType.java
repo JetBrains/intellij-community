@@ -87,16 +87,18 @@ public class PyModuleType implements PyType { // Maybe make it a PyClassType ref
       }
       else result.addAll(processor.getResultList());
     }
-    for (PsiFileSystemItem pfsi : getSubmodulesList()) {
-      String s = pfsi.getName();
-      int pos = s.lastIndexOf('.'); // it may not contain a dot, except in extension; cut it off.
-      if (pos > 0) s = s.substring(0, pos);
-      if (!PyNames.isIdentifier(s)) continue; // file is e.g. a script with a strange name, not a module
-      if (names_already != null) {
-        if (names_already.contains(s)) continue;
-        else names_already.add(s);
+    else /*if (role == AS_MODULE)*/ { // when being imported, add submodules
+      for (PsiFileSystemItem pfsi : getSubmodulesList()) {
+        String s = pfsi.getName();
+        int pos = s.lastIndexOf('.'); // it may not contain a dot, except in extension; cut it off.
+        if (pos > 0) s = s.substring(0, pos);
+        if (!PyNames.isIdentifier(s)) continue;
+        if (names_already != null) {
+          if (names_already.contains(s)) continue;
+          else names_already.add(s);
+        }
+        result.add(LookupElementBuilder.create(pfsi, s).setPresentableText(s));
       }
-      result.add(LookupElementBuilder.create(pfsi, s).setPresentableText(s));
     }
     return result.toArray();
   }

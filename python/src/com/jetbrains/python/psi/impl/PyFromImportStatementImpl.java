@@ -74,6 +74,20 @@ public class PyFromImportStatementImpl extends PyElementImpl implements PyFromIm
     return findChildByClass(PyStarImportElement.class);
   }
 
+  public int getRelativeLevel() {
+    // crude but OK for reasonable cases, and in unreasonably complex error cases this number is moot anyway. 
+    int result = 0;
+    PsiElement import_kwd = findChildByType(PyTokenTypes.IMPORT_KEYWORD);
+    if (import_kwd != null) {
+      ASTNode seeker = import_kwd.getNode();
+      while (seeker != null) {
+        if (seeker.getElementType() == PyTokenTypes.DOT) result += 1;
+        seeker = seeker.getTreePrev();
+      }
+    }
+    return result;
+  }
+
   public boolean processDeclarations(@NotNull final PsiScopeProcessor processor, @NotNull final ResolveState state, final PsiElement lastParent,
                                      @NotNull final PsiElement place) {
     // import is per-file

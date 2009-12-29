@@ -443,9 +443,10 @@ public class ResolveImportUtil {
   }
 
   @Nullable
-  private static PsiElement resolveInDirectory(final String referencedName,
-                                               final PsiFile containingFile,
-                                               final PsiDirectory dir, ResolveProcessor processor) {
+  private static PsiElement resolveInDirectory(
+    final String referencedName, final PsiFile containingFile, final PsiDirectory dir, ResolveProcessor processor
+  ) {
+    if (referencedName == null) return null;
     final PsiFile file = dir.findFile(referencedName + PY_SUFFIX);
     if (file != null) return file;
     final PsiDirectory subdir = dir.findSubdirectory(referencedName);
@@ -645,5 +646,44 @@ public class ResolveImportUtil {
       visitGivenRoots(libraryOrderEntry.getRootFiles(OrderRootType.CLASSES), myVisitor);
       return null;
     }
+  }
+
+  public static enum ROLE_IN_IMPORT {
+    /**
+     * The reference is not inside an import statement.
+     */
+    NONE,
+
+    /**
+     * The reference is inside import and refers to a module
+     */
+    AS_MODULE,
+
+    /**
+     * The reference is inside import and refers to a name imported from a module
+     */
+    AS_NAME
+  }
+
+  /**
+   * @param reference what we test
+   * @return the role of reference in enclosing import statement, if any
+   */
+  public static ROLE_IN_IMPORT getRoleInImport(@NotNull PsiReference reference) {
+    PsiElement parent = PsiTreeUtil.getParentOfType(
+      reference.getElement(),
+      PyImportElement.class, PyFromImportStatement.class
+    );
+    if (parent instanceof PyFromImportStatement) return ROLE_IN_IMPORT.AS_MODULE; // from foo ...
+    if (parent instanceof PyImportElement) {
+      PsiElement statement = parent.getParent();
+      if (statement instanceof PyImportStatement) return ROLE_IN_IMPORT.AS_MODULE; // import foo,...
+      else if (statement instanceof PyFromImportStatement) {
+        PyFromImportStatement importer = (PyFromImportStatement)statement; // from ??? import foo
+        if (importer.getImportSource() == null && importer.getRelativeLevel() > 0) return ROLE_IN_IMPORT.AS_MODULE; // from . import foo,...
+        else return ROLE_IN_IMPORT.AS_NAME; // from bar import foo,...
+      }
+    }
+    return ROLE_IN_IMPORT.NONE;
   }
 }
