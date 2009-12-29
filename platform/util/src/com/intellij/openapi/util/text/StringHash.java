@@ -16,11 +16,7 @@
 package com.intellij.openapi.util.text;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lesya
- * Date: May 5, 2008
- * Time: 10:28:06 PM
- * To change this template use File | Settings | File Templates.
+ * @author lesya
  */
 public class StringHash {
   private static final long initialHash = 0xe12398c6d9ae3b8aL;  // initial values

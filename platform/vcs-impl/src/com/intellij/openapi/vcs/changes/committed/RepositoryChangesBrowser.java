@@ -78,7 +78,7 @@ public class RepositoryChangesBrowser extends ChangesBrowser implements DataProv
   }
 
   public Object getData(@NonNls final String dataId) {
-    if (CommittedChangesBrowserUseCase.CONTEXT_NAME.equals(dataId)) {
+    if (CommittedChangesBrowserUseCase.DATA_KEY.is(dataId)) {
       return myUseCase;
     }
 
@@ -106,13 +106,13 @@ public class RepositoryChangesBrowser extends ChangesBrowser implements DataProv
       event.getPresentation().setIcon(myEditSourceIcon);
       event.getPresentation().setText("Edit Source");
       if ((! ModalityState.NON_MODAL.equals(ModalityState.current())) ||
-          CommittedChangesBrowserUseCase.IN_AIR.equals(event.getDataContext().getData(CommittedChangesBrowserUseCase.CONTEXT_NAME))) {
+          CommittedChangesBrowserUseCase.IN_AIR.equals(CommittedChangesBrowserUseCase.DATA_KEY.getData(event.getDataContext()))) {
         event.getPresentation().setEnabled(false);
       }
     }
 
     protected Navigatable[] getNavigatables(final DataContext dataContext) {
-      Change[] changes = (Change[])dataContext.getData(VcsDataKeys.SELECTED_CHANGES.getName());
+      Change[] changes = VcsDataKeys.SELECTED_CHANGES.getData(dataContext);
       if (changes != null) {
         Collection<Change> changeCollection = Arrays.asList(changes);
         return ChangesUtil.getNavigatableArray(myProject, ChangesUtil.getFilesFromChanges(changeCollection));

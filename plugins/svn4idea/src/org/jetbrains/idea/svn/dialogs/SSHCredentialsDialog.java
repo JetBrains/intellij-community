@@ -36,11 +36,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 
 /**
- * Created by IntelliJ IDEA.
- * User: alex
- * Date: 25.06.2005
- * Time: 16:47:22
- * To change this template use File | Settings | File Templates.
+ * @author alex
  */
 public class SSHCredentialsDialog extends DialogWrapper implements ActionListener, DocumentListener {
   private boolean myAllowSave;

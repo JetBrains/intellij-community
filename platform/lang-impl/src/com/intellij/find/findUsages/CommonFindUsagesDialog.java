@@ -16,9 +16,9 @@
 
 package com.intellij.find.findUsages;
 
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.usageView.UsageViewUtil;
@@ -26,11 +26,7 @@ import com.intellij.usageView.UsageViewUtil;
 import javax.swing.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Feb 14, 2005
- * Time: 5:40:05 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class CommonFindUsagesDialog extends AbstractFindUsagesDialog {
   private final PsiElement myPsiElement;

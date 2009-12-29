@@ -19,17 +19,17 @@ package com.intellij.ide.hierarchy;
 import com.intellij.ide.actions.CloseTabToolbarAction;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.TreeToolTipHandler;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -194,24 +194,24 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
 
   @Nullable
   public Object getData(@NonNls final String dataId) {
-      if (DataConstants.PSI_ELEMENT.equals(dataId)) {
+      if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
       final PsiElement anElement = getSelectedElement();
       return anElement != null && anElement.isValid() ? anElement : null;
     }
-    if (DataConstants.PSI_ELEMENT_ARRAY.equals(dataId)) {
+    if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       return getSelectedElements();
     }
-    if (DataConstants.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
+    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       return null;
     }
-    if (DataConstants.NAVIGATABLE.equals(dataId)) {
+    if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
       final DefaultMutableTreeNode selectedNode = getSelectedNode();
       if (selectedNode == null) return null;
       final HierarchyNodeDescriptor descriptor = getDescriptor(selectedNode);
       if (descriptor == null) return null;
       return getNavigatable(descriptor);
     }
-    if (DataConstants.NAVIGATABLE_ARRAY.equals(dataId)) {
+    if (PlatformDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       return getNavigatables();
     }
     return null;

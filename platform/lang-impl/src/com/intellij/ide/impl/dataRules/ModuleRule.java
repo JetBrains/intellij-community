@@ -18,8 +18,9 @@ package com.intellij.ide.impl.dataRules;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,20 +32,20 @@ import com.intellij.psi.PsiElement;
  */
 public class ModuleRule implements GetDataRule {
   public Object getData(DataProvider dataProvider) {
-    Object moduleContext = dataProvider.getData(DataConstants.MODULE_CONTEXT);
+    Object moduleContext = LangDataKeys.MODULE_CONTEXT.getData(dataProvider);
     if (moduleContext != null) {
       return moduleContext;
     }
-    Project project = (Project)dataProvider.getData(DataConstants.PROJECT);
+    Project project = PlatformDataKeys.PROJECT.getData(dataProvider);
     if (project == null) {
-      PsiElement element = (PsiElement)dataProvider.getData(DataConstants.PSI_ELEMENT);
+      PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataProvider);
       if (element == null || !element.isValid()) return null;
       project = element.getProject();
     }
 
-    VirtualFile virtualFile = (VirtualFile)dataProvider.getData(DataConstants.VIRTUAL_FILE);
+    VirtualFile virtualFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataProvider);
     if (virtualFile == null) {
-      GetDataRule dataRule = ((DataManagerImpl)DataManager.getInstance()).getDataRule(DataConstants.VIRTUAL_FILE);
+      GetDataRule dataRule = ((DataManagerImpl)DataManager.getInstance()).getDataRule(PlatformDataKeys.VIRTUAL_FILE.getName());
       if (dataRule != null) {
         virtualFile = (VirtualFile)dataRule.getData(dataProvider);
       }

@@ -28,11 +28,7 @@ import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 11.08.2005
- * Time: 18:06:12
- * To change this template use File | Settings | File Templates.
+ * @author yole
  */
 public class CommonBundle {
   @NonNls private static final String BUNDLE = "messages.CommonBundle";
@@ -107,7 +103,7 @@ public class CommonBundle {
   }
 
   public static String getLoadingTreeNodeText() {
-    return CommonBundle.message("tree.node.loading");
+    return message("tree.node.loading");
   }
 
   public static String getOkButtonText(){
@@ -115,32 +111,32 @@ public class CommonBundle {
   }
 
   public static String getYesButtonText(){
-    return CommonBundle.message("button.yes");
+    return message("button.yes");
   }
 
   public static String getNoButtonText(){
-    return CommonBundle.message("button.no");
+    return message("button.no");
   }
 
   public static String getContinueButtonText(){
-    return CommonBundle.message("button.continue");
+    return message("button.continue");
   }
 
 
   public static String getYesForAllButtonText() {
-    return CommonBundle.message("button.yes.for.all");
+    return message("button.yes.for.all");
   }
 
   public static String getCloseButtonText() {
-    return CommonBundle.message("button.close");
+    return message("button.close");
   }
 
   public static String getNoForAllButtonText() {
-    return CommonBundle.message("button.no.for.all");
+    return message("button.no.for.all");
   }
 
   public static String getApplyButtonText() {
-    return CommonBundle.message("button.apply");
+    return message("button.apply");
   }
 
 }

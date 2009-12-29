@@ -17,8 +17,8 @@ package org.jetbrains.idea.maven.tasks;
 
 import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.ide.DataAccessors;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -30,11 +30,11 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.execution.MavenRunner;
+import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.navigator.SelectMavenGoalDialog;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.execution.MavenRunner;
-import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.util.Collections;
@@ -47,7 +47,7 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
     myProject = project;
   }
 
-  public Key getId() {
+  public Key<MavenBeforeRunTask> getId() {
     return TASK_ID;
   }
 
@@ -105,7 +105,7 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
     try {
       ApplicationManager.getApplication().invokeAndWait(new Runnable() {
         public void run() {
-          final Project project = DataAccessors.PROJECT.from(context);
+          final Project project = PlatformDataKeys.PROJECT.getData(context);
           final Pair<MavenProject, String> projectAndGoal = getProjectAndGoalChecked(task);
 
           if (project == null || project.isDisposed() || projectAndGoal == null) return;

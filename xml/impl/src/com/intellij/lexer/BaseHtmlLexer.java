@@ -26,11 +26,7 @@ import org.jetbrains.annotations.NonNls;
 import java.util.HashMap;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Oct 7, 2004
- * Time: 2:29:06 PM
- * To change this template use File | Settings | File Templates.
+ * @author Maxim.Mossienko
  */
 abstract class BaseHtmlLexer extends DelegateLexer {
   protected static final int BASE_STATE_MASK = 0x3F;

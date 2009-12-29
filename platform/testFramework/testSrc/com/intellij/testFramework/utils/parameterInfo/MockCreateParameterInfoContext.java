@@ -24,12 +24,8 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
-* Created by IntelliJ IDEA.
-* User: Maxim.Mossienko
-* Date: 01.10.2009
-* Time: 21:44:31
-* To change this template use File | Settings | File Templates.
-*/
+ * @author Maxim.Mossienko
+ */
 public class MockCreateParameterInfoContext implements CreateParameterInfoContext {
   private Object[] myItems;
   private PsiElement myHighlightedElement;

@@ -17,7 +17,6 @@ package com.intellij.cvsSupport2.actions.merge;
 
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vcs.merge.MergeProvider;
@@ -29,15 +28,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lesya
- * Date: Jul 29, 2005
- * Time: 12:48:39 AM
- * To change this template use File | Settings | File Templates.
+ * @author lesya
  */
 public class CvsMergeProvider implements MergeProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.actions.merge.CvsMergeProvider");
-
   @NotNull
   public MergeData loadRevisions(final VirtualFile file) throws VcsException {
     return parseConflictsInFile(file).createData();
@@ -56,9 +49,8 @@ public class CvsMergeProvider implements MergeProvider {
       @NotNull
       public MergeData createData() throws VcsException {
         try {
-          BufferedInputStream input = null;
+          BufferedInputStream input = new BufferedInputStream(new FileInputStream(CvsVfsUtil.getFileFor(file)));
           try {
-            input = new BufferedInputStream(new FileInputStream(CvsVfsUtil.getFileFor(file)));
             final CvsConflictsParser parser = CvsConflictsParser.createOn(input);
             final MergeData mergeData = new MergeData();
             mergeData.ORIGINAL = parser.getCenterVersion().getBytes();
@@ -67,9 +59,7 @@ public class CvsMergeProvider implements MergeProvider {
             return mergeData;
           }
           finally {
-            if (input != null) {
-              input.close();
-            }
+            input.close();
           }
         }
         catch (IOException e) {

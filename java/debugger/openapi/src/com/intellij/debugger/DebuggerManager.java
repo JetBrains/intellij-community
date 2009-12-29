@@ -25,30 +25,29 @@ import com.intellij.psi.PsiClass;
 import com.intellij.util.Function;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lex
- * Date: Apr 29, 2004
- * Time: 6:33:26 PM
- * To change this template use File | Settings | File Templates.
+ * @author lex
  */
-public abstract class DebuggerManager implements ProjectComponent, JDOMExternalizable{
+public abstract class DebuggerManager implements ProjectComponent, JDOMExternalizable {
   public static DebuggerManager getInstance(Project project) {
     return project.getComponent(DebuggerManager.class);
   }
 
   public abstract DebugProcess getDebugProcess(ProcessHandler processHandler);
 
-  public abstract void addDebugProcessListener   (ProcessHandler processHandler, DebugProcessListener listener);
+  public abstract void addDebugProcessListener(ProcessHandler processHandler, DebugProcessListener listener);
+
   public abstract void removeDebugProcessListener(ProcessHandler processHandler, DebugProcessListener listener);
 
   public abstract boolean isDebuggerManagerThread();
-  
+
   public abstract void addClassNameMapper(NameMapper mapper);
+
   public abstract void removeClassNameMapper(NameMapper mapper);
-  
-  public abstract String getVMClassQualifiedName(PsiClass aClass); 
-  
-  public abstract void registerPositionManagerFactory(Function<DebugProcess,PositionManager> factory);
+
+  public abstract String getVMClassQualifiedName(PsiClass aClass);
+
+  public abstract void registerPositionManagerFactory(Function<DebugProcess, PositionManager> factory);
+
   public abstract void unregisterPositionManagerFactory(Function<DebugProcess, PositionManager> factory);
-  
+
 }

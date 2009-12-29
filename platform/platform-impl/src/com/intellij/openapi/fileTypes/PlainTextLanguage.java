@@ -19,11 +19,7 @@ package com.intellij.openapi.fileTypes;
 import com.intellij.lang.Language;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Mar 15, 2006
- * Time: 7:42:03 PM
- * To change this template use File | Settings | File Templates.
+ * @author Maxim.Mossienko
  */
 public class PlainTextLanguage extends Language {
 

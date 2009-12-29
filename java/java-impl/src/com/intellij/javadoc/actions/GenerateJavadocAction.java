@@ -33,7 +33,7 @@ public final class GenerateJavadocAction extends AnAction{
 
   public void update(AnActionEvent event){
     final Presentation presentation = event.getPresentation();
-    presentation.setEnabled(event.getDataContext().getData(DataConstants.PROJECT) != null);
+    presentation.setEnabled(PlatformDataKeys.PROJECT.getData(event.getDataContext()) != null);
   }
 
   private static PsiDirectory getDirectoryFromContext(final DataContext dataContext) {

@@ -18,28 +18,26 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class CloseEditorAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
 
     final FileEditorManagerEx editorManager = ((FileEditorManagerEx)FileEditorManager.getInstance(project));
-    EditorWindow window = (EditorWindow)dataContext.getData(DataConstantsEx.EDITOR_WINDOW);
+    EditorWindow window = e.getData(EditorWindow.DATA_KEY);
     VirtualFile file;
     if (window == null) {
       window = editorManager.getCurrentWindow();
       file = window.getSelectedFile();
     }
     else {
-      file = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+      file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
     }
     if (file != null) {
       editorManager.closeFile(file, window);
@@ -48,8 +46,7 @@ public class CloseEditorAction extends AnAction implements DumbAware {
 
   public void update(final AnActionEvent event){
     final Presentation presentation = event.getPresentation();
-    final DataContext dataContext = event.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = event.getData(PlatformDataKeys.PROJECT);
     if (project == null) {
       presentation.setEnabled(false);
       return;
@@ -57,7 +54,7 @@ public class CloseEditorAction extends AnAction implements DumbAware {
     if (ActionPlaces.EDITOR_POPUP.equals(event.getPlace()) || ActionPlaces.EDITOR_TAB_POPUP.equals(event.getPlace())) {
       presentation.setText(IdeBundle.message("action.close"));
     }
-    EditorWindow window = (EditorWindow)dataContext.getData(DataConstantsEx.EDITOR_WINDOW);
+    EditorWindow window = event.getData(EditorWindow.DATA_KEY);
     if (window == null) {
       window = ((FileEditorManagerEx)FileEditorManager.getInstance(project)).getCurrentWindow();
     }

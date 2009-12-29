@@ -19,19 +19,15 @@ package com.intellij.util.ui;
 import com.intellij.openapi.util.Pair;
 
 import javax.swing.*;
-import java.util.Map;
-import java.util.HashMap;
 import java.awt.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 02.09.2005
- * Time: 19:53:02
- * To change this template use File | Settings | File Templates.
+ * @author yole
  */
 public class MappingListCellRenderer extends DefaultListCellRenderer {
-  private final Map<Object,String> myValueMap;
+  private final Map<Object, String> myValueMap;
 
   public MappingListCellRenderer(final Map<Object, String> valueMap) {
     myValueMap = valueMap;
@@ -39,7 +35,7 @@ public class MappingListCellRenderer extends DefaultListCellRenderer {
 
   public MappingListCellRenderer(final Pair<Object, String>... valuePairs) {
     myValueMap = new HashMap<Object, String>();
-    for(Pair<Object, String> valuePair: valuePairs) {
+    for (Pair<Object, String> valuePair : valuePairs) {
       myValueMap.put(valuePair.getFirst(), valuePair.getSecond());
     }
   }

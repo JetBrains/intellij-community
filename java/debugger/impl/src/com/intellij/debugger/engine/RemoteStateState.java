@@ -29,11 +29,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lex
- * Date: Apr 29, 2004
- * Time: 6:27:18 PM
- * To change this template use File | Settings | File Templates.
+ * @author lex
  */
 public class RemoteStateState implements RemoteState {
   private final Project    myProject;

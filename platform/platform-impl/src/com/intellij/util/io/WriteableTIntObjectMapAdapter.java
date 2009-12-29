@@ -21,11 +21,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Dmitry.Shtukenberg
- * Date: Apr 28, 2004
- * Time: 4:36:27 PM
- * To change this template use File | Settings | File Templates.
+ * @author Dmitry.Shtukenberg
  */
 public class WriteableTIntObjectMapAdapter <V> implements WriteableMap<V> {
   private final TIntObjectHashMap<V> hashmap;

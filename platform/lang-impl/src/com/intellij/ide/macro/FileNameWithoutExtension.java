@@ -17,8 +17,8 @@
 package com.intellij.ide.macro;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
 
 
@@ -32,8 +32,10 @@ public final class FileNameWithoutExtension extends FileNameMacro {
   }
 
   public String expand(DataContext dataContext) {
-    VirtualFile file = (VirtualFile)dataContext.getData(DataConstants.VIRTUAL_FILE);
-    if (file == null) return null;
+    VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+    if (file == null) {
+      return null;
+    }
     return file.getNameWithoutExtension();
   }
 }

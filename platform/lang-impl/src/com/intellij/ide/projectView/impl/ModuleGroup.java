@@ -19,9 +19,10 @@
  */
 package com.intellij.ide.projectView.impl;
 
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -33,6 +34,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class ModuleGroup {
+  public static final DataKey<ModuleGroup[]> ARRAY_DATA_KEY = DataKey.create("moduleGroup.array");
+
   private final String[] myGroupPath;
 
   public ModuleGroup(@NotNull String[] groupPath) {
@@ -77,8 +80,7 @@ public class ModuleGroup {
   }
 
   public Collection<ModuleGroup> childGroups(DataContext dataContext) {
-    return childGroups((ModifiableModuleModel)dataContext.getData(DataConstantsEx.MODIFIABLE_MODULE_MODEL),
-                       (Project)dataContext.getData(DataConstants.PROJECT));
+    return childGroups(LangDataKeys.MODIFIABLE_MODULE_MODEL.getData(dataContext), PlatformDataKeys.PROJECT.getData(dataContext));
   }
 
   public Collection<ModuleGroup> childGroups(ModifiableModuleModel model, Project project) {

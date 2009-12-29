@@ -16,22 +16,23 @@
 package com.intellij.openapi.diff.impl.mergeTool;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.impl.incrementalMerge.ChangeCounter;
 import com.intellij.openapi.diff.impl.incrementalMerge.ui.MergePanel2;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.command.CommandProcessor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -150,7 +151,8 @@ public class MergeRequestImpl extends MergeRequest {
       }
       builder.setOkOperation(new Runnable() {
         public void run() {
-          myActionButtonPresentation.run((DiffViewer)DataManager.getInstance().getDataContext(builder.getCenterPanel()).getData(DataConstants.DIFF_VIEWER));
+          final DataContext dataContext = DataManager.getInstance().getDataContext(builder.getCenterPanel());
+          myActionButtonPresentation.run(PlatformDataKeys.DIFF_VIEWER.getData(dataContext));
           if (myActionButtonPresentation.closeDialog()) {
             builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
           }
@@ -238,12 +240,11 @@ public class MergeRequestImpl extends MergeRequest {
       if (!getWholePanel().isDisplayable()) return;
       myWasInvoked = true;
       ChangeCounter.getOrCreate(myMergePanel.getMergeList()).removeListener(this);
-      int doApply = Messages.showDialog(getProject(),
-                                        DiffBundle.message("merge.all.changes.have.processed.save.and.finish.confirmation.text"),
-                                        DiffBundle.message("all.changes.processed.dialog.title"),
-                                        new String[]{DiffBundle.message("merge.save.and.finish.button"),
-                                          DiffBundle.message("merge.continue.button")}, 0,
-                                        Messages.getQuestionIcon());
+      int doApply = Messages
+        .showDialog(getProject(), DiffBundle.message("merge.all.changes.have.processed.save.and.finish.confirmation.text"),
+                    DiffBundle.message("all.changes.processed.dialog.title"),
+                    new String[]{DiffBundle.message("merge.save.and.finish.button"), DiffBundle.message("merge.continue.button")}, 0,
+                    Messages.getQuestionIcon());
       if (doApply != 0) return;
       myDialogWrapper.close(DialogWrapper.OK_EXIT_CODE);
     }

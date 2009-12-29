@@ -16,7 +16,6 @@
 package org.intellij.images.thumbnail.actionSystem;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import org.intellij.images.thumbnail.ThumbnailView;
 
@@ -44,8 +43,7 @@ public final class ThumbnailViewActionUtil {
     }
 
     public static ThumbnailView getThumbnailView(AnActionEvent e) {
-        DataContext dataContext = e.getDataContext();
-        return (ThumbnailView) dataContext.getData(ThumbnailView.class.getName());
+      return ThumbnailView.DATA_KEY.getData(e.getDataContext());
     }
 
     /**

@@ -26,7 +26,7 @@ public class MakeModuleAction extends CompileActionBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.actions.MakeModuleAction");
 
   protected void doAction(DataContext dataContext, Project project) {
-    Module[] modules = (Module[])dataContext.getData(DataConstants.MODULE_CONTEXT_ARRAY);
+    Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
     Module module;
     if (modules == null) {
       module = LangDataKeys.MODULE.getData(dataContext);
@@ -51,7 +51,7 @@ public class MakeModuleAction extends CompileActionBase {
     }
     final DataContext dataContext = event.getDataContext();
     final Module module = LangDataKeys.MODULE.getData(dataContext);
-    Module[] modules = (Module[])dataContext.getData(DataConstants.MODULE_CONTEXT_ARRAY);
+    Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
     final boolean isEnabled = module != null || modules != null;
     presentation.setEnabled(isEnabled);
     final String actionName = getTemplatePresentation().getTextWithMnemonic();

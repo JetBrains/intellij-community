@@ -196,42 +196,41 @@ public class GitCommittedChangeListProvider implements CachingCommittedChangesPr
   }
 
   public int getFormatVersion() {
-    return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    return 0;
   }
 
   public void writeChangeList(DataOutput stream, CommittedChangeList list) throws IOException {
-    //To change body of implemented methods use File | Settings | File Templates.
   }
 
   public CommittedChangeList readChangeList(RepositoryLocation location, DataInput stream) throws IOException {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 
   public boolean isMaxCountSupported() {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
+    return false;
   }
 
   public Collection<FilePath> getIncomingFiles(RepositoryLocation location) throws VcsException {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 
   public boolean refreshCacheByNumber() {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
+    return false;
   }
 
   @Nls
   public String getChangelistTitle() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 
   public boolean isChangeLocallyAvailable(FilePath filePath,
                                           @Nullable VcsRevisionNumber localRevision,
                                           VcsRevisionNumber changeRevision,
                                           CommittedChangeList changeList) {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
+    return false;
   }
 
   public boolean refreshIncomingWithCommitted() {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
+    return false;
   }
 }

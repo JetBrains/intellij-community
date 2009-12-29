@@ -46,8 +46,8 @@ public class DeleteFromFavoritesAction extends AnAction implements DumbAware {
       return;
     }
     FavoritesManager favoritesManager = FavoritesManager.getInstance(project);
-    FavoritesTreeNodeDescriptor[] roots = (FavoritesTreeNodeDescriptor[])dataContext.getData(FavoritesTreeViewPanel.CONTEXT_FAVORITES_ROOTS);
-    String listName = (String)dataContext.getData(FavoritesTreeViewPanel.FAVORITES_LIST_NAME);
+    FavoritesTreeNodeDescriptor[] roots = FavoritesTreeViewPanel.CONTEXT_FAVORITES_ROOTS_DATA_KEY.getData(dataContext);
+    String listName = FavoritesTreeViewPanel.FAVORITES_LIST_NAME_DATA_KEY.getData(dataContext);
     assert roots != null;
     assert listName != null;
     for (FavoritesTreeNodeDescriptor root : roots) {
@@ -64,8 +64,8 @@ public class DeleteFromFavoritesAction extends AnAction implements DumbAware {
       e.getPresentation().setEnabled(false);
       return;
     }
-    final String listName = (String)dataContext.getData(FavoritesTreeViewPanel.FAVORITES_LIST_NAME);
-    FavoritesTreeNodeDescriptor[] roots = (FavoritesTreeNodeDescriptor[])dataContext.getData(FavoritesTreeViewPanel.CONTEXT_FAVORITES_ROOTS);
+    final String listName = FavoritesTreeViewPanel.FAVORITES_LIST_NAME_DATA_KEY.getData(dataContext);
+    FavoritesTreeNodeDescriptor[] roots = FavoritesTreeViewPanel.CONTEXT_FAVORITES_ROOTS_DATA_KEY.getData(dataContext);
     e.getPresentation().setEnabled(listName != null && roots != null && roots.length != 0);
   }
 }

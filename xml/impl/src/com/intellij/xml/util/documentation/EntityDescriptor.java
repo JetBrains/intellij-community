@@ -16,11 +16,7 @@
 package com.intellij.xml.util.documentation;
 
 /**
- * Created by IntelliJ IDEA.
- * User: maxim
- * Date: 24.12.2004
- * Time: 23:53:29
- * To change this template use File | Settings | File Templates.
+ * @author maxim
  */
 class EntityDescriptor {
   private String description;

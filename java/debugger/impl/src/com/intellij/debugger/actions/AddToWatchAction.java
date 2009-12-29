@@ -66,7 +66,7 @@ public class AddToWatchAction extends DebuggerAction {
       }
     }
     else {
-      final Editor editor = (Editor)context.getData(PlatformDataKeys.EDITOR.getName());
+      final Editor editor = e.getData(PlatformDataKeys.EDITOR);
       enabled = DebuggerUtilsEx.getEditorText(editor) != null;
     }
     e.getPresentation().setEnabled(enabled);
@@ -99,7 +99,7 @@ public class AddToWatchAction extends DebuggerAction {
       addFromNodes(debuggerContext, watchPanel, selectedNodes);
     }
     else {
-      final Editor editor = (Editor)context.getData(PlatformDataKeys.EDITOR.getName());
+      final Editor editor = e.getData(PlatformDataKeys.EDITOR);
       if (editor != null) {
         final TextWithImports editorText = DebuggerUtilsEx.getEditorText(editor);
         if (editorText != null) {

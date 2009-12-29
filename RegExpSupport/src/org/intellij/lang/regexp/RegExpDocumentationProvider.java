@@ -26,11 +26,7 @@ import org.intellij.lang.regexp.psi.impl.RegExpPropertyImpl;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
- * User: vnikolaenko
- * Date: 17.09.2008
- * Time: 19:24:29
- * To change this template use File | Settings | File Templates.
+ * @author vnikolaenko
  */
 public class RegExpDocumentationProvider extends QuickDocumentationProvider {
   @Override

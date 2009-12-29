@@ -31,7 +31,7 @@ public class ExportToTextFileAction extends AnAction {
     export(project, exporterToTextFile);
   }
 
-  public void export(Project project, ExporterToTextFile exporter) {
+  public static void export(Project project, ExporterToTextFile exporter) {
     final ExportToFileUtil.ExportDialogBase dlg = new ExportToFileUtil.ExportDialogBase(project, exporter);
 
     dlg.show();
@@ -44,14 +44,13 @@ public class ExportToTextFileAction extends AnAction {
   }
 
   protected ExporterToTextFile getExporter(DataContext dataContext) {
-    ExporterToTextFile exporterToTextFile = (ExporterToTextFile)dataContext.getData(DataConstants.EXPORTER_TO_TEXT_FILE);
-    return exporterToTextFile;
+    return PlatformDataKeys.EXPORTER_TO_TEXT_FILE.getData(dataContext);
   }
 
   public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
     ExporterToTextFile exporterToTextFile = getExporter(dataContext);
-    presentation.setEnabled(dataContext.getData(DataConstants.PROJECT) != null && exporterToTextFile != null && exporterToTextFile.canExport());
+    presentation.setEnabled(PlatformDataKeys.PROJECT.getData(dataContext) != null && exporterToTextFile != null && exporterToTextFile.canExport());
   }
 }

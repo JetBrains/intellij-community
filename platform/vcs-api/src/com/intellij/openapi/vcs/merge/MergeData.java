@@ -19,11 +19,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lesya
- * Date: Jul 29, 2005
- * Time: 12:34:09 AM
- * To change this template use File | Settings | File Templates.
+ * @author lesya
  */
 public class MergeData {
   public byte[] ORIGINAL;

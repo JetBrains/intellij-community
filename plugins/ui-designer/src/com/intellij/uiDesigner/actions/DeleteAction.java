@@ -20,10 +20,10 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.CaptionSelection;
+import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 
 /**
  * @author yole
@@ -35,7 +35,7 @@ public final class DeleteAction extends AnAction {
 
   public void actionPerformed(final AnActionEvent e) {
     final GuiEditor editor = FormEditingUtil.getEditorFromContext(e.getDataContext());
-    CaptionSelection selection = e.getData(CaptionSelection.DATA_KEY);
+    CaptionSelection selection = CaptionSelection.DATA_KEY.getData(e.getDataContext());
     if (editor == null || selection == null || selection.getFocusedIndex() < 0) return;
     FormEditingUtil.deleteRowOrColumn(editor, selection.getContainer(), selection.getSelection(), selection.isRow());
     selection.getContainer().revalidate();
@@ -43,7 +43,7 @@ public final class DeleteAction extends AnAction {
 
   public void update(final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
-    CaptionSelection selection = e.getData(CaptionSelection.DATA_KEY);
+    CaptionSelection selection = CaptionSelection.DATA_KEY.getData(e.getDataContext());
     if(selection == null || selection.getContainer() == null){
       presentation.setVisible(false);
       return;

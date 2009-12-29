@@ -28,7 +28,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 
@@ -72,7 +72,7 @@ public class ThreadsPanel extends DebuggerTreePanel{
   }
 
   public Object getData(String dataId) {
-    if (DataConstantsEx.HELP_ID.equals(dataId)) {
+    if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return HELP_ID;
     }
     return super.getData(dataId);

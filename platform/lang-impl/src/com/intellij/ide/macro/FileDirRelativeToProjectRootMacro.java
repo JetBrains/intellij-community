@@ -17,7 +17,6 @@
 package com.intellij.ide.macro;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
@@ -36,16 +35,24 @@ public class FileDirRelativeToProjectRootMacro extends Macro {
 
   public String expand(final DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    if (project == null) return null;
-    VirtualFile file = (VirtualFile)dataContext.getData(DataConstants.VIRTUAL_FILE);
-    if (file == null) return null;
+    if (project == null) {
+      return null;
+    }
+    VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+    if (file == null) {
+      return null;
+    }
     if (!file.isDirectory()) {
       file = file.getParent();
-      if (file == null) return null;
+      if (file == null) {
+        return null;
+      }
     }
 
     final VirtualFile contentRoot = ProjectRootManager.getInstance(project).getFileIndex().getContentRootForFile(file);
-    if (contentRoot == null) return null;
+    if (contentRoot == null) {
+      return null;
+    }
     return FileUtil.getRelativePath(getIOFile(contentRoot), getIOFile(file));
   }
 }

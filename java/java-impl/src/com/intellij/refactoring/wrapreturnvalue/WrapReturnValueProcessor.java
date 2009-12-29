@@ -26,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -97,7 +98,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
   }
 
   private String calculateUnwrapMethodName() {
-    final PsiClass existingClass = JavaPsiFacade.getInstance(myProject).findClass(myQualifiedName);
+    final PsiClass existingClass = JavaPsiFacade.getInstance(myProject).findClass(myQualifiedName, GlobalSearchScope.allScope(myProject));
     if (existingClass != null) {
       if (TypeConversionUtil.isPrimitiveWrapper(myQualifiedName)) {
         final PsiPrimitiveType unboxedType =
@@ -156,7 +157,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
   @Override
   protected boolean preprocessUsages(final Ref<UsageInfo[]> refUsages) {
     MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
-    final PsiClass existingClass = JavaPsiFacade.getInstance(myProject).findClass(myQualifiedName);
+    final PsiClass existingClass = JavaPsiFacade.getInstance(myProject).findClass(myQualifiedName, GlobalSearchScope.allScope(myProject));
     if (myUseExistingClass) {
       if (existingClass == null) {
         conflicts.putValue(existingClass, RefactorJBundle.message("could.not.find.selected.wrapping.class"));

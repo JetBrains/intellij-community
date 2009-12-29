@@ -22,11 +22,11 @@ package com.intellij.ide.projectView.impl;
 import com.intellij.ide.projectView.actions.MoveModulesOutsideGroupAction;
 import com.intellij.ide.projectView.actions.MoveModulesToSubGroupAction;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -34,14 +34,17 @@ import java.util.*;
 public class MoveModuleToGroupTopLevel extends ActionGroup {
   public void update(AnActionEvent e){
     final DataContext dataContext = e.getDataContext();
-    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-    final Module[] modules = (Module[])dataContext.getData(DataConstants.MODULE_CONTEXT_ARRAY);
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
     boolean active = project != null && modules != null && modules.length != 0;
     e.getPresentation().setVisible(active);
   }
 
+  @NotNull
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
-    if (e == null) return AnAction.EMPTY_ARRAY;
+    if (e == null) {
+      return EMPTY_ARRAY;
+    }
     List<String> topLevelGroupNames = new ArrayList<String> (getTopLevelGroupNames(e.getDataContext()));
     Collections.sort ( topLevelGroupNames );
 
@@ -56,9 +59,9 @@ public class MoveModuleToGroupTopLevel extends ActionGroup {
   }
 
   private static Collection<String> getTopLevelGroupNames(final DataContext dataContext) {
-    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    final Project project =PlatformDataKeys.PROJECT.getData(dataContext);
 
-    final ModifiableModuleModel model = (ModifiableModuleModel)dataContext.getData(DataConstantsEx.MODIFIABLE_MODULE_MODEL);
+    final ModifiableModuleModel model = LangDataKeys.MODIFIABLE_MODULE_MODEL.getData(dataContext);
 
     Module[] allModules;
     if ( model != null ) {

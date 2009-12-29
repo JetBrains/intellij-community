@@ -20,11 +20,7 @@ import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import org.jetbrains.plugins.groovy.structure.elements.impl.GroovyMethodStructureViewElement;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Dmitry.Krasilschikov
- * Date: 06.01.2009
- * Time: 15:02:27
- * To change this template use File | Settings | File Templates.
+ * @author Dmitry.Krasilschikov
  */
 public class GroovyInheritFilter extends InheritedMembersFilter {
   @Override

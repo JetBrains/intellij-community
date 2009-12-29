@@ -28,11 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Jun 15, 2006
- * Time: 8:11:57 PM
- * To change this template use File | Settings | File Templates.
+ * @author Maxim.Mossienko
  */
 public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
   @NonNls private static final String MIN_OCCURS_ATTR_NAME = "minOccurs";

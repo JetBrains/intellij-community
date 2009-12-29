@@ -282,7 +282,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
   }
 
   public Object getData(String dataId) {
-    if (DataConstants.NAVIGATABLE.equals(dataId)) {
+    if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
       TreePath path = myTree.getSelectionPath();
       if (path == null) {
         return null;
@@ -306,14 +306,14 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
         return null;
       }
     }
-    else if (DataConstants.VIRTUAL_FILE.equals(dataId)) {
+    else if (PlatformDataKeys.VIRTUAL_FILE.is(dataId)) {
       final PsiFile file = getSelectedFile();
       return file != null ? file.getVirtualFile() : null;
     }
-    else if (DataConstants.PSI_ELEMENT.equals(dataId)) {
+    else if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
       return getSelectedElement();
     }
-    else if (DataConstants.VIRTUAL_FILE_ARRAY.equals(dataId)) {
+    else if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
       PsiFile file = getSelectedFile();
       if (file != null) {
         return new VirtualFile[]{file.getVirtualFile()};
@@ -322,7 +322,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
         return VirtualFile.EMPTY_ARRAY;
       }
     }
-    else if (DataConstants.HELP_ID.equals(dataId)) {
+    else if (PlatformDataKeys.HELP_ID.is(dataId)) {
       //noinspection HardCodedStringLiteral
       return "find.todoList";
     }

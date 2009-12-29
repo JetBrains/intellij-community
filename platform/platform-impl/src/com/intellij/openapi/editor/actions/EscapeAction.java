@@ -14,23 +14,18 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: May 15, 2002
- * Time: 8:25:25 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 
+/**
+ * @author max
+ */
 public class EscapeAction extends EditorAction {
   public EscapeAction() {
     super(new Handler());
@@ -43,7 +38,7 @@ public class EscapeAction extends EditorAction {
 
     public boolean isEnabled(Editor editor, DataContext dataContext) {
       SelectionModel selectionModel = editor.getSelectionModel();
-      return dataContext.getData(DataConstants.IS_MODAL_CONTEXT) != Boolean.TRUE &&
+      return PlatformDataKeys.IS_MODAL_CONTEXT.getData(dataContext) != Boolean.TRUE &&
              (selectionModel.hasSelection() || selectionModel.hasBlockSelection());
     }
   }

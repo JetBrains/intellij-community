@@ -16,6 +16,7 @@
 package org.intellij.images.thumbnail;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.intellij.images.ImagesBundle;
@@ -28,45 +29,47 @@ import org.jetbrains.annotations.NotNull;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public interface ThumbnailView extends Disposable, ImageComponentDecorator {
-    String TOOLWINDOW_ID = ImagesBundle.message("thumbnails.toolwindow.name");
+  DataKey<ThumbnailView> DATA_KEY = DataKey.create(ThumbnailView.class.getName());
 
-    @NotNull
-    Project getProject();
+  String TOOLWINDOW_ID = ImagesBundle.message("thumbnails.toolwindow.name");
 
-    /**
-     * Add virtual files to view
-     *
-     * @param root Root
-     */
-    void setRoot(@NotNull VirtualFile root);
+  @NotNull
+  Project getProject();
 
-    /**
-     * Return current root
-     *
-     * @return Current root
-     */
-    VirtualFile getRoot();
+  /**
+   * Add virtual files to view
+   *
+   * @param root Root
+   */
+  void setRoot(@NotNull VirtualFile root);
 
-    boolean isRecursive();
+  /**
+   * Return current root
+   *
+   * @return Current root
+   */
+  VirtualFile getRoot();
 
-    void setRecursive(boolean recursive);
+  boolean isRecursive();
 
-    void setSelected(@NotNull VirtualFile file, boolean selected);
+  void setRecursive(boolean recursive);
 
-    boolean isSelected(@NotNull VirtualFile file);
+  void setSelected(@NotNull VirtualFile file, boolean selected);
 
-    @NotNull
-    VirtualFile[] getSelection();
+  boolean isSelected(@NotNull VirtualFile file);
 
-    /**
-     * Scroll to selection. If ToolWindow is not active, then
-     * it will perform activatation before scroll.
-     */
-    void scrollToSelection();
+  @NotNull
+  VirtualFile[] getSelection();
 
-    void setVisible(boolean visible);
+  /**
+   * Scroll to selection. If ToolWindow is not active, then
+   * it will perform activatation before scroll.
+   */
+  void scrollToSelection();
 
-    boolean isVisible();
+  void setVisible(boolean visible);
 
-    void activate();
+  boolean isVisible();
+
+  void activate();
 }

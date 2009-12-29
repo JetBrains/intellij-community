@@ -19,7 +19,10 @@ package com.intellij.uiDesigner.snapShooter;
 import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.RunJavaConfiguration;
 import com.intellij.execution.application.ApplicationConfiguration;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.ModuleBasedConfiguration;
+import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -29,8 +32,8 @@ import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.pom.Navigatable;
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -116,12 +119,12 @@ public class SnapShooterConfigurationExtension extends RunConfigurationExtension
 
   @Override
   public <T extends ModuleBasedConfiguration & RunJavaConfiguration> SettingsEditor createEditor(T configuration) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 
   @Override
   public String getEditorTitle() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 
   @Override
@@ -131,7 +134,7 @@ public class SnapShooterConfigurationExtension extends RunConfigurationExtension
 
   @Override
   public <T extends ModuleBasedConfiguration & RunJavaConfiguration> Icon getIcon(T runConfiguration) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 
   @Override

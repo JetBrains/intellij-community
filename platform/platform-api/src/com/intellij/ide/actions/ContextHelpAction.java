@@ -18,8 +18,8 @@ package com.intellij.ide.actions;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.help.HelpManager;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,14 +47,7 @@ public class ContextHelpAction extends AnAction implements DumbAware {
 
   @Nullable
   protected String getHelpId(DataContext dataContext) {
-    if (myHelpID != null) {
-      return myHelpID;
-    }
-    Object helpIDObj = dataContext.getData(DataConstants.HELP_ID);
-    if (helpIDObj != null) {
-      return helpIDObj.toString();
-    }
-    return null;
+    return myHelpID != null ? myHelpID : PlatformDataKeys.HELP_ID.getData(dataContext);
   }
 
   public void update(AnActionEvent event){

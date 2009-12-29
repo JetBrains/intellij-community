@@ -16,9 +16,9 @@
 package com.intellij.cvsSupport2.actions;
 
 import com.intellij.cvsSupport2.CvsUtil;
-import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.actions.actionVisibility.CvsActionVisibility;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
+import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -27,8 +27,8 @@ import com.intellij.openapi.vcs.ui.Refreshable;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
 
 /**
  * author: lesya
@@ -44,8 +44,7 @@ public class RemoveLocallyDeletedFilesAction extends RemoveLocallyFileOrDirector
       public boolean isPerformedOn(CvsContext context) {
         Collection<File> fileNames = getFilesToRemove(context);
         if (fileNames.isEmpty()) return false;
-        for (Iterator<File> iterator = fileNames.iterator(); iterator.hasNext();) {
-          File file = iterator.next();
+        for (File file : fileNames) {
           if (file.isDirectory()) return false;
           if (file.isFile()) return false;
           if (!CvsUtil.fileIsUnderCvs(file)) return false;
@@ -82,9 +81,7 @@ public class RemoveLocallyDeletedFilesAction extends RemoveLocallyFileOrDirector
     File[] files = context.getSelectedIOFiles();
     ArrayList<File> result = new ArrayList<File>();
     if (files == null) return result;
-    for (int i = 0; i < files.length; i++) {
-      result.add(files[i]);
-    }
+    result.addAll(Arrays.asList(files));
     return result;
   }
 
@@ -93,7 +90,7 @@ public class RemoveLocallyDeletedFilesAction extends RemoveLocallyFileOrDirector
       e.getPresentation().setVisible(false);
       return;
     }
-    if (e.getDataContext().getData(Refreshable.PANEL) == null) {
+    if (Refreshable.PANEL_KEY.getData(e.getDataContext()) == null) {
       Presentation presentation = e.getPresentation();
       presentation.setEnabled(false);
       presentation.setVisible(false);

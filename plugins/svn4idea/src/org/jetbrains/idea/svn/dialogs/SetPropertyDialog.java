@@ -43,11 +43,7 @@ import java.util.Collection;
 import java.util.TreeSet;
 
 /**
- * Created by IntelliJ IDEA.
- * User: alex
- * Date: 04.07.2005
- * Time: 19:29:03
- * To change this template use File | Settings | File Templates.
+ * @author alex
  */
 public class SetPropertyDialog extends DialogWrapper {
   private final String myPropertyName;

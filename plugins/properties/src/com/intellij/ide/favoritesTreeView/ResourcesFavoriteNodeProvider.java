@@ -28,7 +28,6 @@ import com.intellij.lang.properties.projectView.ResourceBundleNode;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -46,16 +45,18 @@ public class ResourcesFavoriteNodeProvider extends FavoriteNodeProvider {
 
   public Collection<AbstractTreeNode> getFavoriteNodes(final DataContext context, final ViewSettings viewSettings) {
     final Project project = PlatformDataKeys.PROJECT.getData(context);
-    if (project == null) return null;
-    final Object object = context.getData(DataConstantsEx.RESOURCE_BUNDLE_ARRAY);
+    if (project == null) {
+      return null;
+    }
+    final ResourceBundle[] resourceBundles = ResourceBundle.ARRAY_DATA_KEY.getData(context);
     //on bundles nodes
-       if (object instanceof ResourceBundle[]) {
-         final Collection<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
-         for (ResourceBundle bundle : (ResourceBundle[])object) {
-           result.add(new ResourceBundleNode(project, bundle, viewSettings));
-         }
-         return result;
-       }
+    if (resourceBundles != null) {
+      final Collection<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+      for (ResourceBundle bundle : resourceBundles) {
+        result.add(new ResourceBundleNode(project, bundle, viewSettings));
+      }
+      return result;
+    }
     return null;
   }
 
@@ -100,7 +101,7 @@ public class ResourcesFavoriteNodeProvider extends FavoriteNodeProvider {
   }
 
   public String getElementUrl(final Object element) {
-    if (element instanceof ResourceBundle) {
+    if (element instanceof ResourceBundleImpl) {
       return ((ResourceBundleImpl)element).getUrl();
     }
     return null;

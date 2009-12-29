@@ -34,11 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lex
- * Date: Apr 12, 2004
- * Time: 2:46:02 PM
- * To change this template use File | Settings | File Templates.
+ * @author lex
  */
 public abstract class DebuggerEditorImpl extends CompletionEditor{
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.DebuggerEditorImpl");
@@ -86,7 +82,9 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
     if (document != null) {
       PsiDocumentManager.getInstance(project).commitDocument(document);
       PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
-      return createText(psiFile.getText(), ((JavaCodeFragment)psiFile).importsToString());
+      if (psiFile != null) {
+        return createText(psiFile.getText(), ((JavaCodeFragment)psiFile).importsToString());
+      }
     }
 
     return createText("");

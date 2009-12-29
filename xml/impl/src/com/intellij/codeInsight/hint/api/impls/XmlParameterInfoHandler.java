@@ -19,6 +19,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.MutableLookupElement;
+import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -29,7 +30,6 @@ import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.Function;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.lang.parameterInfo.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,11 +37,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Feb 1, 2006
- * Time: 9:18:45 PM
- * To change this template use File | Settings | File Templates.
+ * @author Maxim.Mossienko
  */
 public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlElementDescriptor> {
   private static final Comparator<XmlAttributeDescriptor> COMPARATOR = new Comparator<XmlAttributeDescriptor>() {
@@ -52,7 +48,7 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
 
   public Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
     if (!(item instanceof MutableLookupElement)) return null;
-    final Object lookupItem = ((MutableLookupElement)item).getObject();
+    final Object lookupItem = item.getObject();
     if (lookupItem instanceof XmlElementDescriptor) return new Object[]{lookupItem};
     return null;
   }

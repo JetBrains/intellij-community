@@ -15,29 +15,25 @@
  */
 package com.intellij.uiDesigner;
 
-import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.uiDesigner.shared.XYLayoutManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.Pair;
+import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Util;
-import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.radComponents.*;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.uiDesigner.shared.XYLayoutManager;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.awt.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 15.11.2005
- * Time: 14:13:06
- * To change this template use File | Settings | File Templates.
+ * @author yole
  */
 public class GridBuildUtil {
   private static final Logger LOG=Logger.getInstance("#com.intellij.uiDesigner.GridBuildUtil");
@@ -354,9 +350,8 @@ public class GridBuildUtil {
       constraints.setColumn(x[i]);
       constraints.setColSpan(colSpans[i]);
     }
-    final GridLayoutManager gridLayoutManager = new GridLayoutManager(pair.first.intValue(), pair.second.intValue());
 
-    return gridLayoutManager;
+    return new GridLayoutManager(pair.first.intValue(), pair.second.intValue());
   }
 
   /**

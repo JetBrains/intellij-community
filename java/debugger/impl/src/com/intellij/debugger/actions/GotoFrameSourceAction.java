@@ -24,11 +24,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lex
- * Date: Apr 14, 2004
- * Time: 10:36:59 AM
- * To change this template use File | Settings | File Templates.
+ * @author lex
  */
 public abstract class GotoFrameSourceAction extends DebuggerAction{
   public void actionPerformed(AnActionEvent e) {

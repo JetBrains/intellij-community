@@ -17,8 +17,8 @@ package com.intellij.openapi.diff.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.actions.MergeActionGroup;
@@ -129,7 +129,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     myPanel.requestScrollEditors();
   }
 
-  private DiffHighlighterFactory createHighlighter(FileType contentType, Project project) {
+  private static DiffHighlighterFactory createHighlighter(FileType contentType, Project project) {
     return new DiffHighlighterFactoryImpl(contentType, project);
   }
 
@@ -187,7 +187,6 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
   private void updateStatusBar() {
     int differentLineBlocks = getLineBlocks().getCount();
-    String text;
     myPanel.setStatusBarText(DiffBundle.message("diff.count.differences.status.text", differentLineBlocks));
   }
 
@@ -324,7 +323,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     myPanel.setBottomComponent(newBottomComponent);
   }
 
-  private void setWindowTitle(Window window, String title) {
+  private static void setWindowTitle(Window window, String title) {
     if (window instanceof JDialog) {
       ((JDialog)window).setTitle(title);
     }
@@ -333,7 +332,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
   @Nullable
   public static DiffPanelImpl fromDataContext(DataContext dataContext) {
-    DiffViewer viewer = (DiffViewer)dataContext.getData(DataConstants.DIFF_VIEWER);
+    DiffViewer viewer = PlatformDataKeys.DIFF_VIEWER.getData(dataContext);
     return viewer instanceof DiffPanelImpl ? (DiffPanelImpl)viewer : null;
   }
 
@@ -378,8 +377,13 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
     @Override
     public Object getData(String dataId) {
-      if (DataConstants.DIFF_VIEWER.equals(dataId)) return myDiffPanel;
-      if (FocusDiffSide.FOCUSED_DIFF_SIDE.equals(dataId)) return myDiffPanel.myCurrentSide == null ? null : myFocusDiffSide;
+      if (PlatformDataKeys.DIFF_VIEWER.is(dataId)) {
+        return myDiffPanel;
+      }
+      if (FocusDiffSide.DATA_KEY.is(dataId)) {
+        return myDiffPanel.myCurrentSide == null ? null : myFocusDiffSide;
+      }
+
       return super.getData(dataId);
     }
   }

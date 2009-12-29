@@ -22,14 +22,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 
 /**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: Dec 12, 2005
- * Time: 3:28:22 PM
- * To change this template use File | Settings | File Templates.
+ * @author ik
  */
 public interface JspFileViewProvider extends JspxFileViewProvider {
   @NotNull
   Language getTemplateDataLanguage();
+
   Set<String> getKnownTaglibPrefixes();
 }

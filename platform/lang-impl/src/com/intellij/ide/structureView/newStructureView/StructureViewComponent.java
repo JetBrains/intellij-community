@@ -657,7 +657,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   }
 
   public Object getData(String dataId) {
-    if (DataConstants.PSI_ELEMENT.equals(dataId)) {
+    if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
       TreePath path = getSelectedUniquePath();
       if (path == null) return null;
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
@@ -672,29 +672,29 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       if (!((PsiElement)element).isValid()) return null;
       return element;
     }
-    if (DataConstants.PSI_ELEMENT_ARRAY.equals(dataId)) {
+    if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       return convertToPsiElementsArray(getSelectedElements());
     }
-    if (DataConstants.FILE_EDITOR.equals(dataId)) {
+    if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
       return myFileEditor;
     }
-    if (DataConstants.CUT_PROVIDER.equals(dataId)) {
+    if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
       return myCopyPasteDelegator.getCutProvider();
     }
-    if (DataConstants.COPY_PROVIDER.equals(dataId)) {
+    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
       return myCopyPasteDelegator.getCopyProvider();
     }
-    if (DataConstants.PASTE_PROVIDER.equals(dataId)) {
+    if (PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
       return myCopyPasteDelegator.getPasteProvider();
     }
-    if (DataConstants.NAVIGATABLE.equals(dataId)) {
+    if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
       Object[] selectedElements = getSelectedTreeElements();
       if (selectedElements == null || selectedElements.length == 0) return null;
       if (selectedElements[0] instanceof Navigatable) {
         return selectedElements[0];
       }
     }
-    if (DataConstants.HELP_ID.equals(dataId)) {
+    if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return getHelpID();
     }
     return null;

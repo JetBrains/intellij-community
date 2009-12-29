@@ -24,11 +24,7 @@ import java.lang.ref.SoftReference;
 import java.util.ResourceBundle;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lesya
- * Date: Aug 31, 2005
- * Time: 3:43:13 PM
- * To change this template use File | Settings | File Templates.
+ * @author lesya
  */
 public class XmlBundle {
   private static Reference<ResourceBundle> ourBundle;
@@ -38,7 +34,7 @@ public class XmlBundle {
   private XmlBundle() {
   }
 
-  public static String message(@NonNls @PropertyKey(resourceBundle = PATH_TO_BUNDLE)String key, Object... params) {
+  public static String message(@NonNls @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, Object... params) {
     return CommonBundle.message(getBundle(), key, params);
   }
 

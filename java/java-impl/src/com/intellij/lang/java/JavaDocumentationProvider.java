@@ -61,11 +61,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Apr 11, 2006
- * Time: 7:45:12 PM
- * To change this template use File | Settings | File Templates.
+ * @author Maxim.Mossienko
  */
 public class JavaDocumentationProvider implements CodeDocumentationProvider {
   private static final String LINE_SEPARATOR = "\n";
@@ -608,7 +604,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider {
     return CodeInsightBundle.message("javadoc.candidates.not.found", text);
   }
 
-  private void createElementLink(@NonNls final StringBuffer sb, final PsiElement element, final String str) {
+  private static void createElementLink(@NonNls final StringBuffer sb, final PsiElement element, final String str) {
     sb.append("&nbsp;&nbsp;<a href=\"psi_element://");
     sb.append(JavaDocUtil.getReferenceText(element.getProject(), element));
     sb.append("\">");
@@ -649,7 +645,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider {
         JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>("Choose javadoc root", ArrayUtil.toStringArray(set)) {
           public PopupStep onChosen(final String selectedValue, final boolean finalChoice) {
             BrowserUtil.launchBrowser(selectedValue);
-            return PopupStep.FINAL_CHOICE;
+            return FINAL_CHOICE;
           }
         }).showInBestPositionFor(DataManager.getInstance().getDataContext());
       }

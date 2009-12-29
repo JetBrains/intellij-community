@@ -29,7 +29,6 @@ import com.intellij.codeInspection.ui.InspectionTree;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
@@ -54,7 +53,7 @@ public class QuickFixAction extends AnAction {
   protected InspectionTool myTool;
 
   public static InspectionResultsView getInvoker(AnActionEvent e) {
-    return (InspectionResultsView)e.getDataContext().getData(DataConstantsEx.INSPECTION_VIEW);
+    return InspectionResultsView.DATA_KEY.getData(e.getDataContext());
   }
 
   protected QuickFixAction(String text, InspectionTool tool) {

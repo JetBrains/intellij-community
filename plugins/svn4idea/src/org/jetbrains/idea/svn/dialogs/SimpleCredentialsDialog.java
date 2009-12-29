@@ -15,24 +15,19 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.help.HelpManager;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.idea.svn.SvnBundle;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
 
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.idea.svn.SvnBundle;
-
 /**
- * Created by IntelliJ IDEA.
- * User: alex
- * Date: 25.06.2005
- * Time: 16:47:22
- * To change this template use File | Settings | File Templates.
+ * @author alex
  */
 public class SimpleCredentialsDialog extends DialogWrapper implements DocumentListener {
   private boolean myAllowSave;

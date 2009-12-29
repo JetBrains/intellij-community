@@ -88,10 +88,8 @@ public class SnapShotTreeModel implements TreeModel {
   }
 
   public void addTreeModelListener(TreeModelListener l) {
-    //To change body of implemented methods use File | Settings | File Templates.
   }
 
   public void removeTreeModelListener(TreeModelListener l) {
-    //To change body of implemented methods use File | Settings | File Templates.
   }
 }

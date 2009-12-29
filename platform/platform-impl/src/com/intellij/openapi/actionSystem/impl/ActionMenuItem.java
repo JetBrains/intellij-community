@@ -20,7 +20,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Disposer;
@@ -207,7 +206,7 @@ public class ActionMenuItem extends JMenuItem {
       if (ActionUtil.lastUpdateAndCheckDumb(myAction, event, false)) {
         ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
         actionManager.fireBeforeActionPerformed(myAction, myContext, event);
-        Component component = ((Component)event.getDataContext().getData(DataConstantsEx.CONTEXT_COMPONENT));
+        Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(event.getDataContext());
         if (component != null && !isInTree(component)) {
           return;
         }

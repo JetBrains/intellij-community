@@ -24,11 +24,7 @@ import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.tree.IElementType;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Dec 6, 2004
- * Time: 8:34:21 PM
- * To change this template use File | Settings | File Templates.
+ * @author Maxim.Mossienko
  */
 class CustomFileTypeQuoteHandler implements QuoteHandler {
   public boolean isClosingQuote(HighlighterIterator iterator, int offset) {

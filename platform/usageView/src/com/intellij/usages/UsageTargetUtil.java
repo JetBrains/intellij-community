@@ -15,8 +15,9 @@
  */
 package com.intellij.usages;
 
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -32,18 +33,18 @@ public class UsageTargetUtil {
   public void foo() {}
 
   public static UsageTarget[] findUsageTargets(DataProvider dataProvider) {
-    Editor editor = (Editor)dataProvider.getData(DataConstants.EDITOR);
-    PsiFile file = (PsiFile)dataProvider.getData(DataConstants.PSI_FILE);
+    Editor editor = PlatformDataKeys.EDITOR.getData(dataProvider);
+    PsiFile file = LangDataKeys.PSI_FILE.getData(dataProvider);
 
     List<UsageTarget> result = new ArrayList<UsageTarget>();
     if (file != null && editor != null) {
       UsageTarget[] targets = findUsageTargets(editor, file);
-      if (targets != null ) Collections.addAll(result, targets);
+      if (targets != null) Collections.addAll(result, targets);
     }
-    PsiElement psiElement = (PsiElement)dataProvider.getData(DataConstants.PSI_ELEMENT);
+    PsiElement psiElement = LangDataKeys.PSI_ELEMENT.getData(dataProvider);
     if (psiElement != null) {
       UsageTarget[] targets = findUsageTargets(psiElement);
-      if (targets != null )Collections.addAll(result, targets);
+      if (targets != null)Collections.addAll(result, targets);
     }
 
     return result.isEmpty() ? null : result.toArray(new UsageTarget[result.size()]);

@@ -37,10 +37,16 @@ public class OptimizeImportsAction extends AnAction {
 
   public static void actionPerformedImpl(final DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    if (project == null) {
+      return;
+    }
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     final Editor editor = BaseCodeInsightAction.getInjectedEditor(project, PlatformDataKeys.EDITOR.getData(dataContext));
 
-    final VirtualFile[] files = (VirtualFile[])dataContext.getData(DataConstants.VIRTUAL_FILE_ARRAY);
+    final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    if (files == null) {
+      return;
+    }
 
     PsiFile file = null;
     PsiDirectory dir;
@@ -59,7 +65,7 @@ public class OptimizeImportsAction extends AnAction {
     }
     else{
       Project projectContext = PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext);
-      Module moduleContext = (Module)dataContext.getData(DataConstants.MODULE_CONTEXT);
+      Module moduleContext = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
 
       if (projectContext != null || moduleContext != null) {
         final String text;
@@ -131,7 +137,7 @@ public class OptimizeImportsAction extends AnAction {
       return;
     }
 
-    final VirtualFile[] files = (VirtualFile[])dataContext.getData(DataConstants.VIRTUAL_FILE_ARRAY);
+    final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
 
     final Editor editor = BaseCodeInsightAction.getInjectedEditor(project, PlatformDataKeys.EDITOR.getData(dataContext), false);
     if (editor != null){
@@ -161,8 +167,8 @@ public class OptimizeImportsAction extends AnAction {
     else if (files != null && files.length == 1) {
       // skip. Both directories and single files are supported.
     }
-    else if (dataContext.getData(DataConstants.MODULE_CONTEXT) == null &&
-             dataContext.getData(DataConstants.PROJECT_CONTEXT) == null) {
+    else if (LangDataKeys.MODULE_CONTEXT.getData(dataContext) == null &&
+             PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext) == null) {
       PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
       if (element == null){
         presentation.setEnabled(false);

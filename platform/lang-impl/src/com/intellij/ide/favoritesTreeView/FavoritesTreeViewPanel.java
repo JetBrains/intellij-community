@@ -35,7 +35,6 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -74,8 +73,12 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
   private FavoritesViewTreeBuilder myBuilder;
   private final CopyPasteDelegator myCopyPasteDelegator;
   private MouseListener myTreePopupHandler;
-  @NonNls public static final String CONTEXT_FAVORITES_ROOTS = "FavoritesRoot";
-  @NonNls public static final String FAVORITES_LIST_NAME = "FavoritesListName";
+
+  public static final DataKey<FavoritesTreeNodeDescriptor[]> CONTEXT_FAVORITES_ROOTS_DATA_KEY = DataKey.create("FavoritesRoot");
+  @Deprecated public static final String CONTEXT_FAVORITES_ROOTS = CONTEXT_FAVORITES_ROOTS_DATA_KEY.getName();
+
+  public static final DataKey<String> FAVORITES_LIST_NAME_DATA_KEY = DataKey.create("FavoritesListName");
+  @Deprecated public static final String FAVORITES_LIST_NAME = FAVORITES_LIST_NAME_DATA_KEY.getName();
 
   protected Project myProject;
   private final String myHelpId;
@@ -125,7 +128,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
             final FavoritesTreeNodeDescriptor favoritesTreeNodeDescriptor = (FavoritesTreeNodeDescriptor)userObject;
             AbstractTreeNode treeNode = favoritesTreeNodeDescriptor.getElement();
             final ItemPresentation presentation = treeNode.getPresentation();
-            String locationString = presentation != null ? presentation.getLocationString() : null;
+            String locationString = presentation.getLocationString();
             if (locationString != null && locationString.length() > 0) {
               append(" (" + locationString + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
             }
@@ -209,38 +212,38 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
   }
 
   public Object getData(String dataId) {
-    if (DataConstants.PROJECT.equals(dataId)) {
+    if (PlatformDataKeys.PROJECT.is(dataId)) {
       return myProject;
     }
-    if (DataConstants.NAVIGATABLE.equals(dataId)) {
+    if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
       final FavoritesTreeNodeDescriptor[] selectedNodeDescriptors = getSelectedNodeDescriptors();
       return selectedNodeDescriptors.length == 1 ? selectedNodeDescriptors[0].getElement() : null;
     }
-    if (DataConstants.NAVIGATABLE_ARRAY.equals(dataId)) {
+    if (PlatformDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       final List<Navigatable> selectedElements = getSelectedElements(Navigatable.class);
       return selectedElements.toArray(new Navigatable[selectedElements.size()]);
     }
 
-    if (DataConstants.CUT_PROVIDER.equals(dataId)) {
+    if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
       return myCopyPasteDelegator.getCutProvider();
     }
-    if (DataConstants.COPY_PROVIDER.equals(dataId)) {
+    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
       return myCopyPasteDelegator.getCopyProvider();
     }
-    if (DataConstants.PASTE_PROVIDER.equals(dataId)) {
+    if (PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
       return myCopyPasteDelegator.getPasteProvider();
     }
-    if (DataConstants.HELP_ID.equals(dataId)) {
+    if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return myHelpId;
     }
-    if (DataConstants.PSI_ELEMENT.equals(dataId)) {
+    if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
       PsiElement[] elements = getSelectedPsiElements();
       if (elements.length != 1) {
         return null;
       }
       return elements[0] != null && elements[0].isValid() ? elements[0] : null;
     }
-    if (DataConstants.PSI_ELEMENT_ARRAY.equals(dataId)) {
+    if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       final PsiElement[] elements = getSelectedPsiElements();
       ArrayList<PsiElement> result = new ArrayList<PsiElement>();
       for (PsiElement element : elements) {
@@ -251,42 +254,42 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
       return result.isEmpty() ? null : result.toArray(new PsiElement[result.size()]);
     }
 
-    if (DataConstants.IDE_VIEW.equals(dataId)) {
+    if (LangDataKeys.IDE_VIEW.is(dataId)) {
       return myIdeView;
     }
 
-    if (DataConstantsEx.TARGET_PSI_ELEMENT.equals(dataId)) {
+    if (LangDataKeys.TARGET_PSI_ELEMENT.is(dataId)) {
       return null;
     }
 
-    if (DataConstants.MODULE_CONTEXT.equals(dataId)) {
+    if (LangDataKeys.MODULE_CONTEXT.is(dataId)) {
       Module[] selected = getSelectedModules();
       return selected != null && selected.length == 1 ? selected[0] : null;
     }
-    if (DataConstants.MODULE_CONTEXT_ARRAY.equals(dataId)) {
+    if (LangDataKeys.MODULE_CONTEXT_ARRAY.is(dataId)) {
       return getSelectedModules();
     }
 
-    if (DataConstants.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
+    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       final Object[] elements = getSelectedNodeElements();
       return elements != null && elements.length >= 1 && elements[0] instanceof Module
              ? myDeleteModuleProvider
              : myDeletePSIElementProvider;
 
     }
-    if (DataConstantsEx.MODULE_GROUP_ARRAY.equals(dataId)) {
+    if (ModuleGroup.ARRAY_DATA_KEY.is(dataId)) {
       final List<ModuleGroup> selectedElements = getSelectedElements(ModuleGroup.class);
       return selectedElements.isEmpty() ? null : selectedElements.toArray(new ModuleGroup[selectedElements.size()]);
     }
-    if (DataConstantsEx.LIBRARY_GROUP_ARRAY.equals(dataId)) {
+    if (LibraryGroupElement.ARRAY_DATA_KEY.is(dataId)) {
       final List<LibraryGroupElement> selectedElements = getSelectedElements(LibraryGroupElement.class);
       return selectedElements.isEmpty() ? null : selectedElements.toArray(new LibraryGroupElement[selectedElements.size()]);
     }
-    if (DataConstantsEx.NAMED_LIBRARY_ARRAY.equals(dataId)) {
+    if (NamedLibraryElement.ARRAY_DATA_KEY.is(dataId)) {
       final List<NamedLibraryElement> selectedElements = getSelectedElements(NamedLibraryElement.class);
       return selectedElements.isEmpty() ? null : selectedElements.toArray(new NamedLibraryElement[selectedElements.size()]);
     }
-    if (CONTEXT_FAVORITES_ROOTS.equals(dataId)) {
+    if (CONTEXT_FAVORITES_ROOTS_DATA_KEY.is(dataId)) {
       List<FavoritesTreeNodeDescriptor> result = new ArrayList<FavoritesTreeNodeDescriptor>();
       FavoritesTreeNodeDescriptor[] selectedNodeDescriptors = getSelectedNodeDescriptors();
       for (FavoritesTreeNodeDescriptor selectedNodeDescriptor : selectedNodeDescriptors) {
@@ -297,7 +300,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
       }
       return result.toArray(new FavoritesTreeNodeDescriptor[result.size()]);
     }
-    if (FAVORITES_LIST_NAME.equals(dataId)) {
+    if (FAVORITES_LIST_NAME_DATA_KEY.is(dataId)) {
       return myListName;
     }
     FavoritesTreeNodeDescriptor[] descriptors = getSelectedNodeDescriptors();

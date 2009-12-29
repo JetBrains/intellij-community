@@ -35,11 +35,7 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jan 26, 2005
- * Time: 12:40:22 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class JavaParserDefinition implements ParserDefinition {
   private final TokenSet myStringLiteralElementSet = TokenSet.create(JavaElementType.LITERAL_EXPRESSION);

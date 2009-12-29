@@ -26,7 +26,6 @@ import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.SelectionModel;
@@ -88,7 +87,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
 
   @Nullable
   public Object getData(@NonNls final String dataId) {
-    if (DataConstants.EDITOR_EVEN_IF_INACTIVE.equals(dataId)) {
+    if (PlatformDataKeys.EDITOR_EVEN_IF_INACTIVE.is(dataId)) {
       return myEditor;
     }
     return null;
@@ -286,19 +285,11 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     });
 
     new VariantsCompletionAction(); // It registers a shortcut set automatically on construction
-
-    myDocumentListener = new com.intellij.openapi.editor.event.DocumentAdapter() {
-      public void documentChanged(final com.intellij.openapi.editor.event.DocumentEvent e) {
-        updateResults(false);
-      }
-    };
-
-    myEditor.getDocument().addDocumentListener(myDocumentListener);
   }
 
   public void setInitialText(final String initialText) {
     final String text = initialText != null ? initialText : "";
-    if (text.indexOf("\n") >= 0) {
+    if (text.contains("\n")) {
       setRegexp(true);
       setTextInField(StringUtil.escapeToRegexp(text));
     }
@@ -373,6 +364,19 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
 
     myEditor.setHeaderComponent(null);
     addCurrentTextToRecents();
+  }
+
+  @Override
+  public void addNotify() {
+    super.addNotify();
+
+    myDocumentListener = new com.intellij.openapi.editor.event.DocumentAdapter() {
+      public void documentChanged(final com.intellij.openapi.editor.event.DocumentEvent e) {
+        updateResults(false);
+      }
+    };
+
+    myEditor.getDocument().addDocumentListener(myDocumentListener);
   }
 
   public void removeNotify() {
@@ -454,7 +458,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
         if (count > 0) {
           setRegularBackground();
           if (count > 1) {
-            myMatchInfoLabel.setText("" + count + " matches");
+            myMatchInfoLabel.setText(count + " matches");
           }
           else {
             myMatchInfoLabel.setText("1 match");
@@ -530,8 +534,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
   }
 
   private boolean findAndSelectFirstUsage(final FindManager findManager, final FindModel model, final int offset, VirtualFile file) {
-    final FindResult firstResult;
-    firstResult = findManager.findString(myEditor.getDocument().getCharsSequence(), offset, model, file);
+    final FindResult firstResult = findManager.findString(myEditor.getDocument().getCharsSequence(), offset, model, file);
     if (firstResult.isStringFound()) {
       myEditor.getSelectionModel().setSelection(firstResult.getStartOffset(), firstResult.getEndOffset());
 

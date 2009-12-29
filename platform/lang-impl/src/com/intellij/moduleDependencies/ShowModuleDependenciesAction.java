@@ -45,12 +45,12 @@ public class ShowModuleDependenciesAction extends AnAction{
     }
     ModulesDependenciesPanel panel;
     AnalysisScope scope = new AnalysisScope(project);
-    final Module[] modules = (Module[])dataContext.getData(DataConstants.MODULE_CONTEXT_ARRAY);
+    final Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
     if (modules != null){
       panel = new ModulesDependenciesPanel(project, modules);
       scope = new AnalysisScope(modules);
     } else {
-      final PsiElement element = (PsiElement)dataContext.getData(DataConstants.PSI_FILE);
+      final PsiElement element = LangDataKeys.PSI_FILE.getData(dataContext);
       final Module module = element != null ? ModuleUtil.findModuleForPsiElement(element) : null;
       if (module != null && ModuleManager.getInstance(project).getModules().length > 1){
         MyModuleOrProjectScope dlg = new MyModuleOrProjectScope(module.getName());

@@ -72,4 +72,10 @@ public class DataKey<T> {
     //noinspection unchecked
     return (T) dataContext.getData(myName);
   }
+
+  @Nullable
+  public T getData(DataProvider dataProvider) {
+    //noinspection unchecked
+    return (T) dataProvider.getData(myName);
+  }
 }

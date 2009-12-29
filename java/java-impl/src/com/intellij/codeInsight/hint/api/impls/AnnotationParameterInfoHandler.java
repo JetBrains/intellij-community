@@ -15,20 +15,16 @@
  */
 package com.intellij.codeInsight.hint.api.impls;
 
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.psi.*;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.codeInsight.lookup.LookupElement;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Feb 1, 2006
- * Time: 3:16:16 PM
- * To change this template use File | Settings | File Templates.
+ * @author Maxim.Mossienko
  */
 public class AnnotationParameterInfoHandler implements ParameterInfoHandler<PsiAnnotationParameterList,PsiAnnotationMethod> {
   public @Nullable Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context) {

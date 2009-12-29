@@ -21,12 +21,8 @@ import com.intellij.psi.PsiElement;
 import java.awt.*;
 
 /**
-* Created by IntelliJ IDEA.
-* User: Maxim.Mossienko
-* Date: 01.10.2009
-* Time: 21:43:55
-* To change this template use File | Settings | File Templates.
-*/
+ * @author Maxim.Mossienko
+ */
 public class MockParameterInfoUIContext<T extends PsiElement> implements ParameterInfoUIContext {
   private boolean enabled;
   private String text;

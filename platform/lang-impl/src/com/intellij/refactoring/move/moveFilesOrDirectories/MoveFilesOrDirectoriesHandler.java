@@ -17,7 +17,7 @@
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -70,7 +70,7 @@ public class MoveFilesOrDirectoriesHandler extends MoveHandlerDelegate {
                            final Editor editor) {
     if ((element instanceof PsiFile && ((PsiFile)element).getVirtualFile() != null)
         || element instanceof PsiDirectory) {
-      doMove(project, new PsiElement[]{element}, (PsiElement)dataContext.getData(DataConstantsEx.TARGET_PSI_ELEMENT), null);
+      doMove(project, new PsiElement[]{element}, LangDataKeys.TARGET_PSI_ELEMENT.getData(dataContext), null);
       return true;
     }
     if (element instanceof PsiPlainText) {

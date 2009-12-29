@@ -19,7 +19,7 @@ package com.intellij.ide.projectView.impl;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.projectView.impl.nodes.DropTargetNode;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -311,7 +311,7 @@ class MoveDropTargetListener implements DropTargetListener {
       getActionHandler(dataContext).invoke(myProject, sourceElements, new DataContext() {
         @Nullable
         public Object getData(@NonNls String dataId) {
-          if (dataId.equals(DataConstantsEx.TARGET_PSI_ELEMENT)) {
+          if (LangDataKeys.TARGET_PSI_ELEMENT.is(dataId)) {
             return targetElement;
           }
           else {
@@ -322,7 +322,7 @@ class MoveDropTargetListener implements DropTargetListener {
     }
 
     private RefactoringActionHandler getActionHandler(final DataContext dataContext) {
-      final MoveAction.MoveProvider moveProvider = (MoveAction.MoveProvider)dataContext.getData(MoveAction.MOVE_PROVIDER);
+      final MoveAction.MoveProvider moveProvider = MoveAction.MoveProvider.DATA_KEY.getData(dataContext);
       if (moveProvider != null) {
         return moveProvider.getHandler(dataContext);
       }

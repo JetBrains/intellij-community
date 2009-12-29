@@ -15,10 +15,7 @@
  */
 package com.intellij.openapi.diff.impl;
 
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.diff.impl.util.FocusDiffSide;
-import com.intellij.openapi.editor.Editor;
 
 import java.util.HashMap;
 import java.util.Map;

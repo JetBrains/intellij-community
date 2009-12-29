@@ -109,11 +109,13 @@ public abstract class EditorAction extends AnAction implements DumbAware {
   }
 
   private static DataContext getProjectAwareDataContext(final Editor editor, final DataContext original) {
-    if (original.getData(DataConstants.PROJECT) == editor.getProject()) return original;
+    if (PlatformDataKeys.PROJECT.getData(original) == editor.getProject()) {
+      return original;
+    }
 
     return new DataContext() {
       public Object getData(String dataId) {
-        if (DataConstants.PROJECT.equals(dataId)) {
+        if (PlatformDataKeys.PROJECT.is(dataId)) {
           return editor.getProject();
         }
         return original.getData(dataId);

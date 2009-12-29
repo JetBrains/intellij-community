@@ -21,9 +21,9 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 
@@ -37,8 +37,8 @@ public class HighlightUsagesAction extends AnAction implements DumbAware {
     final Presentation presentation = event.getPresentation();
     final DataContext dataContext = event.getDataContext();
 
-    presentation.setEnabled(dataContext.getData(DataConstants.PROJECT) != null &&
-                            dataContext.getData(DataConstants.EDITOR) != null);
+    presentation.setEnabled(PlatformDataKeys.PROJECT.getData(dataContext) != null &&
+                            PlatformDataKeys.EDITOR.getData(dataContext) != null);
   }
 
   public void actionPerformed(AnActionEvent e) {

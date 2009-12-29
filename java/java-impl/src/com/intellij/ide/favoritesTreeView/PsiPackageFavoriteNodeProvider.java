@@ -30,7 +30,6 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -89,9 +88,9 @@ public class PsiPackageFavoriteNodeProvider extends FavoriteNodeProvider {
           }
         }
       } else {
-        final Object data = context.getData(DataConstantsEx.MODULE_GROUP_ARRAY);
-        if (data instanceof ModuleGroup[]) {
-          for (ModuleGroup moduleGroup : ((ModuleGroup[])data)) {
+        final ModuleGroup[] data = ModuleGroup.ARRAY_DATA_KEY.getData(context);
+        if (data != null) {
+          for (ModuleGroup moduleGroup : data) {
             if (currentViewId.equals(ProjectViewPane.ID)) {
               result.add(new ProjectViewModuleGroupNode(project, moduleGroup, viewSettings));
             }

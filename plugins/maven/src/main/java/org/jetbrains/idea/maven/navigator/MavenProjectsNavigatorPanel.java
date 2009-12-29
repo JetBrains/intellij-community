@@ -32,8 +32,8 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
-import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.execution.MavenGoalLocation;
+import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
 
 import javax.swing.*;
@@ -99,18 +99,18 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
 
   @Nullable
   public Object getData(@NonNls String dataId) {
-    if (dataId.equals(PlatformDataKeys.HELP_ID.getName())) return "reference.toolWindows.mavenProjects";
+    if (PlatformDataKeys.HELP_ID.is(dataId)) return "reference.toolWindows.mavenProjects";
 
-    if (dataId.equals(PlatformDataKeys.PROJECT.getName())) return myProject;
+    if (PlatformDataKeys.PROJECT.is(dataId)) return myProject;
 
-    if (dataId.equals(PlatformDataKeys.VIRTUAL_FILE.getName())) return extractVirtualFile();
-    if (dataId.equals(PlatformDataKeys.VIRTUAL_FILE_ARRAY.getName())) return extractVirtualFiles();
+    if (PlatformDataKeys.VIRTUAL_FILE.is(dataId)) return extractVirtualFile();
+    if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) return extractVirtualFiles();
 
-    if (dataId.equals(Location.LOCATION)) return extractLocation();
-    if (dataId.equals(PlatformDataKeys.NAVIGATABLE_ARRAY.getName())) return extractNavigatables();
+    if (Location.DATA_KEY.is(dataId)) return extractLocation();
+    if (PlatformDataKeys.NAVIGATABLE_ARRAY.is(dataId)) return extractNavigatables();
 
-    if (dataId.equals(MavenDataKeys.MAVEN_GOALS.getName())) return extractGoals();
-    if (dataId.equals(MavenDataKeys.MAVEN_PROFILES.getName())) return extractProfiles();
+    if (MavenDataKeys.MAVEN_GOALS.is(dataId)) return extractGoals();
+    if (MavenDataKeys.MAVEN_PROFILES.is(dataId)) return extractProfiles();
 
     return null;
   }

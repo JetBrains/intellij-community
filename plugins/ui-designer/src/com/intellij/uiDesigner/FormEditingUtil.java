@@ -544,7 +544,7 @@ public final class FormEditingUtil {
       return ((UIFormEditor)editor).getEditor();
     }
     else {
-      return (GuiEditor) context.getData(GuiEditor.class.getName());
+      return GuiEditor.DATA_KEY.getData(context);
     }
   }
 
