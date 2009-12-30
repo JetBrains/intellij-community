@@ -93,19 +93,19 @@ public class IdeaSpecificSettings {
     for (Object o : root.getChildren("lib")) {
       Element libElement = (Element)o;
       final String libName = libElement.getAttributeValue("name");
-      final Library libraryByName = model.getModuleLibraryTable().getLibraryByName(libName);
+      Library libraryByName = model.getModuleLibraryTable().getLibraryByName(libName);
       if (libraryByName != null) {
-        final LibraryOrderEntry libraryOrderEntry = model.findLibraryOrderEntry(libraryByName);
-        if (libraryOrderEntry != null) {
-          final String scopeAttribute = libElement.getAttributeValue("scope");
-          libraryOrderEntry.setScope(scopeAttribute == null ? DependencyScope.COMPILE : DependencyScope.valueOf(scopeAttribute));
-        }
+        appendLibraryScope(model, libElement, libraryByName);
         final Library.ModifiableModel modifiableModel = libraryByName.getModifiableModel();
         replaceCollapsedByEclipseSourceRoots(libElement, modifiableModel);
         replaceModuleRelatedRoots(model.getProject(), modifiableModel, libElement, OrderRootType.SOURCES, RELATIVE_MODULE_SRC);
         replaceModuleRelatedRoots(model.getProject(), modifiableModel, libElement, OrderRootType.CLASSES, RELATIVE_MODULE_CLS);
         modifiableModel.commit();
       } else { //try to replace everywhere
+        libraryByName = EclipseClasspathReader.findLibraryByName(model.getProject(), libName);
+        if (libraryByName != null) {
+          appendLibraryScope(model, libElement, libraryByName);
+        }
         final Library[] libraries = model.getModuleLibraryTable().getLibraries();
         for (Library library : libraries) {
           final Library.ModifiableModel modifiableModel = library.getModifiableModel();
@@ -114,6 +114,14 @@ public class IdeaSpecificSettings {
           modifiableModel.commit();
         }
       }
+    }
+  }
+
+  private static void appendLibraryScope(ModifiableRootModel model, Element libElement, Library libraryByName) {
+    final LibraryOrderEntry libraryOrderEntry = model.findLibraryOrderEntry(libraryByName);
+    if (libraryOrderEntry != null) {
+      final String scopeAttribute = libElement.getAttributeValue("scope");
+      libraryOrderEntry.setScope(scopeAttribute == null ? DependencyScope.COMPILE : DependencyScope.valueOf(scopeAttribute));
     }
   }
 
