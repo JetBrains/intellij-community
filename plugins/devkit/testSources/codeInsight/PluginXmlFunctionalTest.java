@@ -122,4 +122,8 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.checkResultByFile(getTestName(false) + "_after.xml");
   }
 
+  public void testPluginModule() throws Throwable {
+    myFixture.testHighlighting("pluginWithModules.xml");
+  }
+
 }
