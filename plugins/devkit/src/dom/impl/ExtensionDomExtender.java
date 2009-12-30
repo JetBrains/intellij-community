@@ -60,9 +60,9 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     } else {
       prefix = "";
     }
-    
+
+    registerExtensions(prefix, ideaPlugin, registrar, psiManager);
     final Collection<String> dependencies = getDependencies(ideaPlugin);
-    ContainerUtil.addIfNotNull(ideaPlugin.getPluginId(), dependencies);
     for (IdeaPlugin plugin : IdeaPluginConverter.collectAllVisiblePlugins(DomUtil.getFile(extensions))) {
       final String value = plugin.getPluginId();
       if (value != null && dependencies.contains(value)) {
