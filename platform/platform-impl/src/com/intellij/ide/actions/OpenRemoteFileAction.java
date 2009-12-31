@@ -30,7 +30,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
  * @author nik
  * internal action
  */
-@SuppressWarnings({"HardCodedStringLiteral"})
 public class OpenRemoteFileAction extends AnAction implements DumbAware {
   @Override
   public void update(final AnActionEvent e) {
@@ -40,7 +39,7 @@ public class OpenRemoteFileAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(final AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
-    String defaultUrl = "http://localhost:8080/index.html";
+    String defaultUrl = "http://";
     String url = Messages.showInputDialog(project, "URL:", "Open Remote File", null, defaultUrl, null);
     if (url != null) {
       VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);

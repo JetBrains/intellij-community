@@ -17,6 +17,9 @@ package com.intellij.openapi.fileEditor.impl.http;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorState;
 import com.intellij.openapi.project.Project;
@@ -33,11 +36,14 @@ import java.beans.PropertyChangeListener;
 /**
  * @author nik
  */
-public class HttpFileEditor implements NavigatableFileEditor {
+public class HttpFileEditor implements TextEditor {
   private final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
   private final RemoteFilePanel myPanel;
+  private Editor myMockTextEditor;
+  private final Project myProject;
 
   public HttpFileEditor(final Project project, final HttpVirtualFile virtualFile) {
+    myProject = project;
     myPanel = new RemoteFilePanel(project, virtualFile);
   }
 
@@ -57,6 +63,18 @@ public class HttpFileEditor implements NavigatableFileEditor {
   @NotNull
   public String getName() {
     return "Http";
+  }
+
+  @NotNull
+  public Editor getEditor() {
+    final TextEditor fileEditor = myPanel.getFileEditor();
+    if (fileEditor != null) {
+      return fileEditor.getEditor();
+    }
+    if (myMockTextEditor == null) {
+      myMockTextEditor = EditorFactory.getInstance().createViewer(new DocumentImpl(""), myProject);
+    }
+    return myMockTextEditor;
   }
 
   @NotNull
@@ -157,6 +175,9 @@ public class HttpFileEditor implements NavigatableFileEditor {
   }
 
   public void dispose() {
+    if (myMockTextEditor != null) {
+      EditorFactory.getInstance().releaseEditor(myMockTextEditor);
+    }
     myPanel.dispose();
   }
 }
