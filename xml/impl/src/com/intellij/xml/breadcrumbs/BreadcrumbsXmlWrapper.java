@@ -229,7 +229,9 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
     return null;
   }
 
+  @Nullable
   private FileViewProvider findViewProvider() {
+    if (myFile == null) return null;
     return PsiManager.getInstance(myProject).findViewProvider(myFile);
   }
 

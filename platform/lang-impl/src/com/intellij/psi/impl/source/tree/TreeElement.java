@@ -35,7 +35,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
 
   private final IElementType myType;
   private volatile int myStartOffsetInParent = -1;
-  protected static final String START_OFFSET_LOCK = new String("TreeElement.START_OFFSET_LOCK");
+  @NonNls protected static final String START_OFFSET_LOCK = new String("TreeElement.START_OFFSET_LOCK");
 
   public TreeElement(IElementType type) {
     myType = type;
@@ -99,31 +99,34 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
 
   public final int getStartOffsetInParent() {
     if (myParent == null) return -1;
-    int offset = myStartOffsetInParent;
-    if (offset != -1) return offset;
+    int offsetInParent = myStartOffsetInParent;
+    if (offsetInParent != -1) return offsetInParent;
     
     synchronized (START_OFFSET_LOCK) {
       TreeElement cur = this;
+      offsetInParent = myStartOffsetInParent;
+      if (offsetInParent != -1) return offsetInParent;
 
       while (true) {
-        if (cur.myStartOffsetInParent != -1) break;
         TreeElement prev = cur.getTreePrev();
         if (prev == null) break;
         cur = prev;
+        offsetInParent = cur.myStartOffsetInParent;
+        if (offsetInParent != -1) break;
       }
 
-      if (cur.myStartOffsetInParent == -1) {
-        cur.myStartOffsetInParent = 0;
+      if (offsetInParent == -1) {
+        cur.myStartOffsetInParent = offsetInParent = 0;
       }
 
       while (cur != this) {
         TreeElement next = cur.getTreeNext();
-        next.myStartOffsetInParent = cur.myStartOffsetInParent + cur.getTextLength();
+        offsetInParent += cur.getTextLength();
+        next.myStartOffsetInParent = offsetInParent;
         cur = next;
       }
-      return myStartOffsetInParent;
+      return offsetInParent;
     }
-
   }
 
   public int getTextOffset() {
@@ -186,6 +189,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
   public void clearCaches() {
   }
 
+  @SuppressWarnings({"EqualsWhichDoesntCheckParameterClass"})
   public final boolean equals(Object obj) {
     return obj == this;
   }
@@ -202,7 +206,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
     if (DebugUtil.shouldTrackInvalidation()) {
       final Boolean trackInvalidation = getUserData(DebugUtil.TRACK_INVALIDATION_KEY);
       if (trackInvalidation != null && trackInvalidation) {
-        //noinspection HardCodedStringLiteral
+        //noinspection HardCodedStringLiteral,ThrowableInstanceNeverThrown,CallToPrintStackTrace
         new Throwable("Element invalidated:" + this).printStackTrace();
       }
     }

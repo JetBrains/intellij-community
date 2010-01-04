@@ -360,6 +360,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
     addFilteringActions(group);
     group.add(new PreviewUsageAction(this));
+    group.add(new SortMembersAlphabeticallyAction(this));
     return group;
   }
 

@@ -42,6 +42,7 @@ public class UsageViewSettings implements PersistentStateComponent<UsageViewSett
   public boolean IS_FILTER_DUPLICATED_LINE = false;
   public boolean IS_SHOW_MODULES = false;
   public boolean IS_PREVIEW_USAGES = false;
+  public boolean IS_SORT_MEMBERS_ALPHABETICALLY = true;
   public float PREVIEW_USAGES_SPLITTER_PROPORTIONS = 0.5f;
 
   public boolean GROUP_BY_USAGE_TYPE = true;

@@ -44,9 +44,6 @@ public class OptimizeImportsAction extends AnAction {
     final Editor editor = BaseCodeInsightAction.getInjectedEditor(project, PlatformDataKeys.EDITOR.getData(dataContext));
 
     final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
-    if (files == null) {
-      return;
-    }
 
     PsiFile file = null;
     PsiDirectory dir;

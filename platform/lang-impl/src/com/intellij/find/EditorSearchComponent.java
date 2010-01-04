@@ -285,19 +285,11 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     });
 
     new VariantsCompletionAction(); // It registers a shortcut set automatically on construction
-
-    myDocumentListener = new com.intellij.openapi.editor.event.DocumentAdapter() {
-      public void documentChanged(final com.intellij.openapi.editor.event.DocumentEvent e) {
-        updateResults(false);
-      }
-    };
-
-    myEditor.getDocument().addDocumentListener(myDocumentListener);
   }
 
   public void setInitialText(final String initialText) {
     final String text = initialText != null ? initialText : "";
-    if (text.indexOf("\n") >= 0) {
+    if (text.contains("\n")) {
       setRegexp(true);
       setTextInField(StringUtil.escapeToRegexp(text));
     }
@@ -372,6 +364,19 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
 
     myEditor.setHeaderComponent(null);
     addCurrentTextToRecents();
+  }
+
+  @Override
+  public void addNotify() {
+    super.addNotify();
+
+    myDocumentListener = new com.intellij.openapi.editor.event.DocumentAdapter() {
+      public void documentChanged(final com.intellij.openapi.editor.event.DocumentEvent e) {
+        updateResults(false);
+      }
+    };
+
+    myEditor.getDocument().addDocumentListener(myDocumentListener);
   }
 
   public void removeNotify() {
@@ -453,7 +458,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
         if (count > 0) {
           setRegularBackground();
           if (count > 1) {
-            myMatchInfoLabel.setText("" + count + " matches");
+            myMatchInfoLabel.setText(count + " matches");
           }
           else {
             myMatchInfoLabel.setText("1 match");
@@ -529,8 +534,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
   }
 
   private boolean findAndSelectFirstUsage(final FindManager findManager, final FindModel model, final int offset, VirtualFile file) {
-    final FindResult firstResult;
-    firstResult = findManager.findString(myEditor.getDocument().getCharsSequence(), offset, model, file);
+    final FindResult firstResult = findManager.findString(myEditor.getDocument().getCharsSequence(), offset, model, file);
     if (firstResult.isStringFound()) {
       myEditor.getSelectionModel().setSelection(firstResult.getStartOffset(), firstResult.getEndOffset());
 

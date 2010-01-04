@@ -70,7 +70,7 @@ public class XDebugSessionImpl implements XDebugSession {
   private XDebugSessionTab mySessionTab;
   private final EventDispatcher<XDebugSessionListener> myDispatcher = EventDispatcher.create(XDebugSessionListener.class);
   private Project myProject;
-  private ExecutionEnvironment myEnvironment;
+  private @Nullable ExecutionEnvironment myEnvironment;
   private ProgramRunner myRunner;
   private boolean myStopped;
   private boolean myPauseActionSupported;
@@ -174,7 +174,9 @@ public class XDebugSessionImpl implements XDebugSession {
 
   private void initSessionTab(@NotNull XDebugSessionData sessionData) {
     mySessionTab = new XDebugSessionTab(myProject, mySessionName);
-    mySessionTab.setEnvironment(myEnvironment);
+    if (myEnvironment != null) {
+      mySessionTab.setEnvironment(myEnvironment);
+    }
     Disposer.register(myProject, mySessionTab);
     mySessionTab.attachToSession(this, myRunner, myEnvironment, sessionData);
   }

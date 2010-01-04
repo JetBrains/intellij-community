@@ -13,16 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.quickfix;
+package org.jetbrains.idea.devkit.dom;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.NameValue;
+import org.jetbrains.annotations.NotNull;
 
-public interface UnresolvedReferenceQuickFixProvider {
-  ExtensionPointName<UnresolvedReferenceQuickFixProvider> EXTENSION_NAME =
-      ExtensionPointName.create("com.intellij.codeInsight.unresolvedReferenceQuickFixProvider");
+/**
+ * @author Dmitry Avdeev
+ */
+public interface PluginModule extends DomElement {
 
+  @NotNull
+  @NameValue
+  GenericAttributeValue<String> getValue();
 
-  void registerFixes(PsiJavaCodeReferenceElement ref, QuickFixActionRegistrar registrar);
 }

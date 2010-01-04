@@ -208,7 +208,7 @@
           <separator/>
           <group id="PlaySavedMacroActions" class="com.intellij.ide.actionMacro.actions.MacrosGroup"/>
         </group>
-        <action id="PsiViewer" class="com.intellij.internal.psiView.ViewerAction"/>
+        <action id="PsiViewer" class="com.intellij.internal.psiView.PsiViewerAction"/>
       </group>
 
       <group id="WindowMenu" popup="true">
