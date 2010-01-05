@@ -13,11 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.xml;
+package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.ExtendClass;
+import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.PsiClassConverter;
 
 /**
  * @author peter

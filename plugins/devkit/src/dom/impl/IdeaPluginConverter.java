@@ -15,32 +15,27 @@
  */
 package org.jetbrains.idea.devkit.dom.impl;
 
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.PackageIndex;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.xml.ConvertContext;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomManager;
-import com.intellij.util.xml.ResolvingConverter;
+import com.intellij.util.Function;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.DomService;
+import com.intellij.util.xml.ResolvingConverter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
-import org.jetbrains.idea.devkit.module.PluginModuleType;
-import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author mike
@@ -68,100 +63,19 @@ public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
     return DevKitBundle.message("error.cannot.resolve.plugin", s);
   }
 
-  public static Collection<IdeaPlugin> collectAllVisiblePlugins(final XmlFile xmlFile) {
-    List<IdeaPlugin> ideaPlugins = new ArrayList<IdeaPlugin>();
-    final Project project = xmlFile.getProject();
-    final PsiManager psiManager = PsiManager.getInstance(project);
+  public static Collection<IdeaPlugin> collectAllVisiblePlugins(@NotNull XmlFile xmlFile) {
 
-    final Iterable<VirtualFile> metaInfs = PackageIndex.getInstance(project).getDirsByPackageName("META-INF", true);
+    Project project = xmlFile.getProject();
+    Module module = ModuleUtil.findModuleForPsiElement(xmlFile);
 
-    for (VirtualFile metaInf : metaInfs) {
-      final VirtualFile pluginXml = metaInf.findChild("plugin.xml");
-      if (pluginXml == null) continue;
-      final IdeaPlugin ideaPlugin = getIdeaPlugin(project, psiManager, pluginXml);
-      if (ideaPlugin != null) {
-        ideaPlugins.add(ideaPlugin);
+    GlobalSearchScope scope = module == null ? GlobalSearchScope.allScope(project) :
+                              GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, true);
+    List<DomFileElement<IdeaPlugin>> files = DomService.getInstance().getFileElements(IdeaPlugin.class, project, scope);
+    return ContainerUtil.map(files, new Function<DomFileElement<IdeaPlugin>, IdeaPlugin>() {
+      public IdeaPlugin fun(DomFileElement<IdeaPlugin> ideaPluginDomFileElement) {
+        return ideaPluginDomFileElement.getRootElement();
       }
-    }
-
-    final Module module = ModuleUtil.findModuleForPsiElement(xmlFile);
-    if (module != null) {
-      // a plugin.xml doesn't need to be in a source folder. 
-      final Module[] dependencies = ModuleRootManager.getInstance(module).getDependencies();
-      for (Module dep : dependencies) {
-        if (PluginModuleType.isOfType(dep)) {
-          final XmlFile file = PluginModuleType.getPluginXml(dep);
-          if (file == null) continue;
-          final VirtualFile pluginXml = file.getVirtualFile();
-          if (pluginXml != null) {
-            final IdeaPlugin ideaPlugin = getIdeaPlugin(project, psiManager, pluginXml);
-            if (ideaPlugin != null) {
-              if (!ideaPlugins.contains(ideaPlugin)) {
-                ideaPlugins.add(ideaPlugin);
-              }
-            }
-          }
-        }
-      }
-
-      final Sdk jdk = ModuleRootManager.getInstance(module).getSdk();
-      if (jdk != null && jdk.getSdkType() instanceof IdeaJdk) {
-        final VirtualFile jdkHome = jdk.getHomeDirectory();
-        if (jdkHome != null) {
-          final VirtualFile pluginsHome = jdkHome.findChild("plugins");
-          final VirtualFile[] plugins = pluginsHome != null ? pluginsHome.getChildren() : VirtualFile.EMPTY_ARRAY;
-          for (VirtualFile plugin : plugins) {
-            if (plugin.isDirectory()) {
-              final VirtualFile lib = plugin.findChild("lib");
-              final VirtualFile[] children = lib != null ? lib.getChildren() : VirtualFile.EMPTY_ARRAY;
-              for (VirtualFile child : children) {
-                final IdeaPlugin ideaPlugin = findPluginInFile(child, project, psiManager);
-                if (ideaPlugin != null) {
-                  ideaPlugins.add(ideaPlugin);
-                }
-              }
-            }
-            else {
-              final IdeaPlugin ideaPlugin = findPluginInFile(plugin, project, psiManager);
-              if (ideaPlugin != null) {
-                ideaPlugins.add(ideaPlugin);
-              }
-            }
-          }
-        }
-      }
-    }
-
-    return ideaPlugins;
-  }
-
-  @Nullable
-  private static IdeaPlugin findPluginInFile(final VirtualFile child, final Project project, final PsiManager psiManager) {
-    if (child.getFileType() != FileTypes.ARCHIVE) return null;
-
-    final VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(child);
-    if (jarRoot == null) return null;
-    final VirtualFile metaInf = jarRoot.findChild("META-INF");
-    if (metaInf == null) return null;
-
-    final VirtualFile pluginXml = metaInf.findChild("plugin.xml");
-    if (pluginXml == null) return null;
-
-    return getIdeaPlugin(project, psiManager, pluginXml);
-  }
-
-  @Nullable
-  private static IdeaPlugin getIdeaPlugin(final Project project, final PsiManager psiManager, final VirtualFile pluginXml) {
-    final XmlFile psiFile = (XmlFile)psiManager.findFile(pluginXml);
-    if (psiFile == null) return null;
-
-    final XmlDocument document = psiFile.getDocument();
-    if (document == null) return null;
-
-    final DomElement domElement = DomManager.getDomManager(project).getDomElement(document.getRootTag());
-    if (!(domElement instanceof IdeaPlugin)) return null;
-    return (IdeaPlugin)domElement;
-
+    });
   }
 
   public IdeaPlugin fromString(@Nullable @NonNls final String s, final ConvertContext context) {

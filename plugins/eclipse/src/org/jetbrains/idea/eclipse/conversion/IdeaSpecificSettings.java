@@ -93,19 +93,19 @@ public class IdeaSpecificSettings {
     for (Object o : root.getChildren("lib")) {
       Element libElement = (Element)o;
       final String libName = libElement.getAttributeValue("name");
-      final Library libraryByName = model.getModuleLibraryTable().getLibraryByName(libName);
+      Library libraryByName = model.getModuleLibraryTable().getLibraryByName(libName);
       if (libraryByName != null) {
-        final LibraryOrderEntry libraryOrderEntry = model.findLibraryOrderEntry(libraryByName);
-        if (libraryOrderEntry != null) {
-          final String scopeAttribute = libElement.getAttributeValue("scope");
-          libraryOrderEntry.setScope(scopeAttribute == null ? DependencyScope.COMPILE : DependencyScope.valueOf(scopeAttribute));
-        }
+        appendLibraryScope(model, libElement, libraryByName);
         final Library.ModifiableModel modifiableModel = libraryByName.getModifiableModel();
         replaceCollapsedByEclipseSourceRoots(libElement, modifiableModel);
         replaceModuleRelatedRoots(model.getProject(), modifiableModel, libElement, OrderRootType.SOURCES, RELATIVE_MODULE_SRC);
         replaceModuleRelatedRoots(model.getProject(), modifiableModel, libElement, OrderRootType.CLASSES, RELATIVE_MODULE_CLS);
         modifiableModel.commit();
       } else { //try to replace everywhere
+        libraryByName = EclipseClasspathReader.findLibraryByName(model.getProject(), libName);
+        if (libraryByName != null) {
+          appendLibraryScope(model, libElement, libraryByName);
+        }
         final Library[] libraries = model.getModuleLibraryTable().getLibraries();
         for (Library library : libraries) {
           final Library.ModifiableModel modifiableModel = library.getModifiableModel();
@@ -114,6 +114,14 @@ public class IdeaSpecificSettings {
           modifiableModel.commit();
         }
       }
+    }
+  }
+
+  private static void appendLibraryScope(ModifiableRootModel model, Element libElement, Library libraryByName) {
+    final LibraryOrderEntry libraryOrderEntry = model.findLibraryOrderEntry(libraryByName);
+    if (libraryOrderEntry != null) {
+      final String scopeAttribute = libElement.getAttributeValue("scope");
+      libraryOrderEntry.setScope(scopeAttribute == null ? DependencyScope.COMPILE : DependencyScope.valueOf(scopeAttribute));
     }
   }
 
@@ -237,35 +245,45 @@ public class IdeaSpecificSettings {
     }
 
     for (OrderEntry entry : model.getOrderEntries()) {
-      if (entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).isModuleLevel()) {
+      if (entry instanceof LibraryOrderEntry) {
         final Element element = new Element("lib");
         element.setAttribute("name", entry.getPresentableName());
         final DependencyScope scope = ((LibraryOrderEntry)entry).getScope();
         element.setAttribute("scope", scope.name());
-        final String[] urls = entry.getUrls(OrderRootType.SOURCES);
-        if (urls.length > 1) {
-          for (int i = 0; i < urls.length - 1; i++) {
-            Element srcElement = new Element(SRCROOT_ATTR);
-            srcElement.setAttribute("url", urls[i]);
-            element.addContent(srcElement);
+        if (((LibraryOrderEntry)entry).isModuleLevel()) {
+          final String[] urls = entry.getUrls(OrderRootType.SOURCES);
+          if (urls.length > 1) {
+            for (int i = 0; i < urls.length - 1; i++) {
+              Element srcElement = new Element(SRCROOT_ATTR);
+              srcElement.setAttribute("url", urls[i]);
+              element.addContent(srcElement);
+            }
           }
-        }
-        else if (urls.length == 1 && urls[0].contains(JarFileSystem.JAR_SEPARATOR)) {
-          final VirtualFile virtualFile = JarFileSystem.getInstance().findFileByPath(VfsUtil.urlToPath(urls[0]));
-          if (virtualFile != null) {
-            Element srcElement = new Element(SRCROOT_ATTR);
-            srcElement.setAttribute("url", urls[0]);
-            element.addContent(srcElement);
+          else if (urls.length == 1 && urls[0].contains(JarFileSystem.JAR_SEPARATOR)) {
+            final VirtualFile virtualFile = JarFileSystem.getInstance().findFileByPath(VfsUtil.urlToPath(urls[0]));
+            if (virtualFile != null) {
+              Element srcElement = new Element(SRCROOT_ATTR);
+              srcElement.setAttribute("url", urls[0]);
+              element.addContent(srcElement);
+            }
           }
-        }
 
-        for (String srcUrl : entry.getUrls(OrderRootType.SOURCES)) {
-          appendModuleRelatedRoot(element, srcUrl, RELATIVE_MODULE_SRC, model);
+          for (String srcUrl : entry.getUrls(OrderRootType.SOURCES)) {
+            appendModuleRelatedRoot(element, srcUrl, RELATIVE_MODULE_SRC, model);
+          }
+          for (String classesUrl : entry.getUrls(OrderRootType.CLASSES)) {
+            appendModuleRelatedRoot(element, classesUrl, RELATIVE_MODULE_CLS, model);
+          }
+          if (!element.getChildren().isEmpty()) {
+            root.addContent(element);
+            isModified = true;
+            continue;
+          }
         }
-        for (String classesUrl : entry.getUrls(OrderRootType.CLASSES)) {
-          appendModuleRelatedRoot(element, classesUrl, RELATIVE_MODULE_CLS, model);
+        if (!scope.equals(DependencyScope.COMPILE)) {
+          root.addContent(element);
+          isModified = true;
         }
-        if (!element.getChildren().isEmpty() || !scope.equals(DependencyScope.COMPILE)) root.addContent(element);
       }
     }
 

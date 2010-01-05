@@ -15,37 +15,18 @@
  */
 package org.jetbrains.idea.devkit.dom;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.NameValue;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
 
 /**
- * @author mike
+ * @author Dmitry Avdeev
  */
-public interface ExtensionPoint extends DomElement {
-  enum Area {
-    IDEA_PROJECT,
-    IDEA_MODULE,
-    IDEA_APPLICATION
-  }
+public interface PluginModule extends DomElement {
 
   @NotNull
   @NameValue
-  GenericAttributeValue<String> getName();
+  GenericAttributeValue<String> getValue();
 
-  @Attribute("qualifiedName")
-  GenericAttributeValue<String> getQualifiedName();
-
-  @NotNull
-  @Convert(PluginPsiClassConverter.class)
-  GenericAttributeValue<PsiClass> getInterface();
-
-  @NotNull
-  @Attribute("beanClass")
-  @Convert(PluginPsiClassConverter.class)
-  GenericAttributeValue<PsiClass> getBeanClass();
-
-  @NotNull
-  GenericAttributeValue<Area> getArea();
 }

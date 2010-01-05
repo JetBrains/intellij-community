@@ -299,10 +299,21 @@ public class EclipseClasspathReader {
                                final boolean exported,
                                final String name,
                                final String notFoundLibraryLevel) {
+    Library lib = findLibraryByName(myProject, name);
+    if (lib != null) {
+      rootModel.addLibraryEntry(lib).setExported(exported);
+    }
+    else {
+      unknownLibraries.add(name);
+      rootModel.addInvalidLibrary(name, notFoundLibraryLevel).setExported(exported);
+    }
+  }
+
+  public static Library findLibraryByName(Project project, String name) {
     final LibraryTablesRegistrar tablesRegistrar = LibraryTablesRegistrar.getInstance();
     Library lib = tablesRegistrar.getLibraryTable().getLibraryByName(name);
     if (lib == null) {
-      lib = tablesRegistrar.getLibraryTable(myProject).getLibraryByName(name);
+      lib = tablesRegistrar.getLibraryTable(project).getLibraryByName(name);
     }
     if (lib == null) {
       for (LibraryTable table : tablesRegistrar.getCustomLibraryTables()) {
@@ -312,13 +323,7 @@ public class EclipseClasspathReader {
         }
       }
     }
-    if (lib != null) {
-      rootModel.addLibraryEntry(lib).setExported(exported);
-    }
-    else {
-      unknownLibraries.add(name);
-      rootModel.addInvalidLibrary(name, notFoundLibraryLevel).setExported(exported);
-    }
+    return lib;
   }
 
   @NotNull
