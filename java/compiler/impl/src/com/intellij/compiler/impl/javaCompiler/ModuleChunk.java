@@ -215,6 +215,10 @@ public class ModuleChunk extends Chunk<Module> {
   }
 
   public String getCompilationBootClasspath() {
+    return convertToStringPath(getCompilationBootClasspathFiles());
+  }
+
+  public OrderedSet<VirtualFile> getCompilationBootClasspathFiles() {
     final Set<Module> modules = getNodes();
     final OrderedSet<VirtualFile> cpFiles = new OrderedSet<VirtualFile>(TObjectHashingStrategy.CANONICAL);
     final OrderedSet<VirtualFile> jdkFiles = new OrderedSet<VirtualFile>(TObjectHashingStrategy.CANONICAL);
@@ -236,7 +240,7 @@ public class ModuleChunk extends Chunk<Module> {
       }
     }
     cpFiles.addAll(jdkFiles);
-    return convertToStringPath(cpFiles);
+    return cpFiles;
   }
 
   private static String convertToStringPath(final OrderedSet<VirtualFile> cpFiles) {

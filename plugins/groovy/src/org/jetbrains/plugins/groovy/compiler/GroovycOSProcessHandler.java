@@ -42,14 +42,12 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
   private final List<CompilerMessage> compilerMessages = new ArrayList<CompilerMessage>();
   private final StringBuffer unparsedOutput = new StringBuffer();
   private final CompileContext myContext;
-  private final TranslatingCompiler.OutputSink mySink;
 
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.compiler.GroovycOSProcessHandler");
 
-  public GroovycOSProcessHandler(CompileContext context, Process process, String s, TranslatingCompiler.OutputSink sink) {
+  public GroovycOSProcessHandler(CompileContext context, Process process, String s) {
     super(process, s);
     myContext = context;
-    mySink = sink;
   }
 
   public void notifyTextAvailable(final String text, final Key outputType) {

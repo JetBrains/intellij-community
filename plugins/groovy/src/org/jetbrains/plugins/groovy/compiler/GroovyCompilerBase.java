@@ -22,6 +22,7 @@ import com.intellij.compiler.impl.FileSetCompileScope;
 import com.intellij.compiler.impl.javaCompiler.ModuleChunk;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.compiler.CompileContext;
@@ -35,6 +36,7 @@ import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ModuleFileIndex;
@@ -84,14 +86,14 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
                                     boolean forStubs,
                                     VirtualFile outputDir,
                                     OutputSink sink, boolean tests) {
-    GeneralCommandLine commandLine = new GeneralCommandLine();
     final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
     assert sdk != null; //verified before
     SdkType sdkType = sdk.getSdkType();
     assert sdkType instanceof JavaSdkType;
-    commandLine.setExePath(((JavaSdkType)sdkType).getVMExecutablePath(sdk));
+    final String exePath = ((JavaSdkType)sdkType).getVMExecutablePath(sdk);
 
-    final PathsList classPathBuilder = new PathsList();
+    final JavaParameters parameters = new JavaParameters();
+    final PathsList classPathBuilder = parameters.getClassPath();
     classPathBuilder.add(PathUtil.getJarPathForClass(GroovycRunner.class));
 
     final ModuleChunk chunk = createChunk(module, compileContext);
@@ -101,6 +103,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
       classPathBuilder.addVirtualFiles(Arrays.asList(libraries[0].getFiles(OrderRootType.COMPILATION_CLASSES)));
     }
 
+    classPathBuilder.addVirtualFiles(chunk.getCompilationBootClasspathFiles());
     classPathBuilder.addVirtualFiles(chunk.getCompilationClasspathFiles());
     appendOutputPath(module, classPathBuilder, false);
     if (tests) {
@@ -115,19 +118,15 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
 
     final boolean profileGroovyc = "true".equals(System.getProperty("profile.groovy.compiler"));
     if (profileGroovyc) {
-      commandLine.addParameter("-Djava.library.path=" + PathManager.getBinPath());
-      commandLine.addParameter("-Dprofile.groovy.compiler=true");
-      commandLine.addParameter("-agentlib:yjpagent=disablej2ee,disablecounts,disablealloc,sessionname=GroovyCompiler");
+      parameters.getVMParametersList().defineProperty("java.library.path", PathManager.getBinPath());
+      parameters.getVMParametersList().defineProperty("profile.groovy.compiler", "true");
+      parameters.getVMParametersList().add("-agentlib:yjpagent=disablej2ee,disablecounts,disablealloc,sessionname=GroovyCompiler");
       classPathBuilder.add(PathManager.findFileInLibDirectory("yjp-controller-api-redist.jar").getAbsolutePath());
     }
 
-    commandLine.addParameter("-cp");
-    commandLine.addParameter(classPathBuilder.getPathsString());
-
-
-    commandLine.addParameter("-Xmx" + GroovyCompilerConfiguration.getInstance(myProject).getHeapSize() + "m");
+    parameters.getVMParametersList().add("-Xmx" + GroovyCompilerConfiguration.getInstance(myProject).getHeapSize() + "m");
     if (profileGroovyc) {
-      commandLine.addParameter("-XX:+HeapDumpOnOutOfMemoryError");
+      parameters.getVMParametersList().add("-XX:+HeapDumpOnOutOfMemoryError");
     }
 
     //debug
@@ -136,9 +135,11 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     // Setting up process encoding according to locale
     final ArrayList<String> list = new ArrayList<String>();
     CompilerUtil.addLocaleOptions(list, false);
-    commandLine.addParameters(list);
+    for (String s : list) {
+      parameters.getVMParametersList().add(s);
+    }
 
-    commandLine.addParameter(GroovycRunner.class.getName());
+    parameters.setMainClass(GroovycRunner.class.getName());
 
     try {
       File fileWithParameters = File.createTempFile("toCompile", "");
@@ -146,8 +147,8 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
       LOG.assertTrue(finalOutputDir != null, "No output directory for module " + module.getName() + (tests ? " tests" : " production"));
       fillFileWithGroovycParameters(toCompile, fileWithParameters, outputDir, patchers, finalOutputDir);
 
-      commandLine.addParameter(forStubs ? "stubs" : "groovyc");
-      commandLine.addParameter(fileWithParameters.getPath());
+      parameters.getProgramParametersList().add(forStubs ? "stubs" : "groovyc");
+      parameters.getProgramParametersList().add(fileWithParameters.getPath());
     }
     catch (IOException e) {
       LOG.error(e);
@@ -156,7 +157,8 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     GroovycOSProcessHandler processHandler;
 
     try {
-      processHandler = new GroovycOSProcessHandler(compileContext, commandLine.createProcess(), commandLine.getCommandLineString(), sink);
+      final GeneralCommandLine commandLine = JdkUtil.setupJVMCommandLine(exePath, parameters, true);
+      processHandler = new GroovycOSProcessHandler(compileContext, commandLine.createProcess(), commandLine.getCommandLineString());
 
       processHandler.startNotify();
       processHandler.waitFor();
