@@ -113,7 +113,8 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
       patchers.addAll(extension.getCompilationUnitPatchers(chunk));
     }
 
-    if ("true".equals(System.getProperty("profile.groovy.compiler"))) {
+    final boolean profileGroovyc = "true".equals(System.getProperty("profile.groovy.compiler"));
+    if (profileGroovyc) {
       commandLine.addParameter("-Djava.library.path=" + PathManager.getBinPath());
       commandLine.addParameter("-Dprofile.groovy.compiler=true");
       commandLine.addParameter("-agentlib:yjpagent=disablej2ee,disablecounts,disablealloc,sessionname=GroovyCompiler");
@@ -125,7 +126,9 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
 
 
     commandLine.addParameter("-Xmx" + GroovyCompilerConfiguration.getInstance(myProject).getHeapSize() + "m");
-    commandLine.addParameter("-XX:+HeapDumpOnOutOfMemoryError");
+    if (profileGroovyc) {
+      commandLine.addParameter("-XX:+HeapDumpOnOutOfMemoryError");
+    }
 
     //debug
     //commandLine.addParameter("-Xdebug"); commandLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239");
