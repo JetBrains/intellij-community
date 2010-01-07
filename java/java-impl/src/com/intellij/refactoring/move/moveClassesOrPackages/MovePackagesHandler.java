@@ -71,19 +71,21 @@ public class MovePackagesHandler extends MoveClassesOrPackagesHandlerBase {
           processor.run();
         }
         else {
-          new MoveClassesOrPackagesToNewDirectoryDialog(directories[0], new PsiElement[2], callback) {
-            @Override
-            protected void performRefactoring(Project project,
-                                              final PsiDirectory targetDirectory,
-                                              PsiPackage aPackage,
-                                              boolean searchInComments,
-                                              boolean searchForTextOccurences) {
-              final MoveDirectoryWithClassesProcessor processor =
-                new MoveDirectoryWithClassesProcessor(project, directories, targetDirectory, searchInComments, searchForTextOccurences,
-                                                      true, callback);
-              processor.run();
-            }
-          }.show();
+          final MoveClassesOrPackagesToNewDirectoryDialog dlg =
+            new MoveClassesOrPackagesToNewDirectoryDialog(directories[0], new PsiElement[2], false, callback) {
+              @Override
+              protected void performRefactoring(Project project,
+                                                final PsiDirectory targetDirectory,
+                                                PsiPackage aPackage,
+                                                boolean searchInComments,
+                                                boolean searchForTextOccurences) {
+                final MoveDirectoryWithClassesProcessor processor =
+                  new MoveDirectoryWithClassesProcessor(project, directories, targetDirectory, searchInComments, searchForTextOccurences,
+                                                        true, callback);
+                processor.run();
+              }
+            };
+          dlg.show();
         }
         return;
       }

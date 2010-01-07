@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -45,6 +46,8 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author ven
@@ -57,6 +60,12 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
   private final MoveCallback myMoveCallback;
 
   public MoveClassesOrPackagesToNewDirectoryDialog(@NotNull final PsiDirectory directory, PsiElement[] elementsToMove,
+                                                   final MoveCallback moveCallback) {
+    this(directory, elementsToMove, true, moveCallback);
+  }
+
+  public MoveClassesOrPackagesToNewDirectoryDialog(@NotNull final PsiDirectory directory, PsiElement[] elementsToMove,
+                                                   boolean canShowPreserveSourceRoots,
                                                    final MoveCallback moveCallback) {
     super(false);
     setTitle(MoveHandler.REFACTORING_NAME);
@@ -93,6 +102,24 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
       }
     });
 
+    if (canShowPreserveSourceRoots) {
+      final Set<VirtualFile> sourceRoots = new HashSet<VirtualFile>();
+      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(directory.getProject()).getFileIndex();
+      for (PsiElement element : elementsToMove) {
+        if (element instanceof PsiPackage) {
+          for (PsiDirectory psiDirectory : ((PsiPackage)element).getDirectories()) {
+            sourceRoots.add(fileIndex.getSourceRootForFile(psiDirectory.getVirtualFile()));
+          }
+        } else if (element instanceof PsiClass) {
+          final PsiDirectory psiDirectory = element.getContainingFile().getContainingDirectory();
+          LOG.assertTrue(psiDirectory != null);
+          if (psiDirectory != null) {
+            sourceRoots.add(psiDirectory.getVirtualFile());
+          }
+        }
+      }
+      myPreserveSourceRoot.setVisible(sourceRoots.size() > 1);
+    }
     init();
   }
 
@@ -101,6 +128,7 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
   private JCheckBox mySearchInCommentsAndStringsCheckBox;
   private JPanel myRootPanel;
   private JLabel myNameLabel;
+  private JCheckBox myPreserveSourceRoot;
 
   private boolean isSearchInNonJavaFiles() {
     return mySearchForTextOccurrencesCheckBox.isSelected();
@@ -168,7 +196,9 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
       return;
     }
     final JavaRefactoringFactory factory = JavaRefactoringFactory.getInstance(project);
-    final MoveDestination destination = factory.createSourceRootMoveDestination(aPackage.getQualifiedName(), sourceRoot);
+    final MoveDestination destination = myPreserveSourceRoot.isSelected() && myPreserveSourceRoot.isVisible()
+                                        ? factory.createSourceFolderPreservingMoveDestination(aPackage.getQualifiedName())
+                                        : factory.createSourceRootMoveDestination(aPackage.getQualifiedName(), sourceRoot);
 
     MoveClassesOrPackagesProcessor processor = new MoveClassesOrPackagesProcessor(myDirectory.getProject(), myElementsToMove, destination,
                                                                                   searchInComments, searchForTextOccurences,
