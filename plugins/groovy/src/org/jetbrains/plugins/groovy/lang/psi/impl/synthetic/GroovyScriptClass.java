@@ -153,7 +153,7 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
 
   @NotNull
   public PsiClass[] getSupers() {
-    return PsiClass.EMPTY_ARRAY;
+    return new PsiClass[]{getSuperClass()};
   }
 
   @NotNull

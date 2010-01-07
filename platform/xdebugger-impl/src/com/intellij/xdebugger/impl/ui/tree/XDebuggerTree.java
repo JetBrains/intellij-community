@@ -21,7 +21,9 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Convertor;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
@@ -35,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
@@ -44,6 +47,19 @@ import java.util.List;
  */
 public class XDebuggerTree extends DnDAwareTree implements DataProvider {
   private static final DataKey<XDebuggerTree> XDEBUGGER_TREE_KEY = DataKey.create("xdebugger.tree");
+  private static final Convertor<TreePath,String> SPEED_SEARCH_CONVERTER = new Convertor<TreePath, String>() {
+    public String convert(TreePath o) {
+      final Object node = o.getLastPathComponent();
+      String text = null;
+      if (node instanceof XValueNodeImpl) {
+        text = ((XValueNodeImpl)node).getName();
+      }
+      else if (node instanceof XDebuggerTreeNode) {
+        text = ((XDebuggerTreeNode)node).getText().toString();
+      }
+      return text != null ? text : "";
+    }
+  };
   private final DefaultTreeModel myTreeModel;
   private final Project myProject;
   private final XDebuggerEditorsProvider myEditorsProvider;
@@ -78,6 +94,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider {
         }
       }
     });
+    new TreeSpeedSearch(this, SPEED_SEARCH_CONVERTER);
   }
 
   public void addTreeListener(@NotNull XDebuggerTreeListener listener) {

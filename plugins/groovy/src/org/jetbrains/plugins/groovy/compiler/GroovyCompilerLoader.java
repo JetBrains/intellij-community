@@ -22,7 +22,6 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.compiler.generator.GroovyToJavaGenerator;
 import org.jetbrains.plugins.groovy.compiler.generator.GroovycStubGenerator;
 
 import java.util.Arrays;
@@ -42,12 +41,8 @@ public class GroovyCompilerLoader extends AbstractProjectComponent {
     compilerManager.addCompilableFileType(GroovyFileType.GROOVY_FILE_TYPE);
 
     compilerManager.addTranslatingCompiler(new GroovycStubGenerator(myProject),
-                                           new HashSet<FileType>(Arrays.asList(GroovyFileType.GROOVY_FILE_TYPE, StdFileTypes.JAVA)),
+                                           new HashSet<FileType>(Arrays.asList(GroovyFileType.GROOVY_FILE_TYPE)),
                                            new HashSet<FileType>(Arrays.asList(StdFileTypes.JAVA)));
-
-    GroovyToJavaGenerator generator = new GroovyToJavaGenerator(myProject);
-    compilerManager.addCompiler(generator);
-    compilerManager.addCompilationStatusListener(generator);
 
     compilerManager.addTranslatingCompiler(new GroovyCompiler(myProject),
                                            new HashSet<FileType>(Arrays.asList(GroovyFileType.GROOVY_FILE_TYPE, StdFileTypes.CLASS)),

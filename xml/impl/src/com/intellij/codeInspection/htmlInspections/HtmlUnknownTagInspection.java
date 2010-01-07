@@ -203,10 +203,13 @@ public class HtmlUnknownTagInspection extends HtmlLocalInspectionTool {
           final PsiElement endTagName = XmlTagUtil.getEndTagNameElement(tag);
 
           final CreateNSDeclarationIntentionFix declarationIntentionFix = new CreateNSDeclarationIntentionFix(startTagName, "");
-          holder.registerProblem(startTagName, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, action, declarationIntentionFix);
+          ProblemHighlightType highlightType = tag.getContainingFile().getContext() == null ? 
+                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING : 
+                                               ProblemHighlightType.INFORMATION;
+          holder.registerProblem(startTagName, message, highlightType, action, declarationIntentionFix);
 
           if (endTagName != null) {
-            holder.registerProblem(endTagName, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, action, declarationIntentionFix);
+            holder.registerProblem(endTagName, message, highlightType, action, declarationIntentionFix);
           }
         }
       }

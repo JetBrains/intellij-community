@@ -81,24 +81,11 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
 
   public boolean isSDKLibrary(Library library) {
     if (library == null) return false;
-    return isGroovyLibrary(library.getFiles(OrderRootType.CLASSES));
-  }
-
-  public static boolean isGroovyLibrary(VirtualFile[] classFiles) {
-    for (VirtualFile file : classFiles) {
-      if (isAnyGroovyJar(file.getName())) {
-        return true;
-      }
-    }
-    return false;
+    return LibrariesUtil.getGroovyLibraryHome(library.getFiles(OrderRootType.CLASSES)) != null;
   }
 
   public String getSDKVersion(@NotNull Library library) {
     return getSDKVersion(LibrariesUtil.getGroovyLibraryHome(library));
-  }
-
-  public static boolean isAnyGroovyJar(@NonNls final String name) {
-    return name.matches(GROOVY_ALL_JAR_PATTERN) || name.matches(GROOVY_JAR_PATTERN);
   }
 
   @Nullable
@@ -129,15 +116,6 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
     return s != null ? s : NO_VERSION;
   }
 
-
-  @NotNull
-  public String getSDKInstallPath(Module module) {
-    if (module == null) return "";
-    Library[] libraries = getSDKLibrariesByModule(module);
-    if (libraries.length == 0) return "";
-    Library library = libraries[0];
-    return LibrariesUtil.getGroovyLibraryHome(library);
-  }
 
   @Override
   public boolean isSDKHome(VirtualFile file) {

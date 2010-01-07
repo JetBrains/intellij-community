@@ -63,11 +63,11 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
               if (aPackage != null) {
                 if (!aPackage.processDeclarations(processor, state, lastParent, place)) return false;
               }
-            } else {
-              PsiClass clazz = facade.findClass(qName, getResolveScope());
+            }
+            else {
+              final PsiClass clazz = facade.findClass(qName, getResolveScope());
               if (clazz != null) {
                 if (!processAllMembers(processor, clazz)) return false;
-
               }
             }
           }
@@ -115,7 +115,7 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
     }
   }
 
-  private boolean processAllMembers(PsiScopeProcessor processor, PsiClass clazz) {
+  private static boolean processAllMembers(PsiScopeProcessor processor, PsiClass clazz) {
     for (PsiField field : clazz.getFields()) {
       if (field.hasModifierProperty(PsiModifier.STATIC) && !ResolveUtil.processElement(processor, field))
         return false;

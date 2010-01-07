@@ -56,6 +56,7 @@ import javax.swing.event.EventListenerList;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.EventListener;
+import java.util.List;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -126,7 +127,7 @@ public abstract class DynamicDialog extends DialogWrapper {
   }
 
   private void setUpStatusLabel() {
-    if (!isTypeChekerPanelEnable()) {
+    if (!isTypeCheckerPanelEnable()) {
       myTypeStatusPanel.setVisible(false);
       return;
     }
@@ -139,12 +140,18 @@ public abstract class DynamicDialog extends DialogWrapper {
     }
 
     final PsiType type = typeElement.getType();
-    setStatusTextAndIcon(IconLoader.getIcon("/compiler/information.png"), GroovyInspectionBundle.message("resolved.type.status", type.getPresentableText()));
+    if (type instanceof PsiClassType && ((PsiClassType)type).resolve() == null) {
+      setStatusTextAndIcon(IconLoader.getIcon("/compiler/warning.png"),
+                           GroovyInspectionBundle.message("unresolved.type.status", type.getPresentableText()));
+      return;
+    }
+    setStatusTextAndIcon(null, "");
   }
 
   private void setStatusTextAndIcon(final Icon icon, final String text) {
     myTypeStatusLabel.setIcon(icon);
     myTypeStatusLabel.setText(text);
+    pack();
   }
 
 
@@ -243,20 +250,13 @@ public abstract class DynamicDialog extends DialogWrapper {
 
   protected void updateOkStatus() {
     GrTypeElement typeElement = getEnteredTypeName();
-
     if (typeElement == null) {
       setOKActionEnabled(false);
-
     } else {
       setOKActionEnabled(true);
-
-      final PsiType type = typeElement.getType();
-      if (type instanceof PsiClassType && ((PsiClassType) type).resolve() == null) {
-        setStatusTextAndIcon(IconLoader.getIcon("/compiler/warning.png"), GroovyInspectionBundle.message("unresolved.type.status", type.getPresentableText()));
-      } else {
-        setStatusTextAndIcon(IconLoader.getIcon("/compiler/information.png"), GroovyInspectionBundle.message("resolved.type.status", type.getPresentableText()));
-      }
     }
+
+    setUpStatusLabel();
   }
 
   @Nullable
@@ -274,6 +274,7 @@ public abstract class DynamicDialog extends DialogWrapper {
     }
   }
 
+  @Nullable
   public Document getTypeEditorDocument() {
     final Object item = myTypeComboBox.getEditor().getItem();
 
@@ -281,7 +282,8 @@ public abstract class DynamicDialog extends DialogWrapper {
 
   }
 
-  public ContainingClassItem getEnteredContaningClass() {
+  @Nullable
+  public ContainingClassItem getEnteredContainingClass() {
     final Object item = myClassComboBox.getSelectedItem();
     if (!(item instanceof ContainingClassItem)) return null;
 
@@ -305,7 +307,7 @@ public abstract class DynamicDialog extends DialogWrapper {
   protected void doOKAction() {
     super.doOKAction();
 
-    mySettings.setContainingClassName(getEnteredContaningClass().getContainingClass().getQualifiedName());
+    mySettings.setContainingClassName(getEnteredContainingClass().getContainingClass().getQualifiedName());
     mySettings.setStatic(myStaticCheckBox.isSelected());
     GrTypeElement typeElement = getEnteredTypeName();
 
@@ -322,7 +324,7 @@ public abstract class DynamicDialog extends DialogWrapper {
       if (typeQualifiedName != null) {
         mySettings.setType(typeQualifiedName);
       } else {
-        mySettings.setType(type.getCanonicalText());
+        mySettings.setType(type.getPresentableText());
       }
     }
 
@@ -336,7 +338,7 @@ public abstract class DynamicDialog extends DialogWrapper {
 
             final DItemElement itemElement;
             if (mySettings.isMethod()) {
-              final java.util.List<MyPair> myPairList = mySettings.getPairs();
+              final List<MyPair> myPairList = mySettings.getPairs();
               final String[] argumentsTypes = QuickfixUtil.getArgumentsTypes(myPairList);
               itemElement = myDynamicManager.findConcreteDynamicMethod(mySettings.getContainingClassName(), mySettings.getName(), argumentsTypes);
             } else {
@@ -394,7 +396,7 @@ public abstract class DynamicDialog extends DialogWrapper {
     myDynamicManager.fireChange();
   }
 
-  class ContainingClassItem {
+  static class ContainingClassItem {
     private final PsiClass myContainingClass;
 
     ContainingClassItem(PsiClass containingClass) {
@@ -420,11 +422,7 @@ public abstract class DynamicDialog extends DialogWrapper {
     return myTypeComboBox;
   }
 
-  protected JPanel getPanel() {
-    return myPanel;
-  }
-
-  protected boolean isTableVisible() {
+protected boolean isTableVisible() {
     return false;
   }
 
@@ -432,8 +430,8 @@ public abstract class DynamicDialog extends DialogWrapper {
     return myParametersTable;
   }
 
-  protected boolean isTypeChekerPanelEnable() {
-    return false;
+  protected static boolean isTypeCheckerPanelEnable() {
+    return true;
   }
 
   public Project getProject() {

@@ -21,8 +21,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
@@ -30,15 +28,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+
 /**
  * @author Maxim.Medvedev
  */
 public class GroovyGStringSelectioner extends GroovyBasicSelectioner {
   public boolean canSelect(PsiElement e) {
     PsiElement parent = e.getParent();
-    if (parent instanceof GrClosableBlock || parent instanceof GrReferenceExpression) {
-      parent = parent.getParent();
-    }
     return parent instanceof GrStringInjection || parent instanceof GrString;
   }
 
@@ -46,13 +43,6 @@ public class GroovyGStringSelectioner extends GroovyBasicSelectioner {
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
     List<TextRange> ranges = new ArrayList<TextRange>();
     PsiElement parent = e.getParent();
-    if (parent instanceof GrReferenceExpression) {
-      e = parent;
-      parent = e.getParent();
-    }
-    if (parent instanceof GrClosableBlock) {
-      parent = parent.getParent();
-    }
 
     if (parent instanceof GrString) {
       final TextRange selection =
