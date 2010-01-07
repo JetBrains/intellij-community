@@ -150,6 +150,17 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
     refactoringSettings.MOVE_SEARCH_IN_COMMENTS = searchInComments;
     refactoringSettings.MOVE_SEARCH_FOR_TEXT = searchForTextOccurences;
 
+    performRefactoring(project, directory, aPackage, searchInComments, searchForTextOccurences);
+  }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myDestDirectoryField.getTextField();
+  }
+
+  protected void performRefactoring(Project project, PsiDirectory directory, PsiPackage aPackage,
+                                    boolean searchInComments,
+                                    boolean searchForTextOccurences) {
     final VirtualFile sourceRoot = ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(directory.getVirtualFile());
     if (sourceRoot == null) {
       Messages.showErrorDialog(project, RefactoringBundle.message("destination.directory.does.not.correspond.to.any.package"),

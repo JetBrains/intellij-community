@@ -22,11 +22,17 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.lang.TitledHandler;
+import com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesProcessor;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -37,7 +43,7 @@ public class DirectoryAsPackageRenameHandler implements RenameHandler, TitledHan
 
   public boolean isAvailableOnDataContext(final DataContext dataContext) {
     final PsiElement element = PsiElementRenameHandler.getElement(dataContext);
-    return element instanceof PsiDirectory;
+    return element instanceof PsiDirectory && ProjectRootManager.getInstance(element.getProject()).getFileIndex().isInContent(((PsiDirectory)element).getVirtualFile());
   }
 
   public boolean isRenaming(final DataContext dataContext) {
@@ -59,9 +65,9 @@ public class DirectoryAsPackageRenameHandler implements RenameHandler, TitledHan
     doRename(element, project, element, editor);
   }
 
-  public static void doRename(PsiElement element, Project project, PsiElement nameSuggestionContext, Editor editor) {
-    PsiDirectory psiDirectory = (PsiDirectory)element;
-    PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
+  public static void doRename(PsiElement element, final Project project, PsiElement nameSuggestionContext, Editor editor) {
+    final PsiDirectory psiDirectory = (PsiDirectory)element;
+    final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
     final String qualifiedName = aPackage != null ? aPackage.getQualifiedName() : "";
     if (aPackage == null || qualifiedName.length() == 0/*default package*/ ||
         !JavaPsiFacade.getInstance(project).getNameHelper().isIdentifier(psiDirectory.getName())) {
@@ -74,23 +80,85 @@ public class DirectoryAsPackageRenameHandler implements RenameHandler, TitledHan
         PsiElementRenameHandler.rename(aPackage, project, nameSuggestionContext, editor);
       }
       else { // the directory corresponds to a package that has multiple associated directories
-        StringBuffer message = new StringBuffer();
-        RenameUtil.buildPackagePrefixChangedMessage(virtualFiles, message, qualifiedName);
-        buildMultipleDirectoriesInPackageMessage(message, aPackage, directories);
-        message.append(RefactoringBundle.message("directories.and.all.references.to.package.will.be.renamed", psiDirectory.getVirtualFile().getPresentableUrl()));
-        int ret =
-          Messages.showDialog(project, message.toString(), RefactoringBundle.message("warning.title"),
-                              new String[]{
-                                RefactoringBundle.message("rename.package.button.text"),
-                                RefactoringBundle.message("rename.directory.button.text"),
-                              CommonBundle.getCancelButtonText()}, 0, Messages.getWarningIcon());
-        if (ret == 0) {
-          PsiElementRenameHandler.rename(aPackage, project, nameSuggestionContext, editor);
-        } else if (ret == 1){
-          PsiElementRenameHandler.rename(psiDirectory, project, nameSuggestionContext, editor);
+        final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+        boolean inLib = false;
+        for (PsiDirectory directory : directories) {
+          inLib |= !projectFileIndex.isInContent(directory.getVirtualFile());
+        }
+
+        final PsiDirectory[] projectDirectories = aPackage.getDirectories(GlobalSearchScope.projectScope(project));
+        if (inLib) {
+          final String promptMessage = "Package \'" +
+                                       aPackage.getName() +
+                                       "\' contains directories in libraries which cannot be renamed. Do you want to rename current directory";
+          if (projectDirectories.length > 0) {
+            int ret = Messages
+              .showDialog(project, promptMessage + " or all directories in project?", RefactoringBundle.message("warning.title"),
+                          new String[]{RefactoringBundle.message("rename.current.directory"),
+                            RefactoringBundle.message("rename.directories"), CommonBundle.getCancelButtonText()}, 0,
+                          Messages.getWarningIcon());
+            renameDirs(project, nameSuggestionContext, editor, psiDirectory, aPackage, ret == 0 ? new PsiDirectory[] {psiDirectory} : projectDirectories);
+          }
+          else {
+            if (Messages.showDialog(project, promptMessage + "?", RefactoringBundle.message("warning.title"),
+                                      new String[]{CommonBundle.getOkButtonText(), CommonBundle.getCancelButtonText()}, 0,
+                                      Messages.getWarningIcon()) == DialogWrapper.OK_EXIT_CODE) {
+              renameDirs(project, nameSuggestionContext, editor, psiDirectory, aPackage, psiDirectory);
+            }
+          }
+        }
+        else {
+          final StringBuffer message = new StringBuffer();
+          RenameUtil.buildPackagePrefixChangedMessage(virtualFiles, message, qualifiedName);
+          buildMultipleDirectoriesInPackageMessage(message, aPackage, directories);
+          message.append(RefactoringBundle.message("directories.and.all.references.to.package.will.be.renamed",
+                                                   psiDirectory.getVirtualFile().getPresentableUrl()));
+          int ret = Messages.showDialog(project, message.toString(), RefactoringBundle.message("warning.title"),
+                                    new String[]{RefactoringBundle.message("rename.package.button.text"),
+                                      RefactoringBundle.message("rename.directory.button.text"), CommonBundle.getCancelButtonText()}, 0,
+                                    Messages.getWarningIcon());
+          if (ret == 0) {
+            PsiElementRenameHandler.rename(aPackage, project, nameSuggestionContext, editor);
+          }
+          else if (ret == 1) {
+            renameDirs(project, nameSuggestionContext, editor, psiDirectory, aPackage, psiDirectory);
+          }
         }
       }
     }
+  }
+
+  private static void renameDirs(final Project project,
+                                 final PsiElement nameSuggestionContext,
+                                 final Editor editor,
+                                 final PsiDirectory contextDirectory,
+                                 final PsiPackage aPackage,
+                                 final PsiDirectory... dirsToRename) {
+    final RenameDialog dialog = new RenameDialog(project, contextDirectory, nameSuggestionContext, editor) {
+      @Override
+      protected void doAction() {
+        final String newName = StringUtil.getQualifiedName(StringUtil.getPackageName(aPackage.getQualifiedName()), getNewName());
+        final MoveDirectoryWithClassesProcessor moveProcessor =
+          new MoveDirectoryWithClassesProcessor(project, dirsToRename, null, isSearchInComments(), isSearchInNonJavaFiles(), false, null) {
+            @Override
+            public TargetDirectoryWrapper getTargetDirectory(final PsiDirectory dir) {
+              return new TargetDirectoryWrapper(dir.getParentDirectory(), getNewName());
+            }
+
+            @Override
+            protected String getTargetName() {
+              return newName;
+            }
+
+            @Override
+            protected String getCommandName() {
+              return dirsToRename.length == 1 ? "Rename directory" : "Rename directories";
+            }
+          };
+        invokeRefactoring(moveProcessor);
+      }
+    };
+    dialog.show();
   }
 
   public static void buildMultipleDirectoriesInPackageMessage(StringBuffer message,
