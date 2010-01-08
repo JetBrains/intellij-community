@@ -466,6 +466,7 @@ class ModuleRedeclarator(object):
   # {("class", "method"): ("signature_string")}
   PREDEFINED_BUILTIN_SIGS = {
     ("object", "__init__"): "(self)",
+    ("object", "__new__"): "(cls, *more)", # only for the sake of parameter names readability
     ("str", "__init__"): "(self, x)", # overrides a fake
     ("type", "__init__"): "(self, name, bases=None, dict=None)", # overrides a fake
     ("int", "__init__"): "(self, x, base=10)", # overrides a fake
@@ -1046,7 +1047,7 @@ if __name__ == "__main__":
           # action = "creating subdir " + subdirname
           # os.makedirs(subdirname)
       target_dir = dirname + os.path.sep.join(quals[0 : len(quals)-1])
-      sys.stderr.write("target dir is " + repr(target_dir) + "\n")
+      #sys.stderr.write("target dir is " + repr(target_dir) + "\n")
       if not os.path.isdir(target_dir):
         action = "creating dir " + target_dir
         os.makedirs(target_dir)
