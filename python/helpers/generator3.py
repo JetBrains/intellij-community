@@ -800,14 +800,11 @@ class ModuleRedeclarator(object):
       methods = {}
       properties = {}
       others = {}
+      we_are_the_base_class = p_modname == BUILTIN_MOD_NAME and p_name in ("object", FAKE_CLASSOBJ_NAME)
       for item_name in p_class.__dict__:
-        if item_name in ("__dict__", "__doc__", "__module__"):
-          # must be declared in base types
-          if p_modname == BUILTIN_MOD_NAME and p_name in ("object", FAKE_CLASSOBJ_NAME):
-            if item_name == "__dict__":
-              item = {}
-            else:
-              item = ""
+        if item_name in ("__doc__", "__module__"):
+          if we_are_the_base_class:
+            item = "" # must be declared in base types
           else:
             continue # in all other cases. must be skipped
         else:
@@ -819,6 +816,8 @@ class ModuleRedeclarator(object):
         else:
           others[item_name] = item
         #
+      if we_are_the_base_class: 
+          others["__dict__"] = {} # force-feed it, for __dict__ does not contain a reference to itself :)
       # add fake __init__s to type and tuple to have the right sig
       if p_class in self.FAKE_BUILTIN_INITS:
         methods["__init__"] = self.fake_builtin_init
@@ -1007,8 +1006,9 @@ if __name__ == "__main__":
   -b -- use names from sys.builtin_module_names
   -q -- quiet, do not print anything on stdout. Errors still go to stderr.
   -u -- update, only recreate skeletons for newer files, and skip unchanged.
+  -x -- die on exceptions with a stacktrace; only for debugging.
   """
-  opts, fnames = getopt(sys.argv[1:], "d:hbqu")
+  opts, fnames = getopt(sys.argv[1:], "d:hbqux")
   opts = dict(opts)
   if not opts or '-h' in opts:
     print(helptext)
@@ -1018,6 +1018,7 @@ if __name__ == "__main__":
     sys.exit(1)
   quiet = '-q' in opts
   update_mode = "-u" in opts
+  debug_mode = "-x" in opts
   subdir = opts.get('-d', '')
   # determine names
   names = fnames
@@ -1086,6 +1087,7 @@ if __name__ == "__main__":
       outfile.close()
     except:
       sys.stderr.write("Failed to process " + name + " while " + action + "\n")
-      # Please don't add a 'raise' here. If we fail to process one module, it's not a sufficient reason
-      # to cancel processing the remaining ones.
-      continue
+      if debug_mode:
+        raise
+      else:
+        continue
