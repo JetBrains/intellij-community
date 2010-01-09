@@ -16,9 +16,10 @@
 
 package com.intellij.ide.macro;
 
-import com.intellij.ide.DataAccessors;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.module.Module;
 
 import java.io.File;
 
@@ -32,7 +33,8 @@ public final class ModuleFileDirMacro extends Macro {
   }
 
   public String expand(DataContext dataContext) {
-    final String path = DataAccessors.MODULE_FILE_PATH.from(dataContext);
+    final Module module = LangDataKeys.MODULE.getData(dataContext);
+    final String path = module != null ? module.getModuleFilePath() : null;
     if (path == null) {
       return null;
     }
