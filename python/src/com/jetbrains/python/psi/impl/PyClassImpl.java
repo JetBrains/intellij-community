@@ -203,7 +203,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
         }
       }
       else if (! PyBuiltinCache.BUILTIN_FILE.equals(getContainingFile().getName())) { // old-style *and* not builtin object() 
-        PyClass oldstyler = PyBuiltinCache.getInstance(this).getClass("___Classobj");
+        PyClass oldstyler = PyBuiltinCache.getInstance(this).getClass(PyNames.FAKE_OLD_BASE);
         if (oldstyler != null) result.add(oldstyler);
       }
       return result;

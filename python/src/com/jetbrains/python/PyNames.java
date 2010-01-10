@@ -20,6 +20,7 @@ public class PyNames {
 
   @NonNls public static final String OBJECT = "object";
   @NonNls public static final String NONE = "None";
+  @NonNls public static final String FAKE_OLD_BASE = "___Classobj";
 
   @NonNls public static final String CLASSMETHOD = "classmethod";
   @NonNls public static final String STATICMETHOD = "staticmethod";
@@ -31,7 +32,7 @@ public class PyNames {
     _UnderscoredAttributes.add("__bases__");
     //_UnderscoredAttributes.add("__builtins__");
     //_UnderscoredAttributes.add("__debug__");
-    //_UnderscoredAttributes.add("__dict__");
+    _UnderscoredAttributes.add("__dict__");
     _UnderscoredAttributes.add("__docformat__");
     _UnderscoredAttributes.add("__file__");
     //_UnderscoredAttributes.add("__future__");

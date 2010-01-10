@@ -186,9 +186,13 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         file.putCopyableUserData(PyFile.KEY_IS_DIRECTORY, Boolean.TRUE);
         return file; // ResolveImportUtil will extract directory part as needed, everyone else are better off with a file.
       }
-      else return null; // dir without __init__.py does not resolve
+      else {
+        return null;
+      } // dir without __init__.py does not resolve
     }
-    else return target;
+    else {
+      return target;
+    }
   }
 
   /**
@@ -219,7 +223,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
     final PyExpression qualifier = getQualifier();
     if (qualifier != null) {
-      // attributes
+      // regular attributes
       PyType qualifierType = qualifier.getType();
       if (qualifierType != null) {
         if (qualifier instanceof PyQualifiedExpression) {
@@ -237,7 +241,29 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         // resolve within the type proper
         PsiElement ref_elt = qualifierType.resolveMember(referencedName);
         if (ref_elt != null) ret.poke(ref_elt, RatedResolveResult.RATE_NORMAL);
-        return ret;
+      }
+      // special case of __doc__
+      if ("__doc__".equals(referencedName)) {
+        PsiElement docstring = null;
+        if (qualifierType instanceof PyClassType) {
+          PyClass qual_class = ((PyClassType)qualifierType).getPyClass();
+          if (qual_class != null) docstring = qual_class.getDocStringExpression();
+        }
+        else if (qualifierType instanceof PyModuleType) {
+          PsiFile qual_module = ((PyModuleType)qualifierType).getModule();
+          if (qual_module instanceof PyDocStringOwner) {
+            docstring = ((PyDocStringOwner)qual_module).getDocStringExpression();
+          }
+        }
+        else if (qualifier instanceof PyReferenceExpression) {
+          PsiElement qual_object = ((PyReferenceExpression)qualifier).resolve();
+          if (qual_object instanceof PyDocStringOwner) {
+            docstring = ((PyDocStringOwner)qual_object).getDocStringExpression();
+          }
+        }
+        if (docstring != null) {
+          ret.poke(docstring, RatedResolveResult.RATE_HIGH);
+        }
       }
       return ret;
     }
@@ -284,21 +310,28 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   // NOTE: very crude
   private static int getRate(PsiElement elt) {
     int rate;
-    if (elt instanceof PyImportElement || elt instanceof PyStarImportElement) rate = RatedResolveResult.RATE_LOW;
-    else if (elt instanceof PyFile) rate = RatedResolveResult.RATE_HIGH;
-    else rate = RatedResolveResult.RATE_NORMAL;
+    if (elt instanceof PyImportElement || elt instanceof PyStarImportElement) {
+      rate = RatedResolveResult.RATE_LOW;
+    }
+    else if (elt instanceof PyFile) {
+      rate = RatedResolveResult.RATE_HIGH;
+    }
+    else {
+      rate = RatedResolveResult.RATE_NORMAL;
+    }
     return rate;
   }
 
   private static Collection<PyExpression> collectAssignedAttributes(PyQualifiedExpression qualifier) {
     List<PyQualifiedExpression> qualifier_path = PyResolveUtil.unwindQualifiers(qualifier);
     if (qualifier_path != null) {
-      AssignmentCollectProcessor proc = new AssignmentCollectProcessor(qualifier_path)
-      ;
+      AssignmentCollectProcessor proc = new AssignmentCollectProcessor(qualifier_path);
       PyResolveUtil.treeCrawlUp(proc, qualifier);
       return proc.getResult();
     }
-    else return EMPTY_LIST; 
+    else {
+      return EMPTY_LIST;
+    }
   }
 
   // sorts and modifies results of resolveInner
@@ -437,7 +470,9 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
           Collections.addAll(variants, qualifierType.getCompletionVariants(this, ctx));
           return variants.toArray();
         }
-        else return qualifierType.getCompletionVariants(this, ctx);
+        else {
+          return qualifierType.getCompletionVariants(this, ctx);
+        }
       }
       return NO_VARIANTS;
     }

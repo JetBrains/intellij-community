@@ -7,9 +7,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFromImportStatement;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
+import static com.jetbrains.python.psi.resolve.ResolveImportUtil.ROLE_IN_IMPORT.*;
 import com.jetbrains.python.psi.resolve.VariantsProcessor;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,7 +32,8 @@ public class PyModuleType implements PyType { // Maybe make it a PyClassType ref
     ourPossibleFields.add("__name__");
     ourPossibleFields.add("__file__");
     ourPossibleFields.add("__path__");
-    ourPossibleFields = Collections.unmodifiableSet(ourPossibleFields); 
+    ourPossibleFields.add("__doc__");
+    ourPossibleFields = Collections.unmodifiableSet(ourPossibleFields);
   }
 
   public PyModuleType(PsiFile source) {
@@ -48,7 +51,8 @@ public class PyModuleType implements PyType { // Maybe make it a PyClassType ref
 
 
   /**
-   * @return a list of submodules of this module, either files or dirs, for aesier naming.
+   * @return a list of submodules of this module, either files or dirs, for easier naming; may contain filenames
+   * not suitable for import.
    */
   @NotNull
   public List<PsiFileSystemItem> getSubmodulesList() {
@@ -59,7 +63,8 @@ public class PyModuleType implements PyType { // Maybe make it a PyClassType ref
       if (mydir != null) { // just in case
         // file modules
         for (PsiFile f : mydir.getFiles()) {
-          if (f instanceof PyFile && !f.getName().equals(PyNames.INIT_DOT_PY)) result.add(f);
+          final String filename = f.getName();
+          if (f instanceof PyFile && !filename.equals(PyNames.INIT_DOT_PY)) result.add(f);
         }
         // dir modules
         for (PsiDirectory dir : mydir.getSubdirectories()) {
@@ -71,9 +76,10 @@ public class PyModuleType implements PyType { // Maybe make it a PyClassType ref
   }
 
   public Object[] getCompletionVariants(final PyReferenceExpression referenceExpression, ProcessingContext context) {
-    Set<String> names_already = context.get(PyType.CTX_NAMES);
+    Set<String> names_already = context.get(CTX_NAMES);
     List<Object> result = new ArrayList<Object>();
-    if (PsiTreeUtil.getParentOfType(referenceExpression, PyImportElement.class) == null) { // we're not in an import
+    ResolveImportUtil.ROLE_IN_IMPORT role = ResolveImportUtil.getRoleInImport(referenceExpression);
+    if (role == NONE) { // when not inside import, add regular attributes
       final VariantsProcessor processor = new VariantsProcessor();
       myModule.processDeclarations(processor, ResolveState.initial(), null, referenceExpression);
       if (names_already != null) {
