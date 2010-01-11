@@ -513,4 +513,8 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     setErrorText(null);
   }
 
+  @Override
+  protected String getDimensionServiceKey() {
+    return "FileChooserDialogImpl";
+  }
 }

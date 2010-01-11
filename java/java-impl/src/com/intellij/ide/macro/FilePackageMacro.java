@@ -15,10 +15,14 @@
  */
 package com.intellij.ide.macro;
 
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.psi.PsiPackage;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.JavaDataAccessors;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPackage;
+import org.jetbrains.annotations.Nullable;
 
 public final class FilePackageMacro extends Macro {
   public String getName() {
@@ -30,8 +34,17 @@ public final class FilePackageMacro extends Macro {
   }
 
   public String expand(DataContext dataContext) {
-    PsiPackage aPackage = JavaDataAccessors.FILE_PACKAGE.from(dataContext);
+    PsiPackage aPackage = getFilePackage(dataContext);
     if (aPackage == null) return null;
     return aPackage.getName();
+  }
+
+  @Nullable
+  static PsiPackage getFilePackage(DataContext dataContext) {
+    PsiFile psiFile = DataKeys.PSI_FILE.getData(dataContext);
+    if (psiFile == null) return null;
+    PsiDirectory containingDirectory = psiFile.getContainingDirectory();
+    if (containingDirectory == null || !containingDirectory.isValid()) return null;
+    return JavaDirectoryService.getInstance().getPackage(containingDirectory);
   }
 }

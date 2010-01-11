@@ -15,14 +15,13 @@
  */
 package com.intellij.ide.macro;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.psi.PsiPackage;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.JavaDataAccessors;
 
 public class FileFQPackage extends Macro {
-  public String expand(DataContext dataContext) throws Macro.ExecutionCancelledException {
-    PsiPackage aPackage = JavaDataAccessors.FILE_PACKAGE.from(dataContext);
+  public String expand(DataContext dataContext) {
+    PsiPackage aPackage = FilePackageMacro.getFilePackage(dataContext);
     if (aPackage == null) return null;
     return aPackage.getQualifiedName();
   }

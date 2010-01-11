@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/**
- * class ViewerAction
- * created Aug 27, 2001
- * @author Jeka
- */
 package com.intellij.internal.psiView;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -27,16 +21,18 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 
-public class ViewerAction extends AnAction implements DumbAware {
+/**
+ * @author Konstantin Bulenkov
+ */
+public class PsiViewerAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
-    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-    PsiViewerDialog dialog = new PsiViewerDialog(project,false);
-    dialog.show();
+    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    new PsiViewerDialog(project, false).show();
   }
 
   @Override
   public void update(AnActionEvent e) {
-    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     e.getPresentation().setEnabled(project != null);
   }
 }
