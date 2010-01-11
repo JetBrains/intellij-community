@@ -215,14 +215,13 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
       public void run() {
         if (isDisabled()) return;
         try {
-          for (final FileViewProvider viewProvider : myUpdatedProviders) {
+          FileViewProvider[] viewProviders = myUpdatedProviders.toArray(new FileViewProvider[myUpdatedProviders.size()]);
+          for (final FileViewProvider viewProvider : viewProviders) {
             doPostponedFormatting(viewProvider);
           }
         }
         finally {
           LOG.assertTrue(myReformatElements.isEmpty());
-          myUpdatedProviders.clear();
-          myReformatElements.clear();
         }
       }
     });
@@ -231,13 +230,19 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
   public void doPostponedFormatting(final FileViewProvider viewProvider) {
     atomic(new Runnable() {
       public void run() {
-        if (isDisabled()) return;
+        if (isDisabled() || !myUpdatedProviders.contains(viewProvider)) return;
 
-        disablePostprocessFormattingInside(new Runnable() {
-          public void run() {
-            doPostponedFormattingInner(viewProvider);
-          }
-        });
+        try {
+          disablePostprocessFormattingInside(new Runnable() {
+            public void run() {
+              doPostponedFormattingInner(viewProvider);
+            }
+          });
+        }
+        finally {
+          myUpdatedProviders.remove(viewProvider);
+          myReformatElements.remove(viewProvider);
+        }
       }
     });
   }
