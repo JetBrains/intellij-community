@@ -19,7 +19,8 @@ setProperty("pluginFilter", [
         "CSS", "css-api",
         "JSInspections",
         "JSIntentionPowerPack",
-        "SpellChecker", "spellchecker"
+        "SpellChecker", "spellchecker",
+        "yaml"
 ])
 
 private List platformImplementationModules() {
@@ -135,6 +136,8 @@ target('default': "Build artifacts") {
           usedJars: usedJars,
 
           "$sandbox/layout")
+
+  buildExe()
   
   ant.echo(message: buildName, file: "$sandbox/layout/build.txt")
 
@@ -156,7 +159,7 @@ target('default': "Build artifacts") {
 }
 
 String appInfoFile() {
-  return "$home/out/classes/production/python-ide/idea/PythonApplicationInfo.xml"
+  return "$home/out/pycharm/classes/production/python-ide/idea/PythonApplicationInfo.xml"
 }
 
 void wire_build_date(String buildName) {
