@@ -166,6 +166,18 @@ void wire_build_date(String buildName) {
   }
 }
 
+def buildExe() {
+  if (!isMac()) {
+    executeExternalAnt(
+            "config.file": "$home/python/build/pycharm.exe4j",
+            "output.file": "pycharm.exe",
+            "$home/build/buildLauncher.xml")
+  }
+  else {
+    project.warning("Building .exe executable skipped")
+  }
+}
+
 def layoutFull(Map args, String target) {
   def openapiModules = platformApiModules()
   def implementationModules = [platformImplementationModules(), "python", "python-ide", "python-py"].flatten()
