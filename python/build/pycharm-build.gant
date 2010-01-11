@@ -1,0 +1,237 @@
+import org.jetbrains.jps.Module
+import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
+import org.jetbrains.jps.Jps
+
+includeTargets << new File("${guessHome(this as Script)}/build/scripts/utils.gant")
+includeTool << Jps
+
+requireProperty("buildNumber", requireProperty("build.number", "94.SNAPSHOT"))
+
+setProperty("dryRun", false)
+                          
+setProperty("pluginFilter", [
+        "htmltools",
+        "JavaScriptLanguage",
+        "cvsIntegration", "cvs-core", "cvs-plugin", "javacvs-src", "smartcvs-src",
+        "PerforceIntegration", "Perforce", "perforce_util",
+        "svn4idea",
+        "git4idea",
+        "CSS", "css-api",
+        "JSInspections",
+        "JSIntentionPowerPack",
+        "SpellChecker", "spellchecker"
+])
+
+private List platformImplementationModules() {
+  return [
+          "RegExpSupport",
+          "license_common",
+          "platform-ultimate",
+          "platform-impl",
+          "vcs-impl",
+          "lang-impl",
+          "testRunner",
+          "smRunner",
+          "xdebugger-impl",
+          "testFramework",
+          "xml",
+          "lvcs-impl",
+          "images",
+  ]
+}
+
+private List<String> platformApiModules() {
+  return ["platform-api", "lvcs-api", "lang-api", "vcs-api", "usageView", "xdebugger-api", "xml-openapi"]
+}
+
+def includeFile(String filepath) {
+  Script s = groovyShell.parse(new File(filepath))
+  s.setBinding(binding)
+  s
+}
+
+target('default': "Build artifacts") {
+
+  def sandbox = "$home/out/pycharm";
+
+  def modules = [
+          "python", "python-ide", "python-py", platformApiModules(), platformImplementationModules(), pluginFilter
+  ].flatten()
+  
+  loadProject()
+
+//  project.dryRun = true
+  project.stage("Cleaning up sandbox folder")
+  
+  project.targetFolder = "$sandbox/classes"
+  project.dryRun = dryRun
+
+  if (!dryRun) {
+    ant.delete(dir: sandbox)
+    ant.mkdir(dir: sandbox)
+  }
+
+
+  ant.tstamp() {
+    format(property: "today.year", pattern: "yyyy")
+  }
+
+  ant.patternset(id: "resources.included") {
+    include(name: "**/*.properties")
+    include(name: "fileTemplates/**/*")
+    include(name: "inspectionDescriptions/**/*")
+    include(name: "intentionDescriptions/**/*")
+    include(name: "tips/**/*")
+    include(name: "search/**/*")
+  }
+
+  ant.patternset(id: "resources.excluded") {
+    exclude(name: "**/*.properties")
+    exclude(name: "fileTemplates/**/*")
+    exclude(name: "fileTemplates")
+    exclude(name: "inspectionDescriptions/**/*")
+    exclude(name: "inspectionDescriptions")
+    exclude(name: "intentionDescriptions/**/*")
+    exclude(name: "intentionDescriptions")
+    exclude(name: "tips/**/*")
+    exclude(name: "tips")
+  }
+
+  def usedJars = new HashSet();
+
+  project.clean()
+  modules.each {
+    Module module = project[it] as Module
+    if (module != null) {
+      project.info("Building $module.name")
+      module.runtimeClasspath().each {
+        File file = new File(it)
+        if (file.exists()) {
+          String path = file.canonicalPath.replace('\\', '/')
+          String normalizedHome = home.replace('\\', '/')
+          if (path.endsWith(".jar") && (path.startsWith("$normalizedHome/lib/") || path.startsWith("$normalizedHome/community/lib/"))
+              && !path.contains("/dev/") && !path.contains("/rt/") && !path.contains("/ant/")) {
+            usedJars.add(path);
+          }
+        }
+
+      }
+      module.make()
+    }
+    else {
+      project.warning("$it is not a module")
+    }
+  }
+
+  def buildName = "PY-$buildNumber"
+
+  wire_build_date(buildName)
+  layoutFull(
+          buildName: buildName,
+          version: "1.0",
+          system_selector: "PY",
+          jdk_req: "1.6*",
+          vmoptions: "-Xms128m -Xmx512m -XX:MaxPermSize=250m -ea",
+          usedJars: usedJars,
+
+          "$sandbox/layout")
+  
+  ant.echo(message: buildName, file: "$sandbox/layout/build.txt")
+
+  def root = "${buildName}.app"
+
+  def artifactsPath = "$home/out/artifacts"
+  ant.mkdir(dir: artifactsPath)
+  ant.zip(zipfile: "$artifactsPath/${buildName}.zip") {
+    tarfileset(dir: "$sandbox/layout", prefix: root) {
+      exclude(name: "bin/*.sh")
+      exclude(name: "Contents/MacOS/idea")
+    }
+
+    tarfileset(dir: "$sandbox/layout", filemode: "755", prefix: root) {
+      include(name: "bin/*.sh")
+      include(name: "Contents/MacOS/idea")
+    }
+  }
+}
+
+String appInfoFile() {
+  return "$home/out/classes/production/python-ide/idea/PythonApplicationInfo.xml"
+}
+
+void wire_build_date(String buildName) {
+  if (!dryRun) {
+    ant.replace(token: "__BUILD_NUMBER__", value: buildName, file: appInfoFile())
+    ant.replace(token: "__BUILD_DATE__", value: DSTAMP, file: appInfoFile())
+  }
+}
+
+def layoutFull(Map args, String target) {
+  def openapiModules = platformApiModules()
+  def implementationModules = [platformImplementationModules(), "python", "python-ide", "python-py"].flatten()
+
+  layout(target) {
+    dir("lib") {
+      jar("util.jar") { module("util") }
+
+      jar("openapi.jar") {
+        openapiModules.each { module it}
+      }
+
+      jar("annotations.jar") { module("annotations")}
+      jar("extensions.jar") { module("extensions")}
+
+      jar("pycharm.jar") {
+        implementationModules.each { module it}
+      }
+
+      jar("bootstrap.jar") { module("bootstrap")}
+      jar("resources.jar") {
+        module("platform-resources")
+      }
+
+      jar("forms_rt.jar") {
+        module("forms_rt")
+      }
+
+      jar("resources_en.jar") {
+        module("platform-resources-en")
+      }
+
+      jar("icons.jar") { module("icons") }
+      jar("boot.jar") { module("boot") }
+
+      args.usedJars.each {
+        fileset(file: it)
+      }
+
+      fileset(dir: "$home/community/lib/src") {
+        include(name: "trove4j_changes.txt")
+        include(name: "trove4j_src.jar")
+      }
+    }
+
+    def layouts = includeFile("$home/build/scripts/layouts.gant")
+    layouts.layoutPlugins()
+
+    dir("bin") {
+      fileset(dir: "$home/community/bin") { include(name: "*.*") }
+      fileset(dir: "$home/community/bin/nix")
+      fileset(dir: "$home/community/bin/mac")
+    }
+  }
+
+  ant.copy(todir: target) {
+    fileset(dir: "$home/community/build/conf/mac")
+  }
+
+  ant.replace(file: "$target/Contents/Info.plist") {
+    replacefilter(token: "@@build@@", value: args.buildName)
+
+
+    replacefilter(token: "@@version@@", value: args.version)
+    replacefilter(token: "@@vmoptions@@", value: args.vmoptions + " -Xverify:none -XX:+UseCompressedOOPS -XX:+DoEscapeAnalysis -Didea.platform.prefix=Python")
+    replacefilter(token: "@@system_selector@@", value: args.system_selector)
+    replacefilter(token: "@@jdk_req@@", value: args.jdk_req)
+  }
+}
