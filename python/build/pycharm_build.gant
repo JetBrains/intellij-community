@@ -51,6 +51,8 @@ def includeFile(String filepath) {
   s
 }
 
+setProperty("buildName", "PY-$buildNumber")
+
 target('default': "Build artifacts") {
 
   def sandbox = "$home/out/pycharm";
@@ -123,8 +125,6 @@ target('default': "Build artifacts") {
       project.warning("$it is not a module")
     }
   }
-
-  def buildName = "PY-$buildNumber"
 
   wire_build_date(buildName)
   layoutFull(
