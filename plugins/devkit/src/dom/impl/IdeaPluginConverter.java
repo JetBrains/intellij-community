@@ -15,8 +15,6 @@
  */
 package org.jetbrains.idea.devkit.dom.impl;
 
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
@@ -66,10 +64,7 @@ public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
   public static Collection<IdeaPlugin> collectAllVisiblePlugins(@NotNull XmlFile xmlFile) {
 
     Project project = xmlFile.getProject();
-    Module module = ModuleUtil.findModuleForPsiElement(xmlFile);
-
-    GlobalSearchScope scope = module == null ? GlobalSearchScope.allScope(project) :
-                              GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, true);
+    GlobalSearchScope scope = GlobalSearchScope.allScope(project);
     List<DomFileElement<IdeaPlugin>> files = DomService.getInstance().getFileElements(IdeaPlugin.class, project, scope);
     return ContainerUtil.map(files, new Function<DomFileElement<IdeaPlugin>, IdeaPlugin>() {
       public IdeaPlugin fun(DomFileElement<IdeaPlugin> ideaPluginDomFileElement) {
