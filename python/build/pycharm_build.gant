@@ -20,7 +20,7 @@ setProperty("pluginFilter", [
         "JSInspections",
         "JSIntentionPowerPack",
         "SpellChecker", "spellchecker",
-        "yaml"
+        "yaml", "yaml-plugin"
 ])
 
 private List platformImplementationModules() {
@@ -156,6 +156,12 @@ target('default': "Build artifacts") {
       include(name: "Contents/MacOS/idea")
     }
   }
+
+  def installer = includeFile("nsis_installer.gant")
+  installer.nsis_installer(["$sandbox/layout"],
+                           "$home/python/build/strings.nsi",
+                           "$home/build/conf/nsis/paths.nsi",
+                           "PyCharmPY-")
 }
 
 String appInfoFile() {
