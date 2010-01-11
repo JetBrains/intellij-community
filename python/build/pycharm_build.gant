@@ -256,3 +256,42 @@ def layoutFull(Map args, String target) {
     replacefilter(token: "@@jdk_req@@", value: args.jdk_req)
   }
 }
+
+def executeExternalAnt(Map args, String file) {
+  set(args, "build.number", buildName)
+  set(args, "project.home", home)
+  set(args, "artifacts.path", "$home/out/artifacts")
+  //set(args, "dist.win", paths.distWin)
+  //set(args, "dist.all", paths.distAll)
+
+  //set(args, "dist.all.15", paths.distAll15)
+  //set(args, "dist.all.16", paths.distAll16)
+  set(args, "sandbox.path", "$home/out/pycharm")
+  set(args, "component.version.major", getProperty("component.version.major"))
+  set(args, "component.version.minor", "\"" + getProperty("component.version.minor") + "\"")
+
+  ant.java(failonerror: "true", classname: "org.apache.tools.ant.Main", fork: "true") {
+    args.each { String key, String value ->
+      jvmarg(line: "-D$key=$value")
+    }
+
+    jvmarg(line: "-Xmx250m")
+
+    classpath {
+      fileset(dir: "$home/build/lib") {
+        include (name: "commons-net-1.4.1.jar")
+        include (name: "jsch-0.1.28.jar")
+      }
+
+      fileset(dir: "$ch/lib/ant/lib") {
+        include (name: "*.jar")
+      }
+
+      fileset (file: "$jdk15/lib/tools.jar")
+      fileset (file: "$ch/lib/oromatcher.jar")
+    }
+
+    arg(value: "-f")
+    arg(value: file)
+  }
+}
