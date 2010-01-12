@@ -257,6 +257,12 @@ def layoutFull(Map args, String target) {
   }
 }
 
+def set(Map args, String key, Object value) {
+  if (!args.containsKey(key)) {
+    args[key] = value
+  }
+}
+
 def executeExternalAnt(Map args, String file) {
   set(args, "build.number", buildName)
   set(args, "project.home", home)
