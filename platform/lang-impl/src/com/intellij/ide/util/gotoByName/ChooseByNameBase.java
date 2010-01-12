@@ -16,6 +16,7 @@
 
 package com.intellij.ide.util.gotoByName;
 
+import com.intellij.Patches;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.ide.ui.UISettings;
@@ -965,7 +966,14 @@ public abstract class ChooseByNameBase{
         }
         return;
       }
-      super.processKeyEvent(e);
+      try {
+        super.processKeyEvent(e);
+      }
+      catch (NullPointerException e1) {
+        if (!Patches.SUN_BUG_6322854) {
+          throw e1;
+        }
+      }
     }
 
     private void fillInCommonPrefix(final String pattern) {
