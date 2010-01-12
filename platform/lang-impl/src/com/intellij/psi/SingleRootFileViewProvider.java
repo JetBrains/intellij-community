@@ -162,7 +162,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     if (component.isViewProviderLocked(this)) {
       throw new RuntimeException("Document is locked by write PSI operations. Use PsiDocumentManager.doPostponedOperationsAndUnblockDocument() to commit PSI changes to the document.");
     }
-    component.doPostponedFormatting(this);
+    component.postponedFormatting(this);
     final PsiFileImpl psiFile = (PsiFileImpl)getCachedPsi(getBaseLanguage());
     if (psiFile != null && psiFile.isContentsLoaded() && getContent()instanceof DocumentContent) {
       setContent(new PsiFileContent(psiFile, getModificationStamp()));

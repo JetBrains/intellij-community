@@ -227,10 +227,18 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
     });
   }
 
+  public void postponedFormatting(final FileViewProvider viewProvider) {
+    postponedFormattingImpl(viewProvider, true);
+  }
+
   public void doPostponedFormatting(final FileViewProvider viewProvider) {
+    postponedFormattingImpl(viewProvider, false);
+  }
+
+  private void postponedFormattingImpl(final FileViewProvider viewProvider, final boolean check) {
     atomic(new Runnable() {
       public void run() {
-        if (isDisabled() || !myUpdatedProviders.contains(viewProvider)) return;
+        if (isDisabled() || check && !myUpdatedProviders.contains(viewProvider)) return;
 
         try {
           disablePostprocessFormattingInside(new Runnable() {
