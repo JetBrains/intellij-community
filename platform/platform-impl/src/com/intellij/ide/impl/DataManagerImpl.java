@@ -26,6 +26,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.StringSetSpinAllocator;
@@ -223,6 +225,14 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
         if (activeWindow == null) return null;
       }
     }
+
+    if (Registry.is("actionSystem.noContextComponentWhileFocusTransfer")) {
+      IdeFocusManager fm = IdeFocusManager.findInstanceByComponent(activeWindow);
+      if (fm.isFocusBeingTransferred()) {
+        return null;
+      }
+    }
+
     // try to find first parent window that has focus
     Window window = activeWindow;
     Component focusedComponent = null;
