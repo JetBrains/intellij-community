@@ -7,6 +7,7 @@
   <icon size32="/icon.png" size16="/icon_small.png" size32opaque="/icon.png"/>
   <package code="__PACKAGE_CODE__"/>
   <names product="PyCharm" fullname="PyCharm"/>
+  <install-over minbuild="0" maxbuild="0" version="1.x"/>
 
   <welcome-screen caption-url="/welcomeCaption.png" slogan-url="/developSlogan.png"/>
 

@@ -53,9 +53,25 @@ def includeFile(String filepath) {
   s
 }
 
-def sandbox = "$home/out/pycharm";
-def sandbox_win = "$sandbox/win";
+boolean isEap() {
+  return "true" == p("component.version.eap")
+}
 
+class Paths {
+  final sandbox
+  final artifacts
+
+  def Paths(String home) {
+    sandbox = "$home/out/pycharm"
+    artifacts = "$home/out/artifacts"
+  }
+}
+
+setProperty("paths", new Paths(home))
+
+def sandbox = "$home/out/pycharm";
+
+setProperty("sandbox_win", "$sandbox/win");
 setProperty("buildName", "PY-$buildNumber")
 
 target('default': "Build artifacts") {
@@ -83,6 +99,7 @@ target('default': "Build artifacts") {
   }
 
   ant.xmlproperty(file: "$home/python/resources/idea/PythonApplicationInfo.xml", collapseAttributes: "true")
+  setProperty("isEap", isEap())
 
   ant.patternset(id: "resources.included") {
     include(name: "**/*.properties")
@@ -148,9 +165,8 @@ target('default': "Build artifacts") {
 
   def root = "${buildName}.app"
 
-  def artifactsPath = "$home/out/artifacts"
-  ant.mkdir(dir: artifactsPath)
-  ant.zip(zipfile: "$artifactsPath/${buildName}.zip") {
+  ant.mkdir(dir: paths.artifacts)
+  ant.zip(zipfile: "${paths.artifacts}/${buildName}.zip") {
     tarfileset(dir: "$sandbox/layout", prefix: root) {
       exclude(name: "bin/*.sh")
       exclude(name: "Contents/MacOS/idea")
@@ -163,10 +179,10 @@ target('default': "Build artifacts") {
   }
 
   def installer = includeFile("$home/build/scripts/nsis_installer.gant")
-  installer.nsis_installer(["$sandbox/layout", $sandbox_win],
+  installer.nsis_installer(["$sandbox/layout", sandbox_win],
                            "$home/python/build/strings.nsi",
-                           "$home/build/conf/nsis/paths.nsi",
-                           "PyCharmPY-")
+                           "$home/python/build/paths.nsi",
+                           "pycharm")
 }
 
 String appInfoFile() {
@@ -182,7 +198,7 @@ void wire_build_date(String buildName) {
 
 def buildExe() {
   if (!isMac()) {
-    ant.mkdir(dir: $sandbox_win)
+    ant.mkdir(dir: sandbox_win)
     executeExternalAnt(
             "config.file": "$home/python/build/pycharm.exe4j",
             "output.file": "pycharm.exe",
@@ -272,8 +288,8 @@ def set(Map args, String key, Object value) {
 def executeExternalAnt(Map args, String file) {
   set(args, "build.number", buildName)
   set(args, "project.home", home)
-  set(args, "artifacts.path", "$home/out/artifacts")
-  set(args, "dist.win", $sandboxWin)
+  set(args, "artifacts.path", paths.artifacts)
+  set(args, "dist.win", sandbox_win)
   //set(args, "dist.all", paths.distAll)
 
   //set(args, "dist.all.15", paths.distAll15)
