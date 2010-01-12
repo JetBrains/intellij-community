@@ -60,9 +60,15 @@ boolean isEap() {
 class Paths {
   final sandbox
   final artifacts
+  final ideaSystem
+  final ideaConfig
 
   def Paths(String home) {
     sandbox = "$home/out/pycharm"
+
+    ideaSystem = "$sandbox/system"
+    ideaConfig = "$sandbox/config"
+
     artifacts = "$home/out/artifacts"
   }
 }
@@ -148,6 +154,7 @@ target('default': "Build artifacts") {
     }
   }
 
+  build_searchable_options()
   wire_build_date(buildName)
   layoutFull(
           buildName: buildName,
@@ -185,6 +192,26 @@ target('default': "Build artifacts") {
                            "$home/python/build/strings.nsi",
                            "$home/python/build/paths.nsi",
                            "pycharm", false)
+}
+
+def build_searchable_options() {
+  def dest_dir = "${project ["platform-resources"].output}/search"
+  project.stage("Building searchable options")
+  ant.mkdir(dir: "${dest_dir}/search")
+  ant.copy(file: "$home/build/idea.license", todir: paths.ideaSystem)
+  ant.copy(file: "$home/build/rubymine.license", todir: paths.ideaSystem)
+  ant.java(classname: "com.intellij.idea.Main", fork: "true") {
+    jvmarg(line: "-ea -Xmx250m -Didea.home.path=$home -Didea.system.path=${paths.ideaSystem} -Didea.config.path=${paths.ideaConfig} -Didea.platform.prefix=Python")
+    jvmarg(value: "-Xbootclasspath/a:${boot.output}")
+    arg(line: "traverseUI ${dest_dir}/searchableOptions.xml")
+
+    classpath() {
+      pathelement(location: "$ch/lib/junit.jar")
+      project["python-ide"].runtimeClasspath().each {
+        pathelement(location: it)
+      }
+    }
+  }
 }
 
 String appInfoFile() {
@@ -289,7 +316,7 @@ def layoutWin(String target) {
   layout(target) {
     dir("bin") {
       fileset(dir: "$home/bin") {
-        include(name: "libyjpagent.dll")
+        include(name: "jpagent.dll")
       }
       fileset(dir: "$home/python/build") {
         include(name: "pycharm.bat")
