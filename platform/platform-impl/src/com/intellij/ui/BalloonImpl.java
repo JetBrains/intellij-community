@@ -119,6 +119,8 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow {
     final Point mouseEventPoint = me.getPoint();
     SwingUtilities.convertPointToScreen(mouseEventPoint, me.getComponent());
 
+    if (!myComp.isShowing()) return false;
+
     final Rectangle compRect = new Rectangle(myComp.getLocationOnScreen(), myComp.getSize());
     if (compRect.contains(mouseEventPoint)) return true;
     return false;

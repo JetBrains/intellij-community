@@ -39,6 +39,7 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -437,7 +438,10 @@ public class DocumentationManager {
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-              component.setText(CodeInsightBundle.message("javadoc.external.fetch.error.message", ex[0].getLocalizedMessage()), true);
+              String message = ex[0] instanceof IndexNotReadyException
+                             ? "Documentation is not available until indices are built."
+                             : CodeInsightBundle.message("javadoc.external.fetch.error.message", ex[0].getLocalizedMessage());
+              component.setText(message, true);
               callback.setDone();
             }
           });

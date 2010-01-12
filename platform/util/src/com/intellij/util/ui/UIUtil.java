@@ -1060,5 +1060,9 @@ public class UIUtil {
     }
   }
 
+  public static boolean isPrinting(Graphics g) {
+    return g instanceof PrintGraphics;
+  }
+
 }
 
