@@ -7,6 +7,7 @@ includeTool << Jps
 
 requireProperty("buildNumber", requireProperty("build.number", "94.SNAPSHOT"))
 
+setProperty("ch", "$home/community")
 setProperty("dryRun", false)
                           
 setProperty("pluginFilter", [
