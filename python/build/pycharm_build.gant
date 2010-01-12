@@ -9,7 +9,8 @@ requireProperty("buildNumber", requireProperty("build.number", "94.SNAPSHOT"))
 
 setProperty("ch", "$home/community")
 setProperty("dryRun", false)
-                          
+setProperty("jdk16", guessJdk())
+
 setProperty("pluginFilter", [
         "htmltools",
         "JavaScriptLanguage",
@@ -296,7 +297,7 @@ def executeExternalAnt(Map args, String file) {
         include (name: "*.jar")
       }
 
-      fileset (file: "$jdk15/lib/tools.jar")
+      fileset (file: "$jdk16/lib/tools.jar")
       fileset (file: "$ch/lib/oromatcher.jar")
     }
 
