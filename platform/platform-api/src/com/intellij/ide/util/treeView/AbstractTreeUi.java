@@ -2379,7 +2379,9 @@ public class AbstractTreeUi {
           }
         }
 
-        myTreeModel.removeNodeFromParent(node);
+        if (node.getParent() != null) {
+          myTreeModel.removeNodeFromParent(node);
+        }
       }
     });
   }
