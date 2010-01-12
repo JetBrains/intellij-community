@@ -8,11 +8,8 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
-import com.intellij.openapi.util.IconLoader;
 import com.jetbrains.python.PythonModuleTypeBase;
-import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,15 +17,6 @@ import java.util.List;
  * @author yole
  */
 public class PythonModuleType extends PythonModuleTypeBase<PythonModuleBuilder> {
-  @NonNls public static final String PYTHON_MODULE = "PYTHON_MODULE";
-  private final Icon myBigIcon = IconLoader.getIcon("/com/jetbrains/python/python_24.png");
-  private final Icon myOpenIcon = IconLoader.getIcon("/com/jetbrains/python/pythonOpen.png");
-  private final Icon myClosedIcon = IconLoader.getIcon("/com/jetbrains/python/pythonClosed.png");
-
-  public PythonModuleType() {
-    super(PYTHON_MODULE);
-  }
-
   public static PythonModuleType getInstance() {
     return (PythonModuleType)ModuleTypeManager.getInstance().findByID(PYTHON_MODULE);
   }
@@ -48,21 +36,5 @@ public class PythonModuleType extends PythonModuleTypeBase<PythonModuleBuilder> 
 
   public PythonModuleBuilder createModuleBuilder() {
     return new PythonModuleBuilder();
-  }
-
-  public String getName() {
-    return "Python Module";
-  }
-
-  public String getDescription() {
-    return "Provides facilities for developing Python applications";
-  }
-
-  public Icon getBigIcon() {
-    return myBigIcon;
-  }
-
-  public Icon getNodeIcon(final boolean isOpened) {
-    return isOpened ? myOpenIcon : myClosedIcon;
   }
 }
