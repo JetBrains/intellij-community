@@ -164,7 +164,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
       field.set(to, field.get(from));
     }
     else {
-      System.out.println("Field not copied " + field.getName());
+      throw new RuntimeException("Field not copied " + field.getName());
     }
   }
 

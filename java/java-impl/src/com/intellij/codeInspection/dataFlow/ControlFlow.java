@@ -92,10 +92,6 @@ public class ControlFlow {
     myFields = fields;
   }
 
-  public void dump(PrintStream p) {
-    p.println(toString());
-  }
-
 
   public String toString() {
     StringBuilder result = new StringBuilder();
