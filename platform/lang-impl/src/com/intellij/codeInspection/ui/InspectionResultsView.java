@@ -17,7 +17,6 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.CommonBundle;
-import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -31,9 +30,9 @@ import com.intellij.codeInspection.ui.actions.ExportHTMLAction;
 import com.intellij.codeInspection.ui.actions.InspectionsOptionsToolbarAction;
 import com.intellij.codeInspection.ui.actions.InvokeQuickFixAction;
 import com.intellij.ide.*;
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -80,6 +79,8 @@ import java.util.List;
  * @author max
  */
 public class InspectionResultsView extends JPanel implements Disposable, OccurenceNavigator, DataProvider {
+  public static final DataKey<InspectionResultsView> DATA_KEY = DataKey.create("inspectionView");
+
   private final Project myProject;
   private InspectionTree myTree;
   private final Browser myBrowser;
@@ -566,15 +567,15 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
   public Object getData(String dataId) {
-    if (dataId.equals(DataConstants.HELP_ID)) return HELP_ID;
-    if (dataId.equals(DataConstantsEx.INSPECTION_VIEW)) return this;
+    if (PlatformDataKeys.HELP_ID.is(dataId)) return HELP_ID;
+    if (InspectionResultsView.DATA_KEY.is(dataId)) return this;
     if (myTree == null) return null;
     TreePath[] paths = myTree.getSelectionPaths();
 
     if (paths == null) return null;
 
     if (paths.length > 1) {
-      if (DataConstants.PSI_ELEMENT_ARRAY.equals(dataId)) {
+      if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
         return collectPsiElements();
       }
       else {
@@ -608,14 +609,14 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         }
       }
 
-      if (DataConstants.NAVIGATABLE.equals(dataId)) {
+      if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
         return getSelectedNavigatable(problem, psiElement);
       }
-      else if (DataConstants.PSI_ELEMENT.equals(dataId)) {
+      else if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
         return psiElement.isValid() ? psiElement : null;
       }
     }
-    else if (selectedNode instanceof ProblemDescriptionNode && DataConstants.NAVIGATABLE.equals(dataId)) {
+    else if (selectedNode instanceof ProblemDescriptionNode && PlatformDataKeys.NAVIGATABLE.is(dataId)) {
       return getSelectedNavigatable(((ProblemDescriptionNode)selectedNode).getDescriptor());
     }
 

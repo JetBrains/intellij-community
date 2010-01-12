@@ -37,6 +37,10 @@
 
   <extensionPoint name="intentionAction"
                   beanClass="com.intellij.codeInsight.intention.IntentionActionBean"/>
+  
+  <extensionPoint name="codeInsight.unresolvedReferenceQuickFixProvider"
+                  interface="com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider"/>
+
 
   <extensionPoint name="braceMatcher"
                   beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint"/>

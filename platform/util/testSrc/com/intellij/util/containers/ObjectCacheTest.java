@@ -20,11 +20,7 @@ import junit.framework.Assert;
 import junit.framework.TestCase;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lvo
- * Date: Oct 24, 2005
- * Time: 11:24:04 AM
- * To change this template use File | Settings | File Templates.
+ * @author lvo
  */
 public class ObjectCacheTest extends TestCase {
   public void testCacheFiniteness() {
@@ -59,7 +55,7 @@ public class ObjectCacheTest extends TestCase {
 
   final private static HashMap removedPairs = new HashMap();
 
-  private class CacheDeletedPairsListener implements ObjectCache.DeletedPairsListener {
+  private static class CacheDeletedPairsListener implements ObjectCache.DeletedPairsListener {
     public void objectRemoved(Object key, Object value) {
       removedPairs.put(key, value);
     }

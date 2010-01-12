@@ -15,8 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.rename;
 
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -44,7 +44,7 @@ public class PropertyRenameHandler implements RenameHandler {
 
   @Nullable
   private static GrField getProperty(DataContext dataContext) {
-    final PsiElement element = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
+    final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
     if (element instanceof GrField && ((GrField)element).isProperty()) return (GrField)element;
     if (element instanceof GrAccessorMethod) return ((GrAccessorMethod)element).getProperty();
     return null;

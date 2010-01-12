@@ -136,7 +136,7 @@ class UndoRedoStacksHolder {
     }
   }
 
-  private void doAddToStack(LinkedList<UndoableGroup> stack, UndoableGroup group, int limit) {
+  private static void doAddToStack(LinkedList<UndoableGroup> stack, UndoableGroup group, int limit) {
     if (!group.isUndoable() && stack.isEmpty()) return;
     
     stack.addLast(group);
@@ -187,7 +187,7 @@ class UndoRedoStacksHolder {
     }
   }
 
-  private void doInvalidateAllGlobalActions(LinkedList<UndoableGroup> stack) {
+  private static void doInvalidateAllGlobalActions(LinkedList<UndoableGroup> stack) {
     for (UndoableGroup g : stack) {
       g.invalidateIfGlobal();
     }

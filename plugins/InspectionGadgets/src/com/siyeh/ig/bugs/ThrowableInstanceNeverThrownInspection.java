@@ -137,7 +137,8 @@ public class ThrowableInstanceNeverThrownInspection extends BaseInspection {
         public static PsiElement getParent(PsiElement element) {
             PsiElement parent = element;
             while (parent instanceof PsiParenthesizedExpression ||
-                    parent instanceof PsiConditionalExpression) {
+                    parent instanceof PsiConditionalExpression ||
+                    parent instanceof PsiTypeCastExpression) {
                 parent = parent.getParent();
             }
             final PsiElement skipped = skipInitCause(parent);

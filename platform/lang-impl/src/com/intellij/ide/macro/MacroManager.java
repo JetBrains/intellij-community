@@ -19,7 +19,6 @@ package com.intellij.ide.macro;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.components.ServiceManager;
@@ -58,7 +57,6 @@ public final class MacroManager {
     registerMacro(new JdkPathMacro());
     registerMacro(new PromptMacro());
     registerMacro(new SourcepathEntryMacro());
-    //registerMacro(new ProjectFilePathMacro());
     registerMacro(new ProjectFileDirMacro());
     registerMacro(new ProjectNameMacro());
     registerMacro(new ProjectPathMacro());
@@ -101,15 +99,20 @@ public final class MacroManager {
   }
 
   private static DataContext getCorrectContext(DataContext dataContext) {
-    if (dataContext.getData(DataConstants.FILE_EDITOR) != null) return dataContext;
+    if (PlatformDataKeys.FILE_EDITOR.getData(dataContext) != null) {
+      return dataContext;
+    }
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    if (project == null) return dataContext;
+    if (project == null) {
+      return dataContext;
+    }
     FileEditorManager editorManager = FileEditorManager.getInstance(project);
     VirtualFile[] files = editorManager.getSelectedFiles();
-    if (files.length == 0) return dataContext;
+    if (files.length == 0) {
+      return dataContext;
+    }
     FileEditor fileEditor = editorManager.getSelectedEditor(files[0]);
-    return fileEditor == null ? dataContext :
-      DataManager.getInstance().getDataContext(fileEditor.getComponent());
+    return fileEditor == null ? dataContext : DataManager.getInstance().getDataContext(fileEditor.getComponent());
   }
 
   /**

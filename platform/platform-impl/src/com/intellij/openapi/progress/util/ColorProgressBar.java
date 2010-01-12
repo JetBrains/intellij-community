@@ -73,6 +73,10 @@ public class ColorProgressBar extends JComponent {
   }
 
   public void setFraction(double fraction) {
+    if (Double.isNaN(fraction)) {
+      fraction = 1.0;
+    }
+
     if (myIndeterminate) {
       if (myFraction >= 1.0) {
         myIndeterminateInc = -INDETERMINATE_INC_OFFSET;

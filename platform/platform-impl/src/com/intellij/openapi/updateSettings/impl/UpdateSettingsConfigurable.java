@@ -43,13 +43,8 @@ import java.util.*;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: pti
- * Date: Jun 10, 2005
- * Time: 12:39:08 PM
- * To change this template use File | Settings | File Templates.
+ * @author pti
  */
-
 public class UpdateSettingsConfigurable extends BaseConfigurable implements SearchableConfigurable {
   private UpdatesSettingsPanel myUpdatesSettingsPanel;
   private boolean myCheckNowEnabled = true;

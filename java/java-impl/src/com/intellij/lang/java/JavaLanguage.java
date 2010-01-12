@@ -26,11 +26,7 @@ import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jan 22, 2005
- * Time: 11:16:59 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class JavaLanguage extends Language {
   public JavaLanguage() {
@@ -38,7 +34,8 @@ public class JavaLanguage extends Language {
     SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExplicitExtension(this, new SyntaxHighlighterFactory() {
       @NotNull
       public SyntaxHighlighter getSyntaxHighlighter(final Project project, final VirtualFile virtualFile) {
-        return new JavaFileHighlighter(virtualFile != null ? LanguageLevelUtil.getLanguageLevelForFile(virtualFile) : LanguageLevel.HIGHEST);
+        return new JavaFileHighlighter(
+          virtualFile != null ? LanguageLevelUtil.getLanguageLevelForFile(virtualFile) : LanguageLevel.HIGHEST);
       }
     });
   }

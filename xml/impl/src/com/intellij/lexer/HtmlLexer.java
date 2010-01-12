@@ -20,11 +20,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Oct 7, 2004
- * Time: 5:17:07 PM
- * To change this template use File | Settings | File Templates.
+ * @author Maxim.Mossienko
  */
 public class HtmlLexer extends BaseHtmlLexer {
   private static IElementType ourStyleElementType;
@@ -74,11 +70,11 @@ public class HtmlLexer extends BaseHtmlLexer {
     return myTokenType = tokenType;
   }
 
-  private boolean isStartOfEmbeddmentAttributeValue(final IElementType tokenType) {
+  private static boolean isStartOfEmbeddmentAttributeValue(final IElementType tokenType) {
     return tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN;
   }
 
-  private boolean isStartOfEmbeddmentTagContent(final IElementType tokenType) {
+  private static boolean isStartOfEmbeddmentTagContent(final IElementType tokenType) {
     return (tokenType == XmlTokenType.XML_DATA_CHARACTERS ||
             tokenType == XmlTokenType.XML_CDATA_START ||
             tokenType == XmlTokenType.XML_COMMENT_START ||
@@ -94,7 +90,7 @@ public class HtmlLexer extends BaseHtmlLexer {
     super(_baseLexer,_caseInsensitive);
   }
 
-  public static final void setStyleElementTypes(IElementType _styleElementType,IElementType _inlineStyleElementType) {
+  public static void setStyleElementTypes(IElementType _styleElementType,IElementType _inlineStyleElementType) {
     ourStyleElementType = _styleElementType;
     ourInlineStyleElementType = _inlineStyleElementType;
   }

@@ -23,21 +23,18 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
-import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.highlighting.HighlightUsagesDescriptionLocation;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider;
+import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -1873,17 +1870,8 @@ public class HighlightUtil {
         if (PsiUtil.isInsideJavadocComment(ref)) return null;
 
         HighlightInfo info = HighlightInfo.createHighlightInfo(type, refName, description);
-        QuickFixActionRegistrar registrar = new QuickFixActionRegistrarImpl(info);
 
-        final boolean dumb = DumbService.getInstance(ref.getProject()).isDumb();
-        UnresolvedReferenceQuickFixProvider[] fixProviders = Extensions.getExtensions(UnresolvedReferenceQuickFixProvider.EXTENSION_NAME);
-        for (UnresolvedReferenceQuickFixProvider each : fixProviders) {
-          if (dumb && !(each instanceof DumbAware)) {
-            continue;
-          }
-          each.registerFixes(ref, registrar);
-        }
-
+        UnresolvedReferenceQuickFixProvider.registerReferenceFixes(ref, new QuickFixActionRegistrarImpl(info));
         return info;
       }
 

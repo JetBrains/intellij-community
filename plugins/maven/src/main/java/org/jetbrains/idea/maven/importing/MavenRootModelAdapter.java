@@ -240,7 +240,7 @@ public class MavenRootModelAdapter {
                       OrderRootType type,
                       MavenArtifact artifact,
                       String classifier) {
-    String newUrl = artifact.getUrlForClassifier(classifier);
+    String newUrl = artifact.getUrlForExtraArtifact(classifier);
     for (String url : libraryModel.getUrls(type)) {
       if (newUrl.equals(url)) return;
       if (MavenConstants.SCOPE_SYSTEM.equals(artifact.getScope()) || isRepositoryUrl(artifact, url, classifier)) {
@@ -251,7 +251,7 @@ public class MavenRootModelAdapter {
   }
 
   private boolean isRepositoryUrl(MavenArtifact artifact, String url, String classifier) {
-    return url.endsWith(artifact.getRelativePathForClassifier(classifier) + JarFileSystem.JAR_SEPARATOR);
+    return url.endsWith(artifact.getRelativePathForExtraArtifact(classifier) + JarFileSystem.JAR_SEPARATOR);
   }
 
   public static boolean isChangedByUser(Library library) {
@@ -260,20 +260,18 @@ public class MavenRootModelAdapter {
 
     String classes = classRoots[0];
 
-    int dotPos = classes.lastIndexOf(".");
+    if (!classes.endsWith("!/")) return true;
+
+    int dotPos = classes.lastIndexOf("/", classes.length() - 2 /* trim ending !/ */);
     if (dotPos == -1) return true;
-    String path = classes.substring(0, dotPos);
+    String pathToJar = classes.substring(0, dotPos);
 
-    String jarSuffix = ".jar" + JarFileSystem.JAR_SEPARATOR;
-    String sourcesPath = path + "-" + MavenConstants.CLASSIFIER_SOURCES + jarSuffix;
-    String javadocPath = path + "-" + MavenConstants.CLASSIFIER_JAVADOC + jarSuffix;
+    String[] sources = library.getUrls(OrderRootType.SOURCES);
+    if (sources.length != 1 || !FileUtil.startsWith(sources[0], pathToJar)) return true;
 
-    for (String each : library.getUrls(OrderRootType.SOURCES)) {
-      if (!FileUtil.pathsEqual(each, sourcesPath)) return true;
-    }
-    for (String each : library.getUrls(JavadocOrderRootType.getInstance())) {
-      if (!FileUtil.pathsEqual(each, javadocPath)) return true;
-    }
+    String[] javadoc = library.getUrls(JavadocOrderRootType.getInstance());
+    if (javadoc.length != 1 || !FileUtil.startsWith(javadoc[0], pathToJar)) return true;
+
     return false;
   }
 

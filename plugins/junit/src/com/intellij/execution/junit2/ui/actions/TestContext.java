@@ -19,10 +19,11 @@ package com.intellij.execution.junit2.ui.actions;
 import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.actionSystem.DataKey;
 
 public class TestContext {
-  @NonNls public static final String TEST_CONTEXT = "JUNIT_CONTEXT";
+  public static final DataKey<TestContext> DATA_KEY = DataKey.create("JUNIT_CONTEXT");
+  @Deprecated public static final String TEST_CONTEXT = DATA_KEY.getName();
 
   private final JUnitRunningModel myModel;
   private final TestProxy mySelection;
@@ -49,6 +50,6 @@ public class TestContext {
   }
 
   public static TestContext from(final AnActionEvent event) {
-    return (TestContext) event.getDataContext().getData(TEST_CONTEXT);
+    return DATA_KEY.getData(event.getDataContext());
   }
 }

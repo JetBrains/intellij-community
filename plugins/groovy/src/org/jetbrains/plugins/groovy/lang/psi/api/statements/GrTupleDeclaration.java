@@ -22,11 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Dmitry.Krasilschikov
- * Date: 16.02.2009
- * Time: 17:26:49
- * To change this template use File | Settings | File Templates.
+ * @author Dmitry.Krasilschikov
  */
 public interface GrTupleDeclaration extends GroovyPsiElement{
   @NotNull

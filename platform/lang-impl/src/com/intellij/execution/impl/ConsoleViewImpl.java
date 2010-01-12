@@ -24,8 +24,6 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ObservableConsoleView;
 import com.intellij.ide.CommonActionsManager;
-import com.intellij.ide.DataAccessor;
-import com.intellij.ide.DataAccessors;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -60,7 +58,6 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.LineTokenizer;
@@ -75,6 +72,7 @@ import com.intellij.util.EditorPopupHandler;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
@@ -506,7 +504,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
   }
 
   public Object getData(final String dataId) {
-    if (DataConstants.NAVIGATABLE.equals(dataId)){
+    if (PlatformDataKeys.NAVIGATABLE.is(dataId)){
       if (myEditor == null) {
         return null;
       }
@@ -519,10 +517,10 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
       return openFileDescriptor;
     }
 
-    if (DataConstants.EDITOR.equals(dataId)) {
+    if (PlatformDataKeys.EDITOR.is(dataId)) {
       return myEditor;
     }
-    if (DataConstants.HELP_ID.equals(dataId)) {
+    if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return myHelpId;
     }
     return null;
@@ -953,32 +951,30 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
     }
   }
 
-  private static final DataAccessor<ConsoleViewImpl> CONSOLE = new DataAccessor<ConsoleViewImpl>() {
-    public ConsoleViewImpl getImpl(final DataContext dataContext) throws NoDataException {
-      return DataAccessors.EDITOR.getNotNull(dataContext).getUserData(CONSOLE_VIEW_IN_EDITOR_VIEW);
-    }
-  };
-
-  private static final Condition<ConsoleViewImpl> CONSOLE_IS_RUNNING = new Condition<ConsoleViewImpl>() {
-    public boolean value(final ConsoleViewImpl consoleView) {
-      return consoleView.myState.isRunning();
-    }
-  };
-
-  private static final DataAccessor<ConsoleViewImpl> RUNNINT_CONSOLE =DataAccessor.createConditionalAccessor(CONSOLE, CONSOLE_IS_RUNNING);
-
   private abstract static class ConsoleAction extends AnAction implements DumbAware {
     public void actionPerformed(final AnActionEvent e) {
       final DataContext context = e.getDataContext();
-      final ConsoleViewImpl console = RUNNINT_CONSOLE.from(context);
+      final ConsoleViewImpl console = getRunningConsole(context);
       execute(console, context);
     }
 
     protected abstract void execute(ConsoleViewImpl console, final DataContext context);
 
     public void update(final AnActionEvent e) {
-      final ConsoleViewImpl console = RUNNINT_CONSOLE.from(e.getDataContext());
+      final ConsoleViewImpl console = getRunningConsole(e.getDataContext());
       e.getPresentation().setEnabled(console != null);
+    }
+
+    @Nullable
+    private static ConsoleViewImpl getRunningConsole(final DataContext context) {
+      final Editor editor = PlatformDataKeys.EDITOR.getData(context);
+      if (editor != null) {
+        final ConsoleViewImpl console = editor.getUserData(CONSOLE_VIEW_IN_EDITOR_VIEW);
+        if (console != null && console.myState.isRunning()) {
+          return console;
+        }
+      }
+      return null;
     }
   }
 

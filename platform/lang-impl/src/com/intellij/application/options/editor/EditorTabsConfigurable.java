@@ -16,15 +16,15 @@
 
 package com.intellij.application.options.editor;
 
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.options.ConfigurationException;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ItemListener;
 import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 /**
  * @author yole
@@ -76,7 +76,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
   }
 
   public Icon getIcon() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 
   public String getHelpTopic() {
@@ -151,7 +151,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
 
   public boolean isModified() {
     final UISettings uiSettings = UISettings.getInstance();
-    boolean isModified = isModified(myCbModifiedTabsMarkedWithAsterisk, uiSettings.MARK_MODIFIED_TABS_WITH_ASTERISK);;
+    boolean isModified = isModified(myCbModifiedTabsMarkedWithAsterisk, uiSettings.MARK_MODIFIED_TABS_WITH_ASTERISK);
     isModified |= isModified(myEditorTabLimitField, uiSettings.EDITOR_TAB_LIMIT);
     int tabPlacement = ((Integer)myEditorTabPlacement.getSelectedItem()).intValue();
     isModified |= tabPlacement != uiSettings.EDITOR_TAB_PLACEMENT;
@@ -167,7 +167,6 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
   }
 
   public void disposeUIResources() {
-    //To change body of implemented methods use File | Settings | File Templates.
   }
 
 
@@ -196,16 +195,16 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
       if (UISettings.TABS_NONE == tabPlacement) {
         text = ApplicationBundle.message("combobox.tab.placement.none");
       }
-      else if (SwingConstants.TOP == tabPlacement) {
+      else if (TOP == tabPlacement) {
         text = ApplicationBundle.message("combobox.tab.placement.top");
       }
-      else if (SwingConstants.LEFT == tabPlacement) {
+      else if (LEFT == tabPlacement) {
         text = ApplicationBundle.message("combobox.tab.placement.left");
       }
-      else if (SwingConstants.BOTTOM == tabPlacement) {
+      else if (BOTTOM == tabPlacement) {
         text = ApplicationBundle.message("combobox.tab.placement.bottom");
       }
-      else if (SwingConstants.RIGHT == tabPlacement) {
+      else if (RIGHT == tabPlacement) {
         text = ApplicationBundle.message("combobox.tab.placement.right");
       }
       else {

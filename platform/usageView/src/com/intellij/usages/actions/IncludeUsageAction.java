@@ -19,11 +19,7 @@ import com.intellij.usages.Usage;
 import com.intellij.usages.UsageView;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 22, 2004
- * Time: 9:04:56 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class IncludeUsageAction extends IncludeExcludeActionBase {
   protected void process(Usage[] usages, UsageView usageView) {

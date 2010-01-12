@@ -4,6 +4,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperProcessor;
 import org.jetbrains.annotations.NonNls;
 
@@ -138,9 +139,9 @@ public class TurnRefsToSuperTest extends MultiFileTestCase {
   }
 
   private void performAction(final String className, final String superClassName, boolean replaceInstanceOf) {
-    final PsiClass aClass = myJavaFacade.findClass(className);
+    final PsiClass aClass = myJavaFacade.findClass(className, GlobalSearchScope.allScope(myProject));
     assertNotNull("Class " + className + " not found", aClass);
-    PsiClass superClass = myJavaFacade.findClass(superClassName);
+    PsiClass superClass = myJavaFacade.findClass(superClassName, GlobalSearchScope.allScope(myProject));
     assertNotNull("Class " + superClassName + " not found", superClass);
 
     new TurnRefsToSuperProcessor(myProject, aClass, superClass, replaceInstanceOf).run();

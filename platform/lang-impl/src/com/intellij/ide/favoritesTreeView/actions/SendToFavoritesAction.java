@@ -44,8 +44,8 @@ public class SendToFavoritesAction extends AnAction{
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     final FavoritesManager favoritesManager = FavoritesManager.getInstance(project);
 
-    FavoritesTreeNodeDescriptor[] roots = (FavoritesTreeNodeDescriptor[])dataContext.getData(FavoritesTreeViewPanel.CONTEXT_FAVORITES_ROOTS);
-    String listName = (String)dataContext.getData(FavoritesTreeViewPanel.FAVORITES_LIST_NAME);
+    FavoritesTreeNodeDescriptor[] roots = FavoritesTreeViewPanel.CONTEXT_FAVORITES_ROOTS_DATA_KEY.getData(dataContext);
+    String listName = FavoritesTreeViewPanel.FAVORITES_LIST_NAME_DATA_KEY.getData(dataContext);
 
     doSend(favoritesManager, roots, listName);
   }
@@ -66,13 +66,13 @@ public class SendToFavoritesAction extends AnAction{
       e.getPresentation().setEnabled(false);
       return;
     }
-    FavoritesTreeNodeDescriptor[] roots = (FavoritesTreeNodeDescriptor[])dataContext.getData(FavoritesTreeViewPanel.CONTEXT_FAVORITES_ROOTS);
+    FavoritesTreeNodeDescriptor[] roots = FavoritesTreeViewPanel.CONTEXT_FAVORITES_ROOTS_DATA_KEY.getData(dataContext);
     if (roots == null || roots.length == 0) {
       e.getPresentation().setEnabled(false);
       return;
     }
 
-    String listName = (String)dataContext.getData(FavoritesTreeViewPanel.FAVORITES_LIST_NAME);
+    String listName = FavoritesTreeViewPanel.FAVORITES_LIST_NAME_DATA_KEY.getData(dataContext);
     e.getPresentation().setEnabled(listName != null);
   }
 }

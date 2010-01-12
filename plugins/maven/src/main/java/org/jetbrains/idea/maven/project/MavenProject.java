@@ -671,10 +671,10 @@ public class MavenProject {
 
   public boolean isSupportedDependency(MavenArtifact artifact) {
     String t = artifact.getType();
-    if (t.equalsIgnoreCase(MavenConstants.TYPE_JAR)
-        || t.equalsIgnoreCase("test-jar")
-        || t.equalsIgnoreCase("ejb")
-        || t.equalsIgnoreCase("ejb-client")) {
+    if (MavenConstants.TYPE_JAR.equalsIgnoreCase(t)
+        || MavenConstants.TYPE_TEST_JAR.equalsIgnoreCase(t)
+        || "ejb".equalsIgnoreCase(t)
+        || "ejb-client".equalsIgnoreCase(t)) {
       return true;
     }
 

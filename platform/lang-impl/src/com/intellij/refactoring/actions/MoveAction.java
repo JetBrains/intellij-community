@@ -18,13 +18,13 @@ package com.intellij.refactoring.actions;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.move.MoveHandler;
-import org.jetbrains.annotations.NonNls;
 
 public class MoveAction extends BaseRefactoringAction {
-  @NonNls public static final String MOVE_PROVIDER = "MoveProvider";
+  @Deprecated public static final String MOVE_PROVIDER = MoveProvider.DATA_KEY.getName();
 
   private final MoveProvider myDefaultMoveProvider = new MoveProvider() {
     public boolean isEnabledOnDataContext(DataContext dataContext) {
@@ -58,7 +58,7 @@ public class MoveAction extends BaseRefactoringAction {
   }
 
   private MoveProvider getMoveProvider(DataContext dataContext) {
-    final MoveProvider moveProvider = (MoveProvider)dataContext.getData(MOVE_PROVIDER);
+    final MoveProvider moveProvider = MoveProvider.DATA_KEY.getData(dataContext);
     if (moveProvider != null) {
       return moveProvider;
     }
@@ -71,7 +71,10 @@ public class MoveAction extends BaseRefactoringAction {
   }
 
   public interface MoveProvider {
+    DataKey<MoveProvider> DATA_KEY = DataKey.create("MoveProvider");
+
     boolean isEnabledOnDataContext(DataContext dataContext);
+
     RefactoringActionHandler getHandler(DataContext dataContext);
   }
 }

@@ -16,30 +16,26 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.filters.AndFilter;
 import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.filters.TextContainFilter;
 import com.intellij.psi.filters.OrFilter;
+import com.intellij.psi.filters.TextContainFilter;
 import com.intellij.psi.filters.getters.HtmlAttributeValueGetter;
 import com.intellij.psi.filters.getters.XmlAttributeValueGetter;
 import com.intellij.psi.filters.position.XmlTokenTypeFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Set;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Oct 13, 2004
- * Time: 6:50:33 PM
- * To change this template use File | Settings | File Templates.
+ * @author Maxim.Mossienko
  */
 @SuppressWarnings({"RefusedBequest"})
 public class HtmlCompletionData extends XmlCompletionData {

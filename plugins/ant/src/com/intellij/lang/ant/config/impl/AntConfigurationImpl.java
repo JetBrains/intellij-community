@@ -21,7 +21,6 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.ide.DataAccessors;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.config.*;
@@ -30,6 +29,7 @@ import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.impl.AntFileImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -644,7 +644,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       ApplicationManager.getApplication().invokeAndWait(new Runnable() {
 
         public void run() {
-          Project project = DataAccessors.PROJECT.from(dataContext);
+          Project project = PlatformDataKeys.PROJECT.getData(dataContext);
           if (project == null || project.isDisposed()) {
             result[0] = false;
             return;

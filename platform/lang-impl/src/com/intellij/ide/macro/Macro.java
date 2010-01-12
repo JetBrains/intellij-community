@@ -17,6 +17,7 @@
 package com.intellij.ide.macro;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
@@ -59,6 +60,15 @@ public abstract class Macro {
 
   static File getIOFile(VirtualFile file) {
     return new File(getPath(file));
+  }
+
+  @Nullable
+  protected static VirtualFile getVirtualDirOrParent(DataContext dataContext) {
+    VirtualFile vFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+    if (vFile != null && !vFile.isDirectory()) {
+      vFile = vFile.getParent();
+    }
+    return vFile;
   }
 
   public static class Silent extends Macro {

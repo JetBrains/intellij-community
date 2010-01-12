@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
@@ -28,7 +29,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -235,7 +235,7 @@ public class OptionsEditorDialog extends DialogWrapper implements DataProvider{
   }
 
   public Object getData(@NonNls String dataId) {
-    if (dataId.equals(OptionsEditor.KEY.getName())) {
+    if (OptionsEditor.KEY.is(dataId)) {
       return myEditor;
     }
     return null;

@@ -19,7 +19,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actionMacro.ActionMacroManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 
@@ -28,7 +27,7 @@ import com.intellij.openapi.project.DumbAware;
  */
 public class StartStopMacroRecordingAction extends AnAction implements DumbAware {
   public void update(AnActionEvent e) {
-    boolean editorAvailable = e.getDataContext().getData(DataConstants.EDITOR) != null;
+    boolean editorAvailable = PlatformDataKeys.EDITOR.getData(e.getDataContext()) != null;
     boolean isRecording = ActionMacroManager.getInstance().isRecording();
 
     e.getPresentation().setEnabled(editorAvailable || isRecording);
@@ -38,7 +37,7 @@ public class StartStopMacroRecordingAction extends AnAction implements DumbAware
   }
 
   public void actionPerformed(AnActionEvent e) {
-    if (!ActionMacroManager.getInstance().isRecording() ) {
+    if (!ActionMacroManager.getInstance().isRecording()) {
       final ActionMacroManager manager = ActionMacroManager.getInstance();
       manager.startRecording(IdeBundle.message("macro.noname"));
     }

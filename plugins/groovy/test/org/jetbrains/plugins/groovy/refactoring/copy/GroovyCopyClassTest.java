@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.refactoring.copy;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.copy.CopyClassesHandler;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
@@ -37,7 +38,7 @@ public class GroovyCopyClassTest extends LightCodeInsightFixtureTestCase {
     myFixture.addClass("package foo; public class Bar {}");
     myFixture.addClass("package bar; public class Bar {}");
 
-    final PsiClass srcClass = myFixture.getJavaFacade().findClass("foo." + testName);
+    final PsiClass srcClass = myFixture.getJavaFacade().findClass("foo." + testName, GlobalSearchScope.allScope(getProject()));
     assertTrue(CopyClassesHandler.canCopyClass(srcClass));
     new WriteCommandAction(getProject()) {
       protected void run(Result result) throws Throwable {
@@ -52,7 +53,8 @@ public class GroovyCopyClassTest extends LightCodeInsightFixtureTestCase {
     final String testName = getTestName(false);
     myFixture.copyFileToProject(testName + ".groovy", "/foo/" + testName + ".groovy");
 
-    assertFalse(CopyClassesHandler.canCopyClass(myFixture.getJavaFacade().findClass("foo." + testName)));
+    assertFalse(
+      CopyClassesHandler.canCopyClass(myFixture.getJavaFacade().findClass("foo." + testName, GlobalSearchScope.allScope(getProject()))));
   }
 
 }

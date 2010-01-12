@@ -70,7 +70,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   private JPanel myNorthPanel;
 
   private static boolean ourToShowTextField = true;
-  private FileChooserDialogImpl.TextFieldAction myTextFieldAction;
+  private TextFieldAction myTextFieldAction;
 
   protected FileTextFieldImpl myPathTextField;
 
@@ -232,7 +232,8 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
     if (isTextFieldActive()) {
       final String text = myPathTextField.getTextFieldText();
-      if (text == null || myPathTextField.getFile() == null || !myPathTextField.getFile().exists()) {
+      final LookupFile file = myPathTextField.getFile();
+      if (text == null || file == null || !file.exists()) {
         setErrorText("Specified path cannot be found");
         return;
       }
@@ -367,7 +368,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     }
 
     public Object getData(String dataId) {
-      if (DataConstants.VIRTUAL_FILE_ARRAY.equals(dataId)) {
+      if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
         return getSelectedFiles();
       } else if (KEY.is(dataId)) {
         return FileChooserDialogImpl.this;
@@ -512,4 +513,8 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     setErrorText(null);
   }
 
+  @Override
+  protected String getDimensionServiceKey() {
+    return "FileChooserDialogImpl";
+  }
 }

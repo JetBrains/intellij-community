@@ -42,11 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lex
- * Date: Apr 12, 2004
- * Time: 5:24:17 PM
- * To change this template use File | Settings | File Templates.
+ * @author lex
  */
 public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
   private Modifier myModifier;

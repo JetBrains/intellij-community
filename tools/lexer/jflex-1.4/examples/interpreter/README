@@ -1,0 +1,31 @@
+This directory contains an interpreter for a small functional
+programming language (called "AS"). It uses JFlex and CUP.
+
+Directory contents:
+
+- Main.java is the main program. It reads an AS program from
+  std in and interprets it.
+
+- Makefile runs jflex, cup, javac and the compiled interpreter
+
+- Classes beginning with "T" implement the abstract syntax tree.
+  They also contain context condition checking and the interpreter.
+
+- Symtab.java, SymtabEntry.java, STEfun.java, STEvar.java implement
+  the symbol table.
+
+- scanner.lex and parser.cup contain the scanner and parser.
+
+- example.as is an example program in AS
+
+
+The language is described in:
+Manfred Broy: Einfuehrung in die Informatik, Springer Verlag 
+
+The files are a solution to excercise 3.40 in the book:
+Manfred Broy,Bernhard Rumpe: 
+Uebungen zur Einfuehrung in die Informatik --                      
+Strukturierte Aufgabensammlung mit Musterloesungen, 
+Springer Verlag, 2001
+
+Both books are only available in German. Sorry.

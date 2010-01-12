@@ -44,7 +44,7 @@ public class FindUsagesInFileAction extends AnAction {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
 
-    UsageTarget[] usageTargets = (UsageTarget[])dataContext.getData(UsageView.USAGE_TARGETS);
+    UsageTarget[] usageTargets = UsageView.USAGE_TARGETS_KEY.getData(dataContext);
     if (usageTargets != null) {
       FileEditor fileEditor = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
       if (fileEditor != null) {
@@ -76,7 +76,7 @@ public class FindUsagesInFileAction extends AnAction {
 
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     if (editor == null) {
-      UsageTarget[] target = (UsageTarget[])dataContext.getData(UsageView.USAGE_TARGETS);
+      UsageTarget[] target = UsageView.USAGE_TARGETS_KEY.getData(dataContext);
       return target != null && target.length > 0;
     }
     else {

@@ -17,13 +17,15 @@ package com.intellij.cvsSupport2.actions.cvsContext;
 
 /**
  * author: lesya
+ *
+ * @deprecated use {@link com.intellij.cvsSupport2.actions.cvsContext.CvsDataKeys} instead
  */
-@SuppressWarnings({"ALL"})
+@SuppressWarnings({"UnusedDeclaration"})
 public interface CvsDataConstants {
-  String DELETED_FILE_NAMES = "DeletedFileNames";
-  String FILE_TO_RESTORE = "FileToRestore";
-  String CVS_LIGHT_FILE = "CVS_LIGHT_FILE";
-  String CVS_LIGHT_FILES = "CVS_LIGHT_FILES";
-  String CVS_ENVIRONMENT = "CVS_ENVIRONMENT";
-  String FILES_TO_ADD = "FilesToAdd";
+  String DELETED_FILE_NAMES = CvsDataKeys.DELETED_FILE_NAMES.getName();
+  String FILE_TO_RESTORE = CvsDataKeys.FILE_TO_RESTORE.getName();
+  String CVS_LIGHT_FILE = CvsDataKeys.CVS_LIGHT_FILE.getName();
+  String CVS_LIGHT_FILES = CvsDataKeys.CVS_LIGHT_FILES.getName();
+  String CVS_ENVIRONMENT = CvsDataKeys.CVS_ENVIRONMENT.getName();
+  String FILES_TO_ADD = CvsDataKeys.FILES_TO_ADD.getName();
 }

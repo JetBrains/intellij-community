@@ -1,0 +1,12 @@
+The following changes to JFlex 1.4.1 have been done by JetBrains developers:
+
+July 26, 2005:
+
+ * JFlexTask.java: Added setCharAt() method for setting the -charat option from Ant
+   builds.
+
+July 8, 2005:
+
+ * Main.java, Options.java, Emitter.java: Added new command line option -charat.
+   The option replaces array index access when accessing the zzBufferL array with 
+   calls to the .charAt() method.

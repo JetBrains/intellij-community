@@ -19,16 +19,10 @@ import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.duplicatePropertyInspection.DuplicatePropertyInspection;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: 11.02.2009
- * Time: 18:23:29
- * To change this template use File | Settings | File Templates.
+ * @author Maxim.Mossienko
  */
-public class PropertiesInspectionToolsProvider implements InspectionToolProvider{
+public class PropertiesInspectionToolsProvider implements InspectionToolProvider {
   public Class[] getInspectionClasses() {
-    return new Class[] {
-      UnusedPropertyInspection.class, DuplicatePropertyInspection.class
-    };
+    return new Class[]{UnusedPropertyInspection.class, DuplicatePropertyInspection.class};
   }
 }

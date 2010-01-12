@@ -80,7 +80,7 @@ public class ModuleWithDependentsScope extends GlobalSearchScope {
     if (moduleOfFile == null) return false;
     if (!myModules.contains(moduleOfFile)) return false;
     if (myOnlyTests && !myProjectFileIndex.isInTestSourceContent(file)) return false;
-    if (myProjectFileIndex.isInLibraryClasses(file)) return false;
+    if (myProjectFileIndex.isInLibraryClasses(file) && !myProjectFileIndex.isInSourceContent(file)) return false;
     return true;
   }
 

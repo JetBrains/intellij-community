@@ -15,21 +15,19 @@
  */
 package com.intellij.xml.util.documentation;
 
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.util.ArrayUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.*;
-
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.util.ArrayUtil;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.StringTokenizer;
 
 /**
- * Created by IntelliJ IDEA.
- * User: maxim
- * Date: 24.12.2004
- * Time: 23:56:32
- * To change this template use File | Settings | File Templates.
+ * @author maxim
  */
 public class HtmlDescriptorsTable {
   private static final HashMap<String,HtmlTagDescriptor> ourTagTable = new HashMap<String, HtmlTagDescriptor>();
@@ -70,6 +68,9 @@ public class HtmlDescriptorsTable {
 
   @NonNls public static final String RELATED_TAGS_ATTR = "relatedTags";
 
+  private HtmlDescriptorsTable() {
+  }
+
   static {
     try {
       final Document document = JDOMUtil.loadDocument(HtmlDescriptorsTable.class.getResourceAsStream(HTMLTABLE_RESOURCE_NAME));
@@ -81,14 +82,14 @@ public class HtmlDescriptorsTable {
       ourHtmlTagNames = new String[elements.size()];
 
       int i = 0;
-      for (Iterator iterator = elements.iterator(); iterator.hasNext();) {
-        final Element element = (Element) iterator.next();
+      for (Object object : elements) {
+        final Element element = (Element)object;
         ourHtmlTagNames[i] = element.getAttributeValue(NAME_ATTR);
 
         HtmlTagDescriptor value = new HtmlTagDescriptor();
-        ourTagTable.put(ourHtmlTagNames[i],value);
-        value.setHelpRef( element.getAttributeValue(HELPREF_ATTR) );
-        value.setDescription( element.getAttributeValue(DESCRIPTION_ATTR) );
+        ourTagTable.put(ourHtmlTagNames[i], value);
+        value.setHelpRef(element.getAttributeValue(HELPREF_ATTR));
+        value.setDescription(element.getAttributeValue(DESCRIPTION_ATTR));
         value.setName(ourHtmlTagNames[i]);
 
         value.setHasStartTag(element.getAttribute(STARTTAG_ATTR).getBooleanValue());
@@ -104,31 +105,33 @@ public class HtmlDescriptorsTable {
       }
 
       final List attributes = document.getRootElement().getChildren(ATTRIBUTE_ELEMENT_NAME);
-      for (Iterator iterator = attributes.iterator(); iterator.hasNext();) {
-        final Element element = (Element) iterator.next();
+      for (Object attribute : attributes) {
+        final Element element = (Element)attribute;
         String attrName = element.getAttributeValue(NAME_ATTR);
 
         HtmlAttributeDescriptor value = new HtmlAttributeDescriptor();
         HtmlAttributeDescriptor previousDescriptor = ourAttributeTable.get(attrName);
 
-        if (previousDescriptor==null)
-          ourAttributeTable.put(attrName,value);
+        if (previousDescriptor == null) {
+          ourAttributeTable.put(attrName, value);
+        }
         else {
           CompositeAttributeTagDescriptor parentDescriptor;
 
           if (!(previousDescriptor instanceof CompositeAttributeTagDescriptor)) {
             parentDescriptor = new CompositeAttributeTagDescriptor();
-            ourAttributeTable.put(attrName,parentDescriptor);
+            ourAttributeTable.put(attrName, parentDescriptor);
             parentDescriptor.attributes.add(previousDescriptor);
-          } else {
+          }
+          else {
             parentDescriptor = (CompositeAttributeTagDescriptor)previousDescriptor;
           }
 
           parentDescriptor.attributes.add(value);
         }
 
-        value.setHelpRef( element.getAttributeValue(HELPREF_ATTR) );
-        value.setDescription( element.getAttributeValue(DESCRIPTION_ATTR) );
+        value.setHelpRef(element.getAttributeValue(HELPREF_ATTR));
+        value.setDescription(element.getAttributeValue(DESCRIPTION_ATTR));
         value.setName(attrName);
 
         String attributeValue = element.getAttributeValue(DTD_ATTR);
@@ -136,13 +139,13 @@ public class HtmlDescriptorsTable {
           value.setDtd(attributeValue.charAt(0));
         }
 
-        value.setType( element.getAttributeValue(TYPE_ATTR) );
-        value.setHasDefaultValue( element.getAttribute(DEFAULT_ATTR).getBooleanValue() );
+        value.setType(element.getAttributeValue(TYPE_ATTR));
+        value.setHasDefaultValue(element.getAttribute(DEFAULT_ATTR).getBooleanValue());
 
-        StringTokenizer tokenizer = new StringTokenizer(element.getAttributeValue(RELATED_TAGS_ATTR),",");
+        StringTokenizer tokenizer = new StringTokenizer(element.getAttributeValue(RELATED_TAGS_ATTR), ",");
         int tokenCount = tokenizer.countTokens();
 
-        for(i = 0;i < tokenCount;++i) {
+        for (i = 0; i < tokenCount; ++i) {
           final String s = tokenizer.nextToken();
 
           if (s.equals("!")) {
@@ -152,7 +155,7 @@ public class HtmlDescriptorsTable {
             if (value.getSetOfParentTags() == null) {
               value.setSetOfParentTags(new String[tokenCount - (value.isParentSetIsExclusionSet() ? 1 : 0)]);
             }
-            value.getSetOfParentTags()[i-(value.isParentSetIsExclusionSet() ? 1 : 0)] = s;
+            value.getSetOfParentTags()[i - (value.isParentSetIsExclusionSet() ? 1 : 0)] = s;
           }
         }
 

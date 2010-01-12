@@ -25,12 +25,12 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAware;
 
 public class ToggleColumnModeAction extends ToggleAction implements DumbAware {
@@ -58,9 +58,13 @@ public class ToggleColumnModeAction extends ToggleAction implements DumbAware {
       }
     }
     else {
-      boolean hasSelection = selectionModel.hasBlockSelection();
-      int selStart = hasSelection ? editor.logicalPositionToOffset(selectionModel.getBlockStart()) : 0;
-      int selEnd = hasSelection ? editor.logicalPositionToOffset(selectionModel.getBlockEnd()) : 0;
+      final boolean hasSelection = selectionModel.hasBlockSelection();
+      final LogicalPosition blockStart = selectionModel.getBlockStart();
+      final LogicalPosition blockEnd = selectionModel.getBlockEnd();
+
+      int selStart = hasSelection && blockStart != null ? editor.logicalPositionToOffset(blockStart) : 0;
+      int selEnd = hasSelection && blockEnd != null ? editor.logicalPositionToOffset(blockEnd) : 0;
+
       editor.setColumnMode(false);
       if (hasSelection) {
         selectionModel.setSelection(selStart, selEnd);
@@ -77,7 +81,7 @@ public class ToggleColumnModeAction extends ToggleAction implements DumbAware {
   }
 
   private static EditorEx getEditor(AnActionEvent e) {
-    return (EditorEx) e.getDataContext().getData(DataConstants.EDITOR);
+    return (EditorEx) PlatformDataKeys.EDITOR.getData(e.getDataContext());
   }
 
   public void update(AnActionEvent e){

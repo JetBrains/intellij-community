@@ -18,6 +18,7 @@ package com.intellij.openapi.diff.impl.incrementalMerge;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.DiffContent;
@@ -35,8 +36,8 @@ import com.intellij.openapi.util.*;
 import com.intellij.util.containers.FilteringIterator;
 import com.intellij.util.containers.SequenceIterator;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -49,7 +50,9 @@ public class MergeList implements ChangeList.Parent, UserDataHolder {
   private final UserDataHolderBase myDataHolder = new UserDataHolderBase();
   public static final FragmentSide BRANCH_SIDE = FragmentSide.SIDE2;
   public static final FragmentSide BASE_SIDE = FragmentSide.SIDE1;
-  @NonNls public static final String MERGE_LIST = "mergeList";
+
+  public static final DataKey<MergeList> DATA_KEY = DataKey.create("mergeList");
+  @Deprecated public static final String MERGE_LIST = DATA_KEY.getName();
 
   private MergeList(Project project, Document left, Document base, Document right) {
     myProject = project;
@@ -229,7 +232,7 @@ public class MergeList implements ChangeList.Parent, UserDataHolder {
 
   @Nullable
   public static MergeList fromDataContext(DataContext dataContext) {
-    MergeList mergeList = (MergeList)dataContext.getData(MERGE_LIST);
+    MergeList mergeList = MergeList.DATA_KEY.getData(dataContext);
     if (mergeList != null) return mergeList;
     MergePanel2 mergePanel = MergePanel2.fromDataContext(dataContext);
     return mergePanel == null ? null : mergePanel.getMergeList();

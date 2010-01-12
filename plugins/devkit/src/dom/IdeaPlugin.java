@@ -91,6 +91,9 @@ public interface IdeaPlugin extends DomElement {
   @SubTagList("depends")
   Dependency addDependency();
 
+  @NotNull
+  @SubTagList("module")
+  List<PluginModule> getModules();
 
   @NotNull
   @SubTagList("extensions")

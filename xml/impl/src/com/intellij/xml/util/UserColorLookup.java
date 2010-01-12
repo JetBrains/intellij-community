@@ -31,11 +31,7 @@ import com.intellij.xml.XmlBundle;
 import java.awt.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: maxim
- * Date: 17.11.2004
- * Time: 11:09:58
- * To change this template use File | Settings | File Templates.
+ * @author maxim
  */
 public class UserColorLookup implements DeferredUserLookupValue, LookupValueWithPriority {
   private static final String COLOR_STRING = XmlBundle.message("choose.color.in.color.lookup");
@@ -48,19 +44,16 @@ public class UserColorLookup implements DeferredUserLookupValue, LookupValueWith
     Color myColorAtCaret = null;
 
     Editor selectedTextEditor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-    PsiElement element = PsiDocumentManager.getInstance(project).getPsiFile(selectedTextEditor.getDocument()).findElementAt(
-      selectedTextEditor.getCaretModel().getOffset()
-    );
+    PsiElement element = PsiDocumentManager.getInstance(project).getPsiFile(selectedTextEditor.getDocument())
+      .findElementAt(selectedTextEditor.getCaretModel().getOffset());
 
     if (element instanceof XmlToken) {
       myColorAtCaret = getColorFromElement(element);
     }
 
-    Color color = ColorChooser.chooseColor(
-      WindowManager.getInstance().suggestParentWindow(project), 
-      XmlBundle.message("choose.color.dialog.title"), 
-      myColorAtCaret
-    );
+    Color color = ColorChooser
+      .chooseColor(WindowManager.getInstance().suggestParentWindow(project), XmlBundle.message("choose.color.dialog.title"),
+                   myColorAtCaret);
 
     if (color != null) {
       String s = Integer.toHexString(color.getRGB() & 0xFFFFFF);
@@ -79,18 +72,19 @@ public class UserColorLookup implements DeferredUserLookupValue, LookupValueWith
 
   public static Color getColorFromElement(final PsiElement element) {
     Color myColorAtCaret = null;
-    
+
     if (!(element instanceof XmlToken)) return null;
-    
+
     final String text = element.getText();
-    
+
     if (text.length() > 0 && text.charAt(0) == '#') {
       myColorAtCaret = decodeColor(text);
-    } else {
+    }
+    else {
       final String hexCodeForColorName = ColorSampleLookupValue.getHexCodeForColorName(text);
       if (hexCodeForColorName != null) myColorAtCaret = decodeColor(hexCodeForColorName);
     }
-    
+
     return myColorAtCaret;
   }
 
@@ -98,17 +92,19 @@ public class UserColorLookup implements DeferredUserLookupValue, LookupValueWith
     Color myColorAtCaret = null;
     try {
       String s = text.substring(1);
-      
+
       if (s.length() == 3) { // css color short hand
         StringBuilder buf = new StringBuilder(6);
         buf.append(s.charAt(0)).append(s.charAt(0));
         buf.append(s.charAt(1)).append(s.charAt(1));
         buf.append(s.charAt(2)).append(s.charAt(2));
-        
+
         s = buf.toString();
       }
-      myColorAtCaret = Color.decode("0x"+s);
-    } catch(Exception ex) {}
+      myColorAtCaret = Color.decode("0x" + s);
+    }
+    catch (Exception ignore) {
+    }
     return myColorAtCaret;
   }
 

@@ -42,6 +42,11 @@ public class Patches {
   public static final boolean SUN_BUG_338675 = SystemInfo.JAVA_VERSION.indexOf("1.4.") != -1;
 
   /**
+   * java.lang.NullPointerException: Failed to retrieve atom name.
+   */
+  public static final boolean SUN_BUG_6322854 = SystemInfo.isLinux;
+
+  /**
    * See sun bug parade.
    * If you invoke popup menu, then click on a different window (JFrame, JDialog. It doesn't matter),
    * the JPopupMenu in the previous window still has focus, as does the new window.

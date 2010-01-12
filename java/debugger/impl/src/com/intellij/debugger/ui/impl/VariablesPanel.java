@@ -58,7 +58,7 @@ public class VariablesPanel extends DebuggerTreePanel implements DataProvider{
   }
 
   public Object getData(String dataId) {
-    if (DataConstants.HELP_ID.equals(dataId)) {
+    if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return HELP_ID;
     }
     return super.getData(dataId);

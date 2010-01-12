@@ -90,7 +90,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
         ) {
         final XmlAttribute schemaLocation = tag.getAttribute("schemaLocation", null);
         if (schemaLocation != null) {
-          final XmlFile xmlFile = XmlUtil.findNamespace(myFile, schemaLocation.getValue());
+          final XmlFile xmlFile = XmlUtil.findNamespaceByLocation(myFile, schemaLocation.getValue());
           addDependency(xmlFile, visited);
         }
       } else if (equalsToSchemaName(tag, REDEFINE_TAG_NAME)) {
@@ -202,7 +202,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
         ) {
         final XmlAttribute schemaLocation = tag.getAttribute("schemaLocation", null);
         if (schemaLocation != null) {
-          final XmlFile xmlFile = XmlUtil.findNamespace(rootTag.getContainingFile(), schemaLocation.getValue());
+          final XmlFile xmlFile = XmlUtil.findNamespaceByLocation(rootTag.getContainingFile(), schemaLocation.getValue());
           if (xmlFile != null) {
             final XmlDocument includedDocument = xmlFile.getDocument();
             if (includedDocument != null) {
@@ -299,7 +299,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
         final XmlAttribute schemaLocation = tag.getAttribute("schemaLocation", null);
 
         if (schemaLocation != null) {
-          final XmlFile xmlFile = XmlUtil.findNamespace(myTag.getContainingFile(), schemaLocation.getValue());
+          final XmlFile xmlFile = XmlUtil.findNamespaceByLocation(myTag.getContainingFile(), schemaLocation.getValue());
 
           if (xmlFile != null) {
 
@@ -498,7 +498,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
               ) {
         final String schemaLocation = tag.getAttributeValue("schemaLocation");
         if (schemaLocation != null) {
-          final XmlFile xmlFile = XmlUtil.findNamespace(rootTag.getContainingFile(), schemaLocation);
+          final XmlFile xmlFile = XmlUtil.findNamespaceByLocation(rootTag.getContainingFile(), schemaLocation);
 
           if (xmlFile != null) {
             final XmlDocument document = xmlFile.getDocument();
@@ -727,7 +727,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
         final String schemaLocation = tag.getAttributeValue("schemaLocation");
 
         if (schemaLocation != null) {
-          final XmlFile xmlFile = XmlUtil.findNamespace(rootTag.getContainingFile(), schemaLocation);
+          final XmlFile xmlFile = XmlUtil.findNamespaceByLocation(rootTag.getContainingFile(), schemaLocation);
 
           if (xmlFile != null) {
             final XmlDocument includedDocument = xmlFile.getDocument();
@@ -796,7 +796,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
         final String schemaLocation = tag.getAttributeValue("schemaLocation");
 
         if (schemaLocation != null) {
-          final XmlFile xmlFile = XmlUtil.findNamespace(rootTag.getContainingFile(), schemaLocation);
+          final XmlFile xmlFile = XmlUtil.findNamespaceByLocation(rootTag.getContainingFile(), schemaLocation);
 
           if (xmlFile != null) {
             final XmlDocument document = xmlFile.getDocument();

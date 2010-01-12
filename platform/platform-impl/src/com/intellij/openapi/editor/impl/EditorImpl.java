@@ -22,7 +22,10 @@ import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.*;
 import com.intellij.ide.dnd.DnDManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -2356,7 +2359,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     return new DataContext() {
       public Object getData(String dataId) {
-        if (DataConstants.PROJECT.equals(dataId)) {
+        if (PlatformDataKeys.PROJECT.is(dataId)) {
           return myProject;
         }
         return original.getData(dataId);

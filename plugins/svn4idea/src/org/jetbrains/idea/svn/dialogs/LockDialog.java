@@ -26,11 +26,7 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: alex
- * Date: 04.07.2005
- * Time: 14:39:24
- * To change this template use File | Settings | File Templates.
+ * @author alex
  */
 public class LockDialog extends OptionsDialog {
   private JTextArea myLockTextArea;

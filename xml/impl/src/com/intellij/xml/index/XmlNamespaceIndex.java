@@ -15,6 +15,7 @@
  */
 package com.intellij.xml.index;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.DataIndexer;
@@ -22,11 +23,11 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.io.DataExternalizer;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +35,7 @@ import java.util.Map;
 /**
  * @author Dmitry Avdeev
  */
-public class XmlNamespaceIndex extends XmlIndex<String>{
+public class XmlNamespaceIndex extends XmlIndex<String> {
 
   @Nullable
   public static String getNamespace(VirtualFile file, final Project project) {
@@ -42,14 +43,12 @@ public class XmlNamespaceIndex extends XmlIndex<String>{
     return list.size() == 0 ? null : list.get(0);
   }
 
-  public static Collection<VirtualFile> getFilesByNamespace(String namespace, final Project project) {
-    return FileBasedIndex.getInstance().getContainingFiles(NAME, namespace, createFilter(project));
+  public static List<IndexedRelevantResource<String, String>> getResourcesByNamespace(String namespace, final Project project, Module module) {
+    List<IndexedRelevantResource<String, String>> resources = IndexedRelevantResource.getResources(NAME, namespace, module, project);
+    Collections.sort(resources);
+    return resources;
   }
   
-  static void requestRebuild() {
-    FileBasedIndex.getInstance().requestRebuild(NAME);
-  }
-
   private static final ID<String,String> NAME = ID.create("XmlNamespaces");
 
   public ID<String, String> getName() {

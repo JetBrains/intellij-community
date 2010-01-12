@@ -37,11 +37,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 28.10.2005
- * Time: 17:57:34
- * To change this template use File | Settings | File Templates.
+ * @author yole
  */
 public class BoundIconRenderer extends GutterIconRenderer {
   private final PsiElement myElement;
@@ -84,7 +80,10 @@ public class BoundIconRenderer extends GutterIconRenderer {
       public void actionPerformed(AnActionEvent e) {
         List<PsiFile> formFiles = getBoundFormFiles();
         if (formFiles.size() > 0) {
-          VirtualFile virtualFile = formFiles.get(0).getVirtualFile();
+          final VirtualFile virtualFile = formFiles.get(0).getVirtualFile();
+          if (virtualFile == null) {
+            return;
+          }
           Project project = myElement.getProject();
           FileEditor[] editors = FileEditorManager.getInstance(project).openFile(virtualFile, true);
           if (myElement instanceof PsiField) {

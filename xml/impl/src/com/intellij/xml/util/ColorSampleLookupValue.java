@@ -30,11 +30,7 @@ import java.util.*;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: maxim
- * Date: 10.12.2004
- * Time: 13:35:49
- * To change this template use File | Settings | File Templates.
+ * @author maxim
  */
 public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUserLookupValue, LookupValueWithPriority {
   private static Object[] ourColors;

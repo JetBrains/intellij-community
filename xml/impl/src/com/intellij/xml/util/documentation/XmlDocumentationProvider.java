@@ -49,11 +49,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: maxim
- * Date: 25.12.2004
- * Time: 0:00:05
- * To change this template use File | Settings | File Templates.
+ * @author maxim
  */
 public class XmlDocumentationProvider implements DocumentationProvider {
   private static final Key<XmlElementDescriptor> DESCRIPTOR_KEY = Key.create("Original element");

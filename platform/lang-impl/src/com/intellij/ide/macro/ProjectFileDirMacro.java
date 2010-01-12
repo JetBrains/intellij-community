@@ -16,9 +16,9 @@
 
 package com.intellij.ide.macro;
 
-import com.intellij.ide.DataAccessors;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +34,7 @@ public final class ProjectFileDirMacro extends Macro {
 
   @Nullable
   public String expand(DataContext dataContext) {
-    final VirtualFile baseDir = DataAccessors.PROJECT_BASE_DIR.from(dataContext);
+    final VirtualFile baseDir = PlatformDataKeys.PROJECT_FILE_DIRECTORY.getData(dataContext);
     if (baseDir == null) {
       return null;
     }

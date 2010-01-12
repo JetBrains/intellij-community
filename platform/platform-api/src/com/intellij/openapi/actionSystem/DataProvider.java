@@ -15,23 +15,23 @@
  */
 package com.intellij.openapi.actionSystem;
 
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Allows a component hosting actions to provide context information to the actions. When a specific
  * data item is requested, the component hierarchy is walked up from the currently focused component,
  * and every component implementing the <code>DataProvider</code> interface is queried for the data
  * until one of them returns the data. Data items can also be mapped to each other - for example,
- * if a data provider provides an item for {@link DataConstants#NAVIGATABLE}, an item for
- * {@link DataConstants#NAVIGATABLE_ARRAY} can be generated from it automatically.
+ * if a data provider provides an item for {@link PlatformDataKeys#NAVIGATABLE}, an item for
+ * {@link PlatformDataKeys#NAVIGATABLE_ARRAY} can be generated from it automatically.
  *
  * @see DataContext
  */
 public interface DataProvider {
   /**
    * Returns the object corresponding to the specified data identifier. Some of the supported
-   * data identifiers are defined in the {@link DataConstants} class.
+   * data identifiers are defined in the {@link com.intellij.openapi.actionSystem.PlatformDataKeys} class.
    *
    * @param dataId the data identifier for which the value is requested.
    * @return the value, or null if no value is available in the current context for this identifier.

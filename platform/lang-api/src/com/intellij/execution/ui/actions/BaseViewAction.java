@@ -32,10 +32,24 @@ public abstract class BaseViewAction extends DumbAwareAction {
     Content[] content = getContent(e);
 
     if (context != null && content != null) {
-      update(e, context, content);
+      if (containsInvalidContent(content)) {
+        e.getPresentation().setEnabled(false);
+      } else {
+        update(e, context, content);
+      }
     } else {
       e.getPresentation().setEnabled(false);
     }
+  }
+
+  private boolean containsInvalidContent(Content[] content) {
+    for (Content each : content) {
+      if (!each.isValid()) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   protected void update(AnActionEvent e, ViewContext context, Content[] content) {

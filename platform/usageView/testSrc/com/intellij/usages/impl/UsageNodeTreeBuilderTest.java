@@ -28,11 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 16, 2004
- * Time: 5:44:32 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class UsageNodeTreeBuilderTest extends TestCase {
   protected void setUp() throws Exception {
@@ -83,11 +79,11 @@ public class UsageNodeTreeBuilderTest extends TestCase {
     assertEquals("[Even[1[0, 2], 2[12, 14], 3[102]], Odd[1[1, 3], 2[13, 15], 3[101, 103, 105]], 5[10003, 10001, 10002]]", groupNode.toString());
   }
 
-  private Usage createUsage(int index) {
+  private static Usage createUsage(int index) {
     return new MockUsage(index);
   }
 
-  private GroupNode buildUsageTree(int[] indices, UsageGroupingRule[] rules) {
+  private static GroupNode buildUsageTree(int[] indices, UsageGroupingRule[] rules) {
     Usage[] usages = new Usage[indices.length];
     for (int i = 0; i < usages.length; i++) {
       usages[i] = createUsage(indices[i]);

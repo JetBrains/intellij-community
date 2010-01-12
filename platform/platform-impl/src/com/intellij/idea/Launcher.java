@@ -18,14 +18,13 @@ package com.intellij.idea;
 import java.io.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jan 4, 2005
- * Time: 10:06:20 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class Launcher {
-    @SuppressWarnings({"HardCodedStringLiteral"})
+  private Launcher() {
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
     public static void main(String[] args) throws InterruptedException {
         String javaVmExecutablePath = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
         String classpath = System.getProperty("java.class.path");

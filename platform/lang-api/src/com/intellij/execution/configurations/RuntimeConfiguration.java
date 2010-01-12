@@ -17,6 +17,7 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -24,9 +25,9 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
 public abstract class RuntimeConfiguration extends RunConfigurationBase implements LocatableConfiguration, Cloneable, ModuleRunConfiguration {
+  public static final DataKey<RuntimeConfiguration> DATA_KEY = DataKey.create("runtimeConfiguration");
+
   protected RuntimeConfiguration(final String name, final Project project, final ConfigurationFactory factory) {
     super(project, factory, name);
   }

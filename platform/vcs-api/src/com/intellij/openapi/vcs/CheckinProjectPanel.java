@@ -28,8 +28,7 @@ import java.util.List;
 /**
  * Interface for working with the checkin dialog user interface (retrieving the files
  * included in the checkin operation, getting/setting the commit message and so on).
- * The active check-in dialog can be retrieved from the
- * {@link com.intellij.openapi.actionSystem.DataContext} using the {@link Refreshable#PANEL} data ID.
+ * The active check-in dialog can be retrieved from the using {@link Refreshable#PANEL_KEY}
  *
  * @see com.intellij.openapi.vcs.checkin.CheckinHandlerFactory#createHandler(CheckinProjectPanel)
  */

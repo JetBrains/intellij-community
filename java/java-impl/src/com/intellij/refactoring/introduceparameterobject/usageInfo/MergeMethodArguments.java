@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
@@ -71,7 +72,7 @@ public class MergeMethodArguments extends FixableUsageInfo {
       psiClass = myContainingClass.findInnerClassByName(className, false);
     }
     else {
-      psiClass = psiFacade.findClass(StringUtil.getQualifiedName(packageName, className));
+      psiClass = psiFacade.findClass(StringUtil.getQualifiedName(packageName, className), GlobalSearchScope.allScope(getProject()));
     }
     PsiSubstitutor subst = PsiSubstitutor.EMPTY;
     if (deepestSuperMethod != null) {

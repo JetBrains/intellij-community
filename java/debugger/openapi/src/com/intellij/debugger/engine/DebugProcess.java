@@ -32,11 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lex
- * Date: Apr 2, 2004
- * Time: 7:17:18 PM
- * To change this template use File | Settings | File Templates.
+ * @author lex
  */
 public interface DebugProcess {
   @NonNls String JAVA_STRATUM = "Java";

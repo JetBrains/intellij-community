@@ -38,11 +38,7 @@ import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: alex
- * Date: 25.06.2005
- * Time: 17:12:47
- * To change this template use File | Settings | File Templates.
+ * @author alex
  */
 public class SelectLocationDialog extends DialogWrapper {
   private Project myProject;

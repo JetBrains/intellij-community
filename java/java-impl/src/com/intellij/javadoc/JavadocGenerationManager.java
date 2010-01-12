@@ -23,8 +23,8 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.module.Module;
@@ -57,7 +57,7 @@ public final class JavadocGenerationManager extends AbstractProjectComponent imp
   }
 
   public void generateJavadoc(final PsiDirectory directory, DataContext dataContext) {
-    Component component = (Component)dataContext.getData(DataConstants.CONTEXT_COMPONENT);
+    Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     final PsiPackage aPackage = directory != null ? JavaDirectoryService.getInstance().getPackage(directory) : null;
     String packageFQName = aPackage != null ? aPackage.getQualifiedName() : null;
 

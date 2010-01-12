@@ -14,23 +14,19 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Anna.Kozlova
- * Date: 01-Sep-2006
- * Time: 21:17:18
- */
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 
-import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 
+/*
+ * @author Anna.Kozlova
+ */
 public class ClearTextAction extends AnAction implements DumbAware {
 
   public ClearTextAction() {
@@ -38,7 +34,7 @@ public class ClearTextAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final JComponent component = (JComponent)e.getDataContext().getData(DataConstants.CONTEXT_COMPONENT);
+    final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext());
     if (component instanceof JTextComponent) {
       final JTextComponent textComponent = (JTextComponent)component;
       textComponent.setText("");
@@ -47,7 +43,13 @@ public class ClearTextAction extends AnAction implements DumbAware {
 
 
   public void update(AnActionEvent e) {
-    final Component component = (Component)e.getDataContext().getData(DataConstants.CONTEXT_COMPONENT);
-    e.getPresentation().setEnabled(component instanceof JTextComponent && ((JTextComponent)component).getText().length() > 0 && ((JTextComponent)component).isEditable());
+    final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext());
+    if (component instanceof JTextComponent) {
+      final JTextComponent textComponent = (JTextComponent)component;
+      e.getPresentation().setEnabled(textComponent.getText().length() > 0 && ((JTextComponent)component).isEditable());
+    }
+    else {
+      e.getPresentation().setEnabled(false);
+    }
   }
 }

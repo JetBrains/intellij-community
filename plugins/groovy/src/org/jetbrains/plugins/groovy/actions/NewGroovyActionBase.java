@@ -19,7 +19,7 @@ package org.jetbrains.plugins.groovy.actions;
 import com.intellij.CommonBundle;
 import com.intellij.ide.actions.CreateElementActionBase;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -30,7 +30,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
@@ -63,7 +62,7 @@ public abstract class NewGroovyActionBase extends CreateElementActionBase {
       return false;
     }
 
-    Module module = (Module) dataContext.getData(DataKeys.MODULE.getName());
+    Module module = LangDataKeys.MODULE.getData(dataContext);
     return GroovyUtils.isSuitableModule(module) && LibrariesUtil.hasGroovySdk(module);
   }
 

@@ -37,6 +37,7 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeToolTipHandler;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.actions.StartInplaceEditingAction;
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -47,7 +48,6 @@ import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.quickFixes.QuickFixManager;
 import com.intellij.uiDesigner.radComponents.*;
-import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -73,6 +73,9 @@ import java.util.List;
  */
 public final class ComponentTree extends Tree implements DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.componentTree.ComponentTree");
+
+  public static final DataKey<LwInspectionSuppression[]> LW_INSPECTION_SUPPRESSION_ARRAY_DATA_KEY =
+    DataKey.create(LwInspectionSuppression.class.getName());
 
   private SimpleTextAttributes myBindingAttributes; // exists only for performance reason
   private SimpleTextAttributes myClassAttributes; // exists only for performance reason
@@ -229,39 +232,38 @@ public final class ComponentTree extends Tree implements DataProvider {
   }
 
   /**
-   * Provides {@link DataConstants#NAVIGATABLE} to navigate to
+   * Provides {@link PlatformDataKeys#NAVIGATABLE} to navigate to
    * binding of currently selected component (if any)
    */
   public Object getData(final String dataId) {
-    if (GuiEditor.class.getName().equals(dataId)) {
+    if (GuiEditor.DATA_KEY.is(dataId)) {
       return myEditor;
     }
 
-    if (DataConstants.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
+    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       return myDeleteProvider;
     }
 
-    if (
-      DataConstants.COPY_PROVIDER.equals(dataId) ||
-      DataConstants.CUT_PROVIDER.equals(dataId) ||
-      DataConstants.PASTE_PROVIDER.equals(dataId)) {
+    if (PlatformDataKeys.COPY_PROVIDER.is(dataId) ||
+        PlatformDataKeys.CUT_PROVIDER.is(dataId) ||
+        PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
       return myEditor == null ? null : myEditor.getData(dataId);
     }
 
-    if (LwInspectionSuppression.class.getName().equals(dataId)) {
+    if (LW_INSPECTION_SUPPRESSION_ARRAY_DATA_KEY.is(dataId)) {
       Collection<LwInspectionSuppression> elements = getSelectedElements(LwInspectionSuppression.class);
       return elements.size() == 0 ? null : elements.toArray(new LwInspectionSuppression[elements.size()]);
     }
 
-    if (DataConstants.HELP_ID.equals(dataId)) {
+    if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return ourHelpID;
     }
 
-    if (DataConstants.FILE_EDITOR.equals(dataId)) {
+    if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
       return myFormEditor;
     }
 
-    if (!DataConstants.NAVIGATABLE.equals(dataId)) {
+    if (!PlatformDataKeys.NAVIGATABLE.is(dataId)) {
       return null;
     }
 
@@ -595,7 +597,7 @@ public final class ComponentTree extends Tree implements DataProvider {
 
     public void deleteElement(DataContext dataContext) {
       if (myEditor != null) {
-        LwInspectionSuppression[] suppressions = (LwInspectionSuppression[]) dataContext.getData(LwInspectionSuppression.class.getName());
+        LwInspectionSuppression[] suppressions = LW_INSPECTION_SUPPRESSION_ARRAY_DATA_KEY.getData(dataContext);
         if (suppressions != null) {
           if (!myEditor.ensureEditable()) return;
           for(LwInspectionSuppression suppression: suppressions) {
@@ -604,7 +606,7 @@ public final class ComponentTree extends Tree implements DataProvider {
           myEditor.refreshAndSave(true);
         }
         else {
-          DeleteProvider baseProvider = (DeleteProvider) myEditor.getData(DataConstants.DELETE_ELEMENT_PROVIDER);
+          DeleteProvider baseProvider = (DeleteProvider) myEditor.getData(PlatformDataKeys.DELETE_ELEMENT_PROVIDER.getName());
           if (baseProvider != null) {
             baseProvider.deleteElement(dataContext);
           }
@@ -614,11 +616,11 @@ public final class ComponentTree extends Tree implements DataProvider {
 
     public boolean canDeleteElement(DataContext dataContext) {
       if (myEditor != null) {
-        LwInspectionSuppression[] suppressions = (LwInspectionSuppression[]) dataContext.getData(LwInspectionSuppression.class.getName());
+        LwInspectionSuppression[] suppressions = LW_INSPECTION_SUPPRESSION_ARRAY_DATA_KEY.getData(dataContext);
         if (suppressions != null) {
           return true;
         }
-        DeleteProvider baseProvider = (DeleteProvider) myEditor.getData(DataConstants.DELETE_ELEMENT_PROVIDER);
+        DeleteProvider baseProvider = (DeleteProvider) myEditor.getData(PlatformDataKeys.DELETE_ELEMENT_PROVIDER.getName());
         if (baseProvider != null) {
           return baseProvider.canDeleteElement(dataContext);
         }

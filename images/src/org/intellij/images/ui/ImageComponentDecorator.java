@@ -15,21 +15,25 @@
  */
 package org.intellij.images.ui;
 
+import com.intellij.openapi.actionSystem.DataKey;
+
 /**
  * Image Component manager. It can toggle backround transparency, grid, etc.
  *
  * @author Alexey Efimov
  */
 public interface ImageComponentDecorator {
-    void setTransparencyChessboardVisible(boolean visible);
+  DataKey<ImageComponentDecorator> DATA_KEY = DataKey.create(ImageComponentDecorator.class.getName());
 
-    boolean isTransparencyChessboardVisible();
+  void setTransparencyChessboardVisible(boolean visible);
 
-    /**
-     * Return <code>true</code> if this decorator is enabled for this action place.
-     *
-     * @param place Action place
-     * @return <code>true</code> is decorator is enabled
-     */
-    boolean isEnabledForActionPlace(String place);
+  boolean isTransparencyChessboardVisible();
+
+  /**
+   * Return <code>true</code> if this decorator is enabled for this action place.
+   *
+   * @param place Action place
+   * @return <code>true</code> is decorator is enabled
+   */
+  boolean isEnabledForActionPlace(String place);
 }

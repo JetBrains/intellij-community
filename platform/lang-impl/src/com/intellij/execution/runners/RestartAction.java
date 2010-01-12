@@ -62,12 +62,12 @@ public class RestartAction extends AnAction implements DumbAware {
       final ExecutionEnvironment old = myEnvironment;
       myRunner.execute(myExecutor, new ExecutionEnvironment(old.getRunProfile(), old.getRunnerSettings(), old.getConfigurationSettings(), new DataContext() {
         public Object getData(final String dataId) {
-          if (GenericProgramRunner.CONTENT_TO_REUSE.equals(dataId)) return myDescriptor;
+          if (GenericProgramRunner.CONTENT_TO_REUSE_DATA_KEY.is(dataId)) return myDescriptor;
           return dataContext.getData(dataId);
         }
       }));
     }
-    catch (RunCanceledByUserException e1) {
+    catch (RunCanceledByUserException ignore) {
     }
     catch (ExecutionException e1) {
       Messages.showErrorDialog(project, e1.getMessage(), ExecutionBundle.message("restart.error.message.title"));

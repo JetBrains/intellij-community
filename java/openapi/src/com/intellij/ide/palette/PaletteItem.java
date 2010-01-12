@@ -16,13 +16,11 @@
 
 package com.intellij.ide.palette;
 
+import com.intellij.ide.dnd.DnDDragStartBean;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ide.dnd.DnDDragStartBean;
 import org.jetbrains.annotations.Nullable;
-
-import java.awt.datatransfer.Transferable;
 
 /**
  * @author yole
@@ -51,7 +49,7 @@ public interface PaletteItem {
    * Returns the data for the specified data constant.
    *
    * @param project the project in the context of which data is requested.
-   * @param dataId  the data constant id (see {@link com.intellij.openapi.actionSystem.DataConstants}).
+   * @param dataId  the data constant id (see {@link com.intellij.openapi.actionSystem.PlatformDataKeys}).
    * @return the data item, or null if no data is available for this constant.
    */
   @Nullable Object getData(Project project, String dataId);

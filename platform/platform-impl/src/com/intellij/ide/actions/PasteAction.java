@@ -21,17 +21,19 @@ import com.intellij.openapi.project.DumbAware;
 
 public class PasteAction extends AnAction implements DumbAware {
 
-  public void update(AnActionEvent event){
+  public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
 
-    PasteProvider provider = (PasteProvider)dataContext.getData(DataConstants.PASTE_PROVIDER);
+    PasteProvider provider = PlatformDataKeys.PASTE_PROVIDER.getData(dataContext);
     presentation.setEnabled(provider != null && provider.isPastePossible(dataContext));
   }
+
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    PasteProvider provider = (PasteProvider)dataContext.getData(DataConstants.PASTE_PROVIDER);
-    if (provider == null || !provider.isPasteEnabled(dataContext)) return;
-    provider.performPaste(dataContext);
+    PasteProvider provider = PlatformDataKeys.PASTE_PROVIDER.getData(dataContext);
+    if (provider != null && provider.isPasteEnabled(dataContext)) {
+      provider.performPaste(dataContext);
+    }
   }
 }

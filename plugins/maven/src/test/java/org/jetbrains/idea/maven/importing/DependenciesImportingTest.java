@@ -74,6 +74,47 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/");
   }
 
+  public void testTestJarDependencies() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>junit</groupId>" +
+                  "    <artifactId>junit</artifactId>" +
+                  "    <version>4.0</version>" +
+                  "    <type>test-jar</type>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+
+    assertModules("project");
+    assertModuleLibDep("project", "Maven: junit:junit:test-jar:tests:4.0",
+                       "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-tests.jar!/",
+                       "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-test-sources.jar!/",
+                       "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-test-javadoc.jar!/");
+  }
+
+  public void testDependencyWithClassifier() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>junit</groupId>" +
+                  "    <artifactId>junit</artifactId>" +
+                  "    <version>4.0</version>" +
+                  "    <classifier>bar</classifier>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+    assertModules("project");
+    assertModuleLibDep("project", "Maven: junit:junit:bar:4.0",
+                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-bar.jar!/",
+                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/",
+                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/");
+  }
+
   public void testSystemDependencyWithoutPath() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -718,41 +759,6 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                        "jar://" + envDir + "/lib/tools.jar!/");
   }
 
-  public void testTestJarDependencies() throws Exception {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<dependencies>" +
-                  "  <dependency>" +
-                  "    <groupId>group</groupId>" +
-                  "    <artifactId>artifact</artifactId>" +
-                  "    <type>test-jar</type>" +
-                  "    <version>1</version>" +
-                  "  </dependency>" +
-                  "</dependencies>");
-
-    assertModules("project");
-    assertModuleLibDeps("project", "Maven: group:artifact:test-jar:tests:1");
-  }
-
-  public void testDependencyWithClassifier() throws Exception {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<dependencies>" +
-                  "  <dependency>" +
-                  "    <groupId>group</groupId>" +
-                  "    <artifactId>artifact</artifactId>" +
-                  "    <classifier>bar</classifier>" +
-                  "    <version>1</version>" +
-                  "  </dependency>" +
-                  "</dependencies>");
-    assertModules("project");
-    assertModuleLibDeps("project", "Maven: group:artifact:bar:1");
-  }
-
   public void testDependencyWithVersionRangeOnModule() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -1385,8 +1391,8 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleLibDeps("project", "Maven: org.testng:testng:jdk15:5.8", "Maven: junit:junit:3.8.1");
     assertModuleLibDep("project", "Maven: org.testng:testng:jdk15:5.8",
                        "jar://" + getRepositoryPath() + "/org/testng/testng/5.8/testng-5.8-jdk15.jar!/",
-                       "jar://" + getRepositoryPath() + "/org/testng/testng/5.8/testng-5.8-jdk15-sources.jar!/",
-                       "jar://" + getRepositoryPath() + "/org/testng/testng/5.8/testng-5.8-jdk15-javadoc.jar!/");
+                       "jar://" + getRepositoryPath() + "/org/testng/testng/5.8/testng-5.8-sources.jar!/",
+                       "jar://" + getRepositoryPath() + "/org/testng/testng/5.8/testng-5.8-javadoc.jar!/");
 
     setRepositoryPath(new File(myDir, "__repo").getPath());
     myProjectsManager.getEmbeddersManagerInTests().reset(); // to recognize repository change
@@ -1397,8 +1403,8 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
     assertModuleLibDep("project", "Maven: org.testng:testng:jdk15:5.8",
                        "jar://" + getRepositoryPath() + "/org/testng/testng/5.8/testng-5.8-jdk15.jar!/",
-                       "jar://" + getRepositoryPath() + "/org/testng/testng/5.8/testng-5.8-jdk15-sources.jar!/",
-                       "jar://" + getRepositoryPath() + "/org/testng/testng/5.8/testng-5.8-jdk15-javadoc.jar!/");
+                       "jar://" + getRepositoryPath() + "/org/testng/testng/5.8/testng-5.8-sources.jar!/",
+                       "jar://" + getRepositoryPath() + "/org/testng/testng/5.8/testng-5.8-javadoc.jar!/");
   }
 
   public void testDoNotPopulateSameRootEntriesOnEveryImport() throws Exception {

@@ -51,11 +51,7 @@ import java.util.*;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: pti
- * Date: Mar 18, 2005
- * Time: 7:32:41 PM
- * To change this template use File | Settings | File Templates.
+ * @author pti
  */
 public class WelcomeScreen {
   private JPanel myWelcomePanel;
@@ -738,8 +734,8 @@ public class WelcomeScreen {
     protected void paintBackground(Graphics g) {
       Dimension dimension = getSize();
       int state = getPopState();
-      if (state != ActionButtonComponent.NORMAL) {
-        if (state == ActionButtonComponent.POPPED) {
+      if (state != NORMAL) {
+        if (state == POPPED) {
           g.setColor(BUTTON_POPPED_COLOR);
           g.fillRect(0, 0, dimension.width, dimension.height);
         }
@@ -752,7 +748,7 @@ public class WelcomeScreen {
         g.setColor(getNormalButtonColor());
         g.fillRect(0, 0, dimension.width, dimension.height);
       }
-      if (state == ActionButtonComponent.PUSHED) {
+      if (state == PUSHED) {
         g.setColor(BUTTON_PUSHED_COLOR);
         g.fillRect(0, 0, dimension.width, dimension.height);
       }
@@ -771,14 +767,14 @@ public class WelcomeScreen {
     }
 
     public int getPopState() {
-      if (myKeypressedButton == this) return ActionButtonComponent.PUSHED;
-      if (myKeypressedButton != null) return ActionButtonComponent.NORMAL;
+      if (myKeypressedButton == this) return PUSHED;
+      if (myKeypressedButton != null) return NORMAL;
       if (mySelectedColumn == myColumnIdx &&
           mySelectedRow == myRowIdx &&
           mySelectedGroup == myGroupIdx) {
-        return ActionButtonComponent.POPPED;
+        return POPPED;
       }
-      return ActionButtonComponent.NORMAL;
+      return NORMAL;
     }
 
     private void setupListeners(final JPanel panel) {

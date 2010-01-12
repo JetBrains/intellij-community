@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.impl;
 
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -70,9 +70,9 @@ public abstract class DataValidator<T> {
   }
 
   static {
-    ourValidators.put(DataConstants.VIRTUAL_FILE, VIRTUAL_FILE_VALIDATOR);
-    ourValidators.put(DataConstants.VIRTUAL_FILE_ARRAY, new ArrayValidator<VirtualFile>(VIRTUAL_FILE_VALIDATOR));
-    ourValidators.put(DataConstants.PROJECT, PROJECT_VALIDATOR);
+    ourValidators.put(PlatformDataKeys.VIRTUAL_FILE.getName(), VIRTUAL_FILE_VALIDATOR);
+    ourValidators.put(PlatformDataKeys.VIRTUAL_FILE_ARRAY.getName(), new ArrayValidator<VirtualFile>(VIRTUAL_FILE_VALIDATOR));
+    ourValidators.put(PlatformDataKeys.PROJECT.getName(), PROJECT_VALIDATOR);
   }
 
   public static class ArrayValidator<T> extends DataValidator<T[]> {

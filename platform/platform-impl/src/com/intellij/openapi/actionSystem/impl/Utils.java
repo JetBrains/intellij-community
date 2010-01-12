@@ -160,7 +160,7 @@ public class Utils{
       if (anAction instanceof Separator) {
         continue;
       }
-      final Project project = (Project)context.getData(DataConstants.PROJECT);
+      final Project project = PlatformDataKeys.PROJECT.getData(context);
       if (project != null && DumbService.getInstance(project).isDumb() && !(anAction instanceof DumbAware) && !(anAction instanceof ActionGroup)) {
         continue;
       }

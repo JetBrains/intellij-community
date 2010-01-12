@@ -361,7 +361,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
     if (myUpdateProgress != null) {
       myUpdateProgress.cancel();
-      myPassExecutorService.cancelAll();
+      myPassExecutorService.cancelAll(false);
       cancelVisibleProgress();
       myUpdateProgress = null;
     }
@@ -626,4 +626,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return UpdateHighlightersUtil.getFileLeveleHighlights(project, file);
   }
 
+  @TestOnly
+  public void clearPasses() {
+    myPassExecutorService.cancelAll(true);
+  }
 }

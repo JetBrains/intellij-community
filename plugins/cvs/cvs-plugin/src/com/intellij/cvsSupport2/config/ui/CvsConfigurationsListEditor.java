@@ -38,7 +38,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -120,9 +119,8 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
 
 
   private void fillModel(List<CvsRootConfiguration> configurations) {
-    for (Iterator each = configurations.iterator(); each.hasNext();) {
-      CvsRootConfiguration obj = (CvsRootConfiguration)each.next();
-      myModel.addElement(obj.getMyCopy());
+    for (final CvsRootConfiguration configuration : configurations) {
+      myModel.addElement(configuration.getMyCopy());
     }
   }
 
@@ -311,7 +309,7 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
 
   @NonNls
   public Object getData(String dataId) {
-    if (DataConstants.HELP_ID.equals(dataId)){
+    if (PlatformDataKeys.HELP_ID.is(dataId)){
       return "reference.versionControl.cvs.options";
     }
     return null;

@@ -43,7 +43,7 @@ public interface ChangeListFilteringStrategy {
 
     @Nullable
     public JComponent getFilterUI() {
-      return null;  //To change body of implemented methods use File | Settings | File Templates.
+      return null;
     }
 
     public void setFilterBase(List<CommittedChangeList> changeLists) {

@@ -3,11 +3,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.JavaTestUtil;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Oct 14, 2004
- * Time: 4:39:37 PM
- * To change this template use File | Settings | File Templates.
+ * @author Maxim.Mossienko
  */
 public class CustomFileTypeCompletionTest extends LightCompletionTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/customFileType/";

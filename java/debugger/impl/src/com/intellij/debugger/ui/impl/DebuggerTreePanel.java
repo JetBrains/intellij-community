@@ -24,10 +24,7 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionPopupMenu;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -39,6 +36,8 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 
 public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements DataProvider {
+  public static final DataKey<DebuggerTreePanel> DATA_KEY = DataKey.create("DebuggerPanel");
+  
   protected final DebuggerTree myTree;
 
   public DebuggerTreePanel(Project project, DebuggerStateManager stateManager) {
@@ -101,7 +100,7 @@ public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements
   }
 
   public Object getData(String dataId) {
-    if (DebuggerActions.DEBUGGER_TREE_PANEL.equals(dataId)) {
+    if (DebuggerTreePanel.DATA_KEY.is(dataId)) {
       return this;
     }
     return null;

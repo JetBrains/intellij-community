@@ -51,11 +51,7 @@ import java.util.Enumeration;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: alex
- * Date: 01.07.2005
- * Time: 19:13:10
- * To change this template use File | Settings | File Templates.
+ * @author alex
  */
 public class RepositoryBrowserComponent extends JPanel implements Disposable, DataProvider {
 

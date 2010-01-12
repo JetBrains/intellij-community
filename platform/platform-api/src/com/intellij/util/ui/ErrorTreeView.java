@@ -16,14 +16,15 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 
 public interface ErrorTreeView extends Disposable {
-  @NonNls String CURRENT_EXCEPTION_DATA = "CURRENT_EXCEPTION_DATA";
+  DataKey<Object> CURRENT_EXCEPTION_DATA_KEY = DataKey.create("CURRENT_EXCEPTION_DATA");
+  @Deprecated String CURRENT_EXCEPTION_DATA = CURRENT_EXCEPTION_DATA_KEY.getName();
 
   /**
    * If file is not null, allows to navigate to this file, line, column

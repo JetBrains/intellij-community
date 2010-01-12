@@ -16,6 +16,7 @@
 package com.intellij.xml;
 
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -115,7 +116,7 @@ public class DefaultXmlExtension extends XmlExtension {
   }
 
   @NotNull
-  public Set<String> guessUnboundNamespaces(@NotNull final PsiElement element, final XmlFile file) {
+  public Set<String> guessUnboundNamespaces(@NotNull final PsiElement element, @NotNull XmlFile file) {
     if (!(element instanceof XmlTag)) {
       return Collections.emptySet();
     }
@@ -132,7 +133,7 @@ public class DefaultXmlExtension extends XmlExtension {
     final XmlTag parentTag = tag.getParentTag();
     ns: for (Iterator<String> i = set.iterator(); i.hasNext();) {
       final String s = i.next();
-      final Collection<XmlFile> namespaces = XmlUtil.findNSFilesByURI(s, element.getProject());
+      final Collection<XmlFile> namespaces = XmlUtil.findNSFilesByURI(s, element.getProject(), ModuleUtil.findModuleForPsiElement(file));
       for (XmlFile namespace : namespaces) {
         final XmlDocument document = namespace.getDocument();
         assert document != null;

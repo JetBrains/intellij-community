@@ -28,11 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import java.util.Arrays;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Dmitry.Krasilschikov
- * Date: 16.02.2009
- * Time: 17:23:45
- * To change this template use File | Settings | File Templates.
+ * @author Dmitry.Krasilschikov
  */
 public class GrTupleDeclarationImpl extends GroovyPsiElementImpl implements GrTupleDeclaration {
   public GrTupleDeclarationImpl(@NotNull ASTNode node) {

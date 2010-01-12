@@ -19,11 +19,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.refactoring.typeCook.deductive.resolver.Binding;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
- * Date: Jul 20, 2004
- * Time: 6:02:29 PM
- * To change this template use File | Settings | File Templates.
+ * @author db
  */
 public class Subtype extends Constraint {
   public Subtype(PsiType left, PsiType right) {

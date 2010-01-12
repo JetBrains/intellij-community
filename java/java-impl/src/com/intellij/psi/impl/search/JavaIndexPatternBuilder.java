@@ -15,17 +15,18 @@
  */
 package com.intellij.psi.impl.search;
 
-import com.intellij.lexer.Lexer;
 import com.intellij.lexer.JavaLexer;
+import com.intellij.lexer.Lexer;
+import com.intellij.psi.JavaDocTokenType;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.JavaDocTokenType;
-import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.impl.source.tree.StdTokenSets;
 import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -56,6 +57,6 @@ public class JavaIndexPatternBuilder implements IndexPatternBuilder {
   }
 
   public int getCommentEndDelta(final IElementType tokenType) {
-    return 0;
+    return tokenType == JavaTokenType.C_STYLE_COMMENT ? "*/".length() : 0;
   }
 }

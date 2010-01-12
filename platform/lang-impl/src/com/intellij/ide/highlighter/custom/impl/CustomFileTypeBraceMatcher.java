@@ -26,11 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Dec 6, 2004
- * Time: 8:36:58 PM
- * To change this template use File | Settings | File Templates.
+ * @author Maxim.Mossienko
  */
 class CustomFileTypeBraceMatcher implements BraceMatcher {
   public int getBraceTokenGroupId(IElementType tokenType) {

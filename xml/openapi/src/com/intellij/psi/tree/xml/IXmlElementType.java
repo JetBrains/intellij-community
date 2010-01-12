@@ -20,13 +20,9 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jan 24, 2005
- * Time: 12:01:36 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
-public class IXmlElementType extends IElementType{
+public class IXmlElementType extends IElementType {
   public IXmlElementType(@NonNls String debugName) {
     super(debugName, StdFileTypes.XML.getLanguage());
   }

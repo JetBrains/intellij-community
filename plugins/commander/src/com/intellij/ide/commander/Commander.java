@@ -24,7 +24,6 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -43,6 +42,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.AutoScrollToSourceHandler;
@@ -57,6 +57,7 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Eugene Belyaev
@@ -121,8 +122,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     actionMap.put(ACTION_BACKCOMMAND, backAction);
     actionMap.put(ACTION_FORWARDCOMMAND, fwdAction);
     final KeyStroke[] backStrokes = getKeyStrokes(IdeActions.ACTION_GOTO_BACK, keymapManager);
-    for (int idx = 0; idx < backStrokes.length; idx++) {
-      KeyStroke stroke = backStrokes[idx];
+    for (KeyStroke stroke : backStrokes) {
       //getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(stroke, "backCommand");
       //getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(stroke, "backCommand");
       registerKeyboardAction(backAction, ACTION_BACKCOMMAND, stroke, JComponent.WHEN_IN_FOCUSED_WINDOW);
@@ -130,8 +130,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     }
 
     final KeyStroke[] fwdStrokes = getKeyStrokes(IdeActions.ACTION_GOTO_FORWARD, keymapManager);
-    for (int idx = 0; idx < fwdStrokes.length; idx++) {
-      KeyStroke stroke = fwdStrokes[idx];
+    for (KeyStroke stroke : fwdStrokes) {
       //getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(stroke, "forwardCommand");
       //getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(stroke, "forwardCommand");
       registerKeyboardAction(fwdAction, ACTION_FORWARDCOMMAND, stroke, JComponent.WHEN_IN_FOCUSED_WINDOW);
@@ -200,11 +199,10 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     myElement = null;
   }
 
-  private KeyStroke[] getKeyStrokes(String actionId, KeymapManager keymapManager) {
+  private static KeyStroke[] getKeyStrokes(String actionId, KeymapManager keymapManager) {
     final Shortcut[] shortcuts = keymapManager.getActiveKeymap().getShortcuts(actionId);
-    final java.util.List<KeyStroke> strokes = new ArrayList<KeyStroke>();
-    for (int i = 0; i < shortcuts.length; i++) {
-      final Shortcut shortcut = shortcuts[i];
+    final List<KeyStroke> strokes = new ArrayList<KeyStroke>();
+    for (final Shortcut shortcut : shortcuts) {
       if (shortcut instanceof KeyboardShortcut) {
         strokes.add(((KeyboardShortcut)shortcut).getFirstKeyStroke());
       }
@@ -470,13 +468,13 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
   }
 
   public Object getData(final String dataId) {
-    if (DataConstants.HELP_ID.equals(dataId)) {
+    if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return HelpID.COMMANDER;
     }
-    else if (DataConstants.PROJECT.equals(dataId)) {
+    else if (PlatformDataKeys.PROJECT.is(dataId)) {
       return myProject;
     }
-    else if (DataConstantsEx.TARGET_PSI_ELEMENT.equals(dataId)) {
+    else if (LangDataKeys.TARGET_PSI_ELEMENT.is(dataId)) {
       final AbstractTreeNode parentElement = getInactivePanel().getBuilder().getParentNode();
       if (parentElement == null) return null;
       final Object element = parentElement.getValue();
@@ -559,7 +557,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
       return file != null ? PsiManager.getInstance(myProject).findDirectory(file) : null;
     } else if (element.getAttributeValue(ATTRIBUTE_CLASS) != null) {
       final String className = element.getAttributeValue(ATTRIBUTE_CLASS);
-      return className != null ? JavaPsiFacade.getInstance(myProject).findClass(className) : null;
+      return className != null ? JavaPsiFacade.getInstance(myProject).findClass(className, GlobalSearchScope.allScope(myProject)) : null;
     }
     return null;
   }

@@ -28,14 +28,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
- * Created by IntelliJ IDEA.
- * User: alex
- * Date: 12.07.2005
- * Time: 18:59:52
- * To change this template use File | Settings | File Templates.
+ * @author alex
  */
 public class SelectFilesDialog extends DialogWrapper implements ActionListener {
 
@@ -109,8 +108,8 @@ public class SelectFilesDialog extends DialogWrapper implements ActionListener {
     myFilesList = new FilesList(myFiles);
     myFilesList.setCheckboxColumnName("");
     myFilesList.setEntriesEditable(false);
-    for (int i = 0; i < myFiles.length; i++) {
-      myFilesList.add(myFiles[i]);
+    for (String myFile : myFiles) {
+      myFilesList.add(myFile);
     }
     Font font = myFilesList.getFont();
     FontMetrics fm = myFilesList.getFontMetrics(font);
@@ -130,8 +129,8 @@ public class SelectFilesDialog extends DialogWrapper implements ActionListener {
   }
 
   public void actionPerformed(ActionEvent e) {
-    for (int i = 0; i < myFiles.length; i++) {
-      myFilesList.setChecked(myFiles[i], e.getSource() == mySelectAllButton);
+    for (String file : myFiles) {
+      myFilesList.setChecked(file, e.getSource() == mySelectAllButton);
     }
     myFilesList.refresh();
     setOKActionEnabled(isOKActionEnabled());
@@ -141,45 +140,45 @@ public class SelectFilesDialog extends DialogWrapper implements ActionListener {
     return myFilesList.getSelectedPaths();
   }
 
-  private class FilesList extends OrderPanel {
+  private class FilesList extends OrderPanel<String> {
 
-    private final Map mySelectedFiles;
+    private final Map<String, Boolean> mySelectedFiles;
 
     protected FilesList(String[] files) {
       super(String.class, true);
-      mySelectedFiles = new TreeMap();
-      for (int i = 0; i < files.length; i++) {
-        mySelectedFiles.put(files[i], Boolean.TRUE);
+      mySelectedFiles = new TreeMap<String, Boolean>();
+      for (String file : files) {
+        mySelectedFiles.put(file, Boolean.TRUE);
       }
     }
-    public boolean isCheckable(final Object entry) {
+    public boolean isCheckable(final String entry) {
       return true;
     }
-    public boolean isChecked(final Object entry) {
+
+    public boolean isChecked(final String entry) {
       return Boolean.TRUE.equals(mySelectedFiles.get(entry));
     }
-    public void setChecked(final Object entry, final boolean checked) {
+
+    public void setChecked(final String entry, final boolean checked) {
       mySelectedFiles.put(entry, checked ? Boolean.TRUE : Boolean.FALSE);
       getOKAction().setEnabled(isOKActionEnabled());
     }
 
     public void refresh() {
       clear();
-      for (Iterator paths = mySelectedFiles.keySet().iterator(); paths.hasNext();) {
-        String path = (String)paths.next();
+      for (String path : mySelectedFiles.keySet()) {
         add(path);
       }
     }
 
     public String[] getSelectedPaths() {
-      Collection selected = new TreeSet();
-      for (Iterator paths = mySelectedFiles.keySet().iterator(); paths.hasNext();) {
-        String path = (String)paths.next();
+      Collection<String> selected = new TreeSet<String>();
+      for (String path : mySelectedFiles.keySet()) {
         if (isChecked(path)) {
           selected.add(path);
         }
       }
-      return (String[])ArrayUtil.toStringArray(selected);
+      return ArrayUtil.toStringArray(selected);
     }
   }
 }

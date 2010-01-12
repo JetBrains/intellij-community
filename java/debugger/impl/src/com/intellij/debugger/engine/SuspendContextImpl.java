@@ -34,11 +34,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lex
- * Date: Feb 24, 2004
- * Time: 8:04:50 PM
- * To change this template use File | Settings | File Templates.
+ * @author lex
  */
 public abstract class SuspendContextImpl implements SuspendContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.SuspendContextImpl");

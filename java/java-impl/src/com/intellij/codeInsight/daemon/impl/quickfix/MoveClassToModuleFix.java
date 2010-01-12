@@ -22,7 +22,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -43,6 +43,9 @@ import org.jetbrains.annotations.NotNull;
  * @author cdr
  */
 public class MoveClassToModuleFix {
+  private MoveClassToModuleFix() {
+  }
+
   public static void registerFixes(QuickFixActionRegistrar registrar, final PsiJavaCodeReferenceElement reference) {
     final PsiElement psiElement = reference.getElement();
     @NonNls final String referenceName = reference.getRangeInElement().substring(psiElement.getText());
@@ -102,8 +105,11 @@ public class MoveClassToModuleFix {
             DataManager dataManager = DataManager.getInstance();
             DataContext dataContext = dataManager.getDataContext();
             PsiDirectory directory = PackageUtil.findOrCreateDirectoryForPackage(currentModule, packageName, sourceRoot, true);
-            DataContext context = SimpleDataContext.getSimpleContext(DataConstantsEx.TARGET_PSI_ELEMENT, directory, dataContext);
+            DataContext context = SimpleDataContext.getSimpleContext(LangDataKeys.TARGET_PSI_ELEMENT.getName(), directory, dataContext);
             String qualifiedName = aClass.getQualifiedName();
+            if (qualifiedName == null) {
+              return;
+            }
             moveHandler.invoke(project, new PsiElement[]{aClass}, context);
             PsiReference reference = file.findReferenceAt(editor.getCaretModel().getOffset());
             PsiClass newClass = JavaPsiFacade.getInstance(project).findClass(qualifiedName, GlobalSearchScope.moduleScope(currentModule));

@@ -34,6 +34,9 @@ import java.util.ArrayList;
 public class MigrationUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.migration.MigrationUtil");
 
+  private MigrationUtil() {
+  }
+
   public static UsageInfo[] findPackageUsages(PsiManager manager, PsiMigration migration, String qName) {
     PsiPackage aPackage = findOrCreatePackage(manager, migration, qName);
 
@@ -129,7 +132,7 @@ public class MigrationUtil {
   }
 
   static PsiClass findOrCreateClass(PsiManager manager, final PsiMigration migration, final String qName) {
-    PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(qName);
+    PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(qName, GlobalSearchScope.allScope(manager.getProject()));
     if (aClass == null) {
       aClass = ApplicationManager.getApplication().runWriteAction(new Computable<PsiClass>() {
         public PsiClass compute() {

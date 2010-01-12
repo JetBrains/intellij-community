@@ -38,11 +38,7 @@ import java.awt.*;
 import java.awt.event.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lex
- * Date: Jan 29, 2004
- * Time: 4:23:11 PM
- * To change this template use File | Settings | File Templates.
+ * @author lex
  */
 public class TipManager implements Disposable, PopupMenuListener {
 
@@ -53,7 +49,7 @@ public class TipManager implements Disposable, PopupMenuListener {
 
   private MouseEvent myLastMouseEvent;
 
-  public static interface TipFactory {
+  public interface TipFactory {
     JComponent createToolTip (MouseEvent e);
     MouseEvent createTooltipEvent(MouseEvent candiateEvent);
     boolean isFocusOwner();
@@ -152,8 +148,8 @@ public class TipManager implements Disposable, PopupMenuListener {
   private boolean isInsideComponent(final MouseEvent e) {
     final Rectangle compBounds = myComponent.getBounds();
     final Point compPoint = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), myComponent);
-    final boolean insideCoponent = compBounds.contains(compPoint);
-    return insideCoponent;
+
+    return compBounds.contains(compPoint);
   }
 
 

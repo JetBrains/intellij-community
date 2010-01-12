@@ -25,11 +25,11 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.ChooseFileEncodingAction;
-import com.intellij.openapi.vfs.encoding.ChangeEncodingUpdateGroup;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.ChangeEncodingUpdateGroup;
+import com.intellij.openapi.vfs.encoding.ChooseFileEncodingAction;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 
 import javax.swing.*;
 import java.awt.event.MouseAdapter;
@@ -112,8 +112,8 @@ public class EncodingPanel extends TextPanel implements StatusBarPatch {
       }
     };
     DataContext context = DataManager.getInstance().getDataContext(statusBar);
-    DataContext dataContext = SimpleDataContext.getSimpleContext(DataConstants.VIRTUAL_FILE, virtualFile,
-                              SimpleDataContext.getSimpleContext(DataConstants.PROJECT, getProject(), context));
+    DataContext dataContext = SimpleDataContext.getSimpleContext(PlatformDataKeys.VIRTUAL_FILE.getName(), virtualFile,
+                              SimpleDataContext.getSimpleContext(PlatformDataKeys.PROJECT.getName(), getProject(), context));
     Presentation presentation = changeAction.getTemplatePresentation();
     AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, presentation, ActionManager.getInstance(), 0);
     changeAction.update(event);

@@ -22,6 +22,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -36,19 +37,21 @@ public enum ResourceRelevance {
   SOURCE,
   MAPPED;
 
-  public static ResourceRelevance getRelevance(VirtualFile file, Module module, ProjectFileIndex fileIndex) {
-    Module moduleForFile = fileIndex.getModuleForFile(file);
-    if (moduleForFile != null) { // in module content
-      return module.equals(moduleForFile) || ModuleManager.getInstance(module.getProject()).isModuleDependent(module, moduleForFile) ? SOURCE : NONE;
+  public static ResourceRelevance getRelevance(VirtualFile file, @Nullable Module module, ProjectFileIndex fileIndex) {
+    if (module != null) {
+      Module moduleForFile = fileIndex.getModuleForFile(file);
+      if (moduleForFile != null) { // in module content
+        return module.equals(moduleForFile) || ModuleManager.getInstance(module.getProject()).isModuleDependent(module, moduleForFile) ? SOURCE : NONE;
+      }
     }
     if (fileIndex.isInLibraryClasses(file)) {
       List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(file);
       if (orderEntries.isEmpty()) {
         return NONE;
       }
-      for (OrderEntry orderEntry : orderEntries) {
-        Module ownerModule = orderEntry.getOwnerModule();
-        if (ownerModule != null) {
+      if (module != null) {
+        for (OrderEntry orderEntry : orderEntries) {
+          Module ownerModule = orderEntry.getOwnerModule();
           if (ownerModule.equals(module)) {
             return LIBRARY;
           }
@@ -59,7 +62,7 @@ public enum ResourceRelevance {
     if (resourceManager.isUserResource(file)) {
       return MAPPED;
     }
-    if (resourceManager.isStandardResource(file)) {
+    if (ExternalResourceManagerImpl.isStandardResource(file)) {
       return STANDARD;
     }
     return NONE;

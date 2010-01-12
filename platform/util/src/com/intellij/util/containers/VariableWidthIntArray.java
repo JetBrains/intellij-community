@@ -18,18 +18,14 @@ package com.intellij.util.containers;
 import com.intellij.openapi.diagnostic.Logger;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Dmitry.Shtukenberg
- * Date: Jun 8, 2004
- * Time: 4:31:32 PM
- * To change this template use File | Settings | File Templates.
+ * @author Dmitry.Shtukenberg
  */
 public final class VariableWidthIntArray implements Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.containers.VariableWidthIntArray");
 
-  private int intArray[] = null;
-  private short shortArray[] = null;
-  private byte byteArray[] = null;
+  private int[] intArray = null;
+  private short[] shortArray = null;
+  private byte[] byteArray = null;
 
   private final int minValue;
   private final int maxValue;
@@ -106,9 +102,9 @@ public final class VariableWidthIntArray implements Cloneable {
 
   public Object clone() throws CloneNotSupportedException {
     VariableWidthIntArray arr = (VariableWidthIntArray)super.clone();
-    if( intArray != null ) { arr.intArray = (int[])intArray.clone(); }
-    if( shortArray != null ) { arr.shortArray = (short[])shortArray.clone(); }
-    if( byteArray != null ) { arr.byteArray = (byte[])byteArray.clone(); }
+    if( intArray != null ) { arr.intArray = intArray.clone(); }
+    if( shortArray != null ) { arr.shortArray = shortArray.clone(); }
+    if( byteArray != null ) { arr.byteArray = byteArray.clone(); }
     return arr;
   }
 

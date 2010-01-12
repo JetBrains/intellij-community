@@ -27,11 +27,7 @@ import org.tmatesoft.svn.core.wc.SVNWCClient;
 import java.io.File;
 
 /**
- * Created by IntelliJ IDEA.
- * User: alex
- * Date: 04.07.2005
- * Time: 14:53:47
- * To change this template use File | Settings | File Templates.
+ * @author alex
  */
 public class SvnEditFileProvider implements EditFileProvider {
   private final SvnVcs myVCS;

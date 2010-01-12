@@ -23,8 +23,8 @@ import com.intellij.util.xml.tree.DomModelTreeView;
 /**
  * User: Sergey.Vasiliev
  */
-abstract public class BaseDomTreeAction extends AnAction  {
-private DomModelTreeView myTreeView;
+abstract public class BaseDomTreeAction extends AnAction {
+  private DomModelTreeView myTreeView;
 
   protected BaseDomTreeAction() {
   }
@@ -47,7 +47,7 @@ private DomModelTreeView myTreeView;
   protected DomModelTreeView getTreeView(AnActionEvent e) {
     if (myTreeView != null) return myTreeView;
 
-    return (DomModelTreeView)e.getDataContext().getData(DomModelTreeView.DOM_MODEL_TREE_VIEW_KEY);
+    return DomModelTreeView.DATA_KEY.getData(e.getDataContext());
   }
 
   final public void actionPerformed(AnActionEvent e) {
@@ -59,6 +59,6 @@ private DomModelTreeView myTreeView;
 
   public abstract void actionPerformed(AnActionEvent e, DomModelTreeView treeView);
 
-  public  abstract void update(AnActionEvent e, DomModelTreeView treeView);
+  public abstract void update(AnActionEvent e, DomModelTreeView treeView);
 }
 

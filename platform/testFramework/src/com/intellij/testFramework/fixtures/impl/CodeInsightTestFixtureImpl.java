@@ -409,7 +409,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public List<IntentionAction> filterAvailableIntentions(@NotNull final String hint) throws Exception {
-    return ContainerUtil.findAll(getAvailableIntentions(),new Condition<IntentionAction>() {
+    final List<IntentionAction> availableIntentions = getAvailableIntentions();
+    return ContainerUtil.findAll(availableIntentions, new Condition<IntentionAction>() {
       public boolean value(final IntentionAction intentionAction) {
         return intentionAction.getText().startsWith(hint);
       }
@@ -500,10 +501,16 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   public void renameElementAtCaret(final String newName) throws Exception {
     assertInitialized();
+    final PsiElement element = TargetElementUtilBase.findTargetElement(getCompletionEditor(), TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED |
+                                                                                        TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
+    assert element != null : "element not found in file " + myFile.getName() + " at caret position, offset " +
+                             myEditor.getCaretModel().getOffset();
+    renameElement(element, newName);
+  }
+
+  public void renameElement(final PsiElement element, final String newName) throws Exception {
     new WriteCommandAction.Simple(myProjectFixture.getProject()) {
       protected void run() throws Exception {
-        PsiElement element = TargetElementUtilBase.findTargetElement(getCompletionEditor(), TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED | TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
-        assert element != null: "element not found in file " + myFile.getName() + " at caret position, offset " + myEditor.getCaretModel().getOffset();
         final PsiElement substitution = RenamePsiElementProcessor.forElement(element).substituteElementToRename(element, myEditor);
         new RenameProcessor(myProjectFixture.getProject(), substitution, newName, false, false).run();
      }
@@ -1085,7 +1092,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public static List<HighlightInfo> instantiateAndRun(PsiFile file, Editor editor, int[] toIgnore, boolean allowDirt) {
     Project project = file.getProject();
     ensureIndexesUpToDate(project);
-    FileStatusMap fileStatusMap = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).getFileStatusMap();
+    DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
+    FileStatusMap fileStatusMap = codeAnalyzer.getFileStatusMap();
     for (int ignoreId : toIgnore) {
       fileStatusMap.markFileUpToDate(editor.getDocument(), file, ignoreId);
     }
@@ -1107,6 +1115,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
     finally {
       fileStatusMap.allowDirt(true);
+      codeAnalyzer.clearPasses();
     }
   }
 

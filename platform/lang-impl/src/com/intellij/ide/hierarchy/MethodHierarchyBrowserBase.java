@@ -34,7 +34,8 @@ public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx 
   @SuppressWarnings({"UnresolvedPropertyKey"})
   public static final String METHOD_TYPE = IdeBundle.message("title.hierarchy.method");
 
-  @NonNls public static final String METHOD_HIERARCHY_BROWSER_DATA_KEY = "com.intellij.ide.hierarchy.MethodHierarchyBrowserBase";
+  public static final DataKey<MethodHierarchyBrowserBase> DATA_KEY = DataKey.create("com.intellij.ide.hierarchy.MethodHierarchyBrowserBase");
+  @Deprecated @NonNls public static final String METHOD_HIERARCHY_BROWSER_DATA_KEY = DATA_KEY.getName();
 
   public MethodHierarchyBrowserBase(final Project project, final PsiElement method) {
     super(project, method);
@@ -87,7 +88,7 @@ public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx 
 
   @NotNull
   protected String getBrowserDataKey() {
-    return METHOD_HIERARCHY_BROWSER_DATA_KEY;
+    return DATA_KEY.getName();
   }
 
   @NotNull
@@ -125,7 +126,7 @@ public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx 
 
   public static class BaseOnThisMethodAction extends BaseOnThisElementAction {
     public BaseOnThisMethodAction() {
-      super(IdeBundle.message("action.base.on.this.method"), IdeActions.ACTION_METHOD_HIERARCHY, METHOD_HIERARCHY_BROWSER_DATA_KEY);
+      super(IdeBundle.message("action.base.on.this.method"), IdeActions.ACTION_METHOD_HIERARCHY, DATA_KEY.getName());
     }
   }
 

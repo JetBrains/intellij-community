@@ -17,9 +17,9 @@ package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
-import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,11 +28,7 @@ import java.security.MessageDigest;
 import java.security.cert.X509Certificate;
 
 /**
- * Created by IntelliJ IDEA.
- * User: alex
- * Date: 17.07.2005
- * Time: 19:35:02
- * To change this template use File | Settings | File Templates.
+ * @author alex
  */
 public class ServerSSLDialog extends DialogWrapper {
 

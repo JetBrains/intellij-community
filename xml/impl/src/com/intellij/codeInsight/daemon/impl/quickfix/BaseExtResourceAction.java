@@ -43,7 +43,7 @@ abstract class BaseExtResourceAction extends BaseIntentionAction {
 
     if (uri == null) return false;
 
-    XmlFile xmlFile = XmlUtil.findNamespace(file, uri);
+    XmlFile xmlFile = XmlUtil.findNamespaceByLocation(file, uri);
     if (xmlFile != null) return false;
     if (!isAcceptableUri(uri)) return false;
     setText(XmlBundle.message(getQuickFixKeyId()));
