@@ -79,6 +79,8 @@ target('default': "Build artifacts") {
     format(property: "today.year", pattern: "yyyy")
   }
 
+  ant.xmlproperty(file: "$home/python/resources/idea/PythonApplicationInfo.xml", collapseAttributes: "true")
+
   ant.patternset(id: "resources.included") {
     include(name: "**/*.properties")
     include(name: "fileTemplates/**/*")
