@@ -2218,7 +2218,10 @@ public class AbstractTreeUi {
               if (newElement.get() != null) {
                 createMapping(newElement.get(), childNode);
               }
-              getDescriptorFrom(parentNode).setChildrenSortingStamp(-1);
+              NodeDescriptor parentDescriptor = getDescriptorFrom(parentNode);
+              if (parentDescriptor != null) {
+                parentDescriptor.setChildrenSortingStamp(-1);
+              } 
             }
 
             if (index == null) {
