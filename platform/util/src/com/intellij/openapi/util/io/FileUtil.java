@@ -46,6 +46,10 @@ public class FileUtil {
       return new byte[1024 * 20];
     }
   };
+
+  // do not use channels to copy files larger than 5 Mb because of possible MapFailed error
+  private static final long CHANNELS_COPYING_LIMIT = 5L * 1024L *  1024L; 
+
   //private static final byte[] BUFFER = new byte[1024 * 20];
 
   @Nullable
@@ -520,7 +524,7 @@ public class FileUtil {
       fos = new FileOutputStream(toFile);
     }
 
-    if (Patches.FILE_CHANNEL_TRANSFER_BROKEN) {
+    if (Patches.FILE_CHANNEL_TRANSFER_BROKEN || fromFile.length() > CHANNELS_COPYING_LIMIT) {
       FileInputStream fis = new FileInputStream(fromFile);
       try {
         copy(fis, fos);
