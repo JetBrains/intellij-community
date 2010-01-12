@@ -8,7 +8,7 @@
   <package code="__PACKAGE_CODE__"/>
   <names product="PyCharm" fullname="PyCharm"/>
 
-  <welcome-screen caption-url="/general/welcomeCaption.png" slogan-url="/general/developSlogan.png"/>
+  <welcome-screen caption-url="/welcomeCaption.png" slogan-url="/developSlogan.png"/>
 
   <update-urls check="http://www.jetbrains.com/updates/update.xml" download="http://www.jetbrains.com/idea/download/"/>
   <eap-update-urls check="http://www.jetbrains.com/updates/eap-update.xml" download="http://www.intellij.net/eap/products/idea/download.jsp"/>
