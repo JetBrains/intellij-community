@@ -344,7 +344,7 @@ public class SimpleColoredComponent extends JComponent {
   }
 
   protected synchronized void doPaint(final Graphics g) {
-    checkCanPaint();
+    checkCanPaint(g);
     int xOffset = 0;
 
     // Paint icon and its background
@@ -456,7 +456,9 @@ public class SimpleColoredComponent extends JComponent {
     }
   }
 
-  private static void checkCanPaint() {
+  private static void checkCanPaint(Graphics g) {
+    if (UIUtil.isPrinting(g)) return;
+
     /* wtf??
     if (!isDisplayable()) {
       LOG.assertTrue(false, logSwingPath());
