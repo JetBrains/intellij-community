@@ -63,9 +63,11 @@ public class ProjectScope {
           private final ProjectFileIndex myFileIndex = projectRootManager.getFileIndex();
 
           public boolean contains(VirtualFile file) {
-            if (myFileIndex.isInLibraryClasses(file)) return false;
+            if (file instanceof VirtualFileWindow) return true;
 
-            return file instanceof VirtualFileWindow || myFileIndex.isInContent(file);
+            if (myFileIndex.isInLibraryClasses(file) && !myFileIndex.isInSourceContent(file)) return false;
+
+            return myFileIndex.isInContent(file);
           }
 
           public int compare(VirtualFile file1, VirtualFile file2) {
