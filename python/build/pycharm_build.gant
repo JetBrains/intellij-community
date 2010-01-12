@@ -159,6 +159,8 @@ target('default': "Build artifacts") {
 
           "$sandbox/layout")
 
+  layoutWin(sandbox_win)
+
   buildExe()
   
   ant.echo(message: buildName, file: "$sandbox/layout/build.txt")
@@ -182,7 +184,7 @@ target('default': "Build artifacts") {
   installer.nsis_installer(["$sandbox/layout", sandbox_win],
                            "$home/python/build/strings.nsi",
                            "$home/python/build/paths.nsi",
-                           "pycharm")
+                           "pycharm", false)
 }
 
 String appInfoFile() {
@@ -254,6 +256,10 @@ def layoutFull(Map args, String target) {
       }
     }
 
+    dir("helpers") {
+      fileset(dir: "$home/python/helpers")
+    }
+
     def layouts = includeFile("$home/build/scripts/layouts.gant")
     layouts.layoutPlugins()
 
@@ -276,6 +282,19 @@ def layoutFull(Map args, String target) {
     replacefilter(token: "@@vmoptions@@", value: args.vmoptions + " -Xverify:none -XX:+UseCompressedOOPS -XX:+DoEscapeAnalysis -Didea.platform.prefix=Python")
     replacefilter(token: "@@system_selector@@", value: args.system_selector)
     replacefilter(token: "@@jdk_req@@", value: args.jdk_req)
+  }
+}
+
+def layoutWin(String target) {
+  layout(target) {
+    dir("bin") {
+      fileset(dir: "$home/bin") {
+        include(name: "libyjpagent.dll")
+      }
+      fileset(dir: "$home/python/build") {
+        include(name: "pycharm.bat")
+      }
+    }
   }
 }
 
