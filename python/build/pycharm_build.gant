@@ -53,11 +53,12 @@ def includeFile(String filepath) {
   s
 }
 
+def sandbox = "$home/out/pycharm";
+def sandbox_win = "$sandbox/win";
+
 setProperty("buildName", "PY-$buildNumber")
 
 target('default': "Build artifacts") {
-
-  def sandbox = "$home/out/pycharm";
 
   def modules = [
           "python", "python-ide", "python-py", platformApiModules(), platformImplementationModules(), pluginFilter
@@ -161,8 +162,8 @@ target('default': "Build artifacts") {
     }
   }
 
-  def installer = includeFile("nsis_installer.gant")
-  installer.nsis_installer(["$sandbox/layout"],
+  def installer = includeFile("$home/build/scripts/nsis_installer.gant")
+  installer.nsis_installer(["$sandbox/layout", $sandbox_win],
                            "$home/python/build/strings.nsi",
                            "$home/build/conf/nsis/paths.nsi",
                            "PyCharmPY-")
@@ -181,6 +182,7 @@ void wire_build_date(String buildName) {
 
 def buildExe() {
   if (!isMac()) {
+    ant.mkdir(dir: $sandbox_win)
     executeExternalAnt(
             "config.file": "$home/python/build/pycharm.exe4j",
             "output.file": "pycharm.exe",
@@ -271,7 +273,7 @@ def executeExternalAnt(Map args, String file) {
   set(args, "build.number", buildName)
   set(args, "project.home", home)
   set(args, "artifacts.path", "$home/out/artifacts")
-  //set(args, "dist.win", paths.distWin)
+  set(args, "dist.win", $sandboxWin)
   //set(args, "dist.all", paths.distAll)
 
   //set(args, "dist.all.15", paths.distAll15)
