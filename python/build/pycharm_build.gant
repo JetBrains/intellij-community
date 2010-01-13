@@ -59,12 +59,16 @@ boolean isEap() {
 
 class Paths {
   final sandbox
+  final distWin
+  final distMac
   final artifacts
   final ideaSystem
   final ideaConfig
 
   def Paths(String home) {
     sandbox = "$home/out/pycharm"
+    distWin = "$sandbox/win"
+    distMac = "$sandbox/mac"
 
     ideaSystem = "$sandbox/system"
     ideaConfig = "$sandbox/config"
@@ -77,7 +81,6 @@ setProperty("paths", new Paths(home))
 
 def sandbox = "$home/out/pycharm";
 
-setProperty("sandbox_win", "$sandbox/win");
 setProperty("buildName", "PY-$buildNumber")
 
 target('default': "Build artifacts") {
@@ -140,12 +143,13 @@ target('default': "Build artifacts") {
         if (file.exists()) {
           String path = file.canonicalPath.replace('\\', '/')
           String normalizedHome = home.replace('\\', '/')
-          if (path.endsWith(".jar") && (path.startsWith("$normalizedHome/lib/") || path.startsWith("$normalizedHome/community/lib/"))
+          if (path.endsWith(".jar") && (path.startsWith("$normalizedHome/lib/") ||
+                                        path.startsWith("$normalizedHome/community/lib/") ||
+                                        path.startsWith("$normalizedHome/python/lib"))
               && !path.contains("/dev/") && !path.contains("/rt/") && !path.contains("/ant/")) {
             usedJars.add(path);
           }
         }
-
       }
       module.make()
     }
@@ -156,17 +160,15 @@ target('default': "Build artifacts") {
 
   build_searchable_options()
   wire_build_date(buildName)
-  layoutFull(
-          buildName: buildName,
-          version: "1.0",
-          system_selector: "PY",
-          jdk_req: "1.6*",
-          vmoptions: "-Xms128m -Xmx512m -XX:MaxPermSize=250m -ea",
-          usedJars: usedJars,
+  layoutFull("$sandbox/layout", usedJars)
 
-          "$sandbox/layout")
-
-  layoutWin(sandbox_win)
+  layoutWin(paths.distWin)
+  layoutMac(buildName: buildName,
+            version: "1.0",
+            system_selector: "PY",
+            jdk_req: "1.6*",
+            vmoptions: "-Xms128m -Xmx512m -XX:MaxPermSize=250m -ea",
+            paths.distMac)
 
   buildExe()
   
@@ -175,20 +177,20 @@ target('default': "Build artifacts") {
   def root = "${buildName}.app"
 
   ant.mkdir(dir: paths.artifacts)
-  ant.zip(zipfile: "${paths.artifacts}/${buildName}.zip") {
-    tarfileset(dir: "$sandbox/layout", prefix: root) {
+  ant.zip(zipfile: "${paths.artifacts}/${buildName}.sit") {
+    tarfileset(dir: "$sandbox/layout", prefix: root)
+    tarfileset(dir: paths.distMac, prefix: root) {
       exclude(name: "bin/*.sh")
       exclude(name: "Contents/MacOS/idea")
     }
-
-    tarfileset(dir: "$sandbox/layout", filemode: "755", prefix: root) {
+    tarfileset(dir: paths.distMac, filemode: "755", prefix: root) {
       include(name: "bin/*.sh")
       include(name: "Contents/MacOS/idea")
     }
   }
 
   def installer = includeFile("$home/build/scripts/nsis_installer.gant")
-  installer.nsis_installer(["$sandbox/layout", sandbox_win],
+  installer.nsis_installer(["$sandbox/layout", paths.distWin],
                            "$home/python/build/strings.nsi",
                            "$home/python/build/paths.nsi",
                            "pycharm", false)
@@ -227,7 +229,7 @@ void wire_build_date(String buildName) {
 
 def buildExe() {
   if (!isMac()) {
-    ant.mkdir(dir: sandbox_win)
+    ant.mkdir(dir: paths.distWin)
     executeExternalAnt(
             "config.file": "$home/python/build/pycharm.exe4j",
             "output.file": "pycharm.exe",
@@ -238,7 +240,7 @@ def buildExe() {
   }
 }
 
-def layoutFull(Map args, String target) {
+def layoutFull(String target, Set usedJars) {
   def openapiModules = platformApiModules()
   def implementationModules = [platformImplementationModules(), "python", "python-ide", "python-py"].flatten()
 
@@ -273,7 +275,7 @@ def layoutFull(Map args, String target) {
       jar("icons.jar") { module("icons") }
       jar("boot.jar") { module("boot") }
 
-      args.usedJars.each {
+      usedJars.each {
         fileset(file: it)
       }
 
@@ -292,8 +294,15 @@ def layoutFull(Map args, String target) {
 
     dir("bin") {
       fileset(dir: "$home/community/bin") { include(name: "*.*") }
-      fileset(dir: "$home/community/bin/nix")
+    }
+  }
+}
+
+def layoutMac(Map args, String target) {
+  layout(target) {
+    dir("bin") {
       fileset(dir: "$home/community/bin/mac")
+      fileset(dir: "$home/community/bin/nix")
     }
   }
 
@@ -316,7 +325,7 @@ def layoutWin(String target) {
   layout(target) {
     dir("bin") {
       fileset(dir: "$home/bin") {
-        include(name: "jpagent.dll")
+        include(name: "yjpagent.dll")
       }
       fileset(dir: "$home/python/build") {
         include(name: "pycharm.bat")
@@ -335,7 +344,7 @@ def executeExternalAnt(Map args, String file) {
   set(args, "build.number", buildName)
   set(args, "project.home", home)
   set(args, "artifacts.path", paths.artifacts)
-  set(args, "dist.win", sandbox_win)
+  set(args, "dist.win", paths.distWin)
   //set(args, "dist.all", paths.distAll)
 
   //set(args, "dist.all.15", paths.distAll15)
