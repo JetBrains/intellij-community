@@ -1,6 +1,7 @@
 package com.jetbrains.python;
 
 import com.intellij.testFramework.ParsingTestCase;
+import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 
 /**
  * @author yole
@@ -8,6 +9,7 @@ import com.intellij.testFramework.ParsingTestCase;
 public class PythonParsingTest extends ParsingTestCase {
   public PythonParsingTest() {
     super("", "py");
+    PyLightFixtureTestCase.initPlatformPrefix();
   }
 
   protected String getTestDataPath() {
@@ -85,6 +87,10 @@ public class PythonParsingTest extends ParsingTestCase {
   }
 
   public void testDecoratedFunction() throws Exception {
+    doTest(true);
+  }
+
+  public void testTryExceptAs() throws Exception {   // PY-293
     doTest(true);
   }
 }

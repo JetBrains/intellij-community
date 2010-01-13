@@ -1,19 +1,3 @@
-/*
- *  Copyright 2005 Pythonid Project
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS"; BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package com.jetbrains.python.parsing;
 
 import com.intellij.lang.ITokenTypeRemapper;
@@ -23,8 +7,8 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
 import java.util.Set;
@@ -43,9 +27,10 @@ public class StatementParsing
   @NonNls protected static final String TOK_NESTED_SCOPES = "nested_scopes";
   @NonNls protected static final String TOK_WITH = "with";
   @NonNls protected static final String TOK_AS = "as";
+
   protected enum FIPH {NONE, FROM, FUTURE, IMPORT} // 'from __future__ import' phase
   private FIPH _from_import_phase = FIPH.NONE;
-  private boolean _expect_AS_kwd = false;
+  private boolean myExpectAsKeyword = false;
 
   protected enum FUTURE {ABSOLUTE_IMPORT, DIVISION, GENERATORS, NESTED_SCOPES, WITH_STATEMENT}
   protected Set<FUTURE> myFutureFlags = EnumSet.noneOf(FUTURE.class);
@@ -394,14 +379,14 @@ public class StatementParsing
           }
         }
       }
-      _expect_AS_kwd = true; // possible 'as' comes as an ident; reparse it as keyword if found
+      myExpectAsKeyword = true; // possible 'as' comes as an ident; reparse it as keyword if found
       if (builder.getTokenType() == PyTokenTypes.AS_KEYWORD) {
         builder.advanceLexer();
-        _expect_AS_kwd = false;
+        myExpectAsKeyword = false;
         parseIdentifier(PyElementTypes.TARGET_EXPRESSION);
       }
       asMarker.done(PyElementTypes.IMPORT_ELEMENT);
-      _expect_AS_kwd = false;
+      myExpectAsKeyword = false;
       if (builder.getTokenType() == PyTokenTypes.COMMA) {
         builder.advanceLexer();
         if (in_parens && builder.getTokenType() == PyTokenTypes.RPAR) {
@@ -442,15 +427,15 @@ public class StatementParsing
     PsiBuilder.Marker marker = myBuilder.mark();
     myBuilder.advanceLexer();
     marker.done(PyElementTypes.REFERENCE_EXPRESSION);
-    boolean old_expect_AS_kwd = _expect_AS_kwd;
-    _expect_AS_kwd = expect_as;
+    boolean old_expect_AS_kwd = myExpectAsKeyword;
+    myExpectAsKeyword = expect_as;
     while (myBuilder.getTokenType() == PyTokenTypes.DOT) {
       marker = marker.precede();
       myBuilder.advanceLexer();
       checkMatches(PyTokenTypes.IDENTIFIER, "identifier expected");
       marker.done(PyElementTypes.REFERENCE_EXPRESSION);
     }
-    _expect_AS_kwd = old_expect_AS_kwd;
+    myExpectAsKeyword = old_expect_AS_kwd;
     return true;
   }
 
@@ -574,7 +559,8 @@ public class StatementParsing
           if (!getExpressionParser().parseSingleExpression(false)) {
             myBuilder.error("expression expected");
           }
-          if (myBuilder.getTokenType() == PyTokenTypes.COMMA) {
+          myExpectAsKeyword = true;
+          if (myBuilder.getTokenType() == PyTokenTypes.COMMA || myBuilder.getTokenType() == PyTokenTypes.AS_KEYWORD) {
             myBuilder.advanceLexer();
             if (!getExpressionParser().parseSingleExpression(true)) {
               myBuilder.error("expression expected");
@@ -689,7 +675,7 @@ public class StatementParsing
   }
   public IElementType filter(final IElementType source, final int start, final int end, final CharSequence text) {
     if (
-      (myFutureFlags.contains(FUTURE.WITH_STATEMENT) || _expect_AS_kwd) &&
+      (myFutureFlags.contains(FUTURE.WITH_STATEMENT) || myExpectAsKeyword) &&
       source == PyTokenTypes.IDENTIFIER &&
       CharArrayUtil.regionMatches(text, start, end, TOK_AS)
     ) {
