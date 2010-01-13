@@ -73,7 +73,7 @@ class Paths {
     ideaSystem = "$sandbox/system"
     ideaConfig = "$sandbox/config"
 
-    artifacts = "$home/out/artifacts"
+    artifacts = "$home/out/pycharm/artifacts"
   }
 }
 
