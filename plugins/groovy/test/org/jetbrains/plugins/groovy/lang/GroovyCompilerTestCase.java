@@ -52,7 +52,7 @@ import java.util.List;
 /**
  * @author peter
  */
-public class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase {
+public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase {
   private TempDirTestFixture myMainOutput;
 
   @Override
