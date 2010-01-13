@@ -59,6 +59,7 @@ boolean isEap() {
 
 class Paths {
   final sandbox
+  final distAll
   final distWin
   final distMac
   final artifacts
@@ -67,6 +68,7 @@ class Paths {
 
   def Paths(String home) {
     sandbox = "$home/out/pycharm"
+    distAll = "$sandbox/layout"
     distWin = "$sandbox/win"
     distMac = "$sandbox/mac"
 
@@ -161,7 +163,7 @@ target('default': "Build artifacts") {
 
   build_searchable_options()
   wire_build_date(buildName)
-  layoutFull("$sandbox/layout", usedJars)
+  layoutFull(paths.distAll, usedJars)
 
   layoutWin(paths.distWin)
   layoutMac(buildName: buildName,
@@ -179,7 +181,7 @@ target('default': "Build artifacts") {
 
   ant.mkdir(dir: paths.artifacts)
   ant.zip(zipfile: "${paths.artifacts}/${buildName}.sit") {
-    tarfileset(dir: "$sandbox/layout", prefix: root)
+    tarfileset(dir: paths.distAll, prefix: root)
     tarfileset(dir: paths.distMac, prefix: root) {
       exclude(name: "bin/*.sh")
       exclude(name: "Contents/MacOS/idea")
@@ -190,8 +192,10 @@ target('default': "Build artifacts") {
     }
   }
 
+  buildTarGz()
+
   def installer = includeFile("$home/build/scripts/nsis_installer.gant")
-  installer.nsis_installer(["$sandbox/layout", paths.distWin],
+  installer.nsis_installer([paths.distAll, paths.distWin],
                            "$home/python/build/strings.nsi",
                            "$home/python/build/paths.nsi",
                            "pycharm", false)
@@ -239,6 +243,25 @@ def buildExe() {
   else {
     project.warning("Building .exe executable skipped")
   }
+}
+
+def buildTarGz() {
+  project.stage("tar.gz")
+  def tarRoot = "pycharm-$buildNumber"
+  def tarPath = "$paths.artifacts/pycharm${buildName}.tar"
+  ant.tar(tarfile: tarPath) {
+    tarfileset(dir: paths.distAll, prefix: tarRoot) {
+      exclude(name: "**/*.dll")
+      exclude(name: "bin/*.sh")
+    }
+    tarfileset(dir: "$home/community/bin/linux", prefix: "$tarRoot/bin")
+    tarfileset(dir: "$home/community/bin/nix", filemode: "755", prefix: "$tarRoot/bin") {
+      include(name: "*.sh")
+    }
+  }
+
+  ant.gzip(src: tarPath, zipfile: "${tarPath}.gz")
+  ant.delete(file: tarPath)
 }
 
 def layoutFull(String target, Set usedJars) {
