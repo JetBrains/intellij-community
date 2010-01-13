@@ -1,13 +1,14 @@
 package com.jetbrains.python;
 
-import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.intellij.application.options.colors.InspectionColorSettingsPage;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.util.containers.HashMap;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Map;
@@ -15,7 +16,7 @@ import java.util.Map;
 /**
  * @author yole
  */
-public class PythonColorsPage implements ColorSettingsPage {
+public class PythonColorsPage implements ColorSettingsPage, InspectionColorSettingsPage {
   private static final AttributesDescriptor[] ATTRS = new AttributesDescriptor[] {
     new AttributesDescriptor("Keyword", PyHighlighter.PY_KEYWORD),
     new AttributesDescriptor("String", PyHighlighter.PY_STRING),
