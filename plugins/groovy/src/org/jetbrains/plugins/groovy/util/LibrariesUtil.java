@@ -75,7 +75,8 @@ public class LibrariesUtil {
   @NotNull
   public static String getGroovyLibraryHome(Library library) {
     final VirtualFile[] classRoots = library.getFiles(OrderRootType.CLASSES);
-    return getGroovyLibraryHome(classRoots);
+    final String home = getGroovyLibraryHome(classRoots);
+    return home == null ? "" : home;
   }
 
   public static boolean hasGroovySdk(@Nullable Module module) {
@@ -131,6 +132,7 @@ public class LibrariesUtil {
     return null;
   }
 
+  @Nullable
   public static String getGroovyLibraryHome(VirtualFile[] classRoots) {
     final String sdkHome = getGroovySdkHome(classRoots);
     if (sdkHome != null) {
@@ -148,7 +150,7 @@ public class LibrariesUtil {
         return parent.getPath();
       }
     }
-    return "";
+    return null;
   }
 
   @NotNull

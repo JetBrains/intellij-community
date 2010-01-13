@@ -82,6 +82,11 @@ public class ModuleChunk extends Chunk<Module> {
     myTransformedToOriginalMap.put(transformedFile, originalFile);
   }
 
+  public VirtualFile getOriginalFile(VirtualFile file) {
+    final VirtualFile original = myTransformedToOriginalMap.get(file);
+    return original != null? original : file;
+  }
+
   @NotNull
   public List<VirtualFile> getFilesToCompile(Module forModule) {
     return myModuleToFilesMap.get(forModule);

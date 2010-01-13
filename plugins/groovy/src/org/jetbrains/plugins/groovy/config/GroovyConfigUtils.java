@@ -84,10 +84,6 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
     return LibrariesUtil.getGroovyLibraryHome(library.getFiles(OrderRootType.CLASSES)) != null;
   }
 
-  public String getSDKVersion(@NotNull Library library) {
-    return getSDKVersion(LibrariesUtil.getGroovyLibraryHome(library));
-  }
-
   @Nullable
   public String getSDKVersion(@NotNull Module module) {
     final String path = LibrariesUtil.getGroovyHomePath(module);
