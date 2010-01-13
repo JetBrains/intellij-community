@@ -21,7 +21,9 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
@@ -29,6 +31,8 @@ import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.roots.ContentEntry;
@@ -112,7 +116,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
     return configureByFiles(projectFile, vFiles);
   }
-  protected VirtualFile configureByFile(String filePath, String projectRoot) throws Exception {
+  protected VirtualFile configureByFile(@NonNls String filePath, String projectRoot) throws Exception {
     String fullPath = getTestDataPath() + filePath;
 
     final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
@@ -586,11 +590,21 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     }
   }
 
-  protected void backspace() {
-    EditorActionManager actionManager = EditorActionManager.getInstance();
-    EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE);
+  protected void undo() {
+    UndoManager undoManager = UndoManager.getInstance(myProject);
+    TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(getEditor());
+    undoManager.undo(textEditor);
+  }
 
-    actionHandler.execute(getEditor(), DataManager.getInstance().getDataContext());
+  protected void backspace() {
+    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
+      public void run() {
+        EditorActionManager actionManager = EditorActionManager.getInstance();
+        EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE);
+
+        actionHandler.execute(getEditor(), DataManager.getInstance().getDataContext());
+      }
+    }, "backspace", getEditor().getDocument());
   }
 
   protected void ctrlShiftF7() {
