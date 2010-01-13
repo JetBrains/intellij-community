@@ -327,6 +327,11 @@ def layoutWin(String target) {
       fileset(dir: "$home/bin") {
         include(name: "yjpagent.dll")
       }
+      fileset(dir: "$home/community/bin/win") {
+        exclude(name: "breakgen*")
+        exclude(name: "idea.bat")
+        
+      }
       fileset(dir: "$home/python/build") {
         include(name: "pycharm.bat")
       }
