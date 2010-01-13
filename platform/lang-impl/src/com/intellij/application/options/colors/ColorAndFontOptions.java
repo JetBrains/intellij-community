@@ -418,7 +418,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
                                        ArrayList<EditorSchemeAttributeDescriptor> descriptions,
                                        MyColorScheme scheme) {
     String group = page.getDisplayName();
-    AttributesDescriptor[] attributeDescriptors = page.getAttributeDescriptors();
+    List<AttributesDescriptor> attributeDescriptors = ColorSettingsUtil.getAllAttributeDescriptors(page);
     for (AttributesDescriptor descriptor : attributeDescriptors) {
       addSchemedDescription(descriptions, descriptor.getDisplayName(), group, descriptor.getKey(), scheme, null, null);
     }
