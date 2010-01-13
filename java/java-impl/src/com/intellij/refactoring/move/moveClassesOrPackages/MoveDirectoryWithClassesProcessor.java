@@ -20,8 +20,10 @@
  */
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -150,11 +152,22 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
 
   @Override
   public void performRefactoring(UsageInfo[] usages) {
+    //try to create all directories beforehand
+    for (PsiClass psiClass : myClassesToMove.keySet()) {
+      try {
+        myClassesToMove.get(psiClass).findOrCreateTargetDirectory();
+      }
+      catch (IncorrectOperationException e) {
+        Messages.showErrorDialog(myProject, e.getMessage(), CommonBundle.getErrorTitle());
+        return;
+      }
+    }
     final Map<PsiElement, PsiElement> oldToNewElementsMapping = new HashMap<PsiElement, PsiElement>();
     for (PsiClass psiClass : myClassesToMove.keySet()) {
       ChangeContextUtil.encodeContextInfo(psiClass, true);
       final RefactoringElementListener listener = getTransaction().getElementListener(psiClass);
-      final PsiClass newClass = MoveClassesOrPackagesUtil.doMoveClass(psiClass, myClassesToMove.get(psiClass).findOrCreateTargetDirectory());
+      final PsiDirectory moveDestination = myClassesToMove.get(psiClass).getTargetDirectory();
+      final PsiClass newClass = MoveClassesOrPackagesUtil.doMoveClass(psiClass, moveDestination);
       oldToNewElementsMapping.put(psiClass, newClass);
       listener.elementMoved(newClass);
     }
@@ -241,7 +254,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
       myRelativePath = relativePath;
     }
 
-    public PsiDirectory findOrCreateTargetDirectory() {
+    public PsiDirectory findOrCreateTargetDirectory() throws IncorrectOperationException{
       if (myTargetDirectory == null) {
         final PsiDirectory root = myParentDirectory.findOrCreateTargetDirectory();
 

@@ -84,7 +84,7 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
   };
 
   public int getVersion() {
-    return 8;
+    return 9; // TODO: version should enumerate all word scanner versions and build version upon that set
   }
 
   public boolean dependsOnFileContent() {
