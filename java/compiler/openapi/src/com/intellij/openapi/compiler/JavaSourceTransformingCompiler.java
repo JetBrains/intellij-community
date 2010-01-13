@@ -27,7 +27,7 @@ public interface JavaSourceTransformingCompiler extends Compiler {
    *
    * @param file an original file that is about to be compiled with java compiler
    * @return true if compiler would like to transform the file, false otherwise.
-   *         If true is returned, a copy of ariginal file will be made and {@link #transform(CompileContext,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile)}
+   *         If true is returned, a copy of original file will be made and {@link #transform(CompileContext,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile)}
    *         method will be called on it. If transformation succeeded, the transformed copy will be passed to java compiler instead of original file.
    */
   boolean isTransformable(VirtualFile file);
@@ -36,7 +36,7 @@ public interface JavaSourceTransformingCompiler extends Compiler {
    * Transforms the specified file.
    *
    * @param context      the current compile context.
-   * @param file         a copy of original file to be transformed
+   * @param file         a copy of original file to be transformed. If there are more than one transformer registered, this copy may already contain transformations made by other transformers which were called before this one
    * @param originalFile an original file. Since the copy that is supposed to be modified is located outside the project, it is not possible to use PSI for analysis.
    *                     So the original file is provided. Note that it is passed for reference purposes only. It MUST NOT be transformed or changed in any way.
    *                     For example, it is possible to obtain a PsiFile for the original file:<br><br>

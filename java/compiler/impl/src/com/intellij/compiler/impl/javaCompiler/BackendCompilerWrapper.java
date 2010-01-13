@@ -526,13 +526,15 @@ public class BackendCompilerWrapper {
       application.invokeAndWait(new Runnable() {
         public void run() {
           for (final Module module : modules) {
-            List<VirtualFile> filesToCompile = chunk.getFilesToCompile(module);
-            for (final VirtualFile file : filesToCompile) {
-              if (transformer.isTransformable(file)) {
+            for (final VirtualFile file : chunk.getFilesToCompile(module)) {
+              final VirtualFile untransformed = chunk.getOriginalFile(file);
+              if (transformer.isTransformable(untransformed)) {
                 application.runWriteAction(new Runnable() {
                   public void run() {
                     try {
-                      VirtualFile fileCopy = createFileCopy(getTempDir(module), file);
+                      // if untransformed != file, the file is already a (possibly transformed) copy of the original 'untransformed' file.
+                      // If this is the case, just use already created copy and do not copy file content once again
+                      final VirtualFile fileCopy = untransformed.equals(file)? createFileCopy(getTempDir(module), file) : file;
                       originalToCopyFileMap.put(file, fileCopy);
                     }
                     catch (IOException e) {
@@ -551,9 +553,9 @@ public class BackendCompilerWrapper {
         final List<VirtualFile> filesToCompile = chunk.getFilesToCompile(module);
         for (int j = 0; j < filesToCompile.size(); j++) {
           final VirtualFile file = filesToCompile.get(j);
-          VirtualFile fileCopy = originalToCopyFileMap.get(file);
+          final VirtualFile fileCopy = originalToCopyFileMap.get(file);
           if (fileCopy != null) {
-            final boolean ok = transformer.transform(myCompileContext, fileCopy, file);
+            final boolean ok = transformer.transform(myCompileContext, fileCopy, chunk.getOriginalFile(file));
             if (ok) {
               chunk.substituteWithTransformedVersion(module, j, fileCopy);
             }

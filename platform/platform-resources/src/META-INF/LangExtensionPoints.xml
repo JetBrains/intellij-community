@@ -145,6 +145,7 @@
 
   <extensionPoint name="usageTargetProvider"
                   interface="com.intellij.usages.UsageTargetProvider"/>
+  <extensionPoint name="usageToPsiElementProvider" interface="com.intellij.usages.UsageToPsiElementProvider" />
 
   <extensionPoint name="customScopesProvider"
                   interface="com.intellij.psi.search.scope.packageSet.CustomScopesProvider"
