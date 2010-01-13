@@ -146,7 +146,8 @@ target('default': "Build artifacts") {
           if (path.endsWith(".jar") && (path.startsWith("$normalizedHome/lib/") ||
                                         path.startsWith("$normalizedHome/community/lib/") ||
                                         path.startsWith("$normalizedHome/python/lib"))
-              && !path.contains("/dev/") && !path.contains("/rt/") && !path.contains("/ant/")) {
+              && !path.contains("/dev/") && !path.contains("/rt/") && !path.contains("/ant/")
+              && !path.contains("client-api") && !path.contains("ideaLicenseDecoder")) {
             usedJars.add(path);
           }
         }
@@ -257,6 +258,8 @@ def layoutFull(String target, Set usedJars) {
 
       jar("pycharm.jar") {
         implementationModules.each { module it}
+        zipfileset(src: "${home}/lib/client-api.jar")
+        zipfileset(src: "${home}/lib/ideaLicenseDecoder.jar")
       }
 
       jar("bootstrap.jar") { module("bootstrap")}
