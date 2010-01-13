@@ -149,7 +149,7 @@ public class CoverageConfigurable<T extends ModuleBasedConfiguration & RunJavaCo
     myClassFilterEditor.setEnabled(myCoverageEnabledCheckbox.isSelected());
 
     myClassFilterEditor.setFilters(configuration.getCoveragePatterns());
-    myTracingRb.setEnabled(runner != null && runner.isCoverageByTestApplicable());
+    myTracingRb.setEnabled(myTracingRb.isEnabled() && runner != null && runner.isCoverageByTestApplicable());
     mySamplingRb.setSelected(configuration.isSampling() || !myTracingRb.isEnabled());
     myTracingRb.setSelected(!mySamplingRb.isSelected());
 
