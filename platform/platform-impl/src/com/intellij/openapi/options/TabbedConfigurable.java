@@ -25,7 +25,7 @@ import java.awt.*;
 /**
  * @author yole
  */
-public abstract class TabbedConfigurable extends CompositeConfigurable<Configurable> {
+public abstract class TabbedConfigurable<T extends Configurable> extends CompositeConfigurable<T> {
   protected TabbedPaneWrapper myTabbedPane;
   private final Disposable myParent;
 
