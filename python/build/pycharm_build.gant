@@ -180,7 +180,7 @@ target('default': "Build artifacts") {
   def root = "${buildName}.app"
 
   ant.mkdir(dir: paths.artifacts)
-  ant.zip(zipfile: "${paths.artifacts}/${buildName}.sit") {
+  ant.zip(zipfile: "${paths.artifacts}/pycharm${buildName}.sit") {
     tarfileset(dir: paths.distAll, prefix: root)
     tarfileset(dir: paths.distMac, prefix: root) {
       exclude(name: "bin/*.sh")
@@ -191,7 +191,9 @@ target('default': "Build artifacts") {
       include(name: "Contents/MacOS/idea")
     }
   }
-
+  executeExternalAnt("file.name": "pycharm",
+                     "$home/build/buildDmg.xml")
+  
   buildTarGz()
 
   def installer = includeFile("$home/build/scripts/nsis_installer.gant")
