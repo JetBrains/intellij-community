@@ -44,6 +44,8 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
   private JPanel myMainPanel;
   protected EventDispatcher<ContentEntryEditorListener> myEventDispatcher;
   private String myContentEntryUrl;
+  protected final boolean myCanMarkSources;
+  protected final boolean myCanMarkTestSources;
 
   public interface ContentEntryEditorListener extends EventListener{
     void editingStarted(ContentEntryEditor editor);
@@ -56,8 +58,10 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
     void packagePrefixSet(ContentEntryEditor editor, SourceFolder folder);
   }
 
-  public ContentEntryEditor(final String contentEntryUrl) {
+  public ContentEntryEditor(final String contentEntryUrl, boolean canMarkSources, boolean canMarkTestSources) {
     myContentEntryUrl = contentEntryUrl;
+    myCanMarkSources = canMarkSources;
+    myCanMarkTestSources = canMarkTestSources;
   }
 
   public String getContentEntryUrl() {
@@ -171,7 +175,14 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
     myMainPanel.revalidate();
   }
 
-  protected abstract ContentRootPanel createContentRootPane();
+  protected ContentRootPanel createContentRootPane() {
+    return new ContentRootPanel(this, myCanMarkSources, myCanMarkTestSources) {
+      @Override
+      protected ContentEntry getContentEntry() {
+        return ContentEntryEditor.this.getContentEntry();
+      }
+    };
+  }
 
   @Nullable
   public SourceFolder addSourceFolder(VirtualFile file, boolean isTestSource) {

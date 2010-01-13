@@ -17,26 +17,21 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ContentFolder;
-import com.intellij.openapi.roots.ExcludeFolder;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.roots.IconActionComponent;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
 
 public abstract class JavaContentRootPanel extends ContentRootPanel {
-  private static final Color SOURCES_COLOR = new Color(0x0A50A1);
   private static final Icon ADD_PREFIX_ICON = IconLoader.getIcon("/modules/setPackagePrefix.png");
   private static final Icon ADD_PREFIX_ROLLOVER_ICON = IconLoader.getIcon("/modules/setPackagePrefixRollover.png");
 
   public JavaContentRootPanel(ActionCallback callback) {
-    super(callback);
+    super(callback, true, true);
   }
 
   @Nullable
@@ -65,47 +60,5 @@ public abstract class JavaContentRootPanel extends ContentRootPanel {
     panel.add(iconComponent, BorderLayout.CENTER);
     panel.add(Box.createHorizontalStrut(3), BorderLayout.EAST);
     return panel;
-  }
-
-  protected void addFolderGroupComponents() {
-    final List<ContentFolder> sources = new ArrayList<ContentFolder>();
-    final List<ContentFolder> testSources = new ArrayList<ContentFolder>();
-    final List<ContentFolder> excluded = new ArrayList<ContentFolder>();
-    final SourceFolder[] sourceFolders = getContentEntry().getSourceFolders();
-    for (SourceFolder folder : sourceFolders) {
-      if (folder.isSynthetic()) {
-        continue;
-      }
-      final VirtualFile folderFile = folder.getFile();
-      if (folderFile != null && (isExcluded(folderFile) || isUnderExcludedDirectory(folderFile))) {
-        continue;
-      }
-      if (folder.isTestSource()) {
-        testSources.add(folder);
-      }
-      else {
-        sources.add(folder);
-      }
-    }
-
-    final ExcludeFolder[] excludeFolders = getContentEntry().getExcludeFolders();
-    for (final ExcludeFolder excludeFolder : excludeFolders) {
-      if (!excludeFolder.isSynthetic()) {
-        excluded.add(excludeFolder);
-      }
-    }
-
-    if (sources.size() > 0) {
-      final JComponent sourcesComponent = createFolderGroupComponent(ProjectBundle.message("module.paths.sources.group"), sources.toArray(new ContentFolder[sources.size()]), SOURCES_COLOR);
-      this.add(sourcesComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 10, 0), 0, 0));
-    }
-    if (testSources.size() > 0) {
-      final JComponent testSourcesComponent = createFolderGroupComponent(ProjectBundle.message("module.paths.test.sources.group"), testSources.toArray(new ContentFolder[testSources.size()]), TESTS_COLOR);
-      this.add(testSourcesComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 10, 0), 0, 0));
-    }
-    if (excluded.size() > 0) {
-      final JComponent excludedComponent = createFolderGroupComponent(ProjectBundle.message("module.paths.excluded.group"), excluded.toArray(new ContentFolder[excluded.size()]), EXCLUDED_COLOR);
-      this.add(excludedComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 10, 0), 0, 0));
-    }
   }
 }
