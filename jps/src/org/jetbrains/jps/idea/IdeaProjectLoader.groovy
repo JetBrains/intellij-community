@@ -142,7 +142,10 @@ public class IdeaProjectLoader {
 
               case "module-library":
                 def moduleLibrary = loadLibrary(project, "moduleLibrary#${libraryCount++}", entryTag.library.first(), projectBasePath, moduleBasePath)
-                if (scope == "TEST") {
+                if (scope == "PROVIDED") {
+                  providedClasspath moduleLibrary
+                }
+                else if (scope == "TEST") {
                   testclasspath moduleLibrary
                 }
                 else {
@@ -159,7 +162,10 @@ public class IdeaProjectLoader {
                       project.warning("Cannot resolve library $name in $currentModuleName")
                     }
                     else {
-                      if (scope == "TEST") {
+                      if (scope == "PROVIDED") {
+                        providedClasspath library
+                      }
+                      else if (scope == "TEST") {
                         testclasspath library
                       }
                       else {
