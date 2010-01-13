@@ -9,6 +9,7 @@ class Module extends LazyInitializeableObject implements ClasspathItem {
 
   List<ClasspathItem> classpath = []
   List<ClasspathItem> testclasspath = []
+  List<ClasspathItem> providedClasspath = []
   List sourceRoots = []
   List testRoots = []
   List excludes = []
@@ -28,6 +29,10 @@ class Module extends LazyInitializeableObject implements ClasspathItem {
 
       meta.testclasspath = {Object[] arg ->
         arg.each { testclasspath << project.resolve(it) }
+      }
+
+      meta.providedClasspath = {Object[] arg ->
+        arg.each { providedClasspath << project.resolve(it) }
       }
 
       meta.src = {Object[] arg ->
@@ -97,10 +102,17 @@ class Module extends LazyInitializeableObject implements ClasspathItem {
     }
   }
 
-  def List<String> getClasspath(boolean tests) {
+  def List<String> getClasspath(boolean tests, boolean provided) {
+    List answer = classpath;
+
     if (tests) {
-      return [classpath, testclasspath].flatten()
+      answer = [answer, testclasspath].flatten()
     }
-    return classpath
+
+    if (provided) {
+      answer = [answer, providedClasspath].flatten()
+    }
+
+    return answer
   }
 }

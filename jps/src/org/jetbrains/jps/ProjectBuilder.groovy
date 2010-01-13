@@ -122,7 +122,7 @@ class ProjectBuilder {
     (
             sourceRoots: sources,
             excludes: chunk.excludes,
-            classpath: moduleCompileClasspath(chunk, tests),
+            classpath: moduleCompileClasspath(chunk, tests, true),
             targetFolder: dst,
             tempRootsToDelete: []
     )
@@ -141,7 +141,7 @@ class ProjectBuilder {
     }
   }
 
-  List<String> moduleCompileClasspath(ModuleChunk chunk, boolean test) {
+  List<String> moduleCompileClasspath(ModuleChunk chunk, boolean test, boolean provided) {
     Map<ModuleChunk, List<String>> map = test ? testCp : cp
 
     if (map[chunk] != null) return map[chunk]
@@ -149,7 +149,7 @@ class ProjectBuilder {
     Set<String> set = new LinkedHashSet()
     Set<Object> processed = new HashSet()
 
-    transitiveClasspath(chunk, test, set, processed)
+    transitiveClasspath(chunk, test, provided, set, processed)
 
     if (test) {
       set.add(chunkOutput(chunk))
@@ -164,7 +164,7 @@ class ProjectBuilder {
 
   List<String> chunkRuntimeClasspath(ModuleChunk chunk, boolean test) {
     Set<String> set = new LinkedHashSet()
-    set.addAll(moduleCompileClasspath(chunk, test))
+    set.addAll(moduleCompileClasspath(chunk, test, false))
     set.add(chunkOutput(chunk))
 
     if (test) {
@@ -174,13 +174,13 @@ class ProjectBuilder {
     return set.asList()
   }
 
-  private def transitiveClasspath(Object chunkOrModule, boolean test, Set<String> set, Set<Object> processed) {
+  private def transitiveClasspath(Object chunkOrModule, boolean test, boolean provided, Set<String> set, Set<Object> processed) {
     if (processed.contains(chunkOrModule)) return
     processed << chunkOrModule
     
-    chunkOrModule.getClasspath(test).each {
+    chunkOrModule.getClasspath(test, provided).each {
       if (it instanceof Module) {
-        transitiveClasspath(it, test, set, processed)
+        transitiveClasspath(it, test, provided, set, processed)
       }
       set.addAll(it.getClasspathRoots(test))
     }

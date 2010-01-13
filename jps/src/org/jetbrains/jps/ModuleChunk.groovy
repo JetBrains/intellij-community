@@ -75,8 +75,8 @@ class ModuleChunk {
     map {it.testRoots}
   }
 
-  def List<ClasspathItem> getClasspath(boolean tests) {
-    map {it.getClasspath(tests)}
+  def List<ClasspathItem> getClasspath(boolean tests, boolean provided) {
+    map {it.getClasspath(tests, provided)}
   }
 
   def List<String> getExcludes() {
