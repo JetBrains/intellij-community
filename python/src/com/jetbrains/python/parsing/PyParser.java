@@ -1,19 +1,3 @@
-/*
- *  Copyright 2005 Pythonid Project
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS"; BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package com.jetbrains.python.parsing;
 
 import com.intellij.lang.ASTNode;
@@ -21,25 +5,31 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
+import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 28.05.2005
- * Time: 10:06:10
- * To change this template use File | Settings | File Templates.
+ * @author yole
  */
 public class PyParser implements PsiParser {
   private static final Logger LOGGER = Logger.getInstance(PyParser.class.getName());
 
-  public
+  private final LanguageLevel myLanguageLevel;
+
+  public PyParser() {
+    myLanguageLevel = LanguageLevel.getDefault();
+  }
+
+  public PyParser(LanguageLevel languageLevel) {
+    myLanguageLevel = languageLevel;
+  }
+
   @NotNull
-  ASTNode parse(IElementType root, PsiBuilder builder) {
+  public ASTNode parse(IElementType root, PsiBuilder builder) {
     builder.setDebugMode(false);
     long start = System.currentTimeMillis();
     final PsiBuilder.Marker rootMarker = builder.mark();
-    ParsingContext context = new ParsingContext(builder);
+    ParsingContext context = new ParsingContext(builder, myLanguageLevel);
     StatementParsing stmt_parser = context.getStatementParser();
     builder.setTokenTypeRemapper(stmt_parser); // must be done before touching the caching lexer with eof() call.
     while (!builder.eof()) {

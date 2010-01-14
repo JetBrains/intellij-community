@@ -630,6 +630,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     final PsiBuilder.Marker statement = myBuilder.mark();
     myBuilder.advanceLexer();
     getExpressionParser().parseExpression();
+    myExpectAsKeyword = true;
     if (myBuilder.getTokenType() == PyTokenTypes.AS_KEYWORD) {
       myBuilder.advanceLexer();
       getExpressionParser().parseExpression(true, true); // 'as' is followed by a target
@@ -702,27 +703,34 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   }
   public IElementType filter(final IElementType source, final int start, final int end, final CharSequence text) {
     if (
-      (myFutureFlags.contains(FUTURE.WITH_STATEMENT) || myExpectAsKeyword) &&
-      source == PyTokenTypes.IDENTIFIER &&
-      CharArrayUtil.regionMatches(text, start, end, TOK_AS)
+      (myExpectAsKeyword || myContext.getLanguageLevel().hasWithStatement()) &&
+      source == PyTokenTypes.IDENTIFIER && isWordAtPosition(text, start, end, TOK_AS)
     ) {
       return PyTokenTypes.AS_KEYWORD;
     }
     else if ( // filter
         (myFutureImportPhase == Phase.FROM) &&
         source == PyTokenTypes.IDENTIFIER &&
-        CharArrayUtil.regionMatches(text, start, end, TOK_FUTURE_IMPORT)
+        isWordAtPosition(text, start, end, TOK_FUTURE_IMPORT)
     ) {
       myFutureImportPhase = Phase.FUTURE;
       return source;
     }
     else if (
-        myFutureFlags.contains(FUTURE.WITH_STATEMENT) &&
+        hasWithStatement() &&
         source == PyTokenTypes.IDENTIFIER &&
-        CharArrayUtil.regionMatches(text, start, end, TOK_WITH)
+        isWordAtPosition(text, start, end, TOK_WITH)
     ) {
       return PyTokenTypes.WITH_KEYWORD;
     }
     return source;
+  }
+
+  private static boolean isWordAtPosition(CharSequence text, int start, int end, final String tokenText) {
+    return CharArrayUtil.regionMatches(text, start, end, tokenText) && end - start == tokenText.length();
+  }
+
+  private boolean hasWithStatement() {
+    return myContext.getLanguageLevel().hasWithStatement() || myFutureFlags.contains(FUTURE.WITH_STATEMENT);
   }
 }

@@ -29,6 +29,7 @@ import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.facet.PythonFacetSettings;
+import com.jetbrains.python.psi.LanguageLevel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -451,5 +452,19 @@ public class PythonSdkType extends SdkType {
       }
     }
     return null;
+  }
+
+  public static LanguageLevel getLanguageLevelForSdk(@Nullable Sdk sdk) {
+    if (sdk != null) {
+      String version = sdk.getVersionString();
+      if (version != null) {
+        // HACK rewrite in some nicer way?
+        if (version.startsWith("Python ") || version.startsWith("Jython ")) {
+          String pythonVersion = version.substring("Python ".length());
+          return LanguageLevel.fromPythonVersion(pythonVersion);
+        }
+      }
+    }
+    return LanguageLevel.getDefault();
   }
 }

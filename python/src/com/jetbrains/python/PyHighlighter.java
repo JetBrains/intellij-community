@@ -1,47 +1,34 @@
-/*
- *  Copyright 2005 Pythonid Project
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS"; BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package com.jetbrains.python;
 
 import com.intellij.lexer.LayeredLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.HighlighterColors;
-import static com.intellij.openapi.editor.SyntaxHighlighterColors.*;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.lexer.PyStringLiteralLexer;
-import com.jetbrains.python.lexer.PythonFutureAwareLexer;
+import com.jetbrains.python.lexer.PythonHighlightingLexer;
+import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.intellij.openapi.editor.SyntaxHighlighterColors.*;
+
 /**
  * Colors and lexer(s) needed for highlighting.
  */
 public class PyHighlighter extends SyntaxHighlighterBase {
   private static Map<IElementType, TextAttributesKey> keys1;
+  private final LanguageLevel myLanguageLevel;
 
   @NotNull
   public Lexer getHighlightingLexer() {
-    LayeredLexer ret = new LayeredLexer(new PythonFutureAwareLexer());
+    LayeredLexer ret = new LayeredLexer(new PythonHighlightingLexer(myLanguageLevel));
     ret.registerSelfStoppingLayer(
       new PyStringLiteralLexer(PyTokenTypes.STRING_LITERAL, false), // TODO: set according to 2.x or 3.0 lang level
       new IElementType[]{PyTokenTypes.STRING_LITERAL}, IElementType.EMPTY_ARRAY
@@ -103,7 +90,8 @@ public class PyHighlighter extends SyntaxHighlighterBase {
   public static final TextAttributesKey PY_INVALID_STRING_ESCAPE = _copy("PY.INVALID_STRING_ESCAPE", INVALID_STRING_ESCAPE);
 
 
-  public PyHighlighter() {
+  public PyHighlighter(LanguageLevel languageLevel) {
+    myLanguageLevel = languageLevel;
     keys1 = new HashMap<IElementType, TextAttributesKey>();
 
     fillMap(keys1, PyTokenTypes.KEYWORDS, PY_KEYWORD);

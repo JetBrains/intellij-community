@@ -1,4 +1,3 @@
-<!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
 <idea-plugin version="2">
 
   <extensions defaultExtensionNs="com.intellij">
@@ -98,6 +97,8 @@
     <lang.refactoringSupport language="Python" implementationClass="com.jetbrains.python.refactoring.RefactoringProvider"/>
     <codeInsight.gotoSuper language="Python" implementationClass="com.jetbrains.python.codeInsight.PyGotoSuperHandler"/>
     <gotoDeclarationHandler implementation="com.jetbrains.python.codeInsight.PyBreakContinueGotoProvider" order="FIRST"/>
+
+    <filePropertyPusher implementation="com.jetbrains.python.psi.impl.PythonLanguageLevelPusher"/>
 
     <!-- Django -->
     <annotator language="Python" implementationClass="com.jetbrains.django.annotator.ViewMethodAnnotator"/>
