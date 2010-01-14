@@ -35,6 +35,7 @@ class ParameterObjectBuilder {
     private final List<PsiTypeParameter> typeParams = new ArrayList<PsiTypeParameter>();
     private Project myProject;
   private JavaCodeStyleManager myJavaCodeStyleManager ;
+  private String myVisibility;
 
   public void setClassName(String className) {
         this.className = className;
@@ -63,7 +64,7 @@ class ParameterObjectBuilder {
         @NonNls final StringBuffer out = new StringBuffer(1024);
         if (packageName.length() > 0) out.append("package " + packageName + ';');
         out.append('\n');
-        out.append("public class " + className);
+        out.append(myVisibility + " class " + className);
         if (!typeParams.isEmpty()) {
             out.append('<');
             boolean first = true;
@@ -172,7 +173,7 @@ class ParameterObjectBuilder {
     }
 
     private void outputConstructor(@NonNls StringBuffer out) {
-        out.append("\tpublic " + className + '(');
+        out.append("\t" + myVisibility + " " + className + '(');
         for (Iterator<ParameterSpec> iterator = fields.iterator(); iterator.hasNext();) {
             final ParameterSpec field = iterator.next();
             final PsiParameter parameter = field.getParameter();
@@ -257,5 +258,8 @@ class ParameterObjectBuilder {
         return null;
     }
 
+  public void setVisibility(String visibility) {
+    myVisibility = visibility;
+  }
 }
 
