@@ -324,7 +324,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
 
   /*
   Really parses two forms:
-  from identifier import id, id... -- may be relative or absolute
+  from identifier import id, id... -- may be either relative or absolute
   from . import identifier -- only relative
    */
   private void parseFromImportStatement(boolean inSuite) {
