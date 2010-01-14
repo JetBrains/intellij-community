@@ -4,9 +4,8 @@ import com.jetbrains.python.psi.PyStringLiteralExpression;
 
 /**
  * Looks for well-formedness of string constants.
- * User: dcheryasov
- * Date: Jul 5, 2008
- * Time: 11:58:57 PM
+ *
+ * @author dcheryasov
  */
 public class StringConstantAnnotator extends PyAnnotator {
   public static final String MISSING_Q = "Missing closing quote";
@@ -34,9 +33,15 @@ public class StringConstantAnnotator extends PyAnnotator {
         char c = s.charAt(index);
         if (esc) esc = false;
         else {
-          if (c != first_quote) {
-            if (c  == '\\') esc = true;
+          if (c == '\\') esc = true;
+          // a line may consist of multiple fragments with different quote chars (PY-299)
+          else if (c == '\'' || c == '\"') {
+            if (first_quote == '\0')
+              first_quote = c;
+            else
+              first_quote = '\0';
           }
+          
           /*
           else { // impossible with current lexer, but who knows :)
             msg = PREMATURE_Q + " [" + first_quote  + "]";
@@ -53,7 +58,7 @@ public class StringConstantAnnotator extends PyAnnotator {
     }
     //
     if (! ok) {
-        getHolder().createErrorAnnotation(node, msg);
+      getHolder().createErrorAnnotation(node, msg);
     }
   }
 }
