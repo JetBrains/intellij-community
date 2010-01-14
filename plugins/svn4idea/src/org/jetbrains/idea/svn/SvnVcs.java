@@ -318,7 +318,7 @@ public class SvnVcs extends AbstractVcs {
                                                   NotificationType.INFORMATION, new NotificationListener() {
             public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
               final int upgradeAnswer = Messages.showYesNoDialog(SvnBundle.message("upgrade.format.to16.question.text",
-                  SvnBundle.message("label.where.svn.format.can.be.changed.text", SvnBundle.message("action.show.svn.map.text"))),
+                  SvnBundle.message("label.where.svn.format.can.be.changed.text", SvnBundle.message("action.show.svn.map.text.reference"))),
                   SvnBundle.message("upgrade.format.to16.question.title"), Messages.getWarningIcon());
               if (DialogWrapper.OK_EXIT_CODE == upgradeAnswer) {
                 workingCopyChecker.doUpgrade();
