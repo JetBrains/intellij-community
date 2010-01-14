@@ -178,7 +178,8 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
    * @param target a resolve candidate.
    * @return a PsiFile if target was a PsiDirectory, or null, or target unchanged.
    */
-  private PsiElement turnDirIntoInit(PsiElement target) {
+  @Nullable
+  private static PsiElement turnDirIntoInit(PsiElement target) {
     if (target instanceof PsiDirectory) {
       final PsiDirectory dir = (PsiDirectory)target;
       final PsiFile file = dir.findFile(ResolveImportUtil.INIT_PY);
@@ -186,13 +187,9 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         file.putCopyableUserData(PyFile.KEY_IS_DIRECTORY, Boolean.TRUE);
         return file; // ResolveImportUtil will extract directory part as needed, everyone else are better off with a file.
       }
-      else {
-        return null;
-      } // dir without __init__.py does not resolve
+      else return null; // dir without __init__.py does not resolve
     }
-    else {
-      return target;
-    }
+    else return target; // don't touch non-dirs
   }
 
   /**
@@ -239,7 +236,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
           }
         }
         // resolve within the type proper
-        PsiElement ref_elt = qualifierType.resolveMember(referencedName);
+        PsiElement ref_elt = turnDirIntoInit(qualifierType.resolveMember(referencedName));
         if (ref_elt != null) ret.poke(ref_elt, RatedResolveResult.RATE_NORMAL);
       }
       // special case of __doc__

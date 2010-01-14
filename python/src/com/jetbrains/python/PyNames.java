@@ -22,6 +22,8 @@ public class PyNames {
   @NonNls public static final String NONE = "None";
   @NonNls public static final String FAKE_OLD_BASE = "___Classobj";
 
+  @NonNls public static final String FUTURE_MODULE = "__future__";
+
   @NonNls public static final String CLASSMETHOD = "classmethod";
   @NonNls public static final String STATICMETHOD = "staticmethod";
 
