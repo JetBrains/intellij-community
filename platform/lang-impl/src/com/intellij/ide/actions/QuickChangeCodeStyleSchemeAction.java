@@ -64,8 +64,11 @@ public class QuickChangeCodeStyleSchemeAction extends QuickSwitchSchemeAction {
     }
   }
 
-  private void addScheme(final DefaultActionGroup group, final CodeStyleSettingsManager manager, final CodeStyleScheme currentScheme,
-                         final CodeStyleScheme scheme, final boolean addScheme) {
+  private static void addScheme(final DefaultActionGroup group,
+                                final CodeStyleSettingsManager manager,
+                                final CodeStyleScheme currentScheme,
+                                final CodeStyleScheme scheme,
+                                final boolean addScheme) {
     group.add(new AnAction(scheme.getName(), "",
                            scheme == currentScheme && !manager.USE_PER_PROJECT_SETTINGS ? ourCurrentAction : ourNotCurrentAction) {
       public void actionPerformed(AnActionEvent e) {
@@ -85,6 +88,6 @@ public class QuickChangeCodeStyleSchemeAction extends QuickSwitchSchemeAction {
 
   public void update(AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setEnabled(e.getDataContext().getData(DataConstants.PROJECT) != null);
+    e.getPresentation().setEnabled(PlatformDataKeys.PROJECT.getData(e.getDataContext()) != null);
   }
 }

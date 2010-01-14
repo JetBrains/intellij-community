@@ -23,7 +23,7 @@ class TestClassInfo extends ClassBasedInfo {
     super(DisplayTestInfoExtractor.FOR_CLASS);
   }
 
-  public void readPacketFrom(final ObjectReader reader) {
+  public void readFrom(final ObjectReader reader) {
     readClass(reader);
   }
 }

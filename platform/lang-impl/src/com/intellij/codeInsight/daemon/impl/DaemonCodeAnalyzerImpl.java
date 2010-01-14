@@ -361,7 +361,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
     if (myUpdateProgress != null) {
       myUpdateProgress.cancel();
-      myPassExecutorService.cancelAll();
+      myPassExecutorService.cancelAll(false);
       cancelVisibleProgress();
       myUpdateProgress = null;
     }
@@ -519,11 +519,20 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     markup.putUserData(MARKERS_IN_EDITOR_DOCUMENT_KEY, lineMarkers);
   }
 
-  public synchronized void setLastIntentionHint(IntentionHintComponent hintComponent) {
+  public synchronized void setLastIntentionHint(Project project, PsiFile file, Editor editor, ShowIntentionsPass.IntentionsInfo intentions, boolean hasToRecreate) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    hideLastIntentionHint();
+    IntentionHintComponent hintComponent = IntentionHintComponent.showIntentionHint(project, file, editor, intentions, false);
+    if (hasToRecreate) {
+      hintComponent.recreate();
+    }
+    myLastIntentionHint = hintComponent;
+  }
+
+  public synchronized void hideLastIntentionHint() {
     if (myLastIntentionHint != null && myLastIntentionHint.isVisible()) {
       myLastIntentionHint.hide();
     }
-    myLastIntentionHint = hintComponent;
   }
 
   public synchronized IntentionHintComponent getLastIntentionHint() {
@@ -617,4 +626,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return UpdateHighlightersUtil.getFileLeveleHighlights(project, file);
   }
 
+  @TestOnly
+  public void clearPasses() {
+    myPassExecutorService.cancelAll(true);
+  }
 }

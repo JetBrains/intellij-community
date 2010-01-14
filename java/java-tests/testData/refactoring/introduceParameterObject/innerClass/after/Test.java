@@ -5,10 +5,10 @@ class Test {
 
   void bar(String s){}
 
-    public static class Param {
+    private static class Param {
         private final String s;
 
-        public Param(String s) {
+        private Param(String s) {
             this.s = s;
         }
 

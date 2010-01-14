@@ -25,11 +25,7 @@ import com.intellij.openapi.util.Iconable;
 import javax.swing.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Feb 10, 2005
- * Time: 3:26:11 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class PropertiesStructureViewElement implements StructureViewTreeElement {
   private final Property myProperty;

@@ -17,8 +17,8 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
 import com.intellij.util.net.HttpConfigurable;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -36,11 +36,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 
 /**
- * Created by IntelliJ IDEA.
- * User: alex
- * Date: Sep 24, 2005
- * Time: 5:25:35 PM
- * To change this template use File | Settings | File Templates.
+ * @author alex
  */
 public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
   private final Project myProject;
@@ -78,7 +74,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
     }
 
     public int acceptServerAuthentication(final SVNURL url, final String realm, final Object certificate, final boolean resultMayBeStored) {
-      return ISVNAuthenticationProvider.ACCEPTED_TEMPORARY;
+      return ACCEPTED_TEMPORARY;
     }
 
     public void saveAuthentication(final SVNAuthentication auth, final String kind, final String realm) throws SVNException {

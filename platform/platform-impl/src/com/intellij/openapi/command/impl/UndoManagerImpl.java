@@ -403,7 +403,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     return isUndoOrRedoAvailable(refs, false);
   }
 
-  private Collection<DocumentReference> getDocRefs(FileEditor editor) {
+  private static Collection<DocumentReference> getDocRefs(FileEditor editor) {
     if (editor instanceof TextEditor && ((TextEditor)editor).getEditor().isViewer()) return null;
     return getDocumentReferences(editor);
   }

@@ -38,6 +38,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.*;
@@ -123,7 +124,7 @@ public class BraceHighlightingHandler {
            editorProject.isDisposed() || project.isDisposed() || !editor.getComponent().isShowing() || editor.isViewer();
   }
 
-  static PsiFile getInjectedFileIfAny(@NotNull final Editor editor, @NotNull final Project project, int offset, @NotNull PsiFile psiFile, @NotNull final Alarm alarm) {
+  private static PsiFile getInjectedFileIfAny(@NotNull final Editor editor, @NotNull final Project project, int offset, @NotNull PsiFile psiFile, @NotNull final Alarm alarm) {
     Document document = editor.getDocument();
     // when document is committed, try to highlight braces in injected lang - it's fast
     if (!PsiDocumentManager.getInstance(project).isUncommited(document)) {
@@ -423,11 +424,12 @@ public class BraceHighlightingHandler {
   }
 
   private void removeLineMarkers() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     RangeHighlighter marker = myEditor.getUserData(LINE_MARKER_IN_EDITOR_KEY);
-    if (marker != null) {
+    if (marker != null && ((MarkupModelEx)myEditor.getMarkupModel()).containsHighlighter(marker)) {
       myEditor.getMarkupModel().removeHighlighter(marker);
-      myEditor.putUserData(LINE_MARKER_IN_EDITOR_KEY, null);
     }
+    myEditor.putUserData(LINE_MARKER_IN_EDITOR_KEY, null);
   }
 
   private static class MyLineMarkerRenderer implements LineMarkerRenderer {

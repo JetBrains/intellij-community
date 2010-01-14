@@ -169,6 +169,9 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     }
     else if (key == DATA_KEY) {
       sink.put(DATA_KEY, this);
+    } else if (VcsDataKeys.SELECTED_CHANGES_IN_DETAILS.equals(key)) {
+      final List<Change> selectedChanges = getSelectedChanges();
+      sink.put(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS, selectedChanges.toArray(new Change[selectedChanges.size()]));
     }
   }
 

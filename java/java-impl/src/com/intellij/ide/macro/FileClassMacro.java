@@ -15,11 +15,12 @@
  */
 package com.intellij.ide.macro;
 
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiJavaFile;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.JavaDataAccessors;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
 
 public final class FileClassMacro extends Macro {
   public String getName() {
@@ -43,15 +44,14 @@ public final class FileClassMacro extends Macro {
     //if (!(psiFile instanceof PsiJavaFile)) {
     //  return null;
     //}
-    final PsiJavaFile javaFile = JavaDataAccessors.PSI_JAVA_FILE.from(dataContext);
-    if (javaFile == null) return null;
-    PsiClass[] classes = javaFile.getClasses();
+    final PsiFile javaFile = LangDataKeys.PSI_FILE.getData(dataContext);
+    if (!(javaFile instanceof PsiJavaFile)) return null;
+    PsiClass[] classes = ((PsiJavaFile) javaFile).getClasses();
     if (classes.length == 1) {
       return classes[0].getQualifiedName();
     }
     String fileName = javaFile.getVirtualFile().getNameWithoutExtension();
-    for (int i = 0; i < classes.length; i++) {
-      PsiClass aClass = classes[i];
+    for (PsiClass aClass : classes) {
       String name = aClass.getName();
       if (fileName.equals(name)) {
         return aClass.getQualifiedName();

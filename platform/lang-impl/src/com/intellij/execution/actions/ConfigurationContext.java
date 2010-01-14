@@ -22,11 +22,9 @@ import com.intellij.execution.configurations.RuntimeConfiguration;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -53,12 +51,13 @@ public class ConfigurationContext {
   private final Component myContextComponent;
 
   public ConfigurationContext(final DataContext dataContext) {
-    myRuntimeConfiguration = (RuntimeConfiguration)dataContext.getData(DataConstantsEx.RUNTIME_CONFIGURATION);
-    myContextComponent = (Component)dataContext.getData(DataConstants.CONTEXT_COMPONENT);
+    myRuntimeConfiguration = RuntimeConfiguration.DATA_KEY.getData(dataContext);
+    myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     myModule = LangDataKeys.MODULE.getData(dataContext);
-    final Object location = dataContext.getData(Location.LOCATION);
+    @SuppressWarnings({"unchecked"})
+    final Location<PsiElement> location = (Location<PsiElement>)Location.DATA_KEY.getData(dataContext);
     if (location != null) {
-      myLocation = (Location<PsiElement>)location;
+      myLocation = location;
       return;
     }
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);

@@ -15,13 +15,14 @@
  */
 package git4idea.actions;
 
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.GitFileUtils;
@@ -38,31 +39,38 @@ import java.util.Map;
 public class GitAdd extends BasicAction {
 
   @Override
-  public void perform(@NotNull Project project, GitVcs vcs, @NotNull List<VcsException> exceptions, @NotNull VirtualFile[] affectedFiles)
-    throws VcsException {
+  public boolean perform(@NotNull final Project project,
+                         final GitVcs vcs,
+                         @NotNull final List<VcsException> exceptions,
+                         @NotNull final VirtualFile[] affectedFiles) {
     saveAll();
+    if (!ProjectLevelVcsManager.getInstance(project).checkAllFilesAreUnder(GitVcs.getInstance(project), affectedFiles)) return false;
+    return toBackground(project, vcs, affectedFiles, exceptions, new Consumer<ProgressIndicator>() {
+      public void consume(ProgressIndicator indicator) {
+        try {
+          addFiles(project, affectedFiles, indicator);
+        }
+        catch (VcsException e) {
+          exceptions.add(e);
+        }
+      }
+    });
 
-    if (!ProjectLevelVcsManager.getInstance(project).checkAllFilesAreUnder(GitVcs.getInstance(project), affectedFiles)) return;
-
-    addFiles(project, affectedFiles);
   }
 
   /**
    * Add the specified files to the project.
    *
    * @param project The project to add files to
-   * @param files   The files to add
-   * @throws VcsException If an error occurs
+   * @param files   The files to add  @throws VcsException If an error occurs
+   * @param pi      progress indicator
    */
-  public static void addFiles(@NotNull Project project, @NotNull VirtualFile[] files) throws VcsException {
+  public static void addFiles(@NotNull final Project project, @NotNull final VirtualFile[] files, ProgressIndicator pi)
+    throws VcsException {
     final Map<VirtualFile, List<VirtualFile>> roots = GitUtil.sortFilesByGitRoot(Arrays.asList(files));
     for (Map.Entry<VirtualFile, List<VirtualFile>> entry : roots.entrySet()) {
+      pi.setText(entry.getKey().getPresentableUrl());
       GitFileUtils.addFiles(project, entry.getKey(), entry.getValue());
-    }
-    VcsDirtyScopeManager mgr = VcsDirtyScopeManager.getInstance(project);
-    for (VirtualFile file : files) {
-      mgr.fileDirty(file);
-      file.refresh(true, true);
     }
   }
 

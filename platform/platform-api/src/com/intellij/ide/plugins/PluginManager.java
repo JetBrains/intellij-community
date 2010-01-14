@@ -699,11 +699,11 @@ public class PluginManager {
             ourBuildNumber = BuildNumber.fromString(new String(FileUtil.loadFileText(buildTxtFile)).trim());
           }
           else {
-            ourBuildNumber = BuildNumber.fromString("92.SNAPSHOT");
+            ourBuildNumber = BuildNumber.fromString("94.SNAPSHOT");
           }
         }
         catch (IOException e) {
-          ourBuildNumber = BuildNumber.fromString("92.SNAPSHOT");
+          ourBuildNumber = BuildNumber.fromString("94.SNAPSHOT");
         }
       }
     }
@@ -862,16 +862,16 @@ public class PluginManager {
         return loader;
       }
       catch (NoSuchMethodException e) {
-        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        e.printStackTrace();
       }
       catch (IOException e) {
-        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        e.printStackTrace();
       }
       catch (IllegalAccessException e) {
-        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        e.printStackTrace();
       }
       catch (InvocationTargetException e) {
-        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        e.printStackTrace();
       }
     }
 

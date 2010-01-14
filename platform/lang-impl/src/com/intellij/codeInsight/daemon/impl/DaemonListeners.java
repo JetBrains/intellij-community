@@ -29,6 +29,7 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
@@ -125,7 +126,7 @@ public class DaemonListeners implements Disposable {
         }
 
         stopDaemon(true);
-        myDaemonCodeAnalyzer.setLastIntentionHint(null);
+        myDaemonCodeAnalyzer.hideLastIntentionHint();
       }
     }, this);
 
@@ -269,16 +270,33 @@ public class DaemonListeners implements Disposable {
     if (file instanceof PsiCodeFragment) return true;
     Project project = file.getProject();
     if (!ModuleUtil.projectContainsFile(project, virtualFile, false)) return false;
-    if (!FileDocumentManager.getInstance().isFileModified(virtualFile)) return false;
+    Result vcs = vcsThinksItChanged(virtualFile, project);
+    if (vcs == Result.CHANGED) return true;
+    if (vcs == Result.UNCHANGED) return false;
+
+    return canUndo(virtualFile);
+  }
+
+  private boolean canUndo(VirtualFile virtualFile) {
+    for (FileEditor editor : FileEditorManager.getInstance(myProject).getEditors(virtualFile)) {
+      if (UndoManagerImpl.getInstance(myProject).isUndoAvailable(editor)) return true;
+    }
+    return false;
+  }
+
+  private static enum Result {
+    CHANGED, UNCHANGED, NOT_SURE
+  }
+  private Result vcsThinksItChanged(VirtualFile virtualFile, Project project) {
     FilePath path = new FilePathImpl(virtualFile);
     boolean vcsIsThinking = !VcsDirtyScopeManager.getInstance(myProject).whatFilesDirty(Arrays.asList(path)).isEmpty();
-    if (vcsIsThinking) return false;
+    if (vcsIsThinking) return Result.UNCHANGED; // do not modify file which is in the process of updating
 
     AbstractVcs activeVcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(virtualFile);
-    if (activeVcs == null) return true;
+    if (activeVcs == null) return Result.NOT_SURE;
     FileStatus status = FileStatusManager.getInstance(project).getStatus(virtualFile);
 
-    return status == FileStatus.MODIFIED || status == FileStatus.ADDED;
+    return status == FileStatus.MODIFIED || status == FileStatus.ADDED ? Result.CHANGED : Result.UNCHANGED;
   }
 
   private class MyApplicationListener extends ApplicationAdapter {

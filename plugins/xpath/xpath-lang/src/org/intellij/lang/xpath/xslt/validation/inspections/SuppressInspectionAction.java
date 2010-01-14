@@ -53,13 +53,15 @@ abstract class SuppressInspectionAction extends SuppressIntentionAction {
     }
 
     @Nullable
-    protected abstract XmlTag getAnchor(PsiElement element);
+    protected abstract XmlTag getAnchor(@NotNull PsiElement element);
 
     public boolean isAvailable(@NotNull Project project, Editor editor, @Nullable PsiElement element) {
-        return getAnchor(element) != null;
+        return element != null && getAnchor(element) != null;
     }
 
     public void invoke(Project project, Editor editor, PsiElement element) throws IncorrectOperationException {
+        if (element == null) return;
+
         final XmlTag anchor = getAnchor(element);
         if (anchor == null) return;
 

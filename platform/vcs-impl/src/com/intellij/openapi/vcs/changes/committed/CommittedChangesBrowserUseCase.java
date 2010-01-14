@@ -15,11 +15,14 @@
  */
 package com.intellij.openapi.vcs.changes.committed;
 
+import com.intellij.openapi.actionSystem.DataKey;
+
 public enum CommittedChangesBrowserUseCase {
   COMMITTED,
   INCOMING,
   UPDATE,
   IN_AIR;
 
-  public final static String CONTEXT_NAME = "COMMITTED_CHANGES_BROWSER_USE_CASE";
+  public static final DataKey<CommittedChangesBrowserUseCase> DATA_KEY = DataKey.create("COMMITTED_CHANGES_BROWSER_USE_CASE");
+  @Deprecated public final static String CONTEXT_NAME = DATA_KEY.getName();
 }

@@ -27,11 +27,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
+import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -62,8 +64,9 @@ public class ProgressTipPanel {
     myProject = project;
     myCurrentFeature = 0;
 
-    //noinspection HardCodedStringLiteral
-    myBrowser.setContentType("text/html");
+    final HTMLEditorKit editorKit = new HTMLEditorKit();
+    myBrowser.setEditorKit(editorKit);
+    myBrowser.setContentType(UIUtil.HTML_MIME);
 
     myScrollPane.setPreferredSize(new Dimension(600, 200));
     myBrowser.setEditable(false);

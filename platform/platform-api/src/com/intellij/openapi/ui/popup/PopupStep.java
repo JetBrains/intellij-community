@@ -102,4 +102,10 @@ public interface PopupStep<T> {
    * @return true if the submenu for the first selectable item should be displayed automatically, false otherwise.
    */
   boolean isAutoSelectionEnabled();
+
+  /**
+   * @return runnable to be executed when final step is chosen
+   */
+  @Nullable
+  Runnable getFinalRunnable();
 }

@@ -28,9 +28,9 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitVcs;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Collection;
 
 public class TestOutgoingAction extends AnAction {
   @Override
@@ -41,7 +41,7 @@ public class TestOutgoingAction extends AnAction {
 
     final VcsOutgoingChangesProvider<CommittedChangeList> provider = vcs.getOutgoingChangesProvider();
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-    final VirtualFile vf = (VirtualFile)e.getDataContext().getData(PlatformDataKeys.VIRTUAL_FILE.getName());
+    final VirtualFile vf = PlatformDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
     try {
       if (vf != null) {
         final VirtualFile root = vcsManager.getVcsRootFor(vf);

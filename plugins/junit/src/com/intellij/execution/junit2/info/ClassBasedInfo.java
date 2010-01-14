@@ -21,7 +21,7 @@ import com.intellij.execution.junit2.segments.ObjectReader;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class ClassBasedInfo extends TestInfoImpl {
+public abstract class ClassBasedInfo extends TestInfo {
   private final DisplayTestInfoExtractor myClassInfo;
   private PsiClassLocator myClass;
   private String myComment = null;

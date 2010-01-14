@@ -21,8 +21,6 @@ import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.patterns.PlatformPatterns;
-import static com.intellij.patterns.PlatformPatterns.or;
-import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
@@ -39,12 +37,11 @@ import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.patterns.PlatformPatterns.or;
+import static com.intellij.patterns.PlatformPatterns.psiElement;
+
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jan 24, 2005
- * Time: 10:59:22 AM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class XMLLanguage extends CompositeLanguage {
 

@@ -17,11 +17,11 @@ package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.ui.popup.PopupOwner;
+import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.actions.*;
 import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
 import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.ui.popup.PopupOwner;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -130,11 +130,11 @@ public final class GlassLayer extends JComponent implements DataProvider, PopupO
   }
 
   /**
-   * Provides {@link DataConstants#NAVIGATABLE} to navigate to
+   * Provides {@link PlatformDataKeys#NAVIGATABLE} to navigate to
    * binding of currently selected component (if any)
    */
   public Object getData(final String dataId) {
-    if(DataConstants.NAVIGATABLE.equals(dataId)) {
+    if(PlatformDataKeys.NAVIGATABLE.is(dataId)) {
       return UIDesignerToolWindowManager.getInstance(myEditor.getProject()).getComponentTree().getData(dataId);
     }
     else{

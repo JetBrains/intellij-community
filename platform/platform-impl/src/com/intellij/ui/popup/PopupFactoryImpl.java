@@ -408,6 +408,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private final boolean myEnableMnemonics;
     private final int myDefaultOptionIndex;
     private final boolean myAutoSelectionEnabled;
+    private Runnable myFinalRunnable;
 
     private ActionPopupStep(@NotNull final List<ActionItem> items,
                            final String title,
@@ -472,19 +473,19 @@ public class PopupFactoryImpl extends JBPopupFactory {
           return JBPopupFactory.getInstance().createActionsStep((ActionGroup)action, dataContext, myEnableMnemonics, false, null, myContext, false);
       }
       else {
-        // invokeLater is required to get a chance for the popup to hide in case the action called displays modal dialog
-        SwingUtilities.invokeLater(new Runnable() {
+        myFinalRunnable = new Runnable() {
           public void run() {
-            action.actionPerformed(new AnActionEvent(null,
-                                                     dataContext,
-                                                     ActionPlaces.UNKNOWN,
-                                                     (Presentation)action.getTemplatePresentation().clone(),
-                                                     ActionManager.getInstance(),
-                                                     0));
+            action.actionPerformed(
+              new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, (Presentation)action.getTemplatePresentation().clone(),
+                                ActionManager.getInstance(), 0));
           }
-        });
+        };
         return FINAL_CHOICE;
       }
+    }
+
+    public Runnable getFinalRunnable() {
+      return myFinalRunnable;
     }
 
     public boolean hasSubstep(final ActionItem selectedValue) {

@@ -16,9 +16,9 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
@@ -46,6 +46,8 @@ import java.util.Set;
  */
 public class EditorWindow {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.EditorWindow");
+
+  public static final DataKey<EditorWindow> DATA_KEY = DataKey.create("editorWindow");
 
   protected JPanel myPanel;
   private EditorTabbedContainer myTabbedPane;
@@ -307,11 +309,11 @@ public class EditorWindow {
     }
 
     public Object getData(String dataId) {
-      if (dataId.equals(DataConstants.VIRTUAL_FILE)){
+      if (PlatformDataKeys.VIRTUAL_FILE.is(dataId)){
         final VirtualFile virtualFile = myEditor.getFile();
         return virtualFile.isValid() ? virtualFile : null;
       }
-      else if (dataId.equals(DataConstants.PROJECT)) {
+      else if (PlatformDataKeys.PROJECT.is(dataId)) {
         return myEditor.getFileEditorManager().getProject();
       }
       return null;
@@ -327,7 +329,7 @@ public class EditorWindow {
     }
 
     public Object getData(String dataId) {
-      if (dataId.equals(DataConstantsEx.EDITOR_WINDOW)){
+      if (EditorWindow.DATA_KEY.is(dataId)){
         // this is essintial for ability to close opened file
         return myWindow;
       }

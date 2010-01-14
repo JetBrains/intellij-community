@@ -16,6 +16,7 @@
 
 package com.intellij.util.xml.tree;
 
+import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,13 +27,15 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.ui.treeStructure.*;
+import com.intellij.ui.treeStructure.SimpleNode;
+import com.intellij.ui.treeStructure.SimpleTree;
+import com.intellij.ui.treeStructure.SimpleTreeStructure;
+import com.intellij.ui.treeStructure.WeightBasedComparator;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,8 +49,8 @@ import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 
 public class DomModelTreeView extends Wrapper implements DataProvider, Disposable {
-
-  @NonNls public static String DOM_MODEL_TREE_VIEW_KEY = "DOM_MODEL_TREE_VIEW_KEY";
+  public static final DataKey<DomModelTreeView> DATA_KEY = DataKey.create("DOM_MODEL_TREE_VIEW_KEY");
+  @Deprecated @NonNls public static String DOM_MODEL_TREE_VIEW_KEY = DATA_KEY.getName();
   @NonNls public static String DOM_MODEL_TREE_VIEW_POPUP = "DOM_MODEL_TREE_VIEW_POPUP";
 
   private final SimpleTree myTree;
@@ -70,7 +73,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
     ToolTipManager.sharedInstance().registerComponent(myTree);
     TreeUtil.installActions(myTree);
 
-    myBuilder = new AbstractTreeBuilder(myTree, (DefaultTreeModel)myTree.getModel(), treeStructure, WeightBasedComparator.INSTANCE);
+    myBuilder = new AbstractTreeBuilder(myTree, (DefaultTreeModel)myTree.getModel(), treeStructure, WeightBasedComparator.INSTANCE, false);
     Disposer.register(this, myBuilder);
 
     myBuilder.setNodeDescriptorComparator(null);
@@ -180,14 +183,14 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
 
   @Nullable
   public Object getData(String dataId) {
-    if (DOM_MODEL_TREE_VIEW_KEY.equals(dataId)) {
+    if (DomModelTreeView.DATA_KEY.is(dataId)) {
       return this;
     }
     final SimpleNode simpleNode = getTree().getSelectedNode();
     if (simpleNode instanceof AbstractDomElementNode) {
       final DomElement domElement = ((AbstractDomElementNode)simpleNode).getDomElement();
       if (domElement != null && domElement.isValid()) {
-        if (DataConstants.NAVIGATABLE_ARRAY.equals(dataId)) {
+        if (PlatformDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
           final XmlElement tag = domElement.getXmlElement();
           if (tag instanceof Navigatable) {
             return new Navigatable[] { (Navigatable)tag };

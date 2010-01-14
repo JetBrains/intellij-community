@@ -151,9 +151,9 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     doInit(false);
   }
 
-  private void initNew(List<VirtualFile> files, List<String> profiles) {
+  private void initNew(List<VirtualFile> files, List<String> explicitProfiles) {
     myState.originalFiles = MavenUtil.collectPaths(files);
-    myState.activeProfiles = profiles;
+    myState.activeProfiles = explicitProfiles;
     doInit(true);
   }
 
@@ -202,7 +202,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
   private void applyTreeToState() {
     myState.originalFiles = myProjectsTree.getManagedFilesPaths();
-    myState.activeProfiles = myProjectsTree.getActiveProfiles();
+    myState.activeProfiles = new ArrayList<String>(myProjectsTree.getExplicitProfiles());
     myState.ignoredFiles = new THashSet<String>(myProjectsTree.getIgnoredFilesPaths());
     myState.ignoredPathMasks = myProjectsTree.getIgnoredFilesPatterns();
   }
@@ -349,6 +349,9 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
           if (projectWithChanges.first.hasUnresolvedPlugins()) {
             schedulePluginsResolving(projectWithChanges.first, nativeMavenProject);
           }
+          scheduleArtifactsDownloading(Collections.singleton(projectWithChanges.first),
+                                       getImportingSettings().shouldDownloadSourcesAutomatically(),
+                                       getImportingSettings().shouldDownloadJavadocAutomatically());
           scheduleForNextImport(projectWithChanges);
         }
         processMessage(message);
@@ -470,18 +473,23 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     return myProjectsTree.isManagedFile(f);
   }
 
-  public List<String> getActiveProfiles() {
+  public Collection<String> getExplicitProfiles() {
     if (!isInitialized()) return Collections.emptyList();
-    return myProjectsTree.getActiveProfiles();
+    return myProjectsTree.getExplicitProfiles();
   }
 
-  public List<String> getAvailableProfiles() {
+  public void setExplicitProfiles(Collection<String> profiles) {
+    myWatcher.setExplicitProfiles(profiles);
+  }
+
+  public Collection<String> getAvailableProfiles() {
     if (!isInitialized()) return Collections.emptyList();
     return myProjectsTree.getAvailableProfiles();
   }
 
-  public void setActiveProfiles(List<String> profiles) {
-    myWatcher.setActiveProfiles(profiles);
+  public Collection<Pair<String, MavenProfileState>> getProfilesWithStates() {
+    if (!isInitialized()) return Collections.emptyList();
+    return myProjectsTree.getProfilesWithStates();
   }
 
   public boolean hasProjects() {
@@ -677,6 +685,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
           MavenProject each = it.next();
           Object message = it.hasNext() ? null : FORCE_IMPORT_MESSAGE;
           myFoldersResolvingProcessor.scheduleTask(new MavenProjectsProcessorFoldersResolvingTask(each,
+                                                                                                  getGeneralSettings(), 
                                                                                                   getImportingSettings(),
                                                                                                   myProjectsTree,
                                                                                                   message));
@@ -699,14 +708,21 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     });
   }
 
-  public void scheduleArtifactsDownloading(final Collection<MavenProject> projects) {
+  public void scheduleArtifactsDownloading(final Collection<MavenProject> projects, final boolean sources, final boolean javadoc) {
+    if (!sources && !javadoc) return;
+
     runWhenFullyOpen(new Runnable() {
       public void run() {
         for (MavenProject each : projects) {
-          myArtifactsDownloadingProcessor.scheduleTask(new MavenProjectsProcessorArtifactsDownloadingTask(each, myProjectsTree));
+          myArtifactsDownloadingProcessor.scheduleTask(
+            new MavenProjectsProcessorArtifactsDownloadingTask(each, myProjectsTree, sources, javadoc));
         }
       }
     });
+  }
+
+  public void scheduleArtifactsDownloading(final Collection<MavenProject> projects) {
+    scheduleArtifactsDownloading(projects, true, true);
   }
 
   public void scheduleArtifactsDownloadingForAllProjects() {

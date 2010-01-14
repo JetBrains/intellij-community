@@ -56,7 +56,7 @@ public class LocalHistoryActionsTest extends LocalHistoryUITestCase {
     super.tearDown();
   }
 
-  private EditorFactory getEditorFactory() {
+  private static EditorFactory getEditorFactory() {
     return EditorFactory.getInstance();
   }
 
@@ -129,9 +129,9 @@ public class LocalHistoryActionsTest extends LocalHistoryUITestCase {
     DataContext dc = new DataContext() {
       @Nullable
       public Object getData(String id) {
-        if (id.equals(PlatformDataKeys.VIRTUAL_FILE_ARRAY.getName())) return files;
-        if (id.equals(PlatformDataKeys.EDITOR.getName())) return editor;
-        if (id.equals(PlatformDataKeys.PROJECT.getName())) return p;
+        if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(id)) return files;
+        if (PlatformDataKeys.EDITOR.is(id)) return editor;
+        if (PlatformDataKeys.PROJECT.is(id)) return p;
         return null;
       }
     };

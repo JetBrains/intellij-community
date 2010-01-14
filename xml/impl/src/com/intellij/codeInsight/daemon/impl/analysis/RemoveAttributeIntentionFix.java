@@ -15,24 +15,20 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.openapi.project.Project;
+import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
-* User: Maxim.Mossienko
-* Date: Nov 29, 2007
-* Time: 11:14:30 PM
-* To change this template use File | Settings | File Templates.
-*/
+ * @author Maxim.Mossienko
+ */
 class RemoveAttributeIntentionFix implements IntentionAction {
   private final String myLocalName;
   private final XmlAttribute myAttribute;

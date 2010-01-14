@@ -22,6 +22,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsBundle;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author nik
@@ -39,18 +41,18 @@ public class RemoteFileInfo implements RemoteContentProvider.DownloadingCallback
   private final Object myLock = new Object();
   private final String myUrl;
   private final RemoteFileManager myManager;
-  private final RemoteContentProvider myContentProvider;
+  private @Nullable RemoteContentProvider myContentProvider;
   private File myLocalFile;
   private VirtualFile myLocalVirtualFile;
-  private boolean myDownloaded;
+  private VirtualFile myPrevLocalFile;
+  private RemoteFileState myState = RemoteFileState.DOWNLOADING_NOT_STARTED;
   private String myErrorMessage;
-  private volatile boolean myCancelled;
+  private final AtomicBoolean myCancelled = new AtomicBoolean();
   private final List<FileDownloadingListener> myListeners = new SmartList<FileDownloadingListener>();
 
-  public RemoteFileInfo(final @NotNull String url, final @NotNull RemoteFileManager manager, final @NotNull RemoteContentProvider provider) {
+  public RemoteFileInfo(final @NotNull String url, final @NotNull RemoteFileManager manager) {
     myUrl = url;
     myManager = manager;
-    myContentProvider = provider;
   }
 
   public void addDownloadingListener(@NotNull FileDownloadingListener listener) {
@@ -72,8 +74,9 @@ public class RemoteFileInfo implements RemoteContentProvider.DownloadingCallback
   public void restartDownloading() {
     synchronized (myLock) {
       myErrorMessage = null;
+      myPrevLocalFile = myLocalVirtualFile;
       myLocalVirtualFile = null;
-      myDownloaded = false;
+      myState = RemoteFileState.DOWNLOADING_NOT_STARTED;
       myLocalFile = null;
       startDownloading();
     }
@@ -83,20 +86,13 @@ public class RemoteFileInfo implements RemoteContentProvider.DownloadingCallback
     LOG.debug("Downloading requested");
 
     File localFile;
+    FileDownloadingListener[] listeners;
     synchronized (myLock) {
-      if (myDownloaded) {
-        LOG.debug("File already downloaded: " + myLocalVirtualFile);
+      if (myState != RemoteFileState.DOWNLOADING_NOT_STARTED) {
+        LOG.debug("File already downloaded: file = " + myLocalVirtualFile + ", state = " + myState);
         return;
       }
-      if (myErrorMessage != null) {
-        LOG.debug("Error occured: " + myErrorMessage);
-        return;
-      }
-
-      if (myLocalFile != null) {
-        LOG.debug("Downloading in progress");
-        return;
-      }
+      myState = RemoteFileState.DOWNLOADING_IN_PROGRESS;
 
       try {
         myLocalFile = myManager.getStorage().createLocalFile(myUrl);
@@ -104,13 +100,20 @@ public class RemoteFileInfo implements RemoteContentProvider.DownloadingCallback
       }
       catch (IOException e) {
         LOG.info(e);
-        errorOccured(VfsBundle.message("cannot.create.local.file", e.getMessage()));
+        errorOccurred(VfsBundle.message("cannot.create.local.file", e.getMessage()), false);
         return;
       }
-      myCancelled = false;
+      myCancelled.set(false);
       localFile = myLocalFile;
+      listeners = myListeners.toArray(new FileDownloadingListener[myListeners.size()]);
+    }
+    for (FileDownloadingListener listener : listeners) {
+      listener.downloadingStarted();
     }
 
+    if (myContentProvider == null) {
+      myContentProvider = HttpFileSystemImpl.getInstanceImpl().findContentProvider(myUrl);
+    }
     myContentProvider.saveContent(myUrl, localFile, this);
   }
 
@@ -152,7 +155,8 @@ public class RemoteFileInfo implements RemoteContentProvider.DownloadingCallback
     FileDownloadingListener[] listeners;
     synchronized (myLock) {
       myLocalVirtualFile = localFile;
-      myDownloaded = true;
+      myPrevLocalFile = null;
+      myState = RemoteFileState.DOWNLOADED;
       myErrorMessage = null;
       listeners = myListeners.toArray(new FileDownloadingListener[myListeners.size()]);
     }
@@ -162,7 +166,7 @@ public class RemoteFileInfo implements RemoteContentProvider.DownloadingCallback
   }
 
   public boolean isCancelled() {
-    return myCancelled;
+    return myCancelled.get();
   }
 
   public String getErrorMessage() {
@@ -171,16 +175,20 @@ public class RemoteFileInfo implements RemoteContentProvider.DownloadingCallback
     }
   }
 
-  public void errorOccured(@NotNull final String errorMessage) {
+  public void errorOccurred(@NotNull final String errorMessage, boolean cancelled) {
     LOG.debug("Error: " + errorMessage);
     FileDownloadingListener[] listeners;
     synchronized (myLock) {
       myLocalVirtualFile = null;
+      myPrevLocalFile = null;
+      myState = RemoteFileState.ERROR_OCCURRED;
       myErrorMessage = errorMessage;
       listeners = myListeners.toArray(new FileDownloadingListener[myListeners.size()]);
     }
     for (FileDownloadingListener listener : listeners) {
-      listener.errorOccured(errorMessage);
+      if (!cancelled) {
+        listener.errorOccurred(errorMessage);
+      }
     }
   }
 
@@ -210,15 +218,29 @@ public class RemoteFileInfo implements RemoteContentProvider.DownloadingCallback
     }
   }
 
-  public boolean isDownloaded() {
+  public RemoteFileState getState() {
     synchronized (myLock) {
-      return myDownloaded;
+      return myState;
     }
   }
 
   public void cancelDownloading() {
+    FileDownloadingListener[] listeners;
     synchronized (myLock) {
-      myCancelled = true;
+      myCancelled.set(true);
+      if (myPrevLocalFile != null) {
+        myLocalVirtualFile = myPrevLocalFile;
+        myLocalFile = VfsUtil.virtualToIoFile(myLocalVirtualFile);
+        myState = RemoteFileState.DOWNLOADED;
+        myErrorMessage = null;
+      }
+      else {
+        myState = RemoteFileState.ERROR_OCCURRED;
+      }
+      listeners = myListeners.toArray(new FileDownloadingListener[myListeners.size()]);
+    }
+    for (FileDownloadingListener listener : listeners) {
+      listener.downloadingCancelled();
     }
   }
 
@@ -227,7 +249,9 @@ public class RemoteFileInfo implements RemoteContentProvider.DownloadingCallback
     synchronized (myLock) {
       localVirtualFile = myLocalVirtualFile;
     }
-    if ((localVirtualFile == null || !myContentProvider.isUpToDate(myUrl, localVirtualFile)) && myContentProvider.canProvideContent(myUrl)) {
+    final RemoteContentProvider contentProvider = HttpFileSystemImpl.getInstanceImpl().findContentProvider(myUrl);
+    if ((localVirtualFile == null || !contentProvider.equals(myContentProvider) || !contentProvider.isUpToDate(myUrl, localVirtualFile))) {
+      myContentProvider = contentProvider;
       addDownloadingListener(new MyRefreshingDownloadingListener(postRunnable));
       restartDownloading();
     }
@@ -241,6 +265,14 @@ public class RemoteFileInfo implements RemoteContentProvider.DownloadingCallback
     }
 
     @Override
+    public void downloadingCancelled() {
+      removeDownloadingListener(this);
+      if (myPostRunnable != null) {
+        myPostRunnable.run();
+      }
+    }
+
+    @Override
     public void fileDownloaded(final VirtualFile localFile) {
       removeDownloadingListener(this);
       if (myPostRunnable != null) {
@@ -249,12 +281,11 @@ public class RemoteFileInfo implements RemoteContentProvider.DownloadingCallback
     }
 
     @Override
-    public void errorOccured(@NotNull final String errorMessage) {
+    public void errorOccurred(@NotNull final String errorMessage) {
       removeDownloadingListener(this);
       if (myPostRunnable != null) {
         myPostRunnable.run();
       }
     }
   }
-
 }

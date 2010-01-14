@@ -21,7 +21,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.patterns.ElementPattern;
-import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Icons;
 import com.intellij.util.ProcessingContext;
@@ -32,12 +31,10 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+import static com.intellij.patterns.PlatformPatterns.psiElement;
+
 /**
- * Created by IntelliJ IDEA.
- * User: vnikolaenko
- * Date: 22.09.2008
- * Time: 12:14:14
- * To change this template use File | Settings | File Templates.
+ * @author vnikolaenko
  */
 public class RegExpCompletionContributor extends CompletionContributor {
   private static final Icon emptyIcon = new EmptyIcon(Icons.PROPERTY_ICON.getIconWidth(), Icons.PROPERTY_ICON.getIconHeight());

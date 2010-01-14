@@ -29,9 +29,8 @@ public class PersistentLineMarker extends RangeMarkerImpl {
     myLine = document.getLineNumber(offset);
   }
 
-  public void documentChanged(DocumentEvent e) {
-    if (!isValid()) return;
-
+  @Override
+  protected void changedUpdateImpl(DocumentEvent e) {
     DocumentEventImpl event = (DocumentEventImpl)e;
     if (event.isWholeTextReplaced()) {
       myLine = event.translateLineViaDiff(myLine);
@@ -44,7 +43,7 @@ public class PersistentLineMarker extends RangeMarkerImpl {
       }
     }
     else {
-      super.documentChanged(e);
+      super.changedUpdateImpl(e);
       if (isValid()) {
         myLine = getDocument().getLineNumber(myStart);
       }

@@ -21,10 +21,10 @@ import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit2.segments.ObjectReader;
 import com.intellij.openapi.project.Project;
 
-class AllInPackageInfo extends TestInfoImpl {
+class AllInPackageInfo extends TestInfo {
   private String myName;
 
-  public void readPacketFrom(final ObjectReader reader) {
+  public void readFrom(final ObjectReader reader) {
     myName = reader.readLimitedString();
   }
 

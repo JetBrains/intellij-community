@@ -65,5 +65,4 @@ public class MavenImportingConfigurable implements Configurable {
   public String getHelpTopic() {
     return "reference.settings.project.maven.importing";
   }
-
 }

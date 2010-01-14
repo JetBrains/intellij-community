@@ -9,6 +9,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 
 /**
@@ -80,7 +81,7 @@ public class IntroduceVariableMultifileTest extends MultiFileTestCase {
     return new PerformAction() {
       public void performAction(VirtualFile vroot, VirtualFile rootAfter) {
         final JavaPsiFacade psiManager = getJavaFacade();
-        final PsiClass aClass = psiManager.findClass(className);
+        final PsiClass aClass = psiManager.findClass(className, GlobalSearchScope.allScope(myProject));
         assertTrue(aClass != null);
         final PsiFile containingFile = aClass.getContainingFile();
         final VirtualFile virtualFile = containingFile.getVirtualFile();

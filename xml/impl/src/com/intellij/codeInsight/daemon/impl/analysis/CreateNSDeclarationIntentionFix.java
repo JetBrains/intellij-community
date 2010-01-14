@@ -64,12 +64,8 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Created by IntelliJ IDEA.
-* User: Maxim.Mossienko
-* Date: Nov 29, 2007
-* Time: 11:13:33 PM
-* To change this template use File | Settings | File Templates.
-*/
+ * @author Maxim.Mossienko
+ */
 public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFix {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.CreateNSDeclarationIntentionFix");
@@ -126,7 +122,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     if (!myElement.isValid() || !CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
-    final Set<String> set = XmlExtension.getExtension((XmlFile)file).guessUnboundNamespaces(myElement, (XmlFile)file);
+    final Set<String> set = XmlExtension.getExtension(file).guessUnboundNamespaces(myElement, (XmlFile)file);
     final String[] namespaces = ArrayUtil.toStringArray(set);
     Arrays.sort(namespaces);
 
@@ -146,7 +142,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
           }
           final int offset = editor.getCaretModel().getOffset();
           final RangeMarker marker = editor.getDocument().createRangeMarker(offset, offset);
-          final XmlExtension extension = XmlExtension.getExtension((XmlFile)file);
+          final XmlExtension extension = XmlExtension.getExtension(file);
           extension.insertNamespaceDeclaration((XmlFile)file, editor, Collections.singleton(namespace), myNamespacePrefix, new XmlExtension.Runner<String, IncorrectOperationException>() {
             public void run(final String param) throws IncorrectOperationException {
               if (namespace.length() > 0) {

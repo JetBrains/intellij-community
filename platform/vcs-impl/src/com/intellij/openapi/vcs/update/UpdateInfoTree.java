@@ -20,7 +20,6 @@ import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -222,29 +221,29 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
     if (myTreeBrowser.isVisible()) {
       return null;
     }
-    if (DataConstants.NAVIGATABLE.equals(dataId)) {
+    if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
       if (mySelectedFile == null || !mySelectedFile.isValid()) return null;
       return new OpenFileDescriptor(myProject, mySelectedFile);
     }
-    else if (DataConstants.VIRTUAL_FILE_ARRAY.equals(dataId)) {
+    else if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
       return getVirtualFileArray();
     }
-    else if (VcsDataConstants.IO_FILE_ARRAY.equals(dataId)) {
+    else if (VcsDataKeys.IO_FILE_ARRAY.is(dataId)) {
       return getFileArray();
-    } else if (DataConstantsEx.TREE_EXPANDER.equals(dataId)) {
+    } else if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
       if (myGroupByChangeList) {
         return myTreeBrowser.getTreeExpander();
       }
       else {
         return myTreeExpander;
       }
-    } else if (VcsDataKeys.UPDATE_VIEW_SELECTED_PATH.getName().equals(dataId)) {
+    } else if (VcsDataKeys.UPDATE_VIEW_SELECTED_PATH.is(dataId)) {
       return mySelectedUrl;
-    } else if (VcsDataKeys.UPDATE_VIEW_FILES_ITERABLE.getName().equals(dataId)) {
+    } else if (VcsDataKeys.UPDATE_VIEW_FILES_ITERABLE.is(dataId)) {
       return myTreeIterable;
-    } else if (VcsDataKeys.LABEL_BEFORE.getName().equals(dataId)) {
+    } else if (VcsDataKeys.LABEL_BEFORE.is(dataId)) {
       return myBefore;
-    }  else if (VcsDataKeys.LABEL_AFTER.getName().equals(dataId)) {
+    }  else if (VcsDataKeys.LABEL_AFTER.is(dataId)) {
       return myAfter;
     }
 

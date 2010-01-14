@@ -48,6 +48,8 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
 
   protected EventListenerList myListenerList = new EventListenerList();
 
+  private Runnable myFinalRunnable;
+
   public ComboBoxTableRenderer(final T[] values) {
     myValues = values;
     setFont(UIUtil.getButtonFont());
@@ -71,14 +73,16 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     return value.toString();
   }
 
-  protected void onChosen(@NotNull final T value) {
+
+
+  protected Runnable onChosen(@NotNull final T value) {
     stopCellEditing(value);
 
-    SwingUtilities.invokeLater(new Runnable() {
+    return new Runnable() {
       public void run() {
         stopCellEditing(value);
       }
-    });
+    };
   }
 
   @Override
@@ -117,12 +121,16 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
       }
 
       public PopupStep onChosen(T selectedValue, boolean finalChoice) {
-        ComboBoxTableRenderer.this.onChosen(selectedValue);
+        myFinalRunnable = ComboBoxTableRenderer.this.onChosen(selectedValue);
         return FINAL_CHOICE;
       }
 
       public void canceled() {
         ComboBoxTableRenderer.this.cancelCellEditing();
+      }
+
+      public Runnable getFinalRunnable() {
+        return myFinalRunnable;
       }
     });
 

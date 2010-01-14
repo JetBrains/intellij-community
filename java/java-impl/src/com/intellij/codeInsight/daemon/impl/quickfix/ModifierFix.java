@@ -99,6 +99,7 @@ public class ModifierFix extends IntentionAndQuickFixAction {
     return myModifierList != null &&
            myModifierList.isValid() &&
            myModifierList.getManager().isInProject(myModifierList) &&
+           myModifierList.hasModifierProperty(myModifier) != myShouldHave &&
            (myVariable == null || myVariable.isValid());
   }
 

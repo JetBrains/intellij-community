@@ -24,13 +24,12 @@ import java.util.ArrayList;
 import java.util.Set;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Mar 19, 2004
- * Time: 1:28:54 PM
- * To change this template use File | Settings | File Templates.
+ * @author Maxim.Mossienko
  */
 public class TemplateImplUtil {
+  private TemplateImplUtil() {
+  }
+
   public static boolean validateTemplateText(String s) {
     TemplateTextLexer lexer = new TemplateTextLexer();
     lexer.start(s);

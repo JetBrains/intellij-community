@@ -17,15 +17,13 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +39,7 @@ public class AddTestProcessAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final Project p = (Project)e.getData(DataKey.create(DataConstantsEx.PROJECT));
+    final Project p = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     if (p != null) {
       ToolWindowManager.getInstance(p)
         .notifyByBalloon("TODO", MessageType.INFO, "Started. <a href=\"#a\">Click me!</a>", null, new HyperlinkListener() {

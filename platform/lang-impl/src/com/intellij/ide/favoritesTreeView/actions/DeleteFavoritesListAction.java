@@ -23,8 +23,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 
 /**
  * User: anna
@@ -32,7 +32,7 @@ import com.intellij.openapi.project.DumbAware;
  */
 public class DeleteFavoritesListAction extends AnAction implements DumbAware {
   public DeleteFavoritesListAction() {
-    super(IdeBundle.message("action.delete.favorites.list",""));
+    super(IdeBundle.message("action.delete.favorites.list", ""));
   }
 
   public void actionPerformed(AnActionEvent e) {
@@ -42,22 +42,24 @@ public class DeleteFavoritesListAction extends AnAction implements DumbAware {
       return;
     }
     FavoritesManager favoritesManager = FavoritesManager.getInstance(project);
-    String listName = (String)dataContext.getData(FavoritesTreeViewPanel.FAVORITES_LIST_NAME);
-    favoritesManager.removeFavoritesList(listName);
+    String listName = FavoritesTreeViewPanel.FAVORITES_LIST_NAME_DATA_KEY.getData(dataContext);
+    if (listName != null) {
+      favoritesManager.removeFavoritesList(listName);
+    }
   }
 
   public void update(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    if (project == null){
+    if (project == null) {
       e.getPresentation().setEnabled(false);
       return;
     }
-    String listName = (String)dataContext.getData(FavoritesTreeViewPanel.FAVORITES_LIST_NAME);
+    String listName = FavoritesTreeViewPanel.FAVORITES_LIST_NAME_DATA_KEY.getData(dataContext);
     e.getPresentation().setEnabled(listName != null && !listName.equals(project.getName()));
     if (listName != null) {
-      e.getPresentation().setText(IdeBundle.message("action.delete.favorites.list",listName));
-      e.getPresentation().setDescription(IdeBundle.message("action.delete.favorites.list",listName));
+      e.getPresentation().setText(IdeBundle.message("action.delete.favorites.list", listName));
+      e.getPresentation().setDescription(IdeBundle.message("action.delete.favorites.list", listName));
     }
   }
 }

@@ -16,15 +16,19 @@
 
 package com.intellij.ide.impl.dataRules;
 
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDirectoryContainer;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
@@ -40,46 +44,46 @@ public class VirtualFileArrayRule implements GetDataRule {
   public Object getData(final DataProvider dataProvider) {
     // Try to detect multiselection.
 
-    Project project = (Project)dataProvider.getData(DataConstants.PROJECT_CONTEXT);
+    Project project = PlatformDataKeys.PROJECT_CONTEXT.getData(dataProvider);
     if (project != null && !project.isDisposed()) {
       return ProjectRootManager.getInstance(project).getContentRoots();
     }
 
-    Module[] selectedModules = (Module[])dataProvider.getData(DataConstants.MODULE_CONTEXT_ARRAY);
+    Module[] selectedModules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataProvider);
     if (selectedModules != null && selectedModules.length > 0) {
       return getFilesFromModules(selectedModules);
     }
 
-    Module selectedModule = (Module)dataProvider.getData(DataConstants.MODULE_CONTEXT);
+    Module selectedModule = LangDataKeys.MODULE_CONTEXT.getData(dataProvider);
     if (selectedModule != null && !selectedModule.isDisposed()) {
       return ModuleRootManager.getInstance(selectedModule).getContentRoots();
     }
 
-    PsiElement[] psiElements = (PsiElement[])dataProvider.getData(DataConstants.PSI_ELEMENT_ARRAY);
+    PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataProvider);
     if (psiElements != null && psiElements.length != 0) {
       return getFilesFromPsiElements(psiElements);
     }
 
     // VirtualFile -> VirtualFile[]
-    VirtualFile vFile = (VirtualFile)dataProvider.getData(DataConstants.VIRTUAL_FILE);
+    VirtualFile vFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataProvider);
     if (vFile != null) {
       return new VirtualFile[]{vFile};
     }
 
     //
 
-    PsiFile psiFile = (PsiFile)dataProvider.getData(DataConstants.PSI_FILE);
+    PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataProvider);
     if (psiFile != null && psiFile.getVirtualFile() != null) {
       return new VirtualFile[]{psiFile.getVirtualFile()};
     }
 
-    PsiElement elem = (PsiElement)dataProvider.getData(DataConstants.PSI_ELEMENT);
+    PsiElement elem = LangDataKeys.PSI_ELEMENT.getData(dataProvider);
     if (elem != null) {
       return getFilesFromPsiElement(elem);
     }
 
-    Usage[] usages = (Usage[])dataProvider.getData(UsageView.USAGES);
-    UsageTarget[] usageTargets = (UsageTarget[])dataProvider.getData(UsageView.USAGE_TARGETS);
+    Usage[] usages = UsageView.USAGES_KEY.getData(dataProvider);
+    UsageTarget[] usageTargets = UsageView.USAGE_TARGETS_KEY.getData(dataProvider);
     if (usages != null || usageTargets != null)  {
       return getFilesFromUsages(usages, usageTargets);
     }

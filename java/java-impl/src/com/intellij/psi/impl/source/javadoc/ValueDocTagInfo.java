@@ -20,17 +20,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.javadoc.JavadocTagInfo;
 import com.intellij.psi.javadoc.PsiDocTagValue;
+import com.intellij.psi.util.PsiUtil;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 10.08.2005
- * Time: 18:25:51
- * To change this template use File | Settings | File Templates.
+ * @author yole
  */
 public class ValueDocTagInfo implements JavadocTagInfo {
   public String getName() {
@@ -81,6 +77,6 @@ public class ValueDocTagInfo implements JavadocTagInfo {
   }
 
   public PsiReference getReference(PsiDocTagValue value) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.projectView.impl.nodes;
 
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiPackage;
 
@@ -24,6 +25,8 @@ import com.intellij.psi.PsiPackage;
  * Time: 3:51:02 PM
  */
 public final class PackageElement {
+  public static final DataKey<PackageElement> DATA_KEY =  DataKey.create("package.element");
+
   private final Module myModule;
   private final PsiPackage myElement;
   private final boolean myIsLibraryElement;

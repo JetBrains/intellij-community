@@ -15,6 +15,7 @@
  */
 package com.intellij.util.ui.tree;
 
+import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -504,7 +505,16 @@ public final class TreeUtil {
       final Runnable runnable = new Runnable() {
         public void run() {
           if (scroll) {
-            tree.scrollRectToVisible(b1);
+            AbstractTreeBuilder builder = AbstractTreeBuilder.getBuilderFor(tree);
+            if (builder != null) {
+              builder.getReady(TreeUtil.class).doWhenDone(new Runnable() {
+                public void run() {
+                  tree.scrollRectToVisible(b1);  
+                }
+              });  
+            } else {
+              tree.scrollRectToVisible(b1);
+            }
           }
           callback.setDone();
         }

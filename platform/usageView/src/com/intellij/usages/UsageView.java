@@ -18,7 +18,6 @@ package com.intellij.usages;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.usageView.UsageInfo;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,18 +32,20 @@ public interface UsageView extends Disposable {
   /**
    * Returns {@link com.intellij.usages.UsageTarget} to look usages for
    */
-  @NonNls String USAGE_TARGETS = "usageTarget";
-  DataKey<UsageTarget[]> USAGE_TARGETS_KEY = DataKey.create(USAGE_TARGETS);
+  DataKey<UsageTarget[]> USAGE_TARGETS_KEY = DataKey.create("usageTarget");
+  @Deprecated String USAGE_TARGETS = USAGE_TARGETS_KEY.getName();
 
   /**
    * Returns {@link com.intellij.usages.Usage} which are selected in usage view
    */
-  @NonNls String USAGES = "usages";
-  DataKey<Usage[]> USAGES_KEY = DataKey.create(USAGES);
+  DataKey<Usage[]> USAGES_KEY = DataKey.create("usages");
+  @Deprecated String USAGES = USAGES_KEY.getName();
 
-  @NonNls String USAGE_VIEW = "UsageView.new";
-  DataKey<UsageView> USAGE_VIEW_KEY = DataKey.create(USAGE_VIEW);
+  DataKey<UsageView> USAGE_VIEW_KEY = DataKey.create("UsageView.new");
+  @Deprecated String USAGE_VIEW = USAGE_VIEW_KEY.getName();
+
   DataKey<UsageInfo> USAGE_INFO_KEY = DataKey.create("UsageInfo");
+
   DataKey<List<UsageInfo>> USAGE_INFO_LIST_KEY = DataKey.create("UsageInfo.List");
 
   void appendUsage(@NotNull Usage usage);

@@ -81,7 +81,6 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
       int count = 0;
       while ((len = input.read(buf)) > 0) {
         if (callback.isCancelled()) {
-          callback.errorOccured(VfsBundle.message("downloading.cancelled.message"));
           return;
         }
         count += len;
@@ -97,7 +96,7 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
     }
     catch (IOException e) {
       LOG.info(e);
-      callback.errorOccured(VfsBundle.message("cannot.load.remote.file", url, e.getMessage()));
+      callback.errorOccurred(VfsBundle.message("cannot.load.remote.file", url, e.getMessage()), false);
     }
     finally {
       if (input != null) {

@@ -93,6 +93,10 @@ class PsiMethodListPopupStep implements ListPopupStep {
     return FINAL_CHOICE;
   }
 
+  public Runnable getFinalRunnable() {
+    return null;
+  }
+
   public boolean hasSubstep(Object selectedValue) {
     return false;
   }

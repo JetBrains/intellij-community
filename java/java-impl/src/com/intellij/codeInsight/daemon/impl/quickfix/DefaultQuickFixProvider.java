@@ -22,8 +22,9 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NotNull;
 
-public class DefaultQuickFixProvider implements UnresolvedReferenceQuickFixProvider{
+public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider<PsiJavaCodeReferenceElement> {
   public void registerFixes(PsiJavaCodeReferenceElement ref, QuickFixActionRegistrar registrar) {
     registrar.register(new ImportClassFix(ref));
     registrar.register(SetupJDKFix.getInstnace());
@@ -59,5 +60,10 @@ public class DefaultQuickFixProvider implements UnresolvedReferenceQuickFixProvi
       registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.CLASS));
       registrar.register(new CreateInnerClassFromUsageFix(ref, CreateClassKind.CLASS));
     }
+  }
+
+  @NotNull
+  public Class<PsiJavaCodeReferenceElement> getReferenceClass() {
+    return PsiJavaCodeReferenceElement.class;
   }
 }

@@ -20,19 +20,16 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import static org.jetbrains.plugins.groovy.annotator.GroovyAnnotator.isDeclarationAssignment;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
+import static org.jetbrains.plugins.groovy.annotator.GroovyAnnotator.isDeclarationAssignment;
+
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Medvedev
- * Date: Mar 10, 2009
- * Time: 5:04:31 PM
- * To change this template use File | Settings | File Templates.
+ * @author Maxim.Medvedev
  */
 public class GroovyUnresolvedAccessInspection extends BaseInspection {
   protected BaseInspectionVisitor buildVisitor() {

@@ -23,11 +23,7 @@ import com.sun.jdi.Value;
 import org.jetbrains.annotations.NonNls;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lex
- * Date: Apr 20, 2004
- * Time: 5:34:50 PM
- * To change this template use File | Settings | File Templates.
+ * @author lex
  */
 public class PostfixOperationEvaluator implements Evaluator{
   private final Evaluator myOperandEvaluator;

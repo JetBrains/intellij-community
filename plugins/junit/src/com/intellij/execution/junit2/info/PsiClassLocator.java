@@ -16,10 +16,13 @@
 
 package com.intellij.execution.junit2.info;
 
+import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
-import com.intellij.execution.PsiClassLocationUtil;
+import com.intellij.execution.PsiLocation;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.search.GlobalSearchScope;
 
 public class PsiClassLocator implements PsiLocator {
   private final String myName;
@@ -39,7 +42,8 @@ public class PsiClassLocator implements PsiLocator {
   }
 
   public Location<PsiClass> getLocation(final Project project) {
-    return PsiClassLocationUtil.fromClassQualifiedName(project, getQualifiedName());
+    final PsiClass psiClass = JavaExecutionUtil.findMainClass(project, getQualifiedName(), GlobalSearchScope.allScope(project));
+    return psiClass != null ? new PsiLocation<PsiClass>(project, psiClass) : null;
   }
 
   public String getPackage() {
@@ -51,6 +55,6 @@ public class PsiClassLocator implements PsiLocator {
   }
 
   public String getQualifiedName() {
-    return (myPackage.length() > 0 ? myPackage + "." : "") + myName;
+    return StringUtil.getQualifiedName(myPackage, myName);
   }
 }

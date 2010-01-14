@@ -362,12 +362,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void updateProjectsAndImport(VirtualFile... files) {
-    List<MavenProject> projects = new ArrayList<MavenProject>();
-    for (VirtualFile each : files) {
-      projects.add(myProjectsManager.findProject(each));
-    }
-    myProjectsManager.forceUpdateProjects(projects);
-    waitForReadingCompletion();
+    readProjects(files);
     myProjectsManager.performScheduledImport();
   }
 
@@ -383,6 +378,19 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   protected void waitForReadingCompletion() {
     myProjectsManager.waitForReadingCompletion();
+  }
+
+  protected void readProjects() {
+    readProjects(myProjectsManager.getProjectsFiles());
+  }
+
+  protected void readProjects(VirtualFile... files) {
+    List<MavenProject> projects = new ArrayList<MavenProject>();
+    for (VirtualFile each : files) {
+      projects.add(myProjectsManager.findProject(each));
+    }
+    myProjectsManager.forceUpdateProjects(projects);
+    waitForReadingCompletion();
   }
 
   protected void resolveDependenciesAndImport() {

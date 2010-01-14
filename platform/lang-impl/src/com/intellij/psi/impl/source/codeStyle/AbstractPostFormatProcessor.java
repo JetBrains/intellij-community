@@ -21,11 +21,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lesya
- * Date: Jul 21, 2005
- * Time: 7:53:12 PM
- * To change this template use File | Settings | File Templates.
+ * @author lesya
  */
 public class AbstractPostFormatProcessor {
   protected final CodeStyleSettings mySettings;

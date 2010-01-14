@@ -42,6 +42,10 @@ public class HttpFileSystemImpl extends HttpFileSystem {
     myDefaultRemoteContentProvider = new DefaultRemoteContentProvider();
   }
 
+  public static HttpFileSystemImpl getInstanceImpl() {
+    return (HttpFileSystemImpl)getInstance();
+  }
+
   public VirtualFile findFileByPath(@NotNull String path) {
     return findFileByPath(path, false);
   }
@@ -49,8 +53,7 @@ public class HttpFileSystemImpl extends HttpFileSystem {
   public VirtualFile findFileByPath(@NotNull String path, boolean isDirectory) {
     try {
       String url = VirtualFileManager.constructUrl(PROTOCOL, path);
-      RemoteContentProvider provider = findContentProvider(url);
-      return myRemoteFileManager.getOrCreateFile(url, path, isDirectory, provider);
+      return myRemoteFileManager.getOrCreateFile(url, path, isDirectory);
     }
     catch (IOException e) {
       return null;
@@ -58,7 +61,7 @@ public class HttpFileSystemImpl extends HttpFileSystem {
   }
 
   @NotNull
-  private RemoteContentProvider findContentProvider(final @NotNull String url) {
+  public RemoteContentProvider findContentProvider(final @NotNull String url) {
     for (RemoteContentProvider provider : myProviders) {
       if (provider.canProvideContent(url)) {
         return provider;
@@ -68,7 +71,7 @@ public class HttpFileSystemImpl extends HttpFileSystem {
   }
 
   public boolean isFileDownloaded(@NotNull final VirtualFile file) {
-    return file instanceof HttpVirtualFile && ((HttpVirtualFile)file).getFileInfo().isDownloaded();
+    return file instanceof HttpVirtualFile && ((HttpVirtualFile)file).getFileInfo().getState() == RemoteFileState.DOWNLOADED;
   }
 
   public void addRemoteContentProvider(@NotNull final RemoteContentProvider provider, @NotNull Disposable parentDisposable) {

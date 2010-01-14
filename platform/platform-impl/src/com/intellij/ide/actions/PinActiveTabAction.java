@@ -17,22 +17,23 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerUtil;
+import org.jetbrains.annotations.Nullable;
 
 public class PinActiveTabAction extends ToggleAction implements DumbAware {
   /**
    * @return selected editor or <code>null</code>
    */
-  private VirtualFile getFile(final DataContext context){
+  @Nullable
+  private static VirtualFile getFile(final DataContext context){
     Project project = PlatformDataKeys.PROJECT.getData(context);
     if(project == null){
       return null;
@@ -49,7 +50,8 @@ public class PinActiveTabAction extends ToggleAction implements DumbAware {
   /**
    * @return selected content or <code>null</code>
    */
-  private Content getContent(final DataContext context){
+  @Nullable
+  private static Content getContent(final DataContext context){
     ContentManager contentManager = ContentManagerUtil.getContentManagerFromContext(context, true);
     if (contentManager == null){
       return null;
@@ -102,10 +104,10 @@ public class PinActiveTabAction extends ToggleAction implements DumbAware {
     content.setPinned(state);
   }
 
-  private EditorWindow getEditorWindow(DataContext context) {
-    final Project project = PlatformDataKeys.PROJECT.getData(context);
+  private static EditorWindow getEditorWindow(DataContext dataContext) {
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
-    EditorWindow editorWindow = (EditorWindow) context.getData(DataConstantsEx.EDITOR_WINDOW);
+    EditorWindow editorWindow = EditorWindow.DATA_KEY.getData(dataContext);
     if (editorWindow == null) {
       editorWindow = fileEditorManager.getCurrentWindow();
     }

@@ -17,7 +17,6 @@ package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.idea.svn.SvnAuthenticationNotifier;
@@ -32,11 +31,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.security.cert.X509Certificate;
 
 /**
- * Created by IntelliJ IDEA.
- * User: alex
- * Date: 25.06.2005
- * Time: 17:00:17
- * To change this template use File | Settings | File Templates.
+ * @author alex
  */
 public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
   private final Project myProject;

@@ -22,20 +22,15 @@ import com.intellij.lang.properties.psi.Property;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Iconable;
-
-import javax.swing.*;
-import java.util.List;
-import java.util.Collection;
-import java.util.ArrayList;
-
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Feb 10, 2005
- * Time: 3:26:11 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class PropertiesFileStructureViewElement extends PsiTreeElementBase<PropertiesFile> {
 

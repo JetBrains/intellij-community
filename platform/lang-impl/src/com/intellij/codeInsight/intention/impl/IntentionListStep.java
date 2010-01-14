@@ -21,6 +21,7 @@ import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.PreferredAction;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.openapi.application.ApplicationManager;
@@ -62,6 +63,7 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
       return o1.getAction().getClass() == o2.getAction().getClass() && o1.getText().equals(o2.getText());
     }
   };
+  private Runnable myFinalRunnable;
 
   IntentionListStep(IntentionHintComponent intentionHintComponent, ShowIntentionsPass.IntentionsInfo intentions, Editor editor, PsiFile file,
                     Project project) {
@@ -162,8 +164,12 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     return FINAL_CHOICE;
   }
 
+  public Runnable getFinalRunnable() {
+    return myFinalRunnable;
+  }
+
   private void applyAction(final IntentionActionWithTextCaching cachedAction) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    myFinalRunnable = new Runnable() {
       public void run() {
         HintManager.getInstance().hideAllHints();
         ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -179,7 +185,7 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
           }
         });
       }
-    });
+    };
   }
 
   private PopupStep getSubStep(final IntentionActionWithTextCaching action) {
@@ -213,12 +219,8 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     result.addAll(myCachedGutters);
     Collections.sort(result, new Comparator<IntentionActionWithTextCaching>() {
       public int compare(final IntentionActionWithTextCaching o1, final IntentionActionWithTextCaching o2) {
-        final IntentionAction action1 = o1.getAction();
-        final IntentionAction action2 = o2.getAction();
-        if (action1 instanceof EmptyIntentionAction && !(action2 instanceof EmptyIntentionAction)) return 1;
-        if (action2 instanceof EmptyIntentionAction && !(action1 instanceof EmptyIntentionAction)) return -1;
-        int weight1 = myCachedErrorFixes.contains(o1) ? 2 : myCachedInspectionFixes.contains(o1) ? 1 : 0;
-        int weight2 = myCachedErrorFixes.contains(o2) ? 2 : myCachedInspectionFixes.contains(o2) ? 1 : 0;
+        int weight1 = getWeight(o1);
+        int weight2 = getWeight(o2);
         if (weight1 != weight2) {
           return weight2 - weight1;
         }
@@ -226,6 +228,24 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
       }
     });
     return result;
+  }
+
+  private int getWeight(IntentionActionWithTextCaching action) {
+    if (action.getAction() instanceof PreferredAction) {
+      return 3;
+    }
+    else if (myCachedErrorFixes.contains(action)) {
+      return 2;
+    }
+    else if (myCachedInspectionFixes.contains(action)) {
+      return 1;
+    }
+    else if (action.getAction() instanceof EmptyIntentionAction) {
+      return -1;
+    }
+    else {
+      return 0;
+    }
   }
 
   @NotNull
@@ -272,10 +292,7 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     if (index == 0) return null;
     IntentionActionWithTextCaching prev = values.get(index - 1);
 
-    if (myCachedErrorFixes.contains(value) != myCachedErrorFixes.contains(prev)
-      || myCachedInspectionFixes.contains(value) != myCachedInspectionFixes.contains(prev)
-      || myCachedIntentions.contains(value) != myCachedIntentions.contains(prev)
-      || value.getAction() instanceof EmptyIntentionAction != prev.getAction() instanceof EmptyIntentionAction) {
+    if (getWeight(value) != getWeight(prev)) {
       return new ListSeparator();
     }
     return null;

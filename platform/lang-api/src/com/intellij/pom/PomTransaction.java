@@ -20,15 +20,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 
 /**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: Oct 6, 2004
- * Time: 9:48:15 PM
- * To change this template use File | Settings | File Templates.
+ * @author ik
  */
-public interface PomTransaction{
+public interface PomTransaction {
   PomModelEvent getAccumulatedEvent();
+
   void run() throws IncorrectOperationException;
+
   PsiElement getChangeScope();
+
   PomModelAspect getTransactionAspect();
 }

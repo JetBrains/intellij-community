@@ -16,10 +16,16 @@
 
 package com.intellij.openapi.actionSystem.ex;
 
-import com.intellij.openapi.actionSystem.DataConstants;
 import org.jetbrains.annotations.NonNls;
 
-public interface DataConstantsEx extends DataConstants {
+
+/**
+ * Identifiers for data items which can be returned from {@link com.intellij.openapi.actionSystem.DataContext#getData(String)} and
+ * {@link com.intellij.openapi.actionSystem.DataProvider#getData(String)}.
+ * @deprecated {@link DataKeys} and {@link com.intellij.openapi.actionSystem.DataKey#getData} should be used instead
+ */
+@SuppressWarnings({"HardCodedStringLiteral", "JavadocReference", "UnusedDeclaration"})
+public interface DataConstantsEx {
   /**
    * Returns {@link com.intellij.psi.PsiElement}
    */

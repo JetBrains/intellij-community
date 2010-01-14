@@ -140,8 +140,12 @@ public class TabLabel extends JPanel {
   private void doPaint(Graphics g) {
     final JBTabsPosition pos = myTabs.getTabsPosition();
 
-    int dX = 0, dXs = 0, dY = 0, dYs = 0;
-    int selected = 1, plain = 2;
+    int dX = 0;
+    int dXs = 0;
+    int dY = 0;
+    int dYs = 0;
+    int selected = 1;
+    int plain = 2;
 
     switch (pos) {
       case bottom:
@@ -192,8 +196,7 @@ public class TabLabel extends JPanel {
       toShow.addSeparator();
     }
 
-    Object tabs =
-      DataManager.getInstance().getDataContext(e.getComponent(), e.getX(), e.getY()).getData(JBTabsImpl.NAVIGATION_ACTIONS_KEY.getName());
+    JBTabsImpl tabs = JBTabsImpl.NAVIGATION_ACTIONS_KEY.getData(DataManager.getInstance().getDataContext(e.getComponent(), e.getX(), e.getY()));
     if (tabs == myTabs && myTabs.myAddNavigationGroup) {
       toShow.addAll(myTabs.myNavigationActions);
     }
@@ -265,12 +268,15 @@ public class TabLabel extends JPanel {
     Insets insets = decoration.getLabelInsets();
     if (insets != null) {
       Insets current = JBTabsImpl.ourDefaultDecorator.getDecoration().getLabelInsets();
-      setBorder(new EmptyBorder(getValue(current.top, insets.top), getValue(current.left, insets.left),
-                                getValue(current.bottom, insets.bottom), getValue(current.right, insets.right)));
+      if (current != null) {
+        setBorder(
+          new EmptyBorder(getValue(current.top, insets.top), getValue(current.left, insets.left), getValue(current.bottom, insets.bottom),
+                          getValue(current.right, insets.right)));
+      }
     }
   }
 
-  private int getValue(int curentValue, int newValue) {
+  private static int getValue(int curentValue, int newValue) {
     return newValue != -1 ? newValue : curentValue;
   }
 

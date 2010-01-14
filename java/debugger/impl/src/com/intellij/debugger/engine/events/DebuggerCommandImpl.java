@@ -18,11 +18,7 @@ package com.intellij.debugger.engine.events;
 import com.intellij.debugger.impl.DebuggerTaskImpl;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lex
- * Date: Mar 5, 2004
- * Time: 6:04:07 PM
- * To change this template use File | Settings | File Templates.
+ * @author lex
  */
 public abstract class DebuggerCommandImpl extends DebuggerTaskImpl {
   protected abstract void action() throws Exception;

@@ -1,0 +1,234 @@
+/*
+  This example comes from a short article series in the Linux 
+  Gazette by Richard A. Sevenich and Christopher Lopes, titled
+  "Compiler Construction Tools". The article series starts at
+
+  http://www.linuxgazette.com/issue39/sevenich.html
+
+  Small changes and updates to newest JFlex+Cup versions 
+  by Gerwin Klein
+*/
+
+/*
+  Commented By: Christopher Lopes
+  File Name: ycalc.cup
+  To Create: > java java_cup.Main < ycalc.cup
+*/
+   
+   
+/* ----------------------Preliminary Declarations Section--------------------*/
+   
+/* Import the class java_cup.runtime.*  */
+import java_cup.runtime.*;
+   
+/* Parser code to change the way the parser reports errors (include
+   line and column number of the error). */
+parser code {:
+    
+    /* Change the method report_error so it will display the line and
+       column of where the error occurred in the input as well as the
+       reason for the error which is passed into the method in the
+       String 'message'. */
+    public void report_error(String message, Object info) {
+   
+        /* Create a StringBuffer called 'm' with the string 'Error' in it. */
+        StringBuffer m = new StringBuffer("Error");
+   
+        /* Check if the information passed to the method is the same
+           type as the type java_cup.runtime.Symbol. */
+        if (info instanceof java_cup.runtime.Symbol) {
+            /* Declare a java_cup.runtime.Symbol object 's' with the
+               information in the object info that is being typecasted
+               as a java_cup.runtime.Symbol object. */
+            java_cup.runtime.Symbol s = ((java_cup.runtime.Symbol) info);
+   
+            /* Check if the line number in the input is greater or
+               equal to zero. */
+            if (s.left >= 0) {                
+                /* Add to the end of the StringBuffer error message
+                   the line number of the error in the input. */
+                m.append(" in line "+(s.left+1));   
+                /* Check if the column number in the input is greater
+                   or equal to zero. */
+                if (s.right >= 0)                    
+                    /* Add to the end of the StringBuffer error message
+                       the column number of the error in the input. */
+                    m.append(", column "+(s.right+1));
+            }
+        }
+   
+        /* Add to the end of the StringBuffer error message created in
+           this method the message that was passed into this method. */
+        m.append(" : "+message);
+   
+        /* Print the contents of the StringBuffer 'm', which contains
+           an error message, out on a line. */
+        System.err.println(m);
+    }
+   
+    /* Change the method report_fatal_error so when it reports a fatal
+       error it will display the line and column number of where the
+       fatal error occurred in the input as well as the reason for the
+       fatal error which is passed into the method in the object
+       'message' and then exit.*/
+    public void report_fatal_error(String message, Object info) {
+        report_error(message, info);
+        System.exit(1);
+    }
+:};
+   
+
+   
+/* ------------Declaration of Terminals and Non Terminals Section----------- */
+   
+/* Terminals (tokens returned by the scanner).  
+
+   Terminals that have no value are listed first and then terminals
+   that do have an value, in this case an integer value, are listed on
+   the next line down. */
+terminal           SEMI, PLUS, MINUS, TIMES, DIVIDE, LPAREN, RPAREN;
+terminal Integer   NUMBER, ID;
+   
+/* Non terminals used in the grammar section.  
+
+   Non terminals that have an object value are listed first and then
+   non terminals that have an integer value are listed.  An object
+   value means that it can be any type, it isn't set to a specific
+   type.  So it could be an Integer or a String or whatever. */
+non terminal Object     expr_list, expr_part;
+non terminal Integer    expr, factor, term;
+   
+
+/* -------------Precedence and Associatively of Terminals Section----------- */
+   
+/*
+  Precedence of non terminals could be defined here.  If you do define
+  precedence here you won't need to worry about precedence in the
+  Grammar Section, i.e. that TIMES should have a higher precedence
+  than PLUS.
+  
+  The precedence defined here would look something like this where the
+  lower line always will have higher precedence than the line before it.
+   
+  precedence left PLUS, MINUS; 
+  precedence left TIMES, DIVIDE; 
+*/
+
+
+/* ----------------------------Grammar Section-------------------- */
+   
+/* The grammar for our parser.
+   
+   expr_list ::=   expr_list expr_part
+                 | expr_part
+   expr_part ::=   expr SEMI
+   expr      ::=   factor PLUS expr
+                 | factor MINUS expr
+                 | factor
+   factor    ::=   factor TIMES term
+                 | factor DIVIDE term
+                 | term
+   term     ::=    LPAREN expr RPAREN
+                 | NUMBER
+                 | ID     
+*/
+   
+/* 'expr_list' is the start of our grammar.  It can lead to another
+   'expr_list' followed by an 'expr_part' or it can just lead to an
+   'expr_part'.  The lhs of the non terminals 'expr_list' and
+   'expr_part' that are in the rhs side of the production below need
+   to be found.  Then the rhs sides of those non terminals need to be
+   followed in a similar manner, i.e. if there are any non terminals
+   in the rhs of those productions then the productions with those non
+   terminals need to be found and those rhs's followed.  This process
+   keeps continuing until only terminals are found in the rhs of a
+   production.  Then we can work our way back up the grammar bringing
+   any values that might have been assigned from a terminal. */
+   
+   expr_list ::= expr_list expr_part
+                 |
+                 expr_part;
+   
+/* 'expr_part' is an 'expr' followed by the terminal 'SEMI'.  The ':e'
+   after the non terminal 'expr' is a label an is used to access the
+   value of 'expr' which will be an integer.  The action for the
+   production lies between {: and :}.  This action will print out the
+   line " = + e" where e is the value of 'expr'.  Before the action
+   takes places we need to go deeper into the grammar since 'expr' is
+   a non terminal.  Whenever a non terminal is encountered on the rhs
+   of a production we need to find the rhs of that non terminal until
+   there are no more non terminals in the rhs.  So when we finish
+   going through the grammar and don't encounter any more non
+   terminals in the rhs productions will return until we get back to
+   'expr' and at that point 'expr' will contain an integer value. */
+   
+   expr_part ::= expr:e
+                 {: System.out.println(" = " + e); :}
+                 SEMI
+                 ;
+   
+/* 'expr' can lead to 'factor PLUS expr', 'factor MINUS expr', or
+   'factor'.  The 'TIMES' and 'DIVIDE' productions are not at this
+   level.  They are at a lower level in the grammar which in affect
+   makes them have higher precedence.  Actions for the rhs of the non
+   terminal 'expr' return a value to 'expr'.  This value that is
+   created is an integer and gets stored in 'RESULT' in the action.
+   RESULT is the label that is assigned automatically to the rhs, in
+   this case 'expr'.  If the rhs is just 'factor' then 'f' refers to
+   the non terminal 'factor'.  The value of 'f' is retrieved with the
+   function 'intValue()' and will be stored in 'RESULT'.  In the other
+   two cases 'f' and 'e' refers to the non terminals 'factor' and
+   'expr' respectively with a terminal between them, either 'PLUS' or
+   'MINUS'.  The value of each is retrieved with the same function
+   'intValue'.  The values will be added or subtracted and then the
+   new integer will be stored in 'RESULT'.*/
+   
+   expr      ::= factor:f PLUS expr:e
+                 {: RESULT = new Integer(f.intValue() + e.intValue()); :}
+                 |
+                 factor:f MINUS expr:e
+                 {: RESULT = new Integer(f.intValue() - e.intValue()); :}
+                 |
+                 factor:f
+                 {: RESULT = new Integer(f.intValue()); :}
+                 ;
+   
+/* 'factor' can lead to 'factor TIMES term', 'factor DIVIDE term', or
+   'term'.  Since the productions for TIMES and DIVIDE are lower in
+   the grammar than 'PLUS' and 'MINUS' they will have higher
+   precedence.  The same sort of actions take place in the rhs of
+   'factor' as in 'expr'.  The only difference is the operations that
+   takes place on the values retrieved with 'intValue()', 'TIMES' and
+   'DIVIDE' here instead of 'PLUS' and 'MINUS'.  */
+   
+   factor    ::= factor:f TIMES term:t
+                 {: RESULT = new Integer(f.intValue() * t.intValue()); :}
+                 |
+                 factor:f DIVIDE term:t
+                 {: RESULT = new Integer(f.intValue() / t.intValue()); :}
+                 |
+                 term:t
+                 {: RESULT = new Integer(t.intValue()); :}
+                 ;
+   
+/* 'term' can lead to 'LPAREN expr RPAREN', 'NUMBER', or 'ID'.  The
+   first production has the non terminal 'expr' in it so the
+   production with its lhs side needs to be found and followed.  The
+   next rhs has no non terminals.  So the grammar ends here and can go
+   back up.  When it goes back up it will bring the value that was
+   retrieved when the scanner encounter the token 'NUMBER'.  'RESULT'
+   is assigned 'n', which refers to 'NUMBER', as the action for this
+   production.  The same action occurs for 'ID', except the 'i' is
+   used to refer to 'ID'.  'ID' is also the only thing on the rhs of
+   the production.  And since 'ID' is a terminal the grammar will end
+   here and go back up. */
+   
+   term      ::= LPAREN expr:e RPAREN
+                 {: RESULT = e; :}
+                 |
+                 NUMBER:n
+                 {: RESULT = n; :}
+                 |
+                 ID:i
+                 {: RESULT = i; :}
+                 ;

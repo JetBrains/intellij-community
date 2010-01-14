@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  * favorites or commander).
  *
  * @since 5.1
- * @see com.intellij.openapi.actionSystem.DataConstants#IDE_VIEW
+ * @see com.intellij.openapi.actionSystem.PlatformDataKeys#IDE_VIEW
  */
 public interface IdeView {
   /**

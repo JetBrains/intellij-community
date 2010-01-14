@@ -16,12 +16,11 @@
 package org.jetbrains.idea.maven.utils;
 
 import org.jdom.Element;
+import org.jetbrains.idea.maven.project.MavenId;
+
 import static org.jetbrains.idea.maven.project.MavenId.append;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -32,29 +31,24 @@ public class MavenPluginInfo {
   private final String myGoalPrefix;
   private final Map<String, Mojo> myMojos;
 
-  public MavenPluginInfo(InputStream inputStream) throws IOException {
-    JDOMReader r = new JDOMReader(inputStream);
+  public MavenPluginInfo(byte[] text)  {
+    Element plugin = MavenJDOMUtil.read(text, null);
 
-    myGroupId = r.getChildText(r.getRootElement(), "groupId");
-    myArtifactId = r.getChildText(r.getRootElement(), "artifactId");
-    myVersion = r.getChildText(r.getRootElement(), "version");
+    myGroupId = MavenJDOMUtil.findChildValueByPath(plugin, "groupId", MavenId.UNKNOWN_VALUE);
+    myArtifactId = MavenJDOMUtil.findChildValueByPath(plugin, "artifactId",MavenId.UNKNOWN_VALUE);
+    myVersion = MavenJDOMUtil.findChildValueByPath(plugin, "version", MavenId.UNKNOWN_VALUE);
 
-    myGoalPrefix = r.getChildText(r.getRootElement(), "goalPrefix");
+    myGoalPrefix = MavenJDOMUtil.findChildValueByPath(plugin, "goalPrefix", "unknown");
 
-    myMojos = readMojos(r);
+    myMojos = readMojos(plugin);
   }
 
-  private Map<String, Mojo> readMojos(JDOMReader r) {
-    Element mojosElement = r.getChild(r.getRootElement(), "mojos");
-    if (mojosElement == null) return Collections.emptyMap();
-
+  private Map<String, Mojo> readMojos(Element plugin) {
     Map<String, Mojo> result = new LinkedHashMap<String, Mojo>();
-
-    for (Element mojoElement : r.getChildren(mojosElement, "mojo")) {
-      String goal = r.getChildText(mojoElement, "goal");
+    for (Element each : MavenJDOMUtil.findChildrenByPath(plugin, "mojos", "mojo")) {
+      String goal = MavenJDOMUtil.findChildValueByPath(each, "goal", "unknown");
       result.put(goal, new Mojo(goal));
     }
-
     return result;
   }
 

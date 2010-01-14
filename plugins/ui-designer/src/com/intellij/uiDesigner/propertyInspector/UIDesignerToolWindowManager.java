@@ -219,7 +219,7 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
 
     @Nullable
     public Object getData(@NonNls String dataId) {
-      if (dataId.equals(GuiEditor.class.getName())) {
+      if (GuiEditor.DATA_KEY.is(dataId)) {
         return getActiveFormEditor();
       }
       return null;

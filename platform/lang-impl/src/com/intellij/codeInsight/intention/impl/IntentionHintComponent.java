@@ -19,7 +19,10 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
-import com.intellij.codeInsight.hint.*;
+import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.codeInsight.hint.PriorityQuestionAction;
+import com.intellij.codeInsight.hint.ScrollAwareHint;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.openapi.Disposable;
@@ -44,6 +47,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -119,6 +123,11 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     return component;
   }
 
+  @TestOnly
+  public boolean isDisposed() {
+    return myDisposed;
+  }
+
   public void dispose() {
     myDisposed = true;
     myComponentHint.hide();
@@ -173,7 +182,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
   }
 
   private static Point getHintPosition(Editor editor) {
-
+    if (ApplicationManager.getApplication().isUnitTestMode()) return new Point();
     final int offset = editor.getCaretModel().getOffset();
     final LogicalPosition pos = editor.offsetToLogicalPosition(offset);
     int line = pos.line;
@@ -274,6 +283,11 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
   private void updateComponentHintSize() {
     Component component = myComponentHint.getComponent();
     component.setSize(getPreferredSize().width, getHeight());
+  }
+
+  @TestOnly
+  public LightweightHint getComponentHint() {
+    return myComponentHint;
   }
 
   private void closePopup() {

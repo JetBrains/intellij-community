@@ -24,13 +24,8 @@ import javax.swing.*;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: pti
- * Date: Jun 24, 2005
- * Time: 10:44:40 PM
- * To change this template use File | Settings | File Templates.
+ * @author pti
  */
-
 class NoUpdatesDialog extends AbstractUpdateDialog {
 
   protected NoUpdatesDialog(final boolean canBeParent, final List<PluginDownloader> updatePlugins, boolean enableLink) {

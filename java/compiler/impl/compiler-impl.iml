@@ -21,7 +21,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$APPLICATION_HOME_DIR$/community/lib/dev/compilerapi.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../lib/dev/compilerapi.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

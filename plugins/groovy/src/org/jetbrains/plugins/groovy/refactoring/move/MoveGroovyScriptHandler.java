@@ -17,7 +17,7 @@
 package org.jetbrains.plugins.groovy.refactoring.move;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -79,7 +79,7 @@ public class MoveGroovyScriptHandler extends MoveClassesOrPackagesHandlerBase {
   @Override
   public boolean tryToMove(PsiElement element, Project project, DataContext dataContext, @Nullable PsiReference reference, Editor editor) {
     if (canMove(element)) {
-      doMove(project, new PsiElement[]{element}, (PsiElement)dataContext.getData(DataConstantsEx.TARGET_PSI_ELEMENT), null);
+      doMove(project, new PsiElement[]{element}, LangDataKeys.TARGET_PSI_ELEMENT.getData(dataContext), null);
       return true;
     }
     return false;

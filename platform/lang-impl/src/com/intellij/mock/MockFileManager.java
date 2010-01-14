@@ -85,7 +85,7 @@ public class MockFileManager implements FileManager {
   }
 
   public void cleanupForNextTest() {
-    throw new UnsupportedOperationException("Method cleanupForNextTest is not yet implemented in " + getClass().getName());
+    myViewProviders.clear();
   }
 
   public FileViewProvider findViewProvider(VirtualFile file) {

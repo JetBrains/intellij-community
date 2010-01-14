@@ -22,7 +22,6 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -92,7 +91,7 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
 
   public Object getData(Collection<AbstractTreeNode> selected, String dataId) {
     if (selected != null) {
-      if (dataId.equals(Form.DATA_KEY.getName())) {
+      if (Form.DATA_KEY.is(dataId)) {
         List<Form> result = new ArrayList<Form>();
         for(AbstractTreeNode node: selected) {
           if (node.getValue() instanceof Form) {
@@ -103,14 +102,14 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
           return result.toArray(new Form[result.size()]);
         }
       }
-      else if (dataId.equals(DataConstants.DELETE_ELEMENT_PROVIDER)) {
+      else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
         for(AbstractTreeNode node: selected) {
           if (node.getValue() instanceof Form) {
             return new MyDeleteProvider(selected);
           }
         }
       }
-      else if (dataId.equals(MoveAction.MOVE_PROVIDER)) {
+      else if (MoveAction.MoveProvider.DATA_KEY.is(dataId)) {
         for(AbstractTreeNode node: selected) {
           if (node.getValue() instanceof Form) {
             return new FormMoveProvider();

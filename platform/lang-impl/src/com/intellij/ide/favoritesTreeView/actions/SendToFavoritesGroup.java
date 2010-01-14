@@ -22,6 +22,7 @@ import com.intellij.ide.favoritesTreeView.FavoritesTreeNodeDescriptor;
 import com.intellij.ide.favoritesTreeView.FavoritesTreeViewPanel;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -32,19 +33,19 @@ import java.util.List;
  * Date: Feb 24, 2005
  */
 public class SendToFavoritesGroup extends ActionGroup{
-
+  @NotNull
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
-    if (e == null) return AnAction.EMPTY_ARRAY;
+    if (e == null) return EMPTY_ARRAY;
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null){
-      return AnAction.EMPTY_ARRAY;
+      return EMPTY_ARRAY;
     }
     final FavoritesManager favoritesManager = FavoritesManager.getInstance(project);
     final DataContext dataContext = e.getDataContext();
-    FavoritesTreeNodeDescriptor[] roots = (FavoritesTreeNodeDescriptor[])dataContext.getData(FavoritesTreeViewPanel.CONTEXT_FAVORITES_ROOTS);
-    String listName = (String)dataContext.getData(FavoritesTreeViewPanel.FAVORITES_LIST_NAME);
+    FavoritesTreeNodeDescriptor[] roots = FavoritesTreeViewPanel.CONTEXT_FAVORITES_ROOTS_DATA_KEY.getData(dataContext);
+    String listName = FavoritesTreeViewPanel.FAVORITES_LIST_NAME_DATA_KEY.getData(dataContext);
     if (roots == null || roots.length == 0 || listName == null) {
-      return AnAction.EMPTY_ARRAY;
+      return EMPTY_ARRAY;
     }
 
     final String[] allLists = favoritesManager.getAvailableFavoritesLists();
@@ -70,8 +71,8 @@ public class SendToFavoritesGroup extends ActionGroup{
     public void actionPerformed(AnActionEvent e) {
       final DataContext dataContext = e.getDataContext();
       Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-      FavoritesTreeNodeDescriptor[] roots = (FavoritesTreeNodeDescriptor[])dataContext.getData(FavoritesTreeViewPanel.CONTEXT_FAVORITES_ROOTS);
-      String listName = (String)dataContext.getData(FavoritesTreeViewPanel.FAVORITES_LIST_NAME);
+      FavoritesTreeNodeDescriptor[] roots = FavoritesTreeViewPanel.CONTEXT_FAVORITES_ROOTS_DATA_KEY.getData(dataContext);
+      String listName = FavoritesTreeViewPanel.FAVORITES_LIST_NAME_DATA_KEY.getData(dataContext);
       
       String newName = AddNewFavoritesListAction.doAddNewFavoritesList(project);
       if (newName != null) {

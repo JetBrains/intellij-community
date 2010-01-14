@@ -51,11 +51,7 @@ import java.util.Enumeration;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: alex
- * Date: 01.07.2005
- * Time: 19:13:10
- * To change this template use File | Settings | File Templates.
+ * @author alex
  */
 public class RepositoryBrowserComponent extends JPanel implements Disposable, DataProvider {
 
@@ -244,14 +240,14 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
 
   @Nullable
   public Object getData(@NonNls String dataId) {
-    if (PlatformDataKeys.NAVIGATABLE.getName().equals(dataId)) {
+    if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
       final Project project = myVCS.getProject();
       if (project == null || project.isDefault()) {
         return null;
       }
       final VirtualFile vcsFile = getSelectedVcsFile();
       return vcsFile != null ? new OpenFileDescriptor(project, vcsFile) : null;
-    } else if (PlatformDataKeys.PROJECT.getName().equals(dataId)) {
+    } else if (PlatformDataKeys.PROJECT.is(dataId)) {
       return myVCS.getProject();
     }
     return null;

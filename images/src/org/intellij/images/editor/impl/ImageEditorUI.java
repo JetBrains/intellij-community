@@ -73,7 +73,7 @@ final class ImageEditorUI extends JPanel implements DataProvider {
         final PsiActionSupportFactory factory = PsiActionSupportFactory.getInstance();
         copyPasteSupport = factory.createPsiBasedCopyPasteSupport(editor.getProject(), this, new PsiActionSupportFactory.PsiElementSelector() {
             public PsiElement[] getSelectedElements() {
-                return (PsiElement[]) getData(DataConstants.PSI_ELEMENT_ARRAY);
+                return LangDataKeys.PSI_ELEMENT_ARRAY.getData(ImageEditorUI.this);
             }
         });
 
@@ -342,26 +342,26 @@ final class ImageEditorUI extends JPanel implements DataProvider {
     @Nullable
     public Object getData(String dataId) {
 
-        if (DataConstants.PROJECT.equals(dataId)) {
+        if (PlatformDataKeys.PROJECT.is(dataId)) {
             return editor.getProject();
-        } else if (DataConstants.VIRTUAL_FILE.equals(dataId)) {
+        } else if (PlatformDataKeys.VIRTUAL_FILE.is(dataId)) {
             return editor.getFile();
-        } else if (DataConstants.VIRTUAL_FILE_ARRAY.equals(dataId)) {
+        } else if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
             return new VirtualFile[]{editor.getFile()};
-        } else if (DataConstants.PSI_FILE.equals(dataId)) {
-            return getData(DataConstants.PSI_ELEMENT);
-        } else if (DataConstants.PSI_ELEMENT.equals(dataId)) {
+        } else if (LangDataKeys.PSI_FILE.is(dataId)) {
+            return getData(LangDataKeys.PSI_ELEMENT.getName());
+        } else if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
             VirtualFile file = editor.getFile();
             return file != null && file.isValid() ? PsiManager.getInstance(editor.getProject()).findFile(file) : null;
-        } else if (DataConstants.PSI_ELEMENT_ARRAY.equals(dataId)) {
-            return new PsiElement[]{(PsiElement) getData(DataConstants.PSI_ELEMENT)};
-        } else if (DataConstants.COPY_PROVIDER.equals(dataId)) {
+        } else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+            return new PsiElement[]{(PsiElement) getData(LangDataKeys.PSI_ELEMENT.getName())};
+        } else if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
             return copyPasteSupport.getCopyProvider();
-        } else if (DataConstants.CUT_PROVIDER.equals(dataId)) {
+        } else if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
             return copyPasteSupport.getCutProvider();
-        } else if (DataConstants.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
+        } else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
             return deleteProvider;
-        } else if (ImageComponentDecorator.class.getName().equals(dataId)) {
+        } else if (ImageComponentDecorator.DATA_KEY.is(dataId)) {
             return editor;
         }
 

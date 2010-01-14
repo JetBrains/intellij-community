@@ -45,7 +45,7 @@ public class PaletteWindow extends JPanel implements DataProvider {
   private final Project myProject;
   private final ArrayList<PaletteGroupHeader> myGroupHeaders = new ArrayList<PaletteGroupHeader>();
   private final PaletteItemProvider[] myProviders;
-  private final PaletteWindow.MyPropertyChangeListener myPropertyChangeListener = new MyPropertyChangeListener();
+  private final MyPropertyChangeListener myPropertyChangeListener = new MyPropertyChangeListener();
   private final Set<PaletteGroup> myGroups = new HashSet<PaletteGroup>();
   private final JTabbedPane myTabbedPane = new JTabbedPane();
   private final JScrollPane myScrollPane = new JScrollPane();
@@ -190,10 +190,10 @@ public class PaletteWindow extends JPanel implements DataProvider {
   }
 
   @Nullable public Object getData(String dataId) {
-    if (dataId.equals(DataConstants.HELP_ID)) {
+    if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return ourHelpID;
     }
-    if (dataId.equals(DataConstants.PROJECT)) {
+    if (PlatformDataKeys.PROJECT.is(dataId)) {
       return myProject;
     }
     PaletteItem item = getActiveItem();

@@ -164,7 +164,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
       field.set(to, field.get(from));
     }
     else {
-      System.out.println("Field not copied " + field.getName());
+      throw new RuntimeException("Field not copied " + field.getName());
     }
   }
 
@@ -1148,7 +1148,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
           if (fileTypeId != null && fileTypeId.length() > 0) {
             FileType target = FileTypeManager.getInstance().getFileTypeByExtension(fileTypeId);
-            if (FileTypes.UNKNOWN == target || FileTypes.PLAIN_TEXT == target) {
+            if (FileTypes.UNKNOWN == target || FileTypes.PLAIN_TEXT == target || target.getDefaultExtension().length() == 0) {
               target = new TempFileType(fileTypeId);
             }
 

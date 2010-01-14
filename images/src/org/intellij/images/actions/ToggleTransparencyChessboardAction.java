@@ -27,12 +27,12 @@ import org.intellij.images.ui.ImageComponentDecorator;
  */
 public final class ToggleTransparencyChessboardAction extends ToggleAction {
   public boolean isSelected(AnActionEvent e) {
-    ImageComponentDecorator decorator = (ImageComponentDecorator)e.getDataContext().getData(ImageComponentDecorator.class.getName());
+    ImageComponentDecorator decorator = ImageComponentDecorator.DATA_KEY.getData(e.getDataContext());
     return decorator != null && decorator.isEnabledForActionPlace(e.getPlace()) && decorator.isTransparencyChessboardVisible();
   }
 
   public void setSelected(AnActionEvent e, boolean state) {
-    ImageComponentDecorator decorator = (ImageComponentDecorator)e.getDataContext().getData(ImageComponentDecorator.class.getName());
+    ImageComponentDecorator decorator = ImageComponentDecorator.DATA_KEY.getData(e.getDataContext());
     if (decorator != null && decorator.isEnabledForActionPlace(e.getPlace())) {
       decorator.setTransparencyChessboardVisible(state);
     }
@@ -40,7 +40,7 @@ public final class ToggleTransparencyChessboardAction extends ToggleAction {
 
   public void update(final AnActionEvent e) {
     super.update(e);
-    ImageComponentDecorator decorator = (ImageComponentDecorator)e.getDataContext().getData(ImageComponentDecorator.class.getName());
+    ImageComponentDecorator decorator = ImageComponentDecorator.DATA_KEY.getData(e.getDataContext());
     e.getPresentation().setEnabled(decorator != null && decorator.isEnabledForActionPlace(e.getPlace()));
     e.getPresentation().setText(isSelected(e) ? "Hide Chessboard" : "Show Chessboard");
   }

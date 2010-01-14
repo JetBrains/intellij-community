@@ -22,11 +22,7 @@ import com.intellij.refactoring.typeCook.Util;
 import java.util.HashSet;
 
 /**
- * Created by IntelliJ IDEA.
- * User: db
- * Date: Jul 5, 2004
- * Time: 6:45:51 PM
- * To change this template use File | Settings | File Templates.
+ * @author db
  */
 public class VictimCollector extends Visitor {
   final HashSet<PsiElement> myVictims = new HashSet<PsiElement>();

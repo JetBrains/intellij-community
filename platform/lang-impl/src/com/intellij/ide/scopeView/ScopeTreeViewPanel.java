@@ -34,8 +34,9 @@ import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
@@ -230,7 +231,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     settings.UI_COMPACT_EMPTY_MIDDLE_PACKAGES = projectView.isHideEmptyMiddlePackages(ScopeViewPane.ID);
     myBuilder = new FileTreeModelBuilder(myProject, new Marker() {
       public boolean isMarked(PsiFile file) {
-        return packageSet.contains(file, holder);
+        return packageSet != null && packageSet.contains(file, holder);
       }
     }, settings);
     myTree.setModel(myBuilder.build(myProject, showProgress, projectView.isSortByType(ScopeViewPane.ID)));
@@ -258,7 +259,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
 
   @Nullable
   public Object getData(String dataId) {
-    if (dataId.equals(DataConstants.MODULE_CONTEXT)) {
+    if (LangDataKeys.MODULE_CONTEXT.is(dataId)) {
       final TreePath selectionPath = myTree.getSelectionPath();
       if (selectionPath != null) {
         PackageDependenciesNode node = (PackageDependenciesNode)selectionPath.getLastPathComponent();
@@ -267,7 +268,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
         }
       }
     }
-    if (dataId.equals(DataConstants.PSI_ELEMENT)) {
+    if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
       final TreePath selectionPath = myTree.getSelectionPath();
       if (selectionPath != null) {
         PackageDependenciesNode node = (PackageDependenciesNode)selectionPath.getLastPathComponent();
@@ -276,7 +277,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     }
     final TreePath[] treePaths = myTree.getSelectionPaths();
     if (treePaths != null) {
-      if (dataId.equals(DataConstants.PSI_ELEMENT_ARRAY)) {
+      if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
         Set<PsiElement> psiElements = new HashSet<PsiElement>();
         for (TreePath treePath : treePaths) {
           final PackageDependenciesNode node = (PackageDependenciesNode)treePath.getLastPathComponent();
@@ -290,19 +291,19 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
         return psiElements.isEmpty() ? null : psiElements.toArray(new PsiElement[psiElements.size()]);
       }
     }
-    if (dataId.equals(DataConstants.IDE_VIEW)) {
+    if (LangDataKeys.IDE_VIEW.is(dataId)) {
       return myIdeView;
     }
-    if (DataConstants.CUT_PROVIDER.equals(dataId)) {
+    if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
       return myCopyPasteDelegator.getCutProvider();
     }
-    if (DataConstants.COPY_PROVIDER.equals(dataId)) {
+    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
       return myCopyPasteDelegator.getCopyProvider();
     }
-    if (DataConstants.PASTE_PROVIDER.equals(dataId)) {
+    if (PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
       return myCopyPasteDelegator.getPasteProvider();
     }
-    if (DataConstants.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
+    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       if (getSelectedModules() != null) {
         return myDeleteModuleProvider;
       }
@@ -372,7 +373,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
             setIcon(node.getClosedIcon());
           }
         }
-        catch (IndexNotReadyException e) {
+        catch (IndexNotReadyException ignore) {
         }
         final SimpleTextAttributes regularAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
         TextAttributes textAttributes = regularAttributes.toTextAttributes();

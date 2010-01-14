@@ -16,8 +16,8 @@
 package com.intellij.compiler.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.project.Project;
@@ -34,6 +34,6 @@ public class CompileDirtyAction extends CompileActionBase {
     if (!presentation.isEnabled()) {
       return;
     }
-    presentation.setEnabled(event.getDataContext().getData(DataConstants.PROJECT) != null);
+    presentation.setEnabled(PlatformDataKeys.PROJECT.getData(event.getDataContext()) != null);
   }
 }

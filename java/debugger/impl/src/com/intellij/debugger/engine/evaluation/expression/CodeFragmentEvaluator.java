@@ -15,10 +15,10 @@
  */
 package com.intellij.debugger.engine.evaluation.expression;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.HashMap;
 import com.sun.jdi.Value;
@@ -26,11 +26,7 @@ import com.sun.jdi.Value;
 import java.util.Map;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lex
- * Date: Mar 24, 2004
- * Time: 10:45:50 PM
- * To change this template use File | Settings | File Templates.
+ * @author lex
  */
 public class CodeFragmentEvaluator extends BlockStatementEvaluator{
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.evaluation.expression.CodeFragmentEvaluator");

@@ -25,6 +25,7 @@ import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -60,7 +61,7 @@ public abstract class PassExecutorService implements Disposable {
 
   private final Map<ScheduledPass, Job<Void>> mySubmittedPasses = new ConcurrentHashMap<ScheduledPass, Job<Void>>();
   private final Project myProject;
-  private boolean isDisposed;
+  private volatile boolean isDisposed;
   private final AtomicInteger nextPassId = new AtomicInteger(100);
 
   public PassExecutorService(Project project) {
@@ -69,28 +70,29 @@ public abstract class PassExecutorService implements Disposable {
   }
 
   public void dispose() {
-    for (Job<Void> submittedPass : mySubmittedPasses.values()) {
-      submittedPass.cancel();
-    }
-    for (Job<Void> job : mySubmittedPasses.values()) {
-      try {
-        if (!job.isDone()) ((JobImpl)job).waitForTermination();
-      }
-      catch (Throwable throwable) {
-        LOG.error(throwable);
-      }
-    }
+    cancelAll(true);
     isDisposed = true;
   }
 
-  public void cancelAll() {
+  public void cancelAll(boolean waitForTermination) {
     for (Job<Void> submittedPass : mySubmittedPasses.values()) {
       submittedPass.cancel();
+    }
+    if (waitForTermination) {
+      for (Job<Void> job : mySubmittedPasses.values()) {
+        try {
+          if (!job.isDone()) ((JobImpl)job).waitForTermination();
+        }
+        catch (Throwable throwable) {
+          LOG.error(throwable);
+        }
+      }
     }
     mySubmittedPasses.clear();
   }
 
   public void submitPasses(Map<FileEditor, HighlightingPass[]> passesMap, DaemonProgressIndicator updateProgress, final int jobPriority) {
+    if (isDisposed()) return;
     int id = 1;
 
     // (doc, passId) -> created pass
@@ -316,8 +318,7 @@ public abstract class PassExecutorService implements Disposable {
 
       ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable(){
         public void run() {
- //         assert !ApplicationManager.getApplication().isReadAccessAllowed();
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
+          boolean success = ApplicationManagerEx.getApplicationEx().tryRunReadAction(new Runnable() {
             public void run() {
               try {
                 if (DumbService.getInstance(myProject).isDumb() && !(myPass instanceof DumbAware)) {
@@ -331,12 +332,6 @@ public abstract class PassExecutorService implements Disposable {
               catch (ProcessCanceledException e) {
                 log(myUpdateProgress, myPass, "Canceled ");
 
-                //Throwable throwable = e;
-                ////throwable.fillInStackTrace();
-                //StringWriter writer = new StringWriter();
-                //throwable.printStackTrace(new PrintWriter(writer));
-                //System.out.println("PCE "+myUpdateProgress.hashCode()+"; "+writer.toString().replaceAll("\n","   ").replaceAll("\r","   "));
-
                 myUpdateProgress.cancel(); //in case when some smartasses throw PCE just for fun
               }
               catch (RuntimeException e) {
@@ -349,7 +344,10 @@ public abstract class PassExecutorService implements Disposable {
               }
             }
           });
-//          assert !ApplicationManager.getApplication().isReadAccessAllowed();
+
+          if (!success) {
+            myUpdateProgress.cancel();
+          }
         }
       },myUpdateProgress);
 

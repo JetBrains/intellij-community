@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.lang.TitledHandler;
+import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,10 +102,12 @@ public class RenameHandlerRegistry {
   private static class HandlersChooser extends DialogWrapper {
     private final String[] myRenamers;
     private String mySelection;
+    private JRadioButton[] myRButtons;
 
     protected HandlersChooser(Project project, String [] renamers) {
       super(project);
       myRenamers = renamers;
+      myRButtons = new JRadioButton[myRenamers.length];
       mySelection = renamers[0];
       setTitle(RefactoringBundle.message("select.refactoring.title"));
       init();
@@ -119,8 +122,10 @@ public class RenameHandlerRegistry {
       radioPanel.add(descriptionLabel);
       final ButtonGroup bg = new ButtonGroup();
       boolean selected = true;
+      int rIdx = 0;
       for (final String renamer : myRenamers) {
         final JRadioButton rb = new JRadioButton(renamer, selected);
+        myRButtons[rIdx++] = rb;
         final ActionListener listener = new ActionListener() {
           public void actionPerformed(ActionEvent e) {
             if (rb.isSelected()) {
@@ -133,7 +138,13 @@ public class RenameHandlerRegistry {
         bg.add(rb);
         radioPanel.add(rb);
       }
+      new RadioUpDownListener(myRButtons);
       return radioPanel;
+    }
+
+    @Override
+    public JComponent getPreferredFocusedComponent() {
+      return myRButtons[0];
     }
 
     public String getSelection() {

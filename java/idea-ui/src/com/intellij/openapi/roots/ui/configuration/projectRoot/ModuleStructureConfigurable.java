@@ -28,7 +28,6 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.NamePathComponent;
 import com.intellij.ide.util.projectWizard.ProjectWizardUtil;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -47,7 +46,10 @@ import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.*;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureDaemonAnalyzer;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedConfigurable;
@@ -546,7 +548,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
     @Nullable
     public Object getData(@NonNls String dataId) {
-      if (DataKeys.MODULE_CONTEXT_ARRAY.getName().equals(dataId)){
+      if (DataKeys.MODULE_CONTEXT_ARRAY.is(dataId)){
         final TreePath[] paths = myTree.getSelectionPaths();
         if (paths != null) {
           ArrayList<Module> modules = new ArrayList<Module>();
@@ -562,10 +564,10 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
           return !modules.isEmpty() ? modules.toArray(new Module[modules.size()]) : null;
         }
       }
-      if (DataKeys.MODULE_CONTEXT.getName().equals(dataId)){
+      if (DataKeys.MODULE_CONTEXT.is(dataId)){
         return getSelectedModule();
       }
-      if (DataConstantsEx.MODIFIABLE_MODULE_MODEL.equals(dataId)){
+      if (LangDataKeys.MODIFIABLE_MODULE_MODEL.is(dataId)){
         return myContext.myModulesConfigurator.getModuleModel();
       }
 

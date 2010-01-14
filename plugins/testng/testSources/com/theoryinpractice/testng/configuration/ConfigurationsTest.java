@@ -33,6 +33,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.RefactoringFactory;
 import com.intellij.refactoring.RenameRefactoring;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -185,19 +186,19 @@ public class ConfigurationsTest {
     Assert.assertTrue(t.isConfigurationByLocation(runConfiguration, new PsiLocation(project, psiClass)));
   }
 
-  private PsiClass findTestClass(final Project project) {
-    final PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass("Testt");
+  private static PsiClass findTestClass(final Project project) {
+    final PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass("Testt", GlobalSearchScope.allScope(project));
     assert psiClass != null;
     return psiClass;
   }
 
-  private PsiMethod findNotATestMethod(final PsiClass psiClass) {
+  private static PsiMethod findNotATestMethod(final PsiClass psiClass) {
     final PsiMethod[] notATestMethods = psiClass.findMethodsByName("notATest", false);
     assert notATestMethods.length == 1;
     return notATestMethods[0];
   }
 
-  private TestNGConfiguration createConfiguration(final Project project) {
+  private static TestNGConfiguration createConfiguration(final Project project) {
     final RunManagerEx manager = RunManagerEx.getInstanceEx(project);
     final RunnerAndConfigurationSettings settings =
       manager.createRunConfiguration("testt", TestNGConfigurationType.getInstance().getConfigurationFactories()[0]);

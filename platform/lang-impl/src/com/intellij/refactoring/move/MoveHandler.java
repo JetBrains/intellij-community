@@ -21,7 +21,7 @@
 package com.intellij.refactoring.move;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.extensions.Extensions;
@@ -85,7 +85,7 @@ public class MoveHandler implements RefactoringActionHandler {
    * called by an Action in AtomicAction
    */
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
-    doMove(project, elements, dataContext == null ? null : (PsiElement)dataContext.getData(DataConstantsEx.TARGET_PSI_ELEMENT), null);
+    doMove(project, elements, dataContext == null ? null : LangDataKeys.TARGET_PSI_ELEMENT.getData(dataContext), null);
   }
 
   /**

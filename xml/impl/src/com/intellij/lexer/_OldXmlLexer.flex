@@ -33,6 +33,7 @@ import com.intellij.psi.xml.*;
 %state ATTRIBUTE_VALUE_DQ
 %state ATTRIBUTE_VALUE_SQ
 %state PROCESSING_INSTRUCTION
+%state DOCTYPE_MARKUP_STARTED
 
 %state DOCTYPE
 %state DOCTYPE_EXTERNAL_ID
@@ -48,13 +49,9 @@ DIGIT=[0-9]
 WS=[\ \n\r\t\f]
 S={WS}+
 
-STRING_LITERAL=(\"[^\"]*\")|('[^']*')
-NON_CLOSED_STRING_LITERAL=(\"[^\"]*)|('[^']*)
-
 TAG_NAME=({ALPHA}|"_"|":")({ALPHA}|{DIGIT}|"_"|":"|"."|"-")*
 NAME=({ALPHA}|"_"|":")({ALPHA}|{DIGIT}|"_"|":"|"."|"-")*
 NMTOKEN=({ALPHA}|{DIGIT}|"_"|":"|"."|"-")+
-DATA_CHARACTERS=([^\<]|("<"[^[:letter:]\/\!])|("<!"[^\-])|("<!-"[^\-]))*
 
 %%
 "<![CDATA[" {yybegin(CDATA); return XmlTokenType.XML_CDATA_START; }
@@ -109,7 +106,8 @@ DATA_CHARACTERS=([^\<]|("<"[^[:letter:]\/\!])|("<!"[^\-])|("<!-"[^\-]))*
 <DOCTYPE_MARKUP> "+" { return XmlTokenType.XML_PLUS;}
 <DOCTYPE_MARKUP> "*" { return XmlTokenType.XML_STAR;}
 <DOCTYPE_MARKUP> "%" { return XmlTokenType.XML_PERCENT;}
-<DOCTYPE_MARKUP> "--" { yybegin(DOCTYPE_COMMENT); return XmlTokenType.XML_COMMENT_START;}
+<DOCTYPE_MARKUP> "--" ([^\-]|(\-[^\-]))* "--" { yybegin(DOCTYPE_MARKUP_STARTED); yypushback(yylength()); }
+<DOCTYPE_MARKUP_STARTED> "--" { yybegin(DOCTYPE_COMMENT); return XmlTokenType.XML_COMMENT_START;}
 <DOCTYPE_COMMENT> ([^\-]|(\-[^\-]))* { return XmlTokenType.XML_COMMENT_CHARACTERS; }
 <DOCTYPE_COMMENT> "--" { yybegin(DOCTYPE_MARKUP); return XmlTokenType.XML_COMMENT_END;}
 <DOCTYPE_MARKUP> \| { return XmlTokenType.XML_BAR;}

@@ -18,7 +18,7 @@ package git4idea;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.commands.GitHandler;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +61,7 @@ public class GitTag extends GitReference {
    * @throws VcsException if there is a problem with running git
    */
   public static void listAsStrings(final Project project, final VirtualFile root, final Collection<String> tags) throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitHandler.TAG);
+    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.TAG);
     handler.setNoSSH(true);
     handler.setSilent(true);
     handler.addParameters("-l");

@@ -90,7 +90,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         final PsiActionSupportFactory factory = PsiActionSupportFactory.getInstance();
         copyPasteSupport = factory.createPsiBasedCopyPasteSupport(thumbnailView.getProject(), this, new PsiActionSupportFactory.PsiElementSelector() {
             public PsiElement[] getSelectedElements() {
-                return (PsiElement[]) getData(DataConstants.PSI_ELEMENT_ARRAY);
+                return (PsiElement[]) getData(LangDataKeys.PSI_ELEMENT_ARRAY.getName());
             }
         });
 
@@ -410,32 +410,32 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
 
     @Nullable
     public Object getData(String dataId) {
-        if (DataConstants.PROJECT.equals(dataId)) {
+        if (PlatformDataKeys.PROJECT.is(dataId)) {
             return thumbnailView.getProject();
-        } else if (DataConstants.VIRTUAL_FILE.equals(dataId)) {
+        } else if (PlatformDataKeys.VIRTUAL_FILE.is(dataId)) {
             VirtualFile[] selectedFiles = getSelectedFiles();
             return selectedFiles.length > 0 ? selectedFiles[0] : null;
-        } else if (DataConstants.VIRTUAL_FILE_ARRAY.equals(dataId)) {
+        } else if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
             return getSelectedFiles();
-        } else if (DataConstants.PSI_FILE.equals(dataId)) {
-            return getData(DataConstants.PSI_ELEMENT);
-        } else if (DataConstants.PSI_ELEMENT.equals(dataId)) {
+        } else if (LangDataKeys.PSI_FILE.is(dataId)) {
+            return getData(LangDataKeys.PSI_ELEMENT.getName());
+        } else if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
             VirtualFile[] selectedFiles = getSelectedFiles();
             return selectedFiles.length > 0 ? PsiManager.getInstance(thumbnailView.getProject()).findFile(selectedFiles[0]) : null;
-        } else if (DataConstants.PSI_ELEMENT_ARRAY.equals(dataId)) {
+        } else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
             return getSelectedElements();
-        } else if (DataConstants.NAVIGATABLE.equals(dataId)) {
+        } else if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
             VirtualFile[] selectedFiles = getSelectedFiles();
             return new ThumbnailNavigatable(selectedFiles.length > 0 ? selectedFiles[0] : null);
-        } else if (DataConstants.COPY_PROVIDER.equals(dataId)) {
+        } else if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
             return copyPasteSupport.getCopyProvider();
-        } else if (DataConstants.CUT_PROVIDER.equals(dataId)) {
+        } else if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
             return copyPasteSupport.getCutProvider();
-        } else if (DataConstants.PASTE_PROVIDER.equals(dataId)) {
+        } else if (PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
             return copyPasteSupport.getPasteProvider();
-        } else if (DataConstants.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
+        } else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
             return deleteProvider;
-        } else if (DataConstants.NAVIGATABLE_ARRAY.equals(dataId)) {
+        } else if (PlatformDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
             VirtualFile[] selectedFiles = getSelectedFiles();
             Set<Navigatable> navigatables = new HashSet<Navigatable>(selectedFiles.length);
             for (VirtualFile selectedFile : selectedFiles) {
@@ -444,9 +444,9 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
                 }
             }
             return navigatables.toArray(EMPTY_NAVIGATABLE_ARRAY);
-        } else if (ThumbnailView.class.getName().equals(dataId)) {
+        } else if (ThumbnailView.DATA_KEY.is(dataId)) {
             return thumbnailView;
-        } else if (ImageComponentDecorator.class.getName().equals(dataId)) {
+        } else if (ImageComponentDecorator.DATA_KEY.is(dataId)) {
             return thumbnailView;
         }
 
@@ -466,7 +466,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
                 psiElements.add(element);
             }
         }
-        return psiElements.toArray(PsiElement.EMPTY_ARRAY);
+        return psiElements.toArray(new PsiElement[psiElements.size()]);
     }
 
     @NotNull

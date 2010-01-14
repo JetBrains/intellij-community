@@ -143,6 +143,8 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     ((StartupManagerImpl)StartupManagerEx.getInstanceEx(getProject())).runStartupActivities();
     ((StartupManagerImpl)StartupManagerEx.getInstanceEx(getProject())).runPostStartupActivities();
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
+
+    myRunCommandForTest = wrapInCommand();
   }
 
   protected void tearDown() throws Exception {
@@ -307,17 +309,36 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   public @interface CanChangeDocumentDuringHighlighting {}
 
   private boolean canChangeDocumentDuringHighlighting() {
+    return annotatedWith(CanChangeDocumentDuringHighlighting.class);
+  }
+
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.METHOD, ElementType.TYPE})
+  public @interface DoNotWrapInCommand {}
+
+  private boolean wrapInCommand() {
+    return !annotatedWith(DoNotWrapInCommand.class);
+  }
+
+  private boolean annotatedWith(Class annotationClass) {
     String methodName = "test" + getTestName(false);
+    Class aClass = getClass();
+    if (aClass.getAnnotation(annotationClass) != null) return true;
     Method method = null;
-    try {
-      Class<? extends DaemonAnalyzerTestCase> aClass = getClass();
-      if (aClass.getAnnotation(CanChangeDocumentDuringHighlighting.class) != null) return true;
-      method = aClass.getDeclaredMethod(methodName);
+    while (aClass != null) {
+      try {
+        method = aClass.getDeclaredMethod(methodName);
+        break;
+      }
+      catch (NoSuchMethodException e) {
+        aClass = aClass.getSuperclass();
+      }
     }
-    catch (NoSuchMethodException e) {
+    if (method == null) {
       fail(methodName);
     }
-    CanChangeDocumentDuringHighlighting annotation = method.getAnnotation(CanChangeDocumentDuringHighlighting.class);
+
+    Object annotation = method.getAnnotation(annotationClass);
     return annotation != null;
   }
 

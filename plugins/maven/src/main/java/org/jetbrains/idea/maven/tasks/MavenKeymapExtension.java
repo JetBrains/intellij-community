@@ -147,7 +147,7 @@ public class MavenKeymapExtension implements KeymapExtension {
     LinkedHashSet<String> result = new LinkedHashSet<String>(); // may contains similar plugins or somethig
     result.addAll(MavenEmbedderFactory.getPhasesList());
 
-    for (MavenPlugin each : project.getPlugins()) {
+    for (MavenPlugin each : project.getDeclaredPlugins()) {
       collectGoals(project.getLocalRepository(), each, result);
     }
 
@@ -185,7 +185,7 @@ public class MavenKeymapExtension implements KeymapExtension {
       MavenRunnerParameters params = new MavenRunnerParameters(true,
                                                                myMavenProject.getDirectory(),
                                                                Arrays.asList(myGoal),
-                                                               MavenActionUtil.getProjectsManager(e).getActiveProfiles());
+                                                               MavenActionUtil.getProjectsManager(e).getExplicitProfiles());
       MavenRunConfigurationType.runConfiguration(MavenActionUtil.getProject(e), params, e.getDataContext(), null);
     }
 

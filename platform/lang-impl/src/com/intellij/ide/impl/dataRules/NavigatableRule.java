@@ -17,25 +17,30 @@
 package com.intellij.ide.impl.dataRules;
 
 import com.intellij.ide.util.EditSourceUtil;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 
 public class NavigatableRule implements GetDataRule {
   public Object getData(DataProvider dataProvider) {
-    final OpenFileDescriptor openFileDescriptor = (OpenFileDescriptor)dataProvider.getData(DataConstants.OPEN_FILE_DESCRIPTOR);
-    if (openFileDescriptor != null && openFileDescriptor.getFile().isValid()) {
-      return openFileDescriptor;
+    final Navigatable navigatable = PlatformDataKeys.NAVIGATABLE.getData(dataProvider);
+    if (navigatable != null && navigatable instanceof OpenFileDescriptor) {
+      final OpenFileDescriptor openFileDescriptor = (OpenFileDescriptor)navigatable;
+
+      if (openFileDescriptor.getFile().isValid()) {
+        return openFileDescriptor;
+      }
     }
 
-    final PsiElement element = (PsiElement)dataProvider.getData(DataConstants.PSI_ELEMENT);
+    final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataProvider);
     if (element != null) {
       return EditSourceUtil.getDescriptor(element);
     }
 
-    final Object selection = dataProvider.getData(DataConstants.SELECTED_ITEM);
+    final Object selection = PlatformDataKeys.SELECTED_ITEM.getData(dataProvider);
     if (selection instanceof Navigatable) {
       return selection;
     }

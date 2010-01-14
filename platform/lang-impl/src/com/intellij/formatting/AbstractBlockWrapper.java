@@ -22,11 +22,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import java.util.ArrayList;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lesya
- * Date: Apr 14, 2005
- * Time: 9:40:01 PM
- * To change this template use File | Settings | File Templates.
+ * @author lesya
  */
 public abstract class AbstractBlockWrapper {
   protected WhiteSpace myWhiteSpace;

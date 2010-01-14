@@ -323,6 +323,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
 
         final PopupStep queriedStep = myStep.onChosen(userObject, handleFinalChoices);
         if (queriedStep == PopupStep.FINAL_CHOICE || !hasNextStep) {
+          setFinalRunnable(myStep.getFinalRunnable());
           disposeAllParents(e);
         }
         else {

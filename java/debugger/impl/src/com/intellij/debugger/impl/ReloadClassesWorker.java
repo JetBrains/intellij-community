@@ -33,15 +33,12 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lex
- * Date: Mar 10, 2004
- * Time: 7:12:57 PM
- * To change this template use File | Settings | File Templates.
+ * @author lex
  */
 class ReloadClassesWorker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.ReloadClassesWorker");
@@ -60,10 +57,6 @@ class ReloadClassesWorker {
 
   private DebugProcessImpl getDebugProcess() {
     return myDebuggerSession.getProcess();
-  }
-
-  private Project getProject() {
-    return myDebuggerSession.getProject();
   }
 
   private void processException(Throwable e) {
@@ -120,7 +113,7 @@ class ReloadClassesWorker {
     virtualMachineProxy.suspend();
            
     try {
-      final Map<ReferenceType, byte[]> redefineMap = new java.util.HashMap<ReferenceType,byte[]>();
+      final Map<ReferenceType, byte[]> redefineMap = new HashMap<ReferenceType,byte[]>();
       int processedClassesCount = 0;
       final IOException[] _ex = new IOException[] {null};
       for (final String qualifiedName : modifiedClasses.keySet()) {

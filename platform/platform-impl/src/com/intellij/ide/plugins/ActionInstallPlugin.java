@@ -20,9 +20,9 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.net.IOExceptionDialog;
 
 import java.io.IOException;
@@ -30,11 +30,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lloix
- * Date: May 24, 2006
- * Time: 2:47:54 PM
- * To change this template use File | Settings | File Templates.
+ * @author lloix
  */
 public class ActionInstallPlugin extends AnAction implements DumbAware {
   final private static String updateMessage = IdeBundle.message("action.update.plugin");

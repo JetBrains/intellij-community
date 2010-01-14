@@ -16,8 +16,8 @@
 package com.intellij.ui;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,7 +37,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
-
 
 public class FocusTrackback {
 
@@ -107,12 +106,12 @@ public class FocusTrackback {
     }
   }
 
-  private Component getFocusFor(Window parent) {
+  private static Component getFocusFor(Window parent) {
     final WeakReference<Component> ref = ourRootWindowToFocusedMap.get(parent);
     return ref != null ? ref.get() : null;
   }
 
-  private void setFocusFor(Window parent, Component focus) {
+  private static void setFocusFor(Window parent, Component focus) {
     ourRootWindowToFocusedMap.put(parent, new WeakReference<Component>(focus));
   }
 
@@ -166,7 +165,7 @@ public class FocusTrackback {
     DataContext context =
         myParentWindow == null ? DataManager.getInstance().getDataContext() : DataManager.getInstance().getDataContext(myParentWindow);
     if (context != null) {
-      project = (Project)context.getData(DataConstants.PROJECT);
+      project = PlatformDataKeys.PROJECT.getData(context);
     }
 
     mySheduledForRestore = true;
@@ -355,11 +354,11 @@ public class FocusTrackback {
     return mySheduledForRestore;
   }
 
-  public static interface Provider {
+  public interface Provider {
     FocusTrackback getFocusTrackback();
   }
 
-  public static interface ComponentQuery {
+  public interface ComponentQuery {
     Component getComponent();
   }
 

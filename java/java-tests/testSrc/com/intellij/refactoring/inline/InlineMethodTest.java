@@ -98,6 +98,9 @@ public class InlineMethodTest extends LightCodeInsightTestCase {
 
   public void testVarargs1() throws Exception { doTest(); }
 
+  public void testFlatVarargs() throws Exception {doTest();}
+  public void testFlatVarargs1() throws Exception {doTest();}
+
   public void testEnumConstructor() throws Exception { doTest(); }
 
   public void testEnumConstantConstructorParameter() throws Exception {  // IDEADEV-26133

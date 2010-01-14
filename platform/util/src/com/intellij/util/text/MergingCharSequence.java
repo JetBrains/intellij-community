@@ -16,11 +16,7 @@
 package com.intellij.util.text;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jan 6, 2005
- * Time: 11:32:22 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class MergingCharSequence implements CharSequence {
   private final CharSequence s1;

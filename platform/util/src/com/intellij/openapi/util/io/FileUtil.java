@@ -572,6 +572,14 @@ public class FileUtil {
   }
 
   public static void copyDir(File fromDir, File toDir, boolean copySystemFiles) throws IOException {
+    copyDir(fromDir, toDir, copySystemFiles ? null : new FileFilter() {
+      public boolean accept(File file) {
+        return !file.getName().startsWith(".");
+      }
+    });
+  }
+
+  public static void copyDir(File fromDir, File toDir, final @Nullable FileFilter filter) throws IOException {
     toDir.mkdirs();
     if (isAncestor(fromDir, toDir, true)) {
       LOG.error(fromDir.getAbsolutePath() + " is ancestor of " + toDir + ". Can't copy to itself.");
@@ -581,11 +589,11 @@ public class FileUtil {
     if(files == null) throw new IOException(CommonBundle.message("exception.directory.is.invalid", fromDir.getPath()));
     if(!fromDir.canRead()) throw new IOException(CommonBundle.message("exception.directory.is.not.readable", fromDir.getPath()));
     for (File file : files) {
-      if (!copySystemFiles && file.getName().startsWith(".")) {
+      if (filter != null && !filter.accept(file)) {
         continue;
       }
       if (file.isDirectory()) {
-        copyDir(file, new File(toDir, file.getName()), copySystemFiles);
+        copyDir(file, new File(toDir, file.getName()), filter);
       }
       else {
         copy(file, new File(toDir, file.getName()));
@@ -651,24 +659,24 @@ public class FileUtil {
     delete(source);
   }
 
-  public static boolean startsWith(@NonNls String path1, @NonNls String path2) {
-    return startsWith(path1, path2, SystemInfo.isFileSystemCaseSensitive);
+  public static boolean startsWith(@NonNls String path, @NonNls String start) {
+    return startsWith(path, start, SystemInfo.isFileSystemCaseSensitive);
   }
 
-  public static boolean startsWith(final String path1, final String path2, final boolean caseSensitive) {
-    final int length1 = path1.length();
-    final int length2 = path2.length();
+  public static boolean startsWith(final String path, final String start, final boolean caseSensitive) {
+    final int length1 = path.length();
+    final int length2 = start.length();
     if (length2 == 0) return true;
     if (length2 > length1) return false;
-    if (!path1.regionMatches(!caseSensitive, 0, path2, 0, length2)) return false;
+    if (!path.regionMatches(!caseSensitive, 0, start, 0, length2)) return false;
     if (length1 == length2) return true;
-    char last2 = path2.charAt(length2 - 1);
+    char last2 = start.charAt(length2 - 1);
     char next1;
     if (last2 == '/' || last2 == File.separatorChar) {
-      next1 = path1.charAt(length2 -1);
+      next1 = path.charAt(length2 -1);
     }
     else {
-      next1 = path1.charAt(length2);
+      next1 = path.charAt(length2);
     }
     return next1 == '/' || next1 == File.separatorChar;
   }

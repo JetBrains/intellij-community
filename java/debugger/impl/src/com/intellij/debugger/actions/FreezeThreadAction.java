@@ -25,44 +25,45 @@ import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lex
- * Date: Apr 14, 2004
- * Time: 3:35:58 PM
- * To change this template use File | Settings | File Templates.
+ * @author lex
  */
-public class FreezeThreadAction extends DebuggerAction{
+public class FreezeThreadAction extends DebuggerAction {
   public void actionPerformed(final AnActionEvent e) {
     DebuggerTreeNodeImpl[] selectedNode = getSelectedNodes(e.getDataContext());
+    if (selectedNode == null) {
+      return;
+    }
     final DebuggerContextImpl debuggerContext = getDebuggerContext(e.getDataContext());
     final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
 
-    for (int i = 0; i < selectedNode.length; i++) {
-      final DebuggerTreeNodeImpl debuggerTreeNode = selectedNode[i];
+    for (final DebuggerTreeNodeImpl debuggerTreeNode : selectedNode) {
       ThreadDescriptorImpl threadDescriptor = ((ThreadDescriptorImpl)debuggerTreeNode.getDescriptor());
       final ThreadReferenceProxyImpl thread = threadDescriptor.getThreadReference();
 
-      if(!threadDescriptor.isFrozen()) {
+      if (!threadDescriptor.isFrozen()) {
         debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(debuggerContext.getSuspendContext()) {
-              public void contextAction() throws Exception {
-                debugProcess.createFreezeThreadCommand(thread).run();
-                debuggerTreeNode.calcValue();
-              }
-            });
+          public void contextAction() throws Exception {
+            debugProcess.createFreezeThreadCommand(thread).run();
+            debuggerTreeNode.calcValue();
+          }
+        });
       }
     }
   }
 
   public void update(AnActionEvent e) {
     DebuggerTreeNodeImpl[] selectedNode = getSelectedNodes(e.getDataContext());
+    if (selectedNode == null) {
+      return;
+    }
     DebugProcessImpl debugProcess = getDebuggerContext(e.getDataContext()).getDebugProcess();
 
     boolean visible = false;
-    if(debugProcess != null) {
+    if (debugProcess != null) {
       visible = true;
-      for (int i = 0; i < selectedNode.length; i++) {
-        NodeDescriptorImpl threadDescriptor = selectedNode[i].getDescriptor();
-        if(!(threadDescriptor instanceof ThreadDescriptorImpl) || ((ThreadDescriptorImpl)threadDescriptor).isFrozen()) {
+      for (DebuggerTreeNodeImpl aSelectedNode : selectedNode) {
+        NodeDescriptorImpl threadDescriptor = aSelectedNode.getDescriptor();
+        if (!(threadDescriptor instanceof ThreadDescriptorImpl) || ((ThreadDescriptorImpl)threadDescriptor).isFrozen()) {
           visible = false;
           break;
         }

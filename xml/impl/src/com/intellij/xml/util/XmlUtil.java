@@ -31,6 +31,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -63,6 +64,7 @@ import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
 import com.intellij.xml.impl.schema.TypeDescriptor;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
+import com.intellij.xml.index.IndexedRelevantResource;
 import com.intellij.xml.index.XmlNamespaceIndex;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -97,9 +99,9 @@ public class XmlUtil {
   @NonNls public static final String JSP_URI = "http://java.sun.com/JSP/Page";
   @NonNls public static final String ANY_URI = "http://www.intellij.net/ns/any";
 
-  @NonNls private static final String JSTL_CORE_URI = "http://java.sun.com/jsp/jstl/core";
-  @NonNls private static final String JSTL_CORE_URI2 = "http://java.sun.com/jstl/core";
-  @NonNls private static final String JSTL_CORE_URI3 = "http://java.sun.com/jstl/core_rt";
+  @NonNls public static final String JSTL_CORE_URI = "http://java.sun.com/jsp/jstl/core";
+  @NonNls public static final String JSTL_CORE_URI2 = "http://java.sun.com/jstl/core";
+  @NonNls public static final String JSTL_CORE_URI3 = "http://java.sun.com/jstl/core_rt";
   @NonNls public static final String[] JSTL_CORE_URIS = {JSTL_CORE_URI, JSTL_CORE_URI2, JSTL_CORE_URI3};
 
   @NonNls public static final String JSF_HTML_URI = "http://java.sun.com/jsf/html";
@@ -134,6 +136,7 @@ public class XmlUtil {
       "http://java.sun.com/j2ee/dtds/web-app_2_2.dtd"};
   @NonNls public static final String FACELETS_URI = "http://java.sun.com/jsf/facelets";
   @NonNls public static final String JSTL_FUNCTIONS_URI = "http://java.sun.com/jsp/jstl/functions";
+  @NonNls public static final String JSTL_FUNCTIONS_URI2 = "http://java.sun.com/jstl/functions";
   @NonNls public static final String JSTL_FN_FACELET_URI = "com.sun.facelets.tag.jstl.fn.JstlFnLibrary";
   @NonNls public static final String JSTL_CORE_FACELET_URI = "com.sun.facelets.tag.jstl.core.JstlCoreLibrary";
   @NonNls public static final String TARGET_NAMESPACE_ATTR_NAME = "targetNamespace";
@@ -239,16 +242,21 @@ public class XmlUtil {
     return xmlFile == null ? findXmlFile(base, location) : xmlFile;
   }
 
-  public static Collection<XmlFile> findNSFilesByURI(String namespace, final Project project) {
-    final Collection<VirtualFile> files = XmlNamespaceIndex.getFilesByNamespace(namespace, project);
-    final ArrayList<XmlFile> list = new ArrayList<XmlFile>(files.size());
-    for (VirtualFile file : files) {
-      final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-      if (psiFile instanceof XmlFile) {
-        list.add((XmlFile)psiFile);
+  @Nullable
+  public static XmlFile findNamespaceByLocation(PsiFile base, @NotNull String nsLocation) {
+    final String location = ExternalResourceManager.getInstance().getResourceLocation(nsLocation, base.getProject());
+    return findXmlFile(base, location);
+  }
+
+  public static Collection<XmlFile> findNSFilesByURI(String namespace, final Project project, Module module) {
+    final List<IndexedRelevantResource<String,String>> resources = XmlNamespaceIndex.getResourcesByNamespace(namespace, project, module);
+    final PsiManager psiManager = PsiManager.getInstance(project);
+    return ContainerUtil.mapNotNull(resources, new NullableFunction<IndexedRelevantResource<String, String>, XmlFile>() {
+      public XmlFile fun(IndexedRelevantResource<String, String> stringStringIndexedRelevantResource) {
+        PsiFile file = psiManager.findFile(stringStringIndexedRelevantResource.getFile());
+        return file instanceof XmlFile ? (XmlFile)file : null;
       }
-    }
-    return list;
+    });
   }
 
   @Nullable

@@ -25,11 +25,7 @@ import com.intellij.psi.impl.source.xml.XmlFileImpl;
 import com.intellij.psi.xml.XmlElementType;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jan 26, 2005
- * Time: 12:43:27 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class DTDParserDefinition extends XMLParserDefinition {
   public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {

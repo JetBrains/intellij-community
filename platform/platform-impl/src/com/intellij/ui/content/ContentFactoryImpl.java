@@ -31,6 +31,6 @@ public class ContentFactoryImpl implements ContentFactory {
   }
 
   public ContentManager createContentManager(boolean canCloseContents, Project project) {
-    return new ContentManagerImpl(new TabbedPaneContentUI(), canCloseContents, project);
+    return createContentManager(new TabbedPaneContentUI(), canCloseContents, project);
   }
 }

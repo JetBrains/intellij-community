@@ -22,6 +22,7 @@ import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
 
+import java.util.Collection;
 import java.util.List;
 
 public class ToggleProfileAction extends MavenAction {
@@ -44,7 +45,7 @@ public class ToggleProfileAction extends MavenAction {
     List<String> selectedProfiles = e.getData(MavenDataKeys.MAVEN_PROFILES);
     if (selectedProfiles == null || selectedProfiles.isEmpty()) return false;
 
-    List<String> activeProfiles = MavenActionUtil.getProjectsManager(e).getActiveProfiles();
+    Collection<String> activeProfiles = MavenActionUtil.getProjectsManager(e).getExplicitProfiles();
     int activeCount = 0;
     for (String profile : selectedProfiles) {
       if (activeProfiles.contains(profile)) {
@@ -55,7 +56,7 @@ public class ToggleProfileAction extends MavenAction {
   }
 
   private boolean isActive(MavenProjectsManager projectsManager, List<String> profiles) {
-    return projectsManager.getActiveProfiles().contains(profiles.get(0));
+    return projectsManager.getExplicitProfiles().contains(profiles.get(0));
   }
 
   @Override
@@ -63,13 +64,13 @@ public class ToggleProfileAction extends MavenAction {
     MavenProjectsManager manager = MavenActionUtil.getProjectsManager(e);
     List<String> selectedProfiles = e.getData(MavenDataKeys.MAVEN_PROFILES);
 
-    List<String> activeProfiles = manager.getActiveProfiles();
+    Collection<String> activeProfiles = manager.getExplicitProfiles();
     if (isActive(manager, selectedProfiles)) {
       activeProfiles.removeAll(selectedProfiles);
     }
     else {
       activeProfiles.addAll(selectedProfiles);
     }
-    manager.setActiveProfiles(activeProfiles);
+    manager.setExplicitProfiles(activeProfiles);
   }
 }

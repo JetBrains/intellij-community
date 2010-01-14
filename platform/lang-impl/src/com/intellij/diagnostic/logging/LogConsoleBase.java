@@ -48,11 +48,7 @@ import java.io.*;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Eugene.Kudelevsky
- * Date: Sep 11, 2009
- * Time: 9:26:11 PM
- * To change this template use File | Settings | File Templates.
+ * @author Eugene.Kudelevsky
  */
 public abstract class LogConsoleBase extends AdditionalTabComponent implements LogConsole, LogFilterListener {
   private static final Logger LOG = Logger.getInstance("com.intellij.diagnostic.logging.LogConsoleImpl");
@@ -340,7 +336,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
 
   @Nullable
   private Editor getEditor() {
-    return myConsole != null ? (Editor)((DataProvider)myConsole).getData(DataConstants.EDITOR) : null;
+    return myConsole != null ? PlatformDataKeys.EDITOR.getData((DataProvider) myConsole) : null;
   }
 
   private synchronized void filterConsoleOutput(Condition<String> isApplicable) {

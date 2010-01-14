@@ -37,11 +37,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: maxim
- * Date: 24.12.2004
- * Time: 23:55:08
- * To change this template use File | Settings | File Templates.
+ * @author maxim
  */
 public class HtmlDocumentationProvider implements DocumentationProvider {
   private static String ourBaseHtmlExtDocUrl;
@@ -71,7 +67,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     return result != null ? Collections.singletonList(result) : null;
   }
 
-  public String getUrlForHtml(PsiElement element, XmlTag context) {
+  public static String getUrlForHtml(PsiElement element, XmlTag context) {
     final EntityDescriptor descriptor = findDocumentationDescriptor(element, context);
 
     if (descriptor!=null) {
@@ -81,7 +77,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     }
   }
 
-  private EntityDescriptor findDocumentationDescriptor(PsiElement element, XmlTag context) {
+  private static EntityDescriptor findDocumentationDescriptor(PsiElement element, XmlTag context) {
     boolean isTag = true;
     PsiElement nameElement = null;
     String key = null;
@@ -272,7 +268,8 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
         final XmlElementDescriptor tagDescriptor = tagFromText.getDescriptor();
         return tagDescriptor != null ? tagDescriptor.getDeclaration() : null;
       }
-      catch(IncorrectOperationException ex) {}
+      catch(IncorrectOperationException ignore) {
+      }
     }
     else {
       XmlTag tagContext = findTagContext(context);
@@ -311,7 +308,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
   }
 
   public static void setBaseHtmlExtDocUrl(String baseHtmlExtDocUrl) {
-    HtmlDocumentationProvider.ourBaseHtmlExtDocUrl = baseHtmlExtDocUrl;
+    ourBaseHtmlExtDocUrl = baseHtmlExtDocUrl;
   }
 
   static String getBaseHtmlExtDocUrl() {

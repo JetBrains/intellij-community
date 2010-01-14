@@ -477,7 +477,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   }
 
   private Object getData(final String dataId) {
-    if (SelectInContext.DATA_CONTEXT_ID.equals(dataId)) {
+    if (SelectInContext.DATA_KEY.is(dataId)) {
       return new SelectInContext(){
         @NotNull
         public Project getProject() {
@@ -502,7 +502,12 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
           if (selectedPropertiesFile == null) return null;
           return new FileEditorProvider() {
             public FileEditor openFileEditor() {
-              return FileEditorManager.getInstance(getProject()).openFile(selectedPropertiesFile.getVirtualFile(), false)[0];
+              final VirtualFile file = selectedPropertiesFile.getVirtualFile();
+              if (file == null) {
+                return null;
+              }
+              return FileEditorManager.getInstance(getProject()).openFile(file, false)[0];
+
             }
           };
         }

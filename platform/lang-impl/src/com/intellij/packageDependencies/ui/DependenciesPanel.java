@@ -436,14 +436,14 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   @Nullable
   @NonNls
   public Object getData(@NonNls String dataId) {
-    if (dataId.equals(DataConstants.PSI_ELEMENT)) {
+    if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
       final PackageDependenciesNode selectedNode = myRightTree.getSelectedNode();
       if (selectedNode != null) {
         final PsiElement element = selectedNode.getPsiElement();
         return element != null && element.isValid() ? element : null;
       }
     }
-    if (dataId.equals(DataConstants.HELP_ID)) {
+    if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return "dependency.viewer.tool.window";
     }
     return null;
@@ -675,10 +675,10 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   private static class MyTree extends Tree implements DataProvider {
     public Object getData(String dataId) {
       PackageDependenciesNode node = getSelectedNode();
-      if (DataConstants.NAVIGATABLE.equals(dataId)) {
+      if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
         return node;
       }
-      if (DataConstants.PSI_ELEMENT.equals(dataId) && node != null)  {
+      if (LangDataKeys.PSI_ELEMENT.is(dataId) && node != null)  {
         final PsiElement element = node.getPsiElement();
         return element != null && element.isValid() ? element : null;
       }

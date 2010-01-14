@@ -23,18 +23,18 @@ import java.util.List;
 import java.util.Set;
 
 public class MavenProjectReaderResult {
-  public List<String> activeProfiles;
+  public MavenGeneralSettings settings;
   public Collection<MavenProjectProblem> readingProblems;
   public Set<MavenId> unresolvedArtifactIds;
   public File localRepository;
   public MavenProject nativeMavenProject;
 
-  public MavenProjectReaderResult(List<String> activeProfiles,
+  public MavenProjectReaderResult(MavenGeneralSettings settings,
                                   Collection<MavenProjectProblem> readingProblems,
                                   Set<MavenId> unresolvedArtifactIds,
                                   File localRepository,
                                   MavenProject nativeMavenProject) {
-    this.activeProfiles = activeProfiles;
+    this.settings = settings;
     this.readingProblems = readingProblems;
     this.unresolvedArtifactIds = unresolvedArtifactIds;
     this.localRepository = localRepository;

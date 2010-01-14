@@ -25,6 +25,8 @@
 package com.intellij;
 
 import com.intellij.idea.Bombed;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestRunnerUtil;
 import junit.framework.Test;
@@ -41,6 +43,7 @@ public class TestCaseLoader {
   private final List<Class> myClassList = new ArrayList<Class>();
   private final TestClassesFilter myTestClassesFilter;
   private final String myTestGroupName;
+  private final Set<String> blockedTests = new HashSet<String>();
 
   public TestCaseLoader(String classFilterName) {
     InputStream excludedStream = getClass().getClassLoader().getResourceAsStream(classFilterName);
@@ -57,12 +60,35 @@ public class TestCaseLoader {
         }
       }
 
+      myTestGroupName = System.getProperty("idea.test.group");
     }
     else {
-      myTestClassesFilter = TestClassesFilter.EMPTY_CLASSES_FILTER;
+      String patterns = System.getProperty("idea.test.patterns");
+      if (patterns != null) {
+        myTestClassesFilter = new TestClassesFilter(StringUtil.split(patterns, ";"));
+      }
+      else {
+        myTestClassesFilter = TestClassesFilter.EMPTY_CLASSES_FILTER;
+      }
+      myTestGroupName = "";
     }
 
-    myTestGroupName = System.getProperty("idea.test.group");
+    try {
+      if (Comparing.equal(System.getProperty("idea.fast.only"), "true")) {
+        BufferedReader reader =
+          new BufferedReader(new InputStreamReader(getClass().getClassLoader().getResourceAsStream("tests/slowTests.txt")));
+        do {
+          final String testName = reader.readLine();
+          if (testName == null) break;
+          blockedTests.add(testName);
+        }
+        while (true);
+      }
+    }
+    catch (IOException e) {
+      // No luck
+    }
+
 
     System.out.println("Using test group: [" + (myTestGroupName == null ? "" :  myTestGroupName) + "]");
   }
@@ -103,7 +129,7 @@ public class TestCaseLoader {
    * Determine if we should exclude this test case.
    */
   private boolean shouldExcludeTestClass(Class testCaseClass) {
-    return !myTestClassesFilter.matches(testCaseClass.getName(), myTestGroupName) || isBombed(testCaseClass);
+    return !myTestClassesFilter.matches(testCaseClass.getName(), myTestGroupName) || isBombed(testCaseClass) || blockedTests.contains(testCaseClass.getName());
   }
 
   public static boolean isBombed(final Method method) {

@@ -17,8 +17,8 @@
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
@@ -52,10 +52,10 @@ class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTestFixtu
   private class MyDataProvider implements DataProvider {
     @Nullable
     public Object getData(@NonNls String dataId) {
-      if (dataId.equals(DataConstants.PROJECT)) {
+      if (PlatformDataKeys.PROJECT.is(dataId)) {
         return getProject();
       }
-      else if (dataId.equals(DataConstants.EDITOR) || dataId.equals(OpenFileDescriptor.NAVIGATE_IN_EDITOR.getName())) {
+      else if (PlatformDataKeys.EDITOR.is(dataId) || OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
         return FileEditorManager.getInstance(getProject()).getSelectedTextEditor();
       }
       else {

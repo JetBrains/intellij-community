@@ -18,7 +18,7 @@ package com.intellij.ui.content.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -116,8 +116,8 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
     @Nullable
     public Object getData(@NonNls final String dataId) {
-      if (DataConstantsEx.CONTENT_MANAGER.equals(dataId)) return ContentManagerImpl.this;
-      if (DataConstantsEx.NONEMPTY_CONTENT_MANAGER.equals(dataId) && getContentCount() > 1) {
+      if (PlatformDataKeys.CONTENT_MANAGER.is(dataId)) return ContentManagerImpl.this;
+      if (PlatformDataKeys.NONEMPTY_CONTENT_MANAGER.is(dataId) && getContentCount() > 1) {
         return ContentManagerImpl.this;
       }
 
@@ -423,7 +423,11 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     Content selectedContent = getSelectedContent();
     int index = getIndexOfContent(selectedContent);
     index = (index - 1 + contentCount) % contentCount;
-    return setSelectedContentCB(getContent(index), true);
+    final Content content = getContent(index);
+    if (content == null) {
+      return null;
+    }
+    return setSelectedContentCB(content, true);
   }
 
   public ActionCallback selectNextContent() {
@@ -432,7 +436,11 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     Content selectedContent = getSelectedContent();
     int index = getIndexOfContent(selectedContent);
     index = (index + 1) % contentCount;
-    return setSelectedContentCB(getContent(index), true);
+    final Content content = getContent(index);
+    if (content == null) {
+      return null;
+    }
+    return setSelectedContentCB(content, true);
   }
 
   public void addContentManagerListener(@NotNull ContentManagerListener l) {

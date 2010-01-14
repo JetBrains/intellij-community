@@ -16,9 +16,10 @@
 
 package com.intellij.ide.macro;
 
-import com.intellij.ide.DataAccessors;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,12 +34,13 @@ public class FileRelativePathMacro extends Macro {
   }
 
   public String expand(DataContext dataContext) {
-    final VirtualFile baseDir = DataAccessors.PROJECT_BASE_DIR.from(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final VirtualFile baseDir = project == null ? null : project.getBaseDir();
     if (baseDir == null) {
       return null;
     }
 
-    VirtualFile file = DataAccessors.VIRTUAL_FILE.from(dataContext);
+    VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
     if (file == null) return null;
     return FileUtil.getRelativePath(VfsUtil.virtualToIoFile(baseDir), VfsUtil.virtualToIoFile(file));
   }

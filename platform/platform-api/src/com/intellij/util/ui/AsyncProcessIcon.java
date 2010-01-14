@@ -78,7 +78,7 @@ public class AsyncProcessIcon extends AnimatedIcon {
             try {
               sleep(15000);
             } catch (InterruptedException e1) {
-              e1.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+              e1.printStackTrace();
             }
           }
         };
@@ -87,7 +87,7 @@ public class AsyncProcessIcon extends AnimatedIcon {
         try {
           sleeper.join();
         } catch (InterruptedException e1) {
-          e1.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+          e1.printStackTrace();
         }
       }
     });

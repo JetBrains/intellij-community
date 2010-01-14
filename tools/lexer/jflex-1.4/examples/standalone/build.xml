@@ -1,0 +1,23 @@
+<project name="standalone" default="run">
+
+  <taskdef classname="JFlex.anttask.JFlexTask" name="jflex" />
+
+  <target name="run" depends="compile">
+    <java classname="Subst"> <arg line="sample.inp"/> </java>
+  </target>
+
+  <target name="compile" depends="jflex"> 
+  	<javac srcdir="." destdir="."/>  
+  </target>
+
+  <target name="jflex"> <jflex file="standalone.flex"/> </target>
+
+  <target name="clean">
+    <delete file="Subst.java"/>
+    <delete>      
+      <fileset dir="." includes="**/*~"/>
+      <fileset dir="." includes="**/*.class"/>
+    </delete>
+  </target>
+
+</project>

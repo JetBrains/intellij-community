@@ -12,11 +12,7 @@ import java.lang.ref.SoftReference;
 import java.util.ResourceBundle;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lesya
- * Date: Sep 5, 2005
- * Time: 5:09:57 PM
- * To change this template use File | Settings | File Templates.
+ * @author lesya
  */
 public class SmartCvsSrcBundle {
   private static Reference<ResourceBundle> ourBundle;

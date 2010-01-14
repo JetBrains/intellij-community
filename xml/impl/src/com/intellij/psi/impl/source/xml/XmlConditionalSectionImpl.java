@@ -27,11 +27,7 @@ import com.intellij.psi.xml.XmlEntityDecl;
 import com.intellij.psi.xml.XmlEntityRef;
 
 /**
- * Created by IntelliJ IDEA.
- * User: maxim.mossienko
- * Date: Jan 13, 2006
- * Time: 6:55:25 PM
- * To change this template use File | Settings | File Templates.
+ * @author maxim.mossienko
  */
 public class XmlConditionalSectionImpl extends XmlElementImpl implements XmlConditionalSection, XmlElementType {
   public XmlConditionalSectionImpl() {

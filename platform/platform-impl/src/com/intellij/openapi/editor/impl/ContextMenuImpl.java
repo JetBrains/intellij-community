@@ -30,6 +30,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -201,7 +202,7 @@ public class ContextMenuImpl extends JPanel implements Disposable {
     }
 
     final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    return file != null && file.isValid() && file.getFileSystem() == LocalFileSystem.getInstance();
+    return file != null && file.isValid() && (file.getFileSystem() == LocalFileSystem.getInstance() || file instanceof HttpVirtualFile);
   }
 
   private void scheduleHide() {

@@ -200,7 +200,7 @@ public class TargetElementUtilBase {
 
     final List<PomTarget> targets = CollectionFactory.arrayList();
     final Consumer<PomTarget> consumer = new Consumer<PomTarget>() {
-      public void consume(@NotNull PomTarget target) {
+      public void consume(PomTarget target) {
         if (target instanceof PsiDeclaredTarget) {
           final PsiDeclaredTarget declaredTarget = (PsiDeclaredTarget)target;
           final PsiElement navigationElement = declaredTarget.getNavigationElement();
@@ -222,9 +222,7 @@ public class TargetElementUtilBase {
         searcher.findDeclarationsAt(parent, offset, consumer);
         if (!targets.isEmpty()) {
           final PomTarget target = targets.get(0);
-          if (target != null) {
-            return PomService.convertToPsi(element.getProject(), target);
-          }
+          return target == null ? null : PomService.convertToPsi(element.getProject(), target);
         }
       }
       offset += parent.getStartOffsetInParent();

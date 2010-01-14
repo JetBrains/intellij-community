@@ -34,12 +34,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 
 /**
- * Created by IntelliJ IDEA.
-* User: Maxim.Mossienko
-* Date: Jul 6, 2006
-* Time: 5:08:37 PM
-* To change this template use File | Settings | File Templates.
-*/
+ * @author Maxim.Mossienko
+ */
 public class AddHtmlTagOrAttributeToCustomsIntention implements IntentionAction {
   private final String myName;
   private final int myType;

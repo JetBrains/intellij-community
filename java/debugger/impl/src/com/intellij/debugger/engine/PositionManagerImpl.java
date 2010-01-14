@@ -41,11 +41,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lex
- * Date: Apr 2, 2004
- * Time: 8:33:41 PM
- * To change this template use File | Settings | File Templates.
+ * @author lex
  */
 public class PositionManagerImpl implements PositionManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.PositionManagerImpl");

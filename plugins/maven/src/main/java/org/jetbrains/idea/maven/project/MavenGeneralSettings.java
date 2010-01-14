@@ -19,14 +19,18 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.embedder.MavenExecutionOptions;
+import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @SuppressWarnings({"UnusedDeclaration"})
 public class MavenGeneralSettings implements Cloneable {
@@ -43,7 +47,8 @@ public class MavenGeneralSettings implements Cloneable {
   private MavenExecutionOptions.SnapshotUpdatePolicy snapshotUpdatePolicy = MavenExecutionOptions.SnapshotUpdatePolicy.ALWAYS_UPDATE;
   private MavenExecutionOptions.PluginUpdatePolicy pluginUpdatePolicy = MavenExecutionOptions.PluginUpdatePolicy.DO_NOT_UPDATE;
 
-  private File myEffectiveLocalRepositoryCache;
+  private volatile File myEffectiveLocalRepositoryCache;
+  private volatile Set<String> myDefaultPluginsCache;
 
   private List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
 
@@ -108,10 +113,12 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   public File getEffectiveLocalRepository() {
-    if (myEffectiveLocalRepositoryCache == null) {
-      myEffectiveLocalRepositoryCache = MavenEmbedderFactory.resolveLocalRepository(mavenHome, mavenSettingsFile, localRepository);
-    }
-    return myEffectiveLocalRepositoryCache;
+    File result = myEffectiveLocalRepositoryCache;
+    if (result != null) return result;
+
+    result = MavenEmbedderFactory.resolveLocalRepository(mavenHome, mavenSettingsFile, localRepository);
+    myEffectiveLocalRepositoryCache = result;
+    return result;
   }
 
   public void setLocalRepository(final @Nullable String localRepository) {
@@ -119,8 +126,7 @@ public class MavenGeneralSettings implements Cloneable {
       if (!Comparing.equal(this.localRepository, localRepository)) {
         this.localRepository = localRepository;
 
-        myEffectiveLocalRepositoryCache = null;
-        firePathChanged();
+        localRepositoryChanged();
       }
     }
   }
@@ -134,8 +140,8 @@ public class MavenGeneralSettings implements Cloneable {
     if (!Comparing.equal(this.mavenHome, mavenHome)) {
       this.mavenHome = mavenHome;
 
-      myEffectiveLocalRepositoryCache = null;
-      firePathChanged();
+      myDefaultPluginsCache = null;
+      pathsChanged();
     }
   }
 
@@ -153,11 +159,18 @@ public class MavenGeneralSettings implements Cloneable {
     if (mavenSettingsFile != null) {
       if (!Comparing.equal(this.mavenSettingsFile, mavenSettingsFile)) {
         this.mavenSettingsFile = mavenSettingsFile;
-
-        myEffectiveLocalRepositoryCache = null;
-        firePathChanged();
+        pathsChanged();
       }
     }
+  }
+
+  public void localRepositoryChanged() {
+    pathsChanged();
+  }
+
+  private void pathsChanged() {
+    myEffectiveLocalRepositoryCache = null;
+    fidePathsChanged();
   }
 
   @Nullable
@@ -194,6 +207,27 @@ public class MavenGeneralSettings implements Cloneable {
   @NotNull
   public VirtualFile getEffectiveSuperPom() {
     return MavenEmbedderFactory.resolveSuperPomFile(getMavenHome());
+  }
+
+  public boolean isDefaultPlugin(String groupId, String artifactId) {
+    return getDefaultPlugins().contains(groupId + ":" + artifactId);
+  }
+
+  private Set<String> getDefaultPlugins() {
+    Set<String> result = myDefaultPluginsCache;
+    if (result != null) return result;
+
+    result = new THashSet<String>();
+
+    Element superProject = MavenJDOMUtil.read(getEffectiveSuperPom(), null);
+    for (Element each : MavenJDOMUtil.findChildrenByPath(superProject, "build.pluginManagement.plugins", "plugin")) {
+      String groupId = MavenJDOMUtil.findChildValueByPath(each, "groupId", "org.apache.maven.plugins");
+      String artifactId = MavenJDOMUtil.findChildValueByPath(each, "artifactId", null);
+      result.add(groupId + ":" + artifactId);
+    }
+
+    myDefaultPluginsCache = result;
+    return result;
   }
 
   public boolean isPrintErrorStackTraces() {
@@ -279,13 +313,13 @@ public class MavenGeneralSettings implements Cloneable {
     myListeners.remove(l);
   }
 
-  private void firePathChanged() {
+  private void fidePathsChanged() {
     for (Listener each : myListeners) {
-      each.pathChanged();
+      each.pathsChanged();
     }
   }
 
   public interface Listener {
-    void pathChanged();
+    void pathsChanged();
   }
 }

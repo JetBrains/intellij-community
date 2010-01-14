@@ -84,6 +84,10 @@ public abstract class GitHandler {
    */
   private final Project myProject;
   /**
+   * The descriptor for the command to be executed
+   */
+  protected final GitCommand myCommand;
+  /**
    * the working directory
    */
   private final File myWorkingDirectory;
@@ -124,120 +128,7 @@ public abstract class GitHandler {
    * if true, the command execution is not logged in version control view
    */
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private boolean mySilent;
-  /**
-   * The constant for git command {@value}
-   */
-  @NonNls public static final String CLONE = "clone";
-  /**
-   * The constant for git command {@value}
-   */
-  @NonNls public static final String RM = "rm";
-  /**
-   * The constant for git command {@value}
-   */
-  @NonNls public static final String ADD = "add";
-  /**
-   * The constant for git command {@value}
-   */
-  @NonNls public static final String ANNOTATE = "annotate";
-  /**
-   * The constant for git command {@value}
-   */
-  @NonNls public static final String COMMIT = "commit";
-  /**
-   * The constant for git command {@value}
-   */
-  @NonNls public static final String CONFIG = "config";
-  /**
-   * The constant for git command {@value}
-   */
-  @NonNls public static final String FETCH = "fetch";
-  /**
-   * The constant for git command {@value}
-   */
-  @NonNls public static final String SHOW = "show";
-  /**
-   * The constant for git command {@value}
-   */
-  @NonNls public static final String LOG = "log";
-  /**
-   * The constant for git command {@value}
-   */
-  @NonNls public static final String INIT = "init";
-  /**
-   * The constant for git command {@value}
-   */
-  @NonNls public static final String BRANCH = "branch";
-  /**
-   * The constant for git command {@value}
-   */
-  @NonNls public static final String MERGE = "merge";
-  /**
-   * The constant for git command {@value}
-   */
-  @NonNls public static final String MERGE_BASE = "merge-base";
-  /**
-   * The constant for git command {@value}
-   */
-  @NonNls public static final String PUSH = "push";
-  /**
-   * The constant for git command {@value}
-   */
-  @NonNls public static final String LS_REMOTE = "ls-remote";
-  /**
-   * The constant for git command {@value}
-   */
-  @NonNls public static final String REMOTE = "remote";
-  /**
-   * The constant for git command {@value}
-   */
-  @NonNls public static final String REV_LIST = "rev-list";
-  /**
-   * The constant for git command {@value}
-   */
-  @NonNls public static final String CHECKOUT = "checkout";
-  /**
-   * The constant for git command {@value}
-   */
-  @NonNls public static final String TAG = "tag";
-  /**
-   * The constant for git command {@value}
-   */
-  @NonNls public static final String PULL = "pull";
-  /**
-   * The constant for git command {@value}
-   */
-  @NonNls public static final String LS_FILES = "ls-files";
-  /**
-   * The constant for git command {@value}
-   */
-  @NonNls public static final String DIFF = "diff";
-  /**
-   * The constant for git command {@value}
-   */
-  @NonNls public static final String VERSION = "version";
-  /**
-   * The constant for git command {@value}
-   */
-  @NonNls public static final String STASH = "stash";
-  /**
-   * The constant for git command {@value}
-   */
-  @NonNls public static final String REBASE = "rebase";
-  /**
-   * The constant for git command {@value}
-   */
-  @NonNls public static final String RESET = "reset";
 
-  @NonNls public static final String UPDATE_INDEX = "update-index";
-  /**
-   * Check attributes command
-   */
-  @NonNls public static final String CHECK_ATTR = "check-attr";
-  /**
-   * Name of environment variable that specifies editor for the git
-   */
-  @NonNls public static final String GIT_EDITOR_ENV = "GIT_EDITOR";
   /**
    * The vcs object
    */
@@ -250,6 +141,14 @@ public abstract class GitHandler {
    * The settings object
    */
   private GitVcsSettings mySettings;
+  /**
+   * Suspend action used by {@link #suspendWriteLock()}
+   */
+  private Runnable mySuspendAction;
+  /**
+   * Resume action used by {@link #resumeWriteLock()}
+   */
+  private Runnable myResumeAction;
 
 
   /**
@@ -259,8 +158,9 @@ public abstract class GitHandler {
    * @param directory a process directory
    * @param command   a command to execute (if empty string, the parameter is ignored)
    */
-  protected GitHandler(@NotNull Project project, @NotNull File directory, @NotNull String command) {
+  protected GitHandler(@NotNull Project project, @NotNull File directory, @NotNull GitCommand command) {
     myProject = project;
+    myCommand = command;
     mySettings = GitVcsSettings.getInstanceChecked(project);
     myEnv = new HashMap<String, String>(System.getenv());
     if (!myEnv.containsKey("HOME")) {
@@ -277,8 +177,8 @@ public abstract class GitHandler {
     myCommandLine = new GeneralCommandLine();
     myCommandLine.setExePath(mySettings.GIT_EXECUTABLE);
     myCommandLine.setWorkingDirectory(myWorkingDirectory);
-    if (command.length() > 0) {
-      myCommandLine.addParameter(command);
+    if (command.name().length() > 0) {
+      myCommandLine.addParameter(command.name());
     }
   }
 
@@ -289,7 +189,7 @@ public abstract class GitHandler {
    * @param vcsRoot a process directory
    * @param command a command to execute
    */
-  protected GitHandler(final Project project, final VirtualFile vcsRoot, final String command) {
+  protected GitHandler(final Project project, final VirtualFile vcsRoot, final GitCommand command) {
     this(project, VfsUtil.virtualToIoFile(vcsRoot), command);
   }
 
@@ -424,6 +324,12 @@ public abstract class GitHandler {
     }
   }
 
+  /**
+   * Add file path parameters. The parameters are made relative to the working directory
+   *
+   * @param files a parameters to add
+   * @throws IllegalArgumentException if some path is not under root.
+   */
   public void addRelativePathsForFiles(@NotNull final Collection<File> files) {
     checkNotStarted();
     for (File file : files) {
@@ -718,5 +624,32 @@ public abstract class GitHandler {
    */
   public void setInputProcessor(Processor<OutputStream> inputProcessor) {
     myInputProcessor = inputProcessor;
+  }
+
+  /**
+   * Set suspend/resume actions
+   *
+   * @param suspend the suspend action
+   * @param resume  the resume action
+   */
+  synchronized void setSuspendResume(Runnable suspend, Runnable resume) {
+    mySuspendAction = suspend;
+    myResumeAction = resume;
+  }
+
+  /**
+   * Suspend write lock held by the handler
+   */
+  public synchronized void suspendWriteLock() {
+    assert mySuspendAction != null;
+    mySuspendAction.run();
+  }
+
+  /**
+   * Resume write lock held by the handler
+   */
+  public synchronized void resumeWriteLock() {
+    assert mySuspendAction != null;
+    myResumeAction.run();
   }
 }

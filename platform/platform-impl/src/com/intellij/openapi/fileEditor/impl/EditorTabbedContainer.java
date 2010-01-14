@@ -21,7 +21,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -315,17 +314,17 @@ final class EditorTabbedContainer implements Disposable {
 
   private class MyDataProvider implements DataProvider {
     public Object getData(@NonNls final String dataId) {
-      if (DataConstants.PROJECT.equals(dataId)) {
+      if (PlatformDataKeys.PROJECT.is(dataId)) {
         return myProject;
       }
-      if (DataConstants.VIRTUAL_FILE.equals(dataId)) {
+      if (PlatformDataKeys.VIRTUAL_FILE.is(dataId)) {
         final VirtualFile selectedFile = myWindow.getSelectedFile();
         return selectedFile != null && selectedFile.isValid() ? selectedFile : null;
       }
-      if (DataConstantsEx.EDITOR_WINDOW.equals(dataId)) {
+      if (EditorWindow.DATA_KEY.is(dataId)) {
         return myWindow;
       }
-      if (DataConstants.HELP_ID.equals(dataId)) {
+      if (PlatformDataKeys.HELP_ID.is(dataId)) {
         return HELP_ID;
       }
       return null;

@@ -20,10 +20,10 @@ import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileSystemTree;
@@ -34,8 +34,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
-import com.intellij.openapi.roots.ui.configuration.actions.ToggleSourcesStateAction;
 import com.intellij.openapi.roots.ui.configuration.actions.ToggleExcludedStateAction;
+import com.intellij.openapi.roots.ui.configuration.actions.ToggleSourcesStateAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -61,8 +61,10 @@ import java.util.Comparator;
  * Date: Oct 9, 2003
  * Time: 1:19:47 PM
  */
-public abstract class ContentEntryTreeEditor {
+public class ContentEntryTreeEditor {
   private final Project myProject;
+  private final boolean myCanMarkSources;
+  private final boolean myCanMarkTestSources;
   protected Tree myTree;
   private FileSystemTreeImpl myFileSystemTree;
   private final JPanel myTreePanel;
@@ -72,8 +74,10 @@ public abstract class ContentEntryTreeEditor {
   private final MyContentEntryEditorListener myContentEntryEditorListener = new MyContentEntryEditorListener();
   private final FileChooserDescriptor myDescriptor;
 
-  public ContentEntryTreeEditor(Project project) {
+  public ContentEntryTreeEditor(Project project, boolean canMarkSources, boolean canMarkTestSources) {
     myProject = project;
+    myCanMarkSources = canMarkSources;
+    myCanMarkTestSources = canMarkTestSources;
     myTree = new Tree();
     myTree.setRootVisible(true);
     myTree.setShowsRootHandles(true);
@@ -94,6 +98,17 @@ public abstract class ContentEntryTreeEditor {
   }
 
   protected void createEditingActions() {
+    if (myCanMarkSources) {
+      ToggleSourcesStateAction markSourcesAction = new ToggleSourcesStateAction(myTree, this, false);
+      markSourcesAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.ALT_MASK)), myTree);
+      myEditingActionsGroup.add(markSourcesAction);
+    }
+
+    if (myCanMarkTestSources) {
+      setupTestsAction();
+    }
+
+    setupExcludedAction();
   }
 
   protected TreeCellRenderer getContentEntryCellRenderer() {
@@ -256,7 +271,7 @@ public abstract class ContentEntryTreeEditor {
 
     @Nullable
     public Object getData(@NonNls final String dataId) {
-      if (dataId.equals(FileSystemTree.DATA_KEY.getName())) {
+      if (FileSystemTree.DATA_KEY.is(dataId)) {
         return myFileSystemTree;
       }
       return null;

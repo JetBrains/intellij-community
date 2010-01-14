@@ -359,7 +359,7 @@ public class HighlightInfo {
   public static class IntentionActionDescriptor {
     private final IntentionAction myAction;
     private volatile List<IntentionAction> myOptions;
-    private HighlightDisplayKey myKey;
+    private volatile HighlightDisplayKey myKey;
     private final String myDisplayName;
     private final Icon myIcon;
 
@@ -386,38 +386,43 @@ public class HighlightInfo {
 
     @Nullable
     public List<IntentionAction> getOptions(@NotNull PsiElement element) {
-      if (myOptions == null && myKey != null) {
-        List<IntentionAction> options = IntentionManager.getInstance().getStandardIntentionOptions(myKey, element);
-        InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile();
-        InspectionProfileEntry tool = profile.getInspectionTool(myKey.toString(), element);
-        if (!(tool instanceof LocalInspectionToolWrapper)) {
-          HighlightDisplayKey key = HighlightDisplayKey.findById(myKey.toString());
-          if (key != null) {
-            tool = profile.getInspectionTool(key.toString(), element);
-          }
+      List<IntentionAction> options = myOptions;
+      HighlightDisplayKey key = myKey;
+      if (options != null || key == null) {
+        return options;
+      }
+      List<IntentionAction> newOptions = IntentionManager.getInstance().getStandardIntentionOptions(key, element);
+      InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile();
+      InspectionProfileEntry tool = profile.getInspectionTool(key.toString(), element);
+      if (!(tool instanceof LocalInspectionToolWrapper)) {
+        HighlightDisplayKey idkey = HighlightDisplayKey.findById(key.toString());
+        if (idkey != null) {
+          tool = profile.getInspectionTool(idkey.toString(), element);
         }
-        if (tool instanceof LocalInspectionToolWrapper) {
-          final LocalInspectionTool localInspectionTool = ((LocalInspectionToolWrapper)tool).getTool();
-          Class aClass = myAction.getClass();
-          if (myAction instanceof QuickFixWrapper) {
-            aClass = ((QuickFixWrapper)myAction).getFix().getClass();
-          }
-          options.add(new CleanupInspectionIntention(localInspectionTool, aClass));
-          if (localInspectionTool instanceof CustomSuppressableInspectionTool) {
-            final IntentionAction[] suppressActions = ((CustomSuppressableInspectionTool)localInspectionTool).getSuppressActions(element);
-            if (suppressActions != null) {
-              options.addAll(Arrays.asList(suppressActions));
-            }
-          }
+      }
+      if (tool instanceof LocalInspectionToolWrapper) {
+        final LocalInspectionTool localInspectionTool = ((LocalInspectionToolWrapper)tool).getTool();
+        Class aClass = myAction.getClass();
+        if (myAction instanceof QuickFixWrapper) {
+          aClass = ((QuickFixWrapper)myAction).getFix().getClass();
         }
-        myKey = null;
-        synchronized (this) {
-          if (myOptions == null) {
-            myOptions = options;
+        newOptions.add(new CleanupInspectionIntention(localInspectionTool, aClass));
+        if (localInspectionTool instanceof CustomSuppressableInspectionTool) {
+          final IntentionAction[] suppressActions = ((CustomSuppressableInspectionTool)localInspectionTool).getSuppressActions(element);
+          if (suppressActions != null) {
+            newOptions.addAll(Arrays.asList(suppressActions));
           }
         }
       }
-      return myOptions;
+
+      synchronized (this) {
+        options = myOptions;
+        if (options == null) {
+          myOptions = options = newOptions;
+        }
+        myKey = null;
+      }
+      return options;
     }
 
     public String getDisplayName() {

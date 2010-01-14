@@ -26,9 +26,9 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.MergedObject;
 import com.intellij.util.xml.TypeNameManager;
-import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.tree.BaseDomElementNode;
 import com.intellij.util.xml.tree.DomElementsGroupNode;
@@ -58,7 +58,7 @@ public class AddElementInCollectionAction extends AddDomElementAction {
   protected DomModelTreeView getTreeView(AnActionEvent e) {
     if (myTreeView != null) return myTreeView;
 
-    return (DomModelTreeView)e.getDataContext().getData(DomModelTreeView.DOM_MODEL_TREE_VIEW_KEY);
+    return DomModelTreeView.DATA_KEY.getData(e.getDataContext());
   }
 
   protected boolean isEnabled(final AnActionEvent e) {
@@ -93,7 +93,7 @@ public class AddElementInCollectionAction extends AddDomElementAction {
     if (node instanceof BaseDomElementNode) {
       List<DomCollectionChildDescription> consolidated = ((BaseDomElementNode)node).getConsolidatedChildrenDescriptions();
       if (consolidated.size() > 0) {
-        return consolidated.toArray(DomCollectionChildDescription.EMPTY_ARRAY);
+        return consolidated.toArray(new DomCollectionChildDescription[consolidated.size()]);
       }
     }
 

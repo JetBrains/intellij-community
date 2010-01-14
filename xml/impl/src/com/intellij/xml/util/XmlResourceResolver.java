@@ -15,8 +15,8 @@
  */
 package com.intellij.xml.util;
 
-import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.ExternalResourceManager;
+import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.UriUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,11 +29,11 @@ import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.xml.actions.ValidateXmlActionHandler;
 import com.intellij.xml.XmlBundle;
+import com.intellij.xml.actions.ValidateXmlActionHandler;
 import org.apache.xerces.xni.XMLResourceIdentifier;
 import org.apache.xerces.xni.XNIException;
 import org.apache.xerces.xni.parser.XMLEntityResolver;
@@ -51,11 +51,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Aug 6, 2004
- * Time: 6:48:55 PM
- * To change this template use File | Settings | File Templates.
+ * @author Maxim.Mossienko
  */
 public class XmlResourceResolver implements XMLEntityResolver {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.util.XmlResourceResolver");
@@ -64,7 +60,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
   private final Map<String,String> myExternalResourcesMap = new HashMap<String, String>(1);
   private boolean myStopOnUnDeclaredResource;
   @NonNls
-  public static final String FILE_PREFIX = "file://";
+  public static final String HONOUR_ALL_SCHEMA_LOCATIONS_PROPERTY_KEY = "idea.xml.honour.all.schema.locations";
   private final ValidateXmlActionHandler.ErrorReporter myErrorReporter;
 
   public XmlResourceResolver(XmlFile _xmlFile, Project _project, final ValidateXmlActionHandler.ErrorReporter errorReporter) {
@@ -111,16 +107,16 @@ public class XmlResourceResolver implements XMLEntityResolver {
               File workingFile = new File("");
               String workingDir = workingFile.getAbsoluteFile().getAbsolutePath().replace(File.separatorChar, '/');
               String id = StringUtil.replace(baseSystemId, workingDir, myFile.getVirtualFile().getParent().getPath());
-              vFile = UriUtil.findRelativeFile(id, (VirtualFile)null);
+              vFile = UriUtil.findRelativeFile(id, null);
             }
 
             if (vFile == null) {
-              vFile = UriUtil.findRelativeFile(baseSystemId, (VirtualFile)null);
+              vFile = UriUtil.findRelativeFile(baseSystemId, null);
 
               if (vFile == null) {
                 try {
                   vFile = VfsUtil.findFileByURL(new URL(baseSystemId));
-                } catch(MalformedURLException ex) {}
+                } catch(MalformedURLException ignore) {}
               }
             }
           }

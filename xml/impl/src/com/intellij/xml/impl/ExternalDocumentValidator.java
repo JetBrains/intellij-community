@@ -20,12 +20,13 @@ import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.ide.highlighter.XHtmlFileType;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -35,6 +36,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.reference.SoftReference;
@@ -42,8 +44,6 @@ import com.intellij.xml.actions.ValidateXmlActionHandler;
 import com.intellij.xml.util.CheckXmlFileWithXercesValidatorInspection;
 import com.intellij.xml.util.XmlResourceResolver;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.ide.highlighter.XHtmlFileType;
 import org.jetbrains.annotations.NonNls;
 import org.xml.sax.SAXParseException;
 
@@ -52,11 +52,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: maxim
- * Date: 21.01.2005
- * Time: 0:07:51
- * To change this template use File | Settings | File Templates.
+ * @author maxim
  */
 public class ExternalDocumentValidator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.impl.ExternalDocumentValidator");
@@ -337,6 +333,10 @@ public class ExternalDocumentValidator {
       return;
     }
 
+    if (containingFile.getViewProvider() instanceof TemplateLanguageFileViewProvider) {
+      return;
+    }
+    
     final FileType fileType = containingFile.getViewProvider().getVirtualFile().getFileType();
     if (fileType != XmlFileType.INSTANCE && fileType != XHtmlFileType.INSTANCE) {
       return;

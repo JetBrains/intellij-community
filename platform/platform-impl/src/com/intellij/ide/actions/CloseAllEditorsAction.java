@@ -17,29 +17,29 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class CloseAllEditorsAction extends AnAction implements DumbAware {
-  public void actionPerformed(AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+  public void actionPerformed(final AnActionEvent e) {
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(
       project, new Runnable(){
         public void run() {
-          final EditorWindow window = (EditorWindow)dataContext.getData(DataConstantsEx.EDITOR_WINDOW);
+          final EditorWindow window = e.getData(EditorWindow.DATA_KEY);
           if (window != null){
             final VirtualFile[] files = window.getFiles();
-            for (int i = 0; i < files.length; i++) {
-              VirtualFile file = files[i];
+            for (final VirtualFile file : files) {
               window.closeFile(file);
             }
             return;
@@ -47,8 +47,8 @@ public class CloseAllEditorsAction extends AnAction implements DumbAware {
           FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
           VirtualFile selectedFile = fileEditorManager.getSelectedFiles()[0];
           VirtualFile[] openFiles = fileEditorManager.getSiblings(selectedFile);
-          for (int i = 0; i < openFiles.length; i++) {
-            fileEditorManager.closeFile(openFiles[i]);
+          for (final VirtualFile openFile : openFiles) {
+            fileEditorManager.closeFile(openFile);
           }
         }
       }, IdeBundle.message("command.close.all.editors"), null
@@ -57,15 +57,14 @@ public class CloseAllEditorsAction extends AnAction implements DumbAware {
 
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
-    final DataContext dataContext = event.getDataContext();
-    final EditorWindow editorWindow = (EditorWindow)dataContext.getData(DataConstantsEx.EDITOR_WINDOW);
+    final EditorWindow editorWindow = event.getData(EditorWindow.DATA_KEY);
     if (editorWindow != null && editorWindow.inSplitter()) {
       presentation.setText(IdeBundle.message("action.close.all.editors.in.tab.group"));
     }
     else {
       presentation.setText(IdeBundle.message("action.close.all.editors"));
     }
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = event.getData(PlatformDataKeys.PROJECT);
     if (project == null) {
       presentation.setEnabled(false);
       return;

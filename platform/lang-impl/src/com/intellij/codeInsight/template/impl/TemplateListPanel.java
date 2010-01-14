@@ -152,6 +152,10 @@ class TemplateListPanel extends JPanel {
     }
     Collections.sort(result, new Comparator<TemplateImpl>(){
       public int compare(final TemplateImpl o1, final TemplateImpl o2) {
+        final int groupsEqual = o1.getGroupName().compareTo(o2.getGroupName());
+        if (groupsEqual != 0) {
+          return groupsEqual;
+        }
         return o1.getKey().compareTo(o2.getKey());
       }
     });
@@ -166,14 +170,21 @@ class TemplateListPanel extends JPanel {
       newTemplate.parseSegments();
       TemplateImpl originalTemplate = originalGroup.get(i);
       originalTemplate.parseSegments();
-      if (!originalTemplate.equals(newTemplate)) return false;
-      if (originalTemplate.isDeactivated() != newTemplate.isDeactivated()) return false;
+      if (!originalTemplate.equals(newTemplate)) {
+        return false;
+      }
 
-      if (!areOptionsEqual(newTemplate, originalTemplate)) return false;
+      if (originalTemplate.isDeactivated() != newTemplate.isDeactivated()) {
+        return false;
+      }
 
-      if (!areContextsEqual(newTemplate, originalTemplate)) return false;
+      if (!areOptionsEqual(newTemplate, originalTemplate)) {
+        return false;
+      }
 
-
+      if (!areContextsEqual(newTemplate, originalTemplate)) {
+        return false;
+      }
     }
 
     return true;

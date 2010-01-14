@@ -16,7 +16,10 @@
 package com.intellij.ide.actions;
 
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -53,7 +56,7 @@ public abstract class UndoRedoAction extends DumbAwareAction {
     FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
 
     // do not allow global undo in dialogs
-    if (editor == null && dataContext.getData(DataConstants.IS_MODAL_CONTEXT) == Boolean.TRUE) {
+    if (editor == null && PlatformDataKeys.IS_MODAL_CONTEXT.getData(dataContext)) {
       presentation.setEnabled(false);
       return;
     }

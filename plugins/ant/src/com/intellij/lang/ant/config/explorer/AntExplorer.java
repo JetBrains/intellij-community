@@ -28,7 +28,6 @@ import com.intellij.lang.ant.config.impl.*;
 import com.intellij.lang.ant.config.impl.configuration.BuildFilePropertiesPanel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -132,7 +131,7 @@ public class AntExplorer extends JPanel implements DataProvider {
       public void actionPerformed(ActionEvent e) {
         runSelection(DataManager.getInstance().getDataContext(myTree));
       }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED);
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), WHEN_FOCUSED);
     myTree.expandRow(0);
     myTree.setLineStyleAngled();
     myAntBuildFilePropertiesAction = new AntBuildFilePropertiesAction(this);
@@ -396,7 +395,7 @@ public class AntExplorer extends JPanel implements DataProvider {
 
   @Nullable
   public Object getData(@NonNls String dataId) {
-    if (DataConstants.NAVIGATABLE.equals(dataId)) {
+    if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
       final AntBuildFile buildFile = getCurrentBuildFile();
       if (buildFile == null) {
         return null;
@@ -428,13 +427,13 @@ public class AntExplorer extends JPanel implements DataProvider {
         return new OpenFileDescriptor(myProject, file);
       }
     }
-    else if (DataConstants.HELP_ID.equals(dataId)) {
+    else if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return HelpID.ANT;
     }
-    else if (DataConstantsEx.TREE_EXPANDER.equals(dataId)) {
+    else if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
       return myTreeExpander;
     }
-    else if (DataConstants.VIRTUAL_FILE_ARRAY.equals(dataId)) {
+    else if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
       final TreePath[] paths = myTree.getSelectionPaths();
       if (paths == null) {
         return null;
@@ -671,7 +670,7 @@ public class AntExplorer extends JPanel implements DataProvider {
         public void actionPerformed(ActionEvent e) {
           doAction();
         }
-      }, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+      }, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
     }
 
     public void actionPerformed(AnActionEvent e) {

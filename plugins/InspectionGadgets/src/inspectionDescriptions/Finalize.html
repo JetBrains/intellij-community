@@ -1,8 +1,15 @@
 <html>
 <body><table> <tr> <td valign="top" height="150">
 <font face="verdana" size="-1">This inspection reports any implementations of
-a <b><font color="#000080">finalize()</font></b> method.  Due to inability to
-guarantee that <b><font color="#000080">finalize()</font></b> will ever be called,
+a <b><font color="#000080">finalize()</font></b> method. For performance reasons or due to inability
+to guarantee that <b><font color="#000080">finalize()</font></b> will ever be called,
 some coding standards prohibit its use.
+<p>
+Use the checkbox below to ignore <b><font color="#000080">finalize()</font></b> implementations with an empty
+method body or a body containing only if statements which have a condition which
+evaluates to false at compile time. For performance reasons it can be beneficial to
+override a non-trivial <b><font color="#000080">finalize()</font></b> with an empty
+implementation in a subclass. An empty final <b><font color="#000080">finalize()</font></b>
+implementation can also be used to prevent subclasses from overriding.
 </font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets </font> </td> </tr> </table> </body>
 </html>

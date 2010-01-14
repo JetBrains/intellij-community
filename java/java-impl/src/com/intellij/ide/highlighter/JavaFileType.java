@@ -28,8 +28,9 @@ public class JavaFileType extends LanguageFileType {
   @NonNls public static final String DEFAULT_EXTENSION = "java";
   @NonNls public static final String DOT_DEFAULT_EXTENSION = ".java";
   private static final Icon ICON = IconLoader.getIcon("/fileTypes/java.png");
+  public static final JavaFileType INSTANCE = new JavaFileType();
 
-  public JavaFileType() {
+  private JavaFileType() {
     super(new JavaLanguage());
   }
 

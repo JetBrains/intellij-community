@@ -17,16 +17,20 @@ package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiManager;
+import com.intellij.ui.ErrorLabel;
+import com.intellij.ui.GroupedElementsRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -41,7 +45,9 @@ import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 import org.jetbrains.idea.maven.utils.*;
 
+import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InputEvent;
@@ -110,8 +116,15 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
         return userObject instanceof ProfileNode;
       }
 
-      public boolean isSelected(Object userObject) {
-        return ((ProfileNode)userObject).isActive();
+      public MavenUIUtil.CheckBoxState getState(Object userObject) {
+        MavenProfileState state = ((ProfileNode)userObject).getState();
+        switch (state) {
+          case NONE: return MavenUIUtil.CheckBoxState.UNCHECKED;
+          case EXPLICIT:  return MavenUIUtil.CheckBoxState.CHECKED;
+          case IMPLICIT: return MavenUIUtil.CheckBoxState.PARTIAL;
+        }
+        MavenLog.LOG.error("unknown profile state: " + state);
+        return MavenUIUtil.CheckBoxState.UNCHECKED;
       }
     });
   }
@@ -200,8 +213,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
   }
 
-  public void setActiveProfiles(List<String> profiles) {
-    myRoot.setActiveProfiles(profiles);
+  public void updateProfiles() {
+    myRoot.updateProfiles();
   }
 
   public void updateIgnored(List<MavenProject> projects) {
@@ -543,14 +556,10 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     public void updateProfiles() {
       myProfilesNode.updateProfiles();
     }
-
-    public void setActiveProfiles(List<String> profiles) {
-      myProfilesNode.setActiveProfiles(profiles);
-    }
   }
 
   public class ProfilesNode extends GroupNode {
-    private final List<ProfileNode> myProfileNodes = new ArrayList<ProfileNode>();
+    private List<ProfileNode> myProfileNodes = new ArrayList<ProfileNode>();
 
     public ProfilesNode(MavenSimpleNode parent) {
       super(parent);
@@ -567,39 +576,31 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     public void updateProfiles() {
-      List<String> allProfiles = myProjectsManager.getAvailableProfiles();
-      for (ProfileNode each : new ArrayList<ProfileNode>(myProfileNodes)) {
-        if (!allProfiles.contains(each.getProfileName())) myProfileNodes.remove(each);
+      Collection<Pair<String,MavenProfileState>> profiles = myProjectsManager.getProfilesWithStates();
+
+      List<ProfileNode> newNodes = new ArrayList<ProfileNode>(profiles.size());
+      for (Pair<String, MavenProfileState> each : profiles) {
+        ProfileNode node = findOrCreateNodeFor(each.first);
+        node.setState(each.second);
+        newNodes.add(node);
       }
-      for (String each : allProfiles) {
-        if (!hasNodeFor(each)) {
-          myProfileNodes.add(new ProfileNode(this, each));
-        }
-      }
+
+      myProfileNodes = newNodes;
       sort(myProfileNodes);
       childrenChanged();
-
-      setActiveProfiles(myProjectsManager.getActiveProfiles());
     }
 
-    private boolean hasNodeFor(String profileName) {
+    private ProfileNode findOrCreateNodeFor(String profileName) {
       for (ProfileNode each : myProfileNodes) {
-        if (each.getProfileName().equals(profileName)) return true;
+        if (each.getProfileName().equals(profileName)) return each;
       }
-      return false;
-    }
-
-    public void setActiveProfiles(List<String> activeProfiles) {
-      for (ProfileNode each : myProfileNodes) {
-        each.setActive(activeProfiles.contains(each.getProfileName()));
-      }
-      updateFrom(this);
+      return new ProfileNode(this, profileName);
     }
   }
 
   public class ProfileNode extends MavenSimpleNode {
     private final String myProfileName;
-    private boolean isActive;
+    private MavenProfileState myState;
 
     public ProfileNode(ProfilesNode parent, String profileName) {
       super(parent);
@@ -615,12 +616,12 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       return myProfileName;
     }
 
-    public boolean isActive() {
-      return isActive;
+    public MavenProfileState getState() {
+      return myState;
     }
 
-    private void setActive(boolean active) {
-      isActive = active;
+    private void setState(MavenProfileState state) {
+      myState = state;
     }
 
     @Nullable
@@ -923,7 +924,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     public void updatePlugins(MavenProject mavenProject) {
-      List<MavenPlugin> plugins = mavenProject.getPlugins();
+      List<MavenPlugin> plugins = mavenProject.getDeclaredPlugins();
+
       for (PluginNode each : new ArrayList<PluginNode>(myPluginNodes)) {
         if (plugins.contains(each.getPlugin())) {
           each.updatePlugin();
@@ -1014,7 +1016,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   }
 
   public abstract class BaseDependenciesNode extends GroupNode {
-    private final List<DependencyNode> myChildren = new ArrayList<DependencyNode>();
+    private List<DependencyNode> myChildren = new ArrayList<DependencyNode>();
 
     protected BaseDependenciesNode(MavenSimpleNode parent) {
       super(parent);
@@ -1033,9 +1035,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
         newNode.updateChildren(each.getDependencies(), mavenProject);
         newNode.updateDependency();
       }
-      myChildren.clear();
-      myChildren.addAll(newNodes);
-
+      myChildren = newNodes;
       childrenChanged();
     }
 

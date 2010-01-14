@@ -15,7 +15,6 @@
  */
 package com.intellij.util;
 
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -31,7 +30,7 @@ public class OpenSourceUtil {
   }
 
   public static void openSourcesFrom(DataProvider context, boolean requestFocus) {
-    navigate((Navigatable[])context.getData(DataConstants.NAVIGATABLE_ARRAY), requestFocus);
+    navigate(PlatformDataKeys.NAVIGATABLE_ARRAY.getData(context), requestFocus);
   }
 
   public static void navigate(final Navigatable[] navigatables, final boolean requestFocus) {

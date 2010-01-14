@@ -15,9 +15,8 @@
  */
 package com.intellij.openapi.diff.impl.util;
 
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.diff.DiffToolbar;
 import com.intellij.openapi.diff.ex.DiffStatusBar;
@@ -87,9 +86,13 @@ public class DiffPanelOutterComponent extends JPanel implements DataProvider {
   }
 
   public Object getData(String dataId) {
-    if (DataConstantsEx.SOURCE_NAVIGATION_LOCKED.equals(dataId)) return Boolean.TRUE;
-    if (myDataProvider == null) return null;
-    if (dataId == DataConstants.EDITOR) {
+    if (PlatformDataKeys.SOURCE_NAVIGATION_LOCKED.is(dataId)) {
+      return Boolean.TRUE;
+    }
+    if (myDataProvider == null) {
+      return null;
+    }
+    if (PlatformDataKeys.EDITOR.is(dataId)) {
       if (myBottomComponent != null) {
         // we don't want editor actions to be executed when the bottom component has focus
         final Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
@@ -97,7 +100,7 @@ public class DiffPanelOutterComponent extends JPanel implements DataProvider {
           return null;
         }
       }
-      FocusDiffSide side = (FocusDiffSide)myDataProvider.getData(FocusDiffSide.FOCUSED_DIFF_SIDE);
+      FocusDiffSide side = (FocusDiffSide)myDataProvider.getData(FocusDiffSide.DATA_KEY.getName());
       if (side != null) return side.getEditor();
     }
     return myDataProvider.getData(dataId);
@@ -156,7 +159,8 @@ public class DiffPanelOutterComponent extends JPanel implements DataProvider {
       return NO_SCROLL_NEEDED;
     }
 
-    public void deferScroll(DiffPanelOutterComponent outter) { }
+    public void deferScroll(DiffPanelOutterComponent outter) {
+    }
   };
 
   private static final DeferScrollToFirstDiff SCROLL_WHEN_POSSIBLE = new DeferScrollToFirstDiff() {

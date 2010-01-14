@@ -15,22 +15,18 @@
  */
 package com.intellij.codeInsight.hint.api.impls;
 
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.Function;
-import com.intellij.codeInsight.lookup.LookupElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Feb 1, 2006
- * Time: 3:16:09 PM
- * To change this template use File | Settings | File Templates.
+ * @author Maxim.Mossienko
  */
 public class ReferenceParameterInfoHandler implements ParameterInfoHandler<PsiReferenceParameterList,PsiTypeParameter> {
   public Object[] getParametersForLookup(final LookupElement item, final ParameterInfoContext context) {

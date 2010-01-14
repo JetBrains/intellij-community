@@ -24,7 +24,8 @@ import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -71,13 +72,13 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
     }
 
     public Object getData(final String dataId) {
-      if (DataConstants.DOMINANT_HINT_AREA_RECTANGLE.equals(dataId)) {
+      if (PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.is(dataId)) {
         final LookupImpl lookup = (LookupImpl)LookupManager.getInstance(myProject).getActiveLookup();
         if (lookup != null && lookup.isVisible()) {
           return lookup.getBounds();
         }
       }
-      if (DataConstants.MODULE.equals(dataId)) {
+      if (LangDataKeys.MODULE.is(dataId)) {
         return ModuleUtil.findModuleForFile(myFile, myProject);
       }
       return super.getData(dataId);

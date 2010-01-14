@@ -20,11 +20,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lex
- * Date: Apr 14, 2004
- * Time: 11:15:59 AM
- * To change this template use File | Settings | File Templates.
+ * @author lex
  */
 public class EditFrameSourceAction extends GotoFrameSourceAction{
   public void update(AnActionEvent e) {

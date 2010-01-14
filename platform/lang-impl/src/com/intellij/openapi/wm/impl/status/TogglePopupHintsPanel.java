@@ -84,7 +84,8 @@ public class TogglePopupHintsPanel extends JPanel implements StatusBarPatch{
   }
 
   public void clear() {
-
+    myHectorLabel.setIcon(EMPTY_ICON);
+    myHectorLabel.setToolTipText(null);
   }
 
   public void updateStatus() {

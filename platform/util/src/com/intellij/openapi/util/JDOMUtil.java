@@ -72,8 +72,9 @@ public class JDOMUtil {
     if (e1 == null && e2 == null) return true;
     if (e1 == null || e2 == null) return false;
 
-    return attListsEqual(e1.getAttributes(), e2.getAttributes()) &&
-           contentListsEqual(e1.getContent(CONTENT_FILTER), e2.getContent(CONTENT_FILTER));
+    return Comparing.equal(e1.getName(), e2.getName())
+           && attListsEqual(e1.getAttributes(), e2.getAttributes())
+           && contentListsEqual(e1.getContent(CONTENT_FILTER), e2.getContent(CONTENT_FILTER));
   }
 
   private static final EmptyTextFilter CONTENT_FILTER = new EmptyTextFilter();

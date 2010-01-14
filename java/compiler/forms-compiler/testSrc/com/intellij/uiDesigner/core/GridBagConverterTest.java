@@ -22,11 +22,7 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 23.11.2005
- * Time: 13:47:38
- * To change this template use File | Settings | File Templates.
+ * @author yole
  */
 public class GridBagConverterTest extends TestCase {
   /**
@@ -892,7 +888,7 @@ public class GridBagConverterTest extends TestCase {
     assertEquals(100, field3.getHeight());
   }
 
-  private void applyConversionResults(final JPanel panel, final GridBagConverter converter) {
+  private static void applyConversionResults(final JPanel panel, final GridBagConverter converter) {
     GridBagConverter.Result[] results = converter.convert();
     for(int i=0; i<results.length; i++)  {
       GridBagConverter.Result result = results [i];

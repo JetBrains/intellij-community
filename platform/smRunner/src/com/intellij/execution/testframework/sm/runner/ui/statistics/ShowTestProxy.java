@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Roman Chernyatchik
  */
-public class ShowTestProxy extends AnAction{
+public class ShowTestProxy extends AnAction {
   public void actionPerformed(final AnActionEvent e) {
     final StatisticsPanel sender = e.getData(StatisticsPanel.SM_TEST_RUNNER_STATISTICS);
     if (sender == null) {
@@ -45,6 +45,7 @@ public class ShowTestProxy extends AnAction{
   }
 
   @Nullable
-  private Object getSelectedTestProxy(final AnActionEvent e) {
-    return e.getDataContext().getData (AbstractTestProxy.DATA_CONSTANT);
-  }}
+  private static Object getSelectedTestProxy(final AnActionEvent e) {
+    return AbstractTestProxy.DATA_KEY.getData(e.getDataContext());
+  }
+}

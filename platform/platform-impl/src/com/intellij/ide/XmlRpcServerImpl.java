@@ -33,7 +33,8 @@ import java.net.ServerSocket;
  */
 public class XmlRpcServerImpl implements XmlRpcServer, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.XmlRpcServerImpl");
-  public static final int PORT_NUMBER = 63342;
+  private static final int FIRST_PORT_NUMBER = 63342;
+  private static final int PORTS_COUNT = 20;
   public static int detectedPortNumber = -1;
   private WebServer myWebServer;
   @NonNls private static final String PROPERTY_RPC_PORT = "rpc.port";
@@ -47,7 +48,7 @@ public class XmlRpcServerImpl implements XmlRpcServer, ApplicationComponent {
   public void initComponent() {
     if (ApplicationManager.getApplication().isUnitTestMode() || !checkPort()) return;
     final Thread thread = Thread.currentThread();
-    final int currentPrio = thread.getPriority();
+    final int currentPriority = thread.getPriority();
     try {
       thread.setPriority(Thread.NORM_PRIORITY - 2);
       myWebServer = new IdeaAwareWebServer(getPortNumber(), null, new IdeaAwareXmlRpcServer());
@@ -58,40 +59,44 @@ public class XmlRpcServerImpl implements XmlRpcServer, ApplicationComponent {
       myWebServer = null;
     }
     finally {
-      thread.setPriority(currentPrio);
+      thread.setPriority(currentPriority);
     }
   }
 
   public int getPortNumber() {
-    return detectedPortNumber == -1 ? getPortImpl() : detectedPortNumber;
+    return detectedPortNumber == -1 ? getDefaultPort() : detectedPortNumber;
   }
 
-  private static int getPortImpl() {
+  private static int getDefaultPort() {
     if (System.getProperty(PROPERTY_RPC_PORT) != null) return Integer.parseInt(System.getProperty(PROPERTY_RPC_PORT));
-    return PORT_NUMBER;
+    return FIRST_PORT_NUMBER;
   }
 
   private static boolean checkPort() {
     ServerSocket socket = null;
     try {
-      try {
-        socket = new ServerSocket(getPortImpl());
-      }
-      catch (BindException e) {
+      final int firstPort = getDefaultPort();
+      for (int i = 0; i < PORTS_COUNT; i++) {
+        int port = firstPort + i;
         try {
-          // try any port
-          socket = new ServerSocket(0);
-          detectedPortNumber = socket.getLocalPort();
+          socket = new ServerSocket(port);
+          detectedPortNumber = port;
           return true;
-        } catch (BindException e1) {
-          // fallthrow
         }
-        return false;
+        catch (BindException ignored) {
+        }
+      }
+
+      try {
+        // try any port
+        socket = new ServerSocket(0);
+        detectedPortNumber = socket.getLocalPort();
+        return true;
+      } catch (BindException ignored) {
       }
     }
     catch (IOException e) {
       LOG.info(e);
-      return false;
     }
     finally {
       if (socket != null) {
@@ -100,11 +105,10 @@ public class XmlRpcServerImpl implements XmlRpcServer, ApplicationComponent {
         }
         catch (IOException e) {
           LOG.error(e);
-          return false;
         }
       }
     }
-    return true;
+    return false;
   }
 
   public void disposeComponent() {

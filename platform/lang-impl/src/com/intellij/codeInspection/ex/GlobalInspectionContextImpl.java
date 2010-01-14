@@ -518,7 +518,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
 
         final FileViewProvider viewProvider = psiManager.findViewProvider(virtualFile);
         final com.intellij.openapi.editor.Document document = viewProvider != null ? viewProvider.getDocument() : null;
-        if (document == null) return; //do not inspect binary files
+        if (document == null || virtualFile.getFileType().isBinary()) return; //do not inspect binary files
         final LocalInspectionsPass pass = new LocalInspectionsPass(file, document, 0, file.getTextLength());
         try {
           final List<InspectionProfileEntry> lTools = new ArrayList<InspectionProfileEntry>();

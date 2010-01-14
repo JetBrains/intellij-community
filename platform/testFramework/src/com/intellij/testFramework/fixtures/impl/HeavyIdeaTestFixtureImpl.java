@@ -20,8 +20,8 @@ import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaTestApplication;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -186,10 +186,10 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
   private class MyDataProvider implements DataProvider {
     @Nullable
     public Object getData(@NonNls String dataId) {
-      if (dataId.equals(DataConstants.PROJECT)) {
+      if (PlatformDataKeys.PROJECT.is(dataId)) {
         return myProject;
       }
-      else if (dataId.equals(DataConstants.EDITOR) || dataId.equals(OpenFileDescriptor.NAVIGATE_IN_EDITOR.getName())) {
+      else if (PlatformDataKeys.EDITOR.is(dataId) || OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
         return FileEditorManager.getInstance(myProject).getSelectedTextEditor();
       }
       else {

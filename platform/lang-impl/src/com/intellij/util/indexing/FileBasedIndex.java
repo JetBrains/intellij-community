@@ -69,7 +69,6 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.io.*;
@@ -827,64 +826,10 @@ public class FileBasedIndex implements ApplicationComponent {
     return result;
   }
 
-  public interface AllValuesProcessor<V> {
-    void process(final int inputId, V value);
-  }
-
-  public <K, V> void processAllValues(final ID<K, V> indexId, final AllValuesProcessor<V> processor, @NotNull Project project) {
-    try {
-      ensureUpToDate(indexId, project, null);
-      final UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
-      if (index == null) {
-        return;
-      }
-      final Ref<StorageException> storageEx = new Ref<StorageException>(null);
-      index.processAllKeys(new Processor<K>() {
-        public boolean process(K dataKey) {
-          try {
-            final ValueContainer<V> container = index.getData(dataKey);
-            for (final Iterator<V> it = container.getValueIterator(); it.hasNext();) {
-              final V value = it.next();
-              for (final ValueContainer.IntIterator inputsIt = container.getInputIdsIterator(value); inputsIt.hasNext();) {
-                processor.process(inputsIt.next(), value);
-              }
-            }
-            return true;
-          }
-          catch (StorageException e) {
-            storageEx.set(e);
-            return false;
-          }
-        }
-      });
-      final StorageException ex = storageEx.get();
-      if (ex != null) {
-        throw ex;
-      }
-    }
-    catch (StorageException e) {
-      scheduleRebuild(indexId, e);
-    }
-    catch (RuntimeException e) {
-      final Throwable cause = e.getCause();
-      if (cause instanceof StorageException || cause instanceof IOException) {
-        scheduleRebuild(indexId, e);
-      }
-      else {
-        throw e;
-      }
-    }
-  }
-
-  private <K> void scheduleRebuild(final ID<K, ?> indexId, final Throwable e) {
-    requestRebuild(indexId);
+  public <K> void scheduleRebuild(final ID<K, ?> indexId, final Throwable e) {
     LOG.info(e);
+    requestRebuild(indexId);
     checkRebuild(indexId, false);
-  }
-
-  @TestOnly
-  public boolean isIndexReady(final ID<?, ?> indexId) {
-    return myRebuildStatus.get(indexId).get() == OK;
   }
 
   private void checkRebuild(final ID<?, ?> indexId, final boolean cleanupOnly) {

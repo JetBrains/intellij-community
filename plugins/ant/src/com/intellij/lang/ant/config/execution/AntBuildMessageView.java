@@ -29,7 +29,6 @@ import com.intellij.lang.ant.config.actions.*;
 import com.intellij.lang.ant.config.impl.AntBuildFileImpl;
 import com.intellij.lang.ant.config.impl.HelpID;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -422,10 +421,10 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   public Object getData(String dataId) {
     Object data = myCurrentView.getData(dataId);
     if (data != null) return data;
-    if (DataConstants.HELP_ID.equals(dataId)) {
+    if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return HelpID.ANT;
     }
-    else if (DataConstantsEx.TREE_EXPANDER.equals(dataId)) {
+    else if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
       return myTreeExpander;
     }
     return null;

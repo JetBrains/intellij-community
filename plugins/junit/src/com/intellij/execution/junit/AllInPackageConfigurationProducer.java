@@ -17,6 +17,7 @@
 package com.intellij.execution.junit;
 
 import com.intellij.execution.Location;
+import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.project.Project;
@@ -38,6 +39,7 @@ public class AllInPackageConfigurationProducer extends JUnitConfigurationProduce
     data.TEST_OBJECT = JUnitConfiguration.TEST_PACKAGE;
     data.setScope(setupPackageConfiguration(context, project, configuration, data.getScope()));
     configuration.setGeneratedName();
+    RunConfigurationExtension.patchCreatedConfiguration(configuration);
     return settings;
   }
 

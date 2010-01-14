@@ -77,28 +77,30 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     if (i == TokenType.DUMMY_HOLDER) {
       return myKindWhenDummy;
     }
-    else if (i == JavaElementType.TYPE) {
+    if (i == JavaElementType.TYPE) {
       return getTreeParent().getTreeParent().getPsi() instanceof PsiTypeCodeFragment ? CLASS_OR_PACKAGE_NAME_KIND : CLASS_NAME_KIND;
     }
-    else if (i == JavaElementType.EXTENDS_LIST || i == JavaElementType.IMPLEMENTS_LIST || i == JavaElementType.EXTENDS_BOUND_LIST || i ==
-                                                                                                                                     JavaElementType.THROWS_LIST ||
-             i == JavaElementType.THIS_EXPRESSION ||
-             i == JavaElementType.SUPER_EXPRESSION ||
-             i == JavaDocElementType.DOC_METHOD_OR_FIELD_REF ||
-             i == JavaDocTokenType.DOC_TAG_VALUE_TOKEN ||
-             i == JavaElementType.REFERENCE_PARAMETER_LIST ||
-             i == JavaElementType.ANNOTATION) {
+    if (i == JavaElementType.EXTENDS_LIST ||
+        i == JavaElementType.IMPLEMENTS_LIST ||
+        i == JavaElementType.EXTENDS_BOUND_LIST ||
+        i == JavaElementType.THROWS_LIST ||
+        i == JavaElementType.THIS_EXPRESSION ||
+        i == JavaElementType.SUPER_EXPRESSION ||
+        i == JavaDocElementType.DOC_METHOD_OR_FIELD_REF ||
+        i == JavaDocTokenType.DOC_TAG_VALUE_TOKEN ||
+        i == JavaElementType.REFERENCE_PARAMETER_LIST ||
+        i == JavaElementType.ANNOTATION) {
       if (isQualified()) {
         return CLASS_OR_PACKAGE_NAME_KIND;
       }
 
       return CLASS_NAME_KIND;
     }
-    else if (i == JavaElementType.NEW_EXPRESSION) {
+    if (i == JavaElementType.NEW_EXPRESSION) {
       final ASTNode qualifier = getTreeParent().findChildByRole(ChildRole.QUALIFIER);
       return qualifier != null ? CLASS_IN_QUALIFIED_NEW_KIND : CLASS_NAME_KIND;
     }
-    else if (i == JavaElementType.ANONYMOUS_CLASS) {
+    if (i == JavaElementType.ANONYMOUS_CLASS) {
       if (getTreeParent().getChildRole(this) == ChildRole.BASE_CLASS_REFERENCE) {
         LOG.assertTrue(getTreeParent().getTreeParent().getElementType() == JavaElementType.NEW_EXPRESSION);
         final ASTNode qualifier = getTreeParent().getTreeParent().findChildByRole(ChildRole.QUALIFIER);
@@ -108,60 +110,68 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         return CLASS_OR_PACKAGE_NAME_KIND; // uncomplete code
       }
     }
-    else if (i == JavaElementType.PACKAGE_STATEMENT) {
+    if (i == JavaElementType.PACKAGE_STATEMENT) {
       return PACKAGE_NAME_KIND;
     }
-    else if (i == JavaElementType.IMPORT_STATEMENT) {
+    if (i == JavaElementType.IMPORT_STATEMENT) {
       final boolean isOnDemand = ((PsiImportStatement)SourceTreeToPsiMap.treeElementToPsi(getTreeParent())).isOnDemand();
       return isOnDemand ? CLASS_FQ_OR_PACKAGE_NAME_KIND : CLASS_FQ_NAME_KIND;
     }
-    else if (i == JavaElementType.IMPORT_STATIC_STATEMENT) {
+    if (i == JavaElementType.IMPORT_STATIC_STATEMENT) {
       return CLASS_FQ_OR_PACKAGE_NAME_KIND;
     }
-    else if (i == JavaElementType.JAVA_CODE_REFERENCE) {
+    if (i == JavaElementType.JAVA_CODE_REFERENCE) {
       final int parentKind = ((PsiJavaCodeReferenceElementImpl)getTreeParent()).getKind();
       switch (parentKind) {
-      case CLASS_NAME_KIND:
-             return CLASS_OR_PACKAGE_NAME_KIND;
+        case CLASS_NAME_KIND:
+          return CLASS_OR_PACKAGE_NAME_KIND;
 
-      case PACKAGE_NAME_KIND:
-             return PACKAGE_NAME_KIND;
+        case PACKAGE_NAME_KIND:
+          return PACKAGE_NAME_KIND;
 
-      case CLASS_OR_PACKAGE_NAME_KIND:
-             return CLASS_OR_PACKAGE_NAME_KIND;
+        case CLASS_OR_PACKAGE_NAME_KIND:
+          return CLASS_OR_PACKAGE_NAME_KIND;
 
-      case CLASS_FQ_NAME_KIND:
-             return CLASS_FQ_OR_PACKAGE_NAME_KIND;
+        case CLASS_FQ_NAME_KIND:
+          return CLASS_FQ_OR_PACKAGE_NAME_KIND;
 
-      case CLASS_FQ_OR_PACKAGE_NAME_KIND:
-             return CLASS_FQ_OR_PACKAGE_NAME_KIND;
+        case CLASS_FQ_OR_PACKAGE_NAME_KIND:
+          return CLASS_FQ_OR_PACKAGE_NAME_KIND;
 
-      case CLASS_IN_QUALIFIED_NEW_KIND:
-             return CLASS_IN_QUALIFIED_NEW_KIND; //??
+        case CLASS_IN_QUALIFIED_NEW_KIND:
+          return CLASS_IN_QUALIFIED_NEW_KIND; //??
 
-      default:
-             LOG.assertTrue(false);
-             return -1;
+        default:
+          LOG.assertTrue(false);
+          return -1;
       }
     }
-    else if (i == JavaElementType.CLASS || i == JavaElementType.PARAMETER_LIST || i == TokenType.ERROR_ELEMENT) {
+    if (i == JavaElementType.CLASS || i == JavaElementType.PARAMETER_LIST || i == TokenType.ERROR_ELEMENT) {
       return CLASS_OR_PACKAGE_NAME_KIND;
     }
-    else if (i == JavaElementType.IMPORT_STATIC_REFERENCE) {
+    if (i == JavaElementType.IMPORT_STATIC_REFERENCE) {
       return CLASS_FQ_OR_PACKAGE_NAME_KIND;
     }
-    else if (i == JavaDocElementType.DOC_TAG || i == JavaDocElementType.DOC_INLINE_TAG || i == JavaDocElementType.DOC_REFERENCE_HOLDER || i ==
-                                                                                                                                          JavaDocElementType.DOC_TYPE_HOLDER) {
+    if (i == JavaDocElementType.DOC_TAG ||
+        i == JavaDocElementType.DOC_INLINE_TAG ||
+        i == JavaDocElementType.DOC_REFERENCE_HOLDER ||
+        i == JavaDocElementType.DOC_TYPE_HOLDER) {
       return CLASS_OR_PACKAGE_NAME_KIND;
     }
-    else if (isCodeFragmentType(i)) {
+    if (isCodeFragmentType(i)) {
       PsiJavaCodeReferenceCodeFragment fragment = (PsiJavaCodeReferenceCodeFragment)getTreeParent().getPsi();
       return fragment.isClassesAccepted() ? CLASS_FQ_OR_PACKAGE_NAME_KIND : PACKAGE_NAME_KIND;
     }
-    else {
-      LOG.error("Unknown parent for java code reference:" + getTreeParent());
-      return CLASS_NAME_KIND;
+    CompositeElement parent = getTreeParent();
+    String message = "Unknown parent for java code reference: '" + parent +"'; " +
+                     "Type: "+i+"; \n";
+
+    while (parent != null && parent.getPsi() instanceof PsiExpression) {
+      parent = parent.getTreeParent();
+      message += " Parent: '" + parent+"'; ";
     }
+    LOG.error(message);
+    return CLASS_NAME_KIND;
   }
 
   private static boolean isCodeFragmentType(IElementType type) {

@@ -27,7 +27,7 @@ public class DefaultFileTypeFactory extends FileTypeFactory {
   public void createFileTypes(@NotNull final FileTypeConsumer consumer) {
     consumer.consume(new JavaClassFileType(), "class");
 
-    consumer.consume(new JavaFileType(), "java");
+    consumer.consume(JavaFileType.INSTANCE, "java");
 
     consumer.consume(new WorkspaceFileType(), WorkspaceFileType.DEFAULT_EXTENSION);
     consumer.consume(new ModuleFileType(), ModuleFileType.DEFAULT_EXTENSION);

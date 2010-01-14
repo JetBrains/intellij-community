@@ -15,17 +15,16 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.ide.IdeBundle;
 
 import java.util.ArrayList;
 
@@ -38,7 +37,7 @@ public abstract class CloseEditorsActionBase extends AnAction implements DumbAwa
     final DataContext dataContext = event.getDataContext();
     final Project project = event.getData(PlatformDataKeys.PROJECT);
     final FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(project);
-    final EditorWindow editorWindow = (EditorWindow)dataContext.getData(DataConstantsEx.EDITOR_WINDOW);
+    final EditorWindow editorWindow = EditorWindow.DATA_KEY.getData(dataContext);
     final EditorWindow[] windows;
     if (editorWindow != null){
       windows = new EditorWindow[]{ editorWindow };
@@ -82,7 +81,7 @@ public abstract class CloseEditorsActionBase extends AnAction implements DumbAwa
   public void update(final AnActionEvent event){
     final Presentation presentation = event.getPresentation();
     final DataContext dataContext = event.getDataContext();
-    final EditorWindow editorWindow = (EditorWindow)dataContext.getData(DataConstantsEx.EDITOR_WINDOW);
+    final EditorWindow editorWindow = EditorWindow.DATA_KEY.getData(dataContext);
     final boolean inSplitter = editorWindow != null && editorWindow.inSplitter();
     presentation.setText(getPresentationText(inSplitter));
     final Project project = event.getData(PlatformDataKeys.PROJECT);

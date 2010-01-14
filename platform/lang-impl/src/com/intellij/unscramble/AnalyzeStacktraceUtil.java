@@ -72,7 +72,7 @@ public class AnalyzeStacktraceUtil {
         text = (String)contents.getTransferData(DataFlavor.stringFlavor);
       }
     }
-    catch (Exception ex) {
+    catch (Exception ignore) {
     }
     return text;
   }
@@ -141,7 +141,7 @@ public class AnalyzeStacktraceUtil {
     }
 
     public Object getData(String dataId) {
-      if (DataConstants.EDITOR.equals(dataId)) {
+      if (PlatformDataKeys.EDITOR.is(dataId)) {
         return myEditor;
       }
       return null;

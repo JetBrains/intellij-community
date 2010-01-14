@@ -3,5 +3,14 @@
 <font face="verdana" size="-1">This inspection reports any implementations of the <b><font color="#000080">Object.finalize()</font></b> method
 which do not call <b><font color="#000080">super.finalize()</font></b>.  Failing to call <b><font color="#000080">super.finalize()</font></b> may result in objects failing to properly
 free any resources held or do other cleanup activities.
+<p>
+Use the checkboxes below to ignore direct subclasses of <b><font color="#000080">java.lang.Object</font></b>
+or to ignore <b><font color="#000080">finalize()</font></b> implementations with an empty
+method body or a body containing only if statements which have a condition which
+evaluates to false at compile time. For performance reasons it can be beneficial to
+override a non-trivial <b><font color="#000080">finalize()</font></b> with an empty
+implementation in a subclass. An empty final <b><font color="#000080">finalize()</font></b>
+implementation can also be used to prevent subclasses from overriding.
+</p>
 </font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets </font> </td> </tr> </table> </body>
 </html>

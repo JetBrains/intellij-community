@@ -16,7 +16,7 @@
 
 package com.intellij.execution.junit2.ui;
 
-import com.intellij.execution.junit2.CumulativeStatistics;
+import com.intellij.execution.junit2.states.CumulativeStatistics;
 import com.intellij.execution.junit2.states.Statistics;
 
 class ActualStatistics implements TestStatistics {

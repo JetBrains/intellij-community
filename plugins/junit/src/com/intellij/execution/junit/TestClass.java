@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.JUnitStarter;
 
@@ -39,8 +40,9 @@ class TestClass extends TestObject {
     final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
     RunConfigurationModule module = myConfiguration.getConfigurationModule();
     configureModule(myJavaParameters, module, data.getMainClassName());
-    Location<PsiClass> classLocation = PsiClassLocationUtil.fromClassQualifiedName(module.getProject(), data.getMainClassPsiName());
-    if (JUnitUtil.isJUnit4TestClass(classLocation.getPsiElement())) {
+    final Project project = module.getProject();
+    final PsiClass psiClass = JavaExecutionUtil.findMainClass(project, data.getMainClassName(), GlobalSearchScope.allScope(project));
+    if (JUnitUtil.isJUnit4TestClass(psiClass)) {
       myJavaParameters.getProgramParametersList().add(JUnitStarter.JUNIT4_PARAMETER);
     }
     myJavaParameters.getProgramParametersList().add(data.getMainClassName());

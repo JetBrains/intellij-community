@@ -23,8 +23,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 
 /**
  * User: anna
@@ -42,7 +42,7 @@ public class DeleteAllFavoritesListsButThisAction extends AnAction implements Du
       return;
     }
     FavoritesManager favoritesManager = FavoritesManager.getInstance(project);
-    String listName = (String)dataContext.getData(FavoritesTreeViewPanel.FAVORITES_LIST_NAME);
+    String listName = FavoritesTreeViewPanel.FAVORITES_LIST_NAME_DATA_KEY.getData(dataContext);
     String[] lists = favoritesManager.getAvailableFavoritesLists();
     for (String list : lists) {
       if (!list.equals(listName)) {
@@ -58,7 +58,7 @@ public class DeleteAllFavoritesListsButThisAction extends AnAction implements Du
       e.getPresentation().setEnabled(false);
       return;
     }
-    String listName = (String)dataContext.getData(FavoritesTreeViewPanel.FAVORITES_LIST_NAME);
+    String listName = FavoritesTreeViewPanel.FAVORITES_LIST_NAME_DATA_KEY.getData(dataContext);
     e.getPresentation().setEnabled(listName != null);
     if (listName != null) {
       e.getPresentation().setText(IdeBundle.message("action.delete.all.favorites.lists.but.this",listName));

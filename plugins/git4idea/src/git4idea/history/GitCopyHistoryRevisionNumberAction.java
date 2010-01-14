@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import git4idea.i18n.GitBundle;
@@ -34,7 +35,9 @@ public class GitCopyHistoryRevisionNumberAction extends AnAction implements Dumb
    * The constructor
    */
   public GitCopyHistoryRevisionNumberAction() {
-    super(GitBundle.getString("history.copy.revsion.number"));
+    super(GitBundle.getString("history.copy.revsion.number"),
+          GitBundle.getString("history.copy.revsion.number"),
+          IconLoader.getIcon("/actions/copy.png"));
   }
 
   /**

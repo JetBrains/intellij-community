@@ -25,7 +25,7 @@ public class MavenSettingsTest extends MavenTestCase {
 
     MavenGeneralSettings s = new MavenGeneralSettings();
     s.addListener(new MavenGeneralSettings.Listener() {
-      public void pathChanged() {
+      public void pathsChanged() {
         log[0] += "changed ";
       }
     });

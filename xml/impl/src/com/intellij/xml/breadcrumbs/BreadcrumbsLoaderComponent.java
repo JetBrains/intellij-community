@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiManager;
 import com.intellij.application.options.editor.WebEditorOptions;
@@ -66,11 +67,13 @@ public class BreadcrumbsLoaderComponent extends AbstractProjectComponent {
     }
 
     private static boolean isSuitable(final Project project, final VirtualFile file) {
+      if (file instanceof HttpVirtualFile) {
+        return false; }
+
       final FileViewProvider psiFile = PsiManager.getInstance(project).findViewProvider(file);
-      
+
       return psiFile != null &&
-             (BreadcrumbsXmlWrapper.findInfoProvider(psiFile) != null ||
-              file.getUserData(BREADCRUMBS_SUITABLE_FILE) != null);
+             (BreadcrumbsXmlWrapper.findInfoProvider(psiFile) != null || file.getUserData(BREADCRUMBS_SUITABLE_FILE) != null);
     }
 
     public void fileClosed(final FileEditorManager source, final VirtualFile file) {

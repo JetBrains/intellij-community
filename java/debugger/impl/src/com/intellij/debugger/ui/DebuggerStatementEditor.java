@@ -37,11 +37,7 @@ import java.util.List;
 import java.util.ListIterator;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lex
- * Date: Apr 12, 2004
- * Time: 2:39:17 PM
- * To change this template use File | Settings | File Templates.
+ * @author lex
  */
 public class DebuggerStatementEditor extends DebuggerEditorImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.DebuggerStatementEditor");

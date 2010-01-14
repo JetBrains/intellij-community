@@ -43,7 +43,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author nik
@@ -238,7 +240,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   }
 
   public String getHelpTopic() {
-    final Object component = DataManager.getInstance().getDataContext().getData(DataKeys.CONTEXT_COMPONENT.getName());
+    final Component component = DataKeys.CONTEXT_COMPONENT.getData(DataManager.getInstance().getDataContext());
     if (myTree.equals(component)) {
       final NamedConfigurable selectedConfugurable = getSelectedConfugurable();
       if (selectedConfugurable instanceof FacetTypeConfigurable) {

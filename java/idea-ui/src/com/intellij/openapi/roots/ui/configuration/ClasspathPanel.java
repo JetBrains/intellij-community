@@ -1065,7 +1065,7 @@ public class ClasspathPanel extends JPanel {
 
     private static FileChooserDescriptor createFileChooserDescriptor(Component parent) {
       final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, true, false, false, true);
-      final Module contextModule = (Module)DataManager.getInstance().getDataContext(parent).getData(DataConstants.MODULE_CONTEXT);
+      final Module contextModule = LangDataKeys.MODULE_CONTEXT.getData(DataManager.getInstance().getDataContext(parent));
       descriptor.putUserData(LangDataKeys.MODULE_CONTEXT, contextModule);
       return descriptor;
     }

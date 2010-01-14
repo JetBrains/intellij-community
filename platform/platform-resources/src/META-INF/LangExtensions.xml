@@ -491,6 +491,8 @@
   <projectService serviceInterface="com.intellij.ide.bookmarks.BookmarkManager"
                   serviceImplementation="com.intellij.ide.bookmarks.BookmarkManager"/>
 
+  <http.fileEditorActionProvider implementation="com.intellij.openapi.fileEditor.impl.http.LangRemoteFileEditorActionProvider"/>
+
   <toolWindow id="Project" anchor="left" icon="/general/toolWindowProject.png"
               factoryClass="com.intellij.ide.projectView.impl.ProjectViewToolWindowFactory"/>
   <toolWindow id="TODO" anchor="bottom" icon="/general/toolWindowTodo.png"

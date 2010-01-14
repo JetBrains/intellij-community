@@ -15,8 +15,8 @@
  */
 package com.intellij.ui;
 
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -497,7 +497,7 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
   public Object getData(String dataId) {
     if (myEditor != null && myEditor.isRendererMode()) return null;
 
-    if (DataConstants.EDITOR.equals(dataId)) {
+    if (PlatformDataKeys.EDITOR.is(dataId)) {
       return myEditor;
     }
 

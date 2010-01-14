@@ -23,8 +23,10 @@ package org.jetbrains.idea.devkit.codeInsight;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
@@ -55,7 +57,7 @@ public class CreateClassFixTest {
     myFixture.setUp();
   }
 
-  private String getSourceRoot() {
+  private static String getSourceRoot() {
     return "codeInsight";
   }
 
@@ -77,7 +79,8 @@ public class CreateClassFixTest {
     }
     Assert.assertNotNull(resultAction);
     myFixture.launchAction(resultAction);
-    Assert.assertNotNull(JavaPsiFacade.getInstance(myFixture.getProject()).findClass(testName));
+    final Project project = myFixture.getProject();
+    Assert.assertNotNull(JavaPsiFacade.getInstance(project).findClass(testName, GlobalSearchScope.allScope(project)));
   }
 
 

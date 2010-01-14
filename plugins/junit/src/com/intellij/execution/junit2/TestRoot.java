@@ -18,6 +18,8 @@ package com.intellij.execution.junit2;
 
 import java.util.List;
 
-public interface TestRoot extends TestProxyParent {
+public interface TestRoot {
   List<TestProxy> getAllTests();
+
+  void addChild(TestProxy child);
 }

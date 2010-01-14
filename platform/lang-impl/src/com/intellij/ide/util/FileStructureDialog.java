@@ -50,8 +50,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.SpeedSearchBase;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -337,11 +337,11 @@ public class FileStructureDialog extends DialogWrapper {
 
       if (selectedElement instanceof TreeElement) selectedElement = ((StructureViewTreeElement)selectedElement).getValue();
 
-      if (DataConstants.NAVIGATABLE.equals(dataId)) {
+      if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
         return selectedElement instanceof Navigatable ? selectedElement : myNavigatable;
       }
 
-      if (OpenFileDescriptor.NAVIGATE_IN_EDITOR.getName().equals(dataId)) return myEditor;
+      if (OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) return myEditor;
 
       return getDataImpl(dataId);
     }

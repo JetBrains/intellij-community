@@ -43,7 +43,7 @@ public abstract class XmlSchemaProvider {
   public final static ExtensionPointName<XmlSchemaProvider> EP_NAME = new ExtensionPointName<XmlSchemaProvider>("com.intellij.xml.schemaProvider");
 
   @Nullable
-  public static XmlFile findSchema(@NotNull @NonNls String url, @Nullable Module module, @NotNull PsiFile file) {
+  public static XmlFile findSchema(@NotNull @NonNls String namespace, @Nullable Module module, @NotNull PsiFile file) {
     final boolean dumb = DumbService.getInstance(file.getProject()).isDumb();
 
     for (XmlSchemaProvider provider: Extensions.getExtensions(EP_NAME)) {
@@ -54,7 +54,7 @@ public abstract class XmlSchemaProvider {
       if (file instanceof XmlFile && !provider.isAvailable((XmlFile)file)) {
         continue;
       }
-      final XmlFile schema = provider.getSchema(url, module, file);
+      final XmlFile schema = provider.getSchema(namespace, module, file);
       if (schema != null) {
         return schema;
       }
@@ -63,10 +63,10 @@ public abstract class XmlSchemaProvider {
   }
 
   @Nullable
-  public static XmlFile findSchema(@NotNull @NonNls String url, @NotNull PsiFile baseFile) {
+  public static XmlFile findSchema(@NotNull @NonNls String namespace, @NotNull PsiFile baseFile) {
     final PsiDirectory directory = baseFile.getParent();
     final Module module = ModuleUtil.findModuleForPsiElement(directory == null ? baseFile : directory);
-    return findSchema(url, module, baseFile);
+    return findSchema(namespace, module, baseFile);
   }
 
   /**

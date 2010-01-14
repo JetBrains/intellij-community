@@ -75,24 +75,4 @@ public class SegmentedOutputStream extends OutputStream implements PacketProcess
     writeNext(SegmentedStream.STARTUP_MESSAGE);
     myStarted = true;
   }
-
-  public void beNotStarted() {
-    myStarted = false;
-  }
-
-  public static interface PrintStreamProvider {
-    OutputStream getOutputStream();
-  }
-
-  public static class SimplePrintStreamProvider implements PrintStreamProvider {
-    private final PrintStream myPrintStream;
-
-    public SimplePrintStreamProvider(PrintStream printStream) {
-      myPrintStream = printStream;
-    }
-
-    public OutputStream getOutputStream() {
-      return myPrintStream;
-    }
-  }
 }

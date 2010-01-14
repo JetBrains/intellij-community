@@ -19,7 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
-import git4idea.commands.GitHandler;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
 
@@ -192,7 +192,7 @@ public class GitFetchDialog extends DialogWrapper {
    * @return the handler for the fetch operation
    */
   public GitLineHandler fetchHandler() {
-    GitLineHandler h = new GitLineHandler(myProject, getGitRoot(), GitHandler.FETCH);
+    GitLineHandler h = new GitLineHandler(myProject, getGitRoot(), GitCommand.FETCH);
     h.addParameters("-v");
     if (myForceReferencesUpdateCheckBox.isSelected()) {
       h.addParameters("--force");

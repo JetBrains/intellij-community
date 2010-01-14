@@ -20,13 +20,13 @@
  */
 package com.intellij.junit4;
 
-import com.intellij.rt.execution.junit.segments.OutputObjectRegistryEx;
+import com.intellij.rt.execution.junit.segments.OutputObjectRegistry;
 import com.intellij.rt.execution.junit.segments.Packet;
 import com.intellij.rt.execution.junit.segments.PacketProcessor;
 import org.junit.runner.Description;
 
 
-public class JUnit4OutputObjectRegistry extends OutputObjectRegistryEx {
+public class JUnit4OutputObjectRegistry extends OutputObjectRegistry {
   public JUnit4OutputObjectRegistry(PacketProcessor mainTransport, PacketProcessor auxilaryTransport) {
     super(mainTransport, auxilaryTransport);
   }

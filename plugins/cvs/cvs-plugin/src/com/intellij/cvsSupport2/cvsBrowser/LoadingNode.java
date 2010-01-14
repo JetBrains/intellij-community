@@ -15,18 +15,14 @@
  */
 package com.intellij.cvsSupport2.cvsBrowser;
 
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.CommonBundle;
+import com.intellij.openapi.util.IconLoader;
 
-import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lesya
- * Date: Jul 22, 2005
- * Time: 6:39:50 PM
- * To change this template use File | Settings | File Templates.
+ * @author lesya
  */
 class LoadingNode extends DefaultMutableTreeNode {
   private String myText = CommonBundle.getLoadingTreeNodeText();

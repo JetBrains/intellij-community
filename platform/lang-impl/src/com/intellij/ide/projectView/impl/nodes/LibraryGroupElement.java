@@ -16,6 +16,7 @@
 
 package com.intellij.ide.projectView.impl.nodes;
 
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.module.Module;
 
 /**
@@ -24,6 +25,8 @@ import com.intellij.openapi.module.Module;
  * Time: 7:08:03 PM
  */
 public final class LibraryGroupElement {
+  public static final DataKey<LibraryGroupElement[]> ARRAY_DATA_KEY = DataKey.create("libraryGroup.array");
+  
   private final Module myModule;
 
   public LibraryGroupElement(Module module) {
