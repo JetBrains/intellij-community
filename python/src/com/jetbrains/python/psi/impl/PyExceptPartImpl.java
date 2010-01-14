@@ -3,7 +3,6 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.toolbox.SingleIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,12 +32,11 @@ public class PyExceptPartImpl extends PyElementImpl implements PyExceptPart {
 
   @NotNull
   public Iterable<PyElement> iterateNames() {
-    return new SingleIterable<PyElement>(getTarget());
+    return PyUtil.<PyElement>flattenedParens(getTarget());
   }
 
   public PyElement getElementNamed(final String the_name) {
-    PyElement target = getTarget();
-    return ((target != null) && the_name.equals(target.getName()))? target : null;
+    return IterHelper.findName(iterateNames(), the_name);
   }
 
   public boolean mustResolveOutside() {

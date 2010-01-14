@@ -182,6 +182,12 @@ public class PyResolveTest extends PyResolveTestCase {
     assertTrue(targetElement.getParent() instanceof PyWithStatement);
   }
 
+  public void testTupleInExcept() throws Exception {
+    PsiElement targetElement = resolve();
+    assertTrue(targetElement instanceof PyTargetExpression);
+    assertTrue(PsiTreeUtil.getParentOfType(targetElement, PyExceptPart.class) != null);
+  }
+
 
   @Override
   protected String getTestDataPath() {

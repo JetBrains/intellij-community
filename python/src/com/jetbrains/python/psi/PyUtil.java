@@ -33,9 +33,7 @@ import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
-import static com.jetbrains.python.psi.PyFunction.Flag.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.interpretAsStaticmethodOrClassmethodWrappingCall;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NonNls;
@@ -46,6 +44,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+
+import static com.jetbrains.python.psi.PyFunction.Flag.*;
+import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.interpretAsStaticmethodOrClassmethodWrappingCall;
 
 public class PyUtil {
   private PyUtil() {
@@ -251,7 +252,7 @@ public class PyUtil {
    * @return the list of flattened expressions.
    */
   @NotNull
-  public static <T extends PyElement> List<T> flattenedParens(T[] targets) {
+  public static <T extends PyElement> List<T> flattenedParens(T... targets) {
     return _unfoldParenExprs(targets, new ArrayList<T>(targets.length));
   }
 
