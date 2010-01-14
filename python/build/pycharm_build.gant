@@ -1,0 +1,413 @@
+import org.jetbrains.jps.Module
+import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
+import org.jetbrains.jps.Jps
+
+includeTargets << new File("${guessHome(this as Script)}/build/scripts/utils.gant")
+includeTool << Jps
+
+requireProperty("buildNumber", requireProperty("build.number", "94.SNAPSHOT"))
+
+setProperty("ch", "$home/community")
+setProperty("dryRun", false)
+setProperty("jdk16", guessJdk())
+
+setProperty("pluginFilter", [
+        "htmltools",
+        "JavaScriptLanguage",
+        "cvsIntegration", "cvs-core", "cvs-plugin", "javacvs-src", "smartcvs-src",
+        "PerforceIntegration", "Perforce", "perforce_util",
+        "svn4idea",
+        "git4idea",
+        "CSS", "css-api",
+        "JSInspections",
+        "JSIntentionPowerPack",
+        "SpellChecker", "spellchecker",
+        "yaml", "yaml-plugin"
+])
+
+private List platformImplementationModules() {
+  return [
+          "RegExpSupport",
+          "license_common",
+          "platform-ultimate",
+          "platform-impl",
+          "vcs-impl",
+          "lang-impl",
+          "testRunner",
+          "smRunner",
+          "xdebugger-impl",
+          "testFramework",
+          "xml",
+          "lvcs-impl",
+          "images",
+  ]
+}
+
+private List<String> platformApiModules() {
+  return ["platform-api", "lvcs-api", "lang-api", "vcs-api", "usageView", "xdebugger-api", "xml-openapi"]
+}
+
+def includeFile(String filepath) {
+  Script s = groovyShell.parse(new File(filepath))
+  s.setBinding(binding)
+  s
+}
+
+boolean isEap() {
+  return "true" == p("component.version.eap")
+}
+
+class Paths {
+  final sandbox
+  final distAll
+  final distWin
+  final distMac
+  final artifacts
+  final ideaSystem
+  final ideaConfig
+
+  def Paths(String home) {
+    sandbox = "$home/out/pycharm"
+    distAll = "$sandbox/layout"
+    distWin = "$sandbox/win"
+    distMac = "$sandbox/mac"
+
+    ideaSystem = "$sandbox/system"
+    ideaConfig = "$sandbox/config"
+
+    artifacts = "$home/out/pycharm/artifacts"
+  }
+}
+
+setProperty("paths", new Paths(home))
+
+def sandbox = "$home/out/pycharm";
+
+setProperty("buildName", "PY-$buildNumber")
+
+target('default': "Build artifacts") {
+
+  def modules = [
+          "python", "python-ide", "python-py", platformApiModules(), platformImplementationModules(), pluginFilter
+  ].flatten()
+  
+  loadProject()
+
+//  project.dryRun = true
+  project.stage("Cleaning up sandbox folder")
+  
+  project.targetFolder = "$sandbox/classes"
+  project.dryRun = dryRun
+
+  if (!dryRun) {
+    ant.delete(dir: sandbox)
+    ant.mkdir(dir: sandbox)
+  }
+
+
+  ant.tstamp() {
+    format(property: "today.year", pattern: "yyyy")
+  }
+
+  ant.xmlproperty(file: "$home/python/resources/idea/PythonApplicationInfo.xml", collapseAttributes: "true")
+  setProperty("isEap", isEap())
+
+  ant.patternset(id: "resources.included") {
+    include(name: "**/*.properties")
+    include(name: "fileTemplates/**/*")
+    include(name: "inspectionDescriptions/**/*")
+    include(name: "intentionDescriptions/**/*")
+    include(name: "tips/**/*")
+    include(name: "search/**/*")
+  }
+
+  ant.patternset(id: "resources.excluded") {
+    exclude(name: "**/*.properties")
+    exclude(name: "fileTemplates/**/*")
+    exclude(name: "fileTemplates")
+    exclude(name: "inspectionDescriptions/**/*")
+    exclude(name: "inspectionDescriptions")
+    exclude(name: "intentionDescriptions/**/*")
+    exclude(name: "intentionDescriptions")
+    exclude(name: "tips/**/*")
+    exclude(name: "tips")
+  }
+
+  def usedJars = new HashSet();
+
+  project.clean()
+  modules.each {
+    Module module = project[it] as Module
+    if (module != null) {
+      project.info("Building $module.name")
+      module.runtimeClasspath().each {
+        File file = new File(it)
+        if (file.exists()) {
+          String path = file.canonicalPath.replace('\\', '/')
+          String normalizedHome = home.replace('\\', '/')
+          if (path.endsWith(".jar") && (path.startsWith("$normalizedHome/lib/") ||
+                                        path.startsWith("$normalizedHome/community/lib/") ||
+                                        path.startsWith("$normalizedHome/python/lib"))
+              && !path.contains("/dev/") && !path.contains("/rt/") && !path.contains("/ant/")
+              && !path.contains("client-api") && !path.contains("ideaLicenseDecoder")) {
+            usedJars.add(path);
+          }
+        }
+      }
+      module.make()
+    }
+    else {
+      project.warning("$it is not a module")
+    }
+  }
+
+  build_searchable_options()
+  wire_build_date(buildName)
+  layoutFull(paths.distAll, usedJars)
+
+  layoutWin(paths.distWin)
+  layoutMac(buildName: buildName,
+            version: "1.0",
+            system_selector: "PY",
+            jdk_req: "1.6*",
+            vmoptions: "-Xms128m -Xmx512m -XX:MaxPermSize=250m -ea",
+            paths.distMac)
+
+  buildExe()
+  
+  ant.echo(message: buildName, file: "$sandbox/layout/build.txt")
+
+  def root = "${buildName}.app"
+
+  ant.mkdir(dir: paths.artifacts)
+  ant.zip(zipfile: "${paths.artifacts}/pycharm${buildName}.sit") {
+    tarfileset(dir: paths.distAll, prefix: root)
+    tarfileset(dir: paths.distMac, prefix: root) {
+      exclude(name: "bin/*.sh")
+      exclude(name: "Contents/MacOS/idea")
+    }
+    tarfileset(dir: paths.distMac, filemode: "755", prefix: root) {
+      include(name: "bin/*.sh")
+      include(name: "Contents/MacOS/idea")
+    }
+  }
+  executeExternalAnt("file.name": "pycharm",
+                     "$home/build/buildDmg.xml")
+  
+  buildTarGz()
+
+  def installer = includeFile("$home/build/scripts/nsis_installer.gant")
+  installer.nsis_installer([paths.distAll, paths.distWin],
+                           "$home/python/build/strings.nsi",
+                           "$home/python/build/paths.nsi",
+                           "pycharm", false)
+}
+
+def build_searchable_options() {
+  def dest_dir = "${project ["platform-resources"].output}/search"
+  project.stage("Building searchable options")
+  ant.mkdir(dir: "${dest_dir}/search")
+  ant.copy(file: "$home/build/idea.license", todir: paths.ideaSystem)
+  ant.copy(file: "$home/build/rubymine.license", todir: paths.ideaSystem)
+  ant.java(classname: "com.intellij.idea.Main", fork: "true") {
+    jvmarg(line: "-ea -Xmx250m -Didea.home.path=$home -Didea.system.path=${paths.ideaSystem} -Didea.config.path=${paths.ideaConfig} -Didea.platform.prefix=Python")
+    jvmarg(value: "-Xbootclasspath/a:${boot.output}")
+    arg(line: "traverseUI ${dest_dir}/searchableOptions.xml")
+
+    classpath() {
+      pathelement(location: "$ch/lib/junit.jar")
+      project["python-ide"].runtimeClasspath().each {
+        pathelement(location: it)
+      }
+    }
+  }
+}
+
+String appInfoFile() {
+  return "$home/out/pycharm/classes/production/python-ide/idea/PythonApplicationInfo.xml"
+}
+
+void wire_build_date(String buildName) {
+  if (!dryRun) {
+    ant.replace(token: "__BUILD_NUMBER__", value: buildName, file: appInfoFile())
+    ant.replace(token: "__BUILD_DATE__", value: DSTAMP, file: appInfoFile())
+  }
+}
+
+def buildExe() {
+  if (!isMac()) {
+    ant.mkdir(dir: paths.distWin)
+    executeExternalAnt(
+            "config.file": "$home/python/build/pycharm.exe4j",
+            "output.file": "pycharm.exe",
+            "$home/build/buildLauncher.xml")
+  }
+  else {
+    project.warning("Building .exe executable skipped")
+  }
+}
+
+def buildTarGz() {
+  project.stage("tar.gz")
+  def tarRoot = "pycharm-$buildNumber"
+  def tarPath = "$paths.artifacts/pycharm${buildName}.tar"
+  ant.tar(tarfile: tarPath) {
+    tarfileset(dir: paths.distAll, prefix: tarRoot) {
+      exclude(name: "**/*.dll")
+      exclude(name: "bin/*.sh")
+    }
+    tarfileset(dir: "$home/community/bin/linux", prefix: "$tarRoot/bin")
+    tarfileset(dir: "$home/community/bin/nix", filemode: "755", prefix: "$tarRoot/bin") {
+      include(name: "*.sh")
+    }
+  }
+
+  ant.gzip(src: tarPath, zipfile: "${tarPath}.gz")
+  ant.delete(file: tarPath)
+}
+
+def layoutFull(String target, Set usedJars) {
+  def openapiModules = platformApiModules()
+  def implementationModules = [platformImplementationModules(), "python", "python-ide", "python-py"].flatten()
+
+  layout(target) {
+    dir("lib") {
+      jar("util.jar") { module("util") }
+
+      jar("openapi.jar") {
+        openapiModules.each { module it}
+      }
+
+      jar("annotations.jar") { module("annotations")}
+      jar("extensions.jar") { module("extensions")}
+
+      jar("pycharm.jar") {
+        implementationModules.each { module it}
+        zipfileset(src: "${home}/lib/client-api.jar")
+        zipfileset(src: "${home}/lib/ideaLicenseDecoder.jar")
+      }
+
+      jar("bootstrap.jar") { module("bootstrap")}
+      jar("resources.jar") {
+        module("platform-resources")
+      }
+
+      jar("forms_rt.jar") {
+        module("forms_rt")
+      }
+
+      jar("resources_en.jar") {
+        module("platform-resources-en")
+      }
+
+      jar("icons.jar") { module("icons") }
+      jar("boot.jar") { module("boot") }
+
+      usedJars.each {
+        fileset(file: it)
+      }
+
+      fileset(dir: "$home/community/lib/src") {
+        include(name: "trove4j_changes.txt")
+        include(name: "trove4j_src.jar")
+      }
+    }
+
+    dir("helpers") {
+      fileset(dir: "$home/python/helpers")
+    }
+
+    def layouts = includeFile("$home/build/scripts/layouts.gant")
+    layouts.layoutPlugins()
+
+    dir("bin") {
+      fileset(dir: "$home/community/bin") { include(name: "*.*") }
+    }
+  }
+}
+
+def layoutMac(Map args, String target) {
+  layout(target) {
+    dir("bin") {
+      fileset(dir: "$home/community/bin/mac")
+      fileset(dir: "$home/community/bin/nix")
+    }
+  }
+
+  ant.copy(todir: target) {
+    fileset(dir: "$home/community/build/conf/mac")
+  }
+
+  ant.replace(file: "$target/Contents/Info.plist") {
+    replacefilter(token: "@@build@@", value: args.buildName)
+
+
+    replacefilter(token: "@@version@@", value: args.version)
+    replacefilter(token: "@@vmoptions@@", value: args.vmoptions + " -Xverify:none -XX:+UseCompressedOOPS -XX:+DoEscapeAnalysis -Didea.platform.prefix=Python")
+    replacefilter(token: "@@system_selector@@", value: args.system_selector)
+    replacefilter(token: "@@jdk_req@@", value: args.jdk_req)
+  }
+}
+
+def layoutWin(String target) {
+  layout(target) {
+    dir("bin") {
+      fileset(dir: "$home/bin") {
+        include(name: "yjpagent.dll")
+      }
+      fileset(dir: "$home/community/bin/win") {
+        exclude(name: "breakgen*")
+        exclude(name: "idea.bat")
+        
+      }
+      fileset(dir: "$home/python/build") {
+        include(name: "pycharm.bat")
+      }
+    }
+  }
+}
+
+def set(Map args, String key, Object value) {
+  if (!args.containsKey(key)) {
+    args[key] = value
+  }
+}
+
+def executeExternalAnt(Map args, String file) {
+  set(args, "build.number", buildName)
+  set(args, "project.home", home)
+  set(args, "artifacts.path", paths.artifacts)
+  set(args, "dist.win", paths.distWin)
+  //set(args, "dist.all", paths.distAll)
+
+  //set(args, "dist.all.15", paths.distAll15)
+  //set(args, "dist.all.16", paths.distAll16)
+  set(args, "sandbox.path", "$home/out/pycharm")
+  set(args, "component.version.major", getProperty("component.version.major"))
+  set(args, "component.version.minor", "\"" + getProperty("component.version.minor") + "\"")
+
+  ant.java(failonerror: "true", classname: "org.apache.tools.ant.Main", fork: "true") {
+    args.each { String key, String value ->
+      jvmarg(line: "-D$key=$value")
+    }
+
+    jvmarg(line: "-Xmx250m")
+
+    classpath {
+      fileset(dir: "$home/build/lib") {
+        include (name: "commons-net-1.4.1.jar")
+        include (name: "jsch-0.1.28.jar")
+      }
+
+      fileset(dir: "$ch/lib/ant/lib") {
+        include (name: "*.jar")
+      }
+
+      fileset (file: "$jdk16/lib/tools.jar")
+      fileset (file: "$ch/lib/oromatcher.jar")
+    }
+
+    arg(value: "-f")
+    arg(value: file)
+  }
+}

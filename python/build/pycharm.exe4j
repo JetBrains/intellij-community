@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<exe4j version="3.1.3">
+  <application name="PyCharm"/>
+  <executable name="pycharm"
+              type="1"
+              iconSet="true"
+              iconFile="../../community/platform/icons/src/idea.ico"
+              executableDir="bin"
+              redirectStderr="false"
+              stderrFile="error.log"
+              redirectStdout="false"
+              stdoutFile="output.log"
+              failOnStderrOutput="true"
+              executableMode="1"
+              changeWorkingDirectory="true"
+              workingDirectory="."
+              singleInstance="true"
+              serviceStartType="2"
+              serviceDependencies=""
+              serviceDescription=""
+              jreLocation="">
+    <messageSet language="English"/>
+    <versionInfo include="true"
+                 companyName="JetBrains s.r.o"
+                 fileDescription=""
+                 legalCopyright="Copyright JetBrains s.r.o., (c) 2000-__YEAR__"
+                 productVersion="__PRODUCT_VERSION__"
+                 internalName="idea"/>
+  </executable>
+  <splashScreen show="true" autoOff="true" alwaysOnTop="false" width="400" height="300" bitmapFile="../resources/pycharm_logo.png">
+    <text>
+      <statusLine x="10" y="208" text="" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500"/>
+      <versionLine x="10" y="231" text="" font="Arial" fontSize="8" fontColor="0,0,0" fontWeight="500"/>
+    </text>
+  </splashScreen>
+  <java mainClass="com.intellij.idea.Main"
+        vmParameters="&quot;-Xbootclasspath/a:${EXE4J_EXEDIR}/../lib/boot.jar&quot; &quot;-Didea.properties.file=${IDEA_PROPERTIES}&quot; -Didea.platform.prefix=Python -Didea.no.jre.check=true" 
+        arguments=""
+        allowVMPassthroughParameters="true"
+        minVersion="1.5"
+        maxVersion=""
+        preferredVM=""
+        allowBetaVM="true"
+        jdkOnly="false">
+    <searchSequence>
+      <envVar name="IDEA_JDK"/>
+      <directory location="./jre"/>
+      <registry/>
+      <envVar name="JDK_HOME"/>
+    </searchSequence>
+    <classPath>
+      <archive location="lib/bootstrap.jar" failOnError="true"/>
+      <archive location="lib/util.jar" failOnError="true"/>
+      <archive location="lib/log4j.jar" failOnError="true"/>
+      <archive location="lib/jdom.jar" failOnError="true"/>
+      <archive location="lib/extensions.jar" failOnError="true"/>
+      <archive location="${EXE4J_JVM_HOME}\..\lib\tools.jar" failOnError="true"/>
+    </classPath>
+    <nativeLibraryDirectories/>
+  </java>
+  <includedFiles/>
+</exe4j>
+

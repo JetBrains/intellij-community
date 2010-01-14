@@ -20,7 +20,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <moduleType id="PYTHON_MODULE" implementationClass="com.jetbrains.python.module.PythonModuleType"/>
     <facetType implementation="com.jetbrains.python.facet.PythonFacetType"/>
-    <facetType implementation="com.jetbrains.django.facet.DjangoFacetType"/>
     <frameworkSupport implementation="com.jetbrains.python.facet.PythonFrameworkSupportProvider"/>
     <frameworkSupport implementation="com.jetbrains.django.facet.DjangoFacetSupportProvider"/>
     <moduleConfigurationEditorProvider implementation="com.jetbrains.python.module.PythonModuleConfigurationEditorProvider"/>

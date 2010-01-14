@@ -43,6 +43,8 @@ public class PythonFutureAwareLexer extends PythonLexer {
   // Limited size list of previously processed tokens used for 'from __future__ import ...' processing
   protected List<PendingToken> myTokenHistory = new ArrayList<PendingToken>();
 
+  protected boolean myProcessSpecialTokensPending = false;
+
   protected IElementType getBaseTokenType() {
     return super.getTokenType();
   }
@@ -90,6 +92,10 @@ public class PythonFutureAwareLexer extends PythonLexer {
     }
     if (myTokenQueue.size() > 0) {
       myTokenQueue.remove(0);
+      if (myProcessSpecialTokensPending) {
+        myProcessSpecialTokensPending = false;
+        processSpecialTokens();
+      }
     }
     else {
       advanceBase();

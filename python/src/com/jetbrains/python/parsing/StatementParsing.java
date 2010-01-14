@@ -1,19 +1,3 @@
-/*
- *  Copyright 2005 Pythonid Project
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS"; BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package com.jetbrains.python.parsing;
 
 import com.intellij.lang.ITokenTypeRemapper;
@@ -23,8 +7,8 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
 import java.util.Set;
@@ -42,8 +26,8 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   @NonNls protected static final String TOK_AS = "as";
 
   protected enum Phase {NONE, FROM, FUTURE, IMPORT} // 'from __future__ import' phase
-  private Phase my_future_import_phase = Phase.NONE;
-  private boolean my_expect_AS_kwd = false;
+  private Phase myFutureImportPhase = Phase.NONE;
+  private boolean myExpectAsKeyword = false;
 
   protected enum FUTURE {ABSOLUTE_IMPORT, DIVISION, GENERATORS, NESTED_SCOPES, WITH_STATEMENT}
   protected Set<FUTURE> myFutureFlags = EnumSet.noneOf(FUTURE.class);
@@ -346,15 +330,15 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   private void parseFromImportStatement(boolean inSuite) {
     PsiBuilder builder = myContext.getBuilder();
     assertCurrentToken(PyTokenTypes.FROM_KEYWORD);
-    my_future_import_phase = Phase.FROM;
+    myFutureImportPhase = Phase.FROM;
     final PsiBuilder.Marker fromImportStatement = builder.mark();
     builder.advanceLexer();
     boolean from_future = false;
     boolean had_dots = parseRelativeImportDots();
     if (had_dots && parseOptionalDottedName() || parseDottedName()) {
       checkMatches(PyTokenTypes.IMPORT_KEYWORD, "'import' expected");
-      if (my_future_import_phase == Phase.FUTURE) {
-        my_future_import_phase = Phase.IMPORT;
+      if (myFutureImportPhase == Phase.FUTURE) {
+        myFutureImportPhase = Phase.IMPORT;
         from_future = true;
       }
       if (builder.getTokenType() == PyTokenTypes.MULT) {
@@ -377,7 +361,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     }
     checkEndOfStatement(inSuite);
     fromImportStatement.done(PyElementTypes.FROM_IMPORT_STATEMENT);
-    my_future_import_phase = Phase.NONE;
+    myFutureImportPhase = Phase.NONE;
   }
 
   /**
@@ -416,14 +400,14 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
           }
         }
       }
-      my_expect_AS_kwd = true; // possible 'as' comes as an ident; reparse it as keyword if found
+      myExpectAsKeyword = true; // possible 'as' comes as an ident; reparse it as keyword if found
       if (builder.getTokenType() == PyTokenTypes.AS_KEYWORD) {
         builder.advanceLexer();
-        my_expect_AS_kwd = false;
+        myExpectAsKeyword = false;
         parseIdentifier(PyElementTypes.TARGET_EXPRESSION);
       }
       asMarker.done(PyElementTypes.IMPORT_ELEMENT);
-      my_expect_AS_kwd = false;
+      myExpectAsKeyword = false;
       if (builder.getTokenType() == PyTokenTypes.COMMA) {
         builder.advanceLexer();
         if (in_parens && builder.getTokenType() == PyTokenTypes.RPAR) {
@@ -470,15 +454,15 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     PsiBuilder.Marker marker = myBuilder.mark();
     myBuilder.advanceLexer();
     marker.done(PyElementTypes.REFERENCE_EXPRESSION);
-    boolean old_expect_AS_kwd = my_expect_AS_kwd;
-    my_expect_AS_kwd = expect_as;
+    boolean old_expect_AS_kwd = myExpectAsKeyword;
+    myExpectAsKeyword = expect_as;
     while (myBuilder.getTokenType() == PyTokenTypes.DOT) {
       marker = marker.precede();
       myBuilder.advanceLexer();
       checkMatches(PyTokenTypes.IDENTIFIER, "identifier expected");
       marker.done(PyElementTypes.REFERENCE_EXPRESSION);
     }
-    my_expect_AS_kwd = old_expect_AS_kwd;
+    myExpectAsKeyword = old_expect_AS_kwd;
     return true;
   }
 
@@ -602,7 +586,8 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
           if (!getExpressionParser().parseSingleExpression(false)) {
             myBuilder.error("expression expected");
           }
-          if (myBuilder.getTokenType() == PyTokenTypes.COMMA) {
+          myExpectAsKeyword = true;
+          if (myBuilder.getTokenType() == PyTokenTypes.COMMA || myBuilder.getTokenType() == PyTokenTypes.AS_KEYWORD) {
             myBuilder.advanceLexer();
             if (!getExpressionParser().parseSingleExpression(true)) {
               myBuilder.error("expression expected");
@@ -717,18 +702,18 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   }
   public IElementType filter(final IElementType source, final int start, final int end, final CharSequence text) {
     if (
-      (myFutureFlags.contains(FUTURE.WITH_STATEMENT) || my_expect_AS_kwd) &&
+      (myFutureFlags.contains(FUTURE.WITH_STATEMENT) || myExpectAsKeyword) &&
       source == PyTokenTypes.IDENTIFIER &&
       CharArrayUtil.regionMatches(text, start, end, TOK_AS)
     ) {
       return PyTokenTypes.AS_KEYWORD;
     }
     else if ( // filter
-        (my_future_import_phase == Phase.FROM) &&
+        (myFutureImportPhase == Phase.FROM) &&
         source == PyTokenTypes.IDENTIFIER &&
         CharArrayUtil.regionMatches(text, start, end, TOK_FUTURE_IMPORT)
     ) {
-      my_future_import_phase = Phase.FUTURE;
+      myFutureImportPhase = Phase.FUTURE;
       return source;
     }
     else if (
