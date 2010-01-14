@@ -47,6 +47,11 @@ public class PythonLexerTest extends TestCase {
            "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:LINE_BREAK", "Py:IDENTIFIER");
   }
 
+  public void testMultipleBackslashes() throws Exception {
+    doTest("[\\\n\\\n]",
+           "Py:LBRACKET", "Py:SPACE", "Py:LINE_BREAK", "Py:SPACE", "Py:LINE_BREAK", "Py:RBRACKET");
+  }
+
   public void testIndent() throws Exception {
     doTest("if a:\n b",
            "Py:IF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
