@@ -10,6 +10,14 @@ import com.jetbrains.python.psi.*;
  * @author yole
  */
 public class PyMultiFileResolveTest extends PyLightFixtureTestCase {
+  
+  private static void checkInitPyDir(PsiElement elt, String dirname) throws Exception {
+    assertTrue(elt instanceof PyFile);
+    PyFile f = (PyFile)elt;
+    assertEquals(f.getName(), "__init__.py");
+    assertEquals(f.getContainingDirectory().getName(), dirname);
+  }
+
   public void testSimple() throws Exception {
     PsiElement element = doResolve();
     assertTrue(element instanceof PyFile);
@@ -36,16 +44,9 @@ public class PyMultiFileResolveTest extends PyLightFixtureTestCase {
     assertTrue("is import?", import_elt instanceof PyStarImportElement);
   }
 
-  protected void _checkInitPyDir(PsiElement elt, String dirname) throws Exception {
-    assertTrue(elt instanceof PyFile);
-    PyFile f = (PyFile)elt;
-    assertEquals(f.getName(), "__init__.py");
-    assertEquals(f.getContainingDirectory().getName(), dirname);
-  }
-
   public void testFromPackageImport() throws Exception {
     PsiElement element = doResolve();
-    _checkInitPyDir(element, "mypackage");
+    checkInitPyDir(element, "mypackage");
   }
 
   public void testFromPackageImportFile() throws Exception {
@@ -56,7 +57,7 @@ public class PyMultiFileResolveTest extends PyLightFixtureTestCase {
 
   public void testFromQualifiedPackageImport() throws Exception {
     PsiElement element = doResolve();
-    _checkInitPyDir(element, "mypackage");
+    checkInitPyDir(element, "mypackage");
   }
 
   public void testFromQualifiedFileImportClass() throws Exception {
@@ -100,12 +101,32 @@ public class PyMultiFileResolveTest extends PyLightFixtureTestCase {
     assertTrue("is import?", import_elt instanceof PyImportElement);
   }
 
-  // Currently fails due to inadequate stubs
   public void testCircularImport() throws Exception {
     PsiElement element = doResolve();
     assertTrue(element instanceof PyTargetExpression);
   }
 
+
+  public void testRelativeSimple() throws Exception {
+    PsiElement element = doResolve();
+    assertTrue(element instanceof PyTargetExpression);
+    PsiElement value = ((PyTargetExpression)element).findAssignedValue();
+    assertEquals("local", ((PyStringLiteralExpression)value).getStringValue());
+  }
+
+  public void testRelativeFromInit() throws Exception {
+    PsiElement element = doResolve();
+    assertTrue(element instanceof PyTargetExpression);
+    PsiElement value = ((PyTargetExpression)element).findAssignedValue();
+    assertEquals("unimaginable", ((PyStringLiteralExpression)value).getStringValue());
+  }
+
+  public void testRelativeDotsOnly() throws Exception {
+    PsiElement element = doResolve();
+    assertTrue(element instanceof PyTargetExpression);
+    PsiElement value = ((PyTargetExpression)element).findAssignedValue();
+    assertEquals("silicate", ((PyStringLiteralExpression)value).getStringValue());
+  }
 
   private PsiFile prepareFile() throws Exception {
     String testName = getTestName(true);
