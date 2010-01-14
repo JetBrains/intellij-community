@@ -303,7 +303,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     return myCommandName;
   }
 
-  private static UsageInfo[] extractUsagesForElement(PsiElement element, UsageInfo[] usages) {
+  public static UsageInfo[] extractUsagesForElement(PsiElement element, UsageInfo[] usages) {
     final ArrayList<UsageInfo> extractedUsages = new ArrayList<UsageInfo>(usages.length);
     for (UsageInfo usage : usages) {
       LOG.assertTrue(usage instanceof MoveRenameUsageInfo);

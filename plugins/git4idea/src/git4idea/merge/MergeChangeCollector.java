@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.commands.GitHandler;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
 
@@ -85,7 +85,7 @@ public class MergeChangeCollector {
     try {
       // collect unmerged
       String root = myRoot.getPath();
-      GitSimpleHandler h = new GitSimpleHandler(myProject, myRoot, GitHandler.LS_FILES);
+      GitSimpleHandler h = new GitSimpleHandler(myProject, myRoot, GitCommand.LS_FILES);
       h.setNoSSH(true);
       h.setSilent(true);
       h.addParameters("--unmerged");
@@ -159,7 +159,7 @@ public class MergeChangeCollector {
    */
   private void processDiff(String root, TreeSet<String> updated, TreeSet<String> created, TreeSet<String> removed, String revisions)
     throws VcsException {
-    GitSimpleHandler h = new GitSimpleHandler(myProject, myRoot, GitHandler.DIFF);
+    GitSimpleHandler h = new GitSimpleHandler(myProject, myRoot, GitCommand.DIFF);
     h.setSilent(true);
     h.setNoSSH(true);
     // note that moves are not detected here

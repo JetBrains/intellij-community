@@ -268,7 +268,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     HashSet<FilePath> realAdded = new HashSet<FilePath>();
     HashSet<FilePath> realRemoved = new HashSet<FilePath>();
     // perform diff
-    GitSimpleHandler diff = new GitSimpleHandler(project, root, GitHandler.DIFF);
+    GitSimpleHandler diff = new GitSimpleHandler(project, root, GitCommand.DIFF);
     diff.setNoSSH(true);
     diff.setSilent(true);
     diff.setStdoutSuppressed(true);
@@ -350,7 +350,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
     // perform merge commit
     try {
-      GitSimpleHandler handler = new GitSimpleHandler(project, root, GitHandler.COMMIT);
+      GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.COMMIT);
       handler.setNoSSH(true);
       handler.addParameters("-F", messageFile.getAbsolutePath());
       if (author != null) {
@@ -415,8 +415,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
     if (!removed.isEmpty()) {
       try {
-        GitSimpleHandler handler = new GitSimpleHandler(project, root, GitHandler.RM);
+        GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.RM);
         handler.addParameters("--ignore-unmatch");
+        handler.endOptions();
         handler.addRelativePaths(removed);
         handler.setNoSSH(true);
         handler.run();
@@ -493,7 +494,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                                          Collection<FilePath> files,
                                          File message,
                                          final String nextCommitAuthor) {
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitHandler.COMMIT);
+    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.COMMIT);
     handler.setNoSSH(true);
     handler.addParameters("--only", "-F", message.getAbsolutePath());
     if (nextCommitAuthor != null) {

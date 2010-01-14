@@ -30,7 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.changes.GitChangeUtils;
-import git4idea.commands.GitHandler;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
 import git4idea.config.GitConfigUtil;
@@ -660,7 +660,7 @@ public class GitUtil {
     throws VcsException {
     final List<CommittedChangeList> rc = new ArrayList<CommittedChangeList>();
 
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.LOG);
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
     h.setNoSSH(true);
     h.addParameters("--pretty=format:%x0C%n" + GitChangeUtils.COMMITTED_CHANGELIST_FORMAT, "--name-status");
     parametersSpecifier.consume(h);

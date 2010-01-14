@@ -35,6 +35,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,9 +47,15 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.rename.AutomaticRenamingDialog;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
+import com.intellij.refactoring.rename.RenameProcessor;
+import com.intellij.refactoring.rename.RenameUtil;
+import com.intellij.refactoring.rename.naming.AutomaticRenamer;
+import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashMap;
@@ -161,6 +168,7 @@ public class VariableInplaceRenamer {
     }
     
     final PsiElement scope1 = scope;
+    final int renameOffset = myElementToRename.getTextOffset();
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -174,21 +182,30 @@ public class VariableInplaceRenamer {
             Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
             topLevelEditor.getCaretModel().moveToOffset(range.getStartOffset());
             TemplateManager.getInstance(myProject).startTemplate(topLevelEditor, template, new TemplateEditingAdapter() {
+              private String myNewName = null;
               public void beforeTemplateFinished(final TemplateState templateState, Template template) {
                 finish();
 
                 if (snapshot != null) {
                   TextResult value = templateState.getVariableValue(PRIMARY_VARIABLE_NAME);
                   if (value != null) {
-                    final String newName = value.toString();
-                    if (LanguageNamesValidation.INSTANCE.forLanguage(scope1.getLanguage()).isIdentifier(newName, myProject)) {
+                    myNewName = value.toString();
+                    if (LanguageNamesValidation.INSTANCE.forLanguage(scope1.getLanguage()).isIdentifier(myNewName, myProject)) {
                       ApplicationManager.getApplication().runWriteAction(new Runnable() {
                         public void run() {
-                          snapshot.apply(newName);
+                          snapshot.apply(myNewName);
                         }
                       });
                     }
                   }
+                }
+              }
+
+              @Override
+              public void templateFinished(Template template) {
+                super.templateFinished(template);
+                if (myNewName != null) {
+                  performAutomaticRename(myNewName, PsiTreeUtil.getParentOfType(containingFile.findElementAt(renameOffset), PsiNameIdentifierOwner.class));
                 }
               }
 
@@ -216,6 +233,43 @@ public class VariableInplaceRenamer {
     }, RefactoringBundle.message("rename.title"), null);
 
     return true;
+  }
+
+  public void performAutomaticRename(final String newName, final PsiElement elementToRename) {
+    for (AutomaticRenamerFactory renamerFactory : Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
+      if (renamerFactory.isApplicable(elementToRename)) {
+        final List<UsageInfo> usages = new ArrayList<UsageInfo>();
+        final AutomaticRenamer renamer =
+          renamerFactory.createRenamer(elementToRename, newName, new ArrayList<UsageInfo>());
+        if (renamer.hasAnythingToRename()) {
+          if (!ApplicationManager.getApplication().isUnitTestMode()) {
+            final AutomaticRenamingDialog renamingDialog = new AutomaticRenamingDialog(myProject, renamer);
+            renamingDialog.show();
+            if (!renamingDialog.isOK()) return;
+          }
+
+          final Runnable runnable = new Runnable() {
+            public void run() {
+              renamer.findUsages(usages, false, false);
+            }
+          };
+
+          if (!ProgressManager.getInstance()
+            .runProcessWithProgressSynchronously(runnable, RefactoringBundle.message("searching.for.variables"), true, myProject)) {
+            return;
+          }
+
+          final UsageInfo[] usageInfos = usages.toArray(new UsageInfo[usages.size()]);
+          for (final PsiNamedElement element : renamer.getRenames().keySet()) {
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              public void run() {
+                RenameUtil.doRenameGenericNamedElement(element, renamer.getRenames().get(element), RenameProcessor.extractUsagesForElement(element, usageInfos), null);
+              }
+            });
+          }
+        }
+      }
+    }
   }
 
   private static VirtualFile getTopLevelVirtualFile(final FileViewProvider fileViewProvider) {

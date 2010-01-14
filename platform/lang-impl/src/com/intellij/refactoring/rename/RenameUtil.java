@@ -42,6 +42,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -182,7 +183,7 @@ public class RenameUtil {
   }
 
   public static void doRenameGenericNamedElement(PsiElement namedElement, String newName, UsageInfo[] usages,
-                                                 RefactoringElementListener listener) throws IncorrectOperationException {
+                                                 @Nullable RefactoringElementListener listener) throws IncorrectOperationException {
     PsiWritableMetaData writableMetaData = null;
     if (namedElement instanceof PsiMetaOwner) {
       final PsiMetaData metaData = ((PsiMetaOwner)namedElement).getMetaData();
@@ -224,7 +225,9 @@ public class RenameUtil {
         }
       }
     }
-    listener.elementRenamed(namedElement);
+    if (listener != null) {
+      listener.elementRenamed(namedElement);
+    }
   }
 
   public static void rename(UsageInfo info, String newName) throws IncorrectOperationException {

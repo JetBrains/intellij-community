@@ -332,11 +332,13 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
       return false;
     }
     else {
+      setFinalRunnable(myStep.getFinalRunnable());
       disposeAllParents(e);
       setIndexForShowingChild(-1);
       return true;
     }
   }
+
 
   public void addListSelectionListener(ListSelectionListener listSelectionListener) {
     myList.addListSelectionListener(listSelectionListener);

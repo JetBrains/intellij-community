@@ -28,7 +28,7 @@ import com.intellij.util.Icons;
 import com.intellij.util.ui.tree.TreeUtil;
 import git4idea.GitBranch;
 import git4idea.GitTag;
-import git4idea.commands.GitHandler;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
@@ -140,7 +140,7 @@ public class GitRefspecAddRefsDialog extends DialogWrapper {
     // perform update
     myGetRefsButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        GitSimpleHandler handler = new GitSimpleHandler(myProject, myRoot, GitHandler.LS_REMOTE);
+        GitSimpleHandler handler = new GitSimpleHandler(myProject, myRoot, GitCommand.LS_REMOTE);
         if (myIncludeBranchesCheckBox.isSelected()) {
           handler.addParameters("--heads");
           myBranches.clear();

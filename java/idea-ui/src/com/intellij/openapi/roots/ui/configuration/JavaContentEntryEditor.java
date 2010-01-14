@@ -26,7 +26,7 @@ public abstract class JavaContentEntryEditor extends ContentEntryEditor {
   private final CompilerModuleExtension myCompilerExtension;
 
   public JavaContentEntryEditor(final String contentEntryUrl) {
-    super(contentEntryUrl);
+    super(contentEntryUrl, true, true);
     myCompilerExtension = getModel().getModuleExtension(CompilerModuleExtension.class);
   }
 

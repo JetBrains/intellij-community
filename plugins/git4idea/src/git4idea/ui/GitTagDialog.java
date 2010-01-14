@@ -21,7 +21,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
-import git4idea.commands.GitHandler;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
@@ -170,7 +170,7 @@ public class GitTagDialog extends DialogWrapper {
       messageFile = null;
     }
     try {
-      GitSimpleHandler h = new GitSimpleHandler(myProject, getGitRoot(), GitHandler.TAG);
+      GitSimpleHandler h = new GitSimpleHandler(myProject, getGitRoot(), GitCommand.TAG);
       h.setNoSSH(true);
       if (hasMessage) {
         h.addParameters("-a");
@@ -237,7 +237,7 @@ public class GitTagDialog extends DialogWrapper {
    */
   private void fetchTags() {
     myExistingTags.clear();
-    GitSimpleHandler h = new GitSimpleHandler(myProject, getGitRoot(), GitHandler.TAG);
+    GitSimpleHandler h = new GitSimpleHandler(myProject, getGitRoot(), GitCommand.TAG);
     h.setNoSSH(true);
     h.setSilent(true);
     String output = GitHandlerUtil.doSynchronously(h, GitBundle.getString("tag.getting.existing.tags"), h.printableCommandLine());

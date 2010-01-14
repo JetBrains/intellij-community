@@ -115,6 +115,8 @@ public class AbstractPopup implements JBPopup {
 
   protected InputEvent myDisposeEvent;
 
+  protected Runnable myFinalRunnable;
+
   protected final SpeedSearch mySpeedSearch = new SpeedSearch() {
     boolean searchFieldShown = false;
     protected void update() {
@@ -456,6 +458,9 @@ public class AbstractPopup implements JBPopup {
   public void cancel(InputEvent e) {
     if (isDisposed()) return;
 
+    final Runnable finalRunnable = myFinalRunnable;
+    final IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(myOwner);
+
     if (myPopup != null) {
       if (!canClose()) {
         return;
@@ -496,6 +501,14 @@ public class AbstractPopup implements JBPopup {
     }
 
     Disposer.dispose(this, false);
+
+    if (finalRunnable != null) {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          focusManager.doWhenFocusSettlesDown(finalRunnable);
+        }
+      });
+    }
   }
 
 

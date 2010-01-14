@@ -24,7 +24,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ArrayUtil;
 import git4idea.GitRemote;
 import git4idea.GitVcs;
-import git4idea.commands.GitHandler;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitLineHandler;
 import git4idea.commands.GitSimpleHandler;
@@ -165,7 +165,7 @@ public class GitPullDialog extends DialogWrapper {
     listener.changedUpdate(null);
     myGetBranchesButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        GitSimpleHandler h = new GitSimpleHandler(myProject, gitRoot(), GitHandler.LS_REMOTE);
+        GitSimpleHandler h = new GitSimpleHandler(myProject, gitRoot(), GitCommand.LS_REMOTE);
         h.addParameters("--heads", myRemote.getSelectedItem().toString());
         String output = GitHandlerUtil.doSynchronously(h, GitBundle.getString("pull.getting.remote.branches"), h.printableCommandLine());
         if (output == null) {
@@ -190,7 +190,7 @@ public class GitPullDialog extends DialogWrapper {
    * @return a pull handler configured according to dialog options
    */
   public GitLineHandler pullHandler() {
-    GitLineHandler h = new GitLineHandler(myProject, gitRoot(), GitHandler.PULL);
+    GitLineHandler h = new GitLineHandler(myProject, gitRoot(), GitCommand.PULL);
     // ignore merge failure for the pull
     h.ignoreErrorCode(1);
     h.addParameters("--no-stat");

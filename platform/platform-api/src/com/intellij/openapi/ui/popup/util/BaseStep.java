@@ -22,6 +22,8 @@ import com.intellij.util.ui.UIUtil;
 
 public abstract class BaseStep<T> implements PopupStep<T>, SpeedSearchFilter<T>, MnemonicNavigationFilter<T> {
 
+  private Runnable myFinalRunnable;
+
   public boolean isSpeedSearchEnabled() {
     return false;
   }
@@ -57,5 +59,14 @@ public abstract class BaseStep<T> implements PopupStep<T>, SpeedSearchFilter<T>,
 
   public MnemonicNavigationFilter<T> getMnemonicNavigationFilter() {
     return this;
+  }
+
+  public Runnable getFinalRunnable() {
+    return myFinalRunnable;
+  }
+
+  public PopupStep doFinalStep(Runnable runnable) {
+    myFinalRunnable = runnable;
+    return FINAL_CHOICE;
   }
 }
