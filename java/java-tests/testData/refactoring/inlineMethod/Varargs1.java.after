@@ -1,8 +1,7 @@
 class BugTest {
 
     {
-        String[] s = new String[] {""};
-        for (String s1 : s) {
+        for (String s1 : new String[] {""}) {
 
         }
     }

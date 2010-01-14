@@ -777,6 +777,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
         PsiExpression expr = InlineUtil.inlineVariable(variable, initializer, javaRef);
 
+        InlineUtil.tryToInlineArrayCreationForVarargs(expr);
+
         //Q: move the following code to some util? (addition to inline?)
         if (expr instanceof PsiThisExpression) {
           if (expr.getParent() instanceof PsiReferenceExpression) {
@@ -864,6 +866,17 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
     else if (initializer instanceof PsiCallExpression) {
       if (accessCount > 1) return false;
+      if (initializer instanceof PsiNewExpression) {
+        final PsiArrayInitializerExpression arrayInitializer = ((PsiNewExpression)initializer).getArrayInitializer();
+        if (arrayInitializer != null) {
+          for (PsiExpression expression : arrayInitializer.getInitializers()) {
+            if (!canInlineParmOrThisVariable(expression, shouldBeFinal, strictlyFinal, accessCount, false)) {
+              return false;
+            }
+          }
+          return true;
+        }
+      }
       final PsiExpressionList argumentList = ((PsiCallExpression)initializer).getArgumentList();
       if (argumentList == null) return false;
       final PsiExpression[] expressions = argumentList.getExpressions();
