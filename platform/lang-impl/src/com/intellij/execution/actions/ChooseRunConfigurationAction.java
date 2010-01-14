@@ -427,22 +427,25 @@ public class ChooseRunConfigurationAction extends AnAction {
       final List<ItemWrapper> result = new ArrayList<ItemWrapper>();
 
       final RunnerAndConfigurationSettingsImpl selectedConfiguration = manager.getSelectedConfiguration();
-      final List<RunnerAndConfigurationSettingsImpl> contextConfigurations = populateWithDynamicRunners(result, project, manager, selectedConfiguration);
 
+      final List<RunnerAndConfigurationSettingsImpl> existing = new ArrayList<RunnerAndConfigurationSettingsImpl>();
+      final List<ItemWrapper> wrappedExisting = new ArrayList<ItemWrapper>();
       final ConfigurationType[] factories = manager.getConfigurationFactories();
       for (final ConfigurationType factory : factories) {
         final RunnerAndConfigurationSettingsImpl[] configurations = manager.getConfigurationSettings(factory);
         for (final RunnerAndConfigurationSettingsImpl configuration : configurations) {
-          if (!contextConfigurations.contains(configuration)) { // exclude context configuration
-            final ItemWrapper wrapped = ItemWrapper.wrap(project, configuration);
-            if (configuration == selectedConfiguration) {
-              wrapped.setMnemonic(1);
-            }
-
-            result.add(wrapped);
+          existing.add(configuration);
+          final ItemWrapper wrapped = ItemWrapper.wrap(project, configuration);
+          if (configuration == selectedConfiguration) {
+            wrapped.setMnemonic(1);
           }
+
+          wrappedExisting.add(wrapped);
         }
       }
+
+      populateWithDynamicRunners(result, existing, project, manager, selectedConfiguration);
+      result.addAll(wrappedExisting);
 
       //noinspection unchecked
       final ItemWrapper edit = new ItemWrapper(null) {
@@ -497,9 +500,9 @@ public class ChooseRunConfigurationAction extends AnAction {
 
     @NotNull
     private static List<RunnerAndConfigurationSettingsImpl> populateWithDynamicRunners(final List<ItemWrapper> result,
-                                                                                 final Project project,
-                                                                                 final RunManagerEx manager,
-                                                                                 final RunnerAndConfigurationSettingsImpl selectedConfiguration) {
+                                                                                       List<RunnerAndConfigurationSettingsImpl> existing,
+                                                                                       final Project project, final RunManagerEx manager,
+                                                                                       final RunnerAndConfigurationSettingsImpl selectedConfiguration) {
 
       final ArrayList<RunnerAndConfigurationSettingsImpl> contextConfigurations = new ArrayList<RunnerAndConfigurationSettingsImpl>();
       final DataContext dataContext = DataManager.getInstance().getDataContext();
@@ -519,7 +522,7 @@ public class ChooseRunConfigurationAction extends AnAction {
       int i = 2; // selectedConfiguration == null ? 1 : 2;
       for (final RuntimeConfigurationProducer producer : producers) {
         final RunnerAndConfigurationSettingsImpl configuration = producer.getConfiguration();
-        if (configuration != null) {
+        if (configuration != null && !existing.contains(configuration)) {
           if (selectedConfiguration != null && configuration.equals(selectedConfiguration)) continue;
           contextConfigurations.add(configuration);
 
