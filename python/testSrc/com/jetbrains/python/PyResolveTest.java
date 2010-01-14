@@ -183,6 +183,29 @@ public class PyResolveTest extends PyResolveTestCase {
   }
 
 
+  public void testDocStringClass() throws Exception {
+    PsiElement targetElement = resolve();
+    assertTrue(targetElement instanceof PyStringLiteralExpression);
+    assertEquals("Docstring of class Foo", ((PyStringLiteralExpression)targetElement).getStringValue());
+  }
+
+  public void testDocStringInstance() throws Exception {
+    PsiElement targetElement = resolve();
+    assertTrue(targetElement instanceof PyStringLiteralExpression);
+    assertEquals("Docstring of class Foo", ((PyStringLiteralExpression)targetElement).getStringValue());
+  }
+
+  public void testDocStringFunction() throws Exception {
+    PsiElement targetElement = resolve();
+    assertTrue(targetElement instanceof PyStringLiteralExpression);
+    assertEquals("Docstring of function bar", ((PyStringLiteralExpression)targetElement).getStringValue());
+  }
+
+  public void testDocStringInvalid() throws Exception {
+    PsiElement targetElement = resolve();
+    assertNull(targetElement);
+  }
+
   @Override
   protected String getTestDataPath() {
     return PythonTestUtil.getTestDataPath() + "/resolve/";
