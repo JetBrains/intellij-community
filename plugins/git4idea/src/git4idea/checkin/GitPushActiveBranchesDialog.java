@@ -408,6 +408,14 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
   }
 
   /**
+   * {@inheritDoc}
+   */
+  @Override
+  protected String getHelpId() {
+    return "reference?.?VersionControl?.?Git?.?PushActiveBranches";
+  }
+
+  /**
    * Load VCS roots
    *
    * @param project    the project
