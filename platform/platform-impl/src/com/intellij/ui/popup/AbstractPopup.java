@@ -459,7 +459,7 @@ public class AbstractPopup implements JBPopup {
     if (isDisposed()) return;
 
     final Runnable finalRunnable = myFinalRunnable;
-    final IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(myOwner);
+    final IdeFocusManager focusManager = myOwner != null ? IdeFocusManager.findInstanceByComponent(myOwner) : IdeFocusManager.findInstance();
 
     if (myPopup != null) {
       if (!canClose()) {
