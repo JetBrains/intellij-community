@@ -48,6 +48,7 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.FileContentUtil;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ConcurrentWeakValueHashMap;
 import com.intellij.util.messages.MessageBusConnection;
@@ -863,7 +864,8 @@ public class FileManagerImpl implements FileManager {
                   else if (!newPsiFile.getClass().equals(oldPsiFile.getClass()) ||
                            newPsiFile.getFileType() != myFileTypeManager.getFileTypeByFileName((String)event.getOldValue()) ||
                            languageDialectChanged(newPsiFile, (String)event.getOldValue()) ||
-                           !oldFileViewProvider.getLanguages().equals(fileViewProvider.getLanguages())
+                           !oldFileViewProvider.getLanguages().equals(fileViewProvider.getLanguages()) ||
+                           FileContentUtil.FORCE_RELOAD_REQUESTOR.equals(event.getRequestor())
                           ) {
                     myVFileToViewProviderMap.put(vFile, fileViewProvider);
 

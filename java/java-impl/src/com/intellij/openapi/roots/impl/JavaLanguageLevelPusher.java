@@ -25,12 +25,11 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.messages.MessageBus;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Gregory.Shrago
@@ -93,5 +92,8 @@ public class JavaLanguageLevelPusher implements FilePropertyPusher<LanguageLevel
         FileBasedIndex.getInstance().requestReindex(child);
       }
     }
+  }
+
+  public void afterRootsChanged(Project project) {
   }
 }
