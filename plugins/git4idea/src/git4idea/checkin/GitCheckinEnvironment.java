@@ -36,6 +36,7 @@ import git4idea.commands.*;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
+import git4idea.ui.GitConvertFilesDialog;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
