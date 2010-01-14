@@ -63,6 +63,7 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
       return o1.getAction().getClass() == o2.getAction().getClass() && o1.getText().equals(o2.getText());
     }
   };
+  private Runnable myFinalRunnable;
 
   IntentionListStep(IntentionHintComponent intentionHintComponent, ShowIntentionsPass.IntentionsInfo intentions, Editor editor, PsiFile file,
                     Project project) {
@@ -163,8 +164,12 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     return FINAL_CHOICE;
   }
 
+  public Runnable getFinalRunnable() {
+    return myFinalRunnable;
+  }
+
   private void applyAction(final IntentionActionWithTextCaching cachedAction) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    myFinalRunnable = new Runnable() {
       public void run() {
         HintManager.getInstance().hideAllHints();
         ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -180,7 +185,7 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
           }
         });
       }
-    });
+    };
   }
 
   private PopupStep getSubStep(final IntentionActionWithTextCaching action) {
