@@ -45,7 +45,8 @@ public class GitFileUtils {
    * @throws VcsException in case of git problem
    */
   public static String delete(Project project, VirtualFile root, List<FilePath> files) throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitHandler.RM);
+    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.RM);
+    handler.endOptions();
     handler.addRelativePaths(files);
     handler.setNoSSH(true);
     return handler.run();
@@ -61,7 +62,8 @@ public class GitFileUtils {
    * @throws VcsException in case of git problem
    */
   public static String deleteFiles(Project project, VirtualFile root, List<VirtualFile> files) throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitHandler.RM);
+    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.RM);
+    handler.endOptions();
     handler.addRelativeFiles(files);
     handler.setNoSSH(true);
     return handler.run();
@@ -90,7 +92,8 @@ public class GitFileUtils {
    * @throws VcsException in case of git problem
    */
   public static String addFiles(Project project, VirtualFile root, Collection<VirtualFile> files) throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitHandler.ADD);
+    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.ADD);
+    handler.endOptions();
     handler.addRelativeFiles(files);
     handler.setNoSSH(true);
     return handler.run();
@@ -119,7 +122,8 @@ public class GitFileUtils {
    * @throws VcsException in case of git problem
    */
   public static String addPaths(Project project, VirtualFile root, Collection<FilePath> files) throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitHandler.ADD);
+    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.ADD);
+    handler.endOptions();
     handler.addRelativePaths(files);
     handler.setNoSSH(true);
     return handler.run();

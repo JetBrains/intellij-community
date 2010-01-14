@@ -95,6 +95,7 @@ public class JavaRefactoringSettings implements PersistentStateComponent<JavaRef
   public boolean INLINE_CLASS_SEARCH_IN_NON_JAVA = true;
 
   @SuppressWarnings({"WeakerAccess"}) public boolean RENAME_INHERITORS = true;
+  @SuppressWarnings({"WeakerAccess"}) public boolean RENAME_PARAMETER_IN_HIERARCHY = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean RENAME_VARIABLES = true;
 
   public static JavaRefactoringSettings getInstance() {
@@ -115,6 +116,14 @@ public class JavaRefactoringSettings implements PersistentStateComponent<JavaRef
 
   public void setRenameVariables(final boolean RENAME_VARIABLES) {
     this.RENAME_VARIABLES = RENAME_VARIABLES;
+  }
+
+  public boolean isRenameParameterInHierarchy() {
+    return RENAME_PARAMETER_IN_HIERARCHY;
+  }
+
+  public void setRenameParameterInHierarchy(boolean rename) {
+    this.RENAME_PARAMETER_IN_HIERARCHY = rename;
   }
 
   public JavaRefactoringSettings getState() {

@@ -41,7 +41,9 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -49,6 +51,7 @@ import java.util.Map;
  *         Date: Jan 19, 2004
  */
 public abstract class ContentRootPanel extends JPanel {
+  protected static final Color SOURCES_COLOR = new Color(0x0A50A1);
   protected static final Color TESTS_COLOR = new Color(0x008C2E);
   protected static final Color EXCLUDED_COLOR = new Color(0x992E00);
   private static final Color SELECTED_HEADER_COLOR = new Color(0xDEF2FF);
@@ -66,6 +69,8 @@ public abstract class ContentRootPanel extends JPanel {
   private JComponent myHeader;
   private JComponent myBottom;
   private final Map<JComponent, Color> myComponentToForegroundMap = new HashMap<JComponent, Color>();
+  private final boolean myCanMarkSources;
+  private final boolean myCanMarkTestSources;
 
   public interface ActionCallback {
     void deleteContentEntry();
@@ -74,9 +79,11 @@ public abstract class ContentRootPanel extends JPanel {
     void setPackagePrefix(SourceFolder folder, String prefix);
   }
 
-  public ContentRootPanel(ActionCallback callback) {
+  public ContentRootPanel(ActionCallback callback, boolean canMarkSources, boolean canMarkTestSources) {
     super(new GridBagLayout());
     myCallback = callback;
+    myCanMarkSources = canMarkSources;
+    myCanMarkTestSources = canMarkTestSources;
   }
 
   @Nullable
@@ -95,7 +102,48 @@ public abstract class ContentRootPanel extends JPanel {
     setSelected(false);
   }
 
-  protected abstract void addFolderGroupComponents();
+  protected void addFolderGroupComponents() {
+    final List<ContentFolder> sources = new ArrayList<ContentFolder>();
+    final List<ContentFolder> testSources = new ArrayList<ContentFolder>();
+    final List<ContentFolder> excluded = new ArrayList<ContentFolder>();
+    final SourceFolder[] sourceFolders = getContentEntry().getSourceFolders();
+    for (SourceFolder folder : sourceFolders) {
+      if (folder.isSynthetic()) {
+        continue;
+      }
+      final VirtualFile folderFile = folder.getFile();
+      if (folderFile != null && (isExcluded(folderFile) || isUnderExcludedDirectory(folderFile))) {
+        continue;
+      }
+      if (folder.isTestSource()) {
+        testSources.add(folder);
+      }
+      else {
+        sources.add(folder);
+      }
+    }
+
+    final ExcludeFolder[] excludeFolders = getContentEntry().getExcludeFolders();
+    for (final ExcludeFolder excludeFolder : excludeFolders) {
+      if (!excludeFolder.isSynthetic()) {
+        excluded.add(excludeFolder);
+      }
+    }
+
+    if (sources.size() > 0 && myCanMarkSources) {
+      final JComponent sourcesComponent = createFolderGroupComponent(ProjectBundle.message("module.paths.sources.group"), sources.toArray(new ContentFolder[sources.size()]),
+                                                                     SOURCES_COLOR);
+      this.add(sourcesComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 10, 0), 0, 0));
+    }
+    if (testSources.size() > 0 && myCanMarkTestSources) {
+      final JComponent testSourcesComponent = createFolderGroupComponent(ProjectBundle.message("module.paths.test.sources.group"), testSources.toArray(new ContentFolder[testSources.size()]), TESTS_COLOR);
+      this.add(testSourcesComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 10, 0), 0, 0));
+    }
+    if (excluded.size() > 0) {
+      final JComponent excludedComponent = createFolderGroupComponent(ProjectBundle.message("module.paths.excluded.group"), excluded.toArray(new ContentFolder[excluded.size()]), EXCLUDED_COLOR);
+      this.add(excludedComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 10, 0), 0, 0));
+    }
+  }
 
   private JComponent createHeader() {
     final JPanel panel = new JPanel(new GridBagLayout());

@@ -52,7 +52,7 @@ public class GitLineHandler extends GitHandler {
    * @param command   a command to execute
    */
   @SuppressWarnings({"WeakerAccess"})
-  public GitLineHandler(@NotNull Project project, @NotNull File directory, @NotNull String command) {
+  public GitLineHandler(@NotNull Project project, @NotNull File directory, @NotNull GitCommand command) {
     super(project, directory, command);
   }
 
@@ -63,7 +63,7 @@ public class GitLineHandler extends GitHandler {
    * @param vcsRoot a process directory
    * @param command a command to execute
    */
-  public GitLineHandler(@NotNull final Project project, @NotNull final VirtualFile vcsRoot, @NotNull final String command) {
+  public GitLineHandler(@NotNull final Project project, @NotNull final VirtualFile vcsRoot, @NotNull final GitCommand command) {
     super(project, vcsRoot, command);
   }
 

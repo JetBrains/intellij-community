@@ -19,7 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitVcs;
-import git4idea.commands.GitHandler;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitVersion;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +45,7 @@ public class GitStashUtils {
    * @return true if the stash was created, false otherwise
    */
   public static boolean saveStash(@NotNull Project project, @NotNull VirtualFile root, final String message) throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitHandler.STASH);
+    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.STASH);
     handler.setNoSSH(true);
     handler.addParameters("save", message);
     String output = handler.run();
@@ -59,10 +59,10 @@ public class GitStashUtils {
    * @param root    the root
    */
   public static void popLastStash(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitHandler.STASH);
+    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.STASH);
     handler.setNoSSH(true);
     handler.addParameters("pop");
-    if(QUIET_STASH_SUPPORTED.isLessOrEqual(GitVcs.getInstance(project).version())) {
+    if (QUIET_STASH_SUPPORTED.isLessOrEqual(GitVcs.getInstance(project).version())) {
       handler.addParameters("--quiet");
     }
     handler.run();

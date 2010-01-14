@@ -51,6 +51,10 @@ public class RenameLocalTest extends LightCodeInsightTestCase {
     doTestInplaceRenameCollisionsResolved("myI");
   }
 
+  public void testRenameInPlaceParamInOverriderAutomaticRenamer() throws Exception {
+    doTestInplaceRenameCollisionsResolved("pp");
+  }
+
   //reference itself won't be renamed
   private void doTestInplaceRenameCollisionsResolved(String newName) throws Exception {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
@@ -64,6 +68,7 @@ public class RenameLocalTest extends LightCodeInsightTestCase {
     final ResolveSnapshotProvider.ResolveSnapshot snapshot = resolveSnapshotProvider.createSnapshot(methodScope);
     assertNotNull(snapshot);
 
+    final int offset = element.getTextOffset();
     VariableInplaceRenamer renamer = new VariableInplaceRenamer((PsiNameIdentifierOwner)element, getEditor());
     ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(true);
     try {
@@ -74,6 +79,7 @@ public class RenameLocalTest extends LightCodeInsightTestCase {
       snapshot.apply(newName);
 
       TemplateManagerImpl.getTemplateState(myEditor).gotoEnd();
+      renamer.performAutomaticRename(newName, PsiTreeUtil.getParentOfType(myFile.findElementAt(offset), PsiNameIdentifierOwner.class));
       ((TestLookupManager)LookupManager.getInstance(getProject())).clearLookup();
       ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(false);
     }

@@ -19,6 +19,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.i18n.GitBundle;
@@ -209,8 +210,7 @@ public class GitCloneDialog extends DialogWrapper {
       public void actionPerformed(final ActionEvent e) {
         myTestURL = myRepositoryURL.getText();
         String output = GitHandlerUtil
-          .doSynchronously(GitSimpleHandler.checkRepository(myProject, myTestURL), GitBundle.message("clone.testing", myTestURL),
-                           "connection test");
+          .doSynchronously(checkRepository(myProject, myTestURL), GitBundle.message("clone.testing", myTestURL), "connection test");
         if (output != null) {
           Messages.showInfoMessage(myTestButton, GitBundle.message("clone.test.success.message", myTestURL),
                                    GitBundle.getString("clone.test.success"));
@@ -389,5 +389,21 @@ public class GitCloneDialog extends DialogWrapper {
   @Override
   protected String getHelpId() {
     return "reference.VersionControl.Git.CloneRepository";
+  }
+
+  /**
+   * Prepare check repository handler. To do this ls-remote command is executed and attempts to match
+   * master tag. This will likely return only single entry or none, if there is no master
+   * branch. Stdout output is ignored. Stderr is used to construct exception message and shown
+   * in error message box if exit is negative.
+   *
+   * @param project the project
+   * @param url     the url to check
+   * @return a simple handler that does the task
+   */
+  private static GitSimpleHandler checkRepository(Project project, final String url) {
+    GitSimpleHandler handler = new GitSimpleHandler(project, new File("."), GitCommand.LS_REMOTE);
+    handler.addParameters(url, "master");
+    return handler;
   }
 }

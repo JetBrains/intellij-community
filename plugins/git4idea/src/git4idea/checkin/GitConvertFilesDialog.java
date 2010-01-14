@@ -31,7 +31,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.commands.GitHandler;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
 import git4idea.config.GitVcsSettings;
@@ -258,7 +258,7 @@ public class GitConvertFilesDialog extends DialogWrapper {
     boolean stdin = CHECK_ATTR_STDIN_SUPPORTED.isLessOrEqual(GitVcs.getInstance(project).version());
     for (final Map.Entry<VirtualFile, Set<VirtualFile>> e : files.entrySet()) {
       final VirtualFile r = e.getKey();
-      GitSimpleHandler h = new GitSimpleHandler(project, r, GitHandler.CHECK_ATTR);
+      GitSimpleHandler h = new GitSimpleHandler(project, r, GitCommand.CHECK_ATTR);
       if (stdin) {
         h.addParameters("--stdin", "-z");
       }

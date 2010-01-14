@@ -21,7 +21,7 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitRevisionNumber;
 import git4idea.GitVcs;
-import git4idea.commands.GitHandler;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.config.GitVcsSettings;
 import git4idea.merge.MergeChangeCollector;
@@ -74,7 +74,7 @@ public class GitUpdateProcess extends GitBaseRebaseProcess {
   @Override
   protected GitLineHandler makeStartHandler(VirtualFile root) {
     // do pull
-    GitLineHandler h = new GitLineHandler(myProject, root, GitHandler.PULL);
+    GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.PULL);
     // ignore merge failure for the pull
     h.ignoreErrorCode(1);
     switch (mySettings.UPDATE_TYPE) {

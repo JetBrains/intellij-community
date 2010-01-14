@@ -208,11 +208,12 @@ public class JavaDocExternalFilter {
 
     final boolean[] fail = new boolean[1];
     final Exception [] ex = new Exception[1];
+    final HttpConfigurable httpConfigurable = HttpConfigurable.getInstance();
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         Reader stream = null;
         try {
-          stream = getReaderByUrl(url, ProgressManager.getInstance().getProgressIndicator());
+          stream = getReaderByUrl(url, httpConfigurable, ProgressManager.getInstance().getProgressIndicator());
         }
         catch (IOException e) {
           ex[0] = e;
@@ -283,7 +284,7 @@ public class JavaDocExternalFilter {
 
 
   @Nullable
-  private static Reader getReaderByUrl(final String surl, final ProgressIndicator pi) throws IOException {
+  private static Reader getReaderByUrl(final String surl, final HttpConfigurable httpConfigurable, final ProgressIndicator pi) throws IOException {
     if (surl.startsWith(JAR_PROTOCOL)) {
       VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(BrowserUtil.getDocURL(surl));
 
@@ -295,7 +296,7 @@ public class JavaDocExternalFilter {
     }
 
     URL url = BrowserUtil.getURL(surl);
-    HttpConfigurable.getInstance().prepareURL(url.toString());
+    httpConfigurable.prepareURL(url.toString());
     final URLConnection urlConnection = url.openConnection();
     final String contentEncoding = urlConnection.getContentEncoding();
     final InputStream inputStream =
@@ -434,11 +435,13 @@ public class JavaDocExternalFilter {
     private final String surl;
     private final MyDocBuilder myBuilder;
     private final Exception [] myExceptions = new Exception[1];
+    private final HttpConfigurable myHttpConfigurable;
 
     public MyJavadocFetcher(final String surl, MyDocBuilder builder) {
       this.surl = surl;
       myBuilder = builder;
       ourFree = false;
+      myHttpConfigurable = HttpConfigurable.getInstance();
     }
 
     public static boolean isFree() {
@@ -457,7 +460,7 @@ public class JavaDocExternalFilter {
 
         Reader stream = null;
         try {
-          stream = getReaderByUrl(surl, new ProgressIndicatorBase());
+          stream = getReaderByUrl(surl, myHttpConfigurable, new ProgressIndicatorBase());
         }
         catch (ProcessCanceledException e) {
           return;

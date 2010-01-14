@@ -49,7 +49,7 @@ public abstract class GitRebaseActionBase extends GitRepositoryAction {
     }
     final VirtualFile root = h.workingDirectoryFile();
     GitRebaseEditorService service = GitRebaseEditorService.getInstance();
-    GitInteractiveRebaseEditorHandler editor = new GitInteractiveRebaseEditorHandler(service, project, root);
+    GitInteractiveRebaseEditorHandler editor = new GitInteractiveRebaseEditorHandler(service, project, root, h);
     GitRebaseLineListener resultListener = new GitRebaseLineListener();
     h.addLineListener(resultListener);
     configureEditor(editor);

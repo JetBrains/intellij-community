@@ -18,7 +18,7 @@ package git4idea.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.commands.GitHandler;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
 
@@ -74,7 +74,7 @@ public class GitStashDialog extends DialogWrapper {
    * @return the handler
    */
   public GitLineHandler handler() {
-    GitLineHandler handler = new GitLineHandler(myProject, getGitRoot(), GitHandler.STASH);
+    GitLineHandler handler = new GitLineHandler(myProject, getGitRoot(), GitCommand.STASH);
     handler.addParameters("save");
     if (myKeepIndexCheckBox.isSelected()) {
       handler.addParameters("--keep-index");

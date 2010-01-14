@@ -18,6 +18,8 @@ package com.intellij.application.options.colors;
 
 /**
  * Marker interface for pages capable of editing the colors for inspection problems.
+ * The first page implementing this interface gets the inspection attribute descriptors
+ * added to its attribute descriptors list automatically. 
  *
  * @author yole
  */

@@ -13,7 +13,7 @@
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="xml" />
-    <orderEntry type="module" module-name="testFramework" />
+    <orderEntry type="module" module-name="testFramework" scope="TEST" />
     <orderEntry type="library" name="Jaxen" level="project" />
   </component>
 </module>
