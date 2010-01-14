@@ -16,6 +16,7 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
@@ -57,7 +58,7 @@ public class JavaRunConfigurationModule extends RunConfigurationModule {
     else {
       scope = myClassesInLibraries ? GlobalSearchScope.allScope(getProject()) : GlobalSearchScope.projectScope(getProject());
     }
-    return JavaPsiFacade.getInstance(getProject()).findClass(qualifiedName.replace('$', '.'), scope);
+    return JavaExecutionUtil.findMainClass(getProject(), qualifiedName, scope);
   }
 
   public static Collection<Module> getModulesForClass(@NotNull final Project project, final String className) {

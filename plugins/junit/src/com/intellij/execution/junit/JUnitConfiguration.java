@@ -194,7 +194,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     }
 
     public PsiClass getPsiElement() {
-      return getConfigurationModule().findClass(myData.getMainClassPsiName());
+      return getConfigurationModule().findClass(myData.getMainClassName());
     }
 
     public void setPsiElement(final PsiClass psiClass) {
@@ -396,10 +396,6 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
 
     public String getMainClassName() {
       return MAIN_CLASS_NAME != null ? MAIN_CLASS_NAME : "";
-    }
-
-    public String getMainClassPsiName() {
-      return getMainClassName().replace('$', '.');
     }
 
     public String getPackageName() {

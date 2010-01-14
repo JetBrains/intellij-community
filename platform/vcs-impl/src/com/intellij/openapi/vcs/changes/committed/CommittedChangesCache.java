@@ -785,6 +785,8 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
           public void receivedChanges(List<CommittedChangeList> changes) {
             if (changes.size() > 0) {
               notifyReloadIncomingChanges();
+            } else {
+              myProject.getMessageBus().syncPublisher(CommittedChangesTreeBrowser.ITEMS_RELOADED).emptyRefresh();
             }
             checkDone();
           }

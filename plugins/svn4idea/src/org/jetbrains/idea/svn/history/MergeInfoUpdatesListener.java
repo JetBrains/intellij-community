@@ -74,7 +74,13 @@ public class MergeInfoUpdatesListener {
         }
       });
 
-      myConnection.subscribe(CommittedChangesTreeBrowser.ITEMS_RELOADED, reloadRunnable);
+      myConnection.subscribe(CommittedChangesTreeBrowser.ITEMS_RELOADED, new CommittedChangesTreeBrowser.CommittedChangesReloadListener() {
+        public void itemsReloaded() {
+          reloadRunnable.run();
+        }
+        public void emptyRefresh() {
+        }
+      });
 
       myConnection.subscribe(SvnMergeInfoCache.SVN_MERGE_INFO_CACHE, new SvnMergeInfoCache.SvnMergeInfoCacheListener() {
         public void copyRevisionUpdated() {
