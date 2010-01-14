@@ -90,6 +90,10 @@ public class PythonHighlightingTest extends PyLightFixtureTestCase {
     doTest();    
   }
 
+  public void testMalformedStringTripleQuoteUnterminated() throws Exception {
+    doTest();
+  }
+
   public void testYieldInNestedFunction() throws Exception {
     // highlight func declaration first, lest we get an "Extra fragment highlighted" error.
     EditorColorsManager manager = EditorColorsManager.getInstance();
