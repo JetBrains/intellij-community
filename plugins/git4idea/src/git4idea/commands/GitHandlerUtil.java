@@ -246,6 +246,7 @@ public class GitHandlerUtil {
               }
               else {
                 handler.myVcs.getCommandLock().writeLock().unlock();
+                suspended = true;
               }
             }
             else if (action == RESUME) {
@@ -254,6 +255,7 @@ public class GitHandlerUtil {
               }
               else {
                 handler.myVcs.getCommandLock().writeLock().lock();
+                suspended = false;
               }
             }
           }
