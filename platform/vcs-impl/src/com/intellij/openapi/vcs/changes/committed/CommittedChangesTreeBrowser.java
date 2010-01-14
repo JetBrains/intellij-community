@@ -12,6 +12,7 @@ import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
@@ -36,6 +37,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeCopyProvider;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.TreeWithEmptyText;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -71,7 +73,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   private final RepositoryChangesBrowser myChangesView;
   private List<CommittedChangeList> myChangeLists;
   private List<CommittedChangeList> mySelectedChangeLists;
-  private ChangeListGroupingStrategy myGroupingStrategy = ChangeListGroupingStrategy.DATE;
+  private ChangeListGroupingStrategy myGroupingStrategy = new ChangeListGroupingStrategy.DateChangeListGroupingStrategy();
   private final CompositeChangeListFilteringStrategy myFilteringStrategy = new CompositeChangeListFilteringStrategy();
   private final Splitter myFilterSplitter;
   private final JPanel myLeftPanel;
@@ -82,13 +84,14 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   private final TreeExpander myTreeExpander;
   private String myHelpId;
 
-  public static final Topic<Runnable> ITEMS_RELOADED = new Topic<Runnable>("ITEMS_RELOADED", Runnable.class);
+  public static final Topic<CommittedChangesReloadListener> ITEMS_RELOADED = new Topic<CommittedChangesReloadListener>("ITEMS_RELOADED", CommittedChangesReloadListener.class);
 
   private final List<CommittedChangeListDecorator> myDecorators;
 
   @NonNls public static final String ourHelpId = "reference.changesToolWindow.incoming";
 
   private final WiseSplitter myInnerSplitter;
+  private MessageBusConnection myConnection;
 
   public CommittedChangesTreeBrowser(final Project project, final List<CommittedChangeList> changeLists) {
     super(new BorderLayout());
@@ -149,6 +152,25 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     myHelpId = ourHelpId;
 
     myChangesView.getDiffAction().registerCustomShortcutSet(CommonShortcuts.getDiff(), myChangesTree);
+
+    myConnection = myProject.getMessageBus().connect();
+    myConnection.subscribe(ITEMS_RELOADED, new CommittedChangesReloadListener() {
+      public void itemsReloaded() {
+      }
+      public void emptyRefresh() {
+        updateGrouping();
+      }
+    });
+  }
+
+  private void updateGrouping() {
+    if (myGroupingStrategy.changedSinceApply()) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          updateModel();
+        }
+      }, ModalityState.NON_MODAL);
+    }
   }
 
   private TreeModel buildTreeModel() {
@@ -158,6 +180,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     DefaultMutableTreeNode lastGroupNode = null;
     String lastGroupName = null;
     Collections.sort(filteredChangeLists, myGroupingStrategy.getComparator());
+    myGroupingStrategy.beforeStart();
     for(CommittedChangeList list: filteredChangeLists) {
       String groupName = myGroupingStrategy.getGroupName(list);
       if (!Comparing.equal(groupName, lastGroupName)) {
@@ -196,6 +219,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   }
 
   public void dispose() {
+    myConnection.disconnect();
     mySplitterProportionsData.saveSplitterProportions(this);
     mySplitterProportionsData.externalizeToDimensionService("CommittedChanges.SplitterProportions");
     myChangesView.dispose();
@@ -207,7 +231,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     if (!keepFilter) {
       myFilteringStrategy.setFilterBase(items);
     }
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(ITEMS_RELOADED).run();
+    myProject.getMessageBus().syncPublisher(ITEMS_RELOADED).itemsReloaded();
     updateModel();
   }
 
@@ -657,5 +681,10 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
       myInnerSplitter.setLastComponent(null);
       myInnerSplitter.setInnerComponent(last);
     }
+  }
+
+  public interface CommittedChangesReloadListener {
+    void itemsReloaded();
+    void emptyRefresh();
   }
 }

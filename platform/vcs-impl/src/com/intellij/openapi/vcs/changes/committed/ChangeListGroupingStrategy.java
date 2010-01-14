@@ -22,36 +22,54 @@ import org.jetbrains.annotations.NonNls;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.Locale;
 
 /**
  * @author yole
  */
 public interface ChangeListGroupingStrategy {
+  void beforeStart();
+  boolean changedSinceApply();
   String getGroupName(CommittedChangeList changeList);
   Comparator<CommittedChangeList> getComparator();
 
-  ChangeListGroupingStrategy DATE = new ChangeListGroupingStrategy() {
+  class DateChangeListGroupingStrategy implements ChangeListGroupingStrategy {
     @NonNls private final SimpleDateFormat myWeekdayFormat = new SimpleDateFormat("EEEE", Locale.ENGLISH);
     @NonNls private final SimpleDateFormat myMonthFormat = new SimpleDateFormat("MMMM", Locale.ENGLISH);
     @NonNls private final SimpleDateFormat myMonthYearFormat = new SimpleDateFormat("MMMM yyyy", Locale.ENGLISH);
+    private long myTimeToRecalculateAfter;
+    private Calendar myCurrentCalendar;
 
     public String toString() {
       return VcsBundle.message("date.group.title");
     }
 
+    public boolean changedSinceApply() {
+      return System.currentTimeMillis() > myTimeToRecalculateAfter;
+    }
+
+    public void beforeStart() {
+      myCurrentCalendar = Calendar.getInstance();
+      // +- seconds etc
+      myCurrentCalendar.set(Calendar.HOUR, 0);
+      myCurrentCalendar.set(Calendar.MINUTE, 0);
+
+      myTimeToRecalculateAfter = myCurrentCalendar.getTimeInMillis() + 24 * 60 * 60 * 1000;
+      myCurrentCalendar.setTime(new Date());
+    }
+
     public String getGroupName(final CommittedChangeList list) {
-      Calendar curCal = Calendar.getInstance();
       Calendar clCal = Calendar.getInstance();
       clCal.setTime(list.getCommitDate());
-      if (curCal.get(Calendar.YEAR) == clCal.get(Calendar.YEAR)) {
-        if (curCal.get(Calendar.DAY_OF_YEAR) == clCal.get(Calendar.DAY_OF_YEAR)) {
+      if (myCurrentCalendar.get(Calendar.YEAR) == clCal.get(Calendar.YEAR)) {
+        if (myCurrentCalendar.get(Calendar.DAY_OF_YEAR) == clCal.get(Calendar.DAY_OF_YEAR)) {
           return VcsBundle.message("date.group.today");
         }
-        if (curCal.get(Calendar.WEEK_OF_YEAR) == clCal.get(Calendar.WEEK_OF_YEAR)) {
+        if (myCurrentCalendar.get(Calendar.WEEK_OF_YEAR) == clCal.get(Calendar.WEEK_OF_YEAR)) {
           return myWeekdayFormat.format(list.getCommitDate());
         }
-        if (curCal.get(Calendar.WEEK_OF_YEAR) == clCal.get(Calendar.WEEK_OF_YEAR)+1) {
+        if (myCurrentCalendar.get(Calendar.WEEK_OF_YEAR) == clCal.get(Calendar.WEEK_OF_YEAR)+1) {
           return VcsBundle.message("date.group.last.week");
         }
         return myMonthFormat.format(list.getCommitDate());
@@ -75,6 +93,13 @@ public interface ChangeListGroupingStrategy {
 
     public String getGroupName(final CommittedChangeList changeList) {
       return changeList.getCommitterName();
+    }
+
+    public void beforeStart() {
+    }
+
+    public boolean changedSinceApply() {
+      return false;
     }
 
     public Comparator<CommittedChangeList> getComparator() {
