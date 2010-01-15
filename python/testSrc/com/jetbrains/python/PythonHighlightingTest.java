@@ -6,6 +6,8 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
@@ -89,6 +91,18 @@ public class PythonHighlightingTest extends PyLightFixtureTestCase {
   public void testStringMixedSeparatorsOK() throws Exception {   // PY-299
     doTest();    
   }
+
+  public void testStringBytesLiteralOK() throws Exception {
+    PythonLanguageLevelPusher.FORCE_LANGUAGE_LEVEL = LanguageLevel.PYTHON26;
+    PythonLanguageLevelPusher.pushLanguageLevel(myFixture.getProject());
+    try {
+      doTest();
+    }
+    finally {
+      PythonLanguageLevelPusher.FORCE_LANGUAGE_LEVEL = null;
+    }
+  }
+
 
   public void testMalformedStringTripleQuoteUnterminated() throws Exception {
     doTest();

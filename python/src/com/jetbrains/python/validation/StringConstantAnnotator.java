@@ -21,7 +21,7 @@ public class StringConstantAnnotator extends PyAnnotator {
     int index = 0;
     // skip 'unicode' and 'raw' modifiers
     char first_quote = s.charAt(index);
-    if ((first_quote == 'u') || (first_quote == 'U')) index += 1;
+    if (Character.toLowerCase(first_quote) == 'u' || Character.toLowerCase(first_quote) == 'b') index += 1;
     first_quote = s.charAt(index);
     if ((first_quote == 'r') || (first_quote == 'R')) index += 1;
 
