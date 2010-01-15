@@ -168,4 +168,6 @@ public interface JBPopup extends Disposable, LightweightWindow {
   Component getOwner();
   
   void setMinimumSize(Dimension size);
+
+  void setFinalRunnable(@Nullable Runnable runnable);
 }

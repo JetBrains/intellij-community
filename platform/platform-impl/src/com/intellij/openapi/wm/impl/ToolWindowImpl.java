@@ -218,6 +218,14 @@ public final class ToolWindowImpl implements ToolWindowEx {
     return myToolWindowManager.getToolWindowInternalType(myId);
   }
 
+  public void stretchWidth(int value) {
+    myToolWindowManager.stretchWidth(this, value);
+  }
+
+  public void stretchHeight(int value) {
+    myToolWindowManager.stretchHeight(this, value);
+  }
+
   public final void setAvailable(final boolean available, final Runnable runnable) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final Boolean oldAvailable = myAvailable ? Boolean.TRUE : Boolean.FALSE;

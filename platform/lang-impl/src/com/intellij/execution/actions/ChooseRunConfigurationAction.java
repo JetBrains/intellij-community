@@ -251,10 +251,14 @@ public class ChooseRunConfigurationAction extends AnAction {
   private static Action createNumberAction(final int number, final ListPopupImpl listPopup, final Executor executor) {
     return new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        for (Object item : listPopup.getListStep().getValues()) {
+        for (final Object item : listPopup.getListStep().getValues()) {
           if (item instanceof ItemWrapper && ((ItemWrapper)item).getMnemonic() == number) {
+            listPopup.setFinalRunnable(new Runnable() {
+              public void run() {
+                execute((ItemWrapper)item, executor);
+              }
+            });
             listPopup.cancel();
-            execute((ItemWrapper)item, executor);
           }
         }
       }

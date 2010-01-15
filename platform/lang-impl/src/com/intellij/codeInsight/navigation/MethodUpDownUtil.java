@@ -38,7 +38,7 @@ public class MethodUpDownUtil {
   public static int[] getNavigationOffsets(PsiFile file, final int caretOffset) {
     for(MethodNavigationOffsetProvider provider: Extensions.getExtensions(MethodNavigationOffsetProvider.EP_NAME)) {
       final int[] offsets = provider.getMethodNavigationOffsets(file, caretOffset);
-      if (offsets != null) {
+      if (offsets != null && offsets.length > 0) {
         return offsets;
       }
     }

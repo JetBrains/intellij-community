@@ -227,7 +227,12 @@ public class TestRunnerUtil {
     }
 
     protected void runTest() throws Throwable {
-      throw new RuntimeException(myMessage, myThrowable);
+      try {
+        throw new RuntimeException(myMessage, myThrowable);
+      }
+      catch (NoSuchMethodError e) {
+        throw new RuntimeException(myMessage);
+      }
     }
   }
 }

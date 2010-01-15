@@ -19,14 +19,18 @@ import com.intellij.ExtensionPoints;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import gnu.trove.THashSet;
+import gnu.trove.TIntObjectHashMap;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,20 +46,32 @@ import java.io.*;
 public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = "Since15";
 
-  private static final THashSet<String> ourForbidden15API = new THashSet<String>(1500);
-  private static final THashSet<String> ourForbidden16API = new THashSet<String>(200);
+  private static final TIntObjectHashMap<THashSet<String>> ourForbiddenAPI = new TIntObjectHashMap<THashSet<String>>(5);
   private static final THashSet<String> ourIgnored16ClassesAPI = new THashSet<String>(10);
+  private static final int API_16 = 2;
+  private static final TIntObjectHashMap<String> ourAPIPresentationMap = new TIntObjectHashMap<String>(5);
 
-  public boolean FORBID_15_API = true;
+  public boolean FORBID_15_API = false;
 
-  public boolean FORBID_16_API = true;
+  public boolean FORBID_16_API = false;
   private JPanel myWholePanel;
-  private JCheckBox my15ApiCb;
-  private JCheckBox my16ApiCb;
+  private JComboBox myApiComboBox;
+
+  public int API = 1;
 
   static {
+    final THashSet<String> ourForbidden14API = new THashSet<String>(1000);
+    initForbiddenApi("api14List.txt", ourForbidden14API);
+    ourForbiddenAPI.put(0, ourForbidden14API);
+    ourAPIPresentationMap.put(0, "1.4");
+    final THashSet<String> ourForbidden15API = new THashSet<String>(1000);
     initForbiddenApi("apiList.txt", ourForbidden15API);
+    ourForbiddenAPI.put(1, ourForbidden15API);
+    ourAPIPresentationMap.put(1, "1.5");
+    final THashSet<String> ourForbidden16API = new THashSet<String>(1000);
     initForbiddenApi("api16List.txt", ourForbidden16API);
+    ourForbiddenAPI.put(2, ourForbidden16API);
+    ourAPIPresentationMap.put(2, "1.6");
     initForbiddenApi("ignore16List.txt", ourIgnored16ClassesAPI);
   }
 
@@ -92,16 +108,15 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
 
   @Nullable
   public JComponent createOptionsPanel() {
-    my15ApiCb.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        FORBID_15_API = my15ApiCb.isSelected();
-      }
-    });
-    my15ApiCb.setSelected(FORBID_15_API);
-    my16ApiCb.setSelected(FORBID_16_API);
-    my16ApiCb.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        FORBID_16_API = my16ApiCb.isSelected();
+    final DefaultComboBoxModel model = (DefaultComboBoxModel)myApiComboBox.getModel();
+    model.removeAllElements();
+    for (int idx = 0; idx < ourAPIPresentationMap.size(); idx++) {
+      model.addElement(ourAPIPresentationMap.get(idx));
+    }
+    myApiComboBox.setSelectedIndex(API);
+    myApiComboBox.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        API = myApiComboBox.getSelectedIndex();
       }
     });
     return myWholePanel;
@@ -122,6 +137,27 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
     return SHORT_NAME;
   }
 
+
+  @Override
+  public void readSettings(Element node) throws InvalidDataException {
+    super.readSettings(node);
+    if (FORBID_15_API) {
+      API = API_16 - 1;
+    }
+    else if (FORBID_16_API) {
+      API = API_16;
+    }
+  }
+
+  @Override
+  public void writeSettings(Element node) throws WriteExternalException {
+    if (API != API_16 - 1) {
+      final Element element = new Element("option");
+      element.setAttribute("name", "API");
+      element.setAttribute("value", String.valueOf(API));
+      node.addContent(element);
+    }
+  }
 
   @NotNull
   @Override
@@ -157,6 +193,10 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
     return null;
   }
 
+  public String getApiPresentable() {
+    return ourAPIPresentationMap.get(API);
+  }
+
   private class MyVisitor extends JavaElementVisitor {
     private final ProblemsHolder myHolder;
 
@@ -181,16 +221,15 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
       final PsiElement resolved = reference.resolve();
 
       if (resolved instanceof PsiCompiledElement && resolved instanceof PsiMember) {
-        if (isJava15ApiUsage((PsiMember)resolved)) {
-          register15Error(reference);
-        } else if (isJava16ApiUsage(((PsiMember)resolved))) {
+        if (isForbiddenApiUsage((PsiMember)resolved, API)) {
           PsiClass psiClass = null;
           final PsiElement qualifier = reference.getQualifier();
           if (qualifier != null) {
             if (qualifier instanceof PsiExpression) {
               psiClass = PsiUtil.resolveClassInType(((PsiExpression)qualifier).getType());
             }
-          } else {
+          }
+          else {
             psiClass = PsiTreeUtil.getParentOfType(reference, PsiClass.class);
           }
           if (psiClass != null) {
@@ -199,7 +238,7 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
               if (isIgnored(superClass)) return;
             }
           }
-          register16Error(reference);
+          registerError(reference, API);
         }
       }
     }
@@ -213,30 +252,21 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
       super.visitNewExpression(expression);
       final PsiMethod constructor = expression.resolveConstructor();
       if (constructor instanceof PsiCompiledElement) {
-        if (isJava15ApiUsage(constructor)) {
-          register15Error(expression.getClassReference());
-        } else if (isJava16ApiUsage(constructor)) {
-          register16Error(expression.getClassReference());
+        if (isForbiddenApiUsage(constructor, API)) {
+          registerError(expression.getClassReference(), API);
         }
       }
     }
 
-    private void registerError(PsiJavaCodeReferenceElement reference, @NonNls String api) {
+    private void registerError(PsiJavaCodeReferenceElement reference, int api) {
       if (isInProject(reference)) {
-        myHolder.registerProblem(reference, InspectionsBundle.message("inspection.1.5.problem.descriptor", api));
+        myHolder.registerProblem(reference, InspectionsBundle.message("inspection.1.5.problem.descriptor", ourAPIPresentationMap.get(api)));
       }
-    }
-
-    private void register15Error(PsiJavaCodeReferenceElement referenceElement) {
-      registerError(referenceElement, "@since 1.5");
-    }
-
-    private void register16Error(PsiJavaCodeReferenceElement referenceElement) {
-      registerError(referenceElement, "@since 1.6");
     }
   }
 
-  private static boolean isForbiddenApiUsage(final PsiMember member, boolean is15ApiCheck) {
+  public static boolean isForbiddenApiUsage(final PsiMember member, int api) {
+    if (api == -1) return false;
     if (member == null) return false;
 
     // Annotations caught by special inspection if necessary
@@ -245,22 +275,19 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
     if (member instanceof PsiAnonymousClass) return false;
     if (member.getContainingClass() instanceof PsiAnonymousClass) return false;
     if (member instanceof PsiClass && !(member.getParent() instanceof PsiClass || member.getParent() instanceof PsiFile)) return false;
-
-    return (is15ApiCheck && ourForbidden15API.contains(getSignature(member))) ||
-           (!is15ApiCheck && ourForbidden16API.contains(getSignature(member))) ||
-           isForbiddenApiUsage(member.getContainingClass(), is15ApiCheck);
+    return isForbiddenSignature(member, api) ||
+           isForbiddenApiUsage(member.getContainingClass(), api);
 
   }
 
-  public boolean isJava15ApiUsage(final PsiMember member) {
-    return FORBID_15_API && isForbiddenApiUsage(member, true);
+  private static boolean isForbiddenSignature(PsiMember member, int api) {
+    final THashSet<String> forbiddenApi = ourForbiddenAPI.get(api);
+    if (forbiddenApi == null) return false;
+    return forbiddenApi.contains(getSignature(member)) ||
+           isForbiddenSignature(member, api + 1);
   }
 
-  public boolean isJava16ApiUsage(final PsiMember member) {
-    return (FORBID_15_API || FORBID_16_API) && isForbiddenApiUsage(member, false);
-  }
-
-  private static String getSignature(PsiMember member) {
+  public static String getSignature(PsiMember member) {
     if (member instanceof PsiClass) {
       return ((PsiClass)member).getQualifiedName();
     }

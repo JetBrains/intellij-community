@@ -459,7 +459,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
 
       if (element instanceof PsiReferenceExpression) {
         final PsiReferenceExpression exp = (PsiReferenceExpression)element;
-        if (RefactoringUtil.isPlusPlusOrMinusMinus(exp)) {
+        if (RefactoringUtil.isPlusPlusOrMinusMinus(exp.getParent())) {
           usages.add(isStatic
                      ? new ReplaceStaticVariableIncrementDecrement(exp, qualifiedName)
                      : new ReplaceInstanceVariableIncrementDecrement(exp, delegateFieldName, setter, getter));

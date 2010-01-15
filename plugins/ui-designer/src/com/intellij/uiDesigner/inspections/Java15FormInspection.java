@@ -64,10 +64,8 @@ public class Java15FormInspection extends BaseFormInspection {
         profileEntry = ((LocalInspectionToolWrapper) profileEntry).getTool();
       }
       final Java15APIUsageInspection tool = (Java15APIUsageInspection)profileEntry;
-      if (tool.isJava15ApiUsage(getter)) {
-        registerError(component, collector, prop, "@since 1.5");
-      } else if (tool.isJava16ApiUsage(getter)) {
-        registerError(component, collector, prop, "@since 1.6");
+      if (Java15APIUsageInspection.isForbiddenApiUsage(getter, tool.API)) {
+        registerError(component, collector, prop, "@since " + tool.getApiPresentable());
       }
     }
   }

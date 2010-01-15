@@ -42,6 +42,8 @@ import java.util.Set;
  * @author peter
  */
 public class FileContentUtil {
+  public static final String FORCE_RELOAD_REQUESTOR = "FileContentUtil.saveOrReload";
+
   private FileContentUtil() {
   }
 
@@ -95,6 +97,6 @@ public class FileContentUtil {
         documentManager.saveDocument(document);
       }
     }
-    events.add(new VFilePropertyChangeEvent("FileContentUtil.saveOrReload", virtualFile, VirtualFile.PROP_NAME, virtualFile.getName(), virtualFile.getName(), false));
+    events.add(new VFilePropertyChangeEvent(FORCE_RELOAD_REQUESTOR, virtualFile, VirtualFile.PROP_NAME, virtualFile.getName(), virtualFile.getName(), false));
   }
 }

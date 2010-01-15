@@ -216,6 +216,10 @@
       <implementation-class>com.intellij.codeInsight.preview.ImageOrColorPreviewProjectComponent</implementation-class>
       <skipForDummyProject/>
     </component>
+
+    <component>
+      <implementation-class>com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater</implementation-class>
+    </component>
   </project-components>
 
   <module-components>
