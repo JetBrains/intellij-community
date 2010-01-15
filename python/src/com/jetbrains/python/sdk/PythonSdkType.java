@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -171,6 +172,7 @@ public class PythonSdkType extends SdkType {
     return null;
   }
 
+  @Nullable
   @NonNls
   private static File getPythonBinaryPath(final String path) {
     if (SystemInfo.isWindows) {
@@ -230,18 +232,18 @@ public class PythonSdkType extends SdkType {
   }
   
   public void setupSdkPaths(final Sdk sdk) {
-    final SdkModificator[] sdk_mod_holder = new SdkModificator[]{null};
-    ProgressManager progman = ProgressManager.getInstance();
+    final Ref<SdkModificator> sdkModificatorRef = new Ref<SdkModificator>();
+    final ProgressManager progman = ProgressManager.getInstance();
     final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     final Task.Modal setup_task = new Task.Modal(project, "Setting up library files", false) {
 
       public void run(@NotNull final ProgressIndicator indicator) {
-        sdk_mod_holder[0] = setupSdkPathsUnderProgress(sdk, indicator);
+        sdkModificatorRef.set(setupSdkPathsUnderProgress(sdk, indicator));
       }
 
     };
     progman.run(setup_task);
-    if (sdk_mod_holder[0] != null) sdk_mod_holder[0].commitChanges(); // commit in dispatch thread, not task's
+    if (sdkModificatorRef.get() != null) sdkModificatorRef.get().commitChanges(); // commit in dispatch thread, not task's
   }
 
 
@@ -332,7 +334,10 @@ public class PythonSdkType extends SdkType {
 
   @Nullable
   public String getVersionString(final String sdkHome) {
-    String binaryPath = getInterpreterPath(sdkHome);
+    final String binaryPath = getInterpreterPath(sdkHome);
+    if (binaryPath == null){
+      return null;
+    }
     final boolean isJython = isJythonSdkHome(sdkHome);
     @NonNls String version_regexp, version_opt;
     if (isJython) {
@@ -348,11 +353,10 @@ public class PythonSdkType extends SdkType {
     return version;
   }
 
-  public static String getInterpreterPath(final String sdkHome) { 
-    if (isJythonSdkHome(sdkHome)) {
-      return getJythonBinaryPath(sdkHome).getPath();
-    }
-    return getPythonBinaryPath(sdkHome).getPath();
+  @Nullable
+  public static String getInterpreterPath(final String sdkHome) {
+    final File file = isJythonSdkHome(sdkHome) ? getJythonBinaryPath(sdkHome) : getPythonBinaryPath(sdkHome);
+    return file != null ? file.getPath() : null;
   }
 
   private final static String GENERATOR3 = "generator3.py";
