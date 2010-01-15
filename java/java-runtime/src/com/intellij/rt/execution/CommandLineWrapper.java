@@ -40,8 +40,12 @@ public class CommandLineWrapper {
     final File file = new File(args[0]);
     final BufferedReader reader = new BufferedReader(new FileReader(file));
     try {
-      while(reader.ready()) {
-        urls.add(new File(reader.readLine()).toURI().toURL());
+      final String fileName = reader.readLine();
+      try {
+        urls.add(new File(fileName).toURI().toURL());
+      }
+      catch (NoSuchMethodError e) {
+        urls.add(new File(fileName).toURL());
       }
     }
     finally {
