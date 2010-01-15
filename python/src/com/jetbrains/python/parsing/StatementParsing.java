@@ -22,18 +22,23 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   @NonNls protected static final String TOK_FUTURE_IMPORT = "__future__";
   @NonNls protected static final String TOK_WITH_STATEMENT = "with_statement";
   @NonNls protected static final String TOK_NESTED_SCOPES = "nested_scopes";
+  @NonNls protected static final String TOK_PRINT_FUNCTION = "print_function";
   @NonNls protected static final String TOK_WITH = "with";
   @NonNls protected static final String TOK_AS = "as";
+  @NonNls protected static final String TOK_PRINT = "print";
 
   protected enum Phase {NONE, FROM, FUTURE, IMPORT} // 'from __future__ import' phase
   private Phase myFutureImportPhase = Phase.NONE;
   private boolean myExpectAsKeyword = false;
 
-  protected enum FUTURE {ABSOLUTE_IMPORT, DIVISION, GENERATORS, NESTED_SCOPES, WITH_STATEMENT}
+  public enum FUTURE {ABSOLUTE_IMPORT, DIVISION, GENERATORS, NESTED_SCOPES, WITH_STATEMENT, PRINT_FUNCTION}
   protected Set<FUTURE> myFutureFlags = EnumSet.noneOf(FUTURE.class);
 
-  protected StatementParsing(ParsingContext context) {
+  protected StatementParsing(ParsingContext context, @Nullable FUTURE futureFlag) {
     super(context);
+    if (futureFlag != null) {
+      myFutureFlags.add(futureFlag);
+    }
   }
 
   public void parseStatement() {
@@ -89,7 +94,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     if (firstToken == null) {
       return;
     }
-    if (firstToken == PyTokenTypes.PRINT_KEYWORD) {
+    if (firstToken == PyTokenTypes.PRINT_KEYWORD && hasPrintStatement()) {
       parsePrintStatement(builder, inSuite);
       return;
     }
@@ -191,6 +196,10 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
 
     builder.advanceLexer();
     builder.error("statement expected, found " + firstToken.toString());
+  }
+
+  private boolean hasPrintStatement() {
+    return myContext.getLanguageLevel().hasPrintStatement() && !myFutureFlags.contains(FUTURE.PRINT_FUNCTION);
   }
 
   private void checkEndOfStatement(boolean inSuite) {
@@ -397,6 +406,9 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
           }
           else if (TOK_NESTED_SCOPES.equals(token_text)) {
             myFutureFlags.add(FUTURE.NESTED_SCOPES);
+          }
+          else if (TOK_PRINT_FUNCTION.equals(token_text)) {
+            myFutureFlags.add(FUTURE.PRINT_FUNCTION);
           }
         }
       }
@@ -722,6 +734,10 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
         isWordAtPosition(text, start, end, TOK_WITH)
     ) {
       return PyTokenTypes.WITH_KEYWORD;
+    }
+    else if (hasPrintStatement() && source == PyTokenTypes.IDENTIFIER &&
+             isWordAtPosition(text, start, end, TOK_PRINT)) {
+      return PyTokenTypes.PRINT_KEYWORD;
     }
     return source;
   }

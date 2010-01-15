@@ -25,10 +25,10 @@ public class ParsingContext {
   private final PsiBuilder myBuilder;
   private final LanguageLevel myLanguageLevel;
 
-  public ParsingContext(final PsiBuilder builder, LanguageLevel languageLevel) {
+  public ParsingContext(final PsiBuilder builder, LanguageLevel languageLevel, StatementParsing.FUTURE futureFlag) {
     myBuilder = builder;
     myLanguageLevel = languageLevel;
-    stmtParser = new StatementParsing(this);
+    stmtParser = new StatementParsing(this, futureFlag);
     expressionParser = new ExpressionParsing(this);
     functionParser = new FunctionParsing(this);
   }

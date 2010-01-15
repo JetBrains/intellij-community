@@ -3,6 +3,7 @@ package com.jetbrains.python.lexer;
 
 import com.intellij.lexer.FlexLexer;
 import com.intellij.psi.tree.IElementType;
+import com.jetbrains.python.PyTokenTypes;
 
 %%
 
@@ -100,7 +101,6 @@ TRIPLE_APOS_LITERAL = {THREE_APOS} {STRING_3CHAR_APOS}* {THREE_APOS}
 "not"                 { return PyTokenTypes.NOT_KEYWORD; }
 "or"                  { return PyTokenTypes.OR_KEYWORD; }
 "pass"                { return PyTokenTypes.PASS_KEYWORD; }
-"print"               { return PyTokenTypes.PRINT_KEYWORD; }
 "raise"               { return PyTokenTypes.RAISE_KEYWORD; }
 "return"              { return PyTokenTypes.RETURN_KEYWORD; }
 "try"                 { return PyTokenTypes.TRY_KEYWORD; }

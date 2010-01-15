@@ -21,6 +21,10 @@ public class PythonHighlightingLexer extends PythonLexer {
       if (tokenText.equals("with")) return PyTokenTypes.WITH_KEYWORD;
       if (tokenText.equals("as")) return PyTokenTypes.AS_KEYWORD;
     }
+    if (myLanguageLevel.hasPrintStatement()) {
+      final String tokenText = getTokenText();
+      if (tokenText.equals("print")) return PyTokenTypes.PRINT_KEYWORD;
+    }
     return super.getTokenType();
   }
 }

@@ -1,6 +1,9 @@
 package com.jetbrains.python.psi;
 
-import com.intellij.lang.*;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
+import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.PsiBuilderFactory;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -9,6 +12,7 @@ import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.jetbrains.python.lexer.PythonIndentingLexer;
 import com.jetbrains.python.parsing.PyParser;
+import com.jetbrains.python.parsing.StatementParsing;
 
 /**
 * @author yole
@@ -20,7 +24,7 @@ public class PyFileElementType extends IStubFileElementType {
 
   @Override
   public int getStubVersion() {
-    return 4;
+    return 5;
   }
 
   @Override
@@ -34,7 +38,12 @@ public class PyFileElementType extends IStubFileElementType {
 
     final PsiBuilder builder = factory.createBuilder(project, chameleon, lexer, getLanguage(), chameleon.getChars());
 
-    final PsiParser parser = new PyParser(languageLevel);
+    final PyParser parser = new PyParser(languageLevel);
+    if (languageLevel == LanguageLevel.PYTHON26 &&
+        node.getPsi().getContainingFile().getName().equals("__builtin__.py")) {
+      parser.setFutureFlag(StatementParsing.FUTURE.PRINT_FUNCTION);      
+    }
+
     return parser.parse(this, builder).getFirstChildNode();
   }
 
