@@ -17,15 +17,15 @@ package com.intellij.compiler.impl.javaCompiler.api;
 
 import com.intellij.compiler.OutputParser;
 import com.intellij.compiler.impl.javaCompiler.FileObject;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
+import org.jetbrains.annotations.NonNls;
 
-import javax.tools.JavaFileObject;
-import javax.tools.Diagnostic;
-import java.net.URI;
+import javax.tools.*;
 import java.io.File;
+import java.net.URI;
 
 /**
  * @author cdr
@@ -40,6 +40,7 @@ abstract class CompilationEvent {
         showProgressFor(title, fileObject.toUri(), callback);
       }
 
+      @NonNls
       @Override
       public String toString() {
         return "Progress: "+title+" "+fileObject.toUri();
@@ -59,6 +60,7 @@ abstract class CompilationEvent {
         File file = new File(uri.getPath());
         callback.fileGenerated(new FileObject(file,bytes));
       }
+      @NonNls
       @Override
       public String toString() {
         return "Write: "+uri;
@@ -93,6 +95,7 @@ abstract class CompilationEvent {
                                              : CompilerMessageCategory.INFORMATION;
         callback.message(category, message, url, (int)diagnostic.getLineNumber(), (int)diagnostic.getColumnNumber());
       }
+      @NonNls
       @Override
       public String toString() {
         return "Diagnostic: "+diagnostic;
@@ -106,6 +109,7 @@ abstract class CompilationEvent {
       protected void process(OutputParser.Callback callback) {
         callback.fileProcessed(null);
       }
+      @NonNls
       @Override
       public String toString() {
         return "Processed";

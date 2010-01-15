@@ -118,6 +118,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
         }
         catch (CacheCorruptedException e) {
           context.addMessage(CompilerMessageCategory.ERROR, e.getMessage(), null, -1, -1);
+          LOG.info(e);
         }
       }
     });
@@ -183,6 +184,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
         }
         catch (IOException e) {
           context.addMessage(CompilerMessageCategory.ERROR, e.getMessage(), null, -1, -1);
+          LOG.info(e);
         }
       }
       // update state so that the latest timestamps are recorded by make

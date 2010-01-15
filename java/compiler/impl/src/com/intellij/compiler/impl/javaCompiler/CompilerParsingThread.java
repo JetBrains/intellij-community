@@ -81,8 +81,10 @@ public class CompilerParsingThread implements Runnable, OutputParser.Callback {
       myError = e;
       LOG.info(e);
     }
-    killProcess();
-    processing = false;
+    finally {
+      killProcess();
+      processing = false;
+    }
   }
 
   private void killProcess() {
@@ -115,6 +117,9 @@ public class CompilerParsingThread implements Runnable, OutputParser.Callback {
   }
 
   public final void fileGenerated(FileObject path) {
+    // javac first logs file generated, then starts to write the file to disk,
+    // so this thread sometimes can stumble on not yet existing file,
+    // hence this complex logic
     FileObject previousPath = myClassFileToProcess;
     myClassFileToProcess = path;
     if (previousPath != null) {
@@ -123,6 +128,7 @@ public class CompilerParsingThread implements Runnable, OutputParser.Callback {
       }
       catch (CacheCorruptedException e) {
         myError = e;
+        LOG.info(e);
         killProcess();
       }
     }
