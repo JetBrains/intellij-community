@@ -157,22 +157,21 @@ public abstract class CachedValueBase<T> {
   }
 
   protected long getTimeStamp(Object dependency) {
-    if (dependency instanceof Reference){
-      final Object original = ((Reference)dependency).get();
-      if(original == null) return -1;
-      return getTimeStamp(original);
-    }
-
-    if (dependency instanceof Ref) {
-      final Object original = ((Ref)dependency).get();
-      if(original == null) return -1;
-      return getTimeStamp(original);
-    }
 
     if (dependency instanceof ModificationTracker) {
       return ((ModificationTracker)dependency).getModificationCount();
     }
-    if (dependency instanceof Document) {
+    else if (dependency instanceof Reference){
+      final Object original = ((Reference)dependency).get();
+      if(original == null) return -1;
+      return getTimeStamp(original);
+    }
+    else if (dependency instanceof Ref) {
+      final Object original = ((Ref)dependency).get();
+      if(original == null) return -1;
+      return getTimeStamp(original);
+    }
+    else if (dependency instanceof Document) {
       return ((Document)dependency).getModificationStamp();
     }
     else {

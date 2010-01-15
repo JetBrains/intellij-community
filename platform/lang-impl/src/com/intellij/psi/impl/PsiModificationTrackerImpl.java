@@ -36,6 +36,7 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
   private volatile long myModificationCount = 0;
   private volatile long myOutOfCodeBlockModificationCount = 0;
   private volatile long myJavaStructureModificationCount = 0;
+  private volatile long myAnnotationModificationCount = 0;
   private final Listener myPublisher;
 
   public PsiModificationTrackerImpl(Project project) {
@@ -68,6 +69,10 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
     myPublisher.modificationCountChanged();
   }
 
+  public void incAnnotationModificationCounter() {
+    myAnnotationModificationCount++;
+  }
+
   public void treeChanged(PsiTreeChangeEventImpl event) {
     myModificationCount++;
     if (event.getParent() instanceof PsiDirectory) {
@@ -87,5 +92,9 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
 
   public long getJavaStructureModificationCount() {
     return myJavaStructureModificationCount;
+  }
+
+  public long getAnnotationModificationCount() {
+    return myAnnotationModificationCount;
   }
 }
