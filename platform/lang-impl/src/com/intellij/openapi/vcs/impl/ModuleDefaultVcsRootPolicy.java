@@ -53,13 +53,14 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
   }
 
   public void addDefaultVcsRoots(final NewMappings mappingList, final AbstractVcs vcs, final List<VirtualFile> result) {
-    if (myBaseDir != null && vcs.getName().equals(mappingList.getVcsFor(myBaseDir)) && vcs.fileIsUnderVcs(new FilePathImpl(myBaseDir))) {
+    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+    if (myBaseDir != null && vcs.getName().equals(mappingList.getVcsFor(myBaseDir)) && (vcs.equals(vcsManager.getVcsFor(myBaseDir)))) {
       result.add(myBaseDir);
     }
     final StorageScheme storageScheme = ((ProjectEx) myProject).getStateStore().getStorageScheme();
     if (StorageScheme.DIRECTORY_BASED.equals(storageScheme)) {
       final VirtualFile ideaDir = myBaseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
-      if (ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory()) {
+      if (ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory() && vcs.equals(vcsManager.getVcsFor(ideaDir))) {
         result.add(ideaDir);
       }
     }
@@ -146,7 +147,10 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
     final String defaultMapping = ((ProjectLevelVcsManagerEx)plVcsManager).haveDefaultMapping();
     final boolean haveDefaultMapping = (defaultMapping != null) && (defaultMapping.length() > 0);
     if (haveDefaultMapping) {
-      builder.addDirtyFile(new VcsRoot(plVcsManager.findVcsByName(defaultMapping), baseDir));
+      final AbstractVcs vcs = vcsGuess.getVcsForDirty(baseDir);
+      if (vcs != null) {
+        builder.addDirtyFile(new VcsRoot(vcs, baseDir));
+      }
     }
 
     final VcsRoot[] vcsRoots = plVcsManager.getAllVcsRoots();

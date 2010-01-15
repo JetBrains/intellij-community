@@ -46,7 +46,9 @@ public class RootsCalculator {
     final List<VcsDirectoryMapping> mappings = myPlManager.getDirectoryMappings(myVcs);
     for (VcsDirectoryMapping mapping : mappings) {
       if (mapping.isDefaultMapping()) {
-        roots.add(myProject.getBaseDir());
+        if (myVcs.equals(myPlManager.getVcsFor(myProject.getBaseDir()))) {
+          roots.add(myProject.getBaseDir());
+        }
       } else {
         VirtualFile newFile = LocalFileSystem.getInstance().findFileByPath(mapping.getDirectory());
         if (newFile == null) {
