@@ -5,7 +5,6 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.impl.stubs.*;
 import com.jetbrains.python.psi.stubs.*;
-import com.jetbrains.python.psi.PyDecorator;
 
 public interface PyElementTypes {
 
@@ -19,8 +18,9 @@ public interface PyElementTypes {
 
   PyStubElementType<PyNamedParameterStub, PyNamedParameter> NAMED_PARAMETER = new PyNamedParameterElementType();
   PyStubElementType<PyTupleParameterStub, PyTupleParameter> TUPLE_PARAMETER = new PyTupleParameterElementType();
+  PyStubElementType<PySingleStarParameterStub, PySingleStarParameter> SINGLE_STAR_PARAMETER = new PySingleStarParameterElementType();
 
-  TokenSet PARAMETERS = TokenSet.create(NAMED_PARAMETER, TUPLE_PARAMETER);
+  TokenSet PARAMETERS = TokenSet.create(NAMED_PARAMETER, TUPLE_PARAMETER, SINGLE_STAR_PARAMETER);
 
   PyStubElementType<PyDecoratorStub, PyDecorator> DECORATOR_CALL = new PyDecoratorCallElementType();
 

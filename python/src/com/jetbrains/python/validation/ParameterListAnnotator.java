@@ -1,25 +1,8 @@
-/*
- *  Copyright 2005 Pythonid Project
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS"; BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package com.jetbrains.python.validation;
 
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.psi.PyNamedParameter;
-import com.jetbrains.python.psi.PyParameterList;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
 
 import java.util.Set;
@@ -30,12 +13,15 @@ import java.util.Set;
 public class ParameterListAnnotator extends PyAnnotator {
   @Override
   public void visitPyParameterList(final PyParameterList paramlist) {
+    final LanguageLevel languageLevel = ((PyFile)paramlist.getContainingFile()).getLanguageLevel();
     ParamHelper.walkDownParamArray(
       paramlist.getParameters(),
       new ParamHelper.ParamVisitor() {
         Set<String> parameterNames = new HashSet<String>();
-        boolean hadPositionalContainer = false, hadKeywordContainer = false;
+        boolean hadPositionalContainer = false;
+        boolean hadKeywordContainer = false;
         boolean hadDefaultValue = false;
+        boolean hadSingleStar = false;
         @Override
         public void visitNamedParameter(PyNamedParameter parameter, boolean first, boolean last) {
           if (parameterNames.contains(parameter.getName())) {
@@ -52,18 +38,26 @@ public class ParameterListAnnotator extends PyAnnotator {
             hadKeywordContainer = true;
           }
           else {
-            if (hadPositionalContainer || hadKeywordContainer) {
-              getHolder().createErrorAnnotation(parameter, PyBundle.message("ANN.regular.param.after.starred"));
+            if (hadPositionalContainer && !languageLevel.isPy3K()) {
+              getHolder().createErrorAnnotation(parameter, PyBundle.message("ANN.regular.param.after.vararg"));
+            }
+            else if (hadKeywordContainer) {
+              getHolder().createErrorAnnotation(parameter, PyBundle.message("ANN.regular.param.after.keyword"));
             }
             if (parameter.getDefaultValue() != null) {
               hadDefaultValue = true;
             }
             else {
-              if (hadDefaultValue) {
+              if (hadDefaultValue && !hadSingleStar && (!languageLevel.isPy3K() || !hadPositionalContainer)) {
                 getHolder().createErrorAnnotation(parameter, PyBundle.message("ANN.non.default.param.after.default"));
               }
             }
           }
+        }
+
+        @Override
+        public void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last) {
+          hadSingleStar = true;
         }
       }
     );

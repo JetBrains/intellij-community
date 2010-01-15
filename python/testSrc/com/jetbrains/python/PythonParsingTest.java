@@ -116,6 +116,10 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  public void testKeywordOnlyArgument() throws Exception {   // PEP 3102
+    doTest(LanguageLevel.PYTHON30);
+  }
+
   public void doTest() throws Exception {
     doTest(LanguageLevel.PYTHON25);
   }

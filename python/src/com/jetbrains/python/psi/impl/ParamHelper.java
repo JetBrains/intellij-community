@@ -1,9 +1,6 @@
 package com.jetbrains.python.psi.impl;
 
-import com.jetbrains.python.psi.PyNamedParameter;
-import com.jetbrains.python.psi.PyParameter;
-import com.jetbrains.python.psi.PyParameterList;
-import com.jetbrains.python.psi.PyTupleParameter;
+import com.jetbrains.python.psi.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,12 +28,20 @@ public class ParamHelper {
         walkDownParamArray(nested_params, walker);
         walker.leaveTupleParameter(tpar, (i==0), (i == last));
       }
-      else walker.visitNamedParameter(param.getAsNamed(), (i==0), (i == last));
+      else {
+        final PyNamedParameter namedParameter = param.getAsNamed();
+        if (namedParameter != null) {
+          walker.visitNamedParameter(namedParameter, (i==0), (i == last));
+        }
+        else {
+          walker.visitSingleStarParameter((PySingleStarParameter) param, (i == 0), (i == last));
+        }
+      }
       i += 1;
     }
   }
 
-  public static interface ParamWalker {
+  public interface ParamWalker {
     /**
      * Is called when a tuple parameter is encountered, before visiting any parameters nested in it.
      * @param param the parameter
@@ -60,6 +65,8 @@ public class ParamHelper {
      * @param last true it is the last in the list
      */
     void visitNamedParameter(PyNamedParameter param, boolean first, boolean last);
+
+    void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last);
   }
 
   public static abstract class ParamVisitor implements ParamWalker {
@@ -68,6 +75,8 @@ public class ParamHelper {
     public void leaveTupleParameter(PyTupleParameter param, boolean first, boolean last) { }
 
     public void visitNamedParameter(PyNamedParameter param, boolean first, boolean last) { }
+
+    public void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last) { }
   }
 
   public static StringBuilder appendParameterList(PyParameterList plist, final StringBuilder target) {
@@ -89,6 +98,11 @@ public class ParamHelper {
           target.append(param.getRepr(true));
           if (! last) target.append(COMMA);
         }
+
+        public void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last) {
+          target.append('*');
+          if (!last) target.append(COMMA);
+        }
       }
     );
     target.append(")");
@@ -99,11 +113,7 @@ public class ParamHelper {
     final List<PyNamedParameter> result = new ArrayList<PyNamedParameter>(10); // a random 'enough'
     walkDownParamArray(
       plist.getParameters(),
-      new ParamWalker() {
-        public void enterTupleParameter(PyTupleParameter param, boolean first, boolean last) { }
-
-        public void leaveTupleParameter(PyTupleParameter param, boolean first, boolean last) { }
-
+      new ParamVisitor() {
         public void visitNamedParameter(PyNamedParameter param, boolean first, boolean last) {
           result.add(param);
         }

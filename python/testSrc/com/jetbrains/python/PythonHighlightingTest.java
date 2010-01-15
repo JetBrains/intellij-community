@@ -93,17 +93,17 @@ public class PythonHighlightingTest extends PyLightFixtureTestCase {
   }
 
   public void testStringBytesLiteralOK() throws Exception {
-    PythonLanguageLevelPusher.FORCE_LANGUAGE_LEVEL = LanguageLevel.PYTHON26;
-    PythonLanguageLevelPusher.pushLanguageLevel(myFixture.getProject());
-    try {
-      doTest();
-    }
-    finally {
-      PythonLanguageLevelPusher.FORCE_LANGUAGE_LEVEL = null;
-    }
+    doTest(LanguageLevel.PYTHON26, true, true);
   }
 
+  public void testRegularAfterVarArgs() throws Exception {
+    doTest(LanguageLevel.PYTHON30, true, false);
+  }
 
+  public void testKeywordOnlyArguments() throws Exception {
+    doTest(LanguageLevel.PYTHON30, true, false);
+  }
+  
   public void testMalformedStringTripleQuoteUnterminated() throws Exception {
     doTest();
   }
@@ -120,6 +120,17 @@ public class PythonHighlightingTest extends PyLightFixtureTestCase {
     scheme.setAttributes(xKey, xAttributes);
 
     doTest();
+  }
+
+  private void doTest(final LanguageLevel languageLevel, final boolean checkWarnings, final boolean checkInfos) throws Exception {
+    PythonLanguageLevelPusher.FORCE_LANGUAGE_LEVEL = languageLevel;
+    PythonLanguageLevelPusher.pushLanguageLevel(myFixture.getProject());
+    try {
+      doTest(checkWarnings, checkInfos);
+    }
+    finally {
+      PythonLanguageLevelPusher.FORCE_LANGUAGE_LEVEL = null;
+    }
   }
 
   private void doTest() throws Exception {

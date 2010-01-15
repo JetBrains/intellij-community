@@ -312,8 +312,12 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
         ListIterator<PyExpression> unmatched_arg_iter = unmatched_args.listIterator();
         // check positional args
         while (unmatched_arg_iter.hasNext() && (param_index < params.length)) {
-          final PyExpression arg = unmatched_arg_iter.next(); // current arg
           PyParameter a_param = params[param_index];      // its matching param
+          if (a_param instanceof PySingleStarParameter) {
+            param_index++;
+            continue;
+          }
+          final PyExpression arg = unmatched_arg_iter.next(); // current arg
           PyNamedParameter n_param = a_param.getAsNamed();
           if (n_param != null) { // named
             if (
@@ -329,10 +333,13 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
             ret.my_plain_mapped_params.put(arg, n_param);
           }
           else { // tuple: it may contain only positionals or other tuples.
-            unmatched_arg_iter.previous(); // step back so that the visitor takes this arg again
-            MyParamVisitor visitor = new MyParamVisitor(unmatched_arg_iter, ret);
-            visitor.enterTuple(a_param.getAsTuple()); // will recurse as needed
-            unmatched_subargs.addAll(visitor.getUnmatchedSubargs()); // what it's seen 
+            PyTupleParameter tupleParameter = a_param.getAsTuple();
+            if (tupleParameter != null) {
+              unmatched_arg_iter.previous(); // step back so that the visitor takes this arg again
+              MyParamVisitor visitor = new MyParamVisitor(unmatched_arg_iter, ret);
+              visitor.enterTuple(a_param.getAsTuple()); // will recurse as needed
+              unmatched_subargs.addAll(visitor.getUnmatchedSubargs()); // what it's seen
+            }
           }
           unmatched_arg_iter.remove(); // it has been matched
           param_index += 1;

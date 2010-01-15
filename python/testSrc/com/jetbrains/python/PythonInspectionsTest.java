@@ -4,6 +4,8 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.inspections.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 
 /**
  * @author yole
@@ -36,6 +38,18 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   public void testPyArgumentListInspection() throws Throwable {
     LocalInspectionTool inspection = new PyArgumentListInspection();
     doTest(getTestName(false), inspection);
+  }
+
+  public void testPyArgumentListInspection3K() throws Throwable {
+    PythonLanguageLevelPusher.FORCE_LANGUAGE_LEVEL = LanguageLevel.PYTHON30;
+    PythonLanguageLevelPusher.pushLanguageLevel(myFixture.getProject());
+    try {
+      LocalInspectionTool inspection = new PyArgumentListInspection();
+      doTest(getTestName(false), inspection);
+    }
+    finally {
+      PythonLanguageLevelPusher.FORCE_LANGUAGE_LEVEL = null;
+    }
   }
 
   public void testPyRedeclarationInspection() throws Throwable {

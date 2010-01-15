@@ -10,7 +10,10 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public enum LanguageLevel {
-  PYTHON24(false, true), PYTHON25(false, true), PYTHON26(true, true), PYTHON30(true, false);
+  PYTHON24(false, true, false),
+  PYTHON25(false, true, false),
+  PYTHON26(true, true, false),
+  PYTHON30(true, false, true);
 
   public static LanguageLevel getDefault() {
     return PYTHON26;
@@ -18,10 +21,12 @@ public enum LanguageLevel {
 
   private boolean myHasWithStatement;
   private boolean myHasPrintStatement;
+  private boolean myIsPy3K;
 
-  LanguageLevel(boolean hasWithStatement, boolean hasPrintStatement) {
+  LanguageLevel(boolean hasWithStatement, boolean hasPrintStatement, boolean isPy3K) {
     myHasWithStatement = hasWithStatement;
     myHasPrintStatement = hasPrintStatement;
+    myIsPy3K = isPy3K;
   }
 
   public boolean hasWithStatement() {
@@ -30,6 +35,10 @@ public enum LanguageLevel {
 
   public boolean hasPrintStatement() {
     return myHasPrintStatement;
+  }
+
+  public boolean isPy3K() {
+    return myIsPy3K;
   }
 
   public static LanguageLevel fromPythonVersion(String pythonVersion) {

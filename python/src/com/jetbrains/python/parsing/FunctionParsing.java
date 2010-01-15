@@ -111,7 +111,16 @@ public class FunctionParsing extends Parsing {
 
       final PsiBuilder.Marker parameter = myBuilder.mark();
       boolean isStarParameter = false;
-      if (myBuilder.getTokenType() == PyTokenTypes.MULT || myBuilder.getTokenType() == PyTokenTypes.EXP) {
+      if (myBuilder.getTokenType() == PyTokenTypes.MULT) {
+        myBuilder.advanceLexer();
+        if (myContext.getLanguageLevel().isPy3K() &&
+            (myBuilder.getTokenType() == PyTokenTypes.COMMA) || myBuilder.getTokenType() == endToken) {
+          parameter.done(PyElementTypes.SINGLE_STAR_PARAMETER);
+          continue;
+        }
+        isStarParameter = true;
+      }
+      else if (myBuilder.getTokenType() == PyTokenTypes.EXP) {
         myBuilder.advanceLexer();
         isStarParameter = true;
       }
