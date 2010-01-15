@@ -19,7 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.commands.GitHandler;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.i18n.GitBundle;
@@ -69,7 +69,7 @@ public class GitRebaseAbort extends GitRepositoryAction {
       }
     }
     affectedRoots.add(root);
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.REBASE);
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.REBASE);
     h.addParameters("--abort");
     GitHandlerUtil.doSynchronously(h, getActionName(), h.printableCommandLine());
   }

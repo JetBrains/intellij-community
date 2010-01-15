@@ -27,6 +27,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiClassUtil;
@@ -134,9 +135,16 @@ public class JavaExecutionUtil {
 
   @Nullable
   public static PsiClass findMainClass(final Module module, final String mainClassName) {
-    final PsiManager psiManager = PsiManager.getInstance(module.getProject());
+    return findMainClass(module.getProject(), mainClassName, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
+  }
+
+  @Nullable
+  public static PsiClass findMainClass(final Project project, final String mainClassName, final GlobalSearchScope scope) {
+    final PsiManager psiManager = PsiManager.getInstance(project);
+    final String shortName = StringUtil.getShortName(mainClassName);
+    final String packageName = StringUtil.getPackageName(mainClassName);
     return JavaPsiFacade.getInstance(psiManager.getProject())
-      .findClass(mainClassName.replace('$', '.'), GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
+      .findClass(StringUtil.getQualifiedName(packageName, shortName.replace('$', '.')), scope);
   }
 
 

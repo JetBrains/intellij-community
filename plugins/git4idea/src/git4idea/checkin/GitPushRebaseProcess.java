@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitLineHandler;
 import git4idea.commands.StringScanner;
@@ -96,10 +97,10 @@ public class GitPushRebaseProcess extends GitBaseRebaseProcess {
   protected GitLineHandler makeStartHandler(VirtualFile root) throws VcsException {
     List<String> commits = myReorderedCommits.get(root);
     boolean hasMerges = myRootsWithMerges.contains(root);
-    GitLineHandler h = new GitLineHandler(myProject, root, GitHandler.REBASE);
+    GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.REBASE);
     if (commits != null || hasMerges) {
       h.addParameters("-i");
-      PushRebaseEditor pushRebaseEditor = new PushRebaseEditor(root, commits, hasMerges);
+      PushRebaseEditor pushRebaseEditor = new PushRebaseEditor(root, commits, hasMerges, h);
       myRebaseEditorNo = pushRebaseEditor.getHandlerNo();
       myRebaseEditorService.configureHandler(h, myRebaseEditorNo);
       if (hasMerges) {
@@ -131,7 +132,7 @@ public class GitPushRebaseProcess extends GitBaseRebaseProcess {
    */
   @Override
   protected void configureRebaseEditor(VirtualFile root, GitLineHandler h) {
-    GitInteractiveRebaseEditorHandler editorHandler = new GitInteractiveRebaseEditorHandler(myRebaseEditorService, myProject, root);
+    GitInteractiveRebaseEditorHandler editorHandler = new GitInteractiveRebaseEditorHandler(myRebaseEditorService, myProject, root, h);
     editorHandler.setRebaseEditorShown();
     myRebaseEditorNo = editorHandler.getHandlerNo();
     myRebaseEditorService.configureHandler(h, myRebaseEditorNo);
@@ -175,8 +176,8 @@ public class GitPushRebaseProcess extends GitBaseRebaseProcess {
      * @param commits   the reordered commits
      * @param hasMerges if true, the vcs root has merges
      */
-    public PushRebaseEditor(final VirtualFile root, List<String> commits, boolean hasMerges) {
-      super(myRebaseEditorService, myProject, root);
+    public PushRebaseEditor(final VirtualFile root, List<String> commits, boolean hasMerges, GitHandler h) {
+      super(myRebaseEditorService, myProject, root, h);
       myCommits = commits;
       myHasMerges = hasMerges;
     }

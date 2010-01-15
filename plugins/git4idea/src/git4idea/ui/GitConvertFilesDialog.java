@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.checkin;
+package git4idea.ui;
 
 import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
@@ -31,7 +31,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.commands.GitHandler;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
 import git4idea.config.GitVcsSettings;
@@ -78,10 +78,9 @@ public class GitConvertFilesDialog extends DialogWrapper {
    * The constructor
    *
    * @param project     the project to which this dialog is related
-   * @param settings    the git settings
    * @param filesToShow the files to show sorted by vcs root
    */
-  GitConvertFilesDialog(Project project, GitVcsSettings settings, Map<VirtualFile, Set<VirtualFile>> filesToShow) {
+  GitConvertFilesDialog(Project project, Map<VirtualFile, Set<VirtualFile>> filesToShow) {
     super(project, true);
     ArrayList<VirtualFile> roots = new ArrayList<VirtualFile>(filesToShow.keySet());
     Collections.sort(roots, GitUtil.VIRTUAL_FILE_COMPARATOR);
@@ -140,7 +139,7 @@ public class GitConvertFilesDialog extends DialogWrapper {
   }
 
   /**
-   * Check if files need to be converted to other line separator
+   * Check if files need to be converted to other line separator. The method could be invoked from non-UI thread.
    *
    * @param project       the project to use
    * @param settings      the vcs settings
@@ -148,10 +147,10 @@ public class GitConvertFilesDialog extends DialogWrapper {
    * @param exceptions    the collection with exceptions
    * @return true if conversion completed successfully, false if process was cancelled or there were errors
    */
-  static boolean showDialogIfNeeded(final Project project,
-                                    final GitVcsSettings settings,
-                                    Map<VirtualFile, List<Change>> sortedChanges,
-                                    final List<VcsException> exceptions) {
+  public static boolean showDialogIfNeeded(final Project project,
+                                           final GitVcsSettings settings,
+                                           Map<VirtualFile, List<Change>> sortedChanges,
+                                           final List<VcsException> exceptions) {
     try {
       if (settings.LINE_SEPARATORS_CONVERSION_ASK ||
           settings.LINE_SEPARATORS_CONVERSION == GitVcsSettings.ConversionPolicy.PROJECT_LINE_SEPARATORS) {
@@ -203,7 +202,7 @@ public class GitConvertFilesDialog extends DialogWrapper {
           public void run() {
             VirtualFile[] selectedFiles = null;
             if (settings.LINE_SEPARATORS_CONVERSION_ASK) {
-              GitConvertFilesDialog d = new GitConvertFilesDialog(project, settings, files);
+              GitConvertFilesDialog d = new GitConvertFilesDialog(project, files);
               d.show();
               if (d.isOK()) {
                 settings.LINE_SEPARATORS_CONVERSION_ASK = !d.myDoNotShowCheckBox.isSelected();
@@ -258,7 +257,7 @@ public class GitConvertFilesDialog extends DialogWrapper {
     boolean stdin = CHECK_ATTR_STDIN_SUPPORTED.isLessOrEqual(GitVcs.getInstance(project).version());
     for (final Map.Entry<VirtualFile, Set<VirtualFile>> e : files.entrySet()) {
       final VirtualFile r = e.getKey();
-      GitSimpleHandler h = new GitSimpleHandler(project, r, GitHandler.CHECK_ATTR);
+      GitSimpleHandler h = new GitSimpleHandler(project, r, GitCommand.CHECK_ATTR);
       if (stdin) {
         h.addParameters("--stdin", "-z");
       }

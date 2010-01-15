@@ -28,8 +28,8 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel;
 import com.intellij.openapi.roots.ui.componentsList.layout.VerticalStackLayout;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
@@ -59,7 +59,7 @@ import java.util.Map;
  *         Date: Oct 4, 2003
  *         Time: 6:54:57 PM
  */
-public abstract class CommonContentEntriesEditor extends ModuleElementsEditor {
+public class CommonContentEntriesEditor extends ModuleElementsEditor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.ContentEntriesEditor");
   public static final String NAME = ProjectBundle.message("module.paths.title");
   public static final Icon ICON = IconLoader.getIcon("/modules/sources.png");
@@ -76,11 +76,15 @@ public abstract class CommonContentEntriesEditor extends ModuleElementsEditor {
   private final String myModuleName;
   private final ModulesProvider myModulesProvider;
   private final ModuleConfigurationState myState;
+  private final boolean myCanMarkSources;
+  private final boolean myCanMarkTestSources;
 
-  public CommonContentEntriesEditor(String moduleName, ModuleConfigurationState state) {
+  public CommonContentEntriesEditor(String moduleName, ModuleConfigurationState state, boolean canMarkSources, boolean canMarkTestSources) {
     super(state);
     myState = state;
     myModuleName = moduleName;
+    myCanMarkSources = canMarkSources;
+    myCanMarkTestSources = canMarkTestSources;
     myModulesProvider = state.getModulesProvider();
     final VirtualFileManagerAdapter fileManagerListener = new VirtualFileManagerAdapter() {
       public void afterRefreshFinish(boolean asynchronous) {
@@ -183,7 +187,9 @@ public abstract class CommonContentEntriesEditor extends ModuleElementsEditor {
     return null;
   }
 
-  protected abstract ContentEntryTreeEditor createContentEntryTreeEditor(Project project);
+  protected ContentEntryTreeEditor createContentEntryTreeEditor(Project project) {
+    return new ContentEntryTreeEditor(project, myCanMarkSources, myCanMarkTestSources);
+  }
 
   protected void addAdditionalSettingsToPanel(final JPanel mainPanel) {
   }
@@ -212,7 +218,14 @@ public abstract class CommonContentEntriesEditor extends ModuleElementsEditor {
     myEditorsPanel.add(component);
   }
 
-  protected abstract ContentEntryEditor createContentEntryEditor(String contentEntryUrl);
+  protected ContentEntryEditor createContentEntryEditor(String contentEntryUrl) {
+    return new ContentEntryEditor(contentEntryUrl, myCanMarkSources, myCanMarkTestSources) {
+      @Override
+      protected ModifiableRootModel getModel() {
+        return CommonContentEntriesEditor.this.getModel();
+      }
+    };
+  }
 
   void selectContentEntry(final String contentEntryUrl) {
     if (mySelectedEntryUrl != null && mySelectedEntryUrl.equals(contentEntryUrl)) {

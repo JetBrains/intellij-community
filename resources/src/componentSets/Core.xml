@@ -41,10 +41,6 @@
       <implementation-class>com.intellij.pom.java.impl.PomJavaAspectImpl</implementation-class>
       <skipForDummyProject/>
     </component>
-
-    <component>
-      <implementation-class>com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater</implementation-class>
-    </component>
   </project-components>
 
 

@@ -20,6 +20,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.progress.BackgroundTaskQueue;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
@@ -45,7 +47,7 @@ import git4idea.changes.GitCommittedChangeListProvider;
 import git4idea.changes.GitOutgoingChangesProvider;
 import git4idea.checkin.GitCheckinEnvironment;
 import git4idea.checkin.GitCommitAndPushExecutor;
-import git4idea.commands.GitHandler;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitVcsConfigurable;
 import git4idea.config.GitVcsSettings;
@@ -67,6 +69,8 @@ import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Git VCS implementation
@@ -80,6 +84,9 @@ public class GitVcs extends AbstractVcs {
    * Vcs name
    */
   @NonNls public static final String NAME = "Git";
+  /**
+   * The git vcs key
+   */
   private static final VcsKey ourKey = createKey(NAME);
   /**
    * change provider
@@ -156,11 +163,11 @@ public class GitVcs extends AbstractVcs {
   /**
    * The dispatcher object for root events
    */
-  private EventDispatcher<GitRootsListener> myRootListeners = EventDispatcher.create(GitRootsListener.class);
+  private final EventDispatcher<GitRootsListener> myRootListeners = EventDispatcher.create(GitRootsListener.class);
   /**
    * The dispatcher object for git configuration events
    */
-  private EventDispatcher<GitConfigListener> myConfigListeners = EventDispatcher.create(GitConfigListener.class);
+  private final EventDispatcher<GitConfigListener> myConfigListeners = EventDispatcher.create(GitConfigListener.class);
   /**
    * Tracker for ignored files
    */
@@ -169,6 +176,14 @@ public class GitVcs extends AbstractVcs {
    * Configuration file tracker
    */
   private GitConfigTracker myConfigTracker;
+  /**
+   * The queue that is used to schedule background task from actions
+   */
+  private final BackgroundTaskQueue myTaskQueue;
+  /**
+   * The command read/write lock
+   */
+  private final ReadWriteLock myCommandLock = new ReentrantReadWriteLock(true);
 
   private final TreeDiffProvider myTreeDiffProvider;
 
@@ -204,6 +219,23 @@ public class GitVcs extends AbstractVcs {
     myOutgoingChangesProvider = new GitOutgoingChangesProvider(myProject);
     myTreeDiffProvider = new GitTreeDiffProvider(myProject);
     myCommitAndPushExecutor = new GitCommitAndPushExecutor(gitCheckinEnvironment);
+    myTaskQueue = new BackgroundTaskQueue(myProject, GitBundle.getString("task.queue.title"));
+  }
+
+  /**
+   * @return the command lock
+   */
+  public ReadWriteLock getCommandLock() {
+    return myCommandLock;
+  }
+
+  /**
+   * Run task in background using the common queue (per project)
+   *
+   * @param task the task to run
+   */
+  public void runInBackground(Task.Backgroundable task) {
+    myTaskQueue.run(task);
   }
 
   /**
@@ -556,7 +588,7 @@ public class GitVcs extends AbstractVcs {
    */
   public static String version(Project project) throws VcsException {
     final String s;
-    GitSimpleHandler h = new GitSimpleHandler(project, new File("."), GitHandler.VERSION);
+    GitSimpleHandler h = new GitSimpleHandler(project, new File("."), GitCommand.VERSION);
     h.setNoSSH(true);
     h.setSilent(true);
     s = h.run();
@@ -638,6 +670,7 @@ public class GitVcs extends AbstractVcs {
   }
 
   private final GitOutgoingChangesProvider myOutgoingChangesProvider;
+
   @Override
   protected VcsOutgoingChangesProvider getOutgoingProviderImpl() {
     return myOutgoingChangesProvider;

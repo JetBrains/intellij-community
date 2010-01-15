@@ -41,7 +41,7 @@ import java.util.Map;
 
 public class JavaContentEntriesEditor extends CommonContentEntriesEditor {
   public JavaContentEntriesEditor(String moduleName, ModuleConfigurationState state) {
-    super(moduleName, state);
+    super(moduleName, state, true, true);
   }
 
   protected ContentEntryEditor createContentEntryEditor(final String contentEntryUrl) {
@@ -54,7 +54,7 @@ public class JavaContentEntriesEditor extends CommonContentEntriesEditor {
   }
 
   protected ContentEntryTreeEditor createContentEntryTreeEditor(Project project) {
-    return new JavaContentEntryTreeEditor(project);
+    return new ContentEntryTreeEditor(project, true, true);
   }
 
   @Override

@@ -58,7 +58,7 @@ public class GitSimpleHandler extends GitHandler {
    * @param command   a command to execute
    */
   @SuppressWarnings({"WeakerAccess"})
-  public GitSimpleHandler(@NotNull Project project, @NotNull File directory, @NotNull String command) {
+  public GitSimpleHandler(@NotNull Project project, @NotNull File directory, @NotNull GitCommand command) {
     super(project, directory, command);
   }
 
@@ -70,7 +70,7 @@ public class GitSimpleHandler extends GitHandler {
    * @param command   a command to execute
    */
   @SuppressWarnings({"WeakerAccess"})
-  public GitSimpleHandler(@NotNull final Project project, @NotNull final VirtualFile directory, @NotNull final String command) {
+  public GitSimpleHandler(@NotNull final Project project, @NotNull final VirtualFile directory, @NotNull final GitCommand command) {
     super(project, directory, command);
   }
 
@@ -211,30 +211,10 @@ public class GitSimpleHandler extends GitHandler {
         ex[0] = new VcsException("Process failed to start: " + exception.toString(), exception);
       }
     });
-    start();
-    if (isStarted()) {
-      waitFor();
-    }
+    GitHandlerUtil.runInCurrentThread(this, null);
     if (ex[0] != null) {
       throw ex[0];
     }
     return result[0];
   }
-
-  /**
-   * Prepare check repository handler. To do this ls-remote command is executed and attempts to match
-   * master tag. This will likely return only single entry or none, if there is no master
-   * branch. Stdout output is ignored. Stderr is used to construct exception message and shown
-   * in error message box if exit is negative.
-   *
-   * @param project the project
-   * @param url     the url to check
-   * @return a simple handler that does the task
-   */
-  public static GitSimpleHandler checkRepository(Project project, final String url) {
-    GitSimpleHandler handler = new GitSimpleHandler(project, new File("."), LS_REMOTE);
-    handler.addParameters(url, "master");
-    return handler;
-  }
-
 }

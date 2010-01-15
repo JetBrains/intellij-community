@@ -251,10 +251,14 @@ public class ChooseRunConfigurationAction extends AnAction {
   private static Action createNumberAction(final int number, final ListPopupImpl listPopup, final Executor executor) {
     return new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        for (Object item : listPopup.getListStep().getValues()) {
+        for (final Object item : listPopup.getListStep().getValues()) {
           if (item instanceof ItemWrapper && ((ItemWrapper)item).getMnemonic() == number) {
+            listPopup.setFinalRunnable(new Runnable() {
+              public void run() {
+                execute((ItemWrapper)item, executor);
+              }
+            });
             listPopup.cancel();
-            execute((ItemWrapper)item, executor);
           }
         }
       }
@@ -614,13 +618,11 @@ public class ChooseRunConfigurationAction extends AnAction {
       if (myAction.myEditConfiguration) {
         final Object o = wrapper.getValue();
         if (o instanceof RunnerAndConfigurationSettingsImpl) {
-          SwingUtilities.invokeLater(new Runnable() {
+          return doFinalStep(new Runnable() {
             public void run() {
               myAction.editConfiguration(myProject, (RunnerAndConfigurationSettingsImpl)o);
             }
           });
-
-          return FINAL_CHOICE;
         }
       }
 
@@ -628,7 +630,7 @@ public class ChooseRunConfigurationAction extends AnAction {
       assert executor != null;
 
       if (finalChoice && wrapper.available(executor)) {
-        SwingUtilities.invokeLater(new Runnable() {
+        return doFinalStep(new Runnable() {
           public void run() {
             if (executor == myAction.getAlternateExecutor()) {
               PropertiesComponent.getInstance().setValue(myAction.getAdKey(), Boolean.toString(true));
@@ -637,8 +639,6 @@ public class ChooseRunConfigurationAction extends AnAction {
             wrapper.perform(myProject, executor, DataManager.getInstance().getDataContext());
           }
         });
-
-        return FINAL_CHOICE;
       }
       else {
         return wrapper.getNextStep(myProject, myAction);
@@ -715,13 +715,11 @@ public class ChooseRunConfigurationAction extends AnAction {
 
     @Override
     public PopupStep onChosen(final ActionWrapper selectedValue, boolean finalChoice) {
-      SwingUtilities.invokeLater(new Runnable() {
+      return doFinalStep(new Runnable() {
         public void run() {
           selectedValue.perform();
         }
       });
-
-      return FINAL_CHOICE;
     }
 
     @Override

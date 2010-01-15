@@ -18,6 +18,8 @@ package git4idea.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -27,11 +29,14 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.UIUtil;
 import git4idea.GitFileRevision;
 import git4idea.GitUtil;
+import git4idea.GitVcs;
 import git4idea.changes.GitChangeUtils;
 import git4idea.i18n.GitBundle;
 import git4idea.ui.GitUIUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Initial code for show submitted files action, this action is accessed from history view
@@ -93,16 +98,31 @@ public class GitShowAllSubmittedFilesAction extends AnAction implements DumbAwar
    * @param file     file affected by the revision
    */
   public static void showSubmittedFiles(final Project project, final String revision, final VirtualFile file) {
-    try {
-      VirtualFile vcsRoot = GitUtil.getGitRoot(file);
-      final CommittedChangeList changeList = GitChangeUtils.getRevisionChanges(project, vcsRoot, revision);
-      if (changeList != null) {
-        AbstractVcsHelper.getInstance(project).showChangesListBrowser(changeList, getTitle(revision));
+    GitVcs.getInstance(project).runInBackground(new Task.Backgroundable(project, GitBundle.message("changes.retrieving", revision)) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        indicator.setIndeterminate(true);
+        try {
+          VirtualFile vcsRoot = GitUtil.getGitRoot(file);
+          final CommittedChangeList changeList = GitChangeUtils.getRevisionChanges(project, vcsRoot, revision);
+          if (changeList != null) {
+            UIUtil.invokeLaterIfNeeded(new Runnable() {
+              public void run() {
+                AbstractVcsHelper.getInstance(project)
+                  .showChangesListBrowser(changeList, GitShowAllSubmittedFilesAction.getTitle(revision));
+              }
+            });
+          }
+        }
+        catch (final VcsException e) {
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
+            public void run() {
+              GitUIUtil.showOperationError(project, e, "git show");
+            }
+          });
+        }
       }
-    }
-    catch (VcsException e) {
-      GitUIUtil.showOperationError(project, e, "git show");
-    }
+    });
   }
 
 

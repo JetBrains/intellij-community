@@ -79,6 +79,9 @@
     <extensionPoint name="debugger.breakpointFactory"
                     interface="com.intellij.debugger.ui.breakpoints.BreakpointFactory"/>
 
+    <extensionPoint name="debugger.jvmDebugProvider"
+                    interface="com.intellij.debugger.engine.JVMDebugProvider"/>
+
     <extensionPoint name="OrderRootTypeUI"
                     beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean"/>
 
@@ -154,8 +157,6 @@
 
     <extensionPoint name="java.elementFinder" area="IDEA_PROJECT" interface="com.intellij.psi.PsiElementFinder"/>
     <extensionPoint name="java.shortNamesCache" area="IDEA_PROJECT" interface="com.intellij.psi.search.PsiShortNamesCache"/>
-
-    <extensionPoint name="filePropertyPusher" interface="com.intellij.openapi.roots.impl.FilePropertyPusher"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

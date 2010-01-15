@@ -16,7 +16,6 @@
 package git4idea.actions;
 
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -30,6 +29,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
+import com.intellij.util.Consumer;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
@@ -44,38 +44,46 @@ import java.util.List;
  * Git "revert" action
  */
 public class GitRevert extends BasicAction {
+  /**
+   * {@inheritDoc}
+   */
   @Override
-  public void perform(@NotNull final Project project,
-                      GitVcs vcs,
-                      @NotNull final List<VcsException> exceptions,
-                      @NotNull VirtualFile[] affectedFiles) throws VcsException {
+  public boolean perform(@NotNull final Project project,
+                         GitVcs vcs,
+                         @NotNull final List<VcsException> exceptions,
+                         @NotNull VirtualFile[] affectedFiles) {
     saveAll();
     final ChangeListManager changeManager = ChangeListManager.getInstance(project);
     final List<Change> changes = new ArrayList<Change>();
     final HashSet<VirtualFile> files = new HashSet<VirtualFile>();
-    for (VirtualFile f : affectedFiles) {
-      Change ch = changeManager.getChange(f);
-      if (ch != null) {
-        files.add(GitUtil.getGitRoot(f));
-        changes.add(ch);
+    try {
+      for (VirtualFile f : affectedFiles) {
+        Change ch = changeManager.getChange(f);
+        if (ch != null) {
+          files.add(GitUtil.getGitRoot(f));
+          changes.add(ch);
+        }
       }
     }
-    final ProgressManager progress = ProgressManager.getInstance();
-    progress.runProcessWithProgressSynchronously(new Runnable() {
-      public void run() {
-        ProgressIndicator pi = progress.getProgressIndicator();
+    catch (VcsException ex) {
+      exceptions.add(ex);
+      return true;
+    }
+    return toBackground(project, vcs, affectedFiles, exceptions, new Consumer<ProgressIndicator>() {
+      public void consume(ProgressIndicator pi) {
         pi.setIndeterminate(true);
         GitRollbackEnvironment re = GitRollbackEnvironment.getInstance(project);
         re.rollbackChanges(changes, exceptions, RollbackProgressListener.EMPTY);
-        if(changes.size() == 1) {
+        if (changes.size() == 1) {
           Change c = changes.get(0);
           ContentRevision r = c.getAfterRevision();
-          if(r == null) {
+          if (r == null) {
             r = c.getBeforeRevision();
             assert r != null;
           }
           pi.setText2(r.getFile().getPath());
-        } else {
+        }
+        else {
           pi.setText2(GitBundle.message("revert.reverting.mulitple", changes.size()));
         }
         LocalFileSystem lfs = LocalFileSystem.getInstance();
@@ -114,7 +122,7 @@ public class GitRevert extends BasicAction {
         session.addAllFiles(files);
         session.launch();
       }
-    }, GitBundle.getString("revert.reverting"), false, project);
+    });
   }
 
   @Override

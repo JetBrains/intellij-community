@@ -1,10 +1,10 @@
 public interface Test {
   void foo(Param param);
 
-    public static class Param {
+    private static class Param {
         private final String s;
 
-        public Param(String s) {
+        private Param(String s) {
             this.s = s;
         }
 
@@ -15,6 +15,6 @@ public interface Test {
 }
 
 class TestImpl implements Test {
-  void foo(Param param){}
+  void foo(Test.Param param){}
 }
 

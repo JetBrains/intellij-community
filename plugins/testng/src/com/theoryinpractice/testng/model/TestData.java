@@ -208,10 +208,6 @@ public class TestData implements Cloneable
     return MAIN_CLASS_NAME == null ? "" : MAIN_CLASS_NAME;
   }
 
-  public String getMainClassPsiName() {
-    return getMainClassName().replace('$', '.');
-  }
-
   public Module setTestMethod(Location<PsiMethod> location) {
     final PsiMethod method = location.getPsiElement();
     METHOD_NAME = method.getName();

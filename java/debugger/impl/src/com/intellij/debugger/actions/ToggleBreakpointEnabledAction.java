@@ -77,7 +77,7 @@ public class ToggleBreakpointEnabledAction extends AnAction {
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     final VirtualFile virtualFile = file.getVirtualFile();
     FileType fileType = virtualFile != null ? fileTypeManager.getFileTypeByFile(virtualFile) : null;
-    if (DebuggerUtils.supportsJVMDebugging(fileType)) {
+    if (DebuggerUtils.supportsJVMDebugging(fileType) || DebuggerUtils.supportsJVMDebugging(file)) {
       Breakpoint breakpoint = findBreakpoint(project);
       if (breakpoint == null) {
         presentation.setEnabled(false);
