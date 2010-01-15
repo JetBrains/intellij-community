@@ -409,9 +409,9 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     }
   }
 
-  protected final void setFinalRunnable(Runnable runnable) {
+  public final void setFinalRunnable(Runnable runnable) {
     if (getParent() == null) {
-      myFinalRunnable = runnable;
+      super.setFinalRunnable(runnable);
     } else {
       getParent().setFinalRunnable(runnable);
     }

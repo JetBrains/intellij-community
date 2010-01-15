@@ -115,7 +115,7 @@ public class AbstractPopup implements JBPopup {
 
   protected InputEvent myDisposeEvent;
 
-  protected Runnable myFinalRunnable;
+  private Runnable myFinalRunnable;
 
   protected final SpeedSearch mySpeedSearch = new SpeedSearch() {
     boolean searchFieldShown = false;
@@ -1221,5 +1221,13 @@ public class AbstractPopup implements JBPopup {
 
   public void setMinimumSize(Dimension size) {
     myMinSize = size;
+  }
+
+  public Runnable getFinalRunnable() {
+    return myFinalRunnable;
+  }
+
+  public void setFinalRunnable(Runnable finalRunnable) {
+    myFinalRunnable = finalRunnable;
   }
 }

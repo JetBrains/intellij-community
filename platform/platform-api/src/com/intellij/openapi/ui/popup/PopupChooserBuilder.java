@@ -279,13 +279,11 @@ public class PopupChooserBuilder {
   }
 
   private void closePopup(boolean shouldPerformAction, MouseEvent e) {
-    myPopup.cancel(e);
-
     if (shouldPerformAction) {
-      if (myItemChoosenRunnable != null) {
-        myItemChoosenRunnable.run();
-      }
+      myPopup.setFinalRunnable(myItemChoosenRunnable);
     }
+
+    myPopup.cancel(e);
   }
 
   @NotNull
