@@ -13,19 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.actions;
+package com.intellij.openapi.wm;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
+public interface ToolWindowScrollable {
 
-public class SizeWindowUpAction extends BaseResizeAction {
-  @Override
-  protected void update(ToolWindow window, ToolWindowManager mgr) {
-    
-  }
+  boolean isHorizontalScrollingNeeded();
+  int getNextHorizontalScroll();
 
-  @Override
-  protected void actionPerformed(AnActionEvent e, ToolWindow wnd, ToolWindowManager mgr) {
-  }
+  boolean isVerticalScrollingNeeded();
+  int getNextVerticalScroll();
+
 }

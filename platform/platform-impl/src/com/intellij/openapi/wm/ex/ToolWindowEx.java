@@ -40,4 +40,9 @@ public interface ToolWindowEx extends ToolWindow {
    */
   ToolWindowType getInternalType();
 
+  void stretchWidth(int value);
+
+  void stretchHeight(int value);
+
+
 }
