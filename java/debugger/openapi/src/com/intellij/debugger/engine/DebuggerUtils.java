@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
@@ -453,5 +454,15 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
 
   public static boolean supportsJVMDebugging(FileType type) {
     return type instanceof LanguageFileType && ((LanguageFileType)type).isJVMDebuggingSupported();
+  }
+
+  public static boolean supportsJVMDebugging(PsiFile file) {
+    final JVMDebugProvider[] providers = Extensions.getExtensions(JVMDebugProvider.EP_NAME);
+    for (JVMDebugProvider provider : providers) {
+      if (provider.supportsJVMDebugging(file)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

@@ -186,7 +186,7 @@ public class BreakpointManager implements JDOMExternalizable {
         }
         final FileType fileType = psiFile.getFileType();
         boolean isInsideCompiledClass = StdFileTypes.CLASS.equals(fileType);
-        if (!isInsideCompiledClass && !DebuggerUtils.supportsJVMDebugging(fileType)) {
+        if (!isInsideCompiledClass && !(DebuggerUtils.supportsJVMDebugging(fileType) || DebuggerUtils.supportsJVMDebugging(psiFile))) {
           return null;
         }
         PsiDocumentManager.getInstance(myProject).commitDocument(document);
