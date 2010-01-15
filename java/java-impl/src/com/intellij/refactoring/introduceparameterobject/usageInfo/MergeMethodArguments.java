@@ -29,9 +29,7 @@ import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @SuppressWarnings({"MethodWithTooManyParameters"})
 public class MergeMethodArguments extends FixableUsageInfo {
@@ -74,10 +72,10 @@ public class MergeMethodArguments extends FixableUsageInfo {
     else {
       psiClass = psiFacade.findClass(StringUtil.getQualifiedName(packageName, className), GlobalSearchScope.allScope(getProject()));
     }
+    assert psiClass != null;
     PsiSubstitutor subst = PsiSubstitutor.EMPTY;
     if (deepestSuperMethod != null) {
       final PsiClass parentClass = deepestSuperMethod.getContainingClass();
-      assert psiClass != null;
       final PsiSubstitutor parentSubstitutor =
         TypeConversionUtil.getSuperClassSubstitutor(parentClass, method.getContainingClass(), PsiSubstitutor.EMPTY);
       for (int i1 = 0; i1 < psiClass.getTypeParameters().length; i1++) {
@@ -92,7 +90,8 @@ public class MergeMethodArguments extends FixableUsageInfo {
       }
     }
     final List<ParameterInfoImpl> parametersInfo = new ArrayList<ParameterInfoImpl>();
-    parametersInfo.add(new ParameterInfoImpl(-1, parameterName, new PsiImmediateClassType(psiClass, subst), null) {
+    final PsiClassType classType = JavaPsiFacade.getElementFactory(getProject()).createType(psiClass, subst);
+    parametersInfo.add(new ParameterInfoImpl(-1, parameterName, classType, null) {
       @Override
       public PsiExpression getValue(final PsiCallExpression expr) throws IncorrectOperationException {
         return (PsiExpression)JavaCodeStyleManager.getInstance(getProject()).shortenClassReferences(psiFacade.getElementFactory().createExpressionFromText(getMergedParam(expr), expr));
