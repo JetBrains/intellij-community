@@ -48,7 +48,7 @@ public enum LanguageLevel {
   public static final Key<LanguageLevel> KEY = new Key<LanguageLevel>("python.language.level");
 
   @NotNull
-  public static LanguageLevel forFile(VirtualFile virtualFile) {
+  public static LanguageLevel forFile(@NotNull VirtualFile virtualFile) {
     final VirtualFile folder = virtualFile.getParent();
     if (folder != null) {
       final LanguageLevel level = folder.getUserData(KEY);
