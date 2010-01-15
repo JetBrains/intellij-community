@@ -17,6 +17,7 @@ package com.intellij.formatting.templateLanguages;
 
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.tree.IElementType;
@@ -33,14 +34,24 @@ import java.util.List;
  */
 public abstract class TemplateLanguageBlock extends AbstractBlock implements BlockWithParent {
   private final TemplateLanguageBlockFactory myBlockFactory;
+  protected final CodeStyleSettings mySettings;
   private List<DataLanguageBlockWrapper> myForeignChildren;
   private boolean myChildrenBuilt = false;
   private BlockWithParent myParent;
 
-  protected TemplateLanguageBlock(@NotNull TemplateLanguageBlockFactory blockFactory, @NotNull ASTNode node, @Nullable List<DataLanguageBlockWrapper> foreignChildren) {
-    super(node, null, null);
+  protected TemplateLanguageBlock(@NotNull TemplateLanguageBlockFactory blockFactory, @NotNull CodeStyleSettings settings, 
+                                  @NotNull ASTNode node, @Nullable List<DataLanguageBlockWrapper> foreignChildren) {
+    this(node, null, null, blockFactory, settings, foreignChildren);
+  }
+  
+  protected TemplateLanguageBlock(@NotNull ASTNode node, @Nullable Wrap wrap, @Nullable Alignment alignment, 
+                                  @NotNull TemplateLanguageBlockFactory blockFactory,
+                                  @NotNull CodeStyleSettings settings,
+                                  @Nullable List<DataLanguageBlockWrapper> foreignChildren) {
+    super(node, wrap, alignment);
     myBlockFactory = blockFactory;
     myForeignChildren = foreignChildren;
+    mySettings = settings;
   }
 
   protected List<Block> buildChildren() {
@@ -51,8 +62,8 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
     final ArrayList<TemplateLanguageBlock> tlChildren = new ArrayList<TemplateLanguageBlock>(5);
     for (ASTNode childNode = getNode().getFirstChildNode(); childNode != null; childNode = childNode.getTreeNext()) {
       if (FormatterUtil.containsWhiteSpacesOnly(childNode)) continue;
-      if (childNode.getElementType() != getTemplateTextElementType() || noForeignChildren()) {
-        final TemplateLanguageBlock childBlock = myBlockFactory.createTemplateLanguageBlock(childNode, null);
+      if (shouldBuildBlockFor(childNode)) {
+        final TemplateLanguageBlock childBlock = myBlockFactory.createTemplateLanguageBlock(childNode, null, mySettings);
         childBlock.setParent(this);
         tlChildren.add(childBlock);
       }
@@ -60,6 +71,10 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
     final List<Block> children = (List<Block>)(myForeignChildren == null ? tlChildren : BlockUtil.mergeBlocks(tlChildren, myForeignChildren));
     //BlockUtil.printBlocks(getTextRange(), children);
     return BlockUtil.setParent(children, this);
+  }
+
+  protected boolean shouldBuildBlockFor(ASTNode childNode) {
+    return childNode.getElementType() != getTemplateTextElementType() || noForeignChildren();
   }
 
   private boolean noForeignChildren() {
