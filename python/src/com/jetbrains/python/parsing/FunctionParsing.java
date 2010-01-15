@@ -1,27 +1,12 @@
-/*
- *  Copyright 2005 Pythonid Project
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS"; BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package com.jetbrains.python.parsing;
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
-import static com.jetbrains.python.PyBundle.message;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
+
+import static com.jetbrains.python.PyBundle.message;
 
 /**
  * @author yole
@@ -53,9 +38,9 @@ public class FunctionParsing extends Parsing {
     getStatementParser().parseSuite(functionMarker, PyElementTypes.FUNCTION_DECLARATION);
   }
 
-  public void parseDecoratedFunctionDeclaration() {
+  public void parseDecoratedDeclaration() {
     assertCurrentToken(PyTokenTypes.AT); // ??? need this?
-    final PsiBuilder.Marker functionMarker = myBuilder.mark();
+    final PsiBuilder.Marker decoratorStartMarker = myBuilder.mark();
     final PsiBuilder.Marker decoListMarker = myBuilder.mark();
     boolean decorated = false;
     while (myBuilder.getTokenType() == PyTokenTypes.AT) {
@@ -75,13 +60,16 @@ public class FunctionParsing extends Parsing {
     if (decorated) decoListMarker.done(PyElementTypes.DECORATOR_LIST);
     //else decoListMarker.rollbackTo(); 
     if (myBuilder.getTokenType() == PyTokenTypes.DEF_KEYWORD) {
-      parseFunctionInnards(functionMarker); // it calls functionMarker.done()
+      parseFunctionInnards(decoratorStartMarker); // it calls decoratorStartMarker.done()
+    }
+    else if (myBuilder.getTokenType() == PyTokenTypes.CLASS_KEYWORD) {
+      getStatementParser().parseClassDeclaration(decoratorStartMarker);
     }
     else {
       myBuilder.error(message("PARSE.expected.@.or.def"));
       PsiBuilder.Marker parameterList = myBuilder.mark(); // To have non-empty parameters list at all the time.
       parameterList.done(PyElementTypes.PARAMETER_LIST);
-      functionMarker.done(PyElementTypes.FUNCTION_DECLARATION);
+      decoratorStartMarker.done(PyElementTypes.FUNCTION_DECLARATION);
     }
   }
 

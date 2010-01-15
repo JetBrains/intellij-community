@@ -104,6 +104,10 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON26);
   }
 
+  public void testClassDecorators() throws Exception {
+    doTest(LanguageLevel.PYTHON26);
+  }
+
   public void doTest() throws Exception {
     doTest(LanguageLevel.PYTHON25);
   }

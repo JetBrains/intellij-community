@@ -73,7 +73,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       return;
     }
     if (firstToken == PyTokenTypes.AT) {
-      getFunctionParser().parseDecoratedFunctionDeclaration();
+      getFunctionParser().parseDecoratedDeclaration();
       return;
     }
     if (firstToken == PyTokenTypes.CLASS_KEYWORD) {
@@ -653,8 +653,12 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   }
 
   private void parseClassDeclaration() {
-    assertCurrentToken(PyTokenTypes.CLASS_KEYWORD);
     final PsiBuilder.Marker classMarker = myBuilder.mark();
+    parseClassDeclaration(classMarker);
+  }
+
+  public void parseClassDeclaration(PsiBuilder.Marker classMarker) {
+    assertCurrentToken(PyTokenTypes.CLASS_KEYWORD);
     myBuilder.advanceLexer();
     checkMatches(PyTokenTypes.IDENTIFIER, "identifier expected");
     final PsiBuilder.Marker inheritMarker = myBuilder.mark();
