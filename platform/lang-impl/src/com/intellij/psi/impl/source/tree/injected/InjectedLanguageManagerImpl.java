@@ -276,7 +276,12 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
   private final Map<Class,MultiHostInjector[]> myInjectorsClone = new HashMap<Class, MultiHostInjector[]>();
   @TestOnly
   public void pushInjectors() {
-    assert myInjectorsClone.isEmpty() : myInjectorsClone;
+    try {
+      assert myInjectorsClone.isEmpty() : myInjectorsClone;
+    }
+    finally {
+      myInjectorsClone.clear();
+    }
     myInjectorsClone.putAll(injectors);
   }
   @TestOnly
