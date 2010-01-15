@@ -1,34 +1,15 @@
-/*
- *  Copyright 2005 Pythonid Project
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS"; BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package com.jetbrains.python.parsing;
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
-import static com.jetbrains.python.PyBundle.message;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 
+import static com.jetbrains.python.PyBundle.message;
+
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 29.05.2005
- * Time: 10:26:06
- * To change this template use File | Settings | File Templates.
+ * @author yole
  */
 public class ExpressionParsing extends Parsing {
   private static final Logger LOG = Logger.getInstance("#ru.yole.pythonlanguage.parsing.ExpressionParsing");
@@ -130,7 +111,7 @@ public class ExpressionParsing extends Parsing {
       }
       while (myBuilder.getTokenType() == PyTokenTypes.IF_KEYWORD) {
         myBuilder.advanceLexer();
-        parseExpression();
+        parseOldExpression();
       }
       if (myBuilder.getTokenType() == endToken) {
         myBuilder.advanceLexer();
@@ -430,6 +411,13 @@ public class ExpressionParsing extends Parsing {
 
   public boolean parseSingleExpression(boolean isTargetExpression) {
     return parseTestExpression(false, isTargetExpression);
+  }
+
+  public boolean parseOldExpression() {
+    if (myBuilder.getTokenType() == PyTokenTypes.LAMBDA_KEYWORD) {
+      return parseLambdaExpression(false);
+    }
+    return parseORTestExpression(myBuilder, false, false);
   }
 
   private boolean parseTestExpression(boolean stopOnIn, boolean isTargetExpression) {

@@ -112,6 +112,10 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  public void testListComprehensionNestedIf() throws Exception {  // PY-322
+    doTest();
+  }
+
   public void doTest() throws Exception {
     doTest(LanguageLevel.PYTHON25);
   }
