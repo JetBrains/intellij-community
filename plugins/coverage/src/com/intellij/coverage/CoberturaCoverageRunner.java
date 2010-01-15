@@ -7,6 +7,7 @@ package com.intellij.coverage;
 import com.intellij.coverage.info.CoberturaLoaderUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.process.DefaultJavaProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -29,7 +30,7 @@ public class CoberturaCoverageRunner extends CoverageRunner {
     return CoberturaLoaderUtil.load(sessionDataFile);
   }
 
-  public void appendCoverageArgument(final String sessionDataFilePath, final String[] patterns, final JavaParameters javaParameters,
+  public void appendCoverageArgument(final String sessionDataFilePath, final String[] patterns, final SimpleJavaParameters javaParameters,
                                      final boolean collectLineInfo, final boolean isSampling) {
     @NonNls StringBuffer argument = new StringBuffer("-javaagent:");
     argument.append(PathManager.getLibPath()).append(File.separator);

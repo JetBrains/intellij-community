@@ -5,7 +5,7 @@
 package com.intellij.coverage;
 
 import com.intellij.CommonBundle;
-import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,7 +45,7 @@ public class IDEACoverageRunner extends CoverageRunner {
     return ProjectDataLoader.load(sessionDataFile);
   }
 
-  public void appendCoverageArgument(final String sessionDataFilePath, final String[] patterns, final JavaParameters javaParameters,
+  public void appendCoverageArgument(final String sessionDataFilePath, final String[] patterns, final SimpleJavaParameters javaParameters,
                                      final boolean collectLineInfo, final boolean isSampling) {
     StringBuffer argument = new StringBuffer("-javaagent:");
     argument.append(PathUtil.getJarPathForClass(ProjectData.class));

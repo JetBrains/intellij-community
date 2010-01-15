@@ -8,6 +8,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="coverage-impl" exported="" />
     <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="execution-impl" />
@@ -17,7 +18,6 @@
     <orderEntry type="module-library" exported="">
       <library name="Coverage">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/coverage-agent.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/coverage-report.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/coverage-report-idea.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/instrumenter.jar!/" />
