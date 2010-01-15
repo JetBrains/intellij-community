@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.IntentionAndQuickFixAction;
+import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.project.Project;
@@ -27,6 +28,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import org.jetbrains.annotations.NotNull;
 
@@ -66,8 +68,18 @@ public class MethodReturnFix extends IntentionAndQuickFixAction {
 
   public void applyFix(final Project project, final PsiFile file, final Editor editor) {
     if (!CodeInsightUtilBase.prepareFileForWrite(myMethod.getContainingFile())) return;
-    PsiMethod method = myFixWholeHierarchy ? myMethod.findDeepestSuperMethod() : myMethod;
-    if (method == null) method = myMethod;
+    PsiMethod method = myMethod;
+    if (myFixWholeHierarchy) {
+      final PsiMethod superMethod = myMethod.findDeepestSuperMethod();
+      if (superMethod != null) {
+        final PsiType superReturnType = superMethod.getReturnType();
+        if (superReturnType != null && !Comparing.equal(myReturnType, superReturnType)) {
+          method = SuperMethodWarningUtil.checkSuperMethod(myMethod, RefactoringBundle.message("to.refactor"));
+          if (method == null) return;
+        }
+      }
+    }
+    if (!CodeInsightUtilBase.prepareFileForWrite(method.getContainingFile())) return;
     ChangeSignatureProcessor processor = new ChangeSignatureProcessor(myMethod.getProject(),
                                                                       method,
         false, null,
