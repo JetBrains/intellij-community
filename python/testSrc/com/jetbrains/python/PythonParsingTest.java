@@ -108,6 +108,10 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON26);
   }
 
+  public void testEmptySuperclassList() throws Exception {  // PY-321
+    doTest();
+  }
+
   public void doTest() throws Exception {
     doTest(LanguageLevel.PYTHON25);
   }

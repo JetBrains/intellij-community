@@ -1,0 +1,13 @@
+PyFile:EmptySuperclassList.py
+  PyClass: A
+    PsiElement(Py:CLASS_KEYWORD)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:IDENTIFIER)('A')
+    PyParenthesizedExpression
+      PsiElement(Py:LPAR)('(')
+      PsiElement(Py:RPAR)(')')
+    PsiElement(Py:COLON)(':')
+    PsiWhiteSpace(' ')
+    PyStatementList
+      PyPassStatement
+        PsiElement(Py:PASS_KEYWORD)('pass')
