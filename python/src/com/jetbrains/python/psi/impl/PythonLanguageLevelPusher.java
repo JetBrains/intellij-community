@@ -61,7 +61,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
   public void initExtra(Project project, MessageBus bus, Engine languageLevelUpdater) {
     final Module[] modules = ModuleManager.getInstance(project).getModules();
     for (Module module : modules) {
-      myModuleSdks.put(module, ModuleRootManager.getInstance(module).getSdk());
+      myModuleSdks.put(module, PythonSdkType.findPythonSdk(module));
     }
   }
 
