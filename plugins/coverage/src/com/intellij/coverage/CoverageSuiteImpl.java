@@ -226,8 +226,8 @@ public class CoverageSuiteImpl extends CoverageSuite implements JDOMExternalizab
     ProjectData map = loadProjectInfo();
     if (mySuiteToMerge != null) {
       CoverageSuiteImpl toMerge = null;
-      final CoverageSuite[] suites = coverageDataManager.getSuites();
-      for (CoverageSuite suite : suites) {
+      final BaseCoverageSuite[] suites = coverageDataManager.getSuites();
+      for (BaseCoverageSuite suite : suites) {
         if (Comparing.strEqual(suite.getPresentableName(), mySuiteToMerge)) {
           if (!Comparing.strEqual(((CoverageSuiteImpl)suite).getSuiteToMerge(), getPresentableName())) {
             toMerge = (CoverageSuiteImpl)suite;

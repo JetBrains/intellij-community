@@ -4,10 +4,7 @@
  */
 package com.intellij.coverage.actions;
 
-import com.intellij.coverage.CoverageDataManager;
-import com.intellij.coverage.CoverageDataManagerImpl;
-import com.intellij.coverage.CoverageSuite;
-import com.intellij.coverage.CoverageSuiteImpl;
+import com.intellij.coverage.*;
 import com.intellij.execution.Location;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
@@ -103,6 +100,8 @@ public class TrackCoverageAction extends ToggleModelAction {
       }
       coverageDataManager.selectSubCoverage(currentSuite, testMethods);
     }
+    //TODO remove? can be null
+    coverageDataManager.selectSubCoverage(currentSuite, testMethods);
   }
 
   private class MyTreeSelectionListener implements TreeSelectionListener {

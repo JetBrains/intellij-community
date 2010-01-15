@@ -5,8 +5,8 @@
 package com.intellij.coverage.actions;
 
 import com.intellij.codeInsight.hint.ImplementationViewComponent;
+import com.intellij.coverage.BaseCoverageSuite;
 import com.intellij.coverage.CoverageDataManager;
-import com.intellij.coverage.CoverageSuite;
 import com.intellij.coverage.CoverageSuiteImpl;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -57,7 +57,7 @@ public class ShowCoveringTestsAction extends AnAction {
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     LOG.assertTrue(project != null);
 
-    final CoverageSuite currentSuite = CoverageDataManager.getInstance(project).getCurrentSuite();
+    final BaseCoverageSuite currentSuite = CoverageDataManager.getInstance(project).getCurrentSuite();
     LOG.assertTrue(currentSuite != null);
 
     final File[] traceFiles = getTraceFiles(project);
@@ -153,7 +153,7 @@ public class ShowCoveringTestsAction extends AnAction {
   }
 
   private static File[] getTraceFiles(Project project) {
-    final CoverageSuite currentSuite = CoverageDataManager.getInstance(project).getCurrentSuite();
+    final BaseCoverageSuite currentSuite = CoverageDataManager.getInstance(project).getCurrentSuite();
     LOG.assertTrue(currentSuite != null); //highlight won't be available otherwise
 
     final String filePath = currentSuite.getCoverageDataFileName();

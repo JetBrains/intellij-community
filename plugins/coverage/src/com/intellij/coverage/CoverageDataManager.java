@@ -69,7 +69,7 @@ public abstract class CoverageDataManager implements ProjectComponent, JDOMExter
    * @param collectLineInfo
    * @param tracingEnabled
    */
-  public abstract CoverageSuite addCoverageSuite(String name,
+  public abstract BaseCoverageSuite addCoverageSuite(String name,
                                                  CoverageFileProvider fileProvider,
                                                  String[] filters,
                                                  long lastCoverageTimeStamp,
@@ -77,13 +77,13 @@ public abstract class CoverageDataManager implements ProjectComponent, JDOMExter
                                                  final boolean collectLineInfo, final boolean tracingEnabled);
 
 
-  public abstract CoverageSuite addCoverageSuite(CoverageEnabledConfiguration config);
+  public abstract BaseCoverageSuite addCoverageSuite(CoverageEnabledConfiguration config);
   /**
    * TeamCity 3.1.1 compatibility
    */
   @SuppressWarnings({"UnusedDeclaration"})
   @Deprecated
-  public CoverageSuite addCoverageSuite(String name,
+  public BaseCoverageSuite addCoverageSuite(String name,
                                         CoverageFileProvider fileProvider,
                                         String[] filters,
                                         long lastCoverageTimeStamp,
@@ -100,21 +100,21 @@ public abstract class CoverageDataManager implements ProjectComponent, JDOMExter
   /**
    * @return currently aactive suite
    */
-  public abstract CoverageSuite getCurrentSuite();
+  public abstract BaseCoverageSuite getCurrentSuite();
 
   /**
    * Choose active suite. Calling this method triggers updating the presentations in project view, editors etc.
    * @param suite coverage suite to choose. <b>null</b> means no coverage information should be presented 
    */
-  public abstract void chooseSuite(@Nullable CoverageSuite suite);
+  public abstract void chooseSuite(@Nullable BaseCoverageSuite suite);
 
-  public abstract void coverageGathered(@NotNull CoverageSuite suite);
+  public abstract void coverageGathered(@NotNull BaseCoverageSuite suite);
 
   /**
    * Remove suite
    * @param suite coverage suite to remove
    */
-  public abstract void removeCoverageSuite(CoverageSuite suite);
+  public abstract void removeCoverageSuite(BaseCoverageSuite suite);
 
   /**
    * runs computation in read action, blocking project close till action has been run,
@@ -126,9 +126,9 @@ public abstract class CoverageDataManager implements ProjectComponent, JDOMExter
   @Nullable
   public abstract <T> T doInReadActionIfProjectOpen(Computable<T> computation);
 
-  public abstract void selectSubCoverage(@NotNull CoverageSuite suite, List<String> methodNames);
+  public abstract void selectSubCoverage(@NotNull BaseCoverageSuite suite, List<String> methodNames);
 
-  public abstract void restoreMergedCoverage(@NotNull CoverageSuite suite);
+  public abstract void restoreMergedCoverage(@NotNull BaseCoverageSuite suite);
 
   public abstract void addSuiteListener(CoverageSuiteListener listener, Disposable parentDisposable);
 }

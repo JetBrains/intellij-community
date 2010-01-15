@@ -69,7 +69,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   private final Object myLock = new Object();
   private boolean mySubCoverageIsActive;
 
-  public CoverageSuite getCurrentSuite() {
+  public BaseCoverageSuite getCurrentSuite() {
     return myCurrentSuite;
   }
 
@@ -116,7 +116,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     }
   }
 
-  public CoverageSuite addCoverageSuite(final String name, final CoverageFileProvider fileProvider, final String[] filters, final long lastCoverageTimeStamp,
+  public BaseCoverageSuite addCoverageSuite(final String name, final CoverageFileProvider fileProvider, final String[] filters, final long lastCoverageTimeStamp,
                                         @Nullable final String suiteToMergeWith,
                                         final CoverageRunner coverageRunner,
                                         final boolean collectLineInfo,
@@ -131,7 +131,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   }
 
   @Override
-  public CoverageSuite addCoverageSuite(final CoverageEnabledConfiguration config) {
+  public BaseCoverageSuite addCoverageSuite(final CoverageEnabledConfiguration config) {
     final String name = config.getName() + " Coverage Results";
     CoverageSuiteImpl suite =
       new CoverageSuiteImpl(name, new DefaultCoverageFileProvider(new File(config.getCoverageFilePath())),
@@ -145,7 +145,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     return suite;
   }
 
-  public void removeCoverageSuite(CoverageSuite suite) {
+  public void removeCoverageSuite(BaseCoverageSuite suite) {
     final String fileName = suite.getCoverageDataFileName();
     FileUtil.delete(new File(fileName));
     FileUtil.delete(getTracesDirectory(fileName));
@@ -222,7 +222,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
            (int)((double)(info.fullyCoveredLineCount + info.partiallyCoveredLineCount) / info.totalLineCount * 100) + "% lines covered";
   }
 
-  public void chooseSuite(final CoverageSuite suite) {
+  public void chooseSuite(final BaseCoverageSuite suite) {
     myCurrentSuite = (CoverageSuiteImpl)suite;
     myAlarm.cancelAllRequests();
     myPackageCoverageInfos.clear();
@@ -247,7 +247,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     fireAfterSuiteChosen();
   }
 
-  public void renewCoverageData(final CoverageSuite suite) {
+  public void renewCoverageData(final BaseCoverageSuite suite) {
     final List<PsiPackage> packages = getCurrentSuitePackages();
     final List<PsiClass> classes = getCurrentSuiteClasses();
 
@@ -285,7 +285,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     }
   }
 
-  public void coverageGathered(@NotNull final CoverageSuite suite) {
+  public void coverageGathered(@NotNull final BaseCoverageSuite suite) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         if (myCurrentSuite != null && !myCurrentSuite.equals(suite)) {
@@ -450,7 +450,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     }
   }
 
-  public void selectSubCoverage(@NotNull final CoverageSuite suite, final List<String> testNames) {
+  public void selectSubCoverage(@NotNull final BaseCoverageSuite suite, final List<String> testNames) {
     ((CoverageSuiteImpl)suite).restoreCoverageData();
     final ProjectData data = ((CoverageSuiteImpl)suite).getCoverageData(this);
     if (data == null) return;
@@ -515,7 +515,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     return new File(new File(fileName).getParentFile(), FileUtil.getNameWithoutExtension(new File(fileName)));
   }
 
-  public void restoreMergedCoverage(@NotNull final CoverageSuite suite) {
+  public void restoreMergedCoverage(@NotNull final BaseCoverageSuite suite) {
     mySubCoverageIsActive = false;
     ((CoverageSuiteImpl)suite).restoreCoverageData();
     renewCoverageData(suite);

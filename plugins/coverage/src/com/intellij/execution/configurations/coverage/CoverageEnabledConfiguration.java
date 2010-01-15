@@ -16,8 +16,8 @@
 
 package com.intellij.execution.configurations.coverage;
 
+import com.intellij.coverage.BaseCoverageSuite;
 import com.intellij.coverage.CoverageRunner;
-import com.intellij.coverage.CoverageSuite;
 import com.intellij.coverage.IDEACoverageRunner;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.JavaParameters;
@@ -72,7 +72,7 @@ public class CoverageEnabledConfiguration implements JDOMExternalizable{
   private boolean mySampling = false;
   private boolean myTrackTestFolders = false;
   private final Project myProject;
-  private CoverageSuite myCurrentCoverageSuite;
+  private BaseCoverageSuite myCurrentCoverageSuite;
   private final ModuleBasedConfiguration myConfiguration;
   private String myRunnerId;
 
@@ -267,11 +267,11 @@ public class CoverageEnabledConfiguration implements JDOMExternalizable{
     mySuiteToMergeWith = suiteToMegeWith;
   }
 
-  public CoverageSuite getCurrentCoverageSuite() {
+  public BaseCoverageSuite getCurrentCoverageSuite() {
     return myCurrentCoverageSuite;
   }
 
-  public void setCurrentCoverageSuite(CoverageSuite currentCoverageSuite) {
+  public void setCurrentCoverageSuite(BaseCoverageSuite currentCoverageSuite) {
     myCurrentCoverageSuite = currentCoverageSuite;
   }
 

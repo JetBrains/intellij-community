@@ -17,6 +17,7 @@
 package com.intellij.execution.configurations.coverage;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.coverage.BaseCoverageSuite;
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageRunner;
 import com.intellij.coverage.CoverageSuite;
@@ -141,8 +142,8 @@ public class CoverageConfigurable<T extends ModuleBasedConfiguration & CommonJav
     myMergedCoverageSuiteCombo.setEnabled(myMergeDataCheckbox.isEnabled() && myMergeDataCheckbox.isSelected());
     final DefaultComboBoxModel model = (DefaultComboBoxModel)myMergedCoverageSuiteCombo.getModel();
     model.removeAllElements();
-    final CoverageSuite[] suites = CoverageDataManager.getInstance(myProject).getSuites();
-    for (CoverageSuite suite : suites) {
+    final BaseCoverageSuite[] suites = CoverageDataManager.getInstance(myProject).getSuites();
+    for (BaseCoverageSuite suite : suites) {
       if (suite.isValid()) {
         model.addElement(suite.getPresentableName());
       }

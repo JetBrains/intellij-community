@@ -83,14 +83,14 @@ public class SwitchCoverageSuiteAction extends AnAction {
                                          final List<CoverageSuite> firstInGroup,
                                          final CoverageDataManager coverageManager) {
     final CoverageSuite[] suites = coverageManager.getSuites();
-    final Map<String, List<CoverageSuite>> grouped = new TreeMap<String, List<CoverageSuite>>();
+    final Map<String, List<BaseCoverageSuite>> grouped = new TreeMap<String, List<BaseCoverageSuite>>();
     for (CoverageSuite suite : suites) {
       final CoverageFileProvider coverageFileProvider = ((CoverageSuiteImpl)suite).getCoverageDataFileProvider();
       if (suite.isValid()) {
         final String sourceProvider =
           coverageFileProvider instanceof DefaultCoverageFileProvider ? ((DefaultCoverageFileProvider)coverageFileProvider)
             .getSourceProvider() : coverageFileProvider.getClass().getName();
-        List<CoverageSuite> coverageSuiteList = grouped.get(sourceProvider);
+        List<BaseCoverageSuite> coverageSuiteList = grouped.get(sourceProvider);
         if (coverageSuiteList == null) {
           coverageSuiteList = new ArrayList<CoverageSuite>();
           grouped.put(sourceProvider, coverageSuiteList);
@@ -99,12 +99,12 @@ public class SwitchCoverageSuiteAction extends AnAction {
       }
     }
 
-
+    final List<CoverageSuite> firstInGroup = new ArrayList<CoverageSuite>();
     for (String provider : grouped.keySet()) {
-      final List<CoverageSuite> toSort = grouped.get(provider);
+      final List<BaseCoverageSuite> toSort = grouped.get(provider);
       if (toSort.isEmpty()) continue;
       Collections.sort(toSort, new Comparator<CoverageSuite>() {
-        public int compare(final CoverageSuite s1, final CoverageSuite s2) {
+        public int compare(final BaseCoverageSuite s1, final BaseCoverageSuite s2) {
           return s1.getPresentableName().compareToIgnoreCase(s2.getPresentableName());
         }
       });
@@ -114,6 +114,35 @@ public class SwitchCoverageSuiteAction extends AnAction {
       firstInGroup.add(toSort.get(0));
     }
     model.add(null);
+
+    final JList list = new JList(model);
+    list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    list.setCellRenderer(new MyCellRenderer(coverageManager) {
+      protected boolean hasSeparatorAbove(final BaseCoverageSuite suite) {
+        return suite == null || (suite != model.getElementAt(0) && firstInGroup.contains(suite));
+      }
+    });
+
+    final Runnable chosen = new Runnable(){
+      public void run() {
+        final BaseCoverageSuite suite = (BaseCoverageSuite)list.getSelectedValue();
+        coverageManager.chooseSuite(suite);
+      }
+    };
+
+    final JBPopup popup = new PopupChooserBuilder(list).
+      setTitle(CodeInsightBundle.message("title.popup.show.coverage")).
+      setMovable(true).
+      setItemChoosenCallback(chosen).
+      createPopup();
+
+    list.registerKeyboardAction(
+      new RemoveSuiteAction(list, coverageManager, model, popup, chosen),
+      KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0),
+      JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT
+    );
+
+    popup.showCenteredInCurrentWindow(project);
   }
 
   private static abstract class MyCellRenderer extends ColoredListCellRenderer {
@@ -123,14 +152,14 @@ public class SwitchCoverageSuiteAction extends AnAction {
       myCoverageManager = coverageManager;
     }
 
-    protected abstract boolean hasSeparatorAbove(CoverageSuite suite);
+    protected abstract boolean hasSeparatorAbove(BaseCoverageSuite suite);
 
     public Component getListCellRendererComponent(final JList list,
                                                   final Object value, final int index, final boolean isSelected, final boolean cellHasFocus) {
       final Component coloredComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       setPaintFocusBorder(false);
-      final CoverageSuite suite = (CoverageSuite)value;
-      final JPanel panel = new JPanel(new BorderLayout());
+      BaseCoverageSuite suite = (BaseCoverageSuite)value;
+      JPanel panel = new JPanel(new BorderLayout());
       panel.add(coloredComponent, BorderLayout.CENTER);
       if (hasSeparatorAbove(suite)) {
         final TitledSeparator titledSeparator = new TitledSeparator();
@@ -149,7 +178,7 @@ public class SwitchCoverageSuiteAction extends AnAction {
 
     protected void customizeCellRenderer(final JList list,
                                          final Object value, final int index, final boolean selected, final boolean hasFocus) {
-      CoverageSuite suite = (CoverageSuite)value;
+      BaseCoverageSuite suite = (BaseCoverageSuite)value;
       final SimpleTextAttributes attributes = suite == myCoverageManager.getCurrentSuite() ?
                                               SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES :
                                               SimpleTextAttributes.REGULAR_ATTRIBUTES;
@@ -200,6 +229,25 @@ public class SwitchCoverageSuiteAction extends AnAction {
       }
       return CodeInsightBundle.message("no.coverage");
     }
+    
+    //public void actionPerformed(ActionEvent e) {
+    //  final Object value = myList.getSelectedValue();
+    //  if (value != null) {
+    //    final BaseCoverageSuite suite = (BaseCoverageSuite)value;
+    //    JBPopupFactory.getInstance()
+    //      .createConfirmation(CodeInsightBundle.message("prompt.remove.coverage", suite.getPresentableName()), new Runnable() {
+    //        public void run() {
+    //          myCoverageManager.removeCoverageSuite(suite);
+    //          myModel.removeElement(value);
+    //          if (myModel.getSize() == 1) {
+    //            myPopup.cancel();
+    //            myChooseSuiteRunnable.run();
+    //          }
+    //        }
+    //      }, 0).showInCenterOf(myList);
+    //  }
+    //  return CodeInsightBundle.message("no.coverage");
+    //}
   }
 
   private static abstract class DeletableItemsListPopup extends ListPopupImpl {
