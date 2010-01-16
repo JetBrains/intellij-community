@@ -163,15 +163,17 @@ public class PeriodicalTasksCloser implements ProjectManagerListener {
         return;
       }
       final Ref<Boolean> fire = new Ref<Boolean>();
-      synchronized (ourLock) {
-        final Boolean state = myStates.get(project);
-        if (! Boolean.TRUE.equals(state)) {
-          fire.set(Boolean.TRUE);
-        }
-        if (Boolean.TRUE.equals(fire.get())) {
-          synchronized (start) {
-            start.set(Boolean.FALSE);
-            return;
+      if (project != null) {
+        synchronized (ourLock) {
+          final Boolean state = myStates.get(project);
+          if (! Boolean.TRUE.equals(state)) {
+            fire.set(Boolean.TRUE);
+          }
+          if (Boolean.TRUE.equals(fire.get())) {
+            synchronized (start) {
+              start.set(Boolean.FALSE);
+              return;
+            }
           }
         }
       }
