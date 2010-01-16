@@ -51,11 +51,6 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
   }
 
   private void readExternal(final Element element) {
-    if (myProject.isDefault()) {
-      return; // TODO[max]: hack to enforce default project always has LangLevel == 1.5. This is necessary until StubUpdatingIndex
-      // is able to determine correct language level for stub parsing.
-    }
-
     String level = element.getAttributeValue("languageLevel");
     if (level == null) {
       myLanguageLevel = migrateFromIdea7(element);

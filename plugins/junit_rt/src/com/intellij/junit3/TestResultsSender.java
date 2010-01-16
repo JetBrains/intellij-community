@@ -37,13 +37,17 @@ public class TestResultsSender implements TestListener {
   }
 
   public synchronized void addError(Test test, Throwable throwable) {
-    if (throwable instanceof AssertionError) {
-      doAddFailure(test, (Error)throwable);
+    try {
+      final Class aClass = Class.forName("java.lang.AssertionError");
+      if (aClass.isInstance(throwable)) {
+        doAddFailure(test, (Error)throwable);
+        return;
+      }
     }
-    else {
-      stopMeter(test);
-      prepareDefectPacket(test, throwable).send();
-    }
+    catch (ClassNotFoundException ignored) {}
+
+    stopMeter(test);
+    prepareDefectPacket(test, throwable).send();
   }
 
   public synchronized void addFailure(Test test, AssertionFailedError assertion) {

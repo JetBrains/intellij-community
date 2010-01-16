@@ -359,7 +359,6 @@ public abstract class DebugProcessImpl implements DebugProcess {
       StepRequest stepRequest = requestManager.createStepRequest(stepThread.getThreadReference(), StepRequest.STEP_LINE, depth);
       DebuggerSettings settings = DebuggerSettings.getInstance();
       if (!(hint != null && hint.isIgnoreFilters()) /*&& depth == StepRequest.STEP_INTO*/) {
-        final String currentClassName = getCurrentClassName(stepThread);
         final List<ClassFilter> activeFilters = new ArrayList<ClassFilter>();
         if (settings.TRACING_FILTERS_ENABLED) {
           for (ClassFilter filter : settings.getSteppingFilters()) {
@@ -376,10 +375,13 @@ public abstract class DebugProcessImpl implements DebugProcess {
           }
         }
 
-        if (currentClassName == null || !DebuggerUtilsEx.isFiltered(currentClassName, activeFilters)) {
-          // add class filters
-          for (ClassFilter filter : activeFilters) {
-            stepRequest.addClassExclusionFilter(filter.getPattern());
+        if (!activeFilters.isEmpty()) {
+          final String currentClassName = getCurrentClassName(stepThread);
+          if (currentClassName == null || !DebuggerUtilsEx.isFiltered(currentClassName, activeFilters)) {
+            // add class filters
+            for (ClassFilter filter : activeFilters) {
+              stepRequest.addClassExclusionFilter(filter.getPattern());
+            }
           }
         }
       }
