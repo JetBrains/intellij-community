@@ -20,19 +20,22 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.commands.GitHandler;
-import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitHandlerUtil;
+import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
 import git4idea.ui.GitUIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -60,19 +63,17 @@ public class GitInit extends DumbAwareAction {
     if (files.length == 0) {
       return;
     }
-    VirtualFile root = files[0];
+    final VirtualFile root = files[0];
     if (GitUtil.isUnderGit(root)) {
       Messages.showErrorDialog(project, GitBundle.message("init.error.already.under.git", root.getPresentableUrl()),
                                GitBundle.getString("init.error.title"));
       return;
     }
-    try {
-      GitSimpleHandler h = new GitSimpleHandler(project, root, GitHandler.INIT);
-      h.setNoSSH(true);
-      h.run();
-    }
-    catch (VcsException ex) {
-      GitUIUtil.showOperationError(project, ex, "git init");
+    GitLineHandler h = new GitLineHandler(project, root, GitCommand.INIT);
+    h.setNoSSH(true);
+    GitHandlerUtil.doSynchronously(h, GitBundle.getString("initializing.title"), h.printableCommandLine());
+    if (!h.errors().isEmpty()) {
+      GitUIUtil.showOperationErrors(project, h.errors(), "git init");
       return;
     }
     int rc = Messages.showYesNoDialog(project, GitBundle.getString("init.add.root.message"), GitBundle.getString("init.add.root.title"),
@@ -80,31 +81,36 @@ public class GitInit extends DumbAwareAction {
     if (rc != 0) {
       return;
     }
-    root.refresh(false, false);
-    final String path = root.equals(baseDir) ? "" : root.getPath();
-    ProjectLevelVcsManager vcs = ProjectLevelVcsManager.getInstance(project);
-    final List<VcsDirectoryMapping> vcsDirectoryMappings = new ArrayList<VcsDirectoryMapping>(vcs.getDirectoryMappings());
-    VcsDirectoryMapping mapping = new VcsDirectoryMapping(path, GitVcs.getInstance(project).getName());
-    for (int i = 0; i < vcsDirectoryMappings.size(); i++) {
-      final VcsDirectoryMapping m = vcsDirectoryMappings.get(i);
-      if (m.getDirectory().equals(path)) {
-        if (m.getVcs().length() == 0) {
-          vcsDirectoryMappings.set(i, mapping);
-          mapping = null;
-          break;
+    GitVcs.getInstance(project).runInBackground(new Task.Backgroundable(project, GitBundle.getString("common.refreshing")) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        root.refresh(false, false);
+        final String path = root.equals(baseDir) ? "" : root.getPath();
+        ProjectLevelVcsManager vcs = ProjectLevelVcsManager.getInstance(project);
+        final List<VcsDirectoryMapping> vcsDirectoryMappings = new ArrayList<VcsDirectoryMapping>(vcs.getDirectoryMappings());
+        VcsDirectoryMapping mapping = new VcsDirectoryMapping(path, GitVcs.getInstance(project).getName());
+        for (int i = 0; i < vcsDirectoryMappings.size(); i++) {
+          final VcsDirectoryMapping m = vcsDirectoryMappings.get(i);
+          if (m.getDirectory().equals(path)) {
+            if (m.getVcs().length() == 0) {
+              vcsDirectoryMappings.set(i, mapping);
+              mapping = null;
+              break;
+            }
+            else if (m.getVcs().equals(mapping.getVcs())) {
+              mapping = null;
+              break;
+            }
+          }
         }
-        else if (m.getVcs().equals(mapping.getVcs())) {
-          mapping = null;
-          break;
+        if (mapping != null) {
+          vcsDirectoryMappings.add(mapping);
         }
+        vcs.setDirectoryMappings(vcsDirectoryMappings);
+        vcs.updateActiveVcss();
+        GitUtil.refreshFiles(project, Collections.singleton(root));
       }
-    }
-    if (mapping != null) {
-      vcsDirectoryMappings.add(mapping);
-    }
-    vcs.setDirectoryMappings(vcsDirectoryMappings);
-    vcs.updateActiveVcss();
-    GitUtil.refreshFiles(project, Collections.singleton(root));
+    });
   }
 
   /**

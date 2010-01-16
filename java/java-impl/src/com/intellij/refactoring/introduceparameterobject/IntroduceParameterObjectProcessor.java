@@ -27,6 +27,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -41,6 +42,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -220,6 +222,15 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
     final PsiClass psiClass = buildClass();
     if (psiClass != null) {
       super.performRefactoring(usageInfos);
+      if (!myUseExistingClass) {
+        for (PsiReference reference : ReferencesSearch.search(method)) {
+          final PsiElement place = reference.getElement();
+          VisibilityUtil.escalateVisibility(psiClass, place);
+          for (PsiMethod constructor : psiClass.getConstructors()) {
+            VisibilityUtil.escalateVisibility(constructor, place);
+          }
+        }
+      }
     }
   }
 
@@ -228,6 +239,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
       return existingClass;
     }
     final ParameterObjectBuilder beanClassBuilder = new ParameterObjectBuilder();
+    beanClassBuilder.setVisibility(myCreateInnerClass ? PsiModifier.PRIVATE : PsiModifier.PUBLIC);
     beanClassBuilder.setProject(myProject);
     beanClassBuilder.setTypeArguments(typeParams);
     beanClassBuilder.setClassName(className);

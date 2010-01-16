@@ -51,6 +51,7 @@ import com.intellij.psi.javadoc.JavadocManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SmartList;
@@ -501,8 +502,17 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
         case BEFORE_CHILD_MOVEMENT:
         case BEFORE_CHILD_REPLACEMENT:
         case BEFORE_CHILD_ADDITION:
+          break;
         case BEFORE_CHILD_REMOVAL:
-          return;
+          checkAnnotation(event.getChild());
+          checkModifierListOwner(event.getChild());
+          if (event.getChild() instanceof PsiClassOwner) {
+            PsiClass[] classes = ((PsiClassOwner)event.getChild()).getClasses();
+            for (PsiClass psiClass : classes) {
+              checkModifierListOwner(psiClass);              
+            }
+          }
+          break;
 
         case CHILD_ADDED:
         case CHILD_REMOVED:
@@ -525,6 +535,15 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
       }
     }
 
+    private void checkModifierListOwner(PsiElement child) {
+      if (child instanceof PsiModifierListOwner) {
+        PsiModifierList modifierList = ((PsiModifierListOwner)child).getModifierList();
+        if (modifierList != null && modifierList.getAnnotations().length > 0) {
+          myModificationTracker.incAnnotationModificationCounter();             
+        }
+      }
+    }
+
     private void processChange(final PsiElement parent, final PsiElement child1, final PsiElement child2) {
       try {
         if (!isInsideCodeBlock(parent)) {
@@ -534,6 +553,8 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
           else {
             myModificationTracker.incOutOfCodeBlockModificationCounter();
           }
+          checkAnnotation(parent);
+          checkModifierListOwner(parent);
           return;
         }
 
@@ -543,6 +564,12 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
       }
       catch (PsiInvalidElementAccessException e) {
         myModificationTracker.incCounter(); // Shall not happen actually, just a pre-release paranoia
+      }
+    }
+
+    private void checkAnnotation(PsiElement parent) {
+      if (PsiTreeUtil.getParentOfType(parent, PsiAnnotation.class, false) != null) {
+        myModificationTracker.incAnnotationModificationCounter();
       }
     }
 

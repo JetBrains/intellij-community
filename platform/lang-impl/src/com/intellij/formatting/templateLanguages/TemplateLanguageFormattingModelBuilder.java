@@ -44,7 +44,7 @@ public abstract class TemplateLanguageFormattingModelBuilder implements Delegati
   @NotNull
   public FormattingModel createModel(PsiElement element, CodeStyleSettings settings) {
     final PsiFile file = element.getContainingFile();
-    Block rootBlock = getRootBlock(element, file.getViewProvider(), settings);
+    Block rootBlock = getRootBlock(file, file.getViewProvider(), settings);
     return new DocumentBasedFormattingModel(rootBlock, element.getProject(), settings, file.getFileType(), file);
   }
 
@@ -59,14 +59,14 @@ public abstract class TemplateLanguageFormattingModelBuilder implements Delegati
       return createDummyBlock(node);
     }
     if (builder == null) {
-      return createTemplateLanguageBlock(node, Collections.<DataLanguageBlockWrapper>emptyList());
+      return createTemplateLanguageBlock(node, Collections.<DataLanguageBlockWrapper>emptyList(), null);
     }
     final FormattingModel model = builder.createModel(viewProvider.getPsi(dataLanguage), settings);
     List<DataLanguageBlockWrapper> childWrappers = buildChildWrappers(model.getRootBlock());
     if (childWrappers.size() == 1) {
       childWrappers = buildChildWrappers(childWrappers.get(0).getOriginal());
     }
-    return createTemplateLanguageBlock(node, filterBlocksByRange(childWrappers, node.getTextRange()));
+    return createTemplateLanguageBlock(node, filterBlocksByRange(childWrappers, node.getTextRange()), settings);
   }
 
   protected AbstractBlock createDummyBlock(final ASTNode node) {

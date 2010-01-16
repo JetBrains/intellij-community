@@ -677,6 +677,18 @@
   <action id="HideAllWindows">
     <keyboard-shortcut first-keystroke="control shift F12"/>
   </action>
+  <action id="ResizeToolWindowLeft">
+    <keyboard-shortcut first-keystroke="control shift LEFT"/>
+  </action>
+  <action id="ResizeToolWindowRight">
+    <keyboard-shortcut first-keystroke="control shift RIGHT"/>
+  </action>
+  <action id="ResizeToolWindowUp">
+    <keyboard-shortcut first-keystroke="control shift UP"/>
+  </action>
+  <action id="ResizeToolWindowDown">
+    <keyboard-shortcut first-keystroke="control shift DOWN"/>
+  </action>
   <action id="HideSideWindows"/>
   <action id="ShowPopupMenu">
     <keyboard-shortcut first-keystroke="CONTEXT_MENU"/>

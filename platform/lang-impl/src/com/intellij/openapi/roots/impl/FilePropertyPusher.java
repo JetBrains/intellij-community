@@ -54,4 +54,6 @@ public interface FilePropertyPusher<T> {
     void pushAll();
     void pushRecursively(final VirtualFile vile, final Project project);
   }
+
+  void afterRootsChanged(Project project);
 }

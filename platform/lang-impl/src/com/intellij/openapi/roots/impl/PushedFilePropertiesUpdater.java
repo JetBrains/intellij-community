@@ -68,6 +68,9 @@ public class PushedFilePropertiesUpdater {
 
           public void rootsChanged(final ModuleRootEvent event) {
             pushAll(myPushers);
+            for (FilePropertyPusher pusher : myPushers) {
+              pusher.afterRootsChanged(project);
+            }
           }
         });
 

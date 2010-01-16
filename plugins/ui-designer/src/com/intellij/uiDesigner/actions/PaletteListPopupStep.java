@@ -97,6 +97,10 @@ class PaletteListPopupStep implements ListPopupStep<ComponentItem>, SpeedSearchF
     return PopupStep.FINAL_CHOICE;
   }
 
+  public Runnable getFinalRunnable() {
+    return null;
+  }
+
   public boolean hasSubstep(final ComponentItem selectedValue) {
     return false;
   }

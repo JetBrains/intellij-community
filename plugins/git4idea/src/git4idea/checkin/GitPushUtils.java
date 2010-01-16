@@ -21,7 +21,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
-import git4idea.commands.GitHandler;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.commands.GitLineHandlerAdapter;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +58,7 @@ public class GitPushUtils {
     if (tracked == null) {
       return null;
     }
-    final GitLineHandler rc = new GitLineHandler(project, vcsRoot, GitHandler.PUSH);
+    final GitLineHandler rc = new GitLineHandler(project, vcsRoot, GitCommand.PUSH);
     rc.addParameters("-v", remote, current.getFullName() + ":" + tracked);
     trackPushRejectedAsError(rc, "Rejected push (" + vcsRoot.getPresentableUrl() + "): ");
     return rc;

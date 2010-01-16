@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +47,8 @@ public class ToggleLineBreakpointActionHandler extends DebuggerActionHandler {
       int line = document.getLineNumber(offset);
 
       VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-      if (DebuggerUtils.supportsJVMDebugging(file.getFileType())) {
+      PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+      if (DebuggerUtils.supportsJVMDebugging(file.getFileType()) || DebuggerUtils.supportsJVMDebugging(psiFile)) {
         final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager();
         return breakpointManager.findBreakpoint(document, offset, LineBreakpoint.CATEGORY) != null ||
                    LineBreakpoint.canAddLineBreakpoint(project, document, line);

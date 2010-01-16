@@ -61,8 +61,10 @@ import java.util.Comparator;
  * Date: Oct 9, 2003
  * Time: 1:19:47 PM
  */
-public abstract class ContentEntryTreeEditor {
+public class ContentEntryTreeEditor {
   private final Project myProject;
+  private final boolean myCanMarkSources;
+  private final boolean myCanMarkTestSources;
   protected Tree myTree;
   private FileSystemTreeImpl myFileSystemTree;
   private final JPanel myTreePanel;
@@ -72,8 +74,10 @@ public abstract class ContentEntryTreeEditor {
   private final MyContentEntryEditorListener myContentEntryEditorListener = new MyContentEntryEditorListener();
   private final FileChooserDescriptor myDescriptor;
 
-  public ContentEntryTreeEditor(Project project) {
+  public ContentEntryTreeEditor(Project project, boolean canMarkSources, boolean canMarkTestSources) {
     myProject = project;
+    myCanMarkSources = canMarkSources;
+    myCanMarkTestSources = canMarkTestSources;
     myTree = new Tree();
     myTree.setRootVisible(true);
     myTree.setShowsRootHandles(true);
@@ -94,6 +98,17 @@ public abstract class ContentEntryTreeEditor {
   }
 
   protected void createEditingActions() {
+    if (myCanMarkSources) {
+      ToggleSourcesStateAction markSourcesAction = new ToggleSourcesStateAction(myTree, this, false);
+      markSourcesAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.ALT_MASK)), myTree);
+      myEditingActionsGroup.add(markSourcesAction);
+    }
+
+    if (myCanMarkTestSources) {
+      setupTestsAction();
+    }
+
+    setupExcludedAction();
   }
 
   protected TreeCellRenderer getContentEntryCellRenderer() {

@@ -64,7 +64,7 @@ public class RunToCursorActionHandler extends DebuggerActionHandler {
 
     final VirtualFile virtualFile = file.getVirtualFile();
     FileType fileType = virtualFile != null ? fileTypeManager.getFileTypeByFile(virtualFile) : null;
-    if (DebuggerUtils.supportsJVMDebugging(fileType)) {
+    if (DebuggerUtils.supportsJVMDebugging(fileType) || DebuggerUtils.supportsJVMDebugging(file)) {
       DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(project).getContext().getDebuggerSession();
       return debuggerSession != null && debuggerSession.isPaused();
     }

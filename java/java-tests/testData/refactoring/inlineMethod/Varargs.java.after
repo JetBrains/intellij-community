@@ -4,7 +4,6 @@ public class Varargs {
     }
 
     public void foo() {
-        String[] texts = new String[]{"i", "d", "e", "a"};
-        String s = join("", texts);
+        String s = join("", "i", "d", "e", "a");
     }
 }

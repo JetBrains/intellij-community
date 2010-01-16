@@ -124,8 +124,9 @@ public class DefaultXmlExtension extends XmlExtension {
     final String name = tag.getLocalName();
     final Set<String> byTagName = getNamespacesByTagName(name, file);
     if (!byTagName.isEmpty()) {
-      byTagName.removeAll(Arrays.asList(tag.knownNamespaces()));
-      return byTagName;
+      Set<String> filtered = new HashSet<String>(byTagName);
+      filtered.removeAll(Arrays.asList(tag.knownNamespaces()));
+      return filtered;
     }
     final Set<String> set = guessNamespace(file, name);
     set.removeAll(Arrays.asList(tag.knownNamespaces()));

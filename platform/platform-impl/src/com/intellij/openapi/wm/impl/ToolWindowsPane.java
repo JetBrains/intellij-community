@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.impl.commands.FinalizableCommand;
 import com.intellij.reference.SoftReference;
@@ -366,6 +367,38 @@ final class ToolWindowsPane extends JPanel{
   void stopDrag() {
     for (Stripe each : myStipes) {
       each.stopDrag();
+    }
+  }
+
+  public void stretchWidth(ToolWindow wnd, int value) {
+    JComponent cmp = getComponentAt(wnd.getAnchor());
+    if (cmp == null) return;
+
+    stretch(myHorizontalSplitter, cmp, cmp.getSize().width, value, 0, getSize().width);
+  }
+
+  public void stretchHeight(ToolWindow wnd, int value) {
+    JComponent cmp = getComponentAt(wnd.getAnchor());
+    if (cmp == null) return;
+
+    stretch(myVerticalSplitter, cmp, cmp.getSize().height, value, 0, getSize().height);
+  }
+
+  private void stretch(ThreeComponentsSplitter splitter, JComponent cmp, int currentValue, int incValue, int minValue, int maxValue) {
+    int actualSize = currentValue + incValue;
+
+    if (actualSize < minValue) {
+      actualSize = minValue;
+    }
+
+    if (actualSize > maxValue) {
+      actualSize = maxValue;
+    }
+
+    if (splitter.getFirstComponent() == cmp) {
+      splitter.setFirstSize(actualSize);
+    } else if (splitter.getLastComponent() == cmp) {
+      splitter.setLastSize(actualSize);
     }
   }
 

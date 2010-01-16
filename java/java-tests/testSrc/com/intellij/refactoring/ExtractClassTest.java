@@ -142,6 +142,10 @@ public class ExtractClassTest extends MultiFileTestCase{
     doTestField(null, true);
   }
 
+  public void testIncrementDecrement() throws Exception {
+    doTestField(null, true);
+  }
+
 
   public void testGetters() throws Exception {
     doTestFieldAndMethod("getMyT");

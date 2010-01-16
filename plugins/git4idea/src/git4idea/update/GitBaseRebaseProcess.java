@@ -33,12 +33,14 @@ import git4idea.GitBranch;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.changes.GitChangeUtils;
-import git4idea.commands.GitHandler;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitLineHandler;
 import git4idea.commands.GitLineHandlerAdapter;
+import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.rebase.GitRebaseUtils;
+import git4idea.ui.GitConvertFilesDialog;
 import git4idea.ui.GitUIUtil;
 
 import java.util.*;
@@ -84,6 +86,7 @@ public abstract class GitBaseRebaseProcess {
       HashSet<VirtualFile> rootsToStash = new HashSet<VirtualFile>();
       List<LocalChangeList> listsCopy = null;
       ChangeListManagerEx changeManager = (ChangeListManagerEx)ChangeListManagerEx.getInstance(myProject);
+      Map<VirtualFile, List<Change>> sortedChanges = new HashMap<VirtualFile, List<Change>>();
       if (isAutoStash()) {
         listsCopy = changeManager.getChangeListsCopy();
         for (LocalChangeList l : listsCopy) {
@@ -94,6 +97,12 @@ public abstract class GitBaseRebaseProcess {
               VirtualFile r = GitUtil.getGitRootOrNull(c.getAfterRevision().getFile());
               if (r != null) {
                 rootsToStash.add(r);
+                List<Change> changes = sortedChanges.get(r);
+                if (changes == null) {
+                  changes = new ArrayList<Change>();
+                  sortedChanges.put(r, changes);
+                }
+                changes.add(c);
               }
             }
             else if (c.getBeforeRevision() != null) {
@@ -103,6 +112,15 @@ public abstract class GitBaseRebaseProcess {
               }
             }
           }
+        }
+        GitVcsSettings settings = GitVcsSettings.getInstance(myProject);
+        boolean result = GitConvertFilesDialog.showDialogIfNeeded(myProject, settings, sortedChanges, myExceptions);
+        if (!result) {
+          if (myExceptions.isEmpty()) {
+            //noinspection ThrowableInstanceNeverThrown
+            myExceptions.add(new VcsException("Conversion of line separators failed."));
+          }
+          return;
         }
       }
       if (areRootsUnderRebase(roots)) return;
@@ -121,7 +139,10 @@ public abstract class GitBaseRebaseProcess {
           final Ref<Boolean> cancelled = new Ref<Boolean>(false);
           final Ref<Throwable> ex = new Ref<Throwable>();
           try {
-            boolean stashCreated = rootsToStash.contains(root) && GitStashUtils.saveStash(myProject, root, stashMessage);
+            boolean stashCreated = false;
+            if (rootsToStash.contains(root)) {
+              stashCreated = GitStashUtils.saveStash(myProject, root, stashMessage);
+            }
             try {
               markStart(root);
               try {
@@ -390,26 +411,28 @@ public abstract class GitBaseRebaseProcess {
                         VirtualFile root,
                         RebaseConflictDetector rebaseConflictDetector,
                         final String action) {
-    GitLineHandler rh = new GitLineHandler(myProject, root, GitHandler.REBASE);
+    GitLineHandler rh = new GitLineHandler(myProject, root, GitCommand.REBASE);
     // ignore failure for abort
     rh.ignoreErrorCode(1);
     rh.addParameters(action);
     rebaseConflictDetector.reset();
     rh.addLineListener(rebaseConflictDetector);
-    if(!"--abort".equals(action)) {
+    if (!"--abort".equals(action)) {
       configureRebaseEditor(root, rh);
     }
     try {
-    GitHandlerUtil.doSynchronouslyWithExceptions(rh, progressIndicator);
-    } finally {
+      GitHandlerUtil.doSynchronouslyWithExceptions(rh, progressIndicator);
+    }
+    finally {
       cleanupHandler(root, rh);
     }
   }
 
   /**
    * Configure rebase editor
+   *
    * @param root the vcs root
-   * @param h the handler to configure
+   * @param h    the handler to configure
    */
   @SuppressWarnings({"UnusedDeclaration"})
   protected void configureRebaseEditor(VirtualFile root, GitLineHandler h) {
