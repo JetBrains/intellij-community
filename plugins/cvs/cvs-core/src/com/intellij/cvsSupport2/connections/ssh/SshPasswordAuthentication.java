@@ -28,15 +28,18 @@ public class SshPasswordAuthentication implements SshAuthentication {
   private final static String KEYBOARD_METHOD = "keyboard-interactive";
 
   private final String myLogin;
-  private final String myPassword;
+  private final SSHPasswordProvider myPasswordProvider;
+  private final String myCvsRootAsString;
 
-  public SshPasswordAuthentication(final String login, final String password) {
-    myPassword = password;
+  public SshPasswordAuthentication(final String login, final SSHPasswordProvider passwordProvider, final String cvsRootAsString) {
     myLogin = login;
+    myPasswordProvider = passwordProvider;
+    myCvsRootAsString = cvsRootAsString;
   }
 
   public void authenticate(final Connection connection) throws AuthenticationException, SolveableAuthenticationException {
-    if (myPassword == null) {
+    final String password = myPasswordProvider.getPasswordForCvsRoot(myCvsRootAsString);
+    if (password == null) {
       throw new SolveableAuthenticationException("Authentication rejected.");
     }
     try {
@@ -45,7 +48,7 @@ public class SshPasswordAuthentication implements SshAuthentication {
       final List<String> methods = Arrays.asList(methodsArr);
 
       if (methods.contains(PASSWORD_METHOD)) {
-        if (connection.authenticateWithPassword(myLogin, myPassword)) return;
+        if (connection.authenticateWithPassword(myLogin, password)) return;
       }
 
       if (methods.contains(KEYBOARD_METHOD)) {
@@ -53,7 +56,7 @@ public class SshPasswordAuthentication implements SshAuthentication {
           public String[] replyToChallenge(String s, String instruction, int numPrompts, String[] strings, boolean[] booleans) throws Exception {
             final String[] result = new String[numPrompts];
             if (numPrompts > 0) {
-              Arrays.fill(result, myPassword);
+              Arrays.fill(result, password);
             }
             return result;
           }
