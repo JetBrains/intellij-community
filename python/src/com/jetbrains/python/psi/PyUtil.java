@@ -372,6 +372,11 @@ public class PyUtil {
     return null;
   }
 
+  @Nullable
+  public static PyClass getContainingClassOrSelf(final PyElement element) {
+    return getElementOrContaining(element, PyClass.class);
+  }
+
   /**
    * @param element for which to obtain the file
    * @return PyFile, or null, if there's no containing file, or it is not a PyFile.
