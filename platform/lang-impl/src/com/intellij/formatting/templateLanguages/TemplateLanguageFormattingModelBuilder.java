@@ -59,7 +59,7 @@ public abstract class TemplateLanguageFormattingModelBuilder implements Delegati
       return createDummyBlock(node);
     }
     if (builder == null) {
-      return createTemplateLanguageBlock(node, Collections.<DataLanguageBlockWrapper>emptyList(), null);
+      return createTemplateLanguageBlock(node, Collections.<DataLanguageBlockWrapper>emptyList(), settings);
     }
     final FormattingModel model = builder.createModel(viewProvider.getPsi(dataLanguage), settings);
     List<DataLanguageBlockWrapper> childWrappers = buildChildWrappers(model.getRootBlock());
