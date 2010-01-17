@@ -1,6 +1,7 @@
 package com.jetbrains.python.refactoring.classes;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.classMembers.ClassMembersRefactoringSupport;
 import com.intellij.refactoring.classMembers.DependentMembersCollectorBase;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
@@ -16,8 +17,8 @@ public class PyClassMembersRefactoringSupport implements ClassMembersRefactoring
     final PyMemberInfoStorage infoStorage = new PyMemberInfoStorage(clazz);
     for (PyMemberInfo member : infoStorage.getClassMemberInfos(clazz)) {
       final PyElement function = member.getMember();
-      member.setChecked(function.getTextOffset() >= element1.getTextOffset() &&
-                        function.getTextOffset() + function.getTextLength() <= element2.getTextOffset() + element2.getTextLength());
+      member.setChecked(PsiTreeUtil.isAncestor(function, element1, false) ||
+                        PsiTreeUtil.isAncestor(function, element2, false));
     }
     return infoStorage;    
   }

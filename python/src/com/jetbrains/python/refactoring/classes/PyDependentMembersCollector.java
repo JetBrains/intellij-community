@@ -1,8 +1,7 @@
 package com.jetbrains.python.refactoring.classes;
 
 import com.intellij.refactoring.classMembers.DependentMembersCollectorBase;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.*;
 
 /**
  * @author Dennis.Ushakov
@@ -14,6 +13,24 @@ public class PyDependentMembersCollector extends DependentMembersCollectorBase<P
 
   @Override
   public void collect(PyElement member) {
+    final PyRecursiveElementVisitor visitor = new PyRecursiveElementVisitor() {
+      @Override
+      public void visitPyCallExpression(PyCallExpression node) {
+        final PyCallExpression.PyMarkedFunction markedFunction = node.resolveCallee();
+        final PyFunction function = markedFunction != null ? markedFunction.getFunction() : null;
+        if (!existsInSuperClass(function)) {
+          myCollection.add(function);
+        }
+      }
+    };
+    member.accept(visitor);
+  }
 
+  private boolean existsInSuperClass(PyFunction classMember) {
+    if (getSuperClass() == null) return false;
+    final String name = classMember != null ? classMember.getName() : null;
+    if (name == null) return false;
+    final PyFunction methodBySignature = (getSuperClass()).findMethodByName(name, true);
+    return methodBySignature != null;
   }
 }
