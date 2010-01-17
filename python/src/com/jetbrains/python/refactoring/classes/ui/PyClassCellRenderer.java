@@ -2,6 +2,7 @@ package com.jetbrains.python.refactoring.classes.ui;
 
 import com.intellij.openapi.util.Iconable;
 import com.jetbrains.python.psi.PyClass;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,7 +35,7 @@ public class PyClassCellRenderer extends DefaultListCellRenderer {
 
   public static JLabel customizeRenderer(final JLabel cellRendererComponent, final Object value, final boolean showReadOnly) {
     PyClass aClass = (PyClass) value;
-    cellRendererComponent.setText(aClass.getName());
+    cellRendererComponent.setText(getClassText(aClass));
 
     int flags = Iconable.ICON_FLAG_VISIBILITY;
     if (showReadOnly) {
@@ -45,5 +46,10 @@ public class PyClassCellRenderer extends DefaultListCellRenderer {
       cellRendererComponent.setIcon(icon);
     }
     return cellRendererComponent;
+  }
+
+  @Nullable
+  public static String getClassText(PyClass aClass) {
+    return aClass.getName();
   }
 }

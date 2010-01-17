@@ -373,8 +373,12 @@ public class PyUtil {
   }
 
   @Nullable
-  public static PyClass getContainingClassOrSelf(final PyElement element) {
-    return getElementOrContaining(element, PyClass.class);
+  public static PyClass getContainingClassOrSelf(final PsiElement element) {
+    PsiElement current = element;
+    while (current != null && !(current instanceof PyClass)) {
+      current = current.getParent();
+    }
+    return (PyClass)current;
   }
 
   /**
