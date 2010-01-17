@@ -26,7 +26,6 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.ListUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -187,18 +186,5 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
 
   private static boolean isModified(JToggleButton checkBox, boolean value) {
     return checkBox.isSelected() != value;
-  }
-
-  @Nls
-  public String getDisplayName() {
-    return "Java";
-  }
-
-  public Icon getIcon() {
-    return null;
-  }
-
-  public String getHelpTopic() {
-    return "reference.settingsdialog.IDE.editor.autoimport";
   }
 }

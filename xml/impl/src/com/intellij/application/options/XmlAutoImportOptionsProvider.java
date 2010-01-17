@@ -17,7 +17,6 @@ package com.intellij.application.options;
 
 import com.intellij.application.options.editor.AutoImportOptionsProvider;
 import com.intellij.openapi.options.ConfigurationException;
-import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 
@@ -47,18 +46,5 @@ public class XmlAutoImportOptionsProvider implements AutoImportOptionsProvider {
 
   public void disposeUIResources() {
 
-  }
-
-  @Nls
-  public String getDisplayName() {
-    return "XML";
-  }
-
-  public Icon getIcon() {
-    return null;
-  }
-
-  public String getHelpTopic() {
-    return "reference.settingsdialog.IDE.editor.autoimport";
   }
 }
