@@ -21,4 +21,9 @@ public class RuntimeConfigurationError extends RuntimeConfigurationException{
   public RuntimeConfigurationError(final String message) {
     super(message, ExecutionBundle.message("error.common.title"));
   }
+
+  public RuntimeConfigurationError(final String message, final Runnable quickFix) {
+    super(message, ExecutionBundle.message("error.common.title"));
+    setQuickFix(quickFix);
+  }
 }
