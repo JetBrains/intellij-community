@@ -45,6 +45,7 @@ class ChangedConstantsDependencyProcessor {
   private final int myQName;
   private final FieldChangeInfo[] myChangedFields;
   private final FieldChangeInfo[] myRemovedFields;
+  private static final long ANALYSIS_DURATION_THRESHOLD_MILLIS = 30000L /*30 sec*/;
 
 
   public ChangedConstantsDependencyProcessor(Project project, CachingSearcher searcher, DependencyCache dependencyCache, int qName, FieldChangeInfo[] changedFields, FieldChangeInfo[] removedFields) {
@@ -106,13 +107,18 @@ class ChangedConstantsDependencyProcessor {
       }
     }
     final PsiSearchHelper psiSearchHelper = PsiManager.getInstance(myProject).getSearchHelper();
+
+    final long analysisStart = System.currentTimeMillis();
+    boolean skipResolve = false;
+
     PsiIdentifier[] identifiers = findIdentifiers(psiSearchHelper, myDependencyCache.resolve(info.getName()), searchScope, UsageSearchContext.IN_CODE);
     for (PsiIdentifier identifier : identifiers) {
       PsiElement parent = identifier.getParent();
       if (parent instanceof PsiReferenceExpression) {
         PsiReferenceExpression refExpr = (PsiReferenceExpression)parent;
         PsiReference reference = refExpr.getReference();
-        if (reference.resolve() == null) {
+        skipResolve = skipResolve || (System.currentTimeMillis() - analysisStart) > ANALYSIS_DURATION_THRESHOLD_MILLIS;
+        if (skipResolve || reference == null || reference.resolve() == null) {
           PsiClass ownerClass = getOwnerClass(refExpr);
           if (ownerClass != null && !ownerClass.equals(aClass)) {
             int qualifiedName = myDependencyCache.getSymbolTable().getId(ownerClass.getQualifiedName());
