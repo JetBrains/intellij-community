@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.ZipUtil;
 import org.apache.commons.net.ftp.FTPClient;
@@ -47,33 +48,51 @@ import java.util.zip.ZipOutputStream;
 public class SubmitPerformanceReportAction extends AnAction implements DumbAware {
   private final DateFormat myDateFormat = new SimpleDateFormat("yyyyMMdd-HHmmss");
 
+  private static final String MESSAGE_TITLE = "Submit Performance Report";
+
   public void actionPerformed(final AnActionEvent e) {
     String reportFileName = "perf_" + ApplicationInfo.getInstance().getBuild().asString() + "_" +
                             SystemProperties.getUserName() + "_" + myDateFormat.format(new Date()) + ".zip";
     final File reportPath = new File(SystemProperties.getUserHome(), reportFileName);
     final File logDir = new File(PathManager.getSystemPath(), "log");
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    try {
-      ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(reportPath));
-      ZipUtil.addDirToZipRecursively(zip, reportPath, logDir, "", new FileFilter() {
-        public boolean accept(final File pathname) {
-          if (logDir.equals(pathname.getParentFile())) {
-            return pathname.getPath().contains("threadDumps");
-          }
-          return true;
+
+    final boolean[] archiveCreated = new boolean[1];
+    final boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      public void run() {
+        try {
+          ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(reportPath));
+          ZipUtil.addDirToZipRecursively(zip, reportPath, logDir, "", new FileFilter() {
+            public boolean accept(final File pathname) {
+              ProgressManager.checkCanceled();
+              
+              if (logDir.equals(pathname.getParentFile())) {
+                return pathname.getPath().contains("threadDumps");
+              }
+              return true;
+            }
+          }, null);
+          zip.close();
+          archiveCreated[0] = true;
         }
-      }, null);
-      zip.close();
-    }
-    catch (IOException ex) {
-      Messages.showErrorDialog(project, "Failed to create performance report archive: " + ex.getMessage(),
-                               "Submit Performance Report");
+        catch (final IOException ex) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              Messages.showErrorDialog(project, "Failed to create performance report archive: " + ex.getMessage(), MESSAGE_TITLE);
+            }
+          });
+        }
+      }
+    }, "Collecting Performance Report data", true, project);
+
+    if (!completed ||
+        !archiveCreated[0]) {
       return;
     }
-    int rc = Messages.showYesNoDialog(project, "The performance report has been saved to " + reportPath +
-                                               "\nWould you like to submit it to JetBrains?",
-                                      "Submit Performance Report",
-                                      Messages.getInformationIcon());
+
+    int rc = Messages.showYesNoDialog(project, "The performance report has been saved to\n" + reportPath +
+                                               "\n\nWould you like to submit it to JetBrains?", MESSAGE_TITLE,
+                                      Messages.getQuestionIcon());
     if (rc == 0) {
       ProgressManager.getInstance().run(new Task.Backgroundable(project, "Uploading Performance Report") {
         public void run(@NotNull final ProgressIndicator indicator) {
@@ -81,11 +100,10 @@ public class SubmitPerformanceReportAction extends AnAction implements DumbAware
           if (error != null) {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
-                Messages.showErrorDialog(project, error, "Submit Performance Report");
+                Messages.showErrorDialog(error, MESSAGE_TITLE);
               }
             });
-          }
-
+          } 
         }
       });
     }
@@ -95,9 +113,12 @@ public class SubmitPerformanceReportAction extends AnAction implements DumbAware
   private static String uploadFileToFTP(final File reportPath, @NonNls final String ftpSite, @NonNls final String directory,
                                         final ProgressIndicator indicator) {
     FTPClient ftp = new FTPClient();
+    ftp.setConnectTimeout(30 * 1000);
     try {
+      indicator.setText("Connecting to server...");
       ftp.connect(ftpSite);
       indicator.setText("Connected to server");
+
       if (!ftp.login("anonymous", "anonymous@jetbrains.com")) {
         return "Failed to login";
       }
@@ -109,27 +130,36 @@ public class SubmitPerformanceReportAction extends AnAction implements DumbAware
 
       if (!FTPReply.isPositiveCompletion(reply)) {
         ftp.disconnect();
-        return "FTP server refused connection";
+        return "FTP server refused connection: " + reply;
       }
       if (!ftp.changeWorkingDirectory(directory)) {
         return "Failed to change directory";
       }
+
+      // else won't work behind FW
+      ftp.enterLocalPassiveMode();
+
       if (!ftp.setFileType(FTPClient.BINARY_FILE_TYPE)) {
-       return "Failed to switch to binary mode";
+        return "Failed to switch to binary mode";
       }
+
+      indicator.setText("Transferring (" + StringUtil.formatFileSize(reportPath.length()) + ")");
       FileInputStream readStream = new FileInputStream(reportPath);
       try {
         if (!ftp.storeFile(reportPath.getName(), readStream)) {
           return "Failed to upload file";
         }
+      } catch (IOException e) {
+        return "Error during transfer: " + e.getMessage();
       }
       finally {
         readStream.close();
       }
       ftp.logout();
+      return null;
     }
     catch (IOException e) {
-      return e.getMessage();
+      return "Failed to upload: " + e.getMessage();
     }
     finally {
       if (ftp.isConnected()) {
@@ -141,6 +171,5 @@ public class SubmitPerformanceReportAction extends AnAction implements DumbAware
         }
       }
     }
-    return null;
   }
 }
