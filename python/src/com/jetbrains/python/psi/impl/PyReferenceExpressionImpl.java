@@ -1,24 +1,9 @@
-/*
- *  Copyright 2005 Pythonid Project
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS"; BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
@@ -47,10 +32,11 @@ import java.util.*;
 
 /**
  * Implements reference expression PSI.
- * User: yole
- * Date: 29.05.2005
+ *
+ * @author yole
  */
 public class PyReferenceExpressionImpl extends PyElementImpl implements PyReferenceExpression {
+  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.psi.impl.PyReferenceExpressionImpl");
 
   public PyReferenceExpressionImpl(ASTNode astNode) {
     super(astNode);
@@ -609,6 +595,11 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       PyType maybe_type = PyUtil.getSpecialAttributeType(this);
       if (maybe_type != null) return maybe_type;
     }
+    PyType pyType = getTypeFromProviders();
+    if (pyType != null) {
+      return pyType;
+    }
+
     ResolveResult[] targets = multiResolve(false);
     if (targets.length == 0) return null;
     PsiElement target = targets[0].getElement();
@@ -616,6 +607,22 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       return null;
     }
     return getTypeFromTarget(target);
+  }
+
+  @Nullable
+  private PyType getTypeFromProviders() {
+    for(PyTypeProvider provider: Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+      try {
+        final PyType type = provider.getReferenceExpressionType(this);
+        if (type != null) {
+          return type;
+        }
+      }
+      catch (AbstractMethodError e) {
+        LOG.info(e);
+      }
+    }
+    return null;    
   }
 
   @Nullable

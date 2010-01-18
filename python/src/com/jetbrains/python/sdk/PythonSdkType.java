@@ -132,6 +132,11 @@ public class PythonSdkType extends SdkType {
    */
   @NonNls
   private static boolean isPythonSdkHome(final String path) {
+    final File f = getPythonBinaryPath(path);
+    if (f == null || !f.exists()){
+      return false;
+    }
+    // Extra check for linuxes
     if (SystemInfo.isLinux) {
       // on Linux, Python SDK home points to the /lib directory of a particular Python version
       File f_re = new File(path, "re.py");
@@ -141,13 +146,10 @@ public class PythonSdkType extends SdkType {
       return (
         f_re.exists() &&
         f_future.exists() &&
-        (f_site.exists() &&  f_site.isDirectory()) || (f_dist.exists() &&  f_dist.isDirectory()) 
+        (f_site.exists() &&  f_site.isDirectory()) || (f_dist.exists() &&  f_dist.isDirectory())
       );
     }
-    else {
-      File f = getPythonBinaryPath(path);
-      return f != null && f.exists();
-    }
+    return true;
   }
 
   private static boolean isJythonSdkHome(final String path) {
@@ -188,9 +190,12 @@ public class PythonSdkType extends SdkType {
       if (m.matches()) {
         String py_name = m.group(1); // $1
         py_binary = new File("/usr/bin/"+py_name); // XXX broken logic! can't match the lib to the bin
+      } else {
+        py_binary = new File("/usr/bin/python"); // TODO: search in $PATH
       }
-      else py_binary = new File("/usr/bin/python"); // TODO: search in $PATH
-      if (py_binary.exists()) return py_binary;
+      if (py_binary.exists()) {
+        return py_binary;
+      }
     }
     return null;
   }

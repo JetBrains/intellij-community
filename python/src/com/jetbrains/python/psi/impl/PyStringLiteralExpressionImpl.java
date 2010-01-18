@@ -1,25 +1,15 @@
-/*
- *  Copyright 2005 Pythonid Project
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS"; BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.LiteralTextEscaper;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyElementVisitor;
@@ -205,5 +195,66 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   @NotNull
   public PsiReference[] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this, PyStringLiteralExpression.class);
+  }
+
+  public List<Pair<PsiElement, TextRange>> getInjectedPsi() {
+    return InjectedLanguageUtil.getInjectedPsiFiles(this);
+  }
+
+  public void processInjectedPsi(@NotNull InjectedPsiVisitor visitor) {
+    InjectedLanguageUtil.enumerate(this, visitor);
+  }
+
+  public PsiLanguageInjectionHost updateText(@NotNull String text) {
+    // TODO is this the correct implementation? most likely not
+    ASTNode valueNode = getNode().getFirstChildNode();
+    assert valueNode instanceof LeafElement;
+    ((LeafElement)valueNode).replaceWithText(text);
+    return this;
+  }
+
+  @NotNull
+  public LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper() {
+    return new StringLiteralTextEscaper(this);
+  }
+
+  private static class StringLiteralTextEscaper extends LiteralTextEscaper<PyStringLiteralExpression> {
+    private final PyStringLiteralExpression myHost;
+
+    protected StringLiteralTextEscaper(@NotNull PyStringLiteralExpression host) {
+      super(host);
+      myHost = host;
+    }
+
+    @Override
+    public boolean decode(@NotNull TextRange rangeInsideHost, @NotNull StringBuilder outChars) {
+      // TODO this is far too slow
+      final List<EvaluatedTextRange> characterRanges = myHost.getStringValueCharacterRanges();
+      for (EvaluatedTextRange range : characterRanges) {
+        final TextRange xsect = rangeInsideHost.intersection(range.getRange());
+        if (xsect != null && xsect.getLength() > 0) {
+          outChars.append(range.getValue());
+        }
+      }
+      return true;
+    }
+
+    @Override
+    public int getOffsetInHost(int offsetInDecoded, @NotNull TextRange rangeInsideHost) {
+      final List<EvaluatedTextRange> characterRanges = myHost.getStringValueCharacterRanges();
+
+      for (EvaluatedTextRange range : characterRanges) {
+        if (offsetInDecoded < range.getValue().length()) {
+          return range.getRange().getStartOffset() + offsetInDecoded;
+        }
+        offsetInDecoded -= range.getValue().length();
+      }
+      return -1;
+    }
+
+    @Override
+    public boolean isOneLine() {
+      return false;
+    }
   }
 }
