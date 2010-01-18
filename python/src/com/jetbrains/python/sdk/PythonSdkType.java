@@ -132,6 +132,11 @@ public class PythonSdkType extends SdkType {
    */
   @NonNls
   private static boolean isPythonSdkHome(final String path) {
+    final File f = getPythonBinaryPath(path);
+    if (f == null || !f.exists()){
+      return false;
+    }
+    // Extra check for linuxes
     if (SystemInfo.isLinux) {
       // on Linux, Python SDK home points to the /lib directory of a particular Python version
       File f_re = new File(path, "re.py");
@@ -141,13 +146,10 @@ public class PythonSdkType extends SdkType {
       return (
         f_re.exists() &&
         f_future.exists() &&
-        (f_site.exists() &&  f_site.isDirectory()) || (f_dist.exists() &&  f_dist.isDirectory()) 
+        (f_site.exists() &&  f_site.isDirectory()) || (f_dist.exists() &&  f_dist.isDirectory())
       );
     }
-    else {
-      File f = getPythonBinaryPath(path);
-      return f != null && f.exists();
-    }
+    return true;
   }
 
   private static boolean isJythonSdkHome(final String path) {
@@ -269,9 +271,6 @@ public class PythonSdkType extends SdkType {
   public static void setupSdkPaths(SdkModificator sdkModificator, ProgressIndicator indicator) {
     String sdk_path = sdkModificator.getHomePath();
     String bin_path = getInterpreterPath(sdk_path);
-    if (bin_path == null){
-      return;
-    }
     @NonNls final String stubs_path =
         PathManager.getSystemPath() + File.separator + SKELETON_DIR_NAME + File.separator + sdk_path.hashCode() + File.separator;
     // we have a number of lib dirs, those listed in python's sys.path
