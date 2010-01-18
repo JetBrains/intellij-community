@@ -303,12 +303,11 @@ public class ClasspathPanel extends JPanel {
             return value.isSelectable();
           }
           public PopupStep onChosen(final PopupAction selectedValue, final boolean finalChoice) {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
+            return doFinalStep(new Runnable() {
               public void run() {
                 selectedValue.execute();
               }
-            }, ModalityState.stateForComponent(ClasspathPanel.this));
-            return FINAL_CHOICE;
+            });
           }
           @NotNull
           public String getTextFor(PopupAction value) {

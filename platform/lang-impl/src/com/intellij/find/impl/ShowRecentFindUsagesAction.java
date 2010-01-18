@@ -93,15 +93,13 @@ public class ShowRecentFindUsagesAction extends AnAction {
         }
 
         public PopupStep onChosen(final FindUsagesManager.SearchData selectedValue, final boolean finalChoice) {
-          if (selectedValue.myElements != null) {
-            // later here is for closing the popup first, then rerunning the search
-            SwingUtilities.invokeLater(new Runnable() {
-              public void run() {
+          return doFinalStep(new Runnable() {
+            public void run() {
+              if (selectedValue.myElements != null) {
                 findUsagesManager.rerunAndRecallFromHistory(selectedValue);
               }
-            });
-          }
-          return FINAL_CHOICE;
+            }
+          });
         }
       };
     RelativePoint point;
