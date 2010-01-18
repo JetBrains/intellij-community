@@ -32,7 +32,7 @@ import java.util.Set;
 public class PushDownConflicts {
   private final PsiClass myClass;
   private final Set<PsiMember> myMovedMembers;
-  private final Set<PsiMember> myAbstractMembers;
+  private final Set<PsiMethod> myAbstractMembers;
   private final MultiMap<PsiElement, String> myConflicts;
 
 
@@ -40,13 +40,13 @@ public class PushDownConflicts {
     myClass = aClass;
 
     myMovedMembers = new HashSet<PsiMember>();
-    myAbstractMembers = new HashSet<PsiMember>();
+    myAbstractMembers = new HashSet<PsiMethod>();
     for (MemberInfo memberInfo : memberInfos) {
       final PsiMember member = memberInfo.getMember();
       if (memberInfo.isChecked() && (!(memberInfo.getMember() instanceof PsiClass) || memberInfo.getOverrides() == null)) {
         myMovedMembers.add(member);
         if (memberInfo.isToAbstract()) {
-          myAbstractMembers.add(member);
+          myAbstractMembers.add((PsiMethod)member);
         }
       }
     }
@@ -71,9 +71,11 @@ public class PushDownConflicts {
     }
   }
 
-  public void checkTargetClassConflicts(PsiClass targetClass, boolean checkStatic) {
-    for (final PsiMember movedMember : myMovedMembers) {
-      checkMemberPlacementInTargetClassConflict(targetClass, movedMember);
+  public void checkTargetClassConflicts(PsiClass targetClass, boolean checkStatic, PsiElement context) {
+    if (targetClass != null) {
+      for (final PsiMember movedMember : myMovedMembers) {
+        checkMemberPlacementInTargetClassConflict(targetClass, movedMember);
+      }
     }
     Members:
     for (PsiMember member : myMovedMembers) {
@@ -106,7 +108,7 @@ public class PushDownConflicts {
         }
       }
     }
-    RefactoringConflictsUtil.analyzeAccessibilityConflicts(myMovedMembers, targetClass, myConflicts, null);
+    RefactoringConflictsUtil.analyzeAccessibilityConflicts(myMovedMembers, targetClass, myConflicts, null, context, myAbstractMembers);
   }
 
   public void checkMemberPlacementInTargetClassConflict(final PsiClass targetClass, final PsiMember movedMember) {
