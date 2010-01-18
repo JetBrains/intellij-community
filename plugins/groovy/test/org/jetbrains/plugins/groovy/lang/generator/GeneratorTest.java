@@ -110,7 +110,7 @@ public void testArrayType1() throws Throwable { doTest(); }
     private final String myFileContent;
 
     public GroovyToJavaGeneratorTester(String relTestPath, String fileContent, Project project) {
-      super(project);
+      super(project, null);
       myRelTestPath = relTestPath;
       myFileContent = fileContent;
     }

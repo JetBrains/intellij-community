@@ -30,8 +30,8 @@ public class DefaultBundledKeymaps implements BundledKeymapProvider {
       "Keymap_MacClassic.xml",
       "Keymap_Emacs.xml",
       "Keymap_VisualStudio.xml",
-      "Keymap_GNOME.xml",
       "Keymap_XWin.xml",
+      "Keymap_GNOME.xml",
       "Keymap_KDE.xml",
       "Keymap_Eclipse.xml",
       "Keymap_Netbeans.xml"

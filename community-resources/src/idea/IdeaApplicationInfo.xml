@@ -1,6 +1,6 @@
 <component>
   <!-- <version name="IntelliJ IDEA" major="6" minor="0.2 Beta"/> -->
-  <version codename="Community Edition" major="9" minor="0" eap="true"/>
+  <version codename="Community Edition" major="9" minor="0.1" eap="false" update-channel="idea90"/>
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
   <install-over minbuild="0" maxbuild="0" version="9.0"/>
   <logo url="/idea_community_logo.png" textcolor="FFFFFF"/>
@@ -16,9 +16,11 @@
   <help file="ideahelp.jar" root="idea"/>
   <documentation url="http://www.jetbrains.com/idea/documentation"/>
   <support url="http://www.jetbrains.com/support/idea/index.html"/>
-  <feedback eap-url="http://jetbrains.net/tracker" release-url="http://www.jetbrains.com/feedback/feedback.jsp?product=IDEA&amp;build=$BUILD&amp;timezone=$TIMEZONE&amp;eval=$EVAL"/>
+  <feedback eap-url="http://youtrack.jetbrains.net" release-url="http://www.jetbrains.com/feedback/feedback.jsp?product=IDEA&amp;build=$BUILD&amp;timezone=$TIMEZONE&amp;eval=$EVAL"/>
   <plugins url="http://plugins.intellij.net"/>
-  <whatsnew url="http://www.jetbrains.com/idea/nextversion/index.html"/>
+  <whatsnew url="http://www.jetbrains.com/idea/whatsnew/index.html"/>
+  <keymap win="http://www.jetbrains.com/idea/docs/IntelliJIDEA9_ReferenceCard.pdf"
+          mac="http://www.jetbrains.com/idea/docs/IntelliJIDEA9_ReferenceCard_Mac.pdf"/>
 
   <plugins-page category="VCS Integration" title="Select VCS Integration Plugins"/>
   <plugins-page title="Select Other Plugins"/>

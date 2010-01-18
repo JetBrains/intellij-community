@@ -19,7 +19,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
@@ -92,9 +91,7 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GroovyBa
     PsiElement next = PsiUtil.getNextNonSpace(this);
     ASTNode parentNode = parent.getNode();
     assert parentNode != null;
-    if (parentNode != null) {
-      parentNode.removeChild(getNode());
-    }
+    parentNode.removeChild(getNode());
     if (prev != null && prev.getNode() != null && prev.getNode().getElementType() == GroovyTokenTypes.mCOMMA) {
       parentNode.removeChild(prev.getNode());
     } else if (next instanceof LeafPsiElement && next.getNode() != null && next.getNode().getElementType() == GroovyTokenTypes.mCOMMA) {
@@ -112,11 +109,6 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GroovyBa
     return modifierList != null && modifierList.hasModifierProperty(property);
   }
 
-  @Nullable
-  public PsiDocComment getDocComment() {
-    return null;
-  }
-
   public String getElementToCompare() {
     return getName();
   }
@@ -130,7 +122,12 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GroovyBa
   @Nullable
   public GrTypeElement getTypeElementGroovy() {
     PsiElement parent = getParent();
-    return parent instanceof GrTupleDeclaration ? null : ((GrVariableDeclaration)parent).getTypeElementGroovy();
+    if (parent instanceof GrTupleDeclaration || !(parent instanceof GrVariableDeclaration)) {
+      return null;
+    }
+    else {
+      return ((GrVariableDeclaration)parent).getTypeElementGroovy();
+    }
   }
 
   @Nullable

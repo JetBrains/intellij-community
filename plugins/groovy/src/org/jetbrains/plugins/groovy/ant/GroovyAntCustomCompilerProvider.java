@@ -87,7 +87,7 @@ public class GroovyAntCustomCompilerProvider extends ChunkCustomCompilerExtensio
     String maxVersion = versions.isEmpty() ? null : Collections.max(versions);
     Library sdkLib = null;
     for (Library lib : libraries) {
-      if (maxVersion == null || maxVersion.equals(utils.getSDKVersion(lib))) {
+      if (maxVersion == null || maxVersion.equals(utils.getSDKVersion(LibrariesUtil.getGroovyLibraryHome(lib)))) {
         sdkLib = lib;
       }
     }

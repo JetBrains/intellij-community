@@ -261,7 +261,8 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     lineStart = CharArrayUtil.shiftForward(chars, lineStart, " \t");
     boolean commented;
     if (prefix != null) {
-      commented = CharArrayUtil.regionMatches(chars, lineStart, prefix);
+      commented = CharArrayUtil.regionMatches(chars, lineStart, prefix) ||
+                  prefix.endsWith(" ") && CharArrayUtil.regionMatches(chars, lineStart, prefix.trim()+"\n");
       if (commented) {
         myStartOffsets[line - myStartLine] = lineStart;
         myEndOffsets[line - myStartLine] = -1;
@@ -296,10 +297,14 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
       return ((AbstractFileType)fileType).getCommenter();
     }
 
-    int offset = myDocument.getLineStartOffset(line);
-    offset = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), offset, " \t");
-    final Language language = PsiUtilBase.getLanguageAtOffset(myFile, offset);
-    return CommentByBlockCommentHandler.getCommenter(myFile, myEditor, language);
+    int lineStartOffset = myDocument.getLineStartOffset(line);
+    int lineEndOffset = myDocument.getLineEndOffset(line) - 1;
+    final CharSequence charSequence = myDocument.getCharsSequence();
+    lineStartOffset = CharArrayUtil.shiftForward(charSequence, lineStartOffset, " \t");
+    lineEndOffset = CharArrayUtil.shiftBackward(charSequence, lineEndOffset < 0 ? 0 : lineEndOffset, " \t");
+    final Language lineStartLanguage = PsiUtilBase.getLanguageAtOffset(myFile, lineStartOffset);
+    final Language lineEndLanguage = PsiUtilBase.getLanguageAtOffset(myFile, lineEndOffset);
+    return CommentByBlockCommentHandler.getCommenter(myFile, myEditor, lineStartLanguage, lineEndLanguage);
   }
 
   private Indent computeMinIndent(int line1, int line2, CharSequence chars, CodeStyleManager codeStyleManager, FileType fileType) {
@@ -400,9 +405,12 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     String prefix = commenter.getLineCommentPrefix();
     if (prefix != null) {
       CharSequence chars = myDocument.getCharsSequence();
-      assert CharArrayUtil.regionMatches(chars, startOffset, prefix);
+      boolean skipNewLine = false;
+      boolean commented = CharArrayUtil.regionMatches(chars, startOffset, prefix) ||
+                          (skipNewLine = (prefix.endsWith(" ") && CharArrayUtil.regionMatches(chars, startOffset, prefix.trim() + "\n")));
+      assert commented;
       int position = 0;//text.indexOf(prefix);
-      myDocument.deleteString(position + startOffset , position + startOffset + prefix.length());
+      myDocument.deleteString(position + startOffset , position + startOffset + (skipNewLine? prefix.trim().length():prefix.length()));
       return;
     }
     String text = myDocument.getCharsSequence().subSequence(startOffset, endOffset).toString();

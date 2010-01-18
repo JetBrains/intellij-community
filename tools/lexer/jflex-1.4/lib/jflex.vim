@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:         JFlex
 " Maintainer:       Gerwin Klein <lsf@jflex.de>
-" Last Change:      $Revision: 2.1 $, $Date: 2003/06/08 11:01:12 $
+" Last Change:      $Revision$, $Date$
 
 " Thanks to Michael Brailsford for help and suggestions
 

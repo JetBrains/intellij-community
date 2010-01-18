@@ -16,9 +16,8 @@
 
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -46,8 +45,7 @@ public class HighlightLevelUtil {
     final VirtualFile virtualFile = psiRoot.getContainingFile().getVirtualFile();
     if (virtualFile == null || !virtualFile.isValid()) return false;
 
-    final FileType fileType = virtualFile.getFileType();
-    if (fileType == StdFileTypes.IDEA_MODULE || fileType == StdFileTypes.IDEA_PROJECT || fileType == StdFileTypes.IDEA_WORKSPACE) return false;
+    if (ProjectUtil.isProjectOrWorkspaceFile(virtualFile)) return false;
 
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     if ((fileIndex.isInLibrarySource(virtualFile) || fileIndex.isInLibraryClasses(virtualFile)) && !fileIndex.isInContent(virtualFile)) {

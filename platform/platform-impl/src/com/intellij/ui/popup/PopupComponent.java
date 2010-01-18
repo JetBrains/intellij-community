@@ -35,9 +35,15 @@ public interface PopupComponent {
   interface Factory {
     PopupComponent getPopup(Component owner, Component content, int x, int y);
 
+    boolean isNativePopup();
+
     class AwtDefault implements Factory {
       public PopupComponent getPopup(Component owner, Component content, int x, int y) {
         return new AwtPopupWrapper(PopupFactory.getSharedInstance().getPopup(owner, content, x, y));
+      }
+
+      public boolean isNativePopup() {
+        return true;
       }
     }
 
@@ -57,11 +63,17 @@ public interface PopupComponent {
 
         return new AwtPopupWrapper(factory.getPopup(owner, content, x, y));
       }
+
+      public boolean isNativePopup() {
+        return true;
+      }
     }
 
     class Dialog implements Factory {
       public PopupComponent getPopup(Component owner, Component content, int x, int y) {
         return new DialogPopupWrapper(owner, content, x, y);
+      }public boolean isNativePopup() {
+        return false;
       }
     }
   }

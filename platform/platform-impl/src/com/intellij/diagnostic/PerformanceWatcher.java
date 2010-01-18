@@ -118,9 +118,11 @@ public class PerformanceWatcher implements ApplicationComponent {
           return name.startsWith("threadDumps-");
         }
       });
-      Arrays.sort(dirs);
-      for (int i = 0; i < dirs.length - 11; i++) {
-        FileUtil.delete(new File(allLogsDir, dirs [i]));
+      if (dirs != null) {
+        Arrays.sort(dirs);
+        for (int i = 0; i < dirs.length - 11; i++) {
+          FileUtil.delete(new File(allLogsDir, dirs [i]));
+        }
       }
     }
   }

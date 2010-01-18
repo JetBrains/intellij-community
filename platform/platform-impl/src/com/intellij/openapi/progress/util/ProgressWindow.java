@@ -102,7 +102,6 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     else {
       myDialog = new MyDialog(shouldShowBackground, myProject, myCancelText);
     }
-    myDialog.changeCancelButtonText(myCancelText);
 
     Disposer.register(this, myDialog);
 
@@ -494,6 +493,9 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     private void createCenterPanel() {
       // Cancel button (if any)
 
+      if (myCancelText != null) {
+        myCancelButton.setText(myCancelText);
+      }
       myCancelButton.setVisible(myShouldShowCancel);
 
       myBackgroundButton.setVisible(myShouldShowBackground);

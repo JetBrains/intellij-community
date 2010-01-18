@@ -149,8 +149,8 @@ public final class Configuration implements PersistentStateComponent<Element> {
     setPatternAnnotation(JDOMExternalizerUtil.readField(element, PATTERN_ANNOTATION_NAME));
     setSubstAnnotation(JDOMExternalizerUtil.readField(element, SUBST_ANNOTATION_NAME));
     setResolveReferences(readBoolean(element, RESOLVE_REFERENCES, true));
-    setUseDfaIfAvailable(readBoolean(element, USE_DFA_IF_AVAILABLE, true));
-    setIncludeUncomputablesAsLiterals(readBoolean(element, INCLUDE_UNCOMPUTABLES_AS_LITERALS, true));
+    setUseDfaIfAvailable(readBoolean(element, USE_DFA_IF_AVAILABLE, false));
+    setIncludeUncomputablesAsLiterals(readBoolean(element, INCLUDE_UNCOMPUTABLES_AS_LITERALS, false));
 
     if (mergeWithOriginalAndCompile) {
       mergeWithDefaultConfiguration();

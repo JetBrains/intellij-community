@@ -20,6 +20,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -64,6 +66,11 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
   public void cleanup() {
     myParamaters = null;
     super.cleanup();
+  }
+
+  @Override
+  public boolean isSuitableSdk(Sdk sdk) {
+    return sdk.getSdkType() == JavaSdk.getInstance();
   }
 
   private Parameters getParameters() {

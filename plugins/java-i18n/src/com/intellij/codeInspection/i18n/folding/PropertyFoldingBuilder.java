@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import java.util.*;
  * @author Konstantin Bulenkov
  */
 public class PropertyFoldingBuilder extends FoldingBuilderEx {
+  private static final int FOLD_MAX_LENGTH = 50;
 
   @NotNull
   public FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement element, @NotNull Document document, boolean quick) {
@@ -134,7 +135,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
           if (!text.equals(methodCallExpression.getText())) {
             text = text.replace("''", "'");
           }
-          return text;
+          return text.length() > FOLD_MAX_LENGTH ? text.substring(0, FOLD_MAX_LENGTH - 3) + "..." : text;
         }
       }
     }

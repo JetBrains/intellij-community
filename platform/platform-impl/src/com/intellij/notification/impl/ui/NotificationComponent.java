@@ -57,7 +57,7 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
       @Override
       public void mousePressed(final MouseEvent e) {
         if (UIUtil.isActionClick(e)) {
-          showList();
+          toggleList();
         }
       }
     });
@@ -97,16 +97,16 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
     getManager().addListener(this);
   }
 
-  private void showList() {
+  private void toggleList() {
+    JBPopup popup = null;
     if (myPopupRef != null) {
-      final JBPopup popup = myPopupRef.get();
-      if (popup != null && !popup.isVisible()) {
-        myPopupRef = null;
-      }
-      else if (popup == null) myPopupRef = null;
+      popup = myPopupRef.get();
+      myPopupRef = null;
     }
 
-    if (myPopupRef == null) {
+    if (popup != null && popup.isVisible()) {
+      popup.cancel();
+    } else {
       myPopupRef = new WeakReference<JBPopup>(NotificationsListPanel.show(getProject(), this));
     }
   }

@@ -56,7 +56,6 @@ public class ConvertJUnit3TestCaseToJUnit4Intention extends Intention {
             final PsiModifierList modifierList = method.getModifierList();
             if (name.startsWith("test")) {
                 addAnnotationIfNotPresent(modifierList, "org.junit.Test");
-                method.accept(new MethodCallModifier());
             } else if (name.equals("setUp")) {
                 transformSetUpOrTearDownMethod(method);
                 addAnnotationIfNotPresent(modifierList, "org.junit.Before");
@@ -64,6 +63,7 @@ public class ConvertJUnit3TestCaseToJUnit4Intention extends Intention {
                 transformSetUpOrTearDownMethod(method);
                 addAnnotationIfNotPresent(modifierList, "org.junit.After");
             }
+            method.accept(new MethodCallModifier());
         }
         final PsiJavaCodeReferenceElement[] referenceElements =
                 extendsList.getReferenceElements();

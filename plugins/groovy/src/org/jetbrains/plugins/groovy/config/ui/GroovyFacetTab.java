@@ -24,7 +24,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -52,7 +51,7 @@ public class GroovyFacetTab extends FacetEditorTab {
     myManagedLibrariesEditor.shouldHaveLibrary(new Condition<Library>() {
       public boolean value(Library libraryManager) {
         final VirtualFile[] files = editorContext.getLibraryFiles(libraryManager, OrderRootType.CLASSES);
-        return StringUtil.isNotEmpty(LibrariesUtil.getGroovyLibraryHome(files));
+        return LibrariesUtil.getGroovyLibraryHome(files) != null;
       }
     }, "Groovy-containing libraries are missing");
   }

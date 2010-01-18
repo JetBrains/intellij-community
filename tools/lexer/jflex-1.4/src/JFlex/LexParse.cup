@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * JFlex 1.4.1                                                             *
- * Copyright (C) 1998-2004  Gerwin Klein <lsf@jflex.de>                    *
+ * JFlex 1.4.3                                                             *
+ * Copyright (C) 1998-2009  Gerwin Klein <lsf@jflex.de>                    *
  * All rights reserved.                                                    *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify    *
@@ -27,7 +27,7 @@ import java.util.*;
 action code {:
 
   LexScan     scanner;
-  CharClasses charClasses = new CharClasses(127);
+  CharClasses charClasses = new CharClasses(Options.jlex ? 127 : 0xFFFF);
   RegExps     regExps     = new RegExps();
   Macros      macros      = new Macros();
   Integer     stateNumber;
@@ -76,6 +76,96 @@ action code {:
         
       case sym.LOWERCLASS: 
         return Character.isLowerCase(c);
+        
+      case sym.UNICODE_UNASSIGNED:
+        return Character.getType(c) == Character.UNASSIGNED;
+
+      case sym.UNICODE_UPPERCASE_LETTER:
+        return Character.getType(c) == Character.UPPERCASE_LETTER;
+
+      case sym.UNICODE_LOWERCASE_LETTER:
+        return Character.getType(c) == Character.LOWERCASE_LETTER;
+
+      case sym.UNICODE_TITLECASE_LETTER:
+        return Character.getType(c) == Character.TITLECASE_LETTER;
+
+      case sym.UNICODE_MODIFIER_LETTER:
+        return Character.getType(c) == Character.MODIFIER_LETTER;
+
+      case sym.UNICODE_OTHER_LETTER:
+        return Character.getType(c) == Character.OTHER_LETTER;
+
+      case sym.UNICODE_NON_SPACING_MARK:
+        return Character.getType(c) == Character.NON_SPACING_MARK;
+
+      case sym.UNICODE_ENCLOSING_MARK:
+        return Character.getType(c) == Character.ENCLOSING_MARK;
+
+      case sym.UNICODE_COMBINING_SPACING_MARK:
+        return Character.getType(c) == Character.COMBINING_SPACING_MARK;
+
+      case sym.UNICODE_DECIMAL_DIGIT_NUMBER:
+        return Character.getType(c) == Character.DECIMAL_DIGIT_NUMBER;
+
+      case sym.UNICODE_LETTER_NUMBER:
+        return Character.getType(c) == Character.LETTER_NUMBER;
+
+      case sym.UNICODE_OTHER_NUMBER:
+        return Character.getType(c) == Character.OTHER_NUMBER;
+
+      case sym.UNICODE_SPACE_SEPARATOR:
+        return Character.getType(c) == Character.SPACE_SEPARATOR;
+
+      case sym.UNICODE_LINE_SEPARATOR:
+        return Character.getType(c) == Character.LINE_SEPARATOR;
+
+      case sym.UNICODE_PARAGRAPH_SEPARATOR:
+        return Character.getType(c) == Character.PARAGRAPH_SEPARATOR;
+
+      case sym.UNICODE_CONTROL:
+        return Character.getType(c) == Character.CONTROL;
+
+      case sym.UNICODE_FORMAT:
+        return Character.getType(c) == Character.FORMAT;
+
+      case sym.UNICODE_PRIVATE_USE:
+        return Character.getType(c) == Character.PRIVATE_USE;
+
+      case sym.UNICODE_SURROGATE:
+        return Character.getType(c) == Character.SURROGATE;
+
+      case sym.UNICODE_DASH_PUNCTUATION:
+        return Character.getType(c) == Character.DASH_PUNCTUATION;
+
+      case sym.UNICODE_START_PUNCTUATION:
+        return Character.getType(c) == Character.START_PUNCTUATION;
+
+     case sym.UNICODE_END_PUNCTUATION:
+        return Character.getType(c) == Character.END_PUNCTUATION;
+
+     case sym.UNICODE_CONNECTOR_PUNCTUATION:
+        return Character.getType(c) == Character.CONNECTOR_PUNCTUATION;
+
+     case sym.UNICODE_OTHER_PUNCTUATION:
+        return Character.getType(c) == Character.OTHER_PUNCTUATION;
+
+     case sym.UNICODE_MATH_SYMBOL:
+        return Character.getType(c) == Character.MATH_SYMBOL;
+
+     case sym.UNICODE_CURRENCY_SYMBOL:
+        return Character.getType(c) == Character.CURRENCY_SYMBOL;
+
+     case sym.UNICODE_MODIFIER_SYMBOL:
+        return Character.getType(c) == Character.MODIFIER_SYMBOL;
+
+     case sym.UNICODE_OTHER_SYMBOL:
+        return Character.getType(c) == Character.OTHER_SYMBOL;
+
+     case sym.UNICODE_INITIAL_QUOTE_PUNCTUATION:
+        return Character.getType(c) == Character.INITIAL_QUOTE_PUNCTUATION;
+
+     case sym.UNICODE_FINAL_QUOTE_PUNCTUATION:
+        return Character.getType(c) == Character.FINAL_QUOTE_PUNCTUATION;        
         
       default: return false;
     }
@@ -219,10 +309,19 @@ init with {:
 
 terminal OPENBRACKET, CLOSEBRACKET, HAT, DOLLAR, OPENCLASS,
          CLOSECLASS, DASH, DELIMITER, EQUALS, COMMA, LESSTHAN,
-         MORETHAN, LBRACE, RBRACE, FULL, UNICODE, REGEXPEND;
+         MORETHAN, LBRACE, RBRACE, ASCII, FULL, UNICODE, REGEXPEND;
 
 terminal JLETTERCLASS, JLETTERDIGITCLASS, LETTERCLASS, DIGITCLASS, 
-         UPPERCLASS, LOWERCLASS, EOFRULE, NOACTION, LOOKAHEAD;
+         UPPERCLASS, LOWERCLASS, EOFRULE, NOACTION, LOOKAHEAD,
+
+         UNICODE_UNASSIGNED, UNICODE_UPPERCASE_LETTER, UNICODE_LOWERCASE_LETTER, UNICODE_TITLECASE_LETTER,
+         UNICODE_MODIFIER_LETTER, UNICODE_OTHER_LETTER, UNICODE_NON_SPACING_MARK, UNICODE_ENCLOSING_MARK,
+         UNICODE_COMBINING_SPACING_MARK, UNICODE_DECIMAL_DIGIT_NUMBER, UNICODE_LETTER_NUMBER, UNICODE_OTHER_NUMBER,
+         UNICODE_SPACE_SEPARATOR, UNICODE_LINE_SEPARATOR, UNICODE_PARAGRAPH_SEPARATOR, UNICODE_CONTROL, UNICODE_FORMAT,
+         UNICODE_PRIVATE_USE, UNICODE_SURROGATE, UNICODE_DASH_PUNCTUATION, UNICODE_START_PUNCTUATION,
+         UNICODE_END_PUNCTUATION, UNICODE_CONNECTOR_PUNCTUATION, UNICODE_OTHER_PUNCTUATION, UNICODE_MATH_SYMBOL,
+         UNICODE_CURRENCY_SYMBOL, UNICODE_MODIFIER_SYMBOL, UNICODE_OTHER_SYMBOL, UNICODE_INITIAL_QUOTE_PUNCTUATION,
+         UNICODE_FINAL_QUOTE_PUNCTUATION;
          
 terminal Action ACTION;
 terminal String IDENT, USERCODE;
@@ -242,11 +341,11 @@ terminal STRING_I, CHAR_I;  /* case insensitive strings/chars */
 non terminal           macros, macro;
 non terminal Integer   rule;
 non terminal NFA       specification;
-non terminal RegExp    series, concs, nregexp, regexp, charclass, lookaheadOPT;
-non terminal Interval classcontentelem;
+non terminal RegExp    series, concs, nregexp, regexp, charclass, lookahead;
+non terminal Interval  classcontentelem;
 non terminal Vector    states, statesOPT, classcontent, preclass, rules;
 non terminal Boolean   hatOPT;
-non terminal Action    actions;
+non terminal Action    act, actions;
 
 
 /* grammar specification */
@@ -270,9 +369,12 @@ specification ::=  USERCODE
                        Out.warning("Macro \""+unused.nextElement()+"\" has been declared but never used.");
                      }
 
-                     SemCheck.check(regExps, macros, charClasses.getMaxCharCode(), scanner.file);
+                     SemCheck.check(regExps, macros, scanner.file);
   
                      regExps.checkActions();
+                     regExps.checkLookAheads();
+
+                     Out.checkErrors();
 
                      if (Options.dump) charClasses.dump();
 
@@ -297,7 +399,7 @@ specification ::=  USERCODE
                      t.stop();
        
                      Out.time("");              
-	                 Out.time(ErrorMessages.NFA_TOOK, t);
+	                   Out.time(ErrorMessages.NFA_TOOK, t);
                      
                    :}
                  | /* emtpy spec. error */
@@ -310,7 +412,9 @@ macros        ::=  /* empty, most switches & state declarations are parsed in le
                 | macros macro
                 | error;
 
-macro         ::=  FULL
+macro         ::=  ASCII
+                   {: charClasses.setMaxCharCode(127); :}
+                |  FULL
                    {: charClasses.setMaxCharCode(255); :}
                 |  UNICODE
                    {: charClasses.setMaxCharCode(0xFFFF); :} 
@@ -328,7 +432,10 @@ rules         ::=  rules:rlist rule:r
                      Enumeration rs = rlist2.elements();
                      while ( rs.hasMoreElements() ) {
                        Integer elem = (Integer) rs.nextElement();
-                       regExps.addStates( elem.intValue(), states );
+                       // might be null for error case of "rule"
+                       if (elem != null) { 
+                         regExps.addStates( elem.intValue(), states );
+                       }
                        rlist1.addElement( elem );
                      }                       
                      RESULT = rlist1;
@@ -338,7 +445,10 @@ rules         ::=  rules:rlist rule:r
                      Enumeration rs = rlist.elements();
                      while ( rs.hasMoreElements() ) {
                        Integer elem = (Integer) rs.nextElement();
-                       regExps.addStates( elem.intValue(), states );
+                       // might be null for error case of "rule"
+                       if (elem != null) { 
+                         regExps.addStates( elem.intValue(), states );
+                       }
                      }                       
                      RESULT = rlist;
                    :}
@@ -346,27 +456,32 @@ rules         ::=  rules:rlist rule:r
                    {: RESULT = new Vector(); RESULT.addElement(r); :}
                 ;  
 
-rule          ::=  statesOPT:s hatOPT:bol series:r lookaheadOPT:l actions:a
+rule          ::=  statesOPT:s hatOPT:bol series:r actions:a
+                   {: RESULT = new Integer(regExps.insert(rleft, s, r, a, bol, null)); :}
+                |  statesOPT:s hatOPT:bol series:r lookahead:l act:a
                    {: RESULT = new Integer(regExps.insert(rleft, s, r, a, bol, l)); :}
+                |  statesOPT:s hatOPT:bol series:r lookahead:l NOACTION:a
+                   {: syntaxError(ErrorMessages.LOOKAHEAD_NEEDS_ACTION, aleft, aright+1); :}
                 |  statesOPT:s EOFRULE ACTION:a
                    {: RESULT = new Integer(regExps.insert(s, a)); :}
-                |  error
+                |  error                
                 ;
 
-lookaheadOPT  ::=  DOLLAR
+lookahead     ::=  DOLLAR
                    {: RESULT = makeNL(); :}
                 |  LOOKAHEAD series:r
                    {: RESULT = r; :}
-                |  /* empty */
-                   {: RESULT = null; :}
                 |  LOOKAHEAD series:s DOLLAR
                    {: RESULT = new RegExp2(sym.CONCAT, s, makeNL()); :}
                 ;
 
-actions       ::=  REGEXPEND ACTION:a
+act           ::=  REGEXPEND ACTION:a
+                   {: RESULT = a; :}
+				;
+
+actions       ::=  act:a
                    {: RESULT = a; :}
                 |  NOACTION
-                   {: RESULT = null; :}
                 ;
 
                 
@@ -629,4 +744,64 @@ preclass ::= JLETTERCLASS
              {: RESULT = makePreClass(sym.UPPERCLASS); :}
            | LOWERCLASS
              {: RESULT = makePreClass(sym.LOWERCLASS); :}
+           | UNICODE_UNASSIGNED
+             {: RESULT = makePreClass(sym.UNICODE_UNASSIGNED); :}
+           | UNICODE_UPPERCASE_LETTER
+             {: RESULT = makePreClass(sym.UNICODE_UPPERCASE_LETTER); :}
+           | UNICODE_LOWERCASE_LETTER
+             {: RESULT = makePreClass(sym.UNICODE_LOWERCASE_LETTER); :}
+           | UNICODE_TITLECASE_LETTER
+             {: RESULT = makePreClass(sym.UNICODE_TITLECASE_LETTER); :}
+           | UNICODE_MODIFIER_LETTER
+             {: RESULT = makePreClass(sym.UNICODE_MODIFIER_LETTER); :}
+           | UNICODE_OTHER_LETTER
+             {: RESULT = makePreClass(sym.UNICODE_OTHER_LETTER); :}
+           | UNICODE_NON_SPACING_MARK
+             {: RESULT = makePreClass(sym.UNICODE_NON_SPACING_MARK); :}
+           | UNICODE_ENCLOSING_MARK
+             {: RESULT = makePreClass(sym.UNICODE_ENCLOSING_MARK); :}
+           | UNICODE_COMBINING_SPACING_MARK
+             {: RESULT = makePreClass(sym.UNICODE_COMBINING_SPACING_MARK); :}
+           | UNICODE_DECIMAL_DIGIT_NUMBER
+             {: RESULT = makePreClass(sym.UNICODE_DECIMAL_DIGIT_NUMBER); :}
+           | UNICODE_LETTER_NUMBER
+             {: RESULT = makePreClass(sym.UNICODE_LETTER_NUMBER); :}
+           | UNICODE_OTHER_NUMBER
+             {: RESULT = makePreClass(sym.UNICODE_OTHER_NUMBER); :}
+           | UNICODE_SPACE_SEPARATOR
+             {: RESULT = makePreClass(sym.UNICODE_SPACE_SEPARATOR); :}
+           | UNICODE_LINE_SEPARATOR
+             {: RESULT = makePreClass(sym.UNICODE_LINE_SEPARATOR); :}
+           | UNICODE_PARAGRAPH_SEPARATOR
+             {: RESULT = makePreClass(sym.UNICODE_PARAGRAPH_SEPARATOR); :}
+           | UNICODE_CONTROL
+             {: RESULT = makePreClass(sym.UNICODE_CONTROL); :}
+           | UNICODE_FORMAT
+             {: RESULT = makePreClass(sym.UNICODE_FORMAT); :}
+           | UNICODE_PRIVATE_USE
+             {: RESULT = makePreClass(sym.UNICODE_PRIVATE_USE); :}
+           | UNICODE_SURROGATE
+             {: RESULT = makePreClass(sym.UNICODE_SURROGATE); :}
+           | UNICODE_DASH_PUNCTUATION
+             {: RESULT = makePreClass(sym.UNICODE_DASH_PUNCTUATION); :}
+           | UNICODE_START_PUNCTUATION
+             {: RESULT = makePreClass(sym.UNICODE_START_PUNCTUATION); :}
+           | UNICODE_END_PUNCTUATION
+             {: RESULT = makePreClass(sym.UNICODE_END_PUNCTUATION); :}
+           | UNICODE_CONNECTOR_PUNCTUATION
+             {: RESULT = makePreClass(sym.UNICODE_CONNECTOR_PUNCTUATION); :}
+           | UNICODE_OTHER_PUNCTUATION
+             {: RESULT = makePreClass(sym.UNICODE_OTHER_PUNCTUATION); :}
+           | UNICODE_MATH_SYMBOL
+             {: RESULT = makePreClass(sym.UNICODE_MATH_SYMBOL); :}
+           | UNICODE_CURRENCY_SYMBOL
+             {: RESULT = makePreClass(sym.UNICODE_CURRENCY_SYMBOL); :}
+           | UNICODE_MODIFIER_SYMBOL
+             {: RESULT = makePreClass(sym.UNICODE_MODIFIER_SYMBOL); :}
+           | UNICODE_OTHER_SYMBOL
+             {: RESULT = makePreClass(sym.UNICODE_OTHER_SYMBOL); :}
+           | UNICODE_INITIAL_QUOTE_PUNCTUATION
+             {: RESULT = makePreClass(sym.UNICODE_INITIAL_QUOTE_PUNCTUATION); :}
+           | UNICODE_FINAL_QUOTE_PUNCTUATION
+             {: RESULT = makePreClass(sym.UNICODE_FINAL_QUOTE_PUNCTUATION); :}
            ;

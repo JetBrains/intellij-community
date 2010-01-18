@@ -1167,7 +1167,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
   private void copyOldIndentOptions(@NonNls final String extension, final IndentOptions options) {
     final FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(extension);
-    if (fileType != FileTypes.UNKNOWN && fileType != FileTypes.PLAIN_TEXT && !myAdditionalIndentOptions.containsKey(fileType)) {
+    if (fileType != FileTypes.UNKNOWN && fileType != FileTypes.PLAIN_TEXT && !myAdditionalIndentOptions.containsKey(fileType) && fileType.getDefaultExtension().length() != 0) {
       registerAdditionalIndentOptions(fileType, options);
     }
   }

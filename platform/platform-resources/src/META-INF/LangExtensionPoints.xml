@@ -116,6 +116,8 @@
 
   <extensionPoint name="lang.fileViewProviderFactory" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="fileType.fileViewProviderFactory" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint"/>
+  <extensionPoint name="multiLangCommenter"
+                  interface="com.intellij.psi.templateLanguages.MultipleLangCommentProvider"/>
 
   <extensionPoint name="cacheBuilder"
                   beanClass="com.intellij.lang.cacheBuilder.CacheBuilderEP"/>
@@ -147,6 +149,7 @@
 
   <extensionPoint name="usageTargetProvider"
                   interface="com.intellij.usages.UsageTargetProvider"/>
+  <extensionPoint name="usageToPsiElementProvider" interface="com.intellij.usages.UsageToPsiElementProvider" />
 
   <extensionPoint name="customScopesProvider"
                   interface="com.intellij.psi.search.scope.packageSet.CustomScopesProvider"

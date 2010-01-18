@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.ex.FileChooserKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -374,6 +375,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
       myDescriptor.putUserData(LangDataKeys.MODULE_CONTEXT, getModule());
       myDescriptor.setTitle(ProjectBundle.message("module.paths.add.content.title"));
       myDescriptor.setDescription(ProjectBundle.message("module.paths.add.content.prompt"));
+      myDescriptor.putUserData(FileChooserKeys.DELETE_ACTION_AVAILABLE, false);
     }
 
     public void actionPerformed(AnActionEvent e) {

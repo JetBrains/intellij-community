@@ -675,17 +675,19 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
   private void addParmAndThisVarInitializers(BlockData blockData, PsiMethodCallExpression methodCall) throws IncorrectOperationException {
     PsiExpression[] args = methodCall.getArgumentList().getExpressions();
-    for (int i = 0; i < args.length; i++) {
-      int j = Math.min(i, blockData.parmVars.length - 1);
-      final PsiExpression initializer = blockData.parmVars[j].getInitializer();
-      LOG.assertTrue(initializer != null);
-      if (initializer instanceof PsiNewExpression && ((PsiNewExpression)initializer).getArrayInitializer() != null) { //varargs initializer
-        final PsiArrayInitializerExpression arrayInitializer = ((PsiNewExpression)initializer).getArrayInitializer();
-        arrayInitializer.add(args[i]);
-        continue;
-      }
+    if (blockData.parmVars.length > 0) {
+      for (int i = 0; i < args.length; i++) {
+        int j = Math.min(i, blockData.parmVars.length - 1);
+        final PsiExpression initializer = blockData.parmVars[j].getInitializer();
+        LOG.assertTrue(initializer != null);
+        if (initializer instanceof PsiNewExpression && ((PsiNewExpression)initializer).getArrayInitializer() != null) { //varargs initializer
+          final PsiArrayInitializerExpression arrayInitializer = ((PsiNewExpression)initializer).getArrayInitializer();
+          arrayInitializer.add(args[i]);
+          continue;
+        }
 
-      initializer.replace(args[i]);
+        initializer.replace(args[i]);
+      }
     }
 
     if (blockData.thisVar != null) {

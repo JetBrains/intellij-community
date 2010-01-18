@@ -141,7 +141,7 @@ public class ApplyPatchAction extends AnAction {
   public static ApplyPatchStatus mergeAgainstBaseVersion(final Project project, final VirtualFile file, final FilePath pathBeforeRename,
                                                          final TextFilePatch patch, final PatchMergeRequestFactory mergeRequestFactory) {
     final ApplyPatchForBaseRevisionTexts threeTexts = ApplyPatchForBaseRevisionTexts.create(project, file, pathBeforeRename, patch);
-    if (threeTexts == null) {
+    if ((threeTexts == null) || (threeTexts.getStatus() == null)) {
       return null;
     }
     ApplyPatchStatus status = threeTexts.getStatus();

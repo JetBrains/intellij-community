@@ -145,6 +145,9 @@ public class Bookmark {
   }
 
   public int getLine() {
+    if (myHighlighter != null && myHighlighter.isValid()) {
+      return myHighlighter.getDocument().getLineNumber(myHighlighter.getStartOffset());
+    }
     return myTarget.getLine();
   }
 

@@ -1,3 +1,6 @@
-print String.'pa<caret>'.name
+class X{
+  def get123(){}
+}
+print new X().'1<caret>'
 -----
-'package'
+'123'

@@ -17,8 +17,6 @@ package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements;
 
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiNamedElement;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DNamedElement;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DTypedElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -30,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
  * Base class for Dynamic property and method
  */
 
-public abstract class DItemElement implements DNamedElement, DTypedElement {
+public abstract class DItemElement implements DNamedElement, DTypedElement, Comparable {
   public String myType = null;
   public Boolean myStatic = false;
   public String myName = null;
@@ -56,7 +54,7 @@ public abstract class DItemElement implements DNamedElement, DTypedElement {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    DItemElement that = (DItemElement) o;
+    DItemElement that = (DItemElement)o;
 
     if (myName != null ? !myName.equals(that.myName) : that.myName != null) return false;
     if (myType != null ? !myType.equals(that.myType) : that.myType != null) return false;
@@ -93,13 +91,21 @@ public abstract class DItemElement implements DNamedElement, DTypedElement {
   }
 
   public Boolean isStatic() {
-      return myStatic;
+    return myStatic;
   }
 
   public void setStatic(Boolean aStatic) {
     myStatic = aStatic;
     clearCache();
   }
+
+  public int compareTo(Object o) {
+    if (!(o instanceof DItemElement)) return 0;
+    final DItemElement otherProperty = (DItemElement)o;
+
+    return getName().compareTo(otherProperty.getName()) + getType().compareTo(otherProperty.getType());
+  }
+
 
   @NotNull
   public abstract PsiNamedElement getPsi(PsiManager manager, String containingClassName);

@@ -79,6 +79,7 @@ public def layoutAll(Map args, String home, String out) {
   Paths paths = new Paths(out)
 
   wire_build_date(args.buildNumber)
+  ant.xmlproperty(file: appInfoFile(), collapseAttributes: "true")
 
   def layouts = includeFile("$home/build/scripts/layouts.gant")
   layouts.layoutFull(home, paths.distAll)
@@ -95,15 +96,31 @@ public def layoutAll(Map args, String home, String out) {
   layoutWin(args, home, paths)
 }
 
+boolean isEap() {
+  return "true" == p("component.version.eap")
+}
+
 private def patchPropertiesFile(String where) {
   ant.echo(file: "$where/bin/idea.properties", append: "true", message:
-           """
+           isEap() ?
+"""
 
 #-----------------------------------------------------------------------
 # Change to 'disabled' if you need not to receive instant visual notifications about
 # fatal errors that happen to IDEA or plugins installed.
 #-----------------------------------------------------------------------
 idea.fatal.error.notification=enabled
+"""
+
+ :
+
+"""
+
+#-----------------------------------------------------------------------
+# Change to 'eanbled' if you need to receive instant visual notifications about
+# fatal errors that happen to IDEA or plugins installed.
+#-----------------------------------------------------------------------
+idea.fatal.error.notification=disabled
 """
   )
 }
@@ -140,17 +157,19 @@ private def layoutMac(Map args, String home, Paths paths) {
     fileset(dir: "$home/build/conf/mac")
   }
 
+  def version = isEap() ? p("component.version.codename") : p("component.version.major") + "." +  p("component.version.minor")
+
   ant.replace(file: "${paths.distMac}/Contents/Info.plist") {
     replacefilter(token: "@@build@@", value: args.buildNumber)
 
-
-    replacefilter(token: "@@version@@", value: args.version)
-    replacefilter(token: "@@vmoptions@@", value: args.vmoptions + " -Xverify:none -XX:+UseCompressedOOPS -XX:+DoEscapeAnalysis")
+    replacefilter(token: "@@version@@", value: version)
+    replacefilter(token: "@@vmoptions@@", value: args.vmoptions + " -Xverify:none -XX:+UseCompressedOOPS")
     replacefilter(token: "@@system_selector@@", value: args.system_selector)
     replacefilter(token: "@@jdk_req@@", value: args.jdk_req)
   }
 
-  def root = "$args.version-${args.buildNumber}.app"
+  def root = isEap() ? "${version}-${args.buildNumbder}.app" : "IntelliJ IDEA ${version} CE.app"
+
   ant.zip(zipfile: "$paths.artifacts/idea${args.buildNumber}.mac.zip") {
     [paths.distAll, paths.distMac].each {
       tarfileset(dir: it, prefix: root) {

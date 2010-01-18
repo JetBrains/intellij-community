@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * JFlex 1.4.1                                                             *
- * Copyright (C) 1998-2004  Gerwin Klein <lsf@jflex.de>                    *
+ * JFlex 1.4.3                                                             *
+ * Copyright (C) 1998-2009  Gerwin Klein <lsf@jflex.de>                    *
  * All rights reserved.                                                    *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify    *
@@ -23,7 +23,7 @@ package JFlex;
  * Enumerates the states of a StateSet.
  *
  * @author Gerwin Klein
- * @version JFlex 1.4.1, $Revision: 2.3 $, $Date: 2004/11/06 23:03:32 $
+ * @version $Revision: 1.4.3 $, $Date: 2009/12/21 15:58:48 $
  */
 final public class StateSetEnumerator {
 
@@ -33,7 +33,6 @@ final public class StateSetEnumerator {
   private int offset;
   private long mask;
 
-  private int current;
   private long [] bits;
   
   /**
@@ -53,8 +52,6 @@ final public class StateSetEnumerator {
     index   = 0;
     offset  = 0;
     mask    = 1;
-    current = 0;
-
     while (index < bits.length && bits[index] == 0) 
       index++;
 

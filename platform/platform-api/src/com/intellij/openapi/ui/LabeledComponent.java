@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 
 public class LabeledComponent<Comp extends JComponent> extends JPanel {
@@ -93,7 +94,8 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel {
     if (myComponent != null) {
       add(myComponent, BorderLayout.CENTER);
     }
-    if (myComponent instanceof ComponentWithBrowseButton) {
+
+    if (myComponent instanceof ComponentWithBrowseButton && !(myComponent instanceof TextFieldWithBrowseButton)) {
       myLabel.setLabelFor(((ComponentWithBrowseButton)myComponent).getChildComponent());
     } else myLabel.setLabelFor(myComponent);
   }

@@ -1033,7 +1033,7 @@ public class ClasspathPanel extends JPanel {
       final LibraryTableEditor editor = LibraryTableEditor.editLibrary(provider, library);
       final Module contextModule = DataKeys.MODULE_CONTEXT.getData(DataManager.getInstance().getDataContext(myParent));
       editor.addFileChooserContext(LangDataKeys.MODULE_CONTEXT, contextModule);
-      myIsOk = editor.openDialog(myParent, Collections.singletonList(library), true);
+      myIsOk = editor.openDialog(myParent, Collections.singletonList(library), true) != null;
       if (myIsOk && library.getUrls(OrderRootType.CLASSES).length > 0) {
         myChosenLibrary = library;
       }
@@ -1156,7 +1156,7 @@ public class ClasspathPanel extends JPanel {
 
     private class MyChooserDialog implements ChooserDialog<Library> {
       private final LibraryTableEditor myEditor;
-      private boolean myIsOk;
+      private Library[] myLibraries;
 
       MyChooserDialog(){
         myEditor = LibraryTableEditor.editLibraryTable(myLibraryTableModelProvider, myState.getProject());
@@ -1164,18 +1164,18 @@ public class ClasspathPanel extends JPanel {
       }
 
       public List<Library> getChosenElements() {
-        final List<Library> chosen = new ArrayList<Library>(Arrays.asList(myEditor.getSelectedLibraries()));
+        final List<Library> chosen = new ArrayList<Library>(Arrays.asList(myLibraries));
         chosen.removeAll(getAlreadyAddedLibraries());
         return chosen;
       }
 
       public void doChoose() {
         final Iterator iter = myLibraryTableModelProvider.getModifiableModel().getLibraryIterator();
-        myIsOk = myEditor.openDialog(ClasspathPanel.this, iter.hasNext()? Collections.singleton((Library)iter.next()) : Collections.<Library>emptyList(), false);
+        myLibraries = myEditor.openDialog(ClasspathPanel.this, iter.hasNext()? Collections.singleton((Library)iter.next()) : Collections.<Library>emptyList(), false);
       }
 
       public boolean isOK() {
-        return myIsOk;
+        return myLibraries != null;
       }
 
       public void dispose() {

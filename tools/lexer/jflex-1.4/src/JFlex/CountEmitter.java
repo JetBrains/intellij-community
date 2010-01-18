@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * jflex 1.4                                                               *
- * Copyright (C) 1998-2004  Gerwin Klein <lsf@jflex.de>                    *
+ * Copyright (C) 1998-2009  Gerwin Klein <lsf@jflex.de>                    *
  * All rights reserved.                                                    *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify    *
@@ -24,7 +24,7 @@ package JFlex;
  * An emitter for an array encoded as count/value pairs in a string.
  * 
  * @author Gerwin Klein
- * @version $Revision: 1.6 $, $Date: 2004/04/12 10:07:48 $
+ * @version $Revision: 1.4.3 $, $Date: 2009/12/21 15:58:48 $
  */
 public class CountEmitter extends PackEmitter {
   /** number of entries in expanded array */

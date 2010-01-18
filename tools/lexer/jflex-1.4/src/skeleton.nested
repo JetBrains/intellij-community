@@ -36,10 +36,7 @@
 
   /** the textposition at the last accepting state */
   private int zzMarkedPos;
-
-  /** the textposition at the last state to be included in yytext */
-  private int zzPushbackPos;
-
+  
   /** the current text position in the buffer */
   private int zzCurrentPos;
 
@@ -70,6 +67,8 @@
   /** zzAtEOF == true <=> the scanner is at the EOF */
   private boolean zzAtEOF;
 
+  /** denotes if the user-EOF-code has already been executed */
+  private boolean zzEOFDone;
 
   /** the stack of open (nested) input streams to read from */
   private java.util.Stack zzStreams = new java.util.Stack();
@@ -84,24 +83,24 @@
     int zzStartRead;
     int zzCurrentPos;
     int zzMarkedPos;
-    int zzPushbackPos;
     int yyline;
     int yycolumn;
     char [] zzBuffer;
     boolean zzAtEOF;
+    boolean zzEOFDone;
 
     /** sets all values stored in this class */
     ZzFlexStreamInfo(java.io.Reader zzReader, int zzEndRead, int zzStartRead,
-                  int zzCurrentPos, int zzMarkedPos, int zzPushbackPos,
+                  int zzCurrentPos, int zzMarkedPos, 
                   char [] zzBuffer, boolean zzAtEOF, int yyline, int yycolumn) {
       this.zzReader      = zzReader;
       this.zzEndRead     = zzEndRead;
       this.zzStartRead   = zzStartRead;
       this.zzCurrentPos  = zzCurrentPos;
       this.zzMarkedPos   = zzMarkedPos;
-      this.zzPushbackPos = zzPushbackPos;
       this.zzBuffer      = zzBuffer;
       this.zzAtEOF       = zzAtEOF;
+      this.zzEOFDone     = zzEOFDone;
       this.yyline         = yyline;
       this.yycolumn       = yycolumn;
     }
@@ -137,7 +136,6 @@
       zzEndRead-= zzStartRead;
       zzCurrentPos-= zzStartRead;
       zzMarkedPos-= zzStartRead;
-      zzPushbackPos-= zzStartRead;
       zzStartRead = 0;
     }
 
@@ -153,13 +151,23 @@
     int numRead = zzReader.read(zzBuffer, zzEndRead,
                                             zzBuffer.length-zzEndRead);
 
-    if (numRead < 0) {
-      return true;
-    }
-    else {
+    if (numRead > 0) {
       zzEndRead+= numRead;
       return false;
     }
+    // unlikely but not impossible: read 0 characters, but not at end of stream
+    if (numRead == 0) {
+      int c = zzReader.read();
+      if (c == -1) {
+        return true;
+      } else {
+        zzBuffer[zzEndRead++] = (char) c;
+        return false;
+      }     
+    }
+    
+    // numRead < 0) 
+    return true;
   }
 
     
@@ -190,14 +198,14 @@
   public final void yypushStream(java.io.Reader reader) {
     zzStreams.push(
       new ZzFlexStreamInfo(zzReader, zzEndRead, zzStartRead, zzCurrentPos,
-                        zzMarkedPos, zzPushbackPos, zzBuffer, zzAtEOF,
+                        zzMarkedPos, zzBuffer, zzAtEOF,
                         yyline, yycolumn)
     );
     zzAtEOF  = false;
     zzBuffer = new char[ZZ_BUFFERSIZE];
     zzReader = reader;
     zzEndRead = zzStartRead = 0;
-    zzCurrentPos = zzMarkedPos = zzPushbackPos = 0;
+    zzCurrentPos = zzMarkedPos = 0;
     yyline = yycolumn = 0;
   }
     
@@ -223,8 +231,8 @@
     zzStartRead   = s.zzStartRead;
     zzCurrentPos  = s.zzCurrentPos;
     zzMarkedPos   = s.zzMarkedPos ;
-    zzPushbackPos = s.zzPushbackPos;
     zzAtEOF       = s.zzAtEOF;
+    zzEOFDone     = s.zzEOFDone;
     yyline         = s.yyline;
     yycolumn       = s.yycolumn;
   }
@@ -256,8 +264,9 @@
     zzReader = reader;
     zzAtBOL  = true;
     zzAtEOF  = false;
+    zzEOFDone = false;
     zzEndRead = zzStartRead = 0;
-    zzCurrentPos = zzMarkedPos = zzPushbackPos = 0;
+    zzCurrentPos = zzMarkedPos = 0;
     yyline = yychar = yycolumn = 0;
     zzLexicalState = YYINITIAL;
   }

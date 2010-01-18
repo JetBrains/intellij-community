@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * JFlex 1.4.1                                                             *
- * Copyright (C) 1998-2004  Gerwin Klein <lsf@jflex.de>                    *
+ * JFlex 1.4.3                                                             *
+ * Copyright (C) 1998-2009  Gerwin Klein <lsf@jflex.de>                    *
  * All rights reserved.                                                    *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify    *
@@ -19,14 +19,10 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 package JFlex;
-
+ 
+import java.io.*;
+import java.util.*;
 import JFlex.gui.MainFrame;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.Vector;
 
 
 /**
@@ -35,12 +31,12 @@ import java.util.Vector;
  * starting up the GUI if necessary, etc. 
  *
  * @author Gerwin Klein
- * @version JFlex 1.4.1, $Revision: 2.20 $, $Date: 2004/11/06 23:03:32 $
+ * @version $Revision: 1.4.3 $, $Date: 2009/12/21 15:58:48 $
  */
 public class Main {
   
   /** JFlex version */
-  final public static String version = "1.4.1"; //$NON-NLS-1$
+  final public static String version = "1.4.3"; //$NON-NLS-1$
 
   /**
    * Generates a scanner for the specified input file.
@@ -92,7 +88,7 @@ public class Main {
       Out.time(ErrorMessages.DFA_TOOK, time); 
 
       dfa.checkActions(scanner, parser);
-
+      
       nfa = null;
 
       if (Options.dump) Out.dump(ErrorMessages.get(ErrorMessages.DFA_IS)+
@@ -100,6 +96,8 @@ public class Main {
 
       if (Options.dot) 
         dfa.writeDot(Emitter.normalize("dfa-big.dot", null)); //$NON-NLS-1$
+
+      Out.checkErrors();
 
       time.start();
       dfa.minimize();

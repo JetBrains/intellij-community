@@ -367,7 +367,7 @@ public class CvsEntriesManager extends VirtualFileAdapter {
     return getInfoFor(root).getConnectionSettings();
   }
 
-  public CvsConnectionSettings getCvsConnectionSettingsFor(File root) {
+  public CvsConnectionSettings getCvsConnectionSettingsFor(@NotNull File root) {
     return getCvsConnectionSettingsFor(CvsVfsUtil.refreshAndFindFileByIoFile(root));
   }
 

@@ -85,22 +85,14 @@ public abstract class TokenSets implements GroovyTokenTypes {
       kDOUBLE
   );
 
-  public static TokenSet KEYWORD_REFERENCE_NAMES = TokenSet.orSet(TokenSet.create(
-      kCLASS,
-      kIN,
-      kAS,
-      kDEF,
-      kIF,
-      kELSE,
-      kFOR,
-      kWHILE,
-      kSWITCH,
-      kTRY,
-      kCATCH,
-      kFINALLY,
-      kSTATIC,
-      kDEFAULT
-  ), BUILT_IN_TYPE);
+  /**
+   * all keywords except 'this' and 'super'
+   */
+  public static TokenSet KEYWORD_REFERENCE_NAMES = TokenSet
+    .create(kPACKAGE, kIMPORT, kSTATIC, kDEF, kCLASS, kINTERFACE, kENUM, kEXTENDS, kSUPER, kVOID, kBOOLEAN, kBYTE, kCHAR, kSHORT, kINT,
+            kFLOAT, kLONG, kDOUBLE, kAS, kPRIVATE, kPUBLIC, kPROTECTED, kTRANSIENT, kNATIVE, kSYNCHRONIZED, kVOLATILE, kDEFAULT, kTHROWS,
+            kIMPLEMENTS, kIF, kELSE, kWHILE, kSWITCH, kFOR, kIN, kRETURN, kBREAK, kCONTINUE, kTHROW, kASSERT, kCASE, kTRY, kFINALLY, kCATCH,
+            kINSTANCEOF, kNEW, kTRUE, kNULL);
 
   public static final TokenSet PROPERTY_NAMES = TokenSet.create(mIDENT, mSTRING_LITERAL, mGSTRING_LITERAL);
 

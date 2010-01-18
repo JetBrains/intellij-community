@@ -12,12 +12,15 @@
   <!-- override these if you want to use your own versions -->
   <property name="jflex.jar" value="${tools.dir}/JFlex.jar" />
   <property name="cup.jar" value="${tools.dir}/java_cup.jar" />
+  <property name="junit.jar" value="${tools.dir}/junit.jar" />
 
-  <!-- where to get jflex.jar and cup.jar from -->
+  <!-- where to get tool jars from -->
   <property name="jflex.jar.url" 
   	        value="http://jflex.sourceforge.net/jar/stable/JFlex.jar" />
   <property name="cup.jar.url" 
   	        value="http://jflex.sourceforge.net/jar/stable/java_cup.jar" />
+  <property name="junit.jar.url"
+                value="http://jflex.sourceforge.net/jar/stable/junit.jar" />
 
   	        
   <!-- ==================== targets ================================= -->
@@ -35,16 +38,18 @@
 
   <target name="declare" description="define tasks for jflex and cup">
     <taskdef classname="JFlex.anttask.JFlexTask" name="jflex" classpath="${jflex.jar}"/>
-    <taskdef classname="java_cup.AntTask" name="cup" classpath="${cup.jar}"/>
+    <taskdef classname="java_cup.anttask.CUPTask" name="cup" classpath="${cup.jar}"/>
   </target>
 
   <target name="gettools" description="download development tools">
     <mkdir dir="${tools.dir}"/>
     <get src="${jflex.jar.url}" dest="${jflex.jar}"/>
     <get src="${cup.jar.url}" dest="${cup.jar}"/>
+    <get src="${junit.jar.url}" dest="${junit.jar}"/>
   </target>
 
   <target name="dist" description="build distribution">
+    <antcall target="gettools" />
     <antcall target="build" />
     <antcall target="libclean" />
   </target>
@@ -60,7 +65,8 @@
     <javac srcdir="." 
            destdir="../lib" 
            target="1.1"
-           classpath="."
+    	     source="1.2"
+           classpath=".:${junit.jar}"
            debug="on" />
   </target>
 
@@ -69,7 +75,7 @@
   </target>
 
   <target name="cup" depends="declare" description="generate parser">
-    <cup file="JFlex/LexParse.cup" dir="JFlex" interface="true" parser="LexParse" />
+    <cup srcfile="JFlex/LexParse.cup" interface="true" parser="LexParse" />
   </target>
 
   <target name="copy" description="copy resources to build dir">

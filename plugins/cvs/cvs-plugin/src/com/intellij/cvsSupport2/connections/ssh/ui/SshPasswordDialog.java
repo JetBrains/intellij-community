@@ -16,6 +16,7 @@
 package com.intellij.cvsSupport2.connections.ssh.ui;
 
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 
@@ -27,6 +28,7 @@ public class SshPasswordDialog extends DialogWrapper{
   private JCheckBox myStoreCheckbox;
   private JPanel myPanel;
   private JLabel myLabel;
+  private JLabel myAdditionalLbl;
 
 
   public SshPasswordDialog(String propmtText) {
@@ -34,6 +36,7 @@ public class SshPasswordDialog extends DialogWrapper{
     myLabel.setText(propmtText);
     setTitle(com.intellij.CvsBundle.message("dialog.title.ssh.password"));
     init();
+    myAdditionalLbl.setForeground(UIUtil.getInactiveTextColor());
   }
 
   protected JComponent createCenterPanel() {
@@ -50,5 +53,9 @@ public class SshPasswordDialog extends DialogWrapper{
 
   public JComponent getPreferredFocusedComponent() {
     return myPasswordField;
+  }
+
+  public void setAdditionalText(final String text) {
+    myAdditionalLbl.setText(text);
   }
 }

@@ -106,8 +106,10 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
       ASTNode children[] = getGroovyChildren(node);
       ASTNode prevChildNode = null;
       for (ASTNode childNode : children) {
-        final Indent indent = GroovyIndentProcessor.getChildIndent(block, prevChildNode, childNode);
-        subBlocks.add(new GroovyBlock(childNode, myAlignment, indent, myWrap, mySettings));
+        if (childNode.getTextRange().getLength() > 0) {
+          final Indent indent = GroovyIndentProcessor.getChildIndent(block, prevChildNode, childNode);
+          subBlocks.add(new GroovyBlock(childNode, myAlignment, indent, myWrap, mySettings));
+        }
         prevChildNode = childNode;
       }
       return subBlocks;

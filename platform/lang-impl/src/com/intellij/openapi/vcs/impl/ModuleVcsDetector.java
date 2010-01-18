@@ -24,6 +24,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.ModuleAdapter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
@@ -34,13 +36,11 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author yole
@@ -49,6 +49,7 @@ public class ModuleVcsDetector implements ProjectComponent {
   private final Project myProject;
   private final MessageBus myMessageBus;
   private final ProjectLevelVcsManagerImpl myVcsManager;
+  private MessageBusConnection myConnection;
 
   public ModuleVcsDetector(final Project project, final MessageBus messageBus, final ProjectLevelVcsManager vcsManager) {
     myProject = project;
@@ -63,7 +64,7 @@ public class ModuleVcsDetector implements ProjectComponent {
     manager.registerStartupActivity(new Runnable() {
       public void run() {
         if (myVcsManager.needAutodetectMappings()) {
-          autoDetectVcsMappings();
+          autoDetectVcsMappings(true);
         }
         myVcsManager.updateActiveVcss();
       }
@@ -71,18 +72,34 @@ public class ModuleVcsDetector implements ProjectComponent {
     manager.registerPostStartupActivity(new Runnable() {
       public void run() {
         if (myMessageBus != null) {
-          myMessageBus.connect().subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
-            public void moduleAdded(final Project project, final Module module) {
-              autoDetectModuleVcsMapping(module);
-            }
-
-            public void beforeModuleRemoved(final Project project, final Module module) {
-              checkRemoveVcsRoot(module);
-            }
-          });
+          myConnection = myMessageBus.connect();
+          final MyModulesListener listener = new MyModulesListener();
+          myConnection.subscribe(ProjectTopics.MODULES, listener);
+          myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, listener);
         }
       }
     });
+  }
+
+  private class MyModulesListener extends ModuleAdapter implements ModuleRootListener {
+    public void beforeRootsChange(ModuleRootEvent event) {
+    }
+
+    public void rootsChanged(ModuleRootEvent event) {
+      // the check calculates to true only before user has done any change to mappings, i.e. in case modules are detected/added automatically
+      // on start etc (look inside)
+      if (myVcsManager.needAutodetectMappings()) {
+        autoDetectVcsMappings(false);
+      }
+    }
+
+    public void moduleAdded(final Project project, final Module module) {
+      autoDetectModuleVcsMapping(module);
+    }
+
+    public void beforeModuleRemoved(final Project project, final Module module) {
+      checkRemoveVcsRoot(module);
+    }
   }
 
   public void projectClosed() {
@@ -98,12 +115,16 @@ public class ModuleVcsDetector implements ProjectComponent {
   }
 
   public void disposeComponent() {
+    if (myConnection != null) {
+      myConnection.disconnect();
+    }
   }
 
-  private void autoDetectVcsMappings() {
+  private void autoDetectVcsMappings(final boolean tryMapPieces) {
     Set<AbstractVcs> usedVcses = new HashSet<AbstractVcs>();
     Map<VirtualFile, AbstractVcs> vcsMap = new HashMap<VirtualFile, AbstractVcs>();
-    for(Module module: ModuleManager.getInstance(myProject).getModules()) {
+    final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
+    for(Module module: moduleManager.getModules()) {
       final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
       for(VirtualFile file: files) {
         AbstractVcs contentRootVcs = myVcsManager.findVersioningVcs(file);
@@ -115,11 +136,31 @@ public class ModuleVcsDetector implements ProjectComponent {
     }
     if (usedVcses.size() == 1) {
       final AbstractVcs[] abstractVcses = usedVcses.toArray(new AbstractVcs[1]);
+      final Module[] modules = moduleManager.getModules();
+      final Set<String> contentRoots = new HashSet<String>();
+      for (Module module : modules) {
+        final VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
+        for (VirtualFile root : roots) {
+          contentRoots.add(root.getPath());
+        }
+      }
+
       if (abstractVcses [0] != null) {
+        final List<VcsDirectoryMapping> vcsDirectoryMappings = new ArrayList<VcsDirectoryMapping>(myVcsManager.getDirectoryMappings());
+        for (Iterator<VcsDirectoryMapping> iterator = vcsDirectoryMappings.iterator(); iterator.hasNext();) {
+          final VcsDirectoryMapping mapping = iterator.next();
+          if (! contentRoots.contains(mapping.getDirectory())) {
+            iterator.remove();
+          }
+        }
         myVcsManager.setAutoDirectoryMapping("", abstractVcses [0].getName());
+        for (VcsDirectoryMapping mapping : vcsDirectoryMappings) {
+          myVcsManager.removeDirectoryMapping(mapping);
+        }
+        myVcsManager.cleanupMappings();
       }
     }
-    else {
+    else if (tryMapPieces) {
       for(Map.Entry<VirtualFile, AbstractVcs> entry: vcsMap.entrySet()) {
         myVcsManager.setAutoDirectoryMapping(entry.getKey().getPath(), entry.getValue() == null ? "" : entry.getValue().getName());
       }

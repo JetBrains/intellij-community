@@ -102,7 +102,7 @@ public class GrStringUtil {
 
   public static String removeQuotes(@NotNull String s) {
     if (s.startsWith(TRIPLE_QUOTES) || s.startsWith(TRIPLE_DOUBLE_QUOTES)) {
-      if (s.length() >= 6 && s.endsWith(s.substring(0, 3))) {
+      if (s.endsWith(s.substring(0, 3))) {
         return s.substring(3, s.length() - 3);
       }
       else {
@@ -233,11 +233,22 @@ public class GrStringUtil {
       return true;
     }
     final GroovyPsiElementFactory elementFactory = GroovyPsiElementFactory.getInstance(element.getProject());
-    final GrExpression gString = elementFactory.createExpressionFromText("\"$" + statements[0].getText() + nextChar + '"');
-    final GrReferenceExpression refExpr = (GrReferenceExpression)statements[0];
-    final PsiElement refExprCopy = ((GrStringInjection)gString.getChildren()[0]).getReferenceExpression();
+    final GrExpression gString;
+    try {
+      gString = elementFactory.createExpressionFromText("\"$" + statements[0].getText() + nextChar + '"');
+    }
+    catch (Exception e) {
+      return false;
+    }
+    if (!(gString instanceof GrString)) return false;
+
+    final PsiElement child = gString.getChildren()[0];
+    if (!(child instanceof GrStringInjection)) return false;
+
+    final PsiElement refExprCopy = ((GrStringInjection)child).getReferenceExpression();
     if (!(refExprCopy instanceof GrReferenceExpression)) return false;
 
+    final GrReferenceExpression refExpr = (GrReferenceExpression)statements[0];
     return Comparing.equal(refExpr.getName(), ((GrReferenceExpression)refExprCopy).getName());
   }
 
