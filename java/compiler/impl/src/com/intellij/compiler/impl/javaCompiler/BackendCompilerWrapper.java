@@ -47,6 +47,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -62,7 +63,6 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -85,7 +85,7 @@ public class BackendCompilerWrapper {
   private final Map<Module, VirtualFile> myModuleToTempDirMap = new THashMap<Module, VirtualFile>();
   private final ProjectFileIndex myProjectFileIndex;
   @NonNls private static final String PACKAGE_ANNOTATION_FILE_NAME = "package-info.java";
-  private static final FileObject myStopThreadToken = new FileObject(null,null);
+  private static final FileObject myStopThreadToken = new FileObject(new File(""), new byte[0]);
   private long myCompilationDuration = 0L;
   public final Map<String, Set<CompiledClass>> myFileNameToSourceMap=  new THashMap<String, Set<CompiledClass>>();
 
@@ -180,7 +180,7 @@ public class BackendCompilerWrapper {
       myFilesToRecompile.addAll(allDependent);
     }
     final List<TranslatingCompiler.OutputItem> outputs = processPackageInfoFiles();
-    if (myFilesToRecompile.size() > 0 || outputs.size() > 0) {
+    if (!myFilesToRecompile.isEmpty() || !outputs.isEmpty()) {
       mySink.add(null, outputs, VfsUtil.toVirtualFileArray(myFilesToRecompile));
     }
   }
@@ -458,7 +458,7 @@ public class BackendCompilerWrapper {
         exitValue = process.exitValue();
       }
       finally {
-        myCompilationDuration += (System.currentTimeMillis() - compilationStart);
+        myCompilationDuration += System.currentTimeMillis() - compilationStart;
         if (errorParsingThread != null) {
           errorParsingThread.setProcessTerminated(true);
         }
@@ -880,7 +880,7 @@ public class BackendCompilerWrapper {
       myAddNotNullAssertions = CompilerWorkspaceConfiguration.getInstance(myProject).ASSERT_NOT_NULL;
     }
 
-    volatile boolean processing;
+    private volatile boolean processing;
     public void run() {
       processing = true;
       try {
@@ -897,7 +897,9 @@ public class BackendCompilerWrapper {
       catch (CacheCorruptedException e) {
         myError = e;
       }
-      processing = false;
+      finally {
+        processing = false;
+      }
     }
 
     public void addPath(FileObject path) throws CacheCorruptedException {
@@ -927,7 +929,6 @@ public class BackendCompilerWrapper {
           putName(sourceFileName, newClassQName, relativePathToSource, path);
           boolean haveToInstrument = myAddNotNullAssertions && hasNotNullAnnotations(newClassesCache, dependencyCache.getSymbolTable(), newClassQName);
 
-          boolean fileContentChanged = false;
           if (haveToInstrument) {
             try {
               ClassReader reader = new ClassReader(fileContent, 0, fileContent.length);
@@ -936,8 +937,7 @@ public class BackendCompilerWrapper {
               final NotNullVerifyingInstrumenter instrumenter = new NotNullVerifyingInstrumenter(writer);
               reader.accept(instrumenter, 0);
               if (instrumenter.isModification()) {
-                fileContent = writer.toByteArray();
-                fileContentChanged = true;
+                fileObject = new FileObject(file, writer.toByteArray());
               }
             }
             catch (Exception ignored) {
@@ -945,9 +945,7 @@ public class BackendCompilerWrapper {
             }
           }
 
-          if (fileContentChanged || !fileObject.isSaved()) {
-            writeFile(file, fileContent);
-          }
+          fileObject.save();
         }
         else {
           final String _path = FileUtil.toSystemIndependentName(path);
@@ -960,32 +958,18 @@ public class BackendCompilerWrapper {
         }
       }
       catch (ClsFormatException e) {
-        String message;
         final String m = e.getMessage();
-        if (m == null || "".equals(m)) {
-          message = CompilerBundle.message("error.bad.class.file.format", path);
-        }
-        else {
-          message = CompilerBundle.message("error.bad.class.file.format", m + "\n" + path);
-        }
+        String message = CompilerBundle.message("error.bad.class.file.format", StringUtil.isEmpty(m) ? path : m + "\n" + path);
         myCompileContext.addMessage(CompilerMessageCategory.ERROR, message, null, -1, -1);
+        LOG.info(e);
       }
       catch (IOException e) {
         myCompileContext.addMessage(CompilerMessageCategory.ERROR, e.getMessage(), null, -1, -1);
+        LOG.info(e);
       }
       finally {
         myClassesCount++;
         updateStatistics();
-      }
-    }
-
-    private void writeFile(File file, byte[] fileContent) throws IOException {
-      try {
-        FileUtil.writeToFile(file, fileContent);
-      }
-      catch (FileNotFoundException e) {
-        FileUtil.createParentDirs(file);
-        FileUtil.writeToFile(file, fileContent);
       }
     }
   }

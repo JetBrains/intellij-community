@@ -13,16 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.engine;
+package com.intellij.compiler.impl.javaCompiler.api;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+
+import java.io.File;
 
 /**
- * @author Dennis.Ushakov
+ * User: cdr
  */
-public interface JVMDebugProvider {
-  ExtensionPointName<JVMDebugProvider> EP_NAME = ExtensionPointName.create("com.intellij.debugger.jvmDebugProvider");
+@SuppressWarnings({"Since15"})
+class JavaVirtualByIoFile extends FileVirtualObject {
+  private final File myFile;
 
-  boolean supportsJVMDebugging(PsiFile file);
+  protected JavaVirtualByIoFile(File file, Kind kind) {
+    super(file.toURI(), kind);
+    myFile = file;
+  }
+
+  protected VirtualFile getVirtualFile() {
+    return LocalFileSystem.getInstance().findFileByIoFile(myFile);
+  }
 }

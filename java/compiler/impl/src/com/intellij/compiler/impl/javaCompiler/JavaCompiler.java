@@ -64,6 +64,7 @@ public class JavaCompiler implements TranslatingCompiler {
     }
     catch (CompilerException e) {
       context.addMessage(CompilerMessageCategory.ERROR, e.getMessage(), null, -1, -1);
+      LOG.info(e);
     }
     catch (CacheCorruptedException e) {
       LOG.info(e);

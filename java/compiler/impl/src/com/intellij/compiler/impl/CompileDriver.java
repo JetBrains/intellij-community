@@ -298,6 +298,7 @@ public class CompileDriver {
     }
     catch (IOException e) {
       context.addMessage(CompilerMessageCategory.ERROR, CompilerBundle.message("compiler.error.exception", e.getMessage()), null, -1, -1);
+      LOG.info(e);
     }
   }
 

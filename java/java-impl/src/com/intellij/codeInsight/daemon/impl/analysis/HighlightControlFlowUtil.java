@@ -68,7 +68,7 @@ public class HighlightControlFlowUtil {
             context,
             JavaErrorMessages.message("missing.return.statement"));
         QuickFixAction.registerQuickFixAction(highlightInfo, new AddReturnFix(method));
-        IntentionAction fix = QUICK_FIX_FACTORY.createMethodReturnFix(method, PsiType.VOID, false);
+        IntentionAction fix = QUICK_FIX_FACTORY.createMethodReturnFix(method, PsiType.VOID, true);
         QuickFixAction.registerQuickFixAction(highlightInfo, fix);
         return highlightInfo;
       }

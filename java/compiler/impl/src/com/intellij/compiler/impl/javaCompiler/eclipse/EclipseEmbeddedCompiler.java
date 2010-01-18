@@ -25,6 +25,7 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.Configurable;
@@ -43,6 +44,8 @@ import java.util.Set;
 
 
 public class EclipseEmbeddedCompiler implements BackendCompiler {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.eclipse.EclipseEmbeddedCompiler");
+
   private final Project myProject;
   private final EclipseCompiler myEclipseExternalCompiler;
   private int myExitCode;
@@ -148,6 +151,7 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
         }
         catch (Exception e) {
           compileContext.addMessage(CompilerMessageCategory.ERROR, e.getMessage(), null, -1, -1);
+          LOG.info(e);
           myExitCode = -1;
           return -1;
         }

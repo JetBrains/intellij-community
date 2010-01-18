@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,46 +15,43 @@
  */
 package com.intellij.compiler.impl.javaCompiler.api;
 
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.io.FileUtil;
 
 import javax.tools.*;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URI;
+import java.io.*;
 
 /**
- * @author cdr
- */
+* User: cdr
+*/
 @SuppressWarnings({"Since15"})
-public abstract class FileVirtualObject extends SimpleJavaFileObject {
-  public FileVirtualObject(URI uri, Kind kind) {
-    super(uri, kind);
+class JavaIoFile extends SimpleJavaFileObject {
+  private final File myFile;
+
+  JavaIoFile(File file, Kind kind) {
+    super(file.toURI(), kind);
+    myFile = file;
   }
 
-  protected abstract VirtualFile getVirtualFile();
   @Override
   public CharSequence getCharContent(boolean ignoreEncodingErrors) throws IOException {
-    VirtualFile virtualFile = getVirtualFile();
-    if (virtualFile == null) return null;
-    return LoadTextUtil.loadText(virtualFile);
+    return new String(FileUtil.loadFileText(myFile));
   }
 
   @Override
   public InputStream openInputStream() throws IOException {
-    return getVirtualFile().getInputStream();
+    return new BufferedInputStream(new FileInputStream(myFile));
   }
 
   @Override
   public OutputStream openOutputStream() throws IOException {
-    return getVirtualFile().getOutputStream(this);
+    return new BufferedOutputStream(new FileOutputStream(myFile));
   }
 
   @Override
   public String toString() {
     return toUri().toString();
   }
+
   @Override
   public int hashCode() {
     return toUri().hashCode();

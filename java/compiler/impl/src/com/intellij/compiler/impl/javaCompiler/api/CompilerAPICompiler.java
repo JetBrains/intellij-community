@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
@@ -51,6 +52,7 @@ import java.util.*;
 
 
 public class CompilerAPICompiler implements BackendCompiler {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.api.CompilerAPICompiler");
   private final Project myProject;
   private static final Set<FileType> COMPILABLE_TYPES = Collections.<FileType>singleton(StdFileTypes.JAVA);
 
@@ -94,7 +96,7 @@ public class CompilerAPICompiler implements BackendCompiler {
 
   @NotNull
   public String getPresentableName() {
-    return "Javac in-process (Java6 only)";
+    return "Javac in-process (Java6+ only)";
   }
 
   @NotNull
@@ -111,7 +113,8 @@ public class CompilerAPICompiler implements BackendCompiler {
   public OutputParser createErrorParser(@NotNull final String outputDir, final Process process) {
     return new OutputParser() {
       public boolean processMessageLine(Callback callback) {
-        return ((MyProcess)process).myCompAPIDriver.processAll(callback);
+        ((MyProcess)process).myCompAPIDriver.processAll(callback);
+        return false;
       }
     };
   }
@@ -200,6 +203,7 @@ public class CompilerAPICompiler implements BackendCompiler {
       }
       catch (Exception e) {
         myCompileContext.addMessage(CompilerMessageCategory.ERROR, e.getMessage(), null, -1, -1);
+        LOG.info(e);
         myExitCode = -1;
         return -1;
       }

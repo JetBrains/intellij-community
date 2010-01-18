@@ -502,14 +502,14 @@ public class HighlightUtil {
           description = JavaErrorMessages.message("return.from.void.method");
           errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, statement, description);
           if (valueType != null) {
-            IntentionAction fix = QUICK_FIX_FACTORY.createMethodReturnFix(method, valueType, false);
+            IntentionAction fix = QUICK_FIX_FACTORY.createMethodReturnFix(method, valueType, true);
             QuickFixAction.registerQuickFixAction(errorResult, fix);
           }
         }   
         else {
           errorResult = checkAssignability(returnType, valueType, returnValue, statement);
           if (errorResult != null && valueType != null) {
-            IntentionAction fix = QUICK_FIX_FACTORY.createMethodReturnFix(method, valueType, false);
+            IntentionAction fix = QUICK_FIX_FACTORY.createMethodReturnFix(method, valueType, true);
             QuickFixAction.registerQuickFixAction(errorResult, fix);
             if (returnType instanceof PsiArrayType && TypeConversionUtil.isAssignable(((PsiArrayType)returnType).getComponentType(), valueType)) {
               QuickFixAction.registerQuickFixAction(errorResult, new SurroundWithArrayFix(null){
@@ -527,7 +527,7 @@ public class HighlightUtil {
         if (!isMethodVoid) {
           description = JavaErrorMessages.message("missing.return.value");
           errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, statement, description);
-          IntentionAction fix = QUICK_FIX_FACTORY.createMethodReturnFix(method, PsiType.VOID, false);
+          IntentionAction fix = QUICK_FIX_FACTORY.createMethodReturnFix(method, PsiType.VOID, true);
           QuickFixAction.registerQuickFixAction(errorResult, fix);
           navigationShift = PsiKeyword.RETURN.length();
         }

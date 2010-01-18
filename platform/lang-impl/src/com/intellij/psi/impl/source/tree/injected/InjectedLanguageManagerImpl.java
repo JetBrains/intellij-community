@@ -210,9 +210,6 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
       }
     });
     return text.toString();
-    //String text = injectedNode.getUserData(UNESCAPED_TEXT);
-    //if (text != null) return text;
-    //return injectedNode.getText();
   }
 
   /**
@@ -276,7 +273,12 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
   private final Map<Class,MultiHostInjector[]> myInjectorsClone = new HashMap<Class, MultiHostInjector[]>();
   @TestOnly
   public void pushInjectors() {
-    assert myInjectorsClone.isEmpty() : myInjectorsClone;
+    try {
+      assert myInjectorsClone.isEmpty() : myInjectorsClone;
+    }
+    finally {
+      myInjectorsClone.clear();
+    }
     myInjectorsClone.putAll(injectors);
   }
   @TestOnly
