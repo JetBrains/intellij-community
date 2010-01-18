@@ -814,7 +814,7 @@ public class AbstractPopup implements JBPopup {
   }
 
   private IdeFocusManager getFocusManager() {
-    return IdeFocusManager.getInstance(myProject);
+    return myProject == null ? null : IdeFocusManager.getInstance(myProject);
   }
 
   private static JComponent getTargetComponent(Component aComponent) {
@@ -908,7 +908,13 @@ public class AbstractPopup implements JBPopup {
     resetWindow();
 
     if (myFinalRunnable != null) {
-      getFocusManager().doWhenFocusSettlesDown(myFinalRunnable);
+      IdeFocusManager focusManager = getFocusManager();
+      if (focusManager != null) {
+        focusManager.doWhenFocusSettlesDown(myFinalRunnable);
+      }
+      else {
+        myFinalRunnable.run();
+      }
       myFinalRunnable = null;
     }
   }
