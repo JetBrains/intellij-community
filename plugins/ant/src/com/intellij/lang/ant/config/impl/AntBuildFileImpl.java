@@ -218,7 +218,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   }
 
   public AntFile getAntFile() {
-    final PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(myVFile);
+    final PsiFile psiFile = myVFile.isValid()? PsiManager.getInstance(getProject()).findFile(myVFile) : null;
     return psiFile != null? AntSupport.getAntFile(psiFile) : null;
   }
 
