@@ -16,6 +16,7 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
@@ -24,16 +25,20 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class CoverageRunConfigurationExtension extends RunConfigurationExtension {
-  public void handleStartProcess(final ModuleBasedConfiguration configuration, OSProcessHandler handler) {
+  public void handleStartProcess(final ModuleBasedConfiguration configuration, final OSProcessHandler handler) {
     final CoverageEnabledConfiguration coverageEnabledConfiguration = CoverageEnabledConfiguration.get(configuration);
     if (coverageEnabledConfiguration.isCoverageEnabled()) {
       handler.addProcessListener(new ProcessAdapter() {
         public void processTerminated(final ProcessEvent event) {
-          final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(configuration.getProject());
-          final CoverageEnabledConfiguration coverageEnabledConfiguration = CoverageEnabledConfiguration.get(configuration);
-          final CoverageSuite coverageSuite = coverageEnabledConfiguration.getCurrentCoverageSuite();
-          if (coverageSuite != null) {
-            coverageDataManager.coverageGathered(coverageSuite);
+          handler.removeProcessListener(this);
+          final Project project = configuration.getProject();
+          if (!project.isDisposed()) {
+            final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(project);
+            final CoverageEnabledConfiguration coverageEnabledConfiguration = CoverageEnabledConfiguration.get(configuration);
+            final CoverageSuite coverageSuite = coverageEnabledConfiguration.getCurrentCoverageSuite();
+            if (coverageSuite != null) {
+              coverageDataManager.coverageGathered(coverageSuite);
+            }
           }
         }
       });
