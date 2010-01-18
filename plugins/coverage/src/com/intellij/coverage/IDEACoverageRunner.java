@@ -153,6 +153,11 @@ public class IDEACoverageRunner extends AbstractCoverageRunner {
   }
 
   @Override
+  public boolean acceptsCoverageProvider(@NotNull CoverageSupportProvider provider) {
+    return provider instanceof JavaCoverageSupportProvider;
+  }
+
+  @Override
   public boolean isCoverageByTestApplicable() {
     return true;
   }

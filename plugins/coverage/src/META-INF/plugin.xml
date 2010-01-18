@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
   <name>Coverage</name>
   <depends optional="true">TestNG-J</depends>
   <depends optional="true">JUnit</depends>
@@ -7,14 +7,14 @@
     It is also possible to generate standalone HTML reports for external use.
   </description>
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
-  <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.coverageRunner" interface="com.intellij.coverage.AbstractCoverageRunner"/>
-  </extensionPoints>
+
+  <xi:include href="/META-INF/coverage-impl-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <extensions defaultExtensionNs="com.intellij">
     <runConfigurationExtension implementation="com.intellij.execution.coverage.CoverageRunConfigurationExtension"/>
     <testActionProvider implementation="com.intellij.coverage.actions.TrackCoverageActionProvider"/>
     <!--<coverageRunner implementation="com.intellij.coverage.CoberturaCoverageRunner"/>-->
     <coverageRunner implementation="com.intellij.coverage.IDEACoverageRunner"/>
+    <coverageSupport implementation="com.intellij.coverage.JavaCoverageSupportProvider"/>
     <projectViewNodeDecorator implementation="com.intellij.coverage.CoverageProjectViewNodeDecorator"/>
     <junitListener implementation="com.intellij.coverage.listeners.IDEAJUnitCoverageListener"/>
 
