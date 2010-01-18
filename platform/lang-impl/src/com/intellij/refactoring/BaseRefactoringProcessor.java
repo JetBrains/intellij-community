@@ -465,11 +465,21 @@ public abstract class BaseRefactoringProcessor {
   }
 
   public static class ConflictsInTestsException extends RuntimeException {
-      private final Collection<? extends String> messages;
+    private final Collection<? extends String> messages;
 
-      public ConflictsInTestsException(Collection<? extends String> messages) {
-        this.messages = messages;
-      }
+    private static boolean myTestIgnore = false;
+
+    public ConflictsInTestsException(Collection<? extends String> messages) {
+      this.messages = messages;
+    }
+
+    public static void setTestIgnore(boolean myIgnore) {
+      myTestIgnore = myIgnore;
+    }
+
+    public static boolean isTestIgnore() {
+      return myTestIgnore;
+    }
 
     public Collection<String> getMessages() {
         List<String> result = new ArrayList<String>(messages);

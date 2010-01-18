@@ -440,8 +440,8 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
           }
 
           @Override public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
             correctMethodCall(expression, true);
+            super.visitMethodCallExpression(expression);
           }
         });
       }

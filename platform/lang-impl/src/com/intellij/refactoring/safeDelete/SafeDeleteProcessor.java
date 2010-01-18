@@ -171,7 +171,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
     if (!conflicts.isEmpty()) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
-        throw new ConflictsInTestsException(conflicts);
+        if (!ConflictsInTestsException.isTestIgnore()) throw new ConflictsInTestsException(conflicts);
       }
       else {
         UnsafeUsagesDialog dialog = new UnsafeUsagesDialog(ArrayUtil.toStringArray(conflicts), myProject);
