@@ -5,6 +5,7 @@ import com.intellij.util.Processor;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyParameterList;
+import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.Nullable;
@@ -16,6 +17,10 @@ import java.util.List;
  * @author yole
  */
 public class PyJavaTypeProvider implements PyTypeProvider {
+  public PyType getReferenceExpressionType(PyReferenceExpression referenceExpression) {
+    return null;
+  }
+
   @Nullable
   public PyType getReferenceType(final PsiElement referenceTarget) {
     if (referenceTarget instanceof PsiClass) {
