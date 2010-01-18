@@ -232,9 +232,8 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
       final List<EvaluatedTextRange> characterRanges = myHost.getStringValueCharacterRanges();
       for (EvaluatedTextRange range : characterRanges) {
         final TextRange xsect = rangeInsideHost.intersection(range.getRange());
-        if (xsect != null) {
-          outChars.append(range.getValue().substring(xsect.getStartOffset() - rangeInsideHost.getStartOffset(),
-                                                     xsect.getEndOffset() - rangeInsideHost.getStartOffset()));
+        if (xsect != null && xsect.getLength() > 0) {
+          outChars.append(range.getValue());
         }
       }
       return true;
