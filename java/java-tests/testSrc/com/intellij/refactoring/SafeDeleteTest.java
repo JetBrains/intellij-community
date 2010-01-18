@@ -1,14 +1,14 @@
 package com.intellij.refactoring;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
-import com.intellij.JavaTestUtil;
+import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -59,6 +59,17 @@ public class SafeDeleteTest extends MultiFileTestCase {
   public void testEnumConstructorParameter() throws Exception {
     myDoCompare = false;
     doTest("UserFlags");
+  }
+
+  public void testRemoveOverridersInspiteOfUnsafeUsages() throws Exception {
+    myDoCompare = false;
+    try {
+      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(true);
+      doTest("A");
+    }
+    finally {
+      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(false);
+    }
   }
 
   private void doTest(@NonNls final String qClassName) throws Exception {
