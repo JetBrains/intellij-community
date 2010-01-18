@@ -269,6 +269,9 @@ public class PythonSdkType extends SdkType {
   public static void setupSdkPaths(SdkModificator sdkModificator, ProgressIndicator indicator) {
     String sdk_path = sdkModificator.getHomePath();
     String bin_path = getInterpreterPath(sdk_path);
+    if (bin_path == null){
+      return;
+    }
     @NonNls final String stubs_path =
         PathManager.getSystemPath() + File.separator + SKELETON_DIR_NAME + File.separator + sdk_path.hashCode() + File.separator;
     // we have a number of lib dirs, those listed in python's sys.path
