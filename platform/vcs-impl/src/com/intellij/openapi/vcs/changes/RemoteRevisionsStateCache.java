@@ -27,7 +27,7 @@ import java.io.File;
 import java.util.*;
 
 public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
-  private final static long DISCRETE = 600000;
+  private final static long DISCRETE = 3600000;
   // true -> changed
   private final Map<String, Pair<Boolean, VcsRoot>> myChanged;
 
@@ -35,6 +35,7 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
   private final Map<VcsRoot, Long> myTs;
   private final Object myLock;
   private ProjectLevelVcsManager myVcsManager;
+  private final VcsConfiguration myVcsConfiguration;
 
   RemoteRevisionsStateCache(final Project project) {
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
@@ -42,6 +43,7 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
     myQueries = new MultiMap<VcsRoot, String>();
     myTs = new HashMap<VcsRoot, Long>();
     myLock = new Object();
+    myVcsConfiguration = VcsConfiguration.getInstance(project);
   }
 
   public void invalidate(final Collection<String> paths) {
@@ -96,7 +98,8 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
 
   public boolean updateStep(final AtomicSectionsAware atomicSectionsAware) {
     final MultiMap<VcsRoot, String> dirty = new MultiMap<VcsRoot, String>();
-    final long oldPoint = System.currentTimeMillis() - DISCRETE;
+    final long oldPoint = System.currentTimeMillis() - (myVcsConfiguration.CHANGED_ON_SERVER_INTERVAL > 0 ?
+                                                        myVcsConfiguration.CHANGED_ON_SERVER_INTERVAL * 60000 : DISCRETE);
 
     synchronized (myLock) {
       for (VcsRoot root : myQueries.keySet()) {

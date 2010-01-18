@@ -120,9 +120,9 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
     result.add(myGeneralPanel);
     result.add(new VcsBackgroundOperationsConfigurationPanel(myProject));
     result.add(new IgnoredSettingsPanel(myProject));
-    if (!myProject.isDefault()) {
+    /*if (!myProject.isDefault()) {
       result.add(new CacheSettingsPanel(myProject));
-    }
+    }*/
     result.add(new IssueNavigationConfigurationPanel(myProject));
     result.add(new ChangelistConflictConfigurable(ChangeListManagerImpl.getInstanceImpl(myProject)));
     AbstractVcs[] vcses = ProjectLevelVcsManager.getInstance(myProject).getAllVcss();

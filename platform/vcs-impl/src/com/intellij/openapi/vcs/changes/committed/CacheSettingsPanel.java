@@ -35,14 +35,17 @@ public class CacheSettingsPanel implements Configurable {
   private JSpinner myDaysSpinner;
   private JLabel myCountLabel;
   private JLabel myDaysLabel;
-  private final CommittedChangesCache myCache;
+  private CommittedChangesCache myCache;
 
-  public CacheSettingsPanel(Project project) {
+  public CacheSettingsPanel() {
     myRefreshCheckbox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         updateControls();
       }
     });
+  }
+
+  public void initPanel(final Project project) {
     myCache = CommittedChangesCache.getInstance(project);
   }
 
@@ -111,5 +114,17 @@ public class CacheSettingsPanel implements Configurable {
   }
 
   public void disposeUIResources() {
+  }
+
+  public void setEnableCaching(final boolean value) {
+    myRefreshCheckbox.setSelected(value);
+  }
+
+  public void setEnabled(final boolean value) {
+    myRefreshCheckbox.setEnabled(value);
+  }
+
+  public boolean isCachingEnabled() {
+    return myRefreshCheckbox.isSelected();
   }
 }

@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +37,7 @@ import java.util.*;
 public class LazyRefreshingSelfQueue<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.LazyRefreshingSelfQueue");
 
-  private final long myUpdateInterval;
+  private final Getter<Long> myUpdateInterval;
   // head is old. tail is new
   private final LinkedList<Pair<Long, T>> myQueue;
   private final Set<T> myInProgress;
@@ -44,7 +45,7 @@ public class LazyRefreshingSelfQueue<T> {
   private final Consumer<T> myUpdater;
   private final Object myLock;
 
-  public LazyRefreshingSelfQueue(final long updateInterval, final Computable<Boolean> shouldUpdateOldChecker, final Consumer<T> updater) {
+  public LazyRefreshingSelfQueue(final Getter<Long> updateInterval, final Computable<Boolean> shouldUpdateOldChecker, final Consumer<T> updater) {
     myUpdateInterval = updateInterval;
     myShouldUpdateOldChecker = shouldUpdateOldChecker;
     myUpdater = updater;
@@ -83,7 +84,7 @@ public class LazyRefreshingSelfQueue<T> {
   public void updateStep(@NotNull final ProgressIndicator pi) {
     final List<T> dirty = new LinkedList<T>();
 
-    final long startTime = System.currentTimeMillis() - myUpdateInterval;
+    final long startTime = System.currentTimeMillis() - myUpdateInterval.get();
     boolean onlyAbsolute = true;
     // check if we have some old items at all - if not, we would not check if repository latest revision had changed and will save time
     synchronized (myLock) {
