@@ -84,7 +84,7 @@ public class ArtifactsModelTest extends ArtifactsTestCase {
 
     modifiable.setOutputPath("/aaa");
     modifiable.setName("qqq");
-    assertNull(artifact.getOutputPath());
+    assertEquals(getProject().getBaseDir().getPath() + "/out/artifacts/xxx", artifact.getOutputPath());
     assertEquals("xxx", artifact.getName());
 
     assertSame(modifiable, model.getOrCreateModifiableArtifact(artifact));
