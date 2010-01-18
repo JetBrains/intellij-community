@@ -16,8 +16,8 @@
 
 package com.intellij.execution.configurations.coverage;
 
+import com.intellij.coverage.AbstractCoverageRunner;
 import com.intellij.coverage.BaseCoverageSuite;
-import com.intellij.coverage.CoverageRunner;
 import com.intellij.coverage.IDEACoverageRunner;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.JavaParameters;
@@ -68,7 +68,7 @@ public class CoverageEnabledConfiguration implements JDOMExternalizable{
   @NonNls private static final String TRACK_TEST_FOLDERS = "track_test_folders";
 
   @NonNls private String myCoverageFilePath;
-  private CoverageRunner myCoverageRunner;
+  private AbstractCoverageRunner myCoverageRunner;
   private boolean mySampling = false;
   private boolean myTrackTestFolders = false;
   private final Project myProject;
@@ -127,7 +127,7 @@ public class CoverageEnabledConfiguration implements JDOMExternalizable{
     }
     myRunnerId = element.getAttributeValue(COVERAGE_RUNNER);
     myCoverageRunner = null;
-    for (CoverageRunner coverageRunner : Extensions.getExtensions(CoverageRunner.EP_NAME)) {
+    for (AbstractCoverageRunner coverageRunner : Extensions.getExtensions(AbstractCoverageRunner.EP_NAME)) {
       if (Comparing.strEqual(coverageRunner.getId(), myRunnerId)) {
         myCoverageRunner = coverageRunner;
         break;
@@ -158,11 +158,11 @@ public class CoverageEnabledConfiguration implements JDOMExternalizable{
     return null;
   }
 
-  public CoverageRunner getCoverageRunner() {
+  public AbstractCoverageRunner getCoverageRunner() {
     return myCoverageRunner;
   }
 
-  public void setCoverageRunner(final CoverageRunner coverageRunner) {
+  public void setCoverageRunner(final AbstractCoverageRunner coverageRunner) {
     myCoverageRunner = coverageRunner;
   }
 
@@ -228,8 +228,8 @@ public class CoverageEnabledConfiguration implements JDOMExternalizable{
     if (myCoverageFilePath == null || !isMergeWithPreviousResults()) {
       @NonNls final String coverageRootPath = PathManager.getSystemPath() + File.separator + "coverage";
       myCoverageFilePath =
-          coverageRootPath + File.separator + FileUtil.sanitizeFileName(myProject.getName()) + '$' + FileUtil.sanitizeFileName(myConfiguration.getName()) + "." +
-          (myCoverageRunner != null ? myCoverageRunner.getDataFileExtension() : CoverageRunner.getInstance(IDEACoverageRunner.class).getDataFileExtension());
+          coverageRootPath + File.separator + myProject.getName() + '$' + FileUtil.sanitizeFileName(myConfiguration.getName()) + "." +
+          (myCoverageRunner != null ? myCoverageRunner.getDataFileExtension() : AbstractCoverageRunner.getInstance(IDEACoverageRunner.class).getDataFileExtension());
       new File(coverageRootPath).mkdirs();
     }
     return myCoverageFilePath;

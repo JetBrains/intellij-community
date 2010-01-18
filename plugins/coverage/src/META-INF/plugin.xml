@@ -8,7 +8,7 @@
   </description>
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.coverageRunner" interface="com.intellij.coverage.CoverageRunner"/>
+    <extensionPoint qualifiedName="com.intellij.coverageRunner" interface="com.intellij.coverage.AbstractCoverageRunner"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <runConfigurationExtension implementation="com.intellij.execution.coverage.CoverageRunConfigurationExtension"/>

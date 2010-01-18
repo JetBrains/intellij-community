@@ -30,7 +30,7 @@ public class CoverageSuiteImpl extends CoverageSuite implements JDOMExternalizab
   private long myLastCoverageTimeStamp;
   private String mySuiteToMerge;
   private boolean myCoverageByTestEnabled;
-  private CoverageRunner myRunner;
+  private AbstractCoverageRunner myRunner;
 
   private static final Logger LOG = Logger.getInstance("com.intellij.coverage.CoverageSuite");
   private SoftReference<ProjectData> myCoverageData = new SoftReference<ProjectData>(null);
@@ -71,7 +71,7 @@ public class CoverageSuiteImpl extends CoverageSuite implements JDOMExternalizab
                            final boolean coverageByTestEnabled,
                            final boolean tracingEnabled,
                            final boolean trackTestFolders,
-                           final CoverageRunner coverageRunner) {
+                           final AbstractCoverageRunner coverageRunner) {
     myName = name;
     myCoverageDataFileProvider = coverageDataFileProvider;
     myFilters = filters;
@@ -80,7 +80,7 @@ public class CoverageSuiteImpl extends CoverageSuite implements JDOMExternalizab
     myCoverageByTestEnabled = coverageByTestEnabled;
     myTracingEnabled = tracingEnabled;
     myTrackTestFolders = trackTestFolders;
-    myRunner = coverageRunner != null ? coverageRunner : CoverageRunner.getInstance(IDEACoverageRunner.class);
+    myRunner = coverageRunner != null ? coverageRunner : AbstractCoverageRunner.getInstance(IDEACoverageRunner.class);
   }
 
   public boolean isTrackTestFolders() {
@@ -179,14 +179,14 @@ public class CoverageSuiteImpl extends CoverageSuite implements JDOMExternalizab
     mySuiteToMerge = element.getAttributeValue(MERGE_SUITE);
     final String runner = element.getAttributeValue(COVERAGE_RUNNER);
     if (runner != null) {
-      for (CoverageRunner coverageRunner : Extensions.getExtensions(CoverageRunner.EP_NAME)) {
+      for (AbstractCoverageRunner coverageRunner : Extensions.getExtensions(AbstractCoverageRunner.EP_NAME)) {
         if (Comparing.strEqual(coverageRunner.getId(), runner)) {
           myRunner = coverageRunner;
           break;
         }
       }
     } else {
-      myRunner = CoverageRunner.getInstance(IDEACoverageRunner.class); //default
+      myRunner = AbstractCoverageRunner.getInstance(IDEACoverageRunner.class); //default
     }
     final String collectedLineInfo = element.getAttributeValue(COVERAGE_BY_TEST_ENABLED_ATTRIBUTE_NAME);
     myCoverageByTestEnabled = collectedLineInfo != null && Boolean.valueOf(collectedLineInfo).booleanValue();
@@ -297,7 +297,7 @@ public class CoverageSuiteImpl extends CoverageSuite implements JDOMExternalizab
     return myRunner.isCoverageByTestApplicable();
   }
 
-  public CoverageRunner getRunner() {
+  public AbstractCoverageRunner getRunner() {
     return myRunner;
   }
 

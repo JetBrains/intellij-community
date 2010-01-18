@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NonNls;
 import javax.swing.*;
 import java.io.File;
 
-public class CoberturaCoverageRunner extends CoverageRunner {
+public class CoberturaCoverageRunner extends AbstractCoverageRunner {
 
   public ProjectData loadCoverageData(final File sessionDataFile) {
     return CoberturaLoaderUtil.load(sessionDataFile);

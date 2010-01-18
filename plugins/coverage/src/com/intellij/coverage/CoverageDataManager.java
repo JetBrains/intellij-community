@@ -73,7 +73,7 @@ public abstract class CoverageDataManager implements ProjectComponent, JDOMExter
                                                  CoverageFileProvider fileProvider,
                                                  String[] filters,
                                                  long lastCoverageTimeStamp,
-                                                 @Nullable String suiteToMergeWith, final CoverageRunner coverageRunner,
+                                                 @Nullable String suiteToMergeWith, final AbstractCoverageRunner coverageRunner,
                                                  final boolean collectLineInfo, final boolean tracingEnabled);
 
 

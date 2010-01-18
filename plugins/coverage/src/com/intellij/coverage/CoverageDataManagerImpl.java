@@ -118,7 +118,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
 
   public BaseCoverageSuite addCoverageSuite(final String name, final CoverageFileProvider fileProvider, final String[] filters, final long lastCoverageTimeStamp,
                                         @Nullable final String suiteToMergeWith,
-                                        final CoverageRunner coverageRunner,
+                                        final AbstractCoverageRunner coverageRunner,
                                         final boolean collectLineInfo,
                                         final boolean tracingEnabled) {
     CoverageSuiteImpl suite = new CoverageSuiteImpl(name, fileProvider, filters, lastCoverageTimeStamp, suiteToMergeWith, collectLineInfo, tracingEnabled, false, coverageRunner);

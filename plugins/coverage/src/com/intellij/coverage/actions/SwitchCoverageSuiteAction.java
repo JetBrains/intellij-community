@@ -92,7 +92,7 @@ public class SwitchCoverageSuiteAction extends AnAction {
             .getSourceProvider() : coverageFileProvider.getClass().getName();
         List<BaseCoverageSuite> coverageSuiteList = grouped.get(sourceProvider);
         if (coverageSuiteList == null) {
-          coverageSuiteList = new ArrayList<CoverageSuite>();
+          coverageSuiteList = new ArrayList<BaseCoverageSuite>();
           grouped.put(sourceProvider, coverageSuiteList);
         }
         coverageSuiteList.add(suite);
@@ -103,12 +103,12 @@ public class SwitchCoverageSuiteAction extends AnAction {
     for (String provider : grouped.keySet()) {
       final List<BaseCoverageSuite> toSort = grouped.get(provider);
       if (toSort.isEmpty()) continue;
-      Collections.sort(toSort, new Comparator<CoverageSuite>() {
+      Collections.sort(toSort, new Comparator<BaseCoverageSuite>() {
         public int compare(final BaseCoverageSuite s1, final BaseCoverageSuite s2) {
           return s1.getPresentableName().compareToIgnoreCase(s2.getPresentableName());
         }
       });
-      for (CoverageSuite suite : toSort) {
+      for (BaseCoverageSuite suite : toSort) {
         model.add(suite);
       }
       firstInGroup.add(toSort.get(0));

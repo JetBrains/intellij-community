@@ -38,7 +38,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 
-public class IDEACoverageRunner extends CoverageRunner {
+public class IDEACoverageRunner extends AbstractCoverageRunner {
   private static final Logger LOG = Logger.getInstance("#" + IDEACoverageRunner.class.getName());
 
   public ProjectData loadCoverageData(final File sessionDataFile) {
