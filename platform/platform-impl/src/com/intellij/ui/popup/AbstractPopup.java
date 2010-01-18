@@ -814,7 +814,13 @@ public class AbstractPopup implements JBPopup {
   }
 
   private IdeFocusManager getFocusManager() {
-    return IdeFocusManager.getInstance(myProject);
+    if (myProject != null) {
+      return IdeFocusManager.getInstance(myProject);
+    } else if (myOwner != null) {
+      return IdeFocusManager.findInstanceByComponent(myOwner);
+    } else {
+      return IdeFocusManager.findInstance();
+    }
   }
 
   private static JComponent getTargetComponent(Component aComponent) {
