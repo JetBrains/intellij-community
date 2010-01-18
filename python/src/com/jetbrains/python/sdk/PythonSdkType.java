@@ -190,9 +190,6 @@ public class PythonSdkType extends SdkType {
       if (m.matches()) {
         String py_name = m.group(1); // $1
         py_binary = new File("/usr/bin/"+py_name); // XXX broken logic! can't match the lib to the bin
-        if (py_binary.exists()) {
-          return py_binary;
-        }
       } else {
         py_binary = new File("/usr/bin/python"); // TODO: search in $PATH
       }
