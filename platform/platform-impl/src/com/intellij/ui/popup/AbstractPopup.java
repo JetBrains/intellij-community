@@ -458,9 +458,6 @@ public class AbstractPopup implements JBPopup {
   public void cancel(InputEvent e) {
     if (isDisposed()) return;
 
-    final Runnable finalRunnable = myFinalRunnable;
-    final IdeFocusManager focusManager = myOwner != null ? IdeFocusManager.findInstanceByComponent(myOwner) : IdeFocusManager.findInstance();
-
     if (myPopup != null) {
       if (!canClose()) {
         return;
@@ -501,14 +498,6 @@ public class AbstractPopup implements JBPopup {
     }
 
     Disposer.dispose(this, false);
-
-    if (finalRunnable != null) {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          focusManager.doWhenFocusSettlesDown(finalRunnable);
-        }
-      });
-    }
   }
 
 
@@ -918,6 +907,10 @@ public class AbstractPopup implements JBPopup {
 
     resetWindow();
 
+    if (myFinalRunnable != null) {
+      getFocusManager().doWhenFocusSettlesDown(myFinalRunnable);
+      myFinalRunnable = null;
+    }
   }
 
   private void resetWindow() {
