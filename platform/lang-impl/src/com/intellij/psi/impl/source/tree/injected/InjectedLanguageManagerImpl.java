@@ -210,9 +210,6 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
       }
     });
     return text.toString();
-    //String text = injectedNode.getUserData(UNESCAPED_TEXT);
-    //if (text != null) return text;
-    //return injectedNode.getText();
   }
 
   /**
