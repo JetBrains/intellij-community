@@ -49,6 +49,14 @@ public class MoveInstanceMethodTest extends LightCodeInsightTestCase {
     doTest(true, 0, VisibilityUtil.ESCALATE_VISIBILITY);
   }
 
+  public void testSameNames() throws Exception {
+    doTest(true, 0);
+  }
+  
+  public void testSameNamesRecursion() throws Exception {
+    doTest(true, 0);
+  }
+
   private void doTest(boolean isTargetParameter, final int targetIndex) throws Exception {
     doTest(isTargetParameter, targetIndex, null);
   }
