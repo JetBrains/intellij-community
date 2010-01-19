@@ -33,7 +33,7 @@ public class PySurroundWithTest extends PyLightFixtureTestCase {
         SurroundWithHandler.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile(), surrounder);
       }
     }.execute();
-    myFixture.checkResultByFile(baseName + "_after.py");
+    myFixture.checkResultByFile(baseName + "_after.py", true);
   }
 
   protected String getTestDataPath() {
