@@ -28,3 +28,29 @@ PyFile:KeywordOnlyArgument.py
     PyStatementList
       PyPassStatement
         PsiElement(Py:PASS_KEYWORD)('pass')
+  PsiWhiteSpace('\n')
+  PyFunction('keywordonly_sum')
+    PsiElement(Py:DEF_KEYWORD)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:IDENTIFIER)('keywordonly_sum')
+    PyParameterList
+      PsiElement(Py:LPAR)('(')
+      PySingleStarParameter
+        PsiElement(Py:MULT)('*')
+      PsiElement(Py:COMMA)(',')
+      PsiWhiteSpace(' ')
+      PyNamedParameter('k1')
+        PsiElement(Py:IDENTIFIER)('k1')
+        PsiElement(Py:EQ)('=')
+        PyNumericLiteralExpression
+          PsiElement(Py:INTEGER_LITERAL)('0')
+      PsiElement(Py:COMMA)(',')
+      PsiWhiteSpace(' ')
+      PyNamedParameter('k2')
+        PsiElement(Py:IDENTIFIER)('k2')
+      PsiElement(Py:RPAR)(')')
+    PsiElement(Py:COLON)(':')
+    PsiWhiteSpace(' ')
+    PyStatementList
+      PyPassStatement
+        PsiElement(Py:PASS_KEYWORD)('pass')        
