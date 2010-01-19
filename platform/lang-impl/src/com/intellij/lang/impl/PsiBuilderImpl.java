@@ -175,6 +175,16 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myComments = tokens;
   }
 
+  public @Nullable LighterASTNode getLatestDoneMarker() {
+    int index = myProduction.size() - 1;
+    while (index >= 0) {
+      ProductionMarker marker = myProduction.get(index);
+      if (marker instanceof DoneMarker) return ((DoneMarker)marker).myStart;
+      --index;
+    }
+    return null;
+  }
+
   private abstract static class Node implements LighterASTNode {
     public abstract int hc();
   }
