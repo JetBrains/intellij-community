@@ -11,7 +11,6 @@
   <xi:include href="/META-INF/coverage-impl-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <extensions defaultExtensionNs="com.intellij">
     <runConfigurationExtension implementation="com.intellij.execution.coverage.CoverageJavaRunConfigurationExtension"/>
-    <testActionProvider implementation="com.intellij.coverage.actions.TrackCoverageActionProvider"/>
     <!--<coverageRunner implementation="com.intellij.coverage.CoberturaCoverageRunner"/>-->
     <coverageRunner implementation="com.intellij.coverage.IDEACoverageRunner"/>
     <coverageSupport implementation="com.intellij.coverage.JavaCoverageSupportProvider" order = "last"/>
