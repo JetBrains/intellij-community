@@ -177,4 +177,8 @@ public interface PsiBuilder extends UserDataHolder {
 
   void enforceCommentTokens(TokenSet tokens);
 
+  /**
+   * @return latest left done node for context dependent parsing 
+   */
+  @Nullable LighterASTNode getLatestDoneMarker();
 }
