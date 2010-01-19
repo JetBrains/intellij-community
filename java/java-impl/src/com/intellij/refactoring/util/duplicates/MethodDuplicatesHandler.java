@@ -95,7 +95,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     final BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(RefactoringBundle.message("replace.method.duplicates.scope.chooser.title", REFACTORING_NAME),
                                                                 RefactoringBundle.message("replace.method.duplicates.scope.chooser.message"),
                                                                 project, scope, module != null ? module.getName() : null, false,
-                                                                AnalysisUIOptions.getInstance(project));
+                                                                AnalysisUIOptions.getInstance(project), element);
     dlg.show();
     if (dlg.isOK()) {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {

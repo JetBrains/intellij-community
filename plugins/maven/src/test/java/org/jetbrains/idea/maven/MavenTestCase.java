@@ -116,8 +116,8 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    tearDownFixtures();
     myProject = null;
+    tearDownFixtures();
     if (!FileUtil.delete(myDir)) {
       System.out.println("Cannot delete " + myDir);
       myDir.deleteOnExit();

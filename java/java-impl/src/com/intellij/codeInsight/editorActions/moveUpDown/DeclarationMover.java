@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.lang.ASTFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -24,7 +23,6 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -61,44 +59,6 @@ class DeclarationMover extends LineMover {
         myEnumToInsertSemicolonAfter = null;
       }
     }
-  }
-
-  @Override
-  public void afterMove(@NotNull final Editor editor, @NotNull final PsiFile file, @NotNull final MoveInfo info, final boolean down) {
-    super.afterMove(editor, file, info, down);
-
-    final int line1 = editor.offsetToLogicalPosition(info.range2.getStartOffset()).line;
-    final int line2 = editor.offsetToLogicalPosition(info.range2.getEndOffset()).line;
-    Document document = editor.getDocument();
-    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
-    documentManager.commitDocument(document);
-    PsiWhiteSpace whiteSpace1 = findWhitespaceNear(document.getLineStartOffset(line1), file, false);
-    PsiWhiteSpace whiteSpace2 = findWhitespaceNear(document.getLineStartOffset(line2), file, false);
-    PsiWhiteSpace whiteSpace = findWhitespaceNear(down ? info.range1.getStartOffset() : info.range1.getEndOffset(), file, false);
-    fixupWhiteSpace(whiteSpace1);
-    fixupWhiteSpace(whiteSpace2);
-
-    fixupWhiteSpace(whiteSpace);
-  }
-
-  private static PsiWhiteSpace findWhitespaceNear(final int offset, final PsiFile file, boolean lookRight) {
-    PsiElement element = file.findElementAt(offset);
-    if (element instanceof PsiWhiteSpace) {
-      return (PsiWhiteSpace)element;
-    }
-    if (element == null) return null;
-    element = lookRight ? element.getNextSibling() : element.getPrevSibling();
-    return element instanceof PsiWhiteSpace ? (PsiWhiteSpace)element : null;
-  }
-
-  private static void fixupWhiteSpace(final PsiWhiteSpace whitespace) {
-    if (whitespace == null) return;
-    PsiElement element1 = whitespace.getPrevSibling();
-    PsiElement element2 = whitespace.getNextSibling();
-    if (element2 == null || element1 == null) return;
-    String ws = CodeEditUtil.getStringWhiteSpaceBetweenTokens(whitespace.getNode(), element2.getNode(), element1.getContainingFile());
-
-    whitespace.getParent().getNode().replaceChild(whitespace.getNode(), ASTFactory.whitespace(ws));
   }
 
   @Override
