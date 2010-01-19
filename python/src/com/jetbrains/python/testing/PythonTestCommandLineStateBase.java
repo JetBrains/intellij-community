@@ -1,55 +1,43 @@
 package com.jetbrains.python.testing;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.Executor;
-import com.intellij.execution.DefaultExecutionResult;
-import com.intellij.execution.configurations.CommandLineState;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.filters.Filter;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
-import com.jetbrains.python.run.AbstractPythonRunConfiguration;
-import com.jetbrains.python.run.PythonTracebackFilter;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.run.AbstractPythonRunConfiguration;
+import com.jetbrains.python.run.PythonCommandLineState;
+import com.jetbrains.python.run.PythonTracebackFilter;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.Map;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author yole
  */
-public abstract class PythonTestCommandLineStateBase extends CommandLineState {
+public abstract class PythonTestCommandLineStateBase extends PythonCommandLineState {
   protected final AbstractPythonRunConfiguration myConfiguration;
 
   private static final String PYTHONUNBUFFERED = "PYTHONUNBUFFERED";
   private static final String PYTHONPATH = "PYTHONPATH";
 
   public PythonTestCommandLineStateBase(AbstractPythonRunConfiguration configuration, ExecutionEnvironment env) {
-    super(env);
+    super(configuration, env, Collections.<Filter>emptyList());
     myConfiguration = configuration;
-  }
-
-  @Override
-  public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
-    final ProcessHandler processHandler = startProcess();
-    final ConsoleView console = createAndAttachConsole(myConfiguration.getProject(), processHandler);
-
-    return new DefaultExecutionResult(console, processHandler, createActions(console, processHandler));
   }
 
   @NotNull
@@ -57,14 +45,6 @@ public abstract class PythonTestCommandLineStateBase extends CommandLineState {
     final ConsoleView consoleView = SMTestRunnerConnectionUtil.attachRunner(processHandler, this, myConfiguration, "PythonUnitTestRunner.Splitter.Proportion");
     consoleView.addMessageFilter(new PythonTracebackFilter(project, myConfiguration.getWorkingDirectory()));
     return consoleView;
-  }
-
-  protected OSProcessHandler startProcess() throws ExecutionException {
-    GeneralCommandLine commandLine = generateCommandLine();
-
-    final OSProcessHandler processHandler = new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString());
-    ProcessTerminatedListener.attach(processHandler);
-    return processHandler;
   }
 
   protected GeneralCommandLine generateCommandLine() {
@@ -107,10 +87,6 @@ public abstract class PythonTestCommandLineStateBase extends CommandLineState {
     cmd.setPassParentEnvs(myConfiguration.isPassParentEnvs());
 
     return cmd;
-  }
-
-  protected void setRunnerPath(GeneralCommandLine cmd) {
-    cmd.setExePath(myConfiguration.getInterpreterPath());
   }
 
   protected abstract void addTestRunnerParameters(GeneralCommandLine cmd);

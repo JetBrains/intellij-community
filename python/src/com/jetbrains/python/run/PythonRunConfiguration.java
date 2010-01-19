@@ -49,7 +49,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration imple
     List<Filter> filters = new ArrayList<Filter>();
     filters.add(new PythonTracebackFilter(getProject(), getWorkingDirectory()));
 
-    return new PythonCommandLineState(this, env, filters);
+    return new PythonScriptCommandLineState(this, env, filters);
   }
 
   public void checkConfiguration() throws RuntimeConfigurationException {
