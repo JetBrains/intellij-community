@@ -17,8 +17,11 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyContinueStatement;
 import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyLoopStatement;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -35,4 +38,9 @@ public class PyContinueStatementImpl extends PyElementImpl implements PyContinue
     @Override protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
         pyVisitor.visitPyContinueStatement(this);
     }
+
+  @Nullable
+  public PyLoopStatement getLoop() {
+    return PsiTreeUtil.getParentOfType(this, PyLoopStatement.class);
+  }
 }

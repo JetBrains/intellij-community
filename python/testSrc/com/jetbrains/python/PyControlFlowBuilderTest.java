@@ -20,23 +20,34 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
     return PythonTestUtil.getTestDataPath() + "/psi/controlflow/";
   }
 
-
-  public void testFile() throws Exception {
-    check("file.py", "file.txt");
-  }
-
-  private void check(final String inputFile, final String outputFile) throws Exception {
-    configureByFile(inputFile);
+  private void doTest() throws Exception {
+    final String testName = getTestName(false).toLowerCase();
+    configureByFile(testName + ".py");
     final StringBuffer buffer = new StringBuffer();
-    final ControlFlow flow = ((PyFile)myFile).getControlFlow();    
+    final ControlFlow flow = ((PyFile)myFile).getControlFlow();
     final Instruction[] instructions = flow.getInstructions();
     for (Instruction instruction : instructions) {
       buffer.append(instruction).append("\n");
     }
-    final String fullPath = getTestDataPath() + outputFile;
+    final String fullPath = getTestDataPath() + testName + ".txt";
     final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
     final String fileText = StringUtil.convertLineSeparators(VfsUtil.loadText(vFile), "\n");
     assertEquals(fileText.trim(), buffer.toString().trim());
   }
+  
+  public void testFile() throws Exception {
+    doTest();
+  }
+  
+  public void testIf() throws Exception {
+    doTest();
+  }
 
+  public void testFor() throws Exception {
+    doTest();
+  }
+
+  public void testWhile() throws Exception {
+    doTest();
+  }
 }
