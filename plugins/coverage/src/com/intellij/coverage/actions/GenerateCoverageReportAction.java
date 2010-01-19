@@ -7,7 +7,7 @@ package com.intellij.coverage.actions;
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
 import com.intellij.codeInspection.export.ExportToHTMLDialog;
 import com.intellij.coverage.CoverageDataManager;
-import com.intellij.coverage.CoverageSuiteImpl;
+import com.intellij.coverage.CoverageSuite;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -41,7 +41,7 @@ public class GenerateCoverageReportAction extends AnAction {
     final DataContext dataContext = e.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(project);
-    final CoverageSuiteImpl currentSuite = (CoverageSuiteImpl)coverageDataManager.getCurrentSuite();
+    final CoverageSuite currentSuite = coverageDataManager.getCurrentSuite();
 
     final ExportToHTMLDialog dialog = new ExportToHTMLDialog(project, true);
     dialog.setTitle("Generate coverage report for: \'" + currentSuite.getPresentableName() + "\'");
@@ -70,7 +70,7 @@ public class GenerateCoverageReportAction extends AnAction {
     if (project != null) {
       final Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectJdk();
       if (projectJdk != null) {
-        final CoverageSuiteImpl currentSuite = (CoverageSuiteImpl)CoverageDataManager.getInstance(project).getCurrentSuite();
+        final CoverageSuite currentSuite = CoverageDataManager.getInstance(project).getCurrentSuite();
         if (currentSuite != null && currentSuite.getRunner().isHTMLReportSupported()) {
           presentation.setEnabled(true);
         }
