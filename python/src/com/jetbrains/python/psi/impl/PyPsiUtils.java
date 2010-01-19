@@ -4,6 +4,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -19,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 public class PyPsiUtils {
   public static final Key<Pair<PsiElement, TextRange>> SELECTION_BREAKS_AST_NODE =
     new Key<Pair<PsiElement, TextRange>>("python.selection.breaks.ast.node");
+  private static final Logger LOG = Logger.getInstance(PyPsiUtils.class.getName());
 
   private PyPsiUtils() {
   }
@@ -70,6 +72,37 @@ public class PyPsiUtils {
     }
     else {
       oldExpression.replace(newExpression);
+    }
+  }
+
+  public static void addToEnd(@NotNull final PsiElement psiElement, @NotNull final PsiElement... newElements) {
+    final ASTNode psiNode = psiElement.getNode();
+    LOG.assertTrue(psiNode != null);
+    for (PsiElement newElement : newElements) {
+      //noinspection ConstantConditions
+      psiNode.addChild(newElement.getNode());
+    }
+  }
+
+  public static void addBeforeInParent(@NotNull final PsiElement anchor, @NotNull final PsiElement... newElements) {
+    final PsiElement psiParent = anchor.getParent();
+    LOG.assertTrue(psiParent != null);
+    final ASTNode parentNode = psiParent.getNode();
+    final ASTNode anchorNode = anchor.getNode();
+    LOG.assertTrue(parentNode != null);
+    LOG.assertTrue(anchorNode != null);
+    for (PsiElement newElement : newElements) {
+      //noinspection ConstantConditions
+      parentNode.addChild(newElement.getNode(), anchorNode);
+    }
+  }
+
+  public static void removeElements(@NotNull final PsiElement... elements) {
+    final ASTNode parentNode = elements[0].getParent().getNode();
+    LOG.assertTrue(parentNode != null);
+    for (PsiElement element : elements) {
+      //noinspection ConstantConditions
+      parentNode.removeChild(element.getNode());
     }
   }
 }

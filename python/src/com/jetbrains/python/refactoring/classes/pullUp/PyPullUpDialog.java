@@ -139,8 +139,9 @@ public class PyPullUpDialog extends UpDirectedMembersMovingDialog {
 
     public boolean isMemberEnabled(PyMemberInfo member) {
       PyClass currentSuperClass = getSuperClass();
-      return currentSuperClass == null ||
-             !myStorage.getDuplicatedMemberInfos(currentSuperClass).contains(member);
+      return (currentSuperClass == null ||
+             !myStorage.getDuplicatedMemberInfos(currentSuperClass).contains(member)) &&
+             member.getMember() != currentSuperClass;
     }
 
     public boolean isAbstractEnabled(PyMemberInfo member) {

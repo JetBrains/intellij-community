@@ -55,6 +55,9 @@ public class PyMemberInfoStorage extends AbstractMemberInfoStorage<PyElement, Py
     for (PyFunction function : aClass.getMethods()) {
       temp.add(new PyMemberInfo(function));
     }
+    for (PyClass pyClass : aClass.getSuperClasses()) {
+      temp.add(new PyMemberInfo(pyClass));
+    }
   }
 
   @Override

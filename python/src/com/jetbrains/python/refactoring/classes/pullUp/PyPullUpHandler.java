@@ -2,16 +2,16 @@ package com.jetbrains.python.refactoring.classes.pullUp;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.PsiNavigateUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.refactoring.classes.PyClassMembersRefactoringSupport;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringHandler;
@@ -23,9 +23,8 @@ import java.util.Collection;
 /**
  * @author: Dennis.Ushakov
  */
-public class PyPullUpHandler extends PyClassRefactoringHandler {
+public class PyPullUpHandler extends PyClassRefactoringHandler implements ElementsHandler {
   public static final String REFACTORING_NAME = PyBundle.message("refactoring.pull.up.dialog.title");
-  private static final Logger LOG = Logger.getInstance("com.jetbrains.python.refactoring.classes.pullUp");
 
   @Override
   protected void doRefactor(Project project, PsiElement element1, PsiElement element2, Editor editor, PsiFile file, DataContext dataContext) {
@@ -53,8 +52,8 @@ public class PyPullUpHandler extends PyClassRefactoringHandler {
     }
   }
 
-  private void pullUpWithHelper(PyClass clazz, Collection<PyMemberInfo> selectedMemberInfos, PyClass superClass) {
-
+  private static void pullUpWithHelper(PyClass clazz, Collection<PyMemberInfo> selectedMemberInfos, PyClass superClass) {
+    PsiNavigateUtil.navigate(PyPullUpHelper.pullUp(clazz, selectedMemberInfos, superClass));
   }
 
   @Override
@@ -65,5 +64,9 @@ public class PyPullUpHandler extends PyClassRefactoringHandler {
   @Override
   protected String getHelpId() {
     return "refactoring.pullMembersUp";
+  }
+
+  public boolean isEnabledOnElements(PsiElement[] elements) {
+    return elements.length == 1 && elements[0] instanceof PyClass;
   }
 }

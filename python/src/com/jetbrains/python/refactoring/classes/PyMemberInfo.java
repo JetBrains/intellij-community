@@ -2,6 +2,7 @@ package com.jetbrains.python.refactoring.classes;
 
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.refactoring.classes.ui.PyClassCellRenderer;
 
 /**
  * @author Dennis.Ushakov
@@ -21,6 +22,8 @@ public class PyMemberInfo extends MemberInfoBase<PyElement> {
           overrides = true;
         }
       }
+    } else if (member instanceof PyClass) {
+      displayName = PyClassCellRenderer.getClassText((PyClass)member);
     }
   }
 
@@ -36,5 +39,18 @@ public class PyMemberInfo extends MemberInfoBase<PyElement> {
     }
     builder.append(")");
     return builder.toString();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj instanceof PyMemberInfo) {
+      return getMember().equals(((PyMemberInfo)obj).getMember());
+    }
+    return false;
+  }
+
+  @Override
+  public int hashCode() {
+    return getMember().hashCode();
   }
 }

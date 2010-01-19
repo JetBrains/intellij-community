@@ -27,6 +27,14 @@ public class PullUpConflictsUtil {
         if (name == null) continue;
         final PyFunction superClassMethod = superClass.findMethodByName(name, false);
         isConflict = superClassMethod != null;
+      } else if (member instanceof PyClass) {
+        final PyClass clazz = (PyClass)member;
+        for (PyClass aClass : superClass.getSuperClasses()) {
+          if (aClass == clazz) {
+            conflictsList.putValue(superClass,
+                                   RefactoringUIUtil.getDescription(superClass, false) + " already extends " + RefactoringUIUtil.getDescription(clazz, false));
+          }
+        }
       }
 
       if (isConflict) {
