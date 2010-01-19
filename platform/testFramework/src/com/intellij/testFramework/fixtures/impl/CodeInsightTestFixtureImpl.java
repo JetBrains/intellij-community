@@ -749,17 +749,17 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     checkResultByFile(expectedFile, false);
   }
 
-  public void checkResultByFile(final String expectedFile, final boolean ignoreWhitespaces) throws Exception {
+  public void checkResultByFile(final String expectedFile, final boolean ignoreTrailingWhitespaces) throws Exception {
     assertInitialized();
     new WriteCommandAction.Simple(myProjectFixture.getProject()) {
 
       protected void run() throws Exception {
-        checkResultByFile(expectedFile, myFile, ignoreWhitespaces);
+        checkResultByFile(expectedFile, myFile, ignoreTrailingWhitespaces);
       }
     }.execute().throwException();
   }
 
-  public void checkResultByFile(final String filePath, final String expectedFile, final boolean ignoreWhitespaces) throws Exception {
+  public void checkResultByFile(final String filePath, final String expectedFile, final boolean ignoreTrailingWhitespaces) throws Exception {
     assertInitialized();
 
     new WriteCommandAction.Simple(myProjectFixture.getProject()) {
@@ -768,7 +768,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         final VirtualFile copy = findFileInTempDir(filePath.replace(File.separatorChar, '/'));
         final PsiFile psiFile = myPsiManager.findFile(copy);
         assert psiFile != null;
-        checkResultByFile(expectedFile, psiFile, ignoreWhitespaces);
+        checkResultByFile(expectedFile, psiFile, ignoreTrailingWhitespaces);
       }
     }.execute().throwException();
   }
