@@ -49,10 +49,10 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Bean>
   private final Project myProject;
   private final ContentManager myBackContentManager;
   private final ContentManager myForthContentManager;
-  private static final String BACKSLICE_ACTION_NAME = ActionManager.getInstance().getAction("SliceBackward").getTemplatePresentation().getText();
-  private static final String FORTHSLICE_ACTION_NAME = ActionManager.getInstance().getAction("SliceForward").getTemplatePresentation().getText();
   private volatile boolean myCanceled;
   private final Bean myStoredSettings = new Bean();
+  private static final String BACK_TOOLWINDOW_ID = "Analyze Dataflow to";
+  private static final String FORTH_TOOLWINDOW_ID = "Analyze Dataflow from";
 
   public static class Bean {
     public boolean includeTestSources = true; // to show in dialog
@@ -64,11 +64,11 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Bean>
 
   public SliceManager(@NotNull Project project, @NotNull ToolWindowManager toolWindowManager, final PsiManager psiManager) {
     myProject = project;
-    ToolWindow toolWindow = toolWindowManager.registerToolWindow(BACKSLICE_ACTION_NAME, true, ToolWindowAnchor.BOTTOM, project);
+    ToolWindow toolWindow = toolWindowManager.registerToolWindow(BACK_TOOLWINDOW_ID, true, ToolWindowAnchor.BOTTOM, project);
     myBackContentManager = toolWindow.getContentManager();
     new ContentManagerWatcher(toolWindow, myBackContentManager);
 
-    ToolWindow ftoolWindow = toolWindowManager.registerToolWindow(FORTHSLICE_ACTION_NAME, true, ToolWindowAnchor.BOTTOM, project);
+    ToolWindow ftoolWindow = toolWindowManager.registerToolWindow(FORTH_TOOLWINDOW_ID, true, ToolWindowAnchor.BOTTOM, project);
     myForthContentManager = ftoolWindow.getContentManager();
     new ContentManagerWatcher(ftoolWindow, myForthContentManager);
 
@@ -110,12 +110,10 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Bean>
   }
 
   public void slice(@NotNull PsiElement element, boolean dataFlowToThis) {
-    if (dataFlowToThis) {
-      doSlice(element, BACKSLICE_ACTION_NAME, true, myBackContentManager, BACKSLICE_ACTION_NAME);
-    }
-    else{
-      doSlice(element, FORTHSLICE_ACTION_NAME, false, myForthContentManager, FORTHSLICE_ACTION_NAME);
-    }
+    String dialogTitle = ActionManager.getInstance().getAction(dataFlowToThis ? "SliceBackward" : "SliceForward").getTemplatePresentation().getText();
+    doSlice(element, dialogTitle, dataFlowToThis,
+            dataFlowToThis ? myBackContentManager : myForthContentManager,
+            dataFlowToThis ? BACK_TOOLWINDOW_ID : FORTH_TOOLWINDOW_ID);
   }
 
   private void doSlice(@NotNull PsiElement element, @NotNull String dialogTitle, boolean dataFlowToThis, @NotNull final ContentManager contentManager,
