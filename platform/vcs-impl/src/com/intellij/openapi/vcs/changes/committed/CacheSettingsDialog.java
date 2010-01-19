@@ -19,6 +19,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsConfiguration;
 
 import javax.swing.*;
 
@@ -27,11 +28,14 @@ import javax.swing.*;
  */
 public class CacheSettingsDialog extends DialogWrapper {
   private final CacheSettingsPanel myPanel;
+  private final Project myProject;
 
   public CacheSettingsDialog(Project project) {
     super(project, false);
+    myProject = project;
     setTitle(VcsBundle.message("cache.settings.dialog.title"));
-    myPanel = new CacheSettingsPanel(project);
+    myPanel = new CacheSettingsPanel();
+    myPanel.initPanel(project);
     myPanel.reset();
     init();
   }
@@ -41,6 +45,9 @@ public class CacheSettingsDialog extends DialogWrapper {
 
   protected void doOKAction() {
     try {
+      if (myPanel.isCachingEnabled()) {
+        VcsConfiguration.getInstance(myProject).ENABLE_BACKGROUND_PROCESSES = true;
+      }
       myPanel.apply();
     }
     catch (ConfigurationException e) {

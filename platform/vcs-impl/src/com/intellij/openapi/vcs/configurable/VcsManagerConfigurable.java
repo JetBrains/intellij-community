@@ -23,10 +23,9 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.committed.CacheSettingsPanel;
-import com.intellij.openapi.vcs.changes.ui.IgnoredSettingsPanel;
-import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictConfigurable;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictConfigurable;
+import com.intellij.openapi.vcs.changes.ui.IgnoredSettingsPanel;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
@@ -120,9 +119,9 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
     result.add(myGeneralPanel);
     result.add(new VcsBackgroundOperationsConfigurationPanel(myProject));
     result.add(new IgnoredSettingsPanel(myProject));
-    if (!myProject.isDefault()) {
+    /*if (!myProject.isDefault()) {
       result.add(new CacheSettingsPanel(myProject));
-    }
+    }*/
     result.add(new IssueNavigationConfigurationPanel(myProject));
     result.add(new ChangelistConflictConfigurable(ChangeListManagerImpl.getInstanceImpl(myProject)));
     AbstractVcs[] vcses = ProjectLevelVcsManager.getInstance(myProject).getAllVcss();
