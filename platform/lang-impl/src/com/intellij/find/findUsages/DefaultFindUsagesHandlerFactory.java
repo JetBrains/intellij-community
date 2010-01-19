@@ -30,7 +30,7 @@ public final class DefaultFindUsagesHandlerFactory extends FindUsagesHandlerFact
     else if (!LanguageFindUsages.INSTANCE.forLanguage(element.getLanguage()).canFindUsagesFor(element)) {
       return false;
     }
-    return true;
+    return element.isValid();
   }
 
   public FindUsagesHandler createFindUsagesHandler(final PsiElement element, final boolean forHighlightUsages) {
