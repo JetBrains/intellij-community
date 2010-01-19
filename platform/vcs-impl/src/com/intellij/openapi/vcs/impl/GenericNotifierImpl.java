@@ -65,6 +65,12 @@ public abstract class GenericNotifierImpl<T, Key> {
     }
   }
 
+  protected boolean getStateFor(final Key key) {
+    synchronized (myLock) {
+      return myState.containsKey(key);
+    }
+  }
+
   public void clear() {
     final List<MyNotification<T>> notifications;
     synchronized (myLock) {

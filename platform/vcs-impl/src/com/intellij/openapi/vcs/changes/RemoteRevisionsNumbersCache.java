@@ -90,7 +90,14 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
     final List<LazyRefreshingSelfQueue<String>> list = new ArrayList<LazyRefreshingSelfQueue<String>>();
     mySomethingChanged = false;
     synchronized (myLock) {
-      list.addAll(myRefreshingQueues.values());
+      final Set<VcsRoot> keys = myRefreshingQueues.keySet();
+      for (VcsRoot key : keys) {
+        final boolean backgroundOperationsAllowed = key.vcs.isVcsBackgroundOperationsAllowed(key.path);
+        LOG.debug("backgroundOperationsAllowed: " + backgroundOperationsAllowed + " for " + key.vcs.getName() + ", " + key.path.getPath());
+        if (backgroundOperationsAllowed) {
+          list.add(myRefreshingQueues.get(key));
+        }
+      }
     }
     LOG.debug("queues refresh started, queues: " + list.size());
     final ProgressIndicator pi = ControlledAlarmFactory.createProgressIndicator(atomicSectionsAware);

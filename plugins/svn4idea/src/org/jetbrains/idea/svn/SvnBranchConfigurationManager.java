@@ -39,7 +39,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.branchConfig.*;
 import org.jetbrains.idea.svn.integrate.SvnBranchItem;
-import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.File;
 import java.util.*;
@@ -146,12 +147,7 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
       application.executeOnPooledThread(new Runnable() {
         public void run() {
           final SvnVcs vcs = SvnVcs.getInstance(myProject);
-          final RootsToWorkingCopies rootsToWorkingCopies = vcs.getRootsToWorkingCopies();
-          final WorkingCopy wcRoot = rootsToWorkingCopies.getWcRoot(myRoot);
-          if (wcRoot == null) return;
-
-          final boolean validated = SvnAuthenticationNotifier.passiveValidation(myProject, wcRoot.getUrl(), false, null, null);
-          if (! validated) return;
+          if (! vcs.isVcsBackgroundOperationsAllowed(myRoot)) return;
 
           for (String newBranchUrl : next.getBranchUrls()) {
             if (myAll || (! oldUrls.contains(newBranchUrl))) {

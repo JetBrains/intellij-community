@@ -19,7 +19,10 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.ide.FrameStateListener;
 import com.intellij.ide.FrameStateManager;
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -48,6 +51,7 @@ import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.SoftHashMap;
 import com.intellij.util.messages.MessageBus;
@@ -953,5 +957,10 @@ public class SvnVcs extends AbstractVcs {
 
   public static VcsKey getKey() {
     return ourKey;
+  }
+
+  @Override
+  public boolean isVcsBackgroundOperationsAllowed(VirtualFile root) {
+    return ThreeState.YES.equals(myAuthNotifier.isAuthenticatedFor(root));
   }
 }

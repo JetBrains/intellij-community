@@ -132,6 +132,9 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
     final Map<String, Pair<Boolean, VcsRoot>> results = new HashMap<String, Pair<Boolean, VcsRoot>>();
     for (VcsRoot vcsRoot : dirty.keySet()) {
       atomicSectionsAware.checkShouldExit();
+      // todo - actually it means nothing since the only known VCS to use this scheme is Git and now it always allow
+      // todo - background operations. when it changes, develop more flexible behavior here
+      if (! vcsRoot.vcs.isVcsBackgroundOperationsAllowed(vcsRoot.path)) continue;
       final TreeDiffProvider provider = vcsRoot.vcs.getTreeDiffProvider();
       if (provider == null) continue;
 

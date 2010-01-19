@@ -458,5 +458,13 @@ public abstract class AbstractVcs extends StartedActivated {
   public List<CommitExecutor> getCommitExecutors() {
     return Collections.emptyList();
   }
+
+  /**
+   * Can be temporarily forbidden, for instance, when authorization credentials are wrong - to
+   * don't repeat wrong credentials passing (in some cases it can produce user's account blocking)
+   */
+  public boolean isVcsBackgroundOperationsAllowed(final VirtualFile root) {
+    return true;
+  }
 }
 
