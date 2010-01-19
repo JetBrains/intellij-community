@@ -193,4 +193,8 @@ public class PyElementVisitor extends PsiElementVisitor {
   public void visitPyNumericLiteralExpression(final PyNumericLiteralExpression node) {
     visitPyElement(node);
   }
+
+  public void visitPyPrintStatement(final PyPrintStatement statement) {
+    visitPyStatement(statement);
+  }
 }
