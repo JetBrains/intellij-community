@@ -14,8 +14,7 @@ import com.jetbrains.python.psi.PyStringLiteralExpression;
  */
 public class PyStringLiteralTest extends PyLightFixtureTestCase {
   public void testLiteralEscaper() {
-    final PsiFile file = PsiFileFactory.getInstance(myFixture.getProject()).createFileFromText("test.py", "a = '\\nfoo");
-    PyStringLiteralExpression expr = PsiTreeUtil.getParentOfType(file.findElementAt(5), PyStringLiteralExpression.class);
+    PyStringLiteralExpression expr = createLiteralFromText("'\\nfoo'");
     assertNotNull(expr);
     final LiteralTextEscaper<? extends PsiLanguageInjectionHost> escaper = expr.createLiteralTextEscaper();
     StringBuilder builder = new StringBuilder();
@@ -26,10 +25,20 @@ public class PyStringLiteralTest extends PyLightFixtureTestCase {
     escaper.decode(new TextRange(1, 3), builder);
     assertEquals("\n", builder.toString());
 
-    assertEquals(1, escaper.getOffsetInHost(0, new TextRange(0, 5)));
-    assertEquals(3, escaper.getOffsetInHost(1, new TextRange(0, 5)));
-    assertEquals(4, escaper.getOffsetInHost(2, new TextRange(0, 5)));
-    assertEquals(0, escaper.getOffsetInHost(0, new TextRange(1, 4)));
+    assertEquals(1, escaper.getOffsetInHost(0, new TextRange(1, 4)));
+    assertEquals(3, escaper.getOffsetInHost(1, new TextRange(1, 4)));
+  }
 
+  private PyStringLiteralExpression createLiteralFromText(final String text) {
+    final PsiFile file = PsiFileFactory.getInstance(myFixture.getProject()).createFileFromText("test.py", "a = " + text);
+    final PyStringLiteralExpression expr = PsiTreeUtil.getParentOfType(file.findElementAt(5), PyStringLiteralExpression.class);
+    assert expr != null;
+    return expr;
+  }
+
+  public void testStringValue() {
+    assertEquals("foo", createLiteralFromText("\"\"\"foo\"\"\"").getStringValue());
+    assertEquals("foo", createLiteralFromText("u\"foo\"").getStringValue());
+    assertEquals("foo", createLiteralFromText("b\"foo\"").getStringValue());
   }
 }
