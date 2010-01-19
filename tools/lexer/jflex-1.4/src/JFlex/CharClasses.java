@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * JFlex 1.4.1                                                             *
- * Copyright (C) 1998-2004  Gerwin Klein <lsf@jflex.de>                    *
+ * JFlex 1.4.3                                                             *
+ * Copyright (C) 1998-2009  Gerwin Klein <lsf@jflex.de>                    *
  * All rights reserved.                                                    *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify    *
@@ -20,13 +20,13 @@
 
 package JFlex;
 
-import java.util.Vector;
+import java.util.*;
 
 
 /**
  *
  * @author Gerwin Klein
- * @version JFlex 1.4.1, $Revision: 2.6 $, $Date: 2004/11/06 23:03:32 $
+ * @version $Revision: 1.4.3 $, $Date: 2009/12/21 15:58:48 $
  */
 public class CharClasses {
 
@@ -73,7 +73,7 @@ public class CharClasses {
   
 
   /**
-   * Sets the larges Unicode value of the current input character set.
+   * Sets the largest Unicode value of the current input character set.
    *
    * @param charCode   the largest character code, used for the scanner 
    *                   (i.e. %7bit, %8bit, %16bit etc.)
@@ -225,7 +225,7 @@ public class CharClasses {
    *
    * @param v   a Vector of Interval objects. 
    *            This Vector represents a set of characters. The set of characters is
-   *            the union of all intervalls in the Vector.
+   *            the union of all intervals in the Vector.
    *    
    * @param caseless  if true upper/lower/title case are considered equivalent  
    */
@@ -245,7 +245,7 @@ public class CharClasses {
    * 
    * @param v   a Vector of Interval objects. 
    *            This Vector represents a set of characters. The set of characters is
-   *            the union of all intervalls in the Vector.
+   *            the union of all intervals in the Vector.
    * 
    * @param caseless  if true upper/lower/title case are considered equivalent  
    */
@@ -299,7 +299,7 @@ public class CharClasses {
    * Returns an array that contains the character class codes of all characters
    * in the specified set of input characters.
    * 
-   * @param intervallVec   a Vector of Intervalls, the set of characters to get
+   * @param intervallVec   a Vector of Intervals, the set of characters to get
    *                       the class codes for
    *
    * @return an array with the class codes for intervallVec
@@ -313,7 +313,7 @@ public class CharClasses {
    * Returns an array that contains the character class codes of all characters
    * that are <strong>not</strong> in the specified set of input characters.
    * 
-   * @param intervallVec   a Vector of Intervalls, the complement of the
+   * @param intervallVec   a Vector of Intervals, the complement of the
    *                       set of characters to get the class codes for
    *
    * @return an array with the class codes for the complement of intervallVec
@@ -362,7 +362,7 @@ public class CharClasses {
    * Each CharClassInterval contains the number of the
    * char class it belongs to.
    */
-  public CharClassInterval [] getIntervalls() {
+  public CharClassInterval [] getIntervals() {
     int i, c;
     int size = classes.size();
     int numIntervalls = 0;   

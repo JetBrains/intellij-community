@@ -233,6 +233,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
       for (PsiReference reference : docRefs) {
         reference.bindToElement(method);
       }
+      VisibilityUtil.fixVisibility(usages, method, myNewVisibility);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -439,8 +440,8 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
           }
 
           @Override public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
             correctMethodCall(expression, true);
+            super.visitMethodCallExpression(expression);
           }
         });
       }

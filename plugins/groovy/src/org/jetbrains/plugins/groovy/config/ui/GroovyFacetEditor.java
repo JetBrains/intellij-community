@@ -26,8 +26,9 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContaine
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +37,6 @@ import org.jetbrains.plugins.groovy.config.LibraryManager;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -65,7 +65,6 @@ public class GroovyFacetEditor {
   private JComboBox myComboBox;
   private JRadioButton myExistingSdk;
   private JRadioButton myNewSdk;
-  private AbstractGroovyLibraryManager myChosenManager;
   private final Class<? extends LibraryManager> myAcceptableManager;
 
   public GroovyFacetEditor(@Nullable Project project) {
@@ -164,7 +163,15 @@ public class GroovyFacetEditor {
   @Nullable
   public AbstractGroovyLibraryManager getChosenManager() {
     if (addNewSdk()) {
-      return myChosenManager;
+      final String path = getNewSdkPath();
+      if (path != null) {
+        final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(path));
+        if (file != null && file.isDirectory()) {
+          return findManager(file);
+        }
+      }
+
+      return null;
     }
     final Object selectedItem = myComboBox.getSelectedItem();
     if (selectedItem != null && selectedItem instanceof Pair) {
@@ -178,13 +185,6 @@ public class GroovyFacetEditor {
   }
 
   private void configureSdkPathField(@Nullable final Project project) {
-    mySdkPath.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
-      @Override
-      protected void textChanged(DocumentEvent e) {
-        myChosenManager = null;
-      }
-    });
-
     mySdkPath.getButton().addActionListener(new ActionListener() {
 
       public void actionPerformed(final ActionEvent e) {
@@ -202,7 +202,6 @@ public class GroovyFacetEditor {
         if (files.length > 0) {
           final VirtualFile dir = files[0];
           mySdkPath.setText(FileUtil.toSystemDependentName(dir.getPath()));
-          myChosenManager = findManager(dir);
         }
       }
     });
@@ -211,11 +210,22 @@ public class GroovyFacetEditor {
 
   @Nullable
   private static AbstractGroovyLibraryManager findManager(VirtualFile dir) {
-    for (AbstractGroovyLibraryManager manager : AbstractGroovyLibraryManager.EP_NAME.getExtensions()) {
+    if (GroovyUtils.getFilesInDirectoryByPattern(dir.getPath() + "/lib", "groovy.*\\.jar").length == 0) {
+      return null;
+    }
+
+    final String name = dir.getName();
+
+    final AbstractGroovyLibraryManager[] managers = AbstractGroovyLibraryManager.EP_NAME.getExtensions();
+    for (final AbstractGroovyLibraryManager manager : managers) {
+      if (StringUtil.startsWithIgnoreCase(name, manager.getLibraryPrefix())) {
+        return manager;
+      }
+    }
+
+    for (final AbstractGroovyLibraryManager manager : managers) {
       if (manager.isSDKHome(dir)) {
-        if (GroovyUtils.getFilesInDirectoryByPattern(dir.getPath() + "/lib", "groovy.*\\.jar").length > 0) {
-          return manager;
-        }
+        return manager;
       }
     }
     return null;

@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * jflex 1.4                                                               *
- * Copyright (C) 1998-2004  Gerwin Klein <lsf@jflex.de>                    *
+ * Copyright (C) 1998-2009  Gerwin Klein <lsf@jflex.de>                    *
  * All rights reserved.                                                    *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify    *
@@ -33,7 +33,7 @@ package JFlex;
  * <code>p.emitUnpack();</code> 
  * 
  * @author Gerwin Klein
- * @version $Revision: 1.6 $, $Date: 2004/04/12 10:07:47 $
+ * @version $Revision$, $Date$
  */
 public abstract class PackEmitter {
 
@@ -209,7 +209,7 @@ public abstract class PackEmitter {
   private int UTF8Length(char value) {
     // if (value < 0 || value > 0xFFFF) throw new Error("not a char value ("+value+")");
 
-    // see JVM spec §4.4.7, p 111
+    // see JVM spec section 4.4.7, p 111
     if (value == 0) return 2;
     if (value <= 0x7F) return 1;
 

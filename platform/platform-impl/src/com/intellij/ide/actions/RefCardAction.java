@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NonNls;
@@ -38,9 +39,11 @@ public class RefCardAction extends AnAction implements DumbAware {
       BrowserUtil.launchBrowser(url);
     }
     else {
-      BrowserUtil.launchBrowser(SystemInfo.isMac
-                                ? "http://www.jetbrains.com/idea/docs/IntelliJIDEA8_ReferenceCard_Mac.pdf"
-                                : "http://www.jetbrains.com/idea/docs/IntelliJIDEA8_ReferenceCard.pdf");
+      final ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
+      String webUrl = SystemInfo.isMac ? appInfo.getMacKeymapUrl() : appInfo.getWinKeymapUrl();
+      if (webUrl != null) {
+        BrowserUtil.launchBrowser(webUrl);
+      }
     }
   }
 

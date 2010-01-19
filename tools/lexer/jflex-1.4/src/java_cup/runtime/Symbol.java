@@ -18,10 +18,22 @@ package java_cup.runtime;
   value:  is the lexical value of type Object
   left :  is the left position in the original input file
   right:  is the right position in the original input file
+  xleft:  is the left position Object in the original input file
+  xright:  is the left position Object in the original input file
 ******************************************************************/
 
 public class Symbol {
 
+//  TUM 20060327: Added new Constructor to provide more flexible way
+//   for location handling
+/*******************************
+ *******************************/
+    public Symbol(int id, Symbol left, Symbol right, Object o){
+        this(id,left.left,right.right,o);
+    }
+    public Symbol(int id, Symbol left, Symbol right){
+        this(id,left.left,right.right);
+    }
 /*******************************
   Constructor for l,r values
  *******************************/
@@ -57,7 +69,6 @@ public class Symbol {
     this(sym_num, -1);
     left = -1;
     right = -1;
-    value = null;
   }
 
 /***********************************

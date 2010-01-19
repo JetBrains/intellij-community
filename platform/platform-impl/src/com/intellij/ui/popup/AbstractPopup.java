@@ -140,6 +140,7 @@ public class AbstractPopup implements JBPopup {
   };
 
   private JTextField mySpeedSearchPatternField;
+  private boolean myNativePopup;
 
 
   AbstractPopup() {
@@ -612,7 +613,9 @@ public class AbstractPopup implements JBPopup {
 
     myRequestorComponent = owner;
 
-    myPopup = getFactory(myForcedHeavyweight || myResizable).getPopup(myOwner, myContent, targetBounds.x, targetBounds.y);
+    PopupComponent.Factory factory = getFactory(myForcedHeavyweight || myResizable);
+    myNativePopup = factory.isNativePopup();
+    myPopup = factory.getPopup(myOwner, myContent, targetBounds.x, targetBounds.y);
 
     if (myResizable) {
       final JRootPane root = myContent.getRootPane();
@@ -814,7 +817,13 @@ public class AbstractPopup implements JBPopup {
   }
 
   private IdeFocusManager getFocusManager() {
-    return myProject == null ? null : IdeFocusManager.getInstance(myProject);
+    if (myProject != null) {
+      return IdeFocusManager.getInstance(myProject);
+    } else if (myOwner != null) {
+      return IdeFocusManager.findInstanceByComponent(myOwner);
+    } else {
+      return IdeFocusManager.findInstance();
+    }
   }
 
   private static JComponent getTargetComponent(Component aComponent) {
@@ -908,13 +917,7 @@ public class AbstractPopup implements JBPopup {
     resetWindow();
 
     if (myFinalRunnable != null) {
-      IdeFocusManager focusManager = getFocusManager();
-      if (focusManager != null) {
-        focusManager.doWhenFocusSettlesDown(myFinalRunnable);
-      }
-      else {
-        myFinalRunnable.run();
-      }
+      getFocusManager().doWhenFocusSettlesDown(myFinalRunnable);
       myFinalRunnable = null;
     }
   }
@@ -1007,7 +1010,7 @@ public class AbstractPopup implements JBPopup {
         ((Graphics2D)capture.getGraphics()).drawImage(shadow, null, null);
       }
       catch (Exception e) {
-        e.printStackTrace();
+        LOG.info(e);
       }
       if (capture != null) g.drawImage(capture, 0, 0, null);
     }
@@ -1103,6 +1106,10 @@ public class AbstractPopup implements JBPopup {
 
   public boolean isPersistent() {
     return !myCancelOnClickOutside && !myCancelOnWindow;
+  }
+
+  public boolean isNativePopup() {
+    return myNativePopup;
   }
 
   public void setUiVisible(final boolean visible) {

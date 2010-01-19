@@ -198,8 +198,12 @@ public class ArtifactUtil {
   public static String getDefaultArtifactOutputPath(@NotNull String artifactName, final @NotNull Project project) {
     final CompilerProjectExtension extension = CompilerProjectExtension.getInstance(project);
     if (extension == null) return null;
-    final String outputUrl = extension.getCompilerOutputUrl();
-    if (outputUrl == null) return null;
+    String outputUrl = extension.getCompilerOutputUrl();
+    if (outputUrl == null || outputUrl.length() == 0) {
+      final VirtualFile baseDir = project.getBaseDir();
+      if (baseDir == null) return null;
+      outputUrl = baseDir.getUrl() + "/out";
+    }
     return VfsUtil.urlToPath(outputUrl) + "/artifacts/" + FileUtil.sanitizeFileName(artifactName);
   }
 
@@ -408,12 +412,16 @@ public class ArtifactUtil {
         else if (element instanceof ModuleOutputPackagingElement) {
           final Module module = ((ModuleOutputPackagingElement)element).findModule(context);
           if (module != null) {
+            final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(context.getProject());
             final ContentEntry[] contentEntries = context.getModulesProvider().getRootModel(module).getContentEntries();
             for (ContentEntry contentEntry : contentEntries) {
               for (SourceFolder sourceFolder : contentEntry.getSourceFolders()) {
                 final VirtualFile sourceRoot = sourceFolder.getFile();
                 if (!sourceFolder.isTestSource() && sourceRoot != null) {
-                  ContainerUtil.addIfNotNull(sourceRoot.findFileByRelativePath(path), result);
+                  final VirtualFile sourceFile = sourceRoot.findFileByRelativePath(path);
+                  if (sourceFile != null && compilerConfiguration.isResourceFile(sourceFile)) {
+                    result.add(sourceFile);
+                  }
                 }
               }
             }

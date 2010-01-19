@@ -308,37 +308,27 @@ public class JavaSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
             removeDeletedMethods(OverridingMethodsSearch.search(psiMethod, psiMethod.getUseScope(), true).toArray(PsiMethod.EMPTY_ARRAY),
                                  allElementsToDelete);
 
-    boolean anyRefs = false;
     for (PsiReference reference : references) {
       final PsiElement element = reference.getElement();
       if (!isInside(element, allElementsToDelete) && !isInside(element, overridingMethods)) {
         usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(element, psiMethod, false));
-        anyRefs = true;
       }
     }
 
-    final Condition<PsiElement> usageInsideDeleted;
-    if (!anyRefs) {
-      HashMap<PsiMethod, Collection<PsiReference>> methodToReferences = new HashMap<PsiMethod, Collection<PsiReference>>();
-      for (PsiMethod overridingMethod : overridingMethods) {
-        final Collection<PsiReference> overridingReferences = ReferencesSearch.search(overridingMethod).findAll();
-        methodToReferences.put(overridingMethod, overridingReferences);
+    final HashMap<PsiMethod, Collection<PsiReference>> methodToReferences = new HashMap<PsiMethod, Collection<PsiReference>>();
+    for (PsiMethod overridingMethod : overridingMethods) {
+      final Collection<PsiReference> overridingReferences = ReferencesSearch.search(overridingMethod).findAll();
+      methodToReferences.put(overridingMethod, overridingReferences);
+    }
+    final Set<PsiMethod> validOverriding =
+      validateOverridingMethods(psiMethod, references, Arrays.asList(overridingMethods), methodToReferences, usages,
+                                allElementsToDelete);
+    return new Condition<PsiElement>() {
+      public boolean value(PsiElement usage) {
+        if(usage instanceof PsiFile) return false;
+        return isInside(usage, allElementsToDelete) || isInside(usage,  validOverriding);
       }
-      final Set<PsiMethod> validOverriding =
-              validateOverridingMethods(psiMethod, references, Arrays.asList(overridingMethods), methodToReferences, usages,
-                                        allElementsToDelete);
-      usageInsideDeleted = new Condition<PsiElement>() {
-        public boolean value(PsiElement usage) {
-          if(usage instanceof PsiFile) return false;
-          return isInside(usage, allElementsToDelete) || isInside(usage,  validOverriding);
-        }
-      };
-    }
-    else {
-      usageInsideDeleted = getUsageInsideDeletedFilter(allElementsToDelete);
-    }
-
-    return usageInsideDeleted;
+    };
   }
 
   private static PsiMethod[] removeDeletedMethods(PsiMethod[] methods, final PsiElement[] allElementsToDelete) {

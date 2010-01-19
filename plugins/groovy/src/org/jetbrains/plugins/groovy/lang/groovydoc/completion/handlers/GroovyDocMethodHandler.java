@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.groovydoc.completion.handlers;
 
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.MutableLookupElement;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -56,7 +55,7 @@ public class GroovyDocMethodHandler implements ContextSpecificInsertHandler {
   public void handleInsert(InsertionContext context, int startOffset, LookupElement item) {
 
     Editor editor = context.getEditor();
-    Object o = ((MutableLookupElement)item).getObject();
+    Object o = item.getObject();
     assert o instanceof PsiMethod;
     PsiMethod method = (PsiMethod) o;
 

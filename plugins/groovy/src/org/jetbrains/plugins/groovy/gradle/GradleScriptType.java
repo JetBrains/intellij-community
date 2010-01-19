@@ -39,11 +39,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
-import org.jetbrains.plugins.groovy.gant.GantUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrShiftExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunner;
@@ -80,10 +82,9 @@ public class GradleScriptType extends GroovyScriptType {
       pp = pp.getParent();
       parent = parent.getParent();
     }
-    if (pp != null && parent instanceof GrMethodCallExpression && PsiUtil.isMethodCall((GrMethodCallExpression)parent, "createTask")) {
-      final GrExpression[] arguments = ((GrMethodCallExpression)parent).getArgumentList().getExpressionArguments();
-      if (arguments.length > 0 && arguments[0] instanceof GrLiteral && ((GrLiteral)arguments[0]).getValue() instanceof String) {
-        String target = (String)((GrLiteral)arguments[0]).getValue();
+    if (pp != null) {
+      String target = getTaskTarget(parent);
+      if (target != null) {
         configuration.scriptParams = target;
         configuration.setName(configuration.getName() + "." + target);
       }
@@ -93,6 +94,37 @@ public class GradleScriptType extends GroovyScriptType {
     if (runTask != null) {
       runTask.setEnabled(false);
     }
+  }
+
+  private String getTaskTarget(PsiElement parent) {
+    String target = null;
+    if (isCreateTaskMethod(parent)) {
+      final GrExpression[] arguments = ((GrMethodCallExpression)parent).getArgumentList().getExpressionArguments();
+      if (arguments.length > 0 && arguments[0] instanceof GrLiteral && ((GrLiteral)arguments[0]).getValue() instanceof String) {
+        target = (String)((GrLiteral)arguments[0]).getValue();
+      }
+    }
+    else if (parent instanceof GrApplicationStatement) {
+      PsiElement shiftExpression = parent.getChildren()[1].getChildren()[0];
+      if (shiftExpression instanceof GrShiftExpressionImpl) {
+        PsiElement shiftiesChild = shiftExpression.getChildren()[0];
+        if (shiftiesChild instanceof GrReferenceExpression) {
+          target = shiftiesChild.getText();
+        }
+        else if (shiftiesChild instanceof GrMethodCallExpression) {
+          target = shiftiesChild.getChildren()[0].getText();
+        }
+      }
+      else if (shiftExpression instanceof GrMethodCallExpression) {
+        target = shiftExpression.getChildren()[0].getText();
+      }
+    }
+    
+    return target;
+  }
+
+  private boolean isCreateTaskMethod(PsiElement parent) {
+    return parent instanceof GrMethodCallExpression && PsiUtil.isMethodCall((GrMethodCallExpression)parent, "createTask");
   }
 
   @Override
@@ -162,19 +194,18 @@ public class GradleScriptType extends GroovyScriptType {
   public GlobalSearchScope patchResolveScope(@NotNull GroovyFile file, @NotNull GlobalSearchScope baseScope) {
     final Module module = ModuleUtil.findModuleForPsiElement(file);
     if (module != null) {
-      final String sdkHome = GantUtils.getSdkHomeFromClasspath(module);
-      if (sdkHome != null) {
+      if (GradleLibraryManager.getSdkHomeFromClasspath(module) != null) {
         return baseScope;
       }
     }
 
-    final GradleSettings gantSettings = GradleSettings.getInstance(file.getProject());
-    final VirtualFile home = gantSettings.getSdkHome();
+    final GradleSettings gradleSettings = GradleSettings.getInstance(file.getProject());
+    final VirtualFile home = gradleSettings.getSdkHome();
     if (home == null) {
       return baseScope;
     }
 
-    final List<VirtualFile> files = gantSettings.getClassRoots();
+    final List<VirtualFile> files = gradleSettings.getClassRoots();
     if (files.isEmpty()) {
       return baseScope;
     }

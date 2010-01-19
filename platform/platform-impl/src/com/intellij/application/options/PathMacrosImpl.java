@@ -31,10 +31,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  *  @author dsl
@@ -43,6 +41,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.PathMacrosImpl");
   private final Map<String,String> myMacros = new HashMap<String, String>();
   private final JBReentrantReadWriteLock myLock = LockFactory.createReadWriteLock();
+  private final List<String> myIgnoredMacros = new CopyOnWriteArrayList<String>();
 
   @NonNls
   public static final String MACRO_ELEMENT = "macro";
@@ -50,6 +49,9 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
   public static final String NAME_ATTR = "name";
   @NonNls
   public static final String VALUE_ATTR = "value";
+
+  @NonNls
+  public static final String IGNORED_MACRO_ELEMENT = "ignoredMacro";
 
   // predefined macros
   @NonNls
@@ -62,16 +64,59 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
   private static final Set<String> ourSystemMacroNames = new HashSet<String>();
   @NonNls public static final String EXT_FILE_NAME = "path.macros";
 
-  {
+  static {
     ourSystemMacroNames.add(APPLICATION_HOME_MACRO_NAME);
     ourSystemMacroNames.add(PROJECT_DIR_MACRO_NAME);
     ourSystemMacroNames.add(MODULE_DIR_MACRO_NAME);
+  }
+
+  private static final Set<String> ourToolsMacros = new HashSet<String>();
+  static {
+    ourToolsMacros.add("ClasspathEntry");
+    ourToolsMacros.add("Classpath");
+    ourToolsMacros.add("ColumnNumber");
+    ourToolsMacros.add("FileClass");
+    ourToolsMacros.add("FileDir");
+    ourToolsMacros.add("FileDirRelativeToProjectRoot");
+    ourToolsMacros.add("/FileDirRelativeToProjectRoot");
+    ourToolsMacros.add("FileDirRelativeToSourcepath");
+    ourToolsMacros.add("/FileDirRelativeToSourcepath");
+    ourToolsMacros.add("FileExt");
+    ourToolsMacros.add("FileFQPackage");
+    ourToolsMacros.add("FileName");
+    ourToolsMacros.add("FileNameWithoutExtension");
+    ourToolsMacros.add("FilePackage");
+    ourToolsMacros.add("FilePath");
+    ourToolsMacros.add("FilePathRelativeToProjectRoot");
+    ourToolsMacros.add("/FilePathRelativeToProjectRoot");
+    ourToolsMacros.add("FilePathRelativeToSourcepath");
+    ourToolsMacros.add("/FilePathRelativeToSourcepath");
+    ourToolsMacros.add("FileRelativeDir");
+    ourToolsMacros.add("/FileRelativeDir");
+    ourToolsMacros.add("FileRelativePath");
+    ourToolsMacros.add("/FileRelativePath");
+    ourToolsMacros.add("JavaDocPath");
+    ourToolsMacros.add("JDKPath");
+    ourToolsMacros.add("LineNumber");
+    ourToolsMacros.add("ModuleFileDir");
+    ourToolsMacros.add("ModuleFilePath");
+    ourToolsMacros.add("ModuleName");
+    ourToolsMacros.add("ModuleSourcePath");
+    ourToolsMacros.add("OutputPath");
+    ourToolsMacros.add("ProjectFileDir");
+    ourToolsMacros.add("ProjectFilePath");
+    ourToolsMacros.add("ProjectName");
+    ourToolsMacros.add("Projectpath");
+    ourToolsMacros.add("Prompt");
+    ourToolsMacros.add("SourcepathEntry");
+    ourToolsMacros.add("Sourcepath");
   }
 
   public static PathMacrosImpl getInstanceEx() {
     return (PathMacrosImpl)ApplicationManager.getApplication().getComponent(PathMacros.class);
   }
 
+  @NotNull
   public String getComponentName() {
     return "PathMacrosImpl";
   }
@@ -95,6 +140,10 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
     }
   }
 
+  public static Set<String> getToolMacroNames() {
+    return ourToolsMacros;
+  }
+
   public Set<String> getSystemMacroNames() {
     try {
       myLock.readLock().lock();
@@ -103,6 +152,26 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
     finally {
       myLock.readLock().unlock();
     }
+  }
+
+  @Override
+  public Collection<String> getIgnoredMacroNames() {
+    return myIgnoredMacros;
+  }
+
+  public void setIgnoredMacroNames(@NotNull final Collection<String> names) {
+    myIgnoredMacros.clear();
+    myIgnoredMacros.addAll(names);
+  }
+
+  @Override
+  public void addIgnoredMacro(@NotNull String name) {
+    if (!myIgnoredMacros.contains(name)) myIgnoredMacros.add(name);
+  }
+
+  @Override
+  public boolean isIgnoredMacroName(@NotNull String macro) {
+    return myIgnoredMacros.contains(macro);
   }
 
   public Set<String> getAllMacroNames() {
@@ -168,6 +237,15 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
 
       myMacros.put(name, value);
     }
+
+    final List ignoredChildren = element.getChildren(IGNORED_MACRO_ELEMENT);
+    for (final Object child : ignoredChildren) {
+      final Element macroElement = (Element)child;
+      final String ignoredName = macroElement.getAttributeValue(NAME_ATTR);
+      if (ignoredName != null && ignoredName.length() > 0 && !myIgnoredMacros.contains(ignoredName)) {
+        myIgnoredMacros.add(ignoredName);
+      }
+    }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
@@ -180,6 +258,12 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
         macro.setAttribute(VALUE_ATTR, value);
         element.addContent(macro);
       }
+    }
+
+    for (final String macro : myIgnoredMacros) {
+      final Element macroElement = new Element(IGNORED_MACRO_ELEMENT);
+      macroElement.setAttribute(NAME_ATTR, macro);
+      element.addContent(macroElement);
     }
   }
 

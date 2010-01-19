@@ -70,14 +70,18 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
   public void hidePersistentPopups() {
     final WeakList<JBPopup> list = myPersistentPopups;
     for (JBPopup each : list) {
-      each.setUiVisible(false);
+      if (each.isNativePopup()) {
+        each.setUiVisible(false);
+      }
     }
   }
 
   public void restorePersistentPopups() {
     final WeakList<JBPopup> list = myPersistentPopups;
     for (JBPopup each : list) {
-      each.setUiVisible(true);
+      if (each.isNativePopup()) {
+        each.setUiVisible(true);
+      }
     }
   }
 

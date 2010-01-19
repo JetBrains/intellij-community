@@ -49,7 +49,9 @@ import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.popup.PopupOwner;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.util.Alarm;
+import com.intellij.util.Function;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -1198,23 +1200,37 @@ public abstract class ChooseByNameBase{
     if (name == null) return false;
 
     final List<String> suspects = split(name);
-    final List<String> patterns = split(qualifierPattern);
+    final List<Pair<String, NameUtil.Matcher>> patternsAndMatchers = ContainerUtil.map2List(split(qualifierPattern), new Function<String, Pair<String, NameUtil.Matcher>>() {
+      public Pair<String, NameUtil.Matcher> fun(String s) {
+        final String pattern = getNamePattern(s);
+        final NameUtil.Matcher matcher = buildPatternMatcher(pattern);
+
+        return new Pair<String, NameUtil.Matcher>(pattern, matcher);
+      }
+    });
 
     int matchPosition = 0;
 
-patterns:
-    for (String pattern : patterns) {
-      if (pattern.length() > 0) {
-        for (int j = matchPosition; j < suspects.size() - 1; j++) {
-          String suspect = suspects.get(j);
-          if (StringUtil.startsWithIgnoreCase(suspect, pattern)) {
-            matchPosition = j + 1;
-            continue patterns;
+    try {
+      patterns:
+      for (Pair<String, NameUtil.Matcher> patternAndMatcher : patternsAndMatchers) {
+        final String pattern = patternAndMatcher.first;
+        final NameUtil.Matcher matcher = patternAndMatcher.second;
+        if (pattern.length() > 0) {
+          for (int j = matchPosition; j < suspects.size() - 1; j++) {
+            String suspect = suspects.get(j);
+            if (matches(pattern, matcher, suspect)) {
+              matchPosition = j + 1;
+              continue patterns;
+            }
           }
-        }
 
-        return false;
+          return false;
+        }
       }
+    } catch (Exception e) {
+      // Do nothing. No matches appears valid result for "bad" pattern
+      return false;
     }
 
     return true;
@@ -1233,28 +1249,40 @@ patterns:
     }
 
     final String[] names = checkboxState ? myNames[1] : myNames[0];
-    final NameUtil.Matcher matcher = NameUtil.buildMatcher(pattern, 0, true, true, pattern.toLowerCase().equals(pattern));
+    final NameUtil.Matcher matcher = buildPatternMatcher(pattern);
 
     try {
       for (String name : names) {
         if (calcElementsThread != null && calcElementsThread.myCancelled) {
           break;
         }
-        if (name != null) {
-          if (myModel instanceof CustomMatcherModel) {
-            if (((CustomMatcherModel)myModel).matches(name, pattern)) {
-              list.add(name);
-            }
-          }
-          else if (pattern.length() == 0 || matcher.matches(name)) {
-            list.add(name);
-          }
+        if (matches(pattern, matcher, name)) {
+          list.add(name);
         }
       }
     }
     catch (Exception e) {
       // Do nothing. No matches appears valid result for "bad" pattern
     }
+  }
+
+  private boolean matches(String pattern, NameUtil.Matcher matcher, String name) {
+    boolean matches = false;
+    if (name != null) {
+      if (myModel instanceof CustomMatcherModel) {
+        if (((CustomMatcherModel)myModel).matches(name, pattern)) {
+          matches = true;
+        }
+      }
+      else if (pattern.length() == 0 || matcher.matches(name)) {
+        matches = true;
+      }
+    }
+    return matches;
+  }
+
+  private NameUtil.Matcher buildPatternMatcher(String pattern) {
+    return NameUtil.buildMatcher(pattern, 0, true, true, pattern.toLowerCase().equals(pattern));
   }
 
   private interface CalcElementsCallback {

@@ -286,6 +286,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         new HighlightInfo(info.forcedTextAttributes, info.type, hostRange.getStartOffset(), hostRange.getEndOffset(),
                           info.description, info.toolTip, info.type.getSeverity(null), info.isAfterEndOfLine, null, false);
       patched.setHint(info.hasHint());
+      patched.setGutterIconRenderer(info.getGutterIconRenderer());
 
       if (info.quickFixActionRanges != null) {
         for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {

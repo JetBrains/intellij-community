@@ -152,14 +152,14 @@ public class SelectBranchPopup {
     @Override
     public PopupStep onChosen(final String selectedValue, final boolean finalChoice) {
       if (CONFIGURE_MESSAGE.equals(selectedValue)) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
+        return doFinalStep(new Runnable() {
           public void run() {
             BranchConfigurationDialog.configureBranches(myProject, myVcsRoot, true);
           }
         });
       }
       else if (!myTopLevel || selectedValue.equals(myConfiguration.getTrunkUrl())) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
+        return doFinalStep(new Runnable() {
           public void run() {
             myCallback.branchSelected(myProject, myConfiguration, selectedValue, -1);
           }
@@ -168,7 +168,7 @@ public class SelectBranchPopup {
       else {
         showBranchPopup(selectedValue, true);
       }
-      return null;
+      return FINAL_CHOICE;
     }
 
     @Nullable

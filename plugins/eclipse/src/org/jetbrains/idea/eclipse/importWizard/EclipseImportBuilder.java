@@ -38,8 +38,8 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
@@ -47,9 +47,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.util.Function;
-import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -264,6 +264,8 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
           final Element classpathElement = JDOMUtil.loadDocument(classpathFile).getRootElement();
           classpathReader.readClasspath(rootModel, unknownLibraries, unknownJdks, usedVariables, refsToModules,
                                                                   getParameters().converterOptions.testPattern, classpathElement);
+        } else {
+          EclipseClasspathReader.setupOutput(rootModel, path + "/bin");
         }
         ClasspathStorage.setStorageType(rootModel,
                                       getParameters().linkConverted ? EclipseClasspathStorageProvider.ID : ClasspathStorage.DEFAULT_STORAGE);
@@ -317,31 +319,29 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
       }
     }
     if (!unknownLibraries.isEmpty()) {
-      if (message.length() > 0) message.append("\n");
-      message.append(EclipseBundle.message("eclipse.import.warning.undefinded.libraries"));
+      final StringBuffer buf = new StringBuffer();
+      buf.append("<html><body>");
+      buf.append(EclipseBundle.message("eclipse.import.warning.undefinded.libraries"));
       for (String name : unknownLibraries) {
-        message.append("\n").append(name);
+        buf.append("<br>").append(name);
       }
       if (model == null) {
-        message.append("\nPlease export Eclipse user libraries and import them now from");
-        final String pathToUserLibraries = Messages.showInputDialog(project, message.toString(), getTitle(), Messages.getErrorIcon(),
-                                                                    project.getBaseDir().getPath() +
-                                                                    "/" +
-                                                                    project.getName() +
-                                                                    ".userlibraries", new InputValidator() {
-            public boolean checkInput(String inputString) {
-              return new File(inputString).exists();
-            }
-
-            public boolean canClose(String inputString) {
-              return checkInput(inputString);
-            }
-          });
-        if (pathToUserLibraries != null) {
+        buf.append("<br><b>Please export Eclipse user libraries and import them now from resulted .userlibraries file</b>");
+        buf.append("</body></html>");
+        final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
+          @Override
+          public boolean isFileSelectable(VirtualFile file) {
+            return super.isFileSelectable(file) && Comparing.strEqual(file.getExtension(), "userlibraries");
+          }
+        };
+        descriptor.setDescription(buf.toString());
+        descriptor.setTitle(getTitle());
+        final VirtualFile[] selectedFiles = FileChooser.chooseFiles(project, descriptor, project.getBaseDir());
+        if (selectedFiles.length == 1) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
               try {
-                EclipseUserLibrariesHelper.readProjectLibrariesContent(new File(pathToUserLibraries), project, unknownLibraries);
+                EclipseUserLibrariesHelper.readProjectLibrariesContent(new File(selectedFiles[0].getPath()), project, unknownLibraries);
               }
               catch (Exception e) {
                 LOG.error(e);
@@ -349,7 +349,6 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
             }
           });
         }
-        return result;
       }
     }
 

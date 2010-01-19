@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * JFlex 1.4.1                                                             *
- * Copyright (C) 1998-2004  Gerwin Klein <lsf@jflex.de>                    *
+ * JFlex 1.4.3                                                             *
+ * Copyright (C) 1998-2009  Gerwin Klein <lsf@jflex.de>                    *
  * All rights reserved.                                                    *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify    *
@@ -21,16 +21,16 @@
 package JFlex.tests;
 
 
+import java.io.File;
+
 import JFlex.Skeleton;
 import junit.framework.TestCase;
-
-import java.io.File;
 
 /**
  * SkeletonTest
  * 
  * @author Gerwin Klein
- * @version $Revision: 1.4 $, $Date: 2004/11/06 23:03:30 $
+ * @version $Revision$, $Date$
  */
 public class SkeletonTest extends TestCase {
 

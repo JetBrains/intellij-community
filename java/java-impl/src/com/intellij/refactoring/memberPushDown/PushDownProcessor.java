@@ -17,8 +17,11 @@ package com.intellij.refactoring.memberPushDown;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.codeInsight.intention.impl.CreateClassDialog;
+import com.intellij.codeInsight.intention.impl.CreateSubclassAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -49,6 +52,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
   private final MemberInfo[] myMemberInfos;
   private PsiClass myClass;
   private final DocCommentPolicy myJavaDocPolicy;
+  private CreateClassDialog myCreateClassDlg;
 
   public PushDownProcessor(Project project,
                            MemberInfo[] memberInfos,
@@ -78,7 +82,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
     return usages;
   }
 
-  protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(final Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
     final PushDownConflicts pushDownConflicts = new PushDownConflicts(myClass, myMemberInfos);
     pushDownConflicts.checkSourceClassConflicts();
@@ -88,13 +92,21 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
                             RefactoringBundle.message("interface.0.does.not.have.inheritors", myClass.getQualifiedName()) :
                             RefactoringBundle.message("class.0.does.not.have.inheritors", myClass.getQualifiedName());
       final String message = noInheritors + "\n" + RefactoringBundle.message("push.down.will.delete.members");
-      final int answer = Messages.showYesNoDialog(message, JavaPushDownHandler.REFACTORING_NAME, Messages.getWarningIcon());
-      if (answer != 0) return false;
+      final int answer = Messages.showYesNoCancelDialog(message, JavaPushDownHandler.REFACTORING_NAME, Messages.getWarningIcon());
+      if (answer == DialogWrapper.OK_EXIT_CODE) {
+        myCreateClassDlg = CreateSubclassAction.chooseSubclassToCreate(myClass);
+        if (myCreateClassDlg != null) {
+          pushDownConflicts.checkTargetClassConflicts(null, false, myCreateClassDlg.getTargetDirectory());
+          return showConflicts(pushDownConflicts.getConflicts());
+        } else {
+          return false;
+        }
+      } else if (answer != 1) return false;
     }
     for (UsageInfo usage : usagesIn) {
       final PsiElement element = usage.getElement();
       if (element instanceof PsiClass) {
-        pushDownConflicts.checkTargetClassConflicts((PsiClass)element, usagesIn.length > 1);
+        pushDownConflicts.checkTargetClassConflicts((PsiClass)element, usagesIn.length > 1, element);
       }
     }
 
@@ -113,6 +125,13 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
   protected void performRefactoring(UsageInfo[] usages) {
     try {
       encodeRefs();
+      if (myCreateClassDlg != null) { //usages.length == 0
+        final PsiClass psiClass =
+          CreateSubclassAction.createSubclass(myClass, myCreateClassDlg.getTargetDirectory(), myCreateClassDlg.getClassName());
+        if (psiClass != null) {
+          pushDownToClass(psiClass);
+        }
+      }
       for (UsageInfo usage : usages) {
         if (usage.getElement() instanceof PsiClass) {
           final PsiClass targetClass = (PsiClass)usage.getElement();

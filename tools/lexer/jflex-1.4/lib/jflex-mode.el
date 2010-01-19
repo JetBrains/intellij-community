@@ -3,7 +3,7 @@
 ;;;  jflex-mode
 
 ;;;  author: Gerwin Klein <lsf@jflex.de>
-;;;  $Revision: 2.1 $, $Date: 2003/06/08 11:01:12 $
+;;;  $Revision$, $Date$
 
 (require 'derived)
 (require 'font-lock)

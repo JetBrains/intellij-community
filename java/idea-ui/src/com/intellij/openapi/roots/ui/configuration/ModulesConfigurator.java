@@ -34,6 +34,7 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
@@ -47,6 +48,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
@@ -225,6 +228,60 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   public void apply() throws ConfigurationException {
+    // validate content and source roots 
+    final Map<VirtualFile, String> contentRootToModuleNameMap = new com.intellij.util.containers.HashMap<VirtualFile, String>();
+    final Map<VirtualFile, VirtualFile> srcRootsToContentRootMap = new com.intellij.util.containers.HashMap<VirtualFile, VirtualFile>();
+    for (final ModuleEditor moduleEditor : myModuleEditors) {
+      final ModifiableRootModel rootModel = moduleEditor.getModifiableRootModel();
+      final ContentEntry[] contents = rootModel.getContentEntries();
+      for (ContentEntry contentEntry : contents) {
+        final VirtualFile contentRoot = contentEntry.getFile();
+        if (contentRoot == null) {
+          continue;
+        }
+        final String moduleName = moduleEditor.getName();
+        final String previousName = contentRootToModuleNameMap.put(contentRoot, moduleName);
+        if (previousName != null && !previousName.equals(moduleName)) {
+          throw new ConfigurationException(
+            ProjectBundle.message("module.paths.validation.duplicate.content.error", contentRoot.getPresentableUrl(), previousName, moduleName)
+          );
+        }
+        for (VirtualFile srcRoot : contentEntry.getSourceFolderFiles()) {
+          final VirtualFile anotherContentRoot = srcRootsToContentRootMap.put(srcRoot, contentRoot);
+          if (anotherContentRoot != null) {
+            final String problematicModule;
+            final String correctModule;
+            if (VfsUtil.isAncestor(anotherContentRoot, contentRoot, true)) {
+              problematicModule = contentRootToModuleNameMap.get(anotherContentRoot);
+              correctModule = contentRootToModuleNameMap.get(contentRoot);
+            }
+            else {
+              problematicModule = contentRootToModuleNameMap.get(contentRoot);
+              correctModule = contentRootToModuleNameMap.get(anotherContentRoot);
+            }
+            throw new ConfigurationException(
+              ProjectBundle.message("module.paths.validation.duplicate.source.root.error", problematicModule, srcRoot.getPresentableUrl(), correctModule)
+            );
+          }
+        }
+      }
+    }
+    // additional validation: directories marked as src roots must belong to the same module as their corresponding content root
+    for (Map.Entry<VirtualFile, VirtualFile> entry : srcRootsToContentRootMap.entrySet()) {
+      final VirtualFile srcRoot = entry.getKey();
+      final VirtualFile correspondingContent = entry.getValue();
+      final String expectedModuleName = contentRootToModuleNameMap.get(correspondingContent);
+
+      for (VirtualFile candidateContent = srcRoot; !candidateContent.equals(correspondingContent); candidateContent = candidateContent.getParent()) {
+        final String moduleName = contentRootToModuleNameMap.get(candidateContent);
+        if (moduleName != null && !moduleName.equals(expectedModuleName)) {
+          throw new ConfigurationException(
+            ProjectBundle.message("module.paths.validation.source.root.belongs.to.another.module.error", srcRoot.getPresentableUrl(), expectedModuleName, moduleName)
+          );
+        }
+      }
+    }
+
     final ProjectRootManagerImpl projectRootManager = ProjectRootManagerImpl.getInstanceImpl(myProject);
 
     final ConfigurationException[] ex = new ConfigurationException[1];
@@ -249,7 +306,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         catch (ConfigurationException e) {
           ex[0] = e;
         }
-        finally {          
+        finally {
           ModuleStructureConfigurable.getInstance(myProject).getFacetEditorFacade().clearMaps(false);
 
           for (final ModuleEditor moduleEditor : myModuleEditors) {

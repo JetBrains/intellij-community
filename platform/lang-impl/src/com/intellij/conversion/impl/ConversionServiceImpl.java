@@ -92,9 +92,11 @@ public class ConversionServiceImpl extends ConversionService {
       }
       final File backupDir = ProjectConversionUtil.backupFiles(affectedFiles, context.getProjectBaseDir());
       for (ConversionRunner runner : runners) {
-        runner.preProcess();
-        runner.process();
-        runner.postProcess();
+        if (runner.isConversionNeeded()) {
+          runner.preProcess();
+          runner.process();
+          runner.postProcess();
+        }
       }
       context.saveFiles(affectedFiles);
       listener.successfullyConverted(backupDir);
@@ -143,11 +145,21 @@ public class ConversionServiceImpl extends ConversionService {
     Set<String> convertersToRunIds = new HashSet<String>();
     while (iterator.hasNext()) {
       ConversionRunner runner = iterator.next();
-      if (!runner.isConversionNeeded() && !convertersToRunIds.contains(runner.getProvider().getId())) {
-        iterator.remove();
+      boolean conversionNeeded = runner.isConversionNeeded();
+      if (!conversionNeeded) {
+        for (String id : runner.getProvider().getPrecedingConverterIds()) {
+          if (convertersToRunIds.contains(id)) {
+            conversionNeeded = true;
+            break;
+          }
+        }
+      }
+
+      if (conversionNeeded) {
+        convertersToRunIds.add(runner.getProvider().getId());
       }
       else {
-        convertersToRunIds.add(runner.getProvider().getId());
+        iterator.remove();
       }
     }
     return converters;

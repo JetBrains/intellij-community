@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * JFlex 1.4.1                                                             *
- * Copyright (C) 1998-2004  Gerwin Klein <lsf@jflex.de>                    *
+ * JFlex 1.4.3                                                             *
+ * Copyright (C) 1998-2009  Gerwin Klein <lsf@jflex.de>                    *
  * All rights reserved.                                                    *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify    *
@@ -19,18 +19,19 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 package JFlex.tests;
 
-import JFlex.Options;
-import JFlex.anttask.JFlexTask;
-import junit.framework.TestCase;
-
 import java.io.File;
 import java.io.IOException;
+
+import JFlex.Options;
+import JFlex.anttask.JFlexTask;
+
+import junit.framework.TestCase;
 
 /**
  * Unit tests for the jflex ant task.
  * 
  * @author Gerwin Klein
- * @version $Revision: 1.12 $, $Date: 2004/11/06 23:03:30 $
+ * @version $Revision: 1.4.3 $, $Date: 2009/12/21 15:58:48 $
  */
 public class AntTaskTests extends TestCase {
 

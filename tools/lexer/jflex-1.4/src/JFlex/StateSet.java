@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * JFlex 1.4.1                                                             *
- * Copyright (C) 1998-2004  Gerwin Klein <lsf@jflex.de>                    *
+ * JFlex 1.4.3                                                             *
+ * Copyright (C) 1998-2009  Gerwin Klein <lsf@jflex.de>                    *
  * All rights reserved.                                                    *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify    *
@@ -25,7 +25,7 @@ package JFlex;
  * Very similar to java.util.BitSet, but is faster and doesn't crash
  *
  * @author Gerwin Klein
- * @version JFlex 1.4.1, $Revision: 2.4 $, $Date: 2004/11/06 23:03:32 $
+ * @version $Revision: 1.4.3 $, $Date: 2009/12/21 15:58:48 $ 
  */
 final public class StateSet {
 
@@ -284,6 +284,11 @@ final public class StateSet {
   }
 
 
+  /**
+   * Copy specified StateSet into this.
+   * 
+   * @param set  the state set to copy.
+   */ 
   public void copy(StateSet set) {
     
     if (DEBUG) 

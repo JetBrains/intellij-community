@@ -88,7 +88,6 @@ public class SvnConfigurable implements Configurable {
           if (result == 0) {
             SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
             SvnConfiguration.getInstance(myProject).clearAuthenticationDirectory();
-            SvnVcs.getInstance(myProject).pingRootsForAuth();
           }
         }
 

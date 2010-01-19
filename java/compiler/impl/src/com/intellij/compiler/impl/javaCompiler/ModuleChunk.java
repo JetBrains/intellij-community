@@ -56,8 +56,10 @@ public class ModuleChunk extends Chunk<Module> {
     super(chunk.getNodes());
     myContext = context;
     for (final Module module : chunk.getNodes()) {
-      final List<VirtualFile> set = moduleToFilesMap.get(module);
-      myModuleToFilesMap.put(module, set == null ? Collections.<VirtualFile>emptyList() : set);
+      final List<VirtualFile> files = moduleToFilesMap.get(module);
+      // Important!!! Collections in the myModuleToFilesMap must be modifiable copies of the corresponding collections
+      // from the moduleToFilesMap. This is needed to support SourceTransforming compilers
+      myModuleToFilesMap.put(module, files == null ? Collections.<VirtualFile>emptyList() : new ArrayList<VirtualFile>(files));
     }
   }
 
@@ -78,6 +80,11 @@ public class ModuleChunk extends Chunk<Module> {
       originalFile = currentFile;
     }
     myTransformedToOriginalMap.put(transformedFile, originalFile);
+  }
+
+  public VirtualFile getOriginalFile(VirtualFile file) {
+    final VirtualFile original = myTransformedToOriginalMap.get(file);
+    return original != null? original : file;
   }
 
   @NotNull
@@ -213,6 +220,10 @@ public class ModuleChunk extends Chunk<Module> {
   }
 
   public String getCompilationBootClasspath() {
+    return convertToStringPath(getCompilationBootClasspathFiles());
+  }
+
+  public OrderedSet<VirtualFile> getCompilationBootClasspathFiles() {
     final Set<Module> modules = getNodes();
     final OrderedSet<VirtualFile> cpFiles = new OrderedSet<VirtualFile>(TObjectHashingStrategy.CANONICAL);
     final OrderedSet<VirtualFile> jdkFiles = new OrderedSet<VirtualFile>(TObjectHashingStrategy.CANONICAL);
@@ -234,7 +245,7 @@ public class ModuleChunk extends Chunk<Module> {
       }
     }
     cpFiles.addAll(jdkFiles);
-    return convertToStringPath(cpFiles);
+    return cpFiles;
   }
 
   private static String convertToStringPath(final OrderedSet<VirtualFile> cpFiles) {

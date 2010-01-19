@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * jflex                                                         *
- * Copyright (C) 1998-2004  Gerwin Klein <lsf@jflex.de>                    *
+ * Copyright (C) 1998-2009  Gerwin Klein <lsf@jflex.de>                    *
  * All rights reserved.                                                    *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify    *
@@ -24,7 +24,7 @@ package JFlex;
  * HiLowEmitter
  * 
  * @author Gerwin Klein
- * @version $Revision: 1.5 $, $Date: 2004/04/12 10:07:48 $
+ * @version $Revision: 1.4.3 $, $Date: 2009/12/21 15:58:48 $
  */
 public class HiLowEmitter extends PackEmitter {
 

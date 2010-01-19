@@ -18,6 +18,7 @@ package com.intellij.cvsSupport2.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -64,7 +65,7 @@ public class CvsVfsUtil {
     return LocalFileSystem.getInstance().findFileByIoFile(file);
   }
 
-  public static VirtualFile refreshAndFindFileByIoFile(final File file) {
+  public static VirtualFile refreshAndFindFileByIoFile(@NotNull final File file) {
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
   }
 

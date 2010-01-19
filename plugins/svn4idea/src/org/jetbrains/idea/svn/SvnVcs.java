@@ -24,7 +24,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -133,6 +132,9 @@ public class SvnVcs extends AbstractVcs {
   public static final Topic<Runnable> ROOTS_RELOADED = new Topic<Runnable>("ROOTS_RELOADED", Runnable.class);
   private VcsListener myVcsListener;
 
+  private final RootsToWorkingCopies myRootsToWorkingCopies;
+  private final SvnAuthenticationNotifier myAuthNotifier;
+
   static {
     SvnHttpAuthMethodsDefaultChecker.check();
 
@@ -163,7 +165,9 @@ public class SvnVcs extends AbstractVcs {
                 final VcsDirtyScopeManager vcsDirtyScopeManager) {
     super(project, VCS_NAME);
     LOG.debug("ct");
+    myRootsToWorkingCopies = new RootsToWorkingCopies(myProject);
     myConfiguration = svnConfiguration;
+    myAuthNotifier = new SvnAuthenticationNotifier(this);
 
     dumpFileStatus(FileStatus.ADDED);
     dumpFileStatus(FileStatus.DELETED);
@@ -314,7 +318,7 @@ public class SvnVcs extends AbstractVcs {
                                                   NotificationType.INFORMATION, new NotificationListener() {
             public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
               final int upgradeAnswer = Messages.showYesNoDialog(SvnBundle.message("upgrade.format.to16.question.text",
-                  SvnBundle.message("label.where.svn.format.can.be.changed.text", SvnBundle.message("action.show.svn.map.text"))),
+                  SvnBundle.message("label.where.svn.format.can.be.changed.text", SvnBundle.message("action.show.svn.map.text.reference"))),
                   SvnBundle.message("upgrade.format.to16.question.title"), Messages.getWarningIcon());
               if (DialogWrapper.OK_EXIT_CODE == upgradeAnswer) {
                 workingCopyChecker.doUpgrade();
@@ -361,32 +365,24 @@ public class SvnVcs extends AbstractVcs {
       }
     });
 
-    pingRootsForAuth();
+    vcsManager.addVcsListener(myRootsToWorkingCopies);
   }
 
-  public void pingRootsForAuth() {
-    if (! myProject.isDefault()) {
-      final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
-      final VirtualFile[] files = vcsManager.getRootsUnderVcs(this);
-      Arrays.sort(files, FilePathComparator.getInstance());
-      final SVNStatusClient client = createStatusClient();
-      for (VirtualFile root : files) {
-        try {
-          client.doStatus(new File(root.getPath()), true);
-        }
-        catch (SVNException e) {
-          //
-        }
-      }
-    }
+  public RootsToWorkingCopies getRootsToWorkingCopies() {
+    return myRootsToWorkingCopies;
+  }
+
+  public SvnAuthenticationNotifier getAuthNotifier() {
+    return myAuthNotifier;
   }
 
   @Override
   public void deactivate() {
     FrameStateManager.getInstance().removeListener(myFrameStateListener);
 
+    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     if (myVcsListener != null) {
-      ProjectLevelVcsManager.getInstance(myProject).removeVcsListener(myVcsListener);
+      vcsManager.removeVcsListener(myVcsListener);
     }
     
     VirtualFileManager.getInstance().removeVirtualFileListener(myEntriesFileListener);
@@ -398,6 +394,9 @@ public class SvnVcs extends AbstractVcs {
     if (myChangeListListener != null && (! myProject.isDefault())) {
       ChangeListManager.getInstance(myProject).removeChangeListListener(myChangeListListener);
     }
+    vcsManager.removeVcsListener(myRootsToWorkingCopies);
+    myRootsToWorkingCopies.clear();
+    myAuthNotifier.clear();
   }
 
   public VcsShowConfirmationOption getAddConfirmation() {
@@ -878,22 +877,34 @@ public class SvnVcs extends AbstractVcs {
     
     final List<MyPair<S>> infos = new ArrayList<MyPair<S>>(in.size());
     final SvnFileUrlMappingImpl mapping = (SvnFileUrlMappingImpl) getSvnFileUrlMapping();
+    final List<S> notMatched = new LinkedList<S>();
     for (S s : in) {
       final VirtualFile vf = convertor.convert(s);
 
       final File ioFile = new File(vf.getPath());
-      final SVNURL url = mapping.getUrlForFile(ioFile);
-      if (url == null) continue;
+      SVNURL url = mapping.getUrlForFile(ioFile);
+      if (url == null) {
+        url = SvnUtil.getUrl(ioFile);
+        if (url == null) {
+          notMatched.add(s);
+          continue;
+        }
+      }
       infos.add(new MyPair<S>(vf, url.toString(), s));
     }
     final List<MyPair<S>> filtered = new ArrayList<MyPair<S>>(infos.size());
     ForNestedRootChecker.filterOutSuperfluousChildren(this, infos, filtered);
 
-    return ObjectsConvertor.convert(filtered, new Convertor<MyPair<S>, S>() {
+    final List<S> converted = ObjectsConvertor.convert(filtered, new Convertor<MyPair<S>, S>() {
       public S convert(final MyPair<S> o) {
         return o.getSrc();
       }
     });
+    if (! notMatched.isEmpty()) {
+      // potential bug is here: order is not kept. but seems it only occurs for cases where result is sorted after filtering so ok
+      converted.addAll(notMatched);
+    }
+    return converted;
   }
 
   private static class MyPair<T> implements RootUrlPair {

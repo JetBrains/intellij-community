@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.parameterInfo;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
@@ -27,6 +26,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyPresentationUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -59,7 +59,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
   }
 
   public Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
-    List<? extends PsiElement> elements = JavaCompletionUtil.getAllPsiElements((LookupItem) item);
+    List<? extends PsiElement> elements = JavaCompletionUtil.getAllPsiElements(item);
 
     if (elements != null) {
       List<GroovyResolveResult> methods = new ArrayList<GroovyResolveResult>();
@@ -91,7 +91,8 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
     return findAnchorElement(context.getEditor().getCaretModel().getOffset(), context.getFile());
   }
 
-  private GroovyPsiElement findAnchorElement(int offset, PsiFile file) {
+  @Nullable
+  private static GroovyPsiElement findAnchorElement(int offset, PsiFile file) {
     PsiElement element = file.findElementAt(offset);
     if (element == null) return null;
 
@@ -212,7 +213,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
     }
   }
 
-  private int getCurrentParameterIndex(GroovyPsiElement place, int offset) {
+  private static int getCurrentParameterIndex(GroovyPsiElement place, int offset) {
     if (place instanceof GrArgumentList) {
       GrArgumentList list = (GrArgumentList) place;
       final GrNamedArgument[] namedArguments = list.getNamedArguments();
@@ -338,7 +339,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
     );
   }
 
-  private void appendParameterText(PsiParameter parm, PsiSubstitutor substitutor, StringBuffer buffer) {
+  private static void appendParameterText(PsiParameter parm, PsiSubstitutor substitutor, StringBuffer buffer) {
     if (parm instanceof GrParameter) {
       buffer.append(GroovyPresentationUtil.getParameterPresentation((GrParameter) parm, substitutor));
 

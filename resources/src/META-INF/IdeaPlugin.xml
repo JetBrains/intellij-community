@@ -640,6 +640,7 @@
     <lang.namesValidator language="JAVA" implementationClass="com.intellij.lang.refactoring.JavaNamesValidator"/>
 
     <lang.findUsagesProvider language="JAVA" implementationClass="com.intellij.lang.java.JavaFindUsagesProvider"/>
+    <usageToPsiElementProvider implementation="com.intellij.lang.java.JavaUsageToPsiElementProvider" />
 
     <lang.commenter language="JAVA" implementationClass="com.intellij.lang.java.JavaCommenter"/>
 

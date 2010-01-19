@@ -117,26 +117,28 @@ public class ExtractMethodUtil {
     final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     if (!manager.areElementsEquivalent(oldTarget, newTarget)) {
       final PsiParameter[] oldParameters = oldTarget.getParameterList().getParameters();
-      final PsiMethodCallExpression copy = (PsiMethodCallExpression)call.copy();
-      final PsiExpression[] args = copy.getArgumentList().getExpressions();
-      for (int i = 0; i < args.length; i++) {
-        PsiExpression arg = args[i];
-        PsiType paramType = i < oldParameters.length ? oldParameters[i].getType() : oldParameters[oldParameters.length - 1].getType();
-        final PsiTypeCastExpression cast = (PsiTypeCastExpression)factory.createExpressionFromText("(a)b", null);
-        final PsiTypeElement typeElement = cast.getCastType();
-        assert typeElement != null;
-        typeElement.replace(factory.createTypeElement(paramType));
-        final PsiExpression operand = cast.getOperand();
-        assert operand != null;
-        operand.replace(arg);
-        arg.replace(cast);
-      }
+      if (oldParameters.length > 0) {
+        final PsiMethodCallExpression copy = (PsiMethodCallExpression)call.copy();
+        final PsiExpression[] args = copy.getArgumentList().getExpressions();
+        for (int i = 0; i < args.length; i++) {
+          PsiExpression arg = args[i];
+          PsiType paramType = i < oldParameters.length ? oldParameters[i].getType() : oldParameters[oldParameters.length - 1].getType();
+          final PsiTypeCastExpression cast = (PsiTypeCastExpression)factory.createExpressionFromText("(a)b", null);
+          final PsiTypeElement typeElement = cast.getCastType();
+          assert typeElement != null;
+          typeElement.replace(factory.createTypeElement(paramType));
+          final PsiExpression operand = cast.getOperand();
+          assert operand != null;
+          operand.replace(arg);
+          arg.replace(cast);
+        }
 
-      for (int i = 0; i < copy.getArgumentList().getExpressions().length; i++) {
-        PsiExpression oldarg = call.getArgumentList().getExpressions()[i];
-        PsiTypeCastExpression cast = (PsiTypeCastExpression)copy.getArgumentList().getExpressions()[i];
-        if (!RedundantCastUtil.isCastRedundant(cast)) {
-          oldarg.replace(cast);
+        for (int i = 0; i < copy.getArgumentList().getExpressions().length; i++) {
+          PsiExpression oldarg = call.getArgumentList().getExpressions()[i];
+          PsiTypeCastExpression cast = (PsiTypeCastExpression)copy.getArgumentList().getExpressions()[i];
+          if (!RedundantCastUtil.isCastRedundant(cast)) {
+            oldarg.replace(cast);
+          }
         }
       }
     }

@@ -19,6 +19,7 @@
  */
 package com.intellij.codeInsight.intention.impl.config;
 
+import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.ui.search.SearchUtil;
@@ -142,6 +143,13 @@ public abstract class IntentionSettingsTree {
   }
 
   public void reset(){
+    while (((IntentionManagerImpl)IntentionManager.getInstance()).hasActiveRequests()) {
+      try {
+        Thread.sleep(100);
+      }
+      catch (InterruptedException ignored) {
+      }
+    }
     resetCheckStatus();    
     reset(IntentionManagerSettings.getInstance().getMetaData());
   }

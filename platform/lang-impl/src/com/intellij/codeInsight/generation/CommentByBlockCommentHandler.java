@@ -37,6 +37,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.Indent;
+import com.intellij.psi.templateLanguages.MultipleLangCommentProvider;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
@@ -205,6 +206,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
     return commentedRange;
   }
 
+  @Nullable
   private static Commenter findCommenter(PsiFile file, Editor editor) {
     final FileType fileType = file.getFileType();
     if (fileType instanceof AbstractFileType) {
@@ -213,15 +215,25 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
 
     Language lang = PsiUtilBase.getLanguageInEditor(editor, file.getProject());
 
-    return getCommenter(file, editor, lang);
+    return getCommenter(file, editor, lang, lang);
   }
 
-  public static Commenter getCommenter(PsiFile file, Editor editor, Language lang) {
-    if (lang == null || LanguageCommenters.INSTANCE.forLanguage(lang) == null) {
-      lang = file.getLanguage();
-    }
+  @Nullable
+  public static Commenter getCommenter(final PsiFile file, final Editor editor,
+                                       final Language lineStartLanguage, final Language lineEndLanguage) {
 
     final FileViewProvider viewProvider = file.getViewProvider();
+
+    for (MultipleLangCommentProvider provider : MultipleLangCommentProvider.EP_NAME.getExtensions()) {
+      if (provider.canProcess(file, viewProvider)) {
+        return provider.getLineCommenter(file, editor, lineStartLanguage, lineEndLanguage);
+      }
+    }
+
+    Language lang = lineStartLanguage == null || LanguageCommenters.INSTANCE.forLanguage(lineStartLanguage) == null
+                    ? file.getLanguage()
+                    : lineStartLanguage;
+
     if (viewProvider instanceof TemplateLanguageFileViewProvider &&
         lang == ((TemplateLanguageFileViewProvider)viewProvider).getTemplateDataLanguage()) {
       lang = viewProvider.getBaseLanguage();

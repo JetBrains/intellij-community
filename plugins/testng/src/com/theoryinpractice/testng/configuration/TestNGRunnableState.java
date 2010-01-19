@@ -264,6 +264,8 @@ public class TestNGRunnableState extends JavaCommandLineState {
       javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.OUTDIR_COMMAND_OPT, data.getOutputDirectory());
     }
 
+    javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.USE_DEFAULT_LISTENERS, String.valueOf(data.USE_DEFAULT_REPORTERS));
+
     @NonNls final StringBuilder buf = new StringBuilder();
     if (data.TEST_LISTENERS != null && !data.TEST_LISTENERS.isEmpty()) {
       buf.append(StringUtil.join(data.TEST_LISTENERS, ";"));

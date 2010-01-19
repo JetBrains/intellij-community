@@ -399,5 +399,7 @@
 
     <group id="EditorContextBarMenu">
     </group>
+
+    <action id="Rerun" class="com.intellij.execution.runners.FakeRerunAction" text="Rerun"/>
   </actions>
 </component>

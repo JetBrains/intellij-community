@@ -36,10 +36,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.eclipse.EclipseBundle;
 import org.jetbrains.idea.eclipse.EclipseXml;
 import org.jetbrains.idea.eclipse.IdeaXml;
-import org.jetbrains.idea.eclipse.conversion.ConversionException;
-import org.jetbrains.idea.eclipse.conversion.DotProjectFileHelper;
-import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader;
-import org.jetbrains.idea.eclipse.conversion.EclipseClasspathWriter;
+import org.jetbrains.idea.eclipse.conversion.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -70,8 +67,6 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
         final Library library = ((LibraryOrderEntry)entry).getLibrary();
         if (library == null ||
             entry.getUrls(OrderRootType.CLASSES).length != 1 ||
-            entry.getUrls(OrderRootType.SOURCES).length > 1 ||
-            entry.getUrls(JavadocOrderRootType.getInstance()).length > 1 ||
             library.isJarDirectory(library.getUrls(OrderRootType.CLASSES)[0])) {
           throw new ConfigurationException(
             "Library \'" + entry.getPresentableName() + "\' is incompatible with eclipse format which supports only one content root");
@@ -98,7 +93,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
     return new EclipseClasspathConverter(module);
   }
 
-  static void registerFiles(final CachedXmlDocumentSet fileCache, final Module module, final String moduleRoot, final String storageRoot) {
+  public static void registerFiles(final CachedXmlDocumentSet fileCache, final Module module, final String moduleRoot, final String storageRoot) {
     fileCache.register(EclipseXml.CLASSPATH_FILE, storageRoot);
     fileCache.register(EclipseXml.PROJECT_FILE, storageRoot);
     fileCache.register(EclipseXml.PLUGIN_XML_FILE, storageRoot);
@@ -171,15 +166,16 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
         final EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, module.getProject(), null);
         classpathReader.init(model);
         if (documentSet.exists(EclipseXml.CLASSPATH_FILE)) {
-
           classpathReader.readClasspath(model, new ArrayList<String>(), new ArrayList<String>(), usedVariables, new HashSet<String>(), null,
                                         documentSet.read(EclipseXml.CLASSPATH_FILE).getRootElement());
-          final String eml = model.getModule().getName() + EclipseXml.IDEA_SETTINGS_POSTFIX;
-          if (documentSet.exists(eml)) {
-            EclipseClasspathReader.readIDEASpecific(documentSet.read(eml).getRootElement(), model);
-          } else {
-            model.getModuleExtension(CompilerModuleExtension.class).setExcludeOutput(false);
-          }
+        } else {
+          EclipseClasspathReader.setupOutput(model, path + "/bin");
+        }
+        final String eml = model.getModule().getName() + EclipseXml.IDEA_SETTINGS_POSTFIX;
+        if (documentSet.exists(eml)) {
+          IdeaSpecificSettings.readIDEASpecific(documentSet.read(eml).getRootElement(), model);
+        } else {
+          model.getModuleExtension(CompilerModuleExtension.class).setExcludeOutput(false);
         }
 
         ((RootModelImpl)model).writeExternal(element);
@@ -210,7 +206,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
           element = null;
         }
 
-        if (element != null || model.getSourceRoots().length > 0) {
+        if (element != null || model.getSourceRoots().length > 0 || model.getOrderEntries().length > 2) {
           classpathWriter.writeClasspath(classpathElement, element);
           fileSet.write(new Document(classpathElement), EclipseXml.CLASSPATH_FILE);
         }
@@ -224,7 +220,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
 
         final Element ideaSpecific = new Element(IdeaXml.COMPONENT_TAG);
         final String emlFilename = model.getModule().getName() + EclipseXml.IDEA_SETTINGS_POSTFIX;
-        if (classpathWriter.writeIDEASpecificClasspath(ideaSpecific)) {
+        if (IdeaSpecificSettings.writeIDEASpecificClasspath(ideaSpecific, model)) {
           fileSet.write(new Document(ideaSpecific), emlFilename);
         }
         else {

@@ -60,7 +60,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
   public String workDir;
   public boolean isDebugEnabled;
   public String scriptParams;
-  public String scriptPath;
+  @Nullable public String scriptPath;
 
   public GroovyScriptRunConfiguration(final String name, final Project project, final ConfigurationFactory factory) {
     super(name, new RunConfigurationModule(project), factory);
@@ -196,6 +196,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
 
   @Nullable
   private VirtualFile getScriptFile() {
+    if (scriptPath == null) return null;
     return LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(scriptPath));
   }
 

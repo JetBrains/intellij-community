@@ -100,6 +100,16 @@ public class NewMappings {
   public void setMapping(final String path, final String activeVcsName) {
     LOG.debug("setMapping path = '" + path + "' vcs = " + activeVcsName);
     final VcsDirectoryMapping newMapping = new VcsDirectoryMapping(path, activeVcsName);
+    // do not add duplicates
+    synchronized (myLock) {
+      if (myVcsToPaths.containsKey(activeVcsName)) {
+        final List<VcsDirectoryMapping> vcsDirectoryMappings = myVcsToPaths.get(activeVcsName);
+        if ((vcsDirectoryMappings != null) && (vcsDirectoryMappings.contains(newMapping))) {
+          return;
+        }
+      }
+
+    }
     final LocalFileSystem.WatchRequest request = addWatchRequest(newMapping);
 
     final Ref<Boolean> switched = new Ref<Boolean>(Boolean.FALSE);

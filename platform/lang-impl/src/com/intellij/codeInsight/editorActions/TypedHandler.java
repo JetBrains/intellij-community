@@ -183,16 +183,20 @@ public class TypedHandler implements TypedActionHandler {
       }
     }
 
-    if (')' == charTyped || ']' == charTyped || '}' == charTyped){
-      if (handleRParen(editor, fileType, charTyped)) return;
-    }
-    else if ('"' == charTyped || '\'' == charTyped){
-      if (handleQuote(editor, charTyped, dataContext, file)) return;
+    if (!editor.getSelectionModel().hasBlockSelection()) {
+      if (')' == charTyped || ']' == charTyped || '}' == charTyped) {
+        if (handleRParen(editor, fileType, charTyped)) return;
+      }
+      else if ('"' == charTyped || '\'' == charTyped) {
+        if (handleQuote(editor, charTyped, dataContext, file)) return;
+      }
     }
 
     myOriginalHandler.execute(editor, charTyped, dataContext);
 
-    if (('(' == charTyped || '[' == charTyped || '{' == charTyped) && CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) {
+    if (('(' == charTyped || '[' == charTyped || '{' == charTyped) &&
+        CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET &&
+        !editor.getSelectionModel().hasBlockSelection()) {
       handleAfterLParen(editor, fileType, charTyped);
     }
     else if ('}' == charTyped) {
@@ -335,7 +339,7 @@ public class TypedHandler implements TypedActionHandler {
       lexer.start(Character.toString(charTyped));
       final IElementType tokenType = lexer.getTokenType();
       if (tokenType != iterator.getTokenType()) {
-        return false;        
+        return false;
       }
     }
 

@@ -1,3 +1,25 @@
+* JFlex 1.4.3 (Jan 31, 2009)
+- fixed bug #2018299 (lookahead syntax error)
+- fixed bug #2010261 (min_int in Java example scanner)
+- fixed bug #2007221 (zzEOFDone not reset in yyreset(Reader))
+- fixed bug #1999301 (%type and %int at the same time should produce error msg)
+
+* JFlex 1.4.2 (May 27, 2008)
+- implemented feature request #1212181:
+  Now supports generics syntax for %type, %extends, etc
+- implemented feature request #1762500:
+  Provided %ctorarg option to add arguments to constructor
+- fixed bug #1464525 (Reader.read might return 0)
+- fixed bug #1968897 (Ambiguous error message in macro expansion)
+- fixed bug #1832973 (Syntax error in input may cause NullPointerException)
+- fixed bug #1629920 (Need to defend against path blanks in jflex bash script)
+- fixed bug #1540228 (EOF actions may be ignored for same lex state)
+- fixed bug #1498726 (syntax error in generated ZZ_CMAP)
+- fixed bug #1282840 (lookahead and "|" actions)
+- fixed bug #1164852 (yytext() longer than expected with lookahead)
+- fixed bug #1065521 (OS/2 Java 1.1.8 Issues)
+- fixed bug #421495 (dangerous lookahead check may fail)   
+
 * JFlex 1.4.1 (November 7, 2004)
 - merged in patch by Don Brown (fixes #1049791 Uses Old JUnit method assertFalse)
 - merged in patch by Don Brown (fixes #887821  buffer expansion bug in yy_refill())

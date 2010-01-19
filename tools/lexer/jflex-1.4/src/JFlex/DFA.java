@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * JFlex 1.4.1                                                             *
- * Copyright (C) 1998-2004  Gerwin Klein <lsf@jflex.de>                    *
+ * JFlex 1.4.3                                                             *
+ * Copyright (C) 1998-2009  Gerwin Klein <lsf@jflex.de>                    *
  * All rights reserved.                                                    *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify    *
@@ -21,12 +21,8 @@
 package JFlex;
 
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.Enumeration;
-import java.util.Hashtable;
+import java.io.*;
+import java.util.*;
 
 
 /**
@@ -34,7 +30,7 @@ import java.util.Hashtable;
  * Contains minimization algorithm.
  *
  * @author Gerwin Klein
- * @version JFlex 1.4.1, $Revision: 2.7 $, $Date: 2004/11/06 23:03:31 $
+ * @version $Revision: 1.4.3 $, $Date: 2009/12/21 15:58:48 $
  */
 final public class DFA { 
 
@@ -62,21 +58,7 @@ final public class DFA {
    */
   boolean [] isFinal;
 
-  /**
-   * <code>isPushback[state] == true</code> <=> the state <code>state</code> is 
-   * a final state of an expression that can only be matched when followed by
-   * a certain lookaead.
-   */
-  boolean [] isPushback;
-
-
-  /**
-   * <code>isLookEnd[state] == true</code> <=> the state <code>state</code> is 
-   * a final state of a lookahead expression.
-   */
-  boolean [] isLookEnd;
-
-
+  
   /**
    * <code>action[state]</code> is the action that is to be carried out in
    * state <code>state</code>, <code>null</code> if there is no action.
@@ -84,40 +66,47 @@ final public class DFA {
   Action [] action;
 
   /**
-   * lexState[i] is the start-state of lexical state i
+   * entryState[i] is the start-state of lexical state i or 
+   * lookahead DFA i
    */
-  int lexState [];
+  int entryState [];
 
   /**
    * The number of states in this DFA
    */
   int numStates;
 
-
   /**
    * The current maximum number of input characters
    */
   int numInput;
     
+  /**
+   * The number of lexical states (2*numLexStates <= entryState.length)
+   */
+  int numLexStates;
 
   /**
    * all actions that are used in this DFA
    */
   Hashtable usedActions = new Hashtable();
 
-  public DFA(int numLexStates, int numInp) {
+  /** True iff this DFA contains general lookahead */
+  boolean lookaheadUsed;
+  
+  public DFA(int numEntryStates, int numInp, int numLexStates) {
     numInput = numInp; 
     
-    int statesNeeded = Math.max(numLexStates, STATES);
+    int statesNeeded = Math.max(numEntryStates, STATES);
     
     table       = new int [statesNeeded] [numInput];
     action      = new Action [statesNeeded];
     isFinal     = new boolean [statesNeeded];
-    isPushback  = new boolean [statesNeeded];
-    isLookEnd   = new boolean [statesNeeded];
-    lexState    = new int [numLexStates];
+    entryState  = new int [numEntryStates];
     numStates   = 0;
 
+    this.numLexStates = numLexStates;
+    
     for (int i = 0; i < statesNeeded; i++) {
       for (char j = 0; j < numInput; j++)
 	      table [i][j] = NO_TARGET;    
@@ -125,8 +114,8 @@ final public class DFA {
   }
 
 
-  public void setLexState(int lState, int trueState) {
-    lexState[lState] = trueState;
+  public void setEntryState(int eState, int trueState) {
+    entryState[eState] = trueState;
   }
 
   private void ensureStateCapacity(int newNumStates) {
@@ -139,13 +128,10 @@ final public class DFA {
 
     boolean [] newFinal    = new boolean [newLength];
     boolean [] newPushback = new boolean [newLength];
-    boolean [] newLookEnd  = new boolean [newLength];
     Action  [] newAction   = new Action  [newLength];
     int [] []  newTable    = new int [newLength] [numInput];
     
     System.arraycopy(isFinal,0,newFinal,0,numStates);
-    System.arraycopy(isPushback,0,newPushback,0,numStates);
-    System.arraycopy(isLookEnd,0,newLookEnd,0,numStates);
     System.arraycopy(action,0,newAction,0,numStates);
     System.arraycopy(table,0,newTable,0,oldLength);
   
@@ -158,8 +144,6 @@ final public class DFA {
     }
 
     isFinal    = newFinal;
-    isPushback = newPushback;
-    isLookEnd  = newLookEnd;
     action     = newAction;
     table      = newTable;
   }
@@ -168,19 +152,14 @@ final public class DFA {
   public void setAction(int state, Action stateAction) {
     action[state]    = stateAction;
     if (stateAction != null) {
-      isLookEnd[state] = stateAction.isLookAction();
       usedActions.put(stateAction,stateAction);
+      lookaheadUsed |= stateAction.isGenLookAction();
     }
   }
   
   public void setFinal(int state, boolean isFinalState) {
     isFinal[state] = isFinalState;
   }
-
-  public void setPushback(int state, boolean isPushbackState) {
-    isPushback[state] = isPushbackState;
-  }
-
 
   public void addTransition(int start, char input, int dest) {
     int max = Math.max(start,dest)+1;
@@ -193,14 +172,20 @@ final public class DFA {
   }
 
 
-
   public String toString() {
     StringBuffer result = new StringBuffer();
 
     for (int i=0; i < numStates; i++) {
       result.append("State ");
-      if ( isFinal[i] ) result.append("[FINAL] "); // (action "+action[i].priority+")] ");
-      if ( isPushback[i] ) result.append("[PUSH] ");
+      if ( isFinal[i] ) {
+        result.append("[FINAL");
+        String l = action[i].lookString();
+        if (!l.equals("")) {
+          result.append(", ");
+          result.append(l);        
+        }
+        result.append("] ");
+      }
       result.append(i+":"+Out.NL);
      
       for (char j=0; j < numInput; j++) {
@@ -233,10 +218,11 @@ final public class DFA {
     result.append("rankdir = LR"+Out.NL);
 
     for (int i=0; i < numStates; i++) {
-      if ( isFinal[i] || isPushback[i] ) result.append(i);
-      if ( isFinal[i] ) result.append(" [shape = doublecircle]");
-      if ( isPushback[i] ) result.append(" [shape = box]");
-      if ( isFinal[i] || isPushback[i] ) result.append(Out.NL);
+      if ( isFinal[i] ) {
+        result.append(i);
+        result.append(" [shape = doublecircle]");
+        result.append(Out.NL);
+      }
     }
 
     for (int i=0; i < numStates; i++) {
@@ -255,15 +241,18 @@ final public class DFA {
   }
 
 
-  // check if all actions can actually be matched in this DFA
+  /**
+   * Check that all actions can actually be matched in this DFA.
+   */ 
   public void checkActions(LexScan scanner, LexParse parser) {
     EOFActions eofActions = parser.getEOFActions();
     Enumeration l = scanner.actions.elements();
 
     while (l.hasMoreElements()) {
-      Object next = l.nextElement();
-      if ( !next.equals(usedActions.get(next)) && !eofActions.isEOFAction(next) ) 
-        Out.warning(scanner.file, ErrorMessages.NEVER_MATCH, ((Action) next).priority-1, -1);
+      Action a = (Action) l.nextElement();
+      if ( !a.equals(usedActions.get(a)) && !eofActions.isEOFAction(a) ) {
+        Out.warning(scanner.file, ErrorMessages.NEVER_MATCH, a.priority-1, -1);
+      }
     }
   }
 
@@ -402,28 +391,25 @@ final public class DFA {
         // System.out.println("  picking state ["+(t-1)+"]");
 
         // check, if s could be equivalent with t
-        found = (isPushback[s-1] == isPushback[t-1]) && (isLookEnd[s-1] == isLookEnd[t-1]);
-        if (found) {
-          if (isFinal[s-1]) {
-            found = isFinal[t-1] && action[s-1].isEquiv(action[t-1]);
-          }
-          else {
-            found = !isFinal[t-1];
-          }
-        
-          if (found) { // found -> add state s to block b
-            // System.out.println("Found! Adding to block "+(b-b0));
-            // update block information
-            block[s] = b;
-            block[b]++;
-            
-            // chain in the new element
-            int last = b_backward[b];
-            b_forward[last] = s;
-            b_forward[s] = b;
-            b_backward[b] = s;
-            b_backward[s] = last;
-          }
+        if (isFinal[s-1]) {
+          found = isFinal[t-1] && action[s-1].isEquiv(action[t-1]);
+        }
+        else {
+          found = !isFinal[t-1];
+        }
+      
+        if (found) { // found -> add state s to block b
+          // System.out.println("Found! Adding to block "+(b-b0));
+          // update block information
+          block[s] = b;
+          block[b]++;
+          
+          // chain in the new element
+          int last = b_backward[b];
+          b_forward[last] = s;
+          b_forward[s] = b;
+          b_backward[b] = s;
+          b_backward[s] = last;
         }
 
         b++;
@@ -542,7 +528,7 @@ final public class DFA {
         twin[B_i] = 0;
       }
       
-      // count how many states of each B_i occuring in D go with a into B_j
+      // count how many states of each B_i occurring in D go with a into B_j
       // Actually we only check, if *all* t in B_i go with a into B_j.
       // In this case SD[B_i] == block[B_i] will hold.
       for (int indexD = 0; indexD < numD; indexD++) { // for each s in D
@@ -727,8 +713,6 @@ final public class DFA {
         }
 
         isFinal[j] = isFinal[i];
-        isPushback[j] = isPushback[i];
-        isLookEnd[j] = isLookEnd[i];
         action[j] = action[i];
         
         j++;
@@ -738,9 +722,9 @@ final public class DFA {
     numStates = j;
     
     // translate lexical states
-    for (i = 0; i < lexState.length; i++) {
-      lexState[i] = trans[ lexState[i] ];
-      lexState[i]-= move[ lexState[i] ];
+    for (i = 0; i < entryState.length; i++) {
+      entryState[i] = trans[ entryState[i] ];
+      entryState[i]-= move[ entryState[i] ];
     }
   
     Out.println(numStates+" states in minimized DFA");
@@ -793,6 +777,11 @@ final public class DFA {
   }
 
 
+  /**
+   * Much simpler, but slower and less memory efficient minimization algorithm.
+   * 
+   * @return the equivalence relation on states.
+   */
   public boolean [] [] old_minimize() {
 
     int i,j;
@@ -810,7 +799,7 @@ final public class DFA {
       return null;
     }
 
-    // notequiv[i][j] == true <=> state i and state j are equivalent
+    // equiv[i][j] == true <=> state i and state j are equivalent
     boolean [] [] equiv = new boolean [numStates] [];
 
     // list[i][j] contains all pairs of states that have to be marked "not equivalent"
@@ -827,10 +816,10 @@ final public class DFA {
         // i and j are both final and their actions are equivalent and have same pushback behaviour or
         // i and j are both not final
 
-        if ( isFinal[i] && isFinal[j] && (isPushback[i] == isPushback[j]) && (isLookEnd[i] == isLookEnd[j]) ) 
+        if ( isFinal[i] && isFinal[j] ) 
           equiv[i][j] = action[i].isEquiv(action[j]);        
         else
-          equiv[i][j] = !isFinal[j] && !isFinal[i] && (isPushback[i] == isPushback[j]) && (isLookEnd[i] == isLookEnd[j]);
+          equiv[i][j] = !isFinal[j] && !isFinal[i];
       }
     }
 

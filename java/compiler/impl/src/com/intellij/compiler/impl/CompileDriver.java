@@ -82,8 +82,10 @@ import com.intellij.util.Chunk;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.OrderedSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
@@ -92,6 +94,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class CompileDriver {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompileDriver");
@@ -109,6 +112,7 @@ public class CompileDriver {
 
   private static final boolean GENERATE_CLASSPATH_INDEX = "true".equals(System.getProperty("generate.classpath.index"));
   private static final String PROP_PERFORM_INITIAL_REFRESH = "compiler.perform.outputs.refresh.on.start";
+  private boolean myInitialRefreshPerformed = false;
 
   private static final FileProcessingCompilerAdapterFactory FILE_PROCESSING_COMPILER_ADAPTER_FACTORY = new FileProcessingCompilerAdapterFactory() {
     public FileProcessingCompilerAdapter create(CompileContext context, FileProcessingCompiler compiler) {
@@ -234,7 +238,8 @@ public class CompileDriver {
     return new DependencyCache(myCachesDirectoryPath + File.separator + ".dependency-info");
   }
 
-  public void compile(CompileScope scope, CompileStatusNotification callback, boolean trackDependencies) {
+  public void compile(CompileScope scope, CompileStatusNotification callback, boolean trackDependencies, boolean clearingOutputDirsPossible) {
+    myShouldClearOutputDirectory &= clearingOutputDirsPossible;
     if (trackDependencies) {
       scope = new TrackDependenciesScope(scope);
     }
@@ -595,12 +600,17 @@ public class CompileDriver {
     try {
       if (isRebuild) {
         deleteAll(context);
-        if (context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
-          if (LOG.isDebugEnabled()) {
-            logErrorMessages(context);
-          }
-          return ExitStatus.ERRORS;
+      }
+      else if (forceCompile) {
+        if (myShouldClearOutputDirectory) {
+          clearAffectedOutputPathsIfPossible(context);
         }
+      }
+      if (context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
+        if (LOG.isDebugEnabled()) {
+          logErrorMessages(context);
+        }
+        return ExitStatus.ERRORS;
       }
 
       if (!onlyCheckStatus) {
@@ -620,7 +630,8 @@ public class CompileDriver {
       }
 
       boolean needRecalcOutputDirs = false;
-      if (Registry.is(PROP_PERFORM_INITIAL_REFRESH)) {
+      if (Registry.is(PROP_PERFORM_INITIAL_REFRESH) || !myInitialRefreshPerformed) {
+        myInitialRefreshPerformed = true;
         final long refreshStart = System.currentTimeMillis();
 
         // need this to make sure the VFS is built
@@ -677,7 +688,12 @@ public class CompileDriver {
 
           //RefreshQueue.getInstance().refresh(false, true, null, outputsToRefresh.toArray(new VirtualFile[outputsToRefresh.size()]));
           try {
-            latch.await(); // wait until all threads are refreshed
+            while (latch.getCount() > 0) {
+              latch.await(500, TimeUnit.MILLISECONDS); // wait until all threads are refreshed
+              if (progressIndicator.isCanceled()) {
+                return ExitStatus.CANCELLED;
+              }
+            }
           }
           catch (InterruptedException e) {
             LOG.info(e);
@@ -692,7 +708,19 @@ public class CompileDriver {
         CompilerUtil.ourRefreshTime += initialRefreshTime;
       }
 
-      DumbService.getInstance(myProject).waitForSmartMode();
+      //DumbService.getInstance(myProject).waitForSmartMode();
+      final Semaphore semaphore = new Semaphore();
+      semaphore.down();
+      DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
+        public void run() {
+          semaphore.up();
+        }
+      });
+      while (!semaphore.waitFor(500)) {
+        if (context.getProgressIndicator().isCanceled()) {
+          return ExitStatus.CANCELLED;
+        }
+      }
 
       if (needRecalcOutputDirs) {
         context.recalculateOutputDirs();
@@ -790,6 +818,49 @@ public class CompileDriver {
     }
     catch (ProcessCanceledException e) {
       return ExitStatus.CANCELLED;
+    }
+  }
+
+  private void clearAffectedOutputPathsIfPossible(CompileContextEx context) {
+    final MultiMap<File, Module> outputToModulesMap = new MultiMap<File, Module>();
+    for (Module module : ModuleManager.getInstance(myProject).getModules()) {
+      final CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
+      if (compilerModuleExtension == null) {
+        continue;
+      }
+      final String outputPathUrl = compilerModuleExtension.getCompilerOutputUrl();
+      if (outputPathUrl != null) {
+        final String path = VirtualFileManager.extractPath(outputPathUrl);
+        outputToModulesMap.putValue(new File(path), module);
+      }
+
+      final String outputPathForTestsUrl = compilerModuleExtension.getCompilerOutputUrlForTests();
+      if (outputPathForTestsUrl != null) {
+        final String path = VirtualFileManager.extractPath(outputPathForTestsUrl);
+        outputToModulesMap.putValue(new File(path), module);
+      }
+    }
+    final Set<Module> affectedModules = new HashSet<Module>(Arrays.asList(context.getCompileScope().getAffectedModules()));
+    final List<File> scopeOutputs = new ArrayList<File>(affectedModules.size() * 2);
+    for (File output : outputToModulesMap.keySet()) {
+      final Collection<Module> modules = outputToModulesMap.get(output);
+      boolean shouldInclude = true;
+      for (Module module : modules) {
+        if (!affectedModules.contains(module)) {
+          shouldInclude = false;
+          break;
+        }
+      }
+      if (shouldInclude) {
+        scopeOutputs.add(output);
+      }
+    }
+    if (scopeOutputs.size() > 0) {
+      CompilerUtil.runInContext(context, CompilerBundle.message("progress.clearing.output"), new ThrowableRunnable<RuntimeException>() {
+        public void run() {
+          clearOutputDirectories(scopeOutputs);
+        }
+      });
     }
   }
 
@@ -1187,6 +1258,10 @@ public class CompileDriver {
     for (final String path : CompilerPathsEx.getOutputPaths(modules)) {
       outputDirs.add(new File(path));
     }
+    for (Pair<IntermediateOutputCompiler, Module> pair : myGenerationCompilerModuleToOutputDirMap.keySet()) {
+      outputDirs.add(new File(CompilerPaths.getGenerationOutputPath(pair.getFirst(), pair.getSecond(), false)));
+      outputDirs.add(new File(CompilerPaths.getGenerationOutputPath(pair.getFirst(), pair.getSecond(), true)));
+    }
     final CompilerConfiguration config = CompilerConfiguration.getInstance(myProject);
     if (config.isAnnotationProcessorsEnabled()) {
       for (Module module : modules) {
@@ -1201,35 +1276,32 @@ public class CompileDriver {
     return outputDirs;
   }
 
-  private void clearOutputDirectories(final Set<File> _outputDirectories) {
+  private static void clearOutputDirectories(final Collection<File> outputDirectories) {
     final long start = System.currentTimeMillis();
     // do not delete directories themselves, or we'll get rootsChanged() otherwise
-    final List<File> outputDirectories = new ArrayList<File>(_outputDirectories);
-    for (Pair<IntermediateOutputCompiler, Module> pair : myGenerationCompilerModuleToOutputDirMap.keySet()) {
-      outputDirectories.add(new File(CompilerPaths.getGenerationOutputPath(pair.getFirst(), pair.getSecond(), false)));
-      outputDirectories.add(new File(CompilerPaths.getGenerationOutputPath(pair.getFirst(), pair.getSecond(), true)));
-    }
-    Collection<File> filesToDelete = new ArrayList<File>(outputDirectories.size() * 2);
+    final Collection<File> filesToDelete = new ArrayList<File>(outputDirectories.size() * 2);
     for (File outputDirectory : outputDirectories) {
       File[] files = outputDirectory.listFiles();
       if (files != null) {
         filesToDelete.addAll(Arrays.asList(files));
       }
     }
-    FileUtil.asyncDelete(filesToDelete);
+    if (filesToDelete.size() > 0) {
+      FileUtil.asyncDelete(filesToDelete);
 
-    // ensure output directories exist
-    for (final File file : outputDirectories) {
-      file.mkdirs();
+      // ensure output directories exist
+      for (final File file : outputDirectories) {
+        file.mkdirs();
+      }
+      final long clearStop = System.currentTimeMillis();
+
+      CompilerUtil.refreshIODirectories(outputDirectories);
+
+      final long refreshStop = System.currentTimeMillis();
+
+      CompilerUtil.logDuration("Clearing output dirs", clearStop - start);
+      CompilerUtil.logDuration("Refreshing output directories", refreshStop - clearStop);
     }
-    final long clearStop = System.currentTimeMillis();
-
-    CompilerUtil.refreshIODirectories(outputDirectories);
-
-    final long refreshStop = System.currentTimeMillis();
-
-    CompilerUtil.logDuration("Clearing output dirs", clearStop - start);
-    CompilerUtil.logDuration("Refreshing output directories", refreshStop - clearStop);
   }
 
   private void clearCompilerSystemDirectory(final CompileContextEx context) {

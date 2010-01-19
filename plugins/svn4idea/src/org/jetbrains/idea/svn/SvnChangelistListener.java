@@ -66,6 +66,7 @@ public class SvnChangelistListener implements ChangeListListener {
   }
 
   public void changesAdded(Collection<Change> changes, ChangeList toList) {
+    if (toList == null) return;
     if (SvnChangeProvider.ourDefaultListName.equals(toList.getName())) {
       return;
     }

@@ -204,22 +204,28 @@ public class CodeStyleImportsPanel extends JPanel {
   }
 
   private JPanel createImportLayoutButtonsPanel() {
-    JPanel tableButtonsPanel = new JPanel(new VerticalFlowLayout());
+    JPanel tableButtonsPanel = new JPanel();
+    tableButtonsPanel.setLayout(new BoxLayout(tableButtonsPanel, BoxLayout.Y_AXIS));
 
     JButton addPackageToImportLayoutButton = new JButton(ApplicationBundle.message("button.add.package"));
     tableButtonsPanel.add(addPackageToImportLayoutButton);
+    addPackageToImportLayoutButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, addPackageToImportLayoutButton.getMaximumSize().height));
 
     JButton addBlankLineButton = new JButton(ApplicationBundle.message("button.add.blank"));
     tableButtonsPanel.add(addBlankLineButton);
+    addBlankLineButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, addBlankLineButton.getMaximumSize().height));
 
     myMoveUpButton = new JButton(ApplicationBundle.message("button.move.up"));
     tableButtonsPanel.add(myMoveUpButton);
+    myMoveUpButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, myMoveUpButton.getMaximumSize().height));
 
     myMoveDownButton = new JButton(ApplicationBundle.message("button.move.down"));
     tableButtonsPanel.add(myMoveDownButton);
+    myMoveDownButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, myMoveDownButton.getMaximumSize().height));
 
     myRemovePackageFromImportLayoutButton = new JButton(ApplicationBundle.message("button.remove"));
     tableButtonsPanel.add(myRemovePackageFromImportLayoutButton);
+    myRemovePackageFromImportLayoutButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, myRemovePackageFromImportLayoutButton.getMaximumSize().height));
 
     addPackageToImportLayoutButton.addActionListener(
       new ActionListener(){
@@ -265,14 +271,16 @@ public class CodeStyleImportsPanel extends JPanel {
   }
 
   private JPanel createPackagesButtonsPanel() {
-    JPanel tableButtonsPanel = new JPanel(new VerticalFlowLayout());
-    tableButtonsPanel.setBorder(BorderFactory.createEmptyBorder(4,4,4,4));
+    JPanel tableButtonsPanel = new JPanel();
+    tableButtonsPanel.setLayout(new BoxLayout(tableButtonsPanel, BoxLayout.Y_AXIS));
 
     JButton addPackageToPackagesButton = new JButton(ApplicationBundle.message("button.add.package.p"));
     tableButtonsPanel.add(addPackageToPackagesButton);
+    addPackageToPackagesButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, addPackageToPackagesButton.getMaximumSize().height));
 
     myRemovePackageFromPackagesButton = new JButton(ApplicationBundle.message("button.remove.r"));
     tableButtonsPanel.add(myRemovePackageFromPackagesButton);
+    myRemovePackageFromPackagesButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, myRemovePackageFromPackagesButton.getMaximumSize().height));
 
     addPackageToPackagesButton.addActionListener(
       new ActionListener(){

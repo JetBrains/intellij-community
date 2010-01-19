@@ -64,8 +64,7 @@ abstract class AutoMatchStrategy {
   protected Collection<VirtualFile> suggestFolderForCreation(final TextFilePatch creation) {
     final String newFileParentPath = extractPathWithoutName(creation.getAfterName());
     if (newFileParentPath != null) {
-      final Collection<VirtualFile> variants = filterVariants(creation, myFolderDecisions.get(newFileParentPath));
-      myResult.add(new FilePatchInProgress(creation, variants, myBaseDir));
+      return filterVariants(creation, myFolderDecisions.get(newFileParentPath));
     }
     return null;
   }

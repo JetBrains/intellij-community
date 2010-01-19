@@ -500,8 +500,11 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
         @NotNull public String getTextFor(final Object value) { return NavBarModel.getPresentableText(value, null);}
         public boolean isSelectable(Object value) { return true; }
         public PopupStep onChosen(final Object selectedValue, final boolean finalChoice) {
-          navigateInsideBar(optimizeTarget(selectedValue));
-          return FINAL_CHOICE;
+          return doFinalStep(new Runnable() {
+            public void run() {
+              navigateInsideBar(optimizeTarget(selectedValue));
+            }
+          });
         }
 
         /*
@@ -574,16 +577,12 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       myHint.setBounds(bounds.x, bounds.y, dimension.width, dimension.height);
     }
 
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        if (myModel.hasChildren(object)) {
-          restorePopup();
-        }
-        else {
-          doubleClick(object);
-        }
-      }
-    });
+    if (myModel.hasChildren(object)) {
+      restorePopup();
+    }
+    else {
+      doubleClick(object);
+    }
   }
 
   private void rightClick(final int index) {

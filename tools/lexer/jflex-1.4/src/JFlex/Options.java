@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * JFlex 1.4.1                                                             *
- * Copyright (C) 1998-2004  Gerwin Klein <lsf@jflex.de>                    *
+ * JFlex 1.4.3                                                             *
+ * Copyright (C) 1998-2009  Gerwin Klein <lsf@jflex.de>                    *
  * All rights reserved.                                                    *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify    *
@@ -27,7 +27,7 @@ import java.io.File;
  * ant taks, gui, etc.
  * 
  * @author Gerwin Klein
- * @version JFlex 1.4.1, $Revision: 2.10 $, $Date: 2004/11/06 23:03:31 $
+ * @version $Revision: 1.4.3 $, $Date: 2009/12/21 15:58:48 $
  */
 public class Options {
 
@@ -123,6 +123,7 @@ public class Options {
     time = false;
     dot = false;
     dump = false;
+    Skeleton.readDefault();
   }
 
   public static void setSkeleton(File skel) {

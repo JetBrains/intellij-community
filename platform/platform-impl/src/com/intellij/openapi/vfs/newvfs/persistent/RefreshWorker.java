@@ -19,6 +19,7 @@
  */
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -58,7 +59,7 @@ public class RefreshWorker {
     }
     else {
       if (delegate.getProtocol().equals(LocalFileSystem.PROTOCOL) && 
-          root.isDirectory() &&
+          root.isDirectory() && ApplicationManagerEx.getApplicationEx().isInternal() &&
           Registry.is("filesystem.useNative")) {
 
         if (SystemInfo.isWindows && Win32LocalFileSystem.isAvailable()) {

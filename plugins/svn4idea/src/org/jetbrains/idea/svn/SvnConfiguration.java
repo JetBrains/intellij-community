@@ -32,6 +32,7 @@ import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
 import org.jetbrains.idea.svn.dialogs.SvnAuthenticationProvider;
+import org.jetbrains.idea.svn.dialogs.SvnInteractiveAuthenticationProvider;
 import org.jetbrains.idea.svn.update.MergeRootInfo;
 import org.jetbrains.idea.svn.update.UpdateRootInfo;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -68,6 +69,8 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
   private boolean myRemoteStatus;
   private final Project myProject;
   private SvnAuthenticationManager myAuthManager;
+  private SvnAuthenticationManager myPassiveAuthManager;
+  private SvnAuthenticationManager myInteractiveManager;
   private String myUpgradeMode;
   private SvnSupportOptions mySupportOptions;
 
@@ -218,6 +221,23 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
         myAuthManager.setRuntimeStorage(RUNTIME_AUTH_CACHE);
     }
     return myAuthManager;
+  }
+
+  public ISVNAuthenticationManager getPassiveAuthenticationManager() {
+    if (myPassiveAuthManager == null) {
+        myPassiveAuthManager = new SvnAuthenticationManager(myProject, new File(getConfigurationDirectory()));
+        myPassiveAuthManager.setRuntimeStorage(RUNTIME_AUTH_CACHE);
+    }
+    return myPassiveAuthManager;
+  }
+
+  public ISVNAuthenticationManager getInteractiveManager(final SvnVcs svnVcs) {
+    if (myInteractiveManager == null) {
+      myInteractiveManager = new SvnAuthenticationManager(myProject, new File(getConfigurationDirectory()));
+      myInteractiveManager.setRuntimeStorage(RUNTIME_AUTH_CACHE);
+      myInteractiveManager.setAuthenticationProvider(new SvnInteractiveAuthenticationProvider(svnVcs));
+    }
+    return myInteractiveManager;
   }
 
   public void getServerFilesManagers(final Ref<SvnServerFileManager> systemManager, final Ref<SvnServerFileManager> userManager) {
@@ -422,5 +442,17 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
         }
       }, "button.text.clear.authentication.cache", false, myProject);
     }
+  }
+  
+  public boolean haveCredentialsFor(final String kind, final String realm) {
+    return RUNTIME_AUTH_CACHE.getData(kind, realm) != null;
+  }
+
+  public void acknowledge(final String kind, final String realm, final Object object) {
+    RUNTIME_AUTH_CACHE.putData(kind, realm, object);
+  }
+
+  public void clearCredentials(final String kind, final String realm) {
+    RUNTIME_AUTH_CACHE.putData(kind, realm, null);
   }
 }

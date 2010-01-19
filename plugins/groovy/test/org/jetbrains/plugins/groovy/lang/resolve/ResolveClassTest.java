@@ -100,7 +100,7 @@ public class ResolveClassTest extends GroovyResolveTestCase {
     assertNotNull(ref.resolve());
   }
 
-  public void testImportStaticFromJavaUtil() throws Throwable { doTest(); }
+  public void _testImportStaticFromJavaUtil() throws Throwable { doTest(); }
   public void testInnerEnum() throws Throwable { doTest(); }
   public void testInnerClass()throws Throwable {doTest();}
   public void testInnerClassInSubclass()throws Throwable {doTest();}

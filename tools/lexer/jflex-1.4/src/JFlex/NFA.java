@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * JFlex 1.4.1                                                             *
- * Copyright (C) 1998-2004  Gerwin Klein <lsf@jflex.de>                    *
+ * JFlex 1.4.3                                                             *
+ * Copyright (C) 1998-2009  Gerwin Klein <lsf@jflex.de>                    *
  * All rights reserved.                                                    *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify    *
@@ -19,13 +19,8 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 package JFlex;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.Enumeration;
-import java.util.Hashtable;
-import java.util.Vector;
+import java.util.*;
+import java.io.*;
 
 
 /**
@@ -34,40 +29,36 @@ import java.util.Vector;
  * Contains algorithms RegExp -> NFA and NFA -> DFA.
  *
  * @author Gerwin Klein
- * @version JFlex 1.4.1, $Revision: 2.8 $, $Date: 2004/11/06 23:03:32 $
+ * @version $Revision: 1.4.3 $, $Date: 2009/12/21 15:58:48 $
  */
 final public class NFA {
 
-  // table[current_state][next_char] is the set of states that can be reached
-  // from current_state with an input next_char
+  /** table[current_state][next_char] is the set of states that can be reached
+  /* from current_state with an input next_char */
   StateSet [][] table;
 
-  // epsilon[current_state] is the set of states that can be reached
-  // from current_state via epsilon-edges
+  /** epsilon[current_state] is the set of states that can be reached
+  /* from current_state via epsilon edges */
   StateSet [] epsilon;
 
-  // isFinal[state] == true <=> state is a final state of the NFA
+  /** isFinal[state] == true <=> state is a final state of the NFA */
   boolean [] isFinal;
 
-  // isPushback[state] == true <=> state is the final state of a regexp that
-  // should only be matched when followed by a certain lookahead.
-  boolean [] isPushback;
-
-  // action[current_state]: the action associated with the state 
-  // current_state (null, if there is no action for the state)
+  /** action[current_state]: the action associated with the state 
+  /* current_state (null, if there is no action for the state) */
   Action [] action;
 
-  // the number of states in this NFA
+  /** the number of states in this NFA */
   int numStates;
 
-  // the current maximum number of input characters
+  /** the current maximum number of input characters */
   int numInput;
 
-  // the number of lexical States. Lexical states have the indices
-  // 0..numLexStates-1 in the transition table
+  /** the number of lexical States. Lexical states have the indices
+  /* 0..numLexStates-1 in the transition table */
   int numLexStates;
 
-  // estimated size of the NFA (before actual construction)
+  /** estimated size of the NFA (before actual construction) */
   int estSize = 256;
   
   Macros macros;
@@ -87,10 +78,15 @@ final public class NFA {
     epsilon = new StateSet [estSize];
     action = new Action [estSize];
     isFinal = new boolean [estSize];
-    isPushback = new boolean [estSize];
     table = new StateSet [estSize][numInput];
   }
 
+  /** 
+   * Construct new NFA.
+   * 
+   * Assumes that lookahead cases and numbers are already resolved in RegExps.
+   * @see RegExps#checkLookAheads()
+   */ 
   public NFA(int numInput, LexScan scanner, RegExps regExps, 
              Macros macros, CharClasses classes) {
     this(numInput, regExps.NFASize(macros)+2*scanner.states.number());
@@ -101,15 +97,22 @@ final public class NFA {
     this.classes = classes;
     
     numLexStates = scanner.states.number();
+
+    // ensureCapacity assumes correctly set up numStates. 
+    int new_num = numEntryStates();
+    ensureCapacity(new_num);
+    numStates = new_num;
+  }
     
-    ensureCapacity(2*numLexStates);
-    
-    numStates = 2*numLexStates;
+  public int numEntryStates() {
+    return 2*(numLexStates+regExps.gen_look_count);
   }
   
+  /**
+   * Add a standalone rule that has minimum priority, fires a transition
+   * on all single input characters and has a "print yytext" action.
+   */
   public void addStandaloneRule() {
-    // standalone rule has least priority, fires
-    // transition on all characters and has "print it rule"    
     int start = numStates;
     int end   = numStates+1;
 
@@ -123,7 +126,11 @@ final public class NFA {
     isFinal[end] = true;    
   }
 
-  
+  /**
+   * Add a regexp to this NFA. 
+   * 
+   * @param regExpNum   the number of the regexp to add.
+   */
   public void addRegExp(int regExpNum) {
 
     if (Options.DEBUG)
@@ -147,16 +154,44 @@ final public class NFA {
         
         
     if ( regExps.getLookAhead(regExpNum) != null ) {
-      IntPair look = insertNFA( regExps.getLookAhead(regExpNum) );
-      
-      addEpsilonTransition(nfa.end, look.start);
-
       Action a = regExps.getAction(regExpNum);
-      a.setLookAction(true);
 
-      isPushback[nfa.end]   = true;      
-      action[look.end]      = a;
-      isFinal[look.end]     = true;
+      if (a.lookAhead() == Action.FINITE_CHOICE) {
+        insertLookAheadChoices(nfa.end, a, regExps.getLookAhead(regExpNum));
+        // remove the original action from the collection: it will never
+        // be matched directly, only its copies will.
+        scanner.actions.remove(a);
+      }
+      else {
+        RegExp r1 = regExps.getRegExp(regExpNum);
+        RegExp r2 = regExps.getLookAhead(regExpNum);
+  
+        IntPair look = insertNFA(r2);
+        
+        addEpsilonTransition(nfa.end, look.start);
+  
+        action[look.end]  = a;
+        isFinal[look.end] = true;
+  
+        if (a.lookAhead() == Action.GENERAL_LOOK) {
+          // base forward pass
+          IntPair forward = insertNFA(r1);
+          // lookahead backward pass
+          IntPair backward = insertNFA(r2.rev(macros));
+          
+          isFinal[forward.end] = true;
+          action[forward.end] = new Action(Action.FORWARD_ACTION);
+          
+          isFinal[backward.end] = true;
+          action[backward.end] = new Action(Action.BACKWARD_ACTION);
+          
+          int entry = 2*(regExps.getLookEntry(regExpNum) + numLexStates);
+          addEpsilonTransition(entry, forward.start);
+          addEpsilonTransition(entry+1, backward.start);
+          
+          a.setEntryState(entry);
+        }
+      }
     }
     else {
       action[nfa.end] = regExps.getAction(regExpNum);
@@ -164,7 +199,54 @@ final public class NFA {
     }
   }
 
+  /**
+   * Insert NFAs for the (finitely many) fixed length lookahead choices.
+   * 
+   * @param lookAhead   a lookahead of which isFiniteChoice is true
+   * @param baseEnd     the end state of the base expression NFA
+   * @param a           the action of the expression
+   *  
+   * @see SemCheck#isFiniteChoice(RegExp) 
+   */
+  private void insertLookAheadChoices(int baseEnd, Action a, RegExp lookAhead) {
+    if (lookAhead.type == sym.BAR) {
+      RegExp2 r = (RegExp2) lookAhead;
+      insertLookAheadChoices(baseEnd, a, r.r1);
+      insertLookAheadChoices(baseEnd, a, r.r2);
+    }
+    else if (lookAhead.type == sym.MACROUSE) {
+      RegExp1 r = (RegExp1) lookAhead;
+      insertLookAheadChoices(baseEnd, a, macros.getDefinition((String) r.content));
+    }
+    else {
+      int len = SemCheck.length(lookAhead);
+      
+      if (len >= 0) {
+        // termination case
+        IntPair look = insertNFA(lookAhead);
+        
+        addEpsilonTransition(baseEnd, look.start);
+  
+        Action x = a.copyChoice(len);
+        action[look.end]  = x;
+        isFinal[look.end] = true;
+        
+        // add new copy to the collection of known actions such that
+        // it can be checked for the NEVER_MATCH warning.
+        scanner.actions.add(x);
+      }
+      else {
+        // should never happen
+        throw new Error("When inserting lookahead expression: unkown expression type "+lookAhead.type+" in "+lookAhead); //$NON-NLS-1$ //$NON-NLS-2$
+      }
+    }
+  }
 
+  /**
+   * Make sure the NFA can contain at least newNumStates states. 
+   * 
+   * @param newNumStates  the minimu number of states. 
+   */
   private void ensureCapacity(int newNumStates) {
     int oldLength = epsilon.length;
     
@@ -179,13 +261,11 @@ final public class NFA {
     StateSet [] newEpsilon  = new StateSet [newStatesLength];
 
     System.arraycopy(isFinal,0,newFinal,0,numStates);
-    System.arraycopy(isPushback,0,newIsPush,0,numStates);
     System.arraycopy(action,0,newAction,0,numStates);
     System.arraycopy(epsilon,0,newEpsilon,0,numStates);
     System.arraycopy(table,0,newTable,0,numStates);
 
     isFinal     = newFinal;
-    isPushback  = newIsPush;
     action      = newAction;
     epsilon     = newEpsilon;
     table       = newTable;
@@ -239,7 +319,6 @@ final public class NFA {
    * contains a pushback-state.
    *
    * @param set   the set of states that is tested for pushback-states.
-   */
   private boolean containsPushback(StateSet set) {
     states.reset(set);
 
@@ -248,7 +327,7 @@ final public class NFA {
 
     return false;
   }
-
+  */
 
   /**
    * Returns the action with highest priority in the specified 
@@ -373,14 +452,14 @@ final public class NFA {
   
   /**
    * Returns an DFA that accepts the same language as this NFA.
-   * This DFA is usualy not minimal.
+   * This DFA is usually not minimal.
    */
   public DFA getDFA() {
 
     Hashtable dfaStates = new Hashtable(numStates);
     Vector dfaVector    = new Vector(numStates);
 
-    DFA dfa = new DFA(2*numLexStates, numInput);
+    DFA dfa = new DFA(numEntryStates(), numInput, numLexStates);
 
     int numDFAStates = 0;
     int currentDFAState = 0;
@@ -391,16 +470,16 @@ final public class NFA {
 
     StateSet currentState, newState;
     
-    for ( int i = 0;  i < 2*numLexStates;  i++ ) {
+    // create the initial states of the DFA
+    for ( int i = 0;  i < numEntryStates();  i++ ) {
       newState = epsilon[i];
   
       dfaStates.put(newState, new Integer(numDFAStates));
       dfaVector.addElement(newState);
   
-      dfa.setLexState( i, numDFAStates );
+      dfa.setEntryState( i, numDFAStates );
         
       dfa.setFinal( numDFAStates, containsFinal(newState) );
-      dfa.setPushback( numDFAStates, containsPushback(newState) );
       dfa.setAction( numDFAStates, getAction(newState) );
 
       numDFAStates++;
@@ -413,7 +492,7 @@ final public class NFA {
      
     currentDFAState = 0;
       
-    StateSet tempStateSet  = NFA.tempStateSet;    
+    StateSet tempStateSet = NFA.tempStateSet;    
     StateSetEnumerator states = NFA.states;
 
     // will be reused
@@ -470,7 +549,6 @@ final public class NFA {
 	    
 	          dfa.addTransition(currentDFAState, input, numDFAStates);
 	          dfa.setFinal( numDFAStates, containsFinal(storeState) );
-            dfa.setPushback( numDFAStates, containsPushback(storeState) );
 	          dfa.setAction( numDFAStates, getAction(storeState) );
 	        }
 	      }
@@ -494,15 +572,20 @@ final public class NFA {
 
     for (int i=0; i < numStates; i++) {
       result.append("State");
-      if ( isFinal[i] ) result.append("[FINAL]");
-      if ( isPushback[i] ) result.append(" [PUSHBACK]");
+      if ( isFinal[i] ) {
+        result.append("[FINAL");
+        String l = action[i].lookString();
+        if (!l.equals("")) {
+          result.append(", ");
+          result.append(l);        
+        }
+        result.append("]");
+      }
       result.append(" "+i+Out.NL);
       
       for (char input = 0; input < numInput; input++) {
 	      if ( table[i][input] != null && table[i][input].containsElements() ) 
 	        result.append("  with "+((int) input)+" in "+table[i][input]+Out.NL);	
-          
-          
         }
 
       if ( epsilon[i] != null && epsilon[i].containsElements() ) 
@@ -531,10 +614,11 @@ final public class NFA {
     result.append("rankdir = LR"+Out.NL);
 
     for (int i=0; i < numStates; i++) {
-      if ( isFinal[i] || isPushback[i] ) result.append(i);
-      if ( isFinal[i] ) result.append(" [shape = doublecircle]");
-      if ( isPushback[i] ) result.append(" [shape = box]");
-      if ( isFinal[i] || isPushback[i] ) result.append(Out.NL);
+      if ( isFinal[i] ) {
+          result.append(i);
+          result.append(" [shape = doublecircle]");
+          result.append(Out.NL);
+      }      
     }
 
     for (int i=0; i < numStates; i++) {
@@ -638,7 +722,7 @@ final public class NFA {
 
     int dfaStart = nfa.end+1; 
     
-    // fixme: only need epsilon closure of states reachable from nfa.start
+    // FIXME: only need epsilon closure of states reachable from nfa.start
     epsilonFill();
     
     Hashtable dfaStates = new Hashtable(numStates);
@@ -732,10 +816,7 @@ final public class NFA {
       visited = new boolean [2*numStates];
     }
 
-    _end = end;
-    _dfaStates = dfaVector;
-    _dfaStart = dfaStart;    
-    removeDead(dfaStart);
+    removeDead(dfaStart, end);
 
     if (Options.DEBUG)
       Out.debug("complement finished, nfa ("+start+","+end+") is now :"+this);
@@ -747,11 +828,8 @@ final public class NFA {
   // live[s] == false <=> no final state can be reached from s
   private boolean [] live;    // = new boolean [estSize];
   private boolean [] visited; // = new boolean [estSize];
-  private int _end; // final state of original nfa for dfa (nfa coordinates)
-  private Vector _dfaStates; 
-  private int _dfaStart; // in nfa coordinates
 
-  private void removeDead(int start) {
+  private void removeDead(int start, int end) {
     // Out.debug("removeDead ("+start+")");
 
     if ( visited[start] || live[start] ) return;
@@ -759,7 +837,7 @@ final public class NFA {
 
     // Out.debug("not yet visited");
 
-    if (closure(start).isElement(_end))
+    if (closure(start).isElement(end))
       live[start] = true;
 
     // Out.debug("is final :"+live[start]);
@@ -771,7 +849,7 @@ final public class NFA {
         int next = states.nextElement();
         
         if (next != start) {
-          removeDead(next);
+          removeDead(next,end);
           
           if (live[next]) 
             live[start] = true;
@@ -787,7 +865,7 @@ final public class NFA {
       int next = states.nextElement();
       
       if (next != start) {
-        removeDead(next);
+        removeDead(next,end);
         
         if (live[next]) 
           live[start] = true;
@@ -815,13 +893,13 @@ final public class NFA {
    * @return a pair of integers denoting the index of start
    *         and end state of the NFA.
    */
-  private void insertNFA(RegExp regExp, int start, int end) {    
+  private void insertCCLNFA(RegExp regExp, int start, int end) {    
     switch (regExp.type) {
       
     case sym.BAR:
       RegExp2 r = (RegExp2) regExp;      
-      insertNFA(r.r1, start, end);
-      insertNFA(r.r2, start, end);
+      insertCCLNFA(r.r1, start, end);
+      insertCCLNFA(r.r2, start, end);
       return;
             
     case sym.CCLASS:
@@ -845,7 +923,7 @@ final public class NFA {
       return;
       
     case sym.MACROUSE:
-      insertNFA(macros.getDefinition((String) ((RegExp1) regExp).content), 
+      insertCCLNFA(macros.getDefinition((String) ((RegExp1) regExp).content), 
                 start, end);
       return;
     }
@@ -884,7 +962,7 @@ final public class NFA {
       ensureCapacity(end+1);
       if (end+1 > numStates) numStates = end+1;
       
-      insertNFA(regExp, start, end);
+      insertCCLNFA(regExp, start, end);
 
       return new IntPair(start, end);
     }
@@ -957,29 +1035,7 @@ final public class NFA {
       return complement(insertNFA((RegExp) ((RegExp1) regExp).content));
 
     case sym.TILDE:
-      nfa1 = insertNFA((RegExp) ((RegExp1) regExp).content);
-                 
-      start  = nfa1.end+1;
-      int s1 = start+1;
-      int s2 = s1+1;
-      end    = s2+1;
-
-      for (int i = 0; i < numInput; i++) {
-        addTransition(s1,i,s1);
-        addTransition(s2,i,s2);
-      }
-
-      addEpsilonTransition(start, s1);
-      addEpsilonTransition(s1, nfa1.start);
-      addEpsilonTransition(nfa1.end, s2);
-      addEpsilonTransition(s2, end);
-
-      nfa1 = complement(new IntPair(start,end));
-      nfa2 = insertNFA((RegExp) ((RegExp1) regExp).content);
-      
-      addEpsilonTransition(nfa1.end, nfa2.start);
-
-      return new IntPair(nfa1.start, nfa2.end);
+      return insertNFA(regExp.resolveTilde(macros));
       
     case sym.STRING:
       return insertStringNFA(false, (String) ((RegExp1) regExp).content );
