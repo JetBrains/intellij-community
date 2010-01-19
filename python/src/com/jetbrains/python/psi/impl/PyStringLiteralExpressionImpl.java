@@ -245,7 +245,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
 
       for (EvaluatedTextRange range : characterRanges) {
         if (offsetInDecoded < range.getValue().length()) {
-          return range.getRange().getStartOffset() + offsetInDecoded;
+          return range.getRange().getStartOffset() + offsetInDecoded - rangeInsideHost.getStartOffset();
         }
         offsetInDecoded -= range.getValue().length();
       }

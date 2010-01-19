@@ -29,6 +29,7 @@ public class PyStringLiteralTest extends PyLightFixtureTestCase {
     assertEquals(1, escaper.getOffsetInHost(0, new TextRange(0, 5)));
     assertEquals(3, escaper.getOffsetInHost(1, new TextRange(0, 5)));
     assertEquals(4, escaper.getOffsetInHost(2, new TextRange(0, 5)));
+    assertEquals(0, escaper.getOffsetInHost(0, new TextRange(1, 4)));
 
   }
 }
