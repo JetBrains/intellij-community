@@ -22,18 +22,4 @@ public class JavaCoverageSupportProvider extends CoverageSupportProvider {
     }
     return null;
   }
-
-  @Nullable
-  @Override
-  public String getTestMethodName(@NotNull PsiElement element, @NotNull AbstractTestProxy proxy) {
-    if (element instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)element;
-      final PsiClass psiClass = method.getContainingClass();
-      assert psiClass != null;
-
-      return psiClass.getQualifiedName() + "." + method.getName();
-    }
-
-    return null;
-  }
 }

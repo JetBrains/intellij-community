@@ -1,8 +1,15 @@
 package com.intellij.coverage;
 
+import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
@@ -135,6 +142,36 @@ public class CoverageSuiteImpl extends BaseCoverageSuite {
     }
     setCoverageData(map);
     return map;
+  }
+
+  public String getTestMethodName(@NotNull final PsiElement element,
+                                  @NotNull final AbstractTestProxy testProxy) {
+    if (element instanceof PsiMethod) {
+      final PsiMethod method = (PsiMethod)element;
+      final PsiClass psiClass = method.getContainingClass();
+      assert psiClass != null;
+
+      return psiClass.getQualifiedName() + "." + method.getName();
+    }
+
+    return null;
+  }
+
+  @NotNull
+  public List<PsiElement> findTestsByNames(@NotNull String[] testNames, @NotNull Project project) {
+    final List<PsiElement> elements = new ArrayList<PsiElement>();
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+    for (String testName : testNames) {
+      final PsiClass psiClass =
+          facade.findClass(testName.substring(0, testName.lastIndexOf(".")), GlobalSearchScope.projectScope(project));
+      if (psiClass != null) {
+        final PsiMethod[] testsByName = psiClass.findMethodsByName(testName.substring(testName.lastIndexOf(".") + 1), true);
+        if (testsByName.length == 1) {
+          elements.add(testsByName[0]);
+        }
+      }
+    }
+    return elements;
   }
 
   @Nullable
