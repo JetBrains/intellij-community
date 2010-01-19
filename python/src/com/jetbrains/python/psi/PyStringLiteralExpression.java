@@ -12,7 +12,5 @@ public interface PyStringLiteralExpression extends PyLiteralExpression, PsiLangu
 
   List<TextRange> getStringValueTextRanges();
 
-  List<EvaluatedTextRange> getStringValueCharacterRanges();
-
   List<ASTNode> getStringNodes();
 }

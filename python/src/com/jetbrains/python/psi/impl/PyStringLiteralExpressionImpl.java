@@ -2,6 +2,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.psi.PsiElement;
@@ -116,17 +117,17 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     return text.length() > 0 && Character.toUpperCase(text.charAt(0)) == 'U';
   } 
 
-  public List<EvaluatedTextRange> getStringValueCharacterRanges() {
+  public void iterateCharacterRanges(TextRangeConsumer consumer) {
     int elStart = getTextRange().getStartOffset();
-    List<EvaluatedTextRange> ranges = new ArrayList<EvaluatedTextRange>(100);
     for (ASTNode child : getStringNodes()) {
       final String text = child.getText();
       TextRange textRange = getNodeTextRange(text);
       int offset = child.getTextRange().getStartOffset() - elStart + textRange.getStartOffset();
       String undecoded = text.substring(textRange.getStartOffset(), textRange.getEndOffset());
-      ranges.addAll(getEvaluatedTextRanges(undecoded, offset, isRaw(text), isUnicode(text)));
+      if (!iterateCharacterRanges(consumer, undecoded, offset, isRaw(text), isUnicode(text))) {
+        break;
+      }
     }
-    return Collections.unmodifiableList(ranges);
   }
 
   public List<ASTNode> getStringNodes() {
@@ -137,23 +138,26 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     //ASTNode child = getNode().getFirstChildNode();
     //assert child != null;
     if (stringValue == null) {
-      StringBuilder out = new StringBuilder();
-      List<EvaluatedTextRange> ranges = getStringValueCharacterRanges();
-      for (EvaluatedTextRange range : ranges) {
-        out.append(range.getValue());
-      }
+      final StringBuilder out = new StringBuilder();
+      iterateCharacterRanges(new TextRangeConsumer() {
+        public boolean process(int startOffset, int endOffset, String value) {
+          out.append(value);
+          return true;
+        }
+      });
       stringValue = out.toString();
     }
     return stringValue;
   }
 
-  private List<EvaluatedTextRange> getEvaluatedTextRanges(String undecoded, int off, boolean raw, boolean unicode) {
+  private boolean iterateCharacterRanges(TextRangeConsumer consumer, String undecoded, int off, boolean raw, boolean unicode) {
     Matcher escMatcher = PATTERN_ESCAPE.matcher(undecoded);
-    List<EvaluatedTextRange> ranges = new ArrayList<EvaluatedTextRange>();
     int index = 0;
     while (escMatcher.find(index)) {
       for (int i = index; i < escMatcher.start(); i++) {
-        ranges.add(new EvaluatedTextRange(TextRange.from(off + i, 1), undecoded.charAt(i)));
+        if (!consumer.process(off + i, off + i + 1, Character.toString(undecoded.charAt(i)))) {
+          return false;
+        }
       }
       String octal = escMatcher.group(2);
       String hex = escMatcher.group(3);
@@ -196,31 +200,23 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
       if (str != null) {
         int start = escMatcher.start();
         int end = escMatcher.end();
-        ranges.add(new EvaluatedTextRange(TextRange.from(off + start, end - start), str));
+        if (!consumer.process(off + start, end - start, str)) {
+          return false;
+        }
       }
       index = escMatcher.end();
     }
     for (int i = index; i < undecoded.length(); i++) {
-      ranges.add(new EvaluatedTextRange(TextRange.from(off + i, 1), undecoded.charAt(i)));
+      if (!consumer.process(off + i, off + i + 1, Character.toString(undecoded.charAt(i)))) {
+        return false;
+      }
     }
-    return ranges;
+    return true;
   }
 
   @Override
   public String toString() {
     return super.toString() + ": " + getStringValue();
-  }
-
-  public static TextRange getTextRange(List<EvaluatedTextRange> ranges, int start, int end) {
-    assert start <= end : start + "," + end;
-    if (start == ranges.size()) {
-      // it's an empty string at the end of the string
-      return TextRange.from(ranges.get(start - 1).getRange().getEndOffset(), 0);
-    }
-    int startOffset = ranges.get(start).getRange().getStartOffset();
-    int endOffset = ranges.get(end - 1).getRange().getEndOffset();
-    int length = endOffset - startOffset;
-    return TextRange.from(startOffset, length);
   }
 
   public PyType getType() {
@@ -253,38 +249,48 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     return new StringLiteralTextEscaper(this);
   }
 
-  private static class StringLiteralTextEscaper extends LiteralTextEscaper<PyStringLiteralExpression> {
-    private final PyStringLiteralExpression myHost;
+  private interface TextRangeConsumer {
+    boolean process(int startOffset, int endOffset, String value);
+  }
 
-    protected StringLiteralTextEscaper(@NotNull PyStringLiteralExpression host) {
+  private static class StringLiteralTextEscaper extends LiteralTextEscaper<PyStringLiteralExpression> {
+    private final PyStringLiteralExpressionImpl myHost;
+
+    protected StringLiteralTextEscaper(@NotNull PyStringLiteralExpressionImpl host) {
       super(host);
       myHost = host;
     }
 
     @Override
-    public boolean decode(@NotNull TextRange rangeInsideHost, @NotNull StringBuilder outChars) {
-      // TODO this is far too slow
-      final List<EvaluatedTextRange> characterRanges = myHost.getStringValueCharacterRanges();
-      for (EvaluatedTextRange range : characterRanges) {
-        final TextRange xsect = rangeInsideHost.intersection(range.getRange());
-        if (xsect != null && xsect.getLength() > 0) {
-          outChars.append(range.getValue());
+    public boolean decode(@NotNull final TextRange rangeInsideHost, @NotNull final StringBuilder outChars) {
+      myHost.iterateCharacterRanges(new TextRangeConsumer() {
+        public boolean process(int startOffset, int endOffset, String value) {
+          int xsectStart = Math.max(startOffset, rangeInsideHost.getStartOffset());
+          int xsectEnd = Math.min(endOffset, rangeInsideHost.getEndOffset());
+          if (xsectEnd > xsectStart) {
+            outChars.append(value);
+          }
+          return endOffset < rangeInsideHost.getEndOffset();
         }
-      }
+      });
       return true;
     }
 
     @Override
-    public int getOffsetInHost(int offsetInDecoded, @NotNull TextRange rangeInsideHost) {
-      final List<EvaluatedTextRange> characterRanges = myHost.getStringValueCharacterRanges();
-
-      for (EvaluatedTextRange range : characterRanges) {
-        if (offsetInDecoded < range.getValue().length()) {
-          return range.getRange().getStartOffset() + offsetInDecoded;
+    public int getOffsetInHost(final int offsetInDecoded, @NotNull TextRange rangeInsideHost) {
+      final Ref<Integer> offset = new Ref<Integer>(offsetInDecoded);
+      final Ref<Integer> result = new Ref<Integer>(-1);
+      myHost.iterateCharacterRanges(new TextRangeConsumer() {
+        public boolean process(int startOffset, int endOffset, String value) {
+          if (value.length() > offset.get()) {
+            result.set(startOffset + offset.get());
+            return false;
+          }
+          offset.set(offset.get() - value.length());
+          return true;
         }
-        offsetInDecoded -= range.getValue().length();
-      }
-      return -1;
+      });
+      return result.get();
     }
 
     @Override
