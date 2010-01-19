@@ -28,6 +28,7 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -35,6 +36,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
 import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
@@ -76,19 +78,31 @@ public class UndeclaredTestInspection extends BaseJavaLocalInspectionTool {
       final Project project = aClass.getProject();
       final String qName = aClass.getQualifiedName();
       if (qName == null) return null;
-      final String packageName = ((PsiJavaFile)aClass.getContainingFile()).getPackageName();
-      final String[] names = new String[]{qName, packageName};
+      final String packageQName = ((PsiJavaFile)aClass.getContainingFile()).getPackageName();
+      final String packageName = StringUtil.getShortName(packageQName);
+      final String[] names;
+      if (packageQName.length() > 0) {
+        final String pName = packageName.length() > 0 ? packageName : packageQName;
+        names = new String[]{qName, pName};
+      }
+      else {
+        names = new String[]{qName};
+      }
       for (final String name : names) {
         final boolean[] found = new boolean[]{false};
         PsiManager.getInstance(project).getSearchHelper()
           .processUsagesInNonJavaFiles(name, new PsiNonJavaFileReferenceProcessor() {
             public boolean process(final PsiFile file, final int startOffset, final int endOffset) {
               if (file.findReferenceAt(startOffset) != null) {
-                if (name.equals(packageName)) { //special package tag required
+                if (packageQName.endsWith(name)) { //special package tag required
                   final XmlTag tag = PsiTreeUtil.getParentOfType(file.findElementAt(startOffset), XmlTag.class);
                   if (tag == null || !tag.getName().equals("package")){
                     return true;
                   }
+                  final XmlAttribute attribute = tag.getAttribute("name");
+                  if (attribute == null) return true;
+                  final String value = attribute.getValue();
+                  if (!value.equals(StringUtil.getQualifiedName(packageQName, "*"))) return true;
                 }
                 found[0] = true;
                 return false;

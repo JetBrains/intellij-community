@@ -30,6 +30,11 @@ import org.testng.annotations.Test;
 
 public class UndeclaredTestsInspectionTest extends InspectionTestCase {
 
+  @Override
+  public String getName() {
+    return "test";
+  }
+
   @BeforeMethod
   protected void setUp() throws Exception {
     super.setUp();
