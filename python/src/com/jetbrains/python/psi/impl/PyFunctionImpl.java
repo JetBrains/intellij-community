@@ -21,12 +21,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDosStringFinder;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.controlflow.ControlFlow;
+import com.jetbrains.python.psi.controlflow.PyControlFlowBuilder;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import com.jetbrains.python.toolbox.SingleIterable;
@@ -171,5 +174,29 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   @Override
   public String toString() {
     return super.toString() + "('" + getName() + "')";
+  }
+
+   public void subtreeChanged() {
+    super.subtreeChanged();
+    if (myControlFlowRef != null){
+      myControlFlowRef.clear();
+    }
+  }
+
+  private SoftReference<ControlFlow> myControlFlowRef;
+
+  @NotNull
+  public ControlFlow getControlFlow() {
+    ControlFlow flow = getRefValue(myControlFlowRef);
+    if (flow == null) {
+      flow = new PyControlFlowBuilder().buildControlFlow(this);
+      myControlFlowRef = new SoftReference<ControlFlow>(flow);
+    }
+    return flow;
+  }
+
+  @Nullable
+  private static<T> T getRefValue(final SoftReference<T> reference){
+    return reference != null ? reference.get() : null;
   }
 }

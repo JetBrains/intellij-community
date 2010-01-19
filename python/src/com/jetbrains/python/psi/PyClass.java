@@ -3,6 +3,7 @@ package com.jetbrains.python.psi;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.StubBasedPsiElement;
+import com.jetbrains.python.psi.controlflow.ControlFlowOwner;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -11,7 +12,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents a class declaration in source.
  */
-public interface PyClass extends PsiNamedElement, PyStatement, NameDefiner, PyDocStringOwner, StubBasedPsiElement<PyClassStub> {
+public interface PyClass extends PsiNamedElement, PyStatement, NameDefiner, PyDocStringOwner, StubBasedPsiElement<PyClassStub>,
+                                 ControlFlowOwner {
   @NotNull
   PyStatementList getStatementList();
 

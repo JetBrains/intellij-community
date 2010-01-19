@@ -17,6 +17,8 @@ import com.jetbrains.python.PythonDosStringFinder;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.controlflow.ControlFlow;
+import com.jetbrains.python.psi.controlflow.PyControlFlowBuilder;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveProcessor;
 import com.jetbrains.python.psi.types.PyModuleType;
@@ -25,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -246,5 +249,29 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   public PyStringLiteralExpression getDocStringExpression() {
     return PythonDosStringFinder.find(this);
+  }
+
+  public void subtreeChanged() {
+    super.subtreeChanged();
+    if (myControlFlowRef != null){
+      myControlFlowRef.clear();
+    }
+  }
+
+  private SoftReference<ControlFlow> myControlFlowRef;
+
+  @NotNull
+  public ControlFlow getControlFlow() {
+    ControlFlow flow = getRefValue(myControlFlowRef);
+    if (flow == null) {
+      flow = new PyControlFlowBuilder().buildControlFlow(this);
+      myControlFlowRef = new SoftReference<ControlFlow>(flow);
+    }
+    return flow;
+  }
+
+  @Nullable
+  private static<T> T getRefValue(final SoftReference<T> reference){
+    return reference != null ? reference.get() : null;
   }
 }
