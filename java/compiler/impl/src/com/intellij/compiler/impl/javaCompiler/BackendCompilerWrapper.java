@@ -79,7 +79,6 @@ public class BackendCompilerWrapper {
   private final CompileContextEx myCompileContext;
   private final List<VirtualFile> myFilesToCompile;
   private final TranslatingCompiler.OutputSink mySink;
-  private final Chunk<Module> myChunk;
   private final Project myProject;
   private final Set<VirtualFile> myFilesToRecompile;
   private final Map<Module, VirtualFile> myModuleToTempDirMap = new THashMap<Module, VirtualFile>();
@@ -90,11 +89,10 @@ public class BackendCompilerWrapper {
   public final Map<String, Set<CompiledClass>> myFileNameToSourceMap=  new THashMap<String, Set<CompiledClass>>();
 
 
-  public BackendCompilerWrapper(Chunk<Module> chunk, @NotNull final Project project,
+  public BackendCompilerWrapper(@NotNull final Project project,
                                 @NotNull List<VirtualFile> filesToCompile,
                                 @NotNull CompileContextEx compileContext,
                                 @NotNull BackendCompiler compiler, TranslatingCompiler.OutputSink sink) {
-    myChunk = chunk;
     myProject = project;
     myCompiler = compiler;
     myCompileContext = compileContext;
@@ -186,9 +184,6 @@ public class BackendCompilerWrapper {
   }
 
   private Map<Module, List<VirtualFile>> buildModuleToFilesMap(final List<VirtualFile> filesToCompile) {
-    if (myChunk.getNodes().size() == 1) {
-      return Collections.singletonMap(myChunk.getNodes().iterator().next(), Collections.unmodifiableList(filesToCompile));
-    }
     return CompilerUtil.buildModuleToFilesMap(myCompileContext, filesToCompile);
   }
 
@@ -224,12 +219,10 @@ public class BackendCompilerWrapper {
     final List<VirtualFile> filesInScope = new ArrayList<VirtualFile>(files.size());
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
+        final CompileScope compileScope = myCompileContext.getCompileScope();
         for (VirtualFile file : files) {
-          if (myCompileContext.getCompileScope().belongs(file.getUrl())) {
-            final Module module = myCompileContext.getModuleByFile(file);
-            if (myChunk.getNodes().contains(module)) {
-              filesInScope.add(file);
-            }
+          if (compileScope.belongs(file.getUrl())) {
+            filesInScope.add(file);
           }
         }
       }
@@ -239,12 +232,30 @@ public class BackendCompilerWrapper {
 
   private void compileModules(final Map<Module, List<VirtualFile>> moduleToFilesMap) throws CompilerException {
     myProcessedFilesCount = 0;
+
+    final List<ModuleChunk> chunks = getModuleChunks(moduleToFilesMap);
     try {
-      compileChunk(new ModuleChunk(myCompileContext, myChunk, moduleToFilesMap));
+      for (final ModuleChunk chunk : chunks) {
+        compileChunk(chunk);
+      }
     }
     catch (IOException e) {
       throw new CompilerException(e.getMessage(), e);
     }
+  }
+
+  private List<ModuleChunk> getModuleChunks(final Map<Module, List<VirtualFile>> moduleToFilesMap) {
+    final List<Module> modules = new ArrayList<Module>(moduleToFilesMap.keySet());
+    final List<Chunk<Module>> chunks = ApplicationManager.getApplication().runReadAction(new Computable<List<Chunk<Module>>>() {
+      public List<Chunk<Module>> compute() {
+        return ModuleCompilerUtil.getSortedModuleChunks(myProject, modules);
+      }
+    });
+    final List<ModuleChunk> moduleChunks = new ArrayList<ModuleChunk>(chunks.size());
+    for (final Chunk<Module> chunk : chunks) {
+      moduleChunks.add(new ModuleChunk(myCompileContext, chunk, moduleToFilesMap));
+    }
+    return moduleChunks;
   }
 
   private void compileChunk(ModuleChunk chunk) throws IOException {

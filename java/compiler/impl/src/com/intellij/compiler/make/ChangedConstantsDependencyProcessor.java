@@ -45,7 +45,7 @@ class ChangedConstantsDependencyProcessor {
   private final int myQName;
   private final FieldChangeInfo[] myChangedFields;
   private final FieldChangeInfo[] myRemovedFields;
-  private static final long ANALYSIS_DURATION_THRESHOLD_MILLIS = 30000L /*30 sec*/;
+  private static final long ANALYSIS_DURATION_THRESHOLD_MILLIS = 15000L /*15 sec*/;
 
 
   public ChangedConstantsDependencyProcessor(Project project, CachingSearcher searcher, DependencyCache dependencyCache, int qName, FieldChangeInfo[] changedFields, FieldChangeInfo[] removedFields) {
