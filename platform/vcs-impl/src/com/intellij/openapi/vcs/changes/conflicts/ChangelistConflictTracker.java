@@ -16,23 +16,18 @@
 
 package com.intellij.openapi.vcs.changes.conflicts;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.EditorNotificationPanel;
+import com.intellij.ui.EditorNotifications;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -49,32 +44,30 @@ import java.util.Map;
  */
 public class ChangelistConflictTracker {
 
-  private static final Key<EditorNotificationPanel> KEY = Key.create("changelistConflictPanel");
-
   private final Map<String, Conflict> myConflicts = new HashMap<String, Conflict>();
 
   private Options myOptions = new Options();
   private final Project myProject;
 
   private final ChangeListManager myChangeListManager;
+  private final EditorNotifications myEditorNotifications;
   private final ChangeListAdapter myChangeListListener;
 
   private final FileDocumentManager myDocumentManager;
   private final DocumentAdapter myDocumentListener;
 
   private final FileStatusManager myFileStatusManager;
-  private final FileEditorManager myFileEditorManager;
-  private final FileEditorManagerAdapter myFileEditorManagerListener;
 
   public ChangelistConflictTracker(Project project,
                                    ChangeListManager changeListManager, 
-                                   FileStatusManager fileStatusManager) {
+                                   FileStatusManager fileStatusManager,
+                                   EditorNotifications editorNotifications) {
     myProject = project;
 
     myChangeListManager = changeListManager;
+    myEditorNotifications = editorNotifications;
     myDocumentManager = FileDocumentManager.getInstance();
     myFileStatusManager = fileStatusManager;
-    myFileEditorManager = FileEditorManager.getInstance(project);
 
     myDocumentListener = new DocumentAdapter() {
       @Override
@@ -98,7 +91,7 @@ public class ChangelistConflictTracker {
 
           if (newConflict && myOptions.HIGHLIGHT_CONFLICTS) {
             myFileStatusManager.fileStatusChanged(file);
-            addNotification(file, true);
+            myEditorNotifications.updateNotifications(file);
           }
         }
       }
@@ -125,15 +118,6 @@ public class ChangelistConflictTracker {
         clearChanges(newDefaultList.getChanges(), true);  
       }
     };
-
-    myFileEditorManagerListener = new FileEditorManagerAdapter() {
-      @Override
-      public void fileOpened(FileEditorManager source, VirtualFile file) {
-        if (hasConflict(file)) {
-          addNotification(file, true);
-        }
-      }
-    };
   }
 
   public boolean isWritingAllowed(@NotNull VirtualFile file) {
@@ -150,28 +134,6 @@ public class ChangelistConflictTracker {
     return false;
   }
 
-  private void addNotification(final VirtualFile file, final boolean add) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        FileEditor[] editors = myFileEditorManager.getEditors(file);
-        for (FileEditor editor : editors) {
-          EditorNotificationPanel panel = editor.getUserData(KEY);
-          if (!add && panel == null || add && panel != null) continue;          
-          if (add) {
-            if (getChangeListManager().getChangeList(file) != null) {
-              panel = new ChangelistConflictNotificationPanel(ChangelistConflictTracker.this, file);  
-              myFileEditorManager.addTopComponent(editor, panel);
-              editor.putUserData(KEY, panel);
-            }
-          } else {
-            myFileEditorManager.removeTopComponent(editor, panel);
-            editor.putUserData(KEY, null);
-          }
-        }
-      }
-    });
-  }
-
   private void checkList(ChangeList list) {
     clearChanges(list.getChanges(), myChangeListManager.isDefaultChangeList(list));
   }
@@ -184,7 +146,7 @@ public class ChangelistConflictTracker {
         String path = filePath.getPath();
         if (removeConflict) {
           myConflicts.remove(path);
-          addNotification(filePath.getVirtualFile(), false);
+          myEditorNotifications.updateNotifications(filePath.getVirtualFile());
         }
         myFileStatusManager.fileStatusChanged(filePath.getVirtualFile());
       }
@@ -194,13 +156,11 @@ public class ChangelistConflictTracker {
   public void startTracking() {
     myChangeListManager.addChangeListListener(myChangeListListener);
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myDocumentListener);
-    myFileEditorManager.addFileEditorManagerListener(myFileEditorManagerListener);
   }
 
   public void stopTracking() {
     myChangeListManager.removeChangeListListener(myChangeListListener);
     EditorFactory.getInstance().getEventMulticaster().removeDocumentListener(myDocumentListener);
-    myFileEditorManager.removeFileEditorManagerListener(myFileEditorManagerListener);
   }
 
   public void saveState(Element to) {
@@ -215,29 +175,26 @@ public class ChangelistConflictTracker {
       fileElement.setAttribute("ignored", Boolean.toString(entry.getValue().ignored));
       to.addContent(fileElement);
     }
-    to.setAttribute("verified", "true");              // todo remove the check
     XmlSerializer.serializeInto(myOptions, to);
   }
 
   public void loadState(Element from) {
     myConflicts.clear();
-    if (from.getAttributeValue("verified") != null) {    // todo remove the check
-      List files = from.getChildren("file");
-      for (Object file : files) {
-        Element element = (Element)file;
-        String path = element.getAttributeValue("path");
-        if (path != null) {
-          Conflict conflict = new Conflict();
-          conflict.changelistId = element.getAttributeValue("changelist");
-          try {
-            conflict.timestamp = Long.parseLong(element.getAttributeValue("time"));
-          }
-          catch (NumberFormatException e) {
-            // do nothing
-          }
-          conflict.ignored = Boolean.parseBoolean(element.getAttributeValue("ignored"));
-          myConflicts.put(path, conflict);
+    List files = from.getChildren("file");
+    for (Object file : files) {
+      Element element = (Element)file;
+      String path = element.getAttributeValue("path");
+      if (path != null) {
+        Conflict conflict = new Conflict();
+        conflict.changelistId = element.getAttributeValue("changelist");
+        try {
+          conflict.timestamp = Long.parseLong(element.getAttributeValue("time"));
         }
+        catch (NumberFormatException e) {
+          // do nothing
+        }
+        conflict.ignored = Boolean.parseBoolean(element.getAttributeValue("ignored"));
+        myConflicts.put(path, conflict);
       }
     }
     XmlSerializer.deserializeInto(myOptions, from);
@@ -248,7 +205,7 @@ public class ChangelistConflictTracker {
       VirtualFile file = LocalFileSystem.getInstance().findFileByPath(entry.getKey());
       if (file != null) {
         myFileStatusManager.fileStatusChanged(file);
-        addNotification(file, myOptions.TRACKING_ENABLED && myOptions.HIGHLIGHT_CONFLICTS && !entry.getValue().ignored);
+        myEditorNotifications.updateNotifications(file);
       }
     }
   }
@@ -297,7 +254,7 @@ public class ChangelistConflictTracker {
       myConflicts.put(path, conflict);
     }
     conflict.ignored = ignore;
-    addNotification(file, !ignore);
+    myEditorNotifications.updateNotifications(file);
     myFileStatusManager.fileStatusChanged(file);
   }
 
