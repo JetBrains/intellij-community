@@ -34,6 +34,7 @@ import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,10 +56,6 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
     PsiVariable variable = (PsiVariable) psiElement;
     List<MemberHidesOuterMemberUsageInfo> outerHides = new ArrayList<MemberHidesOuterMemberUsageInfo>();
     List<MemberHidesStaticImportUsageInfo> staticImportHides = new ArrayList<MemberHidesStaticImportUsageInfo>();
-
-    if (variable instanceof PsiField) {
-      findCollisionsAgainstNewName((PsiField) variable, newName, staticImportHides);
-    }
 
     List<PsiElement> occurrencesToCheckForConflict = new ArrayList<PsiElement>();
     // rename all references
@@ -233,7 +230,8 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
     }
   }
 
-  public void findExistingNameConflicts(final PsiElement element, final String newName, final Map<PsiElement, String> conflicts) {
+  @Override
+  public void findExistingNameConflicts(PsiElement element, String newName, MultiMap<PsiElement, String> conflicts) {
     if (element instanceof PsiCompiledElement) return;
     if (element instanceof PsiField) {
       PsiField refactoredField = (PsiField)element;
