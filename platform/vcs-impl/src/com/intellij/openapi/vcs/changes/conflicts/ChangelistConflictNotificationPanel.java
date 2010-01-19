@@ -70,13 +70,7 @@ public class ChangelistConflictNotificationPanel extends EditorNotificationPanel
   @Override
   protected void executeAction(String actionId) {
     if (actionId.equals("move")) {
-      MoveChangesDialog dialog =
-        new MoveChangesDialog(myTracker.getProject(), Collections.singletonList(myChange), Collections.singleton(myChangeList),
-                              "Move Changes to Active Changelist");
-      dialog.show();
-      if (dialog.isOK()) {
-        ChangelistConflictResolution.MOVE.resolveConflict(myTracker.getProject(), dialog.getIncludedChanges());
-      }
+      ChangelistConflictResolution.MOVE.resolveConflict(myTracker.getProject(), myChangeList.getChanges());
     } else if (actionId.equals("switch")) {
       List<Change> changes = Collections.singletonList(myTracker.getChangeListManager().getChange(myFile));
       ChangelistConflictResolution.SWITCH.resolveConflict(myTracker.getProject(), changes);
