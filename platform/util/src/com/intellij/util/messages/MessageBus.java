@@ -24,6 +24,9 @@ package com.intellij.util.messages;
 
 import com.intellij.openapi.Disposable;
 
+/**
+ * Use ComponentManager.getMessageBus() to obtain one.
+ */
 public interface MessageBus {
   MessageBusConnection connect();
   MessageBusConnection connect(Disposable parentDisposable);
