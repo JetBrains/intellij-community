@@ -92,6 +92,8 @@ public final class NavigationUtil {
   }
 
   private static boolean activatePsiElementIfOpen(PsiElement elt) {
+    if (!elt.isValid()) return false;
+    
     final PsiFile file = elt.getContainingFile();
     if (file == null || !file.isValid()) return false;
 
