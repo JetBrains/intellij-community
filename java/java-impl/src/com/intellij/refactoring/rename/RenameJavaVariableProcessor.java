@@ -70,7 +70,9 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
       final PsiElement element = usage.getElement();
       if (element == null) continue;
 
-      if (usage instanceof LocalHidesFieldUsageInfo) {
+      if (usage instanceof MemberHidesStaticImportUsageInfo) {
+        staticImportHides.add((MemberHidesStaticImportUsageInfo)usage);
+      } else if (usage instanceof LocalHidesFieldUsageInfo) {
         PsiJavaCodeReferenceElement collidingRef = (PsiJavaCodeReferenceElement)element;
         PsiElement resolved = collidingRef.resolve();
 
@@ -230,6 +232,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
       PsiField field = (PsiField) element;
       findMemberHidesOuterMemberCollisions(field, newName, result);
       findSubmemberHidesFieldCollisions(field, newName, result);
+      findCollisionsAgainstNewName(field, newName, result);
     }
     else if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
       JavaUnresolvableLocalCollisionDetector.findCollisions(element, newName, result);
