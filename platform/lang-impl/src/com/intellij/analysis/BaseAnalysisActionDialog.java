@@ -21,14 +21,20 @@ import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.TitledSeparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,6 +70,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
 
   private static final String ALL = AnalysisScopeBundle.message("scope.option.uncommited.files.all.changelists.choice");
   private final AnalysisUIOptions myAnalysisOptions;
+  @Nullable private final PsiElement myContext;
 
   public BaseAnalysisActionDialog(@NotNull String title,
                                   @NotNull String analysisNoon,
@@ -71,9 +78,11 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
                                   @NotNull final AnalysisScope scope,
                                   final String moduleName,
                                   final boolean rememberScope,
-                                  @NotNull AnalysisUIOptions analysisUIOptions) {
+                                  @NotNull AnalysisUIOptions analysisUIOptions,
+                                  @Nullable PsiElement context) {
     super(true);
     myAnalysisOptions = analysisUIOptions;
+    myContext = context;
     if (!analysisUIOptions.ANALYZE_TEST_SOURCES) {
       myAnalysisOptions.ANALYZE_TEST_SOURCES = scope.isAnalyzeTestsByDefault();
     }
@@ -130,10 +139,23 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     myFileButton.setText(myFileName);
     myFileButton.setMnemonic(myFileName.charAt(0));
 
+    VirtualFile file = PsiUtilBase.getVirtualFile(myContext);
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+    boolean searchInLib = file != null && (fileIndex.isInLibraryClasses(file) || fileIndex.isInLibrarySource(file));
+
+
+    String preselect = !StringUtil.isEmptyOrSpaces(myAnalysisOptions.CUSTOM_SCOPE_NAME)
+                       ? myAnalysisOptions.CUSTOM_SCOPE_NAME
+                       : FindSettings.getInstance().getDefaultScopeName();
+    if (searchInLib && GlobalSearchScope.projectScope(myProject).getDisplayName().equals(preselect)) {
+      myAnalysisOptions.SCOPE_TYPE = AnalysisScope.CUSTOM;
+      myAnalysisOptions.CUSTOM_SCOPE_NAME = preselect = GlobalSearchScope.allScope(myProject).getDisplayName();
+    }
+
     //custom scope
     myCustomScopeButton.setSelected(myRememberScope && myAnalysisOptions.SCOPE_TYPE == AnalysisScope.CUSTOM);
 
-    myScopeCombo.init(myProject, myAnalysisOptions.CUSTOM_SCOPE_NAME.length() > 0 ? myAnalysisOptions.CUSTOM_SCOPE_NAME : FindSettings.getInstance().getDefaultScopeName());
+    myScopeCombo.init(myProject, searchInLib, true, preselect);
 
     //correct selection
     myProjectButton.setSelected(myRememberScope && myAnalysisOptions.SCOPE_TYPE == AnalysisScope.PROJECT);

@@ -82,7 +82,7 @@ public class RunInspectionIntention implements IntentionAction {
                                                                       project,
                                                                       new AnalysisScope(file),
                                                                       module != null ? module.getName() : null,
-                                                                      true, AnalysisUIOptions.getInstance(project));
+                                                                      true, AnalysisUIOptions.getInstance(project), file);
     AnalysisScope scope = new AnalysisScope(file);
     dlg.show();
     if (!dlg.isOK()) return;
