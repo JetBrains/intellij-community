@@ -414,6 +414,10 @@ class NetCommandFactory:
         except:
             return self.makeErrorMessage(seq, GetExceptionTracebackStr())
 
+    def makeVariableChangedMessage(self, seq):
+        # notify debugger that value was changed successfully
+        return NetCommand(CMD_RETURN, seq, None)
+
     def makeIoMessage(self, v, ctx, dbg=None):
         '''
         @param v: the message to pass to the debug server
@@ -607,6 +611,8 @@ class InternalChangeVariable(InternalThreadCommand):
         """ Converts request into python variable """
         try:
             pydevd_vars.changeAttrExpression(self.thread_id, self.frame_id, self.attr, self.expression)
+            cmd = dbg.cmdFactory.makeVariableChangedMessage(self.sequence)
+            dbg.writer.addCommand(cmd)
         except Exception:
             cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, "Error changing variable attr:%s expression:%s traceback:%s" % (self.attr, self.expression, GetExceptionTracebackStr()))
             dbg.writer.addCommand(cmd)

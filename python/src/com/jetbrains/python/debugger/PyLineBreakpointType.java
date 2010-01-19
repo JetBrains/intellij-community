@@ -23,7 +23,7 @@ public class PyLineBreakpointType extends XLineBreakpointType<XBreakpointPropert
     super("python-line", "Python Line Breakpoint");
   }
 
-  public boolean canPutAt(@NotNull VirtualFile file, int line, @NotNull Project project) {
+  public boolean canPutAt(@NotNull final VirtualFile file, final int line, @NotNull final Project project) {
     final Ref<Boolean> stoppable = Ref.create(false);
     if (file.getFileType() == PythonFileType.INSTANCE) {
       final Document document = FileDocumentManager.getInstance().getDocument(file);
@@ -42,7 +42,7 @@ public class PyLineBreakpointType extends XLineBreakpointType<XBreakpointPropert
   }
 
   @Nullable
-  public XBreakpointProperties createBreakpointProperties(@NotNull VirtualFile file, int line) {
+  public XBreakpointProperties createBreakpointProperties(@NotNull final VirtualFile file, final int line) {
     return null;
   }
 

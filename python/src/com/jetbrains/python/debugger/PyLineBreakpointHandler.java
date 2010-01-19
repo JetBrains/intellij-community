@@ -16,14 +16,14 @@ public class PyLineBreakpointHandler extends XBreakpointHandler<XLineBreakpoint<
     myDebugProcess = debugProcess;
   }
 
-  public void registerBreakpoint(@NotNull XLineBreakpoint<XBreakpointProperties> breakpoint) {
+  public void registerBreakpoint(@NotNull final XLineBreakpoint<XBreakpointProperties> breakpoint) {
     final XSourcePosition position = breakpoint.getSourcePosition();
     if (position != null) {
       myDebugProcess.addBreakpoint(myDebugProcess.getPositionConverter().convert(position), breakpoint);
     }
   }
 
-  public void unregisterBreakpoint(@NotNull XLineBreakpoint<XBreakpointProperties> breakpoint, boolean temporary) {
+  public void unregisterBreakpoint(@NotNull final XLineBreakpoint<XBreakpointProperties> breakpoint, final boolean temporary) {
     final XSourcePosition position = breakpoint.getSourcePosition();
     if (position != null) {
       myDebugProcess.removeBreakpoint(myDebugProcess.getPositionConverter().convert(position));

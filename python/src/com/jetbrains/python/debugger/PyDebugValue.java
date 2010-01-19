@@ -1,40 +1,56 @@
 package com.jetbrains.python.debugger;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.frame.XValueModifier;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.ui.DebuggerIcons;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import java.util.List;
 
-// todo: extensive types support
 // todo: trim long values
 // todo: load long lists by parts
+// todo: null modifier for modify modules, class objects etc.
 public class PyDebugValue extends XValue {
 
+  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.pydev.PyDebugValue");
+
   private final String myName;
+  private String myTempName = null;
   private final String myType;
   private final String myValue;
+  private final boolean myContainer;
+  private final PyDebugValue myParent;
+  private final PyDebugProcess myDebugProcess;
 
-  public PyDebugValue(final String name, final String type, final String value) {
+  public PyDebugValue(final String name, final String type, final String value, final boolean container) {
+    this(name, type, value, container, null, null);
+  }
+
+  public PyDebugValue(final String name, final String type, final String value, final boolean container,
+                      final PyDebugValue parent, final PyDebugProcess debugProcess) {
     myName = name;
     myType = type;
     myValue = value;
-  }
-
-  @Override
-  public void computePresentation(@NotNull XValueNode node) {
-    node.setPresentation(myName, DebuggerIcons.VALUE_ICON, myType, getValuePresentation(), false);
-  }
-
-  @Override
-  public void computeChildren(@NotNull XCompositeNode node) {
-    // todo: support from pydevd needed (?)
-    super.computeChildren(node);
+    myContainer = container;
+    myParent = parent;
+    myDebugProcess = debugProcess;
   }
 
   public String getName() {
     return myName;
+  }
+
+  public String getTempName() {
+    return myTempName != null ? myTempName : myName;
+  }
+
+  public void setTempName(String tempName) {
+    myTempName = tempName;
   }
 
   public String getType() {
@@ -45,16 +61,83 @@ public class PyDebugValue extends XValue {
     return myValue;
   }
 
-  private String getValuePresentation() {
-    String presentation;
-    if ("str".equals(myType) || "unicode".equals(myType)) {
-      presentation = "\"" + myValue + "\"";
+  public boolean isContainer() {
+    return myContainer;
+  }
+
+  public PyDebugValue getParent() {
+    return myParent;
+  }
+
+  public PyDebugValue getTopParent() {
+    return myParent == null ? this : myParent.getTopParent();
+  }
+
+  // todo: pass StringBuilder to recursive calls
+  public String getQualifiedExpression() {
+    if (myParent == null) {
+      return getTempName();
+    }
+    else if ("list".equals(myParent.getType()) || "tuple".equals(myParent.getType())) {
+      return new StringBuilder().append(myParent.getQualifiedExpression()).append('[').append(myName).append(']').toString();
+    }
+    else if ("dict".equals(myParent.getType())) {
+      return new StringBuilder().append(myParent.getQualifiedExpression()).append("['").append(myName).append("']").toString();
     }
     else {
-      presentation = myValue;
+      return new StringBuilder().append(myParent.getQualifiedExpression()).append('.').append(myName).toString();
     }
+  }
 
-    return presentation;
+  /*
+  private void buildQualifiedExpression(final StringBuilder sb, final PyDebugValue child) {
+    if ()
+  }
+  */
+
+  @Override
+  public void computePresentation(@NotNull final XValueNode node) {
+    node.setPresentation(myName, getValueIcon(), myType, PyTypeHandler.format(this), myContainer);
+  }
+
+  @Override
+  public void computeChildren(@NotNull final XCompositeNode node) {
+    if (node.isObsolete()) return;
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      public void run() {
+        if (myDebugProcess == null) return;
+
+        try {
+          final List<PyDebugValue> values = myDebugProcess.loadVariable(PyDebugValue.this);
+          if (!node.isObsolete()) {
+            node.addChildren(values, true);
+          }
+        }
+        catch (PyDebuggerException e) {
+          if (!node.isObsolete()) {
+            node.setErrorMessage("Unable to display children");
+          }
+          LOG.warn(e);
+        }
+      }
+    });
+  }
+
+  @Override
+  public XValueModifier getModifier() {
+    return new PyValueModifier(myDebugProcess, this);
+  }
+
+  private Icon getValueIcon() {
+    if (!myContainer) {
+      return DebuggerIcons.PRIMITIVE_VALUE_ICON;
+    }
+    else if ("list".equals(myType) || "tuple".equals(myType)) {
+      return DebuggerIcons.ARRAY_VALUE_ICON;
+    }
+    else {
+      return DebuggerIcons.VALUE_ICON;
+    }
   }
 
 }

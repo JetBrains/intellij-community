@@ -320,34 +320,19 @@ def evaluateExpression(thread_id, frame_id, expression, doExec):
     updated_globals.update(frame.f_globals)
     updated_globals.update(frame.f_locals) #locals later because it has precedence over the actual globals
 
+    result = None
     try:
-
         if doExec:
-            try:
-                #try to make it an eval (if it is an eval we can print it, otherwise we'll exec it and 
-                #it will have whatever the user actually did)
-                compiled = compile(expression, '<string>', 'eval')
-            except:
-                exec(expression, updated_globals, frame.f_locals)
-            else:
-                result = eval(compiled, updated_globals, frame.f_locals)
-                sys.stdout.write('%s\n' % (result,))
-            return
-
+            exec(expression, updated_globals, frame.f_locals)
         else:
-            result = None
-            try:
-                result = eval(expression, updated_globals, frame.f_locals)
-            except Exception:
-                s = StringIO()
-                traceback.print_exc(file=s)
-                result = s.getvalue()
-            return result
-    finally:
-        #Should not be kept alive if an exception happens and this frame is kept in the stack.
-        del updated_globals
-        del frame
+            result = eval(expression, updated_globals, frame.f_locals)
 
+    except:
+        s = StringIO()
+        traceback.print_exc(file=s)
+        result = s.getvalue()
+
+    return result
 
 def changeAttrExpression(thread_id, frame_id, attr, expression):
     '''Changes some attribute in a given frame.
@@ -380,8 +365,8 @@ def changeAttrExpression(thread_id, frame_id, attr, expression):
             exec('%s=%s' % (attr, expression), frame.f_globals, frame.f_locals)
 
 
-    except Exception:
-        traceback.print_exc()
+    finally:
+        del frame
 
 
 
