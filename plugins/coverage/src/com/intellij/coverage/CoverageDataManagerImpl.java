@@ -227,6 +227,8 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   }
 
   public void chooseSuite(final CoverageSuite suite) {
+    fireBeforeSuiteChosen();
+   
     myCurrentSuite = (CoverageSuiteImpl)suite;
     myAlarm.cancelAllRequests();
     myPackageCoverageInfos.clear();
