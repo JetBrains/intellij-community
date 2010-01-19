@@ -199,7 +199,7 @@ public class SrcFileAnnotator implements Disposable {
     return new SoftReference<TIntIntHashMap>(getCoverageVersionToCurrentLineMapping(change, oldLines.length));
   }
 
-  public void showCoverageInformation(final CoverageSuiteImpl suite) {
+  public void showCoverageInformation(final CoverageSuite suite) {
     final MarkupModel markupModel = myDocument.getMarkupModel(myProject);
     final List<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
     final ProjectData data = suite.getCoverageData(CoverageDataManager.getInstance(myProject));
@@ -295,7 +295,7 @@ public class SrcFileAnnotator implements Disposable {
           }
         }
       }
-      else if (!subCoverageActive && (suite.isClassFiltered(qualifiedName) || suite.isPackageFiltered(packageFQName))) {
+      else if (!subCoverageActive && (((CoverageSuiteImpl)suite).isClassFiltered(qualifiedName) || ((CoverageSuiteImpl)suite).isPackageFiltered(packageFQName))) {
         collectNonCoveredClassInfo(classFile, highlighters, markupModel, executableLines, coverageByTestApplicable);
       }
     }
@@ -441,7 +441,7 @@ public class SrcFileAnnotator implements Disposable {
   }
 
 
-  private void coverageDataNotFound(final CoverageSuiteImpl suite) {
+  private void coverageDataNotFound(final CoverageSuite suite) {
     showEditorWarningMessage(CodeInsightBundle.message("coverage.data.not.found"));
     CoverageDataManager.getInstance(myProject).removeCoverageSuite(suite);
   }

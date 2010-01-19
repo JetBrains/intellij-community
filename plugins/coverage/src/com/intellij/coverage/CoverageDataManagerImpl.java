@@ -2,6 +2,7 @@ package com.intellij.coverage;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
+import com.intellij.execution.configurations.coverage.JavaCoverageEnabledConfiguration;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -62,14 +63,14 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   private final Map<String, ClassCoverageInfo> myClassCoverageInfos = new HashMap<String, ClassCoverageInfo>();
   private static final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, ApplicationManager.getApplication());
   private final Project myProject;
-  private final Set<CoverageSuiteImpl> myCoverageSuites = new HashSet<CoverageSuiteImpl>();
+  private final Set<BaseCoverageSuite> myCoverageSuites = new HashSet<BaseCoverageSuite>();
   private boolean myIsProjectClosing = false;
   private ProjectManagerAdapter myProjectManagerListener;
 
   private final Object myLock = new Object();
   private boolean mySubCoverageIsActive;
 
-  public BaseCoverageSuite getCurrentSuite() {
+  public CoverageSuite getCurrentSuite() {
     return myCurrentSuite;
   }
 
@@ -109,14 +110,14 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   }
 
   public void writeExternal(final Element element) throws WriteExternalException {
-    for (CoverageSuiteImpl coverageSuite : myCoverageSuites) {
+    for (BaseCoverageSuite coverageSuite : myCoverageSuites) {
       final Element suiteElement = new Element(SUITE);
       element.addContent(suiteElement);
       coverageSuite.writeExternal(suiteElement);
     }
   }
 
-  public BaseCoverageSuite addCoverageSuite(final String name, final CoverageFileProvider fileProvider, final String[] filters, final long lastCoverageTimeStamp,
+  public CoverageSuite addCoverageSuite(final String name, final CoverageFileProvider fileProvider, final String[] filters, final long lastCoverageTimeStamp,
                                         @Nullable final String suiteToMergeWith,
                                         final AbstractCoverageRunner coverageRunner,
                                         final boolean collectLineInfo,
@@ -131,13 +132,16 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   }
 
   @Override
-  public BaseCoverageSuite addCoverageSuite(final CoverageEnabledConfiguration config) {
-    final String name = config.getName() + " Coverage Results";
-    CoverageSuiteImpl suite =
-      new CoverageSuiteImpl(name, new DefaultCoverageFileProvider(new File(config.getCoverageFilePath())),
-                            config.getPatterns(), new Date().getTime(), config.getSuiteToMergeWith(), config.isTrackPerTestCoverage() && !config.isSampling(),
-                            !config.isSampling(), config.isTrackTestFolders(), config.getCoverageRunner());
-    if (config.getSuiteToMergeWith() == null || !name.equals(config.getSuiteToMergeWith())) {
+  public CoverageSuite addCoverageSuite(final CoverageEnabledConfiguration config) {
+    final JavaCoverageEnabledConfiguration javaConfig = (JavaCoverageEnabledConfiguration)config;
+    final String name = javaConfig.getName() + " Coverage Results";
+    final String covFilePath = javaConfig.getCoverageFilePath();
+    assert covFilePath != null; // Shouldn't be null here!
+    final CoverageSuiteImpl suite =
+      new CoverageSuiteImpl(name, new DefaultCoverageFileProvider(new File(covFilePath)),
+                            javaConfig.getPatterns(), new Date().getTime(), javaConfig.getSuiteToMergeWith(), javaConfig.isTrackPerTestCoverage() && !javaConfig.isSampling(),
+                            !javaConfig.isSampling(), javaConfig.isTrackTestFolders(), javaConfig.getCoverageRunner());
+    if (javaConfig.getSuiteToMergeWith() == null || !name.equals(javaConfig.getSuiteToMergeWith())) {
       removeCoverageSuite(suite);
     }
     myCoverageSuites.remove(suite); // remove previous instance
@@ -145,7 +149,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     return suite;
   }
 
-  public void removeCoverageSuite(BaseCoverageSuite suite) {
+  public void removeCoverageSuite(CoverageSuite suite) {
     final String fileName = suite.getCoverageDataFileName();
     FileUtil.delete(new File(fileName));
     FileUtil.delete(getTracesDirectory(fileName));
@@ -222,7 +226,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
            (int)((double)(info.fullyCoveredLineCount + info.partiallyCoveredLineCount) / info.totalLineCount * 100) + "% lines covered";
   }
 
-  public void chooseSuite(final BaseCoverageSuite suite) {
+  public void chooseSuite(final CoverageSuite suite) {
     myCurrentSuite = (CoverageSuiteImpl)suite;
     myAlarm.cancelAllRequests();
     myPackageCoverageInfos.clear();
@@ -247,7 +251,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     fireAfterSuiteChosen();
   }
 
-  public void renewCoverageData(final BaseCoverageSuite suite) {
+  public void renewCoverageData(final CoverageSuite suite) {
     final List<PsiPackage> packages = getCurrentSuitePackages();
     final List<PsiClass> classes = getCurrentSuiteClasses();
 
@@ -285,7 +289,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     }
   }
 
-  public void coverageGathered(@NotNull final BaseCoverageSuite suite) {
+  public void coverageGathered(@NotNull final CoverageSuite suite) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         if (myCurrentSuite != null && !myCurrentSuite.equals(suite)) {
@@ -450,7 +454,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     }
   }
 
-  public void selectSubCoverage(@NotNull final BaseCoverageSuite suite, final List<String> testNames) {
+  public void selectSubCoverage(@NotNull final CoverageSuite suite, final List<String> testNames) {
     ((CoverageSuiteImpl)suite).restoreCoverageData();
     final ProjectData data = ((CoverageSuiteImpl)suite).getCoverageData(this);
     if (data == null) return;
@@ -515,9 +519,9 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     return new File(new File(fileName).getParentFile(), FileUtil.getNameWithoutExtension(new File(fileName)));
   }
 
-  public void restoreMergedCoverage(@NotNull final BaseCoverageSuite suite) {
+  public void restoreMergedCoverage(@NotNull final CoverageSuite suite) {
     mySubCoverageIsActive = false;
-    ((CoverageSuiteImpl)suite).restoreCoverageData();
+    ((BaseCoverageSuite)suite).restoreCoverageData();
     renewCoverageData(suite);
   }
 
