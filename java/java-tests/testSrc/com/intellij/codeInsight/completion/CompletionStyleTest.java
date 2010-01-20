@@ -10,6 +10,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.TestDataPath;
 
 /**
  * Created by IntelliJ IDEA.
@@ -18,6 +19,7 @@ import com.intellij.testFramework.LightCodeInsightTestCase;
  * Time: 15:44:18
  * To change this template use Options | File Templates.
  */
+@TestDataPath("$CONTENT_ROOT/testData")
 public class CompletionStyleTest extends LightCodeInsightTestCase{
   private static final String BASE_PATH = "/codeInsight/completion/style";
 
