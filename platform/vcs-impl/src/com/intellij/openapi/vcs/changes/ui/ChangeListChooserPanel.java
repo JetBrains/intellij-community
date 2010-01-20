@@ -46,9 +46,10 @@ public class ChangeListChooserPanel extends JPanel {
   private JComboBox myExisitingsCombo;
   private EditChangelistPanel myNewListPanel;
   @Nullable private final ChangeListEditHandler myHandler;
-  private final Consumer<Boolean> myOkEnabledListener;
+  private final Consumer<String> myOkEnabledListener;
+  private Project myProject;
 
-  public ChangeListChooserPanel(@Nullable final ChangeListEditHandler handler, @NotNull final Consumer<Boolean> okEnabledListener) {
+  public ChangeListChooserPanel(@Nullable final ChangeListEditHandler handler, @NotNull final Consumer<String> okEnabledListener) {
     super(new BorderLayout());
     myHandler = handler;
     myOkEnabledListener = okEnabledListener;
@@ -62,6 +63,7 @@ public class ChangeListChooserPanel extends JPanel {
   }
 
   public void init(final Project project) {
+    myProject = project;
 
     myExisitingsCombo.setRenderer(new ColoredListCellRenderer() {
 
@@ -99,6 +101,9 @@ public class ChangeListChooserPanel extends JPanel {
       myExisitingsCombo.setEnabled(false);
       myNewListPanel.setEnabled(true);
       myNewListPanel.requestFocus();
+    }
+    if (myProject != null) {
+      myNewListPanel.nameChangedImpl(myProject, null);
     }
   }
 
@@ -158,7 +163,11 @@ public class ChangeListChooserPanel extends JPanel {
 
       @Override
       protected void nameChanged(String errorMessage) {
-        myOkEnabledListener.consume(myRbExisting.isSelected() || errorMessage == null);
+        if (myRbExisting.isSelected()) {
+          myOkEnabledListener.consume(null);
+        } else {
+          myOkEnabledListener.consume(errorMessage);
+        }
       }
     };
   }

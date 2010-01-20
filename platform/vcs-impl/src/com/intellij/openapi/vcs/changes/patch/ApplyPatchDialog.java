@@ -650,9 +650,10 @@ public class ApplyPatchDialog extends DialogWrapper {
   }
 
   private void createUIComponents() {
-    myChangeListChooser = new ChangeListChooserPanel(null, new Consumer<Boolean>() {
-      public void consume(final Boolean aBoolean) {
-        setOKActionEnabled(aBoolean);
+    myChangeListChooser = new ChangeListChooserPanel(null, new Consumer<String>() {
+      public void consume(final String errorMessage) {
+        setOKActionEnabled(errorMessage == null);
+        setErrorText(errorMessage);
       }
     });
   }
