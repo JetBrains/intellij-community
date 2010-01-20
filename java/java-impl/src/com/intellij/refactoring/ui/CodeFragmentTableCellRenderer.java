@@ -36,23 +36,26 @@ public class CodeFragmentTableCellRenderer implements TableCellRenderer {
     myProject = project;
   }
 
-  public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+  public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, final boolean hasFocus, int row, int column) {
     PsiCodeFragment codeFragment = (PsiCodeFragment)value;
 
+    final EditorTextField editorTextField;
     if (codeFragment != null) {
       Document document = PsiDocumentManager.getInstance(myProject).getDocument(codeFragment);
-      return new EditorTextField(document, myProject, StdFileTypes.JAVA) {
+      editorTextField = new EditorTextField(document, myProject, StdFileTypes.JAVA) {
         protected boolean shouldHaveBorder() {
           return false;
         }
       };
     }
     else {
-      return new EditorTextField("", myProject, StdFileTypes.JAVA) {
+      editorTextField = new EditorTextField("", myProject, StdFileTypes.JAVA) {
         protected boolean shouldHaveBorder() {
           return false;
-        }        
+        }
       };
     }
+    editorTextField.setBorder(hasFocus ? BorderFactory.createLineBorder(table.getForeground()): null);
+    return editorTextField;
   }
 }
