@@ -3,7 +3,7 @@ package com.jetbrains.python.psi;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.StubBasedPsiElement;
-import com.jetbrains.python.psi.controlflow.ControlFlowOwner;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowOwner;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;

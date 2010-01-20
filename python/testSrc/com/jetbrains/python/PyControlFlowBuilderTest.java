@@ -7,8 +7,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.controlflow.ControlFlow;
-import com.jetbrains.python.psi.controlflow.Instruction;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlow;
+import com.jetbrains.python.codeInsight.controlflow.Instruction;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,7 +19,7 @@ import java.io.IOException;
 public class PyControlFlowBuilderTest extends LightMarkedTestCase {
 
   public String getTestDataPath() {
-    return PythonTestUtil.getTestDataPath() + "/psi/controlflow/";
+    return PythonTestUtil.getTestDataPath() + "/codeInsight/controlflow/";
   }
 
   private void doTest() throws Exception {

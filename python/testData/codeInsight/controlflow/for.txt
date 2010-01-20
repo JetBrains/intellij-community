@@ -1,0 +1,7 @@
+0(1) element: null
+1(2,5) element: PyForStatement
+2(3) element: PyStatementList
+3(4) WRITE ACCESS: i
+4(2,6) element: PyPrintStatement
+5(6) element: PyPrintStatement
+6() element: null

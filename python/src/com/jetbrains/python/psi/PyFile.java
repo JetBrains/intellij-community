@@ -6,7 +6,7 @@ package com.jetbrains.python.psi;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.jetbrains.python.psi.controlflow.ControlFlowOwner;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowOwner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
