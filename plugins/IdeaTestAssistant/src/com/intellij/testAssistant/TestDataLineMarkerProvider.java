@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -90,30 +91,60 @@ public class TestDataLineMarkerProvider implements LineMarkerProvider {
         openFileByIndex(elt.getProject(), 0);
       }
       else {
-        List<String> shortNames = new ArrayList<String>();
-        for (String fileName : myFileNames) {
-          shortNames.add(new File(fileName).getName());
+        TestDataGroupVirtualFile groupFile = getTestDataGroup();
+        if (groupFile != null) {
+          new OpenFileDescriptor(elt.getProject(), groupFile).navigate(true);
         }
-        final JList list = new JList(shortNames.toArray(new String[shortNames.size()]));
-        list.setCellRenderer(new ColoredListCellRenderer() {
-          @Override
-          protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-            String fileName = (String) value;
-            final FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
-            setIcon(fileType.getIcon());
-            append(fileName);
-          }
-        });
-        PopupChooserBuilder builder = new PopupChooserBuilder(list);
-        builder.setItemChoosenCallback(new Runnable() {
-          public void run() {
-            final int[] indices = list.getSelectedIndices();
-            for (int index : indices) {
-              openFileByIndex(elt.getProject(), index);
-            }
-          }
-        }).createPopup().show(new RelativePoint(e));
+        else {
+          showNavigationPopup(elt.getProject(), e);
+        }
       }
+    }
+
+    @Nullable
+    private TestDataGroupVirtualFile getTestDataGroup() {
+      if (myFileNames.size() != 2) {
+        return null;
+      }
+      VirtualFile file1 = LocalFileSystem.getInstance().findFileByPath(myFileNames.get(0));
+      VirtualFile file2 = LocalFileSystem.getInstance().findFileByPath(myFileNames.get(1));
+      if (file1 == null || file2 == null) {
+        return null;
+      }
+      final int commonPrefixLength = StringUtil.commonPrefixLength(file1.getName(), file2.getName());
+      if (file1.getName().substring(commonPrefixLength).toLowerCase().contains("after")) {
+        return new TestDataGroupVirtualFile(file2, file1);
+      }
+      if (file2.getName().substring(commonPrefixLength).toLowerCase().contains("after")) {
+        return new TestDataGroupVirtualFile(file1, file2);
+      }
+      return null;
+    }
+
+    private void showNavigationPopup(final Project project, MouseEvent e) {
+      List<String> shortNames = new ArrayList<String>();
+      for (String fileName : myFileNames) {
+        shortNames.add(new File(fileName).getName());
+      }
+      final JList list = new JList(shortNames.toArray(new String[shortNames.size()]));
+      list.setCellRenderer(new ColoredListCellRenderer() {
+        @Override
+        protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+          String fileName = (String)value;
+          final FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
+          setIcon(fileType.getIcon());
+          append(fileName);
+        }
+      });
+      PopupChooserBuilder builder = new PopupChooserBuilder(list);
+      builder.setItemChoosenCallback(new Runnable() {
+        public void run() {
+          final int[] indices = list.getSelectedIndices();
+          for (int index : indices) {
+            openFileByIndex(project, index);
+          }
+        }
+      }).createPopup().show(new RelativePoint(e));
     }
 
     private void openFileByIndex(final Project project, final int index) {

@@ -7,6 +7,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.testAssistant.TestDataLineMarkerProvider"/>
+    <fileEditorProvider implementation="com.intellij.testAssistant.TestDataGroupEditorProvider"/>
   </extensions>
 
   <actions>
