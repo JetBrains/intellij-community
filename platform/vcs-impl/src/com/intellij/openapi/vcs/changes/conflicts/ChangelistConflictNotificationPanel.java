@@ -25,7 +25,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.InplaceButton;
 
-import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collections;
@@ -50,13 +49,26 @@ public class ChangelistConflictNotificationPanel extends EditorNotificationPanel
     myChangeList = manager.getChangeList(myChange);
     assert myChangeList != null;
     myLabel.setText("File from non-active changelist is modified");
-    createActionLabel("Move changes", "move").
-      setToolTipText("Move changes to active changelist (" + manager.getDefaultChangeList().getName() + ")");
-    createActionLabel("Switch changelist", "switch").
-      setToolTipText("Set active changelist to '" + myChangeList.getName() + "'");
-    createActionLabel("Ignore", "ignore").
-      setToolTipText("Hide this notification");
-    setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
+    createActionLabel("Move changes", new Runnable() {
+      public void run() {
+        ChangelistConflictResolution.MOVE.resolveConflict(myTracker.getProject(), myChangeList.getChanges());
+      }
+    }).setToolTipText("Move changes to active changelist (" + manager.getDefaultChangeList().getName() + ")");
+
+    createActionLabel("Switch changelist", new Runnable() {
+      public void run() {
+        List<Change> changes = Collections.singletonList(myTracker.getChangeListManager().getChange(myFile));
+        ChangelistConflictResolution.SWITCH.resolveConflict(myTracker.getProject(), changes);
+      }
+    }).setToolTipText("Set active changelist to '" + myChangeList.getName() + "'");
+
+    createActionLabel("Ignore", new Runnable() {
+      public void run() {
+        myTracker.ignoreConflict(myFile, true);
+      }
+    }).setToolTipText("Hide this notification");
+
+//    setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
 
     myLinksPanel.add(new InplaceButton("Show options dialog", IconLoader.getIcon("/general/ideOptions.png"), new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -65,17 +77,5 @@ public class ChangelistConflictNotificationPanel extends EditorNotificationPanel
                                                         new ChangelistConflictConfigurable((ChangeListManagerImpl)manager));
       }
     }));
-  }
-
-  @Override
-  protected void executeAction(String actionId) {
-    if (actionId.equals("move")) {
-      ChangelistConflictResolution.MOVE.resolveConflict(myTracker.getProject(), myChangeList.getChanges());
-    } else if (actionId.equals("switch")) {
-      List<Change> changes = Collections.singletonList(myTracker.getChangeListManager().getChange(myFile));
-      ChangelistConflictResolution.SWITCH.resolveConflict(myTracker.getProject(), changes);
-    } else if (actionId.equals("ignore")) {
-      myTracker.ignoreConflict(myFile, true);
-    }
   }
 }

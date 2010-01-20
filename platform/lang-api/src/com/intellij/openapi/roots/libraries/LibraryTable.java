@@ -24,7 +24,8 @@ import java.util.EventListener;
 import java.util.Iterator;
 
 /**
- *  @author dsl
+ * @see com.intellij.openapi.roots.libraries.LibraryTablesRegistrar#getLibraryTable(com.intellij.openapi.project.Project)
+ * @author dsl
  */
 public interface LibraryTable {
   @NotNull

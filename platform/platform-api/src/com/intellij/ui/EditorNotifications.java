@@ -41,6 +41,7 @@ public class EditorNotifications extends AbstractProjectComponent {
 
   public interface Provider<T extends JComponent> {
 
+
     Key<T> getKey();
 
     @Nullable
@@ -88,16 +89,23 @@ public class EditorNotifications extends AbstractProjectComponent {
     });
   }
 
+  public void updateAllNotifications() {
+    VirtualFile[] files = myFileEditorManager.getOpenFiles();
+    for (VirtualFile file : files) {
+      updateNotifications(file);
+    }
+  }
+
   private void updateNotification(FileEditor editor, Key<? extends JComponent> key, @Nullable JComponent component) {
+    JComponent old = editor.getUserData(key);
+    if (old != null) {
+      myFileEditorManager.removeTopComponent(editor, old);
+    }
     if (component != null) {
       myFileEditorManager.addTopComponent(editor, component);
       editor.putUserData((Key<JComponent>)key, component);
     }
     else {
-      JComponent old = editor.getUserData(key);
-      if (old != null) {
-        myFileEditorManager.removeTopComponent(editor, old);
-      }
       editor.putUserData(key, null);
     }
   }

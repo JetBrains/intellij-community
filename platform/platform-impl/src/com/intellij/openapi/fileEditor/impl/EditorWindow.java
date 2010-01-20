@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.LayeredIcon;
@@ -57,6 +58,7 @@ public class EditorWindow {
 
   private boolean myIsDisposed = false;
   private static final Icon PIN_ICON = IconLoader.getIcon("/nodes/tabPin.png");
+  public static final Key<Integer> INITIAL_INDEX_KEY = Key.create("initial editor index");
 
   protected EditorWindow(final EditorsSplitters owner) {
     myOwner = owner;
@@ -404,7 +406,8 @@ public class EditorWindow {
         setSelectedEditor(editor, focusEditor);
       }
       else {
-        final int indexToInsert = myTabbedPane.getSelectedIndex() + 1;
+        Integer initialIndex = editor.getFile().getUserData(INITIAL_INDEX_KEY);
+        final int indexToInsert = initialIndex == null ? myTabbedPane.getSelectedIndex() + 1 : initialIndex;
         final VirtualFile file = editor.getFile();
         final Icon template = IconLoader.getIcon("/fileTypes/text.png");
         myTabbedPane.insertTab(file, new EmptyIcon(template.getIconWidth(), template.getIconHeight()), new TComp(editor), null, indexToInsert);
@@ -661,7 +664,7 @@ public class EditorWindow {
     return -1;
   }
 
-  private int findFileIndex(final VirtualFile fileToFind) {
+  public int findFileIndex(final VirtualFile fileToFind) {
     for (int i = 0; i != getTabCount(); ++i) {
       final VirtualFile file = getFileAt(i);
       if (file.equals (fileToFind)) {
