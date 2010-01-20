@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * @author yole
  */
-@TestDataPath("$CONTENT_ROOT/testData")
+@TestDataPath("$CONTENT_ROOT/testData/")
 public class TestDataReferenceCollectorTest extends LightCodeInsightFixtureTestCase {
   public void testFixtureConfigureByFile() throws Exception {
     final List<String> references = doTest();
@@ -45,6 +45,12 @@ public class TestDataReferenceCollectorTest extends LightCodeInsightFixtureTestC
     assertEquals(2, references.size());
     assertTrue(references.contains("before"));
     assertTrue(references.contains("after"));
+  }
+
+  public void testReferencesInAnyMethod() throws Exception {
+    final List<String> references = doTest();
+    assertEquals(1, references.size());
+    assertEquals("before", references.get(0));
   }
 
   private List<String> doTest() throws Exception {

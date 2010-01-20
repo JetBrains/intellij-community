@@ -54,10 +54,10 @@ public class TestDataReferenceCollector {
           processCallArgument(expression, argumentMap, result, 0);
           processCallArgument(expression, argumentMap, result, 1);
         }
-        else if (callText.startsWith("do") && callText.endsWith("Test")) {
-          final PsiMethod doTestMethod = expression.resolveMethod();
-          if (doTestMethod != null) {
-            result.addAll(collectTestDataReferences(doTestMethod, buildArgumentMap(expression, doTestMethod)));
+        else if (expression.getMethodExpression().getQualifierExpression() == null) {
+          final PsiMethod callee = expression.resolveMethod();
+          if (callee != null) {
+            result.addAll(collectTestDataReferences(callee, buildArgumentMap(expression, callee)));
           }
         }
       }
