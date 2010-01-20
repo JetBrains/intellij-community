@@ -1,0 +1,15 @@
+<idea-plugin>
+  <id>com.intellij.testAssistant</id>
+  <name>IDEA Test Assistant</name>
+  <description>Assists in writing and maintaining tests for IntelliJ IDEA's code</description>
+  <version>1.0.0</version>
+  <vendor url="http://www.jetbrains.com" logo="/general/ijLogo.png">JetBrains</vendor>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.testAssistant.TestDataLineMarkerProvider"/>
+  </extensions>
+
+  <actions>
+  </actions>
+</idea-plugin>
+
