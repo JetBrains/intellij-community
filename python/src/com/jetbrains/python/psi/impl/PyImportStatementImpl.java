@@ -22,6 +22,7 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyImportStatement;
 import org.jetbrains.annotations.NotNull;
@@ -56,5 +57,10 @@ public class PyImportStatementImpl extends PyElementImpl implements PyImportStat
 
   public PyImportElement[] getImportElements() {
     return childrenToPsi(TokenSet.create(PyElementTypes.IMPORT_ELEMENT), new PyImportElement[0]);
+  }
+
+  @Override
+  protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
+    pyVisitor.visitPyImportStatement(this);
   }
 }

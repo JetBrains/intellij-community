@@ -17,6 +17,7 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiElementVisitor;
+import com.jetbrains.python.psi.impl.PyImportStatementImpl;
 
 /**
  * Visitor for python-specific nodes.
@@ -194,7 +195,11 @@ public class PyElementVisitor extends PsiElementVisitor {
     visitPyElement(node);
   }
 
-  public void visitPyPrintStatement(final PyPrintStatement statement) {
-    visitPyStatement(statement);
+  public void visitPyPrintStatement(final PyPrintStatement node) {
+    visitPyStatement(node);
+  }
+
+  public void visitPyImportStatement(PyImportStatement node) {
+    visitPyStatement(node);
   }
 }
