@@ -3,6 +3,8 @@ package com.jetbrains.python.codeInsight.intentions;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -64,7 +66,7 @@ public class ImportToggleAliasIntention implements IntentionAction {
       if (target != null && target.isValid()) myAlias = target.getName();
       else myAlias = null;
       myFromImportStatement = PsiTreeUtil.getParentOfType(myImportElement, PyFromImportStatement.class);
-      if (myFromImportStatement != null && myFromImportStatement.isValid()) {
+      if (myFromImportStatement != null && myFromImportStatement.isValid() && !myFromImportStatement.isFromFuture()) {
         return true;
       }
       else {
@@ -93,11 +95,17 @@ public class ImportToggleAliasIntention implements IntentionAction {
       }
       else {
         // ask for and add alias
-        AskNameDialog dialog = new AskNameDialog(project);
-        dialog.setTitle(PyBundle.message("INTN.alias.for.$0.dialog.title", imported_name));
-        dialog.show();
-        if (!dialog.isOK()) return; // 'Cancel' button cancels everything
-        target_name = dialog.getAlias();
+        Application application = ApplicationManager.getApplication();
+        if (application != null && !application.isUnitTestMode()) {
+          AskNameDialog dialog = new AskNameDialog(project);
+          dialog.setTitle(PyBundle.message("INTN.alias.for.$0.dialog.title", imported_name));
+          dialog.show();
+          if (!dialog.isOK()) return; // 'Cancel' button cancels everything
+          target_name = dialog.getAlias();
+        }
+        else { // test mode
+          target_name = "alias";
+        }
         remove_name = imported_name;
       }
       final PsiElement referee = reference.resolve();

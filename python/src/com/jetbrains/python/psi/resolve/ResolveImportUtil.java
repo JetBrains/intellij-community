@@ -1,8 +1,5 @@
 package com.jetbrains.python.psi.resolve;
 
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -17,7 +14,6 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyImportResolver;
 import com.jetbrains.python.psi.types.PyType;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,35 +21,9 @@ import java.util.*;
 
 /**
  * @author dcheryasov
- *
- * General import logic:
- * 
- * if "import foo":
- *   if absolute imports used:
- *     resolveInRoots("foo")
- *   else:
- *     resolveInDirectory("foo") or resolveInRoots("foo")
- *
- * if "from foo import bar":
- *   if absolute imports used:
- *     module = resolveInRoots("foo")
- *   else:
- *     module = resolveInDirectory("foo") or resolveInRoots("foo")
- *   module.resolveChild("bar")
- *
- * if "from ..foo import bar":
- *   module = stepBack(getRelativeLevel()).resolveInDirectory("foo")
- *   module.resolveChild("bar")
- *
- * if "from ... import foo":
- *   stepBack(getRelativeLevel()).resolveInDirectory("foo")
- *
  */
 public class ResolveImportUtil {
 
-  /** Name of the __init__.py special file. */
-  @NonNls public static final String INIT_PY = "__init__.py";
-  @NonNls public static final String PY_SUFFIX = ".py";
 
   private ResolveImportUtil() {
   }
@@ -104,24 +74,25 @@ public class ResolveImportUtil {
 
 
   /**
-   * Finds a directory that many levels above a given file.
+   * Finds a directory that many levels above a given file, making sure that every level has an __init__.py.
    * @param base file that works as a reference.
    * @param depth must be positive, 1 means the dir that contains base, 2 is one dir above, etc.
    * @return found directory, or null.
    */
   @Nullable
   private static PsiDirectory stepBackFrom(PsiFile base, int depth) {
-    PsiDirectory result = null;
+    PsiDirectory result;
     if (base != null) {
+      base = base.getOriginalFile(); // just to make sure 
       result = base.getContainingDirectory();
       int count = 1;
-      while (result != null) {
+      while (result != null && result.findFile(PyNames.INIT_DOT_PY) != null) {
         if (count >= depth) return result;
         result = result.getParentDirectory();
         count += 1;
       }
     }
-    return result;
+    return null;
   }
 
   @Nullable
@@ -164,11 +135,7 @@ public class ResolveImportUtil {
     }
     else if (parent instanceof PyFromImportStatement) { // "from foo import"
       PyFromImportStatement from_import_statement = (PyFromImportStatement)parent;
-      /*
-      module_reference =  from_import_statement.getImportSource();
-      if (module_reference == null) return null; // can't be: we were called for the sake of a reference, but there isn't one
-      */
-      PsiElement module = resolveModule(/*module_reference*/ importRef, file, absolute_import_enabled, from_import_statement.getRelativeLevel());
+      PsiElement module = resolveModule(importRef, file, absolute_import_enabled, from_import_statement.getRelativeLevel());
       if (module != null) return module;
     }
     // in-python resolution failed
@@ -260,38 +227,6 @@ public class ResolveImportUtil {
   }
 
   /**
-   * Resolves a reference in an import statement into whatever object it refers to.
-   * @param importRef a reference within an import element.
-   * @return the object importRef refers to, or null.
-   */
-  @Nullable
-  public static PsiElement resolveImportReferenceOld(final PyReferenceExpression importRef) {
-    if (importRef == null) return null; // fail fast
-    final String referencedName = importRef.getReferencedName();
-    if (referencedName == null) return null;
-
-    PyReferenceExpression source = null;
-    if (importRef.getParent() instanceof PyImportElement) {
-      PyImportElement parent = (PyImportElement) importRef.getParent();
-      if (parent.getParent() instanceof PyFromImportStatement) {
-        PyFromImportStatement stmt = (PyFromImportStatement) parent.getParent();
-        source =  stmt.getImportSource();
-        if (source == null) return null;
-      }
-    }
-
-    PsiElement result;
-    if (source != null) {
-      result = resolvePythonImport2(source, referencedName);
-    }
-    else result = resolvePythonImport2(importRef, null);
-    if (result != null) {
-      return result;
-    }
-    return resolveForeignImport(importRef, resolveImportReference(source));
-  }
-
-  /**
    * Finds a named submodule file/dir under given root.
    */
   @Nullable
@@ -299,7 +234,7 @@ public class ResolveImportUtil {
     VirtualFile child_file = root_file.findChild(name);
     if (child_file != null) {
       if (name.equals(child_file.getName())) {
-        VirtualFile initpy = child_file.findChild(INIT_PY);
+        VirtualFile initpy = child_file.findChild(PyNames.INIT_DOT_PY);
         if (initpy != null) {
           PsiFile initfile = manager.findFile(initpy);
           if (initfile != null) {
@@ -506,7 +441,7 @@ public class ResolveImportUtil {
     final PsiManager psi_mgr = PsiManager.getInstance(project);
     for(VirtualFile contentRoot: roots) {
       PsiElement result = null;
-      final VirtualFile childFile = contentRoot.findChild(referencedName + PY_SUFFIX);
+      final VirtualFile childFile = contentRoot.findChild(referencedName + PyNames.DOT_PY);
       if (childFile != null) result = psi_mgr.findFile(childFile);
       else {
         final VirtualFile childDir = contentRoot.findChild(referencedName);
@@ -538,7 +473,7 @@ public class ResolveImportUtil {
 
     public boolean visitRoot(final VirtualFile root) {
       if (result != null) return false;
-      final VirtualFile childFile = root.findChild(name + PY_SUFFIX);
+      final VirtualFile childFile = root.findChild(name + PyNames.DOT_PY);
       if (childFile != null) {
         result = psimgr.findFile(childFile);
         return (result == null);
@@ -562,7 +497,7 @@ public class ResolveImportUtil {
     PsiManager psimgr;
 
     static String cutExt(String name) {
-      return name.substring(0, Math.max(name.length() - PY_SUFFIX.length(), 0));
+      return name.substring(0, Math.max(name.length() - PyNames.DOT_PY.length(), 0));
     }
 
     public CollectingRootVisitor(PsiManager psimgr) {
@@ -572,11 +507,11 @@ public class ResolveImportUtil {
 
     public boolean visitRoot(final VirtualFile root) {
       for (VirtualFile vfile : root.getChildren()) {
-        if (vfile.getName().endsWith(PY_SUFFIX)) {
+        if (vfile.getName().endsWith(PyNames.DOT_PY)) {
           PsiFile pfile = psimgr.findFile(vfile);
           if (pfile != null) result.add(cutExt(pfile.getName()));
         }
-        else if (vfile.isDirectory() && (vfile.findChild(INIT_PY) != null)) {
+        else if (vfile.isDirectory() && (vfile.findChild(PyNames.INIT_DOT_PY) != null)) {
           PsiDirectory pdir = psimgr.findDirectory(vfile);
           if (pdir != null) result.add(pdir.getName());
         }
@@ -626,14 +561,14 @@ public class ResolveImportUtil {
     else if (parent instanceof PsiDirectoryContainer) {
       final PsiDirectoryContainer container = (PsiDirectoryContainer)parent;
       for(PsiDirectory childDir: container.getDirectories()) {
-        final PsiElement result = resolveInDirectory(referencedName, containingFile, childDir, processor);
-        if (fileOnly && ! (result instanceof PsiFile) && ! (result instanceof PsiDirectory)) return null;
+        final PsiElement result = resolveInDirectory(referencedName, containingFile, childDir, processor, fileOnly);
+        //if (fileOnly && ! (result instanceof PsiFile) && ! (result instanceof PsiDirectory)) return null;
         if (result != null) return result;
       }
     }
     if (dir != null) {
-      final PsiElement result =  resolveInDirectory(referencedName, containingFile, dir, processor);
-      if (fileOnly && ! (result instanceof PsiFile) && ! (result instanceof PsiDirectory)) return null;
+      final PsiElement result =  resolveInDirectory(referencedName, containingFile, dir, processor, fileOnly);
+      //if (fileOnly && ! (result instanceof PsiFile) && ! (result instanceof PsiDirectory)) return null;
       return result;
     }
     return ret;
@@ -641,18 +576,19 @@ public class ResolveImportUtil {
 
   @Nullable
   private static PsiElement resolveInDirectory(
-    final String referencedName, final PsiFile containingFile, final PsiDirectory dir, ResolveProcessor processor
+    final String referencedName, final PsiFile containingFile, final PsiDirectory dir, ResolveProcessor processor, boolean isFileOnly
   ) {
     if (referencedName == null) return null;
-    final PsiFile file = dir.findFile(referencedName + PY_SUFFIX);
+    final PsiFile file = dir.findFile(referencedName + PyNames.DOT_PY);
     if (file != null) return file;
     final PsiDirectory subdir = dir.findSubdirectory(referencedName);
     if (subdir != null) return subdir;
-    else { // not a subdir, not a file; could be a name in parent/__init__.py
-      final PsiFile initPy = dir.findFile(INIT_PY);
+    else if (! isFileOnly) {
+      // not a subdir, not a file; could be a name in parent/__init__.py
+      final PsiFile initPy = dir.findFile(PyNames.INIT_DOT_PY);
       if (initPy == containingFile) return null; // don't dive into the file we're in
       if (initPy != null) {
-        if (processor == null) processor = new ResolveProcessor(referencedName); // should not normally happen
+        if (processor == null) processor = new ResolveProcessor(referencedName); // by default
         return PyResolveUtil.treeCrawlUp(processor, true, initPy);
       }
     }
@@ -660,14 +596,14 @@ public class ResolveImportUtil {
   }
 
 
-  private static void addImportedNames(PyImportElement[] import_elts, Collection<String> names_already) {
-    if (import_elts != null && names_already != null) {
+  private static void addImportedNames(PyImportElement[] import_elts, Collection<String> collected_names) {
+    if (import_elts != null && collected_names != null) {
       for (PyImportElement ielt : import_elts) {
         String s;
         PyReferenceExpression ref = ielt.getImportReference();
         if (ref != null) {
           s = ref.getReferencedName();
-          if (s != null) names_already.add(s);
+          if (s != null) collected_names.add(s);
         }
       }
     }
@@ -681,17 +617,18 @@ public class ResolveImportUtil {
   public static Object[] suggestImportVariants(final PyReferenceExpression partial_ref) {
     List<Object> variants = new ArrayList<Object>();
     if (partial_ref == null) return variants.toArray();
+    PsiFile current_file = partial_ref.getContainingFile();
+    if (current_file != null) current_file = current_file.getOriginalFile();
+    int relative_level = 0;
+    final Set<String> names_already = new java.util.HashSet<String>(); // don't propose already imported names
     // are we in "import _" or "from foo import _"?
     PyFromImportStatement from_import = PsiTreeUtil.getParentOfType(partial_ref, PyFromImportStatement.class);
     if (from_import != null && partial_ref.getParent() != from_import) { // in "from foo import _"
       PyReferenceExpression src = from_import.getImportSource();
-      // TODO: check relative/absolute import here
       if (src != null) {
         PsiElement mod_candidate = src.resolve();
         if (mod_candidate instanceof PyExpression) {
-          final Set<String> names_already = new java.util.HashSet<String>();
-          // don't propose already imported items
-          addImportedNames(from_import.getImportElements(), names_already);
+          addImportedNames(from_import.getImportElements(), names_already); // don't propose already imported items
           // collect what's within module file
           final VariantsProcessor processor = new VariantsProcessor(new PyResolveUtil.FilterNameNotIn(names_already));
           PyResolveUtil.treeCrawlUp(processor, true, mod_candidate);
@@ -713,10 +650,18 @@ public class ResolveImportUtil {
           return variants.toArray();
         }
       }
+      else { // null source, must be a "from ... import"
+        relative_level = from_import.getRelativeLevel();
+        if (relative_level > 0) {
+          PsiDirectory relative_dir = stepBackFrom(current_file, relative_level);
+          if (relative_dir != null) {
+            addImportedNames(from_import.getImportElements(), names_already);
+            fillFromDir(relative_dir, current_file, names_already, variants);
+          }
+        }
+      }
     }
     // in "import _" or "from _ import"
-    // don't propose already imported names
-    final Set<String> names_already = new java.util.HashSet<String>();
     if (from_import != null) addImportedNames(from_import.getImportElements(), names_already);
     else {
       PyImportStatement import_stmt = PsiTreeUtil.getParentOfType(partial_ref, PyImportStatement.class);
@@ -724,43 +669,47 @@ public class ResolveImportUtil {
         addImportedNames(import_stmt.getImportElements(), names_already);
       }
     }
-    // look in builtins
-    DataContext dataContext = DataManager.getInstance().getDataContext();
     // look at current dir
-    final VirtualFile pfile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
-    if (pfile != null) {
-      VirtualFile pdir = pfile.getParent();
-      if (pdir != null) {
-        for (VirtualFile a_file : pdir.getChildren()) {
-          if (a_file != pfile) {
-            if (a_file.isDirectory()) {
-              if (a_file.findChild(INIT_PY) != null) {
-                final String name = a_file.getName();
-                if (PyNames.isIdentifier(name) && !names_already.contains(name)) variants.add(name);
-              }
+    if (current_file != null && relative_level == 0 && ! isAbsoluteImportEnabledFor(current_file)) {
+      fillFromDir(current_file.getParent(), current_file, names_already, variants);
+    }
+    if (relative_level == 0) {
+      // look in SDK
+      final CollectingRootVisitor visitor = new CollectingRootVisitor(partial_ref.getManager());
+      final Module module = ModuleUtil.findModuleForPsiElement(partial_ref);
+      if (module != null) {
+        ModuleRootManager.getInstance(module).processOrder(new SdkRootVisitingPolicy(visitor), null);
+        for (String name : visitor.getResult()) {
+          if (PyNames.isIdentifier(name) && !names_already.contains(name)) variants.add(name); // to thwart stuff like "__phello__.foo"
+        }
+      }
+    }
+
+    return variants.toArray(new Object[variants.size()]);
+  }
+
+  // adds variants found under given dir
+  private static void fillFromDir(PsiDirectory target_dir, PsiFile source_file, Set<String> names_already, List<Object> variants) {
+    if (target_dir != null) {
+      for (PsiElement dir_item : target_dir.getChildren()) {
+        if (dir_item != source_file) {
+          if (dir_item instanceof PsiDirectory) {
+            final PsiDirectory dir = (PsiDirectory)dir_item;
+            if (dir.findFile(PyNames.INIT_DOT_PY) != null) {
+              final String name = dir.getName();
+              if (PyNames.isIdentifier(name) && !names_already.contains(name)) variants.add(name);
             }
-            else { // plain file
-              String fname = a_file.getName();
-              if (fname.endsWith(PY_SUFFIX)) {
-                final String name = fname.substring(0, fname.length() - PY_SUFFIX.length());
-                if (PyNames.isIdentifier(name) && !names_already.contains(name)) variants.add(name);
-              }
+          }
+          else if (dir_item instanceof PsiFile) { // plain file
+            String filename = ((PsiFile)dir_item).getName();
+            if (!PyNames.INIT_DOT_PY.equals(filename) && filename.endsWith(PyNames.DOT_PY)) {
+              final String name = filename.substring(0, filename.length() - PyNames.DOT_PY.length());
+              if (PyNames.isIdentifier(name) && !names_already.contains(name)) variants.add(name);
             }
           }
         }
       }
     }
-    // look in SDK
-    final CollectingRootVisitor visitor = new CollectingRootVisitor(partial_ref.getManager());
-    final Module module = ModuleUtil.findModuleForPsiElement(partial_ref);
-    if (module != null) {
-      ModuleRootManager.getInstance(module).processOrder(new SdkRootVisitingPolicy(visitor), null);
-      for (String name : visitor.getResult()) {
-        if (PyNames.isIdentifier(name) && !names_already.contains(name)) variants.add(name); // to thwart stuff like "__phello__.foo"
-      }
-    }
-
-    return variants.toArray(new Object[variants.size()]);
   }
 
   /**

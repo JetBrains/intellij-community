@@ -44,4 +44,10 @@ public interface PyFromImportStatement extends PyStatement {
    * @return number of dots in relative "from" clause, or 0 in absolute import.
    */
   int getRelativeLevel();
+
+
+  /**
+   * @return true iff the statement is an import from __future__.
+   */
+  boolean isFromFuture();
 }

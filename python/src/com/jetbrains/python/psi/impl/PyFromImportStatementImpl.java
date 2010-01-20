@@ -22,6 +22,7 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
@@ -86,6 +87,11 @@ public class PyFromImportStatementImpl extends PyElementImpl implements PyFromIm
       }
     }
     return result;
+  }
+
+  public boolean isFromFuture() {
+    PyReferenceExpression source = getImportSource();
+    return (source != null && PyNames.FUTURE_MODULE.equals(source.getReferencedName()));
   }
 
   public boolean processDeclarations(@NotNull final PsiScopeProcessor processor, @NotNull final ResolveState state, final PsiElement lastParent,

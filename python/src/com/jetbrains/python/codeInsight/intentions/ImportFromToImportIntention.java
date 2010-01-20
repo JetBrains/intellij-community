@@ -21,13 +21,18 @@ import static com.jetbrains.python.codeInsight.intentions.DeclarationConflictChe
 import com.jetbrains.python.psi.*;
 import static com.jetbrains.python.psi.PyUtil.sure;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
+import com.jetbrains.python.psi.types.PyModuleType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 /**
- * Transforms {@code from module_name import ...} into {@code import module_name}
- * and qualifies any names imported from that module by module name.
+ * Transforms:<ul>
+ * <li>{@code from module_name import names} into {@code import module_name};</li>
+ * <li>{@code from ...module_name import names} into {@code from ... import module_name};</li>
+ * <li>{@code from ...moduleA.moduleB import names} into {@code from ...moduleA import moduleB}.</li>
+ * Qualifies any names imported from that module by module name.
  * <br><small>
  * User: dcheryasov
  * Date: Sep 26, 2009 9:12:28 AM
@@ -38,11 +43,46 @@ public class ImportFromToImportIntention implements IntentionAction {
   private PyFromImportStatement myFromImportStatement = null;
   private PyReferenceExpression myModuleReference = null;
   private String myModuleName = null;
+  private int myRelativeLevel;
+  private String myQualifier; // we don't always qualify with module name
 
   @NotNull
   public String getText() {
-    String name = myModuleName != null? myModuleName : "...";
-    return "Convert to 'import " + name + "'";
+    String name = myModuleName != null? myModuleName : "?";
+    if (myRelativeLevel > 0) {
+      String[] relative_names = getRelativeNames(false);
+      return PyBundle.message("INTN.convert.to.from.$0.import.$1", relative_names[0], relative_names[1]);
+    }
+    else return PyBundle.message("INTN.convert.to.import.$0", name);
+  }
+
+  // given module "...foo.bar". returns "...foo" and "bar"; if not strict, undefined names become "?".
+  @Nullable
+  private String[] getRelativeNames(boolean strict) {
+    String remaining_name = "?";
+    String separated_name = "?";
+    boolean failure = true;
+    if (myModuleReference != null) {
+      PyExpression remaining_module = myModuleReference.getQualifier();
+      if (remaining_module instanceof PyQualifiedExpression) {
+        remaining_name = PyResolveUtil.toPath((PyQualifiedExpression)remaining_module, ".");
+      }
+      else remaining_name = ""; // unqualified name: "...module"
+      separated_name = myModuleReference.getReferencedName();
+      failure = false;
+      if (separated_name == null) {
+        separated_name = "?";
+        failure = true;
+      }
+    }
+    if (strict && failure) return null;
+    else return new String[] {getDots()+remaining_name, separated_name};
+  }
+
+  private String getDots() {
+    String dots = "";
+    for (int i=0; i<myRelativeLevel; i+=1) dots += "."; // this generally runs 1-2 times, so it's cheaper than allocating a StringBuilder
+    return dots;
   }
 
   @NotNull
@@ -51,13 +91,28 @@ public class ImportFromToImportIntention implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    myFromImportStatement = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyFromImportStatement.class);
-    if (myFromImportStatement != null) {
+    myModuleReference = null;
+    final PsiElement position = file.findElementAt(editor.getCaretModel().getOffset());
+    myFromImportStatement = PsiTreeUtil.getParentOfType(position, PyFromImportStatement.class);
+    if (myFromImportStatement != null && myFromImportStatement.isValid() && !myFromImportStatement.isFromFuture()) {
+      myRelativeLevel = myFromImportStatement.getRelativeLevel();
       myModuleReference = myFromImportStatement.getImportSource();
-      if (myModuleReference != null) myModuleName = PyResolveUtil.toPath(myModuleReference, ".");
-      return true;
+      if (myRelativeLevel > 0) {
+        // make sure we aren't importing a module from the relative path
+        for (PyImportElement import_element : myFromImportStatement.getImportElements()) {
+          PyReferenceExpression ref = import_element.getImportReference();
+          if (ref != null && ref.isValid()) {
+            PsiElement target = ref.resolve();
+            if (target instanceof PyExpression && ((PyExpression)target).getType() instanceof PyModuleType) return false;
+          }
+        }
+
+      }
     }
-    return false;
+    if (myModuleReference != null) {
+      myModuleName = PyResolveUtil.toPath(myModuleReference, ".");
+    }
+    return myModuleReference != null && myModuleName != null && myFromImportStatement != null;
   }
 
   /**
@@ -68,13 +123,20 @@ public class ImportFromToImportIntention implements IntentionAction {
    */
   private void qualifyTarget(ASTNode target_node, PyElementGenerator generator, Project project) {
     target_node.addChild(generator.createDot(project), target_node.getFirstChildNode());
-    target_node.addChild(sure(generator.createFromText(project, PyReferenceExpression.class, myModuleName, new int[]{0,0}).getNode()), target_node.getFirstChildNode());
+    target_node.addChild(sure(generator.createFromText(project, PyReferenceExpression.class, myQualifier, new int[]{0,0}).getNode()), target_node.getFirstChildNode());
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     assert myFromImportStatement != null : "isAvailable() must have returned true, but myFromImportStatement is null";
     try {
       sure(myModuleReference); sure(myModuleName);
+      String[] relative_names = null; // [0] is remaining import path, [1] is imported module name
+      if (myRelativeLevel > 0) {
+        relative_names = getRelativeNames(true);
+        if (relative_names == null) throw new IncorrectOperationException("failed to get relative names");
+        myQualifier = relative_names[1];
+      }
+      else myQualifier = myModuleName;
       // find all unqualified references that lead to one of our import elements
       final PyImportElement[] ielts = myFromImportStatement.getImportElements();
       final PyStarImportElement star_ielt = myFromImportStatement.getStarImportElement();
@@ -158,7 +220,13 @@ public class ImportFromToImportIntention implements IntentionAction {
         qualifyTarget(target_node, generator, project);
       }
       // transform the import statement
-      PyImportStatement new_import = sure(generator.createFromText(project, PyImportStatement.class, "import "+myModuleName));
+      PyStatement new_import;
+      if (myRelativeLevel == 0) {
+        new_import = sure(generator.createFromText(project, PyImportStatement.class, "import " + myModuleName));
+      }
+      else {
+        new_import = sure(generator.createFromText(project, PyFromImportStatement.class, "from " + relative_names[0] +  " import " + relative_names[1]));
+      }
       ASTNode parent = sure(myFromImportStatement.getParent().getNode());
       ASTNode old_node = sure(myFromImportStatement.getNode());
       parent.replaceChild(old_node, sure(new_import.getNode()));
