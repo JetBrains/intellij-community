@@ -74,7 +74,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     return myCurrentSuite;
   }
 
-  private CoverageSuiteImpl myCurrentSuite;
+  private JavaCoverageSuite myCurrentSuite;
   private Map<Editor, SrcFileAnnotator> myAnnotators = new HashMap<Editor, SrcFileAnnotator>();
   private EditorFactoryListener myEditorFactoryListener;
 
@@ -98,7 +98,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   public void readExternal(Element element) throws InvalidDataException {
     //noinspection unchecked
     for (Element suiteElement : (Iterable<Element>) element.getChildren(SUITE)) {
-      CoverageSuiteImpl suite = new CoverageSuiteImpl();
+      JavaCoverageSuite suite = new JavaCoverageSuite();
       try {
         suite.readExternal(suiteElement);
         myCoverageSuites.add(suite);
@@ -122,7 +122,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
                                         final AbstractCoverageRunner coverageRunner,
                                         final boolean collectLineInfo,
                                         final boolean tracingEnabled) {
-    CoverageSuiteImpl suite = new CoverageSuiteImpl(name, fileProvider, filters, lastCoverageTimeStamp, suiteToMergeWith, collectLineInfo, tracingEnabled, false, coverageRunner);
+    JavaCoverageSuite suite = new JavaCoverageSuite(name, fileProvider, filters, lastCoverageTimeStamp, suiteToMergeWith, collectLineInfo, tracingEnabled, false, coverageRunner);
     if (suiteToMergeWith == null || !name.equals(suiteToMergeWith)) {
       removeCoverageSuite(suite);
     }
@@ -137,8 +137,8 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     final String name = javaConfig.getName() + " Coverage Results";
     final String covFilePath = javaConfig.getCoverageFilePath();
     assert covFilePath != null; // Shouldn't be null here!
-    final CoverageSuiteImpl suite =
-      new CoverageSuiteImpl(name, new DefaultCoverageFileProvider(new File(covFilePath)),
+    final JavaCoverageSuite suite =
+      new JavaCoverageSuite(name, new DefaultCoverageFileProvider(new File(covFilePath)),
                             javaConfig.getPatterns(), new Date().getTime(), javaConfig.getSuiteToMergeWith(), javaConfig.isTrackPerTestCoverage() && !javaConfig.isSampling(),
                             !javaConfig.isSampling(), javaConfig.isTrackTestFolders(), javaConfig.getCoverageRunner());
     if (javaConfig.getSuiteToMergeWith() == null || !name.equals(javaConfig.getSuiteToMergeWith())) {
@@ -229,7 +229,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   public void chooseSuite(final CoverageSuite suite) {
     fireBeforeSuiteChosen();
    
-    myCurrentSuite = (CoverageSuiteImpl)suite;
+    myCurrentSuite = (JavaCoverageSuite)suite;
     myAlarm.cancelAllRequests();
     myPackageCoverageInfos.clear();
     myDirCoverageInfos.clear();
@@ -262,7 +262,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
         public void run() {
           if (myProject.isDisposed()) return;
           for (PsiPackage aPackage : packages) {
-            new PackageAnnotator(aPackage).annotate((CoverageSuiteImpl)suite, new PackageAnnotator.Annotator() {
+            new PackageAnnotator(aPackage).annotate((JavaCoverageSuite)suite, new PackageAnnotator.Annotator() {
               public void annotatePackage(String packageQualifiedName, PackageCoverageInfo packageCoverageInfo) {
                 myPackageCoverageInfos.put(packageQualifiedName, packageCoverageInfo);
               }
@@ -457,8 +457,8 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   }
 
   public void selectSubCoverage(@NotNull final CoverageSuite suite, final List<String> testNames) {
-    ((CoverageSuiteImpl)suite).restoreCoverageData();
-    final ProjectData data = ((CoverageSuiteImpl)suite).getCoverageData(this);
+    ((JavaCoverageSuite)suite).restoreCoverageData();
+    final ProjectData data = ((JavaCoverageSuite)suite).getCoverageData(this);
     if (data == null) return;
     mySubCoverageIsActive = true;
     final Map<String, Set<Integer>> executionTrace = new HashMap<String, Set<Integer>>();
@@ -513,7 +513,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
       }
       loadedClassData.setLines(lines);
     }
-    ((CoverageSuiteImpl)suite).setCoverageData(projectData);
+    ((JavaCoverageSuite)suite).setCoverageData(projectData);
     renewCoverageData(suite);
   }
 

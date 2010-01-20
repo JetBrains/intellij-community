@@ -70,7 +70,7 @@ public class PackageAnnotator {
   }
 
   //get read lock myself when needed
-  public void annotate(CoverageSuiteImpl suite, Annotator annotator) {
+  public void annotate(JavaCoverageSuite suite, Annotator annotator) {
     final ProjectData data = suite.getCoverageData(myCoverageManager);
 
     if (data == null) return;

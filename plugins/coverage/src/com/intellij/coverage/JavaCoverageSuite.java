@@ -48,8 +48,8 @@ import java.util.Set;
 /**
  * @author ven
  */
-public class CoverageSuiteImpl extends BaseCoverageSuite {
-  private static final Logger LOG = Logger.getInstance(CoverageSuiteImpl.class.getName());
+public class JavaCoverageSuite extends BaseCoverageSuite {
+  private static final Logger LOG = Logger.getInstance(JavaCoverageSuite.class.getName());
 
   private String[] myFilters;
   private String mySuiteToMerge;
@@ -62,11 +62,11 @@ public class CoverageSuiteImpl extends BaseCoverageSuite {
   private static final String COVERAGE_RUNNER = "RUNNER";
 
   //read external only
-  public CoverageSuiteImpl() {
+  public JavaCoverageSuite() {
     super();
   }
 
-  public CoverageSuiteImpl(final String name,
+  public JavaCoverageSuite(final String name,
                            final CoverageFileProvider coverageDataFileProvider,
                            final String[] filters,
                            final long lastCoverageTimeStamp,
@@ -148,12 +148,12 @@ public class CoverageSuiteImpl extends BaseCoverageSuite {
     if (data != null) return data;
     ProjectData map = loadProjectInfo();
     if (mySuiteToMerge != null) {
-      CoverageSuiteImpl toMerge = null;
+      JavaCoverageSuite toMerge = null;
       final CoverageSuite[] suites = coverageDataManager.getSuites();
       for (CoverageSuite suite : suites) {
         if (Comparing.strEqual(suite.getPresentableName(), mySuiteToMerge)) {
-          if (!Comparing.strEqual(((CoverageSuiteImpl)suite).getSuiteToMerge(), getPresentableName())) {
-            toMerge = (CoverageSuiteImpl)suite;
+          if (!Comparing.strEqual(((JavaCoverageSuite)suite).getSuiteToMerge(), getPresentableName())) {
+            toMerge = (JavaCoverageSuite)suite;
           }
           break;
         }
@@ -381,7 +381,7 @@ public class CoverageSuiteImpl extends BaseCoverageSuite {
           if (aborted || errors != 0) return;
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
-              CoverageDataManager.getInstance(project).chooseSuite(CoverageSuiteImpl.this);
+              CoverageDataManager.getInstance(project).chooseSuite(JavaCoverageSuite.this);
             }
           });
         }
