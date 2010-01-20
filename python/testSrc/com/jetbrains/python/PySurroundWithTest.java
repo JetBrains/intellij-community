@@ -25,7 +25,7 @@ public class PySurroundWithTest extends PyLightFixtureTestCase {
   }
 
   private void doTest(final Surrounder surrounder) throws Exception {
-    String baseName = "/" + getTestName(false);
+    String baseName = "/surround/" + getTestName(false);
     myFixture.configureByFile(baseName + ".py");
     new WriteCommandAction.Simple(myFixture.getProject()) {
       @Override
@@ -34,9 +34,5 @@ public class PySurroundWithTest extends PyLightFixtureTestCase {
       }
     }.execute();
     myFixture.checkResultByFile(baseName + "_after.py", true);
-  }
-
-  protected String getTestDataPath() {
-    return PythonTestUtil.getTestDataPath() + "/surround/";
   }
 }

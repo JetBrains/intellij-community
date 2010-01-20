@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
@@ -16,11 +17,13 @@ import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.jetbrains.python.PythonMockSdk;
+import com.jetbrains.python.PythonTestUtil;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
+@TestDataPath("$CONTENT_ROOT/../testData/")
 public abstract class PyLightFixtureTestCase extends UsefulTestCase {
   private static final PyLightProjectDescriptor ourPyDescriptor = new PyLightProjectDescriptor();
 
@@ -42,7 +45,7 @@ public abstract class PyLightFixtureTestCase extends UsefulTestCase {
   }
 
   protected String getTestDataPath() {
-    return null;
+    return PythonTestUtil.getTestDataPath();
   }
 
   @Override

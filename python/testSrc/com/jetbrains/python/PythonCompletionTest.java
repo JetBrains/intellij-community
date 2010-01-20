@@ -9,14 +9,10 @@ import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 public class PythonCompletionTest extends PyLightFixtureTestCase {
 
   private void doTest() throws Exception {
-    final String testName = getTestName(true);
+    final String testName = "completion/" + getTestName(true);
     myFixture.configureByFile(testName + ".py");
     myFixture.completeBasic();
     myFixture.checkResultByFile(testName + ".after.py");
-  }
-
-  protected String getTestDataPath() {
-    return PythonTestUtil.getTestDataPath() + "/completion/";
   }
 
   public void testLocalVar() throws Exception {
