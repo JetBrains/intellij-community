@@ -6,6 +6,8 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
@@ -90,6 +92,22 @@ public class PythonHighlightingTest extends PyLightFixtureTestCase {
     doTest();    
   }
 
+  public void testStringBytesLiteralOK() throws Exception {
+    doTest(LanguageLevel.PYTHON26, true, true);
+  }
+
+  public void testRegularAfterVarArgs() throws Exception {
+    doTest(LanguageLevel.PYTHON30, true, false);
+  }
+
+  public void testKeywordOnlyArguments() throws Exception {
+    doTest(LanguageLevel.PYTHON30, true, false);
+  }
+  
+  public void testMalformedStringTripleQuoteUnterminated() throws Exception {
+    doTest();
+  }
+
   public void testYieldInNestedFunction() throws Exception {
     // highlight func declaration first, lest we get an "Extra fragment highlighted" error.
     EditorColorsManager manager = EditorColorsManager.getInstance();
@@ -102,6 +120,17 @@ public class PythonHighlightingTest extends PyLightFixtureTestCase {
     scheme.setAttributes(xKey, xAttributes);
 
     doTest();
+  }
+
+  private void doTest(final LanguageLevel languageLevel, final boolean checkWarnings, final boolean checkInfos) throws Exception {
+    PythonLanguageLevelPusher.FORCE_LANGUAGE_LEVEL = languageLevel;
+    PythonLanguageLevelPusher.pushLanguageLevel(myFixture.getProject());
+    try {
+      doTest(checkWarnings, checkInfos);
+    }
+    finally {
+      PythonLanguageLevelPusher.FORCE_LANGUAGE_LEVEL = null;
+    }
   }
 
   private void doTest() throws Exception {

@@ -16,7 +16,7 @@ import java.util.List;
 public class PyStatementSelectionHandler extends ExtendWordSelectionHandlerBase {
   public boolean canSelect(final PsiElement e) {
     return e instanceof PyStringLiteralExpression || e instanceof PyCallExpression || e instanceof PyStatement ||
-           e instanceof PyStatementList || e instanceof PyFunction || e instanceof PyClass;
+           e instanceof PyStatementList;
   }
 
   public List<TextRange> select(final PsiElement e, final CharSequence editorText, final int cursorOffset, final Editor editor) {

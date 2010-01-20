@@ -372,6 +372,15 @@ public class PyUtil {
     return null;
   }
 
+  @Nullable
+  public static PyClass getContainingClassOrSelf(final PsiElement element) {
+    PsiElement current = element;
+    while (current != null && !(current instanceof PyClass)) {
+      current = current.getParent();
+    }
+    return (PyClass)current;
+  }
+
   /**
    * @param element for which to obtain the file
    * @return PyFile, or null, if there's no containing file, or it is not a PyFile.

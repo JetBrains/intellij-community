@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -29,6 +30,7 @@ import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.facet.PythonFacetSettings;
+import com.jetbrains.python.psi.LanguageLevel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -130,6 +132,11 @@ public class PythonSdkType extends SdkType {
    */
   @NonNls
   private static boolean isPythonSdkHome(final String path) {
+    final File f = getPythonBinaryPath(path);
+    if (f == null || !f.exists()){
+      return false;
+    }
+    // Extra check for linuxes
     if (SystemInfo.isLinux) {
       // on Linux, Python SDK home points to the /lib directory of a particular Python version
       File f_re = new File(path, "re.py");
@@ -139,13 +146,10 @@ public class PythonSdkType extends SdkType {
       return (
         f_re.exists() &&
         f_future.exists() &&
-        (f_site.exists() &&  f_site.isDirectory()) || (f_dist.exists() &&  f_dist.isDirectory()) 
+        (f_site.exists() &&  f_site.isDirectory()) || (f_dist.exists() &&  f_dist.isDirectory())
       );
     }
-    else {
-      File f = getPythonBinaryPath(path);
-      return f != null && f.exists();
-    }
+    return true;
   }
 
   private static boolean isJythonSdkHome(final String path) {
@@ -170,6 +174,7 @@ public class PythonSdkType extends SdkType {
     return null;
   }
 
+  @Nullable
   @NonNls
   private static File getPythonBinaryPath(final String path) {
     if (SystemInfo.isWindows) {
@@ -185,9 +190,12 @@ public class PythonSdkType extends SdkType {
       if (m.matches()) {
         String py_name = m.group(1); // $1
         py_binary = new File("/usr/bin/"+py_name); // XXX broken logic! can't match the lib to the bin
+      } else {
+        py_binary = new File("/usr/bin/python"); // TODO: search in $PATH
       }
-      else py_binary = new File("/usr/bin/python"); // TODO: search in $PATH
-      if (py_binary.exists()) return py_binary;
+      if (py_binary.exists()) {
+        return py_binary;
+      }
     }
     return null;
   }
@@ -229,18 +237,18 @@ public class PythonSdkType extends SdkType {
   }
   
   public void setupSdkPaths(final Sdk sdk) {
-    final SdkModificator[] sdk_mod_holder = new SdkModificator[]{null};
-    ProgressManager progman = ProgressManager.getInstance();
+    final Ref<SdkModificator> sdkModificatorRef = new Ref<SdkModificator>();
+    final ProgressManager progman = ProgressManager.getInstance();
     final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     final Task.Modal setup_task = new Task.Modal(project, "Setting up library files", false) {
 
       public void run(@NotNull final ProgressIndicator indicator) {
-        sdk_mod_holder[0] = setupSdkPathsUnderProgress(sdk, indicator);
+        sdkModificatorRef.set(setupSdkPathsUnderProgress(sdk, indicator));
       }
 
     };
     progman.run(setup_task);
-    if (sdk_mod_holder[0] != null) sdk_mod_holder[0].commitChanges(); // commit in dispatch thread, not task's
+    if (sdkModificatorRef.get() != null) sdkModificatorRef.get().commitChanges(); // commit in dispatch thread, not task's
   }
 
 
@@ -331,7 +339,10 @@ public class PythonSdkType extends SdkType {
 
   @Nullable
   public String getVersionString(final String sdkHome) {
-    String binaryPath = getInterpreterPath(sdkHome);
+    final String binaryPath = getInterpreterPath(sdkHome);
+    if (binaryPath == null){
+      return null;
+    }
     final boolean isJython = isJythonSdkHome(sdkHome);
     @NonNls String version_regexp, version_opt;
     if (isJython) {
@@ -347,11 +358,10 @@ public class PythonSdkType extends SdkType {
     return version;
   }
 
-  public static String getInterpreterPath(final String sdkHome) { 
-    if (isJythonSdkHome(sdkHome)) {
-      return getJythonBinaryPath(sdkHome).getPath();
-    }
-    return getPythonBinaryPath(sdkHome).getPath();
+  @Nullable
+  public static String getInterpreterPath(final String sdkHome) {
+    final File file = isJythonSdkHome(sdkHome) ? getJythonBinaryPath(sdkHome) : getPythonBinaryPath(sdkHome);
+    return file != null ? file.getPath() : null;
   }
 
   private final static String GENERATOR3 = "generator3.py";
@@ -451,5 +461,19 @@ public class PythonSdkType extends SdkType {
       }
     }
     return null;
+  }
+
+  public static LanguageLevel getLanguageLevelForSdk(@Nullable Sdk sdk) {
+    if (sdk != null) {
+      String version = sdk.getVersionString();
+      if (version != null) {
+        // HACK rewrite in some nicer way?
+        if (version.startsWith("Python ") || version.startsWith("Jython ")) {
+          String pythonVersion = version.substring("Python ".length());
+          return LanguageLevel.fromPythonVersion(pythonVersion);
+        }
+      }
+    }
+    return LanguageLevel.getDefault();
   }
 }

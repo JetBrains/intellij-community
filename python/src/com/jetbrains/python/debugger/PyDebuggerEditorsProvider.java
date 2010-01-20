@@ -22,7 +22,8 @@ public class PyDebuggerEditorsProvider extends XDebuggerEditorsProvider {
 
   @NotNull
   @Override
-  public Document createDocument(@NotNull Project project, @NotNull String text, @Nullable XSourcePosition sourcePosition) {
+  public Document createDocument(@NotNull final Project project, @NotNull String text, @Nullable final XSourcePosition sourcePosition) {
+    text = text.trim();
     final PyExpressionCodeFragmentImpl fragment = new PyExpressionCodeFragmentImpl(project, "fragment.py", text, true);
 
     /*

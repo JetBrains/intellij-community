@@ -1,5 +1,6 @@
 package com.jetbrains.python.validation;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 
 /**
@@ -9,6 +10,8 @@ import com.jetbrains.python.psi.PyStringLiteralExpression;
  */
 public class StringConstantAnnotator extends PyAnnotator {
   public static final String MISSING_Q = "Missing closing quote";
+  private static final String TRIPLE_QUOTES = "\"\"\"";
+
   //public static final String PREMATURE_Q = "Premature closing quote";
   public void visitPyStringLiteralExpression(final PyStringLiteralExpression node) {
     String s = node.getText();
@@ -18,9 +21,17 @@ public class StringConstantAnnotator extends PyAnnotator {
     int index = 0;
     // skip 'unicode' and 'raw' modifiers
     char first_quote = s.charAt(index);
-    if ((first_quote == 'u') || (first_quote == 'U')) index += 1;
+    if (Character.toLowerCase(first_quote) == 'u' || Character.toLowerCase(first_quote) == 'b') index += 1;
     first_quote = s.charAt(index);
     if ((first_quote == 'r') || (first_quote == 'R')) index += 1;
+
+    if (StringUtil.startsWith(s.substring(index, s.length()), TRIPLE_QUOTES)) {
+      if (s.length() < 6 + index || !s.endsWith(TRIPLE_QUOTES)) {
+        getHolder().createErrorAnnotation(node, "Missing closing triple quotes");
+      }
+      return;
+    }
+    
     first_quote = s.charAt(index);
     // s can't begin with a non-quote, else parser would not say it's a string
     index += 1;
@@ -38,7 +49,7 @@ public class StringConstantAnnotator extends PyAnnotator {
           else if (c == '\'' || c == '\"') {
             if (first_quote == '\0')
               first_quote = c;
-            else
+            else if (c == first_quote)
               first_quote = '\0';
           }
           

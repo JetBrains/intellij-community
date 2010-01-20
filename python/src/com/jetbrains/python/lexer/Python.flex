@@ -3,6 +3,7 @@ package com.jetbrains.python.lexer;
 
 import com.intellij.lexer.FlexLexer;
 import com.intellij.psi.tree.IElementType;
+import com.jetbrains.python.PyTokenTypes;
 
 %%
 
@@ -18,11 +19,13 @@ DIGIT = [0-9]
 NONZERODIGIT = [1-9]
 OCTDIGIT = [0-7]
 HEXDIGIT = [0-9A-Fa-f]
+BINDIGIT = [01]
 
 HEXINTEGER = 0[Xx]({HEXDIGIT})+
-OCTINTEGER = 0({OCTDIGIT})+
+OCTINTEGER = 0[Oo]?({OCTDIGIT})+
+BININTEGER = 0[Bb]({BINDIGIT})+
 DECIMALINTEGER = (({NONZERODIGIT}({DIGIT})*)|0)
-INTEGER = {DECIMALINTEGER}|{OCTINTEGER}|{HEXINTEGER}
+INTEGER = {DECIMALINTEGER}|{OCTINTEGER}|{HEXINTEGER}|{BININTEGER}
 LONGINTEGER = {INTEGER}[Ll]
 
 END_OF_LINE_COMMENT="#"[^\r\n]*
@@ -38,7 +41,7 @@ EXPONENT = [eE][+\-]?({DIGIT})+
 
 IMAGNUMBER=(({FLOATNUMBER})|({INTPART}))[Jj]
 
-STRING_LITERAL=[Uu]?({RAW_STRING}|{QUOTED_STRING})
+STRING_LITERAL=[UuBb]?({RAW_STRING}|{QUOTED_STRING})
 RAW_STRING=[Rr]{QUOTED_STRING}
 QUOTED_STRING=({TRIPLE_APOS_LITERAL})|({QUOTED_LITERAL})|({DOUBLE_QUOTED_LITERAL})|({TRIPLE_QUOTED_LITERAL})
 QUOTED_LITERAL="'"([^\\\'\r\n]|{ESCAPE_SEQUENCE}|(\\[\r\n]))*("'"|\\)?
@@ -100,7 +103,6 @@ TRIPLE_APOS_LITERAL = {THREE_APOS} {STRING_3CHAR_APOS}* {THREE_APOS}
 "not"                 { return PyTokenTypes.NOT_KEYWORD; }
 "or"                  { return PyTokenTypes.OR_KEYWORD; }
 "pass"                { return PyTokenTypes.PASS_KEYWORD; }
-"print"               { return PyTokenTypes.PRINT_KEYWORD; }
 "raise"               { return PyTokenTypes.RAISE_KEYWORD; }
 "return"              { return PyTokenTypes.RETURN_KEYWORD; }
 "try"                 { return PyTokenTypes.TRY_KEYWORD; }

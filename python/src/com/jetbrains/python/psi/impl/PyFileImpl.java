@@ -1,19 +1,3 @@
-/*
- *  Copyright 2005 Pythonid Project
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS"; BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.extapi.psi.PsiFileBase;
@@ -27,11 +11,14 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PythonDosStringFinder;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.controlflow.ControlFlow;
+import com.jetbrains.python.psi.controlflow.PyControlFlowBuilder;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveProcessor;
 import com.jetbrains.python.psi.types.PyModuleType;
@@ -40,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -76,6 +64,21 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       }
     }
     return null;
+  }
+
+  public LanguageLevel getLanguageLevel() {
+    if (myOriginalFile != null) {
+      return ((PyFileImpl) myOriginalFile).getLanguageLevel();
+    }
+    VirtualFile virtualFile = getVirtualFile();
+
+    if (virtualFile == null) {
+      virtualFile = getUserData(FileBasedIndex.VIRTUAL_FILE);
+    }
+    if (virtualFile != null) {
+      return LanguageLevel.forFile(virtualFile);
+    }
+    return LanguageLevel.getDefault();
   }
 
   public Icon getIcon(int flags) {
@@ -246,5 +249,29 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   public PyStringLiteralExpression getDocStringExpression() {
     return PythonDosStringFinder.find(this);
+  }
+
+  public void subtreeChanged() {
+    super.subtreeChanged();
+    if (myControlFlowRef != null){
+      myControlFlowRef.clear();
+    }
+  }
+
+  private SoftReference<ControlFlow> myControlFlowRef;
+
+  @NotNull
+  public ControlFlow getControlFlow() {
+    ControlFlow flow = getRefValue(myControlFlowRef);
+    if (flow == null) {
+      flow = new PyControlFlowBuilder().buildControlFlow(this);
+      myControlFlowRef = new SoftReference<ControlFlow>(flow);
+    }
+    return flow;
+  }
+
+  @Nullable
+  private static<T> T getRefValue(final SoftReference<T> reference){
+    return reference != null ? reference.get() : null;
   }
 }

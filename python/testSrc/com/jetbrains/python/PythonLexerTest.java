@@ -113,6 +113,18 @@ public class PythonLexerTest extends TestCase {
     doTest("with=as", "Py:IDENTIFIER", "Py:EQ", "Py:IDENTIFIER");
   }
 
+  public void testBytesLiteral() throws Exception {
+    doTest("b'ABC'", "Py:STRING_LITERAL");
+  }
+
+  public void testOctalLiteral() throws Exception {
+    doTest("0o123", "Py:INTEGER_LITERAL");
+  }
+
+  public void testBinaryLiteral() throws Exception {
+    doTest("0b0101", "Py:INTEGER_LITERAL");
+  }
+
   public void _testWithKeyword() throws Exception {
     // processing of 'from __future__ import' is now done on parser level, so a pure lexer test won't handle
     // this correctly

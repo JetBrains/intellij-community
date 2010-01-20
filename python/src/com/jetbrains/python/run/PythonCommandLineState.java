@@ -16,7 +16,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -24,15 +23,15 @@ import java.util.List;
 /**
  * @author Leonid Shalupov
  */
-public class PythonCommandLineState extends CommandLineState {
-  private PythonRunConfiguration myConfig;
+public abstract class PythonCommandLineState extends CommandLineState {
+  private AbstractPythonRunConfiguration myConfig;
   private final List<Filter> myFilters;
 
-  public PythonRunConfiguration getConfig() {
+  public AbstractPythonRunConfiguration getConfig() {
     return myConfig;
   }
 
-  public PythonCommandLineState(PythonRunConfiguration runConfiguration, ExecutionEnvironment env, List<Filter> filters) {
+  public PythonCommandLineState(AbstractPythonRunConfiguration runConfiguration, ExecutionEnvironment env, List<Filter> filters) {
     super(env);
     myConfig = runConfiguration;
     myFilters = filters;
@@ -77,10 +76,10 @@ public class PythonCommandLineState extends CommandLineState {
     return processHandler;
   }
 
-  private GeneralCommandLine generateCommandLine() {
+  protected GeneralCommandLine generateCommandLine() {
     GeneralCommandLine commandLine = new GeneralCommandLine();
 
-    commandLine.setExePath(myConfig.getInterpreterPath());
+    setRunnerPath(commandLine);
 
     buildCommandLineParameters(commandLine);
 
@@ -89,17 +88,10 @@ public class PythonCommandLineState extends CommandLineState {
     return commandLine;
   }
 
+  protected void setRunnerPath(GeneralCommandLine commandLine) {
+    commandLine.setExePath(myConfig.getInterpreterPath());
+  }
+
   protected void buildCommandLineParameters(GeneralCommandLine commandLine) {
-    commandLine.getParametersList().addParametersString(myConfig.getInterpreterOptions());
-
-    if (!StringUtil.isEmptyOrSpaces(myConfig.getScriptName())) {
-      commandLine.addParameter(myConfig.getScriptName());
-    }
-
-    commandLine.getParametersList().addParametersString(myConfig.getScriptParameters());
-
-    if (!StringUtil.isEmptyOrSpaces(myConfig.getWorkingDirectory())) {
-      commandLine.setWorkDirectory(myConfig.getWorkingDirectory());
-    }
   }
 }

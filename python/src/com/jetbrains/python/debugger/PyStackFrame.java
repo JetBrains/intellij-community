@@ -17,6 +17,7 @@ import com.intellij.xdebugger.ui.DebuggerIcons;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 public class PyStackFrame extends XStackFrame {
@@ -79,15 +80,20 @@ public class PyStackFrame extends XStackFrame {
 
   @Override
   public void computeChildren(@NotNull final XCompositeNode node) {
+    if (node.isObsolete()) return;
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         try {
           final List<PyDebugValue> values = myDebugProcess.loadFrame();
-          node.addChildren(values, true);
-          // todo: globals (?)
+          if (!node.isObsolete()) {
+            node.addChildren(values, true);
+          }
         }
         catch (PyDebuggerException e) {
-          LOG.error(e);
+          if (!node.isObsolete()) {
+            node.setErrorMessage("Unable to display frame variables");
+          }
+          LOG.warn(e);
         }
       }
     });

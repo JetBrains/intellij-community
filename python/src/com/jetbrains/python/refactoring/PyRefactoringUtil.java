@@ -2,6 +2,7 @@ package com.jetbrains.python.refactoring;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
@@ -230,5 +231,14 @@ public class PyRefactoringUtil {
   }
 
   private PyRefactoringUtil() {
+  }
+
+  public static boolean areConflictingMethods(PyFunction pyFunction, PyFunction pyFunction1) {
+    final PyParameter[] firstParams = pyFunction.getParameterList().getParameters();
+    final PyParameter[] secondParams = pyFunction1.getParameterList().getParameters();
+    final String firstName = pyFunction.getName();
+    final String secondName = pyFunction1.getName();
+
+    return Comparing.strEqual(firstName, secondName) && firstParams.length == secondParams.length;
   }
 }

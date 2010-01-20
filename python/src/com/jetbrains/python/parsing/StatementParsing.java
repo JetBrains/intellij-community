@@ -22,18 +22,23 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   @NonNls protected static final String TOK_FUTURE_IMPORT = "__future__";
   @NonNls protected static final String TOK_WITH_STATEMENT = "with_statement";
   @NonNls protected static final String TOK_NESTED_SCOPES = "nested_scopes";
+  @NonNls protected static final String TOK_PRINT_FUNCTION = "print_function";
   @NonNls protected static final String TOK_WITH = "with";
   @NonNls protected static final String TOK_AS = "as";
+  @NonNls protected static final String TOK_PRINT = "print";
 
   protected enum Phase {NONE, FROM, FUTURE, IMPORT} // 'from __future__ import' phase
   private Phase myFutureImportPhase = Phase.NONE;
   private boolean myExpectAsKeyword = false;
 
-  protected enum FUTURE {ABSOLUTE_IMPORT, DIVISION, GENERATORS, NESTED_SCOPES, WITH_STATEMENT}
+  public enum FUTURE {ABSOLUTE_IMPORT, DIVISION, GENERATORS, NESTED_SCOPES, WITH_STATEMENT, PRINT_FUNCTION}
   protected Set<FUTURE> myFutureFlags = EnumSet.noneOf(FUTURE.class);
 
-  protected StatementParsing(ParsingContext context) {
+  protected StatementParsing(ParsingContext context, @Nullable FUTURE futureFlag) {
     super(context);
+    if (futureFlag != null) {
+      myFutureFlags.add(futureFlag);
+    }
   }
 
   public void parseStatement() {
@@ -68,7 +73,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       return;
     }
     if (firstToken == PyTokenTypes.AT) {
-      getFunctionParser().parseDecoratedFunctionDeclaration();
+      getFunctionParser().parseDecoratedDeclaration();
       return;
     }
     if (firstToken == PyTokenTypes.CLASS_KEYWORD) {
@@ -89,7 +94,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     if (firstToken == null) {
       return;
     }
-    if (firstToken == PyTokenTypes.PRINT_KEYWORD) {
+    if (firstToken == PyTokenTypes.PRINT_KEYWORD && hasPrintStatement()) {
       parsePrintStatement(builder, inSuite);
       return;
     }
@@ -191,6 +196,10 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
 
     builder.advanceLexer();
     builder.error("statement expected, found " + firstToken.toString());
+  }
+
+  private boolean hasPrintStatement() {
+    return myContext.getLanguageLevel().hasPrintStatement() && !myFutureFlags.contains(FUTURE.PRINT_FUNCTION);
   }
 
   private void checkEndOfStatement(boolean inSuite) {
@@ -397,6 +406,9 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
           }
           else if (TOK_NESTED_SCOPES.equals(token_text)) {
             myFutureFlags.add(FUTURE.NESTED_SCOPES);
+          }
+          else if (TOK_PRINT_FUNCTION.equals(token_text)) {
+            myFutureFlags.add(FUTURE.PRINT_FUNCTION);
           }
         }
       }
@@ -630,6 +642,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     final PsiBuilder.Marker statement = myBuilder.mark();
     myBuilder.advanceLexer();
     getExpressionParser().parseExpression();
+    myExpectAsKeyword = true;
     if (myBuilder.getTokenType() == PyTokenTypes.AS_KEYWORD) {
       myBuilder.advanceLexer();
       getExpressionParser().parseExpression(true, true); // 'as' is followed by a target
@@ -640,14 +653,20 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   }
 
   private void parseClassDeclaration() {
-    assertCurrentToken(PyTokenTypes.CLASS_KEYWORD);
     final PsiBuilder.Marker classMarker = myBuilder.mark();
+    parseClassDeclaration(classMarker);
+  }
+
+  public void parseClassDeclaration(PsiBuilder.Marker classMarker) {
+    assertCurrentToken(PyTokenTypes.CLASS_KEYWORD);
     myBuilder.advanceLexer();
     checkMatches(PyTokenTypes.IDENTIFIER, "identifier expected");
     final PsiBuilder.Marker inheritMarker = myBuilder.mark();
     if (myBuilder.getTokenType() == PyTokenTypes.LPAR) {
       myBuilder.advanceLexer();
-      getExpressionParser().parseExpression();
+      if (myBuilder.getTokenType() != PyTokenTypes.RPAR) {
+        getExpressionParser().parseExpression();
+      }
       checkMatches(PyTokenTypes.RPAR, ") expected");
     }
     inheritMarker.done(PyElementTypes.PARENTHESIZED_EXPRESSION);
@@ -702,27 +721,38 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   }
   public IElementType filter(final IElementType source, final int start, final int end, final CharSequence text) {
     if (
-      (myFutureFlags.contains(FUTURE.WITH_STATEMENT) || myExpectAsKeyword) &&
-      source == PyTokenTypes.IDENTIFIER &&
-      CharArrayUtil.regionMatches(text, start, end, TOK_AS)
+      (myExpectAsKeyword || myContext.getLanguageLevel().hasWithStatement()) &&
+      source == PyTokenTypes.IDENTIFIER && isWordAtPosition(text, start, end, TOK_AS)
     ) {
       return PyTokenTypes.AS_KEYWORD;
     }
     else if ( // filter
         (myFutureImportPhase == Phase.FROM) &&
         source == PyTokenTypes.IDENTIFIER &&
-        CharArrayUtil.regionMatches(text, start, end, TOK_FUTURE_IMPORT)
+        isWordAtPosition(text, start, end, TOK_FUTURE_IMPORT)
     ) {
       myFutureImportPhase = Phase.FUTURE;
       return source;
     }
     else if (
-        myFutureFlags.contains(FUTURE.WITH_STATEMENT) &&
+        hasWithStatement() &&
         source == PyTokenTypes.IDENTIFIER &&
-        CharArrayUtil.regionMatches(text, start, end, TOK_WITH)
+        isWordAtPosition(text, start, end, TOK_WITH)
     ) {
       return PyTokenTypes.WITH_KEYWORD;
     }
+    else if (hasPrintStatement() && source == PyTokenTypes.IDENTIFIER &&
+             isWordAtPosition(text, start, end, TOK_PRINT)) {
+      return PyTokenTypes.PRINT_KEYWORD;
+    }
     return source;
+  }
+
+  private static boolean isWordAtPosition(CharSequence text, int start, int end, final String tokenText) {
+    return CharArrayUtil.regionMatches(text, start, end, tokenText) && end - start == tokenText.length();
+  }
+
+  private boolean hasWithStatement() {
+    return myContext.getLanguageLevel().hasWithStatement() || myFutureFlags.contains(FUTURE.WITH_STATEMENT);
   }
 }

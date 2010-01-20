@@ -5,8 +5,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.tree.IFileElementType;
-import com.intellij.psi.tree.IStubFileElementType;
 import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyFileElementType;
 import com.jetbrains.python.psi.impl.PyElementGeneratorImpl;
 import com.jetbrains.python.validation.*;
 
@@ -18,12 +18,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
  */
 public class PythonLanguage extends Language {
   private final PyElementGenerator elementGenerator = new PyElementGeneratorImpl(this);
-  private final IFileElementType ELTYPE_FILE = new IStubFileElementType(this) {
-    @Override
-    public int getStubVersion() {
-      return 3;
-    }
-  };
+  private final IFileElementType ELTYPE_FILE;
   private final Set<Class<? extends PyAnnotator>> _annotators = new CopyOnWriteArraySet<Class<? extends PyAnnotator>>();
 
   public static PythonLanguage getInstance() {
@@ -47,6 +42,7 @@ public class PythonLanguage extends Language {
 
   protected PythonLanguage() {
     super("Python");
+    ELTYPE_FILE = new PyFileElementType(this);
   }
 
   public IFileElementType getFileElementType() {

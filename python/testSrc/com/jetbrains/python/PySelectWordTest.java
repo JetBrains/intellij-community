@@ -15,6 +15,10 @@ public class PySelectWordTest extends PyLightFixtureTestCase {
     doTest();
   }
 
+  public void testSlice() throws Exception {   // PY-288
+    doTest();
+  }
+
   private void doTest() throws Exception {
     myFixture.copyDirectoryToProject("", "");
     @NonNls final String path = getTestName(true);

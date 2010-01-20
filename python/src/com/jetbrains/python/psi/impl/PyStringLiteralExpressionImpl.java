@@ -1,25 +1,16 @@
-/*
- *  Copyright 2005 Pythonid Project
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS"; BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.LiteralTextEscaper;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyElementVisitor;
@@ -32,8 +23,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PyStringLiteralExpressionImpl extends PyElementImpl implements PyStringLiteralExpression {
-  private static final Pattern PATTERN_STRING =
-      Pattern.compile("(u)?(r)?(\"\"\"|\"|'''|')(.*?)(\\3)?", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
   private static final Pattern PATTERN_ESCAPE = Pattern
       .compile("\\\\(\n|\\\\|'|\"|a|b|f|n|r|t|v|([0-8]{1,3})|x([0-9a-fA-F]{1,2})" + "|N(\\{.*?\\})|u([0-9a-fA-F]){4}|U([0-9a-fA-F]{8}))");
   private final Map<String, String> escapeMap = initializeEscapeMap();
@@ -76,59 +65,99 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
       int elStart = getTextRange().getStartOffset();
       List<TextRange> ranges = new ArrayList<TextRange>();
       for (ASTNode node : getStringNodes()) {
-        Matcher m = getTextMatcher(node.getText());
+        TextRange range = getNodeTextRange(node.getText());
         int nodeOffset = node.getStartOffset() - elStart;
-        ranges.add(TextRange.from(nodeOffset + m.start(4), nodeOffset + m.end(4)));
+        ranges.add(TextRange.from(nodeOffset + range.getStartOffset(), nodeOffset + range.getEndOffset()));
       }
       valueTextRanges = Collections.unmodifiableList(ranges);
     }
     return valueTextRanges;
   }
 
-  public List<EvaluatedTextRange> getStringValueCharacterRanges() {
-    int elStart = getTextRange().getStartOffset();
-    List<EvaluatedTextRange> ranges = new ArrayList<EvaluatedTextRange>(100);
-    for (ASTNode child : getStringNodes()) {
-      Matcher m = getTextMatcher(child.getText());
-      int offset = child.getTextRange().getStartOffset() - elStart + m.start(4);
-      String undecoded = m.group(4);
-      ranges.addAll(getEvaluatedTextRanges(undecoded, offset, m.group(2) != null, m.group(1) != null));
+  private static TextRange getNodeTextRange(final String text) {
+    int startOffset = 0;
+    startOffset = skipEncodingPrefix(text, startOffset);
+    startOffset = skipRawPrefix(text, startOffset);
+    int delimiterLength = 1;
+    final String afterPrefix = text.substring(startOffset);
+    if (afterPrefix.startsWith("\"\"\"") || afterPrefix.startsWith("'''")) {
+      delimiterLength = 3;
     }
-    return Collections.unmodifiableList(ranges);
+    final String delimiter = text.substring(startOffset, startOffset + delimiterLength);
+    startOffset += delimiterLength;
+    int endOffset = text.length();
+    if (text.substring(startOffset).endsWith(delimiter)) {
+      endOffset -= delimiterLength;
+    }
+    return new TextRange(startOffset, endOffset);
+  }
+
+  private static int skipRawPrefix(String text, int startOffset) {
+    char c = Character.toUpperCase(text.charAt(startOffset));
+    if (c == 'R') {
+      startOffset++;
+    }
+    return startOffset;
+  }
+
+  private static int skipEncodingPrefix(String text, int startOffset) {
+    char c = Character.toUpperCase(text.charAt(startOffset));
+    if (c == 'U' || c == 'B') {
+      startOffset++;
+    }
+    return startOffset;
+  }
+
+  private static boolean isRaw(String text) {
+    int startOffset = skipEncodingPrefix(text, 0);
+    return skipRawPrefix(text, startOffset) > startOffset;
+  }
+
+  private static boolean isUnicode(String text) {
+    return text.length() > 0 && Character.toUpperCase(text.charAt(0)) == 'U';
+  } 
+
+  public void iterateCharacterRanges(TextRangeConsumer consumer) {
+    int elStart = getTextRange().getStartOffset();
+    for (ASTNode child : getStringNodes()) {
+      final String text = child.getText();
+      TextRange textRange = getNodeTextRange(text);
+      int offset = child.getTextRange().getStartOffset() - elStart + textRange.getStartOffset();
+      String undecoded = text.substring(textRange.getStartOffset(), textRange.getEndOffset());
+      if (!iterateCharacterRanges(consumer, undecoded, offset, isRaw(text), isUnicode(text))) {
+        break;
+      }
+    }
   }
 
   public List<ASTNode> getStringNodes() {
     return Arrays.asList(getNode().getChildren(TokenSet.create(PyTokenTypes.STRING_LITERAL)));
   }
 
-  private static Matcher getTextMatcher(CharSequence text) {
-    Matcher m = PATTERN_STRING.matcher(text);
-    boolean matches = m.matches();
-    assert matches : text;
-    return m;
-  }
-
   public String getStringValue() {
     //ASTNode child = getNode().getFirstChildNode();
     //assert child != null;
     if (stringValue == null) {
-      StringBuilder out = new StringBuilder();
-      List<EvaluatedTextRange> ranges = getStringValueCharacterRanges();
-      for (EvaluatedTextRange range : ranges) {
-        out.append(range.getValue());
-      }
+      final StringBuilder out = new StringBuilder();
+      iterateCharacterRanges(new TextRangeConsumer() {
+        public boolean process(int startOffset, int endOffset, String value) {
+          out.append(value);
+          return true;
+        }
+      });
       stringValue = out.toString();
     }
     return stringValue;
   }
 
-  private List<EvaluatedTextRange> getEvaluatedTextRanges(String undecoded, int off, boolean raw, boolean unicode) {
+  private boolean iterateCharacterRanges(TextRangeConsumer consumer, String undecoded, int off, boolean raw, boolean unicode) {
     Matcher escMatcher = PATTERN_ESCAPE.matcher(undecoded);
-    List<EvaluatedTextRange> ranges = new ArrayList<EvaluatedTextRange>();
     int index = 0;
     while (escMatcher.find(index)) {
       for (int i = index; i < escMatcher.start(); i++) {
-        ranges.add(new EvaluatedTextRange(TextRange.from(off + i, 1), undecoded.charAt(i)));
+        if (!consumer.process(off + i, off + i + 1, Character.toString(undecoded.charAt(i)))) {
+          return false;
+        }
       }
       String octal = escMatcher.group(2);
       String hex = escMatcher.group(3);
@@ -171,31 +200,23 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
       if (str != null) {
         int start = escMatcher.start();
         int end = escMatcher.end();
-        ranges.add(new EvaluatedTextRange(TextRange.from(off + start, end - start), str));
+        if (!consumer.process(off + start, end - start, str)) {
+          return false;
+        }
       }
       index = escMatcher.end();
     }
     for (int i = index; i < undecoded.length(); i++) {
-      ranges.add(new EvaluatedTextRange(TextRange.from(off + i, 1), undecoded.charAt(i)));
+      if (!consumer.process(off + i, off + i + 1, Character.toString(undecoded.charAt(i)))) {
+        return false;
+      }
     }
-    return ranges;
+    return true;
   }
 
   @Override
   public String toString() {
     return super.toString() + ": " + getStringValue();
-  }
-
-  public static TextRange getTextRange(List<EvaluatedTextRange> ranges, int start, int end) {
-    assert start <= end : start + "," + end;
-    if (start == ranges.size()) {
-      // it's an empty string at the end of the string
-      return TextRange.from(ranges.get(start - 1).getRange().getEndOffset(), 0);
-    }
-    int startOffset = ranges.get(start).getRange().getStartOffset();
-    int endOffset = ranges.get(end - 1).getRange().getEndOffset();
-    int length = endOffset - startOffset;
-    return TextRange.from(startOffset, length);
   }
 
   public PyType getType() {
@@ -205,5 +226,76 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   @NotNull
   public PsiReference[] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this, PyStringLiteralExpression.class);
+  }
+
+  public List<Pair<PsiElement, TextRange>> getInjectedPsi() {
+    return InjectedLanguageUtil.getInjectedPsiFiles(this);
+  }
+
+  public void processInjectedPsi(@NotNull InjectedPsiVisitor visitor) {
+    InjectedLanguageUtil.enumerate(this, visitor);
+  }
+
+  public PsiLanguageInjectionHost updateText(@NotNull String text) {
+    // TODO is this the correct implementation? most likely not
+    ASTNode valueNode = getNode().getFirstChildNode();
+    assert valueNode instanceof LeafElement;
+    ((LeafElement)valueNode).replaceWithText(text);
+    return this;
+  }
+
+  @NotNull
+  public LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper() {
+    return new StringLiteralTextEscaper(this);
+  }
+
+  private interface TextRangeConsumer {
+    boolean process(int startOffset, int endOffset, String value);
+  }
+
+  private static class StringLiteralTextEscaper extends LiteralTextEscaper<PyStringLiteralExpression> {
+    private final PyStringLiteralExpressionImpl myHost;
+
+    protected StringLiteralTextEscaper(@NotNull PyStringLiteralExpressionImpl host) {
+      super(host);
+      myHost = host;
+    }
+
+    @Override
+    public boolean decode(@NotNull final TextRange rangeInsideHost, @NotNull final StringBuilder outChars) {
+      myHost.iterateCharacterRanges(new TextRangeConsumer() {
+        public boolean process(int startOffset, int endOffset, String value) {
+          int xsectStart = Math.max(startOffset, rangeInsideHost.getStartOffset());
+          int xsectEnd = Math.min(endOffset, rangeInsideHost.getEndOffset());
+          if (xsectEnd > xsectStart) {
+            outChars.append(value);
+          }
+          return endOffset < rangeInsideHost.getEndOffset();
+        }
+      });
+      return true;
+    }
+
+    @Override
+    public int getOffsetInHost(final int offsetInDecoded, @NotNull TextRange rangeInsideHost) {
+      final Ref<Integer> offset = new Ref<Integer>(offsetInDecoded);
+      final Ref<Integer> result = new Ref<Integer>(-1);
+      myHost.iterateCharacterRanges(new TextRangeConsumer() {
+        public boolean process(int startOffset, int endOffset, String value) {
+          if (value.length() > offset.get()) {
+            result.set(startOffset + offset.get());
+            return false;
+          }
+          offset.set(offset.get() - value.length());
+          return true;
+        }
+      });
+      return result.get();
+    }
+
+    @Override
+    public boolean isOneLine() {
+      return false;
+    }
   }
 }

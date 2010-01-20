@@ -16,16 +16,19 @@
 package com.jetbrains.python.parsing;
 
 import com.intellij.lang.PsiBuilder;
+import com.jetbrains.python.psi.LanguageLevel;
 
 public class ParsingContext {
   private final StatementParsing stmtParser;
   private final ExpressionParsing expressionParser;
   private final FunctionParsing functionParser;
   private final PsiBuilder myBuilder;
+  private final LanguageLevel myLanguageLevel;
 
-  public ParsingContext(final PsiBuilder builder) {
+  public ParsingContext(final PsiBuilder builder, LanguageLevel languageLevel, StatementParsing.FUTURE futureFlag) {
     myBuilder = builder;
-    stmtParser = new StatementParsing(this);
+    myLanguageLevel = languageLevel;
+    stmtParser = new StatementParsing(this, futureFlag);
     expressionParser = new ExpressionParsing(this);
     functionParser = new FunctionParsing(this);
   }
@@ -44,5 +47,9 @@ public class ParsingContext {
 
   public PsiBuilder getBuilder() {
     return myBuilder;
+  }
+
+  public LanguageLevel getLanguageLevel() {
+    return myLanguageLevel;
   }
 }

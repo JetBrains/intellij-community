@@ -7,11 +7,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.jetbrains.python.psi.*;
-import static com.jetbrains.python.psi.PyCallExpression.PyMarkedFunction;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+
+import static com.jetbrains.python.psi.PyCallExpression.PyMarkedFunction;
 
 /**
  * @author yole
@@ -130,6 +131,12 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
           param_indexes.put(param, hint_index);
           hint_flags.put(hint_index, EnumSet.noneOf(ParameterInfoUIContextEx.Flag.class));
           hint_texts.add(strb.toString());
+        }
+
+        public void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last) {
+          hint_flags.put(hint_texts.size(), EnumSet.noneOf(ParameterInfoUIContextEx.Flag.class));
+          if (last) hint_texts.add("*");
+          else hint_texts.add("*,");
         }
       }
     );

@@ -24,6 +24,7 @@ public class PythonDemorganLawIntentionTest extends PyLightFixtureTestCase {
     myFixture.configureByFile("before" + getTestName(false) + ".py");
     final IntentionAction action = myFixture.findSingleIntention("DeMorgan Law");
     myFixture.launchAction(action);
+    myFixture.checkResultByFile("after" + getTestName(false) + ".py");
 
   }
   protected String getTestDataPath() {
