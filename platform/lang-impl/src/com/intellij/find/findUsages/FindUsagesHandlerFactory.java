@@ -16,8 +16,9 @@
 
 package com.intellij.find.findUsages;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -26,8 +27,8 @@ import org.jetbrains.annotations.Nullable;
 public abstract class FindUsagesHandlerFactory {
   public static final ExtensionPointName<FindUsagesHandlerFactory> EP_NAME = ExtensionPointName.create("com.intellij.findUsagesHandlerFactory");
 
-  public abstract boolean canFindUsages(PsiElement element);
+  public abstract boolean canFindUsages(@NotNull PsiElement element);
 
   @Nullable
-  public abstract FindUsagesHandler createFindUsagesHandler(PsiElement element, final boolean forHighlightUsages);
+  public abstract FindUsagesHandler createFindUsagesHandler(@NotNull PsiElement element, final boolean forHighlightUsages);
 }
