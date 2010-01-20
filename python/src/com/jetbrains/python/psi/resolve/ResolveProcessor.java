@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.NameDefiner;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyReferenceExpression;
@@ -54,7 +55,7 @@ public class ResolveProcessor implements PyAsScopeProcessor {
           myResult = element;
           return false;
         }
-        else if (ResolveImportUtil.INIT_PY.equals(file.getName())) {
+        else if (PyNames.INIT_DOT_PY.equals(file.getName())) {
           VirtualFile dir = file.getParent();
           if ((dir != null) && myName.equals(dir.getName())) {
             myResult = element;

@@ -182,7 +182,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   private static PsiElement turnDirIntoInit(PsiElement target) {
     if (target instanceof PsiDirectory) {
       final PsiDirectory dir = (PsiDirectory)target;
-      final PsiFile file = dir.findFile(ResolveImportUtil.INIT_PY);
+      final PsiFile file = dir.findFile(PyNames.INIT_DOT_PY);
       if (file != null) {
         file.putCopyableUserData(PyFile.KEY_IS_DIRECTORY, Boolean.TRUE);
         return file; // ResolveImportUtil will extract directory part as needed, everyone else are better off with a file.
@@ -633,7 +633,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       return new PyClassType((PyClass) target, true);
     }
     if (target instanceof PsiDirectory) {
-      PsiFile file = ((PsiDirectory)target).findFile(ResolveImportUtil.INIT_PY);
+      PsiFile file = ((PsiDirectory)target).findFile(PyNames.INIT_DOT_PY);
       if (file != null) return getTypeFromTarget(file);
     }
     return getReferenceTypeFromProviders(target);

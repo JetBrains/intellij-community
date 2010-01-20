@@ -17,25 +17,24 @@ import java.util.*;
 public class VariantsProcessor implements PsiScopeProcessor {
   private final Map<String, LookupElement> myVariants = new HashMap<String, LookupElement>();
 
-  protected String my_notice;
+  protected String myNotice;
+  protected PyResolveUtil.Filter myFilter;
 
   public VariantsProcessor() {
     // empty
   }
 
   public VariantsProcessor(final PyResolveUtil.Filter filter) {
-    my_filter = filter;
+    myFilter = filter;
   }
 
-  protected PyResolveUtil.Filter my_filter;
-
   public void setNotice(@Nullable String notice) {
-    my_notice = notice;
+    myNotice = notice;
   }
 
   protected LookupElementBuilder setupItem(LookupElementBuilder item) {
-    if (my_notice != null) {
-      return setItemNotice(item, my_notice);
+    if (myNotice != null) {
+      return setItemNotice(item, myNotice);
     }
     return item;
   }
@@ -54,7 +53,7 @@ public class VariantsProcessor implements PsiScopeProcessor {
   }
 
   public boolean execute(PsiElement element, ResolveState substitutor) {
-    if (my_filter != null && !my_filter.accept(element)) return true; // skip whatever the filter rejects
+    if (myFilter != null && !myFilter.accept(element)) return true; // skip whatever the filter rejects
     // TODO: refactor to look saner; much code duplication
     if (element instanceof PsiNamedElement) {
       final PsiNamedElement psiNamedElement = (PsiNamedElement)element;
