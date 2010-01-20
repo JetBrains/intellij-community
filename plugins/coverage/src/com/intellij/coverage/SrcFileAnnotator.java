@@ -52,15 +52,10 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.diff.Diff;
 import gnu.trove.TIntIntHashMap;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.commons.EmptyVisitor;
 
 import javax.swing.*;
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -270,7 +265,7 @@ public class SrcFileAnnotator implements Disposable {
       }
     }
 
-    final boolean subCoverageActive = ((CoverageDataManagerImpl)CoverageDataManager.getInstance(myProject)).isSubCoverageActive();
+    final boolean subCoverageActive = CoverageDataManager.getInstance(myProject).isSubCoverageActive();
     final boolean coverageByTestApplicable = suite.isCoverageByTestApplicable() && !(subCoverageActive && suite.isCoverageByTestEnabled());
     final TreeMap<Integer, LineData> executableLines = new TreeMap<Integer, LineData>();
     final TreeMap<Integer, ClassData> classLines = new TreeMap<Integer, ClassData>();
@@ -289,7 +284,7 @@ public class SrcFileAnnotator implements Disposable {
               classLines.put(line, classData);
               final RangeHighlighter highlighter =
                   createRangeHighlighter(suite.getLastCoverageTimeStamp(), markupModel, coverageByTestApplicable, executableLines,
-                                         classData, line, lineNumberInCurrent);
+                                         classData, line, lineNumberInCurrent, suite);
               highlighters.add(highlighter);
             }
           }
@@ -328,7 +323,7 @@ public class SrcFileAnnotator implements Disposable {
             if (lineData != null) {
               rangeHighlighters.add(
                   createRangeHighlighter(suite.getLastCoverageTimeStamp(), markupModel, coverageByTestApplicable, executableLines,
-                                         classLines.get(oldLineNumber), oldLineNumber, line));
+                                         classLines.get(oldLineNumber), oldLineNumber, line, suite));
             }
           }
           myFile.putUserData(COVERAGE_HIGHLIGHTERS, rangeHighlighters.size() > 0 ? rangeHighlighters : null);
@@ -347,15 +342,18 @@ public class SrcFileAnnotator implements Disposable {
                                                   final boolean coverageByTestApplicable,
                                                   final TreeMap<Integer, LineData> executableLines, final ClassData classData,
                                                   final int line,
-                                                  final int lineNumberInCurrent) {
+                                                  final int lineNumberInCurrent,
+                                                  @NotNull final CoverageSuite coverageSuite) {
     final RangeHighlighter highlighter = markupModel.addLineHighlighter(lineNumberInCurrent, HighlighterLayer.SELECTION - 1, null);
     final CoverageLineMarkerRenderer markerRenderer = CoverageLineMarkerRenderer
-        .getRenderer(line, classData, executableLines, coverageByTestApplicable, new Function<Integer, Integer>() {
+        .getRenderer(line, classData, executableLines, coverageByTestApplicable, coverageSuite,
+                     new Function<Integer, Integer>() {
           public Integer fun(final Integer newLine) {
             final TIntIntHashMap oldLineMapping = getNewToOldLineMapping(date);
             return oldLineMapping != null ? oldLineMapping.get(newLine.intValue()) : 0;
           }
-        }, new Function<Integer, Integer>() {
+        },
+                     new Function<Integer, Integer>() {
           public Integer fun(final Integer newLine) {
             final TIntIntHashMap newLineMapping = getOldToNewLineMapping(date);
             return newLineMapping != null ? newLineMapping.get(newLine.intValue()) : 0;
@@ -395,7 +393,8 @@ public class SrcFileAnnotator implements Disposable {
   private void collectNonCoveredClassInfo(final VirtualFile classFile,
                                           final List<RangeHighlighter> highlighters,
                                           final MarkupModel markupModel,
-                                          final TreeMap<Integer, LineData> executableLines, final boolean coverageByTestApplicable) {
+                                          final TreeMap<Integer, LineData> executableLines,
+                                          final boolean coverageByTestApplicable) {
     final TIntIntHashMap mapping;
     if (classFile.getTimeStamp() < getVirtualFile().getTimeStamp()) {
       mapping = getOldToNewLineMapping(classFile.getTimeStamp());
@@ -405,33 +404,27 @@ public class SrcFileAnnotator implements Disposable {
       mapping = null;
     }
 
-    final byte[] content;
-    try {
-      content = classFile.contentsToByteArray();
-    }
-    catch (IOException e) {
+
+    final CoverageSuite coverageSuite = CoverageDataManager.getInstance(myProject).getCurrentSuite();
+
+    final List<Integer> uncoveredLines = coverageSuite.collectNotCoveredFileLines(classFile, coverageSuite);
+    if (uncoveredLines == null) {
       return;
     }
-
-    ClassReader reader = new ClassReader(content, 0, content.length);
-    final CoverageSuiteImpl coverageSuite = (CoverageSuiteImpl)CoverageDataManager.getInstance(myProject).getCurrentSuite();
-    SourceLineCounter collector = new SourceLineCounter(new EmptyVisitor(), null, coverageSuite.getRunner() instanceof IDEACoverageRunner && coverageSuite.isTracingEnabled());
-    reader.accept(collector, 0);
-    final TIntObjectHashMap lines = collector.getSourceLines();
-    lines.forEachKey(new TIntProcedure() {
-      public boolean execute(int line) {
-        line--;
-        int lineNumber = line;
-        if (mapping != null) line = mapping.get(line);
-        if (line >= myDocument.getLineCount()) return true;
-        executableLines.put(line, null);
-        final RangeHighlighter highlighter =
-            createRangeHighlighter(classFile.getTimeStamp(), markupModel, coverageByTestApplicable, executableLines, null, lineNumber,
-                                   line);
-        highlighters.add(highlighter);
-        return true;
+    final int lineCount = myDocument.getLineCount();
+    for (int lineNumber : uncoveredLines) {
+      if (lineNumber >= lineCount) {
+        continue;
       }
-    });
+
+      final int updatedlineNumber = mapping != null ? mapping.get(lineNumber) : lineNumber;
+
+      executableLines.put(updatedlineNumber, null);
+      final RangeHighlighter highlighter =
+        createRangeHighlighter(classFile.getTimeStamp(), markupModel, coverageByTestApplicable, executableLines, null, lineNumber,
+                               updatedlineNumber, coverageSuite);
+      highlighters.add(highlighter);
+    }
   }
 
   private VirtualFile getVirtualFile() {

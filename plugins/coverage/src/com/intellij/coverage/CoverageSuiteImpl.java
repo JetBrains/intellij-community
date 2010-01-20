@@ -1,22 +1,34 @@
 package com.intellij.coverage;
 
 import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.impl.source.tree.java.PsiSwitchStatementImpl;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.rt.coverage.data.JumpData;
+import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
+import com.intellij.rt.coverage.data.SwitchData;
+import com.intellij.rt.coverage.util.SourceLineCounter;
 import com.intellij.util.ArrayUtil;
+import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TIntProcedure;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.commons.EmptyVisitor;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,6 +36,8 @@ import java.util.List;
  * @author ven
  */
 public class CoverageSuiteImpl extends BaseCoverageSuite {
+  private static final Logger LOG = Logger.getInstance(CoverageSuiteImpl.class.getName());
+
   private String[] myFilters;
   private String mySuiteToMerge;
 
@@ -175,6 +189,127 @@ public class CoverageSuiteImpl extends BaseCoverageSuite {
   }
 
   @Nullable
+  public List<Integer> collectNotCoveredFileLines(@NotNull final VirtualFile classFile, CoverageSuite coverageSuite) {
+    final List<Integer> uncoveredLines = new ArrayList<Integer>();
+
+    final byte[] content;
+    try {
+      content = classFile.contentsToByteArray();
+    }
+    catch (IOException e) {
+      return null;
+    }
+
+    final ClassReader reader = new ClassReader(content, 0, content.length);
+    final boolean excludeLines = coverageSuite.getRunner() instanceof IDEACoverageRunner && coverageSuite.isTracingEnabled();
+    final SourceLineCounter collector = new SourceLineCounter(new EmptyVisitor(), null, excludeLines);
+    reader.accept(collector, 0);
+    final TIntObjectHashMap lines = collector.getSourceLines();
+    lines.forEachKey(new TIntProcedure() {
+      public boolean execute(int line) {
+        line--;
+        uncoveredLines.add(line);
+        return true;
+      }
+    });
+    return uncoveredLines;
+  }
+
+  public String generateBriefReport(@NotNull Editor editor,
+                                    @NotNull PsiFile psiFile,
+                                    int lineNumber,
+                                    int startOffset,
+                                    int endOffset,
+                                    @Nullable LineData lineData) {
+
+    final StringBuffer buf = new StringBuffer();
+    buf.append("Hits: ");
+    if (lineData == null) {
+      buf.append(0);
+      return buf.toString();
+    }
+    buf.append(lineData.getHits()).append("\n");
+
+    final List<PsiExpression> expressions = new ArrayList<PsiExpression>();
+
+    final Project project = editor.getProject();
+    for(int offset = startOffset; offset < endOffset; offset++) {
+      PsiElement parent = PsiTreeUtil.getParentOfType(psiFile.findElementAt(offset), PsiStatement.class);
+      PsiElement condition = null;
+      if (parent instanceof PsiIfStatement) {
+        condition = ((PsiIfStatement)parent).getCondition();
+      } else if (parent instanceof PsiSwitchStatement) {
+        condition = ((PsiSwitchStatement)parent).getExpression();
+      } else if (parent instanceof PsiDoWhileStatement) {
+        condition = ((PsiDoWhileStatement)parent).getCondition();
+      } else if (parent instanceof PsiForStatement) {
+        condition = ((PsiForStatement)parent).getCondition();
+      } else if (parent instanceof PsiWhileStatement) {
+        condition = ((PsiWhileStatement)parent).getCondition();
+      } else if (parent instanceof PsiForeachStatement) {
+        condition = ((PsiForeachStatement)parent).getIteratedValue();
+      } else if (parent instanceof PsiAssertStatement) {
+        condition = ((PsiAssertStatement)parent).getAssertCondition();
+      }
+      if (condition != null) {
+        try {
+          final ControlFlow controlFlow = ControlFlowFactory.getInstance(project).getControlFlow(
+            parent, AllVariablesControlFlowPolicy.getInstance());
+          for (Instruction instruction : controlFlow.getInstructions()) {
+            if (instruction instanceof ConditionalBranchingInstruction) {
+              final PsiExpression expression = ((ConditionalBranchingInstruction)instruction).expression;
+              if (!expressions.contains(expression)) {
+                expressions.add(expression);
+              }
+            }
+          }
+        }
+        catch (AnalysisCanceledException e) {
+          return buf.toString();
+        }
+      }
+    }
+
+    final String indent = "    ";
+    try {
+      int idx = 0;
+      if (lineData.getJumps() != null) {
+        for (Object o : lineData.getJumps()) {
+          final JumpData jumpData = (JumpData)o;
+          if (jumpData.getTrueHits() + jumpData.getFalseHits() > 0) {
+            final PsiExpression expression = expressions.get(idx++);
+            final PsiElement parentExpression = expression.getParent();
+            boolean reverse = parentExpression instanceof PsiBinaryExpression && ((PsiBinaryExpression)parentExpression).getOperationSign().getTokenType() == JavaTokenType.OROR || parentExpression instanceof PsiDoWhileStatement || parentExpression instanceof PsiAssertStatement;
+            buf.append(indent).append(expression.getText()).append("\n");
+            buf.append(indent).append(indent).append("true hits: ").append(reverse ? jumpData.getFalseHits() : jumpData.getTrueHits()).append("\n");
+            buf.append(indent).append(indent).append("false hits: ").append(reverse ? jumpData.getTrueHits() : jumpData.getFalseHits()).append("\n");
+          }
+        }
+      }
+
+      if (lineData.getSwitches() != null) {
+        for (Object o : lineData.getSwitches()) {
+          final SwitchData switchData = (SwitchData)o;
+          final PsiExpression conditionExpression = expressions.get(idx++);
+          buf.append(indent).append(conditionExpression.getText()).append("\n");
+          if (hasDefaultLabel(conditionExpression)) {
+            buf.append(indent).append(indent).append("Default hits: ").append(switchData.getDefaultHits()).append("\n");
+          }
+          int i = 0;
+          for (int key : switchData.getKeys()) {
+            buf.append(indent).append(indent).append("case ").append(key).append(": ").append(switchData.getHits()[i++]).append("\n");
+          }
+        }
+      }
+    }
+    catch (Exception e) {
+      LOG.info(e);
+      return "Hits: " + lineData.getHits();
+    }
+    return buf.toString();
+  }
+
+  @Nullable
   public String getSuiteToMerge() {
     return mySuiteToMerge;
   }
@@ -196,5 +331,24 @@ public class CoverageSuiteImpl extends BaseCoverageSuite {
       }
     }
     return filteredPackageNames.length == 0;
+  }
+
+  private static boolean hasDefaultLabel(final PsiElement conditionExpression) {
+    boolean hasDefault = false;
+    final PsiSwitchStatement switchStatement = PsiTreeUtil.getParentOfType(conditionExpression, PsiSwitchStatement.class);
+    final PsiCodeBlock body = ((PsiSwitchStatementImpl)conditionExpression.getParent()).getBody();
+    if (body != null) {
+      final PsiElement bodyElement = body.getFirstBodyElement();
+      if (bodyElement != null) {
+        PsiSwitchLabelStatement label = PsiTreeUtil.getNextSiblingOfType(bodyElement, PsiSwitchLabelStatement.class);
+        while (label != null) {
+          if (label.getEnclosingSwitchStatement() == switchStatement) {
+            hasDefault |= label.isDefaultCase();
+          }
+          label = PsiTreeUtil.getNextSiblingOfType(label, PsiSwitchLabelStatement.class);
+        }
+      }
+    }
+    return hasDefault;
   }
 }
