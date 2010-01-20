@@ -85,22 +85,24 @@ public class TrackCoverageAction extends ToggleModelAction {
   private void selectSubCoverage() {
     final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(myProperties.getProject());
     final CoverageSuite currentSuite = coverageDataManager.getCurrentSuite();
-    final AbstractTestProxy test = myModel.getTreeView().getSelectedTest();
-    List<String> testMethods = new ArrayList<String>();
-    if (test != null) {
-      final List<? extends AbstractTestProxy> list = test.getAllTests();
-      for (AbstractTestProxy proxy : list) {
-        final Location location = proxy.getLocation(myProperties.getProject());
-        if (location != null) {
-          final PsiElement element = location.getPsiElement();
-          if (element instanceof PsiMethod) {
-            final PsiMethod method = (PsiMethod)element;
-            testMethods.add(method.getContainingClass().getQualifiedName() + "." + method.getName());
+    if (currentSuite != null) {
+      final AbstractTestProxy test = myModel.getTreeView().getSelectedTest();
+      List<String> testMethods = new ArrayList<String>();
+      if (test != null) {
+        final List<? extends AbstractTestProxy> list = test.getAllTests();
+        for (AbstractTestProxy proxy : list) {
+          final Location location = proxy.getLocation(myProperties.getProject());
+          if (location != null) {
+            final PsiElement element = location.getPsiElement();
+            if (element instanceof PsiMethod) {
+              final PsiMethod method = (PsiMethod)element;
+              testMethods.add(method.getContainingClass().getQualifiedName() + "." + method.getName());
+            }
           }
         }
       }
+      coverageDataManager.selectSubCoverage(currentSuite, testMethods);
     }
-    coverageDataManager.selectSubCoverage(currentSuite, testMethods);
   }
 
   private class MyTreeSelectionListener implements TreeSelectionListener {
