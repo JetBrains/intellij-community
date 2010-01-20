@@ -1,12 +1,22 @@
 package com.intellij.coverage;
 
 import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompileStatusNotification;
+import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
@@ -19,6 +29,7 @@ import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.rt.coverage.data.SwitchData;
 import com.intellij.rt.coverage.util.SourceLineCounter;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.HashSet;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntProcedure;
 import org.jdom.Element;
@@ -30,7 +41,9 @@ import org.objectweb.asm.commons.EmptyVisitor;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author ven
@@ -188,8 +201,14 @@ public class CoverageSuiteImpl extends BaseCoverageSuite {
     return elements;
   }
 
+  public boolean isNotCoveredFileIncluded(@NotNull final String qualifiedName,
+                                          @NotNull final VirtualFile outputFile,
+                                          @NotNull final PsiFile sourceFile) {
+    return isClassFiltered(qualifiedName) || isPackageFiltered(getPackageName(sourceFile));
+  }
+
   @Nullable
-  public List<Integer> collectNotCoveredFileLines(@NotNull final VirtualFile classFile, CoverageSuite coverageSuite) {
+  public List<Integer> collectNotCoveredFileLines(@NotNull final VirtualFile classFile, @NotNull final PsiFile srcFile) {
     final List<Integer> uncoveredLines = new ArrayList<Integer>();
 
     final byte[] content;
@@ -201,7 +220,7 @@ public class CoverageSuiteImpl extends BaseCoverageSuite {
     }
 
     final ClassReader reader = new ClassReader(content, 0, content.length);
-    final boolean excludeLines = coverageSuite.getRunner() instanceof IDEACoverageRunner && coverageSuite.isTracingEnabled();
+    final boolean excludeLines = getRunner() instanceof IDEACoverageRunner && isTracingEnabled();
     final SourceLineCounter collector = new SourceLineCounter(new EmptyVisitor(), null, excludeLines);
     reader.accept(collector, 0);
     final TIntObjectHashMap lines = collector.getSourceLines();
@@ -309,6 +328,68 @@ public class CoverageSuiteImpl extends BaseCoverageSuite {
     return buf.toString();
   }
 
+  public String getQualifiedName(@NotNull final VirtualFile outputFile,
+                                 @NotNull final PsiFile sourceFile) {
+    final String packageFQName = getPackageName(sourceFile);
+    return StringUtil.getQualifiedName(packageFQName, outputFile.getNameWithoutExtension());
+  }
+
+  @NotNull
+  public Set<VirtualFile> getCorrespondingOutputFiles(@NotNull final PsiFile srcFile, Module module) {
+    final VirtualFile outputpath = CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
+    final VirtualFile testOutputpath = CompilerModuleExtension.getInstance(module).getCompilerOutputPathForTests();
+
+    final String packageFQName = getPackageName(srcFile);
+    final String packageVmName = packageFQName.replace('.', '/');
+
+    final List<VirtualFile> children = new ArrayList<VirtualFile>();
+    final VirtualFile vDir = packageVmName.length() > 0 ? outputpath.findFileByRelativePath(packageVmName) : outputpath;
+    if (vDir != null) {
+      Collections.addAll(children, vDir.getChildren());
+    }
+
+    if (isTrackTestFolders()) {
+      final VirtualFile testDir = packageVmName.length() > 0 ? testOutputpath.findFileByRelativePath(packageVmName) : testOutputpath;
+      if (testDir != null) {
+        Collections.addAll(children, testDir.getChildren());
+      }
+    }
+
+    final Set<VirtualFile> classFiles = new HashSet<VirtualFile>();
+    for (PsiClass psiClass : ((PsiClassOwner)srcFile).getClasses()) {
+      final String className = psiClass.getName();
+      for (VirtualFile child : children) {
+        if (child.getFileType().equals(StdFileTypes.CLASS)) {
+          final String childName = child.getNameWithoutExtension();
+          if (childName.equals(className) ||  //class or inner
+              childName.startsWith(className) && childName.charAt(className.length()) == '$') {
+            classFiles.add(child);
+          }
+        }
+      }
+    }
+    return classFiles;
+  }
+
+  public boolean needToRecompileAndRerunAction(@NotNull final Project project, @NotNull Runnable chooseSuiteAction) {
+    if (Messages.showOkCancelDialog(
+      "Project class files are out of date. Would you like to recompile? The refusal to do it will result in incomplete coverage information",
+      "Project is out of date", Messages.getWarningIcon()) == DialogWrapper.OK_EXIT_CODE) {
+      final CompilerManager compilerManager = CompilerManager.getInstance(project);
+      compilerManager.make(compilerManager.createProjectCompileScope(project), new CompileStatusNotification() {
+        public void finished(final boolean aborted, final int errors, final int warnings, final CompileContext compileContext) {
+          if (aborted || errors != 0) return;
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              CoverageDataManager.getInstance(project).chooseSuite(CoverageSuiteImpl.this);
+            }
+          });
+        }
+      });
+    }
+    return true;
+  }
+
   @Nullable
   public String getSuiteToMerge() {
     return mySuiteToMerge;
@@ -351,4 +432,10 @@ public class CoverageSuiteImpl extends BaseCoverageSuite {
     }
     return hasDefault;
   }
+
+  @NotNull
+  private String getPackageName(final PsiFile sourceFile) {
+    return ((PsiClassOwner)sourceFile).getPackageName();
+  }
+
 }
