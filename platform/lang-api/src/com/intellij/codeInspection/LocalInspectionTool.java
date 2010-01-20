@@ -19,6 +19,7 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class LocalInspectionTool extends InspectionProfileEntry {
+  private static final Logger LOG = Logger.getInstance("#" + LocalInspectionTool.class.getName());
   /**
    * @return descriptive name to be used in "suppress" comments and annotations,
    *         must consist of [a-zA-Z_0-9]+
@@ -83,6 +85,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
       private void addDescriptors(final ProblemDescriptor[] descriptors) {
         if (descriptors != null) {
           for (ProblemDescriptor descriptor : descriptors) {
+            LOG.assertTrue(descriptor != null, LocalInspectionTool.this.getClass().getName());
             holder.registerProblem(descriptor);
           }
         }
