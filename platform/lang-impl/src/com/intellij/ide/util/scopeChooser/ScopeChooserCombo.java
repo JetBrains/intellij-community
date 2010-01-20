@@ -301,7 +301,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
           for (Usage usage : usages) {
             if (usage instanceof PsiElementUsage) {
               final PsiElement element = ((PsiElementUsage)usage).getElement();
-              if (element != null && element.isValid()) {
+              if (element != null && element.isValid() && element.getContainingFile() != null) {
                 results.add(element);
               }
             }
