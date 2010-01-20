@@ -45,9 +45,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -432,24 +430,22 @@ public class ChooseRunConfigurationAction extends AnAction {
 
       final RunnerAndConfigurationSettingsImpl selectedConfiguration = manager.getSelectedConfiguration();
 
-      final List<RunnerAndConfigurationSettingsImpl> existing = new ArrayList<RunnerAndConfigurationSettingsImpl>();
-      final List<ItemWrapper> wrappedExisting = new ArrayList<ItemWrapper>();
+      final Map<RunnerAndConfigurationSettingsImpl, ItemWrapper> wrappedExisting = new LinkedHashMap<RunnerAndConfigurationSettingsImpl, ItemWrapper>();
       final ConfigurationType[] factories = manager.getConfigurationFactories();
       for (final ConfigurationType factory : factories) {
         final RunnerAndConfigurationSettingsImpl[] configurations = manager.getConfigurationSettings(factory);
         for (final RunnerAndConfigurationSettingsImpl configuration : configurations) {
-          existing.add(configuration);
           final ItemWrapper wrapped = ItemWrapper.wrap(project, configuration);
           if (configuration == selectedConfiguration) {
             wrapped.setMnemonic(1);
           }
 
-          wrappedExisting.add(wrapped);
+          wrappedExisting.put(configuration, wrapped);
         }
       }
 
-      populateWithDynamicRunners(result, existing, project, manager, selectedConfiguration);
-      result.addAll(wrappedExisting);
+      populateWithDynamicRunners(result, wrappedExisting, project, manager, selectedConfiguration);
+      result.addAll(wrappedExisting.values());
 
       //noinspection unchecked
       final ItemWrapper edit = new ItemWrapper(null) {
@@ -504,7 +500,7 @@ public class ChooseRunConfigurationAction extends AnAction {
 
     @NotNull
     private static List<RunnerAndConfigurationSettingsImpl> populateWithDynamicRunners(final List<ItemWrapper> result,
-                                                                                       List<RunnerAndConfigurationSettingsImpl> existing,
+                                                                                       Map<RunnerAndConfigurationSettingsImpl, ItemWrapper> existing,
                                                                                        final Project project, final RunManagerEx manager,
                                                                                        final RunnerAndConfigurationSettingsImpl selectedConfiguration) {
 
@@ -526,53 +522,61 @@ public class ChooseRunConfigurationAction extends AnAction {
       int i = 2; // selectedConfiguration == null ? 1 : 2;
       for (final RuntimeConfigurationProducer producer : producers) {
         final RunnerAndConfigurationSettingsImpl configuration = producer.getConfiguration();
-        if (configuration != null && !existing.contains(configuration)) {
-          if (selectedConfiguration != null && configuration.equals(selectedConfiguration)) continue;
-          contextConfigurations.add(configuration);
+        if (configuration != null) {
+          if (existing.keySet().contains(configuration)) {
+            final ItemWrapper wrapper = existing.get(configuration);
+            if (wrapper.getMnemonic() != 1) {
+              wrapper.setMnemonic(i);
+              i++;
+            }
+          } else {
+            if (selectedConfiguration != null && configuration.equals(selectedConfiguration)) continue;
+            contextConfigurations.add(configuration);
 
-          if (preferred[0] == null) {
-            preferred[0] = configuration;
+            if (preferred[0] == null) {
+              preferred[0] = configuration;
+            }
+
+            //noinspection unchecked
+            final ItemWrapper wrapper = new ItemWrapper(configuration) {
+              @Override
+              public Icon getIcon() {
+                return IconLoader.getTransparentIcon(ExecutionUtil.getConfigurationIcon(project, configuration), 0.3f);
+              }
+
+              @Override
+              public String getText() {
+                return String.format("%s", configuration.getName());
+              }
+
+              @Override
+              public boolean available(Executor executor) {
+                return canRun(executor, configuration);
+              }
+
+              @Override
+              public void perform(@NotNull Project project, @NotNull Executor executor, @NotNull DataContext context) {
+                manager.setTemporaryConfiguration(configuration);
+                RunManagerEx.getInstanceEx(project).setSelectedConfiguration(configuration);
+                ExecutionUtil.executeConfiguration(project, configuration, executor, DataManager.getInstance().getDataContext());
+              }
+
+              @Override
+              public PopupStep getNextStep(@NotNull final Project project, @NotNull final ChooseRunConfigurationAction action) {
+                return new ConfigurationActionsStep(project, action, configuration, isDynamic());
+              }
+
+              @Override
+              public boolean hasActions() {
+                return true;
+              }
+            };
+
+            wrapper.setDynamic(true);
+            wrapper.setMnemonic(i);
+            result.add(wrapper);
+            i++;
           }
-
-          //noinspection unchecked
-          final ItemWrapper wrapper = new ItemWrapper(configuration) {
-            @Override
-            public Icon getIcon() {
-              return IconLoader.getTransparentIcon(ExecutionUtil.getConfigurationIcon(project, configuration), 0.3f);
-            }
-
-            @Override
-            public String getText() {
-              return String.format("%s", configuration.getName());
-            }
-
-            @Override
-            public boolean available(Executor executor) {
-              return canRun(executor, configuration);
-            }
-
-            @Override
-            public void perform(@NotNull Project project, @NotNull Executor executor, @NotNull DataContext context) {
-              manager.setTemporaryConfiguration(configuration);
-              RunManagerEx.getInstanceEx(project).setSelectedConfiguration(configuration);
-              ExecutionUtil.executeConfiguration(project, configuration, executor, DataManager.getInstance().getDataContext());
-            }
-
-            @Override
-            public PopupStep getNextStep(@NotNull final Project project, @NotNull final ChooseRunConfigurationAction action) {
-              return new ConfigurationActionsStep(project, action, configuration, isDynamic());
-            }
-
-            @Override
-            public boolean hasActions() {
-              return true;
-            }
-          };
-
-          wrapper.setDynamic(true);
-          wrapper.setMnemonic(i);
-          result.add(wrapper);
-          i++;
         }
       }
 
