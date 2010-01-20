@@ -178,6 +178,12 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
                            : getCoverageInformationString(myDirCoverageInfos.get(qualifiedPair));
   }
 
+  @Override
+  public String getFileCoverageInformationString(PsiFile file) {
+    // TODO
+    return null;
+  }
+
   public String getPackageCoverageInformationString(final String packageFQName,
                                                     @Nullable final Module module) {
     PackageCoverageInfo info;
