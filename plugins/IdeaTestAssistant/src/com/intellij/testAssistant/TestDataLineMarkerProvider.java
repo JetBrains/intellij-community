@@ -15,7 +15,6 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Icons;
@@ -44,7 +43,7 @@ public class TestDataLineMarkerProvider implements LineMarkerProvider {
     }
     String testDataPath = getTestDataBasePath(method.getContainingClass());
     if (testDataPath != null) {
-      List<String> fileNames = collectTestDataReferences(method, testDataPath, name.substring(4));
+      List<String> fileNames = new TestDataReferenceCollector(testDataPath, name.substring(4)).collectTestDataReferences(method);
       if (fileNames.size() > 0) {
         return new LineMarkerInfo<PsiMethod>(method, method.getTextOffset(), Icons.TEST_SOURCE_FOLDER, Pass.UPDATE_ALL, null,
                                              new TestDataNavigationHandler(fileNames));
@@ -54,32 +53,6 @@ public class TestDataLineMarkerProvider implements LineMarkerProvider {
   }
 
   public void collectSlowLineMarkers(List<PsiElement> elements, Collection<LineMarkerInfo> result) {
-  }
-
-  private static List<String> collectTestDataReferences(final PsiMethod method, final String testDataPath, final String testName) {
-    final List<String> result = new ArrayList<String>();
-    method.accept(new JavaRecursiveElementVisitor() {
-      @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-        String callText = expression.getMethodExpression().getText();
-        if (callText.equals("configureByFile") || callText.equals("checkResultByFile")) {
-          final PsiExpression[] arguments = expression.getArgumentList().getExpressions();
-          if (arguments.length == 1) {
-            String testDataFile = getReferencedFile(arguments [0], testName);
-            if (testDataFile != null) {
-              result.add(testDataPath + testDataFile);
-            }
-          }
-        }
-        else if (callText.startsWith("do") && callText.endsWith("Test")) {
-          final PsiMethod doTestMethod = expression.resolveMethod();
-          if (doTestMethod != null) {
-            result.addAll(collectTestDataReferences(doTestMethod, testDataPath, testName));
-          }
-        }
-      }
-    });
-    return result;
   }
 
   @Nullable
@@ -99,50 +72,6 @@ public class TestDataLineMarkerProvider implements LineMarkerProvider {
             path = path.replace("$CONTENT_ROOT", contentRoot.getPath());
           }
           return path;
-        }
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static String getReferencedFile(PsiExpression expression, String testName) {
-    if (expression instanceof PsiBinaryExpression) {
-      PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
-      if (binaryExpression.getOperationTokenType() == JavaTokenType.PLUS) {
-        String lhs = getReferencedFile(binaryExpression.getLOperand(), testName);
-        String rhs = getReferencedFile(binaryExpression.getROperand(), testName);
-        if (lhs != null && rhs != null) {
-          return lhs + rhs;
-        }
-      }
-    }
-    else if (expression instanceof PsiLiteralExpression) {
-      final Object value = ((PsiLiteralExpression)expression).getValue();
-      if (value instanceof String) {
-        return (String) value;
-      }
-    }
-    else if (expression instanceof PsiReferenceExpression) {
-      final PsiElement result = ((PsiReferenceExpression)expression).resolve();
-      if (result instanceof PsiVariable) {
-        final PsiExpression initializer = ((PsiVariable)result).getInitializer();
-        if (initializer != null) {
-          return getReferencedFile(initializer, testName);
-        }
-
-      }
-    }
-    else if (expression instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
-      final String callText = methodCall.getMethodExpression().getText();
-      if (callText.equals("getTestName")) {
-        final PsiExpression[] psiExpressions = methodCall.getArgumentList().getExpressions();
-        if (psiExpressions.length == 1) {
-          if (psiExpressions[0].getText().equals("true")) {
-            return UsefulTestCase.getTestName(testName, true);
-          }
-          return testName;
         }
       }
     }
