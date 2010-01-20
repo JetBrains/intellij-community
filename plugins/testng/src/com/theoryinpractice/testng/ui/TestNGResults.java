@@ -37,7 +37,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.OpenSourceUtil;
-import com.intellij.util.ui.tree.TreeUtil;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.model.*;
 import com.theoryinpractice.testng.util.TestNGUtil;
@@ -49,7 +48,6 @@ import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -325,13 +323,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
 
   public void selectTest(TestProxy proxy) {
     if (proxy == null) return;
-    DefaultMutableTreeNode node = treeBuilder.ensureTestVisible(proxy);
-    if (node == null) return;
-    TreePath path = TreeUtil.getPath((TreeNode)tree.getModel().getRoot(), node);
-    if (path == null) return;
-    tree.setSelectionPath(path);
-    tree.makeVisible(path);
-    tree.scrollPathToVisible(path);
+    treeBuilder.select(proxy, null);
   }
 
   public void setTotal(int total) {

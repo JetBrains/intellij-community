@@ -165,6 +165,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     final int projectId = getProjectId(project);
     final CompilerConfiguration configuration = CompilerConfiguration.getInstance(project);
     final boolean _forceCompile = forceCompile || isRebuild;
+    final Set<VirtualFile> selectedForRecompilation = new HashSet<VirtualFile>();
     synchronized (mySourcesToRecompile) {
       final TIntHashSet pathsToRecompile = mySourcesToRecompile.get(projectId);
       if (_forceCompile || pathsToRecompile != null && !pathsToRecompile.isEmpty()) {
@@ -177,6 +178,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
           if (_forceCompile) {
             if (compiler.isCompilableFile(file, context) && !configuration.isExcludedFromCompilation(file)) {
               toCompile.add(file);
+              selectedForRecompilation.add(file);
               if (pathsToRecompile == null || !pathsToRecompile.contains(fileId)) {
                 addSourceForRecompilation(projectId, file, null);
               }
@@ -185,6 +187,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
           else if (pathsToRecompile.contains(fileId)) {
             if (compiler.isCompilableFile(file, context) && !configuration.isExcludedFromCompilation(file)) {
               toCompile.add(file);
+              selectedForRecompilation.add(file);
             }
           }
         }
@@ -192,7 +195,6 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
     // it is important that files to delete are collected after the files to compile (see what happens if forceCompile == true)
     if (!isRebuild) {
-      final CompileScope compileScope = context.getCompileScope();
       synchronized (myOutputsToDelete) {
         final Map<String, SourceUrlClassNamePair> outputsToDelete = myOutputsToDelete.get(projectId);
         if (outputsToDelete != null) {
@@ -208,7 +210,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
               if (!compiler.isCompilableFile(srcFile, context)) {
                 continue; // do not collect files that were compiled by another compiler
               }
-              if (!compileScope.belongs(sourceUrl) && ((CompileContextEx)context).isInSourceContent(srcFile)) {
+              if (!selectedForRecompilation.contains(srcFile)) {
                 continue;
               }
             }

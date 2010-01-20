@@ -55,6 +55,7 @@ import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlTagUtil;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
@@ -298,7 +299,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
       addElementsForTagWithManyQuickFixes(
         tag,
         localizedMessage,
-        isInjectedHtmlTag((HtmlTag)tag) ?
+        isInjectedHtmlTagForWhichNoProblemsReporting((HtmlTag)tag) ?
           HighlightInfoType.INFORMATION : 
           SeverityRegistrar.getInstance(tag.getProject()).getHighlightInfoTypeBySeverity(profile.getErrorLevel(key, tag).getSeverity()),
         intentionAction,
@@ -329,16 +330,24 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
   private static HighlightInfoType getTagProblemInfoType(XmlTag tag) {
     if (tag instanceof HtmlTag && XmlUtil.HTML_URI.equals(tag.getNamespace())) {
-      if (isInjectedHtmlTag((HtmlTag)tag)) return HighlightInfoType.INFORMATION;
+      if (isInjectedHtmlTagForWhichNoProblemsReporting((HtmlTag)tag)) return HighlightInfoType.INFORMATION;
       return HighlightInfoType.WARNING;
     }
     return HighlightInfoType.WRONG_REF;
   }
 
-  private static boolean isInjectedHtmlTag(HtmlTag tag) {
+  private static boolean isInjectedHtmlTagForWhichNoProblemsReporting(HtmlTag tag) {
     PsiElement context = tag.getContainingFile().getContext();
-    if (context != null && !(context instanceof XmlText)) return true;
+    if (context != null && skipValidation(context)) return true;
     return false;
+  }
+
+  private static boolean skipValidation(PsiElement context) {
+    return context.getUserData(DO_NOT_VALIDATE_KEY) != null;
+  }
+  
+  public static void setSkipValidation(@NotNull PsiElement element) {
+    element.putUserData(DO_NOT_VALIDATE_KEY, "");
   }
 
   @Override public void visitXmlAttribute(XmlAttribute attribute) {}
@@ -427,7 +436,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   }
 
   private void checkDuplicateAttribute(XmlTag tag, final XmlAttribute attribute) {
-    if (tag.getUserData(DO_NOT_VALIDATE_KEY) != null) {
+    if (skipValidation(tag)) {
       return;
     }
 
@@ -571,7 +580,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   }
 
   @Override public void visitXmlDoctype(XmlDoctype xmlDoctype) {
-    if (xmlDoctype.getUserData(DO_NOT_VALIDATE_KEY) != null) return;
+    if (skipValidation(xmlDoctype)) return;
     checkReferences(xmlDoctype);
   }
 

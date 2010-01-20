@@ -219,17 +219,17 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    */
   void checkResultByFile(@NonNls String expectedFile) throws Exception;
   
-  void checkResultByFile(@NonNls String expectedFile, boolean ignoreWhitespaces) throws Exception;
+  void checkResultByFile(@NonNls String expectedFile, boolean ignoreTrailingWhitespaces) throws Exception;
 
   /**
    * Compares two files.
    *
    * @param filePath file to be checked.
    * @param expectedFile file to check against.
-   * @param ignoreWhitespaces set to true to ignore differences in whitespaces.
+   * @param ignoreTrailingWhitespaces set to true to ignore differences in whitespaces.
    * @throws Exception any exception.
    */
-  void checkResultByFile(@NonNls String filePath, @NonNls String expectedFile, boolean ignoreWhitespaces) throws Exception;
+  void checkResultByFile(@NonNls String filePath, @NonNls String expectedFile, boolean ignoreTrailingWhitespaces) throws Exception;
 
   void testCompletion(@NonNls String[] filesBefore, @NonNls String fileAfter) throws Exception;
 

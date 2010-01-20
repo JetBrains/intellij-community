@@ -37,8 +37,10 @@ public class EditorNotificationPanel extends JPanel {
 
   public EditorNotificationPanel() {
     super(new BorderLayout());
+
     setBackground(LightColors.YELLOW);
-    setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
+    setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 4));
+    setPreferredSize(new Dimension(-1, 24));
     add(myLabel, BorderLayout.CENTER);
 
     myLinksPanel = new JPanel(new FlowLayout());
@@ -51,11 +53,19 @@ public class EditorNotificationPanel extends JPanel {
   }
 
   public HyperlinkLabel createActionLabel(final String text, @NonNls final String actionId) {
+    return createActionLabel(text, new Runnable() {
+      public void run() {
+        executeAction(actionId);
+      }
+    });
+  }
+
+  public HyperlinkLabel createActionLabel(final String text, final Runnable action) {
     HyperlinkLabel label = new HyperlinkLabel(text, Color.BLUE, LightColors.YELLOW, Color.BLUE);
     label.addHyperlinkListener(new HyperlinkListener() {
       public void hyperlinkUpdate(final HyperlinkEvent e) {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          executeAction(actionId);
+          action.run();
         }
       }
     });

@@ -668,6 +668,8 @@
 
     <fileType.fileViewProviderFactory filetype="CLASS" implementationClass="com.intellij.psi.ClassFileViewProviderFactory"/>
 
+    <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.AddSourcesNotificationProvider"/>
+
     <lang.psiStructureViewFactory language="JAVA" implementationClass="com.intellij.lang.java.JavaStructureViewBuilderFactory"/>
 
     <lang.ast.factory language="JAVA" implementationClass="com.intellij.psi.impl.source.tree.JavaASTFactory"/>

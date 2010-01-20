@@ -180,7 +180,7 @@ public class BackendCompilerWrapper {
       myFilesToRecompile.addAll(allDependent);
     }
     final List<TranslatingCompiler.OutputItem> outputs = processPackageInfoFiles();
-    if (!myFilesToRecompile.isEmpty() || !outputs.isEmpty()) {
+    if (myFilesToRecompile.size() > 0 || outputs.size() > 0) {
       mySink.add(null, outputs, VfsUtil.toVirtualFileArray(myFilesToRecompile));
     }
   }

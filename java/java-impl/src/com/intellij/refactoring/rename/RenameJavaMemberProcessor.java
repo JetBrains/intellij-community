@@ -18,15 +18,18 @@ package com.intellij.refactoring.rename;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.HashSet;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author yole
@@ -148,39 +151,44 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
     if (!memberToRename.isPhysical()) {
       return;
     }
-
     final List<PsiReference> potentialConflicts = new ArrayList<PsiReference>();
-    PsiMember prototype = (PsiMember)memberToRename.copy();
-    try {
-      ((PsiNamedElement)prototype).setName(newName);
-      if (prototype instanceof PsiEnumConstant) {
-        final PsiEnumConstantInitializer initializer = ((PsiEnumConstant)prototype).getInitializingClass();
-        if (initializer != null) {
-          // avoid assertion in PsiEnumConstantInitializerImpl.getClassReference() because
-          // an initializer existing 'in the air' validates the invariant (IDEADEV-28840)
-          initializer.delete();
+    final PsiFile containingFile = memberToRename.getContainingFile();
+    if (containingFile instanceof PsiJavaFile) {
+      final PsiImportList importList = ((PsiJavaFile)containingFile).getImportList();
+      if (importList != null) {
+        for (PsiImportStaticStatement staticImport : importList.getImportStaticStatements()) {
+          final String referenceName = staticImport.getReferenceName();
+          if (referenceName != null && !referenceName.equals(newName)) {
+            continue;
+          }
+          final PsiClass targetClass = staticImport.resolveTargetClass();
+          if (targetClass != null) {
+            final Set<PsiMember> importedMembers = new HashSet<PsiMember>();
+            if (memberToRename instanceof PsiMethod) {
+              for (PsiMethod method : targetClass.findMethodsByName(newName, true)) {
+                if (method.getModifierList().hasModifierProperty(PsiModifier.STATIC)) {
+                  importedMembers.add(method);
+                }
+              }
+            }
+            else if (memberToRename instanceof PsiField) {
+              final PsiField fieldByName = targetClass.findFieldByName(newName, true);
+              if (fieldByName != null) {
+                importedMembers.add(fieldByName);
+              }
+            }
+
+            for (PsiMember member : importedMembers) {
+              ReferencesSearch.search(member, new LocalSearchScope(containingFile), true).forEach(new Processor<PsiReference>() {
+                public boolean process(final PsiReference psiReference) {
+                  potentialConflicts.add(psiReference);
+                  return true;
+                }
+              });
+            }
+          }
         }
       }
-      else if (prototype instanceof PsiField) {
-        final PsiExpression initializer = ((PsiField)prototype).getInitializer();
-        if (initializer != null) {
-          initializer.delete();
-        }
-      }
-      prototype = (PsiMember)memberToRename.getContainingClass().add(prototype);
-
-      ReferencesSearch.search(prototype).forEach(new Processor<PsiReference>() {
-        public boolean process(final PsiReference psiReference) {
-          potentialConflicts.add(psiReference);
-          return true;
-        }
-      });
-
-      prototype.delete();
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-      return;
     }
 
     for (PsiReference potentialConflict : potentialConflicts) {

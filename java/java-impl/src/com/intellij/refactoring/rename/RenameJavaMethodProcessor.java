@@ -72,7 +72,9 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
       PsiElement element = usage.getElement();
       if (element == null) continue;
 
-      if (usage instanceof MemberHidesOuterMemberUsageInfo) {
+      if (usage instanceof MemberHidesStaticImportUsageInfo) {
+        staticImportHides.add((MemberHidesStaticImportUsageInfo)usage);
+      } else if (usage instanceof MemberHidesOuterMemberUsageInfo) {
         PsiJavaCodeReferenceElement collidingRef = (PsiJavaCodeReferenceElement)element;
         PsiMethod resolved = (PsiMethod)collidingRef.resolve();
         outerHides.add(new MemberHidesOuterMemberUsageInfo(element, resolved));
@@ -146,6 +148,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     final PsiMethod methodToRename = (PsiMethod)element;
     findSubmemberHidesMemberCollisions(methodToRename, newName, result);
     findMemberHidesOuterMemberCollisions((PsiMethod) element, newName, result);
+    findCollisionsAgainstNewName(methodToRename, newName, result);
   }
 
   public void findExistingNameConflicts(final PsiElement element, final String newName, final MultiMap<PsiElement, String> conflicts) {

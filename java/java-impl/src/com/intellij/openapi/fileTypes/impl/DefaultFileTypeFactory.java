@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class DefaultFileTypeFactory extends FileTypeFactory {
   public void createFileTypes(@NotNull final FileTypeConsumer consumer) {
-    consumer.consume(new JavaClassFileType(), "class");
+    consumer.consume(JavaClassFileType.INSTANCE, "class");
 
     consumer.consume(JavaFileType.INSTANCE, "java");
 

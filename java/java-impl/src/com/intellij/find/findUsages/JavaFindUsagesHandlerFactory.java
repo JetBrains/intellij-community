@@ -61,11 +61,11 @@ public class JavaFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
     myFindVariableOptions = findVariableOptions;
   }
 
-  public boolean canFindUsages(final PsiElement element) {
+  public boolean canFindUsages(@NotNull final PsiElement element) {
     return new JavaFindUsagesProvider().canFindUsagesFor(element);
   }
 
-  public FindUsagesHandler createFindUsagesHandler(final PsiElement element, final boolean forHighlightUsages) {
+  public FindUsagesHandler createFindUsagesHandler(@NotNull final PsiElement element, final boolean forHighlightUsages) {
     if (element instanceof PsiDirectory) {
       final PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)element);
       return psiPackage == null
