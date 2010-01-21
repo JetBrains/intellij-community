@@ -226,6 +226,10 @@ public final class ToolWindowImpl implements ToolWindowEx {
     myToolWindowManager.stretchHeight(this, value);
   }
 
+  public InternalDecorator getDecorator() {
+    return myDecorator;
+  }
+
   public final void setAvailable(final boolean available, final Runnable runnable) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final Boolean oldAvailable = myAvailable ? Boolean.TRUE : Boolean.FALSE;
