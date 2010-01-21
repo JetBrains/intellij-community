@@ -15,11 +15,13 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
@@ -35,6 +37,24 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
 
   protected JLabel myScrollHelper = new JLabel("W");
 
+  private ToolWindow myToolWindow;
+
+  protected ResizeToolWindowAction() {
+  }
+
+  protected ResizeToolWindowAction(String text) {
+    super(text);
+  }
+
+  protected ResizeToolWindowAction(String text, String description, Icon icon) {
+    super(text, description, icon);
+  }
+
+  protected ResizeToolWindowAction(ToolWindow toolWindow, String originalAction, JComponent c) {
+    myToolWindow = toolWindow;
+    new ShadowAction(this, ActionManager.getInstance().getAction(originalAction), c);
+  }
+
   @Override
   public final void update(AnActionEvent e) {
     Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
@@ -45,11 +65,14 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
 
     ToolWindowManager mgr = ToolWindowManager.getInstance(project);
 
-    String active = mgr.getActiveToolWindowId();
-    if (active != null) {
-      ToolWindow window = mgr.getToolWindow(active);
+    ToolWindow window = myToolWindow;
 
-      if (!window.isAvailable() || !window.isVisible() || window.getType() == ToolWindowType.FLOATING) {
+    if (window != null || mgr.getActiveToolWindowId() != null) {
+      if (window == null) {
+        window = mgr.getToolWindow(mgr.getActiveToolWindowId());
+      }
+
+      if (window == null || !window.isAvailable() || !window.isVisible() || window.getType() == ToolWindowType.FLOATING) {
         setDisabled(e);
         return;
       }
@@ -141,6 +164,22 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
   }
 
   public static class Left extends ResizeToolWindowAction {
+
+    public Left() {
+    }
+
+    public Left(String text) {
+      super(text);
+    }
+
+    public Left(String text, String description, Icon icon) {
+      super(text, description, icon);
+    }
+
+    public Left(ToolWindow toolWindow, JComponent c) {
+      super(toolWindow, "ResizeToolWindowLeft", c);
+    }
+
     @Override
     protected void update(AnActionEvent event, ToolWindow window, ToolWindowManager mgr) {
       event.getPresentation().setEnabled(!window.getAnchor().isHorizontal());
@@ -153,6 +192,22 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
   }
 
   public static class Right extends ResizeToolWindowAction {
+
+    public Right() {
+    }
+
+    public Right(String text) {
+      super(text);
+    }
+
+    public Right(String text, String description, Icon icon) {
+      super(text, description, icon);
+    }
+
+    public Right(ToolWindow toolWindow, JComponent c) {
+      super(toolWindow, "ResizeToolWindowRight", c);
+    }
+
     @Override
     protected void update(AnActionEvent event, ToolWindow window, ToolWindowManager mgr) {
       event.getPresentation().setEnabled(!window.getAnchor().isHorizontal());
@@ -165,6 +220,22 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
   }
 
   public static class Up extends ResizeToolWindowAction {
+
+    public Up() {
+    }
+
+    public Up(String text) {
+      super(text);
+    }
+
+    public Up(String text, String description, Icon icon) {
+      super(text, description, icon);
+    }
+
+    public Up(ToolWindow toolWindow, JComponent c) {
+      super(toolWindow, "ResizeToolWindowUp", c);
+    }
+
     @Override
     protected void update(AnActionEvent event, ToolWindow window, ToolWindowManager mgr) {
       event.getPresentation().setEnabled(window.getAnchor().isHorizontal());
@@ -177,6 +248,22 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
   }
 
   public static class Down extends ResizeToolWindowAction {
+
+    public Down() {
+    }
+
+    public Down(String text) {
+      super(text);
+    }
+
+    public Down(String text, String description, Icon icon) {
+      super(text, description, icon);
+    }
+
+    public Down(ToolWindow toolWindow, JComponent c) {
+      super(toolWindow, "ResizeToolWindowDown", c);
+    }
+
     @Override
     protected void update(AnActionEvent event, ToolWindow window, ToolWindowManager mgr) {
       event.getPresentation().setEnabled(window.getAnchor().isHorizontal());
