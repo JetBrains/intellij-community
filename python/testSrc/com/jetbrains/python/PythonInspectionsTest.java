@@ -17,7 +17,7 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   }
 
   private void doTest(String testName, LocalInspectionTool localInspectionTool) throws Throwable {
-    myFixture.testInspection(testName, new LocalInspectionToolWrapper(localInspectionTool));
+    myFixture.testInspection("inspections/" + testName, new LocalInspectionToolWrapper(localInspectionTool));
   }
 
   public void testPyMethodFirstArgAssignmentInspection() throws Throwable {
@@ -70,9 +70,5 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   public void testPyTrailingSemicolonInspection() throws Throwable {
     LocalInspectionTool inspection = new PyTrailingSemicolonInspection();
     doTest(getTestName(false), inspection);
-  }
-
-  protected String getTestDataPath() {
-    return PythonTestUtil.getTestDataPath() + "/inspections/";
   }
 }
