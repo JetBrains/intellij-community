@@ -25,8 +25,9 @@ public class PyStringLiteralTest extends PyLightFixtureTestCase {
     escaper.decode(new TextRange(1, 3), builder);
     assertEquals("\n", builder.toString());
 
-    assertEquals(1, escaper.getOffsetInHost(0, new TextRange(1, 4)));
-    assertEquals(3, escaper.getOffsetInHost(1, new TextRange(1, 4)));
+    assertEquals(1, escaper.getOffsetInHost(0, new TextRange(1, 5)));
+    assertEquals(3, escaper.getOffsetInHost(1, new TextRange(1, 5)));
+    assertEquals(6, escaper.getOffsetInHost(4, new TextRange(1, 5)));
   }
 
   private PyStringLiteralExpression createLiteralFromText(final String text) {
