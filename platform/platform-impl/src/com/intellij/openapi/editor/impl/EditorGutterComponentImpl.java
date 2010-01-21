@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -215,12 +215,15 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         int logLine = myEditor.visualToLogicalPosition(new VisualPosition(j, 0)).line;
         String s = gutterProvider.getLineText(logLine, myEditor);
         final EditorFontType style = gutterProvider.getStyle(logLine, myEditor);
+        final Color bg = gutterProvider.getBgColor(logLine, myEditor);
+        if (bg != null) {
+          g.setColor(bg);
+          g.fillRect(x, j * lineHeight, getAnnotationsAreaWidth(), lineHeight);
+        }
         g.setColor(myEditor.getColorsScheme().getColor(gutterProvider.getColor(logLine, myEditor)));
         g.setFont(myEditor.getColorsScheme().getFont(style));
         if (s != null) {
-          g.drawString(s,
-                       x,
-                       (j + 1) * lineHeight - myEditor.getDescent());
+          g.drawString(s, x, (j+1) * lineHeight - myEditor.getDescent());
         }
       }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,9 +38,11 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.impl.BackgroundableActionEnabledHandler;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
@@ -50,14 +52,30 @@ import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 /**
- * author: lesya
+ * @author: lesya
+ * @author Konstantin Bulenkov
  */
 public class AnnotateToggleAction extends ToggleAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.actions.AnnotateToggleAction");
   protected static final Key<Collection<ActiveAnnotationGutter>> KEY_IN_EDITOR = Key.create("Annotations");
+  private final static Color[] BG_COLORS = {
+    new Color(255, 238, 187),
+    new Color(218, 227, 227),
+    new Color(255, 217, 179),
+    new Color(230, 255, 222),
+    new Color(212, 207, 207),
+    new Color(255, 231, 255),
+    new Color(255, 111, 111),
+    new Color(128, 254, 254),
+    new Color(126, 148, 182),
+    new Color(207, 162, 251),
+    new Color(172, 156, 233),
+    new Color(51, 204, 0)};
 
   public void update(AnActionEvent e) {
     e.getPresentation().setEnabled(isEnabled(VcsContextFactory.SERVICE.getInstance().createContextOn(e)));
@@ -215,10 +233,13 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       gutters.add(mergeSourceGutter);
     }
 
+    final Map<String, Color> revNumbers = Registry.is("vcs.show.colored.annotations") ? computeBgColors(fileAnnotation) : null;
+    
     final LineAnnotationAspect[] aspects = fileAnnotation.getAspects();
     for (LineAnnotationAspect aspect : aspects) {
       final AnnotationFieldGutter gutter = new AnnotationFieldGutter(fileAnnotation, editor, aspect, presentation);
       gutters.add(gutter);
+      gutter.setAspectValueToBgColorMap(revNumbers);
     }
     gutters.add(new MyHighlightedAdditionalColumn(fileAnnotation, editor, null, presentation, highlighting));
 
@@ -232,6 +253,28 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       }
       annotations.add(gutter);
     }
+  }
+
+  @Nullable
+  private static Map<String, Color> computeBgColors(FileAnnotation fileAnnotation) {
+    final Map<String, Color> bgColors = new HashMap<String, Color>();
+    final Map<String, Color> revNumbers = new HashMap<String, Color>();
+    final int length = BG_COLORS.length;
+    final List<VcsFileRevision> fileRevisionList = fileAnnotation.getRevisions();
+    if (fileRevisionList != null) {
+      for (VcsFileRevision revision : fileRevisionList) {
+        final String author = revision.getAuthor();
+        final String revNumber = revision.getRevisionNumber().asString();
+        if (author != null && !bgColors.containsKey(author)) {
+          final int size = bgColors.size();
+          bgColors.put(author, BG_COLORS[size < length ? size : size % length]);
+        }
+        if (!revNumbers.containsKey(revNumber)) {
+          revNumbers.put(revNumber, bgColors.get(author));          
+        }
+    }
+    }
+    return bgColors.size() < 2 ? null : revNumbers;
   }
 
   private static class MyHighlightedAdditionalColumn extends AnnotationFieldGutter {

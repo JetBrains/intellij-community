@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;
+import java.util.Map;
 
+/**
+ * @author Irina Chernushina
+ * @author Konstantin Bulenkov
+ */
 class AnnotationFieldGutter implements ActiveAnnotationGutter {
   protected final FileAnnotation myAnnotation;
   private final Editor myEditor;
@@ -37,6 +42,7 @@ class AnnotationFieldGutter implements ActiveAnnotationGutter {
   private final TextAnnotationPresentation myPresentation;
   private final AnnotationListener myListener;
   private final boolean myIsGutterAction;
+  private Map<String, Color> myColorScheme;
 
   AnnotationFieldGutter(FileAnnotation annotation, Editor editor, LineAnnotationAspect aspect, final TextAnnotationPresentation presentation) {
     myAnnotation = annotation;
@@ -99,5 +105,30 @@ class AnnotationFieldGutter implements ActiveAnnotationGutter {
     myAnnotation.removeListener(myListener);
     myAnnotation.dispose();
     myEditor.getUserData(AnnotateToggleAction.KEY_IN_EDITOR).remove(this);
+    myColorScheme.clear();
   }
+
+  @Nullable
+  public Color getBgColor(int line, Editor editor) {
+    final String s = getLineText(line, editor);
+    if (myColorScheme == null || s == null) return null;
+    final Color bg = myColorScheme.get(s);
+    return bg == null ? findBgColor(s) : bg;
+  }
+
+  @Nullable
+  private Color findBgColor(String s) {
+    if (myColorScheme != null) {
+      for (String key : myColorScheme.keySet()) {
+            if (key.startsWith(s)) {
+              return myColorScheme.get(key);
+            }
+          }
+    }
+    return null;
+  }
+
+  public void setAspectValueToBgColorMap(Map<String, Color> colorScheme) {
+    myColorScheme = colorScheme;
+  } 
 }

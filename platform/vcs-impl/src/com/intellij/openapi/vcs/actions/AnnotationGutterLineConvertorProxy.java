@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,10 @@ import com.intellij.openapi.vcs.annotate.AnnotationSource;
 import java.awt.*;
 import java.util.List;
 
+/**
+ * @author Irina Chernushina
+ * @author Konstantin Bulenkov
+ */
 public class AnnotationGutterLineConvertorProxy implements ActiveAnnotationGutter {
   private final UpToDateLineNumberProvider myGetUpToDateLineNumber;
   private final ActiveAnnotationGutter myDelegate;
@@ -56,6 +60,12 @@ public class AnnotationGutterLineConvertorProxy implements ActiveAnnotationGutte
     int currentLine = myGetUpToDateLineNumber.getLineNumber(line);
     if (currentLine == UpToDateLineNumberProvider.ABSENT_LINE_NUMBER) return AnnotationSource.LOCAL.getColor();
     return myDelegate.getColor(currentLine, editor);
+  }
+
+  public Color getBgColor(int line, Editor editor) {
+    int currentLine = myGetUpToDateLineNumber.getLineNumber(line);
+    if (currentLine == UpToDateLineNumberProvider.ABSENT_LINE_NUMBER) return null;
+    return myDelegate.getBgColor(currentLine, editor);
   }
 
   public List<AnAction> getPopupActions(Editor editor) {
