@@ -26,6 +26,9 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   @NonNls protected static final String TOK_WITH = "with";
   @NonNls protected static final String TOK_AS = "as";
   @NonNls protected static final String TOK_PRINT = "print";
+  @NonNls protected static final String TOK_NONE = "None";
+  @NonNls protected static final String TOK_TRUE = "True";
+  @NonNls protected static final String TOK_FALSE = "False";
 
   protected enum Phase {NONE, FROM, FUTURE, IMPORT} // 'from __future__ import' phase
   private Phase myFutureImportPhase = Phase.NONE;
@@ -744,6 +747,17 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     else if (hasPrintStatement() && source == PyTokenTypes.IDENTIFIER &&
              isWordAtPosition(text, start, end, TOK_PRINT)) {
       return PyTokenTypes.PRINT_KEYWORD;
+    }
+    else if (myContext.getLanguageLevel().isPy3K() && source == PyTokenTypes.IDENTIFIER) {
+      if (isWordAtPosition(text, start, end, TOK_NONE)) {
+        return PyTokenTypes.NONE_KEYWORD;
+      }
+      if (isWordAtPosition(text, start, end, TOK_TRUE)) {
+        return PyTokenTypes.TRUE_KEYWORD;
+      }
+      if (isWordAtPosition(text, start, end, TOK_FALSE)) {
+        return PyTokenTypes.FALSE_KEYWORD;
+      }
     }
     return source;
   }

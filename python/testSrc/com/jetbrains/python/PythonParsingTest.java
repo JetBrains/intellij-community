@@ -1,6 +1,7 @@
 package com.jetbrains.python;
 
 import com.intellij.testFramework.ParsingTestCase;
+import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
@@ -8,6 +9,7 @@ import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 /**
  * @author yole
  */
+@TestDataPath("$CONTENT_ROOT/../testData/psi/")
 public class PythonParsingTest extends ParsingTestCase {
   public PythonParsingTest() {
     super("", "py");
@@ -97,7 +99,7 @@ public class PythonParsingTest extends ParsingTestCase {
   }
 
   public void testWithStatement26() throws Exception {
-    doTest(LanguageLevel.PYTHON26);    
+    doTest(LanguageLevel.PYTHON26);
   }
 
   public void testPrintAsFunction26() throws Exception {
@@ -117,6 +119,10 @@ public class PythonParsingTest extends ParsingTestCase {
   }
 
   public void testKeywordOnlyArgument() throws Exception {   // PEP 3102
+    doTest(LanguageLevel.PYTHON30);
+  }
+
+  public void testPy3KKeywords() throws Exception {
     doTest(LanguageLevel.PYTHON30);
   }
 

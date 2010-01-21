@@ -41,6 +41,14 @@ public class ExpressionParsing extends Parsing {
       buildTokenElement(PyElementTypes.IMAGINARY_LITERAL_EXPRESSION, builder);
       return true;
     }
+    else if (firstToken == PyTokenTypes.NONE_KEYWORD) {
+      buildTokenElement(PyElementTypes.NONE_LITERAL_EXPRESSION, builder);
+      return true;
+    }
+    else if (firstToken == PyTokenTypes.TRUE_KEYWORD || firstToken == PyTokenTypes.FALSE_KEYWORD) {
+      buildTokenElement(PyElementTypes.BOOL_LITERAL_EXPRESSION, builder);
+      return true;
+    }
     else if (firstToken == PyTokenTypes.STRING_LITERAL) {
       final PsiBuilder.Marker marker = builder.mark();
       while (builder.getTokenType() == PyTokenTypes.STRING_LITERAL) {

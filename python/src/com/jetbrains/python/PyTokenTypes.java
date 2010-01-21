@@ -52,6 +52,11 @@ public class PyTokenTypes {
   public static final PyElementType WHILE_KEYWORD = new PyElementType("WHILE_KEYWORD");
   public static final PyElementType YIELD_KEYWORD = new PyElementType("YIELD_KEYWORD");
 
+  // new keywords in Python 3
+  public static final PyElementType NONE_KEYWORD = new PyElementType("NONE_KEYWORD");
+  public static final PyElementType TRUE_KEYWORD = new PyElementType("TRUE_KEYWORD");
+  public static final PyElementType FALSE_KEYWORD = new PyElementType("FALSE_KEYWORD");
+
   public static final TokenSet KEYWORDS = TokenSet.create(
       AND_KEYWORD, AS_KEYWORD, ASSERT_KEYWORD, BREAK_KEYWORD, CLASS_KEYWORD,
       CONTINUE_KEYWORD, DEF_KEYWORD, DEL_KEYWORD, ELIF_KEYWORD, ELSE_KEYWORD,
@@ -60,7 +65,8 @@ public class PyTokenTypes {
       GLOBAL_KEYWORD, IF_KEYWORD, IMPORT_KEYWORD, IN_KEYWORD, IS_KEYWORD,
       LAMBDA_KEYWORD, NOT_KEYWORD, OR_KEYWORD, PASS_KEYWORD, PRINT_KEYWORD,
       RAISE_KEYWORD, RETURN_KEYWORD, TRY_KEYWORD, WITH_KEYWORD, WHILE_KEYWORD,
-      YIELD_KEYWORD);
+      YIELD_KEYWORD,
+      NONE_KEYWORD, TRUE_KEYWORD, FALSE_KEYWORD);
 
   public static final PyElementType INTEGER_LITERAL = new PyElementType("INTEGER_LITERAL");
   public static final PyElementType FLOAT_LITERAL = new PyElementType("FLOAT_LITERAL");
