@@ -131,6 +131,7 @@ public class AnalysisScope {
     myModules = null;
     myScope = scope;
     myType = CUSTOM;
+    mySearchInLibraries = scope instanceof GlobalSearchScope && ((GlobalSearchScope)scope).isSearchInLibraries();
   }
 
   public AnalysisScope(@NotNull Project project, @NotNull Collection<VirtualFile> virtualFiles) {
@@ -198,6 +199,11 @@ public class AnalysisScope {
 
   public boolean contains(VirtualFile file) {
     if (myFilesSet == null) {
+      if (myType == CUSTOM) {
+        // optimization
+        if (myScope instanceof GlobalSearchScope) return ((GlobalSearchScope)myScope).contains(file);
+        if (myScope instanceof LocalSearchScope) return ((LocalSearchScope)myScope).isInScope(file);
+      }
       if (myType == PROJECT) {  //optimization
         final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
         return index.isInContent(file) && (myIncludeTestSource || !index.isInTestSourceContent(file));
