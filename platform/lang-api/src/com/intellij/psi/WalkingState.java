@@ -16,32 +16,34 @@
 
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author cdr
  */
 public abstract class WalkingState<T> {
   public interface TreeGuide<T> {
-    T getNextSibling(T element);
-    T getPrevSibling(T element);
-    T getFirstChild(T element);
-    T getParent(T element);
+    T getNextSibling(@NotNull T element);
+    T getPrevSibling(@NotNull T element);
+    T getFirstChild(@NotNull T element);
+    T getParent(@NotNull T element);
   }
   private boolean isDown;
   protected boolean startedWalking;
   private final TreeGuide<T> myWalker;
   private boolean stopped;
 
-  public abstract void elementFinished(T element);
+  public abstract void elementFinished(@NotNull T element);
 
-  protected WalkingState(TreeGuide<T> delegate) {
+  protected WalkingState(@NotNull TreeGuide<T> delegate) {
     myWalker = delegate;
   }
 
-  public void visit(T element) {
+  public void visit(@NotNull T element) {
     elementStarted(element);
   }
 
-  public void elementStarted(T element){
+  public void elementStarted(@NotNull T element){
     isDown = true;
     if (!startedWalking) {
       stopped = false;
