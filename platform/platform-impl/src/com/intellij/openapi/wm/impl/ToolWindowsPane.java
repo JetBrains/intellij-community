@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.impl.commands.FinalizableCommand;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.HashMap;
@@ -371,37 +372,45 @@ final class ToolWindowsPane extends JPanel{
   }
 
   public void stretchWidth(ToolWindow wnd, int value) {
-    JComponent cmp = getComponentAt(wnd.getAnchor());
-    if (cmp == null) return;
-
-    stretch(myHorizontalSplitter, cmp, cmp.getSize().width, value, 0, getSize().width);
+    stretch(wnd, value);
   }
 
   public void stretchHeight(ToolWindow wnd, int value) {
-    JComponent cmp = getComponentAt(wnd.getAnchor());
-    if (cmp == null) return;
-
-    stretch(myVerticalSplitter, cmp, cmp.getSize().height, value, 0, getSize().height);
+    stretch(wnd, value);
   }
 
-  private void stretch(ThreeComponentsSplitter splitter, JComponent cmp, int currentValue, int incValue, int minValue, int maxValue) {
-    int actualSize = currentValue + incValue;
+  private void stretch(ToolWindow wnd, int value) {
+    if (!wnd.isVisible()) return;
 
-    if (actualSize < minValue) {
-      actualSize = minValue;
-    }
+    if (wnd.getType() == ToolWindowType.DOCKED) {
+      JComponent cmp = getComponentAt(wnd.getAnchor());
+      if (cmp == null) return;
 
-    if (actualSize > maxValue) {
-      actualSize = maxValue;
-    }
 
-    if (splitter.getFirstComponent() == cmp) {
-      splitter.setFirstSize(actualSize);
-    } else if (splitter.getLastComponent() == cmp) {
-      splitter.setLastSize(actualSize);
+      ThreeComponentsSplitter splitter = wnd.getAnchor().isHorizontal() ? myVerticalSplitter : myHorizontalSplitter;
+      int currentValue = wnd.getAnchor().isHorizontal() ? cmp.getHeight() : cmp.getWidth();
+
+      int actualSize = currentValue + value;
+
+      int minValue = 0;
+      int maxValue = wnd.getAnchor().isHorizontal() ? getHeight() : getWidth();
+
+
+      if (actualSize < minValue) {
+        actualSize = minValue;
+      }
+
+      if (actualSize > maxValue) {
+        actualSize = maxValue;
+      }
+
+      if (splitter.getFirstComponent() == cmp) {
+        splitter.setFirstSize(actualSize);
+      } else if (splitter.getLastComponent() == cmp) {
+        splitter.setLastSize(actualSize);
+      }
     }
   }
-
   private final class AddDockedComponentCmd extends FinalizableCommand{
     private final JComponent myComponent;
     private final WindowInfoImpl myInfo;
