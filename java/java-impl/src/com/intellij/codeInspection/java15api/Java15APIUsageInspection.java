@@ -50,16 +50,16 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
   static {
     final THashSet<String> ourForbidden14API = new THashSet<String>(1000);
     initForbiddenApi("api14List.txt", ourForbidden14API);
-    ourForbiddenAPI.put(LanguageLevel.JDK_1_4, ourForbidden14API);
-    ourAPIPresentationMap.put(LanguageLevel.JDK_1_4, "1.4");
+    ourForbiddenAPI.put(LanguageLevel.JDK_1_3, ourForbidden14API);
+    ourAPIPresentationMap.put(LanguageLevel.JDK_1_3, "1.4");
     final THashSet<String> ourForbidden15API = new THashSet<String>(1000);
     initForbiddenApi("apiList.txt", ourForbidden15API);
-    ourForbiddenAPI.put(LanguageLevel.JDK_1_5, ourForbidden15API);
-    ourAPIPresentationMap.put(LanguageLevel.JDK_1_5, "1.5");
+    ourForbiddenAPI.put(LanguageLevel.JDK_1_4, ourForbidden15API);
+    ourAPIPresentationMap.put(LanguageLevel.JDK_1_4, "1.5");
     final THashSet<String> ourForbidden16API = new THashSet<String>(1000);
     initForbiddenApi("api16List.txt", ourForbidden16API);
-    ourForbiddenAPI.put(LanguageLevel.JDK_1_6, ourForbidden16API);
-    ourAPIPresentationMap.put(LanguageLevel.JDK_1_6, "1.6");
+    ourForbiddenAPI.put(LanguageLevel.JDK_1_5, ourForbidden16API);
+    ourAPIPresentationMap.put(LanguageLevel.JDK_1_5, "1.6");
     initForbiddenApi("ignore16List.txt", ourIgnored16ClassesAPI);
   }
 
