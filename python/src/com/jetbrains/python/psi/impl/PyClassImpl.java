@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
@@ -13,7 +14,6 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDosStringFinder;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.codeInsight.controlflow.ControlFlow;
 import com.jetbrains.python.codeInsight.controlflow.PyControlFlowBuilder;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.VariantsProcessor;
