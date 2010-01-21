@@ -60,10 +60,12 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
   private static final String MERGE_SUITE = "MERGE_SUITE";
   @NonNls
   private static final String COVERAGE_RUNNER = "RUNNER";
+  private final JavaCoverageSupportProvider myJavaCoverageSupportProvider;
 
   //read external only
-  public JavaCoverageSuite() {
+  public JavaCoverageSuite(@NotNull final JavaCoverageSupportProvider javaCoverageSupportProvider) {
     super();
+    myJavaCoverageSupportProvider = javaCoverageSupportProvider;
   }
 
   public JavaCoverageSuite(final String name,
@@ -74,13 +76,15 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
                            final boolean coverageByTestEnabled,
                            final boolean tracingEnabled,
                            final boolean trackTestFolders,
-                           final AbstractCoverageRunner coverageRunner) {
+                           final CoverageRunner coverageRunner,
+                           @NotNull final JavaCoverageSupportProvider javaCoverageSupportProvider) {
     super(name, coverageDataFileProvider, lastCoverageTimeStamp, coverageByTestEnabled,
           tracingEnabled, trackTestFolders,
-          coverageRunner != null ? coverageRunner : AbstractCoverageRunner.getInstance(IDEACoverageRunner.class));
+          coverageRunner != null ? coverageRunner : CoverageRunner.getInstance(IDEACoverageRunner.class));
 
     myFilters = filters;
     mySuiteToMerge = suiteToMerge;
+    myJavaCoverageSupportProvider = javaCoverageSupportProvider;
   }
 
   @NotNull
@@ -122,7 +126,7 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
     mySuiteToMerge = element.getAttributeValue(MERGE_SUITE);
 
     if (getRunner() == null) {
-      setRunner(AbstractCoverageRunner.getInstance(IDEACoverageRunner.class)); //default
+      setRunner(CoverageRunner.getInstance(IDEACoverageRunner.class)); //default
     }
   }
 
@@ -138,7 +142,7 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
         element.addContent(filterElement);
       }
     }
-    final AbstractCoverageRunner coverageRunner = getRunner();
+    final CoverageRunner coverageRunner = getRunner();
     element.setAttribute(COVERAGE_RUNNER, coverageRunner != null ? coverageRunner.getId() : "emma");
   }
 
@@ -438,4 +442,84 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
     return ((PsiClassOwner)sourceFile).getPackageName();
   }
 
+  /**
+   * Determines if coverage information should be displayed for given file
+   * @param psiFile
+   * @return
+   */
+  public boolean coverageInfoEnabled(@NotNull final PsiFile psiFile) {
+    return psiFile instanceof PsiClassOwner;
+  }
+
+  public boolean acceptedByFilters(@NotNull final PsiFile psiFile) {
+    final Project project = psiFile.getProject();
+    final List<PsiPackage> packages = getCurrentSuitePackages(project);
+    if (isUnderFilteredPackages((PsiClassOwner)psiFile, packages)) {
+      return true;
+    } else {
+      final List<PsiClass> classes = getCurrentSuiteClasses(project);
+      for (PsiClass aClass : classes) {
+        final PsiFile containingFile = aClass.getContainingFile();
+        if (psiFile.equals(containingFile)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  @NotNull
+  public CoverageAnnotator getCoverageAnnotator(final Project project) {
+    return myJavaCoverageSupportProvider.getCoverageAnnotator(project);
+  }
+
+  public @NotNull List<PsiPackage> getCurrentSuitePackages(Project project) {
+    List<PsiPackage> packages = new ArrayList<PsiPackage>();
+    final PsiManager psiManager = PsiManager.getInstance(project);
+    final String[] filters = getFilteredPackageNames();
+    if (filters.length == 0) {
+      if (getFilteredClassNames().length > 0) return Collections.emptyList();
+
+      final PsiPackage defaultPackage = JavaPsiFacade.getInstance(psiManager.getProject()).findPackage("");
+      if (defaultPackage != null) {
+        packages.add(defaultPackage);
+      }
+    } else {
+      for (String filter : filters) {
+        final PsiPackage psiPackage = JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(filter);
+        if (psiPackage != null) {
+          packages.add(psiPackage);
+        }
+      }
+    }
+
+    return packages;
+  }
+
+  public @NotNull List<PsiClass> getCurrentSuiteClasses(final Project project) {
+    List<PsiClass> classes = new ArrayList<PsiClass>();
+    final PsiManager psiManager = PsiManager.getInstance(project);
+    final String[] classNames = getFilteredClassNames();
+    if (classNames.length > 0) {
+      for (String className : classNames) {
+        final PsiClass aClass =
+          JavaPsiFacade.getInstance(psiManager.getProject()).findClass(className.replace("$", "."), GlobalSearchScope.allScope(project));
+        if (aClass != null) {
+          classes.add(aClass);
+        }
+      }
+    }
+
+    return classes;
+  }
+
+  private boolean isUnderFilteredPackages(final PsiClassOwner javaFile, final List<PsiPackage> packages) {
+    final String hisPackageName = javaFile.getPackageName();
+    PsiPackage hisPackage = JavaPsiFacade.getInstance(javaFile.getProject()).findPackage(hisPackageName);
+    if (hisPackage == null) return false;
+    for (PsiPackage aPackage : packages) {
+      if (PsiTreeUtil.isAncestor(aPackage, hisPackage, false)) return true;
+    }
+    return false;
+  }
 }

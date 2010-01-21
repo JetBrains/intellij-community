@@ -3,11 +3,13 @@ package com.intellij.coverage;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
+import com.intellij.openapi.project.Project;
 import com.intellij.packageDependencies.ui.PackageDependenciesNode;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -23,16 +25,35 @@ public class CoverageProjectViewClassNodeDecorator extends AbstractCoverageProve
     if (element == null || !element.isValid()) {
       return;
     }
+
+    final CoverageDataManager dataManager = getCoverageDataManager();
+    final CoverageSuite currentSuite = dataManager.getCurrentSuite();
+    final Project project = element.getProject();
+
+    final JavaCoverageAnnotator javaCovAnnotator = getCovAnnotator(currentSuite, project);
+    // This decorator is applicable only to JavaCoverageAnnotator
+    if (javaCovAnnotator == null) {
+      return;
+    }
+
     if (element instanceof PsiClass) {
       final String qName = ((PsiClass)element).getQualifiedName();
       if (qName != null) {
-        appendCoverageInfo(cellRenderer, getCoverageDataManager().getClassCoverageInformationString(qName));
+        appendCoverageInfo(cellRenderer, javaCovAnnotator.getClassCoverageInformationString(qName, dataManager));
       }
     }
   }
 
   public void decorate(ProjectViewNode node, PresentationData data) {
     final CoverageDataManager coverageDataManager = getCoverageDataManager();
+    final CoverageSuite currentSuite = coverageDataManager.getCurrentSuite();
+
+    final Project project = node.getProject();
+    final JavaCoverageAnnotator javaCovAnnotator = getCovAnnotator(currentSuite, project);
+    // This decorator is applicable only to JavaCoverageAnnotator
+    if (javaCovAnnotator == null) {
+      return;
+    }
 
     final Object value = node.getValue();
     PsiElement element = null;
@@ -44,16 +65,28 @@ public class CoverageProjectViewClassNodeDecorator extends AbstractCoverageProve
     }
     else if (value instanceof PackageElement) {
       PackageElement packageElement = (PackageElement)value;
-      final String coverageString = coverageDataManager.getPackageCoverageInformationString(packageElement.getPackage().getQualifiedName(),
-                                                                                            packageElement.getModule());
+      final String coverageString = javaCovAnnotator.getPackageCoverageInformationString(packageElement.getPackage().getQualifiedName(),
+                                                                                         packageElement.getModule(),
+                                                                                         coverageDataManager);
       data.setLocationString(coverageString);
     }
 
     if (element instanceof PsiClass) {
       final String qName = ((PsiClass)element).getQualifiedName();
       if (qName != null) {
-        data.setLocationString(coverageDataManager.getClassCoverageInformationString(qName));
+        data.setLocationString(javaCovAnnotator.getClassCoverageInformationString(qName, coverageDataManager));
       }
     }
+  }
+
+  @Nullable
+  private JavaCoverageAnnotator getCovAnnotator(final CoverageSuite currentSuite, final Project project) {
+    if (currentSuite != null) {
+      final CoverageAnnotator coverageAnnotator = currentSuite.getCoverageAnnotator(project);
+      if (coverageAnnotator instanceof JavaCoverageAnnotator) {
+        return (JavaCoverageAnnotator) coverageAnnotator;
+      }
+    }
+    return null;
   }
 }

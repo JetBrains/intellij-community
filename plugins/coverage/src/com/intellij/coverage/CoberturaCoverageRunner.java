@@ -20,12 +20,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.rt.coverage.data.ProjectData;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
 
-public class CoberturaCoverageRunner extends AbstractCoverageRunner {
+public class CoberturaCoverageRunner extends JavaCoverageRunner {
 
   public ProjectData loadCoverageData(final File sessionDataFile) {
     return CoberturaLoaderUtil.load(sessionDataFile);
@@ -112,10 +111,5 @@ public class CoberturaCoverageRunner extends AbstractCoverageRunner {
   @NonNls
   public String getDataFileExtension() {
     return "ser";
-  }
-
-  @Override
-  public boolean acceptsCoverageProvider(@NotNull CoverageSupportProvider provider) {
-    return provider instanceof JavaCoverageSupportProvider;
   }
 }

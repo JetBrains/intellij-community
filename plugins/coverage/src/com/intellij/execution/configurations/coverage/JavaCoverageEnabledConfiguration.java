@@ -16,7 +16,6 @@
 
 package com.intellij.execution.configurations.coverage;
 
-import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
@@ -76,6 +75,7 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
     return myCoveragePatterns;
   }
 
+  @Nullable
   public String [] getPatterns() {
     if (myCoveragePatterns != null) {
       List<String> patterns = new ArrayList<String>();
@@ -85,6 +85,11 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
       return ArrayUtil.toStringArray(patterns);
     }
     return null;
+  }
+
+  @Override
+  public boolean overrideSuiteCoverageDataFor(String newSuiteName) {
+    return getSuiteToMergeWith() == null || !newSuiteName.equals(getSuiteToMergeWith());
   }
 
   public void setCoveragePatterns(final ClassFilter[] coveragePatterns) {

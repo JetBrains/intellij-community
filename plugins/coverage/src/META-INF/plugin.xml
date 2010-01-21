@@ -18,14 +18,17 @@
     <junitListener implementation="com.intellij.coverage.listeners.IDEAJUnitCoverageListener"/>
 
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+    <projectService serviceInterface="com.intellij.coverage.JavaCoverageAnnotator"
+                    serviceImplementation="com.intellij.coverage.JavaCoverageAnnotator"/>
   </extensions>
+
   <extensions defaultExtensionNs="com.theoryinpractice.testng">
     <listener implementation="com.intellij.coverage.listeners.IDEATestNGCoverageListener"/>
   </extensions>
   <project-components>
     <component>
       <interface-class>com.intellij.coverage.CoverageDataManager</interface-class>
-      <implementation-class>com.intellij.coverage.CoverageDataManagerImpl</implementation-class>
+      <implementation-class>com.intellij.coverage.CoveragePluginDataManagerImpl</implementation-class>
       <option name="workspace" value="true"/>
     </component>
   </project-components>

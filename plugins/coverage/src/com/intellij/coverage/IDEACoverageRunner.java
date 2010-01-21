@@ -38,7 +38,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 
-public class IDEACoverageRunner extends AbstractCoverageRunner {
+public class IDEACoverageRunner extends JavaCoverageRunner {
   private static final Logger LOG = Logger.getInstance("#" + IDEACoverageRunner.class.getName());
 
   public ProjectData loadCoverageData(final File sessionDataFile) {
@@ -150,11 +150,6 @@ public class IDEACoverageRunner extends AbstractCoverageRunner {
 
   public String getDataFileExtension() {
     return "ic";
-  }
-
-  @Override
-  public boolean acceptsCoverageProvider(@NotNull CoverageSupportProvider provider) {
-    return provider instanceof JavaCoverageSupportProvider;
   }
 
   @Override
