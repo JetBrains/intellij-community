@@ -1,14 +1,18 @@
 package com.intellij.refactoring;
 
+import com.intellij.JavaTestUtil;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.rename.RenameProcessor;
-import com.intellij.JavaTestUtil;
+import com.intellij.refactoring.rename.naming.AutomaticRenamer;
+import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import org.jetbrains.annotations.NonNls;
 
 public class RenameClassTest extends MultiFileTestCase {
@@ -47,6 +51,35 @@ public class RenameClassTest extends MultiFileTestCase {
 
   public void testImplicitlyImported() throws Exception {
     doTest("pack1.A", "Object");
+  }
+
+  public void testAutomaticRenameVars() throws Exception {
+    doTest(new PerformAction() {
+      public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
+        PsiClass aClass = myJavaFacade.findClass("XX", GlobalSearchScope.allScope(getProject()));
+        assertNotNull("Class XX not found", aClass);
+
+        final RenameProcessor processor = new RenameProcessor(myProject, aClass, "Y", true, true) {
+          @Override
+          protected boolean showAutomaticRenamingDialog(AutomaticRenamer automaticVariableRenamer) {
+            for (PsiNamedElement element : automaticVariableRenamer.getElements()) {
+              automaticVariableRenamer.setRename(element, automaticVariableRenamer.getNewName(element));
+            }
+            return true;
+          }
+        };
+        for (AutomaticRenamerFactory factory : Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
+          processor.addRenamerFactory(factory);
+        }
+        processor.run();
+        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+        FileDocumentManager.getInstance().saveAllDocuments();
+      }
+    });
+  }
+
+  public void testAutomaticRenameVarsCollision() throws Exception {
+    doTest("XX", "Y");
   }
 
   private void doTest(@NonNls final String qClassName, @NonNls final String newName) throws Exception {

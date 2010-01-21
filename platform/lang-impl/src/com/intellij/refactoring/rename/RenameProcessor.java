@@ -134,6 +134,15 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     final List<UsageInfo> variableUsages = new ArrayList<UsageInfo>();
     if (!myRenamers.isEmpty()) {
       if (!findRenamedVariables(variableUsages)) return false;
+      for (final AutomaticRenamer renamer : myRenamers) {
+        final List<? extends PsiNamedElement> variables = renamer.getElements();
+        for (final PsiNamedElement variable : variables) {
+          final String newName = renamer.getNewName(variable);
+          if (newName != null) {
+            addElement(variable, newName);
+          }
+        }
+      }
     }
 
     if (!variableUsages.isEmpty()) {
@@ -148,22 +157,10 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   private boolean findRenamedVariables(final List<UsageInfo> variableUsages) {
     for (final AutomaticRenamer automaticVariableRenamer : myRenamers) {
       if (!automaticVariableRenamer.hasAnythingToRename()) continue;
-      final AutomaticRenamingDialog dialog = new AutomaticRenamingDialog(myProject, automaticVariableRenamer);
-      dialog.show();
-      if (!dialog.isOK()) return false;
+      if (!showAutomaticRenamingDialog(automaticVariableRenamer)) return false;
     }
 
-    for (final AutomaticRenamer renamer : myRenamers) {
-      final List<? extends PsiNamedElement> variables = renamer.getElements();
-      for (final PsiNamedElement variable : variables) {
-        final String newName = renamer.getNewName(variable);
-        if (newName != null) {
-          addElement(variable, newName);
-        }
-      }
-    }
-
-    Runnable runnable = new Runnable() {
+    final Runnable runnable = new Runnable() {
       public void run() {
         for (final AutomaticRenamer renamer : myRenamers) {
           renamer.findUsages(variableUsages, mySearchInComments, mySearchTextOccurrences);
@@ -173,6 +170,12 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
     return ProgressManager.getInstance()
       .runProcessWithProgressSynchronously(runnable, RefactoringBundle.message("searching.for.variables"), true, myProject);
+  }
+
+  protected boolean showAutomaticRenamingDialog(AutomaticRenamer automaticVariableRenamer) {
+    final AutomaticRenamingDialog dialog = new AutomaticRenamingDialog(myProject, automaticVariableRenamer);
+    dialog.show();
+    return dialog.isOK();
   }
 
   public void addElement(@NotNull PsiElement element, @NotNull String newName) {
