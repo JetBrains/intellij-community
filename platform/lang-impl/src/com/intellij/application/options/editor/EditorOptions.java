@@ -22,10 +22,14 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.IconLoader;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 
 public class EditorOptions implements SearchableConfigurable.Parent {
+
+  @NonNls public static final String ID = "preferences.editor";
+
   private EditorOptionsPanel myEditorOptionsPanel;
 
   public Configurable[] getConfigurables() {
@@ -41,11 +45,11 @@ public class EditorOptions implements SearchableConfigurable.Parent {
   }
 
   public String getHelpTopic() {
-    return "preferences.editor";
+    return ID;
   }
 
   public String getId() {
-    return getHelpTopic();
+    return ID;
   }
 
   public Runnable enableSearch(final String option) {

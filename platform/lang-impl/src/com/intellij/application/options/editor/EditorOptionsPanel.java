@@ -70,6 +70,8 @@ public class EditorOptionsPanel {
   private JCheckBox myCbRenameLocalVariablesInplace;
   private JCheckBox myCbHighlightIdentifierUnderCaret;
   private JCheckBox myCbEnsureBlankLineBeforeCheckBox;
+  private JCheckBox myShowReformatCodeDialogCheckBox;
+  private JCheckBox myShowOptimizeImportsDialogCheckBox;
   private final ErrorHighlightingPanel myErrorHighlightingPanel = new ErrorHighlightingPanel();
   private final MyConfigurable myConfigurable;
 
@@ -148,6 +150,9 @@ public class EditorOptionsPanel {
 
     myCbRenameLocalVariablesInplace.setSelected(editorSettings.isVariableInplaceRenameEnabled());
 
+    myShowReformatCodeDialogCheckBox.setSelected(editorSettings.getOptions().SHOW_REFORMAT_DIALOG);
+    myShowOptimizeImportsDialogCheckBox.setSelected(editorSettings.getOptions().SHOW_OPIMIZE_IMPORTS_DIALOG);
+
     myErrorHighlightingPanel.reset();
   }
 
@@ -210,6 +215,9 @@ public class EditorOptionsPanel {
     editorSettings.setRefrainFromScrolling(myRbPreferMovingCaret.isSelected());
 
     editorSettings.setVariableInplaceRenameEnabled(myCbRenameLocalVariablesInplace.isSelected());
+
+    editorSettings.getOptions().SHOW_REFORMAT_DIALOG = myShowReformatCodeDialogCheckBox.isSelected();
+    editorSettings.getOptions().SHOW_OPIMIZE_IMPORTS_DIALOG = myShowOptimizeImportsDialogCheckBox.isSelected();
 
     reinitAllEditors();
 
@@ -305,7 +313,10 @@ public class EditorOptionsPanel {
 
     isModified |= isModified(myRecentFilesLimitField, UISettings.getInstance().RECENT_FILES_LIMIT);
     isModified |= isModified(myCbRenameLocalVariablesInplace, editorSettings.isVariableInplaceRenameEnabled());
-    
+
+    isModified |= isModified(myShowReformatCodeDialogCheckBox, editorSettings.getOptions().SHOW_REFORMAT_DIALOG);
+    isModified |= isModified(myShowOptimizeImportsDialogCheckBox, editorSettings.getOptions().SHOW_OPIMIZE_IMPORTS_DIALOG);
+
     isModified |= myErrorHighlightingPanel.isModified();
     return isModified;
   }

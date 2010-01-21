@@ -2,7 +2,7 @@
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.application.options.editor.EditorOptionsPanel">
   <tabbedpane id="97a1e">
     <constraints>
-      <xy x="22" y="49" width="773" height="686"/>
+      <xy x="22" y="49" width="622" height="455"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -15,10 +15,135 @@
         <properties/>
         <border type="none"/>
         <children>
+          <vspacer id="b6665">
+            <constraints>
+              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false">
+                <preferred-size width="334" height="14"/>
+              </grid>
+            </constraints>
+          </vspacer>
+          <grid id="8dc1a" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
+                <preferred-size width="334" height="106"/>
+              </grid>
+            </constraints>
+            <properties/>
+            <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="group.advanced.mouse.usages"/>
+            <children>
+              <component id="18220" class="javax.swing.JCheckBox" binding="myCbHonorCamelHumpsWhenSelectingByClicking">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false">
+                    <preferred-size width="328" height="22"/>
+                  </grid>
+                </constraints>
+                <properties>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.honor.camelhumps.words.settings.on.double.click"/>
+                </properties>
+              </component>
+              <component id="34803" class="javax.swing.JCheckBox" binding="myCbEnableDnD">
+                <constraints>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false">
+                    <preferred-size width="328" height="22"/>
+                  </grid>
+                </constraints>
+                <properties>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.enable.drag.n.drop.functionality.in.editor"/>
+                </properties>
+              </component>
+              <component id="d0105" class="javax.swing.JCheckBox" binding="myCbEnableWheelFontChange">
+                <constraints>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false">
+                    <preferred-size width="328" height="22"/>
+                  </grid>
+                </constraints>
+                <properties>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.enable.ctrl.mousewheel.changes.font.size"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+          <grid id="5342a" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="1" fill="3" indent="0" use-parent-layout="false">
+                <preferred-size width="240" height="45"/>
+              </grid>
+            </constraints>
+            <properties/>
+            <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="group.virtual.space"/>
+            <children>
+              <component id="400d4" class="javax.swing.JCheckBox" binding="myCbVirtualPageAtBottom">
+                <constraints>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.show.virtual.space.at.file.bottom"/>
+                </properties>
+              </component>
+              <component id="f762" class="javax.swing.JCheckBox" binding="myCbCaretInsideTabs">
+                <constraints>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.allow.placement.of.caret.inside.tabs"/>
+                </properties>
+              </component>
+              <component id="bb18b" class="javax.swing.JCheckBox" binding="myCbVirtualSpace">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <selected value="true"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.allow.placement.of.caret.after.end.of.line"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+          <grid id="dcf48" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
+                <preferred-size width="334" height="106"/>
+              </grid>
+            </constraints>
+            <properties/>
+            <border type="none" title="Scrolling"/>
+            <children>
+              <component id="a193a" class="javax.swing.JRadioButton" binding="myRbPreferScrolling">
+                <constraints>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="Prefer scrolling editor canvas to keep caret line centered"/>
+                </properties>
+              </component>
+              <component id="ef76d" class="javax.swing.JRadioButton" binding="myRbPreferMovingCaret">
+                <constraints>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="Prefer moving caret line to minimize editor scrolling"/>
+                </properties>
+              </component>
+              <component id="a62e2" class="javax.swing.JCheckBox" binding="myCbSmoothScrolling">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <selected value="true"/>
+                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.smooth.scrolling"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
           <grid id="54c3d" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="3" indent="0" use-parent-layout="false"/>
+              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="3" indent="0" use-parent-layout="false">
+                <preferred-size width="215" height="26"/>
+              </grid>
             </constraints>
             <properties/>
             <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="group.brace.highlighting"/>
@@ -49,123 +174,29 @@
               </component>
             </children>
           </grid>
-          <grid id="7fdc1" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="7f3f5" layout-manager="GridLayoutManager" row-count="4" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="10" bottom="0" right="0"/>
             <constraints>
-              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties/>
-            <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="group.limits"/>
-            <children>
-              <component id="498f1" class="javax.swing.JLabel">
-                <constraints>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="0" anchor="9" fill="1" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text resource-bundle="messages/ApplicationBundle" key="editbox.maximum.number.of.contents.to.keep.in.clipboard"/>
-                </properties>
-              </component>
-              <component id="25b75" class="javax.swing.JTextField" binding="myClipboardContentLimitTextField">
-                <constraints>
-                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="9" fill="0" indent="0" use-parent-layout="false">
-                    <preferred-size width="35" height="-1"/>
-                  </grid>
-                </constraints>
-                <properties>
-                  <text value="5"/>
-                </properties>
-              </component>
-              <component id="48bb5" class="javax.swing.JLabel">
-                <constraints>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text resource-bundle="messages/ApplicationBundle" key="editbox.recent.files.limit"/>
-                </properties>
-              </component>
-              <component id="695ab" class="javax.swing.JTextField" binding="myRecentFilesLimitField">
-                <constraints>
-                  <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0" indent="0" use-parent-layout="false">
-                    <preferred-size width="35" height="-1"/>
-                  </grid>
-                </constraints>
-                <properties>
-                  <text value="10"/>
-                </properties>
-              </component>
-            </children>
-          </grid>
-          <grid id="99111" binding="myHighlightSettingsPanel" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-            <margin top="0" left="0" bottom="0" right="0"/>
-            <constraints>
-              <grid row="2" column="1" row-span="2" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties/>
-            <border type="none"/>
-            <children/>
-          </grid>
-          <grid id="dcf48" layout-manager="GridLayoutManager" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-            <margin top="0" left="0" bottom="0" right="0"/>
-            <constraints>
-              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties/>
-            <border type="none" title="Scrolling"/>
-            <children>
-              <component id="a193a" class="javax.swing.JRadioButton" binding="myRbPreferScrolling">
-                <constraints>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text value="Prefer scrolling editor canvas to keep caret line centered"/>
-                </properties>
-              </component>
-              <component id="ef76d" class="javax.swing.JRadioButton" binding="myRbPreferMovingCaret">
-                <constraints>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text value="Prefer moving caret line to minimize editor scrolling"/>
-                </properties>
-              </component>
-              <component id="a62e2" class="javax.swing.JCheckBox" binding="myCbSmoothScrolling">
-                <constraints>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <selected value="true"/>
-                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.smooth.scrolling"/>
-                </properties>
-              </component>
-              <vspacer id="d2acc">
-                <constraints>
-                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
-                </constraints>
-              </vspacer>
-            </children>
-          </grid>
-          <vspacer id="b6665">
-            <constraints>
-              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
-            </constraints>
-          </vspacer>
-          <grid id="7f3f5" layout-manager="GridLayoutManager" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-            <margin top="0" left="15" bottom="0" right="0"/>
-            <constraints>
-              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
+                <preferred-size width="334" height="80"/>
+              </grid>
             </constraints>
             <properties/>
             <border type="none"/>
             <children>
               <component id="87620" class="javax.swing.JComboBox" binding="myStripTrailingSpacesCombo">
                 <constraints>
-                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false">
+                    <preferred-size width="42" height="22"/>
+                  </grid>
                 </constraints>
                 <properties/>
               </component>
               <component id="95b8f" class="javax.swing.JLabel">
                 <constraints>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
+                    <preferred-size width="248" height="14"/>
+                  </grid>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/ApplicationBundle" key="combobox.strip.trailing.spaces.on.save"/>
@@ -173,7 +204,9 @@
               </component>
               <component id="c0a29" class="javax.swing.JCheckBox" binding="myCbRenameLocalVariablesInplace">
                 <constraints>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false">
+                    <preferred-size width="248" height="22"/>
+                  </grid>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/ApplicationBundle" key="checkbox.rename.local.variables.inplace"/>
@@ -187,76 +220,101 @@
                   <text value="Ensure &amp;blank line before end of file on Save"/>
                 </properties>
               </component>
+              <vspacer id="98ff8">
+                <constraints>
+                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false">
+                    <preferred-size width="248" height="14"/>
+                  </grid>
+                </constraints>
+              </vspacer>
             </children>
           </grid>
-          <grid id="8dc1a" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="358be" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+              <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
-            <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="group.advanced.mouse.usages"/>
+            <border type="none" title="Formatting"/>
             <children>
-              <component id="18220" class="javax.swing.JCheckBox" binding="myCbHonorCamelHumpsWhenSelectingByClicking">
-                <constraints>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.honor.camelhumps.words.settings.on.double.click"/>
-                </properties>
-              </component>
-              <component id="34803" class="javax.swing.JCheckBox" binding="myCbEnableDnD">
-                <constraints>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.enable.drag.n.drop.functionality.in.editor"/>
-                </properties>
-              </component>
-              <component id="d0105" class="javax.swing.JCheckBox" binding="myCbEnableWheelFontChange">
+              <component id="d393f" class="javax.swing.JCheckBox" binding="myShowOptimizeImportsDialogCheckBox" default-binding="true">
                 <constraints>
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.enable.ctrl.mousewheel.changes.font.size"/>
+                  <text value="Show &quot;Optimize Imports&quot; dialog"/>
                 </properties>
               </component>
-            </children>
-          </grid>
-          <grid id="5342a" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-            <margin top="0" left="0" bottom="0" right="0"/>
-            <constraints>
-              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="1" fill="3" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties/>
-            <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="group.virtual.space"/>
-            <children>
-              <component id="400d4" class="javax.swing.JCheckBox" binding="myCbVirtualPageAtBottom">
-                <constraints>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.show.virtual.space.at.file.bottom"/>
-                </properties>
-              </component>
-              <component id="f762" class="javax.swing.JCheckBox" binding="myCbCaretInsideTabs">
-                <constraints>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.allow.placement.of.caret.inside.tabs"/>
-                </properties>
-              </component>
-              <component id="bb18b" class="javax.swing.JCheckBox" binding="myCbVirtualSpace">
+              <component id="5263" class="javax.swing.JCheckBox" binding="myShowReformatCodeDialogCheckBox" default-binding="true">
                 <constraints>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <selected value="true"/>
-                  <text resource-bundle="messages/ApplicationBundle" key="checkbox.allow.placement.of.caret.after.end.of.line"/>
+                  <text value="Show &quot;Reformat Code&quot; dialog "/>
                 </properties>
               </component>
             </children>
+          </grid>
+          <grid id="7fdc1" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
+                <preferred-size width="334" height="75"/>
+              </grid>
+            </constraints>
+            <properties/>
+            <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="group.limits"/>
+            <children>
+              <component id="498f1" class="javax.swing.JLabel">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="0" anchor="8" fill="1" indent="0" use-parent-layout="false">
+                    <preferred-size width="247" height="14"/>
+                  </grid>
+                </constraints>
+                <properties>
+                  <text resource-bundle="messages/ApplicationBundle" key="editbox.maximum.number.of.contents.to.keep.in.clipboard"/>
+                </properties>
+              </component>
+              <component id="25b75" class="javax.swing.JTextField" binding="myClipboardContentLimitTextField">
+                <constraints>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="9" fill="0" indent="0" use-parent-layout="false">
+                    <preferred-size width="35" height="-1"/>
+                  </grid>
+                </constraints>
+                <properties>
+                  <text value="5"/>
+                </properties>
+              </component>
+              <component id="48bb5" class="javax.swing.JLabel">
+                <constraints>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
+                    <preferred-size width="247" height="14"/>
+                  </grid>
+                </constraints>
+                <properties>
+                  <text resource-bundle="messages/ApplicationBundle" key="editbox.recent.files.limit"/>
+                </properties>
+              </component>
+              <component id="695ab" class="javax.swing.JTextField" binding="myRecentFilesLimitField">
+                <constraints>
+                  <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="0" indent="0" use-parent-layout="false">
+                    <preferred-size width="35" height="-1"/>
+                  </grid>
+                </constraints>
+                <properties>
+                  <text value="10"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+          <grid id="1ecbd" binding="myHighlightSettingsPanel" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children/>
           </grid>
         </children>
       </grid>
