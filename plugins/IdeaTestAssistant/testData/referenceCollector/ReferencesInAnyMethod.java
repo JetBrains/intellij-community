@@ -7,4 +7,7 @@ public class ATest extends LightCodeInsightFixtureTestCase {
   private void resolve() throws Exception {
     configureByFile("before");
   }
+
+  private void configureByFile(@com.intellij.testFramework.TestDataFile String file) {
+  }
 }

@@ -44,16 +44,19 @@ public class TestDataReferenceCollector {
       public void visitMethodCallExpression(PsiMethodCallExpression expression) {
         String callText = expression.getMethodExpression().getReferenceName();
         if (callText == null) return;
-        if (callText.equals("configureByFile") || callText.equals("checkResultByFile")) {
-          processCallArgument(expression, argumentMap, result, 0);
-        }
-        else if (callText.equals("doFileTest")) {
-          processCallArgument(expression, argumentMap, result, 0);
-          processCallArgument(expression, argumentMap, result, 1);
-        }
-        else if (expression.getMethodExpression().getQualifierExpression() == null) {
-          final PsiMethod callee = expression.resolveMethod();
-          if (callee != null) {
+        final PsiMethod callee = expression.resolveMethod();
+        if (callee != null) {
+          boolean haveAnnotatedParameters = false;
+          final PsiParameter[] psiParameters = callee.getParameterList().getParameters();
+          for (int i = 0, psiParametersLength = psiParameters.length; i < psiParametersLength; i++) {
+            PsiParameter psiParameter = psiParameters[i];
+            final PsiModifierList modifierList = psiParameter.getModifierList();
+            if (modifierList != null && modifierList.findAnnotation("com.intellij.testFramework.TestDataFile") != null) {
+              processCallArgument(expression, argumentMap, result, i);
+              haveAnnotatedParameters = true;
+            }
+          }
+          if (expression.getMethodExpression().getQualifierExpression() == null && !haveAnnotatedParameters) {
             result.addAll(collectTestDataReferences(callee, buildArgumentMap(expression, callee)));
           }
         }

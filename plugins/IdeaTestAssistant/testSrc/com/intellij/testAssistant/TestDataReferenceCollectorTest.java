@@ -28,12 +28,6 @@ import java.util.List;
  */
 @TestDataPath("$CONTENT_ROOT/testData/")
 public class TestDataReferenceCollectorTest extends LightCodeInsightFixtureTestCase {
-  public void testFixtureConfigureByFile() throws Exception {
-    final List<String> references = doTest();
-    assertEquals(1, references.size());
-    assertEquals("fixtureConfigureByFile", references.get(0));
-  }
-
   public void testDoTestParameters() throws Exception {
     final List<String> references = doTest();
     assertEquals(1, references.size());
