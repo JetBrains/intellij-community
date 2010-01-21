@@ -4,7 +4,7 @@
   <executable name="pycharm"
               type="1"
               iconSet="true"
-              iconFile="../resoures/PyCharm.ico"
+              iconFile="../resources/PyCharm.ico"
               executableDir="bin"
               redirectStderr="false"
               stderrFile="error.log"
