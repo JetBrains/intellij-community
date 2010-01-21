@@ -8,20 +8,15 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
-import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
 
 /**
  * Test highlighting added by annotators.
+ *
  * @author yole
  */
 public class PythonHighlightingTest extends PyLightFixtureTestCase {
-  @NonNls
-  protected String getTestDataPath() {
-    return PythonTestUtil.getTestDataPath() + "/highlighting/";
-  }
-
   public void testDeclarations() throws Exception {
     EditorColorsManager manager = EditorColorsManager.getInstance();
     EditorColorsScheme scheme = (EditorColorsScheme)manager.getGlobalScheme().clone();
@@ -89,7 +84,7 @@ public class PythonHighlightingTest extends PyLightFixtureTestCase {
   }
 
   public void testStringMixedSeparatorsOK() throws Exception {   // PY-299
-    doTest();    
+    doTest();
   }
 
   public void testStringBytesLiteralOK() throws Exception {
@@ -103,7 +98,7 @@ public class PythonHighlightingTest extends PyLightFixtureTestCase {
   public void testKeywordOnlyArguments() throws Exception {
     doTest(LanguageLevel.PYTHON30, true, false);
   }
-  
+
   public void testMalformedStringTripleQuoteUnterminated() throws Exception {
     doTest();
   }
@@ -134,11 +129,11 @@ public class PythonHighlightingTest extends PyLightFixtureTestCase {
   }
 
   private void doTest() throws Exception {
-    myFixture.testHighlighting(true, true, false, getTestName(true) + PyNames.DOT_PY);
+    myFixture.testHighlighting(true, true, false, "/highlighting/" + getTestName(true) + PyNames.DOT_PY);
   }
 
   private void doTest(boolean checkWarnings, boolean checkInfos) throws Exception {
-    myFixture.testHighlighting(checkWarnings, checkInfos, false, getTestName(true) + PyNames.DOT_PY);
+    myFixture.testHighlighting(checkWarnings, checkInfos, false, "/highlighting/" + getTestName(true) + PyNames.DOT_PY);
   }
 
 }
