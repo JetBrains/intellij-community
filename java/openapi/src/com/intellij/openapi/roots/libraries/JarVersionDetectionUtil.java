@@ -66,7 +66,7 @@ public class JarVersionDetectionUtil {
       for (OrderEntry library : ModuleRootManager.getInstance(module).getOrderEntries()) {
         if (library instanceof LibraryOrderEntry) {
           VirtualFile file = LibrariesHelper.getInstance().findJarByClass(((LibraryOrderEntry)library).getLibrary(), detectionClass);
-          if (file != null) {
+          if (file != null && file.getFileSystem() instanceof JarFileSystem) {
             return JarFileSystem.getInstance().getJarFile(file);
           }
         }
