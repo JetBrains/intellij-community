@@ -363,6 +363,10 @@ public abstract class UsefulTestCase extends TestCase {
     if (StringUtil.isEmpty(name)) {
       return "";
     }
+    return getTestName(name, lowercaseFirstLetter);
+  }
+
+  public static String getTestName(String name, boolean lowercaseFirstLetter) {
     if (lowercaseFirstLetter && !isAllUppercaseName(name)) {
       name = Character.toLowerCase(name.charAt(0)) + name.substring(1);
     }
