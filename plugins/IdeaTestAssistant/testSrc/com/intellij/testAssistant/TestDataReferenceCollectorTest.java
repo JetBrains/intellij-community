@@ -53,6 +53,12 @@ public class TestDataReferenceCollectorTest extends LightCodeInsightFixtureTestC
     assertEquals("before", references.get(0));
   }
 
+  public void testTestNameAsParameter() throws Exception {
+    final List<String> references = doTest();
+    assertEquals(1, references.size());
+    assertEquals("beforeTestNameAsParameter", references.get(0));
+  }
+
   private List<String> doTest() throws Exception {
     myFixture.configureByFile("referenceCollector/" + getTestName(false) + ".java");
     final PsiMethod theMethod = ((PsiJavaFile)myFixture.getFile()).getClasses()[0].getMethods()[0];
