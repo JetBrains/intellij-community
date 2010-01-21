@@ -154,7 +154,6 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
           new ReformatCodeProcessor(project, dir, dialog.isIncludeSubdirectories()).run();
         }
       }
-      return;
     }
 
     final TextRange range;
