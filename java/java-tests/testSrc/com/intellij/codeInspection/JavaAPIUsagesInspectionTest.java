@@ -27,7 +27,6 @@ public class JavaAPIUsagesInspectionTest extends InspectionTestCase {
 
   private void doTest() throws Exception {
     final Java15APIUsageInspection usageInspection = new Java15APIUsageInspection();
-    usageInspection.API = 1;
     doTest("usage1.5/" + getTestName(true), new LocalInspectionToolWrapper(usageInspection), "java 1.5");
   }
 
