@@ -352,7 +352,7 @@ def layoutMac(Map args, String target) {
     }
   }
 
-  ant.copy(file: "$home/community/build/conf/mac/Contents/MacOS/idea", todir: "$target/Contents/MacOS/pycharm")
+  ant.copy(file: "$home/community/build/conf/mac/Contents/MacOS/idea", tofile: "$target/Contents/MacOS/pycharm")
 
   ant.replace(file: "$target/Contents/Info.plist") {
     replacefilter(token: "@@build@@", value: args.buildName)
