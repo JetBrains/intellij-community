@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 public class LineMarkersPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
   public LineMarkersPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);
-    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, null, new int[]{Pass.UPDATE_ALL}, false, Pass.LINE_MARKERS);
+    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.VISIBLE_LINE_MARKERS}, new int[]{Pass.UPDATE_ALL}, false, Pass.LINE_MARKERS);
   }
 
   @NonNls

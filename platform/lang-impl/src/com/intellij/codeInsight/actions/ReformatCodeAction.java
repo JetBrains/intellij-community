@@ -16,21 +16,33 @@
 
 package com.intellij.codeInsight.actions;
 
+import com.intellij.application.options.editor.EditorOptions;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.lang.LanguageFormatting;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 import java.util.ArrayList;
 
 public class ReformatCodeAction extends AnAction implements DumbAware {
@@ -125,35 +137,55 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       }
     }
 
-    final LayoutCodeDialog dialog = new LayoutCodeDialog(project, CodeInsightBundle.message("process.reformat.code"), file, dir,
-                                                         hasSelection ? Boolean.TRUE : Boolean.FALSE, HELP_ID);
-    dialog.show();
-    if (!dialog.isOK()) return;
+    boolean optimizeImports = ReformatFilesDialog.isOptmizeImportsOptionOn();
+    if (EditorSettingsExternalizable.getInstance().getOptions().SHOW_REFORMAT_DIALOG) {
+      final LayoutCodeDialog dialog = new LayoutCodeDialog(project, CodeInsightBundle.message("process.reformat.code"), file, dir,
+                                                           hasSelection ? Boolean.TRUE : Boolean.FALSE, HELP_ID);
+      dialog.show();
+      if (!dialog.isOK()) return;
+      EditorSettingsExternalizable.getInstance().getOptions().SHOW_REFORMAT_DIALOG = !dialog.isDoNotAskMe();
+      updateShowDialogSetting(dialog, "\"Reformat Code\" dialog disabled");
+      optimizeImports = dialog.isOptimizeImports();
+      if (dialog.isProcessDirectory()){
+        if (optimizeImports) {
+          new ReformatAndOptimizeImportsProcessor(project, dir, dialog.isIncludeSubdirectories()).run();
+        }
+        else {
+          new ReformatCodeProcessor(project, dir, dialog.isIncludeSubdirectories()).run();
+        }
+      }
+      return;
+    }
 
-    final boolean optimizeImports = dialog.isOptimizeImports();
-    if (dialog.isProcessDirectory()){
-      if (optimizeImports) {
-        new ReformatAndOptimizeImportsProcessor(project, dir, dialog.isIncludeSubdirectories()).run();
-      }
-      else {
-        new ReformatCodeProcessor(project, dir, dialog.isIncludeSubdirectories()).run();
-      }
+    final TextRange range;
+    if (editor != null && editor.getSelectionModel().hasSelection()){
+      range = new TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
     }
     else{
-      final TextRange range;
-      if (editor != null && dialog.isProcessSelectedText()){
-        range = new TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
-      }
-      else{
-        range = null;
-      }
+      range = null;
+    }
 
-      if (optimizeImports && range == null) {
-        new ReformatAndOptimizeImportsProcessor(project, file).run();
-      }
-      else {
-        new ReformatCodeProcessor(project, file, range).run();
-      }
+    if (optimizeImports && range == null) {
+      new ReformatAndOptimizeImportsProcessor(project, file).run();
+    }
+    else {
+      new ReformatCodeProcessor(project, file, range).run();
+    }
+  }
+
+  public static void updateShowDialogSetting(LayoutCodeDialog dialog, String title) {
+    if (dialog.isDoNotAskMe()) {
+      Notifications.Bus.notify(new Notification("settings", title,
+                                                "<html>You can re-enable the dialog on the <a href=''>IDE Settings -> Editor</a> pane</html>",
+                                                NotificationType.INFORMATION, new NotificationListener() {
+          public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
+            if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+              EditorOptions editorOptions = ShowSettingsUtil.getInstance().findApplicationConfigurable(EditorOptions.class);
+              IdeFrame ideFrame = WindowManagerEx.getInstanceEx().findFrameFor(null);
+              ShowSettingsUtil.getInstance().editConfigurable((JFrame)ideFrame, editorOptions);
+            }
+          }
+        }));
     }
   }
 

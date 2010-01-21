@@ -22,6 +22,8 @@ import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDialog;
+import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -96,6 +98,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         return file.getFileType() == StdFileTypes.PATCH || file.getFileType() == FileTypes.PLAIN_TEXT;
       }
     };
+    descriptor.setTitle(VcsBundle.message("patch.apply.select.title"));
     myUpdater = new MyUpdater();
     myPatchFile = new TextFieldWithBrowseButton();
     myPatchFile.addBrowseFolderListener(VcsBundle.message("patch.apply.select.title"), "", project, descriptor);
@@ -148,6 +151,11 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     myCommitLegendPanel = new CommitLegendPanel(myInfoCalculator);
 
     init();
+    final FileChooserDialog fileChooserDialog = FileChooserFactory.getInstance().createFileChooser(descriptor, project);
+    final VirtualFile[] files = fileChooserDialog.choose(null, project);
+    if (files != null && files.length > 0) {
+      init(files[0]);
+    }
   }
 
   @Override

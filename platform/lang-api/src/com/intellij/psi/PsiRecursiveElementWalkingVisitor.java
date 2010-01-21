@@ -16,6 +16,7 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.progress.ProgressManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -26,7 +27,7 @@ import java.util.List;
 public abstract class PsiRecursiveElementWalkingVisitor extends PsiElementVisitor  {
   private final boolean myVisitAllFileRoots;
   private final PsiWalkingState myWalkingState = new PsiWalkingState(this){
-    public void elementFinished(PsiElement element) {
+    public void elementFinished(@NotNull PsiElement element) {
       PsiRecursiveElementWalkingVisitor.this.elementFinished(element);
     }
   };

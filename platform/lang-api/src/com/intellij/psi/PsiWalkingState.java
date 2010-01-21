@@ -17,6 +17,7 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author cdr
@@ -26,19 +27,19 @@ public abstract class PsiWalkingState extends WalkingState<PsiElement> {
   private final PsiElementVisitor myVisitor;
 
   private static class PsiTreeGuide implements TreeGuide<PsiElement> {
-    public PsiElement getNextSibling(PsiElement element) {
+    public PsiElement getNextSibling(@NotNull PsiElement element) {
       return element.getNextSibling();
     }
 
-    public PsiElement getPrevSibling(PsiElement element) {
+    public PsiElement getPrevSibling(@NotNull PsiElement element) {
       return element.getPrevSibling();
     }
 
-    public PsiElement getFirstChild(PsiElement element) {
+    public PsiElement getFirstChild(@NotNull PsiElement element) {
       return element.getFirstChild();
     }
 
-    public PsiElement getParent(PsiElement element) {
+    public PsiElement getParent(@NotNull PsiElement element) {
       return element.getParent();
     }
 
@@ -51,12 +52,12 @@ public abstract class PsiWalkingState extends WalkingState<PsiElement> {
   }
 
   @Override
-  public void visit(PsiElement element) {
+  public void visit(@NotNull PsiElement element) {
     element.accept(myVisitor);
   }
 
   @Override
-  public void elementStarted(PsiElement element) {
+  public void elementStarted(@NotNull PsiElement element) {
     if (!startedWalking && element instanceof PsiCompiledElement) {
       // do not walk inside compiled PSI since getNextSibling() is too slow there
       LOG.error(element+"; Do not use walking visitor inside compiled PSI since getNextSibling() is too slow there");

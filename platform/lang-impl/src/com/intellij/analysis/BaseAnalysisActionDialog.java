@@ -144,12 +144,15 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     boolean searchInLib = file != null && (fileIndex.isInLibraryClasses(file) || fileIndex.isInLibrarySource(file));
 
 
-    String preselect = !StringUtil.isEmptyOrSpaces(myAnalysisOptions.CUSTOM_SCOPE_NAME)
-                       ? myAnalysisOptions.CUSTOM_SCOPE_NAME
-                       : FindSettings.getInstance().getDefaultScopeName();
+    String preselect = StringUtil.isEmptyOrSpaces(myAnalysisOptions.CUSTOM_SCOPE_NAME)
+                       ? FindSettings.getInstance().getDefaultScopeName()
+                       : myAnalysisOptions.CUSTOM_SCOPE_NAME;
     if (searchInLib && GlobalSearchScope.projectScope(myProject).getDisplayName().equals(preselect)) {
+      preselect = GlobalSearchScope.allScope(myProject).getDisplayName();
+    }
+    if (GlobalSearchScope.allScope(myProject).getDisplayName().equals(preselect)) {
       myAnalysisOptions.SCOPE_TYPE = AnalysisScope.CUSTOM;
-      myAnalysisOptions.CUSTOM_SCOPE_NAME = preselect = GlobalSearchScope.allScope(myProject).getDisplayName();
+      myAnalysisOptions.CUSTOM_SCOPE_NAME = preselect;
     }
 
     //custom scope
