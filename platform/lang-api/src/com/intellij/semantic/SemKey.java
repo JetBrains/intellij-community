@@ -35,6 +35,10 @@ public class SemKey<T extends SemElement> {
     myUniqueId = counter.getAndIncrement();
   }
 
+  public SemKey<? super T>[] getSupers() {
+    return mySupers;
+  }
+
   public boolean isKindOf(SemKey<?> another) {
     if (another == this) return true;
     for (final SemKey<? super T> superKey : mySupers) {
