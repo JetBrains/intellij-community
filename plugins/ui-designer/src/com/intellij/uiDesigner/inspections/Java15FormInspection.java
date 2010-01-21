@@ -19,7 +19,9 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -64,8 +66,9 @@ public class Java15FormInspection extends BaseFormInspection {
         profileEntry = ((LocalInspectionToolWrapper) profileEntry).getTool();
       }
       final Java15APIUsageInspection tool = (Java15APIUsageInspection)profileEntry;
-      if (Java15APIUsageInspection.isForbiddenApiUsage(getter, tool.API)) {
-        registerError(component, collector, prop, "@since " + tool.getApiPresentable());
+      final LanguageLevel languageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module);
+      if (Java15APIUsageInspection.isForbiddenApiUsage(getter, languageLevel)) {
+        registerError(component, collector, prop, "@since " + tool.getPresentable(languageLevel));
       }
     }
   }

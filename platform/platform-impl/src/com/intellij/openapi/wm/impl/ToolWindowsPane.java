@@ -23,6 +23,8 @@ import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ToolWindowType;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.impl.commands.FinalizableCommand;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.HashMap;
@@ -371,21 +373,58 @@ final class ToolWindowsPane extends JPanel{
   }
 
   public void stretchWidth(ToolWindow wnd, int value) {
-    JComponent cmp = getComponentAt(wnd.getAnchor());
-    if (cmp == null) return;
-
-    stretch(myHorizontalSplitter, cmp, cmp.getSize().width, value, 0, getSize().width);
+    stretch(wnd, value);
   }
 
   public void stretchHeight(ToolWindow wnd, int value) {
-    JComponent cmp = getComponentAt(wnd.getAnchor());
-    if (cmp == null) return;
-
-    stretch(myVerticalSplitter, cmp, cmp.getSize().height, value, 0, getSize().height);
+    stretch(wnd, value);
   }
 
-  private void stretch(ThreeComponentsSplitter splitter, JComponent cmp, int currentValue, int incValue, int minValue, int maxValue) {
-    int actualSize = currentValue + incValue;
+  private void stretch(ToolWindow wnd, int value) {
+    if (!wnd.isVisible()) return;
+
+    Resizer resizer = null;
+    Component cmp = null;
+
+    if (wnd.getType() == ToolWindowType.DOCKED) {
+      cmp = getComponentAt(wnd.getAnchor());
+
+      if (cmp != null) {
+        if (wnd.getAnchor().isHorizontal()) {
+          resizer = myVerticalSplitter.getFirstComponent() == cmp ? new Resizer.Splitter.FirstComponent(myVerticalSplitter) : new Resizer.Splitter.LastComponent(myVerticalSplitter);
+        } else {
+          resizer = myHorizontalSplitter.getFirstComponent() == cmp ? new Resizer.Splitter.FirstComponent(myHorizontalSplitter) : new Resizer.Splitter.LastComponent(myHorizontalSplitter);
+        }
+      }
+    } if (wnd.getType() == ToolWindowType.SLIDING) {
+      cmp = wnd.getComponent();
+      while (cmp != null) {
+        if (cmp.getParent() == myLayeredPane) break;
+        cmp = cmp.getParent();
+      }
+
+      if (cmp != null) {
+        if (wnd.getAnchor() == ToolWindowAnchor.TOP) {
+          resizer = new Resizer.LayeredPane.Top(cmp);
+        } else if (wnd.getAnchor() == ToolWindowAnchor.BOTTOM) {
+          resizer = new Resizer.LayeredPane.Bottom(cmp);
+        } else if (wnd.getAnchor() == ToolWindowAnchor.LEFT) {
+          resizer = new Resizer.LayeredPane.Left(cmp);
+        } else if (wnd.getAnchor() == ToolWindowAnchor.RIGHT) {
+          resizer = new Resizer.LayeredPane.Right(cmp);
+        }
+      }
+    }
+
+    if (resizer == null || cmp == null) return;
+
+    int currentValue = wnd.getAnchor().isHorizontal() ? cmp.getHeight() : cmp.getWidth();
+
+    int actualSize = currentValue + value;
+
+    int minValue = wnd.getAnchor().isHorizontal() ? ((ToolWindowEx)wnd).getDecorator().getTitlePanel().getPreferredSize().height : 16 + myHorizontalSplitter.getDividerWidth();
+    int maxValue = wnd.getAnchor().isHorizontal() ? myLayeredPane.getHeight() : myLayeredPane.getWidth();
+
 
     if (actualSize < minValue) {
       actualSize = minValue;
@@ -395,10 +434,108 @@ final class ToolWindowsPane extends JPanel{
       actualSize = maxValue;
     }
 
-    if (splitter.getFirstComponent() == cmp) {
-      splitter.setFirstSize(actualSize);
-    } else if (splitter.getLastComponent() == cmp) {
-      splitter.setLastSize(actualSize);
+    resizer.setSize(actualSize);
+  }
+
+
+  static interface Resizer {
+    void setSize(int size);
+
+
+    abstract static class Splitter implements Resizer {
+      ThreeComponentsSplitter mySplitter;
+
+      Splitter(ThreeComponentsSplitter splitter) {
+        mySplitter = splitter;
+      }
+
+      static class FirstComponent extends Splitter {
+        FirstComponent(ThreeComponentsSplitter splitter) {
+          super(splitter);
+        }
+
+        public void setSize(int size) {
+          mySplitter.setFirstSize(size);
+        }
+      }
+
+      static class LastComponent extends Splitter {
+        LastComponent(ThreeComponentsSplitter splitter) {
+          super(splitter);
+        }
+
+        public void setSize(int size) {
+          mySplitter.setLastSize(size);
+        }
+      }
+    }
+
+    abstract static class LayeredPane implements Resizer {
+      Component myComponent;
+
+      protected LayeredPane(Component component) {
+        myComponent = component;
+      }
+
+      public final void setSize(int size) {
+        _setSize(size);
+        if (myComponent.getParent() instanceof JComponent) {
+          JComponent parent = (JComponent)myComponent;
+          parent.revalidate();
+          parent.repaint();
+        }
+      }
+
+      abstract void _setSize(int size);
+
+      static class Left extends LayeredPane {
+
+        Left(Component component) {
+          super(component);
+        }
+
+        public void _setSize(int size) {
+          myComponent.setSize(size, myComponent.getHeight());
+        }
+      }
+
+      static class Right extends LayeredPane {
+        Right(Component component) {
+          super(component);
+        }
+
+        public void _setSize(int size) {
+          Rectangle bounds = myComponent.getBounds();
+          int delta = size - bounds.width;
+          bounds.x -= delta;
+          bounds.width += delta;
+          myComponent.setBounds(bounds);
+        }
+      }
+
+      static class Top extends LayeredPane {
+        Top(Component component) {
+          super(component);
+        }
+
+        public void _setSize(int size) {
+          myComponent.setSize(myComponent.getWidth(), size);
+        }
+      }
+
+      static class Bottom extends LayeredPane {
+        Bottom(Component component) {
+          super(component);
+        }
+
+        public void _setSize(int size) {
+          Rectangle bounds = myComponent.getBounds();
+          int delta = size - bounds.height;
+          bounds.y -= delta;
+          bounds.height += delta;
+          myComponent.setBounds(bounds);
+        }
+      }
     }
   }
 

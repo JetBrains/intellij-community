@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.List;
 
 /**
@@ -27,6 +28,7 @@ import java.util.List;
  * editor gutter.
  *
  * @author max
+ * @author Konstantin Bulenkov
  * @see EditorGutter#registerTextAnnotation(TextAnnotationGutterProvider)
  */
 public interface TextAnnotationGutterProvider {
@@ -47,6 +49,18 @@ public interface TextAnnotationGutterProvider {
 
   @Nullable
   ColorKey getColor(int line, Editor editor);
+
+  /**
+   * Returns the background color for the text
+   *
+   * @since 9.0.2
+   *
+   * @param line the line for which the background color is requested.
+   * @param editor the editor in which the text will be drawn.
+   * @return the text to draw, or null if no text should be drawn.
+   */
+  @Nullable
+  Color getBgColor(int line, Editor editor);
 
   /***
    * enables annotation view modifications

@@ -38,7 +38,7 @@ import java.nio.charset.Charset;
 
 public class EditorSettingsExternalizable implements NamedJDOMExternalizable, ExportableApplicationComponent, Cloneable {
   //Q: make it interface?
-  private static class OptionSet implements Cloneable {
+  public static class OptionSet implements Cloneable {
     public String LINE_SEPARATOR;
     public boolean IS_VIRTUAL_SPACE = true;
     public boolean IS_CARET_INSIDE_TABS;
@@ -68,6 +68,9 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
 
     public boolean RENAME_VARIABLES_INPLACE = true;
     public boolean REFRAIN_FROM_SCROLLING = false;
+
+    public boolean SHOW_REFORMAT_DIALOG = true;
+    public boolean SHOW_OPIMIZE_IMPORTS_DIALOG = true;
 
     public Object clone() {
       try {
@@ -129,6 +132,10 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
 
   public String getExternalFileName() {
     return "editor";
+  }
+
+  public OptionSet getOptions() {
+    return myOptions;
   }
 
   public boolean isRightMarginShown() {

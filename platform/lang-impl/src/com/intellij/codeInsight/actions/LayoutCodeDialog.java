@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.LanguageImportStatements;
@@ -24,11 +25,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ui.OptionsDialog;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
@@ -42,6 +46,8 @@ public class LayoutCodeDialog extends DialogWrapper {
   private JRadioButton myRbDirectory;
   private JCheckBox myCbIncludeSubdirs;
   private JCheckBox myCbOptimizeImports;
+  private JCheckBox myDoNotAskMeCheckBox;
+
   public static final @NonNls String OPTIMIZE_IMPORTS_KEY = "LayoutCode.optimizeImports";
   private final String myHelpId;
 
@@ -105,9 +111,12 @@ public class LayoutCodeDialog extends DialogWrapper {
     myCbIncludeSubdirs.setEnabled(myRbDirectory.isSelected());
     myCbOptimizeImports.setEnabled(
       !myRbSelectedText.isSelected() && !(myFile != null && LanguageImportStatements.INSTANCE.forFile(myFile) == null && myRbFile.isSelected()));
+
+    myDoNotAskMeCheckBox.setEnabled(!myRbDirectory.isSelected());
+    myRbDirectory.setEnabled(!myDoNotAskMeCheckBox.isSelected());
   }
 
-  protected JComponent createNorthPanel() {
+  protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
     panel.setBorder(BorderFactory.createEmptyBorder(4, 8, 8, 0));
     GridBagConstraints gbConstraints = new GridBagConstraints();
@@ -165,19 +174,16 @@ public class LayoutCodeDialog extends DialogWrapper {
     return panel;
   }
 
-  protected JComponent createCenterPanel() {
-    JPanel panel = new JPanel(new GridBagLayout());
-
-    GridBagConstraints gbConstraints = new GridBagConstraints();
-    gbConstraints.gridy = 0;
-    gbConstraints.gridx = 0;
-    gbConstraints.gridwidth = 1;
-    gbConstraints.gridheight = 1;
-    gbConstraints.weightx = 1;
-    gbConstraints.insets = new Insets(0, 4, 0, 0);
-    gbConstraints.fill = GridBagConstraints.BOTH;
-
-    return panel;
+  @Override
+  protected JComponent createSouthPanel() {
+    JComponent southPanel = super.createSouthPanel();
+    myDoNotAskMeCheckBox = new JCheckBox(CommonBundle.message("dialog.options.do.not.show"));
+    myDoNotAskMeCheckBox.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        updateState();
+      }
+    });
+    return OptionsDialog.addDoNotShowCheckBox(southPanel, myDoNotAskMeCheckBox);
   }
 
   protected Action[] createActions() {
@@ -202,6 +208,10 @@ public class LayoutCodeDialog extends DialogWrapper {
 
   public boolean isOptimizeImports() {
     return myCbOptimizeImports.isSelected();
+  }
+
+  boolean isDoNotAskMe() {
+    return myDoNotAskMeCheckBox.isSelected(); 
   }
 
   protected void doOKAction() {

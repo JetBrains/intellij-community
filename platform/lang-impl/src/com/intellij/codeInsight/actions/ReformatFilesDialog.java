@@ -47,7 +47,7 @@ public class ReformatFilesDialog extends DialogWrapper {
     super.doOKAction();
   }
 
-  private boolean isOptmizeImportsOptionOn() {
+  static boolean isOptmizeImportsOptionOn() {
     return Boolean.valueOf(PropertiesComponent.getInstance().getValue(LayoutCodeDialog.OPTIMIZE_IMPORTS_KEY));
   }
 

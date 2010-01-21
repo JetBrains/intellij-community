@@ -17,6 +17,7 @@ package com.intellij.openapi.wm.ex;
 
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowType;
+import com.intellij.openapi.wm.impl.InternalDecorator;
 import org.jetbrains.annotations.NonNls;
 
 import java.beans.PropertyChangeListener;
@@ -43,6 +44,8 @@ public interface ToolWindowEx extends ToolWindow {
   void stretchWidth(int value);
 
   void stretchHeight(int value);
+
+  InternalDecorator getDecorator();
 
 
 }

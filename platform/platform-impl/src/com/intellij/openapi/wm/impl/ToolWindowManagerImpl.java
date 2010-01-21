@@ -1703,14 +1703,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   public void stretchWidth(ToolWindowImpl toolWindow, int value) {
-    if (!toolWindow.isVisible()) return;
-
     myToolWindowsPane.stretchWidth(toolWindow, value);
   }
 
   public void stretchHeight(ToolWindowImpl toolWindow, int value) {
-    if (!toolWindow.isVisible()) return;
-
     myToolWindowsPane.stretchHeight(toolWindow, value);
   }
 

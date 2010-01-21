@@ -28,12 +28,6 @@ import java.util.List;
  */
 @TestDataPath("$CONTENT_ROOT/testData/")
 public class TestDataReferenceCollectorTest extends LightCodeInsightFixtureTestCase {
-  public void testFixtureConfigureByFile() throws Exception {
-    final List<String> references = doTest();
-    assertEquals(1, references.size());
-    assertEquals("fixtureConfigureByFile", references.get(0));
-  }
-
   public void testDoTestParameters() throws Exception {
     final List<String> references = doTest();
     assertEquals(1, references.size());
@@ -51,6 +45,12 @@ public class TestDataReferenceCollectorTest extends LightCodeInsightFixtureTestC
     final List<String> references = doTest();
     assertEquals(1, references.size());
     assertEquals("before", references.get(0));
+  }
+
+  public void testTestNameAsParameter() throws Exception {
+    final List<String> references = doTest();
+    assertEquals(1, references.size());
+    assertEquals("beforeTestNameAsParameter", references.get(0));
   }
 
   private List<String> doTest() throws Exception {

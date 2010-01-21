@@ -220,6 +220,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
       JLabel namePrompt = new JLabel();
       myNameField = new EditorTextField(myMethod.getName());
       namePrompt.setText(RefactoringBundle.message("name.prompt"));
+      namePrompt.setLabelFor(myNameField);
       panel.add(namePrompt);
       panel.add(myNameField);
       final DocumentListener documentListener = new DocumentListener() {
@@ -244,6 +245,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
       final Document document = PsiDocumentManager.getInstance(myProject).getDocument(myReturnTypeCodeFragment);
       myReturnTypeField = new EditorTextField(document, myProject, StdFileTypes.JAVA);
       typePrompt.setText(RefactoringBundle.message("changeSignature.return.type.prompt"));
+      typePrompt.setLabelFor(myReturnTypeField);
       panel.add(myReturnTypeField);
       myReturnTypeField.addDocumentListener(documentListener);
     }
@@ -293,7 +295,8 @@ public class ChangeSignatureDialog extends RefactoringDialog {
 
   private JPanel createParametersPanel() {
     myParametersTable = new Table(myParametersTableModel);
-    myParametersTable.setFocusCycleRoot(true);
+    myParametersTable.setCellSelectionEnabled(true);
+    //myParametersTable.setFocusCycleRoot(true);
     final int minWidth = new JCheckBox().getPreferredSize().width;
     final TableColumn anyVarColumn = myParametersTable.getColumnModel().getColumn(3);
     final int headerWidth = myParametersTable.getFontMetrics(myParametersTable.getFont()).stringWidth(ParameterTableModel.ANY_VAR_COLUMN_NAME) + 8;

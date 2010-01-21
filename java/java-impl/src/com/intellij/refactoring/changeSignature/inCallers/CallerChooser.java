@@ -196,8 +196,13 @@ public abstract class CallerChooser extends DialogWrapper {
   }
 
   private Tree createTree() {
-    final CheckedTreeNode root = new MethodNode(null, new HashSet<PsiMethod>());
-    myRoot = new MethodNode(myMethod, new HashSet<PsiMethod>());
+    final Runnable cancelCallback = new Runnable() {
+      public void run() {
+        close(CANCEL_EXIT_CODE);
+      }
+    };
+    final CheckedTreeNode root = new MethodNode(null, new HashSet<PsiMethod>(), cancelCallback);
+    myRoot = new MethodNode(myMethod, new HashSet<PsiMethod>(), cancelCallback);
     root.add(myRoot);
     final CheckboxTree.CheckboxTreeCellRenderer cellRenderer = new CheckboxTree.CheckboxTreeCellRenderer(true, false) {
       public void customizeCellRenderer(JTree tree,

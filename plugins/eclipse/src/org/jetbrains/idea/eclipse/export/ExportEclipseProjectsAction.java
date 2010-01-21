@@ -78,7 +78,7 @@ public class ExportEclipseProjectsAction extends AnAction implements DumbAware {
 
     //todo suggest smth with hierarchy modules
     if (!incompatibleModules.isEmpty()) {
-      if (Messages.showOkCancelDialog(project, "Eclipse incompatible modules found. Would you like to proceed and possibly loose your configurations?", "Eclipse Incompatible Modules Found", Messages.getWarningIcon()) != DialogWrapper.OK_EXIT_CODE) {
+      if (Messages.showOkCancelDialog(project, "Eclipse incompatible modules found. Would you like to proceed and possibly lose your configurations?", "Eclipse Incompatible Modules Found", Messages.getWarningIcon()) != DialogWrapper.OK_EXIT_CODE) {
         return;
       }
     } else if (modules.isEmpty()){

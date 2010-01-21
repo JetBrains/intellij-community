@@ -27,6 +27,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Condition;
@@ -724,5 +725,12 @@ public class PopupFactoryImpl extends JBPopupFactory {
     builder.setFillColor(fillColor);
 
     return builder;
+  }
+
+  @Override
+  public BalloonBuilder createHtmlTextBalloonBuilder(@NotNull String htmlContent,
+                                                     MessageType messageType,
+                                                     @Nullable HyperlinkListener listener) {
+    return createHtmlTextBalloonBuilder(htmlContent, messageType.getDefaultIcon(), messageType.getPopupBackground(), listener);
   }
 }

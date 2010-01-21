@@ -223,6 +223,10 @@ public class FileBasedIndex implements ApplicationComponent {
       }
     });
 
+    myChangedFilesCollector = new ChangedFilesCollector();
+  }
+
+  public void initComponent() {
     final File workInProgressFile = getMarkerFile();
     if (workInProgressFile.exists()) {
       // previous IDEA session was closed incorrectly, so drop all indices
@@ -256,10 +260,12 @@ public class FileBasedIndex implements ApplicationComponent {
         }
       }
 
-      myChangedFilesCollector = new ChangedFilesCollector();
-      vfManager.addVirtualFileListener(myChangedFilesCollector);
+      myVfManager.addVirtualFileListener(myChangedFilesCollector);
 
       registerIndexableSet(new AdditionalIndexableFileSet());
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
     }
     finally {
       ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
@@ -430,9 +436,6 @@ public class FileBasedIndex implements ApplicationComponent {
   @NotNull
   public String getComponentName() {
     return "FileBasedIndex";
-  }
-
-  public void initComponent() {
   }
 
   public void disposeComponent() {

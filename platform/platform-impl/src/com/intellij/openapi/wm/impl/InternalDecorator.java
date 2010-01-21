@@ -16,6 +16,8 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.ResizeToolWindowAction;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -497,6 +499,14 @@ public final class InternalDecorator extends JPanel implements TestableUi, TypeS
       moveGroup.add(rightAction);
     }
     group.add(moveGroup);
+
+    DefaultActionGroup resize = new DefaultActionGroup(ActionsBundle.groupText("ResizeToolWindowGroup"), true);
+    resize.add(new ResizeToolWindowAction.Left(myToolWindow, this));
+    resize.add(new ResizeToolWindowAction.Right(myToolWindow, this));
+    resize.add(new ResizeToolWindowAction.Up(myToolWindow, this));
+    resize.add(new ResizeToolWindowAction.Down(myToolWindow, this));
+
+    group.add(resize);
 
     group.addSeparator();
     group.add(myHideAction);

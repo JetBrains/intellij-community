@@ -260,7 +260,7 @@ public class VariableInplaceRenamer {
           }
 
           final UsageInfo[] usageInfos = usages.toArray(new UsageInfo[usages.size()]);
-          for (final PsiNamedElement element : renamer.getRenames().keySet()) {
+          for (final PsiNamedElement element : renamer.getElements()) {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
               public void run() {
                 RenameUtil.doRenameGenericNamedElement(element, renamer.getRenames().get(element), RenameProcessor.extractUsagesForElement(element, usageInfos), null);

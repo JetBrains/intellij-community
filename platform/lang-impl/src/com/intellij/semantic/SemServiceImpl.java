@@ -25,6 +25,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -130,13 +131,17 @@ public class SemServiceImpl extends SemService{
       SemKey[] allKeys = map.keySet().toArray(new SemKey[map.size()]);
       for (final SemKey key : allKeys) {
         myProducers.put(key, map.get(key));
-        for (final SemKey concrete : allKeys) {
-          if (concrete.isKindOf(key)) {
-            myInheritors.putValue(key, concrete);
-          }
-        }
       }
-
+      ContainerUtil.process(allKeys, new Processor<SemKey>() {
+        public boolean process(SemKey key) {
+          myInheritors.putValue(key, key);
+          for (SemKey parent : key.getSupers()) {
+            myInheritors.putValue(parent, key);
+            process(parent);
+          }
+          return true;
+        }
+      });
       for (final SemKey each : myInheritors.keySet()) {
         final List<SemKey> inheritors = new ArrayList<SemKey>(myInheritors.get(each));
         Collections.sort(inheritors, KEY_COMPARATOR);
@@ -172,7 +177,7 @@ public class SemServiceImpl extends SemService{
   private List<SemElement> createSemElements(SemKey key, PsiElement psi) {
     List<SemElement> result = null;
     final Collection<NullableFunction<PsiElement, ? extends SemElement>> producers = myProducers.get(key);
-    if (!producers.isEmpty()) {
+    if (producers != null && !producers.isEmpty()) {
       for (final NullableFunction<PsiElement, ? extends SemElement> producer : producers) {
         final SemElement element = producer.fun(psi);
         if (element != null) {

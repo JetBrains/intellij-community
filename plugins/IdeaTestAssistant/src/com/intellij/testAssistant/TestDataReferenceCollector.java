@@ -19,10 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.testFramework.UsefulTestCase;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author yole
@@ -47,16 +44,19 @@ public class TestDataReferenceCollector {
       public void visitMethodCallExpression(PsiMethodCallExpression expression) {
         String callText = expression.getMethodExpression().getReferenceName();
         if (callText == null) return;
-        if (callText.equals("configureByFile") || callText.equals("checkResultByFile")) {
-          processCallArgument(expression, argumentMap, result, 0);
-        }
-        else if (callText.equals("doFileTest")) {
-          processCallArgument(expression, argumentMap, result, 0);
-          processCallArgument(expression, argumentMap, result, 1);
-        }
-        else if (expression.getMethodExpression().getQualifierExpression() == null) {
-          final PsiMethod callee = expression.resolveMethod();
-          if (callee != null) {
+        final PsiMethod callee = expression.resolveMethod();
+        if (callee != null) {
+          boolean haveAnnotatedParameters = false;
+          final PsiParameter[] psiParameters = callee.getParameterList().getParameters();
+          for (int i = 0, psiParametersLength = psiParameters.length; i < psiParametersLength; i++) {
+            PsiParameter psiParameter = psiParameters[i];
+            final PsiModifierList modifierList = psiParameter.getModifierList();
+            if (modifierList != null && modifierList.findAnnotation("com.intellij.testFramework.TestDataFile") != null) {
+              processCallArgument(expression, argumentMap, result, i);
+              haveAnnotatedParameters = true;
+            }
+          }
+          if (expression.getMethodExpression().getQualifierExpression() == null && !haveAnnotatedParameters) {
             result.addAll(collectTestDataReferences(callee, buildArgumentMap(expression, callee)));
           }
         }
@@ -68,35 +68,33 @@ public class TestDataReferenceCollector {
   private void processCallArgument(PsiMethodCallExpression expression, Map<String, String> argumentMap, List<String> result, final int index) {
     final PsiExpression[] arguments = expression.getArgumentList().getExpressions();
     if (arguments.length > index) {
-      String testDataFile = getReferencedFile(arguments [index], argumentMap);
+      String testDataFile = evaluate(arguments [index], argumentMap);
       if (testDataFile != null) {
         result.add(myTestDataPath + testDataFile);
       }
     }
   }
 
-  private static Map<String, String> buildArgumentMap(PsiMethodCallExpression expression, PsiMethod method) {
+  private Map<String, String> buildArgumentMap(PsiMethodCallExpression expression, PsiMethod method) {
     Map<String, String> result = new HashMap<String, String>();
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     final PsiExpression[] arguments = expression.getArgumentList().getExpressions();
     for (int i = 0; i < arguments.length && i < parameters.length; i++) {
-      if (arguments[i] instanceof PsiLiteralExpression) {
-        final Object value = ((PsiLiteralExpression)arguments[i]).getValue();
-        if (value instanceof String) {
-          result.put(parameters [i].getName(), (String) value);
-        }
+      String value = evaluate(arguments [i], Collections.<String, String>emptyMap());
+      if (value != null) {
+        result.put(parameters [i].getName(), value);
       }
     }
     return result;
   }
 
   @Nullable
-  private String getReferencedFile(PsiExpression expression, Map<String, String> arguments) {
+  private String evaluate(PsiExpression expression, Map<String, String> arguments) {
     if (expression instanceof PsiBinaryExpression) {
       PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
       if (binaryExpression.getOperationTokenType() == JavaTokenType.PLUS) {
-        String lhs = getReferencedFile(binaryExpression.getLOperand(), arguments);
-        String rhs = getReferencedFile(binaryExpression.getROperand(), arguments);
+        String lhs = evaluate(binaryExpression.getLOperand(), arguments);
+        String rhs = evaluate(binaryExpression.getROperand(), arguments);
         if (lhs != null && rhs != null) {
           return lhs + rhs;
         }
@@ -117,7 +115,7 @@ public class TestDataReferenceCollector {
       if (result instanceof PsiVariable) {
         final PsiExpression initializer = ((PsiVariable)result).getInitializer();
         if (initializer != null) {
-          return getReferencedFile(initializer, arguments);
+          return evaluate(initializer, arguments);
         }
 
       }
