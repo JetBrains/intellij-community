@@ -4,7 +4,7 @@
   <executable name="pycharm"
               type="1"
               iconSet="true"
-              iconFile="../../community/platform/icons/src/idea.ico"
+              iconFile="../resoures/PyCharm.ico"
               executableDir="bin"
               redirectStderr="false"
               stderrFile="error.log"
@@ -54,7 +54,6 @@
       <archive location="lib/log4j.jar" failOnError="true"/>
       <archive location="lib/jdom.jar" failOnError="true"/>
       <archive location="lib/extensions.jar" failOnError="true"/>
-      <archive location="${EXE4J_JVM_HOME}\..\lib\tools.jar" failOnError="true"/>
     </classPath>
     <nativeLibraryDirectories/>
   </java>

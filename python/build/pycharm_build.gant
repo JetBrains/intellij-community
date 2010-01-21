@@ -338,18 +338,27 @@ def layoutMac(Map args, String target) {
       fileset(dir: "$home/community/bin/mac")
       fileset(dir: "$home/community/bin/nix")
     }
+    dir("lib") {
+      fileset(dir: "$home/community/build/conf/mac/lib")
+    }
+    dir("Contents") {
+      dir("MacOS") {
+      }
+      dir("Resources") {
+        fileset(dir: "$home/python/resources", includes: "PyCharm.icns")
+      }
+      fileset(dir: "$home/python/build", includes: "Info.plist")
+    }
   }
 
-  ant.copy(todir: target) {
-    fileset(dir: "$home/community/build/conf/mac")
-  }
+  ant.copy(file: "$home/community/build/conf/mac/Contents/MacOS/idea", todir: "$target/Contents/MacOS/pycharm")
 
   ant.replace(file: "$target/Contents/Info.plist") {
     replacefilter(token: "@@build@@", value: args.buildName)
 
 
     replacefilter(token: "@@version@@", value: args.version)
-    replacefilter(token: "@@vmoptions@@", value: args.vmoptions + " -Xverify:none -XX:+UseCompressedOOPS -XX:+DoEscapeAnalysis -Didea.platform.prefix=Python")
+    replacefilter(token: "@@vmoptions@@", value: args.vmoptions + " -Xverify:none -XX:+UseCompressedOOPS -XX:+DoEscapeAnalysis")
     replacefilter(token: "@@system_selector@@", value: args.system_selector)
     replacefilter(token: "@@jdk_req@@", value: args.jdk_req)
   }
