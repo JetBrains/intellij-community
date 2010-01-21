@@ -31,6 +31,7 @@ import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.ui.RecentsManager;
 import com.intellij.util.IncorrectOperationException;
 
 import javax.swing.*;
@@ -54,6 +55,7 @@ public abstract class ExtractSuperBaseDialog extends RefactoringDialog {
   protected JTextField myExtractedSuperNameField;
   protected PackageNameReferenceEditorCombo myPackageNameField;
   protected DocCommentPanel myJavaDocPanel;
+  private static final String DESTINATION_PACKAGE_RECENT_KEY = "ExtractSuperBase.RECENT_KEYS";
 
 
   public ExtractSuperBaseDialog(Project project, PsiClass sourceClass, List<MemberInfo> members, String refactoringName) {
@@ -86,7 +88,7 @@ public abstract class ExtractSuperBaseDialog extends RefactoringDialog {
     if (file instanceof PsiJavaFile) {
       name = ((PsiJavaFile)file).getPackageName();
     }
-    myPackageNameField = new PackageNameReferenceEditorCombo(name, myProject, "ExtractSuperBase.RECENT_KEYS", RefactoringBundle.message("choose.destination.package"));
+    myPackageNameField = new PackageNameReferenceEditorCombo(name, myProject, DESTINATION_PACKAGE_RECENT_KEY, RefactoringBundle.message("choose.destination.package"));
   }
 
   private void initSourceClassField() {
@@ -170,6 +172,7 @@ public abstract class ExtractSuperBaseDialog extends RefactoringDialog {
       final String[] errorString = new String[]{null};
       final String extractedSuperName = getExtractedSuperName();
       final String packageName = getTargetPackageName();
+      RecentsManager.getInstance(myProject).registerRecentEntry(DESTINATION_PACKAGE_RECENT_KEY, packageName);
       final PsiManager manager = PsiManager.getInstance(myProject);
 
       if ("".equals(extractedSuperName)) {
