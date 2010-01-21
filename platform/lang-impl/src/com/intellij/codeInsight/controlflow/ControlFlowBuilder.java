@@ -18,15 +18,15 @@ import java.util.List;
 */
 public class ControlFlowBuilder {
   // Here we store all the instructions
-
-
   public List<Instruction> instructions;
 
+  // The last instruction
   public Instruction prevInstruction;
 
   // Here we store all the pending instructions with their scope
   public List<Pair<PsiElement, Instruction>> pending;
 
+  // Number of instructions already added
   public int instructionCount;
 
   public ControlFlowBuilder() {
