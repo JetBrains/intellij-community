@@ -16,14 +16,22 @@
 package com.intellij.cvsSupport2.ui.experts;
 
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
+import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.cvsBrowser.CvsElement;
 import com.intellij.cvsSupport2.cvsBrowser.CvsTree;
 import com.intellij.cvsSupport2.cvsBrowser.LoginAbortedException;
+import com.intellij.cvsSupport2.cvsExecution.ModalityContextImpl;
+import com.intellij.cvsSupport2.cvsoperations.common.LoginPerformer;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.util.Consumer;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
 import java.util.Observable;
 import java.util.Observer;
 
@@ -60,9 +68,28 @@ public class SelectCvsElementStep extends WizardStep {
     return myCvsTree.getCurrentSelection().length > 0;
   }
 
+  private boolean isLogged(final CvsRootConfiguration selectedConfiguration) {
+    final Ref<Boolean> errors = new Ref<Boolean>();
+    final LoginPerformer.MyProjectKnown performer = new LoginPerformer.MyProjectKnown(
+      myProject, Collections.<CvsEnvironment>singletonList(selectedConfiguration),
+      new Consumer<VcsException>() {
+        public void consume(VcsException e) {
+          errors.set(Boolean.TRUE);
+        }
+      });
+    final boolean logged = performer.loginAll(
+      new ModalityContextImpl(ModalityState.stateForComponent(mySelectCVSConfigurationStep.getComponent()), false), false);
+    if ((! logged) || (! errors.isNull())) {
+      return false;
+    }
+    return true;
+  }
+
   public boolean setActive() {
     CvsRootConfiguration selectedConfiguration =
       mySelectCVSConfigurationStep.getSelectedConfiguration();
+    if (! isLogged(selectedConfiguration)) return false;
+
     if (myCvsTree == null || !Comparing.equal(myConfiguration, selectedConfiguration)) {
       myConfiguration = selectedConfiguration;
       if (myConfiguration == null) return false;
