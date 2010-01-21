@@ -73,7 +73,7 @@ public abstract class Task implements TaskInfo {
     return myTitle;
   }
 
-  public final Task setTitle(final String title) {
+  public final Task setTitle(@NotNull String title) {
     myTitle = title;
     return this;
   }

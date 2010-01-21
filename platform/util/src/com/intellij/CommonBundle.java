@@ -18,6 +18,7 @@ package com.intellij;
 
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
@@ -51,7 +52,7 @@ public class CommonBundle {
     return bundle;
   }
 
-  public static String messageOrDefault(@Nullable final ResourceBundle bundle, final String key, final @Nullable String defaultValue, final Object... params) {
+  public static String messageOrDefault(@Nullable final ResourceBundle bundle, final String key, @Nullable final String defaultValue, final Object... params) {
     if (bundle == null) return defaultValue;
 
     String value;
@@ -82,6 +83,7 @@ public class CommonBundle {
     return messageOrDefault(bundle, key, null, params);
   }
 
+  @NotNull
   public static String getCancelButtonText() {
     return message("button.cancel");
   }
