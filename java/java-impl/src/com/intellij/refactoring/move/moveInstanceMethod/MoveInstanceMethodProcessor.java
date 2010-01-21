@@ -388,12 +388,20 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
           @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
             try {
               final PsiExpression qualifier = expression.getQualifierExpression();
+              final PsiElement resolved = expression.resolve();
               if (qualifier instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifier).isReferenceTo(myTargetVariable)) {
+                if (resolved instanceof PsiField) {
+                  for (PsiParameter parameter : myMethod.getParameterList().getParameters()) {
+                    if (Comparing.strEqual(parameter.getName(), ((PsiField)resolved).getName())) {
+                      qualifier.replace(factory.createExpressionFromText("this", null));
+                      return;
+                    }
+                  }
+                }
                 //Target is a field, replace target.m -> m
                 qualifier.delete();
                 return;
               }
-              final PsiElement resolved = expression.resolve();
               if (myTargetVariable.equals(resolved)) {
                 PsiThisExpression thisExpression = (PsiThisExpression)factory.createExpressionFromText("this", null);
                 expression.replace(thisExpression);
