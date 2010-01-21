@@ -22,34 +22,41 @@ public class ParameterListAnnotator extends PyAnnotator {
         boolean hadKeywordContainer = false;
         boolean hadDefaultValue = false;
         boolean hadSingleStar = false;
+        boolean hadParamsAfterSingleStar = false;
         @Override
         public void visitNamedParameter(PyNamedParameter parameter, boolean first, boolean last) {
           if (parameterNames.contains(parameter.getName())) {
-            getHolder().createErrorAnnotation(parameter, PyBundle.message("ANN.duplicate.param.name"));
+            markError(parameter, PyBundle.message("ANN.duplicate.param.name"));
           }
           parameterNames.add(parameter.getName());
           if (parameter.isPositionalContainer()) {
             if (hadKeywordContainer) {
-              getHolder().createErrorAnnotation(parameter, PyBundle.message("ANN.starred.param.after.kwparam"));
+              markError(parameter, PyBundle.message("ANN.starred.param.after.kwparam"));
             }
             hadPositionalContainer = true;
           }
           else if (parameter.isKeywordContainer()) {
             hadKeywordContainer = true;
+            if (hadSingleStar && !hadParamsAfterSingleStar) {
+              markError(parameter, PyBundle.message("ANN.named.arguments.after.star"));
+            }
           }
           else {
+            if (hadSingleStar) {
+              hadParamsAfterSingleStar = true;
+            }
             if (hadPositionalContainer && !languageLevel.isPy3K()) {
-              getHolder().createErrorAnnotation(parameter, PyBundle.message("ANN.regular.param.after.vararg"));
+              markError(parameter, PyBundle.message("ANN.regular.param.after.vararg"));
             }
             else if (hadKeywordContainer) {
-              getHolder().createErrorAnnotation(parameter, PyBundle.message("ANN.regular.param.after.keyword"));
+              markError(parameter, PyBundle.message("ANN.regular.param.after.keyword"));
             }
             if (parameter.getDefaultValue() != null) {
               hadDefaultValue = true;
             }
             else {
               if (hadDefaultValue && !hadSingleStar && (!languageLevel.isPy3K() || !hadPositionalContainer)) {
-                getHolder().createErrorAnnotation(parameter, PyBundle.message("ANN.non.default.param.after.default"));
+                markError(parameter, PyBundle.message("ANN.non.default.param.after.default"));
               }
             }
           }
@@ -58,6 +65,9 @@ public class ParameterListAnnotator extends PyAnnotator {
         @Override
         public void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last) {
           hadSingleStar = true;
+          if (last) {
+            markError(param, PyBundle.message("ANN.named.arguments.after.star"));
+          }
         }
       }
     );
