@@ -57,6 +57,10 @@ public class ExtractSuperClassTest extends CodeInsightTestCase {
     doTest("Test", "TestSubclass", new PullUpTest.MemberDescriptor("List", PsiClass.class));
   }
 
+  public void testImportsCorruption() throws Exception {
+    doTest("p1.A", "AA", new PullUpTest.MemberDescriptor("m1", PsiMethod.class));
+  }
+
   @Override
   protected Sdk getTestProjectJdk() {
     return JavaSdkImpl.getMockJdk15("mock 1.5");
