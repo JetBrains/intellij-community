@@ -63,6 +63,14 @@ public class ParameterListAnnotator extends PyAnnotator {
         }
 
         @Override
+        public void enterTupleParameter(PyTupleParameter param, boolean first, boolean last) {
+          super.enterTupleParameter(param, first, last);
+          if (languageLevel.isPy3K()) {
+            markError(param, PyBundle.message("ANN.tuple.py3"));
+          }
+        }
+
+        @Override
         public void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last) {
           hadSingleStar = true;
           if (last) {
