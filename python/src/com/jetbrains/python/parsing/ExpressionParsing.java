@@ -182,19 +182,24 @@ public class ExpressionParsing extends Parsing {
       return;
     }
     firstKeyValueMarker.done(PyElementTypes.KEY_VALUE_EXPRESSION);
-    if (myBuilder.getTokenType() == PyTokenTypes.COMMA) {
+    if (myBuilder.getTokenType() == PyTokenTypes.FOR_KEYWORD) {
+      parseComprehension(startMarker, PyTokenTypes.RBRACE, PyElementTypes.DICT_COMP_EXPRESSION);
+    }
+    else {
+      if (myBuilder.getTokenType() == PyTokenTypes.COMMA) {
+        myBuilder.advanceLexer();
+      }
+      while (myBuilder.getTokenType() != PyTokenTypes.RBRACE) {
+        if (!parseKeyValueExpression()) {
+          break;
+        }
+        if (myBuilder.getTokenType() != PyTokenTypes.RBRACE) {
+          checkMatches(PyTokenTypes.COMMA, message("PARSE.expected.comma"));
+        }
+      }
       myBuilder.advanceLexer();
+      startMarker.done(PyElementTypes.DICT_LITERAL_EXPRESSION);
     }
-    while (myBuilder.getTokenType() != PyTokenTypes.RBRACE) {
-      if (!parseKeyValueExpression()) {
-        break;
-      }
-      if (myBuilder.getTokenType() != PyTokenTypes.RBRACE) {
-        checkMatches(PyTokenTypes.COMMA, message("PARSE.expected.comma"));
-      }
-    }
-    myBuilder.advanceLexer();
-    startMarker.done(PyElementTypes.DICT_LITERAL_EXPRESSION);
   }
 
   private boolean parseKeyValueExpression() {
