@@ -15,8 +15,10 @@
  */
 package org.jetbrains.idea.svn.branchConfig;
 
+import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.integrate.SvnBranchItem;
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
@@ -38,7 +40,9 @@ public class BranchesLoader {
 
   public static List<SvnBranchItem> loadBranches(final Project project, final String url) throws SVNException {
     final List<SvnBranchItem> result = new LinkedList<SvnBranchItem>();
-    final SVNLogClient logClient = SvnVcs.getInstance(project).createLogClient();
+    final ProjectLevelVcsManager vcsManager = PeriodicalTasksCloser.safeGetComponent(project, ProjectLevelVcsManager.class);
+    final SvnVcs svnVcs = (SvnVcs) vcsManager.findVcsByName(SvnVcs.VCS_NAME);
+    final SVNLogClient logClient = svnVcs.createLogClient();
     final SVNURL branchesUrl = SVNURL.parseURIEncoded(url);
     logClient.doList(branchesUrl, SVNRevision.UNDEFINED, SVNRevision.HEAD, false, false, new ISVNDirEntryHandler() {
       public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
