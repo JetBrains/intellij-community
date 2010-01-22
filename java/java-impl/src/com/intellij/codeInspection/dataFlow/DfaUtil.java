@@ -95,8 +95,8 @@ public class DfaUtil {
     if (result != RunnerResult.OK) {
       return Nullness.UNKNOWN;
     }
-    if (visitor.myNulls.contains(variable)) return Nullness.NULL;
-    if (visitor.myNotNulls.contains(variable)) return Nullness.NOT_NULL;
+    if (visitor.myNulls.contains(variable) && !visitor.myNotNulls.contains(variable)) return Nullness.NULL;
+    if (visitor.myNotNulls.contains(variable) && !visitor.myNulls.contains(variable)) return Nullness.NOT_NULL;
     return Nullness.UNKNOWN;
   }
 
