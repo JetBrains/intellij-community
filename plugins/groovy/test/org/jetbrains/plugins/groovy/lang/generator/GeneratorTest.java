@@ -1,15 +1,14 @@
 package org.jetbrains.plugins.groovy.lang.generator;
 
 import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.GeneratingCompiler;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.compiler.generator.GroovyToJavaGenerator;
 import org.jetbrains.plugins.groovy.util.TestUtils;
@@ -77,15 +76,15 @@ public void testArrayType1() throws Throwable { doTest(); }
 
     final StringBuffer buffer = new StringBuffer();
     final GroovyToJavaGeneratorTester groovyToJavaGeneratorTester = new GroovyToJavaGeneratorTester(relTestPath, data.get(0), getProject());
-    final GeneratingCompiler.GenerationItem[][] generatedItems = new GeneratingCompiler.GenerationItem[1][1];
+    final GroovyToJavaGenerator.GenerationItem[][] generatedItems = new GroovyToJavaGenerator.GenerationItem[1][1];
 
-    GeneratingCompiler.GenerationItem[] generationItems = groovyToJavaGeneratorTester.getGenerationItems(null);
+    GroovyToJavaGenerator.GenerationItem[] generationItems = groovyToJavaGeneratorTester.getGenerationItems(null);
 
     VirtualFile outputDirVirtualFile = tempDirFixture.getFile("");
 
-    generatedItems[0] = groovyToJavaGeneratorTester.generate(null, generationItems, outputDirVirtualFile);
+    generatedItems[0] = groovyToJavaGeneratorTester.generate(generationItems, outputDirVirtualFile);
 
-    for (GeneratingCompiler.GenerationItem generatedItem : generatedItems[0]) {
+    for (GroovyToJavaGenerator.GenerationItem generatedItem : generatedItems[0]) {
       final String path = tempDirFixture.getTempDirPath() + File.separator + generatedItem.getPath();
 
       BufferedReader reader = new BufferedReader(new FileReader(path));
