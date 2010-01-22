@@ -90,7 +90,6 @@ TRIPLE_APOS_LITERAL = {THREE_APOS} {STRING_3CHAR_APOS}* {THREE_APOS}
 "elif"                { return PyTokenTypes.ELIF_KEYWORD; }
 "else"                { return PyTokenTypes.ELSE_KEYWORD; }
 "except"              { return PyTokenTypes.EXCEPT_KEYWORD; }
-"exec"                { return PyTokenTypes.EXEC_KEYWORD; }
 "finally"             { return PyTokenTypes.FINALLY_KEYWORD; }
 "for"                 { return PyTokenTypes.FOR_KEYWORD; }
 "from"                { return PyTokenTypes.FROM_KEYWORD; }
