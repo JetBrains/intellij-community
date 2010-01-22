@@ -51,6 +51,10 @@ public abstract class LoginPerformer<T extends CvsEnvironment> {
   protected abstract Project getProject(T root);
 
   public boolean loginAll(final ModalityContext executor) {
+    return loginAll(executor, true);
+  }
+
+  public boolean loginAll(final ModalityContext executor, final boolean goOffline) {
     for (T root : myRoots) {
       final Project project = getProject(root);
 
@@ -59,7 +63,9 @@ public abstract class LoginPerformer<T extends CvsEnvironment> {
       final ThreeState checkResult = checkLoginWorker(worker, executor, project, myForceCheck);
       if (! ThreeState.YES.equals(checkResult)) {
         if (ThreeState.UNSURE.equals(checkResult)) {
-          worker.goOffline();
+          if (goOffline) {
+            worker.goOffline();
+          }
           myExceptionConsumer.consume(new CvsException("Authentication canceled", root.getCvsRootAsString()));
         }
         return false;

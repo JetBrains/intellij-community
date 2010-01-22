@@ -142,20 +142,24 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
     }
 
     public void consume(final SvnBranchConfigurationNew prev, final SvnBranchConfigurationNew next) {
-      final Set<String> oldUrls = (prev == null) ? Collections.<String>emptySet() : new HashSet<String>(prev.getBranchUrls());
       final Application application = ApplicationManager.getApplication();
       application.executeOnPooledThread(new Runnable() {
         public void run() {
-          final SvnVcs vcs = SvnVcs.getInstance(myProject);
-          if (! vcs.isVcsBackgroundOperationsAllowed(myRoot)) return;
-
-          for (String newBranchUrl : next.getBranchUrls()) {
-            if (myAll || (! oldUrls.contains(newBranchUrl))) {
-              new NewRootBunch.BranchesLoadRunnable(myProject, myBunch, newBranchUrl, InfoReliability.defaultValues, myRoot, null).run();
-            }
-          }
+          loadImpl(prev, next);
         }
       });
+    }
+
+    protected void loadImpl(final SvnBranchConfigurationNew prev, final SvnBranchConfigurationNew next) {
+      final Set<String> oldUrls = (prev == null) ? Collections.<String>emptySet() : new HashSet<String>(prev.getBranchUrls());
+      final SvnVcs vcs = SvnVcs.getInstance(myProject);
+      if (! vcs.isVcsBackgroundOperationsAllowed(myRoot)) return;
+
+      for (String newBranchUrl : next.getBranchUrls()) {
+        if (myAll || (! oldUrls.contains(newBranchUrl))) {
+          new NewRootBunch.BranchesLoadRunnable(myProject, myBunch, newBranchUrl, InfoReliability.defaultValues, myRoot, null).run();
+        }
+      }
     }
 
     public void setAll(boolean all) {
@@ -200,11 +204,15 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
     }
     ((ProjectLevelVcsManagerImpl) myVcsManager).addInitializationRequest(VcsInitObject.BRANCHES, new Runnable() {
       public void run() {
-        for (Pair<VirtualFile, SvnBranchConfigurationNew> pair : whatToInit) {
-          final BranchesPreloader branchesPreloader = new BranchesPreloader(myProject, myBunch, pair.getFirst());
-          branchesPreloader.setAll(true);
-          branchesPreloader.consume(null, pair.getSecond());
-        }
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+          public void run() {
+            for (Pair<VirtualFile, SvnBranchConfigurationNew> pair : whatToInit) {
+              final BranchesPreloader branchesPreloader = new BranchesPreloader(myProject, myBunch, pair.getFirst());
+              branchesPreloader.setAll(true);
+              branchesPreloader.loadImpl(null, pair.getSecond());
+            }
+          }
+        });
       }
     });
     object.myConfigurationMap.clear();

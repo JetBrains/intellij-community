@@ -38,7 +38,6 @@ public class GroovyFileType extends LanguageFileType {
 
   public static final GroovyFileType GROOVY_FILE_TYPE = new GroovyFileType();
   public static final Language GROOVY_LANGUAGE = GROOVY_FILE_TYPE.getLanguage();
-  public static final Icon GROOVY_LOGO = GroovyIcons.GROOVY_ICON_16x16;
   @NonNls public static final String DEFAULT_EXTENSION = "groovy";
 
   private GroovyFileType() {
@@ -64,7 +63,7 @@ public class GroovyFileType extends LanguageFileType {
   }
 
   public Icon getIcon() {
-    return GROOVY_LOGO;
+    return GroovyIcons.GROOVY_ICON_16x16;
   }
 
   public boolean isJVMDebuggingSupported() {

@@ -18,12 +18,10 @@ package com.intellij.patterns;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.*;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
@@ -67,12 +65,27 @@ public class PsiMethodPattern extends PsiMemberPattern<PsiMethod,PsiMethodPatter
         if (dotsIndex > 0) {
           final PsiParameter[] psiParameters = parameterList.getParameters();
           for (int i = 0; i < dotsIndex; i++) {
-            if (!Comparing.equal("?", types[i]) && !types[i].equals(psiParameters[i].getType().getCanonicalText())) {
+            if (!Comparing.equal("?", types[i]) && !typeEquivalent(psiParameters[i].getType(), types[i])) {
               return false;
             }
           }
         }
         return true;
+      }
+
+      private boolean typeEquivalent(PsiType type, String expectedText) {
+        final PsiType erasure = TypeConversionUtil.erasure(type);
+        final String text;
+        if (erasure instanceof PsiEllipsisType && expectedText.endsWith("[]")) {
+          text = ((PsiEllipsisType)erasure).getComponentType().getCanonicalText() + "[]";
+        }
+        else if (erasure instanceof PsiArrayType && expectedText.endsWith("...")) {
+          text = ((PsiArrayType)erasure).getComponentType().getCanonicalText() +"...";
+        }
+        else {
+          text = erasure.getCanonicalText();
+        }
+        return expectedText.equals(text);
       }
     });
   }
