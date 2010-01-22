@@ -375,7 +375,7 @@ public class GuessManagerImpl extends GuessManager {
 
   private static class ExpressionTypeInstructionVisitor extends InstructionVisitor {
     private Map<PsiExpression, PsiType> myResult;
-    private PsiElement myForPlace;
+    private final PsiElement myForPlace;
 
     private ExpressionTypeInstructionVisitor(PsiElement forPlace) {
       myForPlace = forPlace;

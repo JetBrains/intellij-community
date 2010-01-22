@@ -162,7 +162,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
     if (CommonClassNames.JAVA_LANG_OBJECT.equals(qname)) {
       return AllClassesSearch.search(searchScope, baseClass.getProject(), parameters.getNameCondition()).forEach(new Processor<PsiClass>() {
         public boolean process(PsiClass aClass) {
-          ProgressManager.getInstance().checkCanceled();
+          ProgressManager.checkCanceled();
           return consumer.process(aClass);
         }
       });
@@ -173,7 +173,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
     final Set<PsiClass> processed = new HashSet<PsiClass>();
     final Processor<PsiClass> processor = new Processor<PsiClass>() {
       public boolean process(final PsiClass candidate) {
-        ProgressManager.getInstance().checkCanceled();
+        ProgressManager.checkCanceled();
 
         final Ref<Boolean> result = new Ref<Boolean>();
         ApplicationManager.getApplication().runReadAction(new Runnable() {

@@ -87,13 +87,15 @@ public class UnusedLibrariesInspection extends DescriptorProviderInspection {
       });
       libraryRoots.addAll(Arrays.asList(LibraryUtil.getLibraryRoots(modules.toArray(new Module[modules.size()]), false, false)));
     }
-    GlobalSearchScope searchScope = null;
+    GlobalSearchScope searchScope;
     try {
       @NonNls final String libsName = "libs";
       searchScope = GlobalSearchScope.filterScope(project, new NamedScope(libsName, PackageSetFactory.getInstance().compile("lib:*..*")));
     }
     catch (ParsingException e) {
       //can't be
+      LOG.error(e);
+      return;
     }
     final AnalysisScope analysisScope = new AnalysisScope(searchScope, project);
     analysisScope.setSearchInLibraries(true);

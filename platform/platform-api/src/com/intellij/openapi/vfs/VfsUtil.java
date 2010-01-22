@@ -347,6 +347,9 @@ public class VfsUtil {
 
     if (file == null && uri.contains(JarFileSystem.JAR_SEPARATOR)) {
       file = JarFileSystem.getInstance().findFileByPath(uri);
+      if (file == null && base == null) {
+        file = VirtualFileManager.getInstance().findFileByUrl(uri);
+      }
     }
 
     if (file == null) {

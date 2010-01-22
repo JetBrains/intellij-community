@@ -301,6 +301,8 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
   }
 
   private THashMap<KeyStroke,ArrayList<String>> getKeystroke2ListOfIds() {
+    myKeystroke2ListOfIds = null;
+
     if (myKeystroke2ListOfIds == null) {
       myKeystroke2ListOfIds = new THashMap<KeyStroke, ArrayList<String>>();
       fillKeystroke2ListOfIds(myKeystroke2ListOfIds, KeyboardShortcut.class);

@@ -19,6 +19,7 @@ package com.intellij.codeInsight.intention;
 import com.intellij.CommonBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.CustomLoadingExtensionPointBean;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -29,7 +30,7 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 
 public class IntentionActionBean extends CustomLoadingExtensionPointBean {
-
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.IntentionActionBean");
   @Tag("className")
   public String className;
   @Tag("category")
@@ -45,6 +46,9 @@ public class IntentionActionBean extends CustomLoadingExtensionPointBean {
   public String[] getCategories() {
     if (categoryKey != null) {
       final String baseName = bundleName != null ? bundleName : ((IdeaPluginDescriptor)myPluginDescriptor).getResourceBundleBaseName();
+      if (baseName == null) {
+        LOG.error("No resource bundle specified for "+myPluginDescriptor);
+      }
       final ResourceBundle bundle = ResourceBundle.getBundle(baseName, Locale.getDefault(), myPluginDescriptor.getPluginClassLoader());
 
       final String[] keys = categoryKey.split("/");

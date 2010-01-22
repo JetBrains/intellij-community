@@ -156,15 +156,17 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     return nsDescriptor;
   }
 
+  @Nullable
   public TypeDescriptor getType() {
     return getType(null);
   }
 
+  @Nullable
   public TypeDescriptor getType(XmlElement context) {
     final XmlNSDescriptor nsDescriptor = getNSDescriptor(context);
-    if (!(nsDescriptor instanceof XmlNSDescriptorImpl)) return null;
+    if (!(nsDescriptor instanceof XmlNSTypeDescriptorProvider)) return null;
 
-    TypeDescriptor type = ((XmlNSDescriptorImpl) nsDescriptor).getTypeDescriptor(myDescriptorTag);
+    TypeDescriptor type = ((XmlNSTypeDescriptorProvider) nsDescriptor).getTypeDescriptor(myDescriptorTag);
     if (type == null) {
       String substAttr = myDescriptorTag.getAttributeValue("substitutionGroup");
       if (substAttr != null) {

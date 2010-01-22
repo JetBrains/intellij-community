@@ -39,15 +39,10 @@ import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
 import org.jetbrains.plugins.groovy.intentions.utils.DuplicatesUtil;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.*;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
@@ -86,8 +81,10 @@ import java.util.*;
 /**
  * @author ven
  */
-public class GroovyAnnotator implements Annotator {
+public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.annotator.GroovyAnnotator");
+
+  private AnnotationHolder myHolder;
 
   private static boolean isDocCommentElement(PsiElement element) {
     if (element == null) return false;
@@ -96,87 +93,21 @@ public class GroovyAnnotator implements Annotator {
   }
 
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-    if (element instanceof GrCodeReferenceElement) {
-      checkReferenceElement(holder, (GrCodeReferenceElement)element);
+    if (element instanceof GroovyPsiElement) {
+      myHolder = holder;
+      ((GroovyPsiElement)element).accept(this);
+      myHolder = null;
     }
-    else if (element instanceof GrReferenceExpression) {
-      checkReferenceExpression(holder, (GrReferenceExpression)element);
-    }
-    else if (element instanceof GrTypeDefinition) {
-      final GrTypeDefinition typeDefinition = (GrTypeDefinition)element;
-      checkTypeDefinition(holder, typeDefinition);
-      checkTypeDefinitionModifiers(holder, typeDefinition);
-      final GrTypeDefinitionBody body = typeDefinition.getBody();
-      if (body != null) checkDuplicateMethod(body.getGroovyMethods(), holder);
-      checkImplementedMethodsOfClass(holder, typeDefinition);
-    }
-    else if (element instanceof GrMethod) {
-      final GrMethod method = (GrMethod)element;
-      checkMethodDefinitionModifiers(holder, method);
-      checkInnerMethod(holder, method);
-    }
-    else if (element instanceof GrVariableDeclaration) {
-      checkVariableDeclaration(holder, (GrVariableDeclaration)element);
-    }
-    else if (element instanceof GrVariable) {
-      if (element instanceof GrMember) {
-        highlightMember(holder, ((GrMember)element));
-        checkStaticDeclarationsInInnerClass((GrMember)element, holder);
-      }
-      checkVariable(holder, (GrVariable)element);
-    }
-    else if (element instanceof GrAssignmentExpression) {
-      checkAssignmentExpression((GrAssignmentExpression)element, holder);
-    }
-    else if (element instanceof GrReturnStatement) {
-      checkReturnStatement((GrReturnStatement)element, holder);
-    }
-    else if (element instanceof GrListOrMap) {
-      checkMap(((GrListOrMap)element).getNamedArguments(), holder);
-    }
-    else if (element instanceof GrNewExpression) {
-      checkNewExpression(holder, (GrNewExpression)element);
-    }
-    else if (element instanceof GrDocMemberReference) {
-      checkGrDocMemberReference((GrDocMemberReference)element, holder);
-    }
-    else if (element instanceof GrConstructorInvocation) {
-      checkConstructorInvocation(holder, (GrConstructorInvocation)element);
-    }
-    else if (element instanceof GrFlowInterruptingStatement) {
-      checkFlowInterruptStatement(((GrFlowInterruptingStatement)element), holder);
-    } else if (element instanceof GrLabeledStatement) {
-      checkLabeledStatement(((GrLabeledStatement) element), holder);
-    }
-    else if (element.getParent() instanceof GrDocReferenceElement) {
-      checkGrDocReferenceElement(holder, element);
-    }
-    else if (element instanceof GrPackageDefinition) {
-      //todo: if reference isn't resolved it construct package definition
-      checkPackageReference(holder, (GrPackageDefinition)element);
-    }
-    else if (element instanceof GrThisReferenceExpression || element instanceof GrSuperReferenceExpression) {
-      checkThisOrSuperReferenceExpression(((GrExpression)element), holder);
-    }
-    else if (element instanceof GrLiteral) {
-      checkLiteral(((GrLiteral)element), holder);
-    }
-    else if (element instanceof GrForInClause) {
-      checkForInClause(((GrForInClause)element), holder);
-    }
-    else if (element instanceof GroovyFile) {
-      final GroovyFile file = (GroovyFile)element;
-      if (file.isScript()) {
-        checkScriptDuplicateMethod(file.getTopLevelDefinitions(), holder);
-      }
-    }
-    else if (element instanceof GrImportStatement) {
-      checkAnnotationList(holder, ((GrImportStatement)element).getAnnotationList(), GroovyBundle.message("import.statement.cannot.have.modifiers"));
+  }
+
+  @Override
+  public void visitElement(GroovyPsiElement element) {
+    if (element.getParent() instanceof GrDocReferenceElement) {
+      checkGrDocReferenceElement(myHolder, element);
     }
     else {
       final ASTNode node = element.getNode();
-      if (node != null &&
-          !(element instanceof PsiWhiteSpace) &&
+      if (!(element instanceof PsiWhiteSpace) &&
           !GroovyTokenTypes.COMMENT_SET.contains(node.getElementType()) &&
           element.getContainingFile() instanceof GroovyFile &&
           !isDocCommentElement(element)) {
@@ -185,7 +116,377 @@ public class GroovyAnnotator implements Annotator {
     }
   }
 
-  private static void checkForInClause(GrForInClause forInClause, AnnotationHolder holder) {
+  @Override
+  public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
+    final PsiElement parent = refElement.getParent();
+    GroovyResolveResult resolveResult = refElement.advancedResolve();
+    highlightAnnotation(myHolder, refElement, resolveResult);
+    registerUsedImport(refElement, resolveResult);
+    highlightAnnotation(myHolder, refElement, resolveResult);
+    if (refElement.getReferenceName() != null) {
+
+      if (parent instanceof GrImportStatement && ((GrImportStatement)parent).isStatic() && refElement.multiResolve(false).length > 0) {
+        return;
+      }
+
+      checkSingleResolvedElement(myHolder, refElement, resolveResult);
+    }
+
+  }
+
+  @Override
+  public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
+    GroovyResolveResult resolveResult = referenceExpression.advancedResolve();
+    GroovyResolveResult[] results = referenceExpression.multiResolve(false); //cached
+    for (GroovyResolveResult result : results) {
+      registerUsedImport(referenceExpression, result);
+    }
+
+    PsiElement resolved = resolveResult.getElement();
+    final PsiElement parent = referenceExpression.getParent();
+    if (resolved != null) {
+      if (resolved instanceof PsiMember) {
+        highlightMemberResolved(myHolder, referenceExpression, ((PsiMember)resolved));
+      }
+      if (!resolveResult.isAccessible()) {
+        String message = GroovyBundle.message("cannot.access", referenceExpression.getReferenceName());
+        myHolder.createWarningAnnotation(referenceExpression.getReferenceNameElement(), message);
+      }
+      if (!resolveResult.isStaticsOK() && resolved instanceof PsiModifierListOwner) {
+        if (!((PsiModifierListOwner)resolved).hasModifierProperty(PsiModifier.STATIC)) {
+          myHolder.createWarningAnnotation(referenceExpression, GroovyBundle.message("cannot.reference.nonstatic", referenceExpression.getReferenceName()));
+        }
+      }
+    }
+    else {
+      GrExpression qualifier = referenceExpression.getQualifierExpression();
+      if (qualifier == null && isDeclarationAssignment(referenceExpression)) return;
+
+      if (parent instanceof GrReferenceExpression && "class".equals(((GrReferenceExpression)parent).getReferenceName())) {
+        checkSingleResolvedElement(myHolder, referenceExpression, resolveResult);
+      }
+    }
+
+    if (parent instanceof GrCall) {
+      if (resolved == null && results.length > 0) {
+        resolved = results[0].getElement();
+        resolveResult = results[0];
+      }
+      if (resolved instanceof PsiMethod && resolved.getUserData(GrMethod.BUILDER_METHOD) == null) {
+        checkMethodApplicability(resolveResult, referenceExpression, myHolder);
+      }
+      else {
+        checkClosureApplicability(resolveResult, referenceExpression.getType(), referenceExpression, myHolder);
+      }
+    }
+    if (isDeclarationAssignment(referenceExpression) || resolved instanceof PsiPackage) return;
+
+    if (resolved == null) {
+      PsiElement refNameElement = referenceExpression.getReferenceNameElement();
+      PsiElement elt = refNameElement == null ? referenceExpression : refNameElement;
+      Annotation annotation = myHolder.createInfoAnnotation(elt, null);
+      final GrExpression qualifier = referenceExpression.getQualifierExpression();
+      if (qualifier == null) {
+        if (!(parent instanceof GrCall)) {
+          registerCreateClassByTypeFix(referenceExpression, annotation);
+          registerAddImportFixes(referenceExpression, annotation);
+        }
+      } else {
+        if (qualifier.getType() == null) {
+          return;
+        }
+      }
+      registerReferenceFixes(referenceExpression, annotation);
+      annotation.setTextAttributes(DefaultHighlighter.UNRESOLVED_ACCESS);
+    }
+  }
+
+  @Override
+  public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
+    checkTypeDefinition(myHolder, typeDefinition);
+    checkTypeDefinitionModifiers(myHolder, typeDefinition);
+
+    final GrTypeDefinitionBody body = typeDefinition.getBody();
+    if (body != null) checkDuplicateMethod(body.getGroovyMethods(), myHolder);
+    checkImplementedMethodsOfClass(myHolder, typeDefinition);
+  }
+
+  @Override
+  public void visitMethod(GrMethod method) {
+    checkMethodDefinitionModifiers(myHolder, method);
+    checkInnerMethod(myHolder, method);
+  }
+
+  @Override
+  public void visitVariableDeclaration(GrVariableDeclaration variableDeclaration) {
+
+    PsiElement parent = variableDeclaration.getParent();
+    assert parent != null;
+
+    PsiElement typeDef = parent.getParent();
+    if (typeDef != null && typeDef instanceof GrTypeDefinition) {
+      PsiModifierList modifiersList = variableDeclaration.getModifierList();
+      checkAccessModifiers(myHolder, modifiersList);
+
+      if (modifiersList.hasExplicitModifier(PsiModifier.VOLATILE) && modifiersList.hasExplicitModifier(PsiModifier.FINAL)) {
+        myHolder.createErrorAnnotation(modifiersList, GroovyBundle.message("illegal.combination.of.modifiers.volatile.and.final"));
+      }
+
+      if (modifiersList.hasExplicitModifier(PsiModifier.NATIVE)) {
+        myHolder.createErrorAnnotation(modifiersList, GroovyBundle.message("variable.cannot.be.native"));
+      }
+
+      if (modifiersList.hasExplicitModifier(PsiModifier.ABSTRACT)) {
+        myHolder.createErrorAnnotation(modifiersList, GroovyBundle.message("variable.cannot.be.abstract"));
+      }
+    }
+  }
+
+  @Override
+  public void visitVariable(GrVariable variable) {
+    if (variable instanceof GrMember) {
+      highlightMember(myHolder, ((GrMember)variable));
+      checkStaticDeclarationsInInnerClass((GrMember)variable, myHolder);
+    }
+    PropertyResolverProcessor processor = new DuplicateVariablesProcessor(variable);
+    final GroovyPsiElement duplicate =
+      ResolveUtil.resolveExistingElement(variable, processor, GrVariable.class, GrReferenceExpression.class);
+
+    if (duplicate instanceof GrVariable) {
+      if (duplicate instanceof GrField && !(variable instanceof GrField)) {
+        myHolder
+          .createWarningAnnotation(variable.getNameIdentifierGroovy(), GroovyBundle.message("field.already.defined", variable.getName()));
+      }
+      else {
+        final String key = duplicate instanceof GrField ? "field.already.defined" : "variable.already.defined";
+        myHolder.createErrorAnnotation(variable.getNameIdentifierGroovy(), GroovyBundle.message(key, variable.getName()));
+      }
+    }
+  }
+
+  @Override
+  public void visitAssignmentExpression(GrAssignmentExpression expression) {
+    GrExpression lValue = expression.getLValue();
+    if (!PsiUtil.mightBeLVlaue(lValue)) {
+      myHolder.createErrorAnnotation(lValue, GroovyBundle.message("invalid.lvalue"));
+    }
+  }
+
+  @Override
+  public void visitReturnStatement(GrReturnStatement returnStatement) {
+    final GrExpression value = returnStatement.getReturnValue();
+    if (value != null) {
+      final PsiType type = value.getType();
+      if (type != null) {
+        final GrParametersOwner owner = PsiTreeUtil.getParentOfType(returnStatement, GrMethod.class, GrClosableBlock.class);
+        if (owner instanceof PsiMethod) {
+          final PsiMethod method = (PsiMethod)owner;
+          if (method.isConstructor()) {
+            myHolder.createErrorAnnotation(value, GroovyBundle.message("cannot.return.from.constructor"));
+          }
+          else {
+            final PsiType methodType = method.getReturnType();
+            if (methodType != null) {
+              if (PsiType.VOID.equals(methodType)) {
+                myHolder.createErrorAnnotation(value, GroovyBundle.message("cannot.return.from.void.method"));
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  @Override
+  public void visitListOrMap(GrListOrMap listOrMap) {
+    final Map<GrNamedArgument, List<GrNamedArgument>> map = DuplicatesUtil.factorDuplicates(listOrMap.getNamedArguments(), new TObjectHashingStrategy<GrNamedArgument>() {
+      public int computeHashCode(GrNamedArgument arg) {
+        final GrArgumentLabel label = arg.getLabel();
+        if (label == null) return 0;
+        final String name = label.getName();
+        if (name == null) return 0;
+        return name.hashCode();
+      }
+
+      public boolean equals(GrNamedArgument arg1, GrNamedArgument arg2) {
+        final GrArgumentLabel label1 = arg1.getLabel();
+        final GrArgumentLabel label2 = arg2.getLabel();
+        if (label1 == null || label2 == null) {
+          return label1 == null && label2 == null;
+        }
+        final String name1 = label1.getName();
+        final String name2 = label2.getName();
+        if (name1 == null || name2 == null) {
+          return name1 == null && name2 == null;
+        }
+        return name1.equals(name2);
+      }
+    });
+
+    processDuplicates(map, myHolder);
+  }
+
+  @Override
+  public void visitNewExpression(GrNewExpression newExpression) {
+    if (newExpression.getArrayCount() > 0) return;
+    GrCodeReferenceElement refElement = newExpression.getReferenceElement();
+    if (refElement == null) return;
+    final PsiElement element = refElement.resolve();
+    if (element instanceof PsiClass) {
+      PsiClass clazz = (PsiClass)element;
+      if (clazz.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        if (newExpression.getAnonymousClassDefinition() == null) {
+          String message = clazz.isInterface()
+                           ? GroovyBundle.message("cannot.instantiate.interface", clazz.getName())
+                           : GroovyBundle.message("cannot.instantiate.abstract.class", clazz.getName());
+          myHolder.createErrorAnnotation(refElement, message);
+        }
+        return;
+      }
+      if (newExpression.getQualifier() != null) {
+        if (clazz.hasModifierProperty(PsiModifier.STATIC)) {
+          myHolder.createErrorAnnotation(newExpression, GroovyBundle.message("qualified.new.of.static.class"));
+        }
+      } else {
+        final PsiClass outerClass = clazz.getContainingClass();
+        if (com.intellij.psi.util.PsiUtil.isInnerClass(clazz) && !PsiUtil.hasEnclosingInstanceInScope(outerClass, newExpression, true)) {
+          myHolder.createErrorAnnotation(newExpression, GroovyBundle.message("cannot.reference.nonstatic", clazz.getQualifiedName()));
+        }
+      }
+    }
+
+    final GroovyResolveResult constructorResolveResult = newExpression.resolveConstructorGenerics();
+    if (constructorResolveResult.getElement() != null) {
+      checkMethodApplicability(constructorResolveResult, refElement, myHolder);
+      final GrArgumentList argList = newExpression.getArgumentList();
+      if (argList != null && argList.getExpressionArguments().length == 0) checkDefaultMapConstructor(myHolder, argList);
+    }
+    else {
+      final GroovyResolveResult[] results = newExpression.multiResolveConstructor();
+      final GrArgumentList argList = newExpression.getArgumentList();
+      PsiElement toHighlight = argList != null ? argList : refElement.getReferenceNameElement();
+
+      if (results.length > 0) {
+        String message = GroovyBundle.message("ambiguous.constructor.call");
+        myHolder.createWarningAnnotation(toHighlight, message);
+      }
+      else {
+        if (element instanceof PsiClass) {
+          //default constructor invocation
+          PsiType[] argumentTypes = PsiUtil.getArgumentTypes(refElement, true, true);
+          if (argumentTypes != null && argumentTypes.length > 0) {
+            String message = GroovyBundle.message("cannot.find.default.constructor", ((PsiClass)element).getName());
+            myHolder.createWarningAnnotation(toHighlight, message);
+          }
+          else checkDefaultMapConstructor(myHolder, argList);
+        }
+      }
+    }
+  }
+
+  @Override
+  public void visitDocMethodReference(GrDocMethodReference reference) {
+    checkGrDocMemberReference(reference, myHolder);
+  }
+
+  @Override
+  public void visitDocFieldReference(GrDocFieldReference reference) {
+    checkGrDocMemberReference(reference, myHolder);
+  }
+
+  @Override
+  public void visitConstructorInvocation(GrConstructorInvocation invocation) {
+    final GroovyResolveResult resolveResult = invocation.resolveConstructorGenerics();
+    if (resolveResult != null) {
+      checkMethodApplicability(resolveResult, invocation.getThisOrSuperKeyword(), myHolder);
+    }
+    else {
+      final GroovyResolveResult[] results = invocation.multiResolveConstructor();
+      final GrArgumentList argList = invocation.getArgumentList();
+      if (results.length > 0) {
+        String message = GroovyBundle.message("ambiguous.constructor.call");
+        myHolder.createWarningAnnotation(argList, message);
+      }
+      else {
+        final PsiClass clazz = invocation.getDelegatedClass();
+        if (clazz != null) {
+          //default constructor invocation
+          PsiType[] argumentTypes = PsiUtil.getArgumentTypes(invocation.getThisOrSuperKeyword(), true, true);
+          if (argumentTypes != null && argumentTypes.length > 0) {
+            String message = GroovyBundle.message("cannot.find.default.constructor", clazz.getName());
+            myHolder.createWarningAnnotation(argList, message);
+          }
+        }
+      }
+    }
+  }
+
+  @Override
+  public void visitBreakStatement(GrBreakStatement breakStatement) {
+    checkFlowInterruptStatement(breakStatement, myHolder);
+  }
+
+  @Override
+  public void visitContinueStatement(GrContinueStatement continueStatement) {
+    checkFlowInterruptStatement(continueStatement, myHolder);
+  }
+
+  @Override
+  public void visitLabeledStatement(GrLabeledStatement labeledStatement) {
+    final String name = labeledStatement.getLabelName();
+    if (ResolveUtil.resolveLabeledStatement(name, labeledStatement, true) != null) {
+      myHolder.createWarningAnnotation(labeledStatement.getLabel(), GroovyBundle.message("label.already.used", name));
+    }
+  }
+
+  @Override
+  public void visitPackageDefinition(GrPackageDefinition packageDefinition) {
+    //todo: if reference isn't resolved it construct package definition
+    final PsiFile file = packageDefinition.getContainingFile();
+    assert file != null;
+
+    PsiDirectory psiDirectory = file.getContainingDirectory();
+    if (psiDirectory != null) {
+      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
+      if (aPackage != null) {
+        String packageName = aPackage.getQualifiedName();
+        if (!packageDefinition.getPackageName().equals(packageName)) {
+          final Annotation annotation = myHolder.createWarningAnnotation(packageDefinition, "wrong package name");
+          annotation.registerFix(new ChangePackageQuickFix((GroovyFile)packageDefinition.getContainingFile(), packageName));
+        }
+      }
+    }
+    final GrModifierList modifierList = packageDefinition.getAnnotationList();
+    checkAnnotationList(myHolder, modifierList, GroovyBundle.message("package.definition.cannot.have.modifiers"));
+  }
+
+  @Override
+  public void visitSuperExpression(GrSuperReferenceExpression superExpression) {
+    checkThisOrSuperReferenceExpression(superExpression, myHolder);
+  }
+
+  @Override
+  public void visitThisExpression(GrThisReferenceExpression thisExpression) {
+    checkThisOrSuperReferenceExpression(thisExpression, myHolder);
+  }
+
+  @Override
+  public void visitLiteralExpression(GrLiteral literal) {
+    String text = literal.getText();
+    if (text.startsWith("'''")) {
+      if (text.length() < 6 || !text.endsWith("'''")) {
+        myHolder.createErrorAnnotation(literal, GroovyBundle.message("string.end.expected"));
+      }
+    }
+    else if (text.startsWith("'")) {
+      if (text.length() < 2 || !text.endsWith("'")) {
+        myHolder.createErrorAnnotation(literal, GroovyBundle.message("string.end.expected"));
+      }
+    }
+  }
+
+  @Override
+  public void visitForInClause(GrForInClause forInClause) {
     final GrVariable[] declaredVariables = forInClause.getDeclaredVariables();
     if (declaredVariables.length < 1) return;
     final GrVariable variable = declaredVariables[0];
@@ -197,29 +498,28 @@ public class GroovyAnnotator implements Annotator {
       final String modifierText = modifier.getText();
       if (PsiModifier.FINAL.equals(modifierText)) continue;
       if ("def".equals(modifierText)) continue;
-      holder.createErrorAnnotation(modifier, GroovyBundle.message("not.allowed.modifier.in.forin", modifierText));
+      myHolder.createErrorAnnotation(modifier, GroovyBundle.message("not.allowed.modifier.in.forin", modifierText));
     }
   }
 
-  private static void checkLiteral(GrLiteral literal, AnnotationHolder holder) {
-    String text = literal.getText();
-    if (text.startsWith("'''")) {
-      if (text.length() < 6 || !text.endsWith("'''")) {
-        holder.createErrorAnnotation(literal, GroovyBundle.message("string.end.expected"));
+  @Override
+  public void visitFile(GroovyFileBase file) {
+    if (!file.isScript()) return;
+
+    List<GrMethod> methods = new ArrayList<GrMethod>();
+
+    for (GrTopLevelDefintion topLevelDefinition : file.getTopLevelDefinitions()) {
+      if (topLevelDefinition instanceof GrMethod) {
+        methods.add(((GrMethod)topLevelDefinition));
       }
     }
-    else if (text.startsWith("'")) {
-      if (text.length() < 2 || !text.endsWith("'")) {
-        holder.createErrorAnnotation(literal, GroovyBundle.message("string.end.expected"));        
-      }
-    }
+
+    checkDuplicateMethod(methods.toArray(new GrMethod[methods.size()]), myHolder);
   }
 
-  private static void checkLabeledStatement(GrLabeledStatement statement, AnnotationHolder holder) {
-    final String name = statement.getLabelName();
-    if (ResolveUtil.resolveLabeledStatement(name, statement, true) != null) {
-      holder.createWarningAnnotation(statement.getLabel(), GroovyBundle.message("label.already.used", name));
-    }
+  @Override
+  public void visitImportStatement(GrImportStatement importStatement) {
+    checkAnnotationList(myHolder, importStatement.getAnnotationList(), GroovyBundle.message("import.statement.cannot.have.modifiers"));
   }
 
   private static void checkFlowInterruptStatement(GrFlowInterruptingStatement statement, AnnotationHolder holder) {
@@ -314,25 +614,6 @@ public class GroovyAnnotator implements Annotator {
     }
   }
 
-  private static void checkPackageReference(AnnotationHolder holder, GrPackageDefinition packageDefinition) {
-    final PsiFile file = packageDefinition.getContainingFile();
-    assert file != null;
-
-    PsiDirectory psiDirectory = file.getContainingDirectory();
-    if (psiDirectory != null) {
-      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
-      if (aPackage != null) {
-        String packageName = aPackage.getQualifiedName();
-        if (!packageDefinition.getPackageName().equals(packageName)) {
-          final Annotation annotation = holder.createWarningAnnotation(packageDefinition, "wrong package name");
-          annotation.registerFix(new ChangePackageQuickFix((GroovyFile)packageDefinition.getContainingFile(), packageName));
-        }
-      }
-    }
-    final GrModifierList modifierList = packageDefinition.getAnnotationList();
-    checkAnnotationList(holder, modifierList, GroovyBundle.message("package.definition.cannot.have.modifiers"));
-  }
-
   private static void checkAnnotationList(AnnotationHolder holder, @Nullable GrModifierList modifierList, String message) {
     if (modifierList == null) return;
     final PsiElement[] modifiers = modifierList.getModifiers();
@@ -366,32 +647,6 @@ public class GroovyAnnotator implements Annotator {
     annotation.registerFix(new ImplementMethodsQuickFix(typeDefinition));
   }
 
-  private static void checkConstructorInvocation(AnnotationHolder holder, GrConstructorInvocation invocation) {
-    final GroovyResolveResult resolveResult = invocation.resolveConstructorGenerics();
-    if (resolveResult != null) {
-      checkMethodApplicability(resolveResult, invocation.getThisOrSuperKeyword(), holder);
-    }
-    else {
-      final GroovyResolveResult[] results = invocation.multiResolveConstructor();
-      final GrArgumentList argList = invocation.getArgumentList();
-      if (results.length > 0) {
-        String message = GroovyBundle.message("ambiguous.constructor.call");
-        holder.createWarningAnnotation(argList, message);
-      }
-      else {
-        final PsiClass clazz = invocation.getDelegatedClass();
-        if (clazz != null) {
-          //default constructor invocation
-          PsiType[] argumentTypes = PsiUtil.getArgumentTypes(invocation.getThisOrSuperKeyword(), true, true);
-          if (argumentTypes != null && argumentTypes.length > 0) {
-            String message = GroovyBundle.message("cannot.find.default.constructor", clazz.getName());
-            holder.createWarningAnnotation(argList, message);
-          }
-        }
-      }
-    }
-  }
-
   private static void checkInnerMethod(AnnotationHolder holder, GrMethod grMethod) {
     final PsiElement parent = grMethod.getParent();
     if (parent instanceof GrOpenBlock || parent instanceof GrClosableBlock) {
@@ -399,63 +654,11 @@ public class GroovyAnnotator implements Annotator {
     }
   }
 
-  private static void checkMap(GrNamedArgument[] namedArguments, AnnotationHolder holder) {
-    final Map<GrNamedArgument, List<GrNamedArgument>> map = DuplicatesUtil.factorDuplicates(namedArguments, new TObjectHashingStrategy<GrNamedArgument>() {
-      public int computeHashCode(GrNamedArgument arg) {
-        final GrArgumentLabel label = arg.getLabel();
-        if (label == null) return 0;
-        final String name = label.getName();
-        if (name == null) return 0;
-        return name.hashCode();
-      }
-
-      public boolean equals(GrNamedArgument arg1, GrNamedArgument arg2) {
-        final GrArgumentLabel label1 = arg1.getLabel();
-        final GrArgumentLabel label2 = arg2.getLabel();
-        if (label1 == null || label2 == null) {
-          return label1 == null && label2 == null;
-        }
-        final String name1 = label1.getName();
-        final String name2 = label2.getName();
-        if (name1 == null || name2 == null) {
-          return name1 == null && name2 == null;
-        }
-        return name1.equals(name2);
-      }
-    });
-
-    processDuplicates(map, holder);
-  }
-
   protected static void processDuplicates(Map<GrNamedArgument, List<GrNamedArgument>> map, AnnotationHolder holder) {
     for (List<GrNamedArgument> args : map.values()) {
       for (int i = 1; i < args.size(); i++) {
         GrNamedArgument namedArgument = args.get(i);
         holder.createWarningAnnotation(namedArgument, GroovyBundle.message("duplicate.element.in.the.map"));
-      }
-    }
-  }
-
-  private static void checkVariableDeclaration(AnnotationHolder holder, GrVariableDeclaration variableDeclaration) {
-
-    PsiElement parent = variableDeclaration.getParent();
-    assert parent != null;
-
-    PsiElement typeDef = parent.getParent();
-    if (typeDef != null && typeDef instanceof GrTypeDefinition) {
-      PsiModifierList modifiersList = variableDeclaration.getModifierList();
-      checkAccessModifiers(holder, modifiersList);
-
-      if (modifiersList.hasExplicitModifier(PsiModifier.VOLATILE) && modifiersList.hasExplicitModifier(PsiModifier.FINAL)) {
-        holder.createErrorAnnotation(modifiersList, GroovyBundle.message("illegal.combination.of.modifiers.volatile.and.final"));
-      }
-
-      if (modifiersList.hasExplicitModifier(PsiModifier.NATIVE)) {
-        holder.createErrorAnnotation(modifiersList, GroovyBundle.message("variable.cannot.be.native"));
-      }
-
-      if (modifiersList.hasExplicitModifier(PsiModifier.ABSTRACT)) {
-        holder.createErrorAnnotation(modifiersList, GroovyBundle.message("variable.cannot.be.abstract"));
       }
     }
   }
@@ -597,18 +800,6 @@ public class GroovyAnnotator implements Annotator {
     }
   }
 
-  private static void checkScriptDuplicateMethod(GrTopLevelDefintion[] topLevelDefinitions, AnnotationHolder holder) {
-    List<GrMethod> methods = new ArrayList<GrMethod>();
-
-    for (GrTopLevelDefintion topLevelDefinition : topLevelDefinitions) {
-      if (topLevelDefinition instanceof GrMethod) {
-        methods.add(((GrMethod)topLevelDefinition));
-      }
-    }
-
-    checkDuplicateMethod(methods.toArray(new GrMethod[methods.size()]), holder);
-  }
-
   private static void checkDuplicateMethod(GrMethod[] methods, AnnotationHolder holder) {
     final Map<GrMethod, List<GrMethod>> map = DuplicatesUtil.factorDuplicates(methods, new TObjectHashingStrategy<GrMethod>() {
       public int computeHashCode(GrMethod method) {
@@ -638,51 +829,6 @@ public class GroovyAnnotator implements Annotator {
     }
   }
 
-
-  private static void checkReturnStatement(GrReturnStatement returnStatement, AnnotationHolder holder) {
-    final GrExpression value = returnStatement.getReturnValue();
-    if (value != null) {
-      final PsiType type = value.getType();
-      if (type != null) {
-        final GrParametersOwner owner = PsiTreeUtil.getParentOfType(returnStatement, GrMethod.class, GrClosableBlock.class);
-        if (owner instanceof PsiMethod) {
-          final PsiMethod method = (PsiMethod)owner;
-          if (method.isConstructor()) {
-            holder.createErrorAnnotation(value, GroovyBundle.message("cannot.return.from.constructor"));
-          }
-          else {
-            final PsiType methodType = method.getReturnType();
-            if (methodType != null) {
-              if (PsiType.VOID.equals(methodType)) {
-                holder.createErrorAnnotation(value, GroovyBundle.message("cannot.return.from.void.method"));
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  private static void checkAssignmentExpression(GrAssignmentExpression assignment, AnnotationHolder holder) {
-    GrExpression lValue = assignment.getLValue();
-    if (!PsiUtil.mightBeLVlaue(lValue)) {
-      holder.createErrorAnnotation(lValue, GroovyBundle.message("invalid.lvalue"));
-    }
-  }
-
-  private static void checkVariable(AnnotationHolder holder, GrVariable variable) {
-    PropertyResolverProcessor processor = new DuplicateVariablesProcessor(variable);
-    final GroovyPsiElement duplicate = ResolveUtil.resolveExistingElement(variable, processor, GrVariable.class, GrReferenceExpression.class);
-
-    if (duplicate instanceof GrVariable) {
-      if (duplicate instanceof GrField && !(variable instanceof GrField)) {
-        holder.createWarningAnnotation(variable.getNameIdentifierGroovy(), GroovyBundle.message("field.already.defined", variable.getName()));
-      } else {
-        final String key = duplicate instanceof GrField ? "field.already.defined" : "variable.already.defined";
-        holder.createErrorAnnotation(variable.getNameIdentifierGroovy(), GroovyBundle.message(key, variable.getName()));
-      }
-    }
-  }
 
   private static void checkTypeDefinition(AnnotationHolder holder, GrTypeDefinition typeDefinition) {
     final GroovyConfigUtils configUtils = GroovyConfigUtils.getInstance();
@@ -801,72 +947,6 @@ public class GroovyAnnotator implements Annotator {
     if (resolved == null) {
       Annotation annotation = holder.createErrorAnnotation(reference, GroovyBundle.message("cannot.resolve", reference.getReferenceName()));
       annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
-    }
-  }
-
-  private static void checkReferenceExpression(AnnotationHolder holder, final GrReferenceExpression refExpr) {
-    GroovyResolveResult resolveResult = refExpr.advancedResolve();
-    GroovyResolveResult[] results = refExpr.multiResolve(false); //cached
-    for (GroovyResolveResult result : results) {
-      registerUsedImport(refExpr, result);
-    }
-
-    PsiElement resolved = resolveResult.getElement();
-    final PsiElement parent = refExpr.getParent();
-    if (resolved != null) {
-      if (resolved instanceof PsiMember) {
-        highlightMemberResolved(holder, refExpr, ((PsiMember)resolved));
-      }
-      if (!resolveResult.isAccessible()) {
-        String message = GroovyBundle.message("cannot.access", refExpr.getReferenceName());
-        holder.createWarningAnnotation(refExpr.getReferenceNameElement(), message);
-      }
-      if (!resolveResult.isStaticsOK() && resolved instanceof PsiModifierListOwner) {
-        if (!((PsiModifierListOwner)resolved).hasModifierProperty(PsiModifier.STATIC)) {
-          holder.createWarningAnnotation(refExpr, GroovyBundle.message("cannot.reference.nonstatic", refExpr.getReferenceName()));
-        }
-      }
-    }
-    else {
-      GrExpression qualifier = refExpr.getQualifierExpression();
-      if (qualifier == null && isDeclarationAssignment(refExpr)) return;
-
-      if (parent instanceof GrReferenceExpression && "class".equals(((GrReferenceExpression)parent).getReferenceName())) {
-        checkSingleResolvedElement(holder, refExpr, resolveResult);
-      }
-    }
-
-    if (parent instanceof GrCall) {
-      if (resolved == null && results.length > 0) {
-        resolved = results[0].getElement();
-        resolveResult = results[0];
-      }
-      if (resolved instanceof PsiMethod && resolved.getUserData(GrMethod.BUILDER_METHOD) == null) {
-        checkMethodApplicability(resolveResult, refExpr, holder);
-      }
-      else {
-        checkClosureApplicability(resolveResult, refExpr.getType(), refExpr, holder);
-      }
-    }
-    if (isDeclarationAssignment(refExpr) || resolved instanceof PsiPackage) return;
-
-    if (resolved == null) {
-      PsiElement refNameElement = refExpr.getReferenceNameElement();
-      PsiElement elt = refNameElement == null ? refExpr : refNameElement;
-      Annotation annotation = holder.createInfoAnnotation(elt, null);
-      final GrExpression qualifier = refExpr.getQualifierExpression();
-      if (qualifier == null) {
-        if (!(parent instanceof GrCall)) {
-          registerCreateClassByTypeFix(refExpr, annotation);
-          registerAddImportFixes(refExpr, annotation);
-        }
-      } else {
-        if (qualifier.getType() == null) {
-          return;
-        }
-      }
-      registerReferenceFixes(refExpr, annotation);
-      annotation.setTextAttributes(DefaultHighlighter.UNRESOLVED_ACCESS);
     }
   }
 
@@ -994,23 +1074,6 @@ public class GroovyAnnotator implements Annotator {
     return false;
   }
 
-  private static void checkReferenceElement(AnnotationHolder holder, final GrCodeReferenceElement refElement) {
-    final PsiElement parent = refElement.getParent();
-    GroovyResolveResult resolveResult = refElement.advancedResolve();
-    highlightAnnotation(holder, refElement, resolveResult);
-    registerUsedImport(refElement, resolveResult);
-    highlightAnnotation(holder, refElement, resolveResult);
-    if (refElement.getReferenceName() != null) {
-
-      if (parent instanceof GrImportStatement && ((GrImportStatement)parent).isStatic() && refElement.multiResolve(false).length > 0) {
-        return;
-      }
-
-      checkSingleResolvedElement(holder, refElement, resolveResult);
-    }
-
-  }
-
   private static void checkSingleResolvedElement(AnnotationHolder holder, GrReferenceElement refElement, GroovyResolveResult resolveResult) {
     final PsiElement resolved = resolveResult.getElement();
     if (resolved == null) {
@@ -1030,63 +1093,6 @@ public class GroovyAnnotator implements Annotator {
     else if (!resolveResult.isAccessible()) {
       String message = GroovyBundle.message("cannot.access", refElement.getReferenceName());
       holder.createWarningAnnotation(refElement.getReferenceNameElement(), message);
-    }
-  }
-
-  private static void checkNewExpression(AnnotationHolder holder, GrNewExpression newExpression) {
-    if (newExpression.getArrayCount() > 0) return;
-    GrCodeReferenceElement refElement = newExpression.getReferenceElement();
-    if (refElement == null) return;
-    final PsiElement element = refElement.resolve();
-    if (element instanceof PsiClass) {
-      PsiClass clazz = (PsiClass)element;
-      if (clazz.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        if (newExpression.getAnonymousClassDefinition() == null) {
-          String message = clazz.isInterface()
-                           ? GroovyBundle.message("cannot.instantiate.interface", clazz.getName())
-                           : GroovyBundle.message("cannot.instantiate.abstract.class", clazz.getName());
-          holder.createErrorAnnotation(refElement, message);
-        }
-        return;
-      }
-      if (newExpression.getQualifier() != null) {
-        if (clazz.hasModifierProperty(PsiModifier.STATIC)) {
-          holder.createErrorAnnotation(newExpression, GroovyBundle.message("qualified.new.of.static.class"));
-        }
-      } else {
-        final PsiClass outerClass = clazz.getContainingClass();
-        if (com.intellij.psi.util.PsiUtil.isInnerClass(clazz) && !PsiUtil.hasEnclosingInstanceInScope(outerClass, newExpression, true)) {
-          holder.createErrorAnnotation(newExpression, GroovyBundle.message("cannot.reference.nonstatic", clazz.getQualifiedName()));
-        }
-      }
-    }
-
-    final GroovyResolveResult constructorResolveResult = newExpression.resolveConstructorGenerics();
-    if (constructorResolveResult.getElement() != null) {
-      checkMethodApplicability(constructorResolveResult, refElement, holder);
-      final GrArgumentList argList = newExpression.getArgumentList();
-      if (argList != null && argList.getExpressionArguments().length == 0) checkDefaultMapConstructor(holder, argList);
-    }
-    else {
-      final GroovyResolveResult[] results = newExpression.multiResolveConstructor();
-      final GrArgumentList argList = newExpression.getArgumentList();
-      PsiElement toHighlight = argList != null ? argList : refElement.getReferenceNameElement();
-
-      if (results.length > 0) {
-        String message = GroovyBundle.message("ambiguous.constructor.call");
-        holder.createWarningAnnotation(toHighlight, message);
-      }
-      else {
-        if (element instanceof PsiClass) {
-          //default constructor invocation
-          PsiType[] argumentTypes = PsiUtil.getArgumentTypes(refElement, true, true);
-          if (argumentTypes != null && argumentTypes.length > 0) {
-            String message = GroovyBundle.message("cannot.find.default.constructor", ((PsiClass)element).getName());
-            holder.createWarningAnnotation(toHighlight, message);
-          }
-          else checkDefaultMapConstructor(holder, argList);
-        }
-      }
     }
   }
 

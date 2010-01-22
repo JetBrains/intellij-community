@@ -57,6 +57,14 @@ public class MoveInstanceMethodTest extends LightCodeInsightTestCase {
     doTest(true, 0);
   }
 
+  public void testQualifyFieldAccess() throws Exception {
+    doTest(false, 0);
+  }
+
+  public void testStripFieldQualifier() throws Exception {
+    doTest(false, 0);
+  }
+
   private void doTest(boolean isTargetParameter, final int targetIndex) throws Exception {
     doTest(isTargetParameter, targetIndex, null);
   }
