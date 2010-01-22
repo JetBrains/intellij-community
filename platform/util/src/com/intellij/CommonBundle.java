@@ -65,7 +65,7 @@ public class CommonBundle {
       } else {
         value = "!" + key + "!";
         if (assertKeyIsFound) {
-          assert false: key + " is not found";
+          assert false: key + " is not found in "+BUNDLE;
         }
       }
     }
