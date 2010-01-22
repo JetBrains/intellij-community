@@ -15,18 +15,27 @@
  */
 package com.intellij.refactoring.copy;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
 import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.RecentsManager;
@@ -49,6 +58,7 @@ class CopyClassDialog extends DialogWrapper{
   private PsiDirectory myTargetDirectory;
   private final boolean myDoClone;
   private final PsiDirectory myDefaultTargetDirectory;
+  private JCheckBox myCbMoveToAnotherSourceFolder = new JCheckBox(RefactoringBundle.message("move.classes.move.to.another.source.folder"));
 
   public CopyClassDialog(PsiClass aClass, PsiDirectory defaultTargetDirectory, Project project, boolean doClone) {
     super(project, true);
@@ -64,6 +74,7 @@ class CopyClassDialog extends DialogWrapper{
     if (myDoClone) {
       myTfPackage.setVisible(false);
       myPackageLabel.setVisible(false);
+      myCbMoveToAnotherSourceFolder.setVisible(false);
     }
   }
 
@@ -127,6 +138,14 @@ class CopyClassDialog extends DialogWrapper{
 
     panel.add(myTfPackage, gbConstraints);
 
+    myCbMoveToAnotherSourceFolder.setEnabled(ProjectRootManager.getInstance(myProject).getContentSourceRoots().length > 1);
+    gbConstraints.gridy = 3;
+    gbConstraints.gridx = 0;
+    gbConstraints.gridwidth = 2;
+    gbConstraints.anchor = GridBagConstraints.EAST;
+    gbConstraints.fill = GridBagConstraints.NONE;
+    panel.add(myCbMoveToAnotherSourceFolder, gbConstraints);
+
     return panel;
   }
 
@@ -155,7 +174,20 @@ class CopyClassDialog extends DialogWrapper{
       }
       else if (!myDoClone) {
         try {
-          myTargetDirectory = PackageUtil.findOrCreateDirectoryForPackage(myProject, packageName, myDefaultTargetDirectory, true);
+          if (myCbMoveToAnotherSourceFolder.isSelected() && myCbMoveToAnotherSourceFolder.isEnabled()) {
+            final PackageWrapper targetPackage = new PackageWrapper(manager, packageName);
+            final VirtualFile sourceRoot = MoveClassesOrPackagesUtil
+              .chooseSourceRoot(targetPackage, ProjectRootManager.getInstance(myProject).getContentSourceRoots(), myDefaultTargetDirectory);
+            if (sourceRoot == null) return;
+            new WriteCommandAction(myProject, CodeInsightBundle.message("create.directory.command")){
+              @Override
+              protected void run(Result objectResult) throws Throwable {
+                myTargetDirectory = RefactoringUtil.createPackageDirectoryInSourceRoot(targetPackage, sourceRoot);
+              }
+            }.execute();
+          } else {
+            myTargetDirectory = PackageUtil.findOrCreateDirectoryForPackage(ModuleUtil.findModuleForFile(myDefaultTargetDirectory.getVirtualFile(), myProject), packageName, myDefaultTargetDirectory, true);
+          }
           if (myTargetDirectory == null) {
             errorString[0] = ""; // message already reported by PackageUtil
           } else {
