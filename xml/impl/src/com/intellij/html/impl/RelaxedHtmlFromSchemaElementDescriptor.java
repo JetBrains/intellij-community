@@ -16,6 +16,7 @@
 package com.intellij.html.impl;
 
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -80,6 +81,11 @@ public class RelaxedHtmlFromSchemaElementDescriptor extends XmlElementDescriptor
       descriptors = ArrayUtil.mergeArrays(descriptors, provider.getAttributeDescriptors(context), XmlAttributeDescriptor.class);
     }
     return descriptors;
+  }
+
+  @Override
+  public XmlAttributeDescriptor getAttributeDescriptor(XmlAttribute attribute) {
+    return getAttributeDescriptor(attribute.getName(), attribute.getParent());
   }
 
   public XmlAttributeDescriptor getAttributeDescriptor(String attributeName, final XmlTag context) {

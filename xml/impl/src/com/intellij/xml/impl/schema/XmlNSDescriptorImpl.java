@@ -48,7 +48,7 @@ import java.util.*;
  * @author Mike
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
-public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocument>, DumbAware {
+public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocument>, DumbAware, XmlNSTypeDescriptorProvider {
   @NonNls private static final Set<String> STD_TYPES = new HashSet<String>();
   private static final Set<String> UNDECLARED_STD_TYPES = new HashSet<String>();
   private XmlFile myFile;
@@ -335,7 +335,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
     return new XmlAttributeDescriptorImpl(tag);
   }
 
-  protected TypeDescriptor getTypeDescriptor(XmlTag descriptorTag) {
+  public TypeDescriptor getTypeDescriptor(XmlTag descriptorTag) {
     String type = descriptorTag.getAttributeValue("type");
 
     if (type != null) {
@@ -405,20 +405,23 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
     return defaultNSDescriptor;
   }
 
+  @Nullable
   protected TypeDescriptor findTypeDescriptor(final String qname) {
     return findTypeDescriptor(qname, myTag);
   }
 
+  @Nullable
   protected TypeDescriptor findTypeDescriptor(final String qname, XmlTag context) {
     String namespace = context.getNamespaceByPrefix(XmlUtil.findPrefixByQualifiedName(qname));
     return findTypeDescriptor(XmlUtil.findLocalNameByQualifiedName(qname), namespace);
   }
 
+  @Nullable
   private TypeDescriptor findTypeDescriptor(String localName, String namespace) {
-    TypeDescriptor typeDescriptor = findTypeDescriptorImpl(myTag, localName, namespace, null);
-    return typeDescriptor;
+    return findTypeDescriptorImpl(myTag, localName, namespace, null);
   }
 
+  @Nullable
   protected TypeDescriptor findTypeDescriptorImpl(XmlTag rootTag, final String name, String namespace, Set<XmlTag> visited) {
     XmlNSDescriptorImpl responsibleDescriptor = this;
     if (namespace != null && namespace.length() != 0 && !namespace.equals(getDefaultNamespace())) {
