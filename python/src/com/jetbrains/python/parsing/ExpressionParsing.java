@@ -66,7 +66,7 @@ public class ExpressionParsing extends Parsing {
       return true;
     }
     else if (firstToken == PyTokenTypes.LBRACE) {
-      parseDictLiteralExpression(builder);
+      parseDictOrSetDisplay();
       return true;
     }
     else if (firstToken == PyTokenTypes.TICK) {
@@ -136,20 +136,61 @@ public class ExpressionParsing extends Parsing {
     expr.done(exprType);
   }
 
-  private void parseDictLiteralExpression(PsiBuilder builder) {
-    LOG.assertTrue(builder.getTokenType() == PyTokenTypes.LBRACE);
-    final PsiBuilder.Marker expr = builder.mark();
-    builder.advanceLexer();
-    while (builder.getTokenType() != PyTokenTypes.RBRACE) {
+  private void parseDictOrSetDisplay() {
+    LOG.assertTrue(myBuilder.getTokenType() == PyTokenTypes.LBRACE);
+    final PsiBuilder.Marker expr = myBuilder.mark();
+    myBuilder.advanceLexer();
+
+    if (myBuilder.getTokenType() == PyTokenTypes.RBRACE) {
+      myBuilder.advanceLexer();
+      expr.done(PyElementTypes.DICT_LITERAL_EXPRESSION);
+      return;
+    }
+
+    final PsiBuilder.Marker firstExprMarker = myBuilder.mark();
+    if (!parseSingleExpression(false)) {
+      myBuilder.error("expression expected");
+      firstExprMarker.drop();
+      expr.done(PyElementTypes.DICT_LITERAL_EXPRESSION);
+      return;
+    }
+
+    if (myBuilder.getTokenType() == PyTokenTypes.COLON) {
+      myBuilder.advanceLexer();
+      parseDictLiteralTail(expr, firstExprMarker);
+    }
+    else if (myBuilder.getTokenType() == PyTokenTypes.COMMA || myBuilder.getTokenType() == PyTokenTypes.RBRACE) {
+      firstExprMarker.drop();
+      parseSetLiteralTail(expr);
+    }
+    else {
+      myBuilder.error("expression expected");
+      firstExprMarker.drop();
+      expr.done(PyElementTypes.DICT_LITERAL_EXPRESSION);
+    }
+  }
+
+  private void parseDictLiteralTail(PsiBuilder.Marker startMarker, PsiBuilder.Marker firstKeyValueMarker) {
+    if (!parseSingleExpression(false)) {
+      myBuilder.error("expression expected");
+      firstKeyValueMarker.drop();
+      startMarker.done(PyElementTypes.DICT_LITERAL_EXPRESSION);
+      return;
+    }
+    firstKeyValueMarker.done(PyElementTypes.KEY_VALUE_EXPRESSION);
+    if (myBuilder.getTokenType() == PyTokenTypes.COMMA) {
+      myBuilder.advanceLexer();
+    }
+    while (myBuilder.getTokenType() != PyTokenTypes.RBRACE) {
       if (!parseKeyValueExpression()) {
         break;
       }
-      if (builder.getTokenType() != PyTokenTypes.RBRACE) {
+      if (myBuilder.getTokenType() != PyTokenTypes.RBRACE) {
         checkMatches(PyTokenTypes.COMMA, message("PARSE.expected.comma"));
       }
     }
-    builder.advanceLexer();
-    expr.done(PyElementTypes.DICT_LITERAL_EXPRESSION);
+    myBuilder.advanceLexer();
+    startMarker.done(PyElementTypes.DICT_LITERAL_EXPRESSION);
   }
 
   private boolean parseKeyValueExpression() {
@@ -165,6 +206,17 @@ public class ExpressionParsing extends Parsing {
     }
     marker.done(PyElementTypes.KEY_VALUE_EXPRESSION);
     return true;
+  }
+
+  private void parseSetLiteralTail(PsiBuilder.Marker startMarker) {
+    while (myBuilder.getTokenType() != PyTokenTypes.RBRACE) {
+      checkMatches(PyTokenTypes.COMMA, message("PARSE.expected.comma"));
+      if (!parseSingleExpression(false)) {
+        break;
+      }
+    }
+    myBuilder.advanceLexer();
+    startMarker.done(PyElementTypes.SET_LITERAL_EXPRESSION);
   }
 
   private void parseParenthesizedExpression(PsiBuilder builder, boolean isTargetExpression) {
