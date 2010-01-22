@@ -90,7 +90,7 @@ public class MethodSignatureUtil {
     return true;
   }
 
-  private static boolean areSignaturesEqualLightweight(MethodSignature sig1, MethodSignature sig2) {
+  public static boolean areSignaturesEqualLightweight(MethodSignature sig1, MethodSignature sig2) {
     String name1 = sig1.getName();
     String name2 = sig2.getName();
     if (!name1.equals(name2)) return false;
