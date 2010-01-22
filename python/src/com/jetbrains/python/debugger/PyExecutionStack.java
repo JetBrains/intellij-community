@@ -13,6 +13,7 @@ public class PyExecutionStack extends XExecutionStack {
 
   private final PyDebugProcess myDebugProcess;
   private final PyThreadInfo myThreadInfo;
+  private PyStackFrame myTopFrame;
 
   public PyExecutionStack(@NotNull final PyDebugProcess debugProcess, @NotNull final PyThreadInfo threadInfo) {
     super(threadInfo.getName());
@@ -22,8 +23,13 @@ public class PyExecutionStack extends XExecutionStack {
 
   @Override
   public XStackFrame getTopFrame() {
-    final List<PyStackFrameInfo> frames = myThreadInfo.getFrames();
-    return frames != null ? convert(myDebugProcess, frames.get(0)) : null;
+    if (myTopFrame == null) {
+      final List<PyStackFrameInfo> frames = myThreadInfo.getFrames();
+      if (frames != null) {
+        myTopFrame = convert(myDebugProcess, frames.get(0));
+      }
+    }
+    return myTopFrame;
   }
 
   @Override
