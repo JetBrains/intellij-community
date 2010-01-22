@@ -1,7 +1,5 @@
 package com.jetbrains.python.refactoring.classes.pushDown;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -33,7 +31,7 @@ public class PyPushDownProcessor extends BaseRefactoringProcessor {
   private PyClass myClass;
   private Collection<PyMemberInfo> mySelectedMemberInfos;
 
-  protected PyPushDownProcessor(Project project, PyClass clazz, Collection<PyMemberInfo> selectedMemberInfos) {
+  public PyPushDownProcessor(Project project, PyClass clazz, Collection<PyMemberInfo> selectedMemberInfos) {
     super(project);
     myClass = clazz;
     mySelectedMemberInfos = selectedMemberInfos;
@@ -75,17 +73,18 @@ public class PyPushDownProcessor extends BaseRefactoringProcessor {
       else LOG.error("unmatched member class " + element.getClass());
     }
 
-    final PsiElement[] elements = methods.toArray(new PsiElement[methods.size()]);
-    if (methods.size() != 0) {
-      PyPsiUtils.removeElements(elements);
-    }
+    final PyElement[] elements = methods.toArray(new PyElement[methods.size()]);
 
     final List<PsiElement> superClassesElements = PyClassRefactoringUtil.removeAndGetSuperClasses(myClass, superClasses);
 
     for (UsageInfo usage : usages) {
       final PyClass targetClass = (PyClass)usage.getElement();
-      PyClassRefactoringUtil.addMethods(targetClass, elements);
+      PyClassRefactoringUtil.addMethods(targetClass, elements, false);
       PyClassRefactoringUtil.addSuperclasses(myClass.getProject(), targetClass, superClassesElements, superClasses);
+    }
+
+    if (methods.size() != 0) {
+      PyPsiUtils.removeElements(elements);
     }
   }
 
@@ -96,7 +95,7 @@ public class PyPushDownProcessor extends BaseRefactoringProcessor {
     conflicts.checkSourceClassConflicts();
 
     if (usages.length == 0) {
-      final String message = RefactoringBundle.message("class.0.does.not.have.inheritors", myClass.getName() + "\n" + RefactoringBundle.message("push.down.will.delete.members"));
+      final String message = RefactoringBundle.message("class.0.does.not.have.inheritors", myClass.getName()) + "\nPushing members down will result in them being deleted";
       final int answer = Messages.showYesNoDialog(message, PyPushDownHandler.REFACTORING_NAME, Messages.getWarningIcon());
       if (answer != 0) {
         return false;
@@ -104,7 +103,7 @@ public class PyPushDownProcessor extends BaseRefactoringProcessor {
     }
 
     for (UsageInfo usage : usages) {
-       conflicts.checkTargetClassConflicts(usage.getElement());
+       conflicts.checkTargetClassConflicts((PyClass)usage.getElement());
     }
     return showConflicts(conflicts.getConflicts());
   }

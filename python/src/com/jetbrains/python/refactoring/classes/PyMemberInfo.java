@@ -1,5 +1,6 @@
 package com.jetbrains.python.refactoring.classes;
 
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.refactoring.classes.ui.PyClassCellRenderer;
@@ -23,7 +24,7 @@ public class PyMemberInfo extends MemberInfoBase<PyElement> {
         }
       }
     } else if (member instanceof PyClass) {
-      displayName = PyClassCellRenderer.getClassText((PyClass)member);
+      displayName = RefactoringBundle.message("member.info.extends.0", PyClassCellRenderer.getClassText((PyClass)member));
     }
   }
 

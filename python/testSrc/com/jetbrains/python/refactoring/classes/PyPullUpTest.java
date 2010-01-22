@@ -17,7 +17,7 @@ import java.util.Collections;
 /**
  * @author Dennis.Ushakov
  */
-public class PyPullUpTest extends PyLightFixtureTestCase {
+public class PyPullUpTest extends PyClassRefactoringTest {
   public void testSimple() throws Exception {
     doHelperTest("Boo", ".boo", "Foo");
   }
@@ -38,26 +38,6 @@ public class PyPullUpTest extends PyLightFixtureTestCase {
     final PyClass superClass = findClass(superClassName);
     PyPullUpHelper.pullUp(clazz, Collections.singleton(new PyMemberInfo(member)), superClass);
     myFixture.checkResultByFile(baseName + ".after.py");
-  }
-
-  private PyElement findMember(String className, String memberName) {
-    if (!memberName.contains(".")) return findClass(memberName);
-    return findMethod(className, memberName.substring(1));
-  }
-
-  private PyFunction findMethod(final String className, final String name) {
-    final PyClass clazz = findClass(className);
-    final PyFunction method = clazz.findMethodByName(name, false);
-    assertNotNull(method);
-    return method;
-  }
-
-  private PyClass findClass(final String name) {
-    final Project project = myFixture.getProject();
-    final Collection<PyClass> classes = StubIndex.getInstance().get(PyClassNameIndex.KEY, name, project,
-                                                                    ProjectScope.getProjectScope(project));
-    assertEquals(1, classes.size());
-    return classes.iterator().next();
   }
 
   @Override
