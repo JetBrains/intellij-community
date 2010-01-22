@@ -536,7 +536,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     }
 
     private void checkModifierListOwner(PsiElement child) {
-      if (child instanceof PsiModifierListOwner) {
+      if (child instanceof PsiClass || child instanceof PsiMethod) {
         PsiModifierList modifierList = ((PsiModifierListOwner)child).getModifierList();
         if (modifierList != null && modifierList.getAnnotations().length > 0) {
           myModificationTracker.incAnnotationModificationCounter();             
