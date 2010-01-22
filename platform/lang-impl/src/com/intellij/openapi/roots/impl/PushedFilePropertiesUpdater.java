@@ -164,7 +164,7 @@ public class PushedFilePropertiesUpdater {
     }
   }
 
-  private static <T> void findAndUpdateValue(final Project project, final VirtualFile fileOrDir, final FilePropertyPusher<T> pusher, final T moduleValue) {
+  public static <T> void findAndUpdateValue(final Project project, final VirtualFile fileOrDir, final FilePropertyPusher<T> pusher, final T moduleValue) {
     final T value = findPusherValuesUpwards(project, fileOrDir, pusher, moduleValue);
     updateValue(fileOrDir, value, pusher);
   }
