@@ -88,6 +88,7 @@ public class TemplateImpl extends Template implements SchemeElement {
   @NonNls public static final String SELECTION = "SELECTION";
   @NonNls public static final String SELECTION_START = "SELECTION_START";
   @NonNls public static final String SELECTION_END = "SELECTION_END";
+  @NonNls public static final String ARG = "ARG";
 
   public static final Set<String> INTERNAL_VARS_SET = new HashSet<String>(Arrays.asList(
       END, SELECTION, SELECTION_START, SELECTION_END));
@@ -378,6 +379,13 @@ public class TemplateImpl extends Template implements SchemeElement {
       if (v.getName().equals(SELECTION)) return true;
     }
 
+    return false;
+  }
+
+  public boolean hasArgument() {
+    for (Variable v : myVariables) {
+      if (v.getName().equals(ARG)) return true;
+    }
     return false;
   }
 
