@@ -20,7 +20,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunner;
@@ -44,7 +44,7 @@ public abstract class GroovyScriptType {
     @NotNull
     @Override
     public Icon getScriptIcon() {
-      return GroovyFileType.GROOVY_LOGO;
+      return GroovyIcons.GROOVY_ICON_16x16;
     }
 
     @Override
