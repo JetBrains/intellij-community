@@ -48,7 +48,7 @@ public class FunctionParsing extends Parsing {
       myBuilder.advanceLexer();
       getStatementParser().parseDottedName();
       if (myBuilder.getTokenType() == PyTokenTypes.LPAR) {
-        getExpressionParser().parseArgumentList(myBuilder);
+        getExpressionParser().parseArgumentList();
       }
       else { // empty arglist node, so we always have it
         myBuilder.mark().done(PyElementTypes.ARGUMENT_LIST);

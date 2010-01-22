@@ -228,7 +228,7 @@ public class ExpressionParsing extends Parsing {
           expr = expr.precede();
         }
         else if (tokenType == PyTokenTypes.LPAR) {
-          parseArgumentList(builder);
+          parseArgumentList();
           expr.done(PyElementTypes.CALL_EXPRESSION);
           expr = expr.precede();
         }
@@ -297,48 +297,48 @@ public class ExpressionParsing extends Parsing {
     expr.done(PyElementTypes.SLICE_EXPRESSION);
   }
 
-  public void parseArgumentList(final PsiBuilder builder) {
-    LOG.assertTrue(builder.getTokenType() == PyTokenTypes.LPAR);
-    final PsiBuilder.Marker arglist = builder.mark();
-    final PsiBuilder.Marker genexpr = builder.mark();
-    builder.advanceLexer();
+  public void parseArgumentList() {
+    LOG.assertTrue(myBuilder.getTokenType() == PyTokenTypes.LPAR);
+    final PsiBuilder.Marker arglist = myBuilder.mark();
+    final PsiBuilder.Marker genexpr = myBuilder.mark();
+    myBuilder.advanceLexer();
     int argNumber = 0;
     boolean needBracket = true;
-    while (builder.getTokenType() != PyTokenTypes.RPAR) {
+    while (myBuilder.getTokenType() != PyTokenTypes.RPAR) {
       argNumber++;
       if (argNumber > 1) {
-        if (argNumber == 2 && builder.getTokenType() == PyTokenTypes.FOR_KEYWORD) {
+        if (argNumber == 2 && myBuilder.getTokenType() == PyTokenTypes.FOR_KEYWORD && genexpr != null) {
           parseListCompExpression(genexpr, PyTokenTypes.RPAR, PyElementTypes.GENERATOR_EXPRESSION);
           needBracket = false;
           break;
         }
-        else if (builder.getTokenType() == PyTokenTypes.COMMA) {
-          builder.advanceLexer();
-          if (builder.getTokenType() == PyTokenTypes.RPAR) {
+        else if (myBuilder.getTokenType() == PyTokenTypes.COMMA) {
+          myBuilder.advanceLexer();
+          if (myBuilder.getTokenType() == PyTokenTypes.RPAR) {
             break;
           }
         }
         else {
-          builder.error(message("PARSE.expected.comma.or.rpar"));
+          myBuilder.error(message("PARSE.expected.comma.or.rpar"));
           break;
         }
       }
-      if (builder.getTokenType() == PyTokenTypes.MULT || builder.getTokenType() == PyTokenTypes.EXP) {
-        final PsiBuilder.Marker starArgMarker = builder.mark();
-        builder.advanceLexer();
+      if (myBuilder.getTokenType() == PyTokenTypes.MULT || myBuilder.getTokenType() == PyTokenTypes.EXP) {
+        final PsiBuilder.Marker starArgMarker = myBuilder.mark();
+        myBuilder.advanceLexer();
         if (!parseSingleExpression(false)) {
-          builder.error(message("PARSE.expected.expression"));
+          myBuilder.error(message("PARSE.expected.expression"));
         }
         starArgMarker.done(PyElementTypes.STAR_ARGUMENT_EXPRESSION);
       }
       else {
-        if (builder.getTokenType() == PyTokenTypes.IDENTIFIER) {
-          final PsiBuilder.Marker keywordArgMarker = builder.mark();
-          builder.advanceLexer();
-          if (builder.getTokenType() == PyTokenTypes.EQ) {
-            builder.advanceLexer();
+        if (myBuilder.getTokenType() == PyTokenTypes.IDENTIFIER) {
+          final PsiBuilder.Marker keywordArgMarker = myBuilder.mark();
+          myBuilder.advanceLexer();
+          if (myBuilder.getTokenType() == PyTokenTypes.EQ) {
+            myBuilder.advanceLexer();
             if (!parseSingleExpression(false)) {
-              builder.error(message("PARSE.expected.expression"));
+              myBuilder.error(message("PARSE.expected.expression"));
             }
             keywordArgMarker.done(PyElementTypes.KEYWORD_ARGUMENT_EXPRESSION);
             continue;
@@ -346,13 +346,15 @@ public class ExpressionParsing extends Parsing {
           keywordArgMarker.rollbackTo();
         }
         if (!parseSingleExpression(false)) {
-          builder.error(message("PARSE.expected.expression"));
+          myBuilder.error(message("PARSE.expected.expression"));
         }
       }
     }
 
     if (needBracket) {
-      genexpr.drop();
+      if (genexpr != null) {
+        genexpr.drop();
+      }
       checkMatches(PyTokenTypes.RPAR, message("PARSE.expected.rpar"));
     }
     arglist.done(PyElementTypes.ARGUMENT_LIST);

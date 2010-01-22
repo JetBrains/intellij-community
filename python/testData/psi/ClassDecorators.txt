@@ -18,7 +18,7 @@ PyFile:ClassDecorators.py
     PsiElement(Py:CLASS_KEYWORD)('class')
     PsiWhiteSpace(' ')
     PsiElement(Py:IDENTIFIER)('A')
-    PyParenthesizedExpression
+    PyArgumentList
       <empty list>
     PsiElement(Py:COLON)(':')
     PsiWhiteSpace('\n  ')

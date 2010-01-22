@@ -44,7 +44,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
     for (Module module : modules) {
       final Sdk sdk = PythonSdkType.findPythonSdk(module);
       myModuleSdks.put(module, sdk);
-      if (!usedSdks.contains(sdk)) {
+      if (sdk != null && !usedSdks.contains(sdk)) {
         usedSdks.add(sdk);
         updateSdkLanguageLevel(project, sdk);
       }

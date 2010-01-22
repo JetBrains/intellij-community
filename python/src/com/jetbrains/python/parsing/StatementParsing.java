@@ -665,15 +665,13 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     assertCurrentToken(PyTokenTypes.CLASS_KEYWORD);
     myBuilder.advanceLexer();
     checkMatches(PyTokenTypes.IDENTIFIER, "identifier expected");
-    final PsiBuilder.Marker inheritMarker = myBuilder.mark();
     if (myBuilder.getTokenType() == PyTokenTypes.LPAR) {
-      myBuilder.advanceLexer();
-      if (myBuilder.getTokenType() != PyTokenTypes.RPAR) {
-        getExpressionParser().parseExpression();
-      }
-      checkMatches(PyTokenTypes.RPAR, ") expected");
+      getExpressionParser().parseArgumentList();
     }
-    inheritMarker.done(PyElementTypes.PARENTHESIZED_EXPRESSION);
+    else {
+      final PsiBuilder.Marker inheritMarker = myBuilder.mark();
+      inheritMarker.done(PyElementTypes.ARGUMENT_LIST);
+    }
     checkMatches(PyTokenTypes.COLON, "colon expected");
     parseSuite();
     classMarker.done(PyElementTypes.CLASS_DECLARATION);

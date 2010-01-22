@@ -81,15 +81,9 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   @NotNull
   public PyExpression[] getSuperClassExpressions() {
-    final PyParenthesizedExpression superExpression = PsiTreeUtil.getChildOfType(this, PyParenthesizedExpression.class);
-    if (superExpression != null) {
-      PyExpression expr = superExpression.getContainedExpression();
-      if (expr instanceof PyTupleExpression) {
-        return ((PyTupleExpression) expr).getElements();
-      }
-      if (expr != null) {
-        return new PyExpression[] { expr };
-      }
+    final PyArgumentList argList = PsiTreeUtil.getChildOfType(this, PyArgumentList.class);
+    if (argList != null) {
+      return argList.getArguments();
     }
     return PyExpression.EMPTY_ARRAY;
   }
@@ -181,7 +175,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       List<PyClass> result = new ArrayList<PyClass>();
       // maybe a bare old-style class?
       // TODO: depend on language version: py3k does not do old style classes
-      PsiElement paren = PsiTreeUtil.getChildOfType(this, PyParenthesizedExpression.class).getFirstChild(); // no NPE, we always have the par expr
+      PsiElement paren = PsiTreeUtil.getChildOfType(this, PyArgumentList.class).getFirstChild(); // no NPE, we always have the par expr
       if (paren != null && "(".equals(paren.getText())) { // "()" after class name, it's new style
         for(PsiElement element: superClassElements) {
           if (element instanceof PyClass) {
