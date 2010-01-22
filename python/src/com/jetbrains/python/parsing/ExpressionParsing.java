@@ -89,7 +89,7 @@ public class ExpressionParsing extends Parsing {
       builder.error(message("PARSE.expected.expression"));
     }
     if (builder.getTokenType() == PyTokenTypes.FOR_KEYWORD) {
-      parseListCompExpression(expr, PyTokenTypes.RBRACKET, PyElementTypes.LIST_COMP_EXPRESSION);
+      parseComprehension(expr, PyTokenTypes.RBRACKET, PyElementTypes.LIST_COMP_EXPRESSION);
     }
     else {
       while (builder.getTokenType() != PyTokenTypes.RBRACKET) {
@@ -106,7 +106,7 @@ public class ExpressionParsing extends Parsing {
     }
   }
 
-  private void parseListCompExpression(PsiBuilder.Marker expr,
+  private void parseComprehension(PsiBuilder.Marker expr,
                                        final IElementType endToken,
                                        final IElementType exprType) {
     assertCurrentToken(PyTokenTypes.FOR_KEYWORD);
@@ -162,6 +162,10 @@ public class ExpressionParsing extends Parsing {
     else if (myBuilder.getTokenType() == PyTokenTypes.COMMA || myBuilder.getTokenType() == PyTokenTypes.RBRACE) {
       firstExprMarker.drop();
       parseSetLiteralTail(expr);
+    }
+    else if (myBuilder.getTokenType() == PyTokenTypes.FOR_KEYWORD) {
+      firstExprMarker.drop();
+      parseComprehension(expr, PyTokenTypes.RBRACE, PyElementTypes.SET_COMP_EXPRESSION);
     }
     else {
       myBuilder.error("expression expected");
@@ -230,7 +234,7 @@ public class ExpressionParsing extends Parsing {
     else {
       parseYieldOrTupleExpression(builder, isTargetExpression);
       if (builder.getTokenType() == PyTokenTypes.FOR_KEYWORD) {
-        parseListCompExpression(expr, PyTokenTypes.RPAR, PyElementTypes.GENERATOR_EXPRESSION);
+        parseComprehension(expr, PyTokenTypes.RPAR, PyElementTypes.GENERATOR_EXPRESSION);
       }
       else {
         checkMatches(PyTokenTypes.RPAR, message("PARSE.expected.rpar"));
@@ -360,7 +364,7 @@ public class ExpressionParsing extends Parsing {
       argNumber++;
       if (argNumber > 1) {
         if (argNumber == 2 && myBuilder.getTokenType() == PyTokenTypes.FOR_KEYWORD && genexpr != null) {
-          parseListCompExpression(genexpr, PyTokenTypes.RPAR, PyElementTypes.GENERATOR_EXPRESSION);
+          parseComprehension(genexpr, PyTokenTypes.RPAR, PyElementTypes.GENERATOR_EXPRESSION);
           needBracket = false;
           break;
         }

@@ -146,6 +146,10 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON30);
   }
 
+  public void testSetComprehension() throws Exception {
+    doTest(LanguageLevel.PYTHON30);
+  }
+
   public void doTest() throws Exception {
     doTest(LanguageLevel.PYTHON25);
   }
