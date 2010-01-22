@@ -156,7 +156,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
 
   private void updateSdkLanguageLevel(Project project, Sdk sdk) {
     final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
-    final VirtualFile[] files = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
+    final VirtualFile[] files = sdk == null ? VirtualFile.EMPTY_ARRAY : sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
     for (VirtualFile file : files) {
       PushedFilePropertiesUpdater.findAndUpdateValue(project, file, this, languageLevel);
     }
