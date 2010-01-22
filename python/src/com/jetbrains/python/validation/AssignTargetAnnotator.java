@@ -1,35 +1,15 @@
-/*
- *  Copyright 2005 Pythonid Project
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS"; BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package com.jetbrains.python.validation;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import static com.jetbrains.python.PyBundle.message;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.sdk.PythonSdkType;
 
+import static com.jetbrains.python.PyBundle.message;
+
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 10.06.2005
- * Time: 23:27:40
- * To change this template use File | Settings | File Templates.
+ * @author yole
  */
 public class AssignTargetAnnotator extends PyAnnotator {
   private enum Operation {
@@ -165,12 +145,26 @@ public class AssignTargetAnnotator extends PyAnnotator {
 
     @Override
     public void visitPyListCompExpression(final PyListCompExpression node) {
-      getHolder()
-        .createErrorAnnotation(node, message(_op == Operation.AugAssign ? "ANN.cant.aug.assign.to.comprh" : "ANN.cant.assign.to.comprh"));
+      markError(node, message(_op == Operation.AugAssign ? "ANN.cant.aug.assign.to.comprh" : "ANN.cant.assign.to.comprh"));
+    }
+
+    @Override
+    public void visitPyDictCompExpression(PyDictCompExpression node) {
+      markError(node, message(_op == Operation.AugAssign ? "ANN.cant.aug.assign.to.dict.comprh" : "ANN.cant.assign.to.dict.comprh"));
+    }
+
+    @Override
+    public void visitPySetCompExpression(PySetCompExpression node) {
+      markError(node, message(_op == Operation.AugAssign ? "ANN.cant.aug.assign.to.set.comprh" : "ANN.cant.assign.to.set.comprh"));
     }
 
     @Override
     public void visitPyDictLiteralExpression(PyDictLiteralExpression node) {
+      checkLiteral(node);
+    }
+
+    @Override
+    public void visitPySetLiteralExpression(PySetLiteralExpression node) {
       checkLiteral(node);
     }
 

@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PySetCompExpression;
 import com.jetbrains.python.psi.types.PyType;
 
@@ -15,5 +16,10 @@ public class PySetCompExpressionImpl extends PyComprehensionElementImpl implemen
   public PyType getType() {
     // TODO
     return null;
+  }
+
+  @Override
+  protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
+    pyVisitor.visitPySetCompExpression(this);
   }
 }
