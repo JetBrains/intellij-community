@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunner;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
+import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.io.File;
 
@@ -78,9 +79,11 @@ public class GantRunner extends GroovyScriptRunner {
     if (groovyJars.length > 0) {
       params.getClassPath().add(groovyJars[0].getAbsolutePath());
     } else if (module != null) {
-      final VirtualFile groovyJar = findGroovyJar(module);
-      if (groovyJar != null) {
-        params.getClassPath().add(groovyJar);
+      final String groovyHome = LibrariesUtil.getGroovyHomePath(module);
+      if (groovyHome != null) {
+        for (File groovyLibJar : GroovyUtils.getFilesInDirectoryByPattern(groovyHome + "/lib/", ".*\\.jar")) {
+          params.getClassPath().add(groovyLibJar);
+        }
       }
     }
 
