@@ -170,7 +170,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
       myFindDialog = new FindDialog(myProject, model, new Runnable(){
         public void run() {
           String stringToFind = model.getStringToFind();
-          if (stringToFind == null || stringToFind.length() == 0){
+          if (stringToFind.length() == 0){
             return;
           }
           FindSettings.getInstance().addStringToFind(stringToFind);
@@ -289,7 +289,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
 
   private static FindResult doFindString(CharSequence text, int offset, final FindModel model, @Nullable VirtualFile file) {
     String toFind = model.getStringToFind();
-    if (toFind == null || toFind.length() == 0){
+    if (toFind.length() == 0){
       return NOT_FOUND_RESULT;
     }
 
@@ -373,7 +373,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
             }
           }
 
-          if (result.size() == 0) {
+          if (result.isEmpty()) {
             result.add(finalLang);
           }
           return result;
@@ -603,7 +603,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
   }
 
   public boolean canFindUsages(@NotNull PsiElement element) {
-    return myFindUsagesManager.canFindUsages(element);
+    return element.isValid() && myFindUsagesManager.canFindUsages(element);
   }
 
   public void findUsages(@NotNull PsiElement element) {

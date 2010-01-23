@@ -10,6 +10,7 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
+import com.intellij.testFramework.TestDataPath;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -19,6 +20,7 @@ import java.util.List;
 /**
  * @author peter
  */
+@TestDataPath("$CONTENT_ROOT/testData")
 public abstract class CompletionSortingTestCase extends LightCompletionTestCase {
   @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors"})
   protected CompletionSortingTestCase(CompletionType type) {

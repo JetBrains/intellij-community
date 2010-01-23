@@ -21,6 +21,7 @@ import com.intellij.lang.LanguageImportStatements;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -104,10 +105,16 @@ public class OptimizeImportsAction extends AnAction {
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       includeSubdirectories = processDirectory = false;
-    } else {
+    }
+    else if (!EditorSettingsExternalizable.getInstance().getOptions().SHOW_OPIMIZE_IMPORTS_DIALOG) {
+      includeSubdirectories = processDirectory = false;
+    }
+    else {
       final LayoutCodeDialog dialog = new LayoutCodeDialog(project, CodeInsightBundle.message("process.optimize.imports"), file, dir, null, HELP_ID);
       dialog.show();
       if (!dialog.isOK()) return;
+      EditorSettingsExternalizable.getInstance().getOptions().SHOW_OPIMIZE_IMPORTS_DIALOG = !dialog.isDoNotAskMe();
+      ReformatCodeAction.updateShowDialogSetting(dialog, "\"Optimize Imports\" dialog disabled");
       processDirectory = dialog.isProcessDirectory();
       includeSubdirectories = dialog.isIncludeSubdirectories();
     }

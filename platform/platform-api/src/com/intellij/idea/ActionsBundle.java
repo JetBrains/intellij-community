@@ -38,6 +38,11 @@ public class ActionsBundle {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral", "UnresolvedPropertyKey"})
+  public static String groupText(@NonNls String actionId) {
+    return message("group." + actionId + ".text");
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral", "UnresolvedPropertyKey"})
   public static String actionDescription(@NonNls String actionId) {
     return message("action." + actionId + ".description");
   }

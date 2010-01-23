@@ -1,0 +1,13 @@
+<project name="Layout IdeaTestAssistant plugin distribution" default="layout">
+  <target name="layout">
+    <layout todir="${deploy}/plugins" xmlns="antlib:jetbrains.antlayout">
+      <dir name="IdeaTestAssistant">
+        <dir name="lib">
+          <jar name="IdeaTestAssistant.jar">
+            <module name="IdeaTestAssistant"/>
+          </jar>
+        </dir>
+      </dir>
+    </layout>
+  </target>
+</project>

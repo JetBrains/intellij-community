@@ -15,11 +15,13 @@
  */
 package com.intellij.application.options.pathMacros;
 
+import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.Table;
 
 import javax.swing.*;
@@ -30,6 +32,7 @@ import java.awt.*;
 import java.io.File;
 import java.util.*;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  *  @author dsl
@@ -243,7 +246,8 @@ public class PathMacroTable extends Table {
     }
 
     public boolean checkName(String name) {
-      return name.length() > 0 && name.indexOf('$') < 0;
+      if (name.length() == 0) return false;
+      return PathMacrosCollector.MACRO_PATTERN.matcher("$" + name + "$").matches();
     }
 
     public boolean isOK(String name, String value) {
@@ -259,7 +263,8 @@ public class PathMacroTable extends Table {
 
   private static class EditValidator implements PathMacroEditor.Validator {
     public boolean checkName(String name) {
-      return name.length() > 0 && name.indexOf('$') < 0;
+      if (name.length() == 0) return false;
+      return PathMacrosCollector.MACRO_PATTERN.matcher("$" + name + "$").matches();
     }
 
     public boolean isOK(String name, String value) {

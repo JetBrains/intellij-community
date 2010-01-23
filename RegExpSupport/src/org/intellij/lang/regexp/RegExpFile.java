@@ -16,14 +16,15 @@
 package org.intellij.lang.regexp;
 
 import com.intellij.extapi.psi.PsiFileBase;
+import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.FileViewProvider;
 import org.jetbrains.annotations.NotNull;
 
 public class RegExpFile extends PsiFileBase {
 
-    public RegExpFile(FileViewProvider viewProvider) {
-        super(viewProvider, RegExpLanguage.INSTANCE);
+    public RegExpFile(FileViewProvider viewProvider, final Language language) {
+        super(viewProvider, language);
     }
 
     @NotNull

@@ -17,12 +17,12 @@ package org.intellij.lang.regexp;
 
 import com.intellij.lexer.FlexAdapter;
 
-class RegExpLexer extends FlexAdapter {
+public class RegExpLexer extends FlexAdapter {
 
     private static final int COMMENT_MODE = 1 << 14;
 
-    public RegExpLexer(boolean xmlSchemaMode) {
-        super(new _RegExLexer(xmlSchemaMode));
+    public RegExpLexer(boolean xmlSchemaMode, boolean allowDanglingMetacharacters) {
+        super(new _RegExLexer(xmlSchemaMode, allowDanglingMetacharacters));
     }
 
     public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {

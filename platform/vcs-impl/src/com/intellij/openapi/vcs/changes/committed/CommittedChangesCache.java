@@ -804,7 +804,9 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
           }
         };
         for(ChangesCacheFile file: files) {
-          refreshCacheAsync(file, initIfEmpty, notifyConsumer, false);
+          if (file.getVcs().isVcsBackgroundOperationsAllowed(file.getRootPath().getVirtualFile())) {
+            refreshCacheAsync(file, initIfEmpty, notifyConsumer, false);
+          }
         }
       }
     };
@@ -946,9 +948,11 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       cache.refreshAllCachesAsync(false);
       final List<ChangesCacheFile> list = cache.getCachesHolder().getAllCaches();
       for(ChangesCacheFile file: list) {
-        if (file.getProvider().refreshIncomingWithCommitted()) {
-          cache.refreshIncomingChangesAsync();
-          break;
+        if (file.getVcs().isVcsBackgroundOperationsAllowed(file.getRootPath().getVirtualFile())) {
+          if (file.getProvider().refreshIncomingWithCommitted()) {
+            cache.refreshIncomingChangesAsync();
+            break;
+          }
         }
       }
     }

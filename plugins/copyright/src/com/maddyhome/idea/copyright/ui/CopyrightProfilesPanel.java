@@ -198,12 +198,11 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent {
                 JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<CopyrightProfile>("Choose profile to import", copyrightProfiles) {
                   @Override
                   public PopupStep onChosen(final CopyrightProfile selectedValue, boolean finalChoice) {
-                    SwingUtilities.invokeLater(new Runnable(){
+                    return doFinalStep(new Runnable(){
                       public void run() {
                         importProfile(selectedValue);
                       }
                     });
-                    return FINAL_CHOICE;
                   }
 
                   @NotNull

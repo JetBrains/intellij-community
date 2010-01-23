@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * JFlex 1.4.1                                                             *
- * Copyright (C) 1998-2004  Gerwin Klein <lsf@jflex.de>                    *
+ * JFlex 1.4.3                                                             *
+ * Copyright (C) 1998-2009  Gerwin Klein <lsf@jflex.de>                    *
  * All rights reserved.                                                    *
  *                                                                         *
  * This program is free software); you can redistribute it and/or modify    *
@@ -31,21 +31,26 @@ import java.util.ResourceBundle;
  * [Is not yet used exclusively, but should]
  * 
  * @author Gerwin Klein
- * @version JFlex 1.4.1, $Revision: 2.8 $, $Date: 2004/11/06 23:03:30 $
+ * @version $Revision: 1.4.3 $, $Date: 2009/12/21 15:58:48 $
  */
 public class ErrorMessages {  
   private String key;
 
-  private static final ResourceBundle RESOURCE_BUNDLE =
-    ResourceBundle.getBundle("JFlex.Messages");
+  /* not final static, because initializing here seems too early
+   * for OS/2 JDK 1.1.8. See bug 1065521.
+   */ 
+  private static ResourceBundle resourceBundle = null;
 
   private ErrorMessages(String key) {
     this.key = key;
   }
 
   public static String get(ErrorMessages msg) {
+    if (resourceBundle == null) {
+      resourceBundle = ResourceBundle.getBundle("JFlex.Messages"); 
+    }    
     try {
-      return RESOURCE_BUNDLE.getString(msg.key);
+      return resourceBundle.getString(msg.key);
     } catch (MissingResourceException e) {
       return '!' + msg.key + '!';
     }
@@ -96,7 +101,6 @@ public class ErrorMessages {
   public static ErrorMessages UNEXPECTED_EOF = new ErrorMessages("UNEXPECTED_EOF");
   public static ErrorMessages NO_LEX_SPEC = new ErrorMessages("NO_LEX_SPEC");
   public static ErrorMessages NO_LAST_ACTION = new ErrorMessages("NO_LAST_ACTION");
-  public static ErrorMessages LOOKAHEAD_ERROR = new ErrorMessages("LOOKAHEAD_ERROR");
   public static ErrorMessages NO_DIRECTORY = new ErrorMessages("NO_DIRECTORY");
   public static ErrorMessages NO_SKEL_FILE = new ErrorMessages("NO_SKEL_FILE");
   public static ErrorMessages WRONG_SKELETON = new ErrorMessages("WRONG_SKELETON");
@@ -137,4 +141,9 @@ public class ErrorMessages {
   public static ErrorMessages MACRO_DEF_MISSING = new ErrorMessages("MACRO_DEF_MISSING");
   public static ErrorMessages PARSING_TOOK = new ErrorMessages("PARSING_TOOK");
   public static ErrorMessages NFA_TOOK = new ErrorMessages("NFA_TOOK");
+  public static ErrorMessages LOOKAHEAD_NEEDS_ACTION = new ErrorMessages("LOOKAHEAD_NEEDS_ACTION");
+  public static ErrorMessages EMPTY_MATCH = new ErrorMessages("EMPTY_MATCH");
+  public static ErrorMessages CTOR_ARG = new ErrorMessages("CTOR_ARG");
+  public static ErrorMessages CTOR_DEBUG = new ErrorMessages("CTOR_DEBUG");
+  public static ErrorMessages INT_AND_TYPE = new ErrorMessages("INT_AND_TYPE");
 }

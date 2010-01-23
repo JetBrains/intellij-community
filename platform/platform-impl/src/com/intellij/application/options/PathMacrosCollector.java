@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.PathMacroMap;
 import com.intellij.util.NotNullFunction;
 import org.jdom.Element;
@@ -31,6 +32,8 @@ import java.util.regex.Pattern;
  *         Date: Dec 6, 2004
  */
 public class PathMacrosCollector extends PathMacroMap {
+  public static final Pattern MACRO_PATTERN = Pattern.compile("\\$([\\w\\-\\.]+?)\\$");
+
   private final Matcher myMatcher;
 
   private static final Set<String> ourSystemMacroNames = new HashSet<String>(
@@ -39,8 +42,7 @@ public class PathMacrosCollector extends PathMacroMap {
   private static final String JAR_PROTOCOL = "jar:";
 
   private PathMacrosCollector() {
-    Pattern pattern = Pattern.compile("\\$(.*?)\\$");
-    myMatcher = pattern.matcher("");
+    myMatcher = MACRO_PATTERN.matcher("");
   }
 
   public static Set<String> getMacroNames(Element root) {
@@ -56,6 +58,8 @@ public class PathMacrosCollector extends PathMacroMap {
     collector.substitute(root, true, false, filter, recursiveFilter);
     final HashSet<String> result = new HashSet<String>(collector.myMacroMap.keySet());
     result.removeAll(ourSystemMacroNames);
+    result.removeAll(PathMacrosImpl.getToolMacroNames());
+    result.removeAll(PathMacros.getInstance().getIgnoredMacroNames());
     return result;
   }
 

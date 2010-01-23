@@ -34,6 +34,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.CheckboxTree;
+import com.intellij.ui.CheckboxTreeBase;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.treeStructure.Tree;
@@ -195,10 +196,15 @@ public abstract class CallerChooser extends DialogWrapper {
   }
 
   private Tree createTree() {
-    final CheckedTreeNode root = new MethodNode(null, new HashSet<PsiMethod>());
-    myRoot = new MethodNode(myMethod, new HashSet<PsiMethod>());
+    final Runnable cancelCallback = new Runnable() {
+      public void run() {
+        close(CANCEL_EXIT_CODE);
+      }
+    };
+    final CheckedTreeNode root = new MethodNode(null, new HashSet<PsiMethod>(), cancelCallback);
+    myRoot = new MethodNode(myMethod, new HashSet<PsiMethod>(), cancelCallback);
     root.add(myRoot);
-    final CheckboxTree.CheckboxTreeCellRenderer cellRenderer = new CheckboxTree.CheckboxTreeCellRenderer() {
+    final CheckboxTree.CheckboxTreeCellRenderer cellRenderer = new CheckboxTree.CheckboxTreeCellRenderer(true, false) {
       public void customizeCellRenderer(JTree tree,
                                         Object value,
                                         boolean selected,
@@ -211,7 +217,7 @@ public abstract class CallerChooser extends DialogWrapper {
         }
       }
     };
-    Tree tree = new CheckboxTree(cellRenderer, root);
+    Tree tree = new CheckboxTree(cellRenderer, root, new CheckboxTreeBase.CheckPolicy(false, false, true, false));
     tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     tree.getSelectionModel().setSelectionPath(new TreePath(myRoot.getPath()));
 

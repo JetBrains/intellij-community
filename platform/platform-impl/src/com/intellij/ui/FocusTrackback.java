@@ -45,7 +45,9 @@ public class FocusTrackback {
   private Window myParentWindow;
 
   private Window myRoot;
+
   private Component myFocusOwner;
+  private Component myLocalFocusOwner;
 
   private static final Map<Window, List<FocusTrackback>> ourRootWindowToParentsStack = new WeakHashMap<Window, List<FocusTrackback>>();
   private static final Map<Window, WeakReference<Component>> ourRootWindowToFocusedMap =
@@ -81,8 +83,10 @@ public class FocusTrackback {
     //todo [kirillk] diagnostics for IDEADEV-28766
     assert index >= 0 : myRequestorName;
 
+    final KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+    setLocalFocusOwner(manager.getPermanentFocusOwner());
+
     if (index == 0) {
-      final KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
       setFocusOwner(manager.getPermanentFocusOwner());
       if (getFocusOwner() == null) {
         final Window window = manager.getActiveWindow();
@@ -104,6 +108,10 @@ public class FocusTrackback {
     else if (index == 0 && getFocusOwner() != null) {
       setFocusFor(myRoot, getFocusOwner());
     }
+  }
+
+  private void setLocalFocusOwner(Component component) {
+    myLocalFocusOwner = component;
   }
 
   private static Component getFocusFor(Window parent) {
@@ -203,7 +211,7 @@ public class FocusTrackback {
 
     if (!stack.contains(this)) return;
 
-    Component toFocus = queryToFocus(stack, this);
+    Component toFocus = queryToFocus(stack, this, true);
 
     if (toFocus != null) {
       final Component ownerBySwing = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
@@ -228,23 +236,39 @@ public class FocusTrackback {
     dispose();
   }
 
-  private static Component queryToFocus(final List<FocusTrackback> stack, final FocusTrackback trackback) {
+  private static Component queryToFocus(final List<FocusTrackback> stack, final FocusTrackback trackback, boolean mustBeLastInStack) {
     final int index = stack.indexOf(trackback);
-    Component toFocus;
-    if (index > 0) {
-      final ComponentQuery query = stack.get(index - 1).myFocusedComponentQuery;
-      toFocus = query != null ? query.getComponent() : null;
-    }
-    else {
-      toFocus = trackback.getFocusOwner();
-    }
+    Component toFocus = null;
 
-    for (int i = index + 1; i < stack.size(); i++) {
-      if (!stack.get(i).isConsumed()) {
+    if (trackback.myLocalFocusOwner != null) {
+      toFocus = trackback.myLocalFocusOwner;
+
+      if (!toFocus.isShowing()) {
         toFocus = null;
-        break;
       }
     }
+
+    if (toFocus == null) {
+      if (index > 0) {
+        final ComponentQuery query = stack.get(index - 1).myFocusedComponentQuery;
+        toFocus = query != null ? query.getComponent() : null;
+      }
+      else {
+        toFocus = trackback.getFocusOwner();
+      }
+    }
+
+    if (mustBeLastInStack) {
+      for (int i = index + 1; i < stack.size(); i++) {
+        if (!stack.get(i).isConsumed()) {
+          toFocus = null;
+          break;
+        }
+      }
+    }
+
+
+
     return toFocus;
   }
 
@@ -303,6 +327,7 @@ public class FocusTrackback {
     myParentWindow = null;
     myRoot = null;
     myFocusOwner = null;
+    myLocalFocusOwner = null;
   }
 
   private boolean isConsumed() {
@@ -362,24 +387,26 @@ public class FocusTrackback {
     Component getComponent();
   }
 
-  @Nullable
-  public static JBPopup getChildPopup(@NotNull final Component component) {
+  @NotNull
+  public static List<JBPopup> getChildPopups(@NotNull final Component component) {
+    List<JBPopup> result = new ArrayList<JBPopup>();
+
     final Window window = SwingUtilities.windowForComponent(component);
-    if (window == null) return null;
+    if (window == null) return result;
 
     final List<FocusTrackback> stack = getCleanStackForRoot(findUtlimateParent(window));
 
     for (FocusTrackback each : stack) {
       if (each.isChildFor(component) && each.getRequestor() instanceof JBPopup) {
-        return (JBPopup)each.getRequestor();
+        result.add((JBPopup)each.getRequestor());
       }
     }
 
-    return null;
+    return result;
   }
 
   private boolean isChildFor(final Component parent) {
-    final Component toFocus = queryToFocus(getCleanStack(), this);
+    final Component toFocus = queryToFocus(getCleanStack(), this, false);
     if (toFocus == null) return false;
     if (parent == toFocus) return true;
 

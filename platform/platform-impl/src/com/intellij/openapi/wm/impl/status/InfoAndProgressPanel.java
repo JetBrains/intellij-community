@@ -86,6 +86,8 @@ public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
       public void mousePressed(MouseEvent e) {
         if (!myPopup.isShowing()) {
           openProcessPopup();
+        } else {
+          hideProcessPopup();
         }
       }
     });

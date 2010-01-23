@@ -168,6 +168,7 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
   public boolean canRepresent(final Object element) {
     if (super.canRepresent(element)) return true;
     final PackageElement value = getValue();
+    if (value == null) return true;
     if (element instanceof PackageElement) {
       final PackageElement packageElement = (PackageElement)element;
       final PsiPackage otherPackage = packageElement.getPackage();
@@ -176,7 +177,6 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
         return true;
       }
     }
-    if (getValue() == null) return true;
     if (element instanceof PsiDirectory) {
       final PsiDirectory directory = (PsiDirectory)element;
       return Arrays.asList(getValue().getPackage().getDirectories()).contains(directory);

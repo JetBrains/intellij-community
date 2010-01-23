@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.rename.naming;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -36,19 +37,21 @@ public class ConstructorParameterOnFieldRenameRenamer extends AutomaticRenamer {
 
   public ConstructorParameterOnFieldRenameRenamer(PsiField aField, String newFieldName) {
     final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(aField.getProject());
-    String propertyName = styleManager.variableNameToPropertyName(aField.getName(), VariableKind.FIELD);
-    final String paramName = styleManager.propertyNameToVariableName(propertyName, VariableKind.PARAMETER);
-    final PsiClass aClass = aField.getContainingClass();
-    for (final PsiMethod constructor : aClass.getConstructors()) {
-      final PsiParameter[] parameters = constructor.getParameterList().getParameters();
-      for (final PsiParameter parameter : parameters) {
-        if (paramName.equals(parameter.getName())) {
-          myElements.add(parameter);
+    final String propertyName = styleManager.variableNameToPropertyName(aField.getName(), VariableKind.FIELD);
+    if (!Comparing.strEqual(propertyName, styleManager.variableNameToPropertyName(newFieldName, VariableKind.FIELD))) {
+      final String paramName = styleManager.propertyNameToVariableName(propertyName, VariableKind.PARAMETER);
+      final PsiClass aClass = aField.getContainingClass();
+      for (final PsiMethod constructor : aClass.getConstructors()) {
+        final PsiParameter[] parameters = constructor.getParameterList().getParameters();
+        for (final PsiParameter parameter : parameters) {
+          if (paramName.equals(parameter.getName())) {
+            myElements.add(parameter);
+          }
         }
       }
-    }
 
-    suggestAllNames(aField.getName(), newFieldName);
+      suggestAllNames(aField.getName(), newFieldName);
+    }
   }
 
   public String getDialogTitle() {

@@ -173,8 +173,6 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
     log.attachStopLogConsoleTrackingListener(myExecutionResult.getProcessHandler());
     addAdditionalTabComponent(log, path);
 
-    Disposer.register(this, log);
-
     myUi.addListener(new ContentManagerAdapter() {
       public void selectionChanged(final ContentManagerEvent event) {
         log.stateChanged(new ChangeEvent(myUi));
@@ -265,7 +263,7 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
   }
 
   public void removeAdditionalTabComponent(AdditionalTabComponent component) {
-    component.dispose();
+    Disposer.dispose(component);
     myDisposeables.remove(component);
     final Content content = myAdditionalContent.remove(component);
     myUi.removeContent(content, true);

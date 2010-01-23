@@ -70,7 +70,7 @@ public class PasteHandler extends EditorActionHandler {
       }
 
     final Project project = editor.getProject();
-    if (project == null || editor.isColumnMode()) {
+    if (project == null || editor.isColumnMode() || editor.getSelectionModel().hasBlockSelection()) {
       if (myOriginalHandler != null) {
         myOriginalHandler.execute(editor, dataContext);
       }

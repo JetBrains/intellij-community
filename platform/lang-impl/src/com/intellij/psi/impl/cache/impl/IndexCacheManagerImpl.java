@@ -98,12 +98,33 @@ public class IndexCacheManagerImpl implements CacheManager{
     };
 
     final Set<VirtualFile> vFiles = new THashSet<VirtualFile>();
-    return FileBasedIndex.getInstance().processValues(IdIndex.NAME, new IdIndexEntry(word, caseSensitively), null, new FileBasedIndex.ValueProcessor<Integer>() {
-      public boolean process(final VirtualFile file, final Integer value) {
-        final int mask = value.intValue();
-        return (mask & occurrenceMask) == 0 || !vFiles.add(file) || virtualFileProcessor.process(file);
+    final GlobalSearchScope projectScope = GlobalSearchScope.allScope(myProject);
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        FileBasedIndex.getInstance().processValues(IdIndex.NAME, new IdIndexEntry(word, caseSensitively), null, new FileBasedIndex.ValueProcessor<Integer>() {
+          public boolean process(final VirtualFile file, final Integer value) {
+            final int mask = value.intValue();
+            if ((mask & occurrenceMask) != 0) {
+              vFiles.add(file);
+            }
+            return true;
+          }
+        }, projectScope);
       }
-    }, GlobalSearchScope.allScope(myProject));
+    });
+
+    // IMPORTANT!!!
+    // Since implementation of virtualFileProcessor.process() may call indices dierctly or indirectly,
+    // we cannot call it inside FileBasedIndex.processValues() method
+    // If we do, deadlocks are possible (IDEADEV-42137). So first we obtain files with the word specified,
+    // and then process them not holding indices' read lock.
+
+    for (VirtualFile vFile : vFiles) {
+      if (!virtualFileProcessor.process(vFile)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @NotNull

@@ -61,9 +61,10 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
 
     if (focused == comp || SwingUtilities.isDescendingFrom(focused, comp)) return focused;
 
-    final JBPopup popup = FocusTrackback.getChildPopup(comp);
-
-    if (popup != null && popup.isFocused()) return focused;
+    java.util.List<JBPopup> popups = FocusTrackback.getChildPopups(comp);
+    for (JBPopup each : popups) {
+      if (each.isFocused()) return focused;
+    }
 
     return null;
   }

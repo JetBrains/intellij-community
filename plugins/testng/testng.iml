@@ -12,15 +12,6 @@
     <orderEntry type="module" module-name="execution-impl" />
     <orderEntry type="module" module-name="debugger-impl" />
     <orderEntry type="module" module-name="debugger-openapi" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/testng-jdk14.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="library" name="JUnit3" level="project" />
     <orderEntry type="module" module-name="testRunner" />
     <orderEntry type="module" module-name="java-runtime" />

@@ -21,7 +21,6 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.components.PathMacroSubstitutor;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
@@ -44,7 +43,10 @@ import com.intellij.util.UniqueFileNamesProvider;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.fs.FileSystem;
 import com.intellij.util.io.fs.IFile;
-import org.jdom.*;
+import org.jdom.Attribute;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,8 +77,8 @@ public class StorageUtil {
       }
 
       if (!macros.isEmpty()) {
-        Notifications.Bus.notify(new UnknownMacroNotification("Load Error", "Loading error: undefined path variables!",
-                                                              String.format("<p><i>%s</i> %s undefined. <a href=\"\">Fix it!</a></p>",
+        Notifications.Bus.notify(new UnknownMacroNotification("Load Error", "Load error: undefined path variables!",
+                                                              String.format("<p><i>%s</i> %s undefined. <a href=\"define\">Fix it</a>.</p>",
                                                                             StringUtil.join(macros, ", "),
                                                                             macros.size() == 1 ? "is" : "are"), NotificationType.ERROR,
                                                               new NotificationListener() {
@@ -225,13 +227,13 @@ public class StorageUtil {
         if (o instanceof Attribute) {
           final Attribute attribute = (Attribute)o;
           final Element parent = attribute.getParent();
-          if (("value".equals(attribute.getName()) || "name".equals(attribute.getName())) && parent != null && "env".equals(parent.getName())) {
+          final String parentName = parent.getName();
+          if (("value".equals(attribute.getName()) || "name".equals(attribute.getName())) && "env".equals(parentName)) {
             return false; // do not proceed environment variables from run configurations
           }
 
-           // do not proceed macros in searchConfigurations (structural search)
-          if (parent != null && ("replaceConfiguration".equals(parent.getName())
-                                 || "searchConfiguration".equals(parent.getName()))) return false;
+          // do not proceed macros in searchConfigurations (structural search)
+          if ("replaceConfiguration".equals(parentName) || "searchConfiguration".equals(parentName)) return false;
         }
 
         return true;

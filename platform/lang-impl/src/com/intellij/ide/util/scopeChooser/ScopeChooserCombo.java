@@ -83,7 +83,9 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
     combo.setRenderer(new DefaultListCellRenderer() {
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        setText(((ScopeDescriptor)value).getDisplay());
+        if (value instanceof ScopeDescriptor) {
+          setText(((ScopeDescriptor)value).getDisplay());
+        }
         return this;
       }
     });
@@ -176,11 +178,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
     result.add(GlobalSearchScope.projectTestScope(project));
 
     if (dataContext != null) {
-      PsiElement dataContextElement = LangDataKeys.PSI_FILE.getData(dataContext);
-
-      if (dataContextElement == null) {
-        dataContextElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
-      }
+      PsiElement dataContextElement = getDataContextElement(dataContext);
 
       if (dataContextElement != null) {
         Module module = ModuleUtil.findModuleForPsiElement(dataContextElement);
@@ -303,7 +301,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
           for (Usage usage : usages) {
             if (usage instanceof PsiElementUsage) {
               final PsiElement element = ((PsiElementUsage)usage).getElement();
-              if (element != null && element.isValid()) {
+              if (element != null && element.isValid() && element.getContainingFile() != null) {
                 results.add(element);
               }
             }
@@ -347,6 +345,15 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
       });
     }
     return result;
+  }
+
+  public static PsiElement getDataContextElement(DataContext dataContext) {
+    PsiElement dataContextElement = LangDataKeys.PSI_FILE.getData(dataContext);
+
+    if (dataContextElement == null) {
+      dataContextElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    }
+    return dataContextElement;
   }
 
 

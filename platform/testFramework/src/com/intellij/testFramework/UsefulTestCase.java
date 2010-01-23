@@ -62,6 +62,8 @@ public abstract class UsefulTestCase extends TestCase {
   protected static final Key<String> CREATION_PLACE = Key.create("CREATION_PLACE");
 
   static {
+    System.setProperty("apple.awt.UIElement", "true"); // Radar #5755208: Command line Java applications need a way to launch without a Dock icon.
+
     try {
       CodeInsightSettings defaultSettings = new CodeInsightSettings();
       Element oldS = new Element("temp");
@@ -361,6 +363,10 @@ public abstract class UsefulTestCase extends TestCase {
     if (StringUtil.isEmpty(name)) {
       return "";
     }
+    return getTestName(name, lowercaseFirstLetter);
+  }
+
+  public static String getTestName(String name, boolean lowercaseFirstLetter) {
     if (lowercaseFirstLetter && !isAllUppercaseName(name)) {
       name = Character.toLowerCase(name.charAt(0)) + name.substring(1);
     }

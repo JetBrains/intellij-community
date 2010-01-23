@@ -54,7 +54,7 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
   public boolean FILTER_RESOLVED_ITEMS = true;
   public boolean ANALYZE_TEST_SOURCES = true;
   public boolean SHOW_DIFF_WITH_PREVIOUS_RUN = false;
-  public int SCOPE_TYPE = 1;
+  public int SCOPE_TYPE = AnalysisScope.PROJECT;
   public String CUSTOM_SCOPE_NAME = "";
   private final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
   public boolean SHOW_ONLY_DIFF = false;

@@ -39,6 +39,8 @@ import org.jetbrains.idea.svn.dialogs.WCInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.*;
@@ -581,5 +583,25 @@ public class SvnUtil {
       }
     }
     return false;
+  }
+
+  @Nullable
+  public static SVNURL getUrl(final File file) {
+    SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
+    try {
+      wcAccess.probeOpen(file, false, 0);
+      SVNEntry entry = wcAccess.getVersionedEntry(file, false);
+      return entry.getSVNURL();
+    } catch (SVNException e) {
+      //
+    } finally {
+      try {
+        wcAccess.close();
+      }
+      catch (SVNException e) {
+        //
+      }
+    }
+    return null;
   }
 }

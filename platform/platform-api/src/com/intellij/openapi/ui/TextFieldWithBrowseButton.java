@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.Disposable;
 
 import javax.swing.*;
+import javax.swing.text.JTextComponent;
 import java.awt.event.ActionListener;
 
 public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextField> {
@@ -88,6 +89,9 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
 
   public void setEditable(boolean b) {
     getTextField().setEditable(b);
+
+    getButton().setFocusable(!b);
+    getTextField().setFocusable(b);
   }
 
   public static class NoPathCompletion extends TextFieldWithBrowseButton {

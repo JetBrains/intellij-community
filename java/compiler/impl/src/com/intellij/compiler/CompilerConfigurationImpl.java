@@ -34,6 +34,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.HashMap;
 import org.apache.oro.text.regex.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -229,14 +230,12 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
         }
       }
 
-      if (ApplicationManagerEx.getApplicationEx().isInternal()) {
-        try {
-          CompilerAPICompiler inprocessJavaCompiler = new CompilerAPICompiler(myProject);
-          myRegisteredCompilers.add(inprocessJavaCompiler);
-        }
-        catch (NoClassDefFoundError e) {
-          // wrong JDK
-        }
+      try {
+        CompilerAPICompiler inprocessJavaCompiler = new CompilerAPICompiler(myProject);
+        myRegisteredCompilers.add(inprocessJavaCompiler);
+      }
+      catch (NoClassDefFoundError e) {
+        // wrong JDK
       }
     }
 
@@ -534,7 +533,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       myObtainProcessorsFromClasspath = Boolean.valueOf(annotationProcessingSettings.getAttributeValue("useClasspath", "true"));
 
       final StringBuilder pathBuilder = new StringBuilder();
-      for (Element pathElement : ((Collection<Element>)annotationProcessingSettings.getChildren("processorPath"))) {
+      for (Element pathElement : (Collection<Element>)annotationProcessingSettings.getChildren("processorPath")) {
         final String path = pathElement.getAttributeValue("value");
         if (path != null) {
           if (pathBuilder.length() > 0) {
@@ -546,7 +545,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       myProcessorPath = pathBuilder.toString();
 
       myProcessorsMap.clear();
-      for (Element processorChild : ((Collection<Element>)annotationProcessingSettings.getChildren("processor"))) {
+      for (Element processorChild : (Collection<Element>)annotationProcessingSettings.getChildren("processor")) {
         final String name = processorChild.getAttributeValue("name");
         final String options = processorChild.getAttributeValue("options", "");
         myProcessorsMap.put(name, options);
@@ -555,8 +554,8 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       myModuleNames.clear();
 
       final Collection<Element> processed = (Collection<Element>)annotationProcessingSettings.getChildren("processModule");
-      if (processed.size() > 0) {
-        final Map<String, Module> moduleMap = new com.intellij.util.containers.HashMap<String, Module>();
+      if (!processed.isEmpty()) {
+        final Map<String, Module> moduleMap = new HashMap<String, Module>();
         for (Module module : myModuleManager.getModules()) {
           moduleMap.put(module.getName(), module);
         }

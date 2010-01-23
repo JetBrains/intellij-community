@@ -90,6 +90,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
                                        JComponent.WHEN_IN_FOCUSED_WINDOW);
     final JLayeredPane layeredPane = parentComponent.getRootPane().getLayeredPane();
     if (!myForceShowAsPopup && (myForceLightweightPopup || fitsLayeredPane(layeredPane, myComponent, new RelativePoint(parentComponent, new Point(x, y))))) {
+      beforeShow();
       final Dimension preferredSize = myComponent.getPreferredSize();
       final Point layeredPanePoint = SwingUtilities.convertPoint(parentComponent, x, y, layeredPane);
 
@@ -108,8 +109,13 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
         .setMovable(myForceShowAsPopup)
         .setTitle(myTitle)
         .createPopup();
+      beforeShow();
       myPopup.show(new RelativePoint(myParentComponent, new Point(x, y)));
     }
+  }
+
+  protected void beforeShow() {
+
   }
 
   private static boolean fitsLayeredPane(JLayeredPane pane, JComponent component, RelativePoint desiredLocation) {
@@ -157,6 +163,10 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
   public final void setBounds(final int x, final int y, final int width, final int height) {
     if (myIsRealPopup) {
       setLocation(x, y);
+
+      if (myPopup != null) {
+        myPopup.setSize(new Dimension(width, height));
+      }
     }
     else {
       myComponent.setBounds(x, y, width, height);
@@ -175,6 +185,10 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
 
   public boolean isVisible() {
     return myIsRealPopup ? myPopup != null : myComponent.isShowing();
+  }
+
+  protected final boolean isRealPopup() {
+    return myIsRealPopup;
   }
 
   public void hide() {

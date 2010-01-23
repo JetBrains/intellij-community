@@ -23,17 +23,21 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.refactoring.util.*;
+import com.intellij.refactoring.util.ConflictsUtil;
+import com.intellij.refactoring.util.MoveRenameUsageInfo;
+import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,7 +70,9 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
       final PsiElement element = usage.getElement();
       if (element == null) continue;
 
-      if (usage instanceof LocalHidesFieldUsageInfo) {
+      if (usage instanceof MemberHidesStaticImportUsageInfo) {
+        staticImportHides.add((MemberHidesStaticImportUsageInfo)usage);
+      } else if (usage instanceof LocalHidesFieldUsageInfo) {
         PsiJavaCodeReferenceElement collidingRef = (PsiJavaCodeReferenceElement)element;
         PsiElement resolved = collidingRef.resolve();
 
@@ -226,6 +232,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
       PsiField field = (PsiField) element;
       findMemberHidesOuterMemberCollisions(field, newName, result);
       findSubmemberHidesFieldCollisions(field, newName, result);
+      findCollisionsAgainstNewName(field, newName, result);
     }
     else if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
       JavaUnresolvableLocalCollisionDetector.findCollisions(element, newName, result);
@@ -233,7 +240,8 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
     }
   }
 
-  public void findExistingNameConflicts(final PsiElement element, final String newName, final Map<PsiElement, String> conflicts) {
+  @Override
+  public void findExistingNameConflicts(PsiElement element, String newName, MultiMap<PsiElement, String> conflicts) {
     if (element instanceof PsiCompiledElement) return;
     if (element instanceof PsiField) {
       PsiField refactoredField = (PsiField)element;

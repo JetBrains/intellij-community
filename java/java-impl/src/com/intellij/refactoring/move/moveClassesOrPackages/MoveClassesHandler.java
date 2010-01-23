@@ -29,7 +29,11 @@ public class MoveClassesHandler extends MoveClassesOrPackagesHandlerBase {
     for(PsiElement element: elements) {
       PsiFile parentFile;
       if (element instanceof PsiJavaFile) {
-        if (((PsiJavaFile)element).getClasses().length == 0) return false;
+        final PsiClass[] classes = ((PsiJavaFile)element).getClasses();
+        if (classes.length == 0) return false;
+        for (PsiClass aClass : classes) {
+          if (aClass instanceof JspClass) return false;
+        }
         parentFile = (PsiFile)element;
       } else {
         if (element instanceof JspClass) return false;

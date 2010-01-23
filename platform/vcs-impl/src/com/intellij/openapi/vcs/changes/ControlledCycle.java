@@ -33,11 +33,17 @@ public class ControlledCycle implements Runnable {
   private final SlowlyClosingAlarm myControlledAlarm;
   // this interval is also to check for not initialized paths, so it is rather small
   private static final int ourRefreshInterval = 10000;
+  private final int myRefreshInterval;
   private final Runnable myRunnable;
 
   private final AtomicBoolean myActive;
 
   public ControlledCycle(final Project project, final MyCallback callback, @NotNull final String name) {
+    this(project, callback, name, -1);
+  }
+
+  public ControlledCycle(final Project project, final MyCallback callback, @NotNull final String name, final int refreshInterval) {
+    myRefreshInterval = (refreshInterval <= 0) ? ourRefreshInterval : refreshInterval;
     myActive = new AtomicBoolean(false);
     myRunnable = new Runnable() {
       boolean shouldBeContinued = true;
@@ -52,7 +58,7 @@ public class ControlledCycle implements Runnable {
         if (! shouldBeContinued) {
           myActive.set(false);
         } else {
-          mySimpleAlarm.addRequest(ControlledCycle.this, ourRefreshInterval);
+          mySimpleAlarm.addRequest(ControlledCycle.this, myRefreshInterval);
         }
       }
     };
@@ -63,7 +69,7 @@ public class ControlledCycle implements Runnable {
   public void start() {
     final boolean wasSet = myActive.compareAndSet(false, true);
     if (wasSet) {
-      mySimpleAlarm.addRequest(this, ourRefreshInterval);
+      mySimpleAlarm.addRequest(this, myRefreshInterval);
     }
   }
 

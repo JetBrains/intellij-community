@@ -20,6 +20,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.FileContentUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -37,6 +38,7 @@ import java.io.IOException;
  * @author nik
  */
 public class ConfigFileFactoryImpl extends ConfigFileFactory {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.descriptors.impl.ConfigFileFactoryImpl");
 
   public ConfigFileMetaDataProvider createMetaDataProvider(final ConfigFileMetaData... metaDatas) {
     return new ConfigFileMetaDataRegistryImpl(metaDatas);
@@ -73,7 +75,14 @@ public class ConfigFileFactoryImpl extends ConfigFileFactory {
   private VirtualFile createFileFromTemplate(@Nullable final Project project, String url, final String templateName, final boolean forceNew) {
     final LocalFileSystem fileSystem = LocalFileSystem.getInstance();
     final File file = new File(VfsUtil.urlToPath(url));
-    final VirtualFile existingFile = fileSystem.refreshAndFindFileByIoFile(file);
+    VirtualFile existingFile = fileSystem.refreshAndFindFileByIoFile(file);
+    if (existingFile != null) {
+      existingFile.refresh(false, false);
+      if (!existingFile.isValid()) {
+        existingFile = null;
+      }
+    }
+
     if (existingFile != null && !forceNew) {
       return existingFile;
     }
@@ -95,6 +104,7 @@ public class ConfigFileFactoryImpl extends ConfigFileFactory {
       return childData;
     }
     catch (final IOException e) {
+      LOG.info(e);
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
           Messages.showErrorDialog(IdeBundle.message("message.text.error.creating.deployment.descriptor", e.getLocalizedMessage()),

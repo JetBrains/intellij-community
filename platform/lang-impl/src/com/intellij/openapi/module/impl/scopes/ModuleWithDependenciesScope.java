@@ -92,7 +92,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
 
     if (myModules != null) {
       final Module module = myProjectFileIndex.getModuleForFile(file);
-      if (module != null) return myModules.contains(module);
+      if (module != null) return myModules.contains(module) && myFileIndex.getOrderEntryForFile(file) != null;
     }
 
     final List<OrderEntry> entries = myFileIndex.getOrderEntriesForFile(file);

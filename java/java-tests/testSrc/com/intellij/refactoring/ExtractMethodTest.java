@@ -286,6 +286,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testStopFolding() throws Exception {
+    doTest();
+  }
+
   public void testIDEADEV11748() throws Exception {
     doTest();
   }
@@ -417,6 +421,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testShortCircuit() throws Exception {
+    doTest();
+  }
+
+  public void testRecursiveCallToExtracted() throws Exception {
     doTest();
   }
 

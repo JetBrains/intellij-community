@@ -32,6 +32,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
+import com.intellij.testFramework.TestDataFile;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -112,9 +113,9 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @return highlighting duration in milliseconds.
    * @throws Exception any exception thrown during highlighting.
    */
-  long testHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, @NonNls String... filePaths) throws Exception;
+  long testHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, @TestDataFile @NonNls String... filePaths) throws Exception;
 
-  long testHighlightingAllFiles(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, @NonNls String... filePaths) throws Exception;
+  long testHighlightingAllFiles(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, @TestDataFile @NonNls String... filePaths) throws Exception;
 
   long testHighlightingAllFiles(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, @NonNls VirtualFile... files) throws Exception;
 
@@ -203,7 +204,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    */
   void launchAction(@NotNull IntentionAction action) throws Exception;
 
-  void configureByFile(@NonNls String file) throws Exception;
+  void configureByFile(@TestDataFile @NonNls String file) throws Exception;
 
   void configureByFiles(@NonNls String... files) throws Exception;
 
@@ -217,19 +218,19 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @param expectedFile file to check against.
    * @throws Exception any exception.
    */
-  void checkResultByFile(@NonNls String expectedFile) throws Exception;
+  void checkResultByFile(@TestDataFile @NonNls String expectedFile) throws Exception;
   
-  void checkResultByFile(@NonNls String expectedFile, boolean ignoreWhitespaces) throws Exception;
+  void checkResultByFile(@TestDataFile @NonNls String expectedFile, boolean ignoreTrailingWhitespaces) throws Exception;
 
   /**
    * Compares two files.
    *
    * @param filePath file to be checked.
    * @param expectedFile file to check against.
-   * @param ignoreWhitespaces set to true to ignore differences in whitespaces.
+   * @param ignoreTrailingWhitespaces set to true to ignore differences in whitespaces.
    * @throws Exception any exception.
    */
-  void checkResultByFile(@NonNls String filePath, @NonNls String expectedFile, boolean ignoreWhitespaces) throws Exception;
+  void checkResultByFile(@NonNls String filePath, @TestDataFile @NonNls String expectedFile, boolean ignoreTrailingWhitespaces) throws Exception;
 
   void testCompletion(@NonNls String[] filesBefore, @NonNls String fileAfter) throws Exception;
 
@@ -241,7 +242,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @param additionalFiles
    * @throws Exception
    */
-  void testCompletion(@NonNls String fileBefore, @NonNls String fileAfter, final String... additionalFiles) throws Exception;
+  void testCompletion(@TestDataFile @NonNls String fileBefore, @TestDataFile @NonNls String fileAfter, final String... additionalFiles) throws Exception;
 
   /**
    * Runs basic completion in caret position in fileBefore.
@@ -250,7 +251,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @param items most probably will contain > 1 items
    * @throws Exception
    */
-  void testCompletionVariants(@NonNls String fileBefore, @NonNls String... items) throws Exception;
+  void testCompletionVariants(@TestDataFile @NonNls String fileBefore, @NonNls String... items) throws Exception;
 
   /**
    * Launches renaming refactoring and checks the result.
@@ -262,7 +263,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @throws Exception any exception.
    * @see #testRename(String, String, String, String[])
    */
-  void testRename(@NonNls String fileBefore, @NonNls String fileAfter, @NonNls String newName, final String... additionalFiles) throws Exception;
+  void testRename(@TestDataFile @NonNls String fileBefore,
+                  @TestDataFile @NonNls String fileAfter, @NonNls String newName, final String... additionalFiles) throws Exception;
 
   void testRename(String fileAfter, String newName) throws Exception;
 

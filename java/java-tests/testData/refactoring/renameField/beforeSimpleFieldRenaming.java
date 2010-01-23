@@ -1,5 +1,5 @@
 class A {
-    int <caret>myField;    
+    int <caret>myField;
 }
 
 class B {

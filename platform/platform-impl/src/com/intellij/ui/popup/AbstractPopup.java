@@ -140,6 +140,7 @@ public class AbstractPopup implements JBPopup {
   };
 
   private JTextField mySpeedSearchPatternField;
+  private boolean myNativePopup;
 
 
   AbstractPopup() {
@@ -458,9 +459,6 @@ public class AbstractPopup implements JBPopup {
   public void cancel(InputEvent e) {
     if (isDisposed()) return;
 
-    final Runnable finalRunnable = myFinalRunnable;
-    final IdeFocusManager focusManager = myOwner != null ? IdeFocusManager.findInstanceByComponent(myOwner) : IdeFocusManager.findInstance();
-
     if (myPopup != null) {
       if (!canClose()) {
         return;
@@ -501,14 +499,6 @@ public class AbstractPopup implements JBPopup {
     }
 
     Disposer.dispose(this, false);
-
-    if (finalRunnable != null) {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          focusManager.doWhenFocusSettlesDown(finalRunnable);
-        }
-      });
-    }
   }
 
 
@@ -623,7 +613,9 @@ public class AbstractPopup implements JBPopup {
 
     myRequestorComponent = owner;
 
-    myPopup = getFactory(myForcedHeavyweight || myResizable).getPopup(myOwner, myContent, targetBounds.x, targetBounds.y);
+    PopupComponent.Factory factory = getFactory(myForcedHeavyweight || myResizable);
+    myNativePopup = factory.isNativePopup();
+    myPopup = factory.getPopup(myOwner, myContent, targetBounds.x, targetBounds.y);
 
     if (myResizable) {
       final JRootPane root = myContent.getRootPane();
@@ -825,7 +817,13 @@ public class AbstractPopup implements JBPopup {
   }
 
   private IdeFocusManager getFocusManager() {
-    return IdeFocusManager.getInstance(myProject);
+    if (myProject != null) {
+      return IdeFocusManager.getInstance(myProject);
+    } else if (myOwner != null) {
+      return IdeFocusManager.findInstanceByComponent(myOwner);
+    } else {
+      return IdeFocusManager.findInstance();
+    }
   }
 
   private static JComponent getTargetComponent(Component aComponent) {
@@ -864,7 +862,6 @@ public class AbstractPopup implements JBPopup {
     final Window wnd = popup.getWindow();
     assert wnd != null;
 
-    wnd.pack();
     wnd.setLocation(p.getScreenPoint());
   }
 
@@ -918,6 +915,10 @@ public class AbstractPopup implements JBPopup {
 
     resetWindow();
 
+    if (myFinalRunnable != null) {
+      getFocusManager().doWhenFocusSettlesDown(myFinalRunnable);
+      myFinalRunnable = null;
+    }
   }
 
   private void resetWindow() {
@@ -1008,7 +1009,7 @@ public class AbstractPopup implements JBPopup {
         ((Graphics2D)capture.getGraphics()).drawImage(shadow, null, null);
       }
       catch (Exception e) {
-        e.printStackTrace();
+        LOG.info(e);
       }
       if (capture != null) g.drawImage(capture, 0, 0, null);
     }
@@ -1104,6 +1105,10 @@ public class AbstractPopup implements JBPopup {
 
   public boolean isPersistent() {
     return !myCancelOnClickOutside && !myCancelOnWindow;
+  }
+
+  public boolean isNativePopup() {
+    return myNativePopup;
   }
 
   public void setUiVisible(final boolean visible) {

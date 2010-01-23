@@ -70,13 +70,14 @@ public abstract class BaseAnalysisAction extends AnAction {
   }*/
     final boolean rememberScope = e.getPlace().equals(ActionPlaces.MAIN_MENU);
     final AnalysisUIOptions uiOptions = AnalysisUIOptions.getInstance(project);
+    PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
     BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(AnalysisScopeBundle.message("specify.analysis.scope", myTitle),
                                                                 AnalysisScopeBundle.message("analysis.scope.title", myAnalysisNoon),
                                                                 project,
                                                                 scope,
                                                                 module != null && scope.getScopeType() != AnalysisScope.MODULE ? ModuleUtil
                                                                   .getModuleNameInReadAction(module) : null,
-                                                                rememberScope, AnalysisUIOptions.getInstance(project)){
+                                                                rememberScope, AnalysisUIOptions.getInstance(project), element){
       @Nullable
       protected JComponent getAdditionalActionSettings(final Project project) {
         return BaseAnalysisAction.this.getAdditionalActionSettings(project, this);

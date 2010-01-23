@@ -24,7 +24,13 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class JavaClassFileType implements FileType {
+
+  public static JavaClassFileType INSTANCE = new JavaClassFileType();
+
   private static final Icon ICON = IconLoader.getIcon("/fileTypes/javaClass.png");
+
+  private JavaClassFileType() {
+  }
 
   @NotNull
   public String getName() {

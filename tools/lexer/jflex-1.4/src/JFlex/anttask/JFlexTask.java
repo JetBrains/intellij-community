@@ -21,21 +21,19 @@
 
 package JFlex.anttask;
 
+import org.apache.tools.ant.Task;
+import org.apache.tools.ant.BuildException;
+
 import JFlex.Main;
 import JFlex.Options;
-import org.apache.tools.ant.BuildException;
-import org.apache.tools.ant.Task;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.LineNumberReader;
+import java.io.*;
 
 /**
  * JFlex task class
  *
  * @author Rafal Mantiuk
- * @version JFlex 1.4.1, $Revision: 2.14 $, $Date: 2004/11/06 23:03:33 $
+ * @version $Revision: 1.4.3 $, $Date: 2009/12/21 15:58:48 $
  */
 public class JFlexTask extends Task {
   private File inputFile;

@@ -297,6 +297,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     disposeChildren();
 
     if (myListModel.getSize() == 0) {
+      setFinalRunnable(myStep.getFinalRunnable());
       disposeAllParents(e);
       setIndexForShowingChild(-1);
       return true;

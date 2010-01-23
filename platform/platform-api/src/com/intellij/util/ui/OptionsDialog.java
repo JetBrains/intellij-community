@@ -66,11 +66,18 @@ public abstract class OptionsDialog extends DialogWrapper {
       return southPanel;
     }
 
-    final JPanel panel = new JPanel(new GridBagLayout());
-    panel.add(myCheckBoxDoNotShowDialog, new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-    panel.add(southPanel, new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-    myCheckBoxDoNotShowDialog.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 20));
+    final JPanel panel = addDoNotShowCheckBox(southPanel, myCheckBoxDoNotShowDialog);
     myCheckBoxDoNotShowDialog.setSelected(!isToBeShown());
+    return panel;
+  }
+
+  public static JPanel addDoNotShowCheckBox(JComponent southPanel, JCheckBox checkBox) {
+    final JPanel panel = new JPanel(new GridBagLayout());
+    checkBox.setVerticalAlignment(SwingConstants.BOTTOM);
+    
+    panel.add(checkBox, new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(15, 0, 0, 0), 0, 0));
+    panel.add(southPanel, new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    checkBox.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 20));
     return panel;
   }
 

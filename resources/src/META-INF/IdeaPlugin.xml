@@ -640,6 +640,7 @@
     <lang.namesValidator language="JAVA" implementationClass="com.intellij.lang.refactoring.JavaNamesValidator"/>
 
     <lang.findUsagesProvider language="JAVA" implementationClass="com.intellij.lang.java.JavaFindUsagesProvider"/>
+    <usageToPsiElementProvider implementation="com.intellij.lang.java.JavaUsageToPsiElementProvider" />
 
     <lang.commenter language="JAVA" implementationClass="com.intellij.lang.java.JavaCommenter"/>
 
@@ -666,6 +667,8 @@
                           order="before xml"/>
 
     <fileType.fileViewProviderFactory filetype="CLASS" implementationClass="com.intellij.psi.ClassFileViewProviderFactory"/>
+
+    <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.AddSourcesNotificationProvider"/>
 
     <lang.psiStructureViewFactory language="JAVA" implementationClass="com.intellij.lang.java.JavaStructureViewBuilderFactory"/>
 

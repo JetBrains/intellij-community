@@ -106,26 +106,11 @@ public abstract class ProjectOpenProcessorBase extends ProjectOpenProcessor {
       wizardContext.setProjectFileDirectory(virtualFile.getParent().getPath());
 
       Project defaultProject = ProjectManager.getInstance().getDefaultProject();
-      Sdk defaultJdk = ProjectRootManager.getInstance(defaultProject).getProjectJdk();
-      if (defaultJdk != null) {
-        wizardContext.setProjectJdk(defaultJdk);
+      Sdk jdk = ProjectRootManager.getInstance(defaultProject).getProjectJdk();
+      if (jdk == null) {
+        jdk = ProjectJdkTable.getInstance().findMostRecentSdkOfType(JavaSdk.getInstance());
       }
-      else {
-        for (Sdk projectJdk : ProjectJdkTable.getInstance().getAllJdks()) {
-          if (projectJdk.getSdkType() instanceof JavaSdk) {
-            final String jdkVersion = projectJdk.getVersionString();
-            if (wizardContext.getProjectJdk() == null) {
-              wizardContext.setProjectJdk(projectJdk);
-            }
-            else {
-              final String version = wizardContext.getProjectJdk().getVersionString();
-              if (jdkVersion == null || (version != null && version.compareTo(jdkVersion) < 0)) {
-                wizardContext.setProjectJdk(projectJdk);
-              }
-            }
-          }
-        }
-      }
+      wizardContext.setProjectJdk(jdk);
 
       final String projectPath = wizardContext.getProjectFileDirectory() + File.separator + wizardContext.getProjectName() +
                                  ProjectFileType.DOT_DEFAULT_EXTENSION;
@@ -175,18 +160,11 @@ public abstract class ProjectOpenProcessorBase extends ProjectOpenProcessor {
 
         projectToOpen.save();
 
-        final ProjectRootManagerEx rootManager = ProjectRootManagerEx.getInstanceEx(projectToOpen);
 
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            if (wizardContext.getProjectJdk() != null) {
-              final String versionString = wizardContext.getProjectJdk().getVersionString();
-              if (versionString != null) {
-                rootManager.setProjectJdk(wizardContext.getProjectJdk());
-                LanguageLevelProjectExtension.getInstance(projectToOpen)
-                  .setLanguageLevel(NewProjectUtil.getDefaultLanguageLevel(versionString));
-              }
-            }
+            Sdk jdk = wizardContext.getProjectJdk();
+            if (jdk != null) NewProjectUtil.applyJdkToProject(projectToOpen, jdk);
 
             final String projectFilePath = wizardContext.getProjectFileDirectory();
             CompilerProjectExtension.getInstance(projectToOpen).setCompilerOutputUrl(getUrl(

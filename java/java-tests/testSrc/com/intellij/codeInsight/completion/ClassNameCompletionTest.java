@@ -11,9 +11,11 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.TestDataPath;
 
 import java.io.File;
 
+@TestDataPath("$CONTENT_ROOT/testData")
 public class ClassNameCompletionTest extends CompletionTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/className/";
   protected boolean myOldSetting;
@@ -125,7 +127,7 @@ public class ClassNameCompletionTest extends CompletionTestCase {
     configureByFile(path + "/implements2-source.java");
     performAction();
     checkResultByFile(path + "/implements2-result.java");
-    
+
     configureByFile(path + "/implements3-source.java");
     performAction();
     checkResultByFile(path + "/implements3-result.java");
@@ -144,7 +146,7 @@ public class ClassNameCompletionTest extends CompletionTestCase {
     configureByFile(path + "/test8-source.java");
     performAction();
     checkResultByFile(path + "/test8-result.java");
-    
+
     configureByFile(path + "/test9-source.java");
     performAction();
     checkResultByFile(path + "/test9-result.java");
@@ -187,7 +189,7 @@ public class ClassNameCompletionTest extends CompletionTestCase {
     performAction();
     checkResultByFile(path + "/methodCall1-result.java");
   }
-  
+
   public void testInVariableDeclarationType() throws Throwable {
     final String path = BASE_PATH + "/nameCompletion/java";
     configureByFile(path + "/varType-source.java");

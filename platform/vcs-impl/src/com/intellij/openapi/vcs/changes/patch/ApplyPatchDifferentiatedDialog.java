@@ -16,13 +16,14 @@
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchReader;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDialog;
+import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -31,10 +32,8 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -52,7 +51,6 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,6 +98,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         return file.getFileType() == StdFileTypes.PATCH || file.getFileType() == FileTypes.PLAIN_TEXT;
       }
     };
+    descriptor.setTitle(VcsBundle.message("patch.apply.select.title"));
     myUpdater = new MyUpdater();
     myPatchFile = new TextFieldWithBrowseButton();
     myPatchFile.addBrowseFolderListener(VcsBundle.message("patch.apply.select.title"), "", project, descriptor);
@@ -137,9 +136,10 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       }
     };
 
-    myChangeListChooser = new ChangeListChooserPanel(null, new Consumer<Boolean>() {
-      public void consume(final Boolean aBoolean) {
-        setOKActionEnabled(aBoolean);
+    myChangeListChooser = new ChangeListChooserPanel(null, new Consumer<String>() {
+      public void consume(final String errorMessage) {
+        setOKActionEnabled(errorMessage == null);
+        setErrorText(errorMessage);
       }
     });
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
@@ -151,6 +151,11 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     myCommitLegendPanel = new CommitLegendPanel(myInfoCalculator);
 
     init();
+    final FileChooserDialog fileChooserDialog = FileChooserFactory.getInstance().createFileChooser(descriptor, project);
+    final VirtualFile[] files = fileChooserDialog.choose(null, project);
+    if (files != null && files.length > 0) {
+      init(files[0]);
+    }
   }
 
   @Override
@@ -824,7 +829,6 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       final List<FilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
 
       int selectedIdx = 0;
-      int idx = 0;
       final ArrayList<DiffRequestPresentable> diffRequestPresentables = new ArrayList<DiffRequestPresentable>(changes.size());
       if (! selectedChanges.isEmpty()) {
         final FilePatchInProgress.PatchChange c = selectedChanges.get(0);
@@ -836,13 +840,11 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
             diffRequestPresentables.add(diffRequestPresentable);
           }
           if (change.equals(c)) {
-            selectedIdx = idx;
+            selectedIdx = diffRequestPresentables.size() - 1;
           }
-          ++ idx;
         }
       }
       if (diffRequestPresentables.isEmpty()) return;
-      selectedIdx = (selectedIdx >= diffRequestPresentables.size()) ? 0 : selectedIdx;
       ShowDiffAction.showDiffImpl(myProject, diffRequestPresentables, selectedIdx, ShowDiffAction.DiffExtendUIFactory.NONE, false);
     }
   }

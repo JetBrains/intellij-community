@@ -25,6 +25,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -221,6 +223,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
   protected void performRefactoring(UsageInfo[] usageInfos) {
     final PsiClass psiClass = buildClass();
     if (psiClass != null) {
+      fixJavadocForConstructor(psiClass);
       super.performRefactoring(usageInfos);
       if (!myUseExistingClass) {
         for (PsiReference reference : ReferencesSearch.search(method)) {
@@ -279,6 +282,37 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
       logger.info(e);
     }
     return null;
+  }
+
+  private void fixJavadocForConstructor(PsiClass psiClass) {
+    final PsiDocComment docComment = method.getDocComment();
+    if (docComment != null) {
+      final List<PsiDocTag> mergedTags = new ArrayList<PsiDocTag>();
+      final PsiDocTag[] paramTags = docComment.findTagsByName("param");
+      for (PsiDocTag paramTag : paramTags) {
+        final PsiElement[] dataElements = paramTag.getDataElements();
+        if (dataElements.length > 0) {
+          mergedTags.add((PsiDocTag)paramTag.copy());
+        }
+      }
+
+      PsiMethod compatibleParamObjectConstructor = null;
+      if (myExistingClassCompatibleConstructor != null && myExistingClassCompatibleConstructor.getDocComment() == null) {
+        compatibleParamObjectConstructor = myExistingClassCompatibleConstructor;
+      } else if (!myUseExistingClass){
+        compatibleParamObjectConstructor = psiClass.getConstructors()[0];
+      }
+
+      if (compatibleParamObjectConstructor != null) {
+        PsiDocComment psiDocComment =
+          JavaPsiFacade.getElementFactory(myProject).createDocCommentFromText("/**\n*/", compatibleParamObjectConstructor);
+        psiDocComment = (PsiDocComment)compatibleParamObjectConstructor.addBefore(psiDocComment, compatibleParamObjectConstructor.getFirstChild());
+
+        for (PsiDocTag tag : mergedTags) {
+          psiDocComment.add(tag);
+        }
+      }
+    }
   }
 
   protected String getCommandName() {

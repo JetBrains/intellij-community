@@ -16,15 +16,14 @@
 package com.intellij.compiler.impl.javaCompiler.api;
 
 import com.intellij.compiler.OutputParser;
-import com.sun.source.util.JavacTask;
-import com.sun.source.util.TaskEvent;
-import com.sun.source.util.TaskListener;
+import com.sun.source.util.*;
 import com.sun.tools.javac.api.JavacTool;
 import org.jetbrains.annotations.NotNull;
 
 import javax.tools.*;
 import java.io.File;
 import java.io.PrintWriter;
+import java.net.URI;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -50,13 +49,16 @@ public class CompAPIDriver {
   private volatile boolean compiling;
   private static final PrintWriter COMPILER_ERRORS = new PrintWriter(System.err);
 
+  public CompAPIDriver() {
+  }
+
   public void compile(List<String> commandLine, List<File> paths, final String outputDir) {
     myOutputDir = outputDir;
     compiling = true;
 
     assert myCompilationResults.isEmpty();
     JavaCompiler compiler = JavacTool.create(); //use current classloader
-    StandardJavaFileManager manager = new MyFileManager(this, outputDir);
+    MyFileManager manager = new MyFileManager(this, outputDir);
 
     Iterable<? extends JavaFileObject> input = manager.getJavaFileObjectsFromFiles(paths);
 
@@ -109,7 +111,7 @@ public class CompAPIDriver {
   }
 
   private volatile boolean processing;
-  public boolean processAll(@NotNull OutputParser.Callback callback) {
+  public void processAll(@NotNull OutputParser.Callback callback) {
     try {
       processing =  true;
       while (true) {
@@ -120,8 +122,9 @@ public class CompAPIDriver {
     }
     catch (InterruptedException ignored) {
     }
-    processing = false;
-    return false;
+    finally {
+      processing = false;
+    }
   }
 
   public void finish() {
@@ -131,9 +134,11 @@ public class CompAPIDriver {
     myCompilationResults.clear();
   }
 
-  public void offer(CompilationEvent compilationEvent) {
-    myCompilationResults.offer(compilationEvent);
+  public void offerClassFile(URI uri, byte[] bytes) {
+    CompilationEvent event = CompilationEvent.generateClass(uri, bytes);
+    myCompilationResults.offer(event);
   }
+
 }
 
 

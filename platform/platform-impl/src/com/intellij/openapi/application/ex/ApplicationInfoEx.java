@@ -83,6 +83,10 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract String getWhatsNewUrl();
 
+  public abstract String getWinKeymapUrl();
+
+  public abstract String getMacKeymapUrl();
+
   public interface UpdateUrls {
     String getCheckingUrl();
     String getPatchesUrl();

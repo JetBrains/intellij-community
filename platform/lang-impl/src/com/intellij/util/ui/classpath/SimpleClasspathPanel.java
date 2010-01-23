@@ -253,12 +253,11 @@ public class SimpleClasspathPanel extends JPanel {
         }
 
         public PopupStep onChosen(final PopupAction selectedValue, final boolean finalChoice) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
+          return doFinalStep(new Runnable() {
             public void run() {
               selectedValue.execute();
             }
-          }, ModalityState.stateForComponent(e.getInputEvent().getComponent()));
-          return FINAL_CHOICE;
+          });
         }
 
         @NotNull

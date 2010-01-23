@@ -42,12 +42,14 @@ import java.util.List;
 public class MethodNode extends CheckedTreeNode {
   private final PsiMethod myMethod;
   private final Set<PsiMethod> myCalled;
+  private final Runnable myCancelCallback;
   private boolean myOldChecked;
 
-  public MethodNode(final PsiMethod method, Set<PsiMethod> called) {
+  public MethodNode(final PsiMethod method, Set<PsiMethod> called, Runnable cancelCallback) {
     super(method);
     myMethod = method;
     myCalled = called;
+    myCancelCallback = cancelCallback;
     isChecked = false;
   }
 
@@ -63,7 +65,7 @@ public class MethodNode extends CheckedTreeNode {
       for (PsiMethod caller : callers) {
         final HashSet<PsiMethod> called = new HashSet<PsiMethod>(myCalled);
         called.add(myMethod);
-        final MethodNode child = new MethodNode(caller, called);
+        final MethodNode child = new MethodNode(caller, called, myCancelCallback);
         children.add(child);
         child.parent = this;
       }
@@ -89,7 +91,7 @@ public class MethodNode extends CheckedTreeNode {
     if (myMethod == null) return PsiMethod.EMPTY_ARRAY;
     final Project project = myMethod.getProject();
     final List<PsiMethod> callers = new ArrayList<PsiMethod>();
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         final PsiReference[] refs =
           MethodReferencesSearch.search(myMethod, GlobalSearchScope.allScope(project), true).toArray(PsiReference.EMPTY_ARRAY);
@@ -105,7 +107,10 @@ public class MethodNode extends CheckedTreeNode {
           }
         }
       }
-    }, RefactoringBundle.message("caller.chooser.looking.for.callers"), false, project);
+    }, RefactoringBundle.message("caller.chooser.looking.for.callers"), true, project)) {
+      myCancelCallback.run();
+      return PsiMethod.EMPTY_ARRAY;
+    }
     return callers.toArray(new PsiMethod[callers.size()]);
   }
 

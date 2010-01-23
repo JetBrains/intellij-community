@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
+import java.util.List;
 
 /**
  * Factory class for creating popup chooser windows (similar to the Code | Generate... popup).
@@ -106,8 +108,11 @@ public abstract class JBPopupFactory {
 
   public boolean isChildPopupFocused(@Nullable Component parent) {
     if (parent == null) return false;
-    final JBPopup child = getChildPopup(parent);
-    return child != null && child.isFocused();
+    List<JBPopup> popups = getChildPopups(parent);
+    for (JBPopup each : popups) {
+      if (each.isFocused()) return true;
+    }
+    return false;
   }
 
   /**
@@ -224,12 +229,14 @@ public abstract class JBPopupFactory {
   public abstract Point getCenterOf(JComponent container, JComponent content);
   
   @Nullable
-  public abstract JBPopup getChildPopup(@NotNull Component parent);
+  public abstract List<JBPopup> getChildPopups(@NotNull Component parent);
 
   public abstract BalloonBuilder createBalloonBuilder(@NotNull JComponent content);
 
 
-  public abstract BalloonBuilder createHtmlTextBalloonBuilder(@NotNull String htmlContent, @Nullable Icon icon, final Color fillColor, @Nullable HyperlinkListener listener);
+  public abstract BalloonBuilder createHtmlTextBalloonBuilder(@NotNull String htmlContent, @Nullable Icon icon, Color fillColor, @Nullable HyperlinkListener listener);
+
+  public abstract BalloonBuilder createHtmlTextBalloonBuilder(@NotNull String htmlContent, MessageType messageType, @Nullable HyperlinkListener listener);
 
   public abstract JBPopup createMessage(String text);
 

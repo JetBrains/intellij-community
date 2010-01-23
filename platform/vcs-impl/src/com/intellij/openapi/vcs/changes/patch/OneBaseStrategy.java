@@ -74,7 +74,12 @@ class OneBaseStrategy extends AutoMatchStrategy {
   @Override
   public void processCreation(TextFilePatch creation) {
     if (! mySucceeded) return;
-    final FilePatchInProgress filePatchInProgress = new FilePatchInProgress(creation, null, myVariants.keySet().iterator().next());
+    final FilePatchInProgress filePatchInProgress;
+    if (myVariants.isEmpty()) {
+      filePatchInProgress = new FilePatchInProgress(creation, null, myBaseDir);
+    } else {
+      filePatchInProgress = new FilePatchInProgress(creation, null, myVariants.keySet().iterator().next());
+    }
     myResult.add(filePatchInProgress);
   }
 

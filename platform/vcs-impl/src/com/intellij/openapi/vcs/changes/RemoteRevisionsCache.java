@@ -19,7 +19,6 @@ import com.intellij.lifecycle.AtomicSectionsAware;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -89,7 +88,7 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
         }
         return shouldBeDone;
       }
-    }, "Finishing \"changed on server\" update");
+    }, "Finishing \"changed on server\" update", 3 * 60 * 1000);
     if ((! myProject.isDefault()) && VcsConfiguration.getInstance(myProject).CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND) {
       ((ProjectLevelVcsManagerImpl) myVcsManager).addInitializationRequest(VcsInitObject.REMOTE_REVISIONS_CACHE,
                                                                            new Runnable() {

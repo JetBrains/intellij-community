@@ -20,8 +20,6 @@
  */
 package org.jetbrains.idea.eclipse.conversion;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -30,20 +28,18 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
-import com.intellij.pom.java.LanguageLevel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.EclipseXml;
 import org.jetbrains.idea.eclipse.IdeaXml;
+import org.jetbrains.idea.eclipse.config.EclipseModuleManager;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -109,27 +105,29 @@ public class EclipseClasspathWriter {
             setExported(orderEntry, libraryOrderEntry);
           }
           else {
-            final Project project = myModel.getModule().getProject();
-            final String[] kind = new String[]{EclipseXml.LIB_KIND};
-            String relativeClassPath = getRelativePath(files[0], kind);
-
-            final String[] srcFiles = libraryOrderEntry.getUrls(OrderRootType.SOURCES);
-            final String relativePath;
-            if (srcFiles.length == 0) {
-              relativePath = null;
+            final String eclipseVariablePath = EclipseModuleManager.getInstance(libraryOrderEntry.getOwnerModule()).getEclipseVariablePath(files[0]);
+            final Element orderEntry;
+            if (eclipseVariablePath != null) {
+              orderEntry = addOrderEntry(EclipseXml.VAR_KIND, eclipseVariablePath, classpathRoot, oldRoot);
             }
             else {
-              final String[] srcKind = new String[1];
-              final boolean replaceVarsInSrc = Comparing.strEqual(kind[0], EclipseXml.VAR_KIND);
-              relativePath = getRelativePath(srcFiles[srcFiles.length - 1], srcKind, replaceVarsInSrc, project, getContentRoot());
-              if (replaceVarsInSrc && srcKind[0] == null) {
-                kind[0] = EclipseXml.LIB_KIND;
-                relativeClassPath = getRelativePath(files[0], kind, false, project, getContentRoot());
-              }
+              orderEntry = addOrderEntry(EclipseXml.LIB_KIND, getRelativePath(files[0]), classpathRoot, oldRoot);
             }
 
-            final Element orderEntry = addOrderEntry(kind[0], relativeClassPath, classpathRoot, oldRoot);
-            setOrRemoveAttribute(orderEntry, EclipseXml.SOURCEPATH_ATTR, relativePath);
+            final String srcRelativePath;
+            final String eclipseSrcVariablePath;
+
+            final String[] srcFiles = libraryOrderEntry.getUrls(OrderRootType.SOURCES);
+            if (srcFiles.length == 0) {
+              srcRelativePath = null;
+              eclipseSrcVariablePath = null;
+            }
+            else {
+              final String lastSourceRoot = srcFiles[srcFiles.length - 1];
+              srcRelativePath = getRelativePath(lastSourceRoot);
+              eclipseSrcVariablePath = EclipseModuleManager.getInstance(libraryOrderEntry.getOwnerModule()).getEclipseSrcVariablePath(lastSourceRoot);
+            }
+            setOrRemoveAttribute(orderEntry, EclipseXml.SOURCEPATH_ATTR, eclipseSrcVariablePath != null ? eclipseSrcVariablePath : srcRelativePath);
 
             //clear javadocs before write new
             final List children = new ArrayList(orderEntry.getChildren(EclipseXml.ATTRIBUTES_TAG));
@@ -181,19 +179,9 @@ public class EclipseClasspathWriter {
     }
   }
 
-  private String getRelativePath(String srcFile, String[] kind) {
-    return getRelativePath(srcFile, kind, true, myModel.getModule().getProject(), getContentRoot());
-  }
-
   private String getRelativePath(String url) {
-    return getRelativePath(url, new String[1]);
-  }
-
-  public static String getRelativePath(final String url,
-                                       String[] kind,
-                                       boolean replaceVars,
-                                       final Project project,
-                                       final VirtualFile contentRoot) {
+    final Project project = myModel.getModule().getProject();
+    final VirtualFile contentRoot = getContentRoot();
     final VirtualFile projectBaseDir = contentRoot != null ? contentRoot.getParent() : project.getBaseDir();
     assert projectBaseDir != null;
     VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
@@ -221,7 +209,7 @@ public class EclipseClasspathWriter {
         return "/" + VfsUtil.getRelativePath(file, projectBaseDir, '/');
       }
       else {
-        return replaceVars ? stripIDEASpecificPrefix(url, kind) : ProjectRootManagerImpl.extractLocalPath(url);
+        return ProjectRootManagerImpl.extractLocalPath(url);
       }
     }
     else {
@@ -236,7 +224,7 @@ public class EclipseClasspathWriter {
         return url.substring(projectUrl.length()); //leading /
       }
 
-      return replaceVars ? stripIDEASpecificPrefix(url, kind) : ProjectRootManagerImpl.extractLocalPath(url);
+      return ProjectRootManagerImpl.extractLocalPath(url);
     }
   }
 
@@ -292,128 +280,6 @@ public class EclipseClasspathWriter {
       attrElement.setAttribute("value", javadocPath);
     }
   }
-
-  private static String stripIDEASpecificPrefix(String path, String[] kind) {
-    String stripped = StringUtil
-      .strip(ProjectRootManagerImpl.extractLocalPath(PathMacroManager.getInstance(ApplicationManager.getApplication()).collapsePath(path)),
-             new CharFilter() {
-               public boolean accept(final char ch) {
-                 return ch != '$';
-               }
-             });
-    boolean leaveLeadingSlash = false;
-    if (!Comparing.strEqual(stripped, ProjectRootManagerImpl.extractLocalPath(path))) {
-      leaveLeadingSlash = kind[0] == null;
-      kind[0] = EclipseXml.VAR_KIND;
-    }
-    return (leaveLeadingSlash ? "/" : "") + stripped;
-  }
-
-  public boolean writeIDEASpecificClasspath(final Element root) throws WriteExternalException {
-
-    boolean isModified = false;
-
-    final CompilerModuleExtension compilerModuleExtension = myModel.getModuleExtension(CompilerModuleExtension.class);
-
-    if (compilerModuleExtension.getCompilerOutputPathForTests() != null) {
-      final Element pathElement = new Element(IdeaXml.OUTPUT_TEST_TAG);
-      pathElement.setAttribute(IdeaXml.URL_ATTR, compilerModuleExtension.getCompilerOutputUrlForTests());
-      root.addContent(pathElement);
-      isModified = true;
-    }
-    if (compilerModuleExtension.isCompilerOutputPathInherited()) {
-      root.setAttribute(IdeaXml.INHERIT_COMPILER_OUTPUT_ATTR, String.valueOf(true));
-      isModified = true;
-    }
-    if (compilerModuleExtension.isExcludeOutput()) {
-      root.addContent(new Element(IdeaXml.EXCLUDE_OUTPUT_TAG));
-      isModified = true;
-    }
-
-    final LanguageLevelModuleExtension languageLevelModuleExtension = myModel.getModuleExtension(LanguageLevelModuleExtension.class);
-    final LanguageLevel languageLevel = languageLevelModuleExtension.getLanguageLevel();
-    if (languageLevel != null) {
-      languageLevelModuleExtension.writeExternal(root);
-      isModified = true;
-    }
-
-    for (ContentEntry entry : myModel.getContentEntries()) {
-      final Element contentEntryElement = new Element(IdeaXml.CONTENT_ENTRY_TAG);
-      contentEntryElement.setAttribute(IdeaXml.URL_ATTR, entry.getUrl());
-      root.addContent(contentEntryElement);
-      for (SourceFolder sourceFolder : entry.getSourceFolders()) {
-        if (sourceFolder.isTestSource()) {
-          Element element = new Element(IdeaXml.TEST_FOLDER_TAG);
-          contentEntryElement.addContent(element);
-          element.setAttribute(IdeaXml.URL_ATTR, sourceFolder.getUrl());
-          isModified = true;
-        }
-      }
-
-      final VirtualFile entryFile = entry.getFile();
-      for (ExcludeFolder excludeFolder : entry.getExcludeFolders()) {
-        final String exludeFolderUrl = excludeFolder.getUrl();
-        final VirtualFile excludeFile = excludeFolder.getFile();
-        if (entryFile == null || excludeFile == null || VfsUtil.isAncestor(entryFile, excludeFile, false)) {
-          Element element = new Element(IdeaXml.EXCLUDE_FOLDER_TAG);
-          contentEntryElement.addContent(element);
-          element.setAttribute(IdeaXml.URL_ATTR, exludeFolderUrl);
-          isModified = true;
-        }
-      }
-    }
-
-    for (OrderEntry entry : myModel.getOrderEntries()) {
-      if (entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).isModuleLevel()) {
-        final Element element = new Element("lib");
-        element.setAttribute("name", entry.getPresentableName());
-        final DependencyScope scope = ((LibraryOrderEntry)entry).getScope();
-        element.setAttribute("scope", scope.name());
-        final String[] urls = entry.getUrls(OrderRootType.SOURCES);
-        if (urls.length > 1) {
-          for (int i = 0; i < urls.length - 1; i++) {
-            Element srcElement = new Element("srcroot");
-            srcElement.setAttribute("url", urls[i]);
-            element.addContent(srcElement);
-          }
-        }
-
-        for (String srcUrl : entry.getUrls(OrderRootType.SOURCES)) {
-          appendModuleRelatedRoot(element, srcUrl, "relative-module-src");
-        }
-        for (String classesUrl : entry.getUrls(OrderRootType.CLASSES)) {
-          appendModuleRelatedRoot(element, classesUrl, "relative-module-cls");
-        }
-        if (!element.getChildren().isEmpty() || !scope.equals(DependencyScope.COMPILE)) root.addContent(element);
-      }
-    }
-
-    PathMacroManager.getInstance(myModel.getModule()).collapsePaths(root);
-
-    return isModified;
-  }
-
-  private boolean appendModuleRelatedRoot(Element element, String classesUrl, final String rootMame) {
-    VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(classesUrl);
-    if (file != null) {
-      if (file.getFileSystem() instanceof JarFileSystem) {
-        file = JarFileSystem.getInstance().getVirtualFileForJar(file);
-        assert file != null;
-      }
-      final Module module = ModuleUtil.findModuleForFile(file, myModel.getProject());
-      if (module != null && module != myModel.getModule()) {
-        final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
-        if (contentRoots.length > 0 && VfsUtil.isAncestor(contentRoots[0], file, false)) {
-          final Element clsElement = new Element(rootMame);
-          clsElement.setAttribute("project-related", PathMacroManager.getInstance(module.getProject()).collapsePath(classesUrl));
-          element.addContent(clsElement);
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
 
   private static Element addOrderEntry(String kind, String path, Element classpathRoot, Element oldRoot) {
     if (oldRoot != null) {

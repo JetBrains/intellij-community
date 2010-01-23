@@ -694,7 +694,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
               }
             }
             else {
-              wcClient.doAdd(ioFile, true, false, false, recursiveItems.contains(file));
+              wcClient.doAdd(ioFile, true, false, false, true);
             }
             VcsDirtyScopeManager.getInstance(project).fileDirty(file);
           }

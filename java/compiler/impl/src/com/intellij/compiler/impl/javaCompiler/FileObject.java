@@ -16,48 +16,57 @@
 package com.intellij.compiler.impl.javaCompiler;
 
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 /**
  * @author cdr
  */
 public class FileObject {
-  private final static byte[] NOT_LOADED = new byte[0];
+  private static final byte[] NOT_LOADED = new byte[0];
 
   private final File myFile;
-  private byte[] myContent;
-  private final boolean mySaved;
+  private final byte[] myContent;
 
-  public FileObject(File file, byte[] content) {
+  public FileObject(@NotNull File file, @NotNull byte[] content) {
     myFile = file;
     myContent = content;
-    mySaved = false;
   }
 
   public FileObject(File file) {
     myFile = file;
     myContent = NOT_LOADED;
-    mySaved = true;
   }
 
   public File getFile() {
     return myFile;
   }
 
-  public byte[] getContent() {
+  public byte[] getContent() throws IOException {
     if (myContent == NOT_LOADED) {
-      try{
-        return FileUtil.loadFileBytes(myFile);
-      }
-      catch(IOException ignored){
-      }
+      return FileUtil.loadFileBytes(myFile);
     }
     return myContent;
   }
 
-  public boolean isSaved() {
-    return mySaved;
+  public void save() throws IOException {
+    if (myContent == NOT_LOADED) {
+      return; // already on disk
+    }
+    try {
+      FileUtil.writeToFile(myFile, myContent);
+    }
+    catch (FileNotFoundException e) {
+      FileUtil.createParentDirs(myFile);
+      FileUtil.writeToFile(myFile, myContent);
+    }
+  }
+
+  @Override
+  public String toString() {
+    return getFile().toString();
   }
 }

@@ -48,15 +48,19 @@ public class RenameLocalTest extends LightCodeInsightTestCase {
   }
 
   public void testRenameInPlaceQualifyFieldReference() throws Exception {
-    doTestInplaceRenameCollisionsResolved("myI");
+    doTestInplaceRename("myI");
   }
 
   public void testRenameInPlaceParamInOverriderAutomaticRenamer() throws Exception {
-    doTestInplaceRenameCollisionsResolved("pp");
+    doTestInplaceRename("pp");
+  }
+
+  public void testRenameInPlaceParamInOverriderAutomaticRenamerConflict() throws Exception {
+    doTestInplaceRename("pp");
   }
 
   //reference itself won't be renamed
-  private void doTestInplaceRenameCollisionsResolved(String newName) throws Exception {
+  private void doTestInplaceRename(String newName) throws Exception {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
     PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
     assertNotNull(element);

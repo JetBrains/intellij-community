@@ -29,8 +29,6 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
-
 public class ConflictsUtil {
   private ConflictsUtil() {
   }
@@ -92,7 +90,7 @@ public class ConflictsUtil {
     );
   }
 
-  public static void checkFieldConflicts(@Nullable PsiClass aClass, String newName, final Map<PsiElement, String> conflicts) {
+  public static void checkFieldConflicts(@Nullable PsiClass aClass, String newName, final MultiMap<PsiElement, String> conflicts) {
     PsiField existingField = aClass != null ? aClass.findFieldByName(newName, true) : null;
     if (existingField != null) {
       if (aClass.equals(existingField.getContainingClass())) {
@@ -101,7 +99,7 @@ public class ConflictsUtil {
                            RefactoringUIUtil.getDescription(aClass, false);
         final String conflict = RefactoringBundle.message("field.0.is.already.defined.in.the.1",
                                                           existingField.getName(), className);
-        conflicts.put(existingField, conflict);
+        conflicts.putValue(existingField, conflict);
       }
       else { // method somewhere in base class
         if (!existingField.hasModifierProperty(PsiModifier.PRIVATE)) {
@@ -109,7 +107,7 @@ public class ConflictsUtil {
           String className = RefactoringUIUtil.getDescription(existingField.getContainingClass(), false);
           final String descr = RefactoringBundle.message("field.0.will.hide.field.1.of.the.base.class",
                                                          newName, fieldInfo, className);
-          conflicts.put(existingField, descr);
+          conflicts.putValue(existingField, descr);
         }
       }
     }

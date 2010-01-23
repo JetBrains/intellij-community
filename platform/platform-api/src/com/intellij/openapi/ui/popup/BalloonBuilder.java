@@ -20,6 +20,9 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.awt.event.ActionListener;
 
+/**
+ * @see JBPopupFactory#createBalloonBuilder(javax.swing.JComponent)
+ */
 public interface BalloonBuilder {
 
   @NotNull

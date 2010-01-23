@@ -56,26 +56,6 @@ public class TestTreeBuilder extends AbstractTestTreeBuilder
             updateSubtree(parentNode);
     }
 
-    public DefaultMutableTreeNode ensureTestVisible(TestProxy proxy) {
-        DefaultMutableTreeNode node = getNodeForElement(proxy);
-        if (node != null) {
-            if (node.getParent() != null) {
-                expandNodeChildren((DefaultMutableTreeNode) node.getParent());
-                node = getNodeForElement(proxy);
-            }
-            return node;
-        }
-        TestProxy path[] = proxy.getPathFromRoot();
-        for (TestProxy item : path) {
-            buildNodeForElement(item);
-            node = getNodeForElement(item);
-            if (node == null) return null;
-            expandNodeChildren(node);
-        }
-
-        return node;
-    }
-
     public TestProxy getRoot() {
         return (TestProxy) getTreeStructure().getRootElement();
     }

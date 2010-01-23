@@ -8,11 +8,15 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
 import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.roots.LanguageLevelModuleExtension;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.FileIndexImplUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -27,12 +31,24 @@ public class JavaAPIUsagesInspectionTest extends InspectionTestCase {
 
   private void doTest() throws Exception {
     final Java15APIUsageInspection usageInspection = new Java15APIUsageInspection();
-    usageInspection.API = 1;
     doTest("usage1.5/" + getTestName(true), new LocalInspectionToolWrapper(usageInspection), "java 1.5");
   }
 
   public void testConstructor() throws Exception {
-    doTest();
+    ModifiableRootModel model = ModuleRootManager.getInstance(getModule()).getModifiableModel();
+    LanguageLevelModuleExtension extension = model.getModuleExtension(LanguageLevelModuleExtension.class);
+    final LanguageLevel languageLevel = extension.getLanguageLevel();
+    try {
+      extension.setLanguageLevel(LanguageLevel.JDK_1_4);
+      model.commit();
+      doTest();
+    }
+    finally {
+      model = ModuleRootManager.getInstance(getModule()).getModifiableModel();
+      extension = model.getModuleExtension(LanguageLevelModuleExtension.class);
+      extension.setLanguageLevel(languageLevel);
+      model.commit();
+    }
   }
 
   public void testIgnored() throws Exception {

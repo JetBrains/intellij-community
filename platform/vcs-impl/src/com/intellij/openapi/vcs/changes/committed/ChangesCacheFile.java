@@ -686,6 +686,10 @@ public class ChangesCacheFile {
     return myVcs;
   }
 
+  public FilePath getRootPath() {
+    return myRootPath;
+  }
+
   private class RefreshIncomingChangesOperation {
     private FactoryMap<VirtualFile, VcsRevisionNumber> myCurrentRevisions;
     private Set<FilePath> myDeletedFiles;

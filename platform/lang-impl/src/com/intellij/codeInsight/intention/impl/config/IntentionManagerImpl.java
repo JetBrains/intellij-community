@@ -218,4 +218,8 @@ public class IntentionManagerImpl extends IntentionManager {
     }
     return list.toArray(new IntentionAction[list.size()]);
   }
+
+  public boolean hasActiveRequests() {
+    return myInitActionsAlarm.getActiveRequestCount() > 0;
+  }
 }

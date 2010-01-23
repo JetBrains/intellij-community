@@ -40,7 +40,7 @@ public class XIncludeProvider extends FileIncludeProvider {
 
   @Override
   public boolean acceptFile(VirtualFile file) {
-    FileType fileType = file.getFileType();
+    final FileType fileType = file.getFileType();
     return fileType == XmlFileType.INSTANCE && !ProjectUtil.isProjectOrWorkspaceFile(file, fileType);
   }
 

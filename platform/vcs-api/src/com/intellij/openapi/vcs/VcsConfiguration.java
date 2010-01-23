@@ -22,10 +22,10 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.startup.StartupManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -63,6 +63,8 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   public boolean PERFORM_ROLLBACK_IN_BACKGROUND = false;
   public volatile boolean CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND = true;
   public VcsShowConfirmationOption.Value MOVE_TO_FAILED_COMMIT_CHANGELIST = VcsShowConfirmationOption.Value.SHOW_CONFIRMATION;
+  public boolean ENABLE_BACKGROUND_PROCESSES = true;
+  public int CHANGED_ON_SERVER_INTERVAL = 5;
 
   public enum StandardOption {
     ADD(VcsBundle.message("vcs.command.name.add")),

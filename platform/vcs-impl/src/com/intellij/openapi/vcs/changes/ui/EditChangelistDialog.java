@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
@@ -43,7 +42,8 @@ public class EditChangelistDialog extends DialogWrapper {
     myPanel = new EditChangelistPanel(((LocalChangeListImpl) list).getEditHandler()) {
       @Override
       protected void nameChanged(String errorMessage) {
-        setOKActionEnabled(!StringUtil.isEmptyOrSpaces(myPanel.getName()));
+        setOKActionEnabled(errorMessage == null);
+        setErrorText(errorMessage);
       }
     };
     myPanel.setName(list.getName());

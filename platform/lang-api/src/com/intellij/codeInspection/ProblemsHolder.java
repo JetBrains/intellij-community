@@ -57,7 +57,7 @@ public class ProblemsHolder {
     registerProblem(myManager.createProblemDescriptor(psiElement, descriptionTemplate, myOnTheFly, fixes, highlightType));
   }
 
-  public void registerProblem(ProblemDescriptor problemDescriptor) {
+  public void registerProblem(@NotNull ProblemDescriptor problemDescriptor) {
     if (myProblems == null) {
       myProblems = new ArrayList<ProblemDescriptor>(1);
     }

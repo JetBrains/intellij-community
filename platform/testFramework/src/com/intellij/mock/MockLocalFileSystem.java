@@ -51,7 +51,7 @@ public class MockLocalFileSystem extends LocalFileSystem {
   }
 
   @Nullable
-  public VirtualFile refreshAndFindFileByIoFile(final File file) {
+  public VirtualFile refreshAndFindFileByIoFile(@NotNull final File file) {
     return findFileByIoFile(file);
   }
 

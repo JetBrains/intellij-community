@@ -82,7 +82,7 @@ public class RunInspectionIntention implements IntentionAction {
                                                                       project,
                                                                       new AnalysisScope(file),
                                                                       module != null ? module.getName() : null,
-                                                                      true, AnalysisUIOptions.getInstance(project));
+                                                                      true, AnalysisUIOptions.getInstance(project), file);
     AnalysisScope scope = new AnalysisScope(file);
     dlg.show();
     if (!dlg.isOK()) return;
@@ -93,24 +93,24 @@ public class RunInspectionIntention implements IntentionAction {
     rerunInspection(baseTool, managerEx, scope, file);
   }
 
-  public void rerunInspection(final InspectionProfileEntry baseTool, final InspectionManagerEx managerEx, final AnalysisScope scope,
+  public static void rerunInspection(final InspectionProfileEntry baseTool, final InspectionManagerEx managerEx, final AnalysisScope scope,
                               PsiElement psiElement) {
-    final InspectionProfileImpl profile = new InspectionProfileImpl(myDisplayName);
+    final InspectionProfileImpl profile = new InspectionProfileImpl(baseTool.getDisplayName());
     final InspectionProfileImpl model = (InspectionProfileImpl)profile.getModifiableModel();
     final InspectionProfileEntry[] profileEntries = model.getInspectionTools(null);
     for (InspectionProfileEntry entry : profileEntries) {
       model.disableTool(entry.getShortName());
     }
-    model.enableTool(myShortName);
+    model.enableTool(baseTool.getShortName());
     try {
       Element element = new Element("toCopy");
       baseTool.writeSettings(element);
-      model.getInspectionTool(myShortName, psiElement).readSettings(element);
+      model.getInspectionTool(baseTool.getShortName(), psiElement).readSettings(element);
     }
     catch (Exception e) {
       //skip
     }
-    model.setEditable(myDisplayName);
+    model.setEditable(baseTool.getDisplayName());
     final GlobalInspectionContextImpl inspectionContext = managerEx.createNewGlobalContext(false);
     inspectionContext.setExternalProfile(model);
     inspectionContext.doInspections(scope, managerEx);

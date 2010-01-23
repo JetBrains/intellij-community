@@ -65,6 +65,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private String myPluginsDownloadUrl;
   private String myDefaultUpdateChannel;
   private String myWhatsNewUrl;
+  private String myWinKeymapUrl;
+  private String myMacKeymapUrl;
   private boolean myEAP;
   @NonNls private String myHelpFileName = "ideahelp.jar";
   @NonNls private String myHelpRootName = "idea";
@@ -112,6 +114,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private static final String ATTRIBUTE_DOWNLOAD_URL = "download-url";
   @NonNls private static final String ATTRIBUTE_WEBHELP_URL = "webhelp-url";
   @NonNls private static final String ELEMENT_WHATSNEW = "whatsnew";
+  @NonNls private static final String ELEMENT_KEYMAP = "keymap";
+  @NonNls private static final String ATTRIBUTE_WINDOWS_URL = "win";
+  @NonNls private static final String ATTRIBUTE_MAC_URL = "mac";
   private static final String DEFAULT_PLUGINS_HOST = "http://plugins.intellij.net";
 
   public void initComponent() { }
@@ -241,6 +246,14 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
   public String getWhatsNewUrl() {
     return myWhatsNewUrl;
+  }
+
+  public String getWinKeymapUrl() {
+    return myWinKeymapUrl;
+  }
+
+  public String getMacKeymapUrl() {
+    return myMacKeymapUrl;
   }
 
   public String getFullApplicationName() {
@@ -418,6 +431,12 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     if (pluginsHost != null) {
       myPluginsListUrl = myPluginsListUrl.replace(DEFAULT_PLUGINS_HOST, pluginsHost);
       myPluginsDownloadUrl = myPluginsDownloadUrl.replace(DEFAULT_PLUGINS_HOST, pluginsHost);
+    }
+
+    Element keymapElement = parentNode.getChild(ELEMENT_KEYMAP);
+    if (keymapElement != null) {
+      myWinKeymapUrl = keymapElement.getAttributeValue(ATTRIBUTE_WINDOWS_URL);
+      myMacKeymapUrl = keymapElement.getAttributeValue(ATTRIBUTE_MAC_URL);
     }
 
     myPluginChooserPages = new ArrayList<PluginChooserPage>();

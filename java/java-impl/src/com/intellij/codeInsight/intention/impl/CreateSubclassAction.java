@@ -37,7 +37,6 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -87,50 +86,61 @@ public class CreateSubclassAction extends PsiElementBaseIntentionAction {
     TextRange declarationRange = HighlightNamesUtil.getClassDeclarationTextRange(psiClass);
     if (!declarationRange.contains(element.getTextRange())) return false;
 
-    myText = psiClass.isInterface()
+    myText = getTitle(psiClass);
+    return true;
+  }
+
+  private static String getTitle(PsiClass psiClass) {
+    return psiClass.isInterface()
              ? CodeInsightBundle.message("intention.implement.abstract.class.interface.text")
              : psiClass.hasModifierProperty(PsiModifier.ABSTRACT)
                ? CodeInsightBundle.message("intention.implement.abstract.class.default.text")
                : CodeInsightBundle.message("intention.implement.abstract.class.subclass.text");
-    return true;
   }
 
   public void invoke(@NotNull final Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     final PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
 
-    PsiDirectory sourceDir = file.getContainingDirectory();
+    final CreateClassDialog dlg = chooseSubclassToCreate(psiClass);
+    if (dlg != null) {
+      createSubclass(psiClass, dlg.getTargetDirectory(), dlg.getClassName());
+    }
+  }
+
+  @Nullable
+  public static CreateClassDialog chooseSubclassToCreate(PsiClass psiClass) {
+    PsiDirectory sourceDir = psiClass.getContainingFile().getContainingDirectory();
 
     final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(sourceDir);
     final CreateClassDialog dialog = new CreateClassDialog(
-      project,
-      myText,
+      psiClass.getProject(), getTitle(psiClass),
       psiClass.getName() + IMPL_SUFFIX,
       aPackage != null ? aPackage.getQualifiedName() : "",
-      CreateClassKind.CLASS, true, ModuleUtil.findModuleForPsiElement(file));
+      CreateClassKind.CLASS, true, ModuleUtil.findModuleForPsiElement(psiClass));
     dialog.show();
-    if (!dialog.isOK()) return;
+    if (!dialog.isOK()) return null;
     final PsiDirectory targetDirectory = dialog.getTargetDirectory();
-    if (targetDirectory == null) return;
-
-    createSubclass(psiClass, targetDirectory, dialog.getClassName());
+    if (targetDirectory == null) return null;
+    return dialog;
   }
 
-  public static void createSubclass(final PsiClass psiClass, final PsiDirectory targetDirectory, final String className) {
+  public static PsiClass createSubclass(final PsiClass psiClass, final PsiDirectory targetDirectory, final String className) {
     final Project project = psiClass.getProject();
+    final PsiClass[] targetClass = new PsiClass[1];
     PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(new Runnable () {
       public void run() {
-        PsiClass targetClass = ApplicationManager.getApplication().runWriteAction(new Computable<PsiClass>() {
-          public PsiClass compute() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
 
             IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
 
             final PsiTypeParameterList oldTypeParameterList = psiClass.getTypeParameterList();
-            PsiClass targetClass;
+
             try {
-              targetClass = JavaDirectoryService.getInstance().createClass(targetDirectory, className);
+              targetClass[0] = JavaDirectoryService.getInstance().createClass(targetDirectory, className);
               if (psiClass.hasTypeParameters()) {
-                final PsiTypeParameterList typeParameterList = targetClass.getTypeParameterList();
+                final PsiTypeParameterList typeParameterList = targetClass[0].getTypeParameterList();
                 assert typeParameterList != null;
                 typeParameterList.replace(oldTypeParameterList);
               }
@@ -143,16 +153,16 @@ public class CreateSubclassAction extends PsiElementBaseIntentionAction {
                                            CodeInsightBundle.message("intention.error.cannot.create.class.title"));
                 }
               });
-              return null;
+              return;
             }
             final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
             PsiJavaCodeReferenceElement ref = elementFactory.createClassReferenceElement(psiClass);
             try {
               if (psiClass.isInterface()) {
-                ref = (PsiJavaCodeReferenceElement)targetClass.getImplementsList().add(ref);
+                ref = (PsiJavaCodeReferenceElement)targetClass[0].getImplementsList().add(ref);
               }
               else {
-                ref = (PsiJavaCodeReferenceElement)targetClass.getExtendsList().add(ref);
+                ref = (PsiJavaCodeReferenceElement)targetClass[0].getExtendsList().add(ref);
               }
 
               if (oldTypeParameterList != null) {
@@ -164,19 +174,18 @@ public class CreateSubclassAction extends PsiElementBaseIntentionAction {
             catch (IncorrectOperationException e) {
               LOG.error(e);
             }
-
-            return targetClass;
           }
         });
-        if (targetClass == null) return;
+        if (targetClass[0] == null) return;
 
         if (!ApplicationManager.getApplication().isUnitTestMode()) {
-          final Editor editor1 = CodeInsightUtil.positionCursor(project, targetClass.getContainingFile(), targetClass.getLBrace());
+          final Editor editor1 = CodeInsightUtil.positionCursor(project, targetClass[0].getContainingFile(), targetClass[0].getLBrace());
           if (editor1 == null) return;
-          OverrideImplementUtil.chooseAndImplementMethods(project, editor1, targetClass);
+          OverrideImplementUtil.chooseAndImplementMethods(project, editor1, targetClass[0]);
         }
       }
     });
+    return targetClass[0];
   }
 
   public boolean startInWriteAction() {

@@ -18,22 +18,23 @@ package com.intellij.find.findUsages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.lang.findUsages.LanguageFindUsages;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
 */
 public final class DefaultFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
-  public boolean canFindUsages(final PsiElement element) {
+  public boolean canFindUsages(@NotNull final PsiElement element) {
     if (element instanceof PsiFile) {
       if (((PsiFile)element).getVirtualFile() == null) return false;
     }
     else if (!LanguageFindUsages.INSTANCE.forLanguage(element.getLanguage()).canFindUsagesFor(element)) {
       return false;
     }
-    return true;
+    return element.isValid();
   }
 
-  public FindUsagesHandler createFindUsagesHandler(final PsiElement element, final boolean forHighlightUsages) {
+  public FindUsagesHandler createFindUsagesHandler(@NotNull final PsiElement element, final boolean forHighlightUsages) {
     if (canFindUsages(element)) {
       return new FindUsagesHandler(element){};
     }

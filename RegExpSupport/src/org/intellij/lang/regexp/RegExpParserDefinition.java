@@ -34,9 +34,9 @@ import org.jetbrains.annotations.NotNull;
 public class RegExpParserDefinition implements ParserDefinition {
   private static final TokenSet COMMENT_TOKENS = TokenSet.create(RegExpTT.COMMENT);
 
-  @NotNull
+    @NotNull
     public Lexer createLexer(Project project) {
-        return new RegExpLexer(false);
+        return new RegExpLexer(false, false);
     }
 
     public PsiParser createParser(Project project) {
@@ -86,7 +86,7 @@ public class RegExpParserDefinition implements ParserDefinition {
             return new RegExpSetOptionsImpl(node);
         } else if (type == RegExpElementTypes.OPTIONS) {
             return new RegExpOptionsImpl(node);
-        } else if (type == RegExpElementTypes.BACKREF) {
+        } else if (type == RegExpElementTypes.BACKREF) {                                    
             return new RegExpBackrefImpl(node);
         } else if (type == RegExpElementTypes.CLOSURE) {
             return new RegExpClosureImpl(node);
@@ -101,7 +101,7 @@ public class RegExpParserDefinition implements ParserDefinition {
     }
 
     public PsiFile createFile(FileViewProvider viewProvider) {
-        return new RegExpFile(viewProvider);
+        return new RegExpFile(viewProvider, RegExpLanguage.INSTANCE);
     }
 
     public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {

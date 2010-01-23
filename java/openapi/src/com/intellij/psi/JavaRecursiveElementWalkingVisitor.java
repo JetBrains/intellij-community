@@ -19,9 +19,11 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NotNull;
+
 public abstract class JavaRecursiveElementWalkingVisitor extends JavaElementVisitor {
   private final PsiWalkingState myWalkingState = new PsiWalkingState(this){
-    public void elementFinished(PsiElement element) {
+    public void elementFinished(@NotNull PsiElement element) {
       JavaRecursiveElementWalkingVisitor.this.elementFinished(element);
     }
   };

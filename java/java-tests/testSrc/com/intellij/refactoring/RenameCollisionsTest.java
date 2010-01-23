@@ -76,6 +76,10 @@ public class RenameCollisionsTest extends LightCodeInsightTestCase {
     doTest("CASE_INSENSITIVE_ORDER");
   }
 
+  public void testRenameVarConstToAlien1() throws Exception {
+    doTest("CASE_INSENSITIVE_ORDER");
+  }
+
   public void testRenameVarConstToParam() throws Exception {
     doTest("param3");
   }

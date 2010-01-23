@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * JFlex 1.4.1                                                             *
- * Copyright (C) 1998-2004  Gerwin Klein <lsf@jflex.de>                    *
+ * JFlex 1.4.3                                                             *
+ * Copyright (C) 1998-2009  Gerwin Klein <lsf@jflex.de>                    *
  * All rights reserved.                                                    *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify    *
@@ -24,7 +24,7 @@ package JFlex;
  * Signals a silent exit (no statistics printout).
  * 
  * @author Gerwin Klein
- * @version $Revision: 2.3 $, $Date: 2004/11/06 23:03:32 $
+ * @version $Revision$, $Date$
  */
 public class SilentExit extends Exception {
 

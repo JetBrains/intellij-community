@@ -102,6 +102,9 @@ public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
 
             holder.registerProblem(tag,
                                    XmlBundle.message("html.inspections.check.empty.script.message"),
+                                   tag.getContainingFile().getContext() != null ? 
+                                     ProblemHighlightType.INFORMATION:
+                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING, 
                                    fix);
           }
         }

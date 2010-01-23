@@ -55,7 +55,7 @@ public abstract class LibraryManager {
   @NotNull
   @Nls
   public String getLibraryPrefix() {
-    return StringUtil.toLowerCase(getLibraryCategoryName()) + "-";
+    return StringUtil.toLowerCase(getLibraryCategoryName());
   }
 
 }

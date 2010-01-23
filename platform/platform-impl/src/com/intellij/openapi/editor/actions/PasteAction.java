@@ -38,7 +38,7 @@ public class PasteAction extends EditorAction {
 
   private static class Handler extends EditorWriteActionHandler {
     public void executeWriteAction(Editor editor, DataContext dataContext) {
-      if (editor.isColumnMode()) {
+      if (editor.isColumnMode() || editor.getSelectionModel().hasBlockSelection()) {
         EditorModificationUtil.pasteFromClipboardAsBlock(editor);
       } else {
         editor.putUserData(EditorEx.LAST_PASTED_REGION, EditorModificationUtil.pasteFromClipboard(editor));

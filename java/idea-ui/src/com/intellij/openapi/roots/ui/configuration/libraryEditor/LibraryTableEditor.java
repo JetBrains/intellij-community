@@ -327,7 +327,7 @@ public class LibraryTableEditor implements Disposable, LibraryEditorListener {
     }
   }
 
-  public Library[] getSelectedLibraries() {
+  private Library[] getSelectedLibraries() {
     final List<Library> libs = new ArrayList<Library>();
     final Object[] selectedElements = getSelectedElements();
     for (Object selectedElement : selectedElements) {
@@ -372,7 +372,8 @@ public class LibraryTableEditor implements Disposable, LibraryEditorListener {
   /**
    * @return true if Ok button was pressed on dialog close, false otherwise
    */
-  public boolean openDialog(final Component parent, final Collection<Library> selection, final boolean expandSelectedItems) {
+  @Nullable
+  public Library[] openDialog(final Component parent, final Collection<Library> selection, final boolean expandSelectedItems) {
     final MyDialogWrapper dialogWrapper = new MyDialogWrapper(parent);
     if (selection != null) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -384,7 +385,7 @@ public class LibraryTableEditor implements Disposable, LibraryEditorListener {
       }, ModalityState.stateForComponent(dialogWrapper.getContentPane()));
     }
     dialogWrapper.show();
-    return dialogWrapper.isOK();
+    return dialogWrapper.isOK() ? dialogWrapper.getSelectedLibraries() : null;
   }
 
   public ActionListener createAddLibraryAction(boolean select){
@@ -794,6 +795,7 @@ public class LibraryTableEditor implements Disposable, LibraryEditorListener {
 
   private class MyDialogWrapper extends DialogWrapper {
     private JTextField myNameField;
+    private Library[] mySelectedLibraries;
 
     public MyDialogWrapper(final Component parent) {
       super(parent, true);
@@ -817,6 +819,8 @@ public class LibraryTableEditor implements Disposable, LibraryEditorListener {
     }
 
     protected void doOKAction() {
+      mySelectedLibraries = LibraryTableEditor.this.getSelectedLibraries();
+
       if (myNameField != null) {
         final Library library = getSelectedLibrary();
         final String currentName = getLibraryEditor(library).getName();
@@ -873,6 +877,10 @@ public class LibraryTableEditor implements Disposable, LibraryEditorListener {
 
     protected JComponent createCenterPanel() {
       return LibraryTableEditor.this.getComponent();
+    }
+
+    public Library[] getSelectedLibraries() {
+      return mySelectedLibraries;
     }
   }
 

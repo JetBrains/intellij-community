@@ -18,9 +18,9 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.ChangeListEditHandler;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.LocalChangeListImpl;
-import com.intellij.openapi.vcs.changes.ChangeListEditHandler;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,9 +52,10 @@ public class ChangeListChooser extends DialogWrapper {
       }
     }
 
-    myPanel = new ChangeListChooserPanel(null, new Consumer<Boolean>() {
-      public void consume(final Boolean aBoolean) {
-        setOKActionEnabled(aBoolean);
+    myPanel = new ChangeListChooserPanel(null, new Consumer<String>() {
+      public void consume(final String errorMessage) {
+        setOKActionEnabled(errorMessage == null);
+        setErrorText(errorMessage);
       }
     });
 

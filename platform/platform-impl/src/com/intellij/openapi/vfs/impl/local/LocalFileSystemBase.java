@@ -185,7 +185,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return getVfsCanonicalPath(path);
   }
 
-  public VirtualFile refreshAndFindFileByIoFile(File file) {
+  public VirtualFile refreshAndFindFileByIoFile(@NotNull File file) {
     String path = file.getAbsolutePath();
     if (path == null) return null;
     return refreshAndFindFileByPath(path.replace(File.separatorChar, '/'));

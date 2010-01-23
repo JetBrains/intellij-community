@@ -673,7 +673,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     return mySchemesManager.getAllSchemes();
   }
 
-  public List<TemplateImpl> collectMatchingCandidates(String key, char shortcutChar) {
+  public List<TemplateImpl> collectMatchingCandidates(String key, char shortcutChar, boolean hasArgument) {
     final Collection<TemplateImpl> templates = getTemplates(key);
     List<TemplateImpl> candidates = new ArrayList<TemplateImpl>();
     for (TemplateImpl template : templates) {
@@ -684,6 +684,9 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
         continue;
       }
       if (template.isSelectionTemplate()) {
+        continue;
+      }
+      if (hasArgument && !template.hasArgument()) {
         continue;
       }
       candidates.add(template);

@@ -53,7 +53,7 @@ public enum ChangelistConflictResolution {
         Messages.showInfoMessage(project, "The conflict seems to be resolved", "No Conflict Found");
         return true;
       }
-      MoveChangesDialog dialog = new MoveChangesDialog(project, changes, changeLists, "Move Changes");
+      MoveChangesDialog dialog = new MoveChangesDialog(project, changes, changeLists, "Move Changes to Active Changelist");
       dialog.show();
       if (dialog.isOK()) {
         manager.moveChangesTo(manager.getDefaultChangeList(), dialog.getIncludedChanges().toArray(new Change[changes.size()]));
@@ -62,7 +62,7 @@ public enum ChangelistConflictResolution {
       return false;
     }},
 
-  SWITCH{
+  SWITCH {
     @Override
     public boolean resolveConflict(Project project, Collection<Change> changes) {
       LocalChangeList changeList = getManager(project).getChangeList(changes.iterator().next());

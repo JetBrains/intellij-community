@@ -51,24 +51,24 @@ public abstract class EditChangelistPanel {
   public EditChangelistPanel(@Nullable final ChangeListEditHandler handler) {
     myHandler = handler;
 
+    myNameTextField.addKeyListener(new KeyListener() {
+      public void keyTyped(final KeyEvent e) {
+        onEditName(EditChangelistPanel.this.myHandler);
+      }
+      public void keyPressed(final KeyEvent e) {
+      }
+      public void keyReleased(final KeyEvent e) {
+        onEditName(EditChangelistPanel.this.myHandler);
+      }
+    });
+    myNameTextField.addInputMethodListener(new InputMethodListener() {
+      public void inputMethodTextChanged(final InputMethodEvent event) {
+        onEditName(EditChangelistPanel.this.myHandler);
+      }
+      public void caretPositionChanged(final InputMethodEvent event) {
+      }
+    });
     if (myHandler != null) {
-      myNameTextField.addKeyListener(new KeyListener() {
-        public void keyTyped(final KeyEvent e) {
-          onEditName(EditChangelistPanel.this.myHandler);
-        }
-        public void keyPressed(final KeyEvent e) {
-        }
-        public void keyReleased(final KeyEvent e) {
-          onEditName(EditChangelistPanel.this.myHandler);
-        }
-      });
-      myNameTextField.addInputMethodListener(new InputMethodListener() {
-        public void inputMethodTextChanged(final InputMethodEvent event) {
-          onEditName(EditChangelistPanel.this.myHandler);
-        }
-        public void caretPositionChanged(final InputMethodEvent event) {
-        }
-      });
       myDescriptionTextArea.addKeyListener(new KeyListener() {
         public void keyTyped(final KeyEvent e) {
         }
@@ -101,14 +101,21 @@ public abstract class EditChangelistPanel {
     myNameTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
-        String name = getName();
-        if ((initial == null || !name.equals(initial.getName())) && ChangeListManager.getInstance(project).findChangeList(name) != null) {
-          nameChanged(VcsBundle.message("new.changelist.duplicate.name.error"));
-        } else {
-          nameChanged(null);
-        }
+        nameChangedImpl(project, initial);
       }
     });
+    nameChangedImpl(project, initial);
+  }
+
+  protected void nameChangedImpl(final Project project, final LocalChangeList initial) {
+    String name = getName();
+    if (name == null || name.trim().length() == 0) {
+      nameChanged("Cannot create new changelist with empty name.");
+    } else if ((initial == null || !name.equals(initial.getName())) && ChangeListManager.getInstance(project).findChangeList(name) != null) {
+      nameChanged(VcsBundle.message("new.changelist.duplicate.name.error"));
+    } else {
+      nameChanged(null);
+    }
   }
 
   public void changelistCreatedOrChanged(LocalChangeList list) {
@@ -118,11 +125,15 @@ public abstract class EditChangelistPanel {
   }
 
   private void onEditComment(ChangeListEditHandler handler) {
-    myNameTextField.setText(handler.changeNameOnChangeComment(myNameTextField.getText(), myDescriptionTextArea.getText()));
+    if (handler != null) {
+      myNameTextField.setText(handler.changeNameOnChangeComment(myNameTextField.getText(), myDescriptionTextArea.getText()));
+    }
   }
 
   private void onEditName(ChangeListEditHandler handler) {
-    myDescriptionTextArea.setText(handler.changeCommentOnChangeName(myNameTextField.getText(), myDescriptionTextArea.getText()));
+    if (handler != null) {
+      myDescriptionTextArea.setText(handler.changeCommentOnChangeName(myNameTextField.getText(), myDescriptionTextArea.getText()));
+    }
   }
 
   public void setName(String s) {

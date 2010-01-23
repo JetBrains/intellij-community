@@ -20,6 +20,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.CachedValue;
@@ -308,5 +309,9 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
 
   public GrDocComment getGrDocComment() {
     return GrDocCommentUtil.findDocComment(this);
+  }
+
+  public PsiDocComment getDocComment() {
+    return null;
   }
 }

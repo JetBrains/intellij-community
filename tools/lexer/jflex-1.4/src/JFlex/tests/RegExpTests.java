@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * JFlex 1.4.1                                                             *
- * Copyright (C) 1998-2004  Gerwin Klein <lsf@jflex.de>                    *
+ * JFlex 1.4.3                                                             *
+ * Copyright (C) 1998-2009  Gerwin Klein <lsf@jflex.de>                    *
  * All rights reserved.                                                    *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify    *
@@ -27,7 +27,7 @@ import junit.framework.TestCase;
  * Unit tests for JFlex.RegExp 
  * 
  * @author Gerwin Klein
- * @version $Revision: 1.5 $, $Date: 2004/11/06 23:03:30 $
+ * @version $Revision$, $Date$
  */
 public class RegExpTests extends TestCase implements sym {
   
@@ -38,6 +38,10 @@ public class RegExpTests extends TestCase implements sym {
    */
   public RegExpTests(String name) {
     super(name);
+  }
+
+  public void testrevString() {
+    assertTrue(RegExp.revString("blah").equals("halb"));
   }
 
   public void testCharClass() {

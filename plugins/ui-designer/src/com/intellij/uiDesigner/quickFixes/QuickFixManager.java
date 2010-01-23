@@ -277,7 +277,7 @@ public abstract class QuickFixManager <T extends JComponent>{
 
     public PopupStep onChosen(final ErrorWithFix selectedValue, final boolean finalChoice) {
       if (finalChoice || !myShowSuppresses) {
-        SwingUtilities.invokeLater(new Runnable() {
+        return doFinalStep(new Runnable() {
           public void run() {
             CommandProcessor.getInstance().executeCommand(myEditor.getProject(), new Runnable() {
               public void run() {
@@ -286,7 +286,6 @@ public abstract class QuickFixManager <T extends JComponent>{
             }, selectedValue.second.getName(), null);
           }
         });
-        return FINAL_CHOICE;
       }
       if (selectedValue.first.getInspectionId() != null && selectedValue.second.getComponent() != null &&
         !(selectedValue.second instanceof SuppressFix)) {

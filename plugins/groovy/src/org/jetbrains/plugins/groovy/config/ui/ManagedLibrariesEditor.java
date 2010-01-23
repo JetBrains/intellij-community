@@ -401,7 +401,7 @@ public class ManagedLibrariesEditor {
 
     @Override
     public PopupStep onChosen(final Object selectedValue, boolean finalChoice) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
+      return doFinalStep(new Runnable() {
         public void run() {
           if (selectedValue instanceof ManagedLibrary) {
             final ManagedLibrary managedLibrary = (ManagedLibrary)selectedValue;
@@ -417,9 +417,7 @@ public class ManagedLibrariesEditor {
 
           updateLibraryList();
         }
-      }, ModalityState.stateForComponent(myComponent));
-
-      return FINAL_CHOICE;
+      });
     }
 
     private void addLibraryCheckingExistings(LibraryManager manager, Library library) {

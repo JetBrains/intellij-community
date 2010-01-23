@@ -21,11 +21,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePathImpl;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsRoot;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -44,8 +42,9 @@ import java.util.*;
 public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
   public static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.RemoteRevisionsNumbersCache");
   
-  // every 5 minutes.. (time unit to check for server commits)
-  private static final long ourRottenPeriod = 300 * 1000;
+  // every hour (time unit to check for server commits)
+  // default, actual in settings
+  private static final long ourRottenPeriod = 3600 * 1000;
   private final Map<String, Pair<VcsRoot, VcsRevisionNumber>> myData;
   private final Map<VcsRoot, LazyRefreshingSelfQueue<String>> myRefreshingQueues;
   private final Map<String, VcsRevisionNumber> myLatestRevisionsMap;
@@ -75,6 +74,7 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
       return -1;
     }
   };
+  private final VcsConfiguration myVcsConfiguration;
 
   RemoteRevisionsNumbersCache(final Project project) {
     myLock = new Object();
@@ -83,13 +83,21 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
     myLatestRevisionsMap = new HashMap<String, VcsRevisionNumber>();
     myLfs = LocalFileSystem.getInstance();
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
+    myVcsConfiguration = VcsConfiguration.getInstance(project);
   }
 
   public boolean updateStep(final AtomicSectionsAware atomicSectionsAware) {
     final List<LazyRefreshingSelfQueue<String>> list = new ArrayList<LazyRefreshingSelfQueue<String>>();
     mySomethingChanged = false;
     synchronized (myLock) {
-      list.addAll(myRefreshingQueues.values());
+      final Set<VcsRoot> keys = myRefreshingQueues.keySet();
+      for (VcsRoot key : keys) {
+        final boolean backgroundOperationsAllowed = key.vcs.isVcsBackgroundOperationsAllowed(key.path);
+        LOG.debug("backgroundOperationsAllowed: " + backgroundOperationsAllowed + " for " + key.vcs.getName() + ", " + key.path.getPath());
+        if (backgroundOperationsAllowed) {
+          list.add(myRefreshingQueues.get(key));
+        }
+      }
     }
     LOG.debug("queues refresh started, queues: " + list.size());
     final ProgressIndicator pi = ControlledAlarmFactory.createProgressIndicator(atomicSectionsAware);
@@ -200,7 +208,11 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
       LazyRefreshingSelfQueue<String> queue = myRefreshingQueues.get(vcsRoot);
       if (queue != null) return queue;
 
-      queue = new LazyRefreshingSelfQueue<String>(ourRottenPeriod, new MyShouldUpdateChecker(vcsRoot), new MyUpdater(vcsRoot));
+      queue = new LazyRefreshingSelfQueue<String>(new Getter<Long>() {
+        public Long get() {
+          return myVcsConfiguration.CHANGED_ON_SERVER_INTERVAL > 0 ? myVcsConfiguration.CHANGED_ON_SERVER_INTERVAL * 60000 : ourRottenPeriod;
+        }
+      }, new MyShouldUpdateChecker(vcsRoot), new MyUpdater(vcsRoot));
       myRefreshingQueues.put(vcsRoot, queue);
       return queue;
     }
@@ -215,7 +227,7 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
 
     public void consume(String s) {
       LOG.debug("update for: " + s);
-      //todo check canceled
+      //todo check canceled - check VCS's ready for asynchronous queries
       final VirtualFile vf = myLfs.refreshAndFindFileByIoFile(new File(s));
       final ItemLatestState state;
       final DiffProvider diffProvider = myVcsRoot.vcs.getDiffProvider();

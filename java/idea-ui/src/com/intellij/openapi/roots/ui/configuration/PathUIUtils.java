@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.util.JavaUtilForVfs;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.DetectedSourceRootsDialog;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -38,11 +39,11 @@ public class PathUIUtils {
    * This method takes a candidates for the project root, then scans the candidates and
    * if multiple candidates or non root source directories are found whithin some
    * directories, it shows a dialog that allows selecting or deselecting them.
-   * @param component a parent component
+   * @param parent a parent parent or project
    * @param rootCandidates a candidates for roots
    * @return a array of source folders or empty array if non was selected or dialog was canceled.
    */
-  public static VirtualFile[] scandAndSelectDetectedJavaSourceRoots(Component component, final VirtualFile[] rootCandidates) {
+  public static VirtualFile[] scandAndSelectDetectedJavaSourceRoots(Object parent, final VirtualFile[] rootCandidates) {
     final Set<VirtualFile> result = new HashSet<VirtualFile>();
     final Map<VirtualFile, List<VirtualFile>> detectedRootsMap = new LinkedHashMap<VirtualFile, List<VirtualFile>>();
     // scan for roots
@@ -59,7 +60,9 @@ public class PathUIUtils {
       }
     }, "Scanning for source roots", true, null);
     if(!detectedRootsMap.isEmpty()) {
-      DetectedSourceRootsDialog dlg = new DetectedSourceRootsDialog(component, detectedRootsMap);
+      DetectedSourceRootsDialog dlg = parent instanceof Component ?
+                                      new DetectedSourceRootsDialog((Component)parent, detectedRootsMap) :
+                                      new DetectedSourceRootsDialog((Project)parent, detectedRootsMap);
       dlg.show();
       if (dlg.isOK()) {
         result.addAll(dlg.getChosenRoots());

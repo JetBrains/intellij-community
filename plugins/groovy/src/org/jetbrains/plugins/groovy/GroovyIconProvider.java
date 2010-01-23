@@ -40,7 +40,7 @@ public class GroovyIconProvider extends IconProvider implements DumbAware {
         if (typeDefinitions.length > 0) {
           return typeDefinitions[0].getIcon(flags);
         }
-        return GroovyFileType.GROOVY_LOGO;
+        return GroovyIcons.GROOVY_ICON_16x16;
       }
 
       return GroovyScriptType.getScriptType(file).getScriptIcon();

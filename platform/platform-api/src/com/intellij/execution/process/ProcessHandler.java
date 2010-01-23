@@ -16,6 +16,7 @@
 package com.intellij.execution.process;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.concurrency.Semaphore;
@@ -68,11 +69,21 @@ public abstract class ProcessHandler extends UserDataHolderBase {
   public abstract boolean detachIsDefault();
 
   public void waitFor() {
-    myWaitSemaphore.waitFor();
+    try {
+      myWaitSemaphore.waitFor();
+    }
+    catch (ProcessCanceledException e) {
+      // Ignore
+    }
   }
 
   public boolean waitFor(long timeoutInMilliseconds) {
-    return myWaitSemaphore.waitFor(timeoutInMilliseconds);
+    try {
+      return myWaitSemaphore.waitFor(timeoutInMilliseconds);
+    }
+    catch (ProcessCanceledException e) {
+      return false;
+    }
   }
 
   public void destroyProcess() {

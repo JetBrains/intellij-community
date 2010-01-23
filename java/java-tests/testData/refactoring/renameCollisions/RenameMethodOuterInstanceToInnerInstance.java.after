@@ -1,7 +1,6 @@
 public class RenameCollisions {
     public void <caret>innerMethod() {
     }
-
     class InnerClass {
         public void innerMethod() {
         }

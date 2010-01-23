@@ -94,11 +94,6 @@
 
     <action id="PinToolwindowTab" class="com.intellij.ui.content.tabs.PinToolwindowTabAction"/>
 
-    <action id="ResizeToolWindowLeft" class="com.intellij.ide.actions.ResizeToolWindowAction$Left"/>
-    <action id="ResizeToolWindowRight" class="com.intellij.ide.actions.ResizeToolWindowAction$Right"/>
-    <action id="ResizeToolWindowUp" class="com.intellij.ide.actions.ResizeToolWindowAction$Up"/>
-    <action id="ResizeToolWindowDown" class="com.intellij.ide.actions.ResizeToolWindowAction$Down"/>
-
     <group id="MainMenu">
       <group id="FileMenu" popup="true">
         <group id="FileOpenGroup">
@@ -234,6 +229,12 @@
         <action id="ToggleSideMode" class="com.intellij.ide.actions.ToggleSideModeAction"/>
         <action id="ToggleContentUiTypeMode" class="com.intellij.ide.actions.ToggleContentUiTypeAction"/>
         <action id="ShowContent" class="com.intellij.ide.actions.ShowContentAction"/>
+        <group id="ResizeToolWindowGroup" popup="true">
+          <action id="ResizeToolWindowLeft" class="com.intellij.ide.actions.ResizeToolWindowAction$Left"/>
+          <action id="ResizeToolWindowRight" class="com.intellij.ide.actions.ResizeToolWindowAction$Right"/>
+          <action id="ResizeToolWindowUp" class="com.intellij.ide.actions.ResizeToolWindowAction$Up"/>
+          <action id="ResizeToolWindowDown" class="com.intellij.ide.actions.ResizeToolWindowAction$Down"/>
+        </group>
         <separator/>
         <action id="NextTab" class="com.intellij.ide.actions.NextTabAction"/>
         <action id="PreviousTab" class="com.intellij.ide.actions.PreviousTabAction"/>
@@ -399,5 +400,12 @@
 
     <group id="EditorContextBarMenu">
     </group>
+
+    <action id="Rerun" class="com.intellij.execution.runners.FakeRerunAction" text="Rerun"/>
+
+    <action id="IncrementWindowWidth" class="com.intellij.ide.actions.WindowAction$IncrementWidth" use-shortcut-of="ResizeToolWindowRight"/>
+    <action id="DecrementWindowWidth" class="com.intellij.ide.actions.WindowAction$DecrementWidth" use-shortcut-of="ResizeToolWindowLeft"/>
+    <action id="IncrementWindowHeight" class="com.intellij.ide.actions.WindowAction$IncrementHeight" use-shortcut-of="ResizeToolWindowDown"/>
+    <action id="DecrementWindowHeight" class="com.intellij.ide.actions.WindowAction$DecrementHeight" use-shortcut-of="ResizeToolWindowUp"/>
   </actions>
 </component>

@@ -18,8 +18,7 @@ package com.intellij.compiler.impl.javaCompiler.api;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
-import javax.tools.JavaFileObject;
-import javax.tools.SimpleJavaFileObject;
+import javax.tools.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -28,6 +27,7 @@ import java.net.URI;
 /**
  * @author cdr
  */
+@SuppressWarnings({"Since15"})
 public abstract class FileVirtualObject extends SimpleJavaFileObject {
   public FileVirtualObject(URI uri, Kind kind) {
     super(uri, kind);
@@ -64,5 +64,4 @@ public abstract class FileVirtualObject extends SimpleJavaFileObject {
   public boolean equals(Object obj) {
     return obj instanceof JavaFileObject && toUri().equals(((JavaFileObject)obj).toUri());
   }
-
 }

@@ -111,7 +111,7 @@ public abstract class ParsingTestCase extends LightPlatformTestCase {
     return DebugUtil.psiToString(file, false, printRanges);
   }
 
-  protected String loadFile(@NonNls String name) throws Exception {
+  protected String loadFile(@NonNls @TestDataFile String name) throws Exception {
     return doLoadFile(myFullDataPath, name);
   }
 
