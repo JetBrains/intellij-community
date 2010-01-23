@@ -66,6 +66,7 @@ public class BraceMatchingUtil {
     String brace1TagName;
     boolean isStrict;
     boolean isCaseSensitive;
+    boolean isStructural;
     private BraceMatcher myMatcher;
 
     MatchBraceContext(CharSequence _fileText, FileType _fileType, HighlighterIterator _iterator, boolean _forward) {
@@ -80,6 +81,7 @@ public class BraceMatchingUtil {
       brace1TagName = myMatcher == null ? null : getTagName(myMatcher,fileText, iterator);
 
       isStrict = myMatcher != null && isStrictTagMatching(myMatcher,fileType, group);
+      isStructural = !isStrict && myMatcher != null && myMatcher.isStructuralBrace(iterator, fileText, fileType);
       isCaseSensitive = myMatcher != null && areTagsCaseSensitive(myMatcher,fileType, group);
     }
 
@@ -115,6 +117,12 @@ public class BraceMatchingUtil {
         }
         String tagName = myMatcher == null ? null : getTagName(myMatcher,fileText, iterator);
         if (!isStrict && !Comparing.equal(brace1TagName, tagName, isCaseSensitive)) continue;
+
+        if (isStructural && (forward ? isRBraceToken(iterator, fileText, fileType) && !isPairBraces(brace1Token, tokenType, fileType)
+                                     : isLBraceToken(iterator, fileText, fileType) && !isPairBraces(brace1Token, tokenType, fileType))) {
+          if (!ourBraceStack.isEmpty() && myMatcher != null && !ourBraceStack.contains(myMatcher.getOppositeBraceTokenType(tokenType))) continue;
+        }
+
         if (forward ? isLBraceToken(iterator, fileText, fileType) : isRBraceToken(iterator, fileText, fileType)){
           ourBraceStack.push(tokenType);
           if (isStrict){
@@ -126,6 +134,12 @@ public class BraceMatchingUtil {
           String topTagName = null;
           if (isStrict){
             topTagName = ourTagNameStack.pop();
+          }
+
+          if (!isStrict && myMatcher != null && ourBraceStack.contains(myMatcher.getOppositeBraceTokenType(tokenType))) {
+            while(!isPairBraces(topTokenType, tokenType, fileType)) {
+              topTokenType = ourBraceStack.pop();
+            }
           }
 
           if (!isPairBraces(topTokenType, tokenType, fileType)
