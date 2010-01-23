@@ -218,8 +218,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
 
   private void processFocusLost(final FocusEvent e) {
     final boolean nodePopupInactive = myNodePopup == null || !myNodePopup.isVisible() || !myNodePopup.isFocused();
-    final JBPopup child = JBPopupFactory.getInstance().getChildPopup(this);
-    final boolean childPopupInactive = child == null || !child.isFocused();
+    boolean childPopupInactive = !JBPopupFactory.getInstance().isChildPopupFocused(this);
     if (nodePopupInactive && childPopupInactive) {
       final Component opposite = e.getOppositeComponent();
       if (opposite != null && opposite != this && !isAncestorOf(opposite) && !e.isTemporary()) {

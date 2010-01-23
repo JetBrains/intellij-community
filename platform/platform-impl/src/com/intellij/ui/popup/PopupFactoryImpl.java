@@ -526,8 +526,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
   }
 
   @Nullable
-  public JBPopup getChildPopup(@NotNull final Component component) {
-    return FocusTrackback.getChildPopup(component);
+  public List<JBPopup> getChildPopups(@NotNull final Component component) {
+    return FocusTrackback.getChildPopups(component);
   }
 
   private static class ActionStepBuilder {

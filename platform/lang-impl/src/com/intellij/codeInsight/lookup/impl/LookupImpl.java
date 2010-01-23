@@ -506,6 +506,13 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     return myLookupStartMarker != null ? myLookupStartMarker.getStartOffset() : calcLookupStart();
   }
 
+  @Override
+  protected void beforeShow() {
+    if (isRealPopup()) {
+      getComponent().setBorder(null);
+    }
+  }
+
   public void show(){
     assert !myDisposed;
 
@@ -921,7 +928,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       Dimension preferredSize = getComponent().getPreferredSize();
       setBounds(point.x,point.y,preferredSize.width,preferredSize.height);
 
-      HintManagerImpl.getInstanceImpl().adjustEditorHintPosition(this, myEditor, getComponent().getLocation());
+      HintManagerImpl.getInstanceImpl().adjustEditorHintPosition(this, myEditor, point);
     }
   }
 

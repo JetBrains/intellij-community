@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
+import java.util.List;
 
 /**
  * Factory class for creating popup chooser windows (similar to the Code | Generate... popup).
@@ -107,8 +108,11 @@ public abstract class JBPopupFactory {
 
   public boolean isChildPopupFocused(@Nullable Component parent) {
     if (parent == null) return false;
-    final JBPopup child = getChildPopup(parent);
-    return child != null && child.isFocused();
+    List<JBPopup> popups = getChildPopups(parent);
+    for (JBPopup each : popups) {
+      if (each.isFocused()) return true;
+    }
+    return false;
   }
 
   /**
@@ -225,7 +229,7 @@ public abstract class JBPopupFactory {
   public abstract Point getCenterOf(JComponent container, JComponent content);
   
   @Nullable
-  public abstract JBPopup getChildPopup(@NotNull Component parent);
+  public abstract List<JBPopup> getChildPopups(@NotNull Component parent);
 
   public abstract BalloonBuilder createBalloonBuilder(@NotNull JComponent content);
 
