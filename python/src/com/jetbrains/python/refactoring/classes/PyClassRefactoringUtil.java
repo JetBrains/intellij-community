@@ -8,10 +8,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -96,31 +98,40 @@ public class PyClassRefactoringUtil {
     PyPsiUtils.removeElements(elements);
   }
 
-  public static void addMethods(PyClass superClass, PyElement[] elements, final boolean up) {
+  public static void addMethods(final PyClass superClass, final PyElement[] elements, final boolean up) {
     if (elements.length == 0) return;
     final Project project = superClass.getProject();
-    final StringBuilder builder = new StringBuilder("class Foo:\n\n");
-    boolean hasChanges = false;
+    final String text = prepareClassText(superClass, elements, up, "Foo");
+
+    if (text == null) return;
+
+    final PyClass newClass = PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyClass.class, text);
+    if (superClass.getMethods().length != 0) {
+      final PyFunction previousLastMethod = superClass.getMethods()[0];
+      PyPsiUtils.addBeforeInParent(previousLastMethod, newClass.getLastChild().getChildren());
+      PyPsiUtils.addBeforeInParent(previousLastMethod, newClass.getLastChild().getPrevSibling());
+      PyPsiUtils.addBeforeInParent(previousLastMethod, newClass.getLastChild());      
+    } else {
+      PyPsiUtils.addToEnd(superClass, newClass.getLastChild());
+    }
+  }
+
+  @Nullable
+  private static String prepareClassText(PyClass superClass, PyElement[] elements, boolean up, final String preparedClassName) {
     PsiElement sibling = elements[0].getPrevSibling();
     sibling = sibling == null ? elements[0].getParent().getPrevSibling() : sibling;
     final String white = sibling.getText();
+    final StringBuilder builder = new StringBuilder("class ");
+    builder.append(preparedClassName).append("\n");
+    boolean hasChanges = false;
     for (PyElement element : elements) {
       final String name = element.getName();
       if (name != null && (up || superClass.findMethodByName(name, false) == null)) {
-        builder.append("  ").append(element.getText()).append("\n\n");
+        builder.append(white).append(element.getText()).append("\n\n");
         hasChanges = true;
       }
     }
-    if (!hasChanges) return;
-    final String text = builder.toString();//.replace(white, "\n  ");
-
-    final PyClass statement = PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyClass.class, text);
-    if (superClass.getMethods().length != 0) {
-      final PyFunction previousLastMethod = superClass.getMethods()[0];
-      PyPsiUtils.addBeforeInParent(previousLastMethod, statement.getLastChild().getChildren());
-      PyPsiUtils.addBeforeInParent(previousLastMethod, statement.getLastChild().getPrevSibling());
-    } else {
-      PyPsiUtils.addToEnd(superClass, statement.getLastChild());
-    }
+    if (!hasChanges) return null;
+    return builder.toString();
   }
 }

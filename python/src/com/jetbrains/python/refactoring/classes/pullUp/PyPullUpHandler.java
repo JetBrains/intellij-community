@@ -23,7 +23,7 @@ import java.util.Collection;
 /**
  * @author: Dennis.Ushakov
  */
-public class PyPullUpHandler extends PyClassRefactoringHandler implements ElementsHandler {
+public class PyPullUpHandler extends PyClassRefactoringHandler {
   public static final String REFACTORING_NAME = PyBundle.message("refactoring.pull.up.dialog.title");
 
   @Override
@@ -64,9 +64,5 @@ public class PyPullUpHandler extends PyClassRefactoringHandler implements Elemen
   @Override
   protected String getHelpId() {
     return "refactoring.pullMembersUp";
-  }
-
-  public boolean isEnabledOnElements(PsiElement[] elements) {
-    return elements.length == 1 && elements[0] instanceof PyClass;
   }
 }

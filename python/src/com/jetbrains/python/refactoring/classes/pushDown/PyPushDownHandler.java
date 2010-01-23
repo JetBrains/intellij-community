@@ -18,7 +18,7 @@ import com.jetbrains.python.refactoring.classes.PyMemberInfoStorage;
 /**
  * @author Dennis.Ushakov
  */
-public class PyPushDownHandler extends PyClassRefactoringHandler implements ElementsHandler {
+public class PyPushDownHandler extends PyClassRefactoringHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("push.members.down.title");
 
   @Override
@@ -44,10 +44,6 @@ public class PyPushDownHandler extends PyClassRefactoringHandler implements Elem
   @Override
   protected String getHelpId() {
     return "members.push.down";
-  }
-
-  public boolean isEnabledOnElements(PsiElement[] elements) {
-    return elements.length == 1 && elements[0] instanceof PyClass;
   }
 
 }

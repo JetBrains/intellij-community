@@ -1,5 +1,5 @@
 class Foo:
-
+    
 
 class Zope(Foo):
     def foo(self):
