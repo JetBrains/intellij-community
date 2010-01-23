@@ -263,7 +263,7 @@ public class GroovyCompilerTest extends GroovyCompilerTestCase {
 
     Module dep = addDependentModule();
 
-    addGroovyLibrary(dep);
+    addGroovyLibrary(dep, false);
 
     assertEmpty(make());
     assertOutput("Bar", "239", dep);
@@ -275,6 +275,15 @@ public class GroovyCompilerTest extends GroovyCompilerTestCase {
     assertEmpty make()
 
     myFixture.addFileToProject "Sub.groovy", "class Sub extends Super {}"
+    assertEmpty make()
+  }
+
+  public void test1_7InnerClass() throws Exception {
+    myFixture.addFileToProject "Foo.groovy", """
+class Foo {
+  static class Bar {}
+}"""
+    myFixture.addFileToProject "AJava.java", "public class AJava extends Foo.Bar {}"
     assertEmpty make()
   }
 

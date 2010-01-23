@@ -254,6 +254,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       boolean completed = JobUtil.invokeConcurrentlyUnderMyProgress(new ArrayList<PsiFile>(fileSet), new Processor<PsiFile>() {
         public boolean process(final PsiFile file) {
           if (file instanceof PsiBinaryFile) return true;
+          file.getViewProvider().getContents(); // load contents outside readaction
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
               try {

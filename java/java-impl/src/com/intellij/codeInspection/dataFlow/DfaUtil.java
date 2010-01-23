@@ -32,6 +32,7 @@ import com.intellij.codeInspection.dataFlow.instructions.AssignInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
@@ -76,7 +77,29 @@ public class DfaUtil {
     final Collection<PsiExpression> expressions = value == null ? null : value.get(variable);
     return expressions == null ? Collections.<PsiExpression>emptyList() : expressions;
   }
-  
+
+  public static enum Nullness {
+    NOT_NULL,NULL,UNKNOWN
+  }
+  // TRUE->not null, FALSE->null, null->unknown
+  @NotNull
+  public static Nullness checkNullness(@Nullable final PsiVariable variable, @Nullable final PsiElement context) {
+    if (variable == null || context == null) return Nullness.UNKNOWN;
+
+    final PsiElement codeBlock = getEnclosingCodeBlock(variable, context);
+    if (codeBlock == null) {
+      return Nullness.UNKNOWN;
+    }
+    final ValuableInstructionVisitor visitor = new ValuableInstructionVisitor(context);
+    RunnerResult result = new ValuableDataFlowRunner().analyzeMethod(codeBlock, visitor);
+    if (result != RunnerResult.OK) {
+      return Nullness.UNKNOWN;
+    }
+    if (visitor.myNulls.contains(variable)) return Nullness.NULL;
+    if (visitor.myNotNulls.contains(variable)) return Nullness.NOT_NULL;
+    return Nullness.UNKNOWN;
+  }
+
   @Nullable
   public static PsiCodeBlock getTopmostBlockInSameClass(@NotNull PsiElement position) {
     PsiCodeBlock block = PsiTreeUtil.getParentOfType(position, PsiCodeBlock.class, false, PsiMember.class, PsiFile.class);
@@ -198,6 +221,8 @@ public class DfaUtil {
 
   private static class ValuableInstructionVisitor extends StandardInstructionVisitor {
     final MultiValuesMap<PsiVariable, PsiExpression> myValues = new MultiValuesMap<PsiVariable, PsiExpression>(true);
+    final Set<PsiVariable> myNulls = new THashSet<PsiVariable>();
+    final Set<PsiVariable> myNotNulls = new THashSet<PsiVariable>();
     private final PsiElement myContext;
 
     public ValuableInstructionVisitor(PsiElement context) {
@@ -214,6 +239,15 @@ public class DfaUtil {
           final PsiExpression psiExpression = state.myExpression;
           if (psiExpression != null) {
             myValues.put(variableValue.getPsiVariable(), psiExpression);
+          }
+        }
+        DfaValue value = instruction.getValue();
+        if (value instanceof DfaVariableValue) {
+          if (memState.isNotNull((DfaVariableValue)value)) {
+            myNotNulls.add(((DfaVariableValue)value).getPsiVariable());
+          }
+          if (memState.isNull(value)) {
+            myNulls.add(((DfaVariableValue)value).getPsiVariable());
           }
         }
       }

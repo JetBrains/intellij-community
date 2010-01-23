@@ -43,6 +43,7 @@ import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.plugins.groovy.compiler.GroovyCompilerLoader;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -65,7 +66,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
 
     CompilerProjectExtension.getInstance(getProject()).setCompilerOutputUrl(myMainOutput.findOrCreateDir("out").getUrl());
 
-    addGroovyLibrary(myModule);
+    addGroovyLibrary(myModule, getName().contains("1_7"));
   }
 
   @Override
@@ -74,8 +75,8 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     super.tuneFixture(moduleBuilder);
   }
 
-  protected static void addGroovyLibrary(final Module to) {
-    final String root = PathManager.getHomePath() + "/community/lib/";
+  protected static void addGroovyLibrary(final Module to, boolean version17) {
+    final String root = version17 ? TestUtils.getRealGroovy1_7LibraryHome() : PathManager.getHomePath() + "/community/lib/";
     final File[] groovyJars = GroovyUtils.getFilesInDirectoryByPattern(root, GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN);
     assert groovyJars.length == 1;
     PsiTestUtil.addLibrary(to, "groovy", root, groovyJars[0].getName());

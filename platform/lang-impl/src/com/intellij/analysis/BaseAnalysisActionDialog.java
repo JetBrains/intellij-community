@@ -143,7 +143,6 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     boolean searchInLib = file != null && (fileIndex.isInLibraryClasses(file) || fileIndex.isInLibrarySource(file));
 
-
     String preselect = StringUtil.isEmptyOrSpaces(myAnalysisOptions.CUSTOM_SCOPE_NAME)
                        ? FindSettings.getInstance().getDefaultScopeName()
                        : myAnalysisOptions.CUSTOM_SCOPE_NAME;
@@ -153,6 +152,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     if (GlobalSearchScope.allScope(myProject).getDisplayName().equals(preselect)) {
       myAnalysisOptions.SCOPE_TYPE = AnalysisScope.CUSTOM;
       myAnalysisOptions.CUSTOM_SCOPE_NAME = preselect;
+      searchInLib = true;
     }
 
     //custom scope
@@ -217,11 +217,6 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     return null;
   }
 
-  protected void doOKAction() {
-    myAnalysisOptions.CUSTOM_SCOPE_NAME = myScopeCombo.getSelectedScopeName();
-    super.doOKAction();
-  }
-
   public boolean isInspectTestSources(){
     return myInspectTestSource.isSelected();
   }
@@ -276,6 +271,8 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     }
     uiOptions.ANALYZE_TEST_SOURCES = isInspectTestSources();
     scope.setIncludeTestSource(isInspectTestSources());
+
+    FindSettings.getInstance().setDefaultScopeName(scope.getDisplayName());
     return scope;
   }
 }

@@ -38,7 +38,7 @@ import java.util.Map;
 public class XmlNamespaceIndex extends XmlIndex<String> {
 
   @Nullable
-  public static String getNamespace(VirtualFile file, final Project project) {
+  public static String getNamespace(@NotNull VirtualFile file, final Project project) {
     final List<String> list = FileBasedIndex.getInstance().getValues(NAME, file.getUrl(), createFilter(project));
     return list.size() == 0 ? null : list.get(0);
   }
