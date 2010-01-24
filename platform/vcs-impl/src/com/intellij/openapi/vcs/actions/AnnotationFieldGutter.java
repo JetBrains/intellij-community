@@ -105,7 +105,6 @@ class AnnotationFieldGutter implements ActiveAnnotationGutter {
     myAnnotation.removeListener(myListener);
     myAnnotation.dispose();
     myEditor.getUserData(AnnotateToggleAction.KEY_IN_EDITOR).remove(this);
-    myColorScheme.clear();
   }
 
   @Nullable
