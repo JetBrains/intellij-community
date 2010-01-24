@@ -101,7 +101,7 @@ public class PyClassRefactoringUtil {
   public static void addMethods(final PyClass superClass, final PyElement[] elements, final boolean up) {
     if (elements.length == 0) return;
     final Project project = superClass.getProject();
-    final String text = prepareClassText(superClass, elements, up, "Foo");
+    final String text = prepareClassText(superClass, elements, up, false, "Foo");
 
     if (text == null) return;
 
@@ -117,12 +117,12 @@ public class PyClassRefactoringUtil {
   }
 
   @Nullable
-  private static String prepareClassText(PyClass superClass, PyElement[] elements, boolean up, final String preparedClassName) {
+  public static String prepareClassText(PyClass superClass, PyElement[] elements, boolean up, boolean ignoreNoChanges, final String preparedClassName) {
     PsiElement sibling = elements[0].getPrevSibling();
     sibling = sibling == null ? elements[0].getParent().getPrevSibling() : sibling;
     final String white = sibling.getText();
     final StringBuilder builder = new StringBuilder("class ");
-    builder.append(preparedClassName).append("\n");
+    builder.append(preparedClassName).append(":\n");
     boolean hasChanges = false;
     for (PyElement element : elements) {
       final String name = element.getName();
@@ -131,7 +131,6 @@ public class PyClassRefactoringUtil {
         hasChanges = true;
       }
     }
-    if (!hasChanges) return null;
-    return builder.toString();
+    return ignoreNoChanges || hasChanges ? builder.toString() : null;
   }
 }

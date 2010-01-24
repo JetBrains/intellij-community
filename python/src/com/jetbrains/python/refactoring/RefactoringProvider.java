@@ -2,6 +2,7 @@ package com.jetbrains.python.refactoring;
 
 import com.intellij.lang.refactoring.DefaultRefactoringSupportProvider;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.jetbrains.python.refactoring.classes.extractSuperclass.PyExtractSuperclassHandler;
 import com.jetbrains.python.refactoring.classes.pullUp.PyPullUpHandler;
 import com.jetbrains.python.refactoring.classes.pushDown.PyPushDownHandler;
 import com.jetbrains.python.refactoring.introduce.constant.ConstantIntroduceHandler;
@@ -32,5 +33,10 @@ public class RefactoringProvider extends DefaultRefactoringSupportProvider {
   @Override
   public RefactoringActionHandler getPushDownHandler() {
     return new PyPushDownHandler();
+  }
+
+  @Override
+  public RefactoringActionHandler getExtractSuperClassHandler() {
+    return new PyExtractSuperclassHandler();
   }
 }
