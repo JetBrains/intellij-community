@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.structure.elements.impl;
 
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -42,6 +43,12 @@ public class GroovyTypeDefinitionStructureViewElement extends GroovyStructureVie
 
     //adding statements for type definition
     final GrTypeDefinition typeDefinition = (GrTypeDefinition)myElement;
+    for (PsiClass innerClass : typeDefinition.getInnerClasses()) {
+      if (innerClass instanceof GrTypeDefinition) {
+        children.add(new GroovyTypeDefinitionStructureViewElement((GrTypeDefinition)innerClass));
+      }
+    }
+
     for (GrField field : typeDefinition.getFields()) {
       children.add(new GroovyVariableStructureViewElement(field));
     }
