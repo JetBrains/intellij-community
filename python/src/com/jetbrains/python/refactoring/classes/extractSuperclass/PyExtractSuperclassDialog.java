@@ -4,10 +4,10 @@ import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.AbstractUsesDependencyMemberInfoModel;
@@ -16,7 +16,6 @@ import com.intellij.refactoring.ui.ConflictsDialog;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.refactoring.PythonNamesValidator;
 import com.jetbrains.python.refactoring.classes.PyMemberInfo;
 import com.jetbrains.python.refactoring.classes.PyMemberInfoStorage;
 import com.jetbrains.python.refactoring.classes.ui.UpDirectedMembersMovingDialog;
@@ -26,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
-import java.util.Collections;
 
 /**
  * @author Dennis.Ushakov
@@ -101,11 +99,14 @@ public class PyExtractSuperclassDialog  extends UpDirectedMembersMovingDialog {
     final VirtualFile root = getRoot();
     assert root != null;
 
-    descriptor.setRoot(myClass.getProject().getBaseDir());
+    final Project project = myClass.getProject();
+    for (VirtualFile file : ProjectRootManager.getInstance(project).getContentRoots()) {
+      descriptor.addRoot(file);
+    }        
     descriptor.setIsTreeRootVisible(true);
     myTargetDirField.setText(FileUtil.toSystemDependentName(root.getPath()));
     myTargetDirField.addBrowseFolderListener(FILE_BROWSER_TITLE,
-                                       null, myClass.getProject(), descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+                                       null, project, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
 
     _panel = new JPanel(new BorderLayout());
     myDirLabel = new JLabel();

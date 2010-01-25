@@ -4,6 +4,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,9 +21,11 @@ import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyMemberInfo;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
@@ -96,6 +100,7 @@ public class PyExtractSuperclassHelper {
         LOG.error(e);
       }
     } else if (file.isDirectory()) {
+      // existing directory
       psiDir = PsiManager.getInstance(project).findDirectory(file);
       final String filename = constructFilename(newClass);
       LOG.assertTrue(psiDir != null);
@@ -103,14 +108,44 @@ public class PyExtractSuperclassHelper {
       psiFile = psiDir.findFile(filename);
       psiFile = psiFile != null ? psiFile : psiDir.createFile(filename);
     } else {
+      // existing file
       psiFile = PsiManager.getInstance(project).findFile(file);
     }
 
     LOG.assertTrue(psiFile != null);
+    insertImport(project, clazz, newClass, psiFile.getVirtualFile());
     PyPsiUtils.addToEnd(psiFile, newClass, newClass.getNextSibling());
   }
 
+  private static void insertImport(Project project, PyClass clazz, PyClass newClass, VirtualFile newFile) {
+    final String path = findPackageName(project, newFile);
+    final String oldPath = findPackageName(project, clazz.getContainingFile().getVirtualFile());
+    LOG.assertTrue(path != null && oldPath != null);
+
+    final String name = newClass.getName();
+    final StringBuilder text = new StringBuilder();
+    if (!Comparing.strEqual(path, oldPath)) {
+      //noinspection ConstantConditions
+      text.append("from ").append(path).append(".").append(newClass.getName().toLowerCase()).append(" ");
+    }
+    text.append("import ").append(name).append("\n");
+
+    final PyStatement imp = PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyStatement.class, text.toString());
+    PyPsiUtils.addBeforeInParent(clazz, imp, imp.getNextSibling());
+  }
+
+  @Nullable
+  private static String findPackageName(Project project, VirtualFile newFile) {
+    for (VirtualFile file : ProjectRootManager.getInstance(project).getContentRoots()) {
+      if (VfsUtil.isAncestor(file, newFile, true)) {
+        return VfsUtil.getRelativePath(newFile.getParent(), file, '.');
+      }
+    }
+    return null;
+  }
+
   private static String constructFilename(PyClass newClass) {
-    return newClass.getName() + "." + PythonFileType.INSTANCE.getDefaultExtension();
+    //noinspection ConstantConditions
+    return newClass.getName().toLowerCase() + "." + PythonFileType.INSTANCE.getDefaultExtension();
   }
 }
