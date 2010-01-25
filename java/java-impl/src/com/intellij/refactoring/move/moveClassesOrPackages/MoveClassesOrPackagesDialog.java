@@ -423,17 +423,17 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
 
   private void invokeMoveToInner() {
     saveRefactoringSettings();
-    PsiClass targetClass = findTargetClass();
+    final PsiClass targetClass = findTargetClass();
+    final PsiClass[] classesToMove = new PsiClass[myElementsToMove.length];
     for (int i = 0; i < myElementsToMove.length; i++) {
-      PsiClass psiClass = (PsiClass)myElementsToMove[i];
-      // fire callback after last element has been processed
-      invokeRefactoring(createMoveToInnerProcessor(targetClass, psiClass, i == myElementsToMove.length - 1 ? myMoveCallback : null));
+      classesToMove[i] = (PsiClass)myElementsToMove[i];
     }
+    invokeRefactoring(createMoveToInnerProcessor(targetClass, classesToMove, myMoveCallback));
   }
 
   //for scala plugin
-  protected MoveClassToInnerProcessor createMoveToInnerProcessor(PsiClass destination, @NotNull PsiClass psiClass, @Nullable final MoveCallback callback) {
-    return new MoveClassToInnerProcessor(getProject(), psiClass, destination, isSearchInComments(), isSearchInNonJavaFiles(), callback);
+  protected MoveClassToInnerProcessor createMoveToInnerProcessor(PsiClass destination, @NotNull PsiClass[] classesToMove, @Nullable final MoveCallback callback) {
+    return new MoveClassToInnerProcessor(getProject(), classesToMove, destination, isSearchInComments(), isSearchInNonJavaFiles(), callback);
   }
 
   protected final boolean isSearchInNonJavaFiles() {
