@@ -16,6 +16,7 @@
 
 package com.intellij.execution.configurations.coverage;
 
+import com.intellij.coverage.JavaCoverageSupportProvider;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,6 +26,7 @@ import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -44,9 +46,12 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
 
   @NonNls private static final String COVERAGE_PATTERN_ELEMENT_NAME = "pattern";
   @NonNls private static final String COVERAGE_MERGE_ATTRIBUTE_NAME = "merge";
+  private JavaCoverageSupportProvider myCoverageProvider;
 
-  public JavaCoverageEnabledConfiguration(ModuleBasedConfiguration configuration) {
+  public JavaCoverageEnabledConfiguration(final ModuleBasedConfiguration configuration,
+                                          final JavaCoverageSupportProvider coverageProvider) {
     super(configuration);
+    myCoverageProvider = coverageProvider;
   }
 
   @Nullable
@@ -56,6 +61,11 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
       return (JavaCoverageEnabledConfiguration)coverageEnabledConfiguration;
     }
     return null;
+  }
+
+  @NotNull
+  public JavaCoverageSupportProvider getCoverageProvider() {
+    return myCoverageProvider;
   }
 
   /**

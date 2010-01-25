@@ -53,7 +53,8 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
     if (!isApplicableFor(configuration)) {
       return null;
     }
-    return new CoverageConfigurable<T>(configuration);
+    final JavaCoverageEnabledConfiguration coverageEnabledConfiguration = JavaCoverageEnabledConfiguration.getFrom(configuration);
+    return new CoverageConfigurable<T>(configuration, coverageEnabledConfiguration.getCoverageProvider());
   }
 
   public String getEditorTitle() {

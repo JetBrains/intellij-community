@@ -47,7 +47,7 @@ public class JavaCoverageSupportProvider extends CoverageSupportProvider {
   @Override
   public CoverageEnabledConfiguration createCoverageEnabledConfiguration(final ModuleBasedConfiguration conf) {
     if (conf instanceof RunJavaConfiguration) {
-      return new JavaCoverageEnabledConfiguration(conf);
+      return new JavaCoverageEnabledConfiguration(conf, this);
     }
     return null;
   }
