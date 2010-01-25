@@ -31,7 +31,9 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.output.EclipseJDOMUtil;
@@ -78,7 +80,11 @@ public class ExportEclipseProjectsAction extends AnAction implements DumbAware {
 
     //todo suggest smth with hierarchy modules
     if (!incompatibleModules.isEmpty()) {
-      if (Messages.showOkCancelDialog(project, "Eclipse incompatible modules found. Would you like to proceed and possibly lose your configurations?", "Eclipse Incompatible Modules Found", Messages.getWarningIcon()) != DialogWrapper.OK_EXIT_CODE) {
+      if (Messages.showOkCancelDialog(project, "<html><body>Eclipse incompatible modules found:<ul><br><li>" + StringUtil.join(incompatibleModules, new Function<Module, String>() {
+        public String fun(Module module) {
+          return module.getName();
+        }
+      }, "<br><li>") + "</ul><br>Would you like to proceed and possibly lose your configurations?</body></html>", "Eclipse Incompatible Modules Found", Messages.getWarningIcon()) != DialogWrapper.OK_EXIT_CODE) {
         return;
       }
     } else if (modules.isEmpty()){
