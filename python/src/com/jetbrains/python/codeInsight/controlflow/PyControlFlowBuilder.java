@@ -72,6 +72,19 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     myBuilder.checkPending(instruction);
   }
 
+  @Override
+  public void visitPyImportStatement(final PyImportStatement node) {
+    myBuilder.startNode(node);
+    for (PyImportElement importElement : node.getImportElements()) {
+      final PyReferenceExpression importReference = importElement.getImportReference();
+      if (importReference != null) {
+        final WriteInstruction instruction = new WriteInstruction(myBuilder, importElement, importReference.getReferencedName());
+        myBuilder.addNode(instruction);
+        myBuilder.checkPending(instruction);
+      }
+    }
+  }
+
   private Instruction getPrevInstruction(final PyElement condition) {
     final Ref<Instruction> head = new Ref<Instruction>(myBuilder.prevInstruction);
     myBuilder.processPending(new ControlFlowBuilder.PendingProcessor() {
