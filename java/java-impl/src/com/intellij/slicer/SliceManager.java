@@ -19,7 +19,6 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.ide.impl.ContentManagerWatcher;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -41,6 +40,8 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.regex.Pattern;
+
 @State(
     name = "SliceManager",
     storages = {@Storage(id = "other", file = "$WORKSPACE_FILE$")}
@@ -55,7 +56,8 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Bean>
   private static final String FORTH_TOOLWINDOW_ID = "Analyze Dataflow from";
 
   public static class Bean {
-    public boolean includeTestSources = true; // to show in dialog
+    //public boolean includeTestSources = true; // to show in dialog
+    public AnalysisUIOptions analysisUIOptions = new AnalysisUIOptions();
   }
 
   public static SliceManager getInstance(@NotNull Project project) {
@@ -110,31 +112,35 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Bean>
   }
 
   public void slice(@NotNull PsiElement element, boolean dataFlowToThis) {
-    String dialogTitle = ActionManager.getInstance().getAction(dataFlowToThis ? "SliceBackward" : "SliceForward").getTemplatePresentation().getText();
-    doSlice(element, dialogTitle, dataFlowToThis,
-            dataFlowToThis ? myBackContentManager : myForthContentManager,
-            dataFlowToThis ? BACK_TOOLWINDOW_ID : FORTH_TOOLWINDOW_ID);
+    doSlice(element, dataFlowToThis);
   }
 
-  private void doSlice(@NotNull PsiElement element, @NotNull String dialogTitle, boolean dataFlowToThis, @NotNull final ContentManager contentManager,
-                       @NotNull final String toolwindowId) {
+  private void doSlice(@NotNull PsiElement element, boolean dataFlowToThis) {
     Module module = ModuleUtil.findModuleForPsiElement(element);
     AnalysisUIOptions analysisUIOptions = new AnalysisUIOptions();
-    analysisUIOptions.SCOPE_TYPE = AnalysisScope.PROJECT;
-    analysisUIOptions.ANALYZE_TEST_SOURCES = myStoredSettings.includeTestSources;
+    analysisUIOptions.save(myStoredSettings.analysisUIOptions);
     AnalysisScope analysisScope = new AnalysisScope(element.getContainingFile());
     String name = module == null ? null : module.getName();
+    String dialogTitle = getElementDescription((dataFlowToThis ? BACK_TOOLWINDOW_ID : FORTH_TOOLWINDOW_ID) + " ", element, null);
+
+    dialogTitle = Pattern.compile("<[^<>]*>").matcher(dialogTitle).replaceAll("");
+    
     BaseAnalysisActionDialog dialog = new BaseAnalysisActionDialog(dialogTitle, "Analyze scope", myProject, analysisScope, name, true, analysisUIOptions, element);
     dialog.show();
     if (!dialog.isOK()) return;
 
-    AnalysisScope scope = dialog.getScope(analysisUIOptions, new AnalysisScope(myProject), myProject, module);
-    myStoredSettings.includeTestSources = scope.isIncludeTestSource();
+    AnalysisScope scope = dialog.getScope(analysisUIOptions, analysisScope, myProject, module);
+    myStoredSettings.analysisUIOptions.save(analysisUIOptions);
 
+    SliceRootNode rootNode = new SliceRootNode(myProject, new DuplicateMap(), scope, createRootUsage(element, scope), dataFlowToThis);
+    createToolWindow(dataFlowToThis, rootNode, false, getElementDescription(null, element, null));
+  }
+
+  public void createToolWindow(final boolean dataFlowToThis, final SliceRootNode rootNode, boolean splitByLeafExpressions, String displayName) {
     final SliceToolwindowSettings sliceToolwindowSettings = SliceToolwindowSettings.getInstance(myProject);
-    SliceUsage usage = createRootUsage(element, scope);
+    final ContentManager contentManager = dataFlowToThis ? myBackContentManager : myForthContentManager;
     final Content[] myContent = new Content[1];
-    final SlicePanel slicePanel = new SlicePanel(myProject, usage, scope, dataFlowToThis) {
+    final SlicePanel slicePanel = new SlicePanel(myProject, dataFlowToThis, rootNode, splitByLeafExpressions) {
       protected void close() {
         contentManager.removeContent(myContent[0], true);
       }
@@ -156,20 +162,19 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Bean>
       }
     };
 
-    myContent[0] = contentManager.getFactory().createContent(slicePanel, getElementDescription(element), true);
+    myContent[0] = contentManager.getFactory().createContent(slicePanel, displayName, true);
     contentManager.addContent(myContent[0]);
     contentManager.setSelectedContent(myContent[0]);
 
-    ToolWindowManager.getInstance(myProject).getToolWindow(toolwindowId).activate(null);
+    ToolWindowManager.getInstance(myProject).getToolWindow(dataFlowToThis ? BACK_TOOLWINDOW_ID : FORTH_TOOLWINDOW_ID).activate(null);
   }
 
-  public static String getElementDescription(PsiElement element) {
+  public static String getElementDescription(String prefix, PsiElement element, String suffix) {
     PsiElement elementToSlice = element;
     if (element instanceof PsiReferenceExpression) elementToSlice = ((PsiReferenceExpression)element).resolve();
     if (elementToSlice == null) elementToSlice = element;
-    String title = "<html>"+ ElementDescriptionUtil.getElementDescription(elementToSlice, RefactoringDescriptionLocation.WITHOUT_PARENT);
-    title = StringUtil.first(title, 100, true)+"</html>";
-    return title;
+    String desc = ElementDescriptionUtil.getElementDescription(elementToSlice, RefactoringDescriptionLocation.WITHOUT_PARENT);
+    return "<html>"+ (prefix == null ? "" : prefix) + StringUtil.first(desc, 100, true)+(suffix == null ? "" : suffix) + "</html>";
   }
 
   public static SliceUsage createRootUsage(@NotNull PsiElement element, @NotNull AnalysisScope scope) {
@@ -202,6 +207,6 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Bean>
   }
 
   public void loadState(Bean state) {
-    myStoredSettings.includeTestSources = state.includeTestSources;
+    myStoredSettings.analysisUIOptions.save(state.analysisUIOptions);
   }
 }

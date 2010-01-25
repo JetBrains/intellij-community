@@ -15,33 +15,36 @@
  */
 package com.intellij.slicer;
 
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.util.Icons;
 
 /**
  * @author cdr
  */
-public class AnalyzeLeavesAction extends ToggleAction {
+public class AnalyzeLeavesAction extends AnAction {
   private final SliceTreeBuilder myTreeBuilder;
+  private static final String TEXT = "Group by leaf expression";
 
   public AnalyzeLeavesAction(SliceTreeBuilder treeBuilder) {
-    super("Group by leaf expression", "Show original expression values that might appear in this place", Icons.XML_TAG_ICON);
+    super(TEXT, "Show original expression values that might appear in this place", Icons.XML_TAG_ICON);
     myTreeBuilder = treeBuilder;
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
-    return myTreeBuilder.splitByLeafExpressions;
+  public void update(AnActionEvent e) {
+    e.getPresentation().setText(TEXT + (myTreeBuilder.analysisInProgress ? " (Analysis in progress)" : ""));
+    e.getPresentation().setEnabled(isAvailabale());
+  }
+
+  private boolean isAvailabale() {
+    if (myTreeBuilder.analysisInProgress) return false;
+    
+    return !myTreeBuilder.splitByLeafExpressions;
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
-    if (state) {
-      myTreeBuilder.switchToSplittedNodes();
-    }
-    else {
-      myTreeBuilder.switchToUnsplittedNodes();
-    }
+  public void actionPerformed(AnActionEvent e) {
+    myTreeBuilder.switchToSplittedNodes(myTreeBuilder.getTreeStructure());
   }
 }
