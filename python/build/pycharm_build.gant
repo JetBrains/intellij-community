@@ -257,7 +257,7 @@ def scramble() {
   ant.mkdir(dir: "$paths.artifacts/pycharm.unscrambled")
   ant.copy(file: "$paths.distAll/lib/pycharm.jar", todir: "$paths.artifacts/pycharm.unscrambled")
   zkmScramble("$paths.sandbox/script.zkm", "$paths.distAll/lib", "pycharm.jar")
-  ant.move(file: "pycharm.jar", todir: "$paths.distAll/lib")
+  ant.move(file: "$paths.distAll/pycharm.jar", todir: "$paths.distAll/lib")
   ant.zip(destfile: "$paths.artifacts/logs.zip") {
     fileset(file: "ChangeLog.txt")
     fileset(file: "ZKM_log.txt")
