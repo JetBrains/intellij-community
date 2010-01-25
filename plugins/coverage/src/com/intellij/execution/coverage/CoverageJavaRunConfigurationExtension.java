@@ -93,7 +93,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
 
   @Override
   public void readExternal(final ModuleBasedConfiguration runConfiguration, Element element) throws InvalidDataException {
-    if (!isApplicableFor(runConfiguration)) {
+     if (!isApplicableFor(runConfiguration)) {
       return;
     }
 
