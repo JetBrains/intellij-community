@@ -162,6 +162,15 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  public void testTupleArguments() throws Exception {
+    doTest();
+  }
+
+
+  public void testDefaultTupleArguments() throws Exception {
+    doTest();
+  }
+
   public void doTest() throws Exception {
     doTest(LanguageLevel.PYTHON25);
   }

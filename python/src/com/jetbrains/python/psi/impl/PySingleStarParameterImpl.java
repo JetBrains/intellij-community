@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PySingleStarParameter;
 import com.jetbrains.python.psi.PyTupleParameter;
@@ -32,6 +33,10 @@ public class PySingleStarParameterImpl extends PyPresentableElementImpl<PySingle
   }
 
   public PyTupleParameter getAsTuple() {
+    return null;
+  }
+
+  public PyExpression getDefaultValue() {
     return null;
   }
 }

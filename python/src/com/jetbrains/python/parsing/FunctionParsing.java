@@ -102,6 +102,7 @@ public class FunctionParsing extends Parsing {
         }
         else if (myBuilder.getTokenType() == PyTokenTypes.LPAR) {
           parseParameterSubList();
+          continue;
         }
         else {
           myBuilder.error(message("PARSE.expected.comma.lpar.rpar"));
@@ -167,6 +168,10 @@ public class FunctionParsing extends Parsing {
         break;
       }
       myBuilder.advanceLexer();
+    }
+    if (myBuilder.getTokenType() == PyTokenTypes.EQ) {
+      myBuilder.advanceLexer();
+      getExpressionParser().parseSingleExpression(false);
     }
     tuple.done(PyElementTypes.TUPLE_PARAMETER);
   }

@@ -23,6 +23,7 @@ public class ParameterListAnnotator extends PyAnnotator {
         boolean hadDefaultValue = false;
         boolean hadSingleStar = false;
         boolean hadParamsAfterSingleStar = false;
+        int inTuple = 0;
         @Override
         public void visitNamedParameter(PyNamedParameter parameter, boolean first, boolean last) {
           if (parameterNames.contains(parameter.getName())) {
@@ -55,7 +56,7 @@ public class ParameterListAnnotator extends PyAnnotator {
               hadDefaultValue = true;
             }
             else {
-              if (hadDefaultValue && !hadSingleStar && (!languageLevel.isPy3K() || !hadPositionalContainer)) {
+              if (hadDefaultValue && !hadSingleStar && (!languageLevel.isPy3K() || !hadPositionalContainer) && inTuple == 0) {
                 markError(parameter, PyBundle.message("ANN.non.default.param.after.default"));
               }
             }
@@ -64,10 +65,18 @@ public class ParameterListAnnotator extends PyAnnotator {
 
         @Override
         public void enterTupleParameter(PyTupleParameter param, boolean first, boolean last) {
-          super.enterTupleParameter(param, first, last);
+          inTuple++;
           if (languageLevel.isPy3K()) {
             markError(param, PyBundle.message("ANN.tuple.py3"));
           }
+          else if (param.getDefaultValue() == null && hadDefaultValue) {
+            markError(param, PyBundle.message("ANN.non.default.param.after.default"));
+          }
+        }
+
+        @Override
+        public void leaveTupleParameter(PyTupleParameter param, boolean first, boolean last) {
+          inTuple--;
         }
 
         @Override

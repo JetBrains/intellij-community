@@ -91,6 +91,10 @@ public class PythonHighlightingTest extends PyLightFixtureTestCase {
     doTest(LanguageLevel.PYTHON26, true, true);
   }
 
+  public void testArgumentList() throws Exception {
+    doTest(true, false);
+  }
+
   public void testRegularAfterVarArgs() throws Exception {
     doTest(LanguageLevel.PYTHON30, true, false);
   }
