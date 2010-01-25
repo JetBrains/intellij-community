@@ -151,7 +151,6 @@ TRIPLE_APOS_LITERAL = {THREE_APOS} {STRING_3CHAR_APOS}* {THREE_APOS}
 "@"                   { return PyTokenTypes.AT; }
 ","                   { return PyTokenTypes.COMMA; }
 ":"                   { return PyTokenTypes.COLON; }
-"..."                 { return PyTokenTypes.ELLIPSIS; }
 "."                   { return PyTokenTypes.DOT; }
 "`"                   { return PyTokenTypes.TICK; }
 "="                   { return PyTokenTypes.EQ; }

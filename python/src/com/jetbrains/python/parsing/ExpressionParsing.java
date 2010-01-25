@@ -42,7 +42,7 @@ public class ExpressionParsing extends Parsing {
       buildTokenElement(PyElementTypes.IMAGINARY_LITERAL_EXPRESSION, builder);
       return true;
     }
-    else if (firstToken == PyTokenTypes.NONE_KEYWORD || firstToken == PyTokenTypes.ELLIPSIS) {
+    else if (firstToken == PyTokenTypes.NONE_KEYWORD) {
       buildTokenElement(PyElementTypes.NONE_LITERAL_EXPRESSION, builder);
       return true;
     }
@@ -73,6 +73,15 @@ public class ExpressionParsing extends Parsing {
     else if (firstToken == PyTokenTypes.TICK) {
       parseReprExpression(builder);
       return true;
+    }
+    else if (firstToken == PyTokenTypes.DOT) {
+      final PsiBuilder.Marker maybeEllipsis = builder.mark();
+      builder.advanceLexer();
+      if (matchToken(PyTokenTypes.DOT) && matchToken(PyTokenTypes.DOT)) {
+        maybeEllipsis.done(PyElementTypes.NONE_LITERAL_EXPRESSION);
+        return true;
+      }
+      maybeEllipsis.rollbackTo();
     }
     return false;
   }

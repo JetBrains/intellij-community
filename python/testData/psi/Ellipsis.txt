@@ -5,7 +5,9 @@ PyFile:Ellipsis.py
         PsiElement(Py:IDENTIFIER)('d')
       PsiElement(Py:LBRACKET)('[')
       PyNoneLiteralExpression
-        PsiElement(Py:ELLIPSIS)('...')
+        PsiElement(Py:DOT)('.')
+        PsiElement(Py:DOT)('.')
+        PsiElement(Py:DOT)('.')
       PsiElement(Py:RBRACKET)(']')
     PsiWhiteSpace(' ')
     PsiElement(Py:EQ)('=')

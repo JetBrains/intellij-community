@@ -94,7 +94,6 @@ public class PyTokenTypes {
   public static final PyElementType EQEQ = new PyElementType("EQEQ");// ==
   public static final PyElementType NE = new PyElementType("NE");// !=
   public static final PyElementType NE_OLD = new PyElementType("NE_OLD");// <>
-  public static final PyElementType ELLIPSIS = new PyElementType("ELLIPSIS"); // ...
 
   // Delimiters
   public static final PyElementType LPAR = new PyElementType("LPAR");// (
