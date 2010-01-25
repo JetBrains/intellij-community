@@ -16,7 +16,6 @@
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.HashMap;
@@ -43,15 +42,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
       return name == null ? 0 : name.hashCode();
     }
     public boolean equals(PsiTypeParameter element1, PsiTypeParameter element2) {
-      if (element1 == element2 || element1.equals(element2)) return true;
-      if (!Comparing.strEqual(element1.getName(), element2.getName())) return false;
-      PsiTypeParameterListOwner owner1 = element1.getOwner();
-      PsiTypeParameterListOwner owner2 = element2.getOwner();
-      boolean b = owner1 instanceof PsiClass && owner2 instanceof PsiClass && element1.getManager().areElementsEquivalent(owner1, owner2);
-      if (b) {
-        return b;
-      }
-      return false;
+      return element1.getManager().areElementsEquivalent(element1, element2);
     }
   };
 
@@ -303,7 +294,8 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
           if (aClass != null) {
             if (aClass instanceof PsiTypeParameter) {
               return rawTypeForTypeParameter((PsiTypeParameter)aClass);
-            } else {
+            }
+            else {
               return JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(aClass);
             }
           }

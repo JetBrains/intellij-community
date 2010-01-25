@@ -21,9 +21,11 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -60,6 +62,9 @@ public class SliceUtil {
       JavaResolveResult result = ref.advancedResolve(false);
       parentSubstitutor = result.getSubstitutor().putAll(parentSubstitutor);
       PsiElement resolved = result.getElement();
+      if (resolved instanceof PsiCompiledElement) {
+        resolved = resolved.getNavigationElement();
+      }
       if (resolved instanceof PsiMethod && expression.getParent() instanceof PsiMethodCallExpression) {
         return processUsagesFlownDownTo(expression.getParent(), processor, parent, parentSubstitutor);
       }
@@ -91,6 +96,15 @@ public class SliceUtil {
       PsiExpression elseE = conditional.getElseExpression();
       if (thenE != null && !handToProcessor(thenE, processor, parent, parentSubstitutor)) return false;
       if (elseE != null && !handToProcessor(elseE, processor, parent, parentSubstitutor)) return false;
+    }
+    if (expression instanceof PsiAssignmentExpression) {
+      PsiAssignmentExpression assignment = (PsiAssignmentExpression)expression;
+      IElementType tokenType = assignment.getOperationTokenType();
+      PsiExpression rExpression = assignment.getRExpression();
+
+      if (tokenType == JavaTokenType.EQ && rExpression != null) {
+        return processUsagesFlownDownTo(rExpression, processor, parent, parentSubstitutor);
+      }
     }
     return true;
   }
@@ -124,7 +138,10 @@ public class SliceUtil {
                                                   @NotNull final SliceUsage parent,
                                                   @NotNull final PsiSubstitutor parentSubstitutor) {
     final JavaResolveResult resolved = methodCallExpr.resolveMethodGenerics();
-    final PsiElement r = resolved.getElement();
+    PsiElement r = resolved.getElement();
+    if (r instanceof PsiCompiledElement) {
+      r = r.getNavigationElement();
+    }
     if (!(r instanceof PsiMethod)) return true;
     PsiMethod methodCalled = (PsiMethod)r;
 
@@ -139,6 +156,11 @@ public class SliceUtil {
     final boolean[] result = {true};
     for (PsiMethod override : overrides) {
       if (!result[0]) break;
+      if (override instanceof PsiCompiledElement) {
+        override = (PsiMethod)override.getNavigationElement();
+      }
+      if (!parent.getScope().contains(override)) continue;
+
       final PsiCodeBlock body = override.getBody();
       if (body == null) continue;
 
@@ -174,12 +196,16 @@ public class SliceUtil {
         if (!handToProcessor(initializer, processor, parent, parentSubstitutor)) return false;
       }
     }
-    return ReferencesSearch.search(field, parent.getScope().toSearchScope()).forEach(new Processor<PsiReference>() {
+    SearchScope searchScope = parent.getScope().toSearchScope();
+    return ReferencesSearch.search(field, searchScope).forEach(new Processor<PsiReference>() {
       public boolean process(final PsiReference reference) {
         SliceManager.getInstance(field.getProject()).checkCanceled();
         PsiElement element = reference.getElement();
         if (!(element instanceof PsiReferenceExpression)) return true;
-        if (element instanceof PsiCompiledElement) return true;
+        if (element instanceof PsiCompiledElement) {
+          element = element.getNavigationElement();
+          if (!parent.getScope().contains(element)) return true;
+        }
         final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
         PsiElement parentExpr = referenceExpression.getParent();
         if (PsiUtil.isOnAssignmentLeftHand(referenceExpression)) {
@@ -265,6 +291,10 @@ public class SliceUtil {
 
           Project project = argumentList.getProject();
           PsiElement element = result.getElement();
+          if (element instanceof PsiCompiledElement) {
+            element = element.getNavigationElement();
+          }
+
           // for erased method calls for which we cannot determine target substitutor,
           // rely on call argument types. I.e. new Pair(1,2) -> Pair<Integer, Integer>
           if (element instanceof PsiTypeParameterListOwner && PsiUtil.isRawSubstitutor((PsiTypeParameterListOwner)element, substitutor)) {
@@ -279,7 +309,7 @@ public class SliceUtil {
           PsiSubstitutor combined = unify(substitutor, parentSubstitutor, project);
           if (combined == null) return true;
           PsiType substitited = combined.substitute(passExpression.getType());
-          if (!TypeConversionUtil.areTypesConvertible(substitited, actualType)) return true;
+          if (substitited == null || !TypeConversionUtil.areTypesConvertible(substitited, actualType)) return true;
 
           return handToProcessor(passExpression, processor, parent, combined);
         }

@@ -23,6 +23,7 @@
     <orderEntry type="module" module-name="lvcs-api" exported="" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" name="JavaHelp" level="project" />
+    <orderEntry type="module" module-name="testFramework" />
   </component>
 </module>
 

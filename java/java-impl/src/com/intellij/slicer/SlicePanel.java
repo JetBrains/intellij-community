@@ -15,7 +15,6 @@
  */
 package com.intellij.slicer;
 
-import com.intellij.analysis.AnalysisScope;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.CloseTabToolbarAction;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -74,39 +73,29 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
   private final Project myProject;
   private boolean isDisposed;
 
-  public SlicePanel(Project project, final SliceUsage root, AnalysisScope scope, boolean dataFlowToThis) {
+  public SlicePanel(Project project, boolean dataFlowToThis, SliceNode rootNode, boolean splitByLeafExpressions) {
     super(new BorderLayout());
     myProject = project;
     myTree = createTree();
 
-    DuplicateMap targetEqualUsages = new DuplicateMap();
+    myBuilder = new SliceTreeBuilder(myTree, project, dataFlowToThis, rootNode, splitByLeafExpressions);
+    myBuilder.setCanYieldUpdate(!ApplicationManager.getApplication().isUnitTestMode());
 
-    final SliceTreeBuilder[] builder = {null};
-    final SliceNode rootNode = new SliceRootNode(project, targetEqualUsages, scope, root){
-      @Override
-      protected SliceTreeBuilder getTreeBuilder() {
-        return builder[0];
-      }
-    };
+    Disposer.register(this, myBuilder);
 
-    builder[0] = new SliceTreeBuilder(myTree, project, dataFlowToThis, rootNode);
-    builder[0].setCanYieldUpdate(!ApplicationManager.getApplication().isUnitTestMode());
-
-    Disposer.register(this, builder[0]);
-
-    builder[0].addSubtreeToUpdate((DefaultMutableTreeNode)myTree.getModel().getRoot(), new Runnable() {
+    myBuilder.addSubtreeToUpdate((DefaultMutableTreeNode)myTree.getModel().getRoot(), new Runnable() {
       public void run() {
-        if (isDisposed || builder[0].isDisposed() || myProject.isDisposed()) return;
-        builder[0].expand(rootNode, new Runnable() {
+        if (isDisposed || myBuilder.isDisposed() || myProject.isDisposed()) return;
+        final SliceNode rootNode = myBuilder.getRootSliceNode();
+        myBuilder.expand(rootNode, new Runnable() {
           public void run() {
-            if (isDisposed || builder[0].isDisposed() || myProject.isDisposed()) return;
-            builder[0].select(rootNode.myCachedChildren.get(0)); //first there is ony one child
+            if (isDisposed || myBuilder.isDisposed() || myProject.isDisposed()) return;
+            myBuilder.select(rootNode.myCachedChildren.get(0)); //first there is ony one child
           }
         });
         treeSelectionChanged();
       }
     });
-    myBuilder = builder[0];
 
     layoutPanel();
   }
@@ -282,6 +271,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
 
     if (myBuilder.dataFlowToThis) {
       actionGroup.add(new AnalyzeLeavesAction(myBuilder));
+      actionGroup.add(new CanItBeNullAction(myBuilder));
     }
 
     //actionGroup.add(new ContextHelpAction(HELP_ID));

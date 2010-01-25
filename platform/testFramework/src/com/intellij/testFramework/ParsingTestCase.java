@@ -67,7 +67,7 @@ public abstract class ParsingTestCase extends LightPlatformTestCase {
     }
   }
 
-  protected void checkResult(@NonNls String targetDataName, final PsiFile file) throws Exception {
+  protected void checkResult(@NonNls @TestDataFile String targetDataName, final PsiFile file) throws Exception {
     doCheckResult(myFullDataPath, file, targetDataName, includeRanges());
   }
 

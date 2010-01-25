@@ -16,6 +16,7 @@
 package com.intellij.slicer;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
@@ -50,13 +51,13 @@ public class SliceUsage extends UsageInfo2UsageAdapter {
     mySubstitutor = PsiSubstitutor.EMPTY;
   }
 
-  public void processChildren(Processor<SliceUsage> processor, boolean dataFlowToThis) {
-    PsiElement element = getElement();
+  public void processChildren(Processor<SliceUsage> processor, final boolean dataFlowToThis) {
+    final PsiElement element = getElement();
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     //indicator.setText2("<html><body>Searching for usages of "+ StringUtil.trimStart(SliceManager.getElementDescription(element),"<html><body>")+"</body></html>");
     indicator.checkCanceled();
 
-    Processor<SliceUsage> uniqueProcessor =
+    final Processor<SliceUsage> uniqueProcessor =
       new CommonProcessors.UniqueProcessor<SliceUsage>(processor, new TObjectHashingStrategy<SliceUsage>() {
         public int computeHashCode(final SliceUsage object) {
           return object.getUsageInfo().hashCode();
@@ -67,12 +68,16 @@ public class SliceUsage extends UsageInfo2UsageAdapter {
         }
       });
 
-    if (dataFlowToThis) {
-      SliceUtil.processUsagesFlownDownTo(element, uniqueProcessor, this, mySubstitutor);
-    }
-    else {
-      SliceFUtil.processUsagesFlownFromThe(element, uniqueProcessor, this);
-    }
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        if (dataFlowToThis) {
+          SliceUtil.processUsagesFlownDownTo(element, uniqueProcessor, SliceUsage.this, mySubstitutor);
+        }
+        else {
+          SliceFUtil.processUsagesFlownFromThe(element, uniqueProcessor, SliceUsage.this);
+        }
+      }
+    });
   }
 
   public SliceUsage getParent() {

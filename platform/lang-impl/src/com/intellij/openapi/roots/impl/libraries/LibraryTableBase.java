@@ -269,7 +269,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
 
     public void writeExternal(Element element) throws WriteExternalException {
       for (Library library : myLibraries) {
-        if (library.getName() != null) {
+        if (library.getName() != null && !((LibraryEx)library).isDisposed()) {
           library.writeExternal(element);
         }
       }
