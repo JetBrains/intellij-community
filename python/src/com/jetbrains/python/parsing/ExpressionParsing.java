@@ -41,7 +41,7 @@ public class ExpressionParsing extends Parsing {
       buildTokenElement(PyElementTypes.IMAGINARY_LITERAL_EXPRESSION, builder);
       return true;
     }
-    else if (firstToken == PyTokenTypes.NONE_KEYWORD) {
+    else if (firstToken == PyTokenTypes.NONE_KEYWORD || firstToken == PyTokenTypes.ELLIPSIS) {
       buildTokenElement(PyElementTypes.NONE_LITERAL_EXPRESSION, builder);
       return true;
     }
