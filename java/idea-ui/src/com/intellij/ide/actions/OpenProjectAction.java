@@ -24,26 +24,30 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.projectImport.ProjectOpenProcessorBase;
-import com.intellij.util.ArrayUtil;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 public class OpenProjectAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
-    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
 
     final FileChooserDescriptor descriptor = new OpenProjectFileChooserDescriptor(true);
     descriptor.setTitle(IdeBundle.message("title.open.project"));
-    String [] extensions = new String[]{ProjectFileType.DOT_DEFAULT_EXTENSION};
+    final Set<String> extensions = new HashSet<String>();
+    extensions.add(ProjectFileType.DOT_DEFAULT_EXTENSION);
     final ProjectOpenProcessor[] openProcessors = Extensions.getExtensions(ProjectOpenProcessorBase.EXTENSION_POINT_NAME);
     for (ProjectOpenProcessor openProcessor : openProcessors) {
       final String[] supportedExtensions = ((ProjectOpenProcessorBase)openProcessor).getSupportedExtensions();
       if (supportedExtensions != null) {
-        extensions = ArrayUtil.mergeArrays(extensions, supportedExtensions, String.class);
+        Collections.addAll(extensions, supportedExtensions);
       }
     }
     descriptor.setDescription(IdeBundle.message("filter.project.files", StringUtil.join(extensions, ", ")));
