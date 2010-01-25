@@ -58,21 +58,19 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
         if (project == myProject) {
           Lookup lookup = getActiveLookup();
           if (lookup != null && (flags & HintManager.HIDE_BY_LOOKUP_ITEM_CHANGE) != 0) {
-            lookup.addLookupListener(
-              new LookupAdapter() {
-                public void currentItemChanged(LookupEvent event) {
-                  hint.hide();
-                }
-
-                public void itemSelected(LookupEvent event) {
-                  hint.hide();
-                }
-
-                public void lookupCanceled(LookupEvent event) {
-                  hint.hide();
-                }
+            lookup.addLookupListener(new LookupAdapter() {
+              public void currentItemChanged(LookupEvent event) {
+                hint.hide();
               }
-            );
+
+              public void itemSelected(LookupEvent event) {
+                hint.hide();
+              }
+
+              public void lookupCanceled(LookupEvent event) {
+                hint.hide();
+              }
+            });
           }
         }
       }
@@ -81,16 +79,17 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
   }
 
   @NotNull
-  public String getComponentName(){
+  public String getComponentName() {
     return "LookupManager";
   }
 
-  public void initComponent() { }
-
-  public void disposeComponent(){
+  public void initComponent() {
   }
 
-  public void projectOpened(){
+  public void disposeComponent() {
+  }
+
+  public void projectOpened() {
 
     final EditorFactoryAdapter myEditorFactoryListener = new EditorFactoryAdapter() {
       public void editorReleased(EditorFactoryEvent event) {
@@ -107,17 +106,23 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
     });
   }
 
-  public void projectClosed(){
+  public void projectClosed() {
     myIsDisposed = true;
   }
 
-  public Lookup showLookup(final Editor editor, @NotNull LookupElement[] items, final String prefix, @NotNull final LookupArranger arranger) {
+  public Lookup showLookup(final Editor editor,
+                           @NotNull LookupElement[] items,
+                           final String prefix,
+                           @NotNull final LookupArranger arranger) {
     final LookupImpl lookup = createLookup(editor, items, prefix, arranger);
     lookup.show();
     return lookup;
   }
 
-  public LookupImpl createLookup(final Editor editor, @NotNull LookupElement[] items, final String prefix, @NotNull final LookupArranger arranger) {
+  public LookupImpl createLookup(final Editor editor,
+                                 @NotNull LookupElement[] items,
+                                 final String prefix,
+                                 @NotNull final LookupArranger arranger) {
     hideActiveLookup();
 
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
@@ -125,12 +130,12 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
     final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
 
     final Alarm alarm = new Alarm();
-    final Runnable request = new Runnable(){
+    final Runnable request = new Runnable() {
       public void run() {
         DocumentationManager.getInstance(myProject).showJavaDocInfo(editor, psiFile, false);
       }
     };
-    if (settings.AUTO_POPUP_JAVADOC_INFO){
+    if (settings.AUTO_POPUP_JAVADOC_INFO) {
       alarm.addRequest(request, settings.JAVADOC_INFO_DELAY);
     }
 
@@ -140,41 +145,41 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
     }
     myActiveLookup = new LookupImpl(myProject, editor, arranger);
     myActiveLookupEditor = editor;
-    myActiveLookup.addLookupListener(
-      new LookupAdapter(){
-        public void itemSelected(LookupEvent event) {
-          dispose();
-        }
+    myActiveLookup.addLookupListener(new LookupAdapter() {
+      public void itemSelected(LookupEvent event) {
+        dispose();
+      }
 
-        public void lookupCanceled(LookupEvent event) {
-          dispose();
-        }
+      public void lookupCanceled(LookupEvent event) {
+        dispose();
+      }
 
-        public void currentItemChanged(LookupEvent event) {
-          alarm.cancelAllRequests();
-          if (settings.AUTO_POPUP_JAVADOC_INFO){
-            alarm.addRequest(request, settings.JAVADOC_INFO_DELAY);
-          }
-        }
-
-        private void dispose(){
-          alarm.cancelAllRequests();
-          if (daemonCodeAnalyzer != null) {
-            daemonCodeAnalyzer.setUpdateByTimerEnabled(true);
-          }
-          if (myActiveLookup == null) return;
-          myActiveLookup.removeLookupListener(this);
-          Lookup lookup = myActiveLookup;
-          myActiveLookup = null;
-          myActiveLookupEditor = null;
-          myPropertyChangeSupport.firePropertyChange(PROP_ACTIVE_LOOKUP, lookup, null);
+      public void currentItemChanged(LookupEvent event) {
+        alarm.cancelAllRequests();
+        if (settings.AUTO_POPUP_JAVADOC_INFO) {
+          alarm.addRequest(request, settings.JAVADOC_INFO_DELAY);
         }
       }
-    );
+
+      private void dispose() {
+        alarm.cancelAllRequests();
+        if (daemonCodeAnalyzer != null) {
+          daemonCodeAnalyzer.setUpdateByTimerEnabled(true);
+        }
+        if (myActiveLookup == null) return;
+        myActiveLookup.removeLookupListener(this);
+        Lookup lookup = myActiveLookup;
+        myActiveLookup = null;
+        myActiveLookupEditor = null;
+        myPropertyChangeSupport.firePropertyChange(PROP_ACTIVE_LOOKUP, lookup, null);
+      }
+    });
 
     if (items.length > 0) {
       for (final LookupElement item : items) {
-        item.setPrefixMatcher(new CamelHumpMatcher(prefix));
+        if (prefix != null) {
+          item.setPrefixMatcher(new CamelHumpMatcher(prefix));
+        }
         myActiveLookup.addItem(item);
       }
       myActiveLookup.refreshUi();
@@ -185,7 +190,7 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
   }
 
   public void hideActiveLookup() {
-    if (myActiveLookup != null){
+    if (myActiveLookup != null) {
       myActiveLookup.hide();
     }
   }
