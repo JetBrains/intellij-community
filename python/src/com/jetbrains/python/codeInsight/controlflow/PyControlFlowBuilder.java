@@ -313,11 +313,11 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     }
 
-    final ArrayList<Instruction> rescueInstructions = new ArrayList<Instruction>();
+    final ArrayList<Instruction> exceptInstructions = new ArrayList<Instruction>();
     for (PyExceptPart exceptPart : node.getExceptParts()) {
       myBuilder.prevInstruction = lastBlockInstruction;
-      final Instruction rescueInstruction = myBuilder.startNode(exceptPart);
-      rescueInstructions.add(rescueInstruction);
+      final Instruction exceptInstruction = myBuilder.startNode(exceptPart);
+      exceptInstructions.add(exceptInstruction);
       exceptPart.accept(this);
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     }
@@ -340,7 +340,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
         // handle raise instructions inside compound statement
         if (pendingElement instanceof PyRaiseStatement && PsiTreeUtil.isAncestor(tryPart, pendingElement, false)) {
-          for (Instruction rescueInstruction : rescueInstructions) {
+          for (Instruction rescueInstruction : exceptInstructions) {
             myBuilder.addEdge(instruction, rescueInstruction);
           }
           return;
@@ -367,6 +367,23 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyListCompExpression(final PyListCompExpression node) {
-    super.visitPyListCompExpression(node);
+    myBuilder.startNode(node);
+    for (ComprhIfComponent component : node.getIfComponents()) {
+      final PyExpression condition = component.getTest();
+      condition.accept(this);
+      final Instruction head = myBuilder.prevInstruction;
+      final Instruction prevInstruction = myBuilder.startConditionalNode(condition, condition, true);
+      // restore head
+      myBuilder.prevInstruction = head;
+      myBuilder.addPendingEdge(node, myBuilder.startConditionalNode(condition, condition, false)); // false condition
+      myBuilder.prevInstruction = prevInstruction;
+    }
+
+    for (ComprhForComponent forComponent : node.getForComponents()) {
+      forComponent.getIteratedList().accept(this);
+      forComponent.getIteratorVariable().accept(this);
+    }
+
+    node.getResultExpression().accept(this);
   }
 }
