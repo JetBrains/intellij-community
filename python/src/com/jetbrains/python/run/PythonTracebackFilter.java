@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
 public class PythonTracebackFilter implements Filter {
   private final Project myProject;
   private final String myWorkingDirectory;
-  private final Pattern myMatchingPattern = Pattern.compile("File \"([^\"]+)\", line (\\d+), in");
+  private final Pattern myMatchingPattern = Pattern.compile("File \"([^\"]+)\", line (\\d+)");
 
   public PythonTracebackFilter(Project myProject, String workingDirectory) {
     this.myProject = myProject;
