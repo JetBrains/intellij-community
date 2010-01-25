@@ -1,17 +1,18 @@
 package com.jetbrains.python.refactoring.classes;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -108,7 +109,10 @@ public class PyClassRefactoringUtil {
     final PyClass newClass = PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyClass.class, text);
     if (superClass.getMethods().length != 0) {
       final PyFunction previousLastMethod = superClass.getMethods()[0];
-      PyPsiUtils.addBeforeInParent(previousLastMethod, newClass.getLastChild().getChildren());
+      final ASTNode node = newClass.getLastChild().getNode();
+      for (ASTNode child : node.getChildren(null)) {
+        PyPsiUtils.addBeforeInParent(previousLastMethod, child.getPsi());
+      }
       PyPsiUtils.addBeforeInParent(previousLastMethod, newClass.getLastChild().getPrevSibling());
       PyPsiUtils.addBeforeInParent(previousLastMethod, newClass.getLastChild());      
     } else {
@@ -127,7 +131,7 @@ public class PyClassRefactoringUtil {
     for (PyElement element : elements) {
       final String name = element.getName();
       if (name != null && (up || superClass.findMethodByName(name, false) == null)) {
-        builder.append(white).append(element.getText()).append("\n\n");
+        builder.append(white).append(element.getText()).append("\n");
         hasChanges = true;
       }
     }
