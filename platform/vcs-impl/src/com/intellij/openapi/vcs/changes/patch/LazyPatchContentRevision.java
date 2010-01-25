@@ -20,7 +20,6 @@ import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,6 +44,10 @@ public class LazyPatchContentRevision implements ContentRevision {
     if (myContent == null) {
       try {
         final Document doc = FileDocumentManager.getInstance().getDocument(myVf);
+        if (doc == null) {
+          myPatchApplyFailed = true;
+          return null;
+        }
         final String baseContent = doc.getText();
         final StringBuilder newText = new StringBuilder();
         myPatch.applyModifications(baseContent, newText);
