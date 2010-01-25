@@ -132,24 +132,32 @@ public class JavaCoverageSupportProvider extends CoverageSupportProvider {
   }
 
   @Override
-  public boolean recompileProjectAndRerunAction(@NotNull final Project project, @NotNull final CoverageSuite suite,
+  public boolean recompileProjectAndRerunAction(@NotNull final Project project1, @NotNull Module module, @NotNull final CoverageSuite suite,
                                                 @NotNull final Runnable chooseSuiteAction) {
-    if (Messages.showOkCancelDialog(
-      "Project class files are out of date. Would you like to recompile? The refusal to do it will result in incomplete coverage information",
-      "Project is out of date", Messages.getWarningIcon()) == DialogWrapper.OK_EXIT_CODE) {
-      final CompilerManager compilerManager = CompilerManager.getInstance(project);
-      compilerManager.make(compilerManager.createProjectCompileScope(project), new CompileStatusNotification() {
-        public void finished(final boolean aborted, final int errors, final int warnings, final CompileContext compileContext) {
-          if (aborted || errors != 0) return;
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              CoverageDataManager.getInstance(project).chooseSuite(suite);
-            }
-          });
-        }
-      });
+    final VirtualFile outputpath = CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
+    final VirtualFile testOutputpath = CompilerModuleExtension.getInstance(module).getCompilerOutputPathForTests();
+
+    if (outputpath == null || (suite.isTrackTestFolders() && testOutputpath == null)) {
+      final Project project = module.getProject();
+
+      if (Messages.showOkCancelDialog(
+        "Project class files are out of date. Would you like to recompile? The refusal to do it will result in incomplete coverage information",
+        "Project is out of date", Messages.getWarningIcon()) == DialogWrapper.OK_EXIT_CODE) {
+        final CompilerManager compilerManager = CompilerManager.getInstance(project);
+        compilerManager.make(compilerManager.createProjectCompileScope(project), new CompileStatusNotification() {
+          public void finished(final boolean aborted, final int errors, final int warnings, final CompileContext compileContext) {
+            if (aborted || errors != 0) return;
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              public void run() {
+                CoverageDataManager.getInstance(project).chooseSuite(suite);
+              }
+            });
+          }
+        });
+      }
+      return true;
     }
-    return true;
+    return false;
   }
 
   public boolean isUnderFilteredPackages(final PsiClassOwner javaFile, final List<PsiPackage> packages) {
