@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,24 @@
  */
 package com.intellij.slicer;
 
-import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.actions.CodeInsightAction;
+import javax.swing.*;
 
 /**
- * @author cdr
+ * User: cdr
  */
-public class SliceForwardAction extends CodeInsightAction{
-  private final SliceHandler myHandler = new SliceForwardHandler();
+public class SliceForwardForm {
+  private JCheckBox myShowDerefs;
+  private JPanel myPanel;
 
-  protected CodeInsightActionHandler getHandler() {
-    return myHandler;
+  public void init(boolean showDerefs) {
+    myShowDerefs.setSelected(showDerefs);
+  }
+
+  public boolean isToShowDerefs() {
+    return myShowDerefs.isSelected();
+  }
+
+  public JPanel getComponent() {
+    return myPanel;
   }
 }

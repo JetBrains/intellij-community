@@ -15,7 +15,6 @@
  */
 package com.intellij.slicer;
 
-import com.intellij.analysis.AnalysisScope;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -33,21 +32,20 @@ import java.util.List;
 public class SliceRootNode extends SliceNode {
   private final SliceUsage myRootUsage;
 
-  public SliceRootNode(@NotNull Project project, @NotNull DuplicateMap targetEqualUsages,
-                          AnalysisScope scope, final SliceUsage rootUsage, boolean dataFlowToThis) {
-    super(project, new SliceUsage(rootUsage.getElement().getContainingFile(), scope), targetEqualUsages, dataFlowToThis);
+  public SliceRootNode(@NotNull Project project, @NotNull DuplicateMap targetEqualUsages, final SliceUsage rootUsage) {
+    super(project, new SliceUsage(rootUsage.getElement().getContainingFile(), rootUsage.params), targetEqualUsages);
     myRootUsage = rootUsage;
   }
 
   void switchToAllLeavesTogether(SliceUsage rootUsage) {
-    SliceNode node = new SliceNode(getProject(), rootUsage, targetEqualUsages, dataFlowToThis);
+    SliceNode node = new SliceNode(getProject(), rootUsage, targetEqualUsages);
     myCachedChildren = Collections.singletonList(node);
   }
 
   @Override
   SliceRootNode copy() {
     SliceUsage newUsage = getValue().copy();
-    SliceRootNode newNode = new SliceRootNode(getProject(), new DuplicateMap(), getValue().getScope(), newUsage, dataFlowToThis);
+    SliceRootNode newNode = new SliceRootNode(getProject(), new DuplicateMap(), newUsage);
     newNode.initialized = initialized;
     newNode.duplicate = duplicate;
     return newNode;

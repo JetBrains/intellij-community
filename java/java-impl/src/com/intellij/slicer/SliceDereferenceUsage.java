@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,21 @@
  */
 package com.intellij.slicer;
 
-import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.actions.CodeInsightAction;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * @author cdr
+ * User: cdr
  */
-public class SliceForwardAction extends CodeInsightAction{
-  private final SliceHandler myHandler = new SliceForwardHandler();
+public class SliceDereferenceUsage extends SliceUsage {
+  public SliceDereferenceUsage(@NotNull PsiElement element, @NotNull SliceUsage parent, @NotNull PsiSubstitutor substitutor) {
+    super(element, parent, substitutor);
+  }
 
-  protected CodeInsightActionHandler getHandler() {
-    return myHandler;
+  @Override
+  public void processChildren(Processor<SliceUsage> processor) {
+    // no children
   }
 }

@@ -16,17 +16,11 @@
 package com.intellij.slicer;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.usageView.UsageViewBundle;
-import com.intellij.usages.Usage;
-import com.intellij.usages.UsageInfo2UsageAdapter;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * User: cdr
@@ -35,7 +29,7 @@ public class SliceLeafValueClassNode extends SliceLeafValueRootNode {
   private final String myClassName;
 
   public SliceLeafValueClassNode(@NotNull Project project, SliceNode root, String className) {
-    super(project, root.getValue().getElement(), root, new ArrayList<SliceNode>());
+    super(project, root.getValue().getElement(), root, new ArrayList<SliceNode>(), root.getValue().params);
     myClassName = className;
   }
 

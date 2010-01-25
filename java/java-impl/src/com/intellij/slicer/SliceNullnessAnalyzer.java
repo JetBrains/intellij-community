@@ -68,7 +68,8 @@ public class SliceNullnessAnalyzer {
             return oldNode.getDuplicate() == null && node(oldNode, map).nulls.contains(nullExpression) ? oldNode.copy() : null;
           }
         },null);
-        nullRoot.myCachedChildren.add(new SliceLeafValueRootNode(root.getProject(), nullExpression, nullRoot, Collections.singletonList(newRoot)));
+        nullRoot.myCachedChildren.add(new SliceLeafValueRootNode(root.getProject(), nullExpression, nullRoot, Collections.singletonList(newRoot),
+                                                                 oldRoot.getValue().params));
       }
     }
     if (!result.notNulls.isEmpty()) {
@@ -81,7 +82,8 @@ public class SliceNullnessAnalyzer {
             return oldNode.getDuplicate() == null && node(oldNode, map).notNulls.contains(expression) ? oldNode.copy() : null;
           }
         },null);
-        valueRoot.myCachedChildren.add(new SliceLeafValueRootNode(root.getProject(), expression, valueRoot, Collections.singletonList(newRoot)));
+        valueRoot.myCachedChildren.add(new SliceLeafValueRootNode(root.getProject(), expression, valueRoot, Collections.singletonList(newRoot),
+                                                                  oldRoot.getValue().params));
       }
     }
     if (!result.unknown.isEmpty()) {
@@ -94,7 +96,8 @@ public class SliceNullnessAnalyzer {
             return oldNode.getDuplicate() == null && node(oldNode, map).unknown.contains(expression) ? oldNode.copy() : null;
           }
         },null);
-        valueRoot.myCachedChildren.add(new SliceLeafValueRootNode(root.getProject(), expression, valueRoot, Collections.singletonList(newRoot)));
+        valueRoot.myCachedChildren.add(new SliceLeafValueRootNode(root.getProject(), expression, valueRoot, Collections.singletonList(newRoot),
+                                                                  oldRoot.getValue().params));
       }
     }
     return root;

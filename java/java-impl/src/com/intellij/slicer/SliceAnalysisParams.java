@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,16 @@
  */
 package com.intellij.slicer;
 
-import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.actions.CodeInsightAction;
+import com.intellij.analysis.AnalysisScope;
 
 /**
- * @author cdr
+ * User: cdr
  */
-public class SliceForwardAction extends CodeInsightAction{
-  private final SliceHandler myHandler = new SliceForwardHandler();
+public class SliceAnalysisParams {
+  public boolean dataFlowToThis = true; // to/from this
+  public boolean showInstanceDereferences = true; // show method calls or field access on the variable being analysed
+  public AnalysisScope scope;
 
-  protected CodeInsightActionHandler getHandler() {
-    return myHandler;
+  public SliceAnalysisParams() {
   }
 }

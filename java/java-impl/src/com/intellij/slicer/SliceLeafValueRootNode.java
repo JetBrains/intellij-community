@@ -15,7 +15,6 @@
  */
 package com.intellij.slicer;
 
-import com.intellij.analysis.AnalysisScope;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -35,8 +34,9 @@ import java.util.List;
 public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCellRenderer {
   protected final List<SliceNode> myCachedChildren;
 
-  public SliceLeafValueRootNode(@NotNull Project project, PsiElement leafExpression, SliceNode root, List<SliceNode> children) {
-    super(project, new SliceUsage(leafExpression, new AnalysisScope(project)), root.targetEqualUsages, true);
+  public SliceLeafValueRootNode(@NotNull Project project, PsiElement leafExpression, SliceNode root, List<SliceNode> children,
+                                SliceAnalysisParams params) {
+    super(project, new SliceUsage(leafExpression, params), root.targetEqualUsages);
     myCachedChildren = children;
   }
 

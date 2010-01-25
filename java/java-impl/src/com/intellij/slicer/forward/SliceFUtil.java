@@ -22,6 +22,7 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.slicer.SliceDereferenceUsage;
 import com.intellij.slicer.SliceManager;
 import com.intellij.slicer.SliceUsage;
 import com.intellij.slicer.SliceUtil;
@@ -111,7 +112,7 @@ public class SliceFUtil {
         for (Iterator<PsiMethod> iterator = superMethods.iterator(); iterator.hasNext(); ) {
           SliceManager.getInstance(method.getProject()).checkCanceled();
           PsiMethod superMethod = iterator.next();
-          if (superMethod instanceof PsiCompiledElement) {
+          if (!parent.params.scope.contains(superMethod)) {
             iterator.remove();
           }
         }
@@ -129,6 +130,9 @@ public class SliceFUtil {
         }
         for (PsiMethod implementor : implementors) {
           SliceManager.getInstance(method.getProject()).checkCanceled();
+          if (!parent.params.scope.contains(implementor)) continue;
+          if (implementor instanceof PsiCompiledElement) implementor = (PsiMethod)implementor.getNavigationElement();
+
           PsiParameter[] parameters = implementor.getParameterList().getParameters();
           if (index != -1 && index < parameters.length) {
             parametersToAnalyze.add(parameters[index]);
@@ -186,12 +190,25 @@ public class SliceFUtil {
   }
 
   private static boolean processAssignmentTarget(PsiElement element, final SliceUsage parent, final Processor<SliceUsage> processor) {
+    if (!parent.params.scope.contains(element)) return true;
+    if (element instanceof PsiCompiledElement) element = element.getNavigationElement();
     Pair<PsiElement, PsiSubstitutor> pair = getAssignmentTarget(element, parent);
     if (pair != null) {
       SliceUsage usage = SliceUtil.createSliceUsage(element, parent, pair.getSecond());
       return processor.process(usage);
     }
+    if (parent.params.showInstanceDereferences && isDereferenced(element)) {
+      SliceUsage usage = new SliceDereferenceUsage(element.getParent(), parent, parent.getSubstitutor());
+      return processor.process(usage);
+    }
     return true;
+  }
+
+  private static boolean isDereferenced(PsiElement element) {
+    if (!(element instanceof PsiReferenceExpression)) return false;
+    PsiElement parent = element.getParent();
+    if (!(parent instanceof PsiReferenceExpression)) return false;
+    return ((PsiReferenceExpression)parent).getQualifierExpression() == element;
   }
 
   private static Pair<PsiElement,PsiSubstitutor> getAssignmentTarget(PsiElement element, SliceUsage parentUsage) {
