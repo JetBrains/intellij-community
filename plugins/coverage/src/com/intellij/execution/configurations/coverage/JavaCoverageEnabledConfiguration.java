@@ -130,6 +130,8 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
+    super.writeExternal(element);
+    
     // merge with prev
     element.setAttribute(COVERAGE_MERGE_ATTRIBUTE_NAME, String.valueOf(myIsMergeWithPreviousResults));
 
