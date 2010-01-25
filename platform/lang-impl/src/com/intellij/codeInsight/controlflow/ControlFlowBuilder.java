@@ -145,7 +145,6 @@ public class ControlFlowBuilder {
 
   /**
    * Creates instruction for given element, and adds it to myInstructionsStack
-   * Warning! Always call finishNode after startNode
    *
    * @param element Element to create instruction for
    * @return new instruction
@@ -159,7 +158,6 @@ public class ControlFlowBuilder {
 
   /**
    * Creates conditional instruction for given element, and adds it to myInstructionsStack
-   * Warning! Always call finishNode after startNode
    *
    * @param element Element to create instruction for
    * @return new instruction
