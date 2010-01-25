@@ -6,6 +6,9 @@ import com.intellij.codeInsight.dataflow.DfaInstance;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.codeInsight.controlflow.WriteInstruction;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeVariable;
+import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeVariableImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;

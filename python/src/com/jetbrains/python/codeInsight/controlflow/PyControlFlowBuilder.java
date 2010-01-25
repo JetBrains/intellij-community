@@ -3,7 +3,6 @@ package com.jetbrains.python.codeInsight.controlflow;
 import com.intellij.codeInsight.controlflow.ControlFlowBuilder;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.Instruction;
-import com.intellij.codeInsight.controlflow.impl.ControlFlowImpl;
 import com.intellij.codeInsight.controlflow.impl.InstructionImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -26,7 +25,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 //// Control flow builder staff
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  public ControlFlow buildControlFlow(@NotNull final ControlFlowOwner owner) {
+  public ControlFlow buildControlFlow(@NotNull final ScopeOwner owner) {
     return myBuilder.build(this, owner);
   }
 

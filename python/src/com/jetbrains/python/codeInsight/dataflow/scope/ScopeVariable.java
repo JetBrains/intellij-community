@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.jetbrains.python.codeInsight.dataflow;
+package com.jetbrains.python.codeInsight.dataflow.scope;
 
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;

@@ -1,7 +1,7 @@
-package com.jetbrains.python.codeInsight.dataflow;
+package com.jetbrains.python.codeInsight.dataflow.scope.impl;
 
 import com.intellij.psi.PsiElement;
-import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeVariable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;

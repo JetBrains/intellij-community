@@ -5,6 +5,8 @@ import com.intellij.codeInsight.dataflow.Semilattice;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeVariable;
+import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeVariableImpl;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;

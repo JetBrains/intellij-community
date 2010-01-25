@@ -1,8 +1,8 @@
-package com.jetbrains.python.codeInsight.dataflow;
+package com.jetbrains.python.codeInsight.dataflow.scope;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.codeInsight.controlflow.ControlFlowOwner;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyExceptPartNavigator;
 import com.jetbrains.python.psi.impl.PyForStatementNavigator;
@@ -35,7 +35,7 @@ public class ScopeUtil {
       return listCompExpression;
     }
 
-    final ControlFlowOwner owner = PsiTreeUtil.getParentOfType(element, ControlFlowOwner.class, false);
+    final ScopeOwner owner = PsiTreeUtil.getParentOfType(element, ScopeOwner.class, false);
     assert owner != null : "element should have not null controlflow owner";
     return owner;
   }

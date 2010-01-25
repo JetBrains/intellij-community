@@ -17,6 +17,8 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PythonDosStringFinder;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
+import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeImpl;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.codeInsight.controlflow.PyControlFlowBuilder;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
@@ -268,6 +270,18 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       myControlFlowRef = new SoftReference<ControlFlow>(flow);
     }
     return flow;
+  }
+
+  private SoftReference<Scope> myScopeRef;
+
+  @NotNull
+  public Scope getScope() {
+    Scope scope = getRefValue(myScopeRef);
+    if (scope == null) {
+      scope = new ScopeImpl(this);
+      myScopeRef = new SoftReference<Scope>(scope);
+    }
+    return scope;
   }
 
   @Nullable
