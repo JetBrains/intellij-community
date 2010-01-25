@@ -4,9 +4,9 @@
 3(4) WRITE ACCESS: collapse
 4(5) element: PyExpressionStatement
 5(6) element: PyAssignmentStatement
-6(7,8) element: PyListCompExpression
-7(9) element: PyCallExpression: callable. Condition: callable(getattr(object, method)):true
-8(10) element: PyCallExpression: callable. Condition: callable(getattr(object, method)):false
+6(7,10) element: PyListCompExpression
+7(8) element: PyCallExpression: callable
+8(9) element: PyCallExpression: dir. Condition: callable(getattr(object, method)):true
 9(10) WRITE ACCESS: method
 10(11) WRITE ACCESS: methodList
 11(12) element: PyAssignmentStatement
