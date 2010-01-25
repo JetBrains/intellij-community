@@ -3,6 +3,7 @@ package com.jetbrains.python.parsing;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 
@@ -295,17 +296,19 @@ public class ExpressionParsing extends Parsing {
         }
         else if (tokenType == PyTokenTypes.LBRACKET) {
           builder.advanceLexer();
+          PsiBuilder.Marker sliceItemStart = builder.mark();
           if (builder.getTokenType() == PyTokenTypes.COLON) {
             PsiBuilder.Marker sliceMarker = builder.mark();
             sliceMarker.done(PyElementTypes.EMPTY_EXPRESSION);
-            parseSliceEnd(builder, expr);
+            parseSliceEnd(expr, sliceItemStart);
           }
           else {
             parseExpressionOptional();
             if (builder.getTokenType() == PyTokenTypes.COLON) {
-              parseSliceEnd(builder, expr);
+              parseSliceEnd(expr, sliceItemStart);
             }
             else {
+              sliceItemStart.drop();
               checkMatches(PyTokenTypes.RBRACKET, message("PARSE.expected.rbracket"));
               expr.done(PyElementTypes.SUBSCRIPTION_EXPRESSION);
               if (isTargetExpression && ! recast_qualifier) {
@@ -331,31 +334,58 @@ public class ExpressionParsing extends Parsing {
     return true;
   }
 
-  private void parseSliceEnd(PsiBuilder builder, PsiBuilder.Marker expr) {
-    builder.advanceLexer();
-    if (builder.getTokenType() == PyTokenTypes.RBRACKET) {
-      PsiBuilder.Marker sliceMarker = builder.mark();
+  private static TokenSet BRACKET_OR_COMMA = TokenSet.create(PyTokenTypes.RBRACKET, PyTokenTypes.COMMA);
+  private static TokenSet BRACKET_COLON_COMMA = TokenSet.create(PyTokenTypes.RBRACKET, PyTokenTypes.COLON, PyTokenTypes.COMMA);
+
+  private void parseSliceEnd(PsiBuilder.Marker exprStart, PsiBuilder.Marker sliceItemStart) {
+    myBuilder.advanceLexer();
+    if (myBuilder.getTokenType() == PyTokenTypes.RBRACKET) {
+      PsiBuilder.Marker sliceMarker = myBuilder.mark();
       sliceMarker.done(PyElementTypes.EMPTY_EXPRESSION);
-      builder.advanceLexer();
+      sliceItemStart.done(PyElementTypes.SLICE_ITEM);
+      myBuilder.advanceLexer();
     }
     else {
-      if (builder.getTokenType() == PyTokenTypes.COLON) {
-        PsiBuilder.Marker sliceMarker = builder.mark();
+      if (myBuilder.getTokenType() == PyTokenTypes.COLON) {
+        PsiBuilder.Marker sliceMarker = myBuilder.mark();
         sliceMarker.done(PyElementTypes.EMPTY_EXPRESSION);
       }
       else {
         parseExpression();
       }
-      if (builder.getTokenType() != PyTokenTypes.RBRACKET && builder.getTokenType() != PyTokenTypes.COLON) {
-        builder.error(message("PARSE.expected.colon.or.rbracket"));
+      if (!BRACKET_COLON_COMMA.contains(myBuilder.getTokenType())) {
+        myBuilder.error(message("PARSE.expected.colon.or.rbracket"));
       }
-      if (builder.getTokenType() == PyTokenTypes.COLON) {
-        builder.advanceLexer();
-        parseExpressionOptional();
+      if (myBuilder.getTokenType() == PyTokenTypes.COLON) {
+        myBuilder.advanceLexer();
+        parseTestExpression(false, false);
       }
-      checkMatches(PyTokenTypes.RBRACKET, message("PARSE.expected.rbracket"));
+
+      sliceItemStart.done(PyElementTypes.SLICE_ITEM);
+      if (!BRACKET_OR_COMMA.contains(myBuilder.getTokenType())) {
+        myBuilder.error("']' or ',' expected");
+      }
     }
-    expr.done(PyElementTypes.SLICE_EXPRESSION);
+
+    while (atToken(PyTokenTypes.COMMA)) {
+      nextToken();
+      sliceItemStart = myBuilder.mark();
+      parseTestExpression(false, false);
+      if (matchToken(PyTokenTypes.COLON)) {
+        parseTestExpression(false, false);
+        if (matchToken(PyTokenTypes.COLON)) {
+          parseTestExpression(false, false);
+        }
+      }
+      sliceItemStart.done(PyElementTypes.SLICE_ITEM);
+      if (!BRACKET_OR_COMMA.contains(myBuilder.getTokenType())) {
+        myBuilder.error("']' or ',' expected");
+        break;
+      }
+    }
+    checkMatches(PyTokenTypes.RBRACKET, message("PARSE.expected.rbracket"));
+
+    exprStart.done(PyElementTypes.SLICE_EXPRESSION);
   }
 
   public void parseArgumentList() {

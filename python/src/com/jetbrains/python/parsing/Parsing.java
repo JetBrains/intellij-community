@@ -44,16 +44,32 @@ public class Parsing {
     }
   }
 
-  protected static void checkMatches(final PsiBuilder builder, final TokenSet tokenSet, final String message) {
-    if (tokenSet.contains(builder.getTokenType())) {
-      builder.advanceLexer();
+  protected boolean checkMatches(final TokenSet tokenSet, final String message) {
+    if (tokenSet.contains(myBuilder.getTokenType())) {
+      myBuilder.advanceLexer();
+      return true;
     }
-    else {
-      builder.error(message);
-    }
+    myBuilder.error(message);
+    return false;
   }
 
   protected void assertCurrentToken(final PyElementType tokenType) {
     LOG.assertTrue(myBuilder.getTokenType() == tokenType);
+  }
+
+  protected boolean atToken(final IElementType tokenType) {
+    return myBuilder.getTokenType() == tokenType;
+  }
+
+  protected boolean matchToken(final IElementType tokenType) {
+    if (myBuilder.getTokenType() == tokenType) {
+      myBuilder.advanceLexer();
+      return true;      
+    }
+    return false;
+  }
+
+  protected void nextToken() {
+    myBuilder.advanceLexer();
   }
 }

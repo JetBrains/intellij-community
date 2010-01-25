@@ -166,8 +166,11 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
-
   public void testDefaultTupleArguments() throws Exception {
+    doTest();
+  }
+
+  public void testExtendedSlices() throws Exception {
     doTest();
   }
 
