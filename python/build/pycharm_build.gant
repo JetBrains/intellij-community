@@ -164,6 +164,7 @@ target('default': "Build artifacts") {
   build_searchable_options()
   wire_build_date(buildName)
   layoutFull(paths.distAll, usedJars)
+  scramble()
 
   layoutWin(paths.distWin)
   layoutMac(buildName: buildName,
@@ -221,6 +222,48 @@ def build_searchable_options() {
       }
     }
   }
+}
+
+def zkmScramble(String script, String dir, String jarName) {
+  ant.java(classname: "ZKM", fork: "true", failonerror: "true") {
+    jvmarg(value: "-Xmx1100m")
+    arg(value: "-v")
+    arg(value: script)
+    classpath {
+      fileset(dir: dir) {
+        include(name: "*.jar")
+        exclude(name: jarName)
+      }
+
+      fileset(dir: "$home/lib") {
+        include(name: "*.jar")
+      }
+
+      pathelement(location: "$home/build/lib/ZKM.jar")
+    }
+  }
+
+  ant.delete(file: "$dir/${jarName}.BACKUP", failonerror: "false")
+}
+
+def scramble() {
+  ant.copy(file: "$home/build/conf/script.zkm.stub", tofile: "$paths.sandbox/script.zkm", overwrite: "true") {
+    filterset(begintoken: "__", endtoken: "__") {
+      filter(token: "CLASSES", value: "\"${paths.distAll}/lib/pycharm.jar\"")
+      filter(token: "SCRAMBLED_CLASSES", value: "${paths.distAll}/")
+      filter(token: "INCREMENTAL", value: "")
+    }
+  }
+  ant.mkdir(dir: "$paths.artifacts/pycharm.unscrambled")
+  ant.copy(file: "$paths.distAll/lib/pycharm.jar", todir: "$paths.artifacts/pycharm.unscrambled")
+  zkmScramble("$paths.sandbox/script.zkm", "$paths.distAll/lib", "pycharm.jar")
+  ant.zip(destfile: "$paths.artifacts/logs.zip") {
+    fileset(file: "ChangeLog.txt")
+    fileset(file: "ZKM_log.txt")
+    fileset(file: "$paths.sandbox/script.zkm")
+  }
+  ant.delete(file: "ChangeLog.txt")
+  ant.delete(file: "ZKM_log.txt")
 }
 
 String appInfoFile() {
