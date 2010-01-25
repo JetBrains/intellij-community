@@ -102,7 +102,7 @@ public class PyClassRefactoringUtil {
   public static void addMethods(final PyClass superClass, final PyElement[] elements, final boolean up) {
     if (elements.length == 0) return;
     final Project project = superClass.getProject();
-    final String text = prepareClassText(superClass, elements, up, false, "Foo");
+    final String text = prepareClassText(superClass, elements, up, false, null);
 
     if (text == null) return;
 
@@ -126,7 +126,11 @@ public class PyClassRefactoringUtil {
     sibling = sibling == null ? elements[0].getParent().getPrevSibling() : sibling;
     final String white = sibling.getText();
     final StringBuilder builder = new StringBuilder("class ");
-    builder.append(preparedClassName).append(":\n");
+    if (preparedClassName != null) {
+      builder.append(preparedClassName).append(":");
+    } else {
+      builder.append("Foo").append(":\n");
+    }
     boolean hasChanges = false;
     for (PyElement element : elements) {
       final String name = element.getName();

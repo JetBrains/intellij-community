@@ -1,6 +1,7 @@
 package com.jetbrains.python.refactoring.classes.extractSuperclass;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -72,7 +73,7 @@ public class PyExtractSuperclassHelper {
   }
 
   private static void placeNewClass(Project project, PyClass newClass, PyClass clazz, String targetFile) {
-    VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(VfsUtil.pathToUrl(targetFile));
+    VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(ApplicationManagerEx.getApplicationEx().isUnitTestMode() ? targetFile : VfsUtil.pathToUrl(targetFile));
     // file is the same as the source
     if (file == clazz.getContainingFile().getVirtualFile()) {
       PyPsiUtils.addBeforeInParent(clazz, newClass, newClass.getNextSibling());
