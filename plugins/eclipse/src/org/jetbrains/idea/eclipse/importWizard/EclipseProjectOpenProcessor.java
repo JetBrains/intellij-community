@@ -42,16 +42,6 @@ public class EclipseProjectOpenProcessor extends ProjectOpenProcessorBase {
     return new String[] {EclipseXml.CLASSPATH_FILE, EclipseXml.PROJECT_FILE};
   }
 
-  public boolean canOpenProject(final VirtualFile file) {
-    return super.canOpenProject(file) && isEclipseProject(file);
-  }
-
-  private static boolean isEclipseProject(final VirtualFile file) {
-    if (file.getName().equals(EclipseXml.DOT_CLASSPATH_EXT)) return true;
-    final VirtualFile dir = file.getParent();
-    return dir != null && dir.findChild(EclipseXml.DOT_CLASSPATH_EXT) != null;
-  }
-
   public boolean doQuickImport(VirtualFile file, final WizardContext wizardContext) {
     //noinspection ConstantConditions
     getBuilder().setRootDirectory(file.getParent().getPath());
