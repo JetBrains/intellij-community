@@ -14,7 +14,7 @@ import com.jetbrains.python.psi.*;
 
 public class PyResolveTest extends PyResolveTestCase {
   private PsiElement resolve() throws Exception {
-    PsiReference ref = configureByFile(getTestName(false) + ".py");
+    PsiReference ref = configureByFile("/resolve/" + getTestName(false) + ".py");
     return ref.resolve();
   }
 
@@ -61,7 +61,7 @@ public class PyResolveTest extends PyResolveTestCase {
   // NOTE: maybe this test does not belong exactly here; still it's the best place currently.
   public void testComplexCallee() throws Exception {
     PsiElement targetElement = resolve();
-    PyExpression assigned = ((PyAssignmentStatement) targetElement.getContext()).getAssignedValue();
+    PyExpression assigned = ((PyAssignmentStatement)targetElement.getContext()).getAssignedValue();
     assertTrue(assigned instanceof PyCallExpression);
     PsiElement callee = ((PyCallExpression)assigned).getCallee();
     assertTrue(callee instanceof PySubscriptionExpression);
@@ -179,7 +179,7 @@ public class PyResolveTest extends PyResolveTestCase {
   public void testWithStatement() throws Exception {
     PsiElement targetElement = resolve();
     assertTrue(targetElement instanceof PyTargetExpression);
-    assertTrue(targetElement.getParent() instanceof PyWithStatement);
+    assertTrue(targetElement.getParent() instanceof PyWithItem);
   }
 
   public void testTupleInExcept() throws Exception {
@@ -210,10 +210,5 @@ public class PyResolveTest extends PyResolveTestCase {
   public void testDocStringInvalid() throws Exception {
     PsiElement targetElement = resolve();
     assertNull(targetElement);
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return PythonTestUtil.getTestDataPath() + "/resolve/";
   }
 }

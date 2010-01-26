@@ -2,11 +2,15 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.jetbrains.python.psi.*;
-import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.toolbox.SingleIterable;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyWithItem;
+import com.jetbrains.python.psi.PyWithStatement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
@@ -20,17 +24,16 @@ public class PyWithStatementImpl extends PyElementImpl implements PyWithStatemen
     pyVisitor.visitPyWithStatement(this);
   }
 
-  @Nullable
-  public PyExpression getTargetExpression() {
-    final ASTNode asNameNode = getNode().findChildByType(PyElementTypes.TARGET_EXPRESSION);
-    if (asNameNode == null) return null;
-    return (PyTargetExpression)asNameNode.getPsi();
-  }
-
   @NotNull
   public Iterable<PyElement> iterateNames() {
-    PyElement ret = getTargetExpression();
-    return new SingleIterable<PyElement>(ret);
+    PyWithItem[] items = PsiTreeUtil.getChildrenOfType(this, PyWithItem.class);
+    List<PyElement> result = new ArrayList<PyElement>();
+    if (items != null) {
+      for (PyWithItem item : items) {
+        result.add(item.getTargetExpression());
+      }
+    }
+    return result;
   }
 
   public PsiElement getElementNamed(final String the_name) {

@@ -306,7 +306,7 @@ public class ExpressionParsing extends Parsing {
         else if (tokenType == PyTokenTypes.LBRACKET) {
           builder.advanceLexer();
           PsiBuilder.Marker sliceItemStart = builder.mark();
-          if (builder.getTokenType() == PyTokenTypes.COLON) {
+          if (atToken(PyTokenTypes.COLON)) {
             PsiBuilder.Marker sliceMarker = builder.mark();
             sliceMarker.done(PyElementTypes.EMPTY_EXPRESSION);
             parseSliceEnd(expr, sliceItemStart);
@@ -348,28 +348,27 @@ public class ExpressionParsing extends Parsing {
 
   private void parseSliceEnd(PsiBuilder.Marker exprStart, PsiBuilder.Marker sliceItemStart) {
     myBuilder.advanceLexer();
-    if (myBuilder.getTokenType() == PyTokenTypes.RBRACKET) {
+    if (atToken(PyTokenTypes.RBRACKET)) {
       PsiBuilder.Marker sliceMarker = myBuilder.mark();
       sliceMarker.done(PyElementTypes.EMPTY_EXPRESSION);
       sliceItemStart.done(PyElementTypes.SLICE_ITEM);
-      myBuilder.advanceLexer();
+      nextToken();
       exprStart.done(PyElementTypes.SLICE_EXPRESSION);
       return;
     }
     else {
-      if (myBuilder.getTokenType() == PyTokenTypes.COLON) {
+      if (atToken(PyTokenTypes.COLON)) {
         PsiBuilder.Marker sliceMarker = myBuilder.mark();
         sliceMarker.done(PyElementTypes.EMPTY_EXPRESSION);
       }
       else {
-        parseExpression();
+        parseSingleExpression(false);
       }
       if (!BRACKET_COLON_COMMA.contains(myBuilder.getTokenType())) {
         myBuilder.error(message("PARSE.expected.colon.or.rbracket"));
       }
-      if (myBuilder.getTokenType() == PyTokenTypes.COLON) {
-        myBuilder.advanceLexer();
-        parseTestExpression(false, false);
+      if (matchToken(PyTokenTypes.COLON)) {
+        parseSingleExpression(false);
       }
 
       sliceItemStart.done(PyElementTypes.SLICE_ITEM);

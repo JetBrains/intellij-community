@@ -13,7 +13,8 @@ public enum LanguageLevel {
   PYTHON24(false, true, false),
   PYTHON25(false, true, false),
   PYTHON26(true, true, false),
-  PYTHON30(true, false, true);
+  PYTHON30(true, false, true),
+  PYTHON31(true, false, true);
 
   public static LanguageLevel getDefault() {
     return PYTHON26;

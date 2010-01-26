@@ -36,27 +36,28 @@ PyFile:WithStatement2.py
   PyWithStatement
     PsiElement(Py:WITH_KEYWORD)('with')
     PsiWhiteSpace(' ')
-    PySubscriptionExpression
-      PyCallExpression: x.y
-        PyReferenceExpression: y
-          PyReferenceExpression: x
-            PsiElement(Py:IDENTIFIER)('x')
-          PsiElement(Py:DOT)('.')
-          PsiElement(Py:IDENTIFIER)('y')
-        PyArgumentList
-          PsiElement(Py:LPAR)('(')
-          PyReferenceExpression: z
-            PsiElement(Py:IDENTIFIER)('z')
-          PsiElement(Py:RPAR)(')')
-      PsiElement(Py:LBRACKET)('[')
-      PyReferenceExpression: t
-        PsiElement(Py:IDENTIFIER)('t')
-      PsiElement(Py:RBRACKET)(']')
-    PsiWhiteSpace(' ')
-    PsiElement(Py:AS_KEYWORD)('as')
-    PsiWhiteSpace(' ')
-    PyTargetExpression: y
-      PsiElement(Py:IDENTIFIER)('y')
+    PyWithItem
+      PySubscriptionExpression
+        PyCallExpression: x.y
+          PyReferenceExpression: y
+            PyReferenceExpression: x
+              PsiElement(Py:IDENTIFIER)('x')
+            PsiElement(Py:DOT)('.')
+            PsiElement(Py:IDENTIFIER)('y')
+          PyArgumentList
+            PsiElement(Py:LPAR)('(')
+            PyReferenceExpression: z
+              PsiElement(Py:IDENTIFIER)('z')
+            PsiElement(Py:RPAR)(')')
+        PsiElement(Py:LBRACKET)('[')
+        PyReferenceExpression: t
+          PsiElement(Py:IDENTIFIER)('t')
+        PsiElement(Py:RBRACKET)(']')
+      PsiWhiteSpace(' ')
+      PsiElement(Py:AS_KEYWORD)('as')
+      PsiWhiteSpace(' ')
+      PyTargetExpression: y
+        PsiElement(Py:IDENTIFIER)('y')
     PsiElement(Py:COLON)(':')
     PsiWhiteSpace(' ')
     PyStatementList
@@ -67,9 +68,10 @@ PyFile:WithStatement2.py
   PsiWhiteSpace('\n')
   PyWithStatement
     PsiElement(Py:WITH_KEYWORD)('with')
-    PsiErrorElement:expression expected
-      <empty list>
     PsiWhiteSpace(' ')
+    PyWithItem
+      PsiErrorElement:expression expected
+        <empty list>
     PyStatementList
       PsiElement(Py:EQ)('=')
       PsiErrorElement:statement expected, found Py:EQ
