@@ -21,8 +21,14 @@ fi
 #   Ensure the IDEA_HOME var for this script points to the
 #   home directory where IntelliJ IDEA is installed on your system.
 
-IDEA_HOME=`dirname "$0"`/..
-IDEA_BIN_HOME=`dirname "$0"`
+SCRIPT_LOCATION=$0
+# Step through symlinks to find where the script really is
+while [ -L $SCRIPT_LOCATION ]; do
+  SCRIPT_LOCATION=`readlink -e $SCRIPT_LOCATION`
+done
+
+IDEA_HOME=`dirname $SCRIPT_LOCATION`/..
+IDEA_BIN_HOME=`dirname $SCRIPT_LOCATION`
 
 export JAVA_HOME
 export IDEA_HOME
