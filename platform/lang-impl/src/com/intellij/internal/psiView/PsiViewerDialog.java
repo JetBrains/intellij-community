@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -101,7 +102,8 @@ public class PsiViewerDialog extends DialogWrapper {
   private Map<String, Object> handlers = new HashMap<String, Object>();
   private DefaultActionGroup myGroup;
   private Language[] myLanguageDialects;
-  private final Color SELECTION_BG_COLOR = new Color(0, 51, 51);
+  private final Color SELECTION_BG_COLOR = Registry.getColor("psi.viewer.selection.color", new Color(255, 204, 204));
+
   private static final Comparator<Language> DIALECTS_COMPARATOR = new Comparator<Language>() {
     public int compare(final Language o1, final Language o2) {
       if (o1 == null) return o2 == null ? 0 : -1;
