@@ -219,6 +219,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     myTfTargetClassName.getChildComponent().addDocumentListener(new DocumentAdapter() {
       public void documentChanged(DocumentEvent e) {
         targetClassChanged();
+        enableEnumDependant(introduceEnumConstant());
       }
     });
     myIntroduceEnumConstantCb.addActionListener(new ActionListener() {
@@ -226,7 +227,6 @@ class IntroduceConstantDialog extends DialogWrapper {
         enableEnumDependant(introduceEnumConstant());
       }
     });
-    enableEnumDependant(introduceEnumConstant());
     final JPanel enumPanel = new JPanel(new BorderLayout());
     enumPanel.add(myIntroduceEnumConstantCb, BorderLayout.EAST);
     myTargetClassNamePanel.add(enumPanel, BorderLayout.SOUTH);
@@ -285,7 +285,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     }
 
     final PsiManager psiManager = PsiManager.getInstance(myProject);
-    if (myTypeSelectorManager.isSuggestedType("java.lang.String") &&
+    if ((myTypeSelectorManager.isSuggestedType("java.lang.String") || (myLocalVariable != null && AnnotationUtil.isAnnotated(myLocalVariable, AnnotationUtil.NON_NLS, false)))&&
         LanguageLevelProjectExtension.getInstance(psiManager.getProject()).getLanguageLevel().hasEnumKeywordAndAutoboxing() &&
         JavaPsiFacade.getInstance(psiManager.getProject()).findClass(AnnotationUtil.NON_NLS, myParentClass.getResolveScope()) != null) {
       final PropertiesComponent component = PropertiesComponent.getInstance(myProject);
@@ -306,7 +306,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     bg.add(myRbpackageLocal);
     bg.add(myRbProtected);
     bg.add(myRbPublic);
-
+    enableEnumDependant(introduceEnumConstant());
     return myPanel;
   }
 

@@ -22,6 +22,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.LanguageLevelUtil;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.pom.java.LanguageLevel;
@@ -172,25 +173,28 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
       final PsiElement resolved = reference.resolve();
 
       if (resolved instanceof PsiCompiledElement && resolved instanceof PsiMember) {
-        final LanguageLevel languageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(ModuleUtil.findModuleForPsiElement(reference.getElement()));
-        if (isForbiddenApiUsage((PsiMember)resolved, languageLevel)) {
-          PsiClass psiClass = null;
-          final PsiElement qualifier = reference.getQualifier();
-          if (qualifier != null) {
-            if (qualifier instanceof PsiExpression) {
-              psiClass = PsiUtil.resolveClassInType(((PsiExpression)qualifier).getType());
+        final Module module = ModuleUtil.findModuleForPsiElement(reference.getElement());
+        if (module != null) {
+          final LanguageLevel languageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module);
+          if (isForbiddenApiUsage((PsiMember)resolved, languageLevel)) {
+            PsiClass psiClass = null;
+            final PsiElement qualifier = reference.getQualifier();
+            if (qualifier != null) {
+              if (qualifier instanceof PsiExpression) {
+                psiClass = PsiUtil.resolveClassInType(((PsiExpression)qualifier).getType());
+              }
             }
-          }
-          else {
-            psiClass = PsiTreeUtil.getParentOfType(reference, PsiClass.class);
-          }
-          if (psiClass != null) {
-            if (isIgnored(psiClass)) return;
-            for (PsiClass superClass : psiClass.getSupers()) {
-              if (isIgnored(superClass)) return;
+            else {
+              psiClass = PsiTreeUtil.getParentOfType(reference, PsiClass.class);
             }
+            if (psiClass != null) {
+              if (isIgnored(psiClass)) return;
+              for (PsiClass superClass : psiClass.getSupers()) {
+                if (isIgnored(superClass)) return;
+              }
+            }
+            registerError(reference, languageLevel);
           }
-          registerError(reference, languageLevel);
         }
       }
     }
@@ -203,10 +207,13 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
     @Override public void visitNewExpression(final PsiNewExpression expression) {
       super.visitNewExpression(expression);
       final PsiMethod constructor = expression.resolveConstructor();
-      final LanguageLevel languageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(ModuleUtil.findModuleForPsiElement(expression));
-      if (constructor instanceof PsiCompiledElement) {
-        if (isForbiddenApiUsage(constructor, languageLevel)) {
-          registerError(expression.getClassReference(), languageLevel);
+      final Module module = ModuleUtil.findModuleForPsiElement(expression);
+      if (module != null) {
+        final LanguageLevel languageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module);
+        if (constructor instanceof PsiCompiledElement) {
+          if (isForbiddenApiUsage(constructor, languageLevel)) {
+            registerError(expression.getClassReference(), languageLevel);
+          }
         }
       }
     }

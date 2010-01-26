@@ -1,6 +1,7 @@
 <!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
 <idea-plugin url="http://www.jetbrains.com/idea">
   <extensions xmlns="org.jetbrains.idea.maven">
-    <importer implementation="org.jetbrains.idea.maven.importing.GroovyImporter"/>
+    <importer implementation="org.jetbrains.idea.maven.importing.Groovy_1_0_Importer"/>
+    <importer implementation="org.jetbrains.idea.maven.importing.Groovy_1_1_plus_Importer"/>
   </extensions>
 </idea-plugin>

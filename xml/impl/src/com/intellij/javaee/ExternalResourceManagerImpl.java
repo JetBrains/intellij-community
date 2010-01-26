@@ -131,17 +131,12 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
 
   public String getResourceLocation(@NonNls String url, String version) {
     String result = getUserResourse(url, version);
-    Map<String, String> map;
-
     if (result == null) {
-      map = getMap(myStdResources.getValue(), version, false);
-      result = map != null ? map.get(url) : null;
+      result = getStdResource(url, version);
     }
-
     if (result == null) {
       result = url;
     }
-
     return result;
   }
 
@@ -150,6 +145,13 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   public String getUserResourse(Project project, String url, String version) {
     String resourse = getProjectResources(project).getUserResourse(url, version);
     return resourse == null ? getUserResourse(url, version) : resourse;
+  }
+
+  @Override
+  @Nullable
+  public String getStdResource(String url, String version) {
+    Map<String, String> map = getMap(myStdResources.getValue(), version, false);
+    return map != null ? map.get(url) : null;
   }
 
   @Nullable

@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.spellchecker.tokenizer;
+package org.jetbrains.idea.maven.importing;
 
-import com.intellij.lang.properties.psi.impl.PropertyValueImpl;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.module.Module;
+import org.jdom.Element;
+import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 
-/**
- * @author Konstantin Bulenkov
- */
-public class PropertyValueTokenizer extends Tokenizer<PropertyValueImpl> {
-  @Override
-  public Token[] tokenize(@NotNull PropertyValueImpl element) {
-    return new Token[]{new Token<PropertyValueImpl>(element, element.getText(),false)};
+import java.util.List;
+import java.util.Map;
+
+public class Groovy_1_1_plus_Importer extends GroovyImporter {
+  public Groovy_1_1_plus_Importer() {
+    super("org.codehaus.gmaven", "gmaven-plugin");
   }
 }

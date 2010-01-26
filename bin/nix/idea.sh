@@ -23,12 +23,12 @@ fi
 
 SCRIPT_LOCATION=$0
 # Step through symlinks to find where the script really is
-while [ -L $SCRIPT_LOCATION ]; do
-  SCRIPT_LOCATION=`readlink -e $SCRIPT_LOCATION`
+while [ -L "$SCRIPT_LOCATION" ]; do
+  SCRIPT_LOCATION=`readlink -e "$SCRIPT_LOCATION"`
 done
 
-IDEA_HOME=`dirname $SCRIPT_LOCATION`/..
-IDEA_BIN_HOME=`dirname $SCRIPT_LOCATION`
+IDEA_HOME=`dirname "$SCRIPT_LOCATION"`/..
+IDEA_BIN_HOME=`dirname "$SCRIPT_LOCATION"`
 
 export JAVA_HOME
 export IDEA_HOME
