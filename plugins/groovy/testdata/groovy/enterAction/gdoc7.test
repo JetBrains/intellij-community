@@ -4,6 +4,7 @@ def foo() {
 -----
 /**
  * <caret>
+ * @return
  */
 
 def foo() {

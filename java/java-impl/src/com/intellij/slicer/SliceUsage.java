@@ -34,24 +34,24 @@ import org.jetbrains.annotations.NotNull;
  */
 public class SliceUsage extends UsageInfo2UsageAdapter {
   private final SliceUsage myParent;
-  private final AnalysisScope myScope;
+  public final SliceAnalysisParams params;
   private final PsiSubstitutor mySubstitutor;
 
   public SliceUsage(@NotNull PsiElement element, @NotNull SliceUsage parent, @NotNull PsiSubstitutor substitutor) {
     super(new UsageInfo(element));
     myParent = parent;
     mySubstitutor = substitutor;
-    myScope = parent.myScope;
-    assert myScope != null;
+    params = parent.params;
+    assert params != null;
   }
-  public SliceUsage(@NotNull PsiElement element, @NotNull AnalysisScope scope) {
+  public SliceUsage(@NotNull PsiElement element, @NotNull SliceAnalysisParams params) {
     super(new UsageInfo(element));
     myParent = null;
-    myScope = scope;
+    this.params = params;
     mySubstitutor = PsiSubstitutor.EMPTY;
   }
 
-  public void processChildren(Processor<SliceUsage> processor, final boolean dataFlowToThis) {
+  public void processChildren(Processor<SliceUsage> processor) {
     final PsiElement element = getElement();
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     //indicator.setText2("<html><body>Searching for usages of "+ StringUtil.trimStart(SliceManager.getElementDescription(element),"<html><body>")+"</body></html>");
@@ -70,7 +70,7 @@ public class SliceUsage extends UsageInfo2UsageAdapter {
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        if (dataFlowToThis) {
+        if (params.dataFlowToThis) {
           SliceUtil.processUsagesFlownDownTo(element, uniqueProcessor, SliceUsage.this, mySubstitutor);
         }
         else {
@@ -86,12 +86,12 @@ public class SliceUsage extends UsageInfo2UsageAdapter {
 
   @NotNull
   public AnalysisScope getScope() {
-    return myScope;
+    return params.scope;
   }
 
   SliceUsage copy() {
     PsiElement element = getUsageInfo().getElement();
-    return getParent() == null ? new SliceUsage(element, getScope()) : new SliceUsage(element, getParent(),mySubstitutor);
+    return getParent() == null ? new SliceUsage(element, params) : new SliceUsage(element, getParent(),mySubstitutor);
   }
 
   public PsiSubstitutor getSubstitutor() {

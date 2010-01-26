@@ -64,7 +64,7 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   public volatile boolean CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND = true;
   public VcsShowConfirmationOption.Value MOVE_TO_FAILED_COMMIT_CHANGELIST = VcsShowConfirmationOption.Value.SHOW_CONFIRMATION;
   public boolean ENABLE_BACKGROUND_PROCESSES = true;
-  public int CHANGED_ON_SERVER_INTERVAL = 5;
+  public int CHANGED_ON_SERVER_INTERVAL = 60;
 
   public enum StandardOption {
     ADD(VcsBundle.message("vcs.command.name.add")),

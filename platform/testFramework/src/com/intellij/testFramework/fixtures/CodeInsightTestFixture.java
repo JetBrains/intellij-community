@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -232,7 +232,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    */
   void checkResultByFile(@NonNls String filePath, @TestDataFile @NonNls String expectedFile, boolean ignoreTrailingWhitespaces) throws Exception;
 
-  void testCompletion(@NonNls String[] filesBefore, @NonNls String fileAfter) throws Exception;
+  void testCompletion(@NonNls String[] filesBefore, @TestDataFile @NonNls String fileAfter) throws Exception;
 
   /**
    * Runs basic completion in caret position in fileBefore.

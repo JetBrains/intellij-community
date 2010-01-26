@@ -148,7 +148,7 @@ public class DeclarationMover extends LineMover {
     if (!isInsideDeclaration(member, startLine, endLine, lineRange, editor)) return null;
 
     if (member instanceof GrDocCommentOwner) {
-      final GrDocComment comment = ((GrDocCommentOwner)member).getGrDocComment();
+      final GrDocComment comment = ((GrDocCommentOwner)member).getDocComment();
       if (comment != null) {
         final int docStart = editor.offsetToLogicalPosition(comment.getTextRange().getStartOffset()).line;
         return new LineRange(docStart, endLine);
@@ -174,7 +174,7 @@ public class DeclarationMover extends LineMover {
       ContainerUtil.addIfNotNull(((GrMember) member).getModifierList(), memberSuspects);
     }
     if (member instanceof GrDocCommentOwner) {
-      ContainerUtil.addIfNotNull(((GrDocCommentOwner)member).getGrDocComment(), memberSuspects);
+      ContainerUtil.addIfNotNull(((GrDocCommentOwner)member).getDocComment(), memberSuspects);
     }
 
     if (member instanceof GrMethod) {

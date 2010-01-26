@@ -77,7 +77,7 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
         if (drawSeparator) {
           GrDocComment comment = null;
           if (element1 instanceof GrDocCommentOwner) {
-            comment = ((GrDocCommentOwner)element1).getGrDocComment();
+            comment = ((GrDocCommentOwner)element1).getDocComment();
           }
           LineMarkerInfo info =
             new LineMarkerInfo<PsiElement>(element, comment != null ? comment.getTextRange() : element.getTextRange(), null,

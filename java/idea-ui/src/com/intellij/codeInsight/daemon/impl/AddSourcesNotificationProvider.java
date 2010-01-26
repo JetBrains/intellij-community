@@ -94,6 +94,9 @@ public class AddSourcesNotificationProvider implements EditorNotifications.Provi
         VirtualFile[] roots = library.getFiles(OrderRootType.CLASSES);
         VirtualFile[] candidates = FileChooser.chooseFiles(myProject, descriptor, roots.length == 0 ? null : roots[0]);
         final VirtualFile[] files = PathUIUtils.scandAndSelectDetectedJavaSourceRoots(myProject, candidates);
+        if (files.length == 0) {
+          return;
+        }
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
             Library.ModifiableModel model = library.getModifiableModel();

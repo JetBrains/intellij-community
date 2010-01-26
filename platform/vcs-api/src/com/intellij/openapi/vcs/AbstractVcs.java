@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,11 +29,13 @@ import com.intellij.openapi.vcs.changes.VcsAppendableDirtyScope;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.RevisionSelector;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NonNls;
@@ -465,6 +467,21 @@ public abstract class AbstractVcs extends StartedActivated {
    */
   public boolean isVcsBackgroundOperationsAllowed(final VirtualFile root) {
     return true;
+  }
+
+  /**
+   * Returns all files for a revision where
+   *
+   * @param revision revision
+   * @param file one of files from revision
+   * @return committed change list from where you can get all committed files
+   * @throws VcsException if VCS does not support such operation
+   *
+   * @since 9.0.2
+   */
+  @Nullable
+  public CommittedChangeList getRevisionChanges(final VcsFileRevision revision, final VirtualFile file) throws VcsException {
+    throw new RevisionChangesNotSupportedException();
   }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,11 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.PropertyKey;
 
+import java.awt.*;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.util.*;
+import java.util.List;
 
 public class Registry  {
 
@@ -60,6 +62,10 @@ public class Registry  {
 
   public static String stringValue(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) String key) {
     return get(key).asString();
+  }
+
+  public static Color getColor(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) String key, Color defaultValue) {
+    return get(key).asColor(defaultValue);
   }
 
   ResourceBundle getBundle() {

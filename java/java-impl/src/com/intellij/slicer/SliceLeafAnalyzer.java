@@ -126,7 +126,8 @@ public class SliceLeafAnalyzer {
         }
       });
 
-      SliceLeafValueRootNode lvNode = new SliceLeafValueRootNode(root.getProject(), leafExpression, root, Collections.singletonList(newNode));
+      SliceLeafValueRootNode lvNode = new SliceLeafValueRootNode(root.getProject(), leafExpression, root, Collections.singletonList(newNode),
+                                                                 oldRoot.getValue().params);
       root.myCachedChildren.add(lvNode);
     }
     return root;

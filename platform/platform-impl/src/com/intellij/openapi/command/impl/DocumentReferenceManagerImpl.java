@@ -21,15 +21,23 @@ import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.util.containers.WeakValueHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class DocumentReferenceManagerImpl extends DocumentReferenceManager implements ApplicationComponent {
+  private static final Key<List<VirtualFile>> DELETED_FILES = Key.create(DocumentReferenceManagerImpl.class.getName() + ".DELETED_FILES");
+
   private final Map<Reference<Document>, DocumentReference> myDocToRef = new WeakValueHashMap<Reference<Document>, DocumentReference>();
   private final Map<VirtualFile, DocumentReference> myFileToRef = new WeakValueHashMap<VirtualFile, DocumentReference>();
   private final Map<FilePath, DocumentReference> myDeletedFilePathToRef = new WeakValueHashMap<FilePath, DocumentReference>();
@@ -52,14 +60,40 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
       }
 
       @Override
+      public void beforeFileDeletion(VirtualFileEvent event) {
+        VirtualFile f = event.getFile();
+        f.putUserData(DELETED_FILES, collectDeletedFiles(f, new ArrayList<VirtualFile>()));
+      }
+
+      @Override
       public void fileDeleted(VirtualFileEvent event) {
         VirtualFile f = event.getFile();
-        DocumentReference ref = myFileToRef.remove(f);
-        if (ref != null) {
-          myDeletedFilePathToRef.put(new FilePath(f.getUrl()), ref);
+        List<VirtualFile> files = f.getUserData(DELETED_FILES);
+        f.putUserData(DELETED_FILES, null);
+
+        for (VirtualFile each : files) {
+          DocumentReference ref = myFileToRef.remove(each);
+          if (ref != null) {
+            myDeletedFilePathToRef.put(new FilePath(each.getUrl()), ref);
+          }
         }
       }
     });
+  }
+
+  private List<VirtualFile> collectDeletedFiles(VirtualFile f, List<VirtualFile> files) {
+    if (!(f instanceof NewVirtualFile)) return files;
+
+    if (!f.isDirectory()) {
+      files.add(f);
+    }
+    else {
+      for (VirtualFile each : ((NewVirtualFile)f).getInDbChildren()) {
+        if (each == NullVirtualFile.INSTANCE) continue;
+        collectDeletedFiles(each, files);
+      }
+    }
+    return files;
   }
 
   public void disposeComponent() {
@@ -75,7 +109,7 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
 
   private DocumentReference doCreate(@NotNull final Document document) {
     final int hashCode = document.hashCode();
-    Reference<Document> reference = new WeakReference<Document>(document){
+    Reference<Document> reference = new WeakReference<Document>(document) {
       @Override
       public int hashCode() {
         return hashCode;

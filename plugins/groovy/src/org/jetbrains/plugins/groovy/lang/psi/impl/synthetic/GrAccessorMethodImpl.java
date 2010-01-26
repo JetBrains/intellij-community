@@ -18,10 +18,10 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -123,6 +123,11 @@ public class GrAccessorMethodImpl extends GrSyntheticMethod implements GrAccesso
   }
 
   public GrField getProperty() {
+    return myProperty;
+  }
+
+  @Override
+  public PsiElement getContext() {
     return myProperty;
   }
 }

@@ -346,7 +346,7 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
     final PsiElement scope = getDeclarationScope();
     if (scope instanceof GrDocCommentOwner) {
       GrDocCommentOwner owner = (GrDocCommentOwner)scope;
-      final GrDocComment comment = owner.getGrDocComment();
+      final GrDocComment comment = owner.getDocComment();
       if (comment != null) {
         return new LocalSearchScope(new PsiElement[]{scope, comment});
       }

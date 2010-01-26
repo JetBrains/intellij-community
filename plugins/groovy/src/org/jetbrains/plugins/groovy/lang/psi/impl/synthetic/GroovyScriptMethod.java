@@ -202,4 +202,9 @@ public class GroovyScriptMethod extends LightElement implements PsiMethod {
   public PsiType getReturnTypeNoResolve() {
     return getReturnType();
   }
+
+  @Override
+  public PsiElement getContext() {
+    return myScriptClass;
+  }
 }

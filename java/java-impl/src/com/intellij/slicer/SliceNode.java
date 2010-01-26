@@ -44,17 +44,15 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
   protected final DuplicateMap targetEqualUsages;
   protected boolean changed;
   private int index; // my index in parent's mycachedchildren
-  protected final boolean dataFlowToThis;
 
-  protected SliceNode(@NotNull Project project, SliceUsage sliceUsage, @NotNull DuplicateMap targetEqualUsages, boolean dataFlowToThis) {
+  protected SliceNode(@NotNull Project project, SliceUsage sliceUsage, @NotNull DuplicateMap targetEqualUsages) {
     super(project, sliceUsage);
     this.targetEqualUsages = targetEqualUsages;
-    this.dataFlowToThis = dataFlowToThis;
   }
 
   SliceNode copy() {
     SliceUsage newUsage = getValue().copy();
-    SliceNode newNode = new SliceNode(getProject(), newUsage, targetEqualUsages, dataFlowToThis);
+    SliceNode newNode = new SliceNode(getProject(), newUsage, targetEqualUsages);
     newNode.initialized = initialized;
     newNode.duplicate = duplicate;
     return newNode;
@@ -96,7 +94,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
         Processor<SliceUsage> processor = new Processor<SliceUsage>() {
           public boolean process(SliceUsage sliceUsage) {
             manager.checkCanceled();
-            SliceNode node = new SliceNode(myProject, sliceUsage, targetEqualUsages, dataFlowToThis);
+            SliceNode node = new SliceNode(myProject, sliceUsage, targetEqualUsages);
             synchronized (children) {
               node.index = children.size();
               children.add(node);
@@ -105,7 +103,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
           }
         };
 
-        getValue().processChildren(processor, dataFlowToThis);
+        getValue().processChildren(processor);
       }
     }, new Runnable(){
       public void run() {
@@ -156,6 +154,10 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
       changed = false;
       if (duplicate != null) {
         presentation.setTooltip("Duplicate node");
+      }
+
+      if (getValue() instanceof SliceDereferenceUsage) {
+        presentation.setTooltip("Variable dereferenced");
       }
     }
   }

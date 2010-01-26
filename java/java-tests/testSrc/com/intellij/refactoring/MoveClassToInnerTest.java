@@ -35,6 +35,10 @@ public class MoveClassToInnerTest extends CodeInsightTestCase {
     doTest(new String[] { "pack1.Class1" }, "pack2.A");
   }
 
+  public void testSimultaneousMove() throws Exception {
+    doTest(new String[] { "pack1.Class1", "pack0.Class0" }, "pack2.A");
+  }
+
   public void testMoveMultiple1() throws Exception {
     doTest(new String[] { "pack1.Class1", "pack1.Class2" }, "pack2.A");
   }
@@ -112,7 +116,7 @@ public class MoveClassToInnerTest extends CodeInsightTestCase {
     prepareTest();
     PsiClass classToMove = myJavaFacade.findClass(className, ProjectScope.getAllScope(myProject));
     PsiClass targetClass = myJavaFacade.findClass(targetClassName, ProjectScope.getAllScope(myProject));
-    MoveClassToInnerProcessor processor = new MoveClassToInnerProcessor(myProject, classToMove, targetClass, true, true, null);
+    MoveClassToInnerProcessor processor = new MoveClassToInnerProcessor(myProject, new PsiClass[]{classToMove}, targetClass, true, true, null);
     UsageInfo[] usages = processor.findUsages();
     MultiMap<PsiElement,String> conflicts = processor.getConflicts(usages);
     assertSameElements(conflicts.values() , expectedConflicts);
@@ -129,9 +133,7 @@ public class MoveClassToInnerTest extends CodeInsightTestCase {
     PsiClass targetClass = myJavaFacade.findClass(targetClassName, ProjectScope.getAllScope(myProject));
     assertNotNull(targetClass);
 
-    for(PsiClass psiClass: classes) {
-      new MoveClassToInnerProcessor(myProject, psiClass, targetClass, true, true, null).run();
-    }
+    new MoveClassToInnerProcessor(myProject, classes, targetClass, true, true, null).run();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     FileDocumentManager.getInstance().saveAllDocuments();
   }

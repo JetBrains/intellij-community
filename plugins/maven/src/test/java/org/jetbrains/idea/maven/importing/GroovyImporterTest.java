@@ -416,4 +416,49 @@ public class GroovyImporterTest extends MavenImportingTestCase {
     assertExcludes("project",
                    "target/generated-sources/groovy-stubs");
   }
+
+  public void testDoNotAddGroovySpecificGeneratedSourcesForGMaven_1_2() throws Exception {
+    createStdProjectFolders();
+    createProjectSubDirs("target/generated-sources/xxx/yyy",
+                         "target/generated-sources/groovy-stubs/main/foo",
+                         "target/generated-sources/groovy-stubs/test/bar");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.codehaus.gmaven</groupId>" +
+                  "      <artifactId>gmaven-plugin</artifactId>" +
+                  "      <version>1.2</version>" +
+                  "      <executions>" +
+                  "        <execution>" +
+                  "          <goals>" +
+                  "            <goal>generateStubs</goal>" +
+                  "            <goal>compile</goal>" +
+                  "            <goal>generateTestStubs</goal>" +
+                  "            <goal>testCompile</goal>" +
+                  "          </goals>" +
+                  "        </execution>" +
+                  "      </executions>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    assertModules("project");
+
+    assertSources("project",
+                  "src/main/java",
+                  "src/main/resources",
+                  "target/generated-sources/xxx");
+    assertTestSources("project",
+                      "src/test/java",
+                      "src/test/resources");
+
+    assertExcludes("project",
+                   "target/generated-sources/groovy-stubs");
+  }
+
 }

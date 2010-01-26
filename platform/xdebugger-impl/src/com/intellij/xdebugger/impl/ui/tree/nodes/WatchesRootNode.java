@@ -53,7 +53,7 @@ public class WatchesRootNode extends XDebuggerTreeNode {
         final String expression = child.getExpression();
         final WatchMessageNode evaluatingNode = WatchMessageNode.createEvaluatingNode(myTree, this, expression);
         newChildren.add(evaluatingNode);
-        evaluator.evaluate(expression, new MyEvaluationCallback(evaluatingNode));
+        evaluator.evaluate(expression, new MyEvaluationCallback(evaluatingNode), null);
       }
     }
     else {
@@ -119,7 +119,7 @@ public class WatchesRootNode extends XDebuggerTreeNode {
     else {
       myChildren.add(index, message);
     }
-    evaluator.evaluate(expression, new MyEvaluationCallback(message));
+    evaluator.evaluate(expression, new MyEvaluationCallback(message), null);
     fireNodeChildrenChanged();
   }
 

@@ -16,15 +16,17 @@
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi.api;
 
-import org.jetbrains.annotations.NotNull;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.javadoc.PsiDocTag;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ilyas
  */
-public interface GrDocTag extends GroovyDocPsiElement {
-  @NotNull
-  PsiElement getNameIdentifier();
+public interface GrDocTag extends GroovyDocPsiElement, PsiDocTag {
+  GrDocTag[] EMPTY_ARRAY = new GrDocTag[0];
 
-  String getName();
+  GrDocComment getContainingComment();
+
+  @Nullable
+  GrDocTagValueToken getValueElement();
 }

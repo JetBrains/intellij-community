@@ -19,7 +19,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -28,7 +27,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.impl.source.tree.java.ClassElement;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.ui.RowIcon;
@@ -120,6 +118,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
     return findChildrenByClass(GrWildcardTypeArgument.class);
   }
 
+  @Nullable
   public GrTypeDefinitionBody getBody() {
     return (GrTypeDefinitionBody)findChildByType(GroovyElementTypes.CLASS_BODY);
   }
@@ -150,7 +149,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
 
       @Nullable
       public Icon getIcon(boolean open) {
-        return GrTypeDefinitionImpl.this.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS);
+        return GrTypeDefinitionImpl.this.getIcon(ICON_FLAG_VISIBILITY | ICON_FLAG_READ_STATUS);
       }
 
       @Nullable
@@ -473,6 +472,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
     return PsiUtil.getJavaNameIdentifier(this);
   }
 
+  @Nullable
   public PsiElement getScope() {
     return null;
   }
@@ -527,11 +527,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
   }
 
   @Nullable
-  public PsiDocComment getDocComment() {
-    return null;
-  }
-
-  public GrDocComment getGrDocComment() {
+  public GrDocComment getDocComment() {
     return GrDocCommentUtil.findDocComment(this);
   }
 
