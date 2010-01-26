@@ -88,4 +88,9 @@ public class ClosureSyntheticParameter extends LightParameter implements Navigat
     }
     return typeGroovy != null ? typeGroovy : super.getType();
   }
+
+  @Override
+  public PsiElement getContext() {
+    return myClosure;
+  }
 }

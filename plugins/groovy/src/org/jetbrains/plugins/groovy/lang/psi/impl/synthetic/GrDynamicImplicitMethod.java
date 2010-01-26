@@ -27,11 +27,11 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
+import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
-import com.intellij.ui.treeStructure.treetable.TreeTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -41,10 +41,10 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWind
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DClassElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import javax.swing.*;
@@ -368,5 +368,10 @@ public class GrDynamicImplicitMethod extends LightElement implements PsiMethod, 
   }
   public PsiType getReturnTypeNoResolve() {
     return getReturnType();
+  }
+
+  @Override
+  public PsiElement getContext() {
+    return myMethod;
   }
 }

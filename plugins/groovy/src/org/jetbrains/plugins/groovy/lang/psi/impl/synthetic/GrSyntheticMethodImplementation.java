@@ -81,4 +81,8 @@ public class GrSyntheticMethodImplementation extends GrSyntheticMethod {
     return "SyntheticMethodImplementation";
   }
 
+  @Override
+  public PsiElement getContext() {
+    return myInterfaceMethod;
+  }
 }

@@ -343,6 +343,11 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
     return true;
   }
 
+  @Override
+  public PsiElement getContext() {
+    return myFile;
+  }
+
   //default implementations of methods from NavigationItem
   public ItemPresentation getPresentation() {
     return new ItemPresentation() {
