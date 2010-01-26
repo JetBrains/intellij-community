@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -33,8 +34,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
 public class TypeMigrationDialog extends RefactoringDialog {
@@ -91,6 +92,7 @@ public class TypeMigrationDialog extends RefactoringDialog {
     });
 
     myScopeChooserCombo = new ScopeChooserCombo(project, false, true, FindSettings.getInstance().getDefaultScopeName());
+    Disposer.register(myDisposable, myScopeChooserCombo);
     myScopeChooserCombo.getChildComponent().addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         validateButtons();
