@@ -39,4 +39,9 @@ public class RefactoringProvider extends DefaultRefactoringSupportProvider {
   public RefactoringActionHandler getExtractSuperClassHandler() {
     return new PyExtractSuperclassHandler();
   }
+
+  @Override
+  public RefactoringActionHandler getExtractMethodHandler() {
+    return new PyExtractMethodHandler(); 
+  }
 }
