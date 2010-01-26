@@ -15,16 +15,16 @@
  */
 package org.intellij.plugins.xpathView.search;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
 import org.intellij.plugins.xpathView.Config;
 import org.intellij.plugins.xpathView.HistoryElement;
 import org.intellij.plugins.xpathView.ui.InputExpressionDialog;
 import org.intellij.plugins.xpathView.ui.Mode;
-
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -53,6 +53,7 @@ public class FindByExpressionDialog extends InputExpressionDialog<FindFormPanel>
         myForm.getMatchEachNode().setSelected(mySettings.MATCH_RECURSIVELY);
         myForm.getMatchRootNode().setSelected(!mySettings.MATCH_RECURSIVELY);
 
+        Disposer.register(myDisposable, myForm);
         super.init();
     }
 

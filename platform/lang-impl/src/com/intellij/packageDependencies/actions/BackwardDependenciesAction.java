@@ -22,6 +22,7 @@ import com.intellij.analysis.BaseAnalysisAction;
 import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,12 +45,17 @@ public class BackwardDependenciesAction extends BaseAnalysisAction {
     scope.setSearchInLibraries(true); //find library usages in project
     final SearchScope selectedScope = myPanel.myCombo.getSelectedScope();
     new BackwardDependenciesHandler(project, scope, selectedScope != null ? new AnalysisScope(selectedScope, project) : new AnalysisScope(project)).analyze();
-    myPanel = null;
+    dispose();
   }
 
   @Override
   protected void canceled() {
     super.canceled();
+    dispose();
+  }
+
+  private void dispose() {
+    Disposer.dispose(myPanel.myCombo);
     myPanel = null;
   }
 

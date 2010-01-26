@@ -60,4 +60,6 @@ public class EvalFormPanel extends JPanel implements InputForm {
     public JCheckBox getUsageViewCheckbox() {
         return myUsageViewCheckbox;
     }
+
+    public void dispose() {}
 }
