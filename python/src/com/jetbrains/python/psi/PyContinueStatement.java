@@ -27,5 +27,5 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface PyContinueStatement extends PyStatement {
   @Nullable
-  PyLoopStatement getLoopStatement();
+  PyLoopStatement getLoop();
 }

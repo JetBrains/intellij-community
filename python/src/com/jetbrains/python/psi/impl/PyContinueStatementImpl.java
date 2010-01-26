@@ -40,7 +40,7 @@ public class PyContinueStatementImpl extends PyElementImpl implements PyContinue
     }
 
   @Nullable
-  public PyLoopStatement getLoopStatement() {
+  public PyLoopStatement getLoop() {
     return PsiTreeUtil.getParentOfType(this, PyLoopStatement.class);
   }
 }

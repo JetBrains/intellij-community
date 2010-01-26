@@ -17,7 +17,6 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -25,7 +24,6 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -57,15 +55,11 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
 
   @PsiCached
   public PyElementType getOperator() {
-    final PsiElement psiOperator = getPsiOperator();
-    return psiOperator != null ? (PyElementType)psiOperator.getNode().getElementType() : null;
-  }
-
-  @Nullable
-  public PsiElement getPsiOperator() {
     ASTNode node = getNode();
-    final ASTNode child = node.findChildByType(PyElementTypes.BINARY_OPS);
-    if (child != null) return child.getPsi();
+    if (node != null) {
+      final ASTNode child = node.findChildByType(PyElementTypes.BINARY_OPS);
+      if (child != null) return (PyElementType)child.getElementType();
+    }
     return null;
   }
 

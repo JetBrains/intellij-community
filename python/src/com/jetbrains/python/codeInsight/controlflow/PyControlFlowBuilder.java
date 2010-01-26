@@ -253,7 +253,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     final Instruction nextInstruction = new InstructionImpl(myBuilder, node);
     myBuilder.addNode(nextInstruction);
     myBuilder.checkPending(nextInstruction);
-    final PyLoopStatement loop = node.getLoopStatement();
+    final PyLoopStatement loop = node.getLoop();
     if (loop != null) {
       final Instruction instruction = myBuilder.findInstructionByElement(loop);
       if (instruction != null) {
