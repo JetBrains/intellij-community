@@ -1,0 +1,6 @@
+<!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
+<idea-plugin url="http://www.jetbrains.com/idea">
+  <extensions xmlns="com.intellij">
+    <spellchecker.support implementation="com.intellij.lang.properties.spellchecker.PropertiesSpellcheckingStrategy"/>
+  </extensions>
+</idea-plugin>

@@ -16,8 +16,6 @@
 package com.intellij.spellchecker.tokenizer;
 
 import com.intellij.lang.Language;
-import com.intellij.lang.properties.psi.impl.PropertyImpl;
-import com.intellij.lang.properties.psi.impl.PropertyValueImpl;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.psi.PsiComment;
@@ -27,7 +25,6 @@ import com.intellij.psi.PsiPlainText;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlText;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author shkate@jetbrains.com
@@ -42,14 +39,6 @@ public class SpellcheckingStrategy {
     if (element instanceof PsiComment) return new CommentTokenizer();
     if (element instanceof XmlAttributeValue) return new SimpleTokenizer();
     if (element instanceof XmlText) return new SimpleTokenizer();
-    if (element instanceof PropertyValueImpl) return new SimpleTokenizer();
-    if (element instanceof PropertyImpl) return new SimpleTokenizer<PropertyImpl>(false, ".") {
-      @Nullable
-      @Override
-      public String getText(PropertyImpl element) {
-        return element.getKey();
-      }
-    };
     if (element instanceof PsiPlainText) return new TextTokenizer();
     return new Tokenizer();
   }
