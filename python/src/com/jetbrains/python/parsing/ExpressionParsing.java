@@ -575,7 +575,7 @@ public class ExpressionParsing extends Parsing {
   private boolean parseLambdaExpression(final boolean oldTest) {
     PsiBuilder.Marker expr = myBuilder.mark();
     myBuilder.advanceLexer();
-    getFunctionParser().parseParameterListContents(PyTokenTypes.COLON, false);
+    getFunctionParser().parseParameterListContents(PyTokenTypes.COLON, false, true);
     boolean parseExpressionResult = oldTest ? parseOldTestExpression() : parseSingleExpression(false);
     if (!parseExpressionResult) {
       myBuilder.error(message("PARSE.expected.expression"));
