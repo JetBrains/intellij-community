@@ -16,7 +16,6 @@
 package com.intellij.cvsSupport2.cvsBrowser;
 
 import com.intellij.CvsBundle;
-import com.intellij.util.Consumer;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
@@ -30,6 +29,7 @@ import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsListenerWithProgres
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.Consumer;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -66,15 +66,42 @@ public abstract class AbstractVcsDataProvider implements RemoteResourceDataProvi
       executeCommand(createDirectoryContentProvider(path), callback, parent, project);
     } else {
       final GetDirectoriesListViaUpdateOperation provider = new GetDirectoriesListViaUpdateOperation(myEnvironment, path);
-      provider.setStepByStepListener(new Consumer<DirectoryContent>() {
+      final MyBufferedConsumer consumer = new MyBufferedConsumer(new Consumer<DirectoryContent>() {
         public void consume(final DirectoryContent directoryContent) {
           final ArrayList<CvsElement> elements = directoryContentToElements(directoryContent, parent, project);
-          if (! elements.isEmpty()) {
+          if (!elements.isEmpty()) {
             callback.appendDirectoryContent(elements);
           }
         }
       });
+      provider.setStepByStepListener(consumer);
       executeCommand(provider, callback, parent, project);
+      consumer.flush();
+    }
+  }
+
+  private static class MyBufferedConsumer implements Consumer<DirectoryContent> {
+    private static final int ourSize = 15;
+    private final DirectoryContent myBuffer;
+    private final Consumer<DirectoryContent> myDelegate;
+
+    private MyBufferedConsumer(final Consumer<DirectoryContent> delegate) {
+      myDelegate = delegate;
+      myBuffer = new DirectoryContent();
+    }
+
+    public void consume(final DirectoryContent directoryContent) {
+      myBuffer.copyDataFrom(directoryContent);
+      if (myBuffer.getTotalSize() >= ourSize) {
+        myDelegate.consume(myBuffer);
+        myBuffer.clear();
+      }
+    }
+
+    public void flush() {
+      if (myBuffer.getTotalSize() > 0) {
+        myDelegate.consume(myBuffer);
+      }
     }
   }
 
