@@ -22,6 +22,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindow;
@@ -509,6 +510,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       false,
       FindSettings.getInstance().getDefaultScopeName()
     );
+    Disposer.register(myDisposable, myScopeChooserCombo);
     JPanel allOptions = new JPanel(new BorderLayout());
     if (myShowScopePanel) {
       JPanel scopePanel = new JPanel(new BorderLayout());
