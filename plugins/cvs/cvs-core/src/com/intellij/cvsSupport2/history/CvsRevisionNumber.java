@@ -69,15 +69,17 @@ public class CvsRevisionNumber implements VcsRevisionNumber {
     String[] stringSubRevisions = revision.split("\\.");
     subRevisions = new int[stringSubRevisions.length];
 
+    int cnt = 0;
     for (int i = 0; i < stringSubRevisions.length; i++) {
       try {
         subRevisions[i] = Integer.parseInt(stringSubRevisions[i]);
+        ++ cnt;
       }
       catch (NumberFormatException ex) {
         subRevisions[i] = 0;
       }
     }
-    return subRevisions;
+    return (cnt == 0) ? new int[0] : subRevisions;
   }
 
   private CvsRevisionNumber(String sringRepresentation, @NotNull int[] subRevisions) {
