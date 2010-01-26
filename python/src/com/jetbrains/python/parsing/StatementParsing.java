@@ -654,11 +654,18 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     assertCurrentToken(PyTokenTypes.WITH_KEYWORD);
     final PsiBuilder.Marker statement = myBuilder.mark();
     myBuilder.advanceLexer();
-    getExpressionParser().parseExpression();
-    myExpectAsKeyword = true;
-    if (myBuilder.getTokenType() == PyTokenTypes.AS_KEYWORD) {
-      myBuilder.advanceLexer();
-      getExpressionParser().parseExpression(true, true); // 'as' is followed by a target
+    while(true) {
+      PsiBuilder.Marker withItem = myBuilder.mark();
+      getExpressionParser().parseExpression();
+      myExpectAsKeyword = true;
+      if (myBuilder.getTokenType() == PyTokenTypes.AS_KEYWORD) {
+        myBuilder.advanceLexer();
+        getExpressionParser().parseSingleExpression(true); // 'as' is followed by a target
+      }
+      withItem.done(PyElementTypes.WITH_ITEM);
+      if (!matchToken(PyTokenTypes.COMMA)) {
+        break;
+      }
     }
     checkMatches(PyTokenTypes.COLON, "colon expected");
     parseSuite();

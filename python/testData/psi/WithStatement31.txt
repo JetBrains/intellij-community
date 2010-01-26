@@ -1,4 +1,4 @@
-PyFile:WithStatement26.py
+PyFile:WithStatement31.py
   PyWithStatement
     PsiElement(Py:WITH_KEYWORD)('with')
     PsiWhiteSpace(' ')
@@ -8,10 +8,20 @@ PyFile:WithStatement26.py
       PsiWhiteSpace(' ')
       PsiElement(Py:AS_KEYWORD)('as')
       PsiWhiteSpace(' ')
-      PyTargetExpression: y
+      PyTargetExpression: a
+        PsiElement(Py:IDENTIFIER)('a')
+    PsiElement(Py:COMMA)(',')
+    PsiWhiteSpace(' ')
+    PyWithItem
+      PyReferenceExpression: y
         PsiElement(Py:IDENTIFIER)('y')
+      PsiWhiteSpace(' ')
+      PsiElement(Py:AS_KEYWORD)('as')
+      PsiWhiteSpace(' ')
+      PyTargetExpression: b
+        PsiElement(Py:IDENTIFIER)('b')
     PsiElement(Py:COLON)(':')
-    PsiWhiteSpace('\n  ')
+    PsiWhiteSpace(' ')
     PyStatementList
       PyPassStatement
         PsiElement(Py:PASS_KEYWORD)('pass')

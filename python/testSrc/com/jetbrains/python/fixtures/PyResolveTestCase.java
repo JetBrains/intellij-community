@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.testFramework.TestDataFile;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -17,7 +18,7 @@ import java.io.IOException;
 public abstract class PyResolveTestCase extends PyLightFixtureTestCase {
   @NonNls protected static final String MARKER = "<ref>";
 
-  protected PsiReference configureByFile(final String filePath) throws Exception {
+  protected PsiReference configureByFile(@TestDataFile final String filePath) throws Exception {
     VirtualFile testDataRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(getTestDataPath()));
     final VirtualFile file = testDataRoot.findFileByRelativePath(filePath);
     assertNotNull(file);
