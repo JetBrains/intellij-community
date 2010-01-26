@@ -353,6 +353,8 @@ public class ExpressionParsing extends Parsing {
       sliceMarker.done(PyElementTypes.EMPTY_EXPRESSION);
       sliceItemStart.done(PyElementTypes.SLICE_ITEM);
       myBuilder.advanceLexer();
+      exprStart.done(PyElementTypes.SLICE_EXPRESSION);
+      return;
     }
     else {
       if (myBuilder.getTokenType() == PyTokenTypes.COLON) {
