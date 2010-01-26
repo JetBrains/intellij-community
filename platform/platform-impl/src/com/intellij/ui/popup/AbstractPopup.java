@@ -862,7 +862,6 @@ public class AbstractPopup implements JBPopup {
     final Window wnd = popup.getWindow();
     assert wnd != null;
 
-    wnd.pack();
     wnd.setLocation(p.getScreenPoint());
   }
 

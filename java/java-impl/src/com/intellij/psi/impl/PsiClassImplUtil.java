@@ -946,16 +946,35 @@ public class PsiClassImplUtil {
     return aClass1 != null && aClass2 != null && field.getManager().areElementsEquivalent(aClass1, aClass2);
   }
 
-  public static boolean isMethodEquivalentTo(PsiMethod method, PsiElement another) {
+  public static boolean isMethodEquivalentTo(PsiMethod method1, PsiElement another) {
     if (!(another instanceof PsiMethod)) return false;
     PsiMethod method2 = (PsiMethod)another;
-    String name1 = method.getName();
+    String name1 = method1.getName();
     if (!another.isValid()) return false;
     String name2 = method2.getName();
     if (!name1.equals(name2)) return false;
-    PsiClass aClass1 = method.getContainingClass();
+    PsiClass aClass1 = method1.getContainingClass();
     PsiClass aClass2 = method2.getContainingClass();
-    return aClass1 != null && aClass2 != null && method.getManager().areElementsEquivalent(aClass1, aClass2) &&
-           MethodSignatureUtil.areSignaturesEqual(method.getSignature(PsiSubstitutor.EMPTY), method2.getSignature(PsiSubstitutor.EMPTY));
+    PsiManager manager = method1.getManager();
+    if (!(aClass1 != null && aClass2 != null && manager.areElementsEquivalent(aClass1, aClass2))) return false;
+
+    PsiParameter[] parameters1 = method1.getParameterList().getParameters();
+    PsiParameter[] parameters2 = method2.getParameterList().getParameters();
+    if (parameters1.length != parameters2.length) return false;
+    for (int i = 0; i < parameters1.length; i++) {
+      PsiParameter parameter1 = parameters1[i];
+      PsiParameter parameter2 = parameters2[i];
+      PsiType type1 = parameter1.getType();
+      PsiType type2 = parameter2.getType();
+      if (!(type1 instanceof PsiClassType) || !(type2 instanceof PsiClassType)) {
+        if (!type1.equals(type2)) return false;
+      }
+      else {
+        PsiClass class1 = ((PsiClassType)type1).resolve();
+        PsiClass class2 = ((PsiClassType)type2).resolve();
+        if (!manager.areElementsEquivalent(class1, class2)) return false;
+      }
+    }
+    return true;
   }
 }

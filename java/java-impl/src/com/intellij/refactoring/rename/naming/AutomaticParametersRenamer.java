@@ -20,6 +20,7 @@
  */
 package com.intellij.refactoring.rename.naming;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
@@ -34,8 +35,10 @@ public class AutomaticParametersRenamer extends AutomaticRenamer {
 
       for (PsiMethod overrider : OverridingMethodsSearch.search(method)) {
         final PsiParameter inheritedParam = overrider.getParameterList().getParameters()[parameterIndex];
-        myElements.add(inheritedParam);
-        suggestAllNames(inheritedParam.getName(), newParamName);
+        if (!Comparing.strEqual(inheritedParam.getName(), newParamName)) {
+          myElements.add(inheritedParam);
+          suggestAllNames(inheritedParam.getName(), newParamName);
+        }
       }
     }
   }

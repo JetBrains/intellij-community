@@ -16,6 +16,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.idea.Bombed;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -37,8 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
-import java.util.Calendar;
-import java.util.Date;
+import java.util.*;
 
 /**
  * @author yole
@@ -199,5 +199,77 @@ public class PlatformTestUtil {
 
   private static boolean isItMe(final String who) {
     return Comparing.equal(who, SystemProperties.getUserName(), false);
+  }
+
+  public static StringBuffer print(AbstractTreeStructure structure,
+                                   Object node,
+                                   int currentLevel,
+                                   Comparator comparator,
+                                   int maxRowCount,
+                                   char paddingChar) {
+    StringBuffer buffer = new StringBuffer();
+    doPrint(buffer, currentLevel, node, structure, comparator, maxRowCount, 0, paddingChar);
+    return buffer;
+  }
+
+  private static int doPrint(StringBuffer buffer,
+                             int currentLevel,
+                             Object node,
+                             AbstractTreeStructure structure,
+                             Comparator comparator,
+                             int maxRowCount,
+                             int currentLine,
+                             char paddingChar) {
+    if (currentLine >= maxRowCount && maxRowCount != -1) return currentLine;
+
+    StringUtil.repeatSymbol(buffer, paddingChar, currentLevel);
+    buffer.append(toString(node)).append("\n");
+    currentLine++;
+    Object[] children = structure.getChildElements(node);
+
+    if (comparator != null) {
+      ArrayList<?> list = new ArrayList<Object>(Arrays.asList(children));
+      Collections.sort(list, comparator);
+      children = list.toArray(new Object[list.size()]);
+    }
+    for (Object child : children) {
+      currentLine = doPrint(buffer, currentLevel + 1, child, structure, comparator, maxRowCount, currentLine, paddingChar);
+    }
+
+    return currentLine;
+  }
+
+  public static String print(Object[] objects) {
+    return print(Arrays.asList(objects));
+  }
+
+  public static String print(Collection c) {
+    StringBuilder result = new StringBuilder();
+    for (Iterator iterator = c.iterator(); iterator.hasNext();) {
+      Object each = iterator.next();
+      result.append(toString(each));
+      if (iterator.hasNext()) {
+        result.append("\n");
+      }
+    }
+
+    return result.toString();
+  }
+
+  public static String print(ListModel model) {
+    StringBuilder result = new StringBuilder();
+    for (int i = 0; i < model.getSize(); i++) {
+      result.append(toString(model.getElementAt(i)));
+      result.append("\n");
+    }
+    return result.toString();
+  }
+
+  public static String print(JTree tree) {
+    return print(tree, false);
+  }
+
+  public static void assertTreeStructureEquals(final AbstractTreeStructure treeStructure, final String expected) {
+    Assert.assertEquals(expected, print(treeStructure, treeStructure.getRootElement(), 0, null, -1, ' ').toString());
   }
 }

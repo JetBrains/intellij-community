@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,31 +16,41 @@
 package com.intellij.spellchecker.tokenizer;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.properties.psi.impl.PropertyImpl;
+import com.intellij.lang.properties.psi.impl.PropertyValueImpl;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.PsiPlainText;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlText;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
- *
  * @author shkate@jetbrains.com
+ * @author Konstantin Bulenkov
  */
 public class SpellcheckingStrategy {
-
-
   public static final ExtensionPointName<SpellcheckingStrategy> EP_NAME = ExtensionPointName.create("com.intellij.spellchecker.support");
 
   @NotNull
   public Tokenizer getTokenizer(PsiElement element) {
     if (element instanceof PsiNameIdentifierOwner) return new PsiIdentifierOwnerTokenizer();
     if (element instanceof PsiComment) return new CommentTokenizer();
-    if (element instanceof XmlAttributeValue) return new XmlAttributeTokenizer();
-    if (element instanceof XmlText) return new XmlTextTokenizer();
+    if (element instanceof XmlAttributeValue) return new SimpleTokenizer();
+    if (element instanceof XmlText) return new SimpleTokenizer();
+    if (element instanceof PropertyValueImpl) return new SimpleTokenizer();
+    if (element instanceof PropertyImpl) return new SimpleTokenizer<PropertyImpl>(false, ".") {
+      @Nullable
+      @Override
+      public String getText(PropertyImpl element) {
+        return element.getKey();
+      }
+    };
     if (element instanceof PsiPlainText) return new TextTokenizer();
-
     return new Tokenizer();
   }
 

@@ -24,7 +24,7 @@ import java.util.Map;
 /**
 * @author cdr
 */ // rehash map on each PSI modification since SmartPsiPointer's hashCode() and equals() are changed
-class DuplicateMap {
+public class DuplicateMap {
   private static final TObjectHashingStrategy<SliceUsage> USAGEINFO_EQUALITY = new TObjectHashingStrategy<SliceUsage>() {
     public int computeHashCode(SliceUsage object) {
       UsageInfo info = object.getUsageInfo();
