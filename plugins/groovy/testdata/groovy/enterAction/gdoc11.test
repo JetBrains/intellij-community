@@ -1,0 +1,9 @@
+/**<caret>
+void foo(int x, int y){}
+-----
+/**
+ * <caret>
+ * @param x
+ * @param y
+ */
+void foo(int x, int y){}

@@ -15,15 +15,20 @@
  */
 package org.jetbrains.plugins.groovy.lang.documentation;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.editorActions.CodeDocumentationUtil;
+import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
+import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
@@ -32,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -53,7 +59,6 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider {
   @NonNls private static final String PARAM_TAG = "@param";
   @NonNls private static final String RETURN_TAG = "@return";
   @NonNls private static final String THROWS_TAG = "@throws";
-  @NonNls public static final String HTML_EXTENSION = ".html";
 
   @Nullable
   public String getQuickNavigateInfo(PsiElement element) {
@@ -213,13 +218,54 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider {
 
   @Nullable
   public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
-    return null;
+    return JavaDocumentationProvider.getExternalJavaDocUrl(element);
   }
 
   @Nullable
   public String generateDoc(PsiElement element, PsiElement originalElement) {
-    //todo
-    return null;
+    if (element instanceof GrReferenceExpression) {
+      return getMethodCandidateInfo((GrReferenceExpression)element);
+    }
+
+    if (element instanceof GrGdkMethod) {
+      element = ((GrGdkMethod)element).getStaticMethod();
+    }
+    
+    final GrDocComment doc = PsiTreeUtil.getParentOfType(originalElement, GrDocComment.class);
+    if (doc != null) {
+      element = GrDocCommentUtil.findDocOwner(doc);
+    }
+
+    return JavaDocumentationProvider.generateExternalJavadoc(element);
+  }
+
+  private static String getMethodCandidateInfo(GrReferenceExpression expr) {
+    final GroovyResolveResult[] candidates = expr.multiResolve(false);
+    final String text = expr.getText();
+    if (candidates.length > 0) {
+      @NonNls final StringBuffer sb = new StringBuffer();
+      for (final GroovyResolveResult candidate : candidates) {
+        final PsiElement element = candidate.getElement();
+        if (!(element instanceof PsiMethod)) {
+          continue;
+        }
+        final String str = PsiFormatUtil.formatMethod((PsiMethod)element, candidate.getSubstitutor(),
+                                                      PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_PARAMETERS,
+                                                      PsiFormatUtil.SHOW_TYPE);
+        createElementLink(sb, element, str);
+      }
+      return CodeInsightBundle.message("javadoc.candiates", text, sb);
+    }
+    return CodeInsightBundle.message("javadoc.candidates.not.found", text);
+  }
+
+  private static void createElementLink(@NonNls final StringBuffer sb, final PsiElement element, final String str) {
+    sb.append("&nbsp;&nbsp;<a href=\"psi_element://");
+    sb.append(JavaDocUtil.getReferenceText(element.getProject(), element));
+    sb.append("\">");
+    sb.append(str);
+    sb.append("</a>");
+    sb.append("<br>");
   }
 
   @Nullable
@@ -229,7 +275,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider {
 
   @Nullable
   public PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
-    return null;
+    return JavaDocUtil.findReferenceTarget(psiManager, link, context);
   }
 
   public PsiComment findExistingDocComment(PsiComment contextElement) {
