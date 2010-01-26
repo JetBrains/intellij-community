@@ -16,15 +16,16 @@
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi.api;
 
+import com.intellij.psi.PsiDocCommentOwner;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
  * @author Maxim.Medvedev
  */
-public interface GrDocCommentOwner extends GroovyPsiElement{
+public interface GrDocCommentOwner extends GroovyPsiElement, PsiDocCommentOwner {
   @Nullable
-  GrDocComment getGrDocComment();
+  GrDocComment getDocComment();
   
   boolean isDeprecated();  
 }

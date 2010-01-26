@@ -236,7 +236,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider {
     if (contextElement instanceof GrDocComment) {
       final GrDocCommentOwner owner = GrDocCommentUtil.findDocOwner((GrDocComment)contextElement);
       if (owner != null) {
-        return owner.getGrDocComment();
+        return owner.getDocComment();
       }
     }
     return null;

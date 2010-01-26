@@ -18,10 +18,19 @@ package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocParameterReference;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTagValueToken;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+
+import java.util.List;
 
 /**
  * @author ilyas
@@ -40,15 +49,39 @@ public class GrDocTagImpl extends GroovyDocPsiElementImpl implements GrDocTag {
     return "GroovyDocTag";
   }
 
+  @NotNull
   public String getName() {
-    return getNameIdentifier().getText();
+    return getNameElement().getText();
   }
 
   @NotNull
-  public PsiElement getNameIdentifier() {
+  public PsiElement getNameElement() {
     PsiElement element = findChildByType(GroovyDocTokenTypes.mGDOC_TAG_NAME);
     assert element != null;
     return element;
   }
 
+
+  public GrDocComment getContainingComment() {
+    return (GrDocComment)getParent();
+  }
+
+  public GrDocTagValueToken getValueElement() {
+    final GrDocParameterReference reference = findChildByClass(GrDocParameterReference.class);
+    if (reference == null) return null;
+    return reference.getReferenceNameElement();
+  }
+
+  public PsiElement[] getDataElements() {
+    final List<PsiElement> list = findChildrenByType(GroovyElementTypes.mGDOC_COMMENT_DATA);
+    return list.toArray(new PsiElement[list.size()]);
+  }
+
+  public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
+    final PsiElement nameElement = getNameElement();
+    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
+    final GrDocComment comment = factory.createDocCommentFromText("/** @" + name + "*/");
+    nameElement.replace(comment.getTags()[0].getNameElement());
+    return this;
+  }
 }

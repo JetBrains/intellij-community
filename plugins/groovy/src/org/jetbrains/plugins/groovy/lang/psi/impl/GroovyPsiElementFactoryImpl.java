@@ -160,7 +160,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   public GrEnumConstant createEnumConstantFromText(String text) {
     GroovyFile file = (GroovyFile)createGroovyFile("enum E{" + text + "}");
     final GrEnumTypeDefinition enumClass = (GrEnumTypeDefinition)file.getClasses()[0];
-    return enumClass.getEnumConstants()[0];    
+    return enumClass.getEnumConstants()[0];
   }
 
   public GrVariableDeclaration createFieldDeclaration(String[] modifiers, String identifier, GrExpression initializer, PsiType type) {
@@ -516,5 +516,12 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     }
 
     return createMethodFromText(modifier, name, type, paramTypes, QuickfixUtil.getMethodArgumentsNames(myProject, res.toArray(PsiType.EMPTY_ARRAY)), null);
+  }
+
+  public GrDocComment createDocCommentFromText(String text) {
+    StringBuilder builder = new StringBuilder();
+    builder.append(text);
+    builder.append(" def foo(){}");
+    return (GrDocComment)createGroovyFile(text+"def foo(){}").getFirstChild();
   }
 }

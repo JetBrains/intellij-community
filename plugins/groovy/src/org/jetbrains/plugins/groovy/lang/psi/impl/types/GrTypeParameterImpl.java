@@ -20,7 +20,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.InheritanceImplUtil;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -333,11 +332,7 @@ public class GrTypeParameterImpl extends GroovyPsiElementImpl implements GrTypeP
   }
 
   @Nullable
-  public PsiDocComment getDocComment() {
-    return null;
-  }
-
-  public GrDocComment getGrDocComment() {
+  public GrDocComment getDocComment() {
     return null;
   }
 
