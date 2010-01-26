@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LazyParseablePsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -90,7 +91,7 @@ public class GrDocCommentImpl extends LazyParseablePsiElement implements GroovyD
     if (!getText().contains(name)) return GrDocTag.EMPTY_ARRAY;
     ArrayList<GrDocTag> list = new ArrayList<GrDocTag>();
     for (PsiElement e = getFirstChild(); e != null; e = e.getNextSibling()) {
-      if (e instanceof GrDocTag && ((GrDocTag)e).getName().equals(name)) {
+      if (e instanceof GrDocTag && CharArrayUtil.regionMatches(((GrDocTag)e).getName(), 1, name)) {
         list.add((GrDocTag)e);
       }
     }

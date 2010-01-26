@@ -18,23 +18,29 @@ package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocInlinedTag;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTagValueToken;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 
 import java.util.List;
 
+import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_COMMENT_DATA;
+import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_TAG_VALUE_TOKEN;
+import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes.*;
+
 /**
  * @author ilyas
  */
 public class GrDocInlinedTagImpl extends GroovyDocPsiElementImpl implements GrDocInlinedTag {
+  private static final TokenSet VALUE_BIT_SET = TokenSet
+    .create(mGDOC_TAG_VALUE_TOKEN, GDOC_METHOD_REF, GDOC_FIELD_REF, GDOC_PARAM_REF, GDOC_REFERENCE_ELEMENT, mGDOC_COMMENT_DATA,
+            GDOC_INLINED_TAG);
 
   public GrDocInlinedTagImpl(@NotNull ASTNode node) {
     super(node);
@@ -55,7 +61,7 @@ public class GrDocInlinedTagImpl extends GroovyDocPsiElementImpl implements GrDo
 
   @NotNull
   public PsiElement getNameElement() {
-    PsiElement element = findChildByType(GroovyDocTokenTypes.mGDOC_TAG_NAME);
+    PsiElement element = findChildByType(mGDOC_TAG_NAME);
     assert element != null;
     return element;
   }
@@ -69,7 +75,7 @@ public class GrDocInlinedTagImpl extends GroovyDocPsiElementImpl implements GrDo
   }
 
   public PsiElement[] getDataElements() {
-    final List<PsiElement> list = findChildrenByType(GroovyElementTypes.mGDOC_COMMENT_DATA);
+    final List<PsiElement> list = findChildrenByType(VALUE_BIT_SET);
     return list.toArray(new PsiElement[list.size()]);
   }
 
