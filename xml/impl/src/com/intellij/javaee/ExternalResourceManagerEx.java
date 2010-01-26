@@ -50,7 +50,7 @@ public abstract class ExternalResourceManagerEx extends ExternalResourceManager 
   public abstract void removeExternalResourceListener(ExternalResourceListener listener);
 
   @Nullable
-  public abstract String getUserResource(Project project, String url, String version);
+  public abstract String getUserResourse(Project project, String url, String version);
   @Nullable
   public abstract String getStdResource(String url, String version);
 }

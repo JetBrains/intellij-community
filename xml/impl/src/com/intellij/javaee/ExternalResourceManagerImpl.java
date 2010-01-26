@@ -142,7 +142,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
 
   @Override
   @Nullable
-  public String getUserResource(Project project, String url, String version) {
+  public String getUserResourse(Project project, String url, String version) {
     String resourse = getProjectResources(project).getUserResourse(url, version);
     return resourse == null ? getUserResourse(url, version) : resourse;
   }
