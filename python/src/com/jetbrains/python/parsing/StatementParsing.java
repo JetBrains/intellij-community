@@ -7,6 +7,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.psi.PyElementType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +30,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   @NonNls protected static final String TOK_NONE = "None";
   @NonNls protected static final String TOK_TRUE = "True";
   @NonNls protected static final String TOK_FALSE = "False";
+  @NonNls protected static final String TOK_NONLOCAL = "nonlocal";
   @NonNls protected static final String TOK_EXEC = "exec";
 
   protected enum Phase {NONE, FROM, FUTURE, IMPORT} // 'from __future__ import' phase
@@ -123,7 +125,11 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       return;
     }
     if (firstToken == PyTokenTypes.GLOBAL_KEYWORD) {
-      parseGlobalStatement(inSuite);
+      parseNameDefiningStatement(inSuite, PyElementTypes.GLOBAL_STATEMENT);
+      return;
+    }
+    if (firstToken == PyTokenTypes.NONLOCAL_KEYWORD) {
+      parseNameDefiningStatement(inSuite, PyElementTypes.NONLOCAL_STATEMENT);
       return;
     }
     if (firstToken == PyTokenTypes.IMPORT_KEYWORD) {
@@ -486,8 +492,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     return true;
   }
 
-  private void parseGlobalStatement(boolean inSuite) {
-    assertCurrentToken(PyTokenTypes.GLOBAL_KEYWORD);
+  private void parseNameDefiningStatement(boolean inSuite, final PyElementType elementType) {
     final PsiBuilder.Marker globalStatement = myBuilder.mark();
     myBuilder.advanceLexer();
     parseIdentifier(PyElementTypes.REFERENCE_EXPRESSION);
@@ -496,7 +501,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       parseIdentifier(PyElementTypes.REFERENCE_EXPRESSION);
     }
     checkEndOfStatement(inSuite);
-    globalStatement.done(PyElementTypes.GLOBAL_STATEMENT);
+    globalStatement.done(elementType);
   }
 
   private void parseExecStatement(boolean inSuite) {
@@ -760,6 +765,9 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       }
       if (isWordAtPosition(text, start, end, TOK_FALSE)) {
         return PyTokenTypes.FALSE_KEYWORD;
+      }
+      if (isWordAtPosition(text, start, end, TOK_NONLOCAL)) {
+        return PyTokenTypes.NONLOCAL_KEYWORD;
       }
     }
     else if (!myContext.getLanguageLevel().isPy3K() && source == PyTokenTypes.IDENTIFIER) {
