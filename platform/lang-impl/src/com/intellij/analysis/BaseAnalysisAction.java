@@ -50,8 +50,7 @@ public abstract class BaseAnalysisAction extends AnAction {
 
   public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
-    presentation.setEnabled(
-      getInspectionScope(event.getDataContext()) != null);
+    presentation.setEnabled(getInspectionScope(event.getDataContext()) != null);
   }
 
   public void actionPerformed(AnActionEvent e) {

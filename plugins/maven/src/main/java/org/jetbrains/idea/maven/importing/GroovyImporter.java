@@ -8,9 +8,9 @@ import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import java.util.List;
 import java.util.Map;
 
-public class GroovyImporter extends MavenImporter {
-  public GroovyImporter() {
-    super("org.codehaus.groovy.maven", "gmaven-plugin");
+public abstract class GroovyImporter extends MavenImporter {
+  public GroovyImporter(String pluginGroupID, String pluginArtifactID) {
+    super(pluginGroupID, pluginArtifactID);
   }
 
   public boolean isApplicable(MavenProject project) {

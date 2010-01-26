@@ -15,16 +15,13 @@
  */
 package com.intellij.slicer;
 
-import com.intellij.analysis.AnalysisScope;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -32,18 +29,26 @@ import java.util.List;
 /**
  * @author cdr
  */
-public abstract class SliceRootNode extends SliceNode {
+public class SliceRootNode extends SliceNode {
   private final SliceUsage myRootUsage;
 
-  protected SliceRootNode(@NotNull Project project, @NotNull DuplicateMap targetEqualUsages,
-                          AnalysisScope scope, final SliceUsage rootUsage) {
-    super(project, new SliceUsage(rootUsage.getElement().getContainingFile(), scope), targetEqualUsages, Collections.<PsiElement>emptyList());
+  public SliceRootNode(@NotNull Project project, @NotNull DuplicateMap targetEqualUsages, final SliceUsage rootUsage) {
+    super(project, new SliceUsage(rootUsage.getElement().getContainingFile(), rootUsage.params), targetEqualUsages);
     myRootUsage = rootUsage;
   }
 
   void switchToAllLeavesTogether(SliceUsage rootUsage) {
-    AbstractTreeNode node = new SliceNode(getProject(), rootUsage, targetEqualUsages, getTreeBuilder(), getLeafExpressions());
+    SliceNode node = new SliceNode(getProject(), rootUsage, targetEqualUsages);
     myCachedChildren = Collections.singletonList(node);
+  }
+
+  @Override
+  SliceRootNode copy() {
+    SliceUsage newUsage = getValue().copy();
+    SliceRootNode newNode = new SliceRootNode(getProject(), new DuplicateMap(), newUsage);
+    newNode.initialized = initialized;
+    newNode.duplicate = duplicate;
+    return newNode;
   }
 
   @NotNull
@@ -84,13 +89,7 @@ public abstract class SliceRootNode extends SliceNode {
                                     boolean hasFocus) {
   }
 
-  public void restructureByLeaves(Collection<PsiElement> leafExpressions) {
-    assert myCachedChildren.size() == 1;
-    SliceNode root = (SliceNode)myCachedChildren.get(0);
-    myCachedChildren = new ArrayList<AbstractTreeNode>(leafExpressions.size());
-    for (PsiElement leaf : leafExpressions) {
-      SliceLeafValueRootNode node = new SliceLeafValueRootNode(getProject(), leaf, root);
-      myCachedChildren.add(node);
-    }
+  public SliceUsage getRootUsage() {
+    return myRootUsage;
   }
 }

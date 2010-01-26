@@ -22,7 +22,7 @@ import com.intellij.codeInsight.actions.CodeInsightAction;
  * @author cdr
  */
 public class SliceForwardAction extends CodeInsightAction{
-  private final SliceHandler myHandler = new SliceHandler(false);
+  private final SliceHandler myHandler = new SliceForwardHandler();
 
   protected CodeInsightActionHandler getHandler() {
     return myHandler;

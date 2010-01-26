@@ -16,66 +16,28 @@
 package com.intellij.slicer;
 
 import com.intellij.ide.projectView.PresentationData;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageInfo2UsageAdapter;
-import com.intellij.usages.impl.NullUsage;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author cdr
  */
-public class SliceLeafValueRootNode extends AbstractTreeNode<Usage> implements MyColoredTreeCellRenderer {
-  final List<SliceNode> myCachedChildren;
+public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCellRenderer {
+  protected final List<SliceNode> myCachedChildren;
 
-  protected SliceLeafValueRootNode(@NotNull Project project, PsiElement leafExpression, SliceNode root) {
-    super(project, leafExpression == PsiUtilBase.NULL_PSI_ELEMENT ? NullUsage.INSTANCE : new UsageInfo2UsageAdapter(new UsageInfo(leafExpression)));
-
-    Set<PsiElement> withLeaves = ContainerUtil.singleton(leafExpression, SliceLeafAnalyzer.LEAF_ELEMENT_EQUALITY);
-    SliceNode node = root.copy(withLeaves);
-    myCachedChildren = Collections.singletonList(node);
-    restructureChildrenByLeaf(node, root, leafExpression, withLeaves, null);
-  }
-
-  private static void restructureChildrenByLeaf(SliceNode node, SliceNode oldRoot, @Nullable PsiElement leafExpression, Set<PsiElement> withLeaves,
-                                                SliceNode parent) {
-    List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
-    node.myCachedChildren = children;
-    assert oldRoot.getLeafExpressions().contains(leafExpression);
-    boolean iAmHereToStay = false;
-    for (AbstractTreeNode cachedChild : oldRoot.myCachedChildren) {
-      SliceNode cachedSliceNode = (SliceNode)cachedChild;
-      if (cachedSliceNode.getDuplicate() != null) {
-        // put entire (potentially unbounded) subtree here
-        //children.add(cachedSliceNode.copy(withLeaves));
-      }
-      else if (cachedSliceNode.getLeafExpressions().contains(leafExpression)) {
-        SliceNode newNode = cachedSliceNode.copy(withLeaves);
-        children.add(newNode);
-        PsiElement element = newNode.getValue().getElement();
-        if (element != null && element.getManager().areElementsEquivalent(element, leafExpression)) {
-          iAmHereToStay = true;
-        }
-        if (!cachedSliceNode.myCachedChildren.isEmpty()) {
-          restructureChildrenByLeaf(newNode, cachedSliceNode, leafExpression, withLeaves, node);
-        }
-      }
-    }
-
-    if (!iAmHereToStay && children.isEmpty() && parent != null) {
-      parent.myCachedChildren.remove(node);
-    }
+  public SliceLeafValueRootNode(@NotNull Project project, PsiElement leafExpression, SliceNode root, List<SliceNode> children,
+                                SliceAnalysisParams params) {
+    super(project, new SliceUsage(leafExpression, params), root.targetEqualUsages);
+    myCachedChildren = children;
   }
 
   @NotNull

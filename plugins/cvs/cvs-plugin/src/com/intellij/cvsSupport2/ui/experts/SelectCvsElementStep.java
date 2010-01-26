@@ -77,18 +77,24 @@ public class SelectCvsElementStep extends WizardStep {
           errors.set(Boolean.TRUE);
         }
       });
-    final boolean logged = performer.loginAll(
-      new ModalityContextImpl(ModalityState.stateForComponent(mySelectCVSConfigurationStep.getComponent()), false), false);
+    /*final boolean logged = performer.loginAll(
+      new ModalityContextImpl(ModalityState.stateForComponent(mySelectCVSConfigurationStep.getComponent()), false), false);*/
+    final boolean logged = performer.loginAll(new ModalityContextImpl(ModalityState.current(), false), false);
     if ((! logged) || (! errors.isNull())) {
       return false;
     }
     return true;
   }
 
+  @Override
+  public boolean preNextCheck() {
+    CvsRootConfiguration selectedConfiguration = mySelectCVSConfigurationStep.getSelectedConfiguration();
+    return isLogged(selectedConfiguration);
+  }
+
   public boolean setActive() {
     CvsRootConfiguration selectedConfiguration =
       mySelectCVSConfigurationStep.getSelectedConfiguration();
-    if (! isLogged(selectedConfiguration)) return false;
 
     if (myCvsTree == null || !Comparing.equal(myConfiguration, selectedConfiguration)) {
       myConfiguration = selectedConfiguration;

@@ -17,131 +17,246 @@ package com.intellij.slicer;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.AbstractTreeStructure;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaReference;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.WalkingState;
 import com.intellij.psi.impl.source.tree.SourceUtil;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FactoryMap;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
+import java.util.*;
 
 /**
  * @author cdr
  */
 public class SliceLeafAnalyzer {
   public static final TObjectHashingStrategy<PsiElement> LEAF_ELEMENT_EQUALITY = new TObjectHashingStrategy<PsiElement>() {
-    public int computeHashCode(PsiElement element) {
+    public int computeHashCode(final PsiElement element) {
       if (element == null) return 0;
-      PsiElement o = elementToCompare(element);
-      String text = o instanceof PsiNamedElement ? ((PsiNamedElement)o).getName() : SourceUtil.getTextSkipWhiteSpaceAndComments(o.getNode());
+      String text = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+        public String compute() {
+          PsiElement elementToCompare = element;
+          if (element instanceof PsiJavaReference) {
+            PsiElement resolved = ((PsiJavaReference)element).resolve();
+            if (resolved != null) {
+              elementToCompare = resolved;
+            }
+          }
+          return elementToCompare instanceof PsiNamedElement ?
+                 ((PsiNamedElement)elementToCompare).getName() : SourceUtil.getTextSkipWhiteSpaceAndComments(elementToCompare.getNode());
+        }
+      });
       return Comparing.hashcode(text);
     }
 
-    @NotNull
-    private PsiElement elementToCompare(PsiElement element) {
-      if (element instanceof PsiJavaReference) {
-        PsiElement resolved = ((PsiJavaReference)element).resolve();
-        if (resolved != null) return resolved;
-      }
-      return element;
-    }
-
-    public boolean equals(PsiElement o1, PsiElement o2) {
-      return o1 != null && o2 != null && PsiEquivalenceUtil.areElementsEquivalent(o1, o2);
+    public boolean equals(final PsiElement o1, final PsiElement o2) {
+      return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+        public Boolean compute() {
+          return o1 != null && o2 != null && PsiEquivalenceUtil.areElementsEquivalent(o1, o2);
+        }
+      });
     }
   };
 
-  private static class SliceNodeGuide implements WalkingState.TreeGuide<SliceNode> {
-    public SliceNode getNextSibling(SliceNode element) {
-      return element.getNext();
+  static SliceNode filterTree(SliceNode oldRoot, NullableFunction<SliceNode, SliceNode> filter, PairProcessor<SliceNode, List<SliceNode>> postProcessor){
+    SliceNode filtered = filter.fun(oldRoot);
+    if (filtered == null) return null;
+
+    List<SliceNode> childrenFiltered = new ArrayList<SliceNode>();
+    if (oldRoot.myCachedChildren != null) {
+      for (SliceNode child : oldRoot.myCachedChildren) {
+        SliceNode childFiltered = filterTree(child, filter,postProcessor);
+        if (childFiltered != null) {
+          childrenFiltered.add(childFiltered);
+        }
+      }
+    }
+    boolean success = postProcessor == null || postProcessor.process(filtered, childrenFiltered);
+    if (!success) return null;
+    filtered.myCachedChildren = new ArrayList<SliceNode>(childrenFiltered);
+    return filtered;
+  }
+
+  private static void groupByValues(Collection<PsiElement> leaves, SliceRootNode oldRoot, final Map<SliceNode, Collection<PsiElement>> map) {
+    assert oldRoot.myCachedChildren.size() == 1;
+    SliceRootNode root = createTreeGroupedByValues(leaves, oldRoot, map);
+
+    SliceNode oldRootStart = oldRoot.myCachedChildren.get(0);
+    SliceUsage rootUsage = oldRootStart.getValue();
+    SliceManager.getInstance(root.getProject()).createToolWindow(true, root, true, SliceManager.getElementDescription(null, rootUsage.getElement(), " Grouped by Value") );
+  }
+
+  public static SliceRootNode createTreeGroupedByValues(Collection<PsiElement> leaves, SliceRootNode oldRoot, final Map<SliceNode, Collection<PsiElement>> map) {
+    SliceNode oldRootStart = oldRoot.myCachedChildren.get(0);
+    SliceRootNode root = oldRoot.copy();
+    root.setChanged();
+    root.targetEqualUsages.clear();
+    root.myCachedChildren = new ArrayList<SliceNode>(leaves.size());
+
+    for (final PsiElement leafExpression : leaves) {
+      SliceNode newNode = filterTree(oldRootStart, new NullableFunction<SliceNode, SliceNode>() {
+        public SliceNode fun(SliceNode oldNode) {
+          if (oldNode.getDuplicate() != null) return null;
+          if (!node(oldNode, map).contains(leafExpression)) return null;
+
+          return oldNode.copy();
+        }
+      }, new PairProcessor<SliceNode, List<SliceNode>>() {
+        public boolean process(SliceNode node, List<SliceNode> children) {
+          if (!children.isEmpty()) return true;
+          PsiElement element = node.getValue().getElement();
+          if (element == null) return false;
+          return element.getManager().areElementsEquivalent(element, leafExpression); // leaf can be there only if it's filtering expression
+        }
+      });
+
+      SliceLeafValueRootNode lvNode = new SliceLeafValueRootNode(root.getProject(), leafExpression, root, Collections.singletonList(newNode),
+                                                                 oldRoot.getValue().params);
+      root.myCachedChildren.add(lvNode);
+    }
+    return root;
+  }
+
+  public static void startAnalyzeValues(final AbstractTreeStructure treeStructure, final Runnable finish) {
+    final SliceRootNode root = (SliceRootNode)treeStructure.getRootElement();
+    final Ref<Collection<PsiElement>> leafExpressions = Ref.create(null);
+
+    final Map<SliceNode, Collection<PsiElement>> map = createMap();
+
+    ProgressManager.getInstance().run(new Task.Backgroundable(root.getProject(), "Expanding all nodes... (may very well take the whole day)", true) {
+      public void run(@NotNull final ProgressIndicator indicator) {
+        Collection<PsiElement> l = calcLeafExpressions(root, treeStructure, map);
+        leafExpressions.set(l);
+      }
+
+      @Override
+      public void onCancel() {
+        finish.run();
+      }
+
+      @Override
+      public void onSuccess() {
+        try {
+          Collection<PsiElement> leaves = leafExpressions.get();
+          if (leaves == null) return;  //cancelled
+
+          if (leaves.isEmpty()) {
+            Messages.showErrorDialog("Unable to find leaf expressions to group by", "Cannot group");
+            return;
+          }
+
+          groupByValues(leaves, root, map);
+        }
+        finally {
+          finish.run();
+        }
+      }
+    });
+
+  }
+
+  public static Map<SliceNode, Collection<PsiElement>> createMap() {
+    final Map<SliceNode, Collection<PsiElement>> map = new FactoryMap<SliceNode, Collection<PsiElement>>() {
+      @Override
+      protected Map<SliceNode, Collection<PsiElement>> createMap() {
+        return new THashMap<SliceNode, Collection<PsiElement>>(TObjectHashingStrategy.IDENTITY);
+      }
+
+      @Override
+      protected Collection<PsiElement> create(SliceNode key) {
+        return new THashSet<PsiElement>(SliceLeafAnalyzer.LEAF_ELEMENT_EQUALITY);
+      }
+    };
+    return map;
+  }
+
+  static class SliceNodeGuide implements WalkingState.TreeGuide<SliceNode> {
+    private final AbstractTreeStructure myTreeStructure;
+    // use tree strucutre because it's setting 'parent' fields in the process
+
+    SliceNodeGuide(@NotNull AbstractTreeStructure treeStructure) {
+      myTreeStructure = treeStructure;
     }
 
-    public SliceNode getPrevSibling(SliceNode element) {
-      return element.getPrev();
+    public SliceNode getNextSibling(@NotNull SliceNode element) {
+      AbstractTreeNode parent = element.getParent();
+      if (parent == null) return null;
+
+      return element.getNext((List)parent.getChildren());
     }
 
-    public SliceNode getFirstChild(SliceNode element) {
-      Object[] children = element.getTreeBuilder().getTreeStructure().getChildElements(element);
+    public SliceNode getPrevSibling(@NotNull SliceNode element) {
+      AbstractTreeNode parent = element.getParent();
+      if (parent == null) return null;
+      return element.getPrev((List)parent.getChildren());
+    }
+
+    public SliceNode getFirstChild(@NotNull SliceNode element) {
+      Object[] children = myTreeStructure.getChildElements(element);
       return children.length == 0 ? null : (SliceNode)children[0];
     }
 
-    public SliceNode getParent(SliceNode element) {
+    public SliceNode getParent(@NotNull SliceNode element) {
       AbstractTreeNode parent = element.getParent();
       return parent instanceof SliceNode ? (SliceNode)parent : null;
     }
-    private static final SliceNodeGuide instance = new SliceNodeGuide();
+  }
+
+  private static Collection<PsiElement> node(SliceNode node, Map<SliceNode, Collection<PsiElement>> map) {
+    return map.get(node);
   }
 
   @NotNull
-  public static Collection<PsiElement> calcLeafExpressions(@NotNull final SliceNode root) {
-    WalkingState<SliceNode> walkingState = new WalkingState<SliceNode>(SliceNodeGuide.instance) {
+  public static Collection<PsiElement> calcLeafExpressions(@NotNull final SliceNode root, AbstractTreeStructure treeStructure,
+                                                           final Map<SliceNode, Collection<PsiElement>> map) {
+    final SliceNodeGuide guide = new SliceNodeGuide(treeStructure);
+    WalkingState<SliceNode> walkingState = new WalkingState<SliceNode>(guide) {
       @Override
-      public void visit(SliceNode element) {
+      public void visit(@NotNull SliceNode element) {
         element.update(null);
-        element.getLeafExpressions().clear();
+        node(element, map).clear();
         SliceNode duplicate = element.getDuplicate();
         if (duplicate != null) {
-          element.addLeafExpressions(duplicate.getLeafExpressions());
+          node(element, map).addAll(node(duplicate, map));
         }
         else {
           SliceUsage sliceUsage = element.getValue();
 
-          Object[] children = element.getTreeBuilder().getTreeStructure().getChildElements(element);
-          if (children.length == 0) {
+          Collection<? extends AbstractTreeNode> children = element.getChildren();
+          if (children.isEmpty()) {
             PsiElement value = sliceUsage.getElement();
-            element.addLeafExpressions(ContainerUtil.singleton(value, LEAF_ELEMENT_EQUALITY));
+            node(element, map).addAll(ContainerUtil.singleton(value, LEAF_ELEMENT_EQUALITY));
           }
           super.visit(element);
         }
       }
 
       @Override
-      public void elementFinished(SliceNode element) {
-        SliceNode parent = SliceNodeGuide.instance.getParent(element);
+      public void elementFinished(@NotNull SliceNode element) {
+        SliceNode parent = guide.getParent(element);
         if (parent != null) {
-          parent.addLeafExpressions(element.getLeafExpressions());
+          node(parent, map).addAll(node(element, map));
         }
       }
     };
-    walkingState.elementStarted(root);
+    walkingState.visit(root);
 
-    return root.getLeafExpressions();
+    return node(root, map);
   }
-
-  //@NotNull
-  //public static Collection<PsiElement> calcLeafExpressionsSOE(@NotNull SliceNode root, @NotNull ProgressIndicator progress) {
-  //  root.update(null);
-  //  root.getLeafExpressions().clear();
-  //  Collection<PsiElement> leaves;
-  //  SliceNode duplicate = root.getDuplicate();
-  //  if (duplicate != null) {
-  //    leaves = duplicate.getLeafExpressions();
-  //    //null means other
-  //    //leaves = ContainerUtil.singleton(PsiUtilBase.NULL_PSI_ELEMENT, LEAF_ELEMENT_EQUALITY);
-  //    //return leaves;//todo
-  //  }
-  //  else {
-  //    SliceUsage sliceUsage = root.getValue();
-  //
-  //    Collection<? extends AbstractTreeNode> children = root.getChildrenUnderProgress(progress);
-  //    if (children.isEmpty()) {
-  //      PsiElement element = sliceUsage.getElement();
-  //      leaves = ContainerUtil.singleton(element, LEAF_ELEMENT_EQUALITY);
-  //    }
-  //    else {
-  //      leaves = new THashSet<PsiElement>(LEAF_ELEMENT_EQUALITY);
-  //      for (AbstractTreeNode child : children) {
-  //        Collection<PsiElement> elements = calcLeafExpressions((SliceNode)child);
-  //        leaves.addAll(elements);
-  //      }
-  //    }
-  //  }
-  //
-  //  root.addLeafExpressions(leaves);
-  //  return leaves;
-  //}
 }

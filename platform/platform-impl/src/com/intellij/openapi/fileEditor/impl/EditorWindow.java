@@ -591,7 +591,9 @@ public class EditorWindow {
       parent.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
     }
     else {
-      parent.add(myPanel.getComponent(0), BorderLayout.CENTER);
+      if (myPanel.getComponentCount() > 0) {
+        parent.add(myPanel.getComponent(0), BorderLayout.CENTER);
+      }
     }
     parent.revalidate();
     myPanel = parent;

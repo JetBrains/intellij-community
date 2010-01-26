@@ -17,13 +17,18 @@ package com.intellij.xdebugger.impl.evaluate.quick;
 
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerUtil;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueNode;
@@ -48,13 +53,17 @@ public class XValueHint extends AbstractValueHint {
   private final XDebuggerEvaluator myEvaluator;
   private final XDebugSession myDebugSession;
   private final String myExpression;
+  private final @Nullable XSourcePosition myExpressionPosition;
 
   public XValueHint(final Project project, final Editor editor, final Point point, final ValueHintType type, final TextRange textRange,
                     final XDebuggerEvaluator evaluator, final XDebugSession session) {
     super(project, editor, point, type, textRange);
     myEvaluator = evaluator;
     myDebugSession = session;
-    myExpression = textRange.substring(editor.getDocument().getText());
+    final Document document = editor.getDocument();
+    myExpression = textRange.substring(document.getText());
+    final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+    myExpressionPosition = file != null ? XDebuggerUtil.getInstance().createPositionByOffset(file, textRange.getStartOffset()) : null;
   }
 
 
@@ -91,7 +100,7 @@ public class XValueHint extends AbstractValueHint {
       public void errorOccurred(@NotNull final String errorMessage) {
         LOG.debug("Cannot evaluate '" + myExpression + "':" + errorMessage);
       }
-    });
+    }, myExpressionPosition);
   }
 
   private void doShowHint(final XValue xValue, final String name, final String separator, final String value, final boolean hasChildren) {

@@ -30,7 +30,7 @@ public class LanguageLevelUtil {
   }
 
   @NotNull
-  public static LanguageLevel getEffectiveLanguageLevel(final Module module) {
+  public static LanguageLevel getEffectiveLanguageLevel(@NotNull final Module module) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     LanguageLevel level = LanguageLevelModuleExtension.getInstance(module).getLanguageLevel();
     if (level != null) return level;

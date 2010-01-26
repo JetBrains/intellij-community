@@ -16,6 +16,7 @@
     <orderEntry type="module" module-name="boot" />
     <orderEntry type="module" module-name="annotations" />
     <orderEntry type="module" module-name="testFramework" />
+    <orderEntry type="module" module-name="spellchecker" />
   </component>
 </module>
 

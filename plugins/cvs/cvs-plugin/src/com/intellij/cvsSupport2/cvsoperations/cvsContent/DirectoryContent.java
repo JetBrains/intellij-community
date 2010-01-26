@@ -27,6 +27,10 @@ public class DirectoryContent {
   private final Collection<String> myFiles = new HashSet<String>();
   private final Collection<String> myModules = new HashSet<String>();
 
+  public int getTotalSize() {
+    return mySubDirectories.size() + myFiles.size() + myModules.size();
+  }
+
   public void addSubDirectory(String subDirectoryName){
     mySubDirectories.add(subDirectoryName);
   }
@@ -65,5 +69,11 @@ public class DirectoryContent {
     mySubDirectories.addAll(directoryContent.getSubDirectories());
     myFiles.addAll(directoryContent.getFiles());
     myModules.addAll(directoryContent.getSubModules());
+  }
+
+  public void clear() {
+    mySubDirectories.clear();
+    myFiles.clear();
+    myModules.clear();
   }
 }

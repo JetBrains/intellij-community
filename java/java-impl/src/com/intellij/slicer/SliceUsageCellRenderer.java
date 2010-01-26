@@ -24,10 +24,10 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.usages.TextChunk;
-import com.intellij.usages.UsageInfo2UsageAdapter;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
+import java.awt.*;
 
 /**
  * @author cdr
@@ -57,10 +57,17 @@ public class SliceUsageCellRenderer extends ColoredTreeCellRenderer {
     }
   }
 
-  public void customizeCellRendererFor(UsageInfo2UsageAdapter sliceUsage) {
+  public void customizeCellRendererFor(SliceUsage sliceUsage) {
+    boolean isForcedLeaf = sliceUsage instanceof SliceDereferenceUsage;
+
     TextChunk[] text = sliceUsage.getPresentation().getText();
     for (TextChunk textChunk : text) {
-      append(textChunk.getText(), SimpleTextAttributes.fromTextAttributes(textChunk.getAttributes()));
+      SimpleTextAttributes attributes = SimpleTextAttributes.fromTextAttributes(textChunk.getAttributes());
+      if (isForcedLeaf) {
+        attributes = attributes.derive(attributes.getStyle(), Color.LIGHT_GRAY, attributes.getBgColor(), attributes.getWaveColor());
+        //attributes = attributes.derive(SimpleTextAttributes.STYLE_UNDERLINE, attributes.getBgColor(), attributes.getBgColor(), attributes.getWaveColor());
+      }
+      append(textChunk.getText(), attributes);
     }
 
     PsiElement element = sliceUsage.getElement();
@@ -76,11 +83,15 @@ public class SliceUsageCellRenderer extends ColoredTreeCellRenderer {
         break;
       }
     }
-    String location = method != null ? PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS | PsiFormatUtil.SHOW_CONTAINING_CLASS, PsiFormatUtil.SHOW_TYPE, 2)
-                    : aClass != null ? PsiFormatUtil.formatClass(aClass, PsiFormatUtil.SHOW_NAME)
-                    : null;
+    String location = method != null
+                      ? PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME |
+                                                                                 PsiFormatUtil.SHOW_PARAMETERS |
+                                                                                 PsiFormatUtil.SHOW_CONTAINING_CLASS,
+                                                   PsiFormatUtil.SHOW_TYPE, 2)
+                      : aClass != null ? PsiFormatUtil.formatClass(aClass, PsiFormatUtil.SHOW_NAME) : null;
     if (location != null) {
-      append(" in " + location, SimpleTextAttributes.GRAY_ATTRIBUTES);
+      SimpleTextAttributes attributes = SimpleTextAttributes.GRAY_ATTRIBUTES;
+      append(" in " + location, attributes);
     }
   }
 }

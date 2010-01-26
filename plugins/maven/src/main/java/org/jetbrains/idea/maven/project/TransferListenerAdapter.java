@@ -53,7 +53,7 @@ public class TransferListenerAdapter implements TransferListener {
   }
 
   protected void doUpdateProgress(long downloaded, long total) {
-    myIndicator.setText2(ProjectBundle.message("maven.transfer.progress", downloaded, total, myRepository, myResource));
+    myIndicator.setText2(ProjectBundle.message("maven.transfer.progress", downloaded, total == 0 ? "?" : total, myRepository, myResource));
   }
 
   public void transferProgress(TransferEvent event, byte[] bytes, int i) {

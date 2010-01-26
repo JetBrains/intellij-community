@@ -16,6 +16,8 @@
 package org.jetbrains.idea.svn.config;
 
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -127,14 +129,28 @@ public class SvnConfigureProxiesDialog extends DialogWrapper implements Validati
     if(! applyImpl()) {
       return;
     }
-    try {
-      SvnVcs.getInstance(myProject).createRepository(url).testConnection();
-    } catch (SVNException exc) {
-      Messages.showErrorDialog(myProject, exc.getMessage(), SvnBundle.message("dialog.edit.http.proxies.settings.test.connection.error.title"));
-      return;
+    final Ref<SVNException> excRef = new Ref<SVNException>();
+    final ProgressManager pm = ProgressManager.getInstance();
+    pm.runProcessWithProgressSynchronously(new Runnable() {
+      public void run() {
+        final ProgressIndicator pi = pm.getProgressIndicator();
+        if (pi != null) {
+          pi.setText("Connecting to " + url);
+        }
+        try {
+          SvnVcs.getInstance(myProject).createRepository(url).testConnection();
+        } catch (SVNException exc) {
+          excRef.set(exc);
+        }
+      }
+    }, "Test connection", true, myProject);
+    if (! excRef.isNull()) {
+      Messages.showErrorDialog(myProject, excRef.get().getMessage(),
+                               SvnBundle.message("dialog.edit.http.proxies.settings.test.connection.error.title"));
+    } else {
+      Messages.showInfoMessage(myProject, SvnBundle.message("dialog.edit.http.proxies.settings.test.connection.succes.text"),
+                               SvnBundle.message("dialog.edit.http.proxies.settings.test.connection.succes.title"));
     }
-    Messages.showInfoMessage(myProject, SvnBundle.message("dialog.edit.http.proxies.settings.test.connection.succes.text"),
-                             SvnBundle.message("dialog.edit.http.proxies.settings.test.connection.succes.title"));
   }
 
   private boolean valid;

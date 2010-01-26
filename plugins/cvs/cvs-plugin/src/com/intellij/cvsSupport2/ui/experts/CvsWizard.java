@@ -41,6 +41,17 @@ public class CvsWizard extends AbstractWizard<WizardStep> {
     return null;
   }
 
+  @Override
+  protected void doNextAction() {
+    if ((myCurrentStep + 1) >= mySteps.size()) return;
+    final WizardStep nextStep = mySteps.get(myCurrentStep + 1);
+    if (! nextStep.preNextCheck()) {
+      return;
+    }
+
+    super.doNextAction();
+  }
+
   public void updateStep() {
     super.updateStep();
     if (getNumberOfSteps() == 0) return;
