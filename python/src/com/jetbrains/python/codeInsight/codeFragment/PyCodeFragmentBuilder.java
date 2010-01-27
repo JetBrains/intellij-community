@@ -4,6 +4,8 @@ import com.intellij.codeInsight.codeFragment.CodeFragmentUtil;
 import com.intellij.codeInsight.codeFragment.Position;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveResult;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 
 import java.util.*;
@@ -17,10 +19,12 @@ public class PyCodeFragmentBuilder extends PyRecursiveElementVisitor {
   final Set<String> inElements = new HashSet<String>();
   final Set<String> outElements = new HashSet<String>();
 
+  private final ScopeOwner myOwner;
   private final int startOffset;
   private final int endOffset;
 
-  public PyCodeFragmentBuilder(int start, int end) {
+  public PyCodeFragmentBuilder(final ScopeOwner owner, final int start, final int end) {
+    myOwner = owner;
     startOffset = start;
     endOffset = end;
   }
@@ -44,6 +48,9 @@ public class PyCodeFragmentBuilder extends PyRecursiveElementVisitor {
     if (position == Position.INSIDE) {
       for (ResolveResult result : element.multiResolve(false)) {
         final PsiElement declaration = result.getElement();
+        if (declaration == null || !PsiTreeUtil.isAncestor(myOwner, declaration, false)){
+          continue;
+        }
         final Position pos = CodeFragmentUtil.getPosition(declaration, startOffset, endOffset);
         // If declaration is before add it to input
         if (pos == Position.BEFORE) {
@@ -61,6 +68,9 @@ public class PyCodeFragmentBuilder extends PyRecursiveElementVisitor {
       }
       for (ResolveResult result : element.multiResolve(false)) {
         final PsiElement declaration = result.getElement();
+        if (declaration == null || !PsiTreeUtil.isAncestor(myOwner, declaration, false)){
+          continue;
+        }
         final Position pos = CodeFragmentUtil.getPosition(declaration, startOffset, endOffset);
         // If declaration is inside
         if (pos == Position.INSIDE) {

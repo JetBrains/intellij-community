@@ -41,7 +41,7 @@ public class PyCodeFragmentUtil {
       @Override
       public void visitPyFunction(final PyFunction node) {
         if (CodeFragmentUtil.getPosition(node, start, end) == Position.INSIDE){
-          throw new CannotCreateCodeFragmentException(PyBundle.message("refactoring.extract.method.error.cannot.perform.refactoring.when.class.declaration.inside"));
+          throw new CannotCreateCodeFragmentException(PyBundle.message("refactoring.extract.method.error.cannot.perform.refactoring.when.function.declaration.inside"));
         }
       }
     });
@@ -104,10 +104,8 @@ public class PyCodeFragmentUtil {
     }
 
     // Building code fragment
-    final PyCodeFragmentBuilder builder = new PyCodeFragmentBuilder(start, end);
+    final PyCodeFragmentBuilder builder = new PyCodeFragmentBuilder(owner, start, end);
     owner.acceptChildren(builder);
     return new CodeFragment(builder.inElements, builder.outElements, returnInstructionInside);
   }
-
-
 }
