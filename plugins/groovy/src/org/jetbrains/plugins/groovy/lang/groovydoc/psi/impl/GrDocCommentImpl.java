@@ -16,14 +16,23 @@
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LazyParseablePsiElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+
+import java.util.ArrayList;
 
 /**
  * @author ilyas
@@ -49,7 +58,7 @@ public class GrDocCommentImpl extends LazyParseablePsiElement implements GroovyD
     PsiElement child = getFirstChild();
     while (child != null) {
       if (child instanceof GroovyPsiElement) {
-        ((GroovyPsiElement) child).accept(visitor);
+        ((GroovyPsiElement)child).accept(visitor);
       }
 
       child = child.getNextSibling();
@@ -58,5 +67,48 @@ public class GrDocCommentImpl extends LazyParseablePsiElement implements GroovyD
 
   public GrDocCommentOwner getOwner() {
     return GrDocCommentUtil.findDocOwner(this);
+  }
+
+  @NotNull
+  public GrDocTag[] getTags() {
+    final GrDocTag[] tags = PsiTreeUtil.getChildrenOfType(this, GrDocTag.class);
+    return tags == null ? GrDocTag.EMPTY_ARRAY : tags;
+  }
+
+  @Nullable
+  public GrDocTag findTagByName(@NonNls String name) {
+    if (!getText().contains(name)) return null;
+    for (PsiElement e = getFirstChild(); e != null; e = e.getNextSibling()) {
+      if (e instanceof GrDocTag && ((GrDocTag)e).getName().equals(name)) {
+        return (GrDocTag)e;
+      }
+    }
+    return null;
+  }
+
+  @NotNull
+  public GrDocTag[] findTagsByName(@NonNls String name) {
+    if (!getText().contains(name)) return GrDocTag.EMPTY_ARRAY;
+    ArrayList<GrDocTag> list = new ArrayList<GrDocTag>();
+    for (PsiElement e = getFirstChild(); e != null; e = e.getNextSibling()) {
+      if (e instanceof GrDocTag && CharArrayUtil.regionMatches(((GrDocTag)e).getName(), 1, name)) {
+        list.add((GrDocTag)e);
+      }
+    }
+    return list.toArray(new GrDocTag[list.size()]);
+  }
+
+  public PsiElement[] getDescriptionElements() {
+    ArrayList<PsiElement> array = new ArrayList<PsiElement>();
+    for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
+      final ASTNode node = child.getNode();
+      if (node == null) continue;
+      final IElementType i = node.getElementType();
+      if (i == GDOC_TAG) break;
+      if (i != mGDOC_COMMENT_START && i != mGDOC_COMMENT_END && i != mGDOC_ASTERISKS) {
+        array.add(child);
+      }
+    }
+    return array.toArray(new PsiElement[array.size()]);
   }
 }

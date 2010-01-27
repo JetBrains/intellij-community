@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package org.jetbrains.plugins.groovy.lang.groovydoc.psi.api;
-
-import com.intellij.psi.PsiDocCommentOwner;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+package com.intellij.codeInsight.codeFragment;
 
 /**
- * @author Maxim.Medvedev
+ * @author oleg
  */
-public interface GrDocCommentOwner extends GroovyPsiElement, PsiDocCommentOwner {
-  @Nullable
-  GrDocComment getDocComment();
-  
-  boolean isDeprecated();  
+public enum Position {
+  BEFORE,
+  INSIDE,
+  AFTER
 }

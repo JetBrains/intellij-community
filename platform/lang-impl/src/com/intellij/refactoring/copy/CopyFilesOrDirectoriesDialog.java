@@ -22,17 +22,18 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.*;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.EditorComboWithBrowseButton;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.RecentsManager;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -42,13 +43,14 @@ import java.io.File;
 
 class CopyFilesOrDirectoriesDialog extends DialogWrapper{
   private JLabel myInformationLabel;
-  private TextFieldWithBrowseButton myTargetDirectoryField;
+  private EditorComboWithBrowseButton myTargetDirectoryField;
   private JTextField myNewNameField;
   private final Project myProject;
   private final boolean myShowDirectoryField;
   private final boolean myShowNewNameField;
 
   private PsiDirectory myTargetDirectory;
+  @NonNls private static final String RECENT_KEYS = "CopyFile.RECENT_KEYS";
 
   public CopyFilesOrDirectoriesDialog(PsiElement[] elements, PsiDirectory defaultTargetDirectory, Project project, boolean doClone) {
     super(project, true);
@@ -88,7 +90,7 @@ class CopyFilesOrDirectoriesDialog extends DialogWrapper{
     }
 
     if (myShowDirectoryField) {
-      myTargetDirectoryField.setText(defaultTargetDirectory == null ? "" : defaultTargetDirectory.getVirtualFile().getPresentableUrl());
+      myTargetDirectoryField.prependItem(defaultTargetDirectory == null ? "" : defaultTargetDirectory.getVirtualFile().getPresentableUrl());
     }
     validateOKButton();
   }
@@ -120,7 +122,7 @@ class CopyFilesOrDirectoriesDialog extends DialogWrapper{
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myShowDirectoryField ? myTargetDirectoryField.getTextField() : myNewNameField;
+    return myShowDirectoryField ? myTargetDirectoryField.getChildComponent() : myNewNameField;
   }
 
   protected JComponent createCenterPanel() {
@@ -145,15 +147,22 @@ class CopyFilesOrDirectoriesDialog extends DialogWrapper{
     if (myShowDirectoryField) {
       panel.add(new JLabel(RefactoringBundle.message("copy.files.to.directory.label")), new GridBagConstraints(0,1,1,1,0,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(4,8,4,8),0,0));
 
-      myTargetDirectoryField = new TextFieldWithBrowseButton();
-      myTargetDirectoryField.addBrowseFolderListener(RefactoringBundle.message("select.target.directory"),
-                                                     RefactoringBundle.message("the.file.will.be.copied.to.this.directory"),
-                                                     null,
-                                                     FileChooserDescriptorFactory.createSingleFolderDescriptor());
+      final ComponentWithBrowseButton.BrowseFolderActionListener browseActionListener =
+        new ComponentWithBrowseButton.BrowseFolderActionListener<JComboBox>(RefactoringBundle.message("select.target.directory"),
+                                                                 RefactoringBundle.message("the.file.will.be.copied.to.this.directory"),
+                                                                 null, myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor(),
+                                                                 TextComponentAccessor.STRING_COMBOBOX_WHOLE_TEXT);
+      myTargetDirectoryField = new EditorComboWithBrowseButton(browseActionListener, "", myProject,
+                                                               RECENT_KEYS);
       myTargetDirectoryField.setTextFieldPreferredWidth(60);
       panel.add(myTargetDirectoryField, new GridBagConstraints(1,1,1,1,1,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(4,0,4,8),0,0));
 
-      myTargetDirectoryField.getTextField().getDocument().addDocumentListener(documentListener);
+      myTargetDirectoryField.getChildComponent().getDocument().addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
+        @Override
+        public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
+          validateOKButton();
+        }
+      });
     }
 
     if (myShowNewNameField) {
@@ -198,6 +207,8 @@ class CopyFilesOrDirectoriesDialog extends DialogWrapper{
         Messages.showMessageDialog(myProject, RefactoringBundle.message("no.target.directory.specified"), RefactoringBundle.message("error.title"), Messages.getErrorIcon());
         return;
       }
+
+      RecentsManager.getInstance(myProject).registerRecentEntry(RECENT_KEYS, targetDirectoryName);
 
       CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
         public void run() {

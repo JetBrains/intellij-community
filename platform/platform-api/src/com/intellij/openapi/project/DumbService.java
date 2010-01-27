@@ -41,6 +41,10 @@ import java.util.List;
  * @author peter
  */
 public abstract class DumbService {
+
+  /**
+   * @see com.intellij.openapi.project.Project#getMessageBus()
+   */
   public static final Topic<DumbModeListener> DUMB_MODE = new Topic<DumbModeListener>("dumb mode", DumbModeListener.class);
 
   /**
@@ -118,11 +122,26 @@ public abstract class DumbService {
     return wrapper;
   }
 
+  public void makeDumbAware(@NotNull final JComponent component, @NotNull Disposable disposable) {
+    component.setEnabled(!isDumb());
+    getProject().getMessageBus().connect(disposable).subscribe(DUMB_MODE, new DumbModeListener() {
+      public void enteredDumbMode() {
+        component.setEnabled(false);
+      }
+
+      public void exitDumbMode() {
+        component.setEnabled(true);
+      }
+    });
+  }
+
   public abstract BalloonHandler showDumbModeNotification(String message);
 
   public abstract Project getProject();
 
-
+  /**
+   * @see #DUMB_MODE
+   */
   public interface DumbModeListener {
 
     /**

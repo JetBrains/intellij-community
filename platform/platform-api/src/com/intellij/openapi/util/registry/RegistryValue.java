@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,17 @@
  */
 package com.intellij.openapi.util.registry;
 
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 
-import java.util.concurrent.CopyOnWriteArraySet;
+import java.awt.*;
 import java.util.MissingResourceException;
+import java.util.concurrent.CopyOnWriteArraySet;
 
+/**
+ * @author Kirill Kalishev
+ * @author Konstantin Bulenkov
+ */
 public class RegistryValue {
 
   private Registry myRegistry;
@@ -64,6 +69,20 @@ public class RegistryValue {
     }
 
     return myIntCachedValue.intValue();
+  }
+
+  public Color asColor(Color defaultValue) {
+      final String s = get(myKey, null, true);
+      if (s != null) {
+        final String[] rgb = s.split(",");
+        if (rgb.length == 3) {
+          try {
+            return new Color(Integer.parseInt(rgb[0]), Integer.parseInt(rgb[1]), Integer.parseInt(rgb[2]));
+          } catch (Exception e) {//
+          }
+        }
+      }
+    return defaultValue;
   }
 
   public String getDescription() {

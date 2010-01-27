@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.ColorChooser;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -38,9 +40,17 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.image.BufferedImage;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
+/**
+ * @author Kirill Kalishev
+ * @author Konstantin Bulenkov
+ */
 public class RegistryUi implements Disposable {
 
   private JTable myTable;
@@ -48,10 +58,9 @@ public class RegistryUi implements Disposable {
 
   private JPanel myContent = new JPanel();
 
-  private DialogWrapper myDialog;
   private static final Icon RESTART_ICON = IconLoader.getIcon("/gutter/check.png");
   private RestoreDefaultsAction myRestoreDefaultsAction;
-  private RegistryUi.MyTableModel myModel;
+  private MyTableModel myModel;
 
   public RegistryUi() {
     myContent.setLayout(new BorderLayout());
@@ -175,9 +184,9 @@ public class RegistryUi implements Disposable {
     });
   }
 
-  private class MyTableModel extends AbstractTableModel {
+  private static class MyTableModel extends AbstractTableModel {
 
-    private java.util.List<RegistryValue> myAll;
+    private List<RegistryValue> myAll;
 
     private MyTableModel() {
       myAll = Registry.getInstance().getAll();
@@ -211,8 +220,7 @@ public class RegistryUi implements Disposable {
   }
 
   public void show() {
-    myDialog = new DialogWrapper(true) {
-
+    DialogWrapper dialog = new DialogWrapper(true) {
       {
         setTitle("Registry");
         setModal(true);
@@ -243,19 +251,17 @@ public class RegistryUi implements Disposable {
 
       @Override
       protected Action[] createActions() {
-        return new Action[]{
-            myRestoreDefaultsAction, new AbstractAction("Close") {
-              public void actionPerformed(ActionEvent e) {
-                processClose();
-                doOKAction();
-              }
-            }
-        };
+        return new Action[]{myRestoreDefaultsAction, new AbstractAction("Close") {
+          public void actionPerformed(ActionEvent e) {
+            processClose();
+            doOKAction();
+          }
+        }};
       }
     };
 
 
-    myDialog.show();
+    dialog.show();
   }
 
   private void processClose() {
@@ -299,7 +305,7 @@ public class RegistryUi implements Disposable {
   public void dispose() {
   }
 
-  private class MyRenderer implements TableCellRenderer {
+  private static class MyRenderer implements TableCellRenderer {
 
     private JLabel myLabel = new JLabel();
 
@@ -319,7 +325,11 @@ public class RegistryUi implements Disposable {
             myLabel.setText(v.getKey());
             break;
           case 2:
-            myLabel.setText(v.asString());
+            if (v.asColor(null) == null) {
+              myLabel.setText(v.asString());
+            } else {
+              myLabel.setIcon(createColoredIcon(v.asColor(null)));
+            }
         }
 
         myLabel.setOpaque(true);
@@ -333,17 +343,42 @@ public class RegistryUi implements Disposable {
     }
   }
 
+  private static final Map<Color, Icon> icons_cache = new HashMap<Color, Icon>();
+  private static Icon createColoredIcon(Color color) {
+    Icon icon = icons_cache.get(color);
+    if (icon != null) return icon;
+    final BufferedImage image = GraphicsEnvironment.getLocalGraphicsEnvironment()
+      .getDefaultScreenDevice().getDefaultConfiguration()
+      .createCompatibleImage(16, 16, Color.TRANSLUCENT);
+    final Graphics g = image.getGraphics();
+    g.setColor(color);
+    g.fillRect(0, 0, 16, 16);
+    g.dispose();
+    icon = new ImageIcon(image);
+    icons_cache.put(color, icon);
+    return icon;
+  }
+
   private class MyEditor extends AbstractCellEditor implements TableCellEditor {
 
     private JTextField myField = new JTextField();
     private RegistryValue myValue;
 
+    @Nullable
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
       myValue = (RegistryValue) value;
-      myField.setText(myValue.asString());
-      myField.selectAll();
-      myField.setBorder(null);
-      return myField;
+      if (myValue.asColor(null) == null) {
+        myField.setText(myValue.asString());
+        myField.selectAll();
+        myField.setBorder(null);
+        return myField;
+      } else {
+        final Color color = ColorChooser.chooseColor(table, "Chose color", ((RegistryValue)value).asColor(Color.WHITE));
+        if (color != null) {
+          myValue.setValue(color.getRed() + "," + color.getGreen() + "," + color.getBlue());
+        }
+        return null;
+      }
     }
 
     @Override

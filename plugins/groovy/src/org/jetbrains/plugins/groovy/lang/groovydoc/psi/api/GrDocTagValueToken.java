@@ -16,8 +16,10 @@
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi.api;
 
+import com.intellij.psi.javadoc.PsiDocTagValue;
+
 /**
  * @author ilyas
  */
-public interface GrDocTagValueToken extends GroovyDocPsiElement{
+public interface GrDocTagValueToken extends GroovyDocPsiElement, PsiDocTagValue {
 }

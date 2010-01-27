@@ -21,7 +21,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
@@ -467,12 +466,7 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
   }
 
   @Nullable
-  public PsiDocComment getDocComment() {
-    return null;
-  }
-
-  @Nullable
-  public GrDocComment getGrDocComment() {
+  public GrDocComment getDocComment() {
     return GrDocCommentUtil.findDocComment(this);
   }
 
