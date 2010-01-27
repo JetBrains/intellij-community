@@ -61,10 +61,6 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey>, J
     return myExternalName.compareTo(key.myExternalName);
   }
 
-  public boolean hasDefaultAttributes() {
-    return myDefaultAttributes != NULL_ATTRIBUTES;
-  }
-
   /**
    * Returns the default text attributes associated with the key.
    *
@@ -72,7 +68,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey>, J
    */
 
   public TextAttributes getDefaultAttributes() {
-    if (!hasDefaultAttributes()) {
+    if (myDefaultAttributes == NULL_ATTRIBUTES) {
       myDefaultAttributes = null;
       EditorColorsManager manager = EditorColorsManager.getInstance();
 
@@ -94,7 +90,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey>, J
    */
   @NotNull public static TextAttributesKey createTextAttributesKey(@NonNls @NotNull String externalName, TextAttributes defaultAttributes) {
     TextAttributesKey key = find(externalName);
-    if (!key.hasDefaultAttributes()) {
+    if (key.myDefaultAttributes == null || key.myDefaultAttributes == NULL_ATTRIBUTES) {
       key.myDefaultAttributes = defaultAttributes;
     }
     return key;
