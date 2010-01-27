@@ -214,7 +214,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     final HighlightAnnotationsActions highlighting = new HighlightAnnotationsActions(project, file, fileAnnotation, editorGutterComponentEx);
     final List<AnnotationFieldGutter> gutters = new ArrayList<AnnotationFieldGutter>();
     final AnnotationSourceSwitcher switcher = fileAnnotation.getAnnotationSourceSwitcher();
-    final MyAnnotationPresentation presentation = new MyAnnotationPresentation(highlighting, switcher, editorGutterComponentEx);
+    final MyAnnotationPresentation presentation = new MyAnnotationPresentation(highlighting, switcher, editorGutterComponentEx, gutters);
 
     if (switcher != null) {
 
@@ -372,19 +372,23 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     private final HighlightAnnotationsActions myHighlighting;
     @Nullable
     private final AnnotationSourceSwitcher mySwitcher;
+    private final List<AnnotationFieldGutter> myGutters;
     private final List<AnAction> myActions;
     private MySwitchAnnotationSourceAction mySwitchAction;
 
     public MyAnnotationPresentation(@NotNull final HighlightAnnotationsActions highlighting, @Nullable final AnnotationSourceSwitcher switcher,
-                                    final EditorGutterComponentEx gutter) {
+                                    final EditorGutterComponentEx gutter,
+                                    List<AnnotationFieldGutter> gutters) {
       myHighlighting = highlighting;
       mySwitcher = switcher;
+      myGutters = gutters;
 
       myActions = new ArrayList<AnAction>(myHighlighting.getList());
       if (mySwitcher != null) {
         mySwitchAction = new MySwitchAnnotationSourceAction(mySwitcher, gutter);
         myActions.add(mySwitchAction);
       }
+      myActions.add(new ShowHideColorsAction(myGutters, gutter));
     }
 
     public EditorFontType getFontType(final int line) {
