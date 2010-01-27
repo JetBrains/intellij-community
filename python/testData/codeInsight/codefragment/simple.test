@@ -1,0 +1,9 @@
+aaa = 123
+<begin>
+print(aaa)
+<end>
+print("Hello")
+<result>
+In:
+aaa
+Out:

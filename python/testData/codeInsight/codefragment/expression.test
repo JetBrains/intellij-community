@@ -1,0 +1,14 @@
+a = 12
+if some_cond:
+  b = 1
+
+c =
+<begin>
+foo(boo(a) + 123 * b)
+<end>
+
+<result>
+In:
+a
+b
+Out:

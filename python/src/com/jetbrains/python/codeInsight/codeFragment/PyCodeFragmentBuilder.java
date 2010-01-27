@@ -7,6 +7,7 @@ import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
 
 import java.util.*;
 
@@ -31,16 +32,27 @@ public class PyCodeFragmentBuilder extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyTargetExpression(final PyTargetExpression node) {
-    visitDeclaration(node);
+    processDeclaration(node);
   }
 
   @Override
   public void visitPyNamedParameter(final PyNamedParameter node) {
-    visitDeclaration(node);
+    processDeclaration(node);
   }
 
   @Override
   public void visitPyReferenceExpression(final PyReferenceExpression element) {
+    // Python PSI makes us to visit qualifier manually
+    final PyExpression qualifier = element.getQualifier();
+    if (qualifier != null){
+      qualifier.accept(this);
+    }
+    // Process import references
+    if (PyImportStatementNavigator.getImportStatementByReference(element) != null){
+      processDeclaration(element);
+      return;
+    }
+
     final Position position = CodeFragmentUtil.getPosition(element, startOffset, endOffset);
     final String name = element.getName();
 
@@ -68,6 +80,12 @@ public class PyCodeFragmentBuilder extends PyRecursiveElementVisitor {
       }
       for (ResolveResult result : element.multiResolve(false)) {
         final PsiElement declaration = result.getElement();
+        // Handle resolve via import statement
+        if (declaration instanceof PyFile && modifiedInsideMap.containsKey(name)){
+          outElements.add(name);
+          break;
+        }
+        // Ignore declarations out of scope
         if (declaration == null || !PsiTreeUtil.isAncestor(myOwner, declaration, false)){
           continue;
         }
@@ -98,13 +116,11 @@ public class PyCodeFragmentBuilder extends PyRecursiveElementVisitor {
     }
   }
 
-  private void visitDeclaration(final PyElement element) {
+  private void processDeclaration(final PyElement element) {
     final Position position = CodeFragmentUtil.getPosition(element, startOffset, endOffset);
     final String name = element.getName();
-
     // Collect in variables
     if (position == Position.INSIDE) {
-
       // Add modification inside
       List<PyElement> list = modifiedInsideMap.get(name);
       if (list == null) {
@@ -112,11 +128,6 @@ public class PyCodeFragmentBuilder extends PyRecursiveElementVisitor {
         modifiedInsideMap.put(name, list);
       }
       list.add(element);
-    }
-
-    // if name is already in out parameters
-    if (inElements.contains(name)) {
-      return;
     }
   }
 }
