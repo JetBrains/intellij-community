@@ -36,6 +36,9 @@ public class TreeSender {
 
   private static Vector getTestCasesOf(Test test) {
     Vector testCases = new Vector();
+    if (test instanceof TestRunnerUtil.SuiteMethodWrapper) {
+      test = ((TestRunnerUtil.SuiteMethodWrapper)test).getSuite();
+    }
     if (test instanceof TestSuite) {
       TestSuite testSuite = (TestSuite)test;
 
