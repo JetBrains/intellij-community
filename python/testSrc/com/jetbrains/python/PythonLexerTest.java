@@ -125,6 +125,10 @@ public class PythonLexerTest extends TestCase {
     doTest("0b0101", "Py:INTEGER_LITERAL");
   }
 
+  public void testLongString() throws Exception {
+    doTest("\"\"\"\"\"\"\na", "Py:STRING_LITERAL", "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:IDENTIFIER");
+  }
+
   public void _testWithKeyword() throws Exception {
     // processing of 'from __future__ import' is now done on parser level, so a pure lexer test won't handle
     // this correctly
