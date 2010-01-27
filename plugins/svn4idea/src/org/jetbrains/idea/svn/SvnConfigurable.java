@@ -178,6 +178,9 @@ public class SvnConfigurable implements Configurable {
     configuration.setConfigurationDirectory(myConfigurationDirectoryText.getText());
     configuration.setUseDefaultConfiguation(myUseDefaultCheckBox.isSelected());
     configuration.setIsUseDefaultProxy(myUseCommonProxy.isSelected());
+    if ((! configuration.DETECT_NESTED_COPIES) && (configuration.DETECT_NESTED_COPIES != myDetectNestedWorkingCopiesCheckBox.isSelected())) {
+      SvnVcs.getInstance(myProject).invokeRefreshSvnRoots(true);
+    }
     configuration.DETECT_NESTED_COPIES = myDetectNestedWorkingCopiesCheckBox.isSelected(); 
     configuration.UPDATE_LOCK_ON_DEMAND = myLockOnDemand.isSelected();
     configuration.setIgnoreSpacesInAnnotate(myIgnoreWhitespaceDifferenciesInCheckBox.isSelected());
