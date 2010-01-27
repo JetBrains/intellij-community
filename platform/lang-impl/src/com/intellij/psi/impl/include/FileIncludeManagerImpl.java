@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiFileSystemItem;
@@ -29,12 +30,12 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.ParameterizedCachedValue;
 import com.intellij.psi.util.ParameterizedCachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -110,7 +111,12 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
 
   @Override
   public VirtualFile[] getIncludedFiles(VirtualFile file, boolean compileTimeOnly) {
-    return myIncludedHolder.getAllFiles(file, compileTimeOnly);
+    if (file instanceof VirtualFileWithId) {
+      return myIncludedHolder.getAllFiles(file, compileTimeOnly);
+    }
+    else {
+      return VirtualFile.EMPTY_ARRAY;
+    }
   }
 
 
