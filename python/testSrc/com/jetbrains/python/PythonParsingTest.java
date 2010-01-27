@@ -194,6 +194,10 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  public void testTrailingSemicolon() throws Exception {  // PY-363
+    doTest();    
+  }
+
   public void doTest() throws Exception {
     doTest(LanguageLevel.PYTHON25);
   }
