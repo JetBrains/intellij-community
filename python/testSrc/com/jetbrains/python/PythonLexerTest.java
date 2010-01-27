@@ -136,6 +136,10 @@ public class PythonLexerTest extends TestCase {
     doTest("''' \\'''foo\\''' ''';", "Py:STRING_LITERAL", "Py:SEMICOLON");
   }
 
+  public void testLongStringWithLineBreak() throws Exception {
+    doTest(THREE_QUOTES + "\\\na\n\n" + THREE_QUOTES + ";", "Py:STRING_LITERAL", "Py:SEMICOLON");
+  }
+
 
   public void _testWithKeyword() throws Exception {
     // processing of 'from __future__ import' is now done on parser level, so a pure lexer test won't handle
