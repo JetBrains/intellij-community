@@ -42,4 +42,14 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
   public void testPredefinedMethodNot() throws Exception {
     doTest();
   }
+
+  public void testPy255() throws Exception {
+    final String dirname = "completion/";
+    final String testName = dirname + "moduleClass";
+    myFixture.configureByFile(testName + ".py");
+    myFixture.copyDirectoryToProject(dirname + "mymodule", dirname + "mymodule");
+    myFixture.copyDirectoryToProject(dirname + "mymodule/mysubmodule", dirname + "mymodule/mysubmodule");
+    myFixture.completeBasic();
+    myFixture.checkResultByFile(testName + ".after.py");
+  }
 }
