@@ -46,4 +46,8 @@ public class PyLineBreakpointType extends XLineBreakpointType<XBreakpointPropert
     return null;
   }
 
+  @Override
+  public String getBreakpointsDialogHelpTopic() {
+    return "reference.dialogs.breakpoints";
+  }
 }
