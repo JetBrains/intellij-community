@@ -22,16 +22,14 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.EditorComboWithBrowseButton;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.RecentsManager;
+import com.intellij.ui.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
@@ -147,13 +145,12 @@ class CopyFilesOrDirectoriesDialog extends DialogWrapper{
     if (myShowDirectoryField) {
       panel.add(new JLabel(RefactoringBundle.message("copy.files.to.directory.label")), new GridBagConstraints(0,1,1,1,0,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(4,8,4,8),0,0));
 
-      final ComponentWithBrowseButton.BrowseFolderActionListener browseActionListener =
-        new ComponentWithBrowseButton.BrowseFolderActionListener<JComboBox>(RefactoringBundle.message("select.target.directory"),
-                                                                 RefactoringBundle.message("the.file.will.be.copied.to.this.directory"),
-                                                                 null, myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor(),
-                                                                 TextComponentAccessor.STRING_COMBOBOX_WHOLE_TEXT);
-      myTargetDirectoryField = new EditorComboWithBrowseButton(browseActionListener, "", myProject,
+      myTargetDirectoryField = new EditorComboWithBrowseButton(null, "", myProject,
                                                                RECENT_KEYS);
+      myTargetDirectoryField.addBrowseFolderListener(RefactoringBundle.message("select.target.directory"),
+                                                                            RefactoringBundle.message("the.file.will.be.copied.to.this.directory"),
+                                                                            myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor(),
+                                                                            EditorComboBox.COMPONENT_ACCESSOR);
       myTargetDirectoryField.setTextFieldPreferredWidth(60);
       panel.add(myTargetDirectoryField, new GridBagConstraints(1,1,1,1,1,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(4,0,4,8),0,0));
 
