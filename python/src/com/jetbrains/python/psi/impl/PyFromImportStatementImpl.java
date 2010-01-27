@@ -103,7 +103,7 @@ public class PyFromImportStatementImpl extends PyElementImpl implements PyFromIm
     if (isStarImport()) {
       PyReferenceExpression expr = getImportSource();
       if (expr != null) {
-        final PsiElement importedFile = ResolveImportUtil.resolveImportReference(expr);
+        final PsiElement importedFile = PyReferenceExpressionImpl.turnDirIntoInit(ResolveImportUtil.resolveImportReference(expr));
         if (importedFile != null) {
           return importedFile.processDeclarations(processor, state, null, place);
         }
