@@ -43,7 +43,6 @@ import java.util.*;
 
 public class CompilerUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompilerUtil");
-  public static volatile long ourRefreshTime = 0L;
 
   public static String quotePath(String path) {
     if(path != null && path.indexOf(' ') != -1) {
@@ -103,43 +102,25 @@ public class CompilerUtil {
    * @param files
    */
   public static void refreshIOFiles(@NotNull final Collection<File> files) {
-    final long start = System.currentTimeMillis();
-    try {
-      LocalFileSystem.getInstance().refreshIoFiles(files);
-    }
-    finally {
-      ourRefreshTime += (System.currentTimeMillis() - start);
-    }
+    LocalFileSystem.getInstance().refreshIoFiles(files);
   }
 
   public static void refreshIODirectories(@NotNull final Collection<File> files) {
-    final long start = System.currentTimeMillis();
-    try {
-      final LocalFileSystem lfs = LocalFileSystem.getInstance();
-      final List<VirtualFile> filesToRefresh = new ArrayList<VirtualFile>();
-      for (File file : files) {
-        final VirtualFile virtualFile = lfs.refreshAndFindFileByIoFile(file);
-        if (virtualFile != null) {
-          filesToRefresh.add(virtualFile);
-        }
+    final LocalFileSystem lfs = LocalFileSystem.getInstance();
+    final List<VirtualFile> filesToRefresh = new ArrayList<VirtualFile>();
+    for (File file : files) {
+      final VirtualFile virtualFile = lfs.refreshAndFindFileByIoFile(file);
+      if (virtualFile != null) {
+        filesToRefresh.add(virtualFile);
       }
-      RefreshQueue.getInstance().refresh(false, true, null, VfsUtil.toVirtualFileArray(filesToRefresh));
     }
-    finally {
-      ourRefreshTime += (System.currentTimeMillis() - start);
-    }
+    RefreshQueue.getInstance().refresh(false, true, null, VfsUtil.toVirtualFileArray(filesToRefresh));
   }
 
   public static void refreshIOFile(final File file) {
-    final long start = System.currentTimeMillis();
-    try {
-      final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-      if (vFile != null) {
-        vFile.refresh(false, false);
-      }
-    }
-    finally {
-      ourRefreshTime += (System.currentTimeMillis() - start);
+    final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    if (vFile != null) {
+      vFile.refresh(false, false);
     }
   }
 

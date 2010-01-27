@@ -420,8 +420,6 @@ public class CompileDriver {
         }
         finally {
           compileContext.commitZipFiles();
-          CompilerUtil.logDuration("Refreshing VFS in total", CompilerUtil.ourRefreshTime);
-          CompilerUtil.ourRefreshTime = 0L;
           final long finish = System.currentTimeMillis();
           CompilerUtil.logDuration(
             "\tCOMPILATION FINISHED; Errors: " +
@@ -704,7 +702,6 @@ public class CompileDriver {
 
         final long initialRefreshTime = System.currentTimeMillis() - refreshStart;
         CompilerUtil.logDuration("Initial VFS refresh", initialRefreshTime);
-        CompilerUtil.ourRefreshTime += initialRefreshTime;
       }
 
       //DumbService.getInstance(myProject).waitForSmartMode();

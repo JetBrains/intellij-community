@@ -19,7 +19,6 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.SymbolTable;
 import com.intellij.compiler.classParsing.MethodInfo;
-import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.javaCompiler.DependencyProcessor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerBundle;
@@ -137,8 +136,6 @@ public class CacheUtils {
 
     final DependencyCache dependencyCache = context.getDependencyCache();
 
-    final long start = System.currentTimeMillis();
-
     final Pair<int[], Set<VirtualFile>> deps =
         dependencyCache.findDependentClasses(context, context.getProject(), succesfullyCompiledJavaFiles, additionalDependencyProcessor);
     final Pair<int[], Set<VirtualFile>> filteredDeps = filter != null? filter.fun(deps) : deps;
@@ -188,7 +185,6 @@ public class CacheUtils {
     }
     context.getProgressIndicator().setText(CompilerBundle.message("progress.found.dependent.files", dependentFiles.size()));
 
-    CompilerUtil.logDuration("Finding dependencies", System.currentTimeMillis() - start);
     return dependentFiles;
   }
 }
