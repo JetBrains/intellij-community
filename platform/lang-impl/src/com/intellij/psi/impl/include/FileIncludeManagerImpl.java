@@ -95,7 +95,8 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
     }
   };
 
-  public FileIncludeManagerImpl(Project project, PsiManager psiManager, PsiFileFactory psiFileFactory) {
+  public FileIncludeManagerImpl(Project project, PsiManager psiManager, PsiFileFactory psiFileFactory,
+                                CachedValuesManager cachedValuesManager) {
     myProject = project;
     myPsiManager = psiManager;
     myPsiFileFactory = psiFileFactory;
@@ -106,7 +107,7 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
       FileIncludeProvider old = myProviderMap.put(provider.getId(), provider);
       assert old == null;
     }
-    myCachedValuesManager = myPsiManager.getCachedValuesManager();
+    myCachedValuesManager = cachedValuesManager;
   }
 
   @Override
