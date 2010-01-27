@@ -1,6 +1,9 @@
 package com.jetbrains.python;
 
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
@@ -21,6 +24,18 @@ public class PyEditingTest extends PyLightFixtureTestCase {
 
   public void testPairedQuotesInRawString() {   // PY-263
     assertEquals("r''", doTestTyping("r", 1, '\''));
+  }
+
+  public void testGreedyBackspace() throws Exception {  // PY-254
+    myFixture.configureByFile("/editing/py254.py");
+    myFixture.getEditor().getCaretModel().moveToLogicalPosition(new LogicalPosition(4, 8));
+    CommandProcessor.getInstance().executeCommand(myFixture.getProject(), new Runnable() {
+      public void run() {
+        myFixture.performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE);
+      }
+    }, "", null);
+    // this should not modify the text, so we can check against the same file 
+    myFixture.checkResultByFile("/editing/py254.py", true);
   }
 
   private String doTestTyping(final String text, final int offset, final char character) {
