@@ -17,12 +17,12 @@
 package com.intellij.execution.junit2.states;
 
 import com.intellij.execution.Location;
-import com.intellij.execution.junit2.states.SuiteState;
 import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.testframework.Printable;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
@@ -55,6 +55,8 @@ public abstract class TestState implements Printable {
 
   public void update() {
   }
+
+  public void merge(@NotNull TestState state){}
 
   public boolean isPassed() {
     return getMagnitude() == PoolOfTestStates.PASSED_INDEX;

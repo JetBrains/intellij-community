@@ -214,7 +214,7 @@ public class CompositeElement extends TreeElement {
   }
 
   public int getChildRole(ASTNode child) {
-    assert child.getTreeParent() == this;
+    LOG.assertTrue(child.getTreeParent() == this, child);
     return 0; //ChildRole.NONE;
   }
 
@@ -255,7 +255,7 @@ public class CompositeElement extends TreeElement {
     for (ASTNode child = getFirstChildNode(); child != null && idx < count; child = child.getTreeNext()) {
       if (filter == null || filter.contains(child.getElementType())) {
         T element = (T)child.getPsi();
-        assert element != null;
+        LOG.assertTrue(element != null, child);
         result[idx++] = element;
       }
     }
@@ -301,6 +301,9 @@ public class CompositeElement extends TreeElement {
     if (cachedLength >= 0) return cachedLength;
 
     synchronized (START_OFFSET_LOCK) {
+      cachedLength = myCachedLength;
+      if (cachedLength >= 0) return cachedLength;
+
       walkCachingLength();
       return myCachedLength;
     }
@@ -331,7 +334,7 @@ public class CompositeElement extends TreeElement {
       cur = next(cur, cur.getCachedLength() == NOT_CACHED);
     }
 
-    assert myCachedLength >= 0;
+    LOG.assertTrue(myCachedLength >= 0, myCachedLength);
   }
 
   @Nullable

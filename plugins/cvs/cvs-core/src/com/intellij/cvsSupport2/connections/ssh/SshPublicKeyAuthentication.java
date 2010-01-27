@@ -25,12 +25,15 @@ import java.io.IOException;
 public class SshPublicKeyAuthentication implements SshAuthentication {
   private final String myLogin;
   private final File myFile;
-  private final String myPassword;
+  private final SSHPasswordProvider myPasswordProvider;
+  private final String myCvsRootAsString;
 
-  public SshPublicKeyAuthentication(final File file, final String password, final String login) {
+  public SshPublicKeyAuthentication(final File file, final String login, final SSHPasswordProvider passwordProvider,
+                                    final String cvsRootAsString) {
     myFile = file;
-    myPassword = password;
     myLogin = login;
+    myPasswordProvider = passwordProvider;
+    myCvsRootAsString = cvsRootAsString;
   }
 
   public void authenticate(final Connection connection) throws AuthenticationException, SolveableAuthenticationException {
@@ -43,7 +46,10 @@ public class SshPublicKeyAuthentication implements SshAuthentication {
     }
 
     try {
-      connection.authenticateWithPublicKey(myLogin, keyChars, myPassword);
+      final String password = myPasswordProvider.getPPKPasswordForCvsRoot(myCvsRootAsString);
+      if (! connection.authenticateWithPublicKey(myLogin, keyChars, password)) {
+        throw new SolveableAuthenticationException("Authentication rejected.");
+      }
     }
     catch (IOException e) {
       throw new SolveableAuthenticationException(e.getMessage(), e);

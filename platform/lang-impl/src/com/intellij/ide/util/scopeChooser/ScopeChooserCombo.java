@@ -18,6 +18,7 @@ package com.intellij.ide.util.scopeChooser;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.favoritesTreeView.FavoritesManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
@@ -28,6 +29,7 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -36,6 +38,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.ComboboxWithBrowseButton;
@@ -56,11 +59,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class ScopeChooserCombo extends ComboboxWithBrowseButton {
+public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Disposable {
   private Project myProject;
   private boolean mySuggestSearchInLibs;
   private boolean myPrevSearchFiles;
 
+  private NamedScopesHolder.ScopeListener myScopeListener;
+  private NamedScopeManager myNamedScopeManager;
+  private DependencyValidationManager myValidationManager;
 
   public ScopeChooserCombo() {
   }
@@ -78,6 +84,19 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
     myPrevSearchFiles = prevSearchWholeFiles;
     final JComboBox combo = getComboBox();
     myProject = project;
+    myScopeListener = new NamedScopesHolder.ScopeListener() {
+      public void scopesChanged() {
+        final SearchScope selectedScope = getSelectedScope();
+        rebuildModel();
+        if (selectedScope != null) {
+          selectScope(selectedScope.getDisplayName());
+        }
+      }
+    };
+    myNamedScopeManager = NamedScopeManager.getInstance(project);
+    myNamedScopeManager.addScopeListener(myScopeListener);
+    myValidationManager = DependencyValidationManager.getInstance(project);
+    myValidationManager.addScopeListener(myScopeListener);
     addActionListener(createScopeChooserListener());
 
     combo.setRenderer(new DefaultListCellRenderer() {
@@ -93,6 +112,20 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
     rebuildModel();
 
     selectScope(preselect);
+  }
+
+  @Override
+  public void dispose() {
+    super.dispose();
+    if (myValidationManager != null) {
+      myValidationManager.removeScopeListener(myScopeListener);
+      myValidationManager = null;
+    }
+    if (myNamedScopeManager != null) {
+      myNamedScopeManager.removeScopeListener(myScopeListener);
+      myNamedScopeManager = null;
+    }
+    myScopeListener = null;
   }
 
   private void selectScope(String preselect) {

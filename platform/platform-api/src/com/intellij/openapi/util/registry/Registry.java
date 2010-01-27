@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,11 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.PropertyKey;
 
+import java.awt.*;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.util.*;
+import java.util.List;
 
 public class Registry  {
 
@@ -39,7 +41,7 @@ public class Registry  {
   private static final Registry ourInstance = new Registry();
 
   public static RegistryValue get(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) String key) {
-    final Registry registry = Registry.getInstance();
+    final Registry registry = getInstance();
 
     if (registry.myValues.containsKey(key)) {
       return registry.myValues.get(key);
@@ -62,7 +64,11 @@ public class Registry  {
     return get(key).asString();
   }
 
-  ResourceBundle getBundle() {
+  public static Color getColor(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) String key, Color defaultValue) {
+    return get(key).asColor(defaultValue);
+  }
+
+  static ResourceBundle getBundle() {
     ResourceBundle bundle = null;
     if (ourBundle != null) bundle = ourBundle.get();
     if (bundle == null) {
@@ -109,9 +115,8 @@ public class Registry  {
     return myUserProperties;
   }
 
-  public List<RegistryValue> getAll() {
-    final Registry registry = Registry.getInstance();
-    final ResourceBundle bundle = registry.getBundle();
+  public static List<RegistryValue> getAll() {
+    final ResourceBundle bundle = getBundle();
     final Enumeration<String> keys = bundle.getKeys();
 
     final ArrayList<RegistryValue> result = new ArrayList<RegistryValue>();
@@ -141,7 +146,7 @@ public class Registry  {
     return isRestartNeeded(myUserProperties) || isRestartNeeded(myLoadedUserProperties);
   }
 
-  private boolean isRestartNeeded(Map<String, String> map) {
+  private static boolean isRestartNeeded(Map<String, String> map) {
     for (String s : map.keySet()) {
       final RegistryValue eachValue = get(s);
       if (eachValue.isRestartRequired() && eachValue.isChangedSinceAppStart()) return true;

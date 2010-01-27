@@ -58,8 +58,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
+import java.awt.event.FocusAdapter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -206,26 +205,24 @@ public class FindUtil {
     CharSequence text = document.getCharsSequence();
     int textLength = document.getTextLength();
     final List<Usage> usages = new ArrayList<Usage>();
-    if (text != null) {
-      FindManager findManager = FindManager.getInstance(project);
-      findModel.setForward(true); // when find all there is no diff in direction
+    FindManager findManager = FindManager.getInstance(project);
+    findModel.setForward(true); // when find all there is no diff in direction
 
-      int offset = 0;
-      VirtualFile virtualFile = getVirtualFile(editor);
+    int offset = 0;
+    VirtualFile virtualFile = getVirtualFile(editor);
 
-      while (offset < textLength) {
-        FindResult result = findManager.findString(text, offset, findModel, virtualFile);
-        if (!result.isStringFound()) break;
+    while (offset < textLength) {
+      FindResult result = findManager.findString(text, offset, findModel, virtualFile);
+      if (!result.isStringFound()) break;
 
-        usages.add(new UsageInfo2UsageAdapter(new UsageInfo(psiFile, result.getStartOffset(), result.getEndOffset())));
+      usages.add(new UsageInfo2UsageAdapter(new UsageInfo(psiFile, result.getStartOffset(), result.getEndOffset())));
 
-        final int prevOffset = offset;
-        offset = result.getEndOffset();
+      final int prevOffset = offset;
+      offset = result.getEndOffset();
 
-        if (prevOffset == offset) {
-          // for regular expr the size of the match could be zero -> could be infinite loop in finding usages!
-          ++offset;
-        }
+      if (prevOffset == offset) {
+        // for regular expr the size of the match could be zero -> could be infinite loop in finding usages!
+        ++offset;
       }
     }
     final UsageTarget[] usageTargets = { new FindInProjectUtil.StringUsageTarget(findModel.getStringToFind()) };
@@ -396,7 +393,7 @@ public class FindUtil {
     });
   }
 
-  private static boolean replace(Project project, Editor editor, int offset, FindModel model) {
+  public static boolean replace(Project project, Editor editor, int offset, FindModel model) {
     Document document = editor.getDocument();
 
     if (!FileDocumentManager.getInstance().requestWriting(document, project)) {
@@ -422,7 +419,7 @@ public class FindUtil {
       document.stopGuardedBlockChecking();
     }
 
-    return false;
+    return true;
   }
 
   private static boolean doReplace(Project project, Editor editor, FindModel model, final Document document, int caretOffset, boolean toPrompt) {
@@ -460,7 +457,7 @@ public class FindUtil {
       int startOffset = result.getStartOffset();
       int endOffset = result.getEndOffset();
       String foundString = document.getCharsSequence().subSequence(startOffset, endOffset).toString();
-      String toReplace = findManager.getStringToReplace(foundString, model);
+      String toReplace = findManager.getStringToReplace(foundString, model, startOffset, document.getText());
       if (toReplace == null) break;
 
       boolean reallyReplace = toPrompt;
@@ -531,10 +528,6 @@ public class FindUtil {
     Document document = editor.getDocument();
 
     final FindResult result = findManager.findString(document.getCharsSequence(), offset, model, getVirtualFile(editor));
-    String stringToFind = model.getStringToFind();
-    if (stringToFind == null) {
-      return null;
-    }
 
     boolean isFound = result.isStringFound();
     if (!model.isGlobal()) {
@@ -597,20 +590,13 @@ public class FindUtil {
     return result;
   }
 
-  private static class MyListener implements FocusListener, CaretListener {
+  private static class MyListener extends FocusAdapter implements CaretListener {
     private final Editor myEditor;
     private final RangeHighlighter mySegmentHighlighter;
 
     private MyListener(Editor editor, RangeHighlighter segmentHighlighter) {
       myEditor = editor;
       mySegmentHighlighter = segmentHighlighter;
-    }
-
-    public void focusGained(FocusEvent e) {
-//        removeAll();
-    }
-
-    public void focusLost(FocusEvent e) {
     }
 
     public void caretPositionChanged(CaretEvent e) {
@@ -689,14 +675,14 @@ public class FindUtil {
                                0, false);
   }
 
-  private static TextRange doReplace(final Project project, final Document document, final FindModel model, FindResult result, @NotNull final String stringToReplace,
+  private static TextRange doReplace(final Project project, final Document document, final FindModel model, FindResult result, @NotNull String stringToReplace,
                                      boolean reallyReplace,
                                      List<Pair<TextRange, String>> rangesToChange) {
     final int startOffset = result.getStartOffset();
     final int endOffset = result.getEndOffset();
 
-    int newOffset;
     final String converted = StringUtil.convertLineSeparators(stringToReplace);
+    int newOffset;
     if (reallyReplace) {
       CommandProcessor.getInstance().executeCommand(project, new Runnable() {
         public void run() {

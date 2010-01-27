@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sascha Weinreuter
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.intellij.plugins.xpathView.ui;
+package com.intellij.codeInsight.codeFragment;
 
-import com.intellij.openapi.Disposable;
-
-import javax.swing.*;
-
-public interface InputForm extends Disposable {
-    JComponent getComponent();
-
-    JLabel getIcon();
-
-    JButton getEditContextButton();
-
-    JPanel getEditorPanel();
+/**
+ * @author oleg
+ */
+public enum Position {
+  BEFORE,
+  INSIDE,
+  AFTER
 }

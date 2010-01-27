@@ -15,16 +15,15 @@
  */
 package com.intellij.xml.util;
 
-import com.intellij.codeInsight.lookup.DeferredUserLookupValue;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupValueWithPriority;
-import com.intellij.codeInsight.lookup.LookupValueWithUIHint;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -32,7 +31,7 @@ import java.util.List;
 /**
  * @author maxim
  */
-public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUserLookupValue, LookupValueWithPriority {
+public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUserLookupValue, Iconable,  LookupValueWithPriority {
   private static Object[] ourColors;
   private static Map<String, String> ourColorNameToHexCodeMap;
   private static Map<String, String> ourHexCodeToColorNameMap;
@@ -266,6 +265,20 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
     return myName;
   }
 
+  public Icon getIcon(int flags) {
+    if (myColor == null) {
+      if (myValue.startsWith("#")) {
+        myColor = Color.decode("0x" + myValue.substring(1));
+      }
+    }
+
+    if (myColor != null) {
+      return ColorIconCache.getIconCache().getIcon(myColor, 32);
+    }
+
+    return null;
+  }
+
   public boolean handleUserSelection(LookupItem item, Project project) {
     if (!myIsStandard) {
       item.setLookupString(myValue);
@@ -312,7 +325,7 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
         tokenizer.nextToken(); // skip rgb
 
         if (!standardColors.containsKey(name)) {
-          colorsList.add(new ColorSampleLookupValue(name, hexValue, true));
+          colorsList.add(new ColorSampleLookupValue(name, hexValue, false));
           ourColorNameToHexCodeMap.put(name, hexValue);
           ourHexCodeToColorNameMap.put(hexValue, name);
         }
@@ -325,17 +338,12 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
   }
 
   public String getTypeHint() {
-    return null;
+    return myValue.charAt(0) == '#' ? myValue : null;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public Color getColorHint() {
-    if (myColor == null) {
-      if (myValue.startsWith("#")) {
-        myColor = Color.decode("0x" + myValue.substring(1));
-      }
-    }
-    return myColor;
+    return null;
   }
 
   public boolean isBold() {
@@ -368,29 +376,29 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
     }
   }
 
-  public static void addColorPreviewAndCodeToLookup(final Color color, final String value, final StringBuilder buf) {
-    if (color == null) return;
-
-    final String code = Integer.toHexString(color.getRGB()).substring(2);
-
-    if (value != null) {
-      if (value.startsWith("#")) {
-        final String colorName = getColorNameForHexCode(value);
-
-        if (colorName != null) {
-          buf.append(XmlBundle.message("color.name", colorName)).append(BR);
-        }
-      }
-      else {
-        final String hexValue = getHexCodeForColorName(value);
-        if (hexValue != null) {
-          buf.append(XmlBundle.message("color.rgb", hexValue.substring(1))).append(BR);
-        }
+  private static String toHex(@NotNull final Color color) {
+    final StringBuffer sb = new StringBuffer();
+    for (int i = 0; i < 3; i++) {
+      String s = Integer.toHexString(i == 0 ? color.getRed() : i == 1 ? color.getGreen() : color.getBlue());
+      if (s.length() < 2) {
+        sb.append('0');
       }
 
+      sb.append(s);
     }
 
-    String colorBox = "<div style=\"border: 1px solid #000000; width: 50px; height: 20px; background-color:#" + code + "\"></div>";
+    return sb.toString();
+  }
+
+  public static void addColorPreviewAndCodeToLookup(final Color color, final String value, final StringBuilder buf) {
+    if (color == null) return;
+    final String code = '#' + toHex(color);
+    final String colorName = getColorNameForHexCode(code);
+    if (colorName != null) {
+      buf.append(XmlBundle.message("color.name", colorName)).append(BR);
+    }
+
+    String colorBox = "<div style=\"border: 1px solid #000000; width: 50px; height: 20px; background-color:" + code + "\"></div>";
     buf.append(XmlBundle.message("color.preview", colorBox)).append(BR);
   }
 }
