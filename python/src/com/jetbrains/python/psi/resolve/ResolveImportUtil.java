@@ -173,10 +173,6 @@ public class ResolveImportUtil {
           if (imported_from_module == null) imported_from_module = resolveModuleInRoots(module_reference, source_file);
         }
       }
-      if (imported_from_module instanceof PsiDirectory) {
-          PsiFile file = ((PsiDirectory)imported_from_module).findFile(PyNames.INIT_DOT_PY);
-          if (file != null) imported_from_module = file;
-      }
       return imported_from_module;
     }
     finally {
