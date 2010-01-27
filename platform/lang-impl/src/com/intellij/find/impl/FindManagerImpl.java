@@ -488,7 +488,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
       }
       return NOT_FOUND_RESULT;
     }
-    else{
+    else {
       int start = -1;
       int end = -1;
       while(matcher.find() && matcher.end() < startOffset){
@@ -517,20 +517,69 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     return pattern.matcher(text);
   }
 
-  public String getStringToReplace(@NotNull String foundString, FindModel model) {
-    if (model == null) {
+  public String getStringToReplace(@NotNull String foundString, @NotNull FindModel model) {
+    String toReplace = model.getStringToReplace();
+    if (model.isRegularExpressions()) {
+      return getStringToReplaceByRegexp0(foundString, model);
+    }
+    if (model.isPreserveCase()) {
+      return replaceWithCaseRespect (toReplace, foundString);
+    }
+    return toReplace;
+  }
+
+  @Override
+  public String getStringToReplace(@NotNull String foundString, @NotNull FindModel model, int startOffset, @NotNull String documentText) {
+    String toReplace = model.getStringToReplace();
+    if (model.isRegularExpressions()) {
+      return getStringToReplaceByRegexp(foundString, model, documentText, startOffset);
+    }
+    if (model.isPreserveCase()) {
+      return replaceWithCaseRespect (toReplace, foundString);
+    }
+    return toReplace;
+  }
+
+  private String getStringToReplaceByRegexp(@NotNull String foundString, @NotNull final FindModel model, @NotNull String text, int startOffset) {
+    Matcher matcher = compileRegExp(model, text);
+
+    if (model.isForward()){
+      if (!matcher.find(startOffset)) {
+        return null;
+      }
+      if (matcher.end() > text.length()) {
+        return null;
+      }
+    }
+    else {
+      int start = -1;
+      while(matcher.find() && matcher.end() < startOffset){
+        start = matcher.start();
+      }
+      if (start < 0){
+        return null;
+      }
+    }
+    try {
+      StringBuffer replaced = new StringBuffer();
+      matcher.appendReplacement(replaced, model.getStringToReplace());
+
+      return replaced.substring(matcher.start());
+    }
+    catch (Exception e) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          Messages.showErrorDialog(myProject, FindBundle.message("find.replace.invalid.replacement.string", model.getStringToReplace()),
+                                   FindBundle.message("find.replace.invalid.replacement.string.title"));
+        }
+      });
       return null;
     }
-    String toReplace = model.getStringToReplace();
-    if (!model.isRegularExpressions()) {
-      if (model.isPreserveCase()) {
-        return replaceWithCaseRespect (toReplace, foundString);
-      }
-      return toReplace;
-    }
+  }
 
+  private String getStringToReplaceByRegexp0(String foundString, final FindModel model) {
     String toFind = model.getStringToFind();
-
+    String toReplace = model.getStringToReplace();
     Pattern pattern;
     try{
       int flags = Pattern.MULTILINE;
@@ -550,14 +599,15 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
       }
       catch (Exception e) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
-              public void run() {
-                Messages.showErrorDialog(myProject, FindBundle.message("find.replace.invalid.replacement.string"),
-                                         FindBundle.message("find.replace.invalid.replacement.string.title"));
-              }
-            });
+          public void run() {
+            Messages.showErrorDialog(myProject, FindBundle.message("find.replace.invalid.replacement.string", model.getStringToReplace()),
+                                     FindBundle.message("find.replace.invalid.replacement.string.title"));
+          }
+        });
         return null;
       }
-    } else {
+    }
+    else {
       // There are valid situations (for example, IDEADEV-2543 or positive lookbehind assertions)
       // where an expression which matches a string in context will not match the same string
       // separately).
