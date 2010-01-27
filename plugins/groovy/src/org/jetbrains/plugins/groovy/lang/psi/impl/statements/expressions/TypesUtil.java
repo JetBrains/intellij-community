@@ -349,6 +349,14 @@ public class TypesUtil {
         return GrClosureType.create(returnType, paramTypes, opts, manager, scope, LanguageLevel.JDK_1_5);
       }
     }
+    else if (GrStringUtil.GROOVY_LANG_GSTRING.equals(type1.getCanonicalText()) &&
+             CommonClassNames.JAVA_LANG_STRING.equals(type2.getInternalCanonicalText())) {
+      return type2;
+    }
+    else if (GrStringUtil.GROOVY_LANG_GSTRING.equals(type2.getCanonicalText()) &&
+             CommonClassNames.JAVA_LANG_STRING.equals(type1.getInternalCanonicalText())) {
+      return type1;
+    }
 
     return GenericsUtil.getLeastUpperBound(type1, type2, manager);
   }

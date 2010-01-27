@@ -47,4 +47,6 @@ public class InputFormPanel extends JPanel implements InputForm {
     public JPanel getEditorPanel() {
         return myEditorPanel;
     }
+
+    public void dispose() {}
 }

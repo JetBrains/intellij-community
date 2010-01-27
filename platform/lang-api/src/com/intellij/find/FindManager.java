@@ -116,7 +116,8 @@ public abstract class FindManager {
    * @param model       the search and replace settings, including the replace string.
    * @return the string to replace the specified found string.
    */
-  public abstract String getStringToReplace(@NotNull String foundString, FindModel model);
+  public abstract String getStringToReplace(@NotNull String foundString, @NotNull FindModel model);
+  public abstract String getStringToReplace(@NotNull String foundString, @NotNull FindModel model, int startOffset, @NotNull String documentText);
 
   /**
    * Gets the flag indicating whether the "Find Next" and "Find Previous" actions are

@@ -175,19 +175,21 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   }
 
   private void processScopes() {
-    myLocalScopesManager.removeAllSets();
-    mySharedScopesManager.removeAllSets();
+    final List<NamedScope> localScopes = new ArrayList<NamedScope>();
+    final List<NamedScope> sharedScopes = new ArrayList<NamedScope>();
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       final MyNode node = (MyNode)myRoot.getChildAt(i);
       final ScopeConfigurable scopeConfigurable = (ScopeConfigurable)node.getConfigurable();
       final NamedScope namedScope = scopeConfigurable.getScope();
       if (scopeConfigurable.getHolder() == myLocalScopesManager) {
-        myLocalScopesManager.addScope(namedScope);
+        localScopes.add(namedScope);
       }
       else {
-        mySharedScopesManager.addScope(namedScope);
+        sharedScopes.add(namedScope);
       }
     }
+    myLocalScopesManager.setScopes(localScopes.toArray(new NamedScope[localScopes.size()]));
+    mySharedScopesManager.setScopes(sharedScopes.toArray(new NamedScope[sharedScopes.size()]));
   }
 
   private void reloadTree() {

@@ -619,7 +619,7 @@ public class AbstractTreeUi {
     };
 
     if (bgLoading) {
-      queueToBackground(build, update, null);
+      queueToBackground(build, update);
     }
     else {
       build.run();
@@ -735,7 +735,7 @@ public class AbstractTreeUi {
           public void run() {
             result.setDone(changes.get());
           }
-        }, null);
+        });
       }
       else {
         result.setDone(_update(nodeDescriptor));
@@ -1412,7 +1412,13 @@ public class AbstractTreeUi {
               result.setRejected();
             }
             else {
-              processRunnable.run().notify(result);
+              try {
+                processRunnable.run().notify(result);
+              }
+              catch (ProcessCanceledException e) {
+                pass.expire();
+                result.setRejected();
+              }
             }
           }
         }, pass);
@@ -1421,7 +1427,13 @@ public class AbstractTreeUi {
         }
       }
       else {
-        processRunnable.run().notify(result);
+        try {
+          processRunnable.run().notify(result);
+        }
+        catch (ProcessCanceledException e) {
+          pass.expire();
+          result.setRejected();
+        }
       }
     }
 
@@ -1875,8 +1887,30 @@ public class AbstractTreeUi {
 
     final Ref<LoadedChildren> children = new Ref<LoadedChildren>();
     final Ref<Object> elementFromDescriptor = new Ref<Object>();
+
+    final DefaultMutableTreeNode[] nodeToProcessActions = new DefaultMutableTreeNode[1];
+
+    final Runnable finalizeRunnable = new Runnable() {
+      public void run() {
+        removeLoading(node, true);
+        removeFromLoadedInBackground(elementFromDescriptor.get());
+        removeFromLoadedInBackground(oldElementFromDescriptor);
+
+        if (nodeToProcessActions[0] != null) {
+          processNodeActionsIfReady(nodeToProcessActions[0]);
+        }
+      }
+    };
+
+
     Runnable buildRunnable = new Runnable() {
       public void run() {
+        if (updateInfo.getPass().isExpired()) {
+          finalizeRunnable.run();
+          return;
+        }
+
+
         if (!updateInfo.isDescriptorIsUpToDate()) {
           update(updateInfo.getDescriptor(), true);
         }
@@ -1884,6 +1918,7 @@ public class AbstractTreeUi {
         Object element = getElementFromDescriptor(updateInfo.getDescriptor());
         if (element == null) {
           removeFromLoadedInBackground(oldElementFromDescriptor);
+          finalizeRunnable.run();
           return;
         }
 
@@ -1900,10 +1935,17 @@ public class AbstractTreeUi {
       }
     };
 
-    final DefaultMutableTreeNode[] nodeToProcessActions = new DefaultMutableTreeNode[1];
     Runnable updateRunnable = new Runnable() {
       public void run() {
-        if (children.get() == null) return;
+        if (updateInfo.getPass().isExpired()) {
+          finalizeRunnable.run();
+          return;
+        }
+
+        if (children.get() == null) {
+          finalizeRunnable.run();
+          return;
+        }
 
         if (isRerunNeeded(updateInfo.getPass())) {
           removeFromLoadedInBackground(elementFromDescriptor.get());
@@ -1940,13 +1982,12 @@ public class AbstractTreeUi {
         }
       }
     };
-    queueToBackground(buildRunnable, updateRunnable, new Runnable() {
+    queueToBackground(buildRunnable, updateRunnable).doWhenProcessed(finalizeRunnable).doWhenRejected(new Runnable() {
       public void run() {
-        if (nodeToProcessActions[0] != null) {
-          processNodeActionsIfReady(nodeToProcessActions[0]);
-        }
+        updateInfo.getPass().expire();
       }
     });
+
     return true;
   }
 
@@ -2488,10 +2529,22 @@ public class AbstractTreeUi {
   }
 
 
-  protected void queueToBackground(@NotNull final Runnable bgBuildAction,
-                                   @Nullable final Runnable edtPostRunnable,
-                                   @Nullable final Runnable finalizeEdtRunnable) {
-    if (validateReleaseRequested()) return;
+  protected ActionCallback queueToBackground(@NotNull final Runnable bgBuildAction,
+                                   @Nullable final Runnable edtPostRunnable) {
+    if (validateReleaseRequested()) return new ActionCallback.Rejected();
+
+    final ActionCallback result = new ActionCallback();
+
+    final Ref<Boolean> fail = new Ref<Boolean>(false);
+    final Runnable finalizer = new Runnable() {
+      public void run() {
+        if (fail.get()) {
+          result.setRejected();
+        } else {
+          result.setDone();
+        }
+      }
+    };
 
     registerWorkerTask(bgBuildAction);
 
@@ -2513,22 +2566,25 @@ public class AbstractTreeUi {
                       assertIsDispatchThread();
 
                       edtPostRunnable.run();
+                    } catch (ProcessCanceledException e) {
+                      fail.set(true);
                     }
                     finally {
-                      unregisterWorkerTask(bgBuildAction, finalizeEdtRunnable);
+                      unregisterWorkerTask(bgBuildAction, finalizer);
                     }
                   }
                 });
               }
               else {
-                unregisterWorkerTask(bgBuildAction, finalizeEdtRunnable);
+                unregisterWorkerTask(bgBuildAction, finalizer);
               }
             }
             catch (ProcessCanceledException e) {
-              unregisterWorkerTask(bgBuildAction, finalizeEdtRunnable);
+              fail.set(true);
+              unregisterWorkerTask(bgBuildAction, finalizer);
             }
             catch (Throwable t) {
-              unregisterWorkerTask(bgBuildAction, finalizeEdtRunnable);
+              unregisterWorkerTask(bgBuildAction, finalizer);
               throw new RuntimeException(t);
             }
           }
@@ -2547,7 +2603,8 @@ public class AbstractTreeUi {
           }
         }
         catch (ProcessCanceledException e) {
-          //ignore
+          fail.set(true);
+          unregisterWorkerTask(bgBuildAction, finalizer);
         }
       }
     };
@@ -2565,6 +2622,8 @@ public class AbstractTreeUi {
         myWorker.addTaskFirst(pooledThreadRunnable);
       }
     }
+
+    return result;
   }
 
   private void registerWorkerTask(Runnable runnable) {

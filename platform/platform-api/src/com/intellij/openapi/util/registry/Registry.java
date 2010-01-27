@@ -41,7 +41,7 @@ public class Registry  {
   private static final Registry ourInstance = new Registry();
 
   public static RegistryValue get(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) String key) {
-    final Registry registry = Registry.getInstance();
+    final Registry registry = getInstance();
 
     if (registry.myValues.containsKey(key)) {
       return registry.myValues.get(key);
@@ -68,7 +68,7 @@ public class Registry  {
     return get(key).asColor(defaultValue);
   }
 
-  ResourceBundle getBundle() {
+  static ResourceBundle getBundle() {
     ResourceBundle bundle = null;
     if (ourBundle != null) bundle = ourBundle.get();
     if (bundle == null) {
@@ -115,9 +115,8 @@ public class Registry  {
     return myUserProperties;
   }
 
-  public List<RegistryValue> getAll() {
-    final Registry registry = Registry.getInstance();
-    final ResourceBundle bundle = registry.getBundle();
+  public static List<RegistryValue> getAll() {
+    final ResourceBundle bundle = getBundle();
     final Enumeration<String> keys = bundle.getKeys();
 
     final ArrayList<RegistryValue> result = new ArrayList<RegistryValue>();
@@ -147,7 +146,7 @@ public class Registry  {
     return isRestartNeeded(myUserProperties) || isRestartNeeded(myLoadedUserProperties);
   }
 
-  private boolean isRestartNeeded(Map<String, String> map) {
+  private static boolean isRestartNeeded(Map<String, String> map) {
     for (String s : map.keySet()) {
       final RegistryValue eachValue = get(s);
       if (eachValue.isRestartRequired() && eachValue.isChangedSinceAppStart()) return true;
