@@ -1,5 +1,6 @@
 package com.intellij.ide.util.treeView;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.Time;
@@ -743,6 +744,60 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       " +xunit\n");
   }
 
+  public void testThrowingProcessCancelledInterruptsUpdate() throws Exception {
+    buildStructure(myRoot);
+
+    expand(getPath("/"));
+    expand(getPath("com"));
+    expand(getPath("jetbrains"));
+    expand(getPath("org"));
+    expand(getPath("xunit"));
+
+    assertTree("-/\n" +
+               " -com\n" +
+               "  +intellij\n" +
+               " -jetbrains\n" +
+               "  +fabrique\n" +
+               " -org\n" +
+               "  +eclipse\n" +
+               " -xunit\n" +
+               "  runner\n");
+    
+    runAndInterrupt(new MyRunnable() {
+      public void runSafe() throws Exception {
+        updateFrom(new NodeElement("/"));
+      }
+    }, "update", new NodeElement("jetbrains"));
+
+    runAndInterrupt(new MyRunnable() {
+      @Override
+      public void runSafe() throws Exception {
+        updateFrom(new NodeElement("/"));
+      }
+    }, "getChildren", new NodeElement("jetbrains"));
+  }
+
+  private void runAndInterrupt(final Runnable action, final String interruptAction, final Object interruptElement) throws Exception {
+    myElementUpdate.clear();
+
+    final boolean[] wasInterrupted = new boolean[1];
+    myElementUpdateHook = new ElementUpdateHook() {
+      public void onElementAction(String action, Object element) {
+        if (wasInterrupted[0]) {
+          if (myCancelRequest == null) {
+            myCancelRequest = new AssertionError("Not supposed to be update after interruption request: action=" + action + " element=" + element);
+          }
+        } else {
+          if (element.equals(interruptElement) && action.equals(interruptAction)) {
+            wasInterrupted[0] = true;
+            throw new ProcessCanceledException();
+          }
+        }
+      }
+    };
+
+    action.run();
+  }
 
   public void testQueryStructure() throws Exception {
     buildStructure(myRoot);
@@ -1417,5 +1472,18 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     suite.addTestSuite(BgLoadingSyncUpdate.class);
     suite.addTestSuite(QuickBgLoadingSyncUpdate.class);
     return suite;
+  }
+
+  abstract class MyRunnable implements Runnable {
+    public final void run() {
+      try {
+        runSafe();
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    public abstract void runSafe() throws Exception;
   }
 }
