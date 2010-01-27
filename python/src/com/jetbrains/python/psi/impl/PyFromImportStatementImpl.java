@@ -17,9 +17,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.TokenSet;
@@ -106,10 +104,7 @@ public class PyFromImportStatementImpl extends PyElementImpl implements PyFromIm
       PyReferenceExpression expr = getImportSource();
       if (expr != null) {
         final PsiElement importedFile = ResolveImportUtil.resolveImportReference(expr);
-        if (importedFile instanceof PsiDirectory) {
-          PsiFile file = ((PsiDirectory)importedFile).findFile(PyNames.INIT_DOT_PY);
-          if (file != null) return file.processDeclarations(processor, state, null, place);
-        } else if (importedFile != null) {
+        if (importedFile != null) {
           return importedFile.processDeclarations(processor, state, null, place);
         }
       }
