@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.tree.IElementType;
@@ -47,4 +48,6 @@ public interface GrReferenceExpression extends GrExpression, GrReferenceElement,
   GroovyResolveResult[] getSameNameVariants();
 
   void setQualifierExpression(GrReferenceExpression qualifierExpression);
+
+  GrReferenceExpression bindToElementViaStaticImport(@NotNull PsiClass qualifierClass);
 }

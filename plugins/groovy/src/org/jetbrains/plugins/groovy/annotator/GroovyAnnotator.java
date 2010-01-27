@@ -191,7 +191,11 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
           registerCreateClassByTypeFix(referenceExpression, annotation);
           registerAddImportFixes(referenceExpression, annotation);
         }
-      } else {
+        else {
+          registerStaticImportFix(referenceExpression, annotation);
+        }
+      }
+      else {
         if (qualifier.getType() == null) {
           return;
         }
@@ -199,6 +203,16 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       registerReferenceFixes(referenceExpression, annotation);
       annotation.setTextAttributes(DefaultHighlighter.UNRESOLVED_ACCESS);
     }
+  }
+
+  private static void registerStaticImportFix(GrReferenceExpression referenceExpression, Annotation annotation) {
+    final String referenceName = referenceExpression.getReferenceName();
+    //noinspection ConstantConditions
+    if (StringUtil.isEmpty(referenceName)) {
+      return;
+    }
+
+    annotation.registerFix(new GroovyStaticImportMethodFix((GrCall)referenceExpression.getParent()));
   }
 
   @Override
