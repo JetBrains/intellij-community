@@ -60,6 +60,7 @@ public class FocusTrackback {
   private boolean myConsumed;
   private WeakReference myRequestor;
   private boolean mySheduledForRestore;
+  private boolean myWillBeSheduledForRestore;
 
   public FocusTrackback(@NotNull Object requestor, Component parent, boolean mustBeShown) {
     this(requestor, SwingUtilities.getWindowAncestor(parent), mustBeShown);
@@ -375,8 +376,16 @@ public class FocusTrackback {
     return myRequestor.get();
   }
 
+  public void setWillBeSheduledForRestore() {
+    myWillBeSheduledForRestore = true;
+  }
+
   public boolean isSheduledForRestore() {
     return mySheduledForRestore;
+  }
+
+  public boolean isWillBeSheduledForRestore() {
+    return myWillBeSheduledForRestore;
   }
 
   public interface Provider {

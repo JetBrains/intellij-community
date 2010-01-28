@@ -27,4 +27,6 @@ import com.intellij.util.IncorrectOperationException;
 public interface TestFramework {
   boolean isTestKlass(PsiClass psiClass);
   PsiMethod findSetUpMethod(PsiClass psiClass) throws IncorrectOperationException;
+
+  boolean isTestMethodOrConfig(PsiMethod psiMethod);
 }

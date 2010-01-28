@@ -47,7 +47,6 @@ public class LineMarkerInfo<T extends PsiElement> {
   @Nullable private final Function<? super T, String> myTooltipProvider;
   private final GutterIconRenderer.Alignment myIconAlignment;
   @Nullable private final GutterIconNavigationHandler<T> myNavigationHandler;
-  public TextAttributesKey textAttributesKey;
 
 
   public LineMarkerInfo(T element,
