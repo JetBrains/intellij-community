@@ -242,4 +242,9 @@ public class GitRevisionNumber implements VcsRevisionNumber {
     Date timestamp = GitUtil.parseTimestamp(tokenizer.nextToken());
     return new GitRevisionNumber(tokenizer.nextToken(), timestamp);
   }
+
+  @Override
+  public String toString() {
+    return myRevisionHash;
+  }
 }
