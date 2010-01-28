@@ -7,6 +7,7 @@ import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import org.junit.Assert;
 
 /**
  * @author sashache
@@ -138,6 +139,17 @@ public class RenameCollisionsTest extends LightCodeInsightTestCase {
 
   public void testRenameVarParamToOuterConst() throws Exception {
     doTest("STATIC_FIELD");
+  }
+
+  public void testRenameLocalVariableHidesFieldInAnonymous() throws Exception {
+    try {
+      doTest("y");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      Assert.assertEquals("There is already a field <b><code>y</code></b>. It will conflict with the renamed variable", e.getMessage());
+      return;
+    }
+    fail("Conflicts were not found");
   }
 
   private void doTest(final String newName) throws Exception {

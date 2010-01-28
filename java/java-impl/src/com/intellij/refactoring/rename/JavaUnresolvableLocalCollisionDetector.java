@@ -51,7 +51,7 @@ public class JavaUnresolvableLocalCollisionDetector {
 
     final CollidingVariableVisitor collidingNameVisitor = new CollidingVariableVisitor() {
       public void visitCollidingElement(PsiVariable collidingVariable) {
-        if (collidingVariable.equals(element) || collidingVariable instanceof PsiField) return;
+        if (collidingVariable.equals(element)) return;
         LocalHidesRenamedLocalUsageInfo collision = new LocalHidesRenamedLocalUsageInfo(element, collidingVariable);
         result.add(collision);
       }
@@ -116,9 +116,6 @@ public class JavaUnresolvableLocalCollisionDetector {
           current = current.getParent();
         }
       }
-    }
-
-    if (collidingVariable != null) {
       collidingNameVisitor.visitCollidingElement(collidingVariable);
     }
   }
@@ -136,7 +133,11 @@ public class JavaUnresolvableLocalCollisionDetector {
       visitElement(expression);
     }
 
-    @Override public void visitClass(PsiClass aClass) {
+    @Override
+    public void visitField(PsiField field) {
+      if (myName.equals(field.getName())) {
+        myCollidingNameVisitor.visitCollidingElement(field);
+      }
     }
 
     @Override public void visitVariable(PsiVariable variable) {
