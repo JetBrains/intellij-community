@@ -152,7 +152,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
         PsiElement ref = ref1.getElement();
         if (ref instanceof PsiMethod && ((PsiMethod)ref).isConstructor()) {
           DefaultConstructorImplicitUsageInfo implicitUsageInfo =
-            new DefaultConstructorImplicitUsageInfo((PsiMethod)ref, myMethodToSearchFor);
+            new DefaultConstructorImplicitUsageInfo((PsiMethod)ref, ((PsiMethod)ref).getContainingClass(), myMethodToSearchFor);
           result.add(implicitUsageInfo);
         }
         else if (ref instanceof PsiClass) {

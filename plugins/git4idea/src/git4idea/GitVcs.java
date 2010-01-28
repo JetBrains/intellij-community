@@ -332,6 +332,11 @@ public class GitVcs extends AbstractVcs {
     return myHistoryProvider;
   }
 
+  @Override
+  public VcsHistoryProvider getVcsBlockHistoryProvider() {
+    return myHistoryProvider;
+  }
+
   /**
    * {@inheritDoc}
    */

@@ -31,7 +31,6 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -55,6 +54,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.Arrays;
 import java.util.List;
+
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 /**
  *
@@ -143,10 +144,11 @@ public class PsiImplUtil {
         } else if (parent instanceof GrMethodCallExpression) {
           funExpr = ((GrMethodCallExpression) parent).getInvokedExpression();
         }
+
         if (funExpr instanceof GrReferenceExpression) {
           qualifier = ((GrReferenceExpression) funExpr).getQualifierExpression();
           if (qualifier != null) break;
-        } else break;
+        }
 
         closure = PsiTreeUtil.getParentOfType(closure, GrClosableBlock.class);
       }

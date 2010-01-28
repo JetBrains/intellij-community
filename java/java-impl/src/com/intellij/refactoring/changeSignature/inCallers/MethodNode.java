@@ -103,6 +103,9 @@ public class MethodNode extends CheckedTreeNode {
             if (enclosingContext instanceof PsiMethod &&
                 !myMethod.equals(enclosingContext) && !myCalled.contains(myMethod)) { //do not add recursive methods
               callers.add((PsiMethod) enclosingContext);
+            } else if (element instanceof PsiClass) {
+              final PsiClass aClass = (PsiClass)element;
+              callers.add(JavaPsiFacade.getElementFactory(project).createMethodFromText(aClass.getName() + "(){}", aClass));
             }
           }
         }
@@ -137,8 +140,10 @@ public class MethodNode extends CheckedTreeNode {
                                             SimpleTextAttributes.EXCLUDED_ATTRIBUTES;
     renderer.append(buffer.toString(), attributes);
 
-    final String packageName = getPackageName(myMethod.getContainingClass());
-    renderer.append("  (" + packageName + ")", new SimpleTextAttributes(SimpleTextAttributes.STYLE_ITALIC, Color.GRAY));
+    if (containingClass != null) {
+      final String packageName = getPackageName(containingClass);
+      renderer.append("  (" + packageName + ")", new SimpleTextAttributes(SimpleTextAttributes.STYLE_ITALIC, Color.GRAY));
+    }
   }
 
   @Nullable
