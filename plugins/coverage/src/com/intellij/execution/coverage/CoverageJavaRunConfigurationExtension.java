@@ -4,7 +4,9 @@
  */
 package com.intellij.execution.coverage;
 
-import com.intellij.coverage.*;
+import com.intellij.coverage.CoverageDataManager;
+import com.intellij.coverage.CoverageSupportProvider;
+import com.intellij.coverage.IDEACoverageRunner;
 import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.RunJavaConfiguration;
 import com.intellij.execution.configurations.*;
@@ -12,8 +14,6 @@ import com.intellij.execution.configurations.coverage.CoverageConfigurable;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.configurations.coverage.JavaCoverageEnabledConfiguration;
 import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -31,21 +31,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
       return;
     }
 
-    final CoverageEnabledConfiguration coverageEnabledConfiguration = JavaCoverageEnabledConfiguration.getFrom(configuration);
-    //noinspection ConstantConditions
-    if (coverageEnabledConfiguration.isCoverageEnabled()) {
-      handler.addProcessListener(new ProcessAdapter() {
-        public void processTerminated(final ProcessEvent event) {
-          final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(configuration.getProject());
-          final CoverageEnabledConfiguration coverageEnabledConfiguration = JavaCoverageEnabledConfiguration.getFrom(configuration);
-          //noinspection ConstantConditions
-          final CoverageSuite coverageSuite = coverageEnabledConfiguration.getCurrentCoverageSuite();
-          if (coverageSuite != null) {
-            coverageDataManager.coverageGathered(coverageSuite);
-          }
-        }
-      });
-    }
+    CoverageDataManager.getInstance(configuration.getProject()).attachToProcess(handler, configuration);
   }
 
   @Nullable
@@ -79,7 +65,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
       return;
     }
 
-    final CoverageEnabledConfiguration coverageConfig = JavaCoverageEnabledConfiguration.getFrom(configuration);
+    final JavaCoverageEnabledConfiguration coverageConfig = JavaCoverageEnabledConfiguration.getFrom(configuration);
     //noinspection ConstantConditions
     coverageConfig.setCurrentCoverageSuite(null);
     if ((!(runnerSettings.getData() instanceof DebuggingRunnerData) || coverageConfig.getCoverageRunner() instanceof IDEACoverageRunner)

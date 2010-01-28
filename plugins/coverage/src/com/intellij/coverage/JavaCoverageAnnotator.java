@@ -1,6 +1,5 @@
 package com.intellij.coverage;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -8,7 +7,6 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,16 +17,14 @@ import java.util.Map;
 /**
  * @author Roman.Chernyatchik
  */
-public class JavaCoverageAnnotator implements CoverageAnnotator {
+public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
   private final Map<String, PackageAnnotator.PackageCoverageInfo> myPackageCoverageInfos = new HashMap<String, PackageAnnotator.PackageCoverageInfo>();
   private final Map<Pair<String, Module>, PackageAnnotator.PackageCoverageInfo> myDirCoverageInfos = new HashMap<Pair<String, Module>, PackageAnnotator.PackageCoverageInfo>();
   private final Map<Pair<String, Module>, PackageAnnotator.PackageCoverageInfo> myTestDirCoverageInfos = new HashMap<Pair<String, Module>, PackageAnnotator.PackageCoverageInfo>();
   private final Map<String, PackageAnnotator.ClassCoverageInfo> myClassCoverageInfos = new HashMap<String, PackageAnnotator.ClassCoverageInfo>();
-  private static final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, ApplicationManager.getApplication());
-  private final Project myProject;
 
   public JavaCoverageAnnotator(final Project project) {
-    myProject = project;
+    super(project);
   }
 
   public static JavaCoverageAnnotator getInstance(final Project project) {
@@ -36,9 +32,9 @@ public class JavaCoverageAnnotator implements CoverageAnnotator {
   }
 
   @Nullable
-  public String getDirCoverageInformationString(final PsiDirectory directory,
-                                                final CoverageSuite currentSuite,
-                                                final CoverageDataManager coverageDataManager) {
+  public String getDirCoverageInformationString(@NotNull final PsiDirectory directory,
+                                                @NotNull final CoverageSuite currentSuite,
+                                                @NotNull final CoverageDataManager coverageDataManager) {
     final PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(directory);
     if (psiPackage == null) return null;
 
@@ -59,58 +55,61 @@ public class JavaCoverageAnnotator implements CoverageAnnotator {
   }
 
   @Nullable
-  public String getFileCoverageInformationString(PsiFile file, CoverageSuite currentSuite) {
+  public String getFileCoverageInformationString(@NotNull PsiFile file, @NotNull CoverageSuite currentSuite) {
     // N/A here we work with java classes
     return null;
   }
 
-  public void onSuiteChoosen(CoverageSuite newSuite) {
+  public void onSuiteChosen(CoverageSuite newSuite) {
+    super.onSuiteChosen(newSuite);
+
     myPackageCoverageInfos.clear();
     myDirCoverageInfos.clear();
     myTestDirCoverageInfos.clear();
     myClassCoverageInfos.clear();
-
-    myAlarm.cancelAllRequests();
   }
 
-  public void renewCoverageData(CoverageSuite suite, final CoverageDataManager dataManager) {
+  protected Runnable createRenewRequest(@NotNull final CoverageSuite suite, @NotNull final CoverageDataManager dataManager) {
     final JavaCoverageSuite javaSuite = (JavaCoverageSuite)suite;
 
-    final List<PsiPackage> packages = javaSuite.getCurrentSuitePackages(myProject);
-    final List<PsiClass> classes = javaSuite.getCurrentSuiteClasses(myProject);
+    final Project project = getProject();
+    final List<PsiPackage> packages = javaSuite.getCurrentSuitePackages(project);
+    final List<PsiClass> classes = javaSuite.getCurrentSuiteClasses(project);
 
-    if (!packages.isEmpty() || !classes.isEmpty()) {
-      myAlarm.addRequest(new Runnable() {
-        public void run() {
-          if (myProject.isDisposed()) return;
-          for (PsiPackage aPackage : packages) {
-            new PackageAnnotator(aPackage).annotate(javaSuite, new PackageAnnotator.Annotator() {
-              public void annotatePackage(String packageQualifiedName, PackageAnnotator.PackageCoverageInfo packageCoverageInfo) {
-                myPackageCoverageInfos.put(packageQualifiedName, packageCoverageInfo);
-              }
-
-              public void annotateSourceDirectory(String packageQualifiedName,
-                                                  PackageAnnotator.PackageCoverageInfo dirCoverageInfo,
-                                                  Module module) {
-                final Pair<String, Module> p = new Pair<String, Module>(packageQualifiedName, module);
-                myDirCoverageInfos.put(p, dirCoverageInfo);
-              }
-
-              public void annotateTestDirectory(String packageQualifiedName, PackageAnnotator.PackageCoverageInfo packageCoverageInfo, Module module) {
-                final Pair<String, Module> p = new Pair<String, Module>(packageQualifiedName, module);
-                myTestDirCoverageInfos.put(p, packageCoverageInfo);
-              }
-
-              public void annotateClass(String classQualifiedName, PackageAnnotator.ClassCoverageInfo classCoverageInfo) {
-                myClassCoverageInfos.put(classQualifiedName, classCoverageInfo);
-              }
-            });
-          }
-
-          dataManager.triggerPresentationUpdate();
-        }
-      }, 100);
+    if (packages.isEmpty() && classes.isEmpty()) {
+      return null;
     }
+
+    return new Runnable() {
+      public void run() {
+        for (PsiPackage aPackage : packages) {
+          new PackageAnnotator(aPackage).annotate(javaSuite, new PackageAnnotator.Annotator() {
+            public void annotatePackage(String packageQualifiedName, PackageAnnotator.PackageCoverageInfo packageCoverageInfo) {
+              myPackageCoverageInfos.put(packageQualifiedName, packageCoverageInfo);
+            }
+
+            public void annotateSourceDirectory(String packageQualifiedName,
+                                                PackageAnnotator.PackageCoverageInfo dirCoverageInfo,
+                                                Module module) {
+              final Pair<String, Module> p = new Pair<String, Module>(packageQualifiedName, module);
+              myDirCoverageInfos.put(p, dirCoverageInfo);
+            }
+
+            public void annotateTestDirectory(String packageQualifiedName,
+                                              PackageAnnotator.PackageCoverageInfo packageCoverageInfo,
+                                              Module module) {
+              final Pair<String, Module> p = new Pair<String, Module>(packageQualifiedName, module);
+              myTestDirCoverageInfos.put(p, packageCoverageInfo);
+            }
+
+            public void annotateClass(String classQualifiedName, PackageAnnotator.ClassCoverageInfo classCoverageInfo) {
+              myClassCoverageInfos.put(classQualifiedName, classCoverageInfo);
+            }
+          });
+        }
+        dataManager.triggerPresentationUpdate();
+      }
+    };
   }
 
   @Nullable

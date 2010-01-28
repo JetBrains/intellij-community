@@ -16,9 +16,12 @@
 
 package com.intellij.execution.configurations.coverage;
 
+import com.intellij.coverage.CoverageRunner;
+import com.intellij.coverage.JavaCoverageRunner;
 import com.intellij.coverage.JavaCoverageSupportProvider;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
+import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -29,6 +32,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -62,6 +67,26 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
     }
     return null;
   }
+
+  public void appendCoverageArgument(final SimpleJavaParameters javaParameters) {
+    final CoverageRunner runner = getCoverageRunner();
+    try {
+      if (runner != null && runner instanceof JavaCoverageRunner) {
+        final String path = getCoverageFilePath();
+        assert path != null; // cannot be null here if runner != null
+
+        ((JavaCoverageRunner)runner).appendCoverageArgument(new File(path).getCanonicalPath(),
+                                                            getPatterns(),
+                                                            javaParameters,
+                                                            isTrackPerTestCoverage(),
+                                                            isSampling());
+      }
+    }
+    catch (IOException e) {
+      LOG.info(e);
+    }
+  }
+
 
   @NotNull
   public JavaCoverageSupportProvider getCoverageProvider() {

@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -109,7 +110,12 @@ public class JavaCoverageSupportProvider extends CoverageSupportProvider {
    * @return
    */
   public boolean coverageInfoApplicableTo(@NotNull final PsiFile psiFile) {
-    return psiFile instanceof PsiClassOwner;
+    if (!(psiFile instanceof PsiClassOwner)) {
+      return false;
+    }
+    // let's show coverage only for module files
+    final Module module = ModuleUtil.findModuleForPsiElement(psiFile);
+    return module != null;
   }
 
   public boolean acceptedByFilters(@NotNull final PsiFile psiFile, @NotNull final CoverageSuite suite) {
@@ -132,7 +138,7 @@ public class JavaCoverageSupportProvider extends CoverageSupportProvider {
   }
 
   @Override
-  public boolean recompileProjectAndRerunAction(@NotNull final Project project1, @NotNull Module module, @NotNull final CoverageSuite suite,
+  public boolean recompileProjectAndRerunAction(@NotNull Module module, @NotNull final CoverageSuite suite,
                                                 @NotNull final Runnable chooseSuiteAction) {
     final VirtualFile outputpath = CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
     final VirtualFile testOutputpath = CompilerModuleExtension.getInstance(module).getCompilerOutputPathForTests();
@@ -171,8 +177,7 @@ public class JavaCoverageSupportProvider extends CoverageSupportProvider {
   }
 
   @Nullable
-  public List<Integer> collectSacLinesForUntouchedFile(@NotNull final VirtualFile classFile, @NotNull final PsiFile srcFile,
-                                                       @NotNull final CoverageSuite suite) {
+  public List<Integer> collectSrcLinesForUntouchedFile(@NotNull final VirtualFile classFile, @NotNull final CoverageSuite suite) {
     final List<Integer> uncoveredLines = new ArrayList<Integer>();
 
     final byte[] content;
@@ -206,16 +211,18 @@ public class JavaCoverageSupportProvider extends CoverageSupportProvider {
   }
 
 
-  public String getQualifiedName(@NotNull final VirtualFile outputFile,
-                                 @NotNull final PsiFile sourceFile) {
+  public String getQualifiedName(@NotNull final VirtualFile outputFile, @NotNull final PsiFile sourceFile, @NotNull CoverageSuite suite) {
     final String packageFQName = getPackageName(sourceFile);
     return StringUtil.getQualifiedName(packageFQName, outputFile.getNameWithoutExtension());
   }
 
   @NotNull
   public Set<VirtualFile> getCorrespondingOutputFiles(@NotNull final PsiFile srcFile,
-                                                      final Module module,
+                                                      @Nullable final Module module,
                                                       @NotNull final CoverageSuite suite) {
+    if (module == null) {
+      return Collections.emptySet();
+    }
     final VirtualFile outputpath = CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
     final VirtualFile testOutputpath = CompilerModuleExtension.getInstance(module).getCompilerOutputPathForTests();
 
