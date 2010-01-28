@@ -727,8 +727,9 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     else {
       final PsiBuilder.Marker marker = myBuilder.mark();
       parseSimpleStatement(true);
-      while (myBuilder.getTokenType() == PyTokenTypes.SEMICOLON) {
-        myBuilder.advanceLexer();
+      while (matchToken(PyTokenTypes.SEMICOLON)) {
+        if (matchToken(PyTokenTypes.STATEMENT_BREAK))
+          break;
         parseSimpleStatement(true);
       }
       marker.done(PyElementTypes.STATEMENT_LIST);

@@ -23,8 +23,11 @@ public class PythonBackspaceHandler extends BackspaceHandlerDelegate {
     if (myTargetPosition != null) {
       // Remove all the following spaces before moving to targetPosition
       final int offset = editor.getCaretModel().getOffset();
-      editor.getSelectionModel().setSelection(offset - editor.getCaretModel().getVisualPosition().column + myTargetPosition.column, offset);
-      EditorModificationUtil.deleteSelectedText(editor);
+      if (EditorModificationUtil.calcAfterLineEnd(editor) == 0) {
+        int delta = editor.getCaretModel().getVisualPosition().column - myTargetPosition.column;
+        editor.getSelectionModel().setSelection(offset - delta, offset);
+        EditorModificationUtil.deleteSelectedText(editor);
+      }
       editor.getCaretModel().moveToLogicalPosition(myTargetPosition);
       myTargetPosition = null;
       return true;
