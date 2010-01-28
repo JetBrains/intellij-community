@@ -35,13 +35,13 @@ public class PushDownTest extends LightCodeInsightTestCase {
 
     final PsiMember psiMember = (PsiMember)targetElement;
 
-    final PsiClass[] classes = ((PsiJavaFile)psiMember.getContainingFile()).getClasses();
+    final PsiClass currentClass = psiMember.getContainingClass();
 
-    assert classes.length > 0;
+    assert currentClass != null;
 
     final List<MemberInfo> membersToMove = new ArrayList<MemberInfo>();
 
-    final PsiField fieldByName = classes[0].findFieldByName("fieldToMove", false);
+    final PsiField fieldByName = currentClass.findFieldByName("fieldToMove", false);
     if (fieldByName != null) {
       final MemberInfo memberInfo = new MemberInfo(fieldByName);
       memberInfo.setChecked(true);
@@ -52,7 +52,7 @@ public class PushDownTest extends LightCodeInsightTestCase {
     memberInfo.setChecked(true);
     membersToMove.add(memberInfo);
 
-    new PushDownProcessor(getProject(), membersToMove.toArray(new MemberInfo[membersToMove.size()]), classes[0], new DocCommentPolicy(DocCommentPolicy.ASIS)){
+    new PushDownProcessor(getProject(), membersToMove.toArray(new MemberInfo[membersToMove.size()]), currentClass, new DocCommentPolicy(DocCommentPolicy.ASIS)){
       @Override
       protected boolean showConflicts(MultiMap<PsiElement,String> conflicts) {
         if (failure ? conflicts.isEmpty() : !conflicts.isEmpty()) {
@@ -90,6 +90,14 @@ public class PushDownTest extends LightCodeInsightTestCase {
   }
 
   public void testThisRefInAnonymous() throws Exception {
+    doTest();
+  }
+
+  public void testSuperOverHierarchyConflict() throws Exception {
+    doTest(true);
+  }
+
+  public void testSuperOverHierarchy() throws Exception {
     doTest();
   }
 }
