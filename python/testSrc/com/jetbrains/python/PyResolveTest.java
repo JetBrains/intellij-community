@@ -14,12 +14,12 @@ import com.jetbrains.python.psi.*;
 
 public class PyResolveTest extends PyResolveTestCase {
   private PsiElement resolve() throws Exception {
-    PsiReference ref = configureByFile("/resolve/" + getTestName(false) + ".py");
+    PsiReference ref = configureByFile("resolve/" + getTestName(false) + ".py");
     return ref.resolve();
   }
 
   private ResolveResult[] multiResolve() throws Exception {
-    PsiReference ref = configureByFile(getTestName(false) + ".py");
+    PsiReference ref = configureByFile("resolve/" + getTestName(false) + ".py");
     assertTrue(ref instanceof PsiPolyVariantReference);
     return ((PsiPolyVariantReference)ref).multiResolve(false);
   }
