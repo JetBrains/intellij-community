@@ -609,7 +609,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
           if (!isModal()) {
             final Ref<IdeFocusManager> focusManager = new Ref<IdeFocusManager>(null);
             if (myProject != null && myProject.get() != null && !myProject.get().isDisposed()) {
-              focusManager.set(IdeFocusManager.getInstance(myProject.get()));
+              focusManager.set(getFocusManager());
               focusManager.get().doWhenFocusSettlesDown(new Runnable() {
                 public void run() {
                   disposeFocusTrackbackIfNoChildWindowFocused(focusManager.get());
@@ -640,6 +640,14 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       super.show();
     }
 
+    private IdeFocusManager getFocusManager() {
+      if (myProject != null && myProject.get() != null && !myProject.get().isDisposed()) {
+        return IdeFocusManager.getInstance(myProject.get());
+      } else {
+        return IdeFocusManager.findInstance();
+      }
+    }
+
     private void disposeFocusTrackbackIfNoChildWindowFocused(@Nullable IdeFocusManager focusManager) {
       if (myFocusTrackback == null) return;
 
@@ -667,7 +675,14 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     public void hide() {
       super.hide();
       if (myFocusTrackback != null) {
-        myFocusTrackback.restoreFocus();
+        myFocusTrackback.setWillBeSheduledForRestore();
+        IdeFocusManager mgr = getFocusManager();
+        mgr.doWhenFocusSettlesDown(new Runnable() {
+          public void run() {
+            myFocusTrackback.restoreFocus();
+            myFocusTrackback = null;
+          }
+        });
       }
     }
 
@@ -686,7 +701,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         myComponentListener = null;
       }
 
-      if (myFocusTrackback != null && !myFocusTrackback.isSheduledForRestore()) {
+      if (myFocusTrackback != null && !(myFocusTrackback.isSheduledForRestore() || myFocusTrackback.isWillBeSheduledForRestore())) {
         myFocusTrackback.dispose();
         myFocusTrackback = null;
       }
