@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,30 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
-import com.intellij.psi.stubs.NamedStub;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-
-import java.util.Set;
+import com.intellij.psi.stubs.StubElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 
 /**
- * @author ilyas
+ * @author Maxim.Medvedev
  */
-public interface GrFieldStub extends NamedStub<GrField> {
-
-  //todo add type info
-  //todo add initializer info
-
-  String[] getAnnotations();
-
-  boolean isEnumConstant();
-
-  @NotNull
-  Set<String>[] getNamedParameters();
-
-  boolean isProperty();
-
-  boolean isDeprecated();
-
-  byte getFlags();
+public interface GrModifierListStub extends StubElement<GrModifierList>{  
+  int getModifiersFlags();
 }

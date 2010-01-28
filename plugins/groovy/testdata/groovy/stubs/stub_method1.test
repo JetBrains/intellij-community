@@ -5,5 +5,9 @@ class Stub {
 -----
 [Groovy script]
   [Class definition : Stub]
+    [Modifiers]
+    [Modifiers]
     [Field : myInt]
     [Method : foo]
+      [Modifiers]
+      [Modifiers]

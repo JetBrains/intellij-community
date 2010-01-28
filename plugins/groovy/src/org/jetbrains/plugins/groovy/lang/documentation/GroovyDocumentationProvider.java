@@ -38,6 +38,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -212,7 +213,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider {
       buffer.append(type.getCanonicalText());
     }
     else {
-      buffer.append("def");
+      buffer.append(GrModifier.DEF);
     }
   }
 
@@ -344,7 +345,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider {
           builder.append(LINE_SEPARATOR);
         }
 
-        if ((method.getReturnType() != null || method.getModifierList().hasModifierProperty("def")) &&
+        if ((method.getReturnType() != null || method.getModifierList().hasModifierProperty(GrModifier.DEF)) &&
             method.getReturnType() != PsiType.VOID) {
           builder.append(CodeDocumentationUtil.createDocCommentLine(RETURN_TAG, project, commenter));
           builder.append(LINE_SEPARATOR);

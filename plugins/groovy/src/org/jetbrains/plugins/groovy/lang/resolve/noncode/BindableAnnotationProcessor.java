@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.noncode;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -54,11 +55,11 @@ public class BindableAnnotationProcessor implements NonCodeMembersProcessor {
       for (GrAnnotation annotation : annotations) {
         if (BINDABLE.equals(annotation.getQualifiedName())) {
           GrMethod addPropertyChangeListenerMethod = GroovyPsiElementFactory.getInstance(annotation.getProject())
-            .createMethodFromText("def", "addPropertyChangeListener", PsiType.VOID.getCanonicalText(),
+            .createMethodFromText(GrModifier.DEF, "addPropertyChangeListener", PsiType.VOID.getCanonicalText(),
                                   new String[]{"PropertyChangeListener"});
 
           GrMethod removePropertyChangeListenerMethod = GroovyPsiElementFactory.getInstance(annotation.getProject())
-            .createMethodFromText("def", "removePropertyChangeListener", PsiType.VOID.getCanonicalText(),
+            .createMethodFromText(GrModifier.DEF, "removePropertyChangeListener", PsiType.VOID.getCanonicalText(),
                                   new String[]{"PropertyChangeListener"});
 
           GroovyResolveResultImpl addPropertyResult = new GroovyResolveResultImpl(addPropertyChangeListenerMethod, true);
