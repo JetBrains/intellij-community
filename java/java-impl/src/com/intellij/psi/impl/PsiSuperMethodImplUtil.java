@@ -150,7 +150,7 @@ public class PsiSuperMethodImplUtil {
       final PsiSubstitutor superSubstitutor = superTypeResolveResult.getSubstitutor();
       PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(superClass, superSubstitutor, substitutor);
 
-      final boolean isInRawContextSuper = isInRawContext || PsiUtil.isRawSubstitutor(superClass, superSubstitutor);
+      final boolean isInRawContextSuper = (isInRawContext || PsiUtil.isRawSubstitutor(superClass, superSubstitutor)) && superClass.getTypeParameters().length != 0;
       Map<MethodSignature, HierarchicalMethodSignature> superResult = buildMethodHierarchy(superClass, finalSubstitutor, false, visited, isInRawContextSuper);
       visited.remove(superClass);
 
