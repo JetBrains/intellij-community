@@ -348,7 +348,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     myDialog.setLocation(x, y);
   }
 
-  public void show() {
+  public ActionCallback show() {
+    final ActionCallback result = new ActionCallback();
+
     LOG.assertTrue(EventQueue.isDispatchThread(), "Access is allowed from event dispatch thread only");
 
     final AnCancelAction anCancelAction = new AnCancelAction();
@@ -397,7 +399,15 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
           LaterInvocator.leaveModal(myDialog);
         }
       }
+
+      myDialog.getFocusManager().doWhenFocusSettlesDown(new Runnable() {
+        public void run() {
+          result.setDone();
+        }
+      });
     }
+
+    return result;
   }
 
 //[kirillk] for now it only deals with the TaskWindow under Mac OS X: modal dialogs are shown behind JBPopup
@@ -674,15 +684,16 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     @Deprecated
     public void hide() {
       super.hide();
-      if (myFocusTrackback != null) {
+      if (myFocusTrackback != null && !(myFocusTrackback.isSheduledForRestore() || myFocusTrackback.isWillBeSheduledForRestore())) {
         myFocusTrackback.setWillBeSheduledForRestore();
         IdeFocusManager mgr = getFocusManager();
-        mgr.doWhenFocusSettlesDown(new Runnable() {
+        Runnable r = new Runnable() {
           public void run() {
             myFocusTrackback.restoreFocus();
             myFocusTrackback = null;
           }
-        });
+        };
+        mgr.doWhenFocusSettlesDown(r);
       }
     }
 

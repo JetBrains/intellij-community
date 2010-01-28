@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.ui;
 
+import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -138,7 +139,7 @@ public abstract class DialogWrapperPeer {
    */
   public abstract void setLocation(int x, int y);
 
-  public abstract void show();
+  public abstract ActionCallback show();
 
   public abstract void setContentPane(JComponent content);
 
