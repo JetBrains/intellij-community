@@ -399,8 +399,7 @@ public class UpdateHighlightersUtil {
       }
       RangeHighlighter marker = toReuse.reuseHighlighterAt(info.startOffset, info.endOffset);
       if (marker == null) {
-        TextAttributes attributes = info.textAttributesKey == null ? null : colorsScheme.getAttributes(info.textAttributesKey);
-        marker = markupModel.addRangeHighlighter(info.startOffset, info.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX, attributes, HighlighterTargetArea.EXACT_RANGE);
+        marker = markupModel.addRangeHighlighter(info.startOffset, info.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX, null, HighlighterTargetArea.EXACT_RANGE);
       }
       LineMarkerInfo.LineMarkerGutterIconRenderer renderer = (LineMarkerInfo.LineMarkerGutterIconRenderer)info.createGutterRenderer();
       LineMarkerInfo.LineMarkerGutterIconRenderer oldRenderer = marker.getGutterIconRenderer() instanceof LineMarkerInfo.LineMarkerGutterIconRenderer ? (LineMarkerInfo.LineMarkerGutterIconRenderer)marker.getGutterIconRenderer() : null;

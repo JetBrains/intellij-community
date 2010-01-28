@@ -65,10 +65,7 @@ public class SimpleTokenSetQuoteHandler implements QuoteHandler {
         IElementType tokenType = iterator.getTokenType();
 
         if (myLiteralTokenSet.contains(tokenType)) {
-          if (iterator.getStart() >= iterator.getEnd() - 1 ||
-              chars.charAt(iterator.getEnd() - 1) != '\"' && chars.charAt(iterator.getEnd() - 1) != '\'') {
-            return true;
-          }
+          if (isNonClosedLiteral(iterator, chars)) return true;
         }
         iterator.advance();
       }
@@ -77,6 +74,14 @@ public class SimpleTokenSetQuoteHandler implements QuoteHandler {
       while(iterator.atEnd() || iterator.getStart() != start) iterator.retreat();
     }
 
+    return false;
+  }
+
+  protected boolean isNonClosedLiteral(HighlighterIterator iterator, CharSequence chars) {
+    if (iterator.getStart() >= iterator.getEnd() - 1 ||
+        chars.charAt(iterator.getEnd() - 1) != '\"' && chars.charAt(iterator.getEnd() - 1) != '\'') {
+      return true;
+    }
     return false;
   }
 

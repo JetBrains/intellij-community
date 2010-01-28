@@ -17,6 +17,7 @@ package com.intellij.junit3;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
+import junit.framework.TestResult;
 import junit.framework.TestSuite;
 import junit.runner.BaseTestRunner;
 
@@ -116,6 +117,7 @@ public class TestRunnerUtil {
           }
           try {
             test = (Test)suiteMethod.invoke(null, new Class[0]); // static method
+            test = new SuiteMethodWrapper(test, suiteClassName);
           }
           catch (final InvocationTargetException e) {
             final String message = MessageFormat.format(ourBundle.getString("junit.failed.to.invoke.suite"), new Object[]{testClass + " " + e.getTargetException().toString()});
@@ -233,6 +235,32 @@ public class TestRunnerUtil {
       catch (NoSuchMethodError e) {
         throw new RuntimeException(myMessage);
       }
+    }
+  }
+
+  public static class SuiteMethodWrapper implements Test {
+    private Test mySuite;
+    private String myClassName;
+
+    public SuiteMethodWrapper(Test suite, String className) {
+      mySuite = suite;
+      myClassName = className;
+    }
+
+    public String getClassName() {
+      return myClassName;
+    }
+
+    public int countTestCases() {
+      return mySuite.countTestCases();
+    }
+
+    public void run(TestResult result) {
+      mySuite.run(result);
+    }
+
+    public Test getSuite() {
+      return mySuite;
     }
   }
 }
