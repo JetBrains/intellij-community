@@ -1,5 +1,10 @@
 package com.jetbrains.python.actions;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.psi.*;
@@ -13,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
  * Date: Apr 23, 2009 4:17:50 PM
  */
 // visibility is intentionally package-level
-class ImportCandidateHolder {
+class ImportCandidateHolder implements Comparable {
   private final PsiElement myImportable;
   private final PyImportElement myImportElement;
   private final PsiFile myFile;
@@ -109,10 +114,38 @@ class ImportCandidateHolder {
     if (parent instanceof PyFromImportStatement) {
       sb.append(" from ").append(((PyFromImportStatement)parent).getImportSource().getReferencedName()); // no NPE, we won't add a sourceless import stmt
     }
-    else if (myImportElement == null) { // no import, only file
-      sb.append(" # add import");
-      if (myAsName != null) sb.append(" as ").append(myAsName);
-    }
     return sb.toString();
+  }
+
+  @Nullable
+  public String getTailText() {
+    if (myImportElement == null) {
+     String text = "add import";
+      if (myAsName != null) {
+        text += " as " + myAsName;
+      }
+      return text;
+    }
+    return null;
+  }
+
+  public int compareTo(Object o) {
+    ImportCandidateHolder rhs = (ImportCandidateHolder) o;
+    return rhs.getRelevance() - getRelevance();
+  }
+
+  int getRelevance() {
+    Project project = myImportable.getProject();
+    final VirtualFile vFile = myImportable.getContainingFile().getVirtualFile();
+    if (vFile == null) return 0;
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    // files under project source are most relevant
+    final Module module = fileIndex.getModuleForFile(vFile);
+    if (module != null) return 3;
+    // then come files directly under Lib
+    if (vFile.getParent().getName().equals("Lib")) return 2;
+    // tests we don't want
+    if (vFile.getParent().getName().equals("test")) return 0;
+    return 1;
   }
 }
