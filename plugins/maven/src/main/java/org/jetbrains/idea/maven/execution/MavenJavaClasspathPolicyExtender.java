@@ -18,43 +18,77 @@ package org.jetbrains.idea.maven.execution;
 import com.intellij.execution.configurations.JavaClasspathPolicyExtender;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.ProjectRootsTraversing;
-import com.intellij.openapi.roots.RootPolicy;
+import com.intellij.openapi.roots.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.project.MavenArtifact;
+import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenConstants;
 
-public class MavenJavaClasspathPolicyExtender implements JavaClasspathPolicyExtender  {
+import java.util.Collections;
+import java.util.List;
+
+public class MavenJavaClasspathPolicyExtender implements JavaClasspathPolicyExtender {
   @NotNull
-  public ProjectRootsTraversing.RootTraversePolicy extend(Project project,
-                                                          @NotNull ProjectRootsTraversing.RootTraversePolicy policy) {
+  public ProjectRootsTraversing.RootTraversePolicy extend(Project project, @NotNull ProjectRootsTraversing.RootTraversePolicy policy) {
     return policy;
   }
 
   @NotNull
-  public ProjectRootsTraversing.RootTraversePolicy extend(final Module module,
-                                                          @NotNull ProjectRootsTraversing.RootTraversePolicy policy) {
+  public ProjectRootsTraversing.RootTraversePolicy extend(final Module module, @NotNull ProjectRootsTraversing.RootTraversePolicy policy) {
     Project project = module.getProject();
     final MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
     if (!manager.isMavenizedProject() || !manager.isMavenizedModule(module)) return policy;
 
-    return new ProjectRootsTraversing.RootTraversePolicy(policy.getVisitSource(),
+    return new ProjectRootsTraversing.RootTraversePolicy(extend(module, manager, policy.getVisitSource(), false),
                                                          policy.getVisitJdk(),
-                                                         extend(module, manager, policy.getVisitLibrary()),
-                                                         extend(module, manager, policy.getVisitModule()));
+                                                         extend(module, manager, policy.getVisitLibrary(), true),
+                                                         extend(module, manager, policy.getVisitModule(), true));
   }
 
   private <T extends OrderEntry> ProjectRootsTraversing.RootTraversePolicy.Visit<T> extend(
     final Module originalModule,
     final MavenProjectsManager manager,
-    final ProjectRootsTraversing.RootTraversePolicy.Visit<T> original) {
+    final ProjectRootsTraversing.RootTraversePolicy.Visit<T> original,
+    final boolean ignoredDependencyModules) {
+
     return new ProjectRootsTraversing.RootTraversePolicy.Visit<T>() {
       public void visit(T entry, ProjectRootsTraversing.TraverseState state, RootPolicy<ProjectRootsTraversing.TraverseState> policy) {
         Module ownerModule = entry.getOwnerModule();
-        if (originalModule != ownerModule && manager.findProject(ownerModule) != null) return;
+        if (ignoredDependencyModules && originalModule != ownerModule && manager.findProject(ownerModule) != null) return;
 
-        original.visit(entry, state, policy);
+        if (originalModule != ownerModule && entry instanceof ModuleSourceOrderEntry) {
+          MavenProject project = manager.findProject(originalModule);
+          MavenProject depProject = manager.findProject(ownerModule);
+
+          if (project == null || depProject == null) {
+            original.visit(entry, state, policy);
+            return;
+          }
+
+          List<MavenArtifact> deps = project.findDependencies(depProject);
+          if (hasDependency(deps, true) && original == ProjectClasspathTraversing.ALL_OUTPUTS) addOutput(ownerModule, true, state);
+          if (hasDependency(deps, false)) addOutput(ownerModule, false, state);
+        }
+        else {
+          original.visit(entry, state, policy);
+        }
       }
     };
+  }
+
+  public void addOutput(Module module, boolean test, ProjectRootsTraversing.TraverseState state) {
+    CompilerModuleExtension ex = CompilerModuleExtension.getInstance(module);
+    if (ex == null) return;
+
+    String output = test ? ex.getCompilerOutputUrlForTests() : ex.getCompilerOutputUrl();
+    if (output != null) state.addAllUrls(Collections.singletonList(output));
+  }
+
+  private boolean hasDependency(List<MavenArtifact> deps, boolean test) {
+    for (MavenArtifact each : deps) {
+      if (test == MavenConstants.TYPE_TEST_JAR.equals(each.getType())) return true;
+    }
+    return false;
   }
 }

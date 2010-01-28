@@ -18,6 +18,7 @@ package com.intellij.openapi.roots;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.SmartList;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -33,10 +34,9 @@ public class ProjectClasspathTraversing {
   public static final ProjectRootsTraversing.RootTraversePolicy FULL_CLASSPATH_RECURSIVE =
     new ProjectRootsTraversing.RootTraversePolicy(ALL_OUTPUTS, ProjectRootsTraversing.RootTraversePolicy.ADD_CLASSES, ProjectRootsTraversing.RootTraversePolicy.ADD_CLASSES, ProjectRootsTraversing.RootTraversePolicy.RECURSIVE);
   public static final ProjectRootsTraversing.RootTraversePolicy FULL_CLASSPATH_WITHOUT_JDK_AND_TESTS =
-    new ProjectRootsTraversing.RootTraversePolicy(GENERAL_OUTPUT, null, ProjectRootsTraversing.RootTraversePolicy.ADD_CLASSES, ProjectRootsTraversing.RootTraversePolicy.RECURSIVE_WITHOUT_TESTS);
-
+    new ProjectRootsTraversing.RootTraversePolicy(GENERAL_OUTPUT, null, ProjectRootsTraversing.RootTraversePolicy.ADD_CLASSES_WITHOUT_TESTS, ProjectRootsTraversing.RootTraversePolicy.RECURSIVE_WITHOUT_TESTS);
   public static final ProjectRootsTraversing.RootTraversePolicy FULL_CLASSPATH_WITHOUT_TESTS =
-    new ProjectRootsTraversing.RootTraversePolicy(GENERAL_OUTPUT, ProjectRootsTraversing.RootTraversePolicy.ADD_CLASSES, ProjectRootsTraversing.RootTraversePolicy.ADD_CLASSES, ProjectRootsTraversing.RootTraversePolicy.RECURSIVE_WITHOUT_TESTS);
+    new ProjectRootsTraversing.RootTraversePolicy(GENERAL_OUTPUT, ProjectRootsTraversing.RootTraversePolicy.ADD_CLASSES_WITHOUT_TESTS, ProjectRootsTraversing.RootTraversePolicy.ADD_CLASSES_WITHOUT_TESTS, ProjectRootsTraversing.RootTraversePolicy.RECURSIVE_WITHOUT_TESTS);
 
   private ProjectClasspathTraversing() {
   }
@@ -53,7 +53,7 @@ public class ProjectClasspathTraversing {
     }
 
     public List<String> getOutputs(Module module) {
-      ArrayList<String> outputs = new ArrayList<String>();
+      List<String> outputs = new SmartList<String>();
       final CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
       if (compilerModuleExtension != null) {
         String testOutput = compilerModuleExtension.getCompilerOutputUrlForTests();

@@ -211,26 +211,15 @@ public class ProjectRootsTraversing {
       }
     };
 
-    public static final Visit<ModuleOrderEntry> RECURSIVE = new Visit<ModuleOrderEntry>() {
-      public void visit(ModuleOrderEntry moduleOrderEntry, TraverseState state, RootPolicy<TraverseState> policy) {
-        Module module = moduleOrderEntry.getModule();
-        if (module == null) return;
-        ModuleRootManager moduleRootManager = state.getCurrentModuleManager();
-        traverseOrder(module, policy, state);
-        state.restoreCurrentModuleManager(moduleRootManager);
+    public static final Visit<OrderEntry> ADD_CLASSES_WITHOUT_TESTS = new Visit<OrderEntry>() {
+      public void visit(OrderEntry orderEntry, TraverseState state, RootPolicy<TraverseState> policy) {
+        if (orderEntry instanceof ExportableOrderEntry && ((ExportableOrderEntry)orderEntry).getScope() == DependencyScope.TEST) return;
+        state.addAllUrls(orderEntry.getUrls(OrderRootType.CLASSES));
       }
     };
 
-    public static final Visit<ModuleOrderEntry> RECURSIVE_WITHOUT_TESTS = new Visit<ModuleOrderEntry>() {
-      public void visit(ModuleOrderEntry moduleOrderEntry, TraverseState state, RootPolicy<TraverseState> policy) {
-        if (moduleOrderEntry.getScope() == DependencyScope.TEST) return;
-        Module module = moduleOrderEntry.getModule();
-        if (module == null) return;
-        ModuleRootManager moduleRootManager = state.getCurrentModuleManager();
-        traverseOrder(module, policy, state);
-        state.restoreCurrentModuleManager(moduleRootManager);
-      }
-    };
+    public static final Visit<ModuleOrderEntry> RECURSIVE = new RecursiveModules(true);
+    public static final Visit<ModuleOrderEntry> RECURSIVE_WITHOUT_TESTS = new RecursiveModules(false);
 
     public static class AddModuleSource implements Visit<ModuleSourceOrderEntry> {
       private boolean myExcludeTests;
@@ -258,6 +247,23 @@ public class ProjectRootsTraversing {
         else {
           state.addAll(orderEntry.getFiles(OrderRootType.SOURCES));
         }
+      }
+    }
+
+    public static class RecursiveModules implements Visit<ModuleOrderEntry> {
+      private boolean myIncludeTests;
+
+      public RecursiveModules(boolean includeTests) {
+        myIncludeTests = includeTests;
+      }
+
+      public void visit(ModuleOrderEntry moduleOrderEntry, TraverseState state, RootPolicy<TraverseState> policy) {
+        if (!myIncludeTests && moduleOrderEntry.getScope() == DependencyScope.TEST) return;
+        Module module = moduleOrderEntry.getModule();
+        if (module == null) return;
+        ModuleRootManager moduleRootManager = state.getCurrentModuleManager();
+        traverseOrder(module, policy, state);
+        state.restoreCurrentModuleManager(moduleRootManager);
       }
     }
   }
