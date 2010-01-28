@@ -1644,9 +1644,7 @@ public class AbstractTreeUi {
         needToUpdate = true;
       }
 
-      //noinspection ConstantConditions
       if (childDescr.get() == null) {
-        LOG.error("childDescr == null, treeStructure = " + getTreeStructure() + ", child = " + child);
         processingDone.setDone();
         continue;
       }
