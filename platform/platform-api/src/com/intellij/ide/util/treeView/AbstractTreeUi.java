@@ -906,6 +906,8 @@ public class AbstractTreeUi {
 
   @NotNull
   UpdaterTreeState setUpdaterState(UpdaterTreeState state) {
+    if (myUpdaterState != null && myUpdaterState.equals(state)) return state;
+
     final UpdaterTreeState oldState = myUpdaterState;
     if (oldState == null) {
       myUpdaterState = state;
