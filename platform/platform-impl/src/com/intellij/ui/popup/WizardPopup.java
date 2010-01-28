@@ -288,6 +288,10 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
       int resultWidth = ofContent.width > MAX_SIZE.width ? MAX_SIZE.width : ofContent.width;
       int resultHeight = ofContent.height > MAX_SIZE.height ? MAX_SIZE.height : ofContent.height;
 
+      if (ofContent.height > MAX_SIZE.height) {
+        resultWidth += new JScrollPane().getVerticalScrollBar().getPreferredSize().getWidth();
+      }
+
       return new Dimension(resultWidth, resultHeight);
     }
   }
