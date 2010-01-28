@@ -26,7 +26,7 @@ public class PyClassType implements PyType {
   protected boolean myIsDefinition;
 
   /**
-   * Describes a class-based type. Since everyting in Python is an instance of some class, this type pretty much completes
+   * Describes a class-based type. Since everything in Python is an instance of some class, this type pretty much completes
    * the type system :)
    * Note that classes' and instances' member list can change during execution, so it is important to construct an instance of PyClassType
    * right in the place of reference, so that such changes could possibly be accounted for.
@@ -116,7 +116,7 @@ public class PyClassType implements PyType {
       Object[] ancestry = (new PyClassType(ancestor, true)).getCompletionVariants(referenceExpression, context);
       for (Object ob : ancestry) {
         if (ob instanceof LookupElementBuilder) {
-          ret.add(((LookupElementBuilder)ob).setTailText(" | " + ancestor.getName()));
+          ret.add(((LookupElementBuilder)ob).setTypeText(ancestor.getName()));
         } else {
           ret.add(ob);
         }
