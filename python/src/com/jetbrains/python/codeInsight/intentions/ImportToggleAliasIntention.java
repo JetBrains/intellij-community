@@ -47,11 +47,11 @@ public class ImportToggleAliasIntention implements IntentionAction {
       if (refex != null) {
         String name = refex.getReferencedName();
         if (name != null && !"".equals(name)) {
-          add_name = "Add alias to '" + name + "'";
+          add_name = PyBundle.message("INTN.add.alias.for.import.$0", name);
         }
       }
     }
-    return myAlias == null? add_name : "Remove alias '" + myAlias + "'";
+    return myAlias == null? add_name : PyBundle.message("INTN.remove.alias.for.import.$0", myAlias);
   }
 
   @NotNull
