@@ -498,5 +498,9 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     public boolean atEnd() {
       return myBaseIterator.atEnd();
     }
+
+    public Document getDocument() {
+      return myBaseIterator.getDocument();
+    }
   }
 }

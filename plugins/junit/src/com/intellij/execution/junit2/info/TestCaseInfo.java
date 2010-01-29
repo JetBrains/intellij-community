@@ -52,7 +52,7 @@ class TestCaseInfo extends ClassBasedInfo {
         MethodSignatureUtil.createMethodSignature(strippedMethodName, PsiType.EMPTY_ARRAY, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY), true);
     if (method != null)
       return new MethodLocation(project, method, classLocation);
-    return classLocation;
+    return null;
   }
 
   public boolean shouldRun() {

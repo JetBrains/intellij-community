@@ -36,4 +36,9 @@ public interface GrFieldStub extends NamedStub<GrField> {
   @NotNull
   Set<String>[] getNamedParameters();
 
+  boolean isProperty();
+
+  boolean isDeprecated();
+
+  byte getFlags();
 }

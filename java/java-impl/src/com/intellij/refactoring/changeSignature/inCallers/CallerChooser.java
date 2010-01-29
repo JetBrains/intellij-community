@@ -136,7 +136,7 @@ public abstract class CallerChooser extends DialogWrapper {
 
     final PsiMethod caller = node.getMethod();
     final PsiMethod callee = parentNode != null ? parentNode.getMethod() : null;
-    if (caller != null && callee != null) {
+    if (caller != null && caller.isPhysical() && callee != null) {
       HighlightManager highlighter = HighlightManager.getInstance(myProject);
       EditorColorsManager colorManager = EditorColorsManager.getInstance();
       TextAttributes attributes = colorManager.getGlobalScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
@@ -162,9 +162,12 @@ public abstract class CallerChooser extends DialogWrapper {
     if (method == null) return "";
     final PsiFile file = method.getContainingFile();
     Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
-    final int start = document.getLineStartOffset(document.getLineNumber(method.getTextRange().getStartOffset()));
-    final int end = document.getLineEndOffset(document.getLineNumber(method.getTextRange().getEndOffset()));
-    return document.getText().substring(start, end);
+    if (document != null) {
+      final int start = document.getLineStartOffset(document.getLineNumber(method.getTextRange().getStartOffset()));
+      final int end = document.getLineEndOffset(document.getLineNumber(method.getTextRange().getEndOffset()));
+      return document.getText().substring(start, end);
+    }
+    return "";
   }
 
   private int getStartOffset (@NotNull final PsiMethod method) {

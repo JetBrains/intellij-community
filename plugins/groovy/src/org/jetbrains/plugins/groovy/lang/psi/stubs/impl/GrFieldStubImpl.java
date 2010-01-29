@@ -22,6 +22,7 @@ import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
 
 import java.util.Set;
@@ -30,23 +31,31 @@ import java.util.Set;
  * @author ilyas
  */
 public class GrFieldStubImpl extends StubBase<GrField> implements GrFieldStub {
+  public static final byte IS_PROPERTY = 0x01;
+  public static final byte IS_ENUM_CONSTANT = 0x02;
+  public static final byte IS_DEPRECATED = 0x04;
 
-  private final boolean isEnumConstant;
+  private final byte myFlags;
   private final StringRef myName;
   private final String[] myAnnotations;
   @Nullable
   private final Set<String>[] myNamedParameters;
 
-  public GrFieldStubImpl(StubElement parent, StringRef name, boolean isEnumConstant, final String[] annotations, @NotNull Set<String>[] namedParameters, final IStubElementType elemType) {
+  public GrFieldStubImpl(StubElement parent,
+                         StringRef name,
+                         final String[] annotations,
+                         @NotNull Set<String>[] namedParameters,
+                         final IStubElementType elemType,
+                         byte flags) {
     super(parent, elemType);
     myName = name;
-    this.isEnumConstant = isEnumConstant;
     myAnnotations = annotations;
     myNamedParameters = namedParameters;
+    myFlags = flags;
   }
 
   public boolean isEnumConstant() {
-    return isEnumConstant;
+    return (myFlags & IS_ENUM_CONSTANT) != 0;
   }
 
   public String getName() {
@@ -60,5 +69,37 @@ public class GrFieldStubImpl extends StubBase<GrField> implements GrFieldStub {
   @NotNull
   public Set<String>[] getNamedParameters() {
     return myNamedParameters;
+  }
+
+  public boolean isProperty() {
+    return (myFlags & IS_PROPERTY) != 0;
+  }
+
+  public boolean isDeprecated() {
+    return (myFlags & IS_DEPRECATED) != 0;
+  }
+
+  public byte getFlags() {
+    return myFlags;
+  }
+
+  public static byte buildFlags(GrField field) {
+    byte f = 0;
+    if (field instanceof GrEnumConstant) {
+      f |= IS_ENUM_CONSTANT;
+    }
+
+    if (field.isProperty()) {
+      f |= IS_PROPERTY;
+    }
+
+    if (field.isDeprecated()) {
+      f|= IS_DEPRECATED;
+    }
+    return f;
+  }
+
+  public static boolean isEnumConstant(byte flags) {
+    return (flags & IS_ENUM_CONSTANT) != 0;
   }
 }

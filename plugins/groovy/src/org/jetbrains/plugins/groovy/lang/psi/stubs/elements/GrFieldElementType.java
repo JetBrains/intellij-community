@@ -25,8 +25,6 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.Nullable;
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.ENUM_CONSTANT;
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.FIELD;
 import org.jetbrains.plugins.groovy.lang.psi.GrStubElementType;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
@@ -40,6 +38,9 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFieldNameIndex;
 
 import java.io.IOException;
 import java.util.*;
+
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.ENUM_CONSTANT;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.FIELD;
 
 /**
  * @author ilyas
@@ -78,10 +79,10 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
 
     Set<String>[] namedParametersArray = new Set[0];
     if (psi instanceof GrFieldImpl){
-      namedParametersArray = ((GrFieldImpl)psi).getNamedParametersArray();
+      namedParametersArray = psi.getNamedParametersArray();
     }
 
-    return new GrFieldStubImpl(parentStub, StringRef.fromString(psi.getName()), false, annNames, namedParametersArray, FIELD);
+    return new GrFieldStubImpl(parentStub, StringRef.fromString(psi.getName()), annNames, namedParametersArray, FIELD, GrFieldStubImpl.buildFlags(psi));
   }
 
   public void serialize(GrFieldStub stub, StubOutputStream dataStream) throws IOException {
@@ -117,7 +118,7 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
         dataStream.writeUTF(namepParameter);
       }
     }
-    dataStream.writeBoolean(stub.isEnumConstant());
+    dataStream.writeByte(stub.getFlags());
   }
 
   static GrFieldStub deserializeFieldStub(StubInputStream dataStream, StubElement parentStub) throws IOException {
@@ -144,9 +145,10 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
       namedParametersSets.add(curSet);
     }
 
-    boolean isEnumConstant = dataStream.readBoolean();
-    return new GrFieldStubImpl(parentStub, ref, isEnumConstant, annNames, namedParametersSets.toArray(new HashSet[0]),
-                               isEnumConstant ? ENUM_CONSTANT : FIELD);
+    byte flags = dataStream.readByte();
+
+    return new GrFieldStubImpl(parentStub, ref, annNames, namedParametersSets.toArray(new HashSet[namedParametersSets.size()]),
+                               GrFieldStubImpl.isEnumConstant(flags) ? ENUM_CONSTANT : FIELD, flags);
   }
 
   static void indexFieldStub(GrFieldStub stub, IndexSink sink) {

@@ -348,7 +348,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     myDialog.setLocation(x, y);
   }
 
-  public void show() {
+  public ActionCallback show() {
+    final ActionCallback result = new ActionCallback();
+
     LOG.assertTrue(EventQueue.isDispatchThread(), "Access is allowed from event dispatch thread only");
 
     final AnCancelAction anCancelAction = new AnCancelAction();
@@ -397,7 +399,15 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
           LaterInvocator.leaveModal(myDialog);
         }
       }
+
+      myDialog.getFocusManager().doWhenFocusSettlesDown(new Runnable() {
+        public void run() {
+          result.setDone();
+        }
+      });
     }
+
+    return result;
   }
 
 //[kirillk] for now it only deals with the TaskWindow under Mac OS X: modal dialogs are shown behind JBPopup
@@ -609,7 +619,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
           if (!isModal()) {
             final Ref<IdeFocusManager> focusManager = new Ref<IdeFocusManager>(null);
             if (myProject != null && myProject.get() != null && !myProject.get().isDisposed()) {
-              focusManager.set(IdeFocusManager.getInstance(myProject.get()));
+              focusManager.set(getFocusManager());
               focusManager.get().doWhenFocusSettlesDown(new Runnable() {
                 public void run() {
                   disposeFocusTrackbackIfNoChildWindowFocused(focusManager.get());
@@ -640,6 +650,14 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       super.show();
     }
 
+    private IdeFocusManager getFocusManager() {
+      if (myProject != null && myProject.get() != null && !myProject.get().isDisposed()) {
+        return IdeFocusManager.getInstance(myProject.get());
+      } else {
+        return IdeFocusManager.findInstance();
+      }
+    }
+
     private void disposeFocusTrackbackIfNoChildWindowFocused(@Nullable IdeFocusManager focusManager) {
       if (myFocusTrackback == null) return;
 
@@ -666,8 +684,16 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     @Deprecated
     public void hide() {
       super.hide();
-      if (myFocusTrackback != null) {
-        myFocusTrackback.restoreFocus();
+      if (myFocusTrackback != null && !(myFocusTrackback.isSheduledForRestore() || myFocusTrackback.isWillBeSheduledForRestore())) {
+        myFocusTrackback.setWillBeSheduledForRestore();
+        IdeFocusManager mgr = getFocusManager();
+        Runnable r = new Runnable() {
+          public void run() {
+            myFocusTrackback.restoreFocus();
+            myFocusTrackback = null;
+          }
+        };
+        mgr.doWhenFocusSettlesDown(r);
       }
     }
 
@@ -686,7 +712,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         myComponentListener = null;
       }
 
-      if (myFocusTrackback != null && !myFocusTrackback.isSheduledForRestore()) {
+      if (myFocusTrackback != null && !(myFocusTrackback.isSheduledForRestore() || myFocusTrackback.isWillBeSheduledForRestore())) {
         myFocusTrackback.dispose();
         myFocusTrackback = null;
       }

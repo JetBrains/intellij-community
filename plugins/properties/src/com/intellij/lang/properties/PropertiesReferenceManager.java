@@ -38,15 +38,13 @@ import java.util.Locale;
  * @author max
  */
 public class PropertiesReferenceManager {
-  private final Project myProject;
   private final PsiManager myPsiManager;
 
   public static PropertiesReferenceManager getInstance(Project project) {
     return ServiceManager.getService(project, PropertiesReferenceManager.class);
   }
 
-  public PropertiesReferenceManager(Project project, PsiManager psiManager) {
-    myProject = project;
+  public PropertiesReferenceManager(PsiManager psiManager) {
     myPsiManager = psiManager;
   }
 
@@ -98,7 +96,7 @@ public class PropertiesReferenceManager {
     return null;
   }
 
-  public String[] getPropertyFileBaseNames(final @NotNull GlobalSearchScope searchScope, final BundleNameEvaluator bundleNameEvaluator) {
+  public String[] getPropertyFileBaseNames(@NotNull final GlobalSearchScope searchScope, final BundleNameEvaluator bundleNameEvaluator) {
     final ArrayList<String> result = new ArrayList<String>();
     processPropertiesFiles(searchScope, new PropertiesFileProcessor() {
       public void process(String baseName, PropertiesFile propertiesFile) {

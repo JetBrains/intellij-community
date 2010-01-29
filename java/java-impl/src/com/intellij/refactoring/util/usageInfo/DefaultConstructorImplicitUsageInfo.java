@@ -23,11 +23,13 @@ import com.intellij.usageView.UsageInfo;
  */
 public class DefaultConstructorImplicitUsageInfo extends UsageInfo {
   private final PsiMethod myOverridingConstructor;
+  private final PsiClass myContainingClass;
   private final PsiMethod myBaseConstructor;
 
-  public DefaultConstructorImplicitUsageInfo(PsiMethod overridingConstructor, PsiMethod baseConstructor) {
+  public DefaultConstructorImplicitUsageInfo(PsiMethod overridingConstructor, PsiClass containingClass, PsiMethod baseConstructor) {
     super(overridingConstructor);
     myOverridingConstructor = overridingConstructor;
+    myContainingClass = containingClass;
     myBaseConstructor = baseConstructor;
   }
 
@@ -37,5 +39,9 @@ public class DefaultConstructorImplicitUsageInfo extends UsageInfo {
 
   public PsiMethod getBaseConstructor() {
     return myBaseConstructor;
+  }
+
+  public PsiClass getContainingClass() {
+    return myContainingClass;
   }
 }

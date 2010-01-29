@@ -23,6 +23,8 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrMethodStub;
 
+import java.util.Set;
+
 /**
  * @author Dmitry.Krasilschikov
  * @date 26.03.2007
@@ -41,4 +43,23 @@ public class GrMethodImpl extends GrMethodBaseImpl<GrMethodStub> implements GrMe
     return "Method";
   }
 
+  @NotNull
+  @Override
+  public Set<String>[] getNamedParametersArray() {
+    final GrMethodStub stub = getStub();
+    if (stub != null) {
+      return stub.getNamedParameters();
+    }
+    return super.getNamedParametersArray();
+  }
+
+  @NotNull
+  @Override
+  public String getName() {
+    final GrMethodStub stub = getStub();
+    if (stub != null) {
+      return stub.getName();
+    }
+    return super.getName();
+  }
 }
