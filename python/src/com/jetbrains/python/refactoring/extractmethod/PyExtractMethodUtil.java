@@ -60,8 +60,8 @@ public class PyExtractMethodUtil {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
               // Generate method
-              PyFunction generatedMethod = generateMethodFromElements(project, methodName, variableData, elementsRange);
-              generatedMethod = insertGeneratedMethod(statement1, generatedMethod);
+              final PyFunction generatedMethod = generateMethodFromElements(project, methodName, variableData, elementsRange);
+              insertGeneratedMethod(statement1, generatedMethod);
 
               // Process parameters
               processParameters(project, generatedMethod, variableData);
@@ -90,7 +90,7 @@ public class PyExtractMethodUtil {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
               // Generate method
-              PyFunction generatedMethod = generateMethodFromElements(project, methodName, variableData, elementsRange);
+              final PyFunction generatedMethod = generateMethodFromElements(project, methodName, variableData, elementsRange);
 
               // Append return modified variables statements
               final StringBuilder builder = new StringBuilder();
@@ -103,7 +103,7 @@ public class PyExtractMethodUtil {
               final PsiElement returnStatement = PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyElement.class, "return " + builder.toString());
               generatedMethod.getStatementList().add(returnStatement);
 
-              generatedMethod = insertGeneratedMethod(statement1, generatedMethod);
+              insertGeneratedMethod(statement1, generatedMethod);
 
               // Process parameters
               processParameters(project, generatedMethod, variableData);
@@ -116,7 +116,7 @@ public class PyExtractMethodUtil {
               // replace statements with call
               callElement = replaceElements(elementsRange, callElement);
 
-              // # Set editor
+              // Set editor
               setSelectionAndCaret(editor, callElement);
             }
           });
@@ -150,8 +150,8 @@ public class PyExtractMethodUtil {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
               // Generate method
-              PyFunction generatedMethod = generateMethodFromExpression(project, methodName, variableData, expression);
-              generatedMethod = insertGeneratedMethod(expression, generatedMethod);
+              final PyFunction generatedMethod = generateMethodFromExpression(project, methodName, variableData, expression);
+              insertGeneratedMethod(expression, generatedMethod);
 
               // Process parameters
               processParameters(project, generatedMethod, variableData);
@@ -165,10 +165,10 @@ public class PyExtractMethodUtil {
               builder.append("(").append(createCallArgsString(variableData)).append(")");
               PsiElement callElement = PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyElement.class, builder.toString());
 
-              //# replace statements with call
+              // replace statements with call
               callElement = PyPsiUtils.replaceExpression(project, expression, callElement);
 
-              // # Set editor
+              // Set editor
               setSelectionAndCaret(editor, callElement);
             }
           });
@@ -219,7 +219,7 @@ public class PyExtractMethodUtil {
     }
   }
 
-  private static PyFunction insertGeneratedMethod(PsiElement anchor, final PyFunction generatedMethod) {
+  private static void insertGeneratedMethod(PsiElement anchor, final PyFunction generatedMethod) {
     final Pair<PsiElement, TextRange> data = anchor.getUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE);
     if (data != null){
       anchor = data.first;
@@ -229,15 +229,12 @@ public class PyExtractMethodUtil {
     final PsiElement parent = compoundStatement.getParent();
     if (parent instanceof PyFunction){
       parent.getParent().addBefore(generatedMethod, parent);
-      return generatedMethod;
     }
     final PsiElement statement = PyPsiUtils.getStatement(compoundStatement, anchor);
     compoundStatement.addBefore(generatedMethod, statement);
-    return generatedMethod;
   }
 
   //  Creates string for method parameters
-
   private static String createMethodParamsString(final VariableData[] variableDatas, final boolean fakeSignature) {
     final StringBuilder builder = new StringBuilder();
     for (VariableData data : variableDatas) {
