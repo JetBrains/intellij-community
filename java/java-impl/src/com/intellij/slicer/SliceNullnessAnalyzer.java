@@ -264,6 +264,7 @@ public class SliceNullnessAnalyzer {
     if (value instanceof PsiLocalVariable || value instanceof PsiParameter) {
       return DfaUtil.checkNullness((PsiVariable)value, context);
     }
+    if (value instanceof PsiEnumConstant) return DfaUtil.Nullness.NOT_NULL;
     return null;
   }
 
