@@ -337,6 +337,10 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
       "Field <b><code>C2.a</code></b> that is used in inlined method is not accessible from call site(s) in method <b><code>C2User.test()</code></b>");
   }
 
+  public void testGetClassConflict() throws Exception {
+    doTestConflict("Result of getClass() invocation would be changed", "Result of getClass() invocation would be changed");
+  }
+
   public void doTestConflict(final String... expected) throws Exception {
     InlineToAnonymousClassProcessor processor = prepareProcessor();
     UsageInfo[] usages = processor.findUsages();
