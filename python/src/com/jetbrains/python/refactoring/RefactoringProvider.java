@@ -5,6 +5,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.jetbrains.python.refactoring.classes.extractSuperclass.PyExtractSuperclassHandler;
 import com.jetbrains.python.refactoring.classes.pullUp.PyPullUpHandler;
 import com.jetbrains.python.refactoring.classes.pushDown.PyPushDownHandler;
+import com.jetbrains.python.refactoring.extractmethod.PyExtractMethodHandler;
 import com.jetbrains.python.refactoring.introduce.constant.ConstantIntroduceHandler;
 import com.jetbrains.python.refactoring.introduce.variable.VariableIntroduceHandler;
 
@@ -42,6 +43,6 @@ public class RefactoringProvider extends DefaultRefactoringSupportProvider {
 
   @Override
   public RefactoringActionHandler getExtractMethodHandler() {
-    return new PyExtractMethodHandler(); 
+    return new PyExtractMethodHandler();
   }
 }

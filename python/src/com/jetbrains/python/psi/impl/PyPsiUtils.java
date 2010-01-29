@@ -10,12 +10,18 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyElementType;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyStatementList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class PyPsiUtils {
   public static final Key<Pair<PsiElement, TextRange>> SELECTION_BREAKS_AST_NODE =
@@ -56,9 +62,9 @@ public class PyPsiUtils {
     return node;
   }
 
-  public static void replaceExpression(@NotNull final Project project,
-                                       @NotNull final PsiElement oldExpression,
-                                       @NotNull final PsiElement newExpression) {
+  public static PsiElement replaceExpression(@NotNull final Project project,
+                                             @NotNull final PsiElement oldExpression,
+                                             @NotNull final PsiElement newExpression) {
     final Pair<PsiElement, TextRange> data = oldExpression.getUserData(SELECTION_BREAKS_AST_NODE);
     if (data != null) {
       final PsiElement parent = data.first;
@@ -68,10 +74,10 @@ public class PyPsiUtils {
       final String suffix = parentText.substring(textRange.getEndOffset(), parent.getTextLength());
       final PsiElement expression = PythonLanguage.getInstance().getElementGenerator()
         .createFromText(project, parent.getClass(), prefix + newExpression.getText() + suffix);
-      parent.replace(expression);
+      return parent.replace(expression);
     }
     else {
-      oldExpression.replace(newExpression);
+      return oldExpression.replace(newExpression);
     }
   }
 
@@ -104,5 +110,56 @@ public class PyPsiUtils {
       //noinspection ConstantConditions
       parentNode.removeChild(element.getNode());
     }
+  }
+
+  @Nullable
+  public static PsiElement getStatement(@NotNull final PsiElement element) {
+    final PyElement compStatement = getCompoundStatement(element);
+    if (compStatement == null){
+      return null;
+    }
+    return getStatement(compStatement, element);
+  }
+
+  @Nullable
+  public static PyElement getCompoundStatement(final PsiElement element) {
+    return element instanceof PyFile || element instanceof PyStatementList
+           ? (PyElement) element
+           : PsiTreeUtil.getParentOfType(element, PyFile.class, PyStatementList.class);
+  }
+
+  @Nullable
+  public static PsiElement getStatement(final PyElement compStatement, PsiElement element) {
+    PsiElement parent = element.getParent();
+    while (parent != null && parent != compStatement){
+      element = parent;
+      parent = element.getParent();
+    }
+    return parent != null ? element : null;
+  }
+
+  public static List<PsiElement> collectElements(final PsiElement statement1, final PsiElement statement2) {
+    // Process ASTNodes here to handle all the nodes
+    final ASTNode node1 = statement1.getNode();
+    final ASTNode node2 = statement2.getNode();
+    final ASTNode parentNode = node1.getTreeParent();
+
+    boolean insideRange = false;
+    final List<PsiElement> result = new ArrayList<PsiElement>();
+    for (ASTNode node : parentNode.getChildren(null)) {
+      // start
+      if (node1 == node){
+        insideRange = true;
+      }
+      if (insideRange){
+        result.add(node.getPsi());
+      }
+      // stop
+      if (node == node2){
+        insideRange = false;
+        break;
+      }
+    }
+    return result;
   }
 }
