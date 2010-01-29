@@ -6,6 +6,8 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.TestDataFile;
+import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.inspections.PyMethodParametersInspection;
 import com.jetbrains.python.inspections.PyTrailingSemicolonInspection;
@@ -20,6 +22,7 @@ import java.io.File;
  * User: dcheryasov
  * Date: Nov 29, 2008 12:47:08 AM
  */
+@TestDataPath("$CONTENT_ROOT/../testData/inspections/")
 public class PyQuickFixTest extends PyLightFixtureTestCase {
 
   public void testAddImport() throws Exception {
@@ -31,105 +34,89 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
   }
 
   public void testQualifyByImport() throws Exception {
-    doInspectionTest(
-      new String[]{"QualifyByImport.py", "QualifyByImportFoo.py"},
-      PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.qualify.with.module"), true, true
-    );
+    doInspectionTest(new String[]{"QualifyByImport.py", "QualifyByImportFoo.py"}, PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.qualify.with.module"), true, true);
   }
 
   public void testAddToImportFromList() throws Exception {
-    doInspectionTest(
-      new String[]{"AddToImportFromList.py", "AddToImportFromFoo.py"},
-      PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.NAME.use.import"), true, true
-    );
+    doInspectionTest(new String[]{"AddToImportFromList.py", "AddToImportFromFoo.py"}, PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.NAME.use.import"), true, true);
   }
   // TODO: add a test for multiple variants of above
 
- // TODO: add tests for stub indexes-based autoimport of unimported somehow.   
+  // TODO: add tests for stub indexes-based autoimport of unimported somehow.
 
   public void testAddSelf() throws Exception {
     doInspectionTest("AddSelf.py", PyMethodParametersInspection.class, PyBundle.message("QFIX.add.parameter.self"), true, true);
   }
 
   public void testRenameToSelf() throws Exception {
-    doInspectionTest("RenameToSelf.py", PyMethodParametersInspection.class, PyBundle.message("QFIX.rename.parameter.to.$0", "self"), true, true);
+    doInspectionTest("RenameToSelf.py", PyMethodParametersInspection.class, PyBundle.message("QFIX.rename.parameter.to.$0", "self"), true,
+                     true);
   }
 
   public void testAddFieldFromMethod() throws Exception {
-    doInspectionTest(
-      "AddFieldFromMethod.py",
-      PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.NAME.add.field.$0.to.class.$1", "y", "A"), 
-      true, true
-    );
+    doInspectionTest("AddFieldFromMethod.py", PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.NAME.add.field.$0.to.class.$1", "y", "A"),
+                     true, true);
   }
 
   public void testAddFieldFromInstance() throws Exception {
-    doInspectionTest(
-      "AddFieldFromInstance.py",
-      PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.NAME.add.field.$0.to.class.$1", "y", "A"),
-      true, true
-    );
+    doInspectionTest("AddFieldFromInstance.py", PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.NAME.add.field.$0.to.class.$1", "y", "A"),
+                     true, true);
   }
 
   public void testAddFieldAddConstructor() throws Exception {
-    doInspectionTest(
-      "AddFieldAddConstructor.py",
-      PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.NAME.add.field.$0.to.class.$1", "x", "B"),
-      true, true
-    );
+    doInspectionTest("AddFieldAddConstructor.py", PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.NAME.add.field.$0.to.class.$1", "x", "B"),
+                     true, true);
+  }
+
+  public void testAddFieldNewConstructor() throws Exception {
+    doInspectionTest("AddFieldNewConstructor.py", PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.NAME.add.field.$0.to.class.$1", "x", "B"),
+                     true, true);
   }
 
   public void testAddMethodFromInstance() throws Exception {
-    doInspectionTest(
-      "AddMethodFromInstance.py",
-      PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.NAME.add.method.$0.to.class.$1", "y", "A"),
-      true, true
-    );
+    doInspectionTest("AddMethodFromInstance.py", PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.NAME.add.method.$0.to.class.$1", "y", "A"),
+                     true, true);
   }
 
   public void testAddMethodFromMethod() throws Exception {
-    doInspectionTest(
-      "AddMethodFromMethod.py",
-      PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.NAME.add.method.$0.to.class.$1", "y", "A"),
-      true, true
-    );
+    doInspectionTest("AddMethodFromMethod.py", PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.NAME.add.method.$0.to.class.$1", "y", "A"),
+                     true, true);
   }
 
   public void testRemoveTrailingSemicolon() throws Exception {
-    doInspectionTest(
-      "RemoveTrailingSemicolon.py", PyTrailingSemicolonInspection.class,
-      PyBundle.message("QFIX.remove.trailing.semicolon"), true, true
-    );
+    doInspectionTest("RemoveTrailingSemicolon.py", PyTrailingSemicolonInspection.class, PyBundle.message("QFIX.remove.trailing.semicolon"),
+                     true, true);
   }
 
-  protected @NonNls String getTestDataPath() {
+  protected
+  @NonNls
+  String getTestDataPath() {
     return PythonTestUtil.getTestDataPath() + "/inspections/";
   }
 
-  protected void doInspectionTest(@NonNls String testFileName,
+  protected void doInspectionTest(@TestDataFile @NonNls String testFileName,
                                   final Class inspectionClass,
                                   @NonNls String quickFixName,
                                   boolean applyFix,
-                                  boolean available
-  ) throws Exception {
+                                  boolean available) throws Exception {
     doInspectionTest(new String[]{testFileName}, inspectionClass, quickFixName, applyFix, available);
   }
 
   /**
    * Runs daemon passes and looks for given fix within infos.
-   * @param testFiles names of files to participate; first is used for inspection and then for check by "_after".
+   *
+   * @param testFiles       names of files to participate; first is used for inspection and then for check by "_after".
    * @param inspectionClass what inspection to run
-   * @param quickFixName how the resulting fix should be named (the human-readable name users see)
-   * @param applyFix true if the fix needs to be applied
-   * @param available true if the fix should be available, false if it should be explicitly not available.
+   * @param quickFixName    how the resulting fix should be named (the human-readable name users see)
+   * @param applyFix        true if the fix needs to be applied
+   * @param available       true if the fix should be available, false if it should be explicitly not available.
    * @throws Exception
    */
   protected void doInspectionTest(@NonNls String[] testFiles,
                                   final Class inspectionClass,
                                   @NonNls String quickFixName,
                                   boolean applyFix,
-                                  boolean available
-  ) throws Exception {
+                                  boolean available) throws Exception {
     myFixture.enableInspections(inspectionClass);
     myFixture.configureByFiles(testFiles);
     myFixture.checkHighlighting(true, false, false);
@@ -139,7 +126,7 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
       if (applyFix) {
         myFixture.launchAction(intentionAction);
 
-        myFixture.checkResultByFile(graftBeforeExt(testFiles [0], "_after"));
+        myFixture.checkResultByFile(graftBeforeExt(testFiles[0], "_after"));
       }
     }
     else {
@@ -153,7 +140,7 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
   private static String graftBeforeExt(String name, String insertion) {
     int dotpos = name.indexOf('.');
     if (dotpos < 0) dotpos = name.length();
-    return name.substring(0, dotpos) +  insertion + name.substring(dotpos, name.length());
+    return name.substring(0, dotpos) + insertion + name.substring(dotpos, name.length());
   }
 
   private static Sdk createMockJdk(String jdkHome) {

@@ -1,5 +1,6 @@
 package com.jetbrains.python;
 
+import com.jetbrains.python.refactoring.classes.PyPullUpTest;
 import junit.framework.TestSuite;
 
 /**
@@ -12,6 +13,7 @@ public class PythonAllTestsSuite {
   public static final Class[] tests = {
     PythonLexerTest.class,
     PythonParsingTest.class,
+    PyStringLiteralTest.class,
     PyIndentTest.class,
     PyStatementPartsTest.class,
     PythonHighlightingTest.class,
@@ -29,7 +31,8 @@ public class PythonAllTestsSuite {
     PythonDemorganLawIntentionTest.class,
     PyQuickFixTest.class,
     PySelectWordTest.class,
-    PySurroundWithTest.class
+    PySurroundWithTest.class,
+    PyPullUpTest.class
   };
 
   public static TestSuite suite() {

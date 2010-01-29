@@ -164,6 +164,7 @@ target('default': "Build artifacts") {
   build_searchable_options()
   wire_build_date(buildName)
   layoutFull(paths.distAll, usedJars)
+  scramble()
 
   layoutWin(paths.distWin)
   layoutMac(buildName: buildName,
@@ -223,6 +224,49 @@ def build_searchable_options() {
   }
 }
 
+def zkmScramble(String script, String dir, String jarName) {
+  ant.java(classname: "ZKM", fork: "true", failonerror: "true") {
+    jvmarg(value: "-Xmx1100m")
+    arg(value: "-v")
+    arg(value: script)
+    classpath {
+      fileset(dir: dir) {
+        include(name: "*.jar")
+        exclude(name: jarName)
+      }
+
+      fileset(dir: "$home/lib") {
+        include(name: "*.jar")
+      }
+
+      pathelement(location: "$home/build/lib/ZKM.jar")
+    }
+  }
+
+  ant.delete(file: "$dir/${jarName}.BACKUP", failonerror: "false")
+}
+
+def scramble() {
+  ant.copy(file: "$home/build/conf/script.zkm.stub", tofile: "$paths.sandbox/script.zkm", overwrite: "true") {
+    filterset(begintoken: "__", endtoken: "__") {
+      filter(token: "CLASSES", value: "\"${paths.distAll}/lib/pycharm.jar\"")
+      filter(token: "SCRAMBLED_CLASSES", value: "${paths.distAll}/")
+      filter(token: "INCREMENTAL", value: "")
+    }
+  }
+  ant.mkdir(dir: "$paths.artifacts/pycharm.unscrambled")
+  ant.copy(file: "$paths.distAll/lib/pycharm.jar", todir: "$paths.artifacts/pycharm.unscrambled")
+  zkmScramble("$paths.sandbox/script.zkm", "$paths.distAll/lib", "pycharm.jar")
+  ant.move(file: "$paths.distAll/pycharm.jar", todir: "$paths.distAll/lib")
+  ant.zip(destfile: "$paths.artifacts/logs.zip") {
+    fileset(file: "ChangeLog.txt")
+    fileset(file: "ZKM_log.txt")
+    fileset(file: "$paths.sandbox/script.zkm")
+  }
+  ant.delete(file: "ChangeLog.txt")
+  ant.delete(file: "ZKM_log.txt")
+}
+
 String appInfoFile() {
   return "$home/out/pycharm/classes/production/python-ide/idea/PythonApplicationInfo.xml"
 }
@@ -266,6 +310,7 @@ def buildTarGz() {
     tarfileset(dir: "$home/python/build", fullpath: "$tarRoot/bin/pycharm.vmoptions") {
       include(name: "pycharm.exe.vmoptions")
     }
+    tarfileset(dir: "$home/python/help", includes: "pycharmhelp.jar", prefix: "$tarRoot/help")
   }
 
   ant.gzip(src: tarPath, zipfile: "${tarPath}.gz")
@@ -338,21 +383,32 @@ def layoutMac(Map args, String target) {
       fileset(dir: "$home/community/bin/mac")
       fileset(dir: "$home/community/bin/nix")
     }
+    dir("lib") {
+      fileset(dir: "$home/community/build/conf/mac/lib")
+    }
+    dir("Contents") {
+      dir("MacOS") {
+      }
+      dir("Resources") {
+        fileset(dir: "$home/python/resources", includes: "PyCharm.icns")
+      }
+      fileset(dir: "$home/python/build", includes: "Info.plist")
+    }
   }
 
-  ant.copy(todir: target) {
-    fileset(dir: "$home/community/build/conf/mac")
-  }
+  ant.copy(file: "$home/community/build/conf/mac/Contents/MacOS/idea", tofile: "$target/Contents/MacOS/pycharm")
 
   ant.replace(file: "$target/Contents/Info.plist") {
     replacefilter(token: "@@build@@", value: args.buildName)
 
 
     replacefilter(token: "@@version@@", value: args.version)
-    replacefilter(token: "@@vmoptions@@", value: args.vmoptions + " -Xverify:none -XX:+UseCompressedOOPS -XX:+DoEscapeAnalysis -Didea.platform.prefix=Python")
+    replacefilter(token: "@@vmoptions@@", value: args.vmoptions + " -Xverify:none -XX:+UseCompressedOOPS -XX:+DoEscapeAnalysis")
     replacefilter(token: "@@system_selector@@", value: args.system_selector)
     replacefilter(token: "@@jdk_req@@", value: args.jdk_req)
   }
+
+  ant.copy(file: "$home/python/help/pycharmhelp_mac.jar", tofile: "$target/help/pycharmhelp.jar")
 }
 
 def layoutWin(String target) {
@@ -371,6 +427,7 @@ def layoutWin(String target) {
       }
     }
   }
+  ant.copy(file: "$home/python/help/pycharmhelp.jar", todir: "$target/help")
 }
 
 def set(Map args, String key, Object value) {

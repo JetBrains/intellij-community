@@ -8,6 +8,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * Plugin version of file type factory - uses UltimateVerifier.
+ *
  * @author yole
  */
 public class PythonFileTypeFactory extends FileTypeFactory {

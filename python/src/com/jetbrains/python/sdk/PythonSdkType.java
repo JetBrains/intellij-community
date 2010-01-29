@@ -53,7 +53,7 @@ public class PythonSdkType extends SdkType {
   private static final Logger LOG = Logger.getInstance("#" + PythonSdkType.class.getName());
 
   public static PythonSdkType getInstance() {
-    return SdkType.findInstance(PythonSdkType.class);    
+    return SdkType.findInstance(PythonSdkType.class);
   }
 
   public PythonSdkType() {
@@ -76,9 +76,14 @@ public class PythonSdkType extends SdkType {
   /**
    * @return name of builtins skeleton file; for Python 2.x it is '{@code __builtins__.py}'.
    */
-  @NotNull @NonNls
-  public String getBuiltinsFileName() {
-    return "__builtin__.py"; // TODO: for py3k, return the appropriate name
+  @NotNull
+  @NonNls
+  public String getBuiltinsFileName(Sdk sdk) {
+    final String version = getVersionString(sdk);
+    if (version != null && version.startsWith("Python 3")) {
+      return "builtins.py";
+    }
+    return "__builtin__.py";
   }
 
   @NonNls
@@ -90,7 +95,7 @@ public class PythonSdkType extends SdkType {
       VirtualFile rootDir = LocalFileSystem.getInstance().findFileByPath("C:\\");
       if (rootDir != null) {
         VirtualFile[] topLevelDirs = rootDir.getChildren();
-        for(VirtualFile dir: topLevelDirs) {
+        for (VirtualFile dir : topLevelDirs) {
           if (dir.isDirectory() && dir.getName().toLowerCase().startsWith(PYTHON_STR)) {
             candidates.add(dir.getPath());
           }
@@ -101,7 +106,7 @@ public class PythonSdkType extends SdkType {
       VirtualFile rootDir = LocalFileSystem.getInstance().findFileByPath("/usr/lib");
       if (rootDir != null) {
         VirtualFile[] suspect_dirs = rootDir.getChildren();
-        for(VirtualFile dir: suspect_dirs) {
+        for (VirtualFile dir : suspect_dirs) {
           if (dir.isDirectory() && dir.getName().startsWith(PYTHON_STR)) {
             candidates.add(dir.getPath());
           }
@@ -115,7 +120,7 @@ public class PythonSdkType extends SdkType {
     if (candidates.size() > 0) {
       // return latest version
       String[] candidateArray = ArrayUtil.toStringArray(candidates);
-      return candidateArray [candidateArray.length-1];
+      return candidateArray[candidateArray.length - 1];
     }
     return null;
   }
@@ -127,13 +132,14 @@ public class PythonSdkType extends SdkType {
   /**
    * Checks if the path is a valid home.
    * Valid CPython home must contain some standard libraries. Of them we look for re.py, __future__.py and site-packages/.
+   *
    * @param path path to check.
    * @return true if paths points to a valid home.
    */
   @NonNls
   private static boolean isPythonSdkHome(final String path) {
     final File f = getPythonBinaryPath(path);
-    if (f == null || !f.exists()){
+    if (f == null || !f.exists()) {
       return false;
     }
     // Extra check for linuxes
@@ -143,11 +149,7 @@ public class PythonSdkType extends SdkType {
       File f_future = new File(path, "__future__.py");
       File f_site = new File(path, "site-packages"); // 2.x
       File f_dist = new File(path, "dist-packages"); // 3.0
-      return (
-        f_re.exists() &&
-        f_future.exists() &&
-        (f_site.exists() &&  f_site.isDirectory()) || (f_dist.exists() &&  f_dist.isDirectory())
-      );
+      return (f_re.exists() && f_future.exists() && (f_site.exists() && f_site.isDirectory()) || (f_dist.exists() && f_dist.isDirectory()));
     }
     return true;
   }
@@ -189,8 +191,9 @@ public class PythonSdkType extends SdkType {
       File py_binary;
       if (m.matches()) {
         String py_name = m.group(1); // $1
-        py_binary = new File("/usr/bin/"+py_name); // XXX broken logic! can't match the lib to the bin
-      } else {
+        py_binary = new File("/usr/bin/" + py_name); // XXX broken logic! can't match the lib to the bin
+      }
+      else {
         py_binary = new File("/usr/bin/python"); // TODO: search in $PATH
       }
       if (py_binary.exists()) {
@@ -223,19 +226,19 @@ public class PythonSdkType extends SdkType {
         if (!stubs_dir.exists()) {
           generateBuiltinStubs(currentSdk.getHomePath(), path);
         }
-        generateBinaryStubs(currentSdk.getHomePath(), path, null); // TODO: add a nice progress indicator somehow 
+        generateBinaryStubs(currentSdk.getHomePath(), path, null); // TODO: add a nice progress indicator somehow
         break;
       }
     }
     return null;
   }
 
-  
+
   @NonNls
   public String getPresentableName() {
     return "Python SDK";
   }
-  
+
   public void setupSdkPaths(final Sdk sdk) {
     final Ref<SdkModificator> sdkModificatorRef = new Ref<SdkModificator>();
     final ProgressManager progman = ProgressManager.getInstance();
@@ -269,7 +272,7 @@ public class PythonSdkType extends SdkType {
     String sdk_path = sdkModificator.getHomePath();
     String bin_path = getInterpreterPath(sdk_path);
     @NonNls final String stubs_path =
-        PathManager.getSystemPath() + File.separator + SKELETON_DIR_NAME + File.separator + sdk_path.hashCode() + File.separator;
+      PathManager.getSystemPath() + File.separator + SKELETON_DIR_NAME + File.separator + sdk_path.hashCode() + File.separator;
     // we have a number of lib dirs, those listed in python's sys.path
     if (indicator != null) {
       indicator.setText("Adding library roots");
@@ -277,7 +280,7 @@ public class PythonSdkType extends SdkType {
     final List<String> paths = getSysPath(sdk_path, bin_path);
     if ((paths != null) && paths.size() > 0) {
       // add every path as root.
-      for (String path: paths) {
+      for (String path : paths) {
         if (path.indexOf(File.separator) < 0) continue; // TODO: interpret possible 'special' paths reasonably
         if (indicator != null) {
           indicator.setText2(path);
@@ -295,7 +298,7 @@ public class PythonSdkType extends SdkType {
             sdkModificator.addRoot(child, OrderRootType.CLASSES);
           }
         }
-        else LOG.info("Bogus sys.path entry "+path);
+        else LOG.info("Bogus sys.path entry " + path);
       }
       if (indicator != null) {
         indicator.setText("Generating skeletons of __builtins__");
@@ -309,10 +312,7 @@ public class PythonSdkType extends SdkType {
 
   private static List<String> getSysPath(String sdk_path, String bin_path) {
     @NonNls String script = // a script printing sys.path
-      "import sys\n"+
-      "import os.path\n" +
-      "for x in sys.path:\n"+
-      "  if x != os.path.dirname(sys.argv [0]): sys.stdout.write(x+chr(10))";
+      "import sys\n" + "import os.path\n" + "for x in sys.path:\n" + "  if x != os.path.dirname(sys.argv [0]): sys.stdout.write(x+chr(10))";
 
     try {
       final File scriptFile = File.createTempFile("script", ".py");
@@ -325,7 +325,7 @@ public class PythonSdkType extends SdkType {
           out.close();
         }
 
-        return SdkUtil.getProcessOutput(sdk_path, new String[] {bin_path, scriptFile.getPath()}).getStdoutLines();
+        return SdkUtil.getProcessOutput(sdk_path, new String[]{bin_path, scriptFile.getPath()}).getStdoutLines();
       }
       finally {
         FileUtil.delete(scriptFile);
@@ -340,7 +340,7 @@ public class PythonSdkType extends SdkType {
   @Nullable
   public String getVersionString(final String sdkHome) {
     final String binaryPath = getInterpreterPath(sdkHome);
-    if (binaryPath == null){
+    if (binaryPath == null) {
       return null;
     }
     final boolean isJython = isJythonSdkHome(sdkHome);
@@ -354,7 +354,7 @@ public class PythonSdkType extends SdkType {
       version_opt = "-V";
     }
     Pattern pattern = Pattern.compile(version_regexp);
-    String version = SdkUtil.getFirstMatch(SdkUtil.getProcessOutput(sdkHome, new String[] {binaryPath, version_opt}).getStderrLines(), pattern);
+    String version = SdkUtil.getFirstMatch(SdkUtil.getProcessOutput(sdkHome, new String[]{binaryPath, version_opt}).getStderrLines(), pattern);
     return version;
   }
 
@@ -365,7 +365,7 @@ public class PythonSdkType extends SdkType {
   }
 
   private final static String GENERATOR3 = "generator3.py";
-  private final static String FIND_BINARIES = "find_binaries.py"; 
+  private final static String FIND_BINARIES = "find_binaries.py";
 
   public static void generateBuiltinStubs(String sdkPath, final String stubsRoot) {
     new File(stubsRoot).mkdirs();
@@ -392,7 +392,8 @@ public class PythonSdkType extends SdkType {
   /**
    * (Re-)generates skeletons for all binary python modules. Up-to-date stubs not regenerated.
    * Does one module at a time: slower, but avoids certain conflicts.
-   * @param sdkPath where to find interpreter.
+   *
+   * @param sdkPath   where to find interpreter.
    * @param stubsRoot where to put results (expected to exist).
    * @param indicator ProgressIndicator to update, or null.
    */
@@ -457,7 +458,7 @@ public class PythonSdkType extends SdkType {
     for (Facet facet : facets) {
       final FacetConfiguration configuration = facet.getConfiguration();
       if (configuration instanceof PythonFacetSettings) {
-        return ((PythonFacetSettings) configuration).getSdk();
+        return ((PythonFacetSettings)configuration).getSdk();
       }
     }
     return null;

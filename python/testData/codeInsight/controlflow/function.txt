@@ -4,12 +4,16 @@
 3(4) WRITE ACCESS: collapse
 4(5) element: PyExpressionStatement
 5(6) element: PyAssignmentStatement
-6(7) WRITE ACCESS: method
-7(8) WRITE ACCESS: methodList
-8(9) element: PyAssignmentStatement
-9(10) WRITE ACCESS: s
-10(11) WRITE ACCESS: s
-11(12) WRITE ACCESS: processFunc
-12(13) element: PyPrintStatement
-13(14) WRITE ACCESS: method
-14() element: null
+6(7,10) element: PyListCompExpression
+7(8) element: PyCallExpression: callable
+8(9) element: PyCallExpression: dir. Condition: callable(getattr(object, method)):true
+9(10) WRITE ACCESS: method
+10(11) WRITE ACCESS: methodList
+11(12) element: PyAssignmentStatement
+12(13) WRITE ACCESS: s
+13(14) WRITE ACCESS: s
+14(15) WRITE ACCESS: processFunc
+15(16) element: PyPrintStatement
+16(17) element: PyListCompExpression
+17(18) WRITE ACCESS: method
+18() element: null

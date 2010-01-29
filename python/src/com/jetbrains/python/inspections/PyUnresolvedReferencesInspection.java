@@ -175,6 +175,7 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
             }
           }
         }
+        fix.sortCandidates();
         fixes.add(fix);
         fixes.add(fix.createDual());
       }

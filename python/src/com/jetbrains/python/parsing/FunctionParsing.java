@@ -34,6 +34,19 @@ public class FunctionParsing extends Parsing {
     }
 
     parseParameterList();
+    if (myContext.getLanguageLevel().isPy3K() && myBuilder.getTokenType() == PyTokenTypes.MINUS) {
+      PsiBuilder.Marker maybeReturnAnnotation = myBuilder.mark();
+      nextToken();
+      if (matchToken(PyTokenTypes.GT)) {
+        if (!myContext.getExpressionParser().parseSingleExpression(false)) {
+          myBuilder.error(message("PARSE.expected.expression"));
+        }
+        maybeReturnAnnotation.done(PyElementTypes.ANNOTATION);
+      }
+      else {
+        maybeReturnAnnotation.rollbackTo();
+      }
+    }
     checkMatches(PyTokenTypes.COLON, message("PARSE.expected.colon"));
     getStatementParser().parseSuite(functionMarker, PyElementTypes.FUNCTION_DECLARATION);
   }
@@ -48,7 +61,7 @@ public class FunctionParsing extends Parsing {
       myBuilder.advanceLexer();
       getStatementParser().parseDottedName();
       if (myBuilder.getTokenType() == PyTokenTypes.LPAR) {
-        getExpressionParser().parseArgumentList(myBuilder);
+        getExpressionParser().parseArgumentList();
       }
       else { // empty arglist node, so we always have it
         myBuilder.mark().done(PyElementTypes.ARGUMENT_LIST);
@@ -81,10 +94,10 @@ public class FunctionParsing extends Parsing {
       parameterList.done(PyElementTypes.PARAMETER_LIST);
       return;
     }
-    parseParameterListContents(PyTokenTypes.RPAR, true);
+    parseParameterListContents(PyTokenTypes.RPAR, true, false);
   }
 
-  public void parseParameterListContents(IElementType endToken, boolean advanceLexer) {
+  public void parseParameterListContents(IElementType endToken, boolean advanceLexer, boolean isLambda) {
     PsiBuilder.Marker parameterList;
     parameterList = myBuilder.mark();
     if (advanceLexer) {
@@ -102,6 +115,7 @@ public class FunctionParsing extends Parsing {
         }
         else if (myBuilder.getTokenType() == PyTokenTypes.LPAR) {
           parseParameterSubList();
+          continue;
         }
         else {
           myBuilder.error(message("PARSE.expected.comma.lpar.rpar"));
@@ -124,10 +138,16 @@ public class FunctionParsing extends Parsing {
         myBuilder.advanceLexer();
         isStarParameter = true;
       }
-      if (myBuilder.getTokenType() == PyTokenTypes.IDENTIFIER) {
-        myBuilder.advanceLexer();
-        if (myBuilder.getTokenType() == PyTokenTypes.EQ && !isStarParameter) {
-          myBuilder.advanceLexer();
+      if (matchToken(PyTokenTypes.IDENTIFIER)) {
+        if (!isLambda && myContext.getLanguageLevel().isPy3K() && atToken(PyTokenTypes.COLON)) {
+          PsiBuilder.Marker annotationMarker = myBuilder.mark();
+          nextToken();
+          if (!getExpressionParser().parseSingleExpression(false)) {
+            myBuilder.error(message("PARSE.expected.expression"));
+          }
+          annotationMarker.done(PyElementTypes.ANNOTATION);
+        }
+        if (!isStarParameter && matchToken(PyTokenTypes.EQ)) {
           getExpressionParser().parseSingleExpression(false);
         }
         parameter.done(PyElementTypes.NAMED_PARAMETER);
@@ -167,6 +187,10 @@ public class FunctionParsing extends Parsing {
         break;
       }
       myBuilder.advanceLexer();
+    }
+    if (myBuilder.getTokenType() == PyTokenTypes.EQ) {
+      myBuilder.advanceLexer();
+      getExpressionParser().parseSingleExpression(false);
     }
     tuple.done(PyElementTypes.TUPLE_PARAMETER);
   }

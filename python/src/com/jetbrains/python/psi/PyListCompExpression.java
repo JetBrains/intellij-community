@@ -27,5 +27,4 @@ public interface PyListCompExpression extends PyExpression, NameDefiner {
   PyExpression getResultExpression();
   List<ComprhForComponent> getForComponents();
   List<ComprhIfComponent> getIfComponents();
-
 }

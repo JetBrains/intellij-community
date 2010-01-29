@@ -21,9 +21,15 @@ fi
 #   Ensure the PYCHARM_HOME var for this script points to the
 #   home directory where PyCharm is installed on your system.
 
-PYCHARM_HOME=`dirname "$0"`/..
-PYCHARM_BIN_HOME=`dirname "$0"`
-                                            
+SCRIPT_LOCATION=$0
+# Step through symlinks to find where the script really is
+while [ -L "$SCRIPT_LOCATION" ]; do
+  SCRIPT_LOCATION=`readlink -e "$SCRIPT_LOCATION"`
+done
+
+PYCHARM_HOME=`dirname "$SCRIPT_LOCATION"`/..
+PYCHARM_BIN_HOME=`dirname "$SCRIPT_LOCATION"`
+
 export JAVA_HOME
 export PYCHARM_HOME
 

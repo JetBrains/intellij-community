@@ -7,6 +7,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.psi.PyElementType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,11 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   @NonNls protected static final String TOK_WITH = "with";
   @NonNls protected static final String TOK_AS = "as";
   @NonNls protected static final String TOK_PRINT = "print";
+  @NonNls protected static final String TOK_NONE = "None";
+  @NonNls protected static final String TOK_TRUE = "True";
+  @NonNls protected static final String TOK_FALSE = "False";
+  @NonNls protected static final String TOK_NONLOCAL = "nonlocal";
+  @NonNls protected static final String TOK_EXEC = "exec";
 
   protected enum Phase {NONE, FROM, FUTURE, IMPORT} // 'from __future__ import' phase
   private Phase myFutureImportPhase = Phase.NONE;
@@ -119,7 +125,11 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       return;
     }
     if (firstToken == PyTokenTypes.GLOBAL_KEYWORD) {
-      parseGlobalStatement(inSuite);
+      parseNameDefiningStatement(inSuite, PyElementTypes.GLOBAL_STATEMENT);
+      return;
+    }
+    if (firstToken == PyTokenTypes.NONLOCAL_KEYWORD) {
+      parseNameDefiningStatement(inSuite, PyElementTypes.NONLOCAL_STATEMENT);
       return;
     }
     if (firstToken == PyTokenTypes.IMPORT_KEYWORD) {
@@ -298,6 +308,10 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
           myBuilder.advanceLexer();
           getExpressionParser().parseSingleExpression(false);
         }
+      }
+      else if (myBuilder.getTokenType() == PyTokenTypes.FROM_KEYWORD) {
+        myBuilder.advanceLexer();
+        getExpressionParser().parseSingleExpression(false);
       }
     }
     checkEndOfStatement(inSuite);
@@ -478,8 +492,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     return true;
   }
 
-  private void parseGlobalStatement(boolean inSuite) {
-    assertCurrentToken(PyTokenTypes.GLOBAL_KEYWORD);
+  private void parseNameDefiningStatement(boolean inSuite, final PyElementType elementType) {
     final PsiBuilder.Marker globalStatement = myBuilder.mark();
     myBuilder.advanceLexer();
     parseIdentifier(PyElementTypes.REFERENCE_EXPRESSION);
@@ -488,7 +501,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       parseIdentifier(PyElementTypes.REFERENCE_EXPRESSION);
     }
     checkEndOfStatement(inSuite);
-    globalStatement.done(PyElementTypes.GLOBAL_STATEMENT);
+    globalStatement.done(elementType);
   }
 
   private void parseExecStatement(boolean inSuite) {
@@ -641,11 +654,18 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     assertCurrentToken(PyTokenTypes.WITH_KEYWORD);
     final PsiBuilder.Marker statement = myBuilder.mark();
     myBuilder.advanceLexer();
-    getExpressionParser().parseExpression();
-    myExpectAsKeyword = true;
-    if (myBuilder.getTokenType() == PyTokenTypes.AS_KEYWORD) {
-      myBuilder.advanceLexer();
-      getExpressionParser().parseExpression(true, true); // 'as' is followed by a target
+    while(true) {
+      PsiBuilder.Marker withItem = myBuilder.mark();
+      getExpressionParser().parseExpression();
+      myExpectAsKeyword = true;
+      if (myBuilder.getTokenType() == PyTokenTypes.AS_KEYWORD) {
+        myBuilder.advanceLexer();
+        getExpressionParser().parseSingleExpression(true); // 'as' is followed by a target
+      }
+      withItem.done(PyElementTypes.WITH_ITEM);
+      if (!matchToken(PyTokenTypes.COMMA)) {
+        break;
+      }
     }
     checkMatches(PyTokenTypes.COLON, "colon expected");
     parseSuite();
@@ -661,15 +681,13 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     assertCurrentToken(PyTokenTypes.CLASS_KEYWORD);
     myBuilder.advanceLexer();
     checkMatches(PyTokenTypes.IDENTIFIER, "identifier expected");
-    final PsiBuilder.Marker inheritMarker = myBuilder.mark();
     if (myBuilder.getTokenType() == PyTokenTypes.LPAR) {
-      myBuilder.advanceLexer();
-      if (myBuilder.getTokenType() != PyTokenTypes.RPAR) {
-        getExpressionParser().parseExpression();
-      }
-      checkMatches(PyTokenTypes.RPAR, ") expected");
+      getExpressionParser().parseArgumentList();
     }
-    inheritMarker.done(PyElementTypes.PARENTHESIZED_EXPRESSION);
+    else {
+      final PsiBuilder.Marker inheritMarker = myBuilder.mark();
+      inheritMarker.done(PyElementTypes.ARGUMENT_LIST);
+    }
     checkMatches(PyTokenTypes.COLON, "colon expected");
     parseSuite();
     classMarker.done(PyElementTypes.CLASS_DECLARATION);
@@ -709,8 +727,9 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     else {
       final PsiBuilder.Marker marker = myBuilder.mark();
       parseSimpleStatement(true);
-      while (myBuilder.getTokenType() == PyTokenTypes.SEMICOLON) {
-        myBuilder.advanceLexer();
+      while (matchToken(PyTokenTypes.SEMICOLON)) {
+        if (matchToken(PyTokenTypes.STATEMENT_BREAK))
+          break;
         parseSimpleStatement(true);
       }
       marker.done(PyElementTypes.STATEMENT_LIST);
@@ -744,6 +763,25 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     else if (hasPrintStatement() && source == PyTokenTypes.IDENTIFIER &&
              isWordAtPosition(text, start, end, TOK_PRINT)) {
       return PyTokenTypes.PRINT_KEYWORD;
+    }
+    else if (myContext.getLanguageLevel().isPy3K() && source == PyTokenTypes.IDENTIFIER) {
+      if (isWordAtPosition(text, start, end, TOK_NONE)) {
+        return PyTokenTypes.NONE_KEYWORD;
+      }
+      if (isWordAtPosition(text, start, end, TOK_TRUE)) {
+        return PyTokenTypes.TRUE_KEYWORD;
+      }
+      if (isWordAtPosition(text, start, end, TOK_FALSE)) {
+        return PyTokenTypes.FALSE_KEYWORD;
+      }
+      if (isWordAtPosition(text, start, end, TOK_NONLOCAL)) {
+        return PyTokenTypes.NONLOCAL_KEYWORD;
+      }
+    }
+    else if (!myContext.getLanguageLevel().isPy3K() && source == PyTokenTypes.IDENTIFIER) {
+      if (isWordAtPosition(text, start, end, TOK_EXEC)) {
+        return PyTokenTypes.EXEC_KEYWORD;
+      }
     }
     return source;
   }

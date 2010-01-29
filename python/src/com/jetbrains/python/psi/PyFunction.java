@@ -3,7 +3,7 @@ package com.jetbrains.python.psi;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.StubBasedPsiElement;
-import com.jetbrains.python.codeInsight.controlflow.ControlFlowOwner;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public interface PyFunction extends PsiNamedElement, PyStatement, NameDefiner, PyDocStringOwner, StubBasedPsiElement<PyFunctionStub>,
-                                    ControlFlowOwner {
+                                    ScopeOwner {
   PyFunction[] EMPTY_ARRAY = new PyFunction[0];
   
   /**

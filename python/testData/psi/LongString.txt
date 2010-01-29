@@ -1,0 +1,46 @@
+PyFile:LongString.py
+  PyAssignmentStatement
+    PyTargetExpression: a
+      PsiElement(Py:IDENTIFIER)('a')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PyStringLiteralExpression: 
+      PsiElement(Py:STRING_LITERAL)('""""""')
+  PsiWhiteSpace('\n')
+  PyAssignmentStatement
+    PyTargetExpression: b
+      PsiElement(Py:IDENTIFIER)('b')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PyStringLiteralExpression: 
+"1.0" encoding="ascii"?
+
+      PsiElement(Py:STRING_LITERAL)('"""\n"1.0" encoding="ascii"?\n"""')
+  PsiWhiteSpace('\n')
+  PyAssignmentStatement
+    PyTargetExpression: str
+      PsiElement(Py:IDENTIFIER)('str')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PyCallExpression: re.sub
+      PyReferenceExpression: sub
+        PyReferenceExpression: re
+          PsiElement(Py:IDENTIFIER)('re')
+        PsiElement(Py:DOT)('.')
+        PsiElement(Py:IDENTIFIER)('sub')
+      PyArgumentList
+        PsiElement(Py:LPAR)('(')
+        PyStringLiteralExpression: 
+          PsiElement(Py:STRING_LITERAL)('r"""\\\\"""')
+        PsiElement(Py:COMMA)(',')
+        PsiWhiteSpace(' ')
+        PyStringLiteralExpression: &#92;
+          PsiElement(Py:STRING_LITERAL)('r"""&#92;"""')
+        PsiElement(Py:COMMA)(',')
+        PsiWhiteSpace(' ')
+        PyReferenceExpression: str
+          PsiElement(Py:IDENTIFIER)('str')
+        PsiElement(Py:RPAR)(')')

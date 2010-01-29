@@ -30,7 +30,9 @@ LONGINTEGER = {INTEGER}[Ll]
 
 END_OF_LINE_COMMENT="#"[^\r\n]*
 
-IDENTIFIER = [a-zA-Z_][a-zA-Z0-9_]*
+IDENT_START = [a-zA-Z_]|[:unicode_uppercase_letter:]|[:unicode_lowercase_letter:]|[:unicode_titlecase_letter:]|[:unicode_modifier_letter:]|[:unicode_other_letter:]|[:unicode_letter_number:]
+IDENT_CONTINUE = [a-zA-Z0-9_]|[:unicode_uppercase_letter:]|[:unicode_lowercase_letter:]|[:unicode_titlecase_letter:]|[:unicode_modifier_letter:]|[:unicode_other_letter:]|[:unicode_letter_number:]|[:unicode_non_spacing_mark:]|[:unicode_combining_spacing_mark:]|[:unicode_decimal_digit_number:]|[:unicode_connector_punctuation:]
+IDENTIFIER = {IDENT_START}{IDENT_CONTINUE}**
 
 FLOATNUMBER=({POINTFLOAT})|({EXPONENTFLOAT})
 POINTFLOAT=(({INTPART})?{FRACTION})|({INTPART}\.)
@@ -48,20 +50,17 @@ QUOTED_LITERAL="'"([^\\\'\r\n]|{ESCAPE_SEQUENCE}|(\\[\r\n]))*("'"|\\)?
 DOUBLE_QUOTED_LITERAL=\"([^\\\"\r\n]|{ESCAPE_SEQUENCE}|(\\[\r\n]))*?(\"|\\)?
 ESCAPE_SEQUENCE=\\[^\r\n]
 
-/*
-TRIPLE_QUOTED_LITERAL="\"\"\""~([^\\]"\"\"\"")
-TRIPLE_APOS_LITERAL="\'\'\'"~([^\\]"\'\'\'")
-*/
+ANY_ESCAPE_SEQUENCE = \\[^]
+
 THREE_QUO = (\"\"\")
-ESCAPED_CHAR = (\\[^] | [^\\])
-NONQUO_CHAR = (\\[^] | [^i\\\"])
-STRING_3CHAR_QUO = ({ESCAPED_CHAR}{1,2}? {NONQUO_CHAR})
-TRIPLE_QUOTED_LITERAL = {THREE_QUO} {STRING_3CHAR_QUO}* {THREE_QUO}
+ONE_TWO_QUO = (\"[^\"]) | (\"\"[^\"])
+QUO_STRING_CHAR = [^\\\"] | {ANY_ESCAPE_SEQUENCE} | {ONE_TWO_QUO}
+TRIPLE_QUOTED_LITERAL = {THREE_QUO} {QUO_STRING_CHAR}* {THREE_QUO}
 
 THREE_APOS = (\'\'\')
-NONAPOS_CHAR = (\\[^] | [^i\\\'])
-STRING_3CHAR_APOS = ({ESCAPED_CHAR}{1,2}? {NONAPOS_CHAR})
-TRIPLE_APOS_LITERAL = {THREE_APOS} {STRING_3CHAR_APOS}* {THREE_APOS}
+ONE_TWO_APOS = ('[^']) | (''[^'])
+APOS_STRING_CHAR = [^\\'] | {ANY_ESCAPE_SEQUENCE} | {ONE_TWO_APOS}
+TRIPLE_APOS_LITERAL = {THREE_APOS} {APOS_STRING_CHAR}* {THREE_APOS}
 
 
 %%
@@ -90,7 +89,6 @@ TRIPLE_APOS_LITERAL = {THREE_APOS} {STRING_3CHAR_APOS}* {THREE_APOS}
 "elif"                { return PyTokenTypes.ELIF_KEYWORD; }
 "else"                { return PyTokenTypes.ELSE_KEYWORD; }
 "except"              { return PyTokenTypes.EXCEPT_KEYWORD; }
-"exec"                { return PyTokenTypes.EXEC_KEYWORD; }
 "finally"             { return PyTokenTypes.FINALLY_KEYWORD; }
 "for"                 { return PyTokenTypes.FOR_KEYWORD; }
 "from"                { return PyTokenTypes.FROM_KEYWORD; }

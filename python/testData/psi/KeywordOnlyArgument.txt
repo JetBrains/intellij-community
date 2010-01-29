@@ -20,8 +20,8 @@ PyFile:KeywordOnlyArgument.py
       PyNamedParameter('key')
         PsiElement(Py:IDENTIFIER)('key')
         PsiElement(Py:EQ)('=')
-        PyReferenceExpression: None
-          PsiElement(Py:IDENTIFIER)('None')
+        PyNoneLiteralExpression
+          PsiElement(Py:NONE_KEYWORD)('None')
       PsiElement(Py:RPAR)(')')
     PsiElement(Py:COLON)(':')
     PsiWhiteSpace(' ')

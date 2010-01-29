@@ -5,10 +5,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.psi.PyNamedParameter;
-import com.jetbrains.python.psi.PyParameter;
-import com.jetbrains.python.psi.PyTupleParameter;
-import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyTupleParameterStub;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +33,14 @@ public class PyTupleParameterImpl extends PyPresentableElementImpl<PyTupleParame
 
   public PyTupleParameter getAsTuple() {
     return this;
+  }
+
+  public PyExpression getDefaultValue() {
+    ASTNode[] nodes = getNode().getChildren(PyElementTypes.EXPRESSIONS);
+    if (nodes.length > 0) {
+      return (PyExpression)nodes[0].getPsi();
+    }
+    return null;
   }
 
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {

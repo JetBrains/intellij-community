@@ -3,7 +3,7 @@ PyFile:EmptySuperclassList.py
     PsiElement(Py:CLASS_KEYWORD)('class')
     PsiWhiteSpace(' ')
     PsiElement(Py:IDENTIFIER)('A')
-    PyParenthesizedExpression
+    PyArgumentList
       PsiElement(Py:LPAR)('(')
       PsiElement(Py:RPAR)(')')
     PsiElement(Py:COLON)(':')

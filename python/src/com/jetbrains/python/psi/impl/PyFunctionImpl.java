@@ -16,6 +16,7 @@
 
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
@@ -27,8 +28,9 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDosStringFinder;
+import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
+import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeImpl;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.codeInsight.controlflow.ControlFlow;
 import com.jetbrains.python.codeInsight.controlflow.PyControlFlowBuilder;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
@@ -193,6 +195,18 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
       myControlFlowRef = new SoftReference<ControlFlow>(flow);
     }
     return flow;
+  }
+
+  private SoftReference<Scope> myScopeRef;
+
+  @NotNull
+  public Scope getScope() {
+    Scope scope = getRefValue(myScopeRef);
+    if (scope == null) {
+      scope = new ScopeImpl(this);
+      myScopeRef = new SoftReference<Scope>(scope);
+    }
+    return scope;
   }
 
   @Nullable

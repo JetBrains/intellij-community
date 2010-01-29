@@ -1,1 +1,1 @@
-[k for k, v in params.items()]
+[k for k, v in params.items() if foo]

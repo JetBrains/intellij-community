@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyClass;
@@ -19,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Dennis.Ushakov
  */
-public abstract class PyClassRefactoringHandler implements RefactoringActionHandler {
+public abstract class PyClassRefactoringHandler implements RefactoringActionHandler, ElementsHandler {
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     PsiElement element1 = null;
     PsiElement element2 = null;
@@ -63,4 +64,8 @@ public abstract class PyClassRefactoringHandler implements RefactoringActionHand
 
   protected abstract String getTitle();
   protected abstract String getHelpId();
+
+  public boolean isEnabledOnElements(PsiElement[] elements) {
+    return elements.length == 1 && elements[0] instanceof PyClass;
+  }
 }

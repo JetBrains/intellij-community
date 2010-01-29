@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
@@ -12,8 +13,9 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDosStringFinder;
+import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
+import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeImpl;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.codeInsight.controlflow.ControlFlow;
 import com.jetbrains.python.codeInsight.controlflow.PyControlFlowBuilder;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.VariantsProcessor;
@@ -81,15 +83,9 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   @NotNull
   public PyExpression[] getSuperClassExpressions() {
-    final PyParenthesizedExpression superExpression = PsiTreeUtil.getChildOfType(this, PyParenthesizedExpression.class);
-    if (superExpression != null) {
-      PyExpression expr = superExpression.getContainedExpression();
-      if (expr instanceof PyTupleExpression) {
-        return ((PyTupleExpression) expr).getElements();
-      }
-      if (expr != null) {
-        return new PyExpression[] { expr };
-      }
+    final PyArgumentList argList = PsiTreeUtil.getChildOfType(this, PyArgumentList.class);
+    if (argList != null) {
+      return argList.getArguments();
     }
     return PyExpression.EMPTY_ARRAY;
   }
@@ -181,7 +177,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       List<PyClass> result = new ArrayList<PyClass>();
       // maybe a bare old-style class?
       // TODO: depend on language version: py3k does not do old style classes
-      PsiElement paren = PsiTreeUtil.getChildOfType(this, PyParenthesizedExpression.class).getFirstChild(); // no NPE, we always have the par expr
+      PsiElement paren = PsiTreeUtil.getChildOfType(this, PyArgumentList.class).getFirstChild(); // no NPE, we always have the par expr
       if (paren != null && "(".equals(paren.getText())) { // "()" after class name, it's new style
         for(PsiElement element: superClassElements) {
           if (element instanceof PyClass) {
@@ -361,6 +357,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   private SoftReference<ControlFlow> myControlFlowRef;
 
+
   @NotNull
   public ControlFlow getControlFlow() {
     ControlFlow flow = getRefValue(myControlFlowRef);
@@ -370,6 +367,19 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     }
     return flow;
   }
+
+  private SoftReference<Scope> myScopeRef;
+
+  @NotNull
+  public Scope getScope() {
+    Scope scope = getRefValue(myScopeRef);
+    if (scope == null) {
+      scope = new ScopeImpl(this);
+      myScopeRef = new SoftReference<Scope>(scope);
+    }
+    return scope;
+  }
+
 
   @Nullable
   private static<T> T getRefValue(final SoftReference<T> reference){

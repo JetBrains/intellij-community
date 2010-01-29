@@ -6,13 +6,13 @@ package com.jetbrains.python.psi;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.jetbrains.python.codeInsight.controlflow.ControlFlowOwner;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ControlFlowOwner {
+public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner {
   
   Key<Boolean> KEY_IS_DIRECTORY = Key.create("Dir impersonated by __init__.py");
   Key<Boolean> KEY_EXCLUDE_BUILTINS = Key.create("Don't include builtins to processDeclaration results");

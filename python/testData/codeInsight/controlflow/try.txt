@@ -1,20 +1,21 @@
 0(1) element: null
 1(2) element: PyImportStatement
-2(3) element: PyTryExceptStatement
-3(4) element: PyTryPart
-4(5) element: PyAssignmentStatement
-5(6) WRITE ACCESS: f
-6(7) element: PyAssignmentStatement
-7(8) WRITE ACCESS: s
-8(9) element: PyAssignmentStatement
-9(10,14,16,19) WRITE ACCESS: i
-10(11) element: PyExceptPart
-11(12) WRITE ACCESS: errno
-12(13) WRITE ACCESS: strerror
-13(19) element: PyPrintStatement
-14(15) element: PyExceptPart
-15(19) element: PyPrintStatement
-16(17) element: PyExceptPart
-17(18) element: PyPrintStatement
-18(19) element: PyRaiseStatement
-19() element: null
+2(3) WRITE ACCESS: sys
+3(4) element: PyTryExceptStatement
+4(5) element: PyTryPart
+5(6) element: PyAssignmentStatement
+6(7) WRITE ACCESS: f
+7(8) element: PyAssignmentStatement
+8(9) WRITE ACCESS: s
+9(10) element: PyAssignmentStatement
+10(11,15,17,20) WRITE ACCESS: i
+11(12) element: PyExceptPart
+12(13) WRITE ACCESS: errno
+13(14) WRITE ACCESS: strerror
+14(20) element: PyPrintStatement
+15(16) element: PyExceptPart
+16(20) element: PyPrintStatement
+17(18) element: PyExceptPart
+18(19) element: PyPrintStatement
+19(20) element: PyRaiseStatement
+20() element: null

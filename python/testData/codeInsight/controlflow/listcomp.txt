@@ -1,0 +1,8 @@
+0(1) element: null
+1(2) element: PyExpressionStatement
+2(3,7) element: PyListCompExpression
+3(4) element: PyReferenceExpression: foo
+4(5) element: PyCallExpression: params.items. Condition: foo:true
+5(6) WRITE ACCESS: k
+6(7) WRITE ACCESS: v
+7() element: null

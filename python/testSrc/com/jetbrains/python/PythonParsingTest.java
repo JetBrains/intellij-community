@@ -1,6 +1,7 @@
 package com.jetbrains.python;
 
 import com.intellij.testFramework.ParsingTestCase;
+import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
@@ -8,6 +9,7 @@ import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 /**
  * @author yole
  */
+@TestDataPath("$CONTENT_ROOT/../testData/psi/")
 public class PythonParsingTest extends ParsingTestCase {
   public PythonParsingTest() {
     super("", "py");
@@ -97,7 +99,7 @@ public class PythonParsingTest extends ParsingTestCase {
   }
 
   public void testWithStatement26() throws Exception {
-    doTest(LanguageLevel.PYTHON26);    
+    doTest(LanguageLevel.PYTHON26);
   }
 
   public void testPrintAsFunction26() throws Exception {
@@ -118,6 +120,82 @@ public class PythonParsingTest extends ParsingTestCase {
 
   public void testKeywordOnlyArgument() throws Exception {   // PEP 3102
     doTest(LanguageLevel.PYTHON30);
+  }
+
+  public void testPy3KKeywords() throws Exception {
+    doTest(LanguageLevel.PYTHON30);
+  }
+
+  public void testExecPy2() throws Exception {
+    doTest();
+  }
+
+  public void testExecPy3() throws Exception {
+    doTest(LanguageLevel.PYTHON30);
+  }
+
+  public void testSuperclassKeywordArguments() throws Exception {
+    doTest(LanguageLevel.PYTHON30);
+  }
+
+  public void testDictLiteral() throws Exception {
+    doTest();
+  }
+
+  public void testSetLiteral() throws Exception {
+    doTest(LanguageLevel.PYTHON30);
+  }
+
+  public void testSetComprehension() throws Exception {
+    doTest(LanguageLevel.PYTHON30);
+  }
+
+  public void testDictComprehension() throws Exception {
+    doTest(LanguageLevel.PYTHON30);
+  }
+
+  public void testRaiseFrom() throws Exception {
+    doTest(LanguageLevel.PYTHON30);
+  }
+
+  public void testEllipsis() throws Exception {
+    doTest();
+  }
+
+  public void testTupleArguments() throws Exception {
+    doTest();
+  }
+
+  public void testDefaultTupleArguments() throws Exception {
+    doTest();
+  }
+
+  public void testExtendedSlices() throws Exception {
+    doTest();
+  }
+
+  public void testAnnotations() throws Exception {
+    doTest(LanguageLevel.PYTHON30);
+  }
+
+  public void testNonlocal() throws Exception {
+    doTest(LanguageLevel.PYTHON30);
+  }
+
+  public void testFloorDiv() throws Exception {
+    doTest();
+  }
+
+  public void testWithStatement31() throws Exception {
+    doTest(LanguageLevel.PYTHON31);
+  }
+
+  public void testLongString() throws Exception {
+    doTest();
+  }
+
+  public void testTrailingSemicolon() throws Exception {  // PY-363
+    doTest();    
   }
 
   public void doTest() throws Exception {

@@ -12,6 +12,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Available on self.my_something when my_something is unresolved.
@@ -74,55 +75,54 @@ public class AddFieldQuickFix implements LocalQuickFix {
             init = ancestor.findMethodByName(PyNames.INIT, false);
             if (init != null) break;
           }
-          if (init != null) {
-            // TODO: factor this out
-            // found it; copy its param list and make a call to it.
-            PyUtil.ensureWritable(cls);
-            final PyParameterList paramlist = init.getParameterList();
-            PyFunction new_init = generator.createFromText(
-              project, PyFunction.class,
-              "def "+PyNames.INIT + paramlist.getText() + ":\n",
-              new int[]{0}
-            ); // NOTE: this results in a parsing error, but the StatementList gets created ok
-            if (cls.isNewStyleClass()) {
-              // form the super() call
-              StringBuffer sb = new StringBuffer("super(");
-              sb.append(cls.getName());
-              PyParameter[] params = paramlist.getParameters();
-              // NOTE: assume that we have at least the first param
-              String self_name = params[0].getName();
-              sb.append(", ").append(self_name).append(").").append(PyNames.INIT).append("(");
-              boolean seen = false;
-              for (int i = 1; i < params.length; i += 1) {
-                if (seen) sb.append(", ");
-                else seen = true;
-                sb.append(params[i].getText());
-              }
-              sb.append(")");
-              PyStatement new_stmt = generator.createFromText(project, PyStatement.class, sb.toString());
-              new_init.getStatementList().add(new_stmt);
-            }
-            appendToInit(new_init, item_name, generator, project);
-            new_init.add(generator.createFromText(project, PsiWhiteSpace.class, "\n\n")); // after the last line
+          PyFunction new_init = createInitMethod(project, cls, init, generator);
 
-            PsiElement add_anchor = null;
-            PyFunction[] meths = cls.getMethods();
-            if (meths.length > 0) add_anchor = meths[0].getPrevSibling();
-            PyStatementList cls_content = cls.getStatementList();
-            cls_content.addAfter(new_init, add_anchor); 
+          appendToInit(new_init, item_name, generator, project);
+          new_init.add(generator.createFromText(project, PsiWhiteSpace.class, "\n\n")); // after the last line
 
-            PyUtil.showBalloon(
-              project,
-              PyBundle.message("QFIX.added.constructor.$0.for.field.$1", cls.getName(), item_name), 
-              MessageType.INFO
-            );
-            return;
-          }
+          PsiElement add_anchor = null;
+          PyFunction[] meths = cls.getMethods();
+          if (meths.length > 0) add_anchor = meths[0].getPrevSibling();
+          PyStatementList cls_content = cls.getStatementList();
+          cls_content.addAfter(new_init, add_anchor);
+
+          PyUtil.showBalloon(project, PyBundle.message("QFIX.added.constructor.$0.for.field.$1", cls.getName(), item_name), MessageType.INFO);
+          return;
           //else  // well, that can't be
         }
       }
     }
     // somehow we failed. tell about this
     PyUtil.showBalloon(project, PyBundle.message("QFIX.failed.to.add.field"), MessageType.ERROR);
+  }
+
+  private static PyFunction createInitMethod(Project project, PyClass cls, @Nullable PyFunction ancestorInit, PyElementGenerator generator) {
+    // found it; copy its param list and make a call to it.
+    PyUtil.ensureWritable(cls);
+    String paramList = ancestorInit != null ? ancestorInit.getParameterList().getText() : "(self)";
+    PyFunction new_init = generator.createFromText(
+      project, PyFunction.class,
+      "def "+ PyNames.INIT + paramList + ":\n",
+      new int[]{0}
+    ); // NOTE: this results in a parsing error, but the StatementList gets created ok
+    if (cls.isNewStyleClass() && ancestorInit != null) {
+      // form the super() call
+      StringBuffer sb = new StringBuffer("super(");
+      sb.append(cls.getName());
+      PyParameter[] params = ancestorInit.getParameterList().getParameters();
+      // NOTE: assume that we have at least the first param
+      String self_name = params[0].getName();
+      sb.append(", ").append(self_name).append(").").append(PyNames.INIT).append("(");
+      boolean seen = false;
+      for (int i = 1; i < params.length; i += 1) {
+        if (seen) sb.append(", ");
+        else seen = true;
+        sb.append(params[i].getText());
+      }
+      sb.append(")");
+      PyStatement new_stmt = generator.createFromText(project, PyStatement.class, sb.toString());
+      new_init.getStatementList().add(new_stmt);
+    }
+    return new_init;
   }
 }

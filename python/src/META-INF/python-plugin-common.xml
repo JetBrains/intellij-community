@@ -24,7 +24,6 @@
     <codeInsight.parameterInfo language="Python" implementationClass="com.jetbrains.python.PyParameterInfoHandler"/>
     <colorSettingsPage implementation="com.jetbrains.python.PythonColorsPage"/>
     <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyWordSelectionHandler"/>
-    <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PySliceSelectHandler"/>
     <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyStatementSelectionHandler"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PyKeywordCompletionContributor"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PySpecialMethodNamesCompletionContributor"/>

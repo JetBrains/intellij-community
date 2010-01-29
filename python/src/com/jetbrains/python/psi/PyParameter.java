@@ -21,4 +21,7 @@ public interface PyParameter extends PyElement {
    */
   @Nullable
   PyTupleParameter getAsTuple();
+
+  @Nullable
+  PyExpression getDefaultValue();
 }

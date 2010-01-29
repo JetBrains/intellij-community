@@ -2,13 +2,14 @@ PyFile:WithStatement26.py
   PyWithStatement
     PsiElement(Py:WITH_KEYWORD)('with')
     PsiWhiteSpace(' ')
-    PyReferenceExpression: x
-      PsiElement(Py:IDENTIFIER)('x')
-    PsiWhiteSpace(' ')
-    PsiElement(Py:AS_KEYWORD)('as')
-    PsiWhiteSpace(' ')
-    PyTargetExpression: y
-      PsiElement(Py:IDENTIFIER)('y')
+    PyWithItem
+      PyReferenceExpression: x
+        PsiElement(Py:IDENTIFIER)('x')
+      PsiWhiteSpace(' ')
+      PsiElement(Py:AS_KEYWORD)('as')
+      PsiWhiteSpace(' ')
+      PyTargetExpression: y
+        PsiElement(Py:IDENTIFIER)('y')
     PsiElement(Py:COLON)(':')
     PsiWhiteSpace('\n  ')
     PyStatementList
