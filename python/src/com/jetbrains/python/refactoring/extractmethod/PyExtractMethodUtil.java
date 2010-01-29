@@ -224,9 +224,11 @@ public class PyExtractMethodUtil {
     if (data != null){
       anchor = data.first;
     }
+    // Handle extracting within functions
     final PsiElement compoundStatement = PyPsiUtils.getCompoundStatement(anchor);
-    if (compoundStatement.getParent() instanceof PyFunction){
-      compoundStatement.getParent().addBefore(generatedMethod, compoundStatement);
+    final PsiElement parent = compoundStatement.getParent();
+    if (parent instanceof PyFunction){
+      parent.getParent().addBefore(generatedMethod, parent);
       return generatedMethod;
     }
     final PsiElement statement = PyPsiUtils.getStatement(compoundStatement, anchor);
