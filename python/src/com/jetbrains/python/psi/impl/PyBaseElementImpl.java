@@ -160,22 +160,17 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
 
   public PsiElement replace(@NotNull PsiElement element) throws IncorrectOperationException {
     PsiElement parent = getParent();
-    if (parent instanceof PyBaseElementImpl) {
-      PyBaseElementImpl pyElement = (PyBaseElementImpl)parent;
-      return pyElement.replacePyChild(this, element);
+    if (parent != null) {
+      return replacePyChild(this, element);
     }
     else {
       return super.replace(element);
     }
   }
 
-  protected PsiElement replacePyChild(PyElement oldel, PsiElement newel) throws IncorrectOperationException {
-    if (!oldel.getParent().equals(this)) {
-      throw new IncorrectOperationException("Element " + oldel + " is " + "not my child");
-    }
-
-    PsiElement copy = newel.copy();
-    getNode().replaceChild(oldel.getNode(), copy.getNode());
+  public static PsiElement replacePyChild(final PyElement oldel, final PsiElement newel) throws IncorrectOperationException {
+    final PsiElement copy = newel.copy();
+    oldel.getParent().getNode().replaceChild(oldel.getNode(), copy.getNode());
     return copy;
   }
 
