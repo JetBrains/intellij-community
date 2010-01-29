@@ -1,0 +1,63 @@
+<!--
+  ~ Copyright 2000-2010 JetBrains s.r.o.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<project name="IntelliJ IDEA CE build file" default="layout">
+  <dirname property="build" file="${ant.file}"/>
+  <property name="project.home" value="${build}/../"/>
+  <property name="gant.home" value="${project.home}/build/lib/gant"/>
+  <property name="modules.output" value="${project.home}/out"/>
+
+  <macrodef name="run">
+    <attribute name="script"/>
+    <attribute name="deploy"/>
+    <sequential>
+      <java failonerror="true" classname="org.apache.tools.ant.Main" fork="true">
+        <jvmarg line="-Xms64m -Xmx512m"/>
+        <jvmarg line="&quot;-Ddeploy=@{deploy}&quot;"/>
+        <jvmarg line="&quot;-Dmodules.output=${modules.output}&quot;"/>
+        <jvmarg line="&quot;-Dgant.script=@{script}&quot;"/>
+
+        <classpath>
+          <fileset dir="${project.home}/lib/ant/lib">
+            <include name="*.jar"/>
+          </fileset>
+          <pathelement location="../build/lib/gant_patches.jar"/>
+          <fileset dir="${gant.home}/lib">
+            <include name="*.jar"/>
+          </fileset>
+        </classpath>
+
+        <arg value="-f"/>
+        <arg value="gant.xml"/>
+      </java>
+
+      <java classname="com.intellij.util.io.zip.ReorderJarsMain" fork="true">
+        <arg value="${build}/order.txt"/>
+        <arg value="@{deploy}"/>
+        <arg value="@{deploy}"/>
+        <arg value="${project.home}/lib"/>
+        <classpath>
+          <pathelement location="${modules.output}/production/util"/>
+        </classpath>
+      </java>
+
+    </sequential>
+  </macrodef>
+
+  <target name="layout">
+    <run script="${project.home}/build/scripts/layouts.gant"
+             deploy="${project.home}/out/deploy"/>
+  </target>
+</project>
