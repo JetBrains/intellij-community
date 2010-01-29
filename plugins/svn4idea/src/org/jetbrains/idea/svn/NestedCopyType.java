@@ -16,7 +16,17 @@
 package org.jetbrains.idea.svn;
 
 public enum NestedCopyType {
-  external,
-  switched,
-  inner
+  external("External"),
+  switched("Switched"),
+  inner("Nested");
+
+  private final String myName;
+
+  NestedCopyType(String name) {
+    myName = name;
+  }
+
+  public String getName() {
+    return myName;
+  }
 }

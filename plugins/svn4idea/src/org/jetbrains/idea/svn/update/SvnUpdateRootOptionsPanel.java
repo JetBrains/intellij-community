@@ -33,6 +33,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -49,6 +50,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
   private TextFieldWithBrowseButton myBranchField;
   private JLabel myBranchLabel;
   private JLabel myUrlLabel;
+  private JLabel myCopyType;
   private String mySourceUrl;
   private SVNURL myBranchUrl;
 
@@ -118,6 +120,24 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     myRevisionText.setEnabled(myRevisionBox.isSelected());
     myURLText.setEnabled(myUpdateToSpecificUrl.isSelected());
     myBranchField.setEnabled(myUpdateToSpecificUrl.isSelected() && (myBranchUrl != null) && (mySourceUrl != null));
+
+    final boolean revisionCanBeSpecifiedForRoot = isRevisionCanBeSpecifiedForRoot();
+    myRevisionBox.setEnabled(revisionCanBeSpecifiedForRoot);
+    myRevisionText.setEnabled(revisionCanBeSpecifiedForRoot);
+    myCopyType.setVisible(! revisionCanBeSpecifiedForRoot);
+    myCopyType.setFont(myCopyType.getFont().deriveFont(Font.ITALIC));
+  }
+
+  private boolean isRevisionCanBeSpecifiedForRoot() {
+    final RootUrlInfo info = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(myRoot.getIOFile());
+    if (info != null) {
+      final boolean result = (!NestedCopyType.external.equals(info.getType())) && (!NestedCopyType.switched.equals(info.getType()));
+      if (! result) {
+        myCopyType.setText(info.getType().getName() + " copy");
+      }
+      return result;
+    }
+    return true;
   }
 
   private void chooseBranch() {

@@ -326,11 +326,24 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateCompone
       clManager.invokeAfterUpdate(new Runnable() {
         public void run() {
           final List<RootUrlInfo> nestedRoots = new ArrayList<RootUrlInfo>();
-          
-          for (NestedCopiesBuilder.MyPointInfo info : myGate.get().getSet()) {
-            if (NestedCopyType.external.equals(info.getType())) {
+
+          final NestedCopiesData data = myGate.get();
+          for (NestedCopiesBuilder.MyPointInfo info : data.getSet()) {
+            if (NestedCopyType.external.equals(info.getType()) || NestedCopyType.switched.equals(info.getType())) {
+              final File infoFile = new File(info.getFile().getPath());
+              boolean copyFound = false;
+              for (RootUrlInfo topRoot : myTopRoots) {
+                if (topRoot.getIoFile().equals(infoFile)) {
+                  topRoot.setType(info.getType());
+                  copyFound = true;
+                  break;
+                }
+              }
+              if (copyFound) {
+                continue;
+              }
               try {
-                final SVNStatus svnStatus = SvnUtil.getStatus(myVcs, new File(info.getFile().getPath()));
+                final SVNStatus svnStatus = SvnUtil.getStatus(myVcs, infoFile);
                 if (svnStatus.getURL() == null) continue;
                 info.setUrl(svnStatus.getURL());
                 info.setFormat(WorkingCopyFormat.getInstance(svnStatus.getWorkingCopyFormat()));
@@ -343,12 +356,16 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateCompone
               if (VfsUtil.isAncestor(topRoot.getVirtualFile(), info.getFile(), true)) {
                 final SVNURL repoRoot = myRepositoryRoots.ask(info.getUrl());
                 if (repoRoot != null) {
-                  nestedRoots.add(new RootUrlInfo(repoRoot, info.getUrl(), info.getFormat(), info.getFile(), topRoot.getRoot()));
+                  final RootUrlInfo rootInfo = new RootUrlInfo(repoRoot, info.getUrl(), info.getFormat(), info.getFile(), topRoot.getRoot());
+                  rootInfo.setType(info.getType());
+                  nestedRoots.add(rootInfo);
                 }
                 break;
               }
             }
           }
+          // check those top roots which ARE externals, but that was not detected due to they itself were the status request target
+          //new SvnNestedTypeRechecker(myVcs.getProject(), myTopRoots).run();
 
           myTopRoots.addAll(nestedRoots);
           myApplier.apply(myVcs, myAtomicSectionsAware, myTopRoots, myLonelyRoots);

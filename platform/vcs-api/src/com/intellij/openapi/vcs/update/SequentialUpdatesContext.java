@@ -20,4 +20,5 @@ import org.jetbrains.annotations.NotNull;
 public interface SequentialUpdatesContext {
   @NotNull
   String getMessageWhenInterruptedBeforeStart();
+  boolean shouldFail();
 }

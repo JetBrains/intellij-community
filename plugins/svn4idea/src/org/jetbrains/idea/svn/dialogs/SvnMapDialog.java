@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -23,17 +25,12 @@ import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.ui.table.TableView;
-import com.intellij.util.messages.Topic;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
-import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnUtil;
-import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.WorkingCopyFormat;
+import org.jetbrains.idea.svn.*;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -187,7 +184,7 @@ public class SvnMapDialog extends DialogWrapper {
   }
 
   private void createUIComponents() {
-    myTableModel = new ListTableModel<WCInfo>(new ColumnInfo[]{WC_ROOT_PATH, WC_URL, WC_COPY_ROOT, WC_FORMAT}, Collections.<WCInfo>emptyList(), 0);
+    myTableModel = new ListTableModel<WCInfo>(new ColumnInfo[]{WC_ROOT_PATH, WC_URL, WC_COPY_ROOT, WC_FORMAT, WC_TYPE}, Collections.<WCInfo>emptyList(), 0);
     myTableView = new TableView<WCInfo>(myTableModel);
   }
 
@@ -207,14 +204,15 @@ public class SvnMapDialog extends DialogWrapper {
     }
   };
   private static final ColumnInfo<WCInfo, String> WC_FORMAT = new ColumnInfo<WCInfo, String>(SvnBundle.message("dialog.show.svn.map.table.header.column.format.title")) {
-    @Override
-    public String getName() {
-      return super.getName();
-    }
-
     public String valueOf(final WCInfo info) {
       final WorkingCopyFormat format = info.getFormat();
       return SvnUtil.formatRepresentation(format);
+    }
+  };
+  private static final ColumnInfo<WCInfo, String> WC_TYPE = new ColumnInfo<WCInfo, String>("Type") {
+    public String valueOf(final WCInfo info) {
+      final NestedCopyType type = info.getType();
+      return type == null ? "" : type.getName();
     }
   };
 
