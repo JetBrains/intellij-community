@@ -126,6 +126,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     myRevisionText.setEnabled(revisionCanBeSpecifiedForRoot);
     myCopyType.setVisible(! revisionCanBeSpecifiedForRoot);
     myCopyType.setFont(myCopyType.getFont().deriveFont(Font.ITALIC));
+    myUpdateToSpecificUrl.setEnabled(revisionCanBeSpecifiedForRoot);
   }
 
   private boolean isRevisionCanBeSpecifiedForRoot() {
