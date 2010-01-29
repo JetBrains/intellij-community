@@ -26,7 +26,7 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 public class IntegrateEventHandler extends UpdateEventHandler {
   public IntegrateEventHandler(final SvnVcs vcs, final ProgressIndicator progressIndicator) {
-    super(vcs, progressIndicator);
+    super(vcs, progressIndicator, null);
   }
 
   protected boolean handleInDescendants(final SVNEvent event) {

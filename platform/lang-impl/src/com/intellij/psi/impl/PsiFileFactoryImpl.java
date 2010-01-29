@@ -145,7 +145,7 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     FileType type = fileTypeManager.getFileTypeByFileName(name);
     if (type.isBinary()) {
-      throw new RuntimeException("Cannot create binary files from text");
+      throw new RuntimeException("Cannot create binary files from text: name " + name + ", file type " + type);
     }
 
     return createFileFromText(name, type, text);

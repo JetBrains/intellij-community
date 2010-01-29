@@ -47,23 +47,24 @@ public class ModulePointerManagerImpl extends ModulePointerManager {
 
       @Override
       public void moduleAdded(Project project, Module module) {
-        final ModulePointerImpl pointer = myUnresolved.remove(module.getName());
-        if (pointer != null) {
-          pointer.moduleAdded(module);
-          registerPointer(module, pointer);
-        }
+        moduleAppears(module);
       }
 
       @Override
       public void modulesRenamed(Project project, List<Module> modules) {
         for (Module module : modules) {
-          ModulePointerImpl pointer = myUnresolved.get(module.getName());
-          if (pointer != null) {
-            pointer.moduleAdded(module);
-          }
+          moduleAppears(module);
         }
       }
     });
+  }
+
+  private void moduleAppears(Module module) {
+    ModulePointerImpl pointer = myUnresolved.remove(module.getName());
+    if (pointer != null && pointer.getModule() == null) {
+      pointer.moduleAdded(module);
+      registerPointer(module, pointer);
+    }
   }
 
   private void registerPointer(final Module module, final ModulePointerImpl pointer) {
@@ -88,7 +89,13 @@ public class ModulePointerManagerImpl extends ModulePointerManager {
   public ModulePointer create(@NotNull Module module) {
     ModulePointerImpl pointer = myPointers.get(module);
     if (pointer == null) {
-      pointer = new ModulePointerImpl(module);
+      pointer = myUnresolved.get(module.getName());
+      if (pointer == null) {
+        pointer = new ModulePointerImpl(module);
+      }
+      else {
+        pointer.moduleAdded(module);
+      }
       registerPointer(module, pointer);
     }
     return pointer;

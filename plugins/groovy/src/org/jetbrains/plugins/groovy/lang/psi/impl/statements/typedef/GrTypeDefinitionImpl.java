@@ -100,6 +100,11 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
 
   @Nullable
   public String getQualifiedName() {
+    final GrTypeDefinitionStub stub = getStub();
+    if (stub != null) {
+      return stub.getQualifiedName();
+    }
+
     final PsiClass containingClass = getContainingClass();
     if (containingClass != null) {
       return containingClass.getQualifiedName() + "." + getName();
@@ -169,7 +174,11 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
     return (GrImplementsClause)findChildByType(GroovyElementTypes.IMPLEMENTS_CLAUSE);
   }
 
-  public  String[] getSuperClassNames() {
+  public String[] getSuperClassNames() {
+    final GrTypeDefinitionStub stub = getStub();
+    if (stub != null) {
+      return stub.getSuperClassNames();
+    }
     return ArrayUtil.mergeArrays(getExtendsNames(), getImplementsNames(), String.class);
   }
 
@@ -231,8 +240,11 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
     return GrClassImplUtil.processDeclarations(this, processor, state, lastParent, place);
   }
 
-//  @NotNull
   public String getName() {
+    final GrTypeDefinitionStub stub = getStub();
+    if (stub != null) {
+      return stub.getName();
+    }
     return PsiImplUtil.getName(this);
   }
 
@@ -241,7 +253,6 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
     return GrClassImplUtil.isClassEquivalentTo(this, another);
   }
 
-  //Fake java class implementation
   public boolean isInterface() {
     return false;
   }
@@ -275,7 +286,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
   }
 
   @Nullable
-  public  PsiClass getSuperClass() {
+  public PsiClass getSuperClass() {
     return GrClassImplUtil.getSuperClass(this);
   }
 
@@ -289,7 +300,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
   }
 
   @NotNull
-  public  PsiClassType[] getSuperTypes() {
+  public PsiClassType[] getSuperTypes() {
     return GrClassImplUtil.getSuperTypes(this);
   }
 
@@ -532,7 +543,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
   }
 
   public boolean isDeprecated() {
-    return false;
+    return com.intellij.psi.impl.PsiImplUtil.isDeprecatedByDocTag(this) || com.intellij.psi.impl.PsiImplUtil.isDeprecatedByAnnotation(this);
   }
 
   public boolean hasTypeParameters() {
@@ -716,14 +727,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
     GrTypeDefinitionBody body = getBody();
     if (body == null) throw new IncorrectOperationException("Type definition without a body");
     ASTNode anchorNode;
-    if (anchorBefore != null) {
-      anchorNode = anchorBefore.getNode();
-    }
-    else {
-      PsiElement child = body.getLastChild();
-      assert child != null;
-      anchorNode = child.getNode();
-    }
+    anchorNode = anchorBefore.getNode();
     ASTNode bodyNode = body.getNode();
     bodyNode.addChild(decl.getNode(), anchorNode);
     bodyNode.addLeaf(GroovyTokenTypes.mWS, " ", decl.getNode()); //add whitespaces before and after to hack over incorrect auto reformat

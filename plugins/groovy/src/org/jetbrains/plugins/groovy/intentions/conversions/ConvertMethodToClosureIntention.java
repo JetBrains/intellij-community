@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
@@ -45,7 +46,7 @@ public class ConvertMethodToClosureIntention extends Intention {
     StringBuilder builder = new StringBuilder(method.getTextLength());
     String modifiers = method.getModifierList().getText();
     if (modifiers.trim().length() == 0) {
-      modifiers = "def";
+      modifiers = GrModifier.DEF;
     }
     builder.append(modifiers).append(' ');
     builder.append(method.getName()).append("={");

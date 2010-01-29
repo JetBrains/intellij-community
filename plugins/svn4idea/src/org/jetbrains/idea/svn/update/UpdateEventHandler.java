@@ -16,11 +16,12 @@
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.WindowManager;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnFileUrlMapping;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -44,13 +45,16 @@ public class UpdateEventHandler implements ISVNEventHandler {
   private UpdatedFiles myUpdatedFiles;
   private int myExternalsCount;
   private final SvnVcs myVCS;
+  @Nullable private final SvnUpdateContext mySequentialUpdatesContext;
 
   protected String myText;
   protected String myText2;
 
-  public UpdateEventHandler(SvnVcs vcs, ProgressIndicator progressIndicator) {
+  public UpdateEventHandler(SvnVcs vcs, ProgressIndicator progressIndicator,
+                            @Nullable final SvnUpdateContext sequentialUpdatesContext) {
     myProgressIndicator = progressIndicator;
     myVCS = vcs;
+    mySequentialUpdatesContext = sequentialUpdatesContext;
     myExternalsCount = 1;
   }
 
@@ -134,6 +138,9 @@ public class UpdateEventHandler implements ISVNEventHandler {
       }
     }
     else if (event.getAction() == SVNEventAction.UPDATE_EXTERNAL) {
+      if (mySequentialUpdatesContext != null) {
+        mySequentialUpdatesContext.registerExternalRootBeingUpdated(event.getFile());
+      }
       myExternalsCount++;
       if (myUpdatedFiles.getGroupById(AbstractSvnUpdateIntegrateEnvironment.EXTERNAL_ID) == null) {
         myUpdatedFiles.registerGroup(new FileGroup(SvnBundle.message("status.group.name.externals"),

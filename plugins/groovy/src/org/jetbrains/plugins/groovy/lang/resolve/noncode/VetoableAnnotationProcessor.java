@@ -21,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -56,7 +57,7 @@ public class VetoableAnnotationProcessor implements NonCodeMembersProcessor {
         if (VETOABLE.equals(annotation.getQualifiedName())) {
           Project project = annotation.getProject();
           GrVariableDeclaration vetoableChangeVar  = GroovyPsiElementFactory.getInstance(project)
-            .createVariableDeclaration(new String[]{"def"}, null, PsiType.getJavaLangObject(PsiManager.getInstance(project), GlobalSearchScope.allScope(
+            .createVariableDeclaration(new String[]{GrModifier.DEF}, null, PsiType.getJavaLangObject(PsiManager.getInstance(project), GlobalSearchScope.allScope(
               project)), "vetoableChange");
 
           GroovyResolveResultImpl vetoableChangeResult  = new GroovyResolveResultImpl(vetoableChangeVar.getVariables()[0], true);

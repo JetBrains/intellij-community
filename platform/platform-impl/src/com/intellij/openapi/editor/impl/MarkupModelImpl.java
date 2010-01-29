@@ -170,7 +170,6 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   public void setRangeHighlighterAttributes(final RangeHighlighter highlighter, final TextAttributes textAttributes) {
     ((RangeHighlighterImpl)highlighter).setTextAttributes(textAttributes);
-    fireSegmentHighlighterChanged(highlighter);
   }
 
   private MarkupModelListener[] getCachedListeners() {
