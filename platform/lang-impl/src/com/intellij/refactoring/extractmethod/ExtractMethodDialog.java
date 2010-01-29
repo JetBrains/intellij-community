@@ -174,28 +174,10 @@ public class ExtractMethodDialog extends DialogWrapper implements ExtractMethodS
         builder.append(outputName);
       }
     }
-    myOutputVariablesTextArea.setText(builder.length() > 0 ? builder.toString() : RefactoringBundle.message("Empty output variables"));
+    myOutputVariablesTextArea.setText(builder.length() > 0 ? builder.toString() : "None");
   }
 
   private void updateSignature() {
-    //final StringBuilder builder = new StringBuilder();
-    //builder.append(PyTokenTypes.DEF_KEYWORD.toString()).append(' ').append(getMethodName());
-    //builder.append("(");
-    //if (myVariableData!=null){
-    //  boolean first = true;
-    //  for (VariableData variableData : myVariableData) {
-    //    if (variableData.passAsParameter){
-    //      if (first){
-    //        first = false;
-    //      } else {
-    //        builder.append(", ");
-    //      }
-    //      builder.append(variableData.name);
-    //    }
-    //  }
-    //}
-    //builder.append(")\nend");
-    //mySignaturePreviewTextArea.setText(builder.toString());
     mySignaturePreviewTextArea.setText(myDecorator.createMethodPreview(getMethodName(), myVariableData));
   }
 
