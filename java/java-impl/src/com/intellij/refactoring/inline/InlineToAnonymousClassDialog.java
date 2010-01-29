@@ -15,14 +15,14 @@
  */
 package com.intellij.refactoring.inline;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCall;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.RefactoringBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,11 +36,11 @@ public class InlineToAnonymousClassDialog extends InlineOptionsDialog {
   private JCheckBox myCbSearchInComments;
   private JCheckBox myCbSearchTextOccurences;
 
-  protected InlineToAnonymousClassDialog(Project project, PsiClass psiClass, final PsiCall callToInline) {
+  protected InlineToAnonymousClassDialog(Project project, PsiClass psiClass, final PsiCall callToInline, boolean isInvokeOnReference) {
     super(project, true, psiClass);
     myClass = psiClass;
     myCallToInline = callToInline;
-    myInvokedOnReference = (myCallToInline != null);
+    myInvokedOnReference = isInvokeOnReference;
     setTitle(RefactoringBundle.message("inline.to.anonymous.refactoring"));
     init();
   }
@@ -69,10 +69,6 @@ public class InlineToAnonymousClassDialog extends InlineOptionsDialog {
   protected JComponent createCenterPanel() {
     JComponent optionsPanel = super.createCenterPanel();
 
-    // TODO[yole]: make visible again when "inline this" option is fixed (IDEADEV-17928)
-    myOptionsPanel.setVisible(false);
-    myRbInlineAll.setSelected(true);
-    
     JPanel panel = new JPanel();
     panel.setLayout(new GridBagLayout());
     GridBagConstraints gbc = new GridBagConstraints();

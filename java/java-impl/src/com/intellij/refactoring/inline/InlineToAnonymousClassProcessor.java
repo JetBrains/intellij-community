@@ -168,8 +168,8 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   }
 
   protected void performRefactoring(UsageInfo[] usages) {
-    PsiClassType superType = getSuperType();
-
+    final PsiClassType superType = getSuperType(myClass);
+    LOG.assertTrue(superType != null);
     List<PsiElement> elementsToDelete = new ArrayList<PsiElement>();
     List<PsiNewExpression> newExpressions = new ArrayList<PsiNewExpression>();
     for(UsageInfo info: usages) {
@@ -249,22 +249,27 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private PsiClassType getSuperType() {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory();
+  @Nullable
+  public static PsiClassType getSuperType(final PsiClass aClass) {
+    PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
 
     PsiClassType superType;
-    PsiClass superClass = myClass.getSuperClass();
-    PsiClassType[] interfaceTypes = myClass.getImplementsListTypes();
+    PsiClass superClass = aClass.getSuperClass();
+    PsiClassType[] interfaceTypes = aClass.getImplementsListTypes();
     if (interfaceTypes.length > 0 && !InlineToAnonymousClassHandler.isRedundantImplements(superClass, interfaceTypes [0])) {
       assert interfaceTypes.length == 1;
       superType = interfaceTypes [0];
     }
     else {
-      PsiClassType[] classTypes = myClass.getExtendsListTypes();
+      PsiClassType[] classTypes = aClass.getExtendsListTypes();
       if (classTypes.length > 0) {
         superType = classTypes [0];
       }
       else {
+        if (superClass == null) {
+          //java.lang.Object was not found
+          return null;
+        }
         superType = factory.createType(superClass);
       }
     }
