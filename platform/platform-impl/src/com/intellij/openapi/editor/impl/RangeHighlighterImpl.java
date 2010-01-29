@@ -20,8 +20,10 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -68,9 +70,12 @@ public class RangeHighlighterImpl implements RangeHighlighterEx {
     return myTextAttributes;
   }
 
-  public void setTextAttributes(final TextAttributes textAttributes) {
+  public void setTextAttributes(TextAttributes textAttributes) {
+    TextAttributes old = myTextAttributes;
     myTextAttributes = textAttributes;
-    fireChanged();
+    if (!Comparing.equal(old, textAttributes)) {
+      fireChanged();
+    }
   }
 
   public int getLayer() {
@@ -110,8 +115,11 @@ public class RangeHighlighterImpl implements RangeHighlighterEx {
   }
 
   public void setGutterIconRenderer(GutterIconRenderer renderer) {
+    GutterIconRenderer old = myGutterIconRenderer;
     myGutterIconRenderer = renderer;
-    fireChanged();
+    if (!Comparing.equal(old, renderer)) {
+      fireChanged();
+    }
   }
 
   public Color getErrorStripeMarkColor() {
@@ -119,8 +127,11 @@ public class RangeHighlighterImpl implements RangeHighlighterEx {
   }
 
   public void setErrorStripeMarkColor(Color color) {
+    Color old = myErrorStripeColor;
     myErrorStripeColor = color;
-    fireChanged();
+    if (!Comparing.equal(old, color)) {
+      fireChanged();
+    }
   }
 
   public Object getErrorStripeTooltip() {
@@ -128,8 +139,11 @@ public class RangeHighlighterImpl implements RangeHighlighterEx {
   }
 
   public void setErrorStripeTooltip(Object tooltipObject) {
+    Object old = myErrorStripeTooltip;
     myErrorStripeTooltip = tooltipObject;
-    fireChanged();
+    if (!Comparing.equal(old, tooltipObject)) {
+      fireChanged();
+    }
   }
 
   public boolean isThinErrorStripeMark() {
@@ -137,8 +151,11 @@ public class RangeHighlighterImpl implements RangeHighlighterEx {
   }
 
   public void setThinErrorStripeMark(boolean value) {
+    boolean old = myErrorStripeMarkIsThin;
     myErrorStripeMarkIsThin = value;
-    fireChanged();
+    if (old != value) {
+      fireChanged();
+    }
   }
 
   public Color getLineSeparatorColor() {
@@ -146,17 +163,23 @@ public class RangeHighlighterImpl implements RangeHighlighterEx {
   }
 
   public void setLineSeparatorColor(Color color) {
+    Color old = myLineSeparatorColor;
     myLineSeparatorColor = color;
-    fireChanged();
+    if (!Comparing.equal(old, color)) {
+      fireChanged();
+    }
   }
 
   public SeparatorPlacement getLineSeparatorPlacement() {
     return mySeparatorPlacement;
   }
 
-  public void setLineSeparatorPlacement(SeparatorPlacement placement) {
+  public void setLineSeparatorPlacement(@Nullable SeparatorPlacement placement) {
+    SeparatorPlacement old = mySeparatorPlacement;
     mySeparatorPlacement = placement;
-    fireChanged();
+    if (!Comparing.equal(old, placement)) {
+      fireChanged();
+    }
   }
 
   public void setEditorFilter(@NotNull MarkupEditorFilter filter) {
@@ -174,8 +197,11 @@ public class RangeHighlighterImpl implements RangeHighlighterEx {
   }
 
   public void setAfterEndOfLine(boolean afterEndOfLine) {
+    boolean old = isAfterEndOfLine;
     isAfterEndOfLine = afterEndOfLine;
-    fireChanged();
+    if (old != afterEndOfLine) {
+      fireChanged();
+    }
   }
 
   private void fireChanged() {

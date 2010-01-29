@@ -247,6 +247,18 @@ public class HighlightInfo {
            Comparing.strEqual(info.description, description);
   }
 
+  public boolean equalsByActualOffset(HighlightInfo info) {
+    if (info == this) return true;
+
+    return info.getSeverity() == getSeverity() &&
+           info.getActualStartOffset() == getActualStartOffset() &&
+           info.getActualEndOffset() == getActualEndOffset() &&
+           Comparing.equal(info.type, type) &&
+           Comparing.equal(info.gutterIconRenderer, gutterIconRenderer) &&
+           Comparing.equal(info.forcedTextAttributes, forcedTextAttributes) &&
+           Comparing.strEqual(info.description, description);
+  }
+
   public int hashCode() {
     return startOffset;
   }
