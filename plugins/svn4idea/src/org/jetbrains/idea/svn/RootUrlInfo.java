@@ -30,6 +30,7 @@ public class RootUrlInfo implements RootUrlPair {
   private final VirtualFile myVfile;
   // vcs root
   private final VirtualFile myRoot;
+  private NestedCopyType myType;
 
   public RootUrlInfo(final SVNURL repositoryUrl, final SVNURL absoluteUrlAsUrl, final WorkingCopyFormat format, final VirtualFile vfile,
                      final VirtualFile root) {
@@ -41,6 +42,7 @@ public class RootUrlInfo implements RootUrlPair {
     final String asString = repositoryUrl.toString();
     myRepositoryUrl = asString.endsWith("/") ? asString.substring(0, asString.length() - 1) : asString;
     myAbsoluteUrlAsUrl = absoluteUrlAsUrl;
+    //myType = NestedCopyType.inner;  // default
   }
 
   public String getRepositoryUrl() {
@@ -78,5 +80,13 @@ public class RootUrlInfo implements RootUrlPair {
 
   public String getUrl() {
     return myAbsoluteUrlAsUrl.toString();
+  }
+
+  public NestedCopyType getType() {
+    return myType;
+  }
+
+  public void setType(NestedCopyType type) {
+    myType = type;
   }
 }
