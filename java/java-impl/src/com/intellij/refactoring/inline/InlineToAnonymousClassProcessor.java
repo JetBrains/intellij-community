@@ -150,6 +150,35 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
       }
     };
     InlineMethodProcessor.addInaccessibleMemberConflicts(myClass, usages, collector, result);
+    for (UsageInfo usage : usages) {
+      final PsiElement element = usage.getElement();
+      if (element == null) continue;
+      final PsiElement parent = element.getParent();
+      if (parent == null) continue;
+      if (parent instanceof PsiNewExpression && PsiTreeUtil.isAncestor(myClass, parent, false)) {
+        result.putValue(parent, "Class cannot be inlined because a call to its constructor inside body");
+      }
+      final PsiElement grandPa = parent.getParent();
+      if (grandPa instanceof PsiParameter && PsiTreeUtil.isAncestor(myClass, grandPa, false)) {
+        for (PsiReference psiReference : ReferencesSearch.search(grandPa)) {
+          final PsiElement refElement = psiReference.getElement();
+          if (refElement instanceof PsiExpression) {
+            final PsiReferenceExpression referenceExpression = PsiTreeUtil.getParentOfType(refElement, PsiReferenceExpression.class);
+            if (referenceExpression != null && referenceExpression.getQualifierExpression() == refElement) {
+              final PsiElement resolvedMember = referenceExpression.resolve();
+              if (resolvedMember != null && PsiTreeUtil.isAncestor(myClass, resolvedMember, false)) {
+                if (resolvedMember instanceof PsiMethod) {
+                  if (myClass.findMethodsBySignature((PsiMethod)resolvedMember, true).length > 1) { //skip inherited methods
+                    continue;
+                  }
+                }
+                result.putValue(refElement, "Class cannot be inlined because a call to its member inside body");
+              }
+            }
+          }
+        }
+      }
+    }
     return result;
   }
 
