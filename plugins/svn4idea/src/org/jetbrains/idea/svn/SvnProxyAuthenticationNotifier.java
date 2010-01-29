@@ -43,4 +43,10 @@ public class SvnProxyAuthenticationNotifier extends GenericNotifierImpl<String, 
   protected String getNotificationContent(String obj) {
     return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
+
+  @NotNull
+  @Override
+  protected String getToString(String obj) {
+    return null;  //To change body of implemented methods use File | Settings | File Templates.
+  }
 }

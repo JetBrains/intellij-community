@@ -139,6 +139,12 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     return "<a href=\"\">Click to fix.</a> Not logged to Subversion '" + obj.getRealm() + "' (" + obj.getUrl().toDecodedString() + ")";
   }
 
+  @NotNull
+  @Override
+  protected String getToString(AuthenticationRequest obj) {
+    return "Click to fix. Not logged to Subversion '" + obj.getRealm() + "' (" + obj.getUrl().toDecodedString() + ")";
+  }
+
   public static class AuthenticationRequest {
     private final Project myProject;
     private final String myKind;
