@@ -576,7 +576,8 @@ public class PsiTreeUtil {
     return filteredElements.toArray(new PsiElement[filteredElements.size()]);
   }
 
-  public static boolean treeWalkUp(@NotNull final PsiScopeProcessor processor, @NotNull final PsiElement entrance,
+  public static boolean treeWalkUp(@NotNull final PsiScopeProcessor processor,
+                                   @NotNull final PsiElement entrance,
                                    @Nullable final PsiElement maxScope,
                                    @NotNull final ResolveState state) {
     PsiElement prevParent = entrance;
