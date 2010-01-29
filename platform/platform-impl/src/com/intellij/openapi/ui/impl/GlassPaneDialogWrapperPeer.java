@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.DialogWrapperPeer;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFrame;
@@ -275,12 +276,14 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
     myDialog.setLocation(_x, _y);
   }
 
-  public void show() {
+  public ActionCallback show() {
     LOG.assertTrue(EventQueue.isDispatchThread(), "Access is allowed from event dispatch thread only");
 
     hidePopupsIfNeeded();
 
     myDialog.setVisible(true);
+
+    return new ActionCallback.Done();
   }
 
   public void setContentPane(final JComponent content) {

@@ -222,11 +222,15 @@ public class SvnVcs extends AbstractVcs {
       if (asynchronous) {
         myCopiesRefreshManager.getCopiesRefresh().asynchRequest();
       } else {
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-          public void run() {
-            myCopiesRefreshManager.getCopiesRefresh().synchRequest();
-          }
-        }, SvnBundle.message("refreshing.working.copies.roots.progress.text"), true, myProject);
+        if (ApplicationManager.getApplication().isDispatchThread()) {
+          ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+            public void run() {
+              myCopiesRefreshManager.getCopiesRefresh().synchRequest();
+            }
+          }, SvnBundle.message("refreshing.working.copies.roots.progress.text"), true, myProject);
+        } else {
+          myCopiesRefreshManager.getCopiesRefresh().synchRequest();
+        }
       }
     }
   }
@@ -816,7 +820,7 @@ public class SvnVcs extends AbstractVcs {
     for (RootUrlInfo info : infoList) {
       final File file = info.getIoFile();
       infos.add(new WCInfo(file.getAbsolutePath(), info.getAbsoluteUrlAsUrl(),
-                           SvnFormatSelector.getWorkingCopyFormat(file), info.getRepositoryUrl(), SvnUtil.isWorkingCopyRoot(file)));
+        SvnFormatSelector.getWorkingCopyFormat(file), info.getRepositoryUrl(), SvnUtil.isWorkingCopyRoot(file), info.getType()));
     }
     return infos;
   }

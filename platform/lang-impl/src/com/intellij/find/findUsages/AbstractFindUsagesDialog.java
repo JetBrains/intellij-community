@@ -20,6 +20,7 @@ import com.intellij.find.FindSettings;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.IdeBorderFactory;
@@ -269,6 +270,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     optionsPanel.add(label, BorderLayout.WEST);
     String scope = myFindUsagesOptions.searchScope.getDisplayName();
     myScopeCombo = new ScopeChooserCombo(myProject, mySearchInLibrariesAvailable, true, scope);
+    Disposer.register(myDisposable, myScopeCombo);
     optionsPanel.add(myScopeCombo, BorderLayout.CENTER);
     label.setLabelFor(myScopeCombo.getComboBox());
     return optionsPanel;

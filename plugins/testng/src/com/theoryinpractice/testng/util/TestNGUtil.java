@@ -477,6 +477,10 @@ public class TestNGUtil implements TestFramework
     return inClass;
   }
 
+  public boolean isTestMethodOrConfig(PsiMethod psiMethod) {
+    return hasTest(psiMethod) || hasConfig(psiMethod);
+  }
+
   public static boolean checkTestNGInClasspath(PsiElement psiElement) {
     final Project project = psiElement.getProject();
     final PsiManager manager = PsiManager.getInstance(project);

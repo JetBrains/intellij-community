@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.TextComponentAccessor;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,6 +39,15 @@ import java.util.ArrayList;
  * @author max
  */
 public class EditorComboBox extends JComboBox implements DocumentListener {
+  public static TextComponentAccessor<EditorComboBox> COMPONENT_ACCESSOR = new TextComponentAccessor<EditorComboBox>() {
+    public String getText(EditorComboBox component) {
+      return component.getText();
+    }
+
+    public void setText(EditorComboBox component, String text) {
+      component.setText(text);
+    }
+  };
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.EditorTextField");
 
   private Document myDocument;

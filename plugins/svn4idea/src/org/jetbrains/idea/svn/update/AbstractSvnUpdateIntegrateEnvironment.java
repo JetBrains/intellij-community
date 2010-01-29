@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
@@ -69,19 +70,31 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
                                          final ProgressIndicator progressIndicator, @NotNull final Ref<SequentialUpdatesContext> context)
     throws ProcessCanceledException {
 
+    if (context.isNull()) {
+      context.set(new SvnUpdateContext(myVcs));
+    }
+
     final ArrayList<VcsException> exceptions = new ArrayList<VcsException>();
-    UpdateEventHandler eventHandler = new UpdateEventHandler(myVcs, progressIndicator);
+    UpdateEventHandler eventHandler = new UpdateEventHandler(myVcs, progressIndicator, (SvnUpdateContext) context.get());
     eventHandler.setUpdatedFiles(updatedFiles);
 
     boolean totalUpdate = true;
     AbstractUpdateIntegrateCrawler crawler = createCrawler(eventHandler, totalUpdate, exceptions, updatedFiles);
 
     Collection<File> updatedRoots = new HashSet<File>();
+    Arrays.sort(contentRoots, new Comparator<FilePath>() {
+      public int compare(FilePath o1, FilePath o2) {
+        return SystemInfo.isFileSystemCaseSensitive ? o1.getPath().replace("/", "\\").compareTo(o2.getPath().replace("/", "\\")) :
+          o1.getPath().replace("/", "\\").compareToIgnoreCase(o2.getPath().replace("/", "\\"));
+      }
+    });
     for (FilePath contentRoot : contentRoots) {
       if (progressIndicator != null && progressIndicator.isCanceled()) {
         throw new ProcessCanceledException();
       }
-      Collection<File> roots = SvnUtil.crawlWCRoots(contentRoot.getIOFile(), crawler, progressIndicator);
+      final File ioRoot = contentRoot.getIOFile();
+      if (! ((SvnUpdateContext)context.get()).shouldRunFor(ioRoot)) continue; 
+      Collection<File> roots = SvnUtil.crawlWCRoots(ioRoot, crawler, progressIndicator);
       updatedRoots.addAll(roots);
     }
     if (updatedRoots.isEmpty()) {

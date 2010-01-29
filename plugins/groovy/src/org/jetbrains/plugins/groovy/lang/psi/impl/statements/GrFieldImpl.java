@@ -89,7 +89,11 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
   }
 
   public boolean isDeprecated() {
-    return false;
+    final GrFieldStub stub = getStub();
+    if (stub != null) {
+      return stub.isDeprecated();
+    }
+    return PsiImplUtil.isDeprecatedByDocTag(this) || PsiImplUtil.isDeprecatedByAnnotation(this);
   }
 
   @Override
@@ -137,8 +141,10 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
   }
 
   public boolean isProperty() {
-//    final String name = getName();
-//    if (!GroovyPropertyUtils.canBePropertyName(name)) return false;
+    final GrFieldStub stub = getStub();
+    if (stub != null) {
+      return stub.isProperty();
+    }
     final PsiClass clazz = getContainingClass();
     if (clazz == null) return false;
     if (clazz.isInterface()) return false;
@@ -237,6 +243,16 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     return PsiImplUtil.getMemberUseScope(this);
   }
 
+  @NotNull
+  @Override
+  public String getName() {
+    final GrFieldStub stub = getStub();
+    if (stub != null) {
+      return stub.getName();
+    }
+    return super.getName();
+  }
+
   @Override
   public ItemPresentation getPresentation() {
     return new ItemPresentation() {
@@ -285,6 +301,10 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
 
   @NotNull
   public Set<String>[] getNamedParametersArray() {
+    final GrFieldStub stub = getStub();
+    if (stub != null) {
+      return stub.getNamedParameters();
+    }
     final GrExpression initializerGroovy = getInitializerGroovy();
 
     List<Set<String>> namedParameters = new LinkedList<Set<String>>();

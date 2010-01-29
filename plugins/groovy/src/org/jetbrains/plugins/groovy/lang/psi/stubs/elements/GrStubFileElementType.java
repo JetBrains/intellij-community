@@ -43,7 +43,7 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
 
   @Override
   public int getStubVersion() {
-    return super.getStubVersion() + 4;
+    return super.getStubVersion() + 5;
   }
 
   public String getExternalId() {

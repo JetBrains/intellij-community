@@ -56,7 +56,8 @@ public class VfsUtil {
   }
 
   public static void saveText(@NotNull VirtualFile file, @NotNull String text) throws IOException {
-    file.setBinaryContent(text.getBytes(file.getCharset().name()));
+    Charset charset = file.getCharset();
+    file.setBinaryContent(text.getBytes(charset.name()));
   }
 
   /**

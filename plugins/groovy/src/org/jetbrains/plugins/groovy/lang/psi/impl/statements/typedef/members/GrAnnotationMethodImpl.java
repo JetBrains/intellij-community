@@ -19,7 +19,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAnnotationMethod;
@@ -50,13 +49,18 @@ public class GrAnnotationMethodImpl extends GrMethodBaseImpl<GrAnnotationMethodS
     return "Default annotation member";
   }
 
-  @Nullable
-  public Set<String> getNamedParameters(int paramNumber) {
-    return null;
-  }
-
   @NotNull
   public Set<String>[] getNamedParametersArray() {
     return new HashSet[0];
+  }
+
+  @NotNull
+  @Override
+  public String getName() {
+    final GrAnnotationMethodStub stub = getStub();
+    if (stub != null) {
+      return stub.getName();
+    }
+    return super.getName();
   }
 }

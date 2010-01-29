@@ -19,8 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.patterns.ElementPattern;
-import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -29,7 +27,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.NonCodeUsageInfoFactory;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -51,11 +48,6 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   private final boolean myInlineThisOnly;
   private final boolean mySearchInComments;
   private final boolean mySearchInNonJavaFiles;
-
-  private final ElementPattern ourCatchClausePattern = PlatformPatterns.psiElement(PsiTypeElement.class).withParent(PlatformPatterns.psiElement(PsiParameter.class).withParent(
-    PlatformPatterns.psiElement(PsiCatchSection.class)));
-  private final ElementPattern ourThrowsClausePattern = PlatformPatterns.psiElement().withParent(PlatformPatterns.psiElement(PsiReferenceList.class).withFirstChild(
-    PlatformPatterns.psiElement().withText(PsiKeyword.THROWS)));
 
   protected InlineToAnonymousClassProcessor(Project project,
                                             PsiClass psiClass,
@@ -134,13 +126,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   }
 
   protected boolean preprocessUsages(final Ref<UsageInfo[]> refUsages) {
-    UsageInfo[] usages = refUsages.get();
-    String s = getPreprocessUsagesMessage(usages);
-    if (s != null) {
-      CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("inline.to.anonymous.refactoring"), s, null, myClass.getProject());
-      return false;
-    }
-    MultiMap<PsiElement, String> conflicts = getConflicts(usages);
+    MultiMap<PsiElement, String> conflicts = getConflicts(refUsages.get());
     if (!conflicts.isEmpty()) {
       return showConflicts(conflicts);
     }
@@ -168,8 +154,8 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   }
 
   protected void performRefactoring(UsageInfo[] usages) {
-    PsiClassType superType = getSuperType();
-
+    final PsiClassType superType = getSuperType(myClass);
+    LOG.assertTrue(superType != null);
     List<PsiElement> elementsToDelete = new ArrayList<PsiElement>();
     List<PsiNewExpression> newExpressions = new ArrayList<PsiNewExpression>();
     for(UsageInfo info: usages) {
@@ -249,22 +235,27 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private PsiClassType getSuperType() {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory();
+  @Nullable
+  public static PsiClassType getSuperType(final PsiClass aClass) {
+    PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
 
     PsiClassType superType;
-    PsiClass superClass = myClass.getSuperClass();
-    PsiClassType[] interfaceTypes = myClass.getImplementsListTypes();
+    PsiClass superClass = aClass.getSuperClass();
+    PsiClassType[] interfaceTypes = aClass.getImplementsListTypes();
     if (interfaceTypes.length > 0 && !InlineToAnonymousClassHandler.isRedundantImplements(superClass, interfaceTypes [0])) {
       assert interfaceTypes.length == 1;
       superType = interfaceTypes [0];
     }
     else {
-      PsiClassType[] classTypes = myClass.getExtendsListTypes();
+      PsiClassType[] classTypes = aClass.getExtendsListTypes();
       if (classTypes.length > 0) {
         superType = classTypes [0];
       }
       else {
+        if (superClass == null) {
+          //java.lang.Object was not found
+          return null;
+        }
         superType = factory.createType(superClass);
       }
     }
@@ -273,53 +264,6 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
 
   protected String getCommandName() {
     return RefactoringBundle.message("inline.to.anonymous.command.name", myClass.getQualifiedName());
-  }
-
-  @Nullable
-  public String getPreprocessUsagesMessage(final UsageInfo[] usages) {
-    boolean hasUsages = false;
-    for(UsageInfo usage: usages) {
-      final PsiElement element = usage.getElement();
-      if (element == null) continue;
-      if (!PsiTreeUtil.isAncestor(myClass, element, false)) {
-        hasUsages = true;
-      }
-      final PsiElement parentElement = element.getParent();
-      if (parentElement != null) {
-        if (parentElement.getParent() instanceof PsiClassObjectAccessExpression) {
-          return "Class cannot be inlined because it has usages of its class literal";
-        }
-        if (ourCatchClausePattern.accepts(parentElement)) {
-          return "Class cannot be inlined because it is used in a 'catch' clause";
-        }
-      }
-      if (ourThrowsClausePattern.accepts(element)) {
-        return "Class cannot be inlined because it is used in a 'throws' clause";
-      }
-      if (parentElement instanceof PsiThisExpression) {
-        return "Class cannot be inlined because it is used as a 'this' qualifier";
-      }
-      if (parentElement instanceof PsiNewExpression) {
-        final PsiNewExpression newExpression = (PsiNewExpression)parentElement;
-        final PsiMethod[] constructors = myClass.getConstructors();
-        if (constructors.length == 0) {
-          PsiExpressionList newArgumentList = newExpression.getArgumentList();
-          if (newArgumentList != null && newArgumentList.getExpressions().length > 0) {
-            return "Class cannot be inlined because a call to its constructor is unresolved";
-          }
-        }
-        else {
-          final JavaResolveResult resolveResult = newExpression.resolveMethodGenerics();
-          if (!resolveResult.isValidResult()) {
-            return "Class cannot be inlined because a call to its constructor is unresolved";
-          }
-        }
-      }
-    }
-    if (!hasUsages) {
-      return RefactoringBundle.message("class.is.never.used");
-    }
-    return null;
   }
 
 }

@@ -4,4 +4,6 @@ interface I {}
 -----
 [Groovy script]
   [Class definition : A]
+    [Modifiers]
   [Interface definition : I]
+    [Modifiers]

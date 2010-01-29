@@ -22,6 +22,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrStubElementType;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAnnotationMethod;
@@ -210,7 +211,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType VARIABLE = new GroovyElementType("assigned variable");
 
   //modifiers
-  GroovyElementType MODIFIERS = new GroovyElementType("modifiers"); //node
+  GrStubElementType<GrModifierListStub, GrModifierList> MODIFIERS = new GrModifierListElementType("modifier list");
 
   GroovyElementType BALANCED_BRACKETS = new GroovyElementType("balanced brackets"); //node
 

@@ -30,7 +30,7 @@
       <reference ref="Compare.LastVersion"/>
       <reference ref="Compare.Selected"/>
       <reference ref="Vcs.ShowTabbedFileHistory"/>
-      <!-- <reference id="Vcs.ShowHistoryForBlock"/>  -->
+      <reference id="Vcs.ShowHistoryForBlock"/>
       <!-- <reference id="ChangesView.Browse"/> -->
       <separator/>
 

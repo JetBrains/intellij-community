@@ -850,7 +850,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
   }
 
   private class MyHighlighter extends DocumentAdapter implements EditorHighlighter {
-    private boolean myHasEditor;
+    private HighlighterClient myEditor;
 
     public HighlighterIterator createIterator(final int startOffset) {
       final int startIndex = findTokenInfoIndexByOffset(startOffset);
@@ -889,6 +889,10 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
           return myIndex < 0 || myIndex >= myTokens.size();
         }
 
+        public Document getDocument() {
+          return myEditor.getDocument();
+        }
+
         private TokenInfo getTokenInfo() {
           return myTokens.get(myIndex);
         }
@@ -899,8 +903,8 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
     }
 
     public void setEditor(final HighlighterClient editor) {
-      LOG.assertTrue(!myHasEditor, "Highlighters cannot be reused with different editors");
-      myHasEditor = true;
+      LOG.assertTrue(myEditor == null, "Highlighters cannot be reused with different editors");
+      myEditor = editor;
     }
 
     public void setColorScheme(EditorColorsScheme scheme) {

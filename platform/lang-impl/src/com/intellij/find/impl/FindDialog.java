@@ -38,6 +38,7 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -730,6 +731,7 @@ final class FindDialog extends DialogWrapper {
     gbConstraints.gridx++;
     gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
     myScopeCombo = new ScopeChooserCombo(myProject, true, true, FindSettings.getInstance().getDefaultScopeName());
+    Disposer.register(myDisposable, myScopeCombo);
     scopePanel.add(myScopeCombo, gbConstraints);
 
 

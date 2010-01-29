@@ -244,7 +244,7 @@ public class DefaultXmlExtension extends XmlExtension {
     @NonNls String nsDeclarationAttrName = null;
     for(XmlTag t = context; t != null; t = t.getParentTag()) {
       if (t.hasNamespaceDeclarations()) {
-        if (nsDeclarationAttrName == null) nsDeclarationAttrName = "xmlns:"+namespacePrefix;
+        if (nsDeclarationAttrName == null) nsDeclarationAttrName = namespacePrefix.length() > 0 ? "xmlns:"+namespacePrefix:"xmlns";
         if (t.getAttributeValue(nsDeclarationAttrName) != null) return true;
       }
     }

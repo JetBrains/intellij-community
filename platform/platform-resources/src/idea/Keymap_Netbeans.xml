@@ -159,6 +159,18 @@
     <action id="GotoBookmark7" />
     <action id="GotoBookmark8" />
     <action id="GotoBookmark9" />
+
+    <action id="ToggleBookmark0" />
+    <action id="ToggleBookmark1" />
+    <action id="ToggleBookmark2" />
+    <action id="ToggleBookmark3" />
+    <action id="ToggleBookmark4" />
+    <action id="ToggleBookmark5" />
+    <action id="ToggleBookmark6" />
+    <action id="ToggleBookmark7" />
+    <action id="ToggleBookmark8" />
+    <action id="ToggleBookmark9" />
+
     <action id="GotoClass">
       <keyboard-shortcut first-keystroke="control O" />
     </action>

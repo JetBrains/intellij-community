@@ -29,10 +29,8 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author ven
@@ -132,15 +130,7 @@ public abstract class GrReferenceElementImpl extends GroovyPsiElementImpl implem
     return PsiTreeUtil.getParentOfType(this, GrDocComment.class) == null && !(getContainingFile() instanceof GroovyCodeFragment) && PsiTreeUtil.getParentOfType(this, GrImportStatement.class) == null;
   }
 
-  private PsiElement bindWithQualifiedRef(String qName) {
-    final GrTypeArgumentList list = getTypeArgumentList();
-    final String typeArgs = (list != null) ? list.getText() : "";
-    final String text = qName + typeArgs;
-    final GrCodeReferenceElement qualifiedRef = GroovyPsiElementFactory.getInstance(getProject()).createTypeOrPackageReference(text);
-    getNode().getTreeParent().replaceChild(getNode(), qualifiedRef.getNode());
-    PsiUtil.shortenReference(qualifiedRef);
-    return qualifiedRef;
-  }
+  protected abstract PsiElement bindWithQualifiedRef(String qName);
 
   protected boolean bindsCorrectly(PsiElement element) {
     return isReferenceTo(element);

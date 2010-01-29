@@ -21,8 +21,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
-import static com.intellij.patterns.PlatformPatterns.psiElement;
-import static com.intellij.patterns.PsiJavaPatterns.psiExpressionStatement;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
@@ -39,6 +37,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.patterns.PlatformPatterns.psiElement;
+import static com.intellij.patterns.PsiJavaPatterns.psiExpressionStatement;
 
 /**
  * @author yole
@@ -153,8 +154,8 @@ class InlineToAnonymousConstructorProcessor {
     if (PsiTreeUtil.getChildrenOfType(anonymousClass, PsiMember.class) == null) {
       anonymousClass.deleteChildRange(anonymousClass.getLBrace(), anonymousClass.getRBrace());
     }
-    ChangeContextUtil.decodeContextInfo(anonymousClass, anonymousClass, null);
-    final PsiNewExpression superNewExpression = (PsiNewExpression) myNewExpression.replace(superNewExpressionTemplate);
+    PsiNewExpression superNewExpression = (PsiNewExpression) myNewExpression.replace(superNewExpressionTemplate);
+    superNewExpression = (PsiNewExpression)ChangeContextUtil.decodeContextInfo(superNewExpression, superNewExpression.getAnonymousClass(), null);
     JavaCodeStyleManager.getInstance(superNewExpression.getProject()).shortenClassReferences(superNewExpression);
   }
 

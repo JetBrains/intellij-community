@@ -75,6 +75,26 @@ public class PushDownConflicts {
     if (targetClass != null) {
       for (final PsiMember movedMember : myMovedMembers) {
         checkMemberPlacementInTargetClassConflict(targetClass, movedMember);
+        movedMember.accept(new JavaRecursiveElementWalkingVisitor() {
+          @Override
+          public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+            super.visitMethodCallExpression(expression);
+            if (expression.getMethodExpression().getQualifierExpression() instanceof PsiSuperExpression) {
+              final PsiMethod resolvedMethod = expression.resolveMethod();
+              if (resolvedMethod != null) {
+                final PsiClass resolvedClass = resolvedMethod.getContainingClass();
+                if (resolvedClass != null) {
+                  if (myClass.isInheritor(resolvedClass, true)) {
+                    final PsiMethod methodBySignature = myClass.findMethodBySignature(resolvedMethod, false);
+                    if (methodBySignature != null && !myMovedMembers.contains(methodBySignature)) {
+                      myConflicts.putValue(expression, "Super method call will resolve to another method");
+                    }
+                  }
+                }
+              }
+            }
+          }
+        });
       }
     }
     Members:

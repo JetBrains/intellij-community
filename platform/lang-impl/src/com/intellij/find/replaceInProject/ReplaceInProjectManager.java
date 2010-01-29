@@ -352,7 +352,7 @@ public class ReplaceInProjectManager {
           if (!findResult.isStringFound()){
             return;
           }
-          String stringToReplace = findManager.getStringToReplace(foundString.toString(), replaceContext.getFindModel());
+          String stringToReplace = findManager.getStringToReplace(foundString.toString(), replaceContext.getFindModel(), textOffset, document.getText());
           if (stringToReplace != null) {
             document.replaceString(textOffset, textEndOffset, stringToReplace);
           }

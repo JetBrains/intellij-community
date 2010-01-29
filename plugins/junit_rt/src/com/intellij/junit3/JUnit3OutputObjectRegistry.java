@@ -60,6 +60,9 @@ public class JUnit3OutputObjectRegistry extends OutputObjectRegistry {
       }
       addTestClass(packet, fullName);
     }
+    else if (test instanceof TestRunnerUtil.SuiteMethodWrapper) {
+      addTestClass(packet, ((TestRunnerUtil.SuiteMethodWrapper)test).getClassName());
+    }
     else {
       addUnknownTest(packet, test);
     }

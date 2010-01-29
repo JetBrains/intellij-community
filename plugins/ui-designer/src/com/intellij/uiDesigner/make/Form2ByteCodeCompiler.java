@@ -16,7 +16,6 @@
 package com.intellij.uiDesigner.make;
 
 import com.intellij.compiler.PsiClassWriter;
-import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -263,8 +262,6 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
     context.getProgressIndicator().pushState();
     context.getProgressIndicator().setText(UIDesignerBundle.message("progress.compiling.ui.forms"));
 
-    final long start = System.currentTimeMillis();
-
     final Project project = context.getProject();
     final HashMap<Module, ArrayList<MyInstrumentationItem>> module2itemsList = sortByModules(project, items);
 
@@ -347,7 +344,6 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
         }
       }
     }
-    CompilerUtil.logDuration("Forms compilation", System.currentTimeMillis() - start);
     context.getProgressIndicator().popState();
 
     return compiledItems.toArray(new ProcessingItem[compiledItems.size()]);

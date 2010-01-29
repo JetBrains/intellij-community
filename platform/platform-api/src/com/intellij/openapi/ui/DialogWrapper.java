@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
+import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
@@ -940,6 +941,12 @@ public abstract class DialogWrapper {
    * @throws IllegalStateException if the dialog is invoked not on the event dispatch thread
    */
   public void show() {
+    showAndGetOk();
+  }
+
+  public AsyncResult<Boolean> showAndGetOk() {
+    final AsyncResult<Boolean> result = new AsyncResult<Boolean>();
+
     ensureEventDispatchThread();
     registerKeyboardShortcuts();
 
@@ -949,7 +956,13 @@ public abstract class DialogWrapper {
       Disposer.register(uiParent, myDisposable); // ensure everything is disposed on app quit
     }
 
-    myPeer.show();
+    myPeer.show().doWhenProcessed(new Runnable() {
+      public void run() {
+        result.setDone(isOK());
+      }
+    });
+
+    return result;
   }
 
   /**

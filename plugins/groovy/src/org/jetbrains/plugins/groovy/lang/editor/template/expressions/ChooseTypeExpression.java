@@ -15,7 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.lang.editor.template.expressions;
 
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.PsiTypeResult;
@@ -23,6 +25,7 @@ import com.intellij.codeInsight.template.Result;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SubtypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SupertypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
@@ -58,7 +61,7 @@ public class ChooseTypeExpression extends Expression {
       }
     }
 
-    result.add(LookupElementBuilder.create("def").setBold());
+    result.add(LookupElementBuilder.create(GrModifier.DEF).setBold());
 
     return result.toArray(new LookupElement[result.size()]);
   }

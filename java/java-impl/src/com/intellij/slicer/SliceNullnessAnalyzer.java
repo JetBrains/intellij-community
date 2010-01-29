@@ -28,16 +28,14 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.FactoryMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 
 /**
  * User: cdr
@@ -67,7 +65,14 @@ public class SliceNullnessAnalyzer {
           public SliceNode fun(SliceNode oldNode) {
             return oldNode.getDuplicate() == null && node(oldNode, map).nulls.contains(nullExpression) ? oldNode.copy() : null;
           }
-        },null);
+        },new PairProcessor<SliceNode, List<SliceNode>>() {
+        public boolean process(SliceNode node, List<SliceNode> children) {
+          if (!children.isEmpty()) return true;
+          PsiElement element = node.getValue().getElement();
+          if (element == null) return false;
+          return element.getManager().areElementsEquivalent(element, nullExpression); // leaf can be there only if it's filtering expression
+        }
+      });
         nullRoot.myCachedChildren.add(new SliceLeafValueRootNode(root.getProject(), nullExpression, nullRoot, Collections.singletonList(newRoot),
                                                                  oldRoot.getValue().params));
       }
@@ -81,7 +86,14 @@ public class SliceNullnessAnalyzer {
           public SliceNode fun(SliceNode oldNode) {
             return oldNode.getDuplicate() == null && node(oldNode, map).notNulls.contains(expression) ? oldNode.copy() : null;
           }
-        },null);
+        },new PairProcessor<SliceNode, List<SliceNode>>() {
+        public boolean process(SliceNode node, List<SliceNode> children) {
+          if (!children.isEmpty()) return true;
+          PsiElement element = node.getValue().getElement();
+          if (element == null) return false;
+          return element.getManager().areElementsEquivalent(element, expression); // leaf can be there only if it's filtering expression
+        }
+      });
         valueRoot.myCachedChildren.add(new SliceLeafValueRootNode(root.getProject(), expression, valueRoot, Collections.singletonList(newRoot),
                                                                   oldRoot.getValue().params));
       }
@@ -95,7 +107,14 @@ public class SliceNullnessAnalyzer {
           public SliceNode fun(SliceNode oldNode) {
             return oldNode.getDuplicate() == null && node(oldNode, map).unknown.contains(expression) ? oldNode.copy() : null;
           }
-        },null);
+        },new PairProcessor<SliceNode, List<SliceNode>>() {
+        public boolean process(SliceNode node, List<SliceNode> children) {
+          if (!children.isEmpty()) return true;
+          PsiElement element = node.getValue().getElement();
+          if (element == null) return false;
+          return element.getManager().areElementsEquivalent(element, expression); // leaf can be there only if it's filtering expression
+        }
+      });
         valueRoot.myCachedChildren.add(new SliceLeafValueRootNode(root.getProject(), expression, valueRoot, Collections.singletonList(newRoot),
                                                                   oldRoot.getValue().params));
       }

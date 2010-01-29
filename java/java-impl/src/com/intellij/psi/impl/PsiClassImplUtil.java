@@ -18,10 +18,7 @@ package com.intellij.psi.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.OrFilter;
@@ -972,6 +969,12 @@ public class PsiClassImplUtil {
       else {
         PsiClass class1 = ((PsiClassType)type1).resolve();
         PsiClass class2 = ((PsiClassType)type2).resolve();
+
+        if (class1 instanceof PsiTypeParameter && class2 instanceof PsiTypeParameter) {
+          return Comparing.equal(class1.getName(), class2.getName()) &&
+                 ((PsiTypeParameter)class1).getIndex() == ((PsiTypeParameter)class2).getIndex();
+        }
+
         if (!manager.areElementsEquivalent(class1, class2)) return false;
       }
     }

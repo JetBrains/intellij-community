@@ -83,7 +83,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
   public boolean MERGE_DIFF_USE_ANCESTRY = true;
   public boolean UPDATE_LOCK_ON_DEMAND = false;
   public boolean IGNORE_SPACES_IN_MERGE = false;
-  public boolean DETECT_NESTED_COPIES = false;
+  public boolean DETECT_NESTED_COPIES = true;
   public boolean IGNORE_SPACES_IN_ANNOTATE = true;
   public boolean SHOW_MERGE_SOURCES_IN_ANNOTATE = true;
 

@@ -92,8 +92,12 @@ public class TestProxy extends CompositePrintable implements PrintableTestProxy,
 
   public void setState(final TestState state) {
     if (myState != state) {
-      myState = state;
       fireOnNewPrintable(state);
+      if (myState != null) {
+        state.merge(myState);
+      }
+
+      myState = state;
       fireStateChanged();
     }
   }

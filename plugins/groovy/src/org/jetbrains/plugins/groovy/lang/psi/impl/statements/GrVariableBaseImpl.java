@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTupleDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -190,7 +191,7 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GroovyBa
       if (typeElement == null) return;
       final ASTNode typeElementNode = typeElement.getNode();
       final ASTNode parent = typeElementNode.getTreeParent();
-      parent.addLeaf(GroovyTokenTypes.kDEF, "def", typeElementNode);
+      parent.addLeaf(GroovyTokenTypes.kDEF, GrModifier.DEF, typeElementNode);
       parent.removeChild(typeElementNode);
     } else {
       type = TypesUtil.unboxPrimitiveTypeWrapper(type);

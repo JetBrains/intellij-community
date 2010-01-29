@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -31,7 +32,7 @@ public class EmptyEditorHighlighter implements EditorHighlighter, PrioritizedDoc
 
   private TextAttributes myAttributes;
   private int myTextLength = 0;
-  private boolean myHasEditor = false;
+  private HighlighterClient myEditor;
 
   public EmptyEditorHighlighter(TextAttributes attributes) {
     myAttributes = attributes;
@@ -46,8 +47,8 @@ public class EmptyEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   }
 
   public void setEditor(HighlighterClient editor) {
-    LOG.assertTrue(!myHasEditor, "Highlighters cannot be reused with different editors");
-    myHasEditor = true;
+    LOG.assertTrue(myEditor == null, "Highlighters cannot be reused with different editors");
+    myEditor = editor;
   }
 
   public void setColorScheme(EditorColorsScheme scheme) {
@@ -90,6 +91,10 @@ public class EmptyEditorHighlighter implements EditorHighlighter, PrioritizedDoc
 
       public boolean atEnd() {
         return index != 0;
+      }
+
+      public Document getDocument() {
+        return myEditor.getDocument();
       }
 
       public IElementType getTokenType(){

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,33 +15,37 @@
  */
 package com.siyeh.ig.inheritance;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.MethodUtils;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class RefusedBequestInspection extends BaseInspection {
 
     /** @noinspection PublicField*/
     public boolean ignoreEmptySuperMethods = false;
 
+    @Override
     @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message("refused.bequest.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "refused.bequest.problem.descriptor");
     }
 
+    @Override
     public JComponent createOptionsPanel() {
         //noinspection HardCodedStringLiteral
         return new SingleCheckboxOptionsPanel(
@@ -50,6 +54,7 @@ public class RefusedBequestInspection extends BaseInspection {
                         "</html>", this, "ignoreEmptySuperMethods");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new RefusedBequestVisitor();
     }
@@ -57,7 +62,6 @@ public class RefusedBequestInspection extends BaseInspection {
     private class RefusedBequestVisitor extends BaseInspectionVisitor{
 
         @Override public void visitMethod(@NotNull PsiMethod method){
-            super.visitMethod(method);
             final PsiCodeBlock body = method.getBody();
             if(body == null){
                 return;
@@ -72,6 +76,9 @@ public class RefusedBequestInspection extends BaseInspection {
             }
             final PsiClass containingClass =
                     leastConcreteSuperMethod.getContainingClass();
+            if (containingClass == null) {
+                return;
+            }
             final String className = containingClass.getQualifiedName();
             if("java.lang.Object".equals(className)){
                 return;
@@ -82,6 +89,9 @@ public class RefusedBequestInspection extends BaseInspection {
                 if (MethodUtils.isEmpty(navigationElement)){
                     return;
                 }
+            }
+            if (TestUtils.isJUnit4BeforeOrAfterMethod(method)) {
+                return;
             }
             if(containsSuperCall(body, leastConcreteSuperMethod)){
                 return;
@@ -96,7 +106,8 @@ public class RefusedBequestInspection extends BaseInspection {
             for(final PsiMethod superMethod : superMethods){
                 final PsiClass containingClass =
                         superMethod.getContainingClass();
-                if(!superMethod.hasModifierProperty(PsiModifier.ABSTRACT) &&
+                if(containingClass != null &&
+                   !superMethod.hasModifierProperty(PsiModifier.ABSTRACT) &&
                         !containingClass.isInterface()){
                     leastConcreteSuperMethod = superMethod;
                     return leastConcreteSuperMethod;
@@ -105,10 +116,10 @@ public class RefusedBequestInspection extends BaseInspection {
             return leastConcreteSuperMethod;
         }
 
-        private boolean containsSuperCall(PsiCodeBlock body,
-                                          PsiMethod method){
+        private boolean containsSuperCall(@NotNull PsiElement context,
+                                          @NotNull PsiMethod method){
             final SuperCallVisitor visitor = new SuperCallVisitor(method);
-            body.accept(visitor);
+            context.accept(visitor);
             return visitor.hasSuperCall();
         }
     }

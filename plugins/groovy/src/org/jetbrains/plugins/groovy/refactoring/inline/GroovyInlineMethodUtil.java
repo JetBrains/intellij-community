@@ -36,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -607,7 +608,7 @@ public class GroovyInlineMethodUtil {
       type = "";
     }
     if (modifiers.length() == 0 && type.length() == 0) {
-      modifiers = "def";
+      modifiers = GrModifier.DEF;
     }
 
     return modifiers + " " + type + " " + varName + " =  " + expression.getText();

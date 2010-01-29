@@ -90,7 +90,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey>, J
    */
   @NotNull public static TextAttributesKey createTextAttributesKey(@NonNls @NotNull String externalName, TextAttributes defaultAttributes) {
     TextAttributesKey key = find(externalName);
-    if (key.getDefaultAttributes() == null) {
+    if (key.myDefaultAttributes == null || key.myDefaultAttributes == NULL_ATTRIBUTES) {
       key.myDefaultAttributes = defaultAttributes;
     }
     return key;

@@ -15,9 +15,10 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.idea.svn.NestedCopyType;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.tmatesoft.svn.core.SVNURL;
-import com.intellij.openapi.vfs.VirtualFile;
 
 public class WCInfo implements WCPaths {
   private final String myPath;
@@ -25,13 +26,16 @@ public class WCInfo implements WCPaths {
   private final WorkingCopyFormat myFormat;
   private final String myRepositoryRoot;
   private final boolean myIsWcRoot;
+  private final NestedCopyType myType;
 
-  public WCInfo(final String path, final SVNURL url, final WorkingCopyFormat format, final String repositoryRoot, final boolean isWcRoot) {
+  public WCInfo(final String path, final SVNURL url, final WorkingCopyFormat format, final String repositoryRoot, final boolean isWcRoot,
+                final NestedCopyType type) {
     myPath = path;
     myUrl = url;
     myFormat = format;
     myRepositoryRoot = repositoryRoot;
     myIsWcRoot = isWcRoot;
+    myType = type;
   }
 
   public String getPath() {
@@ -81,5 +85,9 @@ public class WCInfo implements WCPaths {
   @Override
   public int hashCode() {
     return (myPath != null ? myPath.hashCode() : 0);
+  }
+
+  public NestedCopyType getType() {
+    return myType;
   }
 }

@@ -27,23 +27,29 @@ import com.intellij.openapi.diff.LineTokenizer;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 
 public class FaultyState extends ReadableState {
-  private String myMessage;
-  private String myStackTrace;
+  private List<String> myMessages;
+  private List<String> myStackTraces;
 
   public void initializeFrom(final ObjectReader reader) {
-    myMessage = reader.readLimitedString();
-    myStackTrace = reader.readLimitedString();
+    myMessages = Collections.singletonList(reader.readLimitedString());
+    myStackTraces = Collections.singletonList(reader.readLimitedString());
   }
 
   public void printOn(final Printer printer) {
     printer.print(PrintableTestProxy.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
     printer.mark();
-    printExceptionHeader(printer, myMessage);
-    printer.print(myStackTrace + PrintableTestProxy.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
+    for (int i = 0; i < myMessages.size(); i++) {
+      printExceptionHeader(printer, myMessages.get(i));
+      printer.print(myStackTraces.get(i) + PrintableTestProxy.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
+    }
   }
 
   protected void printExceptionHeader(final Printer printer, final String message) {
@@ -54,9 +60,21 @@ public class FaultyState extends ReadableState {
     return true;
   }
 
+  @Override
+  public void merge(@NotNull TestState state) {
+    if (state instanceof FaultyState) {
+      myMessages = new ArrayList<String>(myMessages);
+      myMessages.addAll(0, ((FaultyState)state).myMessages);
+
+      myStackTraces = new ArrayList<String>(myStackTraces);
+      myStackTraces.addAll(0, ((FaultyState)state).myStackTraces);
+    }
+  }
+
   public Navigatable getDescriptor(final Location<?> location) {
     if (location == null) return super.getDescriptor(location);
-    final String[] stackTrace = new LineTokenizer(myStackTrace).execute();
+    //navigate to the first stack trace
+    final String[] stackTrace = new LineTokenizer(myStackTraces.get(0)).execute();
     final PsiLocation<?> psiLocation = location.toPsiLocation();
     final PsiClass containingClass = psiLocation.getParentElement(PsiClass.class);
     if (containingClass == null) return super.getDescriptor(location);

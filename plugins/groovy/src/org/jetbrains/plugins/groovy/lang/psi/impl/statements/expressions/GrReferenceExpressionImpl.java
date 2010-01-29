@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
@@ -55,6 +54,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
@@ -71,8 +72,6 @@ import java.util.EnumSet;
  * @author ilyas
  */
 public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements GrReferenceExpression {
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl");
-
   public GrReferenceExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -146,6 +145,16 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     return doHandleElementRename(newElementName);
   }
 
+  @Override
+  protected PsiElement bindWithQualifiedRef(String qName) {
+    final GrTypeArgumentList list = getTypeArgumentList();
+    final String typeArgs = (list != null) ? list.getText() : "";
+    final String text = qName + typeArgs;
+    GrReferenceExpression qualifiedRef = GroovyPsiElementFactory.getInstance(getProject()).createReferenceExpressionFromText(text);
+    getNode().getTreeParent().replaceChild(getNode(), qualifiedRef.getNode());
+    return qualifiedRef;
+  }
+
   private PsiElement doHandleElementRename(String newElementName) throws IncorrectOperationException {
     if (!PsiUtil.isValidReferenceName(newElementName)) {
       PsiElement element = GroovyPsiElementFactory.getInstance(getProject()).createStringLiteral(newElementName);
@@ -179,15 +188,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   private static final OurResolver RESOLVER = new OurResolver();
 
   private static final OurTypesCalculator TYPES_CALCULATOR = new OurTypesCalculator();
-
-  public GrReferenceExpression getElementToCompare() {
-    return this;
-  }
-
-  public int compareTo(GrReferenceExpression grReferenceExpression) {
-    if (this.equals(grReferenceExpression)) return 0;
-    else return getText().compareTo(grReferenceExpression.getText());
-  }
 
   public PsiType getNominalType() {
     return GroovyPsiManager.getInstance(getProject()).getTypeInferenceHelper().doWithInferenceDisabled(new Computable<PsiType>() {
@@ -664,5 +664,22 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       }
     }
 
+  }
+
+  public GrReferenceExpression bindToElementViaStaticImport(@NotNull PsiClass qualifierClass) {
+    if (getQualifier() != null) {
+      throw new IncorrectOperationException("Reference has qualifier");
+    }
+
+    if (StringUtil.isEmpty(getReferenceName())) {
+      throw new IncorrectOperationException("Reference has empty name");
+    }
+    final PsiFile file = getContainingFile();
+    if (file instanceof GroovyFile) {
+      final GrImportStatement statement = GroovyPsiElementFactory.getInstance(getProject())
+        .createImportStatementFromText("import static " + qualifierClass.getQualifiedName() + "." + getReferenceName());
+      ((GroovyFile)file).addImport(statement);
+    }
+    return this;
   }
 }

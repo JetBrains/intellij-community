@@ -33,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
@@ -40,6 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousC
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -62,6 +64,17 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.types.GrCodeReferenceEl
 public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implements GrCodeReferenceElement {
   public GrCodeReferenceElementImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  @Override
+  protected PsiElement bindWithQualifiedRef(String qName) {
+    final GrTypeArgumentList list = getTypeArgumentList();
+    final String typeArgs = (list != null) ? list.getText() : "";
+    final String text = qName + typeArgs;
+    final GrCodeReferenceElement qualifiedRef = GroovyPsiElementFactory.getInstance(getProject()).createTypeOrPackageReference(text);
+    getNode().getTreeParent().replaceChild(getNode(), qualifiedRef.getNode());
+    PsiUtil.shortenReference(qualifiedRef);
+    return qualifiedRef;
   }
 
   public void accept(GroovyElementVisitor visitor) {

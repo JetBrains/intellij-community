@@ -200,7 +200,7 @@ public class XLineBreakpointManager {
           if (line >= 0 && line < document.getLineCount() && file != null) {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
-                if (!myProject.isDisposed() && file.isValid()) {
+                if (!myProject.isDisposed() && myProject.isInitialized() && file.isValid()) {
                   XDebuggerUtil.getInstance().toggleLineBreakpoint(myProject, file, line);
                 }
               }

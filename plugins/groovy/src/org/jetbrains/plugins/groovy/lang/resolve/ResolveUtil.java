@@ -144,7 +144,7 @@ public class ResolveUtil {
         if (!membersProcessor.processNonCodeMembers(type, processor, place, forCompletion)) return false;
       }
 
-      if (type instanceof PsiArrayType) {
+      if (type instanceof PsiArrayType && visited.size() == 1) {
         //implicit super types
         PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
         PsiClassType t = factory.createTypeByFQClassName("java.lang.Object", GlobalSearchScope.allScope(project));
@@ -154,11 +154,9 @@ public class ResolveUtil {
         t = factory.createTypeByFQClassName("java.io.Serializable", GlobalSearchScope.allScope(project));
         if (!processNonCodeMethods(t, processor, project, visited, place, forCompletion)) return false;
       }
-      else {
-        for (PsiType superType : type.getSuperTypes()) {
-          if (!processNonCodeMethods(TypeConversionUtil.erasure(superType), processor, project, visited, place, forCompletion)) {
-            return false;
-          }
+      for (PsiType superType : type.getSuperTypes()) {
+        if (!processNonCodeMethods(TypeConversionUtil.erasure(superType), processor, project, visited, place, forCompletion)) {
+          return false;
         }
       }
     }

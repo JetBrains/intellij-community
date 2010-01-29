@@ -23,7 +23,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
-import org.jetbrains.idea.svn.branchConfig.InfoStorage;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
@@ -31,7 +30,10 @@ import org.jetbrains.idea.svn.integrate.SvnBranchItem;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 public class WcInfoLoader {
   private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.history.WcInfoLoader");
@@ -77,7 +79,8 @@ public class WcInfoLoader {
       return null;
     }
     final WCInfo wcInfo = new WCInfo(rootInfo.getIoFile().getAbsolutePath(), rootInfo.getAbsoluteUrlAsUrl(),
-                             SvnFormatSelector.getWorkingCopyFormat(file), rootInfo.getRepositoryUrl(), SvnUtil.isWorkingCopyRoot(file));
+                             SvnFormatSelector.getWorkingCopyFormat(file), rootInfo.getRepositoryUrl(), SvnUtil.isWorkingCopyRoot(file),
+                             rootInfo.getType());
     return createInfo(wcInfo, vcs, urlMapping);
   }
 
@@ -122,7 +125,7 @@ public class WcInfoLoader {
     final String branchRoot = createBranchesList(url, configuration, items);
     return new WCInfoWithBranches(info.getPath(), info.getUrl(), info.getFormat(),
                                                                          info.getRepositoryRoot(), info.isIsWcRoot(), items, root,
-                                                                         branchRoot);
+                                                                         branchRoot, info.getType());
   }
 
   private static String createBranchesList(final String url, final SvnBranchConfigurationNew configuration,

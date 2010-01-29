@@ -50,7 +50,9 @@ public class VcsInitialization {
   public void add(final VcsInitObject vcsInitObject, final Runnable runnable) {
     synchronized (myLock) {
       if (myInitStarted) {
-        LOG.info("Registering startup activity AFTER initialization ", new Throwable());
+        if (! vcsInitObject.isCanBeLast()) {
+          LOG.info("Registering startup activity AFTER initialization ", new Throwable());
+        }
         // post startup are normally called on awt thread
         ApplicationManager.getApplication().invokeLater(runnable);
         return;

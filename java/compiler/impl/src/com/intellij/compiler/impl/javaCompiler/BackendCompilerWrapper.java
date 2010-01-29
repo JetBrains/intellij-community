@@ -86,7 +86,6 @@ public class BackendCompilerWrapper {
   private final ProjectFileIndex myProjectFileIndex;
   @NonNls private static final String PACKAGE_ANNOTATION_FILE_NAME = "package-info.java";
   private static final FileObject myStopThreadToken = new FileObject(new File(""), new byte[0]);
-  private long myCompilationDuration = 0L;
   public final Map<String, Set<CompiledClass>> myFileNameToSourceMap=  new THashMap<String, Set<CompiledClass>>();
 
 
@@ -145,7 +144,6 @@ public class BackendCompilerWrapper {
       throw new CompilerException(e.getMessage(), e);
     }
     finally {
-      CompilerUtil.logDuration(myCompiler.getId() + " running", myCompilationDuration);
       for (final VirtualFile file : myModuleToTempDirMap.values()) {
         if (file != null) {
           final File ioFile = new File(file.getPath());
@@ -458,7 +456,6 @@ public class BackendCompilerWrapper {
         exitValue = process.exitValue();
       }
       finally {
-        myCompilationDuration += System.currentTimeMillis() - compilationStart;
         if (errorParsingThread != null) {
           errorParsingThread.setProcessTerminated(true);
         }

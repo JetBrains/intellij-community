@@ -383,5 +383,9 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     public boolean atEnd() {
       return mySegmentIndex >= mySegments.getSegmentCount() || mySegmentIndex < 0;
     }
+
+    public Document getDocument() {
+      return myEditor.getDocument();
+    }
   }
 }

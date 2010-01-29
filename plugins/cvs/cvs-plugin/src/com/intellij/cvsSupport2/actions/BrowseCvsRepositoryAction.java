@@ -32,6 +32,7 @@ import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.actions.VcsContext;
@@ -42,7 +43,7 @@ import java.util.Collections;
 /**
  * author: lesya
  */
-public class BrowseCvsRepositoryAction extends AbstractAction{
+public class BrowseCvsRepositoryAction extends AbstractAction implements DumbAware {
   private static final String TITLE = CvsBundle.message("operation.name.browse.repository");
   private CvsRootConfiguration mySelectedConfiguration;
 

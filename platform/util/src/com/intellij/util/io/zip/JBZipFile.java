@@ -313,7 +313,12 @@ public class JBZipFile {
       ze.setInternalAttributes(internalAttributes);
       ze.setExternalAttributes(externalAttributes);
       ze.setExtra(extra);
-      ze.setComment(comment);
+      try {
+        ze.setComment(comment);
+      }
+      catch (IllegalArgumentException e) {
+        ze.setComment(comment.substring(0, 0xffff / 3));
+      }
 
       nameMap.put(ze.getName(), ze);
       entries.add(ze);
