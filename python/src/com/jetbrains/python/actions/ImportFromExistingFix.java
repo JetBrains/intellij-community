@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -143,5 +144,9 @@ public class ImportFromExistingFix implements HintAction, LocalQuickFix {
 
   public boolean startInWriteAction() {
     return false; // multiple variants may make us show a menu
+  }
+
+  public void sortCandidates() {
+    Collections.sort(myImports);
   }
 }

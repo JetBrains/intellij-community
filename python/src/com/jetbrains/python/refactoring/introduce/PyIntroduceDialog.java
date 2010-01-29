@@ -26,7 +26,6 @@ import java.awt.event.*;
  */
 public class PyIntroduceDialog extends DialogWrapper implements PyIntroduceSettings {
   private JPanel myContentPane;
-  private JLabel myErrorLabel;
   private JLabel myNameLabel;
   private ComboBox myNameComboBox;
   private JCheckBox myCheckBox;
@@ -139,10 +138,9 @@ public class PyIntroduceDialog extends DialogWrapper implements PyIntroduceSetti
     final boolean nameValid = myValidator.isNameValid(this);
     setOKActionEnabled(nameValid);
     if (!nameValid) {
-      myErrorLabel.setText(PyBundle.message("refactoring.introduce.name.error"));
+      setErrorText(PyBundle.message("refactoring.introduce.name.error"));
       return;
     }
-    final String error = myValidator.check(this);
-    myErrorLabel.setText(error != null ? error : " ");
+    setErrorText(myValidator.check(this));
   }
 }

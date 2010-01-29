@@ -368,6 +368,10 @@ def layoutFull(String target, Set usedJars) {
       fileset(dir: "$home/python/helpers")
     }
 
+    dir("license") {
+      fileset(dir: "$home/python/license")
+    }
+
     def layouts = includeFile("$home/build/scripts/layouts.gant")
     layouts.layoutPlugins()
 

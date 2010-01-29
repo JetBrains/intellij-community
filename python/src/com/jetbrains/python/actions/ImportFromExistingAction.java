@@ -1,25 +1,25 @@
 package com.jetbrains.python.actions;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.codeInsight.hint.QuestionAction;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.List;
 import java.awt.*;
+import java.util.List;
 
 /**
  * Turns an unqualified unresolved identifier into qualified and resolvable.
@@ -32,20 +32,6 @@ public class ImportFromExistingAction implements QuestionAction {
   Editor myEditor;
   String myName;
   boolean myUseQualifiedImport;
-
-  /**
-   * @param target element to become qualified as imported.
-   * @param sources clauses of import to be used.
-   * @param name relevant name ot the target element (e.g. of identifier in an expression).
-   * @param editor target's editor.
-   */
-  public ImportFromExistingAction(@NotNull PyElement target, @NotNull List<ImportCandidateHolder> sources, String name, Editor editor) {
-    myTarget = target;
-    mySources = sources;
-    myName = name;
-    myEditor = editor;
-    myUseQualifiedImport = false;
-  }
 
   /**
    * @param target element to become qualified as imported.
@@ -182,6 +168,12 @@ public class ImportFromExistingAction implements QuestionAction {
       setIcon(item.getImportable().getIcon(0));
       String item_name = item.getPresentableText(myName);
       append(item_name, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+
+      String tailText = item.getTailText();
+      if (tailText != null) {
+        append(" " + tailText, SimpleTextAttributes.GRAY_ATTRIBUTES);
+      }
+
       setFont(FONT);
       if (isSelected) {
         setBackground(list.getSelectionBackground());
