@@ -218,6 +218,10 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     doTest(false, true);
   }
 
+  public void testMultipleAssignments() throws Exception {
+    doTest(false, true);
+  }
+
   public void testNoInlineAbstract() throws Exception {
     doTestNoInline("Abstract classes cannot be inlined");
   }
