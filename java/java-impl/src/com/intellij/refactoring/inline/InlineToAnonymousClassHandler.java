@@ -20,6 +20,8 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -38,6 +40,11 @@ import java.util.Collection;
  * @author yole
  */
 public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
+  static final ElementPattern ourCatchClausePattern = PlatformPatterns.psiElement(PsiTypeElement.class).withParent(PlatformPatterns.psiElement(PsiParameter.class).withParent(
+  PlatformPatterns.psiElement(PsiCatchSection.class)));
+  static final ElementPattern ourThrowsClausePattern = PlatformPatterns.psiElement().withParent(PlatformPatterns.psiElement(PsiReferenceList.class).withFirstChild(
+    PlatformPatterns.psiElement().withText(PsiKeyword.THROWS)));
+
   @Override
   public boolean isEnabledOnElement(PsiElement element) {
     return element instanceof PsiMethod || element instanceof PsiClass;
@@ -240,7 +247,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
       }
     }
 
-    return null;
+    return getCannotInlineDueToUsagesMessage(psiClass);
   }
 
   static boolean isRedundantImplements(final PsiClass superClass, final PsiClassType interfaceType) {
@@ -264,6 +271,53 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
       }
     });
     return stmt.get();
+  }
+
+  @Nullable
+  private static String getCannotInlineDueToUsagesMessage(final PsiClass aClass) {
+    boolean hasUsages = false;
+    for(PsiReference reference : ReferencesSearch.search(aClass)) {
+      final PsiElement element = reference.getElement();
+      if (element == null) continue;
+      if (!PsiTreeUtil.isAncestor(aClass, element, false)) {
+        hasUsages = true;
+      }
+      final PsiElement parentElement = element.getParent();
+      if (parentElement != null) {
+        if (parentElement.getParent() instanceof PsiClassObjectAccessExpression) {
+          return "Class cannot be inlined because it has usages of its class literal";
+        }
+        if (ourCatchClausePattern.accepts(parentElement)) {
+          return "Class cannot be inlined because it is used in a 'catch' clause";
+        }
+      }
+      if (ourThrowsClausePattern.accepts(element)) {
+        return "Class cannot be inlined because it is used in a 'throws' clause";
+      }
+      if (parentElement instanceof PsiThisExpression) {
+        return "Class cannot be inlined because it is used as a 'this' qualifier";
+      }
+      if (parentElement instanceof PsiNewExpression) {
+        final PsiNewExpression newExpression = (PsiNewExpression)parentElement;
+        final PsiMethod[] constructors = aClass.getConstructors();
+        if (constructors.length == 0) {
+          PsiExpressionList newArgumentList = newExpression.getArgumentList();
+          if (newArgumentList != null && newArgumentList.getExpressions().length > 0) {
+            return "Class cannot be inlined because a call to its constructor is unresolved";
+          }
+        }
+        else {
+          final JavaResolveResult resolveResult = newExpression.resolveMethodGenerics();
+          if (!resolveResult.isValidResult()) {
+            return "Class cannot be inlined because a call to its constructor is unresolved";
+          }
+        }
+      }
+    }
+    if (!hasUsages) {
+      return RefactoringBundle.message("class.is.never.used");
+    }
+    return null;
   }
 
   private static class AllowedUsagesProcessor implements Processor<PsiReference> {

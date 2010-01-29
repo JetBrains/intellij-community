@@ -348,9 +348,12 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
   }
 
   private void doTestPreprocessUsages(final String expectedMessage) throws Exception {
-    final InlineToAnonymousClassProcessor processor = prepareProcessor();
-    String message = processor.getPreprocessUsagesMessage(processor.findUsages());
-    assertEquals(expectedMessage, message);
+    configureByFile("/refactoring/inlineToAnonymousClass/" + getTestName(false) + ".java");
+    PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase
+      .ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
+    assertInstanceOf(element, PsiClass.class);
+    final PsiClass psiClass = (PsiClass)element;
+    assertEquals(expectedMessage, InlineToAnonymousClassHandler.getCannotInlineMessage(psiClass));
   }
 
   private InlineToAnonymousClassProcessor prepareProcessor() throws Exception {
@@ -413,10 +416,6 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
 
   public void testCanBeInvokedOnReferenceSyncStatement() throws Exception {
     doTestCanBeInvokedOnReference(true);
-  }
-
-  public void testCantBeInvokedOnReferenceThrowStatement() throws Exception {
-    doTestCanBeInvokedOnReference(false);
   }
 
   private void doTestCanBeInvokedOnReference(boolean canBeInvokedOnReference) throws Exception {
