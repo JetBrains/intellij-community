@@ -126,6 +126,37 @@
       <keyboard-shortcut first-keystroke="control 9"/>
     </action>
 
+    <action id="ToggleBookmark0">
+      <keyboard-shortcut first-keystroke="control shift 0"/>
+    </action>
+    <action id="ToggleBookmark1">
+      <keyboard-shortcut first-keystroke="control shift 1"/>
+    </action>
+    <action id="ToggleBookmark2">
+      <keyboard-shortcut first-keystroke="control shift 2"/>
+    </action>
+    <action id="ToggleBookmark3">
+      <keyboard-shortcut first-keystroke="control shift 3"/>
+    </action>
+    <action id="ToggleBookmark4">
+      <keyboard-shortcut first-keystroke="control shift 4"/>
+    </action>
+    <action id="ToggleBookmark5">
+      <keyboard-shortcut first-keystroke="control shift 5"/>
+    </action>
+    <action id="ToggleBookmark6">
+      <keyboard-shortcut first-keystroke="control shift 6"/>
+    </action>
+    <action id="ToggleBookmark7">
+      <keyboard-shortcut first-keystroke="control shift 7"/>
+    </action>
+    <action id="ToggleBookmark8">
+      <keyboard-shortcut first-keystroke="control shift 8"/>
+    </action>
+    <action id="ToggleBookmark9">
+      <keyboard-shortcut first-keystroke="control shift 9"/>
+    </action>
+    
     <action id="MethodUp">
       <keyboard-shortcut first-keystroke="control UP"/>
     </action>
