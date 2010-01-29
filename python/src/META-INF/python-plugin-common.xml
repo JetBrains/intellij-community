@@ -165,7 +165,7 @@
         class="com.jetbrains.python.devmode.DumpPsiToClipboardAction"
         text="Dump PSI to clipboard"
         >
-      <add-to-group group-id="EditMenu" anchor="before" relative-to-action="Undo"/>
+      <add-to-group group-id="ToolsMenu" anchor="after" relative-to-action="Macros"/>
     </action>
 
     <group id="PyTypeHierarchyPopupMenu">
