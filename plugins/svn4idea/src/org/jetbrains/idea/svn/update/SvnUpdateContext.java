@@ -17,6 +17,9 @@ package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.vcs.update.SequentialUpdatesContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.NestedCopyType;
+import org.jetbrains.idea.svn.RootUrlInfo;
+import org.jetbrains.idea.svn.SvnVcs;
 
 import java.io.File;
 import java.util.HashSet;
@@ -24,8 +27,10 @@ import java.util.Set;
 
 public class SvnUpdateContext implements SequentialUpdatesContext {
   private final Set<File> myUpdatedExternals;
+  private final SvnVcs myVcs;
 
-  public SvnUpdateContext() {
+  public SvnUpdateContext(final SvnVcs vcs) {
+    myVcs = vcs;
     myUpdatedExternals = new HashSet<File>();
   }
 
@@ -44,6 +49,11 @@ public class SvnUpdateContext implements SequentialUpdatesContext {
   }
 
   public boolean shouldRunFor(final File ioRoot) {
-    return ! myUpdatedExternals.contains(ioRoot);
+    if (myUpdatedExternals.contains(ioRoot)) return false;
+    final RootUrlInfo info = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(ioRoot);
+    if (info != null) {
+      return ! NestedCopyType.switched.equals(info.getType());
+    }
+    return true;
   }
 }
