@@ -197,10 +197,10 @@ public class ChangeContextUtil {
             refExpr.setQualifierExpression(factory.createReferenceExpression(containingClass));
           }
         }
-        else if (thisAccessExpr != null){
+        else {
           final PsiClass realParentClass = refExpr.getCopyableUserData(REF_MEMBER_THIS_CLASS_KEY);
           refExpr.putCopyableUserData(REF_MEMBER_THIS_CLASS_KEY, null);
-          if (thisClass != null && realParentClass != null &&
+          if (thisAccessExpr != null && thisClass != null && realParentClass != null &&
               InheritanceUtil.isInheritorOrSelf(thisClass, realParentClass, true)) {
             boolean needQualifier = true;
             PsiElement refElement = refExpr.resolve();

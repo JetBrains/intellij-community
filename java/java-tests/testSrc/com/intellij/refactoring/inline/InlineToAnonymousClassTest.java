@@ -165,7 +165,7 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     doTest(false, false);
   }
 
-  public void _testOuterClassFieldAccess() throws Exception {
+  public void testOuterClassFieldAccess() throws Exception {
     doTest(false, false);
   }
 
