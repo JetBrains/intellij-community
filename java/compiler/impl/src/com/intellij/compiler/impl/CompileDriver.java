@@ -66,7 +66,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -786,13 +785,6 @@ public class CompileDriver {
           });
         }
 
-        if (!context.getProgressIndicator().isCanceled() && context.getMessageCount(CompilerMessageCategory.ERROR) == 0) {
-          RefreshQueue.getInstance().refresh(true, true, new Runnable() {
-            public void run() {
-              CompilerDirectoryTimestamp.updateTimestamp(Arrays.asList(allOutputDirs));
-            }
-          }, allOutputDirs);
-        }
       }
 
       if (!onlyCheckStatus) {
