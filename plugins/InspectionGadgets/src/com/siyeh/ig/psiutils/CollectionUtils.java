@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -317,21 +317,16 @@ public class CollectionUtils{
         }
         // constant empty arrays are ignored.
         return !isConstantEmptyArray(field);
-
     }
 
-    public static String getInterfaceForClass(String name){
-        final int paramStart = name.indexOf((int) '<');
-        String baseName;
-        final String arg;
-        if(paramStart >= 0){
-            baseName = name.substring(0, paramStart);
-            baseName = baseName.trim();
-            arg = name.substring(paramStart);
-        } else{
+    public static String getInterfaceForClass(String name) {
+        final int parameterStart = name.indexOf((int) '<');
+        final String baseName;
+        if (parameterStart >= 0) {
+            baseName = name.substring(0, parameterStart).trim();
+        } else {
             baseName = name;
-            arg = "";
         }
-        return s_interfaceForCollection.get(baseName) + arg;
+        return s_interfaceForCollection.get(baseName);
     }
 }
