@@ -16,6 +16,7 @@ import com.intellij.refactoring.extractmethod.ExtractMethodDecorator;
 import com.intellij.refactoring.extractmethod.ExtractMethodDialog;
 import com.intellij.refactoring.extractmethod.ExtractMethodValidator;
 import com.intellij.refactoring.extractmethod.VariableData;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
@@ -37,8 +38,9 @@ public class PyExtractMethodUtil {
                                            final PsiElement statement1,
                                            final PsiElement statement2) {
     if (!fragment.getOutputVariables().isEmpty() && fragment.isReturnInstructonInside()) {
-      Messages.showErrorDialog(project, "Cannot extract method with non empty output variables and return instructions inside",
-                               RefactoringBundle.message("error.title"));
+      CommonRefactoringUtil.showErrorHint(project, editor,
+                                          "Cannot extract method with non empty output variables and return instructions inside",
+                                          RefactoringBundle.message("error.title"), "refactoring.extractMethod");
       return;
     }
 
@@ -128,8 +130,9 @@ public class PyExtractMethodUtil {
                                            final CodeFragment fragment,
                                            final PsiElement expression) {
     if (!fragment.getOutputVariables().isEmpty() && fragment.isReturnInstructonInside()){
-      Messages.showErrorDialog(project, "Cannot extract method with non empty output variables and return instructions inside",
-                               RefactoringBundle.message("error.title"));
+      CommonRefactoringUtil.showErrorHint(project, editor,
+                                          "Cannot extract method with non empty output variables and return instructions inside",
+                                          RefactoringBundle.message("error.title"), "refactoring.extractMethod");
       return;
     }
 
@@ -187,7 +190,7 @@ public class PyExtractMethodUtil {
     return callElement;
   }
 
-//  #Creates string for call
+  // Creates string for call
   private static String createCallArgsString(VariableData[] variableDatas) {
     final StringBuilder builder = new StringBuilder();
     for (VariableData data : variableDatas) {
@@ -221,8 +224,13 @@ public class PyExtractMethodUtil {
     if (data != null){
       anchor = data.first;
     }
-    final PsiElement statement = PyPsiUtils.getStatement(anchor);
-    statement.getParent().addBefore(generatedMethod, statement);
+    final PsiElement compoundStatement = PyPsiUtils.getCompoundStatement(anchor);
+    if (compoundStatement.getParent() instanceof PyFunction){
+      compoundStatement.getParent().addBefore(generatedMethod, compoundStatement);
+      return generatedMethod;
+    }
+    final PsiElement statement = PyPsiUtils.getStatement(compoundStatement, anchor);
+    compoundStatement.addBefore(generatedMethod, statement);
     return generatedMethod;
   }
 

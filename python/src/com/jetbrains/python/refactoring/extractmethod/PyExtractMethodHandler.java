@@ -6,6 +6,8 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
@@ -60,9 +62,17 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
         element2 = file.findElementAt(document.getLineEndOffset(lineNumber) - 1);
       }
     }
+    // Pass comments and whitespaces
+    while (element1 != null && StringUtil.isEmptyOrSpaces(element1.getText()) || element1 instanceof PsiComment){
+      element1 = PsiTreeUtil.nextLeaf(element1);
+    }
+    while (element2 != null && StringUtil.isEmptyOrSpaces(element2.getText()) || element2 instanceof PsiComment){
+      element2 = PsiTreeUtil.prevLeaf(element2);
+    }
     if (element1 == null || element2 == null) {
-      CommonRefactoringUtil.showErrorHint(project, editor, PyBundle.message("refactoring.introduce.selection.error"),
-                                          RefactoringBundle.message("extract.method.title"), "members.pull.up");
+      CommonRefactoringUtil.showErrorHint(project, editor,
+                                          PyBundle.message("refactoring.extract.method.error.cannot.perform.refactoring.using.selected.elements"),
+                                          RefactoringBundle.message("extract.method.title"), "refactoring.extractMethod");
       return;
     }
 
@@ -77,8 +87,8 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
         fragment = PyCodeFragmentUtil.createCodeFragment(owner, element1, element2);
       }
       catch (CannotCreateCodeFragmentException e) {
-        CommonRefactoringUtil
-          .showErrorHint(project, editor, e.getMessage(), RefactoringBundle.message("extract.method.title"), "refactoring.extractMethod");
+        CommonRefactoringUtil.showErrorHint(project, editor, e.getMessage(),
+                                            RefactoringBundle.message("extract.method.title"), "refactoring.extractMethod");
         return;
       }
       PyExtractMethodUtil.extractFromStatements(project, editor, fragment, statements[0], statements[1]);
@@ -96,14 +106,15 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
         fragment = PyCodeFragmentUtil.createCodeFragment(owner, element1, element2);
       }
       catch (CannotCreateCodeFragmentException e) {
-        CommonRefactoringUtil
-          .showErrorHint(project, editor, e.getMessage(), RefactoringBundle.message("extract.method.title"), "refactoring.extractMethod");
+        CommonRefactoringUtil.showErrorHint(project, editor, e.getMessage(),
+                                            RefactoringBundle.message("extract.method.title"), "refactoring.extractMethod");
         return;
       }
       PyExtractMethodUtil.extractFromExpression(project, editor, fragment, expression);
     }
 
-    CommonRefactoringUtil.showErrorHint(project, editor, PyBundle.message("refactoring.extract.method.error.cannot.perform.refactoring.using.selected.elements"),
+    CommonRefactoringUtil.showErrorHint(project, editor,
+                                        PyBundle.message("refactoring.extract.method.error.cannot.perform.refactoring.using.selected.elements"),
                                         RefactoringBundle.message("extract.method.title"), "refactoring.extractMethod");
   }
 

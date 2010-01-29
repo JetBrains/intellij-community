@@ -129,7 +129,7 @@ public class PyPsiUtils {
   }
 
   @Nullable
-  public static PsiElement getStatement(final PyElement compStatement, PsiElement element) {
+  public static PsiElement getStatement(final PsiElement compStatement, PsiElement element) {
     PsiElement parent = element.getParent();
     while (parent != null && parent != compStatement){
       element = parent;
