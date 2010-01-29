@@ -23,6 +23,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -206,10 +207,15 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
       public void run() {
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           public void run() {
-            for (Pair<VirtualFile, SvnBranchConfigurationNew> pair : whatToInit) {
-              final BranchesPreloader branchesPreloader = new BranchesPreloader(myProject, myBunch, pair.getFirst());
-              branchesPreloader.setAll(true);
-              branchesPreloader.loadImpl(null, pair.getSecond());
+            try {
+              for (Pair<VirtualFile, SvnBranchConfigurationNew> pair : whatToInit) {
+                final BranchesPreloader branchesPreloader = new BranchesPreloader(myProject, myBunch, pair.getFirst());
+                branchesPreloader.setAll(true);
+                branchesPreloader.loadImpl(null, pair.getSecond());
+              }
+            }
+            catch (ProcessCanceledException e) {
+              //
             }
           }
         });
