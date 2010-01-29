@@ -326,7 +326,7 @@ public class ResolveImportUtil {
       if (source_entries_missing) {
         // fallback for a case without any source entries: use project root
         VirtualFile project_root = module.getProject().getBaseDir();
-        if (!visitor.visitRoot(project_root)) return;
+        if (project_root != null && !visitor.visitRoot(project_root)) return;
       }
       // else look in SDK roots
       rootManager.processOrder(new SdkRootVisitingPolicy(visitor), null);
