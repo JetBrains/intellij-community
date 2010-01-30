@@ -472,7 +472,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       }
       boolean continueChain = false;
       for (SequentialUpdatesContext context : myContextInfo.values()) {
-        continueChain |= context != null;
+        continueChain |= (context != null) && (context.shouldFail());
       }
       final boolean continueChainFinal = continueChain;
 
@@ -563,7 +563,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     private void gatherContextInterruptedMessages() {
       for (Map.Entry<AbstractVcs, SequentialUpdatesContext> entry : myContextInfo.entrySet()) {
         final SequentialUpdatesContext context = entry.getValue();
-        if (context == null) continue;
+        if ((context == null) || (! context.shouldFail())) continue;
         final VcsException exception = new VcsException(context.getMessageWhenInterruptedBeforeStart());
         gatherExceptions(entry.getKey(), Collections.singletonList(exception));
       }

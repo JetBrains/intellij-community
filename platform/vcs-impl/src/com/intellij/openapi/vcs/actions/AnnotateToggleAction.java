@@ -64,18 +64,20 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.actions.AnnotateToggleAction");
   protected static final Key<Collection<ActiveAnnotationGutter>> KEY_IN_EDITOR = Key.create("Annotations");
   private final static Color[] BG_COLORS = {
-    new Color(255, 238, 187),
-    new Color(218, 227, 227),
-    new Color(255, 217, 179),
-    new Color(230, 255, 222),
-    new Color(212, 207, 207),
-    new Color(255, 231, 255),
-    new Color(255, 111, 111),
-    new Color(128, 254, 254),
-    new Color(126, 148, 182),
-    new Color(207, 162, 251),
-    new Color(172, 156, 233),
-    new Color(51, 204, 0)};
+    new Color(222, 241, 229),
+    new Color(234, 255, 226),
+    new Color(208, 229, 229),
+    new Color(255, 226, 199),
+    new Color(227, 226, 223),
+    new Color(255, 213, 203),
+    new Color(220, 204, 236),
+    new Color(255, 191, 195),
+    new Color(243, 223, 243),
+    new Color(217, 228, 249),
+    new Color(255, 251, 207),
+    new Color(217, 222, 229),
+    new Color(255, 204, 238),
+    new Color(236, 236, 236)};
 
   public void update(AnActionEvent e) {
     e.getPresentation().setEnabled(isEnabled(VcsContextFactory.SERVICE.getInstance().createContextOn(e)));
@@ -212,7 +214,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     final HighlightAnnotationsActions highlighting = new HighlightAnnotationsActions(project, file, fileAnnotation, editorGutterComponentEx);
     final List<AnnotationFieldGutter> gutters = new ArrayList<AnnotationFieldGutter>();
     final AnnotationSourceSwitcher switcher = fileAnnotation.getAnnotationSourceSwitcher();
-    final MyAnnotationPresentation presentation = new MyAnnotationPresentation(highlighting, switcher, editorGutterComponentEx);
+    final MyAnnotationPresentation presentation = new MyAnnotationPresentation(highlighting, switcher, editorGutterComponentEx, gutters);
 
     if (switcher != null) {
 
@@ -370,19 +372,23 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     private final HighlightAnnotationsActions myHighlighting;
     @Nullable
     private final AnnotationSourceSwitcher mySwitcher;
+    private final List<AnnotationFieldGutter> myGutters;
     private final List<AnAction> myActions;
     private MySwitchAnnotationSourceAction mySwitchAction;
 
     public MyAnnotationPresentation(@NotNull final HighlightAnnotationsActions highlighting, @Nullable final AnnotationSourceSwitcher switcher,
-                                    final EditorGutterComponentEx gutter) {
+                                    final EditorGutterComponentEx gutter,
+                                    List<AnnotationFieldGutter> gutters) {
       myHighlighting = highlighting;
       mySwitcher = switcher;
+      myGutters = gutters;
 
       myActions = new ArrayList<AnAction>(myHighlighting.getList());
       if (mySwitcher != null) {
         mySwitchAction = new MySwitchAnnotationSourceAction(mySwitcher, gutter);
         myActions.add(mySwitchAction);
       }
+      myActions.add(new ShowHideColorsAction(myGutters, gutter));
     }
 
     public EditorFontType getFontType(final int line) {

@@ -60,4 +60,13 @@ public class TestUtil {
     }
     return null;
   }
+
+  public static boolean isTestMethodOrConfig(PsiMethod psiMethod) {
+    for (TestFramework framework : Extensions.getExtensions(TEST_FRAMEWORK)) {
+      if (framework.isTestMethodOrConfig(psiMethod)) {
+        return true;
+      }
+    }
+    return false;
+  }
 }

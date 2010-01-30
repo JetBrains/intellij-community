@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
-import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -41,6 +40,7 @@ import org.jetbrains.plugins.groovy.lang.completion.handlers.AfterNewClassInsert
 import org.jetbrains.plugins.groovy.lang.completion.handlers.ArrayInsertHandler;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -49,10 +49,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
-import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipWhitespaces;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.patterns.PlatformPatterns.psiElement;
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipWhitespaces;
 
 /**
  * @author ilyas
@@ -66,7 +68,8 @@ public class GroovyCompletionContributor extends CompletionContributor {
   private static final ElementPattern<PsiElement> AFTER_DOT = psiElement().afterLeaf(".").withParent(GrReferenceExpression.class);
 
   private static final String[] MODIFIERS =
-    new String[]{"private", "public", "protected", "transient", "abstract", "native", "volatile", "strictfp", "def", "final", "synchronized", "static"};
+    new String[]{GrModifier.PRIVATE, GrModifier.PUBLIC, GrModifier.PROTECTED, GrModifier.TRANSIENT, GrModifier.ABSTRACT, GrModifier.NATIVE,
+      GrModifier.VOLATILE, GrModifier.STRICTFP, GrModifier.DEF, GrModifier.FINAL, GrModifier.SYNCHRONIZED, GrModifier.STATIC};
   private static final ElementPattern<PsiElement> TYPE_IN_VARIABLE_DECLARATION_AFTER_MODIFIER = PlatformPatterns
     .or(psiElement(PsiElement.class).withParent(GrVariable.class).afterLeaf(MODIFIERS),
         psiElement(PsiElement.class).withParent(GrParameter.class));

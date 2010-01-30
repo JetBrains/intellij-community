@@ -52,11 +52,11 @@ public class CvsConnectionUtil {
     final ConnectionPoolI pool = SshConnectionPool.getInstance();
     final SshAuthentication authentication;
     if (sshConfiguration.USE_PPK) {
-      authentication = new SshPublicKeyAuthentication(new File(sshConfiguration.PATH_TO_PPK),
-            sshPasswordProvider.getPPKPasswordForCvsRoot(settings.getCvsRootAsString()), settings.USER);
+      authentication = new SshPublicKeyAuthentication(new File(sshConfiguration.PATH_TO_PPK), settings.USER, sshPasswordProvider,
+                                                      settings.getCvsRootAsString());
     }
     else {
-      authentication = new SshPasswordAuthentication(settings.USER, sshPasswordProvider.getPasswordForCvsRoot(settings.getCvsRootAsString()));
+      authentication = new SshPasswordAuthentication(settings.USER, sshPasswordProvider, settings.getCvsRootAsString());
     }
     return pool.getConnection(settings.REPOSITORY, connectionSettings, authentication);
   }

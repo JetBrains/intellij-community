@@ -5,5 +5,8 @@ class Boo{}
 -----
 [Groovy script]
   [Class definition : Stub]
+    [Modifiers]
+    [Modifiers]
     [Field : foo]
   [Class definition : Boo]
+    [Modifiers]

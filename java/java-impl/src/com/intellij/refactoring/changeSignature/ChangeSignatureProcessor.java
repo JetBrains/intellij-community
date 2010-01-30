@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -182,11 +183,16 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
           result.add(new UsageInfo(ref.getElement()));
         }
         else if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()) {
-          DefaultConstructorImplicitUsageInfo implicitUsageInfo = new DefaultConstructorImplicitUsageInfo((PsiMethod)element, method);
+          DefaultConstructorImplicitUsageInfo implicitUsageInfo = new DefaultConstructorImplicitUsageInfo((PsiMethod)element,
+                                                                                                          ((PsiMethod)element).getContainingClass(), method);
           result.add(implicitUsageInfo);
         }
         else if(element instanceof PsiClass) {
-          result.add(new NoConstructorClassUsageInfo((PsiClass)element));
+          LOG.assertTrue(method.isConstructor());
+          final PsiClass psiClass = (PsiClass)element;
+          if (shouldPropagateToNonPhysicalMethod(method, result, psiClass, myPropagateParametersMethods)) continue;
+          if (shouldPropagateToNonPhysicalMethod(method, result, psiClass, myPropagateExceptionsMethods)) continue;
+          result.add(new NoConstructorClassUsageInfo(psiClass));
         }
         else if (ref instanceof PsiCallReference) {
           result.add(new CallReferenceUsageInfo((PsiCallReference) ref));
@@ -221,6 +227,16 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     }
 
     return overridingMethods;
+  }
+
+  private static boolean shouldPropagateToNonPhysicalMethod(PsiMethod method, ArrayList<UsageInfo> result, PsiClass containingClass, final Set<PsiMethod> propagateMethods) {
+    for (PsiMethod psiMethod : propagateMethods) {
+      if (!psiMethod.isPhysical() && Comparing.strEqual(psiMethod.getName(), containingClass.getName())) {
+        result.add(new DefaultConstructorImplicitUsageInfo(psiMethod, containingClass, method));
+        return true;
+      }
+    }
+    return false;
   }
 
   private void findUsagesInCallers(final ArrayList<UsageInfo> usages) {
@@ -273,7 +289,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
           if (!newName.equals(parameter.getName())) {
             JavaUnresolvableLocalCollisionDetector.visitLocalsCollisions(parameter, newName, method.getBody(), null, new JavaUnresolvableLocalCollisionDetector.CollidingVariableVisitor() {
               public void visitCollidingElement(final PsiVariable collidingVariable) {
-                if (!(collidingVariable instanceof PsiField) && !deletedOrRenamedParameters.contains(collidingVariable)) {
+                if (!deletedOrRenamedParameters.contains(collidingVariable)) {
                   result.add(new RenamedParameterCollidesWithLocalUsageInfo(parameter, collidingVariable, method));
                 }
               }
@@ -284,7 +300,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       else {
         JavaUnresolvableLocalCollisionDetector.visitLocalsCollisions(method, newName, method.getBody(), null, new JavaUnresolvableLocalCollisionDetector.CollidingVariableVisitor() {
           public void visitCollidingElement(PsiVariable collidingVariable) {
-            if (!(collidingVariable instanceof PsiField) && !deletedOrRenamedParameters.contains(collidingVariable)) {
+            if (!deletedOrRenamedParameters.contains(collidingVariable)) {
               result.add(new NewParameterCollidesWithLocalUsageInfo(collidingVariable, collidingVariable, method));
             }
           }
@@ -512,7 +528,17 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
 
         if (usage instanceof DefaultConstructorImplicitUsageInfo) {
           final DefaultConstructorImplicitUsageInfo defConstructorUsage = (DefaultConstructorImplicitUsageInfo)usage;
-          addSuperCall(defConstructorUsage.getConstructor(), defConstructorUsage.getBaseConstructor(),usages);
+          PsiMethod constructor = defConstructorUsage.getConstructor();
+          if (!constructor.isPhysical()) {
+            final boolean toPropagate = myPropagateParametersMethods.remove(constructor);
+            final PsiClass containingClass = defConstructorUsage.getContainingClass();
+            constructor = (PsiMethod)containingClass.add(constructor);
+            PsiUtil.setModifierProperty(constructor, VisibilityUtil.getVisibilityModifier(containingClass.getModifierList()), true);
+            if (toPropagate) {
+              myPropagateParametersMethods.add(constructor);
+            }
+          }
+          addSuperCall(constructor, defConstructorUsage.getBaseConstructor(),usages);
         }
         else if (usage instanceof NoConstructorClassUsageInfo) {
           addDefaultConstructor(((NoConstructorClassUsageInfo)usage).getPsiClass(),usages);

@@ -81,6 +81,10 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
       return "Merge (" + mergeString + ") wasn't started, only update (-r " + myUpdateTagName + ") was performed";
     }
 
+    public boolean shouldFail() {
+      return true;
+    }
+
     public UpdateSettingsOnCvsConfiguration getConfiguration() {
       return myConfiguration;
     }

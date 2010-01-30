@@ -18,7 +18,6 @@ package com.intellij.refactoring.introduceVariable;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiVariable;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.JavaUnresolvableLocalCollisionDetector;
@@ -49,7 +48,6 @@ public class InputValidator implements IntroduceVariableBase.Validator {
     final HashSet<PsiVariable> reportedVariables = new HashSet<PsiVariable>();
     JavaUnresolvableLocalCollisionDetector.CollidingVariableVisitor visitor = new JavaUnresolvableLocalCollisionDetector.CollidingVariableVisitor() {
       public void visitCollidingElement(PsiVariable collidingVariable) {
-        if (collidingVariable instanceof PsiField) return;
         if (!reportedVariables.contains(collidingVariable)) {
           reportedVariables.add(collidingVariable);
           String message = RefactoringBundle.message("introduced.variable.will.conflict.with.0", RefactoringUIUtil.getDescription(collidingVariable, true));

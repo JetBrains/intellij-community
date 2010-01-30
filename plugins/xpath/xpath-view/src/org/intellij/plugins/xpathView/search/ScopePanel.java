@@ -16,12 +16,14 @@
 package org.intellij.plugins.xpathView.search;
 
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +37,7 @@ import java.awt.event.ItemListener;
 import java.util.Arrays;
 import java.util.Vector;
 
-public class ScopePanel extends JPanel {
+public class ScopePanel extends JPanel implements Disposable{
 
     @SuppressWarnings({ "FieldCanBeLocal", "UnusedDeclaration" })
     private JPanel myRoot;
@@ -174,4 +176,8 @@ public class ScopePanel extends JPanel {
                 getModuleName(),
                 ((ScopeChooserCombo)myCustomScopeSelection).getSelectedScopeName());
     }
+
+  public void dispose() {
+    Disposer.dispose(myCustomScopeSelection);
+  }
 }

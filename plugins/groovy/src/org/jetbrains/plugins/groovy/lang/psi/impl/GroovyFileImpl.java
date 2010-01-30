@@ -31,6 +31,7 @@ import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -51,6 +52,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFileStub;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
@@ -82,6 +84,10 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   @NotNull
   public String getPackageName() {
+    final StubElement stub = getStub();
+    if (stub instanceof GrFileStub) {
+      return ((GrFileStub)stub).getPackageName().toString();
+    }
     GrPackageDefinition packageDef = findChildByClass(GrPackageDefinition.class);
     if (packageDef != null) {
       return packageDef.getPackageName();
@@ -371,6 +377,10 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   }
 
   public boolean isScript() {
+    final StubElement stub = getStub();
+    if (stub instanceof GrFileStub) {
+      return ((GrFileStub)stub).isScript();
+    }
     GrTopStatement[] top = findChildrenByClass(GrTopStatement.class);
     for (GrTopStatement st : top) {
       if (!(st instanceof GrTypeDefinition || st instanceof GrImportStatement || st instanceof GrPackageDefinition)) return true;

@@ -199,4 +199,10 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testOverlyLongMethodInspection() throws Exception {
     doTest(new GroovyOverlyLongMethodInspection());
   }
+
+  public void testStringAndGStringUpperBound() throws Exception {doTest();}
+
+  public void testWithMethod() throws Exception {doTest();}
+  
+  public void testArrayLikeAccess() throws Exception {doTest();}
 }

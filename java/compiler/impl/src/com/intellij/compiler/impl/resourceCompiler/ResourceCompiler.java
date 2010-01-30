@@ -78,7 +78,6 @@ public class ResourceCompiler implements TranslatingCompiler {
     final Map<String, Collection<OutputItem>> processed = new HashMap<String, Collection<OutputItem>>();
     final LinkedList<CopyCommand> copyCommands = new LinkedList<CopyCommand>();
     final Module singleChunkModule = moduleChunk.getNodes().size() == 1? moduleChunk.getNodes().iterator().next() : null;
-    final long start = System.currentTimeMillis();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
@@ -123,9 +122,6 @@ public class ResourceCompiler implements TranslatingCompiler {
 
     final Set<String> rootsToRefresh = new HashSet<String>();
     // do actual copy outside of read action to reduce the time the application is locked on it
-    int idx = 0;
-    final int total = copyCommands.size();
-    CopyCommand.ourCopyingTime = 0L;
     while (!copyCommands.isEmpty()) {
       final CopyCommand command = copyCommands.removeFirst();
       if (context.getProgressIndicator().isCanceled()) {
@@ -146,10 +142,6 @@ public class ResourceCompiler implements TranslatingCompiler {
         );
       }
     }
-    final long stop = System.currentTimeMillis();
-
-    CompilerUtil.logDuration("Copying resources TOTAL", stop - start);
-    CompilerUtil.logDuration("\tCopying resources (actual copying)", CopyCommand.ourCopyingTime);
 
     if (!rootsToRefresh.isEmpty()) {
       final List<File> dirs = new ArrayList<File>();
@@ -182,7 +174,6 @@ public class ResourceCompiler implements TranslatingCompiler {
     private final String myFromPath;
     private final String myToPath;
     private final VirtualFile mySourceFile;
-    public static long ourCopyingTime = 0L;
 
     private CopyCommand(String outputPath, String fromPath, String toPath, VirtualFile sourceFile) {
       myOutputPath = outputPath;
@@ -196,9 +187,7 @@ public class ResourceCompiler implements TranslatingCompiler {
         LOG.debug("Copying " + myFromPath + " to " + myToPath);
       }
       final File targetFile = new File(myToPath);
-      final long start = System.currentTimeMillis();
       FileUtil.copyContent(new File(myFromPath), targetFile);
-      ourCopyingTime += (System.currentTimeMillis() - start);
       return new MyOutputItem(myToPath, mySourceFile);
     }
 

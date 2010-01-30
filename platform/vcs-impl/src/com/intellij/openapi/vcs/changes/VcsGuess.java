@@ -45,7 +45,7 @@ public class VcsGuess {
       return null;
     }
     if (myExcludedFileIndex.isInContent(file) || isFileInBaseDir(file) ||
-        myVcsManager.hasExplicitMapping(file)) {
+        myVcsManager.hasExplicitMapping(file) || file.equals(myProject.getBaseDir())) {
       if (myExcludedFileIndex.isExcludedFile(file)) {
         return null;
       }

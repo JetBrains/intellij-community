@@ -6,6 +6,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.psi.PsiCall;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.usageView.UsageInfo;
@@ -165,7 +166,7 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     doTest(false, false);
   }
 
-  public void _testOuterClassFieldAccess() throws Exception {
+  public void testOuterClassFieldAccess() throws Exception {
     doTest(false, false);
   }
 
@@ -347,9 +348,12 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
   }
 
   private void doTestPreprocessUsages(final String expectedMessage) throws Exception {
-    final InlineToAnonymousClassProcessor processor = prepareProcessor();
-    String message = processor.getPreprocessUsagesMessage(processor.findUsages());
-    assertEquals(expectedMessage, message);
+    configureByFile("/refactoring/inlineToAnonymousClass/" + getTestName(false) + ".java");
+    PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase
+      .ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
+    assertInstanceOf(element, PsiClass.class);
+    final PsiClass psiClass = (PsiClass)element;
+    assertEquals(expectedMessage, InlineToAnonymousClassHandler.getCannotInlineMessage(psiClass));
   }
 
   private InlineToAnonymousClassProcessor prepareProcessor() throws Exception {
@@ -376,5 +380,53 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     MultiMap<PsiElement, String> conflicts = processor.getConflicts(usages);
     assertEquals(0, conflicts.size());
     processor.run();
+  }
+
+  public void testCanBeInvokedOnReference() throws Exception {
+    doTestCanBeInvokedOnReference(true);
+  }
+
+  public void testCanBeInvokedOnReference1() throws Exception {
+    doTestCanBeInvokedOnReference(true);
+  }
+
+  public void testCanBeInvokedOnReferenceSubstitution() throws Exception {
+    doTestCanBeInvokedOnReference(true);
+  }
+
+  public void testCanBeInvokedOnReferenceSubstitution1() throws Exception {
+    doTestCanBeInvokedOnReference(true);
+  }
+
+  public void testCanBeInvokedOnReferenceVarargs() throws Exception {
+    doTestCanBeInvokedOnReference(true);
+  }
+
+  public void testCantBeInvokedOnReference() throws Exception {
+    doTestCanBeInvokedOnReference(false);
+  }
+
+  public void testCantBeInvokedOnReference1() throws Exception {
+    doTestCanBeInvokedOnReference(false);
+  }
+
+  public void testCantBeInvokedOnReferenceReturnStatement() throws Exception {
+    doTestCanBeInvokedOnReference(false);
+  }
+
+  public void testCanBeInvokedOnReferenceSyncStatement() throws Exception {
+    doTestCanBeInvokedOnReference(true);
+  }
+
+  private void doTestCanBeInvokedOnReference(boolean canBeInvokedOnReference) throws Exception {
+    configureByFile("/refactoring/inlineToAnonymousClass/" + getTestName(false) + ".java");
+    PsiElement element = TargetElementUtilBase
+      .findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
+    PsiCall callToInline = InlineToAnonymousClassHandler.findCallToInline(myEditor);
+    PsiClass classToInline = (PsiClass) element;
+    assertEquals(null, InlineToAnonymousClassHandler.getCannotInlineMessage(classToInline));
+    final PsiClassType superType = InlineToAnonymousClassProcessor.getSuperType(classToInline);
+    assertTrue(superType != null);
+    assertEquals(canBeInvokedOnReference, InlineToAnonymousClassHandler.canBeInvokedOnReference(callToInline, superType));
   }
 }

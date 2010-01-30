@@ -66,4 +66,8 @@ public class JUnitTestFramework implements TestFramework {
     }
     return inClass;
   }
+
+  public boolean isTestMethodOrConfig(PsiMethod psiMethod) {
+    return JUnitUtil.isTestMethodOrConfig(psiMethod);
+  }
 }

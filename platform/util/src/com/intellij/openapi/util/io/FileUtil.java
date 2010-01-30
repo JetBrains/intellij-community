@@ -641,6 +641,10 @@ public class FileUtil {
     return aFileName.replace('\\', '/');
   }
 
+  public static String nameToCompare(@NonNls @NotNull String name) {
+    return (SystemInfo.isFileSystemCaseSensitive ? name : name.toLowerCase()).replace('\\', '/');
+  }
+
   public static String unquote(String urlString) {
     urlString = urlString.replace('/', File.separatorChar);
     return URLUtil.unescapePercentSequences(urlString);

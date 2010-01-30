@@ -64,7 +64,7 @@ public class ToggleDumbModeAction extends AnAction implements DumbAware {
         public void canceled() {
         }
       };
-      DumbServiceImpl.getInstance(project).queueCacheUpdate(Arrays.asList(updater));
+      DumbServiceImpl.getInstance(project).queueCacheUpdateInDumbMode(Arrays.asList(updater));
     }
   }
 

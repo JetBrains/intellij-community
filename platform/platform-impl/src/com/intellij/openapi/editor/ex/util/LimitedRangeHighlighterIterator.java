@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.ex.util;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.tree.IElementType;
@@ -60,5 +61,9 @@ public class LimitedRangeHighlighterIterator implements HighlighterIterator {
 
   public boolean atEnd() {
     return myOriginal.atEnd() || myOriginal.getStart() >= myEndOffset || myOriginal.getEnd() <= myStartOffset;
+  }
+
+  public Document getDocument() {
+    return myOriginal.getDocument();
   }
 }

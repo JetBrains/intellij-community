@@ -70,6 +70,7 @@ public class RangeHighlighterImpl implements RangeHighlighterEx {
 
   public void setTextAttributes(final TextAttributes textAttributes) {
     myTextAttributes = textAttributes;
+    fireChanged();
   }
 
   public int getLayer() {
@@ -128,6 +129,7 @@ public class RangeHighlighterImpl implements RangeHighlighterEx {
 
   public void setErrorStripeTooltip(Object tooltipObject) {
     myErrorStripeTooltip = tooltipObject;
+    fireChanged();
   }
 
   public boolean isThinErrorStripeMark() {
@@ -136,6 +138,7 @@ public class RangeHighlighterImpl implements RangeHighlighterEx {
 
   public void setThinErrorStripeMark(boolean value) {
     myErrorStripeMarkIsThin = value;
+    fireChanged();
   }
 
   public Color getLineSeparatorColor() {
@@ -158,6 +161,7 @@ public class RangeHighlighterImpl implements RangeHighlighterEx {
 
   public void setEditorFilter(@NotNull MarkupEditorFilter filter) {
     myFilter = filter;
+    fireChanged();
   }
 
   @NotNull
@@ -171,6 +175,7 @@ public class RangeHighlighterImpl implements RangeHighlighterEx {
 
   public void setAfterEndOfLine(boolean afterEndOfLine) {
     isAfterEndOfLine = afterEndOfLine;
+    fireChanged();
   }
 
   private void fireChanged() {

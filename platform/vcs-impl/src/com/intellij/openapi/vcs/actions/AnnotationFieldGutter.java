@@ -43,6 +43,7 @@ class AnnotationFieldGutter implements ActiveAnnotationGutter {
   private final AnnotationListener myListener;
   private final boolean myIsGutterAction;
   private Map<String, Color> myColorScheme;
+  private boolean myShowBg = true;
 
   AnnotationFieldGutter(FileAnnotation annotation, Editor editor, LineAnnotationAspect aspect, final TextAnnotationPresentation presentation) {
     myAnnotation = annotation;
@@ -109,8 +110,9 @@ class AnnotationFieldGutter implements ActiveAnnotationGutter {
 
   @Nullable
   public Color getBgColor(int line, Editor editor) {
+    if (myColorScheme == null || !myShowBg) return null;
     final String s = getLineText(line, editor);
-    if (myColorScheme == null || s == null) return null;
+    if (s == null) return null;
     final Color bg = myColorScheme.get(s);
     return bg == null ? findBgColor(s) : bg;
   }
@@ -129,5 +131,9 @@ class AnnotationFieldGutter implements ActiveAnnotationGutter {
 
   public void setAspectValueToBgColorMap(Map<String, Color> colorScheme) {
     myColorScheme = colorScheme;
-  } 
+  }
+
+  public void setShowBg(boolean show) {
+    myShowBg = show;
+  }
 }

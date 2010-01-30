@@ -67,6 +67,13 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
   }
 
   private void onStateChangedToSuccess(final AuthenticationRequest obj) {
+    myVcs.invokeRefreshSvnRoots(false);
+    /*ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        myVcs.invokeRefreshSvnRoots(false);
+      }
+    });*/
+
     /*final List<SVNURL> outdatedRequests = new LinkedList<SVNURL>();
     final Collection<SVNURL> keys = getAllCurrentKeys();
     for (SVNURL key : keys) {
@@ -130,6 +137,12 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
   @Override
   protected String getNotificationContent(AuthenticationRequest obj) {
     return "<a href=\"\">Click to fix.</a> Not logged to Subversion '" + obj.getRealm() + "' (" + obj.getUrl().toDecodedString() + ")";
+  }
+
+  @NotNull
+  @Override
+  protected String getToString(AuthenticationRequest obj) {
+    return "Click to fix. Not logged to Subversion '" + obj.getRealm() + "' (" + obj.getUrl().toDecodedString() + ")";
   }
 
   public static class AuthenticationRequest {

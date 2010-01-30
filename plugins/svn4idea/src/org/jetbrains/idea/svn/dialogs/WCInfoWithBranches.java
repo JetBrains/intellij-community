@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.idea.svn.NestedCopyType;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -30,8 +31,9 @@ public class WCInfoWithBranches extends WCInfo {
   public WCInfoWithBranches(final String path, final SVNURL url, final WorkingCopyFormat format, final String repositoryRoot, final boolean isWcRoot,
                             final List<Branch> branches,
                             final VirtualFile root,
-                            final String trunkToot) {
-    super(path, url, format, repositoryRoot, isWcRoot);
+                            final String trunkToot,
+                            final NestedCopyType type) {
+    super(path, url, format, repositoryRoot, isWcRoot, type);
     myBranches = branches;
     myRoot = root;
     myTrunkRoot = trunkToot;

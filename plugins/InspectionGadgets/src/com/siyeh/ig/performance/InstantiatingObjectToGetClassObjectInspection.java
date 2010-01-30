@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,22 +29,26 @@ import org.jetbrains.annotations.NotNull;
 public class InstantiatingObjectToGetClassObjectInspection
         extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "instantiating.object.to.get.class.object.display.name");
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "instantiating.object.to.get.class.object.problem.descriptor");
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new InstantiatingObjectToGetClassObjectFix();
     }
@@ -58,6 +62,7 @@ public class InstantiatingObjectToGetClassObjectInspection
                     "instantiating.object.to.get.class.object.replace.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiMethodCallExpression expression =
@@ -70,15 +75,27 @@ public class InstantiatingObjectToGetClassObjectInspection
                 return;
             }
             final PsiType type = qualifier.getType();
-            if (type == null || !(type instanceof PsiClassType)) {
+            if (type == null) {
                 return;
             }
-            final PsiClassType classType = (PsiClassType)type;
-            final String text = classType.getClassName();
-            replaceExpression(expression, text + ".class");
+            replaceExpression(expression,
+                    getTypeText(type, new StringBuilder()) + ".class");
+        }
+
+        private static StringBuilder getTypeText(PsiType type,
+                                                 StringBuilder text) {
+            if (type instanceof PsiArrayType) {
+                text.append("[]");
+                final PsiArrayType arrayType = (PsiArrayType)type;
+                getTypeText(arrayType.getComponentType(), text);
+            } else {
+                text.insert(0, type.getCanonicalText());
+            }
+            return text;
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new InstantiatingObjectToGetClassObjectVisitor();
     }

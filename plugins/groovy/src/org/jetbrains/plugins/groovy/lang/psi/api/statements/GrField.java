@@ -30,7 +30,7 @@ import java.util.Set;
  * @author ven
  */
 public interface GrField extends GrVariable, GrMember, PsiField, GrTopLevelDefintion, StubBasedPsiElement<GrFieldStub>, GrDocCommentOwner {
-  public static final GrField[] EMPTY_ARRAY = new GrField[0];
+  GrField[] EMPTY_ARRAY = new GrField[0];
 
   boolean isProperty();
 
@@ -41,5 +41,5 @@ public interface GrField extends GrVariable, GrMember, PsiField, GrTopLevelDefin
   GrAccessorMethod[] getGetters();
 
   @NotNull
-  public Set<String>[] getNamedParametersArray();
+  Set<String>[] getNamedParametersArray();
 }

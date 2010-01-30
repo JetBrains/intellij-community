@@ -66,14 +66,16 @@ public class LossyEncodingInspection extends BaseJavaLocalInspectionTool {
     if (virtualFile == null) return null;
     String text = file.getText();
     Charset charset = LoadTextUtil.extractCharsetFromFileContent(file.getProject(), virtualFile, text);
-    charset = Native2AsciiCharset.nativeToBaseCharset(charset);
+
+    // no sense in checking transparently decoded file: all characters there are already safely encoded
+    if (charset instanceof Native2AsciiCharset) return null;
 
     int errorCount = 0;
     int start = -1;
     List<ProblemDescriptor> descriptors = new SmartList<ProblemDescriptor>();
-    for (int i = 0; i < text.length(); i++) {
-      char c = text.charAt(i);
-      if (isRepresentable(c, charset)) {
+    for (int i = 0; i <= text.length(); i++) {
+      char c = i == text.length() ? 0 : text.charAt(i);
+      if (i == text.length() || isRepresentable(c, charset)) {
         if (start != -1) {
           ProblemDescriptor descriptor = manager.createProblemDescriptor(file, new TextRange(start, i), InspectionsBundle.message(
             "unsupported.character.for.the.charset", charset), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
@@ -89,11 +91,6 @@ public class LossyEncodingInspection extends BaseJavaLocalInspectionTool {
           start = i;
         }
       }
-    }
-    if (start != -1) {
-      ProblemDescriptor descriptor = manager.createProblemDescriptor(file, new TextRange(start, text.length()), InspectionsBundle.message(
-        "unsupported.character.for.the.charset", charset), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
-      descriptors.add(descriptor);
     }
 
     return descriptors.toArray(new ProblemDescriptor[descriptors.size()]);
