@@ -287,5 +287,26 @@ class Foo {
     assertEmpty make()
   }
 
+  public void testRecompileDependentClass() throws Exception {
+    def cloud = myFixture.addFileToProject("Cloud.groovy", """
+class Cloud {
+  def accessFooProperty(Foo c) {
+    c.prop = 2
+  }
+}
+""")
+    myFixture.addFileToProject "Foo.groovy", """
+class Foo {
+  def withGooParameter(Goo x) {}
+}"""
+    def goo = myFixture.addFileToProject("Goo.groovy", "class Goo {}")
+
+    assertEmpty make()
+
+    touch(cloud.virtualFile)
+    touch(goo.virtualFile)
+    assertEmpty make()
+  }
+
 
 }
