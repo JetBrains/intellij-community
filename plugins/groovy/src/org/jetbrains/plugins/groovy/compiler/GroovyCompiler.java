@@ -35,7 +35,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.containers.FactoryMap;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -43,7 +42,9 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyFileTypeLoader;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.util.*;
@@ -75,14 +76,13 @@ public class GroovyCompiler extends GroovyCompilerBase {
       context.getProgressIndicator().checkCanceled();
       context.getProgressIndicator().setText("Enumerating Groovy classes...");
 
-      final Map<PsiClass, VirtualFile> moduleClasses = new THashMap<PsiClass, VirtualFile>();
-      int groovyFiles = enumerateGroovyClasses(module, moduleClasses);
+      Set<VirtualFile> groovyFiles = enumerateGroovyFiles(module);
 
-      if (toCompile.size() < groovyFiles) {
+      if (toCompile.size() < groovyFiles.size()) {
         context.getProgressIndicator().checkCanceled();
         context.getProgressIndicator().setText("Processing Groovy dependencies...");
 
-        addIntermediateGroovyClasses(allToCompile, moduleClasses);
+        addIntermediateGroovyClasses(allToCompile, groovyFiles);
       }
     }
 
@@ -92,81 +92,46 @@ public class GroovyCompiler extends GroovyCompilerBase {
     runGroovycCompiler(context, module, new ArrayList<VirtualFile>(allToCompile), false, getMainOutput(context, module, tests), sink, tests);
   }
 
-  private void addIntermediateGroovyClasses(Set<VirtualFile> allToCompile, final Map<PsiClass, VirtualFile> moduleClasses) {
-    final Set<PsiClass> initialClasses = new THashSet<PsiClass>();
-    for (VirtualFile file : allToCompile) {
-      initialClasses.addAll(getAllClasses(file));
-    }
+  private void addIntermediateGroovyClasses(Set<VirtualFile> allToCompile, final Set<VirtualFile> groovyFiles) {
+    final Set<VirtualFile> initialFiles = new THashSet<VirtualFile>(allToCompile);
 
-    final THashSet<PsiClass> dirty = new THashSet<PsiClass>(initialClasses);
-
-    final THashSet<PsiClass> visited = new THashSet<PsiClass>();
-    for (PsiClass aClass : initialClasses) {
+    final THashSet<VirtualFile> visited = new THashSet<VirtualFile>();
+    for (VirtualFile aClass : initialFiles) {
       if (visited.add(aClass)) {
-        goForIntermediateClasses(aClass, dirty, new FactoryMap<PsiClass, Set<PsiClass>>() {
+        goForIntermediateFiles(aClass, allToCompile, new FactoryMap<VirtualFile, Set<VirtualFile>>() {
           @Override
-          protected Set<PsiClass> create(final PsiClass key) {
-            return ApplicationManager.getApplication().runReadAction(new Computable<Set<PsiClass>>() {
-              public Set<PsiClass> compute() {
-                return calcCodeReferenceDependencies(key, moduleClasses);
+          protected Set<VirtualFile> create(final VirtualFile key) {
+            return ApplicationManager.getApplication().runReadAction(new Computable<Set<VirtualFile>>() {
+              public Set<VirtualFile> compute() {
+                return calcCodeReferenceDependencies(key, groovyFiles);
               }
             });
           }
         }, visited);
       }
     }
-    for (PsiClass psiClass : dirty) {
-      allToCompile.add(moduleClasses.get(psiClass));
-    }
   }
 
-  private int enumerateGroovyClasses(final Module module, final Map<PsiClass, VirtualFile> moduleClasses) {
-    final Set<VirtualFile> groovyFiles = new THashSet<VirtualFile>();
+  private Set<VirtualFile> enumerateGroovyFiles(final Module module) {
+    final Set<VirtualFile> moduleClasses = new THashSet<VirtualFile>();
     ModuleRootManager.getInstance(module).getFileIndex().iterateContent(new ContentIterator() {
       public boolean processFile(final VirtualFile vfile) {
-        if (!vfile.isDirectory() && GroovyFileType.GROOVY_FILE_TYPE.equals(vfile.getFileType())) {
-          final List<PsiClass> classes = getAllClasses(vfile);
-          if (!classes.isEmpty()) {
-            groovyFiles.add(vfile);
-            for (PsiClass psiClass : classes) {
-              moduleClasses.put(psiClass, vfile);
-            }
-          }
-
+        if (!vfile.isDirectory() &&
+            GroovyFileType.GROOVY_FILE_TYPE.equals(vfile.getFileType()) &&
+            PsiManager.getInstance(myProject).findFile(vfile) instanceof GroovyFile) {
+          moduleClasses.add(vfile);
         }
         return true;
       }
     });
-    return groovyFiles.size();
+    return moduleClasses;
   }
 
-  private List<PsiClass> getAllClasses(final VirtualFile vfile) {
-    final ArrayList<PsiClass> classes = new ArrayList<PsiClass>();
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        final PsiFile file = PsiManager.getInstance(myProject).findFile(vfile);
-        if (file instanceof GroovyFile) {
-          addClassesFrom(((GroovyFile)file).getClasses(), classes);
-        }
-      }
-
-      private void addClassesFrom(final PsiClass[] classes, List<PsiClass> result) {
-        for (PsiClass aClass : classes) {
-          result.add(aClass);
-          addClassesFrom(aClass.getInnerClasses(), result);
-        }
-      }
-
-    });
-    return classes;
-  }
-
-
-  private static void goForIntermediateClasses(PsiClass from, Set<PsiClass> dirty, FactoryMap<PsiClass, Set<PsiClass>> deps, Set<PsiClass> visited) {
-    final Set<PsiClass> set = deps.get(from);
-    for (PsiClass psiClass : set) {
+  private static void goForIntermediateFiles(VirtualFile from, Set<VirtualFile> dirty, FactoryMap<VirtualFile, Set<VirtualFile>> deps, Set<VirtualFile> visited) {
+    final Set<VirtualFile> set = deps.get(from);
+    for (VirtualFile psiClass : set) {
       if (visited.add(psiClass)) {
-        goForIntermediateClasses(psiClass, dirty, deps, visited);
+        goForIntermediateFiles(psiClass, dirty, deps, visited);
       }
       if (dirty.contains(psiClass)) {
         dirty.add(from);
@@ -174,20 +139,23 @@ public class GroovyCompiler extends GroovyCompilerBase {
     }
   }
 
-  private Set<PsiClass> calcCodeReferenceDependencies(PsiClass psiClass, final Map<PsiClass, VirtualFile> moduleClasses) {
-    final Set<PsiClass> deps = new THashSet<PsiClass>();
-    psiClass.acceptChildren(new PsiElementVisitor() {
+  private Set<VirtualFile> calcCodeReferenceDependencies(VirtualFile vfile, final Set<VirtualFile> moduleFiles) {
+    final PsiFile psi = PsiManager.getInstance(myProject).findFile(vfile);
+    if (!(psi instanceof GroovyFile)) return Collections.emptySet();
+
+    final Set<VirtualFile> deps = new THashSet<VirtualFile>();
+    psi.acceptChildren(new PsiElementVisitor() {
       @Override
       public void visitElement(PsiElement element) {
-        if (element instanceof PsiClass) {
-          return;
-        }
         if (element instanceof GrCodeReferenceElement) {
           GrCodeReferenceElement referenceElement = (GrCodeReferenceElement)element;
           try {
             final PsiElement target = referenceElement.resolve();
-            if (target instanceof PsiClass && moduleClasses.containsKey(target)) {
-              deps.add((PsiClass)target);
+            if (target instanceof GrTypeDefinition || target instanceof GroovyScriptClass) {
+              final VirtualFile targetFile = target.getContainingFile().getViewProvider().getVirtualFile();
+              if (moduleFiles.contains(targetFile)) {
+                deps.add(targetFile);
+              }
             }
           }
           catch (Exception e) {
