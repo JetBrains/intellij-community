@@ -117,9 +117,15 @@ public class GroovyCompiler extends GroovyCompilerBase {
     ModuleRootManager.getInstance(module).getFileIndex().iterateContent(new ContentIterator() {
       public boolean processFile(final VirtualFile vfile) {
         if (!vfile.isDirectory() &&
-            GroovyFileType.GROOVY_FILE_TYPE.equals(vfile.getFileType()) &&
-            PsiManager.getInstance(myProject).findFile(vfile) instanceof GroovyFile) {
-          moduleClasses.add(vfile);
+            GroovyFileType.GROOVY_FILE_TYPE.equals(vfile.getFileType())) {
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            public void run() {
+              if (PsiManager.getInstance(myProject).findFile(vfile) instanceof GroovyFile) {
+                moduleClasses.add(vfile);
+              }
+            }
+          });
+
         }
         return true;
       }
