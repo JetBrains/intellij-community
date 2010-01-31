@@ -207,4 +207,6 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testArrayLikeAccess() throws Exception {doTest();}
 
   public void testSetInitializing() throws Exception {doTest();}
+
+  public void testEmptyTupleAssignability() throws Exception {doTest();}
 }
