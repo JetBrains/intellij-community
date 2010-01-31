@@ -14,11 +14,11 @@
  *  limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang;
+package org.jetbrains.plugins.groovy.compiler;
 
 import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
+
+
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -284,6 +284,27 @@ class Foo {
   static class Bar {}
 }"""
     myFixture.addFileToProject "AJava.java", "public class AJava extends Foo.Bar {}"
+    assertEmpty make()
+  }
+
+  public void testRecompileDependentClass() throws Exception {
+    def cloud = myFixture.addFileToProject("Cloud.groovy", """
+class Cloud {
+  def accessFooProperty(Foo c) {
+    c.prop = 2
+  }
+}
+""")
+    myFixture.addFileToProject "Foo.groovy", """
+class Foo {
+  def withGooParameter(Goo x) {}
+}"""
+    def goo = myFixture.addFileToProject("Goo.groovy", "class Goo {}")
+
+    assertEmpty make()
+
+    touch(cloud.virtualFile)
+    touch(goo.virtualFile)
     assertEmpty make()
   }
 

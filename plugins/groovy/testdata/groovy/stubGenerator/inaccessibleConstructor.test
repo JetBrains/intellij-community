@@ -1,0 +1,72 @@
+class Foo {
+  private Foo(Void v, Foo p) {}
+  protected Foo(Foo p) {}
+  protected Foo() {}
+}
+
+class ExtensionLoader extends Foo {
+  ExtensionLoader(parent) {
+    super(parent);
+  }
+}
+-----
+public class Foo implements groovy.lang.GroovyObject {
+  public Foo(java.lang.Void v, Foo p) {
+
+  }
+
+  public Foo(Foo p) {
+
+  }
+
+  public Foo() {
+
+  }
+
+  public groovy.lang.MetaClass getMetaClass() {
+    return null;
+  }
+
+  public void setMetaClass(groovy.lang.MetaClass mc) {
+    return ;
+  }
+
+  public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object args) {
+    return null;
+  }
+
+  public java.lang.Object getProperty(java.lang.String propertyName) {
+    return null;
+  }
+
+  public void setProperty(java.lang.String propertyName, java.lang.Object newValue) {
+    return ;
+  }
+}
+---
+public class ExtensionLoader extends Foo implements groovy.lang.GroovyObject {
+  public ExtensionLoader(java.lang.Object parent) {
+    super((Foo)null);
+  }
+
+  public groovy.lang.MetaClass getMetaClass() {
+    return null;
+  }
+
+  public void setMetaClass(groovy.lang.MetaClass mc) {
+    return ;
+  }
+
+  public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object args) {
+    return null;
+  }
+
+  public java.lang.Object getProperty(java.lang.String propertyName) {
+    return null;
+  }
+
+  public void setProperty(java.lang.String propertyName, java.lang.Object newValue) {
+    return ;
+  }
+}
+---

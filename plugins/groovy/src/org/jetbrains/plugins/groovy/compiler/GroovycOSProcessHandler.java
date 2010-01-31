@@ -44,6 +44,7 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
   private final CompileContext myContext;
 
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.compiler.GroovycOSProcessHandler");
+  public static final String GROOVY_COMPILER_IN_OPERATION = "Groovy compiler in operation...";
 
   public GroovycOSProcessHandler(CompileContext context, Process process, String s) {
     super(process, s);
@@ -73,7 +74,7 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
     }
 
     if (GroovycRunner.CLEAR_PRESENTABLE.equals(text)) {
-      myContext.getProgressIndicator().setText("Groovy compiler in operation...");
+      myContext.getProgressIndicator().setText(GROOVY_COMPILER_IN_OPERATION);
       return;
     }
 

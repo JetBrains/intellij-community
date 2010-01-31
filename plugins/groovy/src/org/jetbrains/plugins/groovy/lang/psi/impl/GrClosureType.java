@@ -41,13 +41,6 @@ public class GrClosureType extends PsiClassType {
                         @Nullable PsiType returnType,
                         PsiType[] parameters,
                         boolean[] optionals,
-                        PsiManager manager) {
-    this(scope, returnType, parameters, optionals, manager,LanguageLevel.JDK_1_5);
-  }
-  private GrClosureType(GlobalSearchScope scope,
-                        @Nullable PsiType returnType,
-                        PsiType[] parameters,
-                        boolean[] optionals,
                         PsiManager manager, LanguageLevel languageLevel) {
     super(languageLevel);
     myScope = scope;
@@ -62,6 +55,7 @@ public class GrClosureType extends PsiClassType {
     return JavaPsiFacade.getInstance(myManager.getProject()).findClass(GrClosableBlock.GROOVY_LANG_CLOSURE, getResolveScope());
   }
 
+  @Nullable
   public PsiType getClosureReturnType() {
     return myReturnType;
   }
@@ -189,8 +183,7 @@ public class GrClosureType extends PsiClassType {
   }
 
   public PsiClassType setLanguageLevel(final LanguageLevel languageLevel) {
-    GrClosureType copy = create(myReturnType, myParameterTypes, myOptionals, myManager, myScope, languageLevel);
-    return copy;
+    return create(myReturnType, myParameterTypes, myOptionals, myManager, myScope, languageLevel);
   }
 
   public static GrClosureType create(GrClosableBlock closure) {
@@ -222,6 +215,7 @@ public class GrClosureType extends PsiClassType {
     return new GrClosureType(scope, returnType, parameterTypes, optionals, manager,languageLevel);
   }
 
+  @Nullable
   public PsiType curry(int num) {
     if (num > myParameterTypes.length) return null;
     PsiType[] newParameterTypes = new PsiType[myParameterTypes.length - num];
