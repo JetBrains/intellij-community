@@ -200,7 +200,9 @@ public class TypesUtil {
     if (rType instanceof GrTupleType) {
       final GrTupleType tuple = (GrTupleType)rType;
       if (tuple.getComponentTypes().length == 0) {
-        if (lType instanceof PsiArrayType || InheritanceUtil.isInheritor(lType, JAVA_UTIL_LIST)) {
+        if (lType instanceof PsiArrayType ||
+            InheritanceUtil.isInheritor(lType, JAVA_UTIL_LIST) ||
+            InheritanceUtil.isInheritor(lType, JAVA_UTIL_SET)) {
           return true;
         }
       }
