@@ -308,5 +308,26 @@ class Foo {
     assertEmpty make()
   }
 
+  public void testRecompileImportedClass() throws Exception {
+    def bar = myFixture.addFileToProject("pack/Bar.groovy", """
+package pack
+import pack.Foo
+class Bar {}
+""")
+    myFixture.addFileToProject "pack/Foo.groovy", """
+package pack
+class Foo extends Goo {
+}"""
+    def goo = myFixture.addFileToProject("Goo.groovy", """
+package pack
+class Goo {}""")
+
+    assertEmpty make()
+
+    touch(bar.virtualFile)
+    touch(goo.virtualFile)
+    assertEmpty make()
+  }
+
 
 }
