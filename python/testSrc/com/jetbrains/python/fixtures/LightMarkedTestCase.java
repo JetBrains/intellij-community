@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.TestDataFile;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 
@@ -47,12 +48,12 @@ public abstract class LightMarkedTestCase extends PyLightFixtureTestCase {
    * @return a mapping of markers to PSI elements
    * @throws Exception
    */
-  protected Map<String, PsiElement> configureByFile(@NonNls String filePath, @NonNls String markerRegexp)
+  protected Map<String, PsiElement> configureByFile(@TestDataFile @NonNls String filePath, @NonNls String markerRegexp)
   throws Exception
   {
     final String fullPath = getTestDataPath() + filePath;
     final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
-    assertNotNull("file " + filePath + " not found", vFile);
+    assertNotNull("file " + fullPath + " not found", vFile);
 
     String fileText = StringUtil.convertLineSeparators(VfsUtil.loadText(vFile), "\n");
 
@@ -111,6 +112,4 @@ public abstract class LightMarkedTestCase extends PyLightFixtureTestCase {
     String fname = getTestName(false) + ".py";
     return configureByFile(fname);
   }
-
-  protected abstract String getTestDataPath();
 }

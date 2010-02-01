@@ -13,8 +13,8 @@ import org.jetbrains.annotations.Nullable;
  * User: dcheryasov
  * Date: Jun 7, 2009 5:06:12 AM
  */
-public class PythonDosStringFinder {
-  private PythonDosStringFinder()  {}
+public class PythonDocStringFinder {
+  private PythonDocStringFinder()  {}
 
   /**
    * Looks for a doc string under given parent.

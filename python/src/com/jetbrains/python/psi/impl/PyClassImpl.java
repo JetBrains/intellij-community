@@ -12,7 +12,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonDosStringFinder;
+import com.jetbrains.python.PythonDocStringFinder;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeImpl;
 import com.jetbrains.python.psi.*;
@@ -285,7 +285,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   public PyStringLiteralExpression getDocStringExpression() {
-    return PythonDosStringFinder.find(getStatementList());
+    return PythonDocStringFinder.find(getStatementList());
   }
 
   public String toString() {

@@ -27,11 +27,11 @@ import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonDosStringFinder;
+import com.jetbrains.python.PythonDocStringFinder;
+import com.jetbrains.python.codeInsight.controlflow.PyControlFlowBuilder;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeImpl;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.codeInsight.controlflow.PyControlFlowBuilder;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import com.jetbrains.python.toolbox.SingleIterable;
@@ -149,7 +149,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   }
 
   public PyStringLiteralExpression getDocStringExpression() {
-    return PythonDosStringFinder.find(getStatementList());
+    return PythonDocStringFinder.find(getStatementList());
   }
 
   protected String getElementLocation() {

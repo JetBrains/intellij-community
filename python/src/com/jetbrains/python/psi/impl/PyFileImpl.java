@@ -14,7 +14,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.PythonDosStringFinder;
+import com.jetbrains.python.PythonDocStringFinder;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
@@ -250,7 +250,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   public PyStringLiteralExpression getDocStringExpression() {
-    return PythonDosStringFinder.find(this);
+    return PythonDocStringFinder.find(this);
   }
 
   public void subtreeChanged() {
