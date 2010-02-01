@@ -122,9 +122,8 @@ public class PyClassRefactoringUtil {
 
   @Nullable
   public static String prepareClassText(PyClass superClass, PyElement[] elements, boolean up, boolean ignoreNoChanges, final String preparedClassName) {
-    PsiElement sibling = elements[0].getPrevSibling();
-    sibling = sibling == null ? elements[0].getParent().getPrevSibling() : sibling;
-    final String white = sibling.getText();
+    PsiElement sibling = superClass.getPrevSibling();
+    final String white = sibling != null ? "\n" + sibling.getText() + "    ": "\n    ";
     final StringBuilder builder = new StringBuilder("class ");
     if (preparedClassName != null) {
       builder.append(preparedClassName).append(":");

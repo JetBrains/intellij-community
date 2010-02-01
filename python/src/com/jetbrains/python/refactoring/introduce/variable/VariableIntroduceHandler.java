@@ -25,7 +25,12 @@ public class VariableIntroduceHandler extends IntroduceHandler {
   protected PsiElement addDeclaration(@NotNull final PsiElement expression,
                                       @NotNull final PsiElement declaration,
                                       @NotNull final List<PsiElement> occurrences,
-                                      final boolean replaceAll) {
+                                      final boolean replaceAll,
+                                      boolean initInConstructor) {
+    return doIntroduceVariable(expression, declaration, occurrences, replaceAll);
+  }
+
+  public static PsiElement doIntroduceVariable(PsiElement expression, PsiElement declaration, List<PsiElement> occurrences, boolean replaceAll) {
     PyStatement anchorStatement;
     if (replaceAll) {
       final PsiElement parent = PsiTreeUtil.findCommonParent(occurrences.toArray(new PsiElement[occurrences.size()]));

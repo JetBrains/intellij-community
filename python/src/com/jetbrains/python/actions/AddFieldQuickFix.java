@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.util.Function;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonLanguage;
@@ -39,7 +40,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
     return PyBundle.message("INSP.GROUP.python");
   }
 
-  private static PsiElement appendToInit(PyFunction init, String item_name, PyElementGenerator generator, Project project) {
+  private static PsiElement appendToInit(PyFunction init, Function<String, PyStatement> callback) {
     // add this field as the last stmt of the constructor
     final PyStatementList stmt_list = init.getStatementList();
     PyStatement[] stmts = stmt_list.getStatements(); // NOTE: rather wasteful, consider iterable stmt list
@@ -51,7 +52,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
     if (params.length > 0) {
       self_name = params[0].getName();
     }
-    PyStatement new_stmt = generator.createFromText(project, PyStatement.class, self_name + "." +item_name + " = None");
+    PyStatement new_stmt = callback.fun(self_name);
     PyUtil.ensureWritable(stmt_list);
     return stmt_list.addAfter(new_stmt, last_stmt);
   }
@@ -60,15 +61,24 @@ public class AddFieldQuickFix implements LocalQuickFix {
     // expect the descriptor to point to the unresolved identifier.
     PyClass cls = myQualifierClass;
     String item_name = myIdentifier;
+    if (cls != null) {
+      if (addFieldToInit(project, cls, item_name, new CreateFieldCallback(project, item_name))) return;
+    }
+    // somehow we failed. tell about this
+    PyUtil.showBalloon(project, PyBundle.message("QFIX.failed.to.add.field"), MessageType.ERROR);
+  }
+
+  public static boolean addFieldToInit(Project project, PyClass cls, String item_name, FieldCallback callback) {
     if (cls != null && item_name != null) {
       PyFunction init = cls.findMethodByName(PyNames.INIT, false);
       Language language = cls.getLanguage();
       if (language instanceof PythonLanguage) {
         PythonLanguage pythonLanguage = (PythonLanguage)language;
         PyElementGenerator generator = pythonLanguage.getElementGenerator();
+        callback.setGenerator(generator);
         if (init != null) {
-          appendToInit(init, item_name, generator, project);
-          return;
+          appendToInit(init, callback);
+          return true;
         }
         else { // no init! boldly copy ancestor's.
           for (PyClass ancestor : cls.iterateAncestors()) {
@@ -77,7 +87,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
           }
           PyFunction new_init = createInitMethod(project, cls, init, generator);
 
-          appendToInit(new_init, item_name, generator, project);
+          appendToInit(new_init, callback);
           new_init.add(generator.createFromText(project, PsiWhiteSpace.class, "\n\n")); // after the last line
 
           PsiElement add_anchor = null;
@@ -87,13 +97,12 @@ public class AddFieldQuickFix implements LocalQuickFix {
           cls_content.addAfter(new_init, add_anchor);
 
           PyUtil.showBalloon(project, PyBundle.message("QFIX.added.constructor.$0.for.field.$1", cls.getName(), item_name), MessageType.INFO);
-          return;
+          return true;
           //else  // well, that can't be
         }
       }
     }
-    // somehow we failed. tell about this
-    PyUtil.showBalloon(project, PyBundle.message("QFIX.failed.to.add.field"), MessageType.ERROR);
+    return false;
   }
 
   private static PyFunction createInitMethod(Project project, PyClass cls, @Nullable PyFunction ancestorInit, PyElementGenerator generator) {
@@ -124,5 +133,28 @@ public class AddFieldQuickFix implements LocalQuickFix {
       new_init.getStatementList().add(new_stmt);
     }
     return new_init;
+  }
+
+  public abstract static class FieldCallback implements Function<String, PyStatement> {
+    protected PyElementGenerator myGenerator;
+
+    public void setGenerator(PyElementGenerator generator) {
+      myGenerator = generator;
+    }
+  }
+
+  private static class CreateFieldCallback extends FieldCallback {
+    private Project myProject;
+    private String myItemName;
+
+
+    private CreateFieldCallback(Project project, String itemName) {
+      myProject = project;
+      myItemName = itemName;
+    }
+
+    public PyStatement fun(String self_name) {
+      return myGenerator.createFromText(myProject, PyStatement.class, self_name + "." + myItemName + " = None");
+    }
   }
 }
