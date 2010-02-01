@@ -79,7 +79,7 @@ public class PythonSdkType extends SdkType {
   @NotNull
   @NonNls
   public String getBuiltinsFileName(Sdk sdk) {
-    final String version = getVersionString(sdk);
+    final String version = sdk.getVersionString(); 
     if (version != null && version.startsWith("Python 3")) {
       return "builtins.py";
     }
