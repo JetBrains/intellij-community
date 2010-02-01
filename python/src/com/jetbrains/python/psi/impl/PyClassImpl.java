@@ -130,25 +130,28 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
           }
 
           public PyClass next() {
-            if (prefetch != null) {
-              PyClass ret = prefetch;
-              prefetch = null;
-              return ret;
+            iterations:
+            while (true) {
+              if (prefetch != null) {
+                PyClass ret = prefetch;
+                prefetch = null;
+                return ret;
+              }
+              if (percolator.hasNext()) {
+                PyClass it = percolator.next();
+                if (seen.contains(it)) continue iterations; // loop back is equivalent to return next();
+                pending.add(it);
+                seen.add(it);
+                return it;
+              }
+              else if (pending.size() > 0) {
+                PyClass it = pending.get(0);
+                pending.remove(0); // t, ts* = pending
+                percolator = it.iterateAncestors().iterator();
+                // loop back is equivalent to return next();
+              }
+              else throw new NoSuchElementException();
             }
-            if (percolator.hasNext()) {
-              PyClass it = percolator.next();
-              if (seen.contains(it)) return next();
-              pending.add(it);
-              seen.add(it);
-              return it;
-            }
-            else if (pending.size() > 0) {
-              PyClass it = pending.get(0);
-              pending.remove(0); // t, ts* = pending
-              percolator = it.iterateAncestors().iterator();
-              return next();
-            }
-            else throw new NoSuchElementException();
           }
 
           public void remove() {
