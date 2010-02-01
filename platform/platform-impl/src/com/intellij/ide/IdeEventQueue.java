@@ -24,7 +24,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.UserActivity;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
@@ -34,16 +33,12 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
-import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.messages.Topic;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -131,14 +126,6 @@ public class IdeEventQueue extends EventQueue {
 
   private final Set<Runnable> myReady = new HashSet<Runnable>();
   private boolean myKeyboardBusy;
-  private UserActivity myUserActivity = new UserActivity.Adapter();
-
-  private Runnable myIdleMessageBusNotifier = new Runnable() {
-    public void run() {
-      getUserActivity().onIdle();
-    }
-  };
-  private boolean myWasEverInstalledNotifier;
 
   private static class IdeEventQueueHolder {
     private static final IdeEventQueue INSTANCE = new IdeEventQueue();
@@ -168,30 +155,6 @@ public class IdeEventQueue extends EventQueue {
         if (mySuspendMode && focusedWindow != null && focusOwner != null && focusOwner != myFocusOwner && !(focusOwner instanceof Window)) {
           exitSuspendMode();
         }
-      }
-    });
-
-    Registry.get("actionSystem.idleTime").addListener(new RegistryValueListener() {
-      public void beforeValueChanged(RegistryValue value) {
-      }
-
-      public void afterValueChanged(RegistryValue value) {
-        installIdleMessageBusSync();
-      }
-    }, null);
-
-    installIdleMessageBusSync();
-  }
-
-  private void installIdleMessageBusSync() {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      public void run() {
-        if (myWasEverInstalledNotifier) {
-          removeIdleListener(myIdleMessageBusNotifier);
-        }
-
-        addIdleListener(myIdleMessageBusNotifier, Registry.intValue("actionSystem.idleTime"));
-        myWasEverInstalledNotifier = true;
       }
     });
   }
@@ -489,16 +452,6 @@ public class IdeEventQueue extends EventQueue {
           addIdleTimeCounterRequest();
           for (Runnable activityListener : myActivityListeners) {
             activityListener.run();
-          }
-
-          if (e instanceof KeyEvent) {
-            if (e.getID() == KeyEvent.KEY_PRESSED) {
-              getUserActivity().onKeyboardActivity((KeyEvent)e);
-            }
-          } else if (e instanceof MouseEvent ){
-            if (e.getID() == MouseEvent.MOUSE_PRESSED) {
-              getUserActivity().onMouseActivity((MouseEvent)e);
-            }
           }
         }
       }
@@ -816,13 +769,5 @@ public class IdeEventQueue extends EventQueue {
         }
       });
     }
-  }
-
-  public void setApplication(Application instance) {
-    myUserActivity = instance.getMessageBus().syncPublisher(UserActivity.TOPIC);
-  }
-
-  private UserActivity getUserActivity() {
-    return myUserActivity;
   }
 }

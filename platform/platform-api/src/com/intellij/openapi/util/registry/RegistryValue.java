@@ -17,7 +17,6 @@ package com.intellij.openapi.util.registry;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.MissingResourceException;
@@ -169,15 +168,13 @@ public class RegistryValue {
     setValue(getBundleValue(myKey, true));
   }
 
-  public void addListener(final RegistryValueListener listener, @Nullable Disposable parent) {
+  public void addListener(final RegistryValueListener listener, Disposable parent) {
     myListeners.add(listener);
-    if (parent != null) {
-      Disposer.register(parent, new Disposable() {
-        public void dispose() {
-          myListeners.remove(listener);
-        }
-      });
-    }
+    Disposer.register(parent, new Disposable() {
+      public void dispose() {
+        myListeners.remove(listener);
+      }
+    });
   }
 
   @Override

@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.application.ex;
 
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,7 +37,6 @@ public class ApplicationManagerEx extends ApplicationManager {
 
   public static void setApplication(Application instance) {
     ourApplication = instance;
-    IdeEventQueue.getInstance().setApplication(instance);
     CachedSingletonsRegistry.cleanupCachedFields();
   }
 
@@ -51,7 +49,6 @@ public class ApplicationManagerEx extends ApplicationManager {
       }
     });
     ourApplication = instance;
-    IdeEventQueue.getInstance().setApplication(instance);
     CachedSingletonsRegistry.cleanupCachedFields();
   }
 }
