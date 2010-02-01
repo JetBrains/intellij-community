@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.FactoryMap;
@@ -51,7 +52,7 @@ public class DomResolveConverter<T extends DomElement> extends ResolvingConverte
     protected CachedValue<Map<String, DomElement>> create(final DomElement scope) {
       final DomManager domManager = scope.getManager();
       final Project project = domManager.getProject();
-      return PsiManager.getInstance(project).getCachedValuesManager().createCachedValue(new CachedValueProvider<Map<String, DomElement>>() {
+      return CachedValuesManager.getManager(project).createCachedValue(new CachedValueProvider<Map<String, DomElement>>() {
         public Result<Map<String, DomElement>> compute() {
           final Map<String, DomElement> map = new THashMap<String, DomElement>();
           visitDomElement(scope, map);
