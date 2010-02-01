@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.refactoring.extractmethod.ExtractMethodDialog">
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.refactoring.extractMethod.AbstractExtractMethodDialog">
   <grid id="cbd77" binding="myContentPane" layout-manager="GridLayoutManager" row-count="6" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
@@ -45,7 +45,7 @@
         <properties/>
         <border type="etched" title-resource-bundle="org/jetbrains/plugins/ruby/RBundle" title-key="refactoring.extract.method.dialog.parameters"/>
         <children>
-          <component id="d4ee9" class="com.intellij.refactoring.extractmethod.ParameterTablePanel" binding="myParametersPanel" custom-create="true">
+          <component id="d4ee9" class="com.intellij.refactoring.extractMethod.AbstractParameterTablePanel" binding="myParametersPanel" custom-create="true">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="1" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>

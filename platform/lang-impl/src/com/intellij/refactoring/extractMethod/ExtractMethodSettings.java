@@ -13,25 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.refactoring.extractmethod;
+package com.intellij.refactoring.extractMethod;
 
 /**
-* @author oleg
-*/
-public class VariableData {
-  public String originalName;
-  public String name;
-  public boolean passAsParameter;
-
-  public String getName() {
-    return name;
-  }
-
-  public String getOriginalName() {
-    return originalName;
-  }
-
-  public boolean isPassAsParameter() {
-    return passAsParameter;
-  }
+ * @author oleg
+ */
+public interface ExtractMethodSettings {
+  String getMethodName();
+  AbstractVariableData[] getVariableData();
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.refactoring.extractmethod;
+package com.intellij.refactoring.extractMethod;
 
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
@@ -34,10 +34,10 @@ import java.awt.event.KeyEvent;
 
 /**
  * @author oleg
- * It`s a modified copy of com.intellij.refactoring.util.ParameterTablePanel
+ * It`s a modified copy of com.intellij.refactoring.util.AbstractParameterTablePanel
  */
-public abstract class ParameterTablePanel extends JPanel {
-  private VariableData[] myVariableData;
+public abstract class AbstractParameterTablePanel extends JPanel {
+  private AbstractVariableData[] myVariableData;
 
   private Table myTable;
   private MyTableModel myTableModel;
@@ -51,11 +51,11 @@ public abstract class ParameterTablePanel extends JPanel {
 
   protected abstract void doCancelAction();
 
-  public void setVariableData(VariableData[] variableData) {
+  public void setVariableData(AbstractVariableData[] variableData) {
     myVariableData = variableData;
   }
 
-  public ParameterTablePanel(final ExtractMethodValidator validator) {
+  public AbstractParameterTablePanel(final ExtractMethodValidator validator) {
     super(new BorderLayout());
     myValidator = validator;
   }
@@ -72,7 +72,7 @@ public abstract class ParameterTablePanel extends JPanel {
     myTable.getColumnModel().getColumn(MyTableModel.PARAMETER_NAME_COLUMN).setCellRenderer(new DefaultTableCellRenderer() {
       public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-        VariableData data = myVariableData[row];
+        AbstractVariableData data = myVariableData[row];
         setText(data.name);
         return this;
       }
@@ -231,7 +231,7 @@ public abstract class ParameterTablePanel extends JPanel {
     int targetRow = row + moveIncrement;
     if (targetRow < 0 || targetRow >= myVariableData.length) return;
 
-    VariableData currentItem = myVariableData[row];
+    AbstractVariableData currentItem = myVariableData[row];
     myVariableData[row] = myVariableData[targetRow];
     myVariableData[targetRow] = currentItem;
 
@@ -286,7 +286,7 @@ public abstract class ParameterTablePanel extends JPanel {
           break;
         }
         case PARAMETER_NAME_COLUMN: {
-          VariableData data = myVariableData[rowIndex];
+          AbstractVariableData data = myVariableData[rowIndex];
           String name = (String)aValue;
           if (myValidator.isValidName(name)) {
             data.name = name;
