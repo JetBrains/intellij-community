@@ -31,6 +31,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.PackageWrapper;
@@ -52,6 +53,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.Map;
+import java.util.Set;
 
 public class MoveInnerDialog extends RefactoringDialog {
   private final Project myProject;
@@ -133,7 +136,7 @@ public class MoveInnerDialog extends RefactoringDialog {
     }
 
     if (myCbPassOuterClass.isEnabled()) {
-      final boolean thisNeeded = MoveInstanceMembersUtil.getThisClassesToMembers(myInnerClass).containsKey(myOuterClass);
+      boolean thisNeeded = isThisNeeded(myInnerClass, myOuterClass);
       myCbPassOuterClass.setSelected(thisNeeded);
       myParameterField.setEnabled(thisNeeded);
     }
@@ -151,6 +154,16 @@ public class MoveInnerDialog extends RefactoringDialog {
     }
 
     super.init();
+  }
+
+  public static boolean isThisNeeded(final PsiClass innerClass, final PsiClass outerClass) {
+    final Map<PsiClass, Set<PsiMember>> classesToMembers = MoveInstanceMembersUtil.getThisClassesToMembers(innerClass);
+    for (PsiClass psiClass : classesToMembers.keySet()) {
+      if (InheritanceUtil.isInheritorOrSelf(outerClass, psiClass, true)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public JComponent getPreferredFocusedComponent() {

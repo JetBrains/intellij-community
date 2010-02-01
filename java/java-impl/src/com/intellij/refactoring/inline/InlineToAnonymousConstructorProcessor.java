@@ -183,7 +183,7 @@ class InlineToAnonymousConstructorProcessor {
         ProcessingContext context = new ProcessingContext();
         if (ourAssignmentPattern.accepts(stmt, context)) {
           PsiAssignmentExpression expression = context.get(ourAssignmentKey);
-          if (!processAssignmentInConstructor(expression)) {
+          if (processAssignmentInConstructor(expression)) {
             initializerBlock.addBefore(replaceParameterReferences(stmt, null, false), initializerBlock.getRBrace());
           }
         }
@@ -205,7 +205,7 @@ class InlineToAnonymousConstructorProcessor {
     if (expression.getLExpression() instanceof PsiReferenceExpression) {
       PsiReferenceExpression lExpr = (PsiReferenceExpression) expression.getLExpression();
       final PsiExpression rExpr = expression.getRExpression();
-      if (rExpr == null) return true;
+      if (rExpr == null) return false;
       final PsiElement psiElement = lExpr.resolve();
       if (psiElement instanceof PsiField) {
         PsiField field = (PsiField) psiElement;
@@ -217,25 +217,20 @@ class InlineToAnonymousConstructorProcessor {
           }
           catch (IncorrectOperationException e) {
             LOG.error(e);
-            return true;
+            return false;
           }
           if (!localVarRefs.isEmpty()) {
-            return false;
+            return true;
           }
 
           myFieldInitializers.put(field.getName(), initializer);
         }
       }
       else if (psiElement instanceof PsiVariable) {
-        try {
-          replaceParameterReferences(rExpr.copy(), new ArrayList<PsiReferenceExpression>(), false);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
+        return true;
       }
     }
-    return true;
+    return false;
   }
 
   public static boolean isConstant(final PsiExpression expr) {

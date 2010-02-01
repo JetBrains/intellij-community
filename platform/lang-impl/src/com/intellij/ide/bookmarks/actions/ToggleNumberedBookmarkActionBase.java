@@ -47,12 +47,13 @@ public abstract class ToggleNumberedBookmarkActionBase extends AnAction implemen
     DataContext dataContext = e.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
 
-    final BookmarkManager manager = BookmarkManager.getInstance(project);
     BookmarksAction.BookmarkInContextInfo info = new BookmarksAction.BookmarkInContextInfo(dataContext, project).invoke();
+    if (info.getFile() == null) return;
+
     final Bookmark oldBookmark = info.getBookmarkAtPlace();
 
     if (oldBookmark != null) {
-      manager.removeBookmark(oldBookmark);
+      BookmarkManager.getInstance(project).removeBookmark(oldBookmark);
     }
 
     if (oldBookmark == null || oldBookmark.getMnemonic() != '0' + myNumber) {

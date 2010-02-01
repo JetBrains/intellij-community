@@ -2,6 +2,7 @@ package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -12,6 +13,7 @@ import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
+import java.util.Calendar;
 
 public class SafeDeleteTest extends MultiFileTestCase {
   private VirtualFile myRootBefore;
@@ -47,6 +49,12 @@ public class SafeDeleteTest extends MultiFileTestCase {
   }
 
   public void testMultipleInterfacesImplementation() throws Exception {
+    myDoCompare = false;
+    doTest("IFoo");
+  }
+
+  @Bombed(day = 3, month = Calendar.FEBRUARY, description = "should not delete method implementing IBar interface")
+  public void testMultipleInterfacesImplementationThroughCommonInterface() throws Exception {
     myDoCompare = false;
     doTest("IFoo");
   }
