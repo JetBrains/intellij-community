@@ -128,6 +128,13 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
     final List<PsiElement> importStatements = new ArrayList<PsiElement>();
     if (!CodeStyleSettingsManager.getSettings(myProject).INSERT_INNER_CLASS_IMPORTS) {
       usages = filterUsagesInImportStatements(usages, importStatements);
+    } else {
+      //rebind imports first
+      Arrays.sort(usages, new Comparator<UsageInfo>() {
+        public int compare(UsageInfo o1, UsageInfo o2) {
+          return PsiUtil.BY_POSITION.compare(o1.getElement(), o2.getElement());
+        }
+      });
     }
     saveNonCodeUsages(usages);
     final Map<PsiElement, PsiElement> oldToNewElementsMapping = new HashMap<PsiElement, PsiElement>();
