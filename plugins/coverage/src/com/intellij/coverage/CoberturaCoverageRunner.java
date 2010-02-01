@@ -20,13 +20,15 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.rt.coverage.data.ProjectData;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
 
 public class CoberturaCoverageRunner extends JavaCoverageRunner {
 
-  public ProjectData loadCoverageData(final File sessionDataFile) {
+  public ProjectData loadCoverageData(@NotNull final File sessionDataFile, @Nullable final CoverageSuite coverageSuite) {
     return CoberturaLoaderUtil.load(sessionDataFile);
   }
 

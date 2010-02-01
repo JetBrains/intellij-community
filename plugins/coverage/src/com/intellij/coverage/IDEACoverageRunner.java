@@ -32,6 +32,7 @@ import jetbrains.coverage.report.SourceCodeProvider;
 import jetbrains.coverage.report.html.HTMLReportBuilder;
 import jetbrains.coverage.report.idea.IDEACoverageData;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,7 +42,7 @@ import java.util.Iterator;
 public class IDEACoverageRunner extends JavaCoverageRunner {
   private static final Logger LOG = Logger.getInstance("#" + IDEACoverageRunner.class.getName());
 
-  public ProjectData loadCoverageData(final File sessionDataFile) {
+  public ProjectData loadCoverageData(@NotNull final File sessionDataFile, @Nullable final CoverageSuite coverageSuite) {
     return ProjectDataLoader.load(sessionDataFile);
   }
 
