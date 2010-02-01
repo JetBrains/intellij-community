@@ -46,7 +46,9 @@ public class MappingsToRoots {
     if (! vcs.allowsNestedRoots()) {
       int i=1;
       while(i < result.size()) {
-        if (ExcludedFileIndex.getInstance(myProject).isValidAncestor(result.get(i-1), result.get(i))) {
+        final VirtualFile previous = result.get(i - 1);
+        final VirtualFile current = result.get(i);
+        if (ExcludedFileIndex.getInstance(myProject).isValidAncestor(previous, current) && vcs.isVersionedDirectory(previous)) {
           result.remove(i);
         }
         else {
