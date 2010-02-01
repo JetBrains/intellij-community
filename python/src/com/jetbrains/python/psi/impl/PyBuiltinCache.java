@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.openapi.components.ComponentManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -29,7 +30,6 @@ import java.util.Map;
  * Provides access to Python builtins via skeletons.
  */
 public class PyBuiltinCache {
-
   public static final @NonNls String BUILTIN_FILE = "__builtin__.py"; 
 
   @NotNull
@@ -89,11 +89,9 @@ public class PyBuiltinCache {
    */
   private static final Map<ComponentManager, PyBuiltinCache> ourInstanceCache = new HashMap<ComponentManager, PyBuiltinCache>();
 
-  private Project myProject;
   private PyFile myBuiltinsFile;
 
-  public PyBuiltinCache(final Project project) {
-    myProject = project;
+  public PyBuiltinCache() {
   }
 
   private PyBuiltinCache(@Nullable final PyFile builtins) {
