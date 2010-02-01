@@ -1784,10 +1784,6 @@ public class AbstractTreeUi {
     return result;
   }
 
-  public ProgressIndicator getProgressIndicator() {
-    return myProgress;
-  }
-
   static class ElementNode extends DefaultMutableTreeNode {
 
     Set<Object> myElements = new HashSet<Object>();

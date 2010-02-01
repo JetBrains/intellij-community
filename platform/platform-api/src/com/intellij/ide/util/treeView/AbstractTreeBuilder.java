@@ -344,10 +344,6 @@ public class AbstractTreeBuilder implements Disposable {
     }
   }
 
-  protected ProgressIndicator getProgressIndicator() {
-    return getUi().getProgressIndicator();
-  }
-
   protected void updateAfterLoadedInBackground(Runnable runnable) {
     if (myUi.isPassthroughMode()) {
       runnable.run();
