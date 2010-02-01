@@ -19,7 +19,7 @@ public interface PyClass extends PsiNamedElement, PyStatement, NameDefiner, PyDo
   @NotNull
   PyExpression[] getSuperClassExpressions();
 
-  @Nullable
+  @NotNull
   PsiElement[] getSuperClassElements();       
 
   @NotNull
@@ -56,7 +56,7 @@ public interface PyClass extends PsiNamedElement, PyStatement, NameDefiner, PyDo
    * @param parent
    * @return True iff this and parent are the same or parent is one of our superclasses.
    */
-  boolean isSublclass(PyClass parent);
+  boolean isSubclass(PyClass parent);
 
   @Nullable
   PyDecoratorList getDecoratorList();

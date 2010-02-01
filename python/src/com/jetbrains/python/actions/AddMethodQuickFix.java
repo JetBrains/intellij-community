@@ -14,11 +14,12 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
-import static com.jetbrains.python.psi.PyUtil.sure;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
+
+import static com.jetbrains.python.psi.PyUtil.sure;
 
 /**
  * Adds a method foo to class X if X.foo() is unresolved. 
@@ -73,7 +74,7 @@ public class AddMethodQuickFix implements LocalQuickFix {
       if (call_by_class) {
         if (args.length > 0) {
           PyType first_arg_type = args[0].getType();
-          if (first_arg_type instanceof PyClassType && ((PyClassType)first_arg_type).getPyClass().isSublclass(cls)) {
+          if (first_arg_type instanceof PyClassType && ((PyClassType)first_arg_type).getPyClass().isSubclass(cls)) {
             // class, first arg ok: instance method
             param_buf.append("self"); // NOTE: might use a name other than 'self', according to code style.
             made_instance = true;
