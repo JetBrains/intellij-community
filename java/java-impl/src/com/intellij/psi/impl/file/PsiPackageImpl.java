@@ -104,7 +104,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
 
   private Collection<PsiDirectory> getAllDirectories() {
     if (myDirectories == null) {
-      myDirectories = myManager.getCachedValuesManager().createCachedValue(new CachedValueProvider<Collection<PsiDirectory>>() {
+      myDirectories = CachedValuesManager.getManager(myManager.getProject()).createCachedValue(new CachedValueProvider<Collection<PsiDirectory>>() {
         public Result<Collection<PsiDirectory>> compute() {
           return Result.create(new DirectoriesSearch().search(GlobalSearchScope.allScope(myManager.getProject())).findAll(),
                                PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, ProjectRootManager.getInstance(getProject()));
@@ -419,7 +419,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
   @Nullable
   public PsiModifierList getAnnotationList() {
     if (myAnnotationList == null) {
-      myAnnotationList = myManager.getCachedValuesManager().createCachedValue(new PackageAnnotationValueProvider());
+      myAnnotationList = CachedValuesManager.getManager(myManager.getProject()).createCachedValue(new PackageAnnotationValueProvider());
     }
     return myAnnotationList.getValue();
   }

@@ -105,7 +105,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
         if(manager == null){
           return resolveEntity(targetElement, entityName, containingFile).getValue();
         }
-        value = manager.getCachedValuesManager().createCachedValue(new CachedValueProvider<XmlEntityDecl>() {
+        value = CachedValuesManager.getManager(manager.getProject()).createCachedValue(new CachedValueProvider<XmlEntityDecl>() {
           public Result<XmlEntityDecl> compute() {
             return resolveEntity(targetElement, entityName, containingFile);
           }

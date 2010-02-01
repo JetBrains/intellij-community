@@ -24,6 +24,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IncorrectOperationException;
@@ -101,7 +102,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     if (isProperty() && getDeclaredType() == null && getInitializer() == null) {
       CachedValue<PsiType> enhancedType = myEnhancedType;
       if (enhancedType == null) {
-        myEnhancedType = enhancedType = getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<PsiType>() {
+        myEnhancedType = enhancedType = CachedValuesManager.getManager(getManager().getProject()).createCachedValue(new CachedValueProvider<PsiType>() {
           public Result<PsiType> compute() {
             for (PropertyEnhancer enhancer : PropertyEnhancer.EP_NAME.getExtensions()) {
               final PsiType type = enhancer.getPropertyType(GrFieldImpl.this);
