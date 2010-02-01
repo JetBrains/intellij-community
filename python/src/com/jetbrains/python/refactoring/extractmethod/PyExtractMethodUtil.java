@@ -262,7 +262,7 @@ public class PyExtractMethodUtil {
                                                          final PsiElement expression) {
     final StringBuilder builder = new StringBuilder();
     builder.append(generateSignature(methodName, variableData, expression));
-    builder.append(expression.getText());
+    builder.append("  return ").append(expression.getText());
     return PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyFunction.class, builder.toString());
   }
 
