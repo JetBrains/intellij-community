@@ -31,7 +31,9 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
   private JTextField myEntriesLimit;
   private JTextField myStartIndex;
   private JTextField myEndIndex;
-
+  private boolean myEntriesLimitUpdateEnabled = true;
+  private boolean myIndexUpdateEnabled = true;
+  
   private final ArrayRenderer myRenderer;
   private JComponent myPanel;
 
@@ -121,7 +123,16 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
 
     final DocumentListener listener = new DocumentListener() {
       private void updateEntriesLimit() {
-        myEntriesLimit.setText(String.valueOf(getInt(myEndIndex) - getInt(myStartIndex) + 1));
+        final boolean state = myIndexUpdateEnabled;
+        myIndexUpdateEnabled = false;
+        try {
+          if (myEntriesLimitUpdateEnabled) {
+            myEntriesLimit.setText(String.valueOf(getInt(myEndIndex) - getInt(myStartIndex) + 1));
+          }
+        }
+        finally {
+          myIndexUpdateEnabled = state;
+        }
       }
       public void changedUpdate(DocumentEvent e) {
         updateEntriesLimit();
@@ -135,6 +146,31 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
     };
     myStartIndex.getDocument().addDocumentListener(listener);
     myEndIndex.getDocument().addDocumentListener(listener);
+    myEntriesLimit.getDocument().addDocumentListener(new DocumentListener() {
+      private void updateEndIndex() {
+        final boolean state = myEntriesLimitUpdateEnabled;
+        myEntriesLimitUpdateEnabled = false;
+        try {
+          if (myIndexUpdateEnabled) {
+            myEndIndex.setText(String.valueOf(getInt(myEntriesLimit) + getInt(myStartIndex) - 1));
+          }
+        }
+        finally {
+          myEntriesLimitUpdateEnabled = state;
+        }
+      }
+      public void insertUpdate(DocumentEvent e) {
+        updateEndIndex();
+      }
+
+      public void removeUpdate(DocumentEvent e) {
+        updateEndIndex();
+      }
+
+      public void changedUpdate(DocumentEvent e) {
+        updateEndIndex();
+      }
+    });
     return myPanel;
   }
 
