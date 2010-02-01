@@ -150,11 +150,7 @@ public class PyIntroduceDialog extends DialogWrapper implements PyIntroduceSetti
   private void updateControls() {
     final boolean nameValid = myValidator.isNameValid(this);
     setOKActionEnabled(nameValid);
-    if (!nameValid) {
-      setErrorText(PyBundle.message("refactoring.introduce.name.error"));
-      return;
-    }
-    setErrorText(myValidator.check(this));
+    setErrorText(!nameValid ? PyBundle.message("refactoring.introduce.name.error") : null);
   }
 
   public boolean initInConstructor() {
