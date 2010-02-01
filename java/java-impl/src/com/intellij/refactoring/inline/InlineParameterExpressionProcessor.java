@@ -237,6 +237,27 @@ public class InlineParameterExpressionProcessor {
           refCannotEvaluate.set(Boolean.TRUE);
         }
       }
+
+      @Override
+      public void visitNewExpression(PsiNewExpression expression) {
+        super.visitNewExpression(expression);
+        final PsiJavaCodeReferenceElement reference = expression.getClassOrAnonymousClassReference();
+        if (reference != null) {
+          final PsiElement resolved = reference.resolve();
+          if (resolved instanceof PsiClass) {
+            final PsiClass refClass = (PsiClass)resolved;
+            if (!PsiUtil.isAccessible(refClass, myMethod, null)) {
+              refCannotEvaluate.set(Boolean.TRUE);
+            } else {
+              final PsiClass methodContainingClass = myMethod.getContainingClass();
+              LOG.assertTrue(methodContainingClass != null);
+              if (!(refClass.getParent() instanceof PsiFile) && !PsiTreeUtil.isAncestor(methodContainingClass, refClass, false)) {
+                refCannotEvaluate.set(Boolean.TRUE);
+              }
+            }
+          }
+        }
+      }
     });
     return refCannotEvaluate.isNull();
   }

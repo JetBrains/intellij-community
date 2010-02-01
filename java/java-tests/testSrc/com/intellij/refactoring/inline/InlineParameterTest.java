@@ -79,12 +79,7 @@ public class InlineParameterTest extends LightCodeInsightTestCase {
   }
 
   public void testRefOuterThis() throws Exception {
-    try {
-      doTest(false);
-    }
-    catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
-      assertEquals("Parameter initializer depends on values which are not available inside the method and cannot be inlined", e.getMessage());
-    }
+    doTestParamInitializerDependsOnUnavalableValues();
   }
 
   public void testRefThis() throws Exception {
@@ -100,12 +95,7 @@ public class InlineParameterTest extends LightCodeInsightTestCase {
   }
 
   public void testRefSameNonFinalFieldOtherObject() throws Exception {
-    try {
-      doTest(false);
-    }
-    catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
-      assertEquals("Cannot find constant initializer for parameter", e.getMessage());
-    }
+    doTestCannotFindInitializer();
   }
 
   public void testRef2ConstantsWithTheSameValue() throws Exception {
@@ -113,6 +103,35 @@ public class InlineParameterTest extends LightCodeInsightTestCase {
   }
 
   public void testRefConstantAndField() throws Exception {
+    doTestCannotFindInitializer();
+  }
+
+  public void testRefNewInner() throws Exception {
+    doTestParamInitializerDependsOnUnavalableValues();
+  }
+
+  private void doTestParamInitializerDependsOnUnavalableValues() throws Exception {
+    try {
+      doTest(false);
+    }
+    catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
+      assertEquals("Parameter initializer depends on values which are not available inside the method and cannot be inlined", e.getMessage());
+    }
+  }
+
+  public void testRefNewInnerForMethod() throws Exception {
+    doTest(false);
+  }
+
+  public void testRefNewTopLevel() throws Exception {
+    doTest(false);
+  }
+
+  public void testRefNewLocal() throws Exception {
+    doTestParamInitializerDependsOnUnavalableValues();
+  }
+
+  private void doTestCannotFindInitializer() throws Exception {
     try {
       doTest(false);
     }
