@@ -18,7 +18,7 @@ package com.jetbrains.python.validation;
 
 import com.intellij.lang.annotation.Annotation;
 import com.jetbrains.python.PyHighlighter;
-import com.jetbrains.python.PythonDosStringFinder;
+import com.jetbrains.python.PythonDocStringFinder;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
@@ -31,18 +31,18 @@ public class DocStringAnnotator extends PyAnnotator {
 
   @Override
   public void visitPyFile(PyFile node) {
-    annotateDocStringStmt(PythonDosStringFinder.find(node));
+    annotateDocStringStmt(PythonDocStringFinder.find(node));
   }
 
 
   @Override
   public void visitPyFunction(PyFunction node) {
-    annotateDocStringStmt(PythonDosStringFinder.find(node.getStatementList()));
+    annotateDocStringStmt(PythonDocStringFinder.find(node.getStatementList()));
   }
 
   @Override
   public void visitPyClass(PyClass node) {
-    annotateDocStringStmt(PythonDosStringFinder.find(node.getStatementList()));
+    annotateDocStringStmt(PythonDocStringFinder.find(node.getStatementList()));
   }
 
   private void annotateDocStringStmt(PyStringLiteralExpression stmt) {

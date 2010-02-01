@@ -5,6 +5,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -580,7 +581,10 @@ public class ResolveImportUtil {
   ) {
     if (referencedName == null) return null;
     final PsiFile file = dir.findFile(referencedName + PyNames.DOT_PY);
-    if (file != null) return file;
+    // findFile() does case-insensitive search, and we need exactly matching case (see PY-381)
+    if (file != null && FileUtil.getNameWithoutExtension(file.getName()).equals(referencedName)) {
+      return file;
+    }
     final PsiDirectory subdir = dir.findSubdirectory(referencedName);
     if (subdir != null) return subdir;
     else if (! isFileOnly) {

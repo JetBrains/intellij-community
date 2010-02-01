@@ -7,6 +7,7 @@ import com.jetbrains.python.refactoring.classes.pullUp.PyPullUpHandler;
 import com.jetbrains.python.refactoring.classes.pushDown.PyPushDownHandler;
 import com.jetbrains.python.refactoring.extractmethod.PyExtractMethodHandler;
 import com.jetbrains.python.refactoring.introduce.constant.ConstantIntroduceHandler;
+import com.jetbrains.python.refactoring.introduce.field.FieldIntroduceHandler;
 import com.jetbrains.python.refactoring.introduce.variable.VariableIntroduceHandler;
 
 /**
@@ -24,6 +25,11 @@ public class RefactoringProvider extends DefaultRefactoringSupportProvider {
   @Override
   public RefactoringActionHandler getIntroduceConstantHandler() {
     return new ConstantIntroduceHandler();
+  }
+
+  @Override
+  public RefactoringActionHandler getIntroduceFieldHandler() {
+    return new FieldIntroduceHandler();
   }
 
   @Override

@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.PythonDosStringFinder;
+import com.jetbrains.python.PythonDocStringFinder;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +40,7 @@ class AddImportHelper {
       }
       // maybe we arrived at the doc comment stmt; skip over it, too
       else if (!skipped_over_imports && ! skipped_over_doc && file instanceof PyFile) {
-        PsiElement doc_elt = PythonDosStringFinder.find((PyElement)file); // this gives the literal; its parent is the expr seeker may have encountered
+        PsiElement doc_elt = PythonDocStringFinder.find((PyElement)file); // this gives the literal; its parent is the expr seeker may have encountered
         if (doc_elt != null && doc_elt.getParent() == seeker) {
         feeler = seeker.getNextSibling();
           seeker = feeler; // skip over doc even if there's nothing below it

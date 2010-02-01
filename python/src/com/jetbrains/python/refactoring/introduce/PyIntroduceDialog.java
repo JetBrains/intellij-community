@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
 import com.intellij.ui.EditorTextField;
@@ -28,31 +29,41 @@ public class PyIntroduceDialog extends DialogWrapper implements PyIntroduceSetti
   private JPanel myContentPane;
   private JLabel myNameLabel;
   private ComboBox myNameComboBox;
-  private JCheckBox myCheckBox;
+  private JCheckBox myReplaceAll;
+  private JCheckBox myInitialzeInConstructor;
 
   private final Project myProject;
   private final int myOccurrencesCount;
   private final IntroduceValidator myValidator;
   private final PyExpression myExpression;
+  private final String myHelpId;
 
   public PyIntroduceDialog(@NotNull final Project project,
                            @NotNull PyExpression expression,
                            @NotNull final String caption,
                            @NotNull final IntroduceValidator validator,
                            final int occurrencesCount,
-                           final String[] possibleNames) {
+                           final String[] possibleNames,
+                           final String helpId,
+                           boolean hasConstructor) {
     super(project, true);
     myOccurrencesCount = occurrencesCount;
     myValidator = validator;
     myProject = project;
     myExpression = expression;
+    myHelpId = helpId;
     setUpNameComboBox(possibleNames);
 
     setModal(true);
     setTitle(caption);
     init();
-    setupDialog();
+    setupDialog(hasConstructor);
     updateControls();
+  }
+
+  @Override
+  protected String getHelpId() {
+    return myHelpId;
   }
 
   private void setUpNameComboBox(String[] possibleNames) {
@@ -89,19 +100,21 @@ public class PyIntroduceDialog extends DialogWrapper implements PyIntroduceSetti
     }
   }
 
-  private void setupDialog() {
-    myCheckBox.setMnemonic(KeyEvent.VK_A);
+  private void setupDialog(boolean hasConstructor) {
+    myReplaceAll.setMnemonic(KeyEvent.VK_A);
     myNameLabel.setLabelFor(myNameComboBox);
+    myInitialzeInConstructor.setText(RefactoringBundle.message("initialize.in.border.title") + " " + RefactoringBundle.message("class.constructors.radio"));
+    myInitialzeInConstructor.setVisible(hasConstructor);
 
     // Replace occurences check box setup
     if (myOccurrencesCount > 1) {
-      myCheckBox.setSelected(false);
-      myCheckBox.setEnabled(true);
-      myCheckBox.setText(myCheckBox.getText() + " (" + myOccurrencesCount + " occurrences)");
+      myReplaceAll.setSelected(false);
+      myReplaceAll.setEnabled(true);
+      myReplaceAll.setText(myReplaceAll.getText() + " (" + myOccurrencesCount + " occurrences)");
     }
     else {
-      myCheckBox.setSelected(false);
-      myCheckBox.setEnabled(false);
+      myReplaceAll.setSelected(false);
+      myReplaceAll.setEnabled(false);
     }
   }
 
@@ -131,16 +144,16 @@ public class PyIntroduceDialog extends DialogWrapper implements PyIntroduceSetti
   }
 
   public boolean doReplaceAllOccurrences() {
-    return myCheckBox.isSelected();
+    return myReplaceAll.isSelected();
   }
 
   private void updateControls() {
     final boolean nameValid = myValidator.isNameValid(this);
     setOKActionEnabled(nameValid);
-    if (!nameValid) {
-      setErrorText(PyBundle.message("refactoring.introduce.name.error"));
-      return;
-    }
-    setErrorText(myValidator.check(this));
+    setErrorText(!nameValid ? PyBundle.message("refactoring.introduce.name.error") : null);
+  }
+
+  public boolean initInConstructor() {
+    return myInitialzeInConstructor.isSelected();
   }
 }

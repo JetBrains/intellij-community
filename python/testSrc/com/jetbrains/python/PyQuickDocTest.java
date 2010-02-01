@@ -28,19 +28,20 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     myProvider = new PythonDocumentationProvider();
   }
 
-  protected String getTestDataPath() {
-    return PythonTestUtil.getTestDataPath() + "/quickdoc/";
-  }
-
   private void checkByHTML(String text) throws Exception {
     assertNotNull(text);
-    String filePath = getTestName(false) + ".html";
+    String filePath = "/quickdoc/" + getTestName(false) + ".html";
     final String fullPath = getTestDataPath() + filePath;
     final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
-    assertNotNull("file " + filePath + " not found", vFile);
+    assertNotNull("file " + fullPath + " not found", vFile);
 
     String fileText = StringUtil.convertLineSeparators(VfsUtil.loadText(vFile), "\n");
     assertEquals(fileText.trim(), text.trim());
+  }
+
+  @Override
+  protected Map<String, PsiElement> loadTest() throws Exception {
+    return configureByFile("/quickdoc/" + getTestName(false) + ".py");
   }
 
   private void processRefDocPair() throws Exception {
@@ -53,7 +54,7 @@ public class PyQuickDocTest extends LightMarkedTestCase {
 
     PsiElement ref_elt = marks.get("<the_ref>").getParent(); // ident -> expr
     final PyDocStringOwner doc_owner = (PyDocStringOwner)((PyReferenceExpression)ref_elt).resolve();
-    assertEquals(doc_owner.getDocStringExpression(), doc_elt);
+    assertEquals(doc_elt, doc_owner.getDocStringExpression());
 
     checkByHTML(myProvider.generateDoc(doc_owner, null));
   }
@@ -68,6 +69,13 @@ public class PyQuickDocTest extends LightMarkedTestCase {
 
   public void testClassConstructor() throws Exception {
     processRefDocPair();
+  }
+
+  public void testClassUndocumentedConstructor() throws Exception {
+    Map<String, PsiElement> marks = loadTest();
+    PsiElement ref_elt = marks.get("<the_ref>").getParent(); // ident -> expr
+    final PyDocStringOwner doc_owner = (PyDocStringOwner)((PyReferenceExpression)ref_elt).resolve();
+    checkByHTML(myProvider.generateDoc(doc_owner, null));
   }
 
   public void testCallFunc() throws Exception {

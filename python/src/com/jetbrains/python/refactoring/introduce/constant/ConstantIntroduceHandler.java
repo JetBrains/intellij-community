@@ -26,7 +26,8 @@ public class ConstantIntroduceHandler extends IntroduceHandler {
   protected PsiElement addDeclaration(@NotNull final PsiElement expression,
                                       @NotNull final PsiElement declaration,
                                       @NotNull final List<PsiElement> occurrences,
-                                      final boolean replaceAll) {
+                                      final boolean replaceAll,
+                                      boolean initInConstructor) {
     PsiElement anchor;
     anchor = expression.getContainingFile();
     assert anchor instanceof PyFile;
@@ -39,5 +40,10 @@ public class ConstantIntroduceHandler extends IntroduceHandler {
       names.add(name.toUpperCase());
     }
     return ArrayUtil.toStringArray(names);
+  }
+
+  @Override
+  protected String getHelpId() {
+    return "refactoring.introduceConstant";
   }
 }

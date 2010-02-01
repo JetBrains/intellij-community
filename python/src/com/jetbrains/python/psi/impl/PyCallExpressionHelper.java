@@ -114,7 +114,14 @@ public class PyCallExpressionHelper {
         }
         // decorators?
         PyFunction method = (PyFunction)resolved; // constructor call?
-        if (PyNames.INIT.equals(method.getName())) implicit_offset += 1;
+        if (PyNames.INIT.equals(method.getName())) {
+          String refName = us.getCallee() instanceof PyReferenceExpression
+            ? ((PyReferenceExpression) us.getCallee()).getReferencedName()
+            : null;
+          if (!PyNames.INIT.equals(refName)) {   // PY-312
+            implicit_offset += 1;
+          }
+        }
         // look for closest decorator
         PyDecoratorList decolist = method.getDecoratorList();
         if (decolist != null) {

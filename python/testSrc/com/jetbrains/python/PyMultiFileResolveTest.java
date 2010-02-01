@@ -128,6 +128,12 @@ public class PyMultiFileResolveTest extends PyLightFixtureTestCase {
     assertEquals("silicate", ((PyStringLiteralExpression)value).getStringValue());
   }
 
+  public void testDirectoryVsClass() throws Exception {
+    PsiElement element = doResolve();
+    assertTrue(element instanceof PyClass);
+    assertEquals("Context", ((PyClass) element).getName());
+  }
+
   private PsiFile prepareFile() throws Exception {
     String testName = getTestName(true);
     String fileName = getTestName(false) + ".py";

@@ -12,7 +12,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonDosStringFinder;
+import com.jetbrains.python.PythonDocStringFinder;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeImpl;
 import com.jetbrains.python.psi.*;
@@ -90,6 +90,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return PyExpression.EMPTY_ARRAY;
   }
 
+  @NotNull
   public PsiElement[] getSuperClassElements() {
     final PyExpression[] superExpressions = getSuperClassExpressions();
     List<PsiElement> superClasses = new ArrayList<PsiElement>();
@@ -109,60 +110,10 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
    It must be more efficient on deep and wide hierarchies, but it was more fun than efficiency that produced it.
    */
   public Iterable<PyClass> iterateAncestors() {
-    return new Iterable<PyClass>() {
-      public Iterator<PyClass> iterator() {
-        return new Iterator<PyClass>() {
-          List<PyClass> pending = new LinkedList<PyClass>();
-          Set<PyClass> seen = new HashSet<PyClass>();
-          Iterator<PyClass> percolator = getSuperClassesList().iterator();
-          PyClass prefetch = null;
-
-          public boolean hasNext() {
-            // due to already-seen filtering, there's no way but to try and see.
-            if (prefetch != null) return true;
-            try {
-              prefetch = next();
-              return true;
-            }
-            catch (NoSuchElementException e) {
-              return false;
-            }
-          }
-
-          public PyClass next() {
-            iterations:
-            while (true) {
-              if (prefetch != null) {
-                PyClass ret = prefetch;
-                prefetch = null;
-                return ret;
-              }
-              if (percolator.hasNext()) {
-                PyClass it = percolator.next();
-                if (seen.contains(it)) continue iterations; // loop back is equivalent to return next();
-                pending.add(it);
-                seen.add(it);
-                return it;
-              }
-              else if (pending.size() > 0) {
-                PyClass it = pending.get(0);
-                pending.remove(0); // t, ts* = pending
-                percolator = it.iterateAncestors().iterator();
-                // loop back is equivalent to return next();
-              }
-              else throw new NoSuchElementException();
-            }
-          }
-
-          public void remove() {
-            throw new UnsupportedOperationException();
-          }
-        };
-      }
-    };
+    return new AncestorsIterable(this);
   }
 
-  public boolean isSublclass(PyClass parent) {
+  public boolean isSubclass(PyClass parent) {
     if (this == parent) return true;
     for (PyClass superclass : iterateAncestors()) {
       if (parent == superclass) return true;
@@ -175,32 +126,35 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   protected List<PyClass> getSuperClassesList() {
+    if (PyNames.FAKE_OLD_BASE.equals(getName())) {
+      return Collections.emptyList();
+    }
     PsiElement[] superClassElements = getSuperClassElements();
-    if (superClassElements != null) {
+    if (superClassElements.length > 0) {
       List<PyClass> result = new ArrayList<PyClass>();
       // maybe a bare old-style class?
       // TODO: depend on language version: py3k does not do old style classes
       PsiElement paren = PsiTreeUtil.getChildOfType(this, PyArgumentList.class).getFirstChild(); // no NPE, we always have the par expr
       if (paren != null && "(".equals(paren.getText())) { // "()" after class name, it's new style
-        for(PsiElement element: superClassElements) {
+        for (PsiElement element : superClassElements) {
           if (element instanceof PyClass) {
-            result.add((PyClass) element);
+            result.add((PyClass)element);
           }
         }
       }
-      else if (! PyBuiltinCache.BUILTIN_FILE.equals(getContainingFile().getName())) { // old-style *and* not builtin object() 
+      else if (!PyBuiltinCache.BUILTIN_FILE.equals(getContainingFile().getName())) { // old-style *and* not builtin object()
         PyClass oldstyler = PyBuiltinCache.getInstance(this).getClass(PyNames.FAKE_OLD_BASE);
         if (oldstyler != null) result.add(oldstyler);
       }
       return result;
     }
-    return new ArrayList<PyClass>(0); 
+    return Collections.emptyList();
   }
 
   @NotNull
   public PyClass[] getSuperClasses() {
     PsiElement[] superClassElements = getSuperClassElements();
-    if (superClassElements != null) {
+    if (superClassElements .length > 0) {
       List<PyClass> result = new ArrayList<PyClass>();
       for(PsiElement element: superClassElements) {
         if (element instanceof PyClass) {
@@ -331,7 +285,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   public PyStringLiteralExpression getDocStringExpression() {
-    return PythonDosStringFinder.find(getStatementList());
+    return PythonDocStringFinder.find(getStatementList());
   }
 
   public String toString() {
@@ -388,4 +342,76 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   private static<T> T getRefValue(final SoftReference<T> reference){
     return reference != null ? reference.get() : null;
   }
+
+  private static class AncestorsIterable implements Iterable<PyClass> {
+    private PyClassImpl myClass;
+
+    public AncestorsIterable(final PyClassImpl pyClass) {
+      myClass = pyClass;
+    }
+
+    public Iterator<PyClass> iterator() {
+      return new AncestorsIterator(myClass);
+    }
+  }
+
+  private static class AncestorsIterator implements Iterator<PyClass> {
+    List<PyClass> pending = new LinkedList<PyClass>();
+    Set<PyClass> seen = new HashSet<PyClass>();
+    Iterator<PyClass> percolator;
+    PyClass prefetch = null;
+    private PyClassImpl myAClass;
+
+    public AncestorsIterator(PyClassImpl aClass) {
+      myAClass = aClass;
+      percolator = myAClass.getSuperClassesList().iterator();
+    }
+
+    public boolean hasNext() {
+      // due to already-seen filtering, there's no way but to try and see.
+      if (prefetch != null) return true;
+      prefetch = getNext();
+      return prefetch != null;
+    }
+
+    public PyClass next() {
+      final PyClass nextClass = getNext();
+      if (nextClass == null) throw new NoSuchElementException();
+      return nextClass;
+    }
+
+    @Nullable
+    private PyClass getNext() {
+      iterations:
+      while (true) {
+        if (prefetch != null) {
+          PyClass ret = prefetch;
+          prefetch = null;
+          return ret;
+        }
+        if (percolator.hasNext()) {
+          PyClass it = percolator.next();
+          if (seen.contains(it)) {
+            continue iterations; // loop back is equivalent to return next();
+          }
+          pending.add(it);
+          seen.add(it);
+          return it;
+        }
+        else if (pending.size() > 0) {
+          PyClass it = pending.get(0);
+          pending.remove(0); // t, ts* = pending
+          percolator = it.iterateAncestors().iterator();
+          // loop back is equivalent to return next();
+        }
+        else return null;
+      }
+    }
+
+    public void remove() {
+      throw new UnsupportedOperationException();
+    }
+  }
+
+
 }

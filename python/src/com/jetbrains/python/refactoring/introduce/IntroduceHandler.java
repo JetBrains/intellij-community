@@ -25,6 +25,7 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.refactoring.NameSuggestorUtil;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -46,7 +47,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    performAction(project, editor, file, null, false);
+    performAction(project, editor, file, null, false, false);
   }
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
@@ -76,7 +77,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     return ArrayUtil.toStringArray(res);
   }
 
-  protected void performAction(@NotNull final Project project, Editor editor, PsiFile file, String name, boolean replaceAll) {
+  protected void performAction(@NotNull final Project project, Editor editor, PsiFile file, String name, boolean replaceAll, boolean hasConstructor) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(file)) {
       return;
     }
@@ -109,6 +110,11 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
                                           "refactoring.extractMethod");
       return;
     }
+
+    if (!checkEnabled(project, editor, element1, myDialogTitle)) {
+      return;
+    }
+
     final PyExpression expression = (PyExpression)element1;
 
     final List<PsiElement> occurrences;
@@ -119,21 +125,32 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       occurrences = Collections.emptyList();
     }
     String[] possibleNames = getSuggestedNames(expression);
+    boolean initInConstructor = false;
     if (name == null) {
-      PyIntroduceDialog dialog = new PyIntroduceDialog(project, expression, myDialogTitle, myValidator, occurrences.size(), possibleNames);
+      PyIntroduceDialog dialog = new PyIntroduceDialog(project, expression, myDialogTitle, myValidator, occurrences.size(), possibleNames, getHelpId(), hasConstructor);
       dialog.show();
       if (!dialog.isOK()) {
         return;
       }
       name = dialog.getName();
       replaceAll = dialog.doReplaceAllOccurrences();
+      initInConstructor = dialog.initInConstructor();
     }
     String assignmentText = name + " = " + expression.getText();
-    final PyAssignmentStatement declaration =
-      PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyAssignmentStatement.class, assignmentText);
+    final PyAssignmentStatement declaration = createDeclaration(project, assignmentText);
 
     assert name != null;
-    performReplace(project, declaration, expression, occurrences, name, replaceAll);
+    performReplace(project, declaration, expression, occurrences, name, replaceAll, initInConstructor);
+  }
+
+  protected abstract String getHelpId();  
+
+  protected PyAssignmentStatement createDeclaration(Project project, String assignmentText) {
+    return PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyAssignmentStatement.class, assignmentText);
+  }
+
+  protected boolean checkEnabled(Project project, Editor editor, PsiElement element1, String dialogTitle) {
+    return true;
   }
 
   private static List<PsiElement> getOccurrences(@NotNull final PyExpression expression) {
@@ -152,19 +169,19 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
                               @NotNull final PsiElement expression,
                               @NotNull final List<PsiElement> occurrences,
                               @NotNull final String name,
-                              final boolean replaceAll) {
+                              final boolean replaceAll,
+                              final boolean initInConstructor) {
     new WriteCommandAction(project, expression.getContainingFile()) {
       protected void run(final Result result) throws Throwable {
         final Pair<PsiElement, TextRange> data = expression.getUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE);
         if (data == null) {
-          addDeclaration(expression, declaration, occurrences, replaceAll);
+          addDeclaration(expression, declaration, occurrences, replaceAll, initInConstructor);
         }
         else {
-          addDeclaration(data.first, declaration, occurrences, replaceAll);
+          addDeclaration(data.first, declaration, occurrences, replaceAll, initInConstructor);
         }
 
-        PyExpressionStatement newExpression =
-          PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyExpressionStatement.class, name);
+        PyExpressionStatement newExpression = createExpression(project, name, declaration);
 
         if (replaceAll) {
           for (PsiElement occurrence : occurrences) {
@@ -178,8 +195,14 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     }.execute();
   }
 
+  protected PyExpressionStatement createExpression(Project project, String name, PyAssignmentStatement declaration) {
+    return PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyExpressionStatement.class, name);
+  }
+
+  @Nullable
   protected abstract PsiElement addDeclaration(@NotNull final PsiElement expression,
                                                @NotNull final PsiElement declaration,
                                                @NotNull final List<PsiElement> occurrences,
-                                               final boolean replaceAll);
+                                               final boolean replaceAll,
+                                               boolean initInConstructor);
 }

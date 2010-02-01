@@ -7,7 +7,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkListCellRenderer;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
-import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.RawCommandLineEditor;
@@ -16,6 +15,8 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +24,7 @@ import java.util.Map;
 /**
  * @author yole
  */
-public class PyCommonOptionsForm implements AbstractPythonRunConfigurationParams {
+  public class PyCommonOptionsForm implements AbstractPythonRunConfigurationParams {
   private TextFieldWithBrowseButton myWorkingDirectoryTextField;
   private EnvironmentVariablesComponent myEnvsComponent;
   private RawCommandLineEditor myInterpreterOptionsTextField;
@@ -56,6 +57,18 @@ public class PyCommonOptionsForm implements AbstractPythonRunConfigurationParams
     myWorkingDirectoryTextField.addBrowseFolderListener("Select Working Directory", "", configuration.getProject(),
                                                   new FileChooserDescriptor(false, true, false, false, false, false));
 
+    ActionListener listener = new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        updateControls();
+      }
+    };
+    myUseSpecifiedSdkRadioButton.addActionListener(listener);
+    myUseModuleSdkRadioButton.addActionListener(listener);
+  }
+
+  private void updateControls() {
+    myModuleComboBox.setEnabled(myUseModuleSdkRadioButton.isSelected());
+    myInterpreterComboBox.setEnabled(myUseSpecifiedSdkRadioButton.isSelected());
   }
 
   public JPanel getMainPanel() {
@@ -75,7 +88,7 @@ public class PyCommonOptionsForm implements AbstractPythonRunConfigurationParams
   }
 
   public String getWorkingDirectory() {
-    return toSystemIndependentName(myWorkingDirectoryTextField.getText().trim());
+    return FileUtil.toSystemIndependentName(myWorkingDirectoryTextField.getText().trim());
   }
 
   public void setWorkingDirectory(String workingDirectory) {
@@ -122,6 +135,7 @@ public class PyCommonOptionsForm implements AbstractPythonRunConfigurationParams
     else {
       myUseSpecifiedSdkRadioButton.setSelected(true);
     }
+    updateControls();
   }
 
   public boolean isPassParentEnvs() {

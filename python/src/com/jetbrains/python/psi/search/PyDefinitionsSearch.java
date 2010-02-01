@@ -4,8 +4,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
+import com.jetbrains.python.psi.PyAssignmentStatement;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyTargetExpression;
 
 /**
  * @author yole
@@ -27,6 +29,12 @@ public class PyDefinitionsSearch implements QueryExecutor<PsiElement, PsiElement
           return consumer.process(pyFunction);
         }
       });
+    }
+    else if (queryParameters instanceof PyTargetExpression) {  // PY-237
+      final PsiElement parent = queryParameters.getParent();
+      if (parent instanceof PyAssignmentStatement) {
+        return consumer.process(parent);        
+      }
     }
     return true;
   }
