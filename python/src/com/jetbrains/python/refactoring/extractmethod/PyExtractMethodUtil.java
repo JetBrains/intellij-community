@@ -6,20 +6,17 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringFactory;
-import com.intellij.refactoring.extractmethod.ExtractMethodDecorator;
-import com.intellij.refactoring.extractmethod.ExtractMethodDialog;
-import com.intellij.refactoring.extractmethod.ExtractMethodValidator;
-import com.intellij.refactoring.extractmethod.VariableData;
+import com.intellij.refactoring.extractMethod.AbstractExtractMethodDialog;
+import com.intellij.refactoring.extractMethod.AbstractVariableData;
+import com.intellij.refactoring.extractMethod.ExtractMethodDecorator;
+import com.intellij.refactoring.extractMethod.ExtractMethodValidator;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.containers.hash.HashMap;
-import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -44,7 +41,7 @@ public class PyExtractMethodUtil {
       return;
     }
 
-    final Pair<String, VariableData[]> data = getNameAndVariableData(project, fragment, statement1);
+    final Pair<String, AbstractVariableData[]> data = getNameAndVariableData(project, fragment, statement1);
     if (data.first == null || data.second == null) {
       return;
     }
@@ -52,7 +49,7 @@ public class PyExtractMethodUtil {
     // collect statements
     final List<PsiElement> elementsRange = PyPsiUtils.collectElements(statement1, statement2);
     final String methodName = data.first;
-    final VariableData[] variableData = data.second;
+    final AbstractVariableData[] variableData = data.second;
 
     if (fragment.getOutputVariables().isEmpty()) {
       CommandProcessor.getInstance().executeCommand(project, new Runnable() {
@@ -136,13 +133,13 @@ public class PyExtractMethodUtil {
       return;
     }
 
-    final Pair<String, VariableData[]> data = getNameAndVariableData(project, fragment, expression);
+    final Pair<String, AbstractVariableData[]> data = getNameAndVariableData(project, fragment, expression);
     if (data.first == null || data.second == null) {
       return;
     }
 
     final String methodName = data.first;
-    final VariableData[] variableData = data.second;
+    final AbstractVariableData[] variableData = data.second;
 
     if (fragment.getOutputVariables().isEmpty()) {
       CommandProcessor.getInstance().executeCommand(project, new Runnable() {
@@ -191,9 +188,9 @@ public class PyExtractMethodUtil {
   }
 
   // Creates string for call
-  private static String createCallArgsString(VariableData[] variableDatas) {
+  private static String createCallArgsString(AbstractVariableData[] variableDatas) {
     final StringBuilder builder = new StringBuilder();
-    for (VariableData data : variableDatas) {
+    for (AbstractVariableData data : variableDatas) {
       if (data.isPassAsParameter()) {
         if (builder.length() != 0) {
           builder.append(", ");
@@ -204,9 +201,9 @@ public class PyExtractMethodUtil {
     return builder.toString();
   }
 
-  private static void processParameters(final Project project, final PyFunction generatedMethod, final VariableData[] variableData) {
+  private static void processParameters(final Project project, final PyFunction generatedMethod, final AbstractVariableData[] variableData) {
     final Map<String, String> map = new HashMap<String, String>();
-    for (VariableData  data : variableData) {
+    for (AbstractVariableData data : variableData) {
       map.put(data.getOriginalName(), data.getName());
     }
     // Rename parameters
@@ -235,9 +232,9 @@ public class PyExtractMethodUtil {
   }
 
   //  Creates string for method parameters
-  private static String createMethodParamsString(final VariableData[] variableDatas, final boolean fakeSignature) {
+  private static String createMethodParamsString(final AbstractVariableData[] variableDatas, final boolean fakeSignature) {
     final StringBuilder builder = new StringBuilder();
-    for (VariableData data : variableDatas) {
+    for (AbstractVariableData data : variableDatas) {
       if (fakeSignature || data.isPassAsParameter()) {
         if (builder.length() != 0) {
           builder.append(", ");
@@ -248,7 +245,7 @@ public class PyExtractMethodUtil {
     return builder.toString();
   }
 
-  private static String generateSignature(final String methodName, final VariableData[] variableData, final PsiElement expression) {
+  private static String generateSignature(final String methodName, final AbstractVariableData[] variableData, final PsiElement expression) {
     final StringBuilder builder = new StringBuilder();
     builder.append("def ").append(methodName).append("(");
     builder.append(createMethodParamsString(variableData, true));
@@ -258,7 +255,7 @@ public class PyExtractMethodUtil {
 
   private static PyFunction generateMethodFromExpression(final Project project,
                                                          final String methodName,
-                                                         final VariableData[] variableData,
+                                                         final AbstractVariableData[] variableData,
                                                          final PsiElement expression) {
     final StringBuilder builder = new StringBuilder();
     builder.append(generateSignature(methodName, variableData, expression));
@@ -268,7 +265,7 @@ public class PyExtractMethodUtil {
 
   private static PyFunction generateMethodFromElements(final Project project,
                                                        final String methodName,
-                                                       final VariableData[] variableData,
+                                                       final AbstractVariableData[] variableData,
                                                        final List<PsiElement> elementsRange) {
     final StringBuilder builder = new StringBuilder();
     builder.append(generateSignature(methodName, variableData, elementsRange.get(0)));
@@ -278,7 +275,7 @@ public class PyExtractMethodUtil {
     return PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyFunction.class, builder.toString());
   }
 
-  private static Pair<String, VariableData[]> getNameAndVariableData(final Project project,
+  private static Pair<String, AbstractVariableData[]> getNameAndVariableData(final Project project,
                                                                      final CodeFragment fragment,
                                                                      final PsiElement element) {
     final ExtractMethodValidator validator = new ExtractMethodValidator() {
@@ -293,12 +290,12 @@ public class PyExtractMethodUtil {
     };
 
     final ExtractMethodDecorator decorator = new ExtractMethodDecorator() {
-      public String createMethodPreview(final String methodName, final VariableData[] variableDatas) {
+      public String createMethodPreview(final String methodName, final AbstractVariableData[] variableDatas) {
         final StringBuilder builder = new StringBuilder();
         builder.append("def ").append(methodName);
         builder.append("(");
         boolean first = true;
-        for (VariableData variableData : variableDatas) {
+        for (AbstractVariableData variableData : variableDatas) {
           if (variableData.passAsParameter) {
             if (first) {
               first = false;
@@ -314,7 +311,7 @@ public class PyExtractMethodUtil {
       }
     };
 
-    final ExtractMethodDialog dialog = new ExtractMethodDialog(project, "method_name", fragment, validator, decorator);
+    final AbstractExtractMethodDialog dialog = new AbstractExtractMethodDialog(project, "method_name", fragment, validator, decorator);
     dialog.show();
 
     //return if don`t want to extract method
