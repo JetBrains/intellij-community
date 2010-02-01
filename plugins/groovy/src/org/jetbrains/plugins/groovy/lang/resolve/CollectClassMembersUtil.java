@@ -19,10 +19,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -79,7 +76,7 @@ public class CollectClassMembersUtil {
   }
 
   private static CachedValue<Trinity<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>, Map<String, CandidateInfo>>> buildCache(final PsiClass aClass, final boolean includeSynthetic) {
-    return aClass.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<Trinity<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>, Map<String, CandidateInfo>>>() {
+    return CachedValuesManager.getManager(aClass.getProject()).createCachedValue(new CachedValueProvider<Trinity<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>, Map<String, CandidateInfo>>>() {
       public Result<Trinity<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>, Map<String, CandidateInfo>>> compute() {
         Map<String, CandidateInfo> allFields = new HashMap<String, CandidateInfo>();
         Map<String, List<CandidateInfo>> allMethods = new HashMap<String, List<CandidateInfo>>();

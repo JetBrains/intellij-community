@@ -276,7 +276,7 @@ public class PsiSuperMethodImplUtil {
     CachedValue<Map<MethodSignature, HierarchicalMethodSignature>> value = aClass.getUserData(SIGNATURES_KEY);
     if (value == null) {
       BySignaturesCachedValueProvider provider = new BySignaturesCachedValueProvider(aClass);
-      value = aClass.getManager().getCachedValuesManager().createCachedValue(provider, false);
+      value = CachedValuesManager.getManager(aClass.getProject()).createCachedValue(provider, false);
       //Do not cache for nonphysical elements
       if (aClass.isPhysical()) {
         UserDataHolderEx dataHolder = (UserDataHolderEx)aClass;

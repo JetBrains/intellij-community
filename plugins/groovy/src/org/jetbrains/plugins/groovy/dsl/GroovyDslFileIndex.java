@@ -40,6 +40,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.unscramble.UnscrambleDialog;
 import com.intellij.util.containers.*;
@@ -230,8 +231,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
                                          PsiScopeProcessor processor,
                                          final GroovyFile dslFile) {
     final Project project = dslFile.getProject();
-    final ConcurrentFactoryMap<ClassDescriptor, CustomMembersHolder> map = dslFile.getManager().getCachedValuesManager()
-      .getCachedValue(dslFile, CACHED_ENHANCEMENTS, new CachedValueProvider<ConcurrentFactoryMap<ClassDescriptor, CustomMembersHolder>>() {
+    final ConcurrentFactoryMap<ClassDescriptor, CustomMembersHolder> map = CachedValuesManager.getManager(dslFile.getProject()).getCachedValue(dslFile, CACHED_ENHANCEMENTS, new CachedValueProvider<ConcurrentFactoryMap<ClassDescriptor, CustomMembersHolder>>() {
         public Result<ConcurrentFactoryMap<ClassDescriptor, CustomMembersHolder>> compute() {
           final ConcurrentFactoryMap<ClassDescriptor, CustomMembersHolder> result =
             new ConcurrentFactoryMap<ClassDescriptor, CustomMembersHolder>() {

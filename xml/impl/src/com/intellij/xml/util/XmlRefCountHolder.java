@@ -25,6 +25,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.IdReference
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -43,7 +44,7 @@ public class XmlRefCountHolder {
   private final static UserDataCache<CachedValue<XmlRefCountHolder>, XmlFile, Object> CACHE =
     new UserDataCache<CachedValue<XmlRefCountHolder>, XmlFile, Object>() {
       protected CachedValue<XmlRefCountHolder> compute(final XmlFile file, final Object p) {
-        return file.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<XmlRefCountHolder>() {
+        return CachedValuesManager.getManager(file.getProject()).createCachedValue(new CachedValueProvider<XmlRefCountHolder>() {
           public Result<XmlRefCountHolder> compute() {
             final XmlRefCountHolder holder = new XmlRefCountHolder();
             final Language language = file.getViewProvider().getBaseLanguage();

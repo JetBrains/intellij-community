@@ -26,6 +26,7 @@ import com.intellij.psi.scope.processor.FilterElementProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
@@ -60,7 +61,7 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
 
   private static final UserDataCache<CachedValue<XmlAttlistDecl[]>,XmlElement, Object> myAttlistDeclCache = new UserDataCache<CachedValue<XmlAttlistDecl[]>,XmlElement, Object>() {
     protected final CachedValue<XmlAttlistDecl[]> compute(final XmlElement owner, Object o) {
-      return owner.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<XmlAttlistDecl[]>() {
+      return CachedValuesManager.getManager(owner.getProject()).createCachedValue(new CachedValueProvider<XmlAttlistDecl[]>() {
         public Result<XmlAttlistDecl[]> compute() {
           return new Result<XmlAttlistDecl[]>(doCollectAttlistDecls(owner),owner);
         }

@@ -22,6 +22,7 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlElementDescriptor;
@@ -70,8 +71,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
       final String name = decl.getName();
       if (cachingMap.containsKey(name)) return;
       cachingMap.put(
-        name,
-        file.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<XmlEntityDecl>() {
+        name, CachedValuesManager.getManager(file.getProject()).createCachedValue(new CachedValueProvider<XmlEntityDecl>() {
           public Result<XmlEntityDecl> compute() {
             if (decl.isValid() && name.equals(decl.getName()))
               return new Result<XmlEntityDecl>(decl,decl);

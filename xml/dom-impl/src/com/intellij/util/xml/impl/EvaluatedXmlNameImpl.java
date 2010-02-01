@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.*;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ConcurrentHashMap;
@@ -106,7 +107,7 @@ public class EvaluatedXmlNameImpl implements EvaluatedXmlName {
   private List<String> getAllowedNamespaces(final XmlFile file) {
     CachedValue<FactoryMap<String, List<String>>> value = file.getUserData(NAMESPACE_PROVIDER_KEY);
     if (value == null) {
-      file.putUserData(NAMESPACE_PROVIDER_KEY, value = file.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<FactoryMap<String, List<String>>>() {
+      file.putUserData(NAMESPACE_PROVIDER_KEY, value = CachedValuesManager.getManager(file.getProject()).createCachedValue(new CachedValueProvider<FactoryMap<String, List<String>>>() {
           public Result<FactoryMap<String, List<String>>> compute() {
             final FactoryMap<String, List<String>> map = new ConcurrentFactoryMap<String, List<String>>() {
               protected List<String> create(final String key) {
