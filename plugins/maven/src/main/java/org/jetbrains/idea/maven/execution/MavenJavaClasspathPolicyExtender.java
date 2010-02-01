@@ -66,29 +66,27 @@ public class MavenJavaClasspathPolicyExtender implements JavaClasspathPolicyExte
             return;
           }
 
-          List<MavenArtifact> deps = project.findDependencies(depProject);
-          if (hasDependency(deps, true) && original == ProjectClasspathTraversing.ALL_OUTPUTS) addOutput(ownerModule, true, state);
-          if (hasDependency(deps, false)) addOutput(ownerModule, false, state);
+          for (MavenArtifact each : project.findDependencies(depProject)) {
+            if (MavenConstants.SCOPE_PROVIDEED.equals(each.getScope())) continue;
+            if (original == ProjectClasspathTraversing.ALL_OUTPUTS || !MavenConstants.SCOPE_TEST.equals(each.getScope())) {
+              addOutput(ownerModule, MavenConstants.TYPE_TEST_JAR.equals(each.getType()), state);
+            }
+          }
         }
         else {
+          // should be in some generic place
+          if (entry instanceof ExportableOrderEntry && ((ExportableOrderEntry)entry).getScope() == DependencyScope.PROVIDED) return;
           original.visit(entry, state, policy);
         }
       }
     };
   }
 
-  public void addOutput(Module module, boolean test, ProjectRootsTraversing.TraverseState state) {
+  public void addOutput(Module module, boolean tests, ProjectRootsTraversing.TraverseState state) {
     CompilerModuleExtension ex = CompilerModuleExtension.getInstance(module);
     if (ex == null) return;
 
-    String output = test ? ex.getCompilerOutputUrlForTests() : ex.getCompilerOutputUrl();
+    String output = tests ? ex.getCompilerOutputUrlForTests() : ex.getCompilerOutputUrl();
     if (output != null) state.addAllUrls(Collections.singletonList(output));
-  }
-
-  private boolean hasDependency(List<MavenArtifact> deps, boolean test) {
-    for (MavenArtifact each : deps) {
-      if (test == MavenConstants.TYPE_TEST_JAR.equals(each.getType())) return true;
-    }
-    return false;
   }
 }
