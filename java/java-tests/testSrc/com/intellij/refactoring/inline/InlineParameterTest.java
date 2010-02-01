@@ -95,6 +95,32 @@ public class InlineParameterTest extends LightCodeInsightTestCase {
     doTest(false);
   }
 
+  public void testRefSameNonFinalField() throws Exception {
+    doTest(false);
+  }
+
+  public void testRefSameNonFinalFieldOtherObject() throws Exception {
+    try {
+      doTest(false);
+    }
+    catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
+      assertEquals("Cannot find constant initializer for parameter", e.getMessage());
+    }
+  }
+
+  public void testRef2ConstantsWithTheSameValue() throws Exception {
+    doTest(false);
+  }
+
+  public void testRefConstantAndField() throws Exception {
+    try {
+      doTest(false);
+    }
+    catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
+      assertEquals("Cannot find constant initializer for parameter", e.getMessage());
+    }
+  }
+
   private void doTest(final boolean createLocal) throws Exception {
     getProject().putUserData(InlineParameterExpressionProcessor.CREATE_LOCAL_FOR_TESTS,createLocal);
 

@@ -15,10 +15,10 @@
  */
 package com.intellij.refactoring.inline;
 
+import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.sameParameterValue.SameParameterValueInspection;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -76,13 +76,16 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
     boolean result = ReferencesSearch.search(method).forEach(new Processor<PsiReference>() {
       public boolean process(final PsiReference psiReference) {
         PsiElement element = psiReference.getElement();
-        if (element.getParent() instanceof PsiCallExpression) {
+        final PsiElement parent = element.getParent();
+        if (parent instanceof PsiCallExpression) {
+          final PsiCallExpression methodCall = (PsiCallExpression)parent;
           occurrences.add(psiReference);
           containingFiles.add(element.getContainingFile());
-          PsiCallExpression methodCall = (PsiCallExpression) element.getParent();
           PsiExpression argument = methodCall.getArgumentList().getExpressions()[index];
           if (!refInitializer.isNull()) {
-            return false;
+            return argument != null
+                   && PsiEquivalenceUtil.areElementsEquivalent(refInitializer.get(), argument)
+                   && PsiEquivalenceUtil.areElementsEquivalent(refMethodCall.get(), methodCall);
           }
           if (InlineToAnonymousConstructorProcessor.isConstant(argument) || getReferencedFinalField(argument) != null) {
             if (refConstantInitializer.isNull()) {
@@ -93,6 +96,7 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
             }
           }
           else {
+            if (!refConstantInitializer.isNull()) return false;
             refInitializer.set(argument);
             refMethodCall.set(methodCall);
           }
@@ -108,8 +112,7 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
       CommonRefactoringUtil.showErrorHint(project, editor, "Cannot find constant initializer for parameter", RefactoringBundle.message("inline.parameter.refactoring"), null);
       return;
     }
-    final ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
-    if ((app.isInternal() || app.isUnitTestMode()) && !refInitializer.isNull()) {
+    if (!refInitializer.isNull()) {
       try {
         new InlineParameterExpressionProcessor(refMethodCall.get(), method, psiParameter, refInitializer.get(), editor).run();
       }
@@ -174,10 +177,10 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
     if (expr1Null || expr2Null) {
       return expr1Null && expr2Null;
     }
-    PsiField field1 = getReferencedFinalField(expr1);
-    PsiField field2 = getReferencedFinalField(expr2);
-    if (field1 != null || field2 != null) {
-      return field1 == field2;
+    final PsiField field1 = getReferencedFinalField(expr1);
+    final PsiField field2 = getReferencedFinalField(expr2);
+    if (field1 != null && field1 == field2) {
+      return true;
     }
     Object value1 = JavaPsiFacade.getInstance(expr1.getProject()).getConstantEvaluationHelper().computeConstantExpression(expr1);
     Object value2 = JavaPsiFacade.getInstance(expr2.getProject()).getConstantEvaluationHelper().computeConstantExpression(expr2);
