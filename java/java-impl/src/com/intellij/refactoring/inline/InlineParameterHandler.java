@@ -49,10 +49,6 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("inline.parameter.refactoring");
 
   public boolean canInlineElement(PsiElement element) {
-    return false;
-  }
-
-  public boolean canInlineElementInEditor(PsiElement element) {
     return element instanceof PsiParameter && element.getParent() instanceof PsiParameterList;
   }
 

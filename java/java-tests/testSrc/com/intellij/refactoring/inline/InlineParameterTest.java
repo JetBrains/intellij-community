@@ -5,6 +5,7 @@ import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
 
@@ -77,6 +78,22 @@ public class InlineParameterTest extends LightCodeInsightTestCase {
     doTest(false);
   }
 
+  public void testRefOuterThis() throws Exception {
+    try {
+      doTest(false);
+    }
+    catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
+      assertEquals("Parameter initializer depends on values which are not available inside the method and cannot be inlined", e.getMessage());
+    }
+  }
+
+  public void testRefThis() throws Exception {
+    doTest(false);
+  }
+
+  public void testRefQualifiedThis() throws Exception {
+    doTest(false);
+  }
 
   private void doTest(final boolean createLocal) throws Exception {
     getProject().putUserData(InlineParameterExpressionProcessor.CREATE_LOCAL_FOR_TESTS,createLocal);

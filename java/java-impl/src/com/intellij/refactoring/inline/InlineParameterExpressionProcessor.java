@@ -220,6 +220,23 @@ public class InlineParameterExpressionProcessor {
           refCannotEvaluate.set(Boolean.TRUE);
         }
       }
+
+      @Override
+      public void visitThisExpression(PsiThisExpression thisExpression) {
+        super.visitThisExpression(thisExpression);
+        final PsiJavaCodeReferenceElement qualifier = thisExpression.getQualifier();
+        PsiElement containingClass;
+        if (qualifier != null) {
+          containingClass = qualifier.resolve();
+        } else {
+          containingClass = PsiTreeUtil.getParentOfType(myMethodCall, PsiClass.class);
+        }
+        final PsiClass methodContainingClass = myMethod.getContainingClass();
+        LOG.assertTrue(methodContainingClass != null);
+        if (!PsiTreeUtil.isAncestor(containingClass, methodContainingClass, false)) {
+          refCannotEvaluate.set(Boolean.TRUE);
+        }
+      }
     });
     return refCannotEvaluate.isNull();
   }
