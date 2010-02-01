@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.groovy.lang;
+package org.jetbrains.plugins.groovy.compiler;
 
 import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.execution.ExecutionException;

@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.groovy.lang.generator;
+package org.jetbrains.plugins.groovy.compiler;
 
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.module.Module;
@@ -59,6 +59,7 @@ public void testArrayType1() throws Throwable { doTest(); }
   public void testToGenerate() throws Throwable { doTest(); }
   public void testToGenerate1() throws Throwable { doTest(); }
   public void testVararg1() throws Throwable { doTest(); }
+  public void testInaccessibleConstructor() throws Throwable { doTest(); }
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {

@@ -130,7 +130,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     }
 
     //debug
-    //commandLine.addParameter("-Xdebug"); commandLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239");
+    //parameters.getVMParametersList().add("-Xdebug"); parameters.getVMParametersList().add("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239");
 
     // Setting up process encoding according to locale
     final ArrayList<String> list = new ArrayList<String>();

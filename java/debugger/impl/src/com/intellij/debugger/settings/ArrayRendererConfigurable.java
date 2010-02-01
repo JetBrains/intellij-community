@@ -50,10 +50,10 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
   }
 
   public void apply() {
-    applyTo(myRenderer);
+    applyTo(myRenderer, true);
   }
 
-  private void applyTo(ArrayRenderer renderer) {
+  private void applyTo(ArrayRenderer renderer, boolean showBigRangeWarning) {
     int newStartIndex = getInt(myStartIndex);
     int newEndIndex = getInt(myEndIndex);
     int newLimit = getInt(myEntriesLimit);
@@ -69,7 +69,7 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
         newLimit = 1;
       }
 
-      if(newEndIndex - newStartIndex > 10000) {
+      if(showBigRangeWarning && (newEndIndex - newStartIndex > 10000)) {
         final int answer = Messages.showOkCancelDialog(
           myPanel.getRootPane(),
           DebuggerBundle.message("warning.range.too.big", ApplicationNamesInfo.getInstance().getProductName()),
@@ -151,7 +151,7 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
 
   public boolean isModified() {
     ArrayRenderer cloneRenderer = myRenderer.clone();
-    applyTo(cloneRenderer);
+    applyTo(cloneRenderer, false);
     final boolean valuesEqual =
       (myRenderer.END_INDEX == cloneRenderer.END_INDEX) &&
       (myRenderer.START_INDEX == cloneRenderer.START_INDEX) &&

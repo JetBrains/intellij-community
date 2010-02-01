@@ -22,6 +22,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -91,6 +92,7 @@ public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements 
     }
   };
 
+  @Nullable
   private static PsiType getClosureCallOrCurryReturnType(GrMethodCallExpressionImpl callExpression,
                                                          GrReferenceExpression refExpr, PsiMethod resolved) {
     PsiClass clazz = resolved.getContainingClass();
