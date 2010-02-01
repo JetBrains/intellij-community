@@ -25,6 +25,7 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.refactoring.NameSuggestorUtil;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -196,6 +197,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     return PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyExpressionStatement.class, name);
   }
 
+  @Nullable
   protected abstract PsiElement addDeclaration(@NotNull final PsiElement expression,
                                                @NotNull final PsiElement declaration,
                                                @NotNull final List<PsiElement> occurrences,

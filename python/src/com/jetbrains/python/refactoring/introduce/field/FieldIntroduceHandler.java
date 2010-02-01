@@ -14,6 +14,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
 import com.jetbrains.python.refactoring.introduce.variable.VariableIntroduceHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -40,6 +41,7 @@ public class FieldIntroduceHandler extends IntroduceHandler {
     return true;
   }
 
+  @Nullable
   @Override
   protected PsiElement addDeclaration(@NotNull PsiElement expression, @NotNull PsiElement declaration, @NotNull List<PsiElement> occurrences,
                                       boolean replaceAll, boolean initInConstructor) {
@@ -48,7 +50,11 @@ public class FieldIntroduceHandler extends IntroduceHandler {
     assert anchor instanceof PyClass;
     if (initInConstructor) {
       final Project project = anchor.getProject();
-      AddFieldQuickFix.addFieldToInit(project, (PyClass)anchor, "", new AddFieldDeclaration(project, declaration));
+      final PyClass clazz = (PyClass)anchor;
+      AddFieldQuickFix.addFieldToInit(project, clazz, "", new AddFieldDeclaration(project, declaration));
+      final PyFunction init = clazz.findMethodByName(PyNames.INIT, false);
+      final PyStatementList statements = init != null ? init.getStatementList() : null;
+      return statements != null ? statements.getLastChild() :  null; 
     }
     return VariableIntroduceHandler.doIntroduceVariable(expression, declaration, occurrences, replaceAll);
   }
