@@ -136,6 +136,7 @@
     <codeInsight.gotoSuper language="Groovy" implementationClass="com.intellij.codeInsight.navigation.JavaGotoSuperHandler"/>
     <lookup.charFilter implementation="org.jetbrains.plugins.groovy.lang.completion.GroovyReferenceCharFilter"/>
     <completion.contributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionContributor"/>
+    <completion.contributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovySmartCompletionContributor"/>
 
     <debuggerClassFilterProvider implementation="org.jetbrains.plugins.groovy.debugger.filters.GroovyDebuggerClassFilterProvider"/>
     <xdebugger.settings implementation="org.jetbrains.plugins.groovy.debugger.filters.GroovyDebuggerSettings"/>
@@ -209,6 +210,10 @@
                     serviceImplementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfiguration"/>
     <projectService serviceInterface="org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker"
                     serviceImplementation="org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker"/>
+
+    <projectService serviceInterface="org.jetbrains.plugins.groovy.codeInsight.GroovyExpectedTypesProvider"
+                    serviceImplementation="org.jetbrains.plugins.groovy.codeInsight.GroovyExpectedTypesProvider"/>
+
 
     <psi.referenceContributor implementation="org.jetbrains.plugins.groovy.gant.GantReferenceContributor"/>
     <psi.referenceContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.providers.GroovyReferenceContributor"/>

@@ -79,7 +79,7 @@ public class GroovyCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy");
   }
 
-  public void testEachMethodForMapWithKeyValue() throws Throwable {
+public void testEachMethodForMapWithKeyValue() throws Throwable {
     doBasicTest();
   }
 
@@ -267,4 +267,7 @@ public class GroovyCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.testCompletionVariants(getTestName(false)+".groovy", "geteMail", "getePost");
   }
 
+  public void testSmartCompletionInAssignmentExpression() throws Throwable {
+    doSmartTest();
+  }
 }

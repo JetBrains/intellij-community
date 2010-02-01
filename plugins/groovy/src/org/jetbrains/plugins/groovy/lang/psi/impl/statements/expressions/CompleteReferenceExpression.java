@@ -159,6 +159,7 @@ public class CompleteReferenceExpression {
         if (GroovyPropertyUtils.isSimplePropertyAccessor(method)) {
           String prop = GroovyPropertyUtils.getPropertyName(method);
           accessedPropertyNames.add(prop);
+          assert prop != null;
           props.add(LookupElementBuilder.create(prop).setIcon(GroovyIcons.PROPERTY));
         }
         else if (eventListener != null) {
@@ -270,6 +271,7 @@ public class CompleteReferenceExpression {
           if (!PsiUtil.isValidReferenceName(propName)) {
             propName = "'" + propName + "'";
           }
+          assert propName != null;
           result.add(LookupElementBuilder.create(propName).setIcon(GroovyIcons.PROPERTY));
         }
       }
