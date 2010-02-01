@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenConstants;
@@ -27,6 +28,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class MavenModuleImporter {
   private final Module myModule;

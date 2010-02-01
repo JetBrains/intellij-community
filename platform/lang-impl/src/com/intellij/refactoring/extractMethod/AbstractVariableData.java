@@ -13,17 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.refactoring.extractmethod;
-
-import org.jetbrains.annotations.Nullable;
+package com.intellij.refactoring.extractMethod;
 
 /**
- * @author oleg
- * This validator should check if name will clash with existing methods 
- */
-public interface ExtractMethodValidator {
-  @Nullable
-  String check(String name);
+* @author oleg
+*/
+public class AbstractVariableData {
+  public String originalName;
+  public String name;
+  public boolean passAsParameter;
 
-  boolean isValidName(String name);
+  public String getName() {
+    return name;
+  }
+
+  public String getOriginalName() {
+    return originalName;
+  }
+
+  public boolean isPassAsParameter() {
+    return passAsParameter;
+  }
 }

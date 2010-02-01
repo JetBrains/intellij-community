@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.refactoring.extractmethod;
+package com.intellij.refactoring.extractMethod;
 
 /**
  * @author oleg
  */
 public interface ExtractMethodDecorator {
-  String createMethodPreview(String methodName, VariableData[] variableDatas);
+  String createMethodPreview(String methodName, AbstractVariableData[] variableDatas);
 }

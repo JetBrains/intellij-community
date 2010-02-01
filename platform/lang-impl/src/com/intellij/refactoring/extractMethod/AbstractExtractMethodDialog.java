@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.refactoring.extractmethod;
+package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.codeFragment.CodeFragment;
 import com.intellij.openapi.help.HelpManager;
@@ -31,9 +31,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class ExtractMethodDialog extends DialogWrapper implements ExtractMethodSettings {
+public class AbstractExtractMethodDialog extends DialogWrapper implements ExtractMethodSettings {
   private JPanel myContentPane;
-  private ParameterTablePanel myParametersPanel;
+  private AbstractParameterTablePanel myParametersPanel;
   private JTextField myMethodNameTextField;
   private JTextArea mySignaturePreviewTextArea;
   private JTextArea myOutputVariablesTextArea;
@@ -41,13 +41,13 @@ public class ExtractMethodDialog extends DialogWrapper implements ExtractMethodS
   private final ExtractMethodValidator myValidator;
   private final ExtractMethodDecorator myDecorator;
 
-  private VariableData[] myVariableData;
-  private Map<String, VariableData> myVariablesMap;
+  private AbstractVariableData[] myVariableData;
+  private Map<String, AbstractVariableData> myVariablesMap;
 
   private final List<String> myArguments;
   private final ArrayList<String> myOutputVariables;
 
-  public ExtractMethodDialog(final Project project,
+  public AbstractExtractMethodDialog(final Project project,
                              final String defaultName,
                              final CodeFragment fragment,
                              final ExtractMethodValidator validator,
@@ -97,10 +97,10 @@ public class ExtractMethodDialog extends DialogWrapper implements ExtractMethodS
     return myMethodNameTextField;
   }
 
-  public static VariableData[] createVariableData(final List<String> args) {
-    final VariableData[] datas = new VariableData[args.size()];
+  public static AbstractVariableData[] createVariableData(final List<String> args) {
+    final AbstractVariableData[] datas = new AbstractVariableData[args.size()];
     for (int i = 0; i < args.size(); i++) {
-      final VariableData data = new VariableData();
+      final AbstractVariableData data = new AbstractVariableData();
       final String name = args.get(i);
       data.originalName = name;
       data.name = name;
@@ -110,9 +110,9 @@ public class ExtractMethodDialog extends DialogWrapper implements ExtractMethodS
     return datas;
   }
 
-  public static Map<String, VariableData> createVariableMap(final VariableData[] data) {
-    final HashMap<String, VariableData> map = new HashMap<String, VariableData>();
-    for (VariableData variableData : data) {
+  public static Map<String, AbstractVariableData> createVariableMap(final AbstractVariableData[] data) {
+    final HashMap<String, AbstractVariableData> map = new HashMap<String, AbstractVariableData>();
+    for (AbstractVariableData variableData : data) {
       map.put(variableData.getOriginalName(), variableData);
     }
     return map;
@@ -143,9 +143,9 @@ public class ExtractMethodDialog extends DialogWrapper implements ExtractMethodS
   }
 
   private void createUIComponents() {
-    myParametersPanel = new ParameterTablePanel(myValidator){
+    myParametersPanel = new AbstractParameterTablePanel(myValidator){
       protected void doCancelAction() {
-        ExtractMethodDialog.this.doCancelAction();
+        AbstractExtractMethodDialog.this.doCancelAction();
       }
 
       protected void doEnterAction() {
@@ -154,7 +154,7 @@ public class ExtractMethodDialog extends DialogWrapper implements ExtractMethodS
 
       protected void updateSignature() {
         updateOutputVariables();
-        ExtractMethodDialog.this.updateSignature();
+        AbstractExtractMethodDialog.this.updateSignature();
       }
     };
   }
@@ -164,7 +164,7 @@ public class ExtractMethodDialog extends DialogWrapper implements ExtractMethodS
     boolean first = true;
     for (String variable : myOutputVariables) {
       if (myVariablesMap!=null){
-        final VariableData data = myVariablesMap.get(variable);
+        final AbstractVariableData data = myVariablesMap.get(variable);
         final String outputName = data != null ? data.getName() : variable;
         if (first){
           first = false;
@@ -189,7 +189,7 @@ public class ExtractMethodDialog extends DialogWrapper implements ExtractMethodS
     return myMethodNameTextField.getText().trim();
   }
 
-  public VariableData[] getVariableData() {
+  public AbstractVariableData[] getVariableData() {
     return myVariableData;
   }
 
