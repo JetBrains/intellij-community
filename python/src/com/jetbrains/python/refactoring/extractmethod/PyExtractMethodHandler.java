@@ -97,7 +97,7 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
 
     final PsiElement expression = PyRefactoringUtil.getSelectedExpression(project, file, element1, element2);
     if (expression != null) {
-      final ScopeOwner owner = PsiTreeUtil.getParentOfType(expression, ScopeOwner.class);
+      final ScopeOwner owner = PsiTreeUtil.getParentOfType(element1, ScopeOwner.class);
       if (owner == null) {
         return;
       }
