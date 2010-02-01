@@ -79,6 +79,10 @@ public class MoveClassToInnerTest extends CodeInsightTestCase {
     doTest(new String[] { "pack1.Class1" }, "pack1.A");
   }
 
+  public void testLocallyUsedPackageLocalToPublicInterface() throws Exception {
+    doTest(new String[]{"pack1.Class1"}, "pack2.A");
+  }
+
   public void testPackageLocalClass() throws Exception {
     doTestConflicts("pack1.Class1", "pack2.A", "Field <b><code>Class1.c2</code></b> uses a package-local class <b><code>pack1.Class2</code></b>.");
   }

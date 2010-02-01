@@ -353,7 +353,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
   private boolean isInaccessibleFromTarget(final PsiElement element, final String visibility) {
     final PsiPackage elementPackage = JavaDirectoryService.getInstance().getPackage(element.getContainingFile().getContainingDirectory());
     return !PsiUtil.isAccessible(myTargetClass, element, null) ||
-        (visibility.equals(PsiModifier.PACKAGE_LOCAL) && !Comparing.equal(elementPackage, myTargetPackage));
+        (!myTargetClass.isInterface() && visibility.equals(PsiModifier.PACKAGE_LOCAL) && !Comparing.equal(elementPackage, myTargetPackage));
   }
 
   private void detectInaccessibleMemberUsages(final ConflictsCollector collector) {
