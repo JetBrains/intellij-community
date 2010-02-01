@@ -55,7 +55,7 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
   }
 
   @Nullable
-  public String getFileCoverageInformationString(@NotNull PsiFile file, @NotNull CoverageSuite currentSuite) {
+  public String getFileCoverageInformationString(@NotNull PsiFile file, @NotNull CoverageSuite currentSuite, @NotNull CoverageDataManager manager) {
     // N/A here we work with java classes
     return null;
   }

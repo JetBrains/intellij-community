@@ -109,7 +109,7 @@ public class JavaCoverageSupportProvider extends CoverageSupportProvider {
    * @param psiFile
    * @return
    */
-  public boolean coverageInfoApplicableTo(@NotNull final PsiFile psiFile) {
+  public boolean coverageEditorHighlightingApplicableTo(@NotNull final PsiFile psiFile) {
     if (!(psiFile instanceof PsiClassOwner)) {
       return false;
     }
