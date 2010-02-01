@@ -71,6 +71,11 @@ public class FieldIntroduceHandler extends IntroduceHandler {
     return PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyAssignmentStatement.class, PyNames.CANONICAL_SELF + "." + assignmentText);
   }
 
+  @Override
+  protected String getHelpId() {
+    return "refactoring.introduceField";
+  }
+
   private static class AddFieldDeclaration extends AddFieldQuickFix.FieldCallback {
     private final Project myProject;
     private final PsiElement myDeclaration;

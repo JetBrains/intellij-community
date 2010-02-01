@@ -44,4 +44,9 @@ public class VariableIntroduceHandler extends IntroduceHandler {
     anchorStatement.getParent().addBefore(declaration, anchorStatement);
     return anchorStatement.getParent().getParent();
   }
+
+  @Override
+  protected String getHelpId() {
+    return "refactoring.introduceVariable";
+  }
 }

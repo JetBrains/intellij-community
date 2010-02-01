@@ -36,6 +36,7 @@ public class PyIntroduceDialog extends DialogWrapper implements PyIntroduceSetti
   private final int myOccurrencesCount;
   private final IntroduceValidator myValidator;
   private final PyExpression myExpression;
+  private final String myHelpId;
 
   public PyIntroduceDialog(@NotNull final Project project,
                            @NotNull PyExpression expression,
@@ -43,12 +44,14 @@ public class PyIntroduceDialog extends DialogWrapper implements PyIntroduceSetti
                            @NotNull final IntroduceValidator validator,
                            final int occurrencesCount,
                            final String[] possibleNames,
+                           final String helpId,
                            boolean hasConstructor) {
     super(project, true);
     myOccurrencesCount = occurrencesCount;
     myValidator = validator;
     myProject = project;
     myExpression = expression;
+    myHelpId = helpId;
     setUpNameComboBox(possibleNames);
 
     setModal(true);
@@ -56,6 +59,11 @@ public class PyIntroduceDialog extends DialogWrapper implements PyIntroduceSetti
     init();
     setupDialog(hasConstructor);
     updateControls();
+  }
+
+  @Override
+  protected String getHelpId() {
+    return myHelpId;
   }
 
   private void setUpNameComboBox(String[] possibleNames) {

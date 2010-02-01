@@ -41,4 +41,9 @@ public class ConstantIntroduceHandler extends IntroduceHandler {
     }
     return ArrayUtil.toStringArray(names);
   }
+
+  @Override
+  protected String getHelpId() {
+    return "refactoring.introduceConstant";
+  }
 }

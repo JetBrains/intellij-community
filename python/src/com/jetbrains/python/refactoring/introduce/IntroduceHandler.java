@@ -127,7 +127,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     String[] possibleNames = getSuggestedNames(expression);
     boolean initInConstructor = false;
     if (name == null) {
-      PyIntroduceDialog dialog = new PyIntroduceDialog(project, expression, myDialogTitle, myValidator, occurrences.size(), possibleNames, hasConstructor);
+      PyIntroduceDialog dialog = new PyIntroduceDialog(project, expression, myDialogTitle, myValidator, occurrences.size(), possibleNames, getHelpId(), hasConstructor);
       dialog.show();
       if (!dialog.isOK()) {
         return;
@@ -142,6 +142,8 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     assert name != null;
     performReplace(project, declaration, expression, occurrences, name, replaceAll, initInConstructor);
   }
+
+  protected abstract String getHelpId();  
 
   protected PyAssignmentStatement createDeclaration(Project project, String assignmentText) {
     return PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyAssignmentStatement.class, assignmentText);
