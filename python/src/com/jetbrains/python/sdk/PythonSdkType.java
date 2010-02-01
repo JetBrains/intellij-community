@@ -218,7 +218,7 @@ public class PythonSdkType extends SdkType {
 
   @Override
   public SdkAdditionalData loadAdditionalData(final Sdk currentSdk, final Element additional) {
-    final String[] urls = currentSdk.getRootProvider().getUrls(OrderRootType.SOURCES);
+    final String[] urls = currentSdk.getRootProvider().getUrls(BUILTIN_ROOT_TYPE);
     for (String url : urls) {
       if (url.contains(SKELETON_DIR_NAME)) {
         final String path = VfsUtil.urlToPath(url);
@@ -266,7 +266,7 @@ public class PythonSdkType extends SdkType {
   /**
    * In which root type built-in skeletons are put.
    */
-  public static final OrderRootType BUITLIN_ROOT_TYPE = OrderRootType.CLASSES;
+  public static final OrderRootType BUILTIN_ROOT_TYPE = OrderRootType.CLASSES;
 
   public static void setupSdkPaths(SdkModificator sdkModificator, ProgressIndicator indicator) {
     String sdk_path = sdkModificator.getHomePath();
@@ -305,7 +305,7 @@ public class PythonSdkType extends SdkType {
         indicator.setText2("");
       }
       generateBuiltinStubs(sdk_path, stubs_path);
-      sdkModificator.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByPath(stubs_path), BUITLIN_ROOT_TYPE);
+      sdkModificator.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByPath(stubs_path), BUILTIN_ROOT_TYPE);
     }
     generateBinaryStubs(sdk_path, stubs_path, indicator);
   }
