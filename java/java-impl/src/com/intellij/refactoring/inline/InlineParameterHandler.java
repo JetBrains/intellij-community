@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -126,10 +127,27 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
       return;
     }
 
+    final Ref<Boolean> isNotConstantAccessible = new Ref<Boolean>();
+    final PsiExpression constantExpression = refConstantInitializer.get();
+    constantExpression.accept(new JavaRecursiveElementVisitor(){
+      @Override
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+        super.visitReferenceExpression(expression);
+        final PsiElement resolved = expression.resolve();
+        if (resolved instanceof PsiMember && !PsiUtil.isAccessible((PsiMember)resolved, method, null)) {
+          isNotConstantAccessible.set(Boolean.TRUE);
+        }
+      }
+    });
+    if (!isNotConstantAccessible.isNull() && isNotConstantAccessible.get()) {
+      CommonRefactoringUtil.showErrorHint(project, editor, "Constant initializer is not accessible in method body", RefactoringBundle.message("inline.parameter.refactoring"), null);
+      return;
+    }
+
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       String occurencesString = RefactoringBundle.message("occurences.string", occurrences.size());
       String question = RefactoringBundle.message("inline.parameter.confirmation", psiParameter.getName(),
-                                                  refConstantInitializer.get().getText()) + " " + occurencesString;
+                                                  constantExpression.getText()) + " " + occurencesString;
       RefactoringMessageDialog dialog = new RefactoringMessageDialog(
         REFACTORING_NAME,
         question,
@@ -147,7 +165,7 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
                            RefactoringBundle.message("inline.parameter.command.name", psiParameter.getName()),
                            containingFiles.toArray(new PsiFile[containingFiles.size()]) ) {
       protected void run(final Result result) throws Throwable {
-        SameParameterValueInspection.InlineParameterValueFix.inlineSameParameterValue(method, psiParameter, refConstantInitializer.get());
+        SameParameterValueInspection.InlineParameterValueFix.inlineSameParameterValue(method, psiParameter, constantExpression);
       }
 
       protected UndoConfirmationPolicy getUndoConfirmationPolicy() {
