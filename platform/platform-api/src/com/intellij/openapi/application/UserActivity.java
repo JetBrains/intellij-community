@@ -17,6 +17,9 @@ package com.intellij.openapi.application;
 
 import com.intellij.util.messages.Topic;
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
@@ -38,6 +41,24 @@ public interface UserActivity {
     }
 
     public void onIdle() {
+    }
+  }
+
+  class Util {
+
+    public static boolean isEditorActivity(InputEvent e) {
+      Component c = null;
+      if (e instanceof KeyEvent) {
+        c = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+      } else if (e instanceof MouseEvent) {
+        c = SwingUtilities.getDeepestComponentAt(e.getComponent(), ((MouseEvent)e).getX(), ((MouseEvent)e).getY());
+      }
+
+      if (c instanceof JComponent) {
+        return Boolean.TRUE.equals(((JComponent)c).getClientProperty("isEditor"));
+      }
+
+      return false;
     }
   }
 

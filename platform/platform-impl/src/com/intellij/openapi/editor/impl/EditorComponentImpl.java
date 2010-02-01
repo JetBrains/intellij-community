@@ -44,6 +44,7 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
     enableInputMethods(true);
     setFocusCycleRoot(true);
     setOpaque(true);
+    putClientProperty("isEditor", Boolean.TRUE);
   }
 
   public EditorImpl getEditor() {
