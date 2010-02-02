@@ -16,6 +16,7 @@
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.HierarchicalMethodSignatureImpl;
@@ -154,26 +155,25 @@ public class PsiSuperMethodImplUtil {
       Map<MethodSignature, HierarchicalMethodSignature> superResult = buildMethodHierarchy(superClass, finalSubstitutor, false, visited, isInRawContextSuper);
       visited.remove(superClass);
 
+      List<Pair<MethodSignature, HierarchicalMethodSignature>> flattened = new ArrayList<Pair<MethodSignature, HierarchicalMethodSignature>>();
       for (Map.Entry<MethodSignature, HierarchicalMethodSignature> entry : superResult.entrySet()) {
-        HierarchicalMethodSignature hierarchicalMethodSignature = entry.getValue();
-        if (!PsiUtil.isAccessible(hierarchicalMethodSignature.getMethod(), aClass, aClass)) continue;
-        MethodSignature superSignature = entry.getKey();
-        HierarchicalMethodSignatureImpl existing = map.get(superSignature);
-        if (existing == null) {
-          map.put(superSignature, copy(hierarchicalMethodSignature));
+        HierarchicalMethodSignature hms = entry.getValue();
+        MethodSignature signature = entry.getKey();
+        PsiClass containingClass = hms.getMethod().getContainingClass();
+        List<HierarchicalMethodSignature> supers = new ArrayList<HierarchicalMethodSignature>(hms.getSuperSignatures());
+        for (HierarchicalMethodSignature aSuper : supers) {
+          PsiClass superContainingClass = aSuper.getMethod().getContainingClass();
+          if (containingClass != null && superContainingClass != null && !containingClass.isInheritor(superContainingClass, true)) {
+            // methods must be inherited from unrelated classes, so flatten hierarchy here
+            // class C implements SAM1, SAM2 { void methodimpl() {} }
+            //hms.getSuperSignatures().remove(aSuper);
+            flattened.add(new Pair<MethodSignature, HierarchicalMethodSignature>(signature, aSuper));
+          }
         }
-        else if (isReturnTypeIsMoreSpecificThan(hierarchicalMethodSignature, existing) && isSuperMethod(aClass, hierarchicalMethodSignature, existing)) {
-          HierarchicalMethodSignatureImpl newSuper = copy(hierarchicalMethodSignature);
-          mergeSupers(newSuper, existing);
-          map.put(superSignature, newSuper);
-        }
-        else if (isSuperMethod(aClass, existing, hierarchicalMethodSignature)) {
-          mergeSupers(existing, hierarchicalMethodSignature);
-        }
-        // just drop an invalid method declaration there - to highlight accordingly
-        else if (!result.containsKey(superSignature)) {
-          result.put(superSignature, hierarchicalMethodSignature);
-        }
+        putInMap(aClass, result, map, hms, signature);
+      }
+      for (Pair<MethodSignature, HierarchicalMethodSignature> pair : flattened) {
+        putInMap(aClass, result, map, pair.second, pair.first);
       }
     }
 
@@ -187,6 +187,28 @@ public class PsiSuperMethodImplUtil {
     }
 
     return result;
+  }
+
+  private static void putInMap(PsiClass aClass, Map<MethodSignature, HierarchicalMethodSignature> result,
+                           Map<MethodSignature, HierarchicalMethodSignatureImpl> map, HierarchicalMethodSignature hierarchicalMethodSignature,
+                           MethodSignature signature) {
+    if (!PsiUtil.isAccessible(hierarchicalMethodSignature.getMethod(), aClass, aClass)) return;
+    HierarchicalMethodSignatureImpl existing = map.get(signature);
+    if (existing == null) {
+      map.put(signature, copy(hierarchicalMethodSignature));
+    }
+    else if (isReturnTypeIsMoreSpecificThan(hierarchicalMethodSignature, existing) && isSuperMethod(aClass, hierarchicalMethodSignature, existing)) {
+      HierarchicalMethodSignatureImpl newSuper = copy(hierarchicalMethodSignature);
+      mergeSupers(newSuper, existing);
+      map.put(signature, newSuper);
+    }
+    else if (isSuperMethod(aClass, existing, hierarchicalMethodSignature)) {
+      mergeSupers(existing, hierarchicalMethodSignature);
+    }
+    // just drop an invalid method declaration there - to highlight accordingly
+    else if (!result.containsKey(signature)) {
+      result.put(signature, hierarchicalMethodSignature);
+    }
   }
 
   private static boolean isReturnTypeIsMoreSpecificThan(@NotNull HierarchicalMethodSignature thisSig, @NotNull HierarchicalMethodSignature thatSig) {
