@@ -31,6 +31,7 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -599,7 +600,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
   @NotNull
   public Object[] getVariants() {
-    return CompleteReferenceExpression.getVariants(this);
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
 
@@ -643,6 +644,10 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   @NotNull
   public GroovyResolveResult[] multiResolve(boolean incomplete) {  //incomplete means we do not take arguments into consideration
     return (GroovyResolveResult[]) getManager().getResolveCache().resolveWithCaching(this, RESOLVER, false, incomplete);
+  }
+
+  public void processVariants(Consumer<Object> consumer) {
+    CompleteReferenceExpression.processVariants(consumer, this);
   }
 
   @NotNull
