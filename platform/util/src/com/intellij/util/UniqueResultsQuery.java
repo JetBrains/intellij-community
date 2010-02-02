@@ -16,62 +16,62 @@
 
 package com.intellij.util;
 
-import com.intellij.openapi.util.Ref;
 import com.intellij.util.containers.ConcurrentHashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Set;
 
 /**
  * @author max
  */
-public class UniqueResultsQuery<T> implements Query<T> {
+public class UniqueResultsQuery<T, M> implements Query<T> {
   private final Query<T> myOriginal;
-  private final TObjectHashingStrategy<T> myHashingStrategy;
+  private final TObjectHashingStrategy<M> myHashingStrategy;
+  private final Function<T, M> myMapper;
+
+  public final static Function ID = new Function() {
+    public Object fun(Object o) {
+      return o;
+    }
+  };
 
   public UniqueResultsQuery(final Query<T> original) {
-    myOriginal = original;
     //noinspection unchecked
-    myHashingStrategy = TObjectHashingStrategy.CANONICAL;
+    this(original, TObjectHashingStrategy.CANONICAL, ID);
   }
 
-  public UniqueResultsQuery(final Query<T> original, TObjectHashingStrategy<T> hashingStrategy) {
+  public UniqueResultsQuery(final Query<T> original, TObjectHashingStrategy<M> hashingStrategy) {
+    //noinspection unchecked
+    this(original, hashingStrategy, ID);
+  }
+
+  public UniqueResultsQuery(final Query<T> original, TObjectHashingStrategy<M> hashingStrategy, Function<T, M> mapper) {
     myOriginal = original;
     myHashingStrategy = hashingStrategy;
+    myMapper = mapper;
   }
 
   public T findFirst() {
     return myOriginal.findFirst();
   }
 
-  private boolean doForEach(@NotNull final Processor<T> consumer, @Nullable Ref<Set<T>> outProcessed) {
-    final Set<T> processedElements = new ConcurrentHashSet<T>(myHashingStrategy);
-    if (outProcessed != null) {
-      outProcessed.set(processedElements);
-    }
+  public boolean forEach(@NotNull final Processor<T> consumer) {
+    final Set<M> processedElements = new ConcurrentHashSet<M>(myHashingStrategy);
     return myOriginal.forEach(new Processor<T>() {
       public boolean process(final T t) {
-        return !processedElements.add(t) || consumer.process(t);
+        return !processedElements.add(myMapper.fun(t)) || consumer.process(t);
       }
     });
   }
 
-  public boolean forEach(@NotNull final Processor<T> consumer) {
-    return doForEach(consumer, null);
-  }
-
   @NotNull
   public Collection<T> findAll() {
-    Ref<Set<T>> refProcessed = new Ref<Set<T>>();
-    doForEach(new Processor<T>() {
-      public boolean process(final T t) {
-        return true;
-      }
-    }, refProcessed);
-
-    return refProcessed.get();
+    final CommonProcessors.CollectProcessor<T> processor = new CommonProcessors.CollectProcessor<T>();
+    forEach(processor);
+    return processor.getResults();
   }
 
   public T[] toArray(final T[] a) {

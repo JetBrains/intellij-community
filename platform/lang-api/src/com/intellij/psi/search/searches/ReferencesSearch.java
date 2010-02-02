@@ -20,6 +20,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.util.Function;
 import com.intellij.util.Query;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -29,21 +30,38 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, ReferencesSearch.SearchParameters> {
   private static final ReferencesSearch INSTANCE = new ReferencesSearch();
-  private static final TObjectHashingStrategy<PsiReference> HASHING_STRATEGY = new TObjectHashingStrategy<PsiReference>() {
-    public int computeHashCode(final PsiReference object) {
-      if (object == null) return 0;
-      final PsiElement element = object.getElement();
-      final PsiFile file = element.getContainingFile();
-      return file.hashCode() + 31 * (element.getTextOffset() + object.getRangeInElement().getStartOffset());
+
+  private static class ReferenceDescriptor {
+    private final PsiFile file;
+    private final int offset;
+
+    private ReferenceDescriptor(PsiFile file, int offset) {
+      this.file = file;
+      this.offset = offset;
     }
 
-    public boolean equals(final PsiReference o1, final PsiReference o2) {
-      if (o1 == o2) return true;
-      if (o1 == null || o2 == null) return false;
-      final PsiElement e1 = o1.getElement();
-      final PsiElement e2 = o2.getElement();
-      return e1.getManager().areElementsEquivalent(e1.getContainingFile(), e2.getContainingFile()) &&
-             e1.getTextOffset() + o1.getRangeInElement().getStartOffset() == e2.getTextOffset() + o2.getRangeInElement().getStartOffset();
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof ReferenceDescriptor)) return false;
+
+      ReferenceDescriptor that = (ReferenceDescriptor)o;
+
+      if (offset != that.offset) return false;
+      return file.equals(that.file);
+    }
+
+    @Override
+    public int hashCode() {
+      return 31 * file.hashCode() + offset;
+    }
+  }
+
+  private static final Function<PsiReference, ReferenceDescriptor> MAPPER = new Function<PsiReference, ReferenceDescriptor>() {
+    public ReferenceDescriptor fun(PsiReference psiReference) {
+      final PsiElement element = psiReference.getElement();
+      final PsiFile file = element.getContainingFile();
+      return new ReferenceDescriptor(file, element.getTextOffset() + psiReference.getRangeInElement().getStartOffset());
     }
   };
 
@@ -97,6 +115,7 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
   }
 
   public static Query<PsiReference> search(@NotNull SearchParameters parameters) {
-    return INSTANCE.createUniqueResultsQuery(parameters, HASHING_STRATEGY);
+    //noinspection unchecked
+    return INSTANCE.createUniqueResultsQuery(parameters, TObjectHashingStrategy.CANONICAL, MAPPER);
   }
 }
