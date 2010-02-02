@@ -90,6 +90,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   private TabbedPaneWrapper myTabbedPane;
   private ArtifactPropertiesEditors myPropertiesEditors;
   private ArtifactValidationManagerImpl myValidationManager;
+  private boolean myDisposed;
 
   public ArtifactEditorImpl(final @NotNull ArtifactsStructureConfigurableContext context, @NotNull Artifact artifact, @NotNull ArtifactEditorSettings settings) {
     myContext = createArtifactEditorContext(context);
@@ -303,6 +304,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     popupActionGroup.add(new ExtractArtifactAction(this));
     popupActionGroup.add(new InlineArtifactAction(this));
     popupActionGroup.add(new RenamePackagingElementAction(this));
+    popupActionGroup.add(new SurroundElementWithAction(this));
     popupActionGroup.add(Separator.getInstance());
     popupActionGroup.add(new HideContentAction(this));
     popupActionGroup.add(new LayoutTreeNavigateAction(myLayoutTreeComponent));
@@ -350,6 +352,11 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   }
 
   public void dispose() {
+    myDisposed = true;
+  }
+
+  public boolean isDisposed() {
+    return myDisposed;
   }
 
   public LayoutTreeComponent getLayoutTreeComponent() {
