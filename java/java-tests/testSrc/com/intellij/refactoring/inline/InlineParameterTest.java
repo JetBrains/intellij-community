@@ -139,6 +139,19 @@ public class InlineParameterTest extends LightCodeInsightTestCase {
     }
   }
 
+  public void testRefArrayAccess() throws Exception {
+    try {
+      doTest(false);
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Parameter initializer depends on value which is not available inside method and cannot be inlined", e.getMessage());
+    }
+  }
+
+  public void testHandleExceptions() throws Exception {
+    doTest(false);
+  }
+
   private void doTestCannotFindInitializer() throws Exception {
     try {
       doTest(false);

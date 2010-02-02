@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.inline;
 
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInspection.sameParameterValue.SameParameterValueInspection;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
@@ -223,11 +224,39 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
         }
       }
     });
+
+    final UsageInfo[] usages = refUsages.get();
+    final Set<PsiVariable> vars = new HashSet<PsiVariable>();
+    for (UsageInfo usageInfo : usages) {
+      if (usageInfo instanceof LocalReplacementUsageInfo) {
+        final PsiVariable var = ((LocalReplacementUsageInfo)usageInfo).getVariable();
+        if (var != null) {
+          vars.add(var);
+        }
+      }
+    }
+    for (PsiVariable var : vars) {
+      for (PsiReference ref : ReferencesSearch.search(var)) {
+        final PsiElement element = ref.getElement();
+        if (element instanceof PsiExpression && isAccessedForWriting((PsiExpression)element)) {
+          conflicts.putValue(element, "Parameter initializer depends on value which is not available inside method and cannot be inlined");
+          break;
+        }
+      }
+    }
     return showConflicts(conflicts);
+  }
+
+  private static boolean isAccessedForWriting (PsiExpression expr) {
+    while (expr.getParent() instanceof PsiArrayAccessExpression) {
+      expr = (PsiExpression)expr.getParent();
+    }
+    return PsiUtil.isAccessedForWriting(expr);
   }
 
   @Override
   protected void performRefactoring(UsageInfo[] usages) {
+    final List<PsiClassType> thrownExceptions = ExceptionUtil.getThrownCheckedExceptions(new PsiElement[]{myInitializer});
     final Set<PsiVariable> varsUsedInInitializer = new HashSet<PsiVariable>();
     final Set<PsiJavaCodeReferenceElement> paramRefsToInline = new HashSet<PsiJavaCodeReferenceElement>();
     final Map<PsiElement, PsiElement> replacements = new HashMap<PsiElement, PsiElement>();
@@ -274,6 +303,15 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
     }
 
     SameParameterValueInspection.InlineParameterValueFix.removeParameter(myMethod, myParameter);
+
+    if (!thrownExceptions.isEmpty()) {
+      for (PsiClassType exception : thrownExceptions) {
+        PsiClass exceptionClass = exception.resolve();
+        if (exceptionClass != null) {
+          PsiUtil.addException(myMethod, exceptionClass);
+        }
+      }
+    }
   }
 
   private static class LocalReplacementUsageInfo extends UsageInfo {
