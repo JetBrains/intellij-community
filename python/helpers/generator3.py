@@ -737,6 +737,13 @@ class ModuleRedeclarator(object):
       deco = self.KNOWN_DECORATORS.get((classname, p_name), None)
       if deco:
         self.out(deco + " # known case", indent)
+    elif p_class:
+      func_repr = repr(p_func)
+      # detect native methods declared with METH_CLASS flag
+      if p_name != "__new__" and type(p_func).__name__.startswith('classmethod'):  # 'classmethod_descriptor' in Python 2.x and 3.x, 'classmethod' in Jython
+        self.out('@classmethod', indent)
+      elif type(p_func).__name__.startswith('staticmethod'): 
+        self.out('@staticmethod', indent)
     if p_name == "__new__":
       self.out("@staticmethod # known case of __new__", indent)
     if inspect and inspect.isfunction(p_func):
