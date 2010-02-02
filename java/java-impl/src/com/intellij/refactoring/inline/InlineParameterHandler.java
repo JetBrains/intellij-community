@@ -33,7 +33,6 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageDialog;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nullable;
 
@@ -114,11 +113,16 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
       return;
     }
     if (!refInitializer.isNull()) {
-      try {
-        new InlineParameterExpressionProcessor(refMethodCall.get(), method, psiParameter, refInitializer.get(), editor).run();
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        final InlineParameterExpressionProcessor processor =
+          new InlineParameterExpressionProcessor(refMethodCall.get(), method, psiParameter, refInitializer.get(),
+                                                 method.getProject().getUserData(
+                                                   InlineParameterExpressionProcessor.CREATE_LOCAL_FOR_TESTS));
+        processor.run();
       }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
+      else {
+        InlineParameterDialog dlg = new InlineParameterDialog(refMethodCall.get(), method, psiParameter, refInitializer.get());
+        dlg.show();
       }
       return;
     }

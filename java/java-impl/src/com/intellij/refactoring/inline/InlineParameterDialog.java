@@ -15,10 +15,13 @@
  */
 package com.intellij.refactoring.inline;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.RefactoringMessageDialog;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.refactoring.ui.RefactoringDialog;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,29 +29,45 @@ import java.awt.*;
 /**
  * @author yole
  */
-public class InlineParameterDialog extends RefactoringMessageDialog {
+public class InlineParameterDialog extends RefactoringDialog {
   private JCheckBox myCreateLocalCheckbox;
+  private final PsiCallExpression myMethodCall;
+  private final PsiMethod myMethod;
+  private final PsiParameter myParameter;
+  private final PsiExpression myInitializer;
 
-  public InlineParameterDialog(String title, String message, String helpTopic, @NonNls String iconId, boolean showCancelButton, Project project) {
-    super(title, message, helpTopic, iconId, showCancelButton, project);
+  public InlineParameterDialog(PsiCallExpression methodCall, PsiMethod method, PsiParameter psiParameter, PsiExpression initializer) {
+    super(method.getProject(), true);
+    myMethodCall = methodCall;
+    myMethod = method;
+    myParameter = psiParameter;
+    myInitializer = initializer;
+    init();
+    setTitle(InlineParameterHandler.REFACTORING_NAME);
   }
 
+  @Override
   protected JComponent createNorthPanel() {
-    JComponent superPanel = super.createNorthPanel();
+    final JPanel panel = new JPanel(new BorderLayout());
+    panel.add(new JLabel(RefactoringBundle.message("inline.parameter.confirmation", myParameter.getName(), myInitializer.getText()), UIManager.getIcon("OptionPane.questionIcon"), 2), BorderLayout.NORTH);
+    return panel;
+  }
+
+  @Override
+  protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
-    panel.add(superPanel, BorderLayout.CENTER);
     myCreateLocalCheckbox = new JCheckBox(RefactoringBundle.message("inline.parameter.replace.with.local.checkbox"));
     panel.add(myCreateLocalCheckbox, BorderLayout.SOUTH);
     return panel;
   }
 
-  public boolean isCreateLocal() {
-    return myCreateLocalCheckbox.isSelected();
+  @Override
+  protected String getHelpId() {
+    return HelpID.INLINE_VARIABLE;
   }
 
-  public boolean showDialog() {
-      show();
-      return isOK();
+  @Override
+  protected void doAction() {
+    invokeRefactoring(new InlineParameterExpressionProcessor(myMethodCall, myMethod, myParameter, myInitializer, myCreateLocalCheckbox.isSelected()));
   }
-
 }

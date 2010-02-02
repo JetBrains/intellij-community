@@ -5,6 +5,7 @@ import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
@@ -12,6 +13,7 @@ import org.jetbrains.annotations.NonNls;
 /**
  * @author yole
  */
+
 public class InlineParameterTest extends LightCodeInsightTestCase {
   @Override
   protected String getTestDataPath() {
@@ -79,7 +81,12 @@ public class InlineParameterTest extends LightCodeInsightTestCase {
   }
 
   public void testRefOuterThis() throws Exception {
-    doTestParamInitializerDependsOnUnavalableValues();
+    try {
+      doTest(false);
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Parameter initializer depends on this which is not available inside the method and cannot be inlined", e.getMessage());
+    }
   }
 
   public void testRefThis() throws Exception {
@@ -107,15 +114,11 @@ public class InlineParameterTest extends LightCodeInsightTestCase {
   }
 
   public void testRefNewInner() throws Exception {
-    doTestParamInitializerDependsOnUnavalableValues();
-  }
-
-  private void doTestParamInitializerDependsOnUnavalableValues() throws Exception {
     try {
       doTest(false);
     }
-    catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
-      assertEquals("Parameter initializer depends on values which are not available inside the method and cannot be inlined", e.getMessage());
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Parameter initializer depends on class <b><code>User.Local</code></b> which is not available inside method and cannot be inlined", e.getMessage());
     }
   }
 
@@ -128,7 +131,12 @@ public class InlineParameterTest extends LightCodeInsightTestCase {
   }
 
   public void testRefNewLocal() throws Exception {
-    doTestParamInitializerDependsOnUnavalableValues();
+    try {
+      doTest(false);
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Parameter initializer depends on class <b><code>Local</code></b> which is not available inside method and cannot be inlined", e.getMessage());
+    }
   }
 
   private void doTestCannotFindInitializer() throws Exception {
