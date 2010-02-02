@@ -17,18 +17,22 @@ import javax.swing.*;
 /**
  * @author Maxim.Mossienko
  */
-public abstract class PsiNamedElementUsageGroupBase<T extends PsiNamedElement & NavigationItem> implements UsageGroup {
+public class PsiNamedElementUsageGroupBase<T extends PsiNamedElement & NavigationItem> implements UsageGroup {
   private final SmartPsiElementPointer myElementPointer;
   private final String myName;
   private final Icon myIcon;
 
   public PsiNamedElementUsageGroupBase(@NotNull T element, Icon icon) {
-    myIcon = icon;
-
     String myName = element.getName();
     if (myName == null) myName = "<anonymous>";
     this.myName = myName;
     myElementPointer = SmartPointerManager.getInstance(element.getProject()).createLazyPointer(element);
+
+    myIcon = icon;
+  }
+
+  public PsiNamedElementUsageGroupBase(@NotNull T element) {
+    this(element, element.getIcon(0));
   }
 
   public Icon getIcon(boolean isOpen) {
