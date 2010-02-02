@@ -28,7 +28,6 @@ public class PyModuleType implements PyType { // Maybe make it a PyClassType ref
 
   static {
     ourPossibleFields = new HashSet<String>();
-    /*ourPossibleFields.addAll(PyObjectType.ourPossibleFields);*/
     ourPossibleFields.add("__name__");
     ourPossibleFields.add("__file__");
     ourPossibleFields.add("__path__");
