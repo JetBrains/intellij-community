@@ -111,6 +111,7 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
         return;
       }
       PyExtractMethodUtil.extractFromExpression(project, editor, fragment, expression);
+      return;
     }
 
     CommonRefactoringUtil.showErrorHint(project, editor,

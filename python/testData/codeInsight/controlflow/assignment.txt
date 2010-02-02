@@ -1,0 +1,4 @@
+0(1) element: null
+1(2) element: PyAssignmentStatement
+2(3) WRITE ACCESS: aaa
+3() element: null

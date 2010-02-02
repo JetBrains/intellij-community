@@ -9,6 +9,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringFactory;
 import com.intellij.refactoring.extractMethod.AbstractExtractMethodDialog;
@@ -21,6 +23,7 @@ import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -29,6 +32,8 @@ import java.util.Map;
  */
 public class PyExtractMethodUtil {
 
+  public static final String NAME = "extract.method.name";
+
   public static void extractFromStatements(final Project project,
                                            final Editor editor,
                                            final CodeFragment fragment,
@@ -36,7 +41,7 @@ public class PyExtractMethodUtil {
                                            final PsiElement statement2) {
     if (!fragment.getOutputVariables().isEmpty() && fragment.isReturnInstructonInside()) {
       CommonRefactoringUtil.showErrorHint(project, editor,
-                                          "Cannot extract method with non empty output variables and return instructions inside",
+                                          "Cannot perform refactoring from expression with local variables modifications and return instructions inside code fragment",
                                           RefactoringBundle.message("error.title"), "refactoring.extractMethod");
       return;
     }
@@ -126,13 +131,19 @@ public class PyExtractMethodUtil {
                                            final Editor editor,
                                            final CodeFragment fragment,
                                            final PsiElement expression) {
-    if (!fragment.getOutputVariables().isEmpty() && fragment.isReturnInstructonInside()){
+    if (!fragment.getOutputVariables().isEmpty()){
       CommonRefactoringUtil.showErrorHint(project, editor,
-                                          "Cannot extract method with non empty output variables and return instructions inside",
+                                          "Cannot perform refactoring from expression with local variables modifications inside code fragment",
                                           RefactoringBundle.message("error.title"), "refactoring.extractMethod");
       return;
     }
 
+    if (fragment.isReturnInstructonInside()){
+      CommonRefactoringUtil.showErrorHint(project, editor,
+                                          "Cannot extract method with return instructions inside code fragment",
+                                          RefactoringBundle.message("error.title"), "refactoring.extractMethod");
+      return;
+    }
     final Pair<String, AbstractVariableData[]> data = getNameAndVariableData(project, fragment, expression);
     if (data.first == null || data.second == null) {
       return;
@@ -221,14 +232,17 @@ public class PyExtractMethodUtil {
     if (data != null){
       anchor = data.first;
     }
-    // Handle extracting within functions
-    final PsiElement compoundStatement = PyPsiUtils.getCompoundStatement(anchor);
-    final PsiElement parent = compoundStatement.getParent();
-    if (parent instanceof PyFunction){
-      parent.getParent().addBefore(generatedMethod, parent);
+    final PsiNamedElement parent = PsiTreeUtil.getParentOfType(anchor, PyFile.class, PyFunction.class);
+    if (parent instanceof PyFile) {
+      final PsiElement statement = PyPsiUtils.getStatement(parent, anchor);
+      parent.addBefore(generatedMethod, statement);
+      return;
     }
-    final PsiElement statement = PyPsiUtils.getStatement(compoundStatement, anchor);
-    compoundStatement.addBefore(generatedMethod, statement);
+    if (parent instanceof PyFunction) {
+      parent.getParent().addBefore(generatedMethod, parent);
+      return;
+    }
+    throw new IllegalStateException("Compound statement should not be null");
   }
 
   //  Creates string for method parameters
@@ -276,8 +290,25 @@ public class PyExtractMethodUtil {
   }
 
   private static Pair<String, AbstractVariableData[]> getNameAndVariableData(final Project project,
-                                                                     final CodeFragment fragment,
-                                                                     final PsiElement element) {
+                                                                             final CodeFragment fragment,
+                                                                             final PsiElement element) {
+    if (ApplicationManager.getApplication().isUnitTestMode()){
+
+      String name = System.getProperty(NAME);
+      if (name == null){
+        name = "foo";
+      }
+      final List<AbstractVariableData> data = new ArrayList<AbstractVariableData>();
+      for (String in : fragment.getInputVariables()) {
+        final AbstractVariableData d = new AbstractVariableData();
+        d.name = in+"_new";
+        d.originalName = in;
+        d.passAsParameter = true;
+        data.add(d);
+      }
+      return Pair.create(name, data.toArray(new AbstractVariableData[data.size()]));
+    }
+
     final ExtractMethodValidator validator = new ExtractMethodValidator() {
       public String check(final String name) {
         // TODO[oleg] implement context for name clashes

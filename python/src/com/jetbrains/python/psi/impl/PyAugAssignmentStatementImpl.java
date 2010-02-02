@@ -22,6 +22,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyAugAssignmentStatement;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -42,10 +43,15 @@ public class PyAugAssignmentStatementImpl extends PyElementImpl implements PyAug
 
   @NotNull
   public PyExpression getTarget() {
-    PyExpression target = childToPsi(PyElementTypes.EXPRESSIONS, 0);
+    final PyExpression target = childToPsi(PyElementTypes.EXPRESSIONS, 0);
     if (target == null) {
       throw new RuntimeException("Target missing in augmented assignment statement");
     }
     return target;
+  }
+
+  @Nullable
+  public PyExpression getValue() {
+    return childToPsi(PyElementTypes.EXPRESSIONS, 1);
   }
 }

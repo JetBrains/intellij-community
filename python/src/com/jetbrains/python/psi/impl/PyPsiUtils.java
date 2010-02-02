@@ -13,10 +13,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyElementType;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyStatementList;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

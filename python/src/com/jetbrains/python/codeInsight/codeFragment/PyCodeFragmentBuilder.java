@@ -31,6 +31,15 @@ public class PyCodeFragmentBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
+  public void visitPyAugAssignmentStatement(final PyAugAssignmentStatement node) {
+    final PyExpression target = node.getTarget();
+    if (target instanceof PyReferenceExpression){
+      visitPyReferenceExpression((PyReferenceExpression) target);
+      processDeclaration(target);
+    }
+  }
+
+  @Override
   public void visitPyTargetExpression(final PyTargetExpression node) {
     processDeclaration(node);
   }

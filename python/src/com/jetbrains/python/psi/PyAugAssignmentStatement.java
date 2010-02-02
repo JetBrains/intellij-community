@@ -17,6 +17,7 @@
 package com.jetbrains.python.psi;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -26,5 +27,8 @@ import org.jetbrains.annotations.NotNull;
  * To change this template use File | Settings | File Templates.
  */
 public interface PyAugAssignmentStatement extends PyStatement {
-    @NotNull PyExpression getTarget();
+  @NotNull
+  PyExpression getTarget();
+  @Nullable
+  PyExpression getValue();
 }
