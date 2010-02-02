@@ -15,7 +15,10 @@
  */
 package org.jetbrains.idea.svn.actions;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -23,6 +26,10 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.dialogs.SvnMapDialog;
 
 public class ShowSvnMapAction extends AnAction implements DumbAware {
+  public ShowSvnMapAction() {
+    super(SvnBundle.message("action.show.svn.map.text"));
+  }
+
   @Override
   public void update(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
@@ -31,7 +38,7 @@ public class ShowSvnMapAction extends AnAction implements DumbAware {
     presentation.setVisible(project != null);
     presentation.setEnabled(project != null);
 
-    presentation.setText(SvnBundle.message("action.show.svn.map.text"));
+    //presentation.setText(SvnBundle.message("action.show.svn.map.text"));
     presentation.setDescription(SvnBundle.message("action.show.svn.map.description"));
     presentation.setIcon(IconLoader.getIcon("/icons/ShowWorkingCopies.png"));
   }
