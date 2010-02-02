@@ -53,7 +53,6 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doTest("IFoo");
   }
 
-  @Bombed(day = 3, month = Calendar.FEBRUARY, description = "should not delete method implementing IBar interface")
   public void testMultipleInterfacesImplementationThroughCommonInterface() throws Exception {
     myDoCompare = false;
     doTest("IFoo");
