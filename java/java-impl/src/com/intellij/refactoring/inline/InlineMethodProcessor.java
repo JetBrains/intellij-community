@@ -145,7 +145,14 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   }
 
   private void addInaccessibleSuperCallsConflicts(final UsageInfo[] usagesIn, final MultiMap<PsiElement, String> conflicts) {
+
     myMethod.accept(new JavaRecursiveElementWalkingVisitor(){
+      @Override
+      public void visitClass(PsiClass aClass) {}
+
+      @Override
+      public void visitAnonymousClass(PsiAnonymousClass aClass) {}
+
       @Override
       public void visitSuperExpression(PsiSuperExpression expression) {
         super.visitSuperExpression(expression);
