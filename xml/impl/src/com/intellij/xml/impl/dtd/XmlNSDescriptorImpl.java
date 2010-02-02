@@ -26,6 +26,7 @@ import com.intellij.psi.scope.processor.FilterElementProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
@@ -100,7 +101,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
 
   // Read-only calculation
   private CachedValue<Map<String, XmlElementDescriptor>> doBuildDeclarationMap() {
-    return myElement.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<Map<String, XmlElementDescriptor>>() {
+    return CachedValuesManager.getManager(myElement.getProject()).createCachedValue(new CachedValueProvider<Map<String, XmlElementDescriptor>>() {
       public Result<Map<String, XmlElementDescriptor>> compute() {
         final List<XmlElementDecl> result = new ArrayList<XmlElementDecl>();
         myElement.processElements(new FilterElementProcessor(new ClassFilter(XmlElementDecl.class), result), getDeclaration());

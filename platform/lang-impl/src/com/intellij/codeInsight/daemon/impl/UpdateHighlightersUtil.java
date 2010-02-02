@@ -250,14 +250,12 @@ public class UpdateHighlightersUtil {
         highlighter.setAfterEndOfLine(info.isAfterEndOfLine);
 
         Color color = info.getErrorStripeMarkColor(psiFile);
-        if (!Comparing.equal(color, highlighter.getErrorStripeMarkColor())) {
-          highlighter.setErrorStripeMarkColor(color);
+        highlighter.setErrorStripeMarkColor(color);
+        if (!(highlighter.getErrorStripeTooltip() instanceof HighlightInfo) || !info.equalsByActualOffset((HighlightInfo)highlighter.getErrorStripeTooltip())) {
+          highlighter.setErrorStripeTooltip(info);
         }
-        highlighter.setErrorStripeTooltip(info);
         GutterIconRenderer renderer = info.getGutterIconRenderer();
-        if (!Comparing.equal(renderer, highlighter.getGutterIconRenderer())) {
-          highlighter.setGutterIconRenderer(renderer);
-        }
+        highlighter.setGutterIconRenderer(renderer);
 
         ranges2markersCache.put(new TextRange(infoStartOffset, infoEndOffset), info.highlighter);
         if (info.quickFixActionRanges != null) {

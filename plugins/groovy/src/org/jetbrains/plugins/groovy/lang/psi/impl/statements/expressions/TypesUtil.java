@@ -25,6 +25,7 @@ import com.intellij.util.containers.HashMap;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -199,7 +200,9 @@ public class TypesUtil {
     if (rType instanceof GrTupleType) {
       final GrTupleType tuple = (GrTupleType)rType;
       if (tuple.getComponentTypes().length == 0) {
-        if (lType instanceof PsiArrayType || InheritanceUtil.isInheritor(lType, JAVA_UTIL_LIST)) {
+        if (lType instanceof PsiArrayType ||
+            InheritanceUtil.isInheritor(lType, JAVA_UTIL_LIST) ||
+            InheritanceUtil.isInheritor(lType, JAVA_UTIL_SET)) {
           return true;
         }
       }
@@ -215,6 +218,17 @@ public class TypesUtil {
 
   public static boolean isAssignableByMethodCallConversion(PsiType lType, PsiType rType, PsiManager manager, GlobalSearchScope scope) {
     if (lType == null || rType == null) return false;
+
+    if (rType instanceof GrTupleType) {
+      final GrTupleType tuple = (GrTupleType)rType;
+      if (tuple.getComponentTypes().length == 0) {
+        if (lType instanceof PsiArrayType ||
+            InheritanceUtil.isInheritor(lType, JAVA_UTIL_LIST) ||
+            InheritanceUtil.isInheritor(lType, JAVA_UTIL_SET)) {
+          return true;
+        }
+      }
+    }
 
     if (rType.equalsToText(GrStringUtil.GROOVY_LANG_GSTRING)) {
       final PsiClass javaLangString = JavaPsiFacade.getInstance(manager.getProject()).findClass(JAVA_LANG_STRING, scope);
@@ -259,18 +273,6 @@ public class TypesUtil {
     return type;
   }
 
-  public static PsiType boxPrimitiveTypeAndEraseGenerics(PsiType result, PsiManager manager, GlobalSearchScope resolveScope) {
-    if (result instanceof PsiPrimitiveType) {
-      PsiPrimitiveType primitive = (PsiPrimitiveType)result;
-      String boxedTypeName = primitive.getBoxedTypeName();
-      if (boxedTypeName != null) {
-        return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName(boxedTypeName, resolveScope);
-      }
-    }
-
-    return TypeConversionUtil.erasure(result);
-  }
-
   public static PsiType boxPrimitiveType(PsiType result, PsiManager manager, GlobalSearchScope resolveScope) {
     if (result instanceof PsiPrimitiveType && result != PsiType.VOID) {
       PsiPrimitiveType primitive = (PsiPrimitiveType)result;
@@ -312,7 +314,7 @@ public class TypesUtil {
   }
 
   @Nullable
-  public static PsiType getLeastUpperBound(PsiType type1, PsiType type2, PsiManager manager) {
+  public static PsiType getLeastUpperBound(@NotNull PsiType type1, @NotNull PsiType type2, PsiManager manager) {
     if (type1 instanceof GrTupleType && type2 instanceof GrTupleType) {
       GrTupleType tuple1 = (GrTupleType)type1;
       GrTupleType tuple2 = (GrTupleType)type2;
@@ -344,7 +346,9 @@ public class TypesUtil {
           paramTypes[i] = GenericsUtil.getGreatestLowerBound(parameterTypes1[i], parameterTypes2[i]);
           opts[i] = clType1.isOptionalParameter(i) && clType2.isOptionalParameter(i);
         }
-        PsiType returnType = getLeastUpperBound(clType1.getClosureReturnType(), clType2.getClosureReturnType(), manager);
+        final PsiType ret1 = clType1.getClosureReturnType();
+        final PsiType ret2 = clType2.getClosureReturnType();
+        PsiType returnType = ret1 == null ? ret2 : ret2 == null ? ret1 : getLeastUpperBound(ret1, ret2, manager);
         GlobalSearchScope scope = clType1.getResolveScope().intersectWith(clType2.getResolveScope());
         return GrClosureType.create(returnType, paramTypes, opts, manager, scope, LanguageLevel.JDK_1_5);
       }

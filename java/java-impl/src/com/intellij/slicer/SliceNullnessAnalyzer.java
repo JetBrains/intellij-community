@@ -221,6 +221,7 @@ public class SliceNullnessAnalyzer {
     return node(root, map);
   }
 
+  @NotNull
   private static DfaUtil.Nullness checkNullness(final PsiElement element) {
     // null
     PsiElement value = element;
@@ -256,15 +257,21 @@ public class SliceNullnessAnalyzer {
       // exception thrown is always not null
       return DfaUtil.Nullness.NOT_NULL;
     }
+
+    if (value instanceof PsiLocalVariable || value instanceof PsiParameter) {
+      DfaUtil.Nullness result = DfaUtil.checkNullness((PsiVariable)value, context);
+      if (result != DfaUtil.Nullness.UNKNOWN) {
+        return result;
+      }
+    }
+
     if (value instanceof PsiModifierListOwner) {
       if (AnnotationUtil.isNotNull((PsiModifierListOwner)value)) return DfaUtil.Nullness.NOT_NULL;
       if (AnnotationUtil.isNullable((PsiModifierListOwner)value)) return DfaUtil.Nullness.NULL;
     }
 
-    if (value instanceof PsiLocalVariable || value instanceof PsiParameter) {
-      return DfaUtil.checkNullness((PsiVariable)value, context);
-    }
-    return null;
+    if (value instanceof PsiEnumConstant) return DfaUtil.Nullness.NOT_NULL;
+    return DfaUtil.Nullness.UNKNOWN;
   }
 
   public static class NullAnalysisResult {

@@ -19,17 +19,16 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.AsyncUpdateAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsKey;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
 
 public abstract class AbstractVcsAction extends AsyncUpdateAction<VcsContext> implements DumbAware {
   public static Collection<AbstractVcs> getActiveVcses(VcsContext dataContext) {
@@ -43,7 +42,7 @@ public abstract class AbstractVcsAction extends AsyncUpdateAction<VcsContext> im
 
   @NotNull
   protected static FilePath[] filterDescindingFiles(@NotNull FilePath[] roots, Project project) {
-    return DescindingFilesFilter.filterDescindingFiles(roots, project);
+    return DescindingFilesFilter.filterDescindingFiles(roots, project, null);
   }
 
   protected VcsContext prepareDataFromContext(final AnActionEvent e) {

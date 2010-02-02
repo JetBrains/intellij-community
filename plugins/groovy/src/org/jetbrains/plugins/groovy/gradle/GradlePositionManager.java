@@ -29,6 +29,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.lang.UrlClassLoader;
@@ -74,7 +75,7 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
     }
 
     final File scriptFile = VfsUtil.virtualToIoFile(virtualFile);
-    final String className = PsiManager.getInstance(module.getProject()).getCachedValuesManager()
+    final String className = CachedValuesManager.getManager(module.getProject())
       .getCachedValue(module, GRADLE_CLASS_NAME, new ScriptSourceMapCalculator(module), false).get(scriptFile);
     return className == null ? "" : className;
   }
@@ -105,7 +106,7 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
   @Nullable
   private static ClassLoader getGradleClassLoader(@NotNull final Module module) {
     final Project project = module.getProject();
-    return PsiManager.getInstance(project).getCachedValuesManager().getCachedValue(module, GRADLE_CLASS_LOADER, new CachedValueProvider<ClassLoader>() {
+    return CachedValuesManager.getManager(project).getCachedValue(module, GRADLE_CLASS_LOADER, new CachedValueProvider<ClassLoader>() {
         public Result<ClassLoader> compute() {
           return Result.create(createGradleClassLoader(module), ProjectRootManager.getInstance(project));
         }

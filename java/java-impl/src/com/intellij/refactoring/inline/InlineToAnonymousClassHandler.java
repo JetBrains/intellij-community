@@ -20,13 +20,17 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +40,11 @@ import java.util.Collection;
  * @author yole
  */
 public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
+  static final ElementPattern ourCatchClausePattern = PlatformPatterns.psiElement(PsiTypeElement.class).withParent(PlatformPatterns.psiElement(PsiParameter.class).withParent(
+  PlatformPatterns.psiElement(PsiCatchSection.class)));
+  static final ElementPattern ourThrowsClausePattern = PlatformPatterns.psiElement().withParent(PlatformPatterns.psiElement(PsiReferenceList.class).withFirstChild(
+    PlatformPatterns.psiElement().withText(PsiKeyword.THROWS)));
+
   @Override
   public boolean isEnabledOnElement(PsiElement element) {
     return element instanceof PsiMethod || element instanceof PsiClass;
@@ -62,15 +71,67 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
     final PsiClass psiClass = psiElement instanceof PsiMethod ? ((PsiMethod) psiElement).getContainingClass() : (PsiClass) psiElement;
     PsiCall callToInline = findCallToInline(editor);
 
+    final PsiClassType superType = InlineToAnonymousClassProcessor.getSuperType(psiClass);
+    if (superType == null) {
+      CommonRefactoringUtil.showErrorHint(project, editor, "java.lang.Object is not found", RefactoringBundle.message("inline.to.anonymous.refactoring"), null);
+      return;
+    }
+
     String errorMessage = getCannotInlineMessage(psiClass);
     if (errorMessage != null) {
       CommonRefactoringUtil.showErrorHint(project, editor, errorMessage, RefactoringBundle.message("inline.to.anonymous.refactoring"), null);
       return;
     }
 
-    InlineToAnonymousClassDialog dlg = new InlineToAnonymousClassDialog(project, psiClass, callToInline);
-    dlg.show();
+    new InlineToAnonymousClassDialog(project, psiClass, callToInline, canBeInvokedOnReference(callToInline, superType)).show();
   }
+
+  public static boolean canBeInvokedOnReference(PsiCall callToInline, PsiType superType) {
+    if (callToInline != null) {
+      final PsiElement parent = callToInline.getParent();
+      if (parent instanceof PsiExpressionStatement || parent instanceof PsiSynchronizedStatement) {
+        return true;
+      }
+      else if (parent instanceof PsiReferenceExpression) {
+        return true;
+      }
+      else if (parent instanceof PsiExpressionList) {
+        final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(parent, PsiMethodCallExpression.class);
+        if (methodCallExpression != null) {
+          int paramIdx = ArrayUtil.find(methodCallExpression.getArgumentList().getExpressions(), callToInline);
+          if (paramIdx != -1) {
+            final JavaResolveResult resolveResult = methodCallExpression.resolveMethodGenerics();
+            final PsiElement resolvedMethod = resolveResult.getElement();
+            if (resolvedMethod instanceof PsiMethod) {
+              PsiType paramType;
+              final PsiParameter[] parameters = ((PsiMethod)resolvedMethod).getParameterList().getParameters();
+              if (paramIdx >= parameters.length) {
+                final PsiParameter varargParameter = parameters[parameters.length - 1];
+                paramType = varargParameter.getType();
+              }
+              else {
+                paramType = parameters[paramIdx].getType();
+              }
+              if (paramType instanceof PsiEllipsisType) {
+                paramType = ((PsiEllipsisType)paramType).getComponentType();
+              }
+              paramType = resolveResult.getSubstitutor().substitute(paramType);
+
+              final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)callToInline).getClassOrAnonymousClassReference();
+              if (classReference != null) {
+                superType = classReference.advancedResolve(false).getSubstitutor().substitute(superType);
+                if (TypeConversionUtil.isAssignable(paramType, superType)) {
+                  return true;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }
+
 
   @Nullable
   public static PsiCall findCallToInline(final Editor editor) {
@@ -186,7 +247,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
       }
     }
 
-    return null;
+    return getCannotInlineDueToUsagesMessage(psiClass);
   }
 
   static boolean isRedundantImplements(final PsiClass superClass, final PsiClassType interfaceType) {
@@ -210,6 +271,54 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
       }
     });
     return stmt.get();
+  }
+
+  @Nullable
+  private static String getCannotInlineDueToUsagesMessage(final PsiClass aClass) {
+    boolean hasUsages = false;
+    for(PsiReference reference : ReferencesSearch.search(aClass)) {
+      final PsiElement element = reference.getElement();
+      if (element == null) continue;
+      if (!PsiTreeUtil.isAncestor(aClass, element, false)) {
+        hasUsages = true;
+      }
+      final PsiElement parentElement = element.getParent();
+      if (parentElement != null) {
+        final PsiElement grandPa = parentElement.getParent();
+        if (grandPa instanceof PsiClassObjectAccessExpression) {
+          return "Class cannot be inlined because it has usages of its class literal";
+        }
+        if (ourCatchClausePattern.accepts(parentElement)) {
+          return "Class cannot be inlined because it is used in a 'catch' clause";
+        }
+      }
+      if (ourThrowsClausePattern.accepts(element)) {
+        return "Class cannot be inlined because it is used in a 'throws' clause";
+      }
+      if (parentElement instanceof PsiThisExpression) {
+        return "Class cannot be inlined because it is used as a 'this' qualifier";
+      }
+      if (parentElement instanceof PsiNewExpression) {
+        final PsiNewExpression newExpression = (PsiNewExpression)parentElement;
+        final PsiMethod[] constructors = aClass.getConstructors();
+        if (constructors.length == 0) {
+          PsiExpressionList newArgumentList = newExpression.getArgumentList();
+          if (newArgumentList != null && newArgumentList.getExpressions().length > 0) {
+            return "Class cannot be inlined because a call to its constructor is unresolved";
+          }
+        }
+        else {
+          final JavaResolveResult resolveResult = newExpression.resolveMethodGenerics();
+          if (!resolveResult.isValidResult()) {
+            return "Class cannot be inlined because a call to its constructor is unresolved";
+          }
+        }
+      }
+    }
+    if (!hasUsages) {
+      return RefactoringBundle.message("class.is.never.used");
+    }
+    return null;
   }
 
   private static class AllowedUsagesProcessor implements Processor<PsiReference> {

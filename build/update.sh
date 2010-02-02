@@ -1,4 +1,15 @@
 #! /bin/bash
+#
+# This script updates your IntelliJ IDEA CE installation from the latest compiled classes. This way you can easily
+# upgrade your working IDEA to the latest changes.
+#
+# Before you run the script, ensure you have the following:
+# 1. Your project for IntelliJ IDEA CE is fully built (do 'Rebuild Project' if you're not sure)
+# 2. WORK_IDEA_HOME points to the directory of IntelliJ IDEA build you want to upgrade
+# 3. DEV_IDEA_HOME points to the directory of the project you built at step 1
+# 4. You quit IntelliJ IDEA
+#
+
 if [ -z "$WORK_IDEA_HOME" ]; then
    echo WORK_IDEA_HOME must be defined and point to build you're updating
    exit

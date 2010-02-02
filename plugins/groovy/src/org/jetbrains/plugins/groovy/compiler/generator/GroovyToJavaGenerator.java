@@ -574,8 +574,13 @@ public class GroovyToJavaGenerator {
             final GroovyResolveResult[] results = constructorInvocation.multiResolveConstructor();
             if (results.length > 0) {
               int i = 0;
-              if (results[i].getElement() == constructor && results.length > 1) {
-                i = 1;
+              while (results.length > i+1) {
+                final PsiMethod candidate = (PsiMethod)results[i].getElement();
+                final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(constructor.getProject()).getResolveHelper();
+                if (candidate != null && candidate != constructor && resolveHelper.isAccessible(candidate, constructorInvocation, null)) {
+                  break;
+                }
+                i++;
               }
               chainedConstructor = (PsiMethod) results[i].getElement();
               substitutor = results[i].getSubstitutor();

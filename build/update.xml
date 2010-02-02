@@ -13,7 +13,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<project name="IntelliJ IDEA CE" default="layout">
+<project name="IntelliJ IDEA CE build file" default="layout">
   <dirname property="build" file="${ant.file}"/>
   <property name="project.home" value="${build}/../"/>
   <property name="gant.home" value="${project.home}/build/lib/gant"/>

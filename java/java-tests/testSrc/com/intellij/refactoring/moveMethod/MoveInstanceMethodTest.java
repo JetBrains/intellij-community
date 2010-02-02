@@ -31,6 +31,8 @@ public class MoveInstanceMethodTest extends LightCodeInsightTestCase {
 
   public void testQualifiedThis() throws Exception { doTest(true, 0); }
 
+  public void testQualifyThisHierarchy() throws Exception {doTest(true, 0);}
+
   public void testTwoParams() throws Exception { doTest(true, 0); }
 
   public void testNoThisParam() throws Exception { doTest(false, 0); }

@@ -66,7 +66,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -420,8 +419,6 @@ public class CompileDriver {
         }
         finally {
           compileContext.commitZipFiles();
-          CompilerUtil.logDuration("Refreshing VFS in total", CompilerUtil.ourRefreshTime);
-          CompilerUtil.ourRefreshTime = 0L;
           final long finish = System.currentTimeMillis();
           CompilerUtil.logDuration(
             "\tCOMPILATION FINISHED; Errors: " +
@@ -704,7 +701,6 @@ public class CompileDriver {
 
         final long initialRefreshTime = System.currentTimeMillis() - refreshStart;
         CompilerUtil.logDuration("Initial VFS refresh", initialRefreshTime);
-        CompilerUtil.ourRefreshTime += initialRefreshTime;
       }
 
       //DumbService.getInstance(myProject).waitForSmartMode();
@@ -789,13 +785,6 @@ public class CompileDriver {
           });
         }
 
-        if (!context.getProgressIndicator().isCanceled() && context.getMessageCount(CompilerMessageCategory.ERROR) == 0) {
-          RefreshQueue.getInstance().refresh(true, true, new Runnable() {
-            public void run() {
-              CompilerDirectoryTimestamp.updateTimestamp(Arrays.asList(allOutputDirs));
-            }
-          }, allOutputDirs);
-        }
       }
 
       if (!onlyCheckStatus) {

@@ -16,19 +16,26 @@
 package com.intellij.openapi.vcs.impl;
 
 public enum VcsInitObject {
-  CHANGE_LIST_MANAGER(100),
-  MAPPINGS(10),
-  COMMITTED_CHANGES_CACHE(200),
-  BRANCHES(250),
-  REMOTE_REVISIONS_CACHE(300);
+  CHANGE_LIST_MANAGER(100, false),
+  MAPPINGS(10, false),
+  COMMITTED_CHANGES_CACHE(200, true),
+  BRANCHES(250, true),
+  REMOTE_REVISIONS_CACHE(300, true);
 
   private final int myOrder;
+  // others do not depend on it
+  private final boolean myCanBeLast;
 
-  VcsInitObject(int order) {
+  VcsInitObject(final int order, final boolean canBeLast) {
     myOrder = order;
+    myCanBeLast = canBeLast;
   }
 
   public int getOrder() {
     return myOrder;
+  }
+
+  public boolean isCanBeLast() {
+    return myCanBeLast;
   }
 }

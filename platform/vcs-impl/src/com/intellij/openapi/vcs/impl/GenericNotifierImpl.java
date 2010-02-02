@@ -15,10 +15,7 @@
  */
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
+import com.intellij.notification.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -59,6 +56,9 @@ public abstract class GenericNotifierImpl<T, Key> {
   @NotNull
   protected abstract String getNotificationContent(final T obj);
 
+  @NotNull
+  protected abstract String getToString(final T obj);
+
   protected Collection<Key> getAllCurrentKeys() {
     synchronized (myLock) {
       return new ArrayList<Key>(myState.keySet());
@@ -89,16 +89,16 @@ public abstract class GenericNotifierImpl<T, Key> {
       if (myState.containsKey(key)) {
         return;
       }
-      notification = new MyNotification<T>(myGroupId, myTitle, getNotificationContent(obj), myType, myListener, obj);
+      notification = new MyNotification<T>(myGroupId, myTitle, getNotificationContent(obj), myType, myListener, obj, getToString(obj));
       myState.put(key, notification);
     }
     final Application application = ApplicationManager.getApplication();
     if (application.isDispatchThread()) {
-      Notifications.Bus.notify(notification, myProject);
+      Notifications.Bus.notify(notification, NotificationDisplayType.STICKY_BALLOON, myProject);
     } else {
       application.invokeLater(new Runnable() {
         public void run() {
-          Notifications.Bus.notify(notification, myProject);
+          Notifications.Bus.notify(notification, NotificationDisplayType.STICKY_BALLOON, myProject);
         }
       });
     }
@@ -158,19 +158,23 @@ public abstract class GenericNotifierImpl<T, Key> {
 
   protected static class MyNotification<T> extends Notification {
     private T myObj;
+    private final String myStringPresentation;
 
-    protected MyNotification(@NotNull String groupId,
-                           @NotNull String title,
-                           @NotNull String content,
-                           @NotNull NotificationType type,
-                           @Nullable NotificationListener listener,
-                           @NotNull final T obj) {
+    protected MyNotification(@NotNull String groupId, @NotNull String title, @NotNull String content, @NotNull NotificationType type, @Nullable NotificationListener listener,
+                             @NotNull final T obj,
+                             final String stringPresentation) {
       super(groupId, title, content, type, listener);
       myObj = obj;
+      myStringPresentation = stringPresentation;
     }
 
     public T getObj() {
       return myObj;
+    }
+
+    @Override
+    public String toString() {
+      return myStringPresentation;
     }
   }
 

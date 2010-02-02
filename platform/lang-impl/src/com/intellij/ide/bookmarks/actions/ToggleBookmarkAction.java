@@ -35,6 +35,7 @@ public class ToggleBookmarkAction extends BookmarksAction implements DumbAware {
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) return;
     BookmarkInContextInfo info = new BookmarkInContextInfo(dataContext, project).invoke();
+    if (info.getFile() == null) return;
 
     if (info.getBookmarkAtPlace() != null) {
       BookmarkManager.getInstance(project).removeBookmark(info.getBookmarkAtPlace());

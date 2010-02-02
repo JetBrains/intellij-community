@@ -38,7 +38,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
@@ -60,7 +59,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeModel;
+import javax.swing.tree.TreePath;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
@@ -112,25 +114,16 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     myTree.setCellRenderer(new ShelfTreeCellRenderer(project, myMoveRenameInfo));
     new TreeLinkMouseListener(new ShelfTreeCellRenderer(project, myMoveRenameInfo)).install(myTree);
 
-    ActionManager.getInstance().getAction("ShelvedChanges.Diff").registerCustomShortcutSet(CommonShortcuts.getDiff(), myTree);
+    final AnAction showDiffAction = ActionManager.getInstance().getAction("ShelvedChanges.Diff");
+    showDiffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), myTree);
 
     PopupHandler.installPopupHandler(myTree, "ShelvedChangesPopupMenu", ActionPlaces.UNKNOWN);
 
     myTree.addMouseListener(new MouseAdapter() {
       public void mouseClicked(final MouseEvent e) {
         if (e.getClickCount() != 2) return;
-        if (myTree.getPathForLocation(e.getX(), e.getY()) == null) return;
-        final TreePath selectionPath = myTree.getSelectionPath();
-        if (selectionPath == null) return;
-        final Object lastPathComponent = selectionPath.getLastPathComponent();
-        if (((TreeNode) lastPathComponent).isLeaf()) {
-          DataContext context = DataManager.getInstance().getDataContext(myTree);
-          final Change[] changes = VcsDataKeys.CHANGES.getData(context);
-          if (changes != null && changes.length > 0) {
-            ShowDiffAction.showDiffForChange(changes, 0, myProject);
-          }
-          e.consume();
-        }
+
+        DiffShelvedChangesAction.showShelvedChangesDiff(DataManager.getInstance().getDataContext(myTree));
       }
     });
   }

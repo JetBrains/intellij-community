@@ -206,7 +206,7 @@ public class XsltSupport {
     }
 
     public static XsltChecker.SupportLevel getXsltSupportLevel(PsiFile psiFile) {
-        final CachedValuesManager mgr = psiFile.getManager().getCachedValuesManager();
+      final CachedValuesManager mgr = CachedValuesManager.getManager(psiFile.getProject());
         return mgr.getParameterizedCachedValue(psiFile, FORCE_XSLT_KEY, XsltSupportProvider.INSTANCE, false, psiFile);
     }
 

@@ -37,7 +37,9 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
@@ -101,7 +103,7 @@ public class CvsOperationExecutor {
           myResult.addAllErrors(handler.getErrorsExceptAborted());
           myResult.addAllWarnings(handler.getWarnings());
           handler.runComplitingActivities();
-          if (myProject != null && !myProject.isDisposed()) {
+          if ((myProject == null) || (myProject != null && !myProject.isDisposed())) {
             showErrors(handler.getErrorsExceptAborted(), handler.getWarnings(), tabbedWindow);
           }
         }
@@ -208,7 +210,23 @@ public class CvsOperationExecutor {
                             final List<VcsException> warnings,
                             final CvsTabbedWindow tabbedWindow) {
     if (!myShowErrors || myIsQuietOperation) return;
-    if (tabbedWindow == null) return;
+    if (tabbedWindow == null) {
+      if (errors.isEmpty() && warnings.isEmpty()) return;
+      final List<String> messages = new ArrayList<String>();
+      for (VcsException error : errors) {
+        if (! StringUtil.isEmptyOrSpaces(error.getMessage())) {
+          messages.add(error.getMessage());
+        }
+      }
+      for (VcsException error : warnings) {
+        if (! StringUtil.isEmptyOrSpaces(error.getMessage())) {
+          messages.add(error.getMessage());
+        }
+      }
+      final String errorMessage = StringUtil.join(messages, "\n");
+      Messages.showErrorDialog(errorMessage, "CVS error");
+      return;
+    }
     if (errors.isEmpty() && warnings.isEmpty()) {
       tabbedWindow.hideErrors();
     }

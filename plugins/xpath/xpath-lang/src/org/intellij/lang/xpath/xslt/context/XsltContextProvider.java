@@ -24,6 +24,7 @@ import com.intellij.openapi.util.SimpleFieldCache;
 import com.intellij.psi.*;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
@@ -228,7 +229,7 @@ public class XsltContextProvider extends ContextProvider {
     }
 
     private CachedValue<ElementNames> createCachedValue(final PsiFile file) {
-        return file.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<ElementNames>() {
+        return CachedValuesManager.getManager(file.getProject()).createCachedValue(new CachedValueProvider<ElementNames>() {
             public Result<ElementNames> compute() {
                 final ElementNames names = new ElementNames();
                 final PsiFile[] associations = myFileAssociationsManager.getAssociationsFor(file, FileAssociationsManager.XML_FILES);

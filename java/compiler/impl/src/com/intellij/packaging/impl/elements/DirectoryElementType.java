@@ -21,7 +21,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.CompositePackagingElementType;
-import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.ui.properties.DirectoryElementPropertiesPanel;
 import com.intellij.packaging.ui.ArtifactEditorContext;
@@ -59,8 +58,8 @@ class DirectoryElementType extends CompositePackagingElementType<DirectoryPackag
     return null;
   }
 
-  public PackagingElement<?> createComposite(@NotNull ArtifactEditorContext context, CompositePackagingElement<?> parent) {
-    final String initialValue = PackagingElementFactoryImpl.suggestFileName(parent, "folder", "");
+  public CompositePackagingElement<?> createComposite(CompositePackagingElement<?> parent, String baseName, @NotNull ArtifactEditorContext context) {
+    final String initialValue = PackagingElementFactoryImpl.suggestFileName(parent, baseName != null ? baseName : "folder", "");
     String path = Messages.showInputDialog(context.getProject(), "Enter directory name: ", "New Directory", null, initialValue, new FilePathValidator());
     if (path == null) return null;
     return PackagingElementFactoryImpl.createDirectoryOrArchiveWithParents(path, false);

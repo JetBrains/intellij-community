@@ -51,10 +51,7 @@ import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.*;
 import com.intellij.psi.xml.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -598,8 +595,7 @@ public class XmlUtil {
 
     private boolean processXInclude(final boolean deepFlag, final boolean wideFlag, final XmlTag xincludeTag) {
 
-      final PsiElement[] inclusion = xincludeTag.getManager().getCachedValuesManager()
-        .getCachedValue(xincludeTag, KEY_RESOLVED_XINCLUDE, new CachedValueProvider<PsiElement[]>() {
+      final PsiElement[] inclusion = CachedValuesManager.getManager(xincludeTag.getProject()).getCachedValue(xincludeTag, KEY_RESOLVED_XINCLUDE, new CachedValueProvider<PsiElement[]>() {
           public Result<PsiElement[]> compute() {
             final Result<PsiElement[]> result = computeInclusion(xincludeTag);
             result.setLockValue(true);
@@ -776,7 +772,7 @@ public class XmlUtil {
       //    return entityDecl.parse(targetFile, type);
 
       if (value == null) {
-        value = entityDecl.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<PsiElement>() {
+        value = CachedValuesManager.getManager(entityDecl.getProject()).createCachedValue(new CachedValueProvider<PsiElement>() {
           public Result<PsiElement> compute() {
             final PsiElement res = entityDecl.parse(targetFile, type, entityRef);
             if (res == null) return new Result<PsiElement>(res, targetFile);

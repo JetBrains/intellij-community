@@ -272,7 +272,7 @@ public class PsiClassImplUtil {
     CachedValue<Map> value = aClass.getUserData(MAP_IN_CLASS_KEY);
     if (value == null) {
       final CachedValueProvider<Map> provider = new ByNameCachedValueProvider(aClass);
-      value = aClass.getManager().getCachedValuesManager().createCachedValue(provider, false);
+      value = CachedValuesManager.getManager(aClass.getProject()).createCachedValue(provider, false);
       //Do not cache for nonphysical elements
       if (aClass.isPhysical()) {
         value = ((UserDataHolderEx)aClass).putUserDataIfAbsent(MAP_IN_CLASS_KEY, value);
@@ -905,7 +905,7 @@ public class PsiClassImplUtil {
     //see com.intellij.psi.impl.PsiFileFactoryImpl#createFileFromText(CharSequence,PsiFile)
     final PsiFile original1 = file1.getUserData(PsiFileFactory.ORIGINAL_FILE);
     final PsiFile original2 = file2.getUserData(PsiFileFactory.ORIGINAL_FILE);
-    if ((original1 == original2 && original1 != null)
+    if (original1 == original2 && original1 != null
         || original1 == file2 || original2 == file1) {
       return true;
     }    
@@ -913,12 +913,8 @@ public class PsiClassImplUtil {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(aClass.getProject()).getFileIndex();
     final VirtualFile vfile1 = file1.getViewProvider().getVirtualFile();
     final VirtualFile vfile2 = file2.getViewProvider().getVirtualFile();
-    if ((fileIndex.isInSource(vfile1) || fileIndex.isInLibraryClasses(vfile1)) &&
-        (fileIndex.isInSource(vfile2) || fileIndex.isInLibraryClasses(vfile2))) {
-      return true;
-    }
-
-    return false;
+    return (fileIndex.isInSource(vfile1) || fileIndex.isInLibraryClasses(vfile1)) &&
+           (fileIndex.isInSource(vfile2) || fileIndex.isInLibraryClasses(vfile2));
   }
 
   private static PsiElement originalElement(PsiClass aClass) {

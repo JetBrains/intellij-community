@@ -31,7 +31,9 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
   private JTextField myEntriesLimit;
   private JTextField myStartIndex;
   private JTextField myEndIndex;
-
+  private boolean myEntriesLimitUpdateEnabled = true;
+  private boolean myIndexUpdateEnabled = true;
+  
   private final ArrayRenderer myRenderer;
   private JComponent myPanel;
 
@@ -50,10 +52,10 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
   }
 
   public void apply() {
-    applyTo(myRenderer);
+    applyTo(myRenderer, true);
   }
 
-  private void applyTo(ArrayRenderer renderer) {
+  private void applyTo(ArrayRenderer renderer, boolean showBigRangeWarning) {
     int newStartIndex = getInt(myStartIndex);
     int newEndIndex = getInt(myEndIndex);
     int newLimit = getInt(myEntriesLimit);
@@ -69,7 +71,7 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
         newLimit = 1;
       }
 
-      if(newEndIndex - newStartIndex > 10000) {
+      if(showBigRangeWarning && (newEndIndex - newStartIndex > 10000)) {
         final int answer = Messages.showOkCancelDialog(
           myPanel.getRootPane(),
           DebuggerBundle.message("warning.range.too.big", ApplicationNamesInfo.getInstance().getProductName()),
@@ -121,7 +123,16 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
 
     final DocumentListener listener = new DocumentListener() {
       private void updateEntriesLimit() {
-        myEntriesLimit.setText(String.valueOf(getInt(myEndIndex) - getInt(myStartIndex) + 1));
+        final boolean state = myIndexUpdateEnabled;
+        myIndexUpdateEnabled = false;
+        try {
+          if (myEntriesLimitUpdateEnabled) {
+            myEntriesLimit.setText(String.valueOf(getInt(myEndIndex) - getInt(myStartIndex) + 1));
+          }
+        }
+        finally {
+          myIndexUpdateEnabled = state;
+        }
       }
       public void changedUpdate(DocumentEvent e) {
         updateEntriesLimit();
@@ -135,6 +146,31 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
     };
     myStartIndex.getDocument().addDocumentListener(listener);
     myEndIndex.getDocument().addDocumentListener(listener);
+    myEntriesLimit.getDocument().addDocumentListener(new DocumentListener() {
+      private void updateEndIndex() {
+        final boolean state = myEntriesLimitUpdateEnabled;
+        myEntriesLimitUpdateEnabled = false;
+        try {
+          if (myIndexUpdateEnabled) {
+            myEndIndex.setText(String.valueOf(getInt(myEntriesLimit) + getInt(myStartIndex) - 1));
+          }
+        }
+        finally {
+          myEntriesLimitUpdateEnabled = state;
+        }
+      }
+      public void insertUpdate(DocumentEvent e) {
+        updateEndIndex();
+      }
+
+      public void removeUpdate(DocumentEvent e) {
+        updateEndIndex();
+      }
+
+      public void changedUpdate(DocumentEvent e) {
+        updateEndIndex();
+      }
+    });
     return myPanel;
   }
 
@@ -151,7 +187,7 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable{
 
   public boolean isModified() {
     ArrayRenderer cloneRenderer = myRenderer.clone();
-    applyTo(cloneRenderer);
+    applyTo(cloneRenderer, false);
     final boolean valuesEqual =
       (myRenderer.END_INDEX == cloneRenderer.END_INDEX) &&
       (myRenderer.START_INDEX == cloneRenderer.START_INDEX) &&

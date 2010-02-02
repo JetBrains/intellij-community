@@ -15,10 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.shelf;
 
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.DiffRequestFactory;
 import com.intellij.openapi.diff.MergeRequest;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchContext;
@@ -30,12 +27,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchAction;
 import com.intellij.openapi.vcs.changes.patch.PatchMergeRequestFactory;
+import com.intellij.openapi.vcs.changes.ui.ChangesComparator;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -43,7 +43,8 @@ import java.util.List;
  */
 public class DiffShelvedChangesAction extends AnAction implements DumbAware {
   public void actionPerformed(final AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    showShelvedChangesDiff(e.getDataContext());
+    /*Project project = e.getData(PlatformDataKeys.PROJECT);
     final ShelvedChangeList[] changeLists = e.getData(ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY);
     List<ShelvedChange> shelvedChanges = e.getData(ShelvedChangesViewManager.SHELVED_CHANGE_KEY);
     if ((shelvedChanges == null || shelvedChanges.isEmpty()) && changeLists != null && changeLists.length > 0) {
@@ -63,7 +64,49 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
         }
       }
     }
-    ActionManager.getInstance().getAction("ChangesView.Diff").actionPerformed(e);
+    ActionManager.getInstance().getAction("ChangesView.Diff").actionPerformed(e);*/
+  }
+
+  public static void showShelvedChangesDiff(final DataContext dc) {
+    Project project = PlatformDataKeys.PROJECT.getData(dc);
+    ShelvedChangeList[] changeLists = ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY.getData(dc);
+    if (changeLists == null) {
+      changeLists = ShelvedChangesViewManager.SHELVED_RECYCLED_CHANGELIST_KEY.getData(dc);
+    }
+
+    // selected changes inside lists
+    List<ShelvedChange> shelvedChanges = ShelvedChangesViewManager.SHELVED_CHANGE_KEY.getData(dc);
+
+    if (changeLists == null) return;
+
+    Change toSelect = null;
+    final List<ShelvedChange> changesFromFirstList = changeLists[0].getChanges();
+    if (shelvedChanges != null) {
+      for (final ShelvedChange fromList : changesFromFirstList) {
+        for (ShelvedChange shelvedChange : shelvedChanges) {
+          if (fromList.equals(shelvedChange)) {
+            toSelect = fromList.getChange(project);
+            break;
+          }
+        }
+        if (toSelect != null) break;
+      }
+    }
+
+    final Change[] changes = new Change[changesFromFirstList.size()];
+    for (int i = 0; i < changesFromFirstList.size(); i++) {
+      final ShelvedChange shelvedChange = changesFromFirstList.get(i);
+      changes[i] = shelvedChange.getChange(project);
+    }
+    Arrays.sort(changes, ChangesComparator.getInstance());
+
+    int toSelectIdx = 0;
+    for (int i = 0; i < changes.length; i++) {
+      if (toSelect == changes[i]) {
+        toSelectIdx = i;
+      }
+    }
+    ShowDiffAction.showDiffForChange(changes, toSelectIdx, project);
   }
 
   private static boolean showConflictingChangeDiff(final Project project, final ShelvedChange c) throws PatchSyntaxException, IOException {

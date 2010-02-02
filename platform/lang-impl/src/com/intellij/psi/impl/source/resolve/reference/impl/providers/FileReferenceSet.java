@@ -254,7 +254,7 @@ public class FileReferenceSet {
                                              PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
       }
     };
-    final CachedValuesManager cachedValuesManager = PsiManager.getInstance(myElement.getProject()).getCachedValuesManager();
+    final CachedValuesManager cachedValuesManager = CachedValuesManager.getManager(myElement.getProject());
     final Collection<PsiFileSystemItem> value =
       cachedValuesManager.getCachedValue(file, DEFAULT_CONTEXTS_KEY, myDefaultContextProvider, false);
     return value == null ? Collections.<PsiFileSystemItem>emptyList() : value;

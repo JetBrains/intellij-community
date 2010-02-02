@@ -15,16 +15,16 @@
  */
 package com.intellij.refactoring.move;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
-import com.intellij.openapi.util.Pair;
-
-import java.util.Set;
-import java.util.Map;
-import java.util.LinkedHashMap;
-
 import org.jetbrains.annotations.Nullable;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author ven
@@ -120,7 +120,7 @@ public class MoveInstanceMembersUtil {
       if (referencedClass == null) return null;
       final PsiClass parentClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
       assert parentClass != null;
-      if (!PsiTreeUtil.isAncestor(referencedClass, parentClass, false)) {
+      if (InheritanceUtil.isInheritorOrSelf(parentClass, referencedClass, false)) {
         referencedClass = parentClass;
       }
       return referencedClass;

@@ -289,7 +289,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
           if (!newName.equals(parameter.getName())) {
             JavaUnresolvableLocalCollisionDetector.visitLocalsCollisions(parameter, newName, method.getBody(), null, new JavaUnresolvableLocalCollisionDetector.CollidingVariableVisitor() {
               public void visitCollidingElement(final PsiVariable collidingVariable) {
-                if (!(collidingVariable instanceof PsiField) && !deletedOrRenamedParameters.contains(collidingVariable)) {
+                if (!deletedOrRenamedParameters.contains(collidingVariable)) {
                   result.add(new RenamedParameterCollidesWithLocalUsageInfo(parameter, collidingVariable, method));
                 }
               }
@@ -300,7 +300,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       else {
         JavaUnresolvableLocalCollisionDetector.visitLocalsCollisions(method, newName, method.getBody(), null, new JavaUnresolvableLocalCollisionDetector.CollidingVariableVisitor() {
           public void visitCollidingElement(PsiVariable collidingVariable) {
-            if (!(collidingVariable instanceof PsiField) && !deletedOrRenamedParameters.contains(collidingVariable)) {
+            if (!deletedOrRenamedParameters.contains(collidingVariable)) {
               result.add(new NewParameterCollidesWithLocalUsageInfo(collidingVariable, collidingVariable, method));
             }
           }

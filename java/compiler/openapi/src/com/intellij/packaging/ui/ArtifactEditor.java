@@ -33,4 +33,6 @@ public interface ArtifactEditor {
   void putModuleIntoDefaultLocation(@NotNull Module module);
 
   void addToClasspath(CompositePackagingElement<?> element, List<String> classpath);
+
+  boolean isDisposed();
 }

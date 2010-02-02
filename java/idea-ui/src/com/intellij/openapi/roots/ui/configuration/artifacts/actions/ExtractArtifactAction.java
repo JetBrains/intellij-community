@@ -22,14 +22,15 @@ import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeComponent;
 import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeSelection;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.packaging.artifacts.ArtifactPointerManager;
 import com.intellij.packaging.artifacts.ModifiableArtifact;
+import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
-import com.intellij.packaging.impl.artifacts.PlainArtifactType;
 import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
+import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.Collection;
 
@@ -58,25 +59,32 @@ public class ExtractArtifactAction extends LayoutTreeActionBase {
       return;
     }
 
+
     final Collection<? extends PackagingElement> selectedElements = selection.getElements();
-    final String name = Messages.showInputDialog(myArtifactEditor.getMainComponent(), ProjectBundle.message("label.text.specify.artifact.name"),
-                                                 ProjectBundle.message("dialog.title.extract.artifact"), null);
-    if (name != null) {
-      final Project project = myArtifactEditor.getContext().getProject();
-      //todo[nik] select type?
-      final ModifiableArtifact artifact = myArtifactEditor.getContext().getOrCreateModifiableArtifactModel().addArtifact(name, PlainArtifactType.getInstance());
-      treeComponent.editLayout(new Runnable() {
-        public void run() {
-          for (PackagingElement<?> element : selectedElements) {
-            artifact.getRootElement().addOrFindChild(ArtifactUtil.copyWithChildren(element, project));
-          }
-          for (PackagingElement element : selectedElements) {
-            parent.removeChild(element);
-          }
-          parent.addOrFindChild(new ArtifactPackagingElement(project, ArtifactPointerManager.getInstance(project).createPointer(artifact, myArtifactEditor.getContext().getArtifactModel())));
-        }
-      });
-      treeComponent.rebuildTree();
+    String initialName = "artifact";
+    if (selectedElements.size() == 1) {
+      initialName = PathUtil.suggestFileName(ContainerUtil.getFirstItem(selectedElements, null).createPresentation(myArtifactEditor.getContext()).getPresentableName());
     }
+    final ExtractArtifactDialog dialog = new ExtractArtifactDialog(myArtifactEditor.getContext(), treeComponent, initialName);
+    dialog.show();
+    if (!dialog.isOK()) {
+      return;
+    }
+
+    final Project project = myArtifactEditor.getContext().getProject();
+    final ModifiableArtifactModel model = myArtifactEditor.getContext().getOrCreateModifiableArtifactModel();
+    final ModifiableArtifact artifact = model.addArtifact(dialog.getArtifactName(), dialog.getArtifactType());
+    treeComponent.editLayout(new Runnable() {
+      public void run() {
+        for (PackagingElement<?> element : selectedElements) {
+          artifact.getRootElement().addOrFindChild(ArtifactUtil.copyWithChildren(element, project));
+        }
+        for (PackagingElement element : selectedElements) {
+          parent.removeChild(element);
+        }
+        parent.addOrFindChild(new ArtifactPackagingElement(project, ArtifactPointerManager.getInstance(project).createPointer(artifact, myArtifactEditor.getContext().getArtifactModel())));
+      }
+    });
+    treeComponent.rebuildTree();
   }
 }

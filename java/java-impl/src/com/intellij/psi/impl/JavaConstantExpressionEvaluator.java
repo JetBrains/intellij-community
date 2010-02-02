@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentSoftHashMap;
@@ -48,7 +49,7 @@ public class JavaConstantExpressionEvaluator extends JavaRecursiveElementWalking
       public ConcurrentMap<PsiElement, Object> create() {
         final Key<CachedValue<ConcurrentMap<PsiElement, Object>>> key =
           throwExceptionOnOverflow ? CONSTANT_VALUE_WITH_OVERFLOW_MAP_KEY : CONSTANT_VALUE_WO_OVERFLOW_MAP_KEY;
-        return PsiManager.getInstance(myProject).getCachedValuesManager().getCachedValue(myProject, key, PROVIDER, false);
+        return CachedValuesManager.getManager(myProject).getCachedValue(myProject, key, PROVIDER, false);
       }
     };
     myProject = project;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,6 +79,9 @@ public class ControlFlowStatementWithoutBracesInspection
                     final PsiElement[] children = ifStatement.getChildren();
                     final StringBuilder newStatementText = new StringBuilder();
                     for (PsiElement child : children) {
+                        if (child instanceof PsiWhiteSpace) {
+                            continue;
+                        }
                         if (child != statementWithoutBraces) {
                             newStatementText.append(child.getText());
                         } else {

@@ -21,8 +21,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
-import static com.intellij.patterns.PlatformPatterns.psiElement;
-import static com.intellij.patterns.PsiJavaPatterns.psiExpressionStatement;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
@@ -39,6 +37,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.patterns.PlatformPatterns.psiElement;
+import static com.intellij.patterns.PsiJavaPatterns.psiExpressionStatement;
 
 /**
  * @author yole
@@ -153,8 +154,8 @@ class InlineToAnonymousConstructorProcessor {
     if (PsiTreeUtil.getChildrenOfType(anonymousClass, PsiMember.class) == null) {
       anonymousClass.deleteChildRange(anonymousClass.getLBrace(), anonymousClass.getRBrace());
     }
-    ChangeContextUtil.decodeContextInfo(anonymousClass, anonymousClass, null);
-    final PsiNewExpression superNewExpression = (PsiNewExpression) myNewExpression.replace(superNewExpressionTemplate);
+    PsiNewExpression superNewExpression = (PsiNewExpression) myNewExpression.replace(superNewExpressionTemplate);
+    superNewExpression = (PsiNewExpression)ChangeContextUtil.decodeContextInfo(superNewExpression, superNewExpression.getAnonymousClass(), null);
     JavaCodeStyleManager.getInstance(superNewExpression.getProject()).shortenClassReferences(superNewExpression);
   }
 
@@ -182,7 +183,7 @@ class InlineToAnonymousConstructorProcessor {
         ProcessingContext context = new ProcessingContext();
         if (ourAssignmentPattern.accepts(stmt, context)) {
           PsiAssignmentExpression expression = context.get(ourAssignmentKey);
-          if (!processAssignmentInConstructor(expression)) {
+          if (processAssignmentInConstructor(expression)) {
             initializerBlock.addBefore(replaceParameterReferences(stmt, null, false), initializerBlock.getRBrace());
           }
         }
@@ -204,7 +205,7 @@ class InlineToAnonymousConstructorProcessor {
     if (expression.getLExpression() instanceof PsiReferenceExpression) {
       PsiReferenceExpression lExpr = (PsiReferenceExpression) expression.getLExpression();
       final PsiExpression rExpr = expression.getRExpression();
-      if (rExpr == null) return true;
+      if (rExpr == null) return false;
       final PsiElement psiElement = lExpr.resolve();
       if (psiElement instanceof PsiField) {
         PsiField field = (PsiField) psiElement;
@@ -216,25 +217,20 @@ class InlineToAnonymousConstructorProcessor {
           }
           catch (IncorrectOperationException e) {
             LOG.error(e);
-            return true;
+            return false;
           }
           if (!localVarRefs.isEmpty()) {
-            return false;
+            return true;
           }
 
           myFieldInitializers.put(field.getName(), initializer);
         }
       }
       else if (psiElement instanceof PsiVariable) {
-        try {
-          replaceParameterReferences(rExpr.copy(), new ArrayList<PsiReferenceExpression>(), false);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
+        return true;
       }
     }
-    return true;
+    return false;
   }
 
   public static boolean isConstant(final PsiExpression expr) {
