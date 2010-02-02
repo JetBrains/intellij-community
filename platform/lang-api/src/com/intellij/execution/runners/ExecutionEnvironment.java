@@ -16,16 +16,20 @@
 
 package com.intellij.execution.runners;
 
-import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.Executor;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 /**
  * @author spleaner
@@ -36,6 +40,7 @@ public class ExecutionEnvironment {
   private RunnerSettings myRunnerSettings;
   private ConfigurationPerRunnerSettings myConfigurationSettings;
 
+  @TestOnly
   public ExecutionEnvironment() {
   }
 
@@ -62,8 +67,19 @@ public class ExecutionEnvironment {
     return myRunProfile;
   }
 
+  @Nullable
+  public Project getProject() {
+    return PlatformDataKeys.PROJECT.getData(myDataContext);
+  }
+
+  @Deprecated
   public DataContext getDataContext() {
     return myDataContext;
+  }
+
+  @Nullable
+  public RunContentDescriptor getContentToReuse() {
+    return GenericProgramRunner.CONTENT_TO_REUSE_DATA_KEY.getData(myDataContext);
   }
 
   @Nullable

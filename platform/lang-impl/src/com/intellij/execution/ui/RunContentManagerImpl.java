@@ -312,13 +312,15 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   @Nullable
   public RunContentDescriptor getReuseContent(final Executor requestor, DataContext dataContext) {
     if(ApplicationManager.getApplication().isUnitTestMode()) return null;
-    RunContentDescriptor runContentDescriptor = GenericProgramRunner.CONTENT_TO_REUSE_DATA_KEY.getData(dataContext);
+    return getReuseContent(requestor, GenericProgramRunner.CONTENT_TO_REUSE_DATA_KEY.getData(dataContext));
+  }
 
-    if(runContentDescriptor != null) return runContentDescriptor;
+  public RunContentDescriptor getReuseContent(Executor requestor, @Nullable RunContentDescriptor contentToReuse) {
+    if(ApplicationManager.getApplication().isUnitTestMode()) return null;
+    if (contentToReuse != null) return contentToReuse;
 
     final ContentManager contentManager = getContentManagerForRunner(requestor);
-
-    return chooseReuseContentForDescriptor(contentManager, runContentDescriptor);
+    return chooseReuseContentForDescriptor(contentManager, contentToReuse);
   }
 
   public RunContentDescriptor findContentDescriptor(final Executor requestor, final ProcessHandler handler) {

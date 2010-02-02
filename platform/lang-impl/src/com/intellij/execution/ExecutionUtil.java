@@ -18,25 +18,21 @@ package com.intellij.execution;
 
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
-import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunDialog;
+import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.ide.DataManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 
 /**
  * @author spleaner
@@ -58,8 +54,6 @@ public class ExecutionUtil {
     ProgramRunner runner = getRunner(executor.getId(), configuration);
     LOG.assertTrue(runner != null, "Runner MUST not be null!");
 
-    final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
-    LOG.assertTrue(component != null, "component MUST not be null!");
     if (!RunManagerImpl.canRunConfiguration(configuration, executor)) {
       final boolean result = RunDialog.editConfiguration(project, configuration, "Edit configuration", executor.getActionName(), executor.getIcon());
       if (!result) {
@@ -89,11 +83,6 @@ public class ExecutionUtil {
                                                                 configuration.getName(), e1.getMessage()),
                                         ExecutionBundle.message("run.error.message.title"));
     }
-  }
-
-  private static DataContext recreateDataContext(final Project project, final Component component) {
-    if (component != null && component.isDisplayable()) return DataManager.getInstance().getDataContext(component);
-    return SimpleDataContext.getProjectContext(project);
   }
 
   public static Icon getConfigurationIcon(final Project project, final RunnerAndConfigurationSettings settings, final boolean invalid) {
