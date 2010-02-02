@@ -58,7 +58,7 @@ public class PyExtractSuperclassHelper {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
             final PyElement[] elements = methods.toArray(new PyElement[methods.size()]);
-            final String text = PyClassRefactoringUtil.prepareClassText(null, elements, true, true, superBaseName) + "\n";
+            final String text = PyClassRefactoringUtil.prepareClassText(clazz, elements, true, true, superBaseName) + "\n";
             final PyClass newClass = PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyClass.class, text);
             newClassRef.set(newClass);
             PyClassRefactoringUtil.moveSuperclasses(clazz, superClasses, newClass);
