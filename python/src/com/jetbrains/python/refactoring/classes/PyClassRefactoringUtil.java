@@ -107,16 +107,16 @@ public class PyClassRefactoringUtil {
     if (text == null) return;
 
     final PyClass newClass = PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyClass.class, text);
-    if (superClass.getMethods().length != 0) {
-      final PyFunction previousLastMethod = superClass.getMethods()[0];
-      final ASTNode node = newClass.getLastChild().getNode();
+    if (superClass.getStatementList().getStatements().length != 0) {
+      final PsiElement firstStatement = superClass.getStatementList().getFirstChild();
+      final ASTNode node = newClass.getStatementList().getNode();
       for (ASTNode child : node.getChildren(null)) {
-        PyPsiUtils.addBeforeInParent(previousLastMethod, child.getPsi());
+        PyPsiUtils.addBeforeInParent(firstStatement, child.getPsi());
       }
-      PyPsiUtils.addBeforeInParent(previousLastMethod, newClass.getLastChild().getPrevSibling());
-      PyPsiUtils.addBeforeInParent(previousLastMethod, newClass.getLastChild());      
+      PyPsiUtils.addBeforeInParent(firstStatement, newClass.getLastChild().getPrevSibling());
+      PyPsiUtils.addBeforeInParent(firstStatement, newClass.getLastChild());
     } else {
-      PyPsiUtils.addToEnd(superClass, newClass.getLastChild());
+      superClass.getStatementList().replace(newClass.getStatementList());
     }
   }
 

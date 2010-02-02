@@ -88,15 +88,10 @@ public class PyPsiUtils {
   }
 
   public static void addBeforeInParent(@NotNull final PsiElement anchor, @NotNull final PsiElement... newElements) {
-    final PsiElement psiParent = anchor.getParent();
-    LOG.assertTrue(psiParent != null);
-    final ASTNode parentNode = psiParent.getNode();
     final ASTNode anchorNode = anchor.getNode();
-    LOG.assertTrue(parentNode != null);
     LOG.assertTrue(anchorNode != null);
     for (PsiElement newElement : newElements) {
-      //noinspection ConstantConditions
-      parentNode.addChild(newElement.getNode(), anchorNode);
+      anchorNode.getTreeParent().addChild(newElement.getNode(), anchorNode);
     }
   }
 

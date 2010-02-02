@@ -8,8 +8,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringFactory;
@@ -24,6 +26,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -110,7 +113,7 @@ public class PyExtractMethodUtil {
               // Process parameters
               processParameters(project, generatedMethod, variableData);
 
-              // Generating call element
+              // Generate call element
               builder.append(" = ").append(methodName).append("(");
               builder.append(createCallArgsString(variableData)).append(")");
               PsiElement callElement = PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyElement.class, builder.toString());
@@ -213,10 +216,7 @@ public class PyExtractMethodUtil {
   }
 
   private static void processParameters(final Project project, final PyFunction generatedMethod, final AbstractVariableData[] variableData) {
-    final Map<String, String> map = new HashMap<String, String>();
-    for (AbstractVariableData data : variableData) {
-      map.put(data.getOriginalName(), data.getName());
-    }
+    final Map<String, String> map = createMap(variableData);
     // Rename parameters
     for (PyParameter parameter : generatedMethod.getParameterList().getParameters()) {
       final String name = parameter.getName();
@@ -227,22 +227,39 @@ public class PyExtractMethodUtil {
     }
   }
 
+  private static Map<String, String> createMap(final AbstractVariableData[] variableData) {
+    final Map<String, String> map = new HashMap<String, String>();
+    for (AbstractVariableData data : variableData) {
+      map.put(data.getOriginalName(), data.getName());
+    }
+    return map;
+  }
+
   private static void insertGeneratedMethod(PsiElement anchor, final PyFunction generatedMethod) {
     final Pair<PsiElement, TextRange> data = anchor.getUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE);
     if (data != null){
       anchor = data.first;
     }
     final PsiNamedElement parent = PsiTreeUtil.getParentOfType(anchor, PyFile.class, PyFunction.class);
+
     if (parent instanceof PyFile) {
       final PsiElement statement = PyPsiUtils.getStatement(parent, anchor);
-      parent.addBefore(generatedMethod, statement);
+      PyPsiUtils.addBeforeInParent(statement, generatedMethod, createWhiteSpace(anchor.getProject()));
       return;
     }
     if (parent instanceof PyFunction) {
-      parent.getParent().addBefore(generatedMethod, parent);
+      if (parent.getParent() instanceof PyStatementList){
+        parent.getParent().addBefore(generatedMethod, parent);
+        return;
+      }
+      PyPsiUtils.addBeforeInParent(parent, generatedMethod, createWhiteSpace(anchor.getProject()));
       return;
     }
     throw new IllegalStateException("Compound statement should not be null");
+  }
+
+  public static PsiWhiteSpace createWhiteSpace(final Project project) {
+    return PythonLanguage.getInstance().getElementGenerator().createFromText(project, PsiWhiteSpace.class, "\n");
   }
 
   //  Creates string for method parameters
@@ -281,12 +298,23 @@ public class PyExtractMethodUtil {
                                                        final String methodName,
                                                        final AbstractVariableData[] variableData,
                                                        final List<PsiElement> elementsRange) {
+    assert !elementsRange.isEmpty() : "Empty statements list was selected!";
     final StringBuilder builder = new StringBuilder();
     builder.append(generateSignature(methodName, variableData, elementsRange.get(0)));
-    for (PsiElement element : elementsRange) {
-      builder.append("  ").append(element.getText());
+    builder.append("  pass");
+    final PyFunction method =
+      PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyFunction.class, builder.toString());
+    final PyStatementList statementList = method.getStatementList();
+    for (int i=0; i<elementsRange.size();i++){
+      final PsiElement element = elementsRange.get(i);
+      if (element instanceof PsiWhiteSpace) {
+        continue;
+      }
+      statementList.add(element);
     }
-    return PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyFunction.class, builder.toString());
+    // remove pass
+    statementList.getFirstChild().delete();
+    return method;
   }
 
   private static Pair<String, AbstractVariableData[]> getNameAndVariableData(final Project project,

@@ -17,15 +17,22 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.jetbrains.python.PythonLanguage;
 import org.jetbrains.annotations.NotNull;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.PyStatementList;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -71,7 +78,6 @@ public class PyStatementListImpl extends PyElementImpl implements PyStatementLis
               return false;
             }
           }
-          return true;
         }
       }
     }
@@ -82,5 +88,53 @@ public class PyStatementListImpl extends PyElementImpl implements PyStatementLis
       }
     }
     return true;
+  }
+
+  @Override
+  public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
+    final PsiElement[] elements = createElements2Add(element);
+    if (elements != null){
+      super.add(elements[1]);
+      return super.add(elements[0]);
+    }
+    return super.add(element);
+  }
+
+  @Override
+  public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+    final PsiElement[] elements = createElements2Add(element);
+    if (elements != null){
+      return super.addBefore(elements[0], super.addBefore(elements[1], anchor));
+    }
+    return super.addBefore(element, anchor);
+  }
+
+  @Override
+  public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+    final PsiElement[] elements = createElements2Add(element);
+    if (elements != null){
+      return super.addAfter(elements[0], super.addAfter(elements[1], anchor));
+    }
+    return super.addAfter(element, anchor);
+  }
+
+  @Nullable
+  /**
+   * Indents given element and creates pair of indented psiElement and psiWhitespace(indent)
+   */
+  private PsiElement[] createElements2Add(final PsiElement element) {
+    final PsiElement sibling = getPrevSibling();
+    final String whitespace = sibling instanceof PsiWhiteSpace ? sibling.getText() : "";
+    final int i = whitespace.lastIndexOf("\n");
+    final int indent = i != -1 ? whitespace.length() - i : 0;
+    try {
+      final String newElementText = StringUtil.shiftIndentInside(element.getText(), indent, true);
+      final PyFile dummyFile =
+        (PyFile) PythonLanguage.getInstance().createDummyFile(getProject(), newElementText);
+      return new PsiElement[]{dummyFile.getLastChild(), PsiTreeUtil.getDeepestFirst(dummyFile)};
+    }
+    catch (IOException e) {
+      return null;
+    }
   }
 }

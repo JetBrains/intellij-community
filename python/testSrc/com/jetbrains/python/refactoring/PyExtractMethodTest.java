@@ -47,10 +47,9 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
     doTest("outEmpty/break_ast.before.py", "bar", "outEmpty/break_ast.after.py");
   }
 
-  // TODO[oleg] fix me!!!
-  //public void testExpression() throws Throwable {
-  //  doTest("outEmpty/expression.before.py", "plus", "outEmpty/expression.after.py");
-  //}
+  public void testExpression() throws Throwable {
+    doTest("outEmpty/expression.before.py", "plus", "outEmpty/expression.after.py");
+  }
 
   public void testStatement() throws Throwable {
     doTest("outEmpty/statement.before.py", "foo", "outEmpty/statement.after.py");
@@ -60,10 +59,9 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
     doTest("outEmpty/statements.before.py", "foo", "outEmpty/statements.after.py");
   }
 
-  // TODO[oleg] fix me!!!
-  //public void testStatementReturn() throws Throwable {
-  //  doTest("outEmpty/statement_return.before.py", "foo", "outEmpty/statement_return.after.py");
-  //}
+  public void testStatementReturn() throws Throwable {
+    doTest("outEmpty/statement_return.before.py", "foo", "outEmpty/statement_return.after.py");
+  }
 
   public void testBinaryExpression() throws Throwable {
     doTest("controlFlow/binary_expr.before.py", "foo", "controlFlow/binary_expr.after.py");
@@ -72,11 +70,6 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   public void testWhileOutput() throws Throwable {
     doTest("controlFlow/while_output.before.py", "bar", "controlFlow/while_output.after.py");
   }
-
-  // TODO[oleg] fix me!!!
-  //public void testComplicated() throws Throwable {
-  //  doTest("controlFlow/complicated.before.py", "foo", "controlFlow/complicated.after.py");
-  //}
 
   // TODO[oleg] implement me!!!
   //public void testNameCollisionClass() throws Throwable {
