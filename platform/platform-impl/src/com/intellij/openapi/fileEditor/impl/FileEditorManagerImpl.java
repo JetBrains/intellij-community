@@ -867,6 +867,17 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     }
   }
 
+  @NotNull
+  @Override
+  public FileEditor[] getAllEditors(@NotNull VirtualFile file) {
+    List<EditorWithProviderComposite> editorComposites = getEditorComposites(file);
+    List<FileEditor> editors = new ArrayList<FileEditor>();
+    for (EditorWithProviderComposite composite : editorComposites) {
+      editors.addAll(Arrays.asList(composite.getEditors()));
+    }
+    return editors.toArray(new FileEditor[editors.size()]);
+  }
+
   @Nullable
   private EditorWithProviderComposite getCurrentEditorWithProviderComposite(@NotNull final VirtualFile virtualFile) {
     final EditorWindow editorWindow = getSplitters().getCurrentWindow();
