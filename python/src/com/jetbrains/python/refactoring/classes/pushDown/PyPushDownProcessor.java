@@ -85,6 +85,7 @@ public class PyPushDownProcessor extends BaseRefactoringProcessor {
 
     if (methods.size() != 0) {
       PyPsiUtils.removeElements(elements);
+      PyClassRefactoringUtil.insertPassIfNeeded(myClass);
     }
   }
 

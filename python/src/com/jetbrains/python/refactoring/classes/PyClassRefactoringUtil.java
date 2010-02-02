@@ -1,6 +1,5 @@
 package com.jetbrains.python.refactoring.classes;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -9,11 +8,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.refactoring.extractmethod.PyExtractMethodUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -99,6 +96,13 @@ public class PyClassRefactoringUtil {
     PyPsiUtils.removeElements(elements);
   }
 
+  public static void insertPassIfNeeded(PyClass clazz) {
+    final PyStatementList statements = clazz.getStatementList();
+    if (statements.getStatements().length == 0) {
+      statements.add(PythonLanguage.getInstance().getElementGenerator().createFromText(clazz.getProject(), PyPassStatement.class, "pass"));
+    }
+  }
+
   public static void addMethods(final PyClass superClass, final PyElement[] elements, final boolean up) {
     if (elements.length == 0) return;
     final Project project = superClass.getProject();
@@ -107,16 +111,14 @@ public class PyClassRefactoringUtil {
     if (text == null) return;
 
     final PyClass newClass = PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyClass.class, text);
-    if (superClass.getStatementList().getStatements().length != 0) {
-      final PsiElement firstStatement = superClass.getStatementList().getFirstChild();
-      final ASTNode node = newClass.getStatementList().getNode();
-      for (ASTNode child : node.getChildren(null)) {
-        PyPsiUtils.addBeforeInParent(firstStatement, child.getPsi());
+    final PyStatementList statements = superClass.getStatementList();
+    if (statements.getStatements().length != 0) {
+      for (PyElement newStatement : newClass.getStatementList().getStatements()) {
+        statements.add(PyExtractMethodUtil.createWhiteSpace(project));
+        statements.add(newStatement);
       }
-      PyPsiUtils.addBeforeInParent(firstStatement, newClass.getLastChild().getPrevSibling());
-      PyPsiUtils.addBeforeInParent(firstStatement, newClass.getLastChild());
     } else {
-      superClass.getStatementList().replace(newClass.getStatementList());
+      statements.replace(newClass.getStatementList());
     }
   }
 
@@ -128,7 +130,7 @@ public class PyClassRefactoringUtil {
     if (preparedClassName != null) {
       builder.append(preparedClassName).append(":");
     } else {
-      builder.append("Foo").append(":\n");
+      builder.append("Foo").append(":");
     }
     boolean hasChanges = false;
     for (PyElement element : elements) {
@@ -137,6 +139,9 @@ public class PyClassRefactoringUtil {
         builder.append(white).append(element.getText()).append("\n");
         hasChanges = true;
       }
+    }
+    if (ignoreNoChanges && !hasChanges) {
+      builder.append(white).append("pass");
     }
     return ignoreNoChanges || hasChanges ? builder.toString() : null;
   }

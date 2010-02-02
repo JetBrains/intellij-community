@@ -64,8 +64,7 @@ public interface PyElementTypes {
                                         BREAK_STATEMENT, CONTINUE_STATEMENT, DEL_STATEMENT, EXEC_STATEMENT, FOR_STATEMENT,
                                         FROM_IMPORT_STATEMENT, GLOBAL_STATEMENT, IMPORT_STATEMENT, IF_STATEMENT, PASS_STATEMENT,
                                         PRINT_STATEMENT, RAISE_STATEMENT, RETURN_STATEMENT, TRY_EXCEPT_STATEMENT, WITH_STATEMENT,
-                                        WHILE_STATEMENT,
-                                        NONLOCAL_STATEMENT);
+                                        WHILE_STATEMENT, NONLOCAL_STATEMENT, CLASS_DECLARATION, FUNCTION_DECLARATION);
 
   TokenSet LOOPS = TokenSet.create(WHILE_STATEMENT, FOR_STATEMENT);
 

@@ -37,6 +37,8 @@ public class PyPullUpHelper {
 
             // move superclasses declarations
             PyClassRefactoringUtil.moveSuperclasses(clazz, superClasses, superClass);
+
+            PyClassRefactoringUtil.insertPassIfNeeded(clazz);
           }
         });
       }
