@@ -136,7 +136,8 @@ class ImportCandidateHolder implements Comparable {
 
   int getRelevance() {
     Project project = myImportable.getProject();
-    final VirtualFile vFile = myImportable.getContainingFile().getVirtualFile();
+    final PsiFile psiFile = myImportable.getContainingFile();
+    final VirtualFile vFile = psiFile == null ? null : psiFile.getVirtualFile();
     if (vFile == null) return 0;
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     // files under project source are most relevant
