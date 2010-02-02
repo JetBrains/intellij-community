@@ -8,7 +8,7 @@
     <lang.parserDefinition language="Python" implementationClass="com.jetbrains.python.PythonParserDefinition"/>
     <lang.commenter language="Python" implementationClass="com.jetbrains.python.PythonCommenter"/>
     <lang.foldingBuilder language="Python" implementationClass="com.jetbrains.python.PythonFoldingBuilder"/>
-    <lang.findUsagesProvider language="Python" implementationClass="com.jetbrains.python.PythonFindUsagesProvider"/>
+    <lang.findUsagesProvider language="Python" implementationClass="com.jetbrains.python.findUsages.PythonFindUsagesProvider"/>
     <lang.formatter language="Python" implementationClass="com.jetbrains.python.PythonFormattingModelBuilder"/>
     <lang.namesValidator language="Python" implementationClass="com.jetbrains.python.refactoring.PythonNamesValidator"/>
     <lang.surroundDescriptor language="Python" implementationClass="com.jetbrains.python.refactoring.surround.PyStatementSurroundDescriptor"/>
@@ -100,6 +100,8 @@
     <gotoDeclarationHandler implementation="com.jetbrains.python.codeInsight.PyBreakContinueGotoProvider" order="FIRST"/>
 
     <filePropertyPusher implementation="com.jetbrains.python.psi.impl.PythonLanguageLevelPusher"/>
+
+    <elementDescriptionProvider implementation="com.jetbrains.python.findUsages.PyElementDescriptionProvider"/>
 
     <!-- Django -->
     <annotator language="Python" implementationClass="com.jetbrains.django.annotator.ViewMethodAnnotator"/>
