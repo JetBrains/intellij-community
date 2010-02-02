@@ -21,12 +21,12 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.CompositePackagingElementType;
-import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.impl.ui.properties.ArchiveElementPropertiesPanel;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPropertiesPanel;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -59,8 +59,8 @@ class ArchiveElementType extends CompositePackagingElementType<ArchivePackagingE
     return null;
   }
 
-  public PackagingElement<?> createComposite(@NotNull ArtifactEditorContext context, CompositePackagingElement<?> parent) {
-    final String initialValue = PackagingElementFactoryImpl.suggestFileName(parent, "archive", ".jar");
+  public CompositePackagingElement<?> createComposite(CompositePackagingElement<?> parent, @Nullable String baseName, @NotNull ArtifactEditorContext context) {
+    final String initialValue = PackagingElementFactoryImpl.suggestFileName(parent, baseName != null ? baseName : "archive", ".jar");
     final String path = Messages.showInputDialog(context.getProject(), "Enter archive name: ", "New Archive", null, initialValue, new FilePathValidator());
     if (path == null) return null;
     return PackagingElementFactoryImpl.createDirectoryOrArchiveWithParents(path, true);
