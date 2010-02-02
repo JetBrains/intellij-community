@@ -34,11 +34,15 @@ public interface RunContentManager {
   /**
    * to reduce number of open contents RunContentManager reuses
    * some of them during showRunContent (for ex. if a process was stopped) 
-   *
-   * getReuseContent returns content that will be reused by showRunContent
-   * @param dataContext
-   * @return
+   * @return content that will be reused by showRunContent
    */
+  @Nullable
+  RunContentDescriptor getReuseContent(Executor requestor, @Nullable RunContentDescriptor contentToReuse);
+
+  /**
+   * @deprecated use {@link #getReuseContent(com.intellij.execution.Executor, RunContentDescriptor)}
+   */
+  @Deprecated
   @Nullable
   RunContentDescriptor getReuseContent(Executor requestor, DataContext dataContext);
 
