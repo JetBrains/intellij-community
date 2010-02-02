@@ -231,4 +231,8 @@ public class ShelvedChange {
       return 0;
     }
   }
+
+  public String getPatchPath() {
+    return myPatchPath;
+  }
 }

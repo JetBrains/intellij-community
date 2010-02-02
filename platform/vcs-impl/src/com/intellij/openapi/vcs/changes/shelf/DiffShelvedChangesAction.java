@@ -18,25 +18,29 @@ package com.intellij.openapi.vcs.changes.shelf;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.DiffRequestFactory;
 import com.intellij.openapi.diff.MergeRequest;
-import com.intellij.openapi.diff.impl.patch.ApplyPatchContext;
-import com.intellij.openapi.diff.impl.patch.ApplyPatchException;
-import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
-import com.intellij.openapi.diff.impl.patch.TextFilePatch;
+import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.actions.ChangeDiffRequestPresentable;
+import com.intellij.openapi.vcs.changes.actions.DiffRequestPresentable;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
-import com.intellij.openapi.vcs.changes.patch.ApplyPatchAction;
+import com.intellij.openapi.vcs.changes.patch.ApplyPatchForBaseRevisionTexts;
+import com.intellij.openapi.vcs.changes.patch.MergedDiffRequestPresentable;
 import com.intellij.openapi.vcs.changes.patch.PatchMergeRequestFactory;
 import com.intellij.openapi.vcs.changes.ui.ChangesComparator;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author yole
@@ -44,27 +48,6 @@ import java.util.List;
 public class DiffShelvedChangesAction extends AnAction implements DumbAware {
   public void actionPerformed(final AnActionEvent e) {
     showShelvedChangesDiff(e.getDataContext());
-    /*Project project = e.getData(PlatformDataKeys.PROJECT);
-    final ShelvedChangeList[] changeLists = e.getData(ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY);
-    List<ShelvedChange> shelvedChanges = e.getData(ShelvedChangesViewManager.SHELVED_CHANGE_KEY);
-    if ((shelvedChanges == null || shelvedChanges.isEmpty()) && changeLists != null && changeLists.length > 0) {
-      shelvedChanges = changeLists [0].getChanges();
-    }
-    if (shelvedChanges != null && shelvedChanges.size() > 0) {
-      ShelvedChange c = shelvedChanges.get(0);
-      Change change = c.getChange(project);
-      if (isConflictingChange(change)) {
-        try {
-          if (showConflictingChangeDiff(project, c)) {
-            return;
-          }
-        }
-        catch (Exception ex) {
-          // ignore and fallback to regular diff
-        }
-      }
-    }
-    ActionManager.getInstance().getAction("ChangesView.Diff").actionPerformed(e);*/
   }
 
   public static void showShelvedChangesDiff(final DataContext dc) {
@@ -79,45 +62,102 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
 
     if (changeLists == null) return;
 
-    Change toSelect = null;
     final List<ShelvedChange> changesFromFirstList = changeLists[0].getChanges();
-    if (shelvedChanges != null) {
-      for (final ShelvedChange fromList : changesFromFirstList) {
-        for (ShelvedChange shelvedChange : shelvedChanges) {
-          if (fromList.equals(shelvedChange)) {
-            toSelect = fromList.getChange(project);
-            break;
-          }
-        }
-        if (toSelect != null) break;
-      }
-    }
 
-    final Change[] changes = new Change[changesFromFirstList.size()];
-    for (int i = 0; i < changesFromFirstList.size(); i++) {
-      final ShelvedChange shelvedChange = changesFromFirstList.get(i);
-      changes[i] = shelvedChange.getChange(project);
-    }
-    Arrays.sort(changes, ChangesComparator.getInstance());
+    Collections.sort(changesFromFirstList, new MyComparator(project));
 
     int toSelectIdx = 0;
-    for (int i = 0; i < changes.length; i++) {
-      if (toSelect == changes[i]) {
-        toSelectIdx = i;
+    final ArrayList<DiffRequestPresentable> diffRequestPresentables = new ArrayList<DiffRequestPresentable>();
+    ApplyPatchContext context = new ApplyPatchContext(project.getBaseDir(), 0, false, false);
+    final PatchesPreloader preloader = new PatchesPreloader();
+
+    final List<String> missing = new LinkedList<String>();
+    for (final ShelvedChange shelvedChange : changesFromFirstList) {
+      final Change change = shelvedChange.getChange(project);
+      final String beforePath = shelvedChange.getBeforePath();
+      try {
+        VirtualFile f = FilePatch.findPatchTarget(context, beforePath, shelvedChange.getAfterPath(), beforePath == null);
+        if ((f == null) || (! f.exists())) {
+          if (beforePath != null) {
+            missing.add(beforePath);
+          }
+          continue;
+        }
+
+        if (isConflictingChange(change)) {
+          TextFilePatch patch = preloader.getPatch(shelvedChange);
+          if (patch == null) continue;
+
+          final FilePath pathBeforeRename = context.getPathBeforeRename(f);
+
+          final ApplyPatchForBaseRevisionTexts threeTexts = ApplyPatchForBaseRevisionTexts.create(project, f, pathBeforeRename, patch);
+          if ((threeTexts == null) || (threeTexts.getStatus() == null) || (ApplyPatchStatus.FAILURE.equals(threeTexts.getStatus()))) {
+            continue;
+          }
+
+          diffRequestPresentables.add(new MergedDiffRequestPresentable(project, threeTexts, f, "Shelved Version"));
+        }
+        else {
+          diffRequestPresentables.add(new ChangeDiffRequestPresentable(project, change));
+        }
+      }
+      catch (IOException e) {
+        continue;
+      }
+      if ((shelvedChanges != null) && shelvedChanges.contains(shelvedChange)) {
+        // just added
+        toSelectIdx = diffRequestPresentables.size() - 1;
       }
     }
-    ShowDiffAction.showDiffForChange(changes, toSelectIdx, project);
+    if (! missing.isEmpty()) {
+      // 7-8
+      ChangesViewBalloonProblemNotifier.showMe(project, "Show Diff: Cannot find base for: " + StringUtil.join(missing, ",\n"), MessageType.WARNING);
+    }
+
+    ShowDiffAction.showDiffImpl(project, diffRequestPresentables, toSelectIdx, ShowDiffAction.DiffExtendUIFactory.NONE, true);
   }
 
-  private static boolean showConflictingChangeDiff(final Project project, final ShelvedChange c) throws PatchSyntaxException, IOException {
-    TextFilePatch patch = c.loadFilePatch();
-    if (patch == null) return false;
+  private static class PatchesPreloader {
+    private final Map<String, List<TextFilePatch>> myFilePatchesMap;
 
-    ApplyPatchContext context = new ApplyPatchContext(project.getBaseDir(), 0, false, false);
-    VirtualFile f = patch.findFileToPatch(context);
-    if (f == null) return false;
+    private PatchesPreloader() {
+      myFilePatchesMap = new HashMap<String, List<TextFilePatch>>();
+    }
 
-    return ApplyPatchAction.mergeAgainstBaseVersion(project, f, context, patch, ShelvedChangeDiffRequestFactory.INSTANCE) != null;
+    @Nullable
+    public TextFilePatch getPatch(final ShelvedChange shelvedChange) {
+      List<TextFilePatch> textFilePatches = myFilePatchesMap.get(shelvedChange.getPatchPath());
+      if (textFilePatches == null) {
+        try {
+          textFilePatches = ShelveChangesManager.loadPatches(shelvedChange.getPatchPath());
+        }
+        catch (IOException e) {
+          return null;
+        }
+        catch (PatchSyntaxException e) {
+          return null;
+        }
+        myFilePatchesMap.put(shelvedChange.getPatchPath(), textFilePatches);
+      }
+      for (TextFilePatch textFilePatch : textFilePatches) {
+        if (shelvedChange.getBeforePath().equals(textFilePatch.getBeforeName())) {
+          return textFilePatch;
+        }
+      }
+      return null;
+    }
+  }
+
+  private final static class MyComparator implements Comparator<ShelvedChange> {
+    private final Project myProject;
+
+    public MyComparator(Project project) {
+      myProject = project;
+    }
+
+    public int compare(final ShelvedChange o1, final ShelvedChange o2) {
+      return ChangesComparator.getInstance().compare(o1.getChange(myProject), o2.getChange(myProject));
+    }
   }
 
   private static boolean isConflictingChange(final Change change) {
