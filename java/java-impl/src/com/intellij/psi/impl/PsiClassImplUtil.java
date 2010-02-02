@@ -272,7 +272,7 @@ public class PsiClassImplUtil {
     CachedValue<Map> value = aClass.getUserData(MAP_IN_CLASS_KEY);
     if (value == null) {
       final CachedValueProvider<Map> provider = new ByNameCachedValueProvider(aClass);
-      value = aClass.getManager().getCachedValuesManager().createCachedValue(provider, false);
+      value = CachedValuesManager.getManager(aClass.getProject()).createCachedValue(provider, false);
       //Do not cache for nonphysical elements
       if (aClass.isPhysical()) {
         value = ((UserDataHolderEx)aClass).putUserDataIfAbsent(MAP_IN_CLASS_KEY, value);

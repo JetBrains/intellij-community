@@ -65,7 +65,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
 
   public JavaClassReferenceProvider(GlobalSearchScope scope, final Project project) {
     myScope = scope;
-    myDefaltPackages = PsiManager.getInstance(project).getCachedValuesManager().createCachedValue(new CachedValueProvider<List<PsiElement>>() {
+    myDefaltPackages = CachedValuesManager.getManager(project).createCachedValue(new CachedValueProvider<List<PsiElement>>() {
       public Result<List<PsiElement>> compute() {
         final List<PsiElement> psiPackages = new ArrayList<PsiElement>();
         final String defPackageName = DEFAULT_PACKAGE.getValue(myOptions);

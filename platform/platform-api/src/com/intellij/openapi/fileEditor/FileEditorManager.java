@@ -92,9 +92,16 @@ public abstract class FileEditorManager {
   /**
    * @param file cannot be null
    *
-   * @return all editors for the specified <code>file</code>
+   * @return current editors for the specified <code>file</code>
    */
   @NotNull public abstract FileEditor[] getEditors(@NotNull VirtualFile file);
+
+  /**
+   * @param file cannot be null
+   *
+   * @return all editors for the specified <code>file</code>
+   */
+  @NotNull public abstract FileEditor[] getAllEditors(@NotNull VirtualFile file);
 
   /**
    * @return all open editors

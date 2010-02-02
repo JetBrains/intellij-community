@@ -215,6 +215,12 @@ import java.util.Map;
     return new FileEditor[] {e};
   }
 
+  @NotNull
+  @Override
+  public FileEditor[] getAllEditors(@NotNull VirtualFile file) {
+    return getEditors(file);
+  }
+
   public TestEditorManagerImpl(Project project) {
     myProject = project;
   }

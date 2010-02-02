@@ -174,7 +174,7 @@ public class AbstractExtractMethodDialog extends DialogWrapper implements Extrac
         builder.append(outputName);
       }
     }
-    myOutputVariablesTextArea.setText(builder.length() > 0 ? builder.toString() : "None");
+    myOutputVariablesTextArea.setText(builder.length() > 0 ? builder.toString() : RefactoringBundle.message("refactoring.extract.method.dialog.empty"));
   }
 
   private void updateSignature() {

@@ -24,6 +24,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -53,7 +54,7 @@ public class DfaUtil {
     CachedValue<MultiValuesMap<PsiVariable, PsiExpression>> cachedValue = context.getUserData(DFA_VARIABLE_INFO_KEY);
     if (cachedValue == null) {
       final PsiElement codeBlock = getEnclosingCodeBlock(variable, context);
-      cachedValue = context.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<MultiValuesMap<PsiVariable, PsiExpression>>() {
+      cachedValue = CachedValuesManager.getManager(context.getProject()).createCachedValue(new CachedValueProvider<MultiValuesMap<PsiVariable, PsiExpression>>() {
         public Result<MultiValuesMap<PsiVariable, PsiExpression>> compute() {
           final MultiValuesMap<PsiVariable, PsiExpression> result;
           if (codeBlock == null) {

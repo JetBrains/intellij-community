@@ -38,10 +38,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiParameterizedCachedValue;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.ParameterizedCachedValue;
-import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -211,7 +208,8 @@ public class InjectedLanguageUtil {
         places = InjectedPsiCachedValueProvider.doCompute(current, injectedManager, project, hostPsiFile);
         if (places != null) {
           // pollute user data only if there is injected fragment there
-          ParameterizedCachedValue<Places, PsiElement> cachedValue = psiManager.getCachedValuesManager().createParameterizedCachedValue(INJECTED_PSI_PROVIDER, false);
+          ParameterizedCachedValue<Places, PsiElement> cachedValue =
+            CachedValuesManager.getManager(psiManager.getProject()).createParameterizedCachedValue(INJECTED_PSI_PROVIDER, false);
           Document hostDocument = hostPsiFile.getViewProvider().getDocument();
           CachedValueProvider.Result<Places> result = new CachedValueProvider.Result<Places>(places, PsiModificationTracker.MODIFICATION_COUNT, hostDocument);
           ((PsiParameterizedCachedValue<Places, PsiElement>)cachedValue).setValue(result);

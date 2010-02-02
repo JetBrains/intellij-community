@@ -46,6 +46,7 @@ import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
@@ -299,7 +300,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     final ExternalResourceManagerEx externalResourceManager = ExternalResourceManagerEx.getInstanceEx();
 
     // We put cached value in any case to cause its value update on e.g. mapping change
-    map.put(namespace, getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<XmlNSDescriptor>() {
+    map.put(namespace, CachedValuesManager.getManager(getManager().getProject()).createCachedValue(new CachedValueProvider<XmlNSDescriptor>() {
       public Result<XmlNSDescriptor> compute() {
         XmlNSDescriptor descriptor = getImplicitNamespaceDescriptor(fileLocation);
         if (descriptor != null) {

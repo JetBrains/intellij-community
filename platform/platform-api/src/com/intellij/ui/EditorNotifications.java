@@ -77,7 +77,7 @@ public class EditorNotifications extends AbstractProjectComponent {
   public void updateNotifications(final VirtualFile file) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        FileEditor[] editors = myFileEditorManager.getEditors(file);
+        FileEditor[] editors = myFileEditorManager.getAllEditors(file);
         for (FileEditor editor : editors) {
           for (Provider<?> provider : PROVIDERS.getValue()) {
             JComponent component = provider.createNotificationPanel(file);

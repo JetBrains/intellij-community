@@ -119,7 +119,7 @@ public class ElementPresentationUtil {
 
     CachedValue<Integer> value = aClass.getUserData(CLASS_KIND_KEY);
     if (value == null) {
-      value = aClass.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<Integer>() {
+      value = CachedValuesManager.getManager(aClass.getProject()).createCachedValue(new CachedValueProvider<Integer>() {
         public Result<Integer> compute() {
           return Result.createSingleDependency(Integer.valueOf(getClassKindImpl(aClass)), aClass);
         }

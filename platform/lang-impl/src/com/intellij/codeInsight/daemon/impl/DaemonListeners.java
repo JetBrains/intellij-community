@@ -288,12 +288,13 @@ public class DaemonListeners implements Disposable {
     CHANGED, UNCHANGED, NOT_SURE
   }
   private Result vcsThinksItChanged(VirtualFile virtualFile, Project project) {
+    AbstractVcs activeVcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(virtualFile);
+    if (activeVcs == null) return Result.NOT_SURE;
+    
     FilePath path = new FilePathImpl(virtualFile);
     boolean vcsIsThinking = !VcsDirtyScopeManager.getInstance(myProject).whatFilesDirty(Arrays.asList(path)).isEmpty();
     if (vcsIsThinking) return Result.UNCHANGED; // do not modify file which is in the process of updating
 
-    AbstractVcs activeVcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(virtualFile);
-    if (activeVcs == null) return Result.NOT_SURE;
     FileStatus status = FileStatusManager.getInstance(project).getStatus(virtualFile);
 
     return status == FileStatus.MODIFIED || status == FileStatus.ADDED ? Result.CHANGED : Result.UNCHANGED;

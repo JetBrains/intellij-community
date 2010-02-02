@@ -291,12 +291,12 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
     return Collections.singletonList(root);
   }
 
-  public static PackagingElement<?> createDirectoryOrArchiveWithParents(@NotNull String path, final boolean archive) {
+  public static CompositePackagingElement<?> createDirectoryOrArchiveWithParents(@NotNull String path, final boolean archive) {
     path = FileUtil.toSystemIndependentName(path);
     final String parentPath = PathUtil.getParentPath(path);
     final String fileName = PathUtil.getFileName(path);
     final PackagingElement<?> element = archive ? new ArchivePackagingElement(fileName) : new DirectoryPackagingElement(fileName);
-    return getInstance().createParentDirectories(parentPath, element);
+    return (CompositePackagingElement<?>)getInstance().createParentDirectories(parentPath, element);
   }
 
   private static class ArtifactRootElementType extends PackagingElementType<ArtifactRootElement<?>> {

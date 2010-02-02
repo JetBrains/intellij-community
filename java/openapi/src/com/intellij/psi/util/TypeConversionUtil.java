@@ -758,7 +758,7 @@ public class TypeConversionUtil {
     final Project project = psiClass.getProject();
     CachedValue<Set<String>> boxedHolderTypes = project.getUserData(POSSIBLE_BOXED_HOLDER_TYPES);
     if (boxedHolderTypes == null) {
-      project.putUserData(POSSIBLE_BOXED_HOLDER_TYPES, boxedHolderTypes = manager.getCachedValuesManager().createCachedValue(new CachedValueProvider<Set<String>>() {
+      project.putUserData(POSSIBLE_BOXED_HOLDER_TYPES, boxedHolderTypes = CachedValuesManager.getManager(manager.getProject()).createCachedValue(new CachedValueProvider<Set<String>>() {
         public Result<Set<String>> compute() {
           final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
           final Set<String> set = new THashSet<String>();
