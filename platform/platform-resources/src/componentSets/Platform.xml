@@ -156,5 +156,10 @@
     <component>
       <implementation-class>com.intellij.openapi.project.DumbModeIndicator</implementation-class>
     </component>
+
+    <component>
+      <implementation-class>com.intellij.notification.impl.ProjectNotificationsComponent</implementation-class>
+      <skipForDummyProject/>
+    </component>
   </project-components>
 </components>
