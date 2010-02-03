@@ -17,6 +17,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
@@ -92,28 +93,27 @@ public class PyStatementListImpl extends PyElementImpl implements PyStatementLis
 
   @Override
   public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
-    final PsiElement[] elements = createElements2Add(element);
-    if (elements != null){
-      super.add(elements[1]);
-      return super.add(elements[0]);
+    final PsiElement preprocessed = preprocessElement(element);
+    if (preprocessed != null){
+      return super.add(preprocessed);
     }
     return super.add(element);
   }
 
   @Override
   public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
-    final PsiElement[] elements = createElements2Add(element);
-    if (elements != null){
-      return super.addBefore(elements[0], super.addBefore(elements[1], anchor));
+    final PsiElement preprocessed = preprocessElement(element);
+    if (preprocessed != null){
+      return super.addBefore(preprocessed, anchor);
     }
     return super.addBefore(element, anchor);
   }
 
   @Override
   public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
-    final PsiElement[] elements = createElements2Add(element);
-    if (elements != null){
-      return super.addAfter(elements[0], super.addAfter(elements[1], anchor));
+    final PsiElement preprocessed = preprocessElement(element);
+    if (preprocessed != null){
+      return super.addAfter(preprocessed, anchor);
     }
     return super.addAfter(element, anchor);
   }
@@ -122,16 +122,18 @@ public class PyStatementListImpl extends PyElementImpl implements PyStatementLis
   /**
    * Indents given element and creates pair of indented psiElement and psiWhitespace(indent)
    */
-  private PsiElement[] createElements2Add(final PsiElement element) {
+  private PsiElement preprocessElement(PsiElement element) {
+    element = PyPsiUtils.preprocessElement(element);
     final PsiElement sibling = getPrevSibling();
     final String whitespace = sibling instanceof PsiWhiteSpace ? sibling.getText() : "";
     final int i = whitespace.lastIndexOf("\n");
-    final int indent = i != -1 ? whitespace.length() - i : 0;
+    final int indent = i != -1 ? whitespace.length() - i - 1 : 0;
     try {
-      final String newElementText = StringUtil.shiftIndentInside(element.getText(), indent, true);
-      final PyFile dummyFile =
-        (PyFile) PythonLanguage.getInstance().createDummyFile(getProject(), newElementText);
-      return new PsiElement[]{dummyFile.getLastChild(), PsiTreeUtil.getDeepestFirst(dummyFile)};
+      final String newElementText = StringUtil.shiftIndentInside(element.getText(), indent, false);
+      final PyClass clazzz = PythonLanguage.getInstance().getElementGenerator().
+        createFromText(getProject(), PyClass.class, "class PyCharmRulezzzzz():\n" + newElementText);
+      final PyStatementList statementList = clazzz.getStatementList();
+      return statementList.getFirstChild();
     }
     catch (IOException e) {
       return null;

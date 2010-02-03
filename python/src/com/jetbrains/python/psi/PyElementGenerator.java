@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,4 +79,8 @@ public interface PyElementGenerator {
   <T> T createFromText(final Project project, Class<T> aClass, final String text, final int[] path);
 
   PyNamedParameter createParameter(@NotNull final Project project, @NotNull String name);
+
+  PsiWhiteSpace createNewLine(@NotNull Project project);
+  
+  PsiWhiteSpace createWhiteSpace(@NotNull Project project, int length);
 }
