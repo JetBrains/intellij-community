@@ -61,7 +61,7 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
     public ReferenceDescriptor fun(PsiReference psiReference) {
       final PsiElement element = psiReference.getElement();
       final PsiFile file = element.getContainingFile();
-      return new ReferenceDescriptor(file, element.getTextOffset() + psiReference.getRangeInElement().getStartOffset());
+      return new ReferenceDescriptor(file, element.getTextRange().getStartOffset() + psiReference.getRangeInElement().getStartOffset());
     }
   };
 
