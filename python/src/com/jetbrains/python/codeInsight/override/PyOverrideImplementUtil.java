@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonLanguage;
@@ -38,8 +39,20 @@ public class PyOverrideImplementUtil {
 
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
-    element = PsiTreeUtil.getParentOfType(element, PyClass.class, false);
-    return (PyClass)element;
+    if (element == null) {
+      // are we in whitespace after last class? PY-440
+      final PsiElement lastChild = file.getLastChild();
+      if (lastChild instanceof PsiWhiteSpace &&
+          offset >= lastChild.getTextRange().getStartOffset() &&
+          offset <= lastChild.getTextRange().getEndOffset()) {
+        element = lastChild;
+      }
+    }
+    final PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class, false);
+    if (pyClass == null && element instanceof PsiWhiteSpace && element.getPrevSibling() instanceof PyClass) {
+      return (PyClass) element.getPrevSibling();
+    }
+    return pyClass;
   }
 
   public static void chooseAndOverrideMethods(final Project project, @NotNull final Editor editor, @NotNull final PyClass pyClass) {
