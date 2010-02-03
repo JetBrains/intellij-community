@@ -9,7 +9,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
@@ -113,8 +115,8 @@ public class PyPsiUtils {
     return getStatement(compStatement, element);
   }
 
-  @Nullable
   public static PyElement getCompoundStatement(final PsiElement element) {
+    //noinspection ConstantConditions
     return element instanceof PyFile || element instanceof PyStatementList
            ? (PyElement) element
            : PsiTreeUtil.getParentOfType(element, PyFile.class, PyStatementList.class);
@@ -153,5 +155,55 @@ public class PyPsiUtils {
       }
     }
     return result;
+  }
+
+  private static int getElementIndentation(final PsiElement element){
+    final PsiElement compStatement = getCompoundStatement(element);
+    final PsiElement statement = getStatement(compStatement, element);
+    PsiElement sibling = statement.getPrevSibling();
+    if (sibling == null){
+      sibling = compStatement.getPrevSibling();
+    }
+    final String whitespace = sibling instanceof PsiWhiteSpace ? sibling.getText() : "";
+    final int i = whitespace.lastIndexOf("\n");
+    return i != -1 ? whitespace.length() - i - 1 : 0;
+  }
+
+  /**
+   * Creates copy of element without redundant whitespaces within element
+   * @param element
+   * @return
+   */
+  @NotNull
+  public static PyElement preprocessElement(final PsiElement element) {
+    final int indentLength = getElementIndentation(element);
+    final String indentString = StringUtil.repeatSymbol(' ', indentLength);
+    final String text = element.getText();
+    final StringBuilder builder = new StringBuilder();
+    for (String line : StringUtil.split(text, "\n")) {
+      if (builder.length() != 0){
+        builder.append("\n");
+      }
+      if (!StringUtil.isEmptyOrSpaces(line)){
+        if (line.startsWith(indentString)){
+          builder.append(line.substring(indentLength));
+        } else {
+          builder.append(line);
+        }
+      }
+    }
+    final PyElementGenerator elementGenerator = PythonLanguage.getInstance().getElementGenerator();
+    final PyElement result = elementGenerator.createFromText(element.getProject(), PyElement.class, builder.toString());
+    if (result == null) {
+      throw new RuntimeException("Failed to create element from text " + builder.toString());
+    }
+    return result;
+  }
+
+  public static void removeRedundantPass(final PyStatementList statementList) {
+    final PyStatement[] statements = statementList.getStatements();
+    if ((statements.length > 1) && (statements[0] instanceof PyPassStatement)) {
+      statements[0].delete();
+    }
   }
 }

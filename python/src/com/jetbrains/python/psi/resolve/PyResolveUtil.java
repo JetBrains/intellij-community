@@ -101,6 +101,7 @@ public class PyResolveUtil {
 
   @Nullable
   public static PsiElement getPrevNodeOf(PsiElement elt, PsiScopeProcessor proc) {
+    if (elt instanceof PsiFile) return null;  // no sense to get the previous node of a file
     if (proc instanceof PyClassScopeProcessor) {
       return getPrevNodeOf(elt, ((PyClassScopeProcessor)proc).getPossibleTargets());
     }

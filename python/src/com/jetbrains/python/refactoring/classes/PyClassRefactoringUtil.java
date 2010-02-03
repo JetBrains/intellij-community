@@ -114,7 +114,7 @@ public class PyClassRefactoringUtil {
     final PyStatementList statements = superClass.getStatementList();
     if (statements.getStatements().length != 0) {
       for (PyElement newStatement : newClass.getStatementList().getStatements()) {
-        statements.add(PyExtractMethodUtil.createWhiteSpace(project));
+        statements.add(PythonLanguage.getInstance().getElementGenerator().createNewLine(project));
         statements.add(newStatement);
       }
     } else {

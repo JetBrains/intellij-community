@@ -12,6 +12,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +55,9 @@ public class AddFieldQuickFix implements LocalQuickFix {
     }
     PyStatement new_stmt = callback.fun(self_name);
     PyUtil.ensureWritable(stmt_list);
-    return stmt_list.addAfter(new_stmt, last_stmt);
+    final PsiElement result = stmt_list.addAfter(new_stmt, last_stmt);
+    PyPsiUtils.removeRedundantPass(stmt_list);
+    return result;
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
@@ -109,11 +112,8 @@ public class AddFieldQuickFix implements LocalQuickFix {
     // found it; copy its param list and make a call to it.
     PyUtil.ensureWritable(cls);
     String paramList = ancestorInit != null ? ancestorInit.getParameterList().getText() : "(self)";
-    PyFunction new_init = generator.createFromText(
-      project, PyFunction.class,
-      "def "+ PyNames.INIT + paramList + ":\n",
-      new int[]{0}
-    ); // NOTE: this results in a parsing error, but the StatementList gets created ok
+
+    String functionText = "def " + PyNames.INIT + paramList + ":\n";
     if (cls.isNewStyleClass() && ancestorInit != null) {
       // form the super() call
       StringBuffer sb = new StringBuffer("super(");
@@ -129,10 +129,16 @@ public class AddFieldQuickFix implements LocalQuickFix {
         sb.append(params[i].getText());
       }
       sb.append(")");
-      PyStatement new_stmt = generator.createFromText(project, PyStatement.class, sb.toString());
-      new_init.getStatementList().add(new_stmt);
+      functionText += "    " + sb.toString();
     }
-    return new_init;
+    else {
+      functionText += "    pass";
+    }
+
+    return generator.createFromText(
+      project, PyFunction.class, functionText,
+      new int[]{0}
+    );
   }
 
   public abstract static class FieldCallback implements Function<String, PyStatement> {

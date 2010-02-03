@@ -1,19 +1,3 @@
-/*
- *  Copyright 2005 Pythonid Project
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS"; BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package com.jetbrains.python.formatter;
 
 import com.intellij.formatting.*;
@@ -30,7 +14,6 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
-import static com.jetbrains.python.psi.PyUtil.sure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,17 +21,18 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.jetbrains.python.psi.PyUtil.sure;
+
 /**
  * @author yole
  */
 public class PyBlock implements Block {
-  //TOLATER: fix formatter
   private final PythonLanguage _language;
   private final Alignment _alignment;
   private final Indent _indent;
   private final ASTNode _node;
   private final Wrap _wrap;
-  private final CodeStyleSettings _settings;
+  private final CodeStyleSettings mySettings;
   private List<Block> _subBlocks = null;
   private final Alignment _childListAlignment;
   private final TokenSet _listElementTypes;
@@ -65,7 +49,7 @@ public class PyBlock implements Block {
     _indent = indent;
     _node = node;
     _wrap = wrap;
-    _settings = settings;
+    mySettings = settings;
     _childListAlignment = Alignment.createAlignment();
 
     _listElementTypes = TokenSet.create(PyElementTypes.LIST_LITERAL_EXPRESSION, PyElementTypes.LIST_COMP_EXPRESSION,
@@ -150,7 +134,7 @@ public class PyBlock implements Block {
       // not our cup of tea
     }
 
-    return new PyBlock(_language, child, childAlignment, childIndent, wrap, _settings);
+    return new PyBlock(_language, child, childAlignment, childIndent, wrap, mySettings);
   }
 
   private static boolean hasLineBreakBefore(ASTNode child) {
@@ -200,6 +184,12 @@ public class PyBlock implements Block {
     IElementType parentType = _node.getElementType();
     IElementType type1 = childNode1.getElementType();
     IElementType type2 = childNode2.getElementType();
+
+    if (type1 == PyElementTypes.FUNCTION_DECLARATION) {
+      int blankLines = mySettings.BLANK_LINES_AROUND_METHOD + 1;
+      return Spacing.createSpacing(0, 0, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+    }
+
     if (isStatementOrDeclaration(type1) && isStatementOrDeclaration(type2)) {
       return Spacing.createSpacing(0, Integer.MAX_VALUE, 1, false, 1);
     }
@@ -221,7 +211,7 @@ public class PyBlock implements Block {
     //}
 
     //return new PySpacingProcessor(getNode(), childNode1, childNode2,
-    //        _settings).getResult();
+    //        mySettings).getResult();
     //return Spacing.createSpacing(0, Integer.MAX_VALUE, 1, true, Integer.MAX_VALUE);
 
     return null;
@@ -281,7 +271,7 @@ public class PyBlock implements Block {
     // delegation sometimes causes NPEs in formatter core, so we calculate the
     // correct indent manually.
     if (statementListsBelow > 0) { // was 1... strange
-      int indent = _settings.getIndentSize(_language.getAssociatedFileType());
+      int indent = mySettings.getIndentSize(_language.getAssociatedFileType());
       return new ChildAttributes(Indent.getSpaceIndent(indent * statementListsBelow), null);
     }
 

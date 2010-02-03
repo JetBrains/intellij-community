@@ -1,6 +1,10 @@
 package com.jetbrains.python;
 
+import com.jetbrains.python.refactoring.PyExtractMethodTest;
+import com.jetbrains.python.refactoring.PyRenameTest;
+import com.jetbrains.python.refactoring.classes.PyExtractSuperclassTest;
 import com.jetbrains.python.refactoring.classes.PyPullUpTest;
+import com.jetbrains.python.refactoring.classes.PyPushDownTest;
 import junit.framework.TestSuite;
 
 /**
@@ -33,7 +37,13 @@ public class PythonAllTestsSuite {
     PySelectWordTest.class,
     PyEditingTest.class,
     PySurroundWithTest.class,
-    PyPullUpTest.class
+    PyEditingTest.class,
+    PyFormatterTest.class,
+    PyRenameTest.class,
+    PyExtractMethodTest.class,
+    PyPullUpTest.class,
+    PyPushDownTest.class,
+    PyExtractSuperclassTest.class,
   };
 
   public static TestSuite suite() {

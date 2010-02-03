@@ -1,24 +1,7 @@
-/*
- *  Copyright 2005 Pythonid Project
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS"; BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package com.jetbrains.python.structureView;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
@@ -33,13 +16,12 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
  * Handles nodes in Structure View.
- * User: yole
- * Date: 05.06.2005
+ * @author yole
  */
 public class PyStructureViewElement implements StructureViewTreeElement {
 
@@ -50,13 +32,13 @@ public class PyStructureViewElement implements StructureViewTreeElement {
     PREDEFINED // like "__init__"; only if really visible
   }
 
-  private PyElement my_element;
-  private Visibility my_visibility;
-  private Icon my_icon;
+  private PyElement myElement;
+  private Visibility myVisibility;
+  private Icon myIcon;
 
   public PyStructureViewElement(PyElement element, Visibility vis) {
-    my_element = element;
-    my_visibility = vis;
+    myElement = element;
+    myVisibility = vis;
   }
 
   public PyStructureViewElement(PyElement element) {
@@ -64,28 +46,28 @@ public class PyStructureViewElement implements StructureViewTreeElement {
   }
 
   public PyElement getValue() {
-    return my_element;
+    return myElement;
   }
 
   public void navigate(boolean requestFocus) {
-    ((NavigationItem)my_element).navigate(requestFocus);
+    myElement.navigate(requestFocus);
   }
 
   public boolean canNavigate() {
-    return ((NavigationItem)my_element).canNavigate();
+    return myElement.canNavigate();
   }
 
   public boolean canNavigateToSource() {
-    return ((NavigationItem)my_element).canNavigateToSource();
+    return myElement.canNavigateToSource();
   }
 
   public void setIcon(Icon icon) {
-    my_icon = icon;
+    myIcon = icon;
   }
 
   public StructureViewTreeElement[] getChildren() {
-    final Set<PyElement> childrenElements = new HashSet<PyElement>();
-    my_element.acceptChildren(new PyElementVisitor() {
+    final Set<PyElement> childrenElements = new LinkedHashSet<PyElement>();
+    myElement.acceptChildren(new PyElementVisitor() {
       @Override
       public void visitElement(PsiElement element) {
         if (isWorthyClassItem(element)) {
@@ -159,16 +141,16 @@ public class PyStructureViewElement implements StructureViewTreeElement {
   public ItemPresentation getPresentation() {
     return new ItemPresentation() {
       public String getPresentableText() {
-        if (my_element instanceof PyFunction) {
-          PsiElement[] children = my_element.getChildren();
+        if (myElement instanceof PyFunction) {
+          PsiElement[] children = myElement.getChildren();
           if (children.length > 0 && children[0] instanceof PyParameterList) {
             PyParameterList argList = (PyParameterList)children[0];
-            StringBuilder result = new StringBuilder(my_element.getName());
+            StringBuilder result = new StringBuilder(myElement.getName());
             ParamHelper.appendParameterList(argList, result);
             return result.toString();
           }
         }
-        return my_element.getName();
+        return myElement.getName();
       }
 
       public
@@ -184,22 +166,22 @@ public class PyStructureViewElement implements StructureViewTreeElement {
       }
 
       public Icon getIcon(boolean open) {
-        Icon normal_icon = my_element.getIcon(Iconable.ICON_FLAG_OPEN);
-        if (my_icon != null) normal_icon = my_icon; // override normal
-        if (my_visibility == Visibility.NORMAL) {
+        Icon normal_icon = myElement.getIcon(Iconable.ICON_FLAG_OPEN);
+        if (myIcon != null) normal_icon = myIcon; // override normal
+        if (myVisibility == Visibility.NORMAL) {
           return normal_icon;
         }
         else {
           LayeredIcon icon = new LayeredIcon(2);
           icon.setIcon(normal_icon, 0);
           Icon overlay = null;
-          if (my_visibility == Visibility.PRIVATE) {
+          if (myVisibility == Visibility.PRIVATE) {
             overlay = PyIcons.PRIVATE;
           }
-          else if (my_visibility == Visibility.PREDEFINED) {
+          else if (myVisibility == Visibility.PREDEFINED) {
             overlay = PyIcons.PREDEFINED;
           }
-          else if (my_visibility == Visibility.INVISIBLE) overlay = PyIcons.INVISIBLE;
+          else if (myVisibility == Visibility.INVISIBLE) overlay = PyIcons.INVISIBLE;
           if (overlay != null) {
             icon.setIcon(overlay, 1);
           }

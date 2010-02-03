@@ -57,7 +57,8 @@ public class PyDebugSupportUtils {
            element instanceof PyQualifiedExpression ||
            element instanceof PyBinaryExpression ||
            element instanceof PyPrefixExpression ||
-           element instanceof PySliceExpression;
+           element instanceof PySliceExpression ||
+           element instanceof PyNamedParameter;
   }
 
   // is expression a variable reference

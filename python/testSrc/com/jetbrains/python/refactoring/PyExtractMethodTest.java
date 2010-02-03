@@ -4,7 +4,6 @@ import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.openapi.util.Pair;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.refactoring.extractmethod.PyExtractMethodUtil;
 
@@ -12,10 +11,6 @@ import com.jetbrains.python.refactoring.extractmethod.PyExtractMethodUtil;
  * @author oleg
  */
 public class PyExtractMethodTest extends LightMarkedTestCase {
-  public String getTestDataPath() {
-    return PythonTestUtil.getTestDataPath() + "/refactoring/extractmethod/";
-  }
-
   private void doTest(final String testPath,
                       final String name,
                       final String result,
@@ -25,7 +20,7 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
     for (Pair<String, String> pair : files2Create) {
       myFixture.addFileToProject(pair.first, pair.second);
     }
-    myFixture.configureByFile(testPath);
+    myFixture.configureByFile("/refactoring/extractmethod/" + testPath);
     final RefactoringActionHandler handler = LanguageRefactoringSupport.INSTANCE.forLanguage(PythonLanguage.getInstance()).getExtractMethodHandler();
     try {
       System.setProperty(PyExtractMethodUtil.NAME, name);
@@ -36,7 +31,7 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
     } finally {
       System.clearProperty(PyExtractMethodUtil.NAME);
     }
-    myFixture.checkResultByFile(result);
+    myFixture.checkResultByFile("/refactoring/extractmethod/" + result);
   }
 
   public void testParameter() throws Throwable {
@@ -94,6 +89,14 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
 
   public void testComment() throws Throwable {
     doTest("comment.before.py", "bar", "comment.after.py");
+  }
+
+  public void testClass() throws Throwable {
+    doTest("class.before.py", "bar", "class.after.py");
+  }
+
+  public void testFile() throws Throwable {
+    doTest("file.before.py", "bar", "file.after.py");
   }
 }
 

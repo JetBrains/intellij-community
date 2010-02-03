@@ -1,7 +1,6 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.openapi.components.ComponentManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -14,6 +13,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiNamedElement;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.types.PyClassType;
@@ -30,7 +30,8 @@ import java.util.Map;
  * Provides access to Python builtins via skeletons.
  */
 public class PyBuiltinCache {
-  public static final @NonNls String BUILTIN_FILE = "__builtin__.py"; 
+  public static final @NonNls String BUILTIN_FILE = "__builtin__.py";
+  @NonNls public static final String BUILTIN_FILE_3K = "builtins.py";
 
   @NotNull
   public static PyBuiltinCache getInstance(PsiElement reference) {
@@ -199,9 +200,13 @@ public class PyBuiltinCache {
     if (target == null) return false;
     if (! target.isValid()) return false;
     final PsiFile the_file = target.getContainingFile();
-    if (the_file == null) {
+    if (!(the_file instanceof PyFile)) {
       return false;
     }
-    return PyBuiltinCache.BUILTIN_FILE.equals(the_file.getName()); // TODO: make it check against the actual file; unmake it static
+    final LanguageLevel languageLevel = ((PyFile)the_file).getLanguageLevel();
+    if (languageLevel.isPy3K()) {
+      return BUILTIN_FILE_3K.equals(the_file.getName());
+    }
+    return BUILTIN_FILE.equals(the_file.getName()); // TODO: make it check against the actual file; unmake it static
   }
 }

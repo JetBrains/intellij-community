@@ -449,6 +449,10 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
               PyReferenceExpression refex = (PyReferenceExpression)ex;
               names_already.add(refex.getReferencedName());
             }
+            else if (ex instanceof PyTargetExpression) {
+              PyTargetExpression targetExpr = (PyTargetExpression) ex;
+              names_already.add(targetExpr.getName());
+            }
           }
           Collections.addAll(variants, qualifierType.getCompletionVariants(this, ctx));
           return variants.toArray();

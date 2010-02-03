@@ -3,15 +3,15 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.ResolveState;
+import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PythonDocStringFinder;
@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.List;
@@ -287,5 +288,20 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @Nullable
   private static<T> T getRefValue(final SoftReference<T> reference){
     return reference != null ? reference.get() : null;
+  }
+
+  @Override
+  public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
+    return super.add(PyPsiUtils.preprocessElement(element));
+  }
+
+  @Override
+  public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+    return super.addBefore(PyPsiUtils.preprocessElement(element), anchor);
+  }
+
+  @Override
+  public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+    return super.addAfter(PyPsiUtils.preprocessElement(element), anchor);
   }
 }

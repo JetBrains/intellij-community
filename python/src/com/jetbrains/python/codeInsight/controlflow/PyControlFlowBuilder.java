@@ -61,7 +61,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   public void visitPyAugAssignmentStatement(final PyAugAssignmentStatement node) {
     myBuilder.startNode(node);
     final PyExpression value = node.getValue();
-    if (value != null){
+    if (value != null) {
       value.accept(this);
     }
     node.getTarget().accept(this);
@@ -243,41 +243,50 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       elsePart.accept(this);
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction); // exit
     }
+    else {
+      myBuilder.addPendingEdge(null, myBuilder.prevInstruction);
+    }
     myBuilder.flowAbrupted();
   }
 
   @Override
   public void visitPyBreakStatement(final PyBreakStatement node) {
-    final Instruction breakInstruction = new InstructionImpl(myBuilder, node);
-    myBuilder.addNode(breakInstruction);
-    myBuilder.checkPending(breakInstruction);
+    myBuilder.startNode(node);
     final PyLoopStatement loop = node.getLoopStatement();
     if (loop != null) {
       myBuilder.addPendingEdge(loop, myBuilder.prevInstruction);
-      myBuilder.flowAbrupted();
     }
+    else {
+      myBuilder.addPendingEdge(null, myBuilder.prevInstruction);
+    }
+    myBuilder.flowAbrupted();
   }
 
   @Override
   public void visitPyContinueStatement(final PyContinueStatement node) {
-    final Instruction nextInstruction = new InstructionImpl(myBuilder, node);
-    myBuilder.addNode(nextInstruction);
-    myBuilder.checkPending(nextInstruction);
+    myBuilder.startNode(node);
     final PyLoopStatement loop = node.getLoopStatement();
     if (loop != null) {
       final Instruction instruction = myBuilder.findInstructionByElement(loop);
       if (instruction != null) {
         myBuilder.addEdge(myBuilder.prevInstruction, instruction);
-        myBuilder.flowAbrupted();
+      }
+      else {
+        myBuilder.addPendingEdge(null, instruction);
       }
     }
+    myBuilder.flowAbrupted();
+  }
+
+  @Override
+  public void visitPyRaiseStatement(final PyRaiseStatement node) {
+    myBuilder.startNode(node);
+    myBuilder.flowAbrupted();
   }
 
   @Override
   public void visitPyReturnStatement(final PyReturnStatement node) {
-    final Instruction instruction = new InstructionImpl(myBuilder, node);
-    myBuilder.addNode(instruction);
-    myBuilder.checkPending(instruction);
+    myBuilder.startNode(node);
     final PyExpression expression = node.getExpression();
     if (expression != null) {
       expression.accept(this);
@@ -382,9 +391,8 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       final PyExpression condition = component.getTest();
       condition.accept(this);
       final Instruction head = myBuilder.prevInstruction;
-      final Instruction prevInstruction =  prevCondition != null
-                                           ? myBuilder.startConditionalNode(condition, prevCondition, true)
-                                           : myBuilder.startNode(condition);
+      final Instruction prevInstruction =
+        prevCondition != null ? myBuilder.startConditionalNode(condition, prevCondition, true) : myBuilder.startNode(condition);
       prevCondition = condition;
       // restore head
       myBuilder.prevInstruction = head;
@@ -394,7 +402,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
     for (ComprhForComponent forComponent : node.getForComponents()) {
       final PyExpression iteratedList = forComponent.getIteratedList();
-      if (prevCondition != null){
+      if (prevCondition != null) {
         myBuilder.startConditionalNode(iteratedList, prevCondition, true);
         prevCondition = null;
       }

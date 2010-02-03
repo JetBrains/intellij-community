@@ -8,6 +8,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PythonFileType;
@@ -44,7 +45,13 @@ public class PythonRunConfigurationProducer extends RuntimeConfigurationProducer
     final Project project = mySourceFile.getProject();
     RunnerAndConfigurationSettingsImpl settings = cloneTemplateConfiguration(project, context);
     PythonRunConfiguration configuration = (PythonRunConfiguration) settings.getConfiguration();
-    configuration.setScriptName(mySourceFile.getVirtualFile().getPath());
+    final VirtualFile vFile = mySourceFile.getVirtualFile();
+    if (vFile == null) return null;
+    configuration.setScriptName(vFile.getPath());
+    final VirtualFile parent = vFile.getParent();
+    if (parent != null) {
+      configuration.setWorkingDirectory(parent.getPath());
+    }
     configuration.setName(configuration.suggestedName());
     if (module != null) {
       configuration.setUseModuleSdk(true);

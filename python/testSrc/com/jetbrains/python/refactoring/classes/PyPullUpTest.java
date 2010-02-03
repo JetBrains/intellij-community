@@ -1,6 +1,5 @@
 package com.jetbrains.python.refactoring.classes;
 
-import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.pullUp.PyPullUpHelper;
@@ -24,17 +23,12 @@ public class PyPullUpTest extends PyClassRefactoringTest {
   }
 
   private void doHelperTest(final String className, final String memberName, final String superClassName) throws Exception {
-    String baseName = "/" + getTestName(true);
+    String baseName = "/refactoring/pullup/" + getTestName(true);
     myFixture.configureByFile(baseName + ".py");
     final PyClass clazz = findClass(className);
     final PyElement member = findMember(className, memberName);
     final PyClass superClass = findClass(superClassName);
     PyPullUpHelper.pullUp(clazz, Collections.singleton(new PyMemberInfo(member)), superClass);
     myFixture.checkResultByFile(baseName + ".after.py");
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return PythonTestUtil.getTestDataPath() + "/refactoring/pullup/";
   }
 }

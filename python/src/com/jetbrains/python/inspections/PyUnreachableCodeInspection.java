@@ -81,7 +81,7 @@ public class PyUnreachableCodeInspection extends LocalInspectionTool {
           final PsiElement e = instruction.getElement();
           if (colors[instruction.num()] != color){
             color = colors[instruction.num()];
-            if (!warned[color]){
+            if (color != 0 && !warned[color]){
               warned[color] = true;
               // Handle ensure parts
               if (e instanceof PyExceptPart) {

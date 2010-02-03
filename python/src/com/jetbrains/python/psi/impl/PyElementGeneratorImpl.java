@@ -18,9 +18,11 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyTokenTypes;
@@ -272,5 +274,13 @@ public class PyElementGeneratorImpl implements PyElementGenerator {
 
   public PyNamedParameter createParameter(@NotNull final Project project, @NotNull String name) {
     return createFromText(project, PyNamedParameter.class, "def f(" + name + "): pass", PATH_PARAMETER);
+  }
+
+  public PsiWhiteSpace createNewLine(@NotNull final Project project) {
+    return createFromText(project, PsiWhiteSpace.class, "\n");
+  }
+
+  public PsiWhiteSpace createWhiteSpace(@NotNull final Project project, final int length) {
+    return createFromText(project, PsiWhiteSpace.class, StringUtil.repeatSymbol(' ', length));
   }
 }

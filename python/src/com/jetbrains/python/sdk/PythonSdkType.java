@@ -31,6 +31,7 @@ import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.facet.PythonFacetSettings;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -81,9 +82,9 @@ public class PythonSdkType extends SdkType {
   public String getBuiltinsFileName(Sdk sdk) {
     final String version = sdk.getVersionString(); 
     if (version != null && version.startsWith("Python 3")) {
-      return "builtins.py";
+      return PyBuiltinCache.BUILTIN_FILE_3K;
     }
-    return "__builtin__.py";
+    return PyBuiltinCache.BUILTIN_FILE;
   }
 
   @NonNls
@@ -218,21 +219,28 @@ public class PythonSdkType extends SdkType {
 
   @Override
   public SdkAdditionalData loadAdditionalData(final Sdk currentSdk, final Element additional) {
-    final String[] urls = currentSdk.getRootProvider().getUrls(BUILTIN_ROOT_TYPE);
-    for (String url : urls) {
-      if (url.contains(SKELETON_DIR_NAME)) {
-        final String path = VfsUtil.urlToPath(url);
-        File stubs_dir = new File(path);
-        if (!stubs_dir.exists()) {
-          generateBuiltinStubs(currentSdk.getHomePath(), path);
-        }
+    String url = findSkeletonsUrl(currentSdk);
+    if (url != null) {
+      final String path = VfsUtil.urlToPath(url);
+      File stubs_dir = new File(path);
+      if (!stubs_dir.exists()) {
+        generateBuiltinStubs(currentSdk.getHomePath(), path);
         generateBinaryStubs(currentSdk.getHomePath(), path, null); // TODO: add a nice progress indicator somehow
-        break;
       }
     }
     return null;
   }
 
+  @Nullable
+  public static String findSkeletonsUrl(Sdk sdk) {
+    final String[] urls = sdk.getRootProvider().getUrls(BUILTIN_ROOT_TYPE);
+    for (String url : urls) {
+      if (url.contains(SKELETON_DIR_NAME)) {
+        return url;
+      }
+    }
+    return null;
+  }
 
   @NonNls
   public String getPresentableName() {
@@ -307,7 +315,9 @@ public class PythonSdkType extends SdkType {
       generateBuiltinStubs(sdk_path, stubs_path);
       sdkModificator.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByPath(stubs_path), BUILTIN_ROOT_TYPE);
     }
-    generateBinaryStubs(sdk_path, stubs_path, indicator);
+    if (!new File(stubs_path).exists()) {
+      generateBinaryStubs(sdk_path, stubs_path, indicator);
+    }
   }
 
   private static List<String> getSysPath(String sdk_path, String bin_path) {
@@ -398,7 +408,6 @@ public class PythonSdkType extends SdkType {
    * @param indicator ProgressIndicator to update, or null.
    */
   public static void generateBinaryStubs(final String sdkPath, final String stubsRoot, ProgressIndicator indicator) {
-    if (!new File(stubsRoot).exists()) return;
     if (indicator != null) {
       indicator.setText("Generating skeletons of binary libs");
     }

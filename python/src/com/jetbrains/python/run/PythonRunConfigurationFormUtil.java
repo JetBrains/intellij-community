@@ -36,28 +36,4 @@ public class PythonRunConfigurationFormUtil {
     textField.addBrowseFolderListener(title, null, project, fileChooserDescriptor);
     return fileChooserDescriptor;
   }
-
-  public static void setupScriptField(Project project,
-                                      TextFieldWithBrowseButton scriptField,
-                                      final TextFieldWithBrowseButton workingDirectoryField) {
-    FileChooserDescriptor chooserDescriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
-      public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-        return file.isDirectory() || Comparing.equal(file.getExtension(), "py");
-      }
-    };
-    //chooserDescriptor.setRoot(s.getProject().getBaseDir());
-
-    ComponentWithBrowseButton.BrowseFolderActionListener<JTextField> listener =
-      new ComponentWithBrowseButton.BrowseFolderActionListener<JTextField>("Select Script", "", scriptField, project,
-                                                                           chooserDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT) {
-
-        protected void onFileChoosen(VirtualFile chosenFile) {
-          super.onFileChoosen(chosenFile);
-          workingDirectoryField.setText(chosenFile.getParent().getPath());
-        }
-      };
-
-    scriptField.addActionListener(listener);
-  }
-
 }
