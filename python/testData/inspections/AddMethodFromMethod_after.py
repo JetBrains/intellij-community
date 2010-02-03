@@ -7,4 +7,3 @@ class A:
 
     def y(self, param_1, a_2):
         pass
-

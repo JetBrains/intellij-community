@@ -17,7 +17,6 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
@@ -25,12 +24,10 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.PythonLanguage;
-import org.jetbrains.annotations.NotNull;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.PyStatementList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -118,16 +115,18 @@ public class PyStatementListImpl extends PyElementImpl implements PyStatementLis
     return super.addAfter(element, anchor);
   }
 
-  @Nullable
   /**
    * Indents given element and creates pair of indented psiElement and psiWhitespace(indent)
    */
+  @Nullable
   private PsiElement preprocessElement(PsiElement element) {
+    if (element instanceof PsiWhiteSpace) return element;
     element = PyPsiUtils.preprocessElement(element);
     final PsiElement sibling = getPrevSibling();
     final String whitespace = sibling instanceof PsiWhiteSpace ? sibling.getText() : "";
     final int i = whitespace.lastIndexOf("\n");
     final int indent = i != -1 ? whitespace.length() - i - 1 : 0;
+    if (indent == 0) return element;
     try {
       final String newElementText = StringUtil.shiftIndentInside(element.getText(), indent, false);
       final PyClass clazzz = PythonLanguage.getInstance().getElementGenerator().

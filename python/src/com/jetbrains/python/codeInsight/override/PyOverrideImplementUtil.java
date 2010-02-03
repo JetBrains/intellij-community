@@ -18,7 +18,10 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,10 +108,6 @@ public class PyOverrideImplementUtil {
                             @NotNull final List<String> newMembers,
                             @NotNull final Project project,
                             @NotNull final Editor editor) {
-    final PyStatement[] statements = pyClass.getStatementList().getStatements();
-    if ((statements.length == 1) && (statements[0] instanceof PyPassStatement)) {
-      statements[0].delete();
-    }
     PyFunction element = null;
     for (String newMember : newMembers) {
       element = PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyFunction.class, newMember + "\n    pass");
@@ -120,6 +119,7 @@ public class PyOverrideImplementUtil {
         LOG.error(e);
       }
     }
+    PyPsiUtils.removeRedundantPass(pyClass.getStatementList());
     final int start = element.getStatementList().getTextRange().getStartOffset();
     editor.getCaretModel().moveToOffset(start);
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
