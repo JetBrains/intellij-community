@@ -31,6 +31,7 @@ import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.facet.PythonFacetSettings;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -81,9 +82,9 @@ public class PythonSdkType extends SdkType {
   public String getBuiltinsFileName(Sdk sdk) {
     final String version = sdk.getVersionString(); 
     if (version != null && version.startsWith("Python 3")) {
-      return "builtins.py";
+      return PyBuiltinCache.BUILTIN_FILE_3K;
     }
-    return "__builtin__.py";
+    return PyBuiltinCache.BUILTIN_FILE;
   }
 
   @NonNls
