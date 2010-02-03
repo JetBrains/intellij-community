@@ -10,12 +10,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.lexer.PythonIndentingLexer;
 import com.jetbrains.python.parsing.PyParser;
 import com.jetbrains.python.psi.PyElementType;
+import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import org.jetbrains.annotations.NotNull;
@@ -87,6 +90,13 @@ public class PythonParserDefinition implements ParserDefinition {
   public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
     if (left.getElementType() == PyTokenTypes.END_OF_LINE_COMMENT) return SpaceRequirements.MUST_LINE_BREAK;
     if (right.getElementType() == PyTokenTypes.DEF_KEYWORD || right.getElementType() == PyTokenTypes.CLASS_KEYWORD) {
+      return SpaceRequirements.MUST_LINE_BREAK;
+    }
+    if (left.getElementType() == TokenType.WHITE_SPACE || right.getElementType() == TokenType.WHITE_SPACE) {
+      return SpaceRequirements.MAY;
+    }
+    final PyStatement leftStatement = PsiTreeUtil.getParentOfType(left.getPsi(), PyStatement.class);
+    if (leftStatement != null && !PsiTreeUtil.isAncestor(leftStatement, right.getPsi(), false)) {
       return SpaceRequirements.MUST_LINE_BREAK;
     }
     final Lexer lexer = createLexer(left.getPsi().getProject());

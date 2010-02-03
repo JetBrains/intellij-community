@@ -304,7 +304,7 @@ public class PyExtractMethodUtil {
     assert !elementsRange.isEmpty() : "Empty statements list was selected!";
     final StringBuilder builder = new StringBuilder();
     builder.append(generateSignature(methodName, variableData, elementsRange.get(0)));
-    builder.append("  print(\"Питон Зохавает Вас!\")");
+    builder.append("  pass\n");
     final PyElementGenerator pyElementGenerator = PythonLanguage.getInstance().getElementGenerator();
     final PyFunction method =
       pyElementGenerator.createFromText(project, PyFunction.class, builder.toString());
