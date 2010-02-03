@@ -19,7 +19,6 @@ import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -175,6 +174,7 @@ public class PyPsiUtils {
    * @param element
    * @return
    */
+  @NotNull
   public static PyElement preprocessElement(final PsiElement element) {
     final int indentLength = getElementIndentation(element);
     final String indentString = StringUtil.repeatSymbol(' ', indentLength);
@@ -192,6 +192,11 @@ public class PyPsiUtils {
         }
       }
     }
-    return PythonLanguage.getInstance().getElementGenerator().createFromText(element.getProject(), PyElement.class, builder.toString());
+    final PyElementGenerator elementGenerator = PythonLanguage.getInstance().getElementGenerator();
+    final PyElement result = elementGenerator.createFromText(element.getProject(), PyElement.class, builder.toString());
+    if (result == null) {
+      throw new RuntimeException("Failed to create element from text " + builder.toString());
+    }
+    return result;
   }
 }
