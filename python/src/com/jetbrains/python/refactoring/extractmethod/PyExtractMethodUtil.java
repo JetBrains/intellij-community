@@ -223,6 +223,21 @@ public class PyExtractMethodUtil {
         RefactoringFactory.getInstance(project).createRename(parameter, newName).run();        
       }
     }
+    // Change signature according to pass settings
+    final StringBuilder builder = new StringBuilder();
+    for (AbstractVariableData data : variableData) {
+      if (data.isPassAsParameter()){
+        if (builder.length() != 0){
+          builder.append(", ");
+        }
+        builder.append(data.name);
+      }
+    }
+    builder.insert(0, "def foo(");
+    builder.append(")\n  pass");
+    final PyParameterList pyParameterList =
+      PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyFunction.class, builder.toString()).getParameterList();
+    generatedMethod.getParameterList().replace(pyParameterList);
   }
 
   private static Map<String, String> createMap(final AbstractVariableData[] variableData) {
