@@ -7666,7 +7666,6 @@ org/jetbrains/plugins/groovy/codeInspection/bugs/GroovyNonShortCircuitBooleanIns
 org/jetbrains/plugins/groovy/codeInspection/bugs/GroovyInfiniteLoopStatementInspection.class:/plugins/Groovy/lib/Groovy.jar
 org/jetbrains/plugins/groovy/codeInspection/bugs/GroovyInfiniteRecursionInspection.class:/plugins/Groovy/lib/Groovy.jar
 org/jetbrains/plugins/groovy/codeInspection/bugs/GroovyDivideByZeroInspection.class:/plugins/Groovy/lib/Groovy.jar
-org/jetbrains/plugins/groovy/codeInspection/bugs/GroovyResultOfArrayAllocationIgnoredInspection.class:/plugins/Groovy/lib/Groovy.jar
 org/jetbrains/plugins/groovy/codeInspection/bugs/GroovyResultOfObjectAllocationIgnoredInspection.class:/plugins/Groovy/lib/Groovy.jar
 org/jetbrains/plugins/groovy/codeInspection/naming/GroovyClassNamingConventionInspection.class:/plugins/Groovy/lib/Groovy.jar
 org/jetbrains/plugins/groovy/codeInspection/naming/ConventionInspection.class:/plugins/Groovy/lib/Groovy.jar
