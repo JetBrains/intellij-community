@@ -11,6 +11,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringFactory;
@@ -107,6 +108,7 @@ public class PyExtractMethodUtil {
 
               // Generate method
               PyFunction generatedMethod = generateMethodFromElements(project, methodName, variableData, newMethodElements);
+              generatedMethod = (PyFunction) CodeStyleManager.getInstance(project).reformat(generatedMethod);
               generatedMethod = insertGeneratedMethod(statement1, generatedMethod);
 
               // Process parameters
