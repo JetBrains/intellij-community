@@ -10,7 +10,6 @@ import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.refactoring.extractmethod.PyExtractMethodUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -114,7 +113,7 @@ public class PyClassRefactoringUtil {
     final PyStatementList statements = superClass.getStatementList();
     if (statements.getStatements().length != 0) {
       for (PyElement newStatement : newClass.getStatementList().getStatements()) {
-        statements.add(PythonLanguage.getInstance().getElementGenerator().createNewLine(project));
+        //statements.add(PythonLanguage.getInstance().getElementGenerator().createNewLine(project));
         statements.add(newStatement);
       }
     } else {

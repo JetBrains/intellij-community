@@ -5,7 +5,6 @@ class A:
 class B(A):
     def meth_b1(self):
         pass
-
     def meth_b2(self):
         pass
 
