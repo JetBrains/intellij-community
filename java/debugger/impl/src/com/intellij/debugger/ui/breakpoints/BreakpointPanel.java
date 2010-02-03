@@ -27,6 +27,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.impl.breakpoints.ui.AbstractBreakpointPanel;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
@@ -34,6 +35,7 @@ import org.jetbrains.annotations.NonNls;
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.tree.TreeModel;
+import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.util.ArrayList;
@@ -378,27 +380,41 @@ public class BreakpointPanel extends AbstractBreakpointPanel<Breakpoint> {
 
   public void removeSelectedBreakpoints() {
     final Breakpoint[] selectedBreakpoints = getSelectedBreakpoints();
-    Breakpoint breakpointToSelect = null;
-    if (selectedBreakpoints.length > 0) {
-      if (isTreeShowing()) {
-        breakpointToSelect = myTree.getPreviousSibling(selectedBreakpoints[0]);
-      }
-      else {
-        final int index = myTable.getModel().getBreakpointIndex(selectedBreakpoints[0]) - 1;
-        if (index >= 0 && index < (myTable.getRowCount() - selectedBreakpoints.length)) {
-          breakpointToSelect = myTable.getModel().getBreakpoint(index);
-        }
-      }
+    if (selectedBreakpoints.length == 0) {
+      return;
     }
+
+    final boolean inTreeMode = isTreeShowing();
+    
+    final int minSelectionIndex;
+    if (inTreeMode) {
+      minSelectionIndex = Math.max(0, myTree.getSelectionModel().getMinSelectionRow());
+    }
+    else {
+      minSelectionIndex = Math.max(0, myTable.getSelectionModel().getMinSelectionIndex());
+    }
+
     myTree.removeBreakpoints(selectedBreakpoints);
     myTable.getModel().removeBreakpoints(selectedBreakpoints);
     myCurrentViewableBreakpoint = null;
-    if (breakpointToSelect != null) {
-      selectBreakpoint(breakpointToSelect);
+
+    if (inTreeMode) {
+      if (myTree.getRowCount() > 0) {
+        int rowToSelect = minSelectionIndex >= myTree.getRowCount()? myTree.getRowCount() - 1 : minSelectionIndex;
+        final TreePath path = myTree.getPathForRow(rowToSelect);
+        if (path != null) {
+          TreeUtil.selectPath(myTree, path, true);
+        }
+      }
     }
     else {
-      updateCurrentBreakpointPropertiesPanel();
+      if (myTable.getRowCount() > 0) { // if in table mode and there are items to select
+        int indexToSelect = minSelectionIndex >= myTable.getRowCount()? myTable.getRowCount() - 1 : minSelectionIndex;
+        TableUtil.selectRows(myTable, new int[] {indexToSelect});
+      }
     }
+
+    updateCurrentBreakpointPropertiesPanel();
   }
 
   public void insertBreakpointAt(Breakpoint breakpoint, int index) {

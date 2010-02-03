@@ -174,15 +174,22 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
 
   @Nullable
   private String decode(final String text) {
+    // strip http get parameters
+    String _text = text;
+    if (text.indexOf('?') >= 0) {
+      _text = text.substring(0, text.lastIndexOf('?'));
+    }
+
     if (myFileReferenceSet.isUrlEncoded()) {
       try {
-        return new URI(text).getPath();
+        return new URI(_text).getPath();
       }
       catch (Exception e) {
         return text;
       }
     }
-    return text;
+
+    return _text;
   }
 
   public Object[] getVariants() {

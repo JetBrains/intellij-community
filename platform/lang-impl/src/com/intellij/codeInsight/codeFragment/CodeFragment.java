@@ -1,26 +1,28 @@
 package com.intellij.codeInsight.codeFragment;
 
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author oleg
  */
 public class CodeFragment {
-  private final Set<String> inputVariables;
-  private final Set<String> outputVariables;
+  private final List<String> inputVariables;
+  private final List<String> outputVariables;
   private final boolean returnInstructonInside;
 
   public CodeFragment(final Set<String> input, final Set<String> output, final boolean returnInside) {
-    inputVariables = input;
-    outputVariables = output;
+    inputVariables = new ArrayList<String>(input);
+    Collections.sort(inputVariables);
+    outputVariables = new ArrayList<String>(output);
+    Collections.sort(outputVariables);
     returnInstructonInside = returnInside;
   }
 
-  public Set<String> getInputVariables() {
+  public Collection<String> getInputVariables() {
     return inputVariables;
   }
 
-  public Set<String> getOutputVariables() {
+  public Collection<String> getOutputVariables() {
     return outputVariables;
   }
 

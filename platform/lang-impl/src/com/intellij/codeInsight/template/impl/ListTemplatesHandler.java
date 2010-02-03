@@ -87,9 +87,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
     return key + argument;
   }
 
-  public static void showTemplatesLookup(final Project project,
-                                         final Editor editor,
-                                         Map<TemplateImpl, String> template2Argument) {
+  public static void showTemplatesLookup(final Project project, final Editor editor, Map<TemplateImpl, String> template2Argument) {
     ArrayList<LookupItem> array = new ArrayList<LookupItem>();
     for (TemplateImpl template : template2Argument.keySet()) {
       String argument = template2Argument.get(template);
@@ -109,7 +107,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
     return true;
   }
 
-  private String getPrefix(Document document, int offset) {
+  private static String getPrefix(Document document, int offset) {
     CharSequence chars = document.getCharsSequence();
     int start = offset;
     while (true) {
@@ -121,7 +119,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
     return chars.subSequence(start, offset).toString();
   }
 
-  private boolean isInPrefix(final char c) {
+  private static boolean isInPrefix(final char c) {
     return Character.isJavaIdentifierPart(c) || c == '.';
   }
 
@@ -137,13 +135,16 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
     }
 
     public void itemSelected(LookupEvent event) {
-      final TemplateImpl template = (TemplateImpl)event.getItem().getObject();
-      final String argument = myTemplate2Argument != null ? myTemplate2Argument.get(template) : null;
-      new WriteCommandAction(myProject) {
-        protected void run(Result result) throws Throwable {
-          ((TemplateManagerImpl)TemplateManager.getInstance(myProject)).startTemplateWithPrefix(myEditor, template, null, argument);
-        }
-      }.execute();
+      LookupElement item = event.getItem();
+      if (item != null) {
+        final TemplateImpl template = (TemplateImpl)item.getObject();
+        final String argument = myTemplate2Argument != null ? myTemplate2Argument.get(template) : null;
+        new WriteCommandAction(myProject) {
+          protected void run(Result result) throws Throwable {
+            ((TemplateManagerImpl)TemplateManager.getInstance(myProject)).startTemplateWithPrefix(myEditor, template, null, argument);
+          }
+        }.execute();
+      }
     }
   }
 }
