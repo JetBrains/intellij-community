@@ -108,15 +108,12 @@ public class AddMethodQuickFix implements LocalQuickFix {
         cnt += 1;
       }
       param_buf.append("):\n");
-      PyFunction meth = generator.createFromText(project, PyFunction.class, "def " + item_name + param_buf);
+      PyFunction meth = generator.createFromText(project, PyFunction.class, "def " + item_name + param_buf + "\n    pass");
       if (deco_name != null) {
         PyDecoratorList deco_list = generator.createFromText(project, PyDecoratorList.class, "@" + deco_name + "\ndef foo(): pass", new int[]{0, 0});
         meth.addBefore(deco_list, meth.getFirstChild()); // in the very beginning
       }
-      // NOTE: this results in a parsing error, but the StatementList gets created ok
-      PyStatement new_stmt = generator.createFromText(project, PyStatement.class, "pass"); // TODO: use a predefined template
-      meth.getStatementList().add(new_stmt);
-      meth.add(generator.createFromText(project, PsiWhiteSpace.class, "\n\n")); // after the last line of method
+      
       final PsiElement first_stmt = cls_stmt_list.getFirstChild();
       if (first_stmt == cls_stmt_list.getLastChild() && first_stmt instanceof PyPassStatement) {
         // replace the lone 'pass'
