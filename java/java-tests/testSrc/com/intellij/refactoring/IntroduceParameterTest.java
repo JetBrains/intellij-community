@@ -236,6 +236,10 @@ public class IntroduceParameterTest extends LightCodeInsightTestCase {
                                                                                                       "Incomplete call(Root()): expected to delete the 1 parameter but only 0 parameters found");
   }
 
+  public void testStaticFieldWithGetterReplacement() throws Exception {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL, true, false, true, false);
+  }
+
   private void doTestThroughHandler() throws Exception {
     configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
     new IntroduceParameterHandler().invoke(getProject(), myEditor, myFile, new DataContext() {
