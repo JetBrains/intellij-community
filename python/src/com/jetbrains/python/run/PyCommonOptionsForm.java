@@ -75,10 +75,6 @@ import java.util.Map;
     return myMainPanel;
   }
 
-  public TextFieldWithBrowseButton getWorkingDirectoryTextField() {
-    return myWorkingDirectoryTextField;
-  }
-
   public String getInterpreterOptions() {
     return myInterpreterOptionsTextField.getText().trim();
   }
