@@ -30,7 +30,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
@@ -99,9 +98,10 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     else {
       element = InjectedLanguageUtil.findElementAtNoCommit(myFile, fileOffset);
     }
-    boolean result = true;
+    boolean result = removeInvalidActions(cachedActions, element);
     for (HighlightInfo.IntentionActionDescriptor descriptor : descriptors) {
       IntentionAction action = descriptor.getAction();
+      if (!isAvailable(action, element)) continue;
       IntentionActionWithTextCaching cachedAction = new IntentionActionWithTextCaching(action, descriptor.getDisplayName(), descriptor.getIcon());
       result &= !cachedActions.add(cachedAction);
       if (element == null) continue;
@@ -124,7 +124,6 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
         }
       }
     }
-    result &= removeInvalidActions(cachedActions, element);
     return result;
   }
 
@@ -134,13 +133,16 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     while (iterator.hasNext()) {
       IntentionActionWithTextCaching cachedAction = iterator.next();
       IntentionAction action = cachedAction.getAction();
-      Pair<PsiFile,Editor> place = ShowIntentionActionsHandler.availableFor(myFile, myEditor, action, element);
-      if (place == null) {
+      if (!isAvailable(action, element)) {
         iterator.remove();
         result = false;
       }
     }
     return result;
+  }
+
+  private boolean isAvailable(IntentionAction action, PsiElement element) {
+    return ShowIntentionActionsHandler.availableFor(myFile, myEditor, action, element) != null;
   }
 
   public String getTitle() {
