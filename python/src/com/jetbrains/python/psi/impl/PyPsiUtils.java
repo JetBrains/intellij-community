@@ -177,6 +177,9 @@ public class PyPsiUtils {
   @NotNull
   public static PyElement preprocessElement(final PsiElement element) {
     final int indentLength = getElementIndentation(element);
+    if (indentLength == 0 && element instanceof PyElement) {
+      return (PyElement) element;
+    }
     final String indentString = StringUtil.repeatSymbol(' ', indentLength);
     final String text = element.getText();
     final StringBuilder builder = new StringBuilder();
