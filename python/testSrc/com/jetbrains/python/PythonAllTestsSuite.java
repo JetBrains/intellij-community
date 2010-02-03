@@ -37,11 +37,12 @@ public class PythonAllTestsSuite {
     PySelectWordTest.class,
     PySurroundWithTest.class,
     PyEditingTest.class,
+    PyFormatterTest.class,
     PyRenameTest.class,
     PyExtractMethodTest.class,
     PyPullUpTest.class,
     PyPushDownTest.class,
-    PyExtractSuperclassTest.class
+    PyExtractSuperclassTest.class,
   };
 
   public static TestSuite suite() {
