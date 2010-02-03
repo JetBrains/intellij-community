@@ -1,19 +1,3 @@
-/*
- *  Copyright 2005 Pythonid Project
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS"; BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -36,11 +20,7 @@ import javax.swing.*;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 02.07.2005
- * Time: 22:53:14
- * To change this template use File | Settings | File Templates.
+ * @author yole
  */
 public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExpressionStub> implements PyTargetExpression {
   public PyTargetExpressionImpl(ASTNode astNode) {
@@ -63,13 +43,17 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
     if (stub != null) {
       return stub.getName();
     }
-    ASTNode node = getNode().findChildByType(PyTokenTypes.IDENTIFIER);
+    ASTNode node = getNameElement();
     return node != null ? node.getText() : null;
+  }
+
+  private ASTNode getNameElement() {
+    return getNode().findChildByType(PyTokenTypes.IDENTIFIER);
   }
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     final ASTNode nameElement = getLanguage().getElementGenerator().createNameIdentifier(getProject(), name);
-    getNode().replaceChild(getNode().getFirstChildNode(), nameElement);
+    getNode().replaceChild(getNameElement(), nameElement);
     return this;
   }
 
