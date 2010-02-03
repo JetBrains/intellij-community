@@ -26,6 +26,38 @@ public class PyEditingTest extends PyLightFixtureTestCase {
     assertEquals("r''", doTestTyping("r", 1, '\''));
   }
 
+  public void testNonClosingQuoteAtIdent() {   // PY-380
+    assertEquals("'abc", doTestTyping("abc", 0, '\''));
+  }
+
+  public void testNonClosingQuoteAtNumber() {   // PY-380
+    assertEquals("'123", doTestTyping("123", 0, '\''));
+  }
+
+  public void testAutoClosingQuoteAtRBracket() {
+    assertEquals("'']", doTestTyping("]", 0, '\''));
+  }
+
+  public void testAutoClosingQuoteAtRParen() {
+    assertEquals("'')", doTestTyping(")", 0, '\''));
+  }
+
+  public void testAutoClosingQuoteAtComma() {
+    assertEquals("'',", doTestTyping(",", 0, '\''));
+  }
+
+  public void testAutoClosingQuoteAtSpace() {
+    assertEquals("'' ", doTestTyping(" ", 0, '\''));
+  }
+
+  public void testNoClosingTriple() {
+    assertEquals("'''", doTestTyping("''", 2, '\''));
+  }
+
+  public void testOvertypeFromInside() {
+    assertEquals("''", doTestTyping("''", 1, '\''));
+  }
+
   public void testGreedyBackspace() throws Exception {  // PY-254
     myFixture.configureByFile("/editing/py254.py");
     myFixture.getEditor().getCaretModel().moveToLogicalPosition(new LogicalPosition(4, 8));
