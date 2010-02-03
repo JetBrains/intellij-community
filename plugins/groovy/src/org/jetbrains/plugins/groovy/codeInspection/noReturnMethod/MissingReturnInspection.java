@@ -99,7 +99,9 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
         final PsiElement element = instruction.getElement();
         if (element instanceof GrReturnStatement) {
           sometimes.set(true);
-          hasExplicitReturn.set(true);
+          if (((GrReturnStatement)element).getReturnValue() != null) {
+            hasExplicitReturn.set(true);
+          }
         }
         else if (element instanceof GrThrowStatement || element instanceof GrAssertStatement) {
           sometimes.set(true);

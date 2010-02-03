@@ -18,10 +18,10 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection;
+import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyResultOfObjectAllocationIgnoredInspection;
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialConditionalInspection;
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialIfInspection;
 import org.jetbrains.plugins.groovy.codeInspection.metrics.GroovyOverlyLongMethodInspection;
-import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection;
 import org.jetbrains.plugins.groovy.codeInspection.unassignedVariable.UnassignedVariableAccessInspection;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUntypedAccessInspection;
@@ -34,6 +34,17 @@ import java.io.IOException;
  * @author peter
  */
 public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
+  public static final DefaultLightProjectDescriptor GROOVY_17_PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
+    @Override
+    public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
+      final Library.ModifiableModel modifiableModel = model.getModuleLibraryTable().createLibrary("GROOVY").getModifiableModel();
+      final VirtualFile groovyJar =
+        JarFileSystem.getInstance().refreshAndFindFileByPath(TestUtils.getMockGroovy1_7LibraryName()+"!/");
+      modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES);
+      modifiableModel.commit();
+    }
+  };
+
   @Override
   protected String getBasePath() {
     return TestUtils.getTestDataPath() + "highlighting/";
@@ -42,16 +53,7 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return new DefaultLightProjectDescriptor() {
-      @Override
-      public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
-        final Library.ModifiableModel modifiableModel = model.getModuleLibraryTable().createLibrary("GROOVY").getModifiableModel();
-        final VirtualFile groovyJar =
-          JarFileSystem.getInstance().refreshAndFindFileByPath(TestUtils.getMockGroovy1_7LibraryName()+"!/");
-        modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES);
-        modifiableModel.commit();
-      }
-    };
+    return GROOVY_17_PROJECT_DESCRIPTOR;
   }
 
   public void testDuplicateClosurePrivateVariable() throws Throwable {
@@ -139,18 +141,9 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testDefaultMapConstructorNamedArgsError() throws Throwable {doTest();}
   public void testDefaultMapConstructorWhenDefConstructorExists() throws Throwable {doTest();}
 
-  public void testUnresolvedLhsAssignment() throws Throwable { doTest(new GroovyUnresolvedAccessInspection()); }
+  public void testSingleAllocationInClosure() throws Throwable {doTest(new GroovyResultOfObjectAllocationIgnoredInspection());}
 
-  public void testMissingReturnWithLastLoop() throws Throwable { doTest(new MissingReturnInspection()); }
-  public void testMissingReturnWithUnknownCall() throws Throwable { doTest(new MissingReturnInspection()); }
-  public void testMissingReturnWithIf() throws Throwable { doTest(new MissingReturnInspection()); }
-  public void testMissingReturnWithAssertion() throws Throwable { doTest(new MissingReturnInspection()); }
-  public void testMissingReturnThrowException() throws Throwable { doTest(new MissingReturnInspection()); }
-  public void testMissingReturnTryCatch() throws Throwable { doTest(new MissingReturnInspection()); }
-  public void testMissingReturnLastNull() throws Throwable { doTest(new MissingReturnInspection()); }
-  public void testMissingReturnImplicitReturns() throws Throwable {doTest(new MissingReturnInspection());}
-  public void testMissingReturnOvertReturnType() throws Throwable {doTest(new MissingReturnInspection());}
-  public void testMissingReturnFromClosure() throws Throwable {doTest(new MissingReturnInspection());}
+  public void testUnresolvedLhsAssignment() throws Throwable { doTest(new GroovyUnresolvedAccessInspection()); }
 
   public void testUnresolvedMethodCallWithTwoDeclarations() throws Throwable{
     doTest();
