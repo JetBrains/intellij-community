@@ -57,7 +57,7 @@ public class PsiImplUtil {
   }
 
   @NotNull
-  public static PsiMethod[] getConstructors(PsiClass aClass) {
+  public static PsiMethod[] getConstructors(@NotNull PsiClass aClass) {
     final List<PsiMethod> constructorsList = new SmartList<PsiMethod>();
     final PsiMethod[] methods = aClass.getMethods();
     for (final PsiMethod method : methods) {
@@ -67,7 +67,7 @@ public class PsiImplUtil {
   }
 
   @Nullable
-  public static PsiAnnotationMemberValue findDeclaredAttributeValue(PsiAnnotation annotation, @NonNls String attributeName) {
+  public static PsiAnnotationMemberValue findDeclaredAttributeValue(@NotNull PsiAnnotation annotation, @NonNls String attributeName) {
     if ("value".equals(attributeName)) attributeName = null;
     PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
     for (PsiNameValuePair attribute : attributes) {
@@ -80,7 +80,7 @@ public class PsiImplUtil {
   }
 
   @Nullable
-  public static PsiAnnotationMemberValue findAttributeValue(PsiAnnotation annotation, @NonNls String attributeName) {
+  public static PsiAnnotationMemberValue findAttributeValue(@NotNull PsiAnnotation annotation, @NonNls String attributeName) {
     final PsiAnnotationMemberValue value = findDeclaredAttributeValue(annotation, attributeName);
     if (value != null) return value;
 
@@ -100,7 +100,8 @@ public class PsiImplUtil {
     return null;
   }
 
-  public static PsiTypeParameter[] getTypeParameters(PsiTypeParameterListOwner owner) {
+  @NotNull
+  public static PsiTypeParameter[] getTypeParameters(@NotNull PsiTypeParameterListOwner owner) {
     final PsiTypeParameterList typeParameterList = owner.getTypeParameterList();
     if (typeParameterList != null) {
       return typeParameterList.getTypeParameters();
@@ -109,7 +110,7 @@ public class PsiImplUtil {
   }
 
   @NotNull
-  public static PsiJavaCodeReferenceElement[] namesToPackageReferences(PsiManager manager, String[] names) {
+  public static PsiJavaCodeReferenceElement[] namesToPackageReferences(@NotNull PsiManager manager, @NotNull String[] names) {
     PsiJavaCodeReferenceElement[] refs = new PsiJavaCodeReferenceElement[names.length];
     for (int i = 0; i < names.length; i++) {
       String name = names[i];
@@ -123,7 +124,7 @@ public class PsiImplUtil {
     return refs;
   }
 
-  public static int getParameterIndex(PsiParameter parameter, PsiParameterList parameterList) {
+  public static int getParameterIndex(@NotNull PsiParameter parameter, @NotNull PsiParameterList parameterList) {
     PsiParameter[] parameters = parameterList.getParameters();
     for (int i = 0; i < parameters.length; i++) {
       if (parameter.equals(parameters[i])) return i;
@@ -133,7 +134,7 @@ public class PsiImplUtil {
     return -1;
   }
 
-  public static int getTypeParameterIndex(PsiTypeParameter typeParameter, PsiTypeParameterList typeParameterList) {
+  public static int getTypeParameterIndex(@NotNull PsiTypeParameter typeParameter, @NotNull PsiTypeParameterList typeParameterList) {
     PsiTypeParameter[] typeParameters = typeParameterList.getTypeParameters();
     for (int i = 0; i < typeParameters.length; i++) {
       if (typeParameter.equals(typeParameters[i])) return i;
@@ -143,14 +144,14 @@ public class PsiImplUtil {
   }
 
   @NotNull
-  public static Object[] getReferenceVariantsByFilter(PsiJavaCodeReferenceElement reference, ElementFilter filter) {
+  public static Object[] getReferenceVariantsByFilter(@NotNull PsiJavaCodeReferenceElement reference, @NotNull ElementFilter filter) {
     FilterScopeProcessor processor = new FilterScopeProcessor(filter);
     PsiScopesUtil.resolveAndWalk(processor, reference, null, true);
     return processor.getResults().toArray();
   }
 
   public static boolean processDeclarationsInMethod(PsiMethod method,
-                                                    PsiScopeProcessor processor,
+                                                    @NotNull PsiScopeProcessor processor,
                                                     ResolveState state,
                                                     PsiElement lastParent,
                                                     PsiElement place) {
@@ -170,20 +171,20 @@ public class PsiImplUtil {
     return true;
   }
 
-  public static boolean hasTypeParameters(PsiTypeParameterListOwner owner) {
+  public static boolean hasTypeParameters(@NotNull PsiTypeParameterListOwner owner) {
     final PsiTypeParameterList typeParameterList = owner.getTypeParameterList();
     return typeParameterList != null && typeParameterList.getTypeParameters().length != 0;
   }
 
   @NotNull
-  public static PsiType[] typesByReferenceParameterList(final PsiReferenceParameterList parameterList) {
+  public static PsiType[] typesByReferenceParameterList(@NotNull PsiReferenceParameterList parameterList) {
     PsiTypeElement[] typeElements = parameterList.getTypeParameterElements();
 
     return typesByTypeElements(typeElements);
   }
 
   @NotNull
-  public static PsiType[] typesByTypeElements(PsiTypeElement[] typeElements) {
+  public static PsiType[] typesByTypeElements(@NotNull PsiTypeElement[] typeElements) {
     PsiType[] types = new PsiType[typeElements.length];
     for (int i = 0; i < types.length; i++) {
       types[i] = typeElements[i].getType();
@@ -191,7 +192,7 @@ public class PsiImplUtil {
     return types;
   }
 
-  public static PsiType getType(PsiClassObjectAccessExpression classAccessExpression) {
+  public static PsiType getType(@NotNull PsiClassObjectAccessExpression classAccessExpression) {
     GlobalSearchScope resolveScope = classAccessExpression.getResolveScope();
     PsiManager manager = classAccessExpression.getManager();
     final PsiClass classClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Class", resolveScope);
@@ -222,7 +223,7 @@ public class PsiImplUtil {
     return new PsiImmediateClassType(classClass, substitutor);
   }
 
-  public static PsiAnnotation findAnnotation(PsiAnnotationOwner modifierList, @NotNull String qualifiedName) {
+  public static PsiAnnotation findAnnotation(@NotNull PsiAnnotationOwner modifierList, @NotNull String qualifiedName) {
     final String shortName = StringUtil.getShortName(qualifiedName);
     PsiAnnotation[] annotations = modifierList.getAnnotations();
     for (PsiAnnotation annotation : annotations) {
@@ -236,7 +237,7 @@ public class PsiImplUtil {
   }
 
   @Nullable
-  public static ASTNode findDocComment(final CompositeElement element) {
+  public static ASTNode findDocComment(@NotNull CompositeElement element) {
     TreeElement node = element.getFirstChildNode();
     while (node != null &&
            (ElementType.WHITE_SPACE_BIT_SET.contains(node.getElementType()) ||
@@ -253,7 +254,7 @@ public class PsiImplUtil {
     }
   }
 
-  public static PsiType normalizeWildcardTypeByPosition(final PsiType type, final PsiExpression expression) {
+  public static PsiType normalizeWildcardTypeByPosition(@NotNull PsiType type, @NotNull PsiExpression expression) {
     PsiExpression toplevel = expression;
     while (toplevel.getParent() instanceof PsiArrayAccessExpression &&
            ((PsiArrayAccessExpression)toplevel.getParent()).getArrayExpression() == toplevel) {
@@ -301,7 +302,7 @@ public class PsiImplUtil {
   }
 
   @NotNull
-  public static SearchScope getMemberUseScope(final PsiMember member) {
+  public static SearchScope getMemberUseScope(@NotNull PsiMember member) {
     final PsiManagerEx psiManager = (PsiManagerEx)member.getManager();
     final GlobalSearchScope maximalUseScope = psiManager.getFileManager().getUseScope(member);
     PsiFile file = member.getContainingFile();
@@ -338,28 +339,28 @@ public class PsiImplUtil {
     }
   }
 
-  public static PsiElement setName(PsiElement element, String name) throws IncorrectOperationException {
+  public static PsiElement setName(@NotNull PsiElement element, @NotNull String name) throws IncorrectOperationException {
     PsiManager manager = element.getManager();
     PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     PsiIdentifier newNameIdentifier = factory.createIdentifier(name);
     return element.replace(newNameIdentifier);
   }
 
-  public static boolean isDeprecatedByAnnotation(PsiModifierListOwner owner) {
+  public static boolean isDeprecatedByAnnotation(@NotNull PsiModifierListOwner owner) {
     PsiModifierList modifierList = owner.getModifierList();
     return modifierList != null && modifierList.findAnnotation("java.lang.Deprecated") != null;
   }
 
-  public static boolean isDeprecatedByDocTag(PsiDocCommentOwner owner) {
+  public static boolean isDeprecatedByDocTag(@NotNull PsiDocCommentOwner owner) {
     PsiDocComment docComment = owner.getDocComment();
     return docComment != null && docComment.findTagByName("deprecated") != null;
   }
 
   @Nullable
   public static PsiAnnotationMemberValue setDeclaredAttributeValue(@NotNull PsiAnnotation psiAnnotation,
-                                                                    @Nullable String attributeName,
-                                                                           @Nullable PsiAnnotationMemberValue value,
-                                                                           @NotNull PairFunction<Project, String, PsiAnnotation> annotationCreator) {
+                                                                   @Nullable String attributeName,
+                                                                   @Nullable PsiAnnotationMemberValue value,
+                                                                   @NotNull PairFunction<Project, String, PsiAnnotation> annotationCreator) {
     final PsiAnnotationMemberValue existing = psiAnnotation.findDeclaredAttributeValue(attributeName);
     if (value == null) {
       if (existing == null) {
@@ -388,8 +389,9 @@ public class PsiImplUtil {
     return psiAnnotation.findDeclaredAttributeValue(attributeName);
   }
 
-  public static PsiNameValuePair createNameValuePair(PsiAnnotationMemberValue value, String namePrefix,
-                                               PairFunction<Project, String, PsiAnnotation> annotationCreator) {
+  private static PsiNameValuePair createNameValuePair(@NotNull PsiAnnotationMemberValue value,
+                                                     @NotNull String namePrefix,
+                                                     @NotNull PairFunction<Project, String, PsiAnnotation> annotationCreator) {
     return annotationCreator.fun(value.getProject(), "@A(" + namePrefix + value.getText() + ")").getParameterList().getAttributes()[0];
   }
 }
