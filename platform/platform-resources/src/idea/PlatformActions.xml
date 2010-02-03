@@ -389,6 +389,9 @@
       <action internal="true" id="PruneEmptyDirectories" class="com.intellij.ide.actions.PruneEmptyDirectoriesAction" text="Prune Empty Directories"/>
       <action internal="true" id="FixLineSeparators" class="com.intellij.ide.actions.FixLineSeparatorsAction" text="Fix Line Separators"/>
       <action id="DumbMode" internal="true" class="com.intellij.internal.ToggleDumbModeAction" text="Dumb mode"/>
+      <separator/>
+      <action id="NotificationTestAction" internal="true" class="com.intellij.notification.impl.actions.NotificationTestAction"
+              text="Add Test Notification"/>
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
