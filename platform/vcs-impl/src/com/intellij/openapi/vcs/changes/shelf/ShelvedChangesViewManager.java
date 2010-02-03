@@ -47,9 +47,11 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -126,6 +128,25 @@ public class ShelvedChangesViewManager implements ProjectComponent {
         DiffShelvedChangesAction.showShelvedChangesDiff(DataManager.getInstance().getDataContext(myTree));
       }
     });
+    new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
+      public String convert(TreePath o) {
+        final Object lc = o.getLastPathComponent();
+        final Object lastComponent = lc == null ? null : ((DefaultMutableTreeNode) lc).getUserObject();
+        if (lastComponent instanceof ShelvedChangeList) {
+          return ((ShelvedChangeList) lastComponent).DESCRIPTION;
+        } else if (lastComponent instanceof ShelvedChange) {
+          final ShelvedChange shelvedChange = (ShelvedChange)lastComponent;
+          return shelvedChange.getBeforeFileName() == null ? shelvedChange.getAfterFileName() : shelvedChange.getBeforeFileName();
+        } else if (lastComponent instanceof ShelvedBinaryFile) {
+          final ShelvedBinaryFile sbf = (ShelvedBinaryFile) lastComponent;
+          final String value = sbf.BEFORE_PATH == null ? sbf.AFTER_PATH : sbf.BEFORE_PATH;
+          int idx = value.lastIndexOf("/");
+          idx = (idx == -1) ? value.lastIndexOf("\\") : idx;
+          return idx > 0 ? value.substring(idx + 1) : value;
+        }
+        return null;
+      }
+    }, true);
   }
 
   public void projectOpened() {
