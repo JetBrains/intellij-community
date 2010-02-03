@@ -329,5 +329,21 @@ class Goo {}""")
     assertEmpty make()
   }
 
+  public void testRecompileDependentClassesWithOnlyOneChanged() throws Exception {
+    def bar = myFixture.addFileToProject("Bar.groovy", """
+class Bar {
+  Foo f
+}
+""")
+    myFixture.addFileToProject "Foo.groovy", """
+class Foo extends Bar {
+}"""
+
+    assertEmpty make()
+
+    touch(bar.virtualFile)
+    assertEmpty make()
+  }
+
 
 }

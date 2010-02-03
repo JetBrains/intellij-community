@@ -1,0 +1,13 @@
+if (suitable) {
+  expectations.each {pattern, action ->
+    if (cloud.match(pattern, action))<caret>
+  }
+}
+-----
+if (suitable) {
+  expectations.each {pattern, action ->
+    if (cloud.match(pattern, action)) {
+      <caret>
+    }
+  }
+}

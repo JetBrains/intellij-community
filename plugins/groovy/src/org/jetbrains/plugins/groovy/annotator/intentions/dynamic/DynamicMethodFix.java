@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,29 +27,21 @@ import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicDialog;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicElementSettings;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicMethodDialog;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicPropertyDialog;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
- * User: Dmitry.Krasilschikov
- * Date: 22.11.2007
+ * @author Maxim.Medvedev
  */
-public class DynamicFix implements IntentionAction {
+public class DynamicMethodFix implements IntentionAction {
   private final GrReferenceExpression myReferenceExpression;
-  private final boolean myIsMethod;
 
-  public DynamicFix(boolean isMethod, GrReferenceExpression referenceExpression) {
-    myIsMethod = isMethod;
+  public DynamicMethodFix(GrReferenceExpression referenceExpression) {
     myReferenceExpression = referenceExpression;
   }
 
   @NotNull
   public String getText() {
-    if (!myIsMethod){
-      return GroovyBundle.message("add.dynamic.property", myReferenceExpression.getName());
-    }
-
     final PsiType[] methodArgumentsTypes = PsiUtil.getArgumentTypes(myReferenceExpression, false, false);
     StringBuilder builder = new StringBuilder(" '").append(myReferenceExpression.getName());
     builder.append("(");
@@ -58,7 +50,7 @@ public class DynamicFix implements IntentionAction {
     for (int i = 0; i < methodArgumentsTypes.length; i++) {
       PsiType type = methodArgumentsTypes[i];
 
-      if (i > 0){
+      if (i > 0) {
         builder.append(", ");
       }
       builder.append(type.getPresentableText());
@@ -79,29 +71,17 @@ public class DynamicFix implements IntentionAction {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
-    DynamicDialog dialog = myIsMethod ?
-                           new DynamicMethodDialog(myReferenceExpression) :
-                           new DynamicPropertyDialog(myReferenceExpression);
-
+    DynamicDialog dialog = new DynamicMethodDialog(myReferenceExpression);
     dialog.show();
   }
 
   public void invoke(Project project) throws IncorrectOperationException {
     final DynamicElementSettings settings = QuickfixUtil.createSettings(myReferenceExpression);
-
-    if (myIsMethod) {
-      DynamicManager.getInstance(project).addMethod(settings);
-    } else {
-      DynamicManager.getInstance(project).addProperty(settings);
-    }
+    DynamicManager.getInstance(project).addMethod(settings);
   }
 
   public boolean startInWriteAction() {
     return false;
-  }
-
-  public boolean isMethod() {
-    return myIsMethod;
   }
 
   public GrReferenceExpression getReferenceExpression() {

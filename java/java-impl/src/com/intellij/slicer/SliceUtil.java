@@ -73,8 +73,12 @@ public class SliceUtil {
     }
     if (expression instanceof PsiVariable) {
       PsiVariable variable = (PsiVariable)expression;
-
-      final Set<PsiExpression> expressions = new THashSet<PsiExpression>(DfaUtil.getCachedVariableValues(variable, original));
+      Collection<PsiExpression> values = DfaUtil.getCachedVariableValues(variable, original);
+      if (values == null) {
+        SliceUsage stopUsage = createTooComplexDFAUsage(expression, parent, parentSubstitutor);
+        return processor.process(stopUsage);
+      }
+      final Set<PsiExpression> expressions = new THashSet<PsiExpression>(values);
       PsiExpression initializer = variable.getInitializer();
       if (initializer != null && expressions.isEmpty()) expressions.add(initializer);
       for (PsiExpression exp : expressions) {
@@ -231,6 +235,9 @@ public class SliceUtil {
 
   public static SliceUsage createSliceUsage(@NotNull PsiElement element, @NotNull SliceUsage parent, @NotNull PsiSubstitutor substitutor) {
     return new SliceUsage(simplify(element), parent, substitutor);
+  }
+  public static SliceUsage createTooComplexDFAUsage(@NotNull PsiElement element, @NotNull SliceUsage parent, @NotNull PsiSubstitutor substitutor) {
+    return new SliceTooComplexDFAUsage(simplify(element), parent, substitutor);
   }
 
   static boolean processParameterUsages(@NotNull final PsiParameter parameter, @NotNull final Processor<SliceUsage> processor, @NotNull final SliceUsage parent,

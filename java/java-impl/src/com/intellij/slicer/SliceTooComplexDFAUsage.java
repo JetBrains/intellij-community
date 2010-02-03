@@ -15,6 +15,8 @@
  */
 package com.intellij.slicer;
 
+import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.usages.TextChunk;
@@ -23,12 +25,13 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * User: cdr
  */
-public class SliceDereferenceUsage extends SliceUsage {
-  public SliceDereferenceUsage(@NotNull PsiElement element, @NotNull SliceUsage parent, @NotNull PsiSubstitutor substitutor) {
+public class SliceTooComplexDFAUsage extends SliceUsage {
+  public SliceTooComplexDFAUsage(@NotNull PsiElement element, @NotNull SliceUsage parent, @NotNull PsiSubstitutor substitutor) {
     super(element, parent, substitutor);
   }
 
@@ -41,11 +44,12 @@ public class SliceDereferenceUsage extends SliceUsage {
   @Override
   public UsagePresentation getPresentation() {
     final UsagePresentation presentation = super.getPresentation();
-
     return new UsagePresentation() {
       @NotNull
       public TextChunk[] getText() {
-        return presentation.getText();
+        return new TextChunk[]{
+          new TextChunk(new TextAttributes(Color.RED, null, null, EffectType.WAVE_UNDERSCORE, Font.PLAIN), getTooltipText())
+        };
       }
 
       @NotNull
@@ -58,7 +62,7 @@ public class SliceDereferenceUsage extends SliceUsage {
       }
 
       public String getTooltipText() {
-        return "Variable dereferenced";
+        return "Too complex to analyze, analysis stoppped here";
       }
     };
   }

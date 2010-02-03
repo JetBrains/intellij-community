@@ -6,8 +6,9 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicFix;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicMethodFix;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertyFix;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.MyPair;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DClassElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DRootElement;
@@ -54,9 +55,16 @@ public class DynamicTest extends JavaCodeInsightFixtureTestCase {
   private GrReferenceExpression doDynamicFix() throws Throwable {
     final List<IntentionAction> actions = myFixture.getAvailableIntentions(getTestName(false) + ".groovy");
 
-    DynamicFix dynamicFix = ContainerUtil.findInstance(actions, DynamicFix.class);
-    dynamicFix.invoke(getProject());
-    return dynamicFix.getReferenceExpression();
+    DynamicPropertyFix dynamicFix = ContainerUtil.findInstance(actions, DynamicPropertyFix.class);
+    if (dynamicFix != null) {
+      dynamicFix.invoke(getProject());
+      return dynamicFix.getReferenceExpression();
+    }
+    else {
+      final DynamicMethodFix fix = ContainerUtil.findInstance(actions, DynamicMethodFix.class);
+      fix.invoke(getProject());
+      return fix.getReferenceExpression();
+    }
   }
 
 }

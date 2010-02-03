@@ -26,6 +26,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +56,11 @@ public abstract class BaseRefactoringAction extends AnAction {
     final PsiElement[] elements = getPsiElementArray(dataContext);
     int eventCount = IdeEventQueue.getInstance().getEventCount();
     RefactoringActionHandler handler = getHandler(dataContext);
-    if (handler == null) return;
+    if (handler == null) {
+      CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message(
+        "error.wrong.caret.position.symbol.to.refactor")), RefactoringBundle.getCannotRefactorMessage(null), null);
+      return;
+    }
     IdeEventQueue.getInstance().setEventCount(eventCount);
     if (editor != null) {
       final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
@@ -91,7 +97,18 @@ public abstract class BaseRefactoringAction extends AnAction {
       }
     }
 
-    if (editor != null) {
+    if (editor == null) {
+      if (isAvailableInEditorOnly()) {
+        disableAction(e);
+        return;
+      }
+      final PsiElement[] elements = getPsiElementArray(dataContext);
+      final boolean isEnabled = isEnabledOnDataContext(dataContext) || elements.length != 0 && isEnabledOnElements(elements);
+      if (!isEnabled) {
+        disableAction(e);
+      }
+    }
+    else {
       PsiElement element = e.getData(LangDataKeys.PSI_ELEMENT);
       if (element == null || !isAvailableForLanguage(element.getLanguage())) {
         if (file == null) {
@@ -104,17 +121,6 @@ public abstract class BaseRefactoringAction extends AnAction {
                                 !(element instanceof SyntheticElement) &&
                                 isAvailableForLanguage(PsiUtilBase.getLanguageInEditor(editor, project)) &&
                                 isAvailableOnElementInEditor(element, editor);
-      if (!isEnabled) {
-        disableAction(e);
-      }
-    }
-    else {
-      if (isAvailableInEditorOnly()) {
-        disableAction(e);
-        return;
-      }
-      final PsiElement[] elements = getPsiElementArray(dataContext);
-      final boolean isEnabled = isEnabledOnDataContext(dataContext) || elements.length != 0 && isEnabledOnElements(elements);
       if (!isEnabled) {
         disableAction(e);
       }

@@ -146,19 +146,15 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
 
   protected void update(PresentationData presentation) {
     if (!initialized) {
-      duplicate = targetEqualUsages.putNodeCheckDupe(this);
+      if (!(getValue() instanceof SliceTooComplexDFAUsage)) duplicate = targetEqualUsages.putNodeCheckDupe(this);
       initialized = true;
     }
     if (presentation != null) {
-      presentation.setChanged(presentation.isChanged() || changed);
-      changed = false;
       if (duplicate != null) {
         presentation.setTooltip("Duplicate node");
       }
-
-      if (getValue() instanceof SliceDereferenceUsage) {
-        presentation.setTooltip("Variable dereferenced");
-      }
+      presentation.setChanged(presentation.isChanged() || changed);
+      changed = false;
     }
   }
 

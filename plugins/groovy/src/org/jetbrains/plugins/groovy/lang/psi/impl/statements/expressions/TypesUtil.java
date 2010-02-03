@@ -309,7 +309,7 @@ public class TypesUtil {
     return facade.getElementFactory().createTypeByFQClassName(fqName, context.getResolveScope());
   }
 
-  public static PsiClassType getJavaLangObject(GroovyPsiElement context) {
+  public static PsiClassType getJavaLangObject(PsiElement context) {
     return PsiType.getJavaLangObject(context.getManager(), context.getResolveScope());
   }
 
