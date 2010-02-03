@@ -157,6 +157,9 @@
     <component>
       <implementation-class>com.jetbrains.python.PythonPsiManager</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.jetbrains.python.sdk.SkeletonVersionUpdater</implementation-class>
+    </component>
   </project-components>
 
   <actions>
