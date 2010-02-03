@@ -199,4 +199,11 @@ public class PyPsiUtils {
     }
     return result;
   }
+
+  public static void removeRedundantPass(final PyStatementList statementList) {
+    final PyStatement[] statements = statementList.getStatements();
+    if ((statements.length > 1) && (statements[0] instanceof PyPassStatement)) {
+      statements[0].delete();
+    }
+  }
 }
