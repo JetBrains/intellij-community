@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -47,7 +46,7 @@ public class ResourceUtil {
       if (url == null) continue;
 
       try {
-        final URLConnection connection = url.openConnection();
+        url.openConnection();
       }
       catch (IOException e) {
         continue;
@@ -105,7 +104,8 @@ public class ResourceUtil {
     return result;
   }
 
-  public static @NotNull String loadText(@NotNull URL url) throws IOException {
+  @NotNull
+  public static String loadText(@NotNull URL url) throws IOException {
     InputStream inputStream = new BufferedInputStream(URLUtil.openStream(url));
 
     InputStreamReader reader = null;

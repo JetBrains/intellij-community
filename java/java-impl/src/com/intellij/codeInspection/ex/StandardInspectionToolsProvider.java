@@ -17,6 +17,7 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LossyEncodingInspection;
+import com.intellij.codeInspection.NumericOverflowInspection;
 import com.intellij.codeInspection.RedundantSuppressInspection;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
 import com.intellij.codeInspection.canBeFinal.CanBeFinalInspection;
@@ -79,6 +80,7 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider {
 
       DataFlowInspection.class,
       DefUseInspection.class,
+      NumericOverflowInspection.class,
       RedundantCastInspection.class,
       RedundantTypeArgsInspection.class,
       RedundantArrayForVarargsCallInspection.class,
