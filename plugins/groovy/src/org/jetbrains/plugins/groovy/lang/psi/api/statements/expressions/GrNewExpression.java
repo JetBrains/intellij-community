@@ -16,9 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
-import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
@@ -26,17 +24,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 /**
  * @author ilyas
  */
-public interface GrNewExpression extends GrCallExpression {
+public interface GrNewExpression extends GrCallExpression, GrConstructorCall {
   @Nullable
   GrExpression getQualifier();
 
   GrCodeReferenceElement getReferenceElement();
-
-  GroovyResolveResult[] multiResolveConstructor();
-
-  PsiMethod resolveConstructor();
-
-  GroovyResolveResult resolveConstructorGenerics();
 
   int getArrayCount();
 

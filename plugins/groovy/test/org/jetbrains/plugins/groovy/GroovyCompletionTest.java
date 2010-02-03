@@ -17,8 +17,11 @@
 package org.jetbrains.plugins.groovy;
 
 import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+
+import java.util.List;
 
 /**
  * @author Maxim.Medvedev
@@ -270,4 +273,17 @@ public void testEachMethodForMapWithKeyValue() throws Throwable {
   public void testSmartCompletionInAssignmentExpression() throws Throwable {
     doSmartTest();
   }
+
+  public void doSmartCompletion(String... variants) throws Exception {
+    myFixture.configureByFile(getTestName(false) + ".groovy");
+    myFixture.complete(CompletionType.SMART);
+    final List<String> list = myFixture.getLookupElementStrings();
+    assertNotNull(list);
+    UsefulTestCase.assertSameElements(list, variants);
+  }
+
+  public void testSimpleMethodParameter() throws Throwable {
+    doSmartCompletion("d1", "d2");
+  }
+
 }

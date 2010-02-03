@@ -15,10 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.codeInsight;
 
-import com.intellij.codeInsight.ExpectedTypeInfo;
-import com.intellij.codeInsight.ExpectedTypeInfoImpl;
-import com.intellij.codeInsight.ExpectedTypesProvider;
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.*;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -28,18 +25,21 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+
+import java.util.Set;
 
 /**
  * @author Maxim.Medvedev
@@ -174,6 +174,46 @@ public class GroovyExpectedTypesProvider {
       }
     }
 
+    @Override
+    public void visitArgumentList(GrArgumentList list) {
+      final PsiElement parent = list.getParent();
+
+      GroovyResolveResult[] results = null;
+      if (parent instanceof GrMethodCallExpression) {
+        final GrExpression expression = ((GrMethodCallExpression)parent).getInvokedExpression();
+        if (expression instanceof GrReferenceExpression) {
+          results = ((GrReferenceExpression)expression).multiResolve(false);
+        }
+      }
+      else if (parent instanceof GrApplicationStatement) {
+        final GrExpression expression = ((GrApplicationStatement)parent).getFunExpression();
+        if (expression instanceof GrReferenceExpression) {
+          results = ((GrReferenceExpression)expression).multiResolve(false);
+        }
+      }
+      else if (parent instanceof GrConstructorCall) {
+        results = ((GrConstructorCall)parent).multiResolveConstructor();
+      }
+
+      if (results == null || results.length == 0) return;
+
+      final int argumentIndex = list.getExpressionArgumentIndex(myExpr);
+      assert argumentIndex != -1;
+
+      Set<ExpectedTypeInfo> infos = new HashSet<ExpectedTypeInfo>();
+      for (GroovyResolveResult result : results) {
+        final PsiElement element = result.getElement();
+        if (!(element instanceof PsiMethod)) continue;
+        final PsiParameter[] parameters = ((PsiMethod)element).getParameterList().getParameters();
+        if (parameters.length < argumentIndex) continue;
+        final PsiParameter parameter = parameters[argumentIndex];
+        final PsiType type = parameter.getType();
+        final TailType tailType = getMethodArgumentTailType(myExpr, argumentIndex, (PsiMethod)element, result.getSubstitutor(), parameters);
+        infos.add(createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, tailType));
+      }
+      myResult = infos.toArray(new ExpectedTypeInfo[infos.size()]);
+    }
+
     private static TailType getAssignmentRValueTailType(GrAssignmentExpression assignment) {
       if (assignment.getParent() instanceof GrExpression) {
         if (!(assignment.getParent().getParent() instanceof GrForStatement)) {
@@ -198,6 +238,24 @@ public class GroovyExpectedTypesProvider {
       JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(variable.getProject());
       VariableKind variableKind = codeStyleManager.getVariableKind(variable);
       return codeStyleManager.variableNameToPropertyName(name, variableKind);
+    }
+
+    private TailType getMethodArgumentTailType(final GrExpression argument, final int index, final PsiMethod method, final PsiSubstitutor substitutor,
+                                               final PsiParameter[] parms) {
+      if (index >= parms.length) {
+        return TailType.NONE;
+      }
+      if (index == parms.length - 1) {
+        //myTailType = CompletionUtil.NONE_TAIL;
+        final PsiElement call = argument.getParent().getParent();
+
+        PsiType returnType = method.getReturnType();
+        if (returnType != null) returnType = substitutor.substitute(returnType);
+        return (PsiType.VOID.equals(returnType) || returnType == null) && call.getParent() instanceof PsiStatement
+               ? TailTypes.CALL_RPARENTH_SEMICOLON
+               : TailTypes.CALL_RPARENTH;
+      }
+      return TailType.COMMA;
     }
   }
 }

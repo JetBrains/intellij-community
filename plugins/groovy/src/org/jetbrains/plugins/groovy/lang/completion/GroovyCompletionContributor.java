@@ -77,10 +77,10 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
   private static final String[] THIS_SUPER = {"this", "super"};
 
-  private static boolean isReferenceInNewExpression(PsiReference reference) {
+  private static boolean isReferenceInNewExpression(PsiElement reference) {
     if (!(reference instanceof GrCodeReferenceElement)) return false;
 
-    PsiElement parent = ((GrCodeReferenceElement)reference).getParent();
+    PsiElement parent = reference.getParent();
     while (parent instanceof GrCodeReferenceElement) parent = parent.getParent();
     return parent instanceof GrNewExpression;
   }
@@ -92,8 +92,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
                                     ProcessingContext context,
                                     @NotNull final CompletionResultSet result) {
         final PsiElement position = parameters.getPosition();
-        final int offset = parameters.getOffset();
-        final PsiReference reference = position.getContainingFile().findReferenceAt(offset);
+        final PsiElement reference = position.getParent();
         if (reference == null) return;
         if (isReferenceInNewExpression(reference)) {
           //reference in new Expression

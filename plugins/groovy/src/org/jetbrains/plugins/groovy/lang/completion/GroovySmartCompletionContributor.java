@@ -18,18 +18,24 @@ package org.jetbrains.plugins.groovy.lang.completion;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInsight.GroovyExpectedTypesProvider;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
@@ -78,28 +84,31 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
         });
 
 
-        final PsiReference reference = position.getContainingFile().findReferenceAt(params.getOffset());
+        final PsiElement reference = position.getParent();
         if (reference == null) return;
-        final Object[] variants = reference.getVariants();
-        for (Object variant : variants) {
-          PsiType type = null;
-          if (variant instanceof PsiElement) {
-            type = getTypeByElement((PsiElement)variant, position);
+        if (reference instanceof GrReferenceElement) {
+          ((GrReferenceElement)reference).processVariants(new Consumer<Object>() {
+            public void consume(Object variant) {
+              PsiType type = null;
+              if (variant instanceof PsiElement) {
+                type = getTypeByElement((PsiElement)variant, position);
+              }
+              else if (variant instanceof String) {
+                if ("true".equals(variant) || "false".equals(variant)) {
+                  type = PsiType.BOOLEAN;
+                }
+              }
+              if (type == null) return;
+              for (ExpectedTypeInfo info : infos) {
+                if (TypesUtil.isAssignableByMethodCallConversion(info.getType(), type, position.getManager(), GlobalSearchScope.allScope(position.getProject()))) {
+                  final LookupElement lookupElement = LookupItemUtil.objectToLookupItem(variant);
+                  result.addElement(lookupElement);
+                  break;
+                }
+              }
 
-          }
-          else if (variant instanceof String) {
-            if ("true".equals(variant) || "false".equals(variant)) {
-              type = PsiType.BOOLEAN;
             }
-          }
-
-          for (ExpectedTypeInfo info : infos) {
-            if (TypesUtil.isAssignable(info.getType(), type, position.getManager(), GlobalSearchScope.allScope(position.getProject()))) {
-              final LookupElement lookupElement = CompletionData.objectToLookupItem(variant);
-              result.addElement(lookupElement);
-              break;
-            }
-          }
+          });
         }
       }
     });
