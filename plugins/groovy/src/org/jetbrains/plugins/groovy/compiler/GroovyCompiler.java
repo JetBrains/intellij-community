@@ -71,8 +71,7 @@ public class GroovyCompiler extends GroovyCompilerBase {
 
     // groovyc may fail if we don't also recompile files like B such that A depends on B and B depends on C, where A & C \in toCompile
     // see http://jira.codehaus.org/browse/GROOVY-4024
-    // this is important only if >1 files have been changed
-    if (toCompile.size() > 1 && !"false".equals(System.getProperty("compile.groovy.dependencies", "true"))) {
+    if (!"false".equals(System.getProperty("compile.groovy.dependencies", "true"))) {
       context.getProgressIndicator().checkCanceled();
       context.getProgressIndicator().setText("Enumerating Groovy classes...");
 
