@@ -156,7 +156,7 @@ public class MavenUtil {
   }
 
   public static void showError(Project project, String title, Throwable e) {
-    MavenLog.LOG.error(e);
+    MavenLog.LOG.warn(title, e);
     Notifications.Bus.notify(new Notification("Maven", title, e.getMessage(), NotificationType.ERROR), project);
   }
 
