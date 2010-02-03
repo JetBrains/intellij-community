@@ -20,10 +20,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
 import org.jetbrains.idea.maven.execution.SoutMavenConsole;
-import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
-import org.jetbrains.idea.maven.utils.MavenTask;
-import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.idea.maven.utils.*;
 
 import java.util.LinkedList;
 import java.util.Queue;
@@ -130,7 +127,15 @@ public class MavenProjectsProcessor {
         }
         indicator.setFraction(counter / (double)(counter + remained));
 
-        task.perform(myProject, myEmbeddersManager, new SoutMavenConsole(), indicator);
+        try {
+          task.perform(myProject, myEmbeddersManager, new SoutMavenConsole(), indicator);
+        }
+        catch (MavenProcessCanceledException e) {
+          throw e;
+        }
+        catch (Throwable e) {
+          MavenLog.LOG.error(e);
+        }
 
         synchronized (myQueue) {
           task = myQueue.poll();
