@@ -77,8 +77,8 @@ public class PyArgumentListInspection  extends LocalInspectionTool {
             PyFunction decofunc = mkfunc.getFunction();
             int first_param_offset =  mkfunc.getImplicitOffset();
             PyParameter[] params = decofunc.getParameterList().getParameters();
-            PyNamedParameter alleged_first_param = params[first_param_offset-1].getAsNamed();
-            if (params.length < first_param_offset || alleged_first_param == null || alleged_first_param.isKeywordContainer()) {
+            PyNamedParameter alleged_first_param = params.length < first_param_offset ? null : params[first_param_offset-1].getAsNamed();
+            if (alleged_first_param == null || alleged_first_param.isKeywordContainer()) {
               // no parameters left to pass function implicitly, or wrong param type
               registerProblem(deco, PyBundle.message("INSP.func.$0.lacks.first.arg", decofunc.getName()));
             }
