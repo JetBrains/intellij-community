@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.psi.util.PsiFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -42,7 +43,7 @@ public class PsiChangeTracker {
   private PsiChangeTracker() {
   }
 
-  public static <T extends PsiElement> Map<T, FileStatus> getElementsChanged(PsiFile file, final PsiElementFilter<T> filter) {
+  public static <T extends PsiElement> Map<T, FileStatus> getElementsChanged(PsiFile file, final PsiFilter<T> filter) {
     final Project project = file.getProject();
     final VirtualFile vf = file.getVirtualFile();
 
@@ -57,15 +58,25 @@ public class PsiChangeTracker {
     return getElementsChanged(file, oldFile, filter);
   }
 
-  public static <T extends PsiElement> Map<T, FileStatus> getElementsChanged(PsiFile file, PsiFile oldFile, final PsiElementFilter<T> filter) {
-    final Project project = file.getProject();
-    final List<T> elements = new ArrayList<T>();
+  public static <T extends PsiElement> Map<T, FileStatus> getElementsChanged(PsiFile file, PsiFile oldFile, final PsiFilter<T> filter) {
+    final HashMap<T, FileStatus> result = new HashMap<T, FileStatus>();
     final List<T> oldElements = new ArrayList<T>();
+    final List<T> elements = new ArrayList<T>();
+
+    if (file == null) {
+      oldFile.accept(new MyVisitor<T>(filter, oldElements));
+      calculateStatuses(elements, oldElements, result);
+      return result;
+    }
+
+    final Project project = file.getProject();
 
     file.accept(new MyVisitor<T>(filter, elements));
     final VirtualFile vf = file.getVirtualFile();
-    final FileStatus status = vf == null ? null : FileStatusManager.getInstance(project).getStatus(vf);
-    final HashMap<T, FileStatus> result = new HashMap<T, FileStatus>();
+    FileStatus status = vf == null ? null : FileStatusManager.getInstance(project).getStatus(vf);
+    if (status == null && oldFile == null) {
+      status = FileStatus.ADDED;
+    }
     if (status == FileStatus.ADDED ||
         status == FileStatus.DELETED ||
         status == FileStatus.DELETED_FROM_FS ||
@@ -146,17 +157,17 @@ public class PsiChangeTracker {
   }
 
   static class MyVisitor<T extends PsiElement> extends PsiRecursiveElementVisitor {
-    private final PsiElementFilter<T> filter;
+    private final PsiFilter<T> filter;
     private final List<T> elements;
 
-    protected MyVisitor(final PsiElementFilter<T> filter, final List<T> elements) {
+    protected MyVisitor(final PsiFilter<T> filter, final List<T> elements) {
       this.filter = filter;
       this.elements = elements;
     }
 
     @Override
     public void visitElement(PsiElement element) {
-      if (filter.getClassFilter().isAssignableFrom(element.getClass())) {
+      if (filter.getParentClass().isAssignableFrom(element.getClass())) {
         final T e = (T)element;
         if (filter.accept(e)) {
           elements.add(e);

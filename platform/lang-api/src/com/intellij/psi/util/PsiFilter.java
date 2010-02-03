@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-package com.intellij.openapi.vcs.changes;
+package com.intellij.psi.util;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class PsiElementFilter<T extends PsiElement> {
+public class PsiFilter<T extends PsiElement> {
   private final Class<T> filter;
 
-  public PsiElementFilter(Class<T> filter) {
+  public PsiFilter(@NotNull Class<T> filter) {
     this.filter = filter;
   }
 
@@ -32,7 +33,7 @@ public class PsiElementFilter<T extends PsiElement> {
     return true;
   }
 
-  public final Class<T> getClassFilter() {
+  public final Class<T> getParentClass() {
     return filter; 
   }
 }
