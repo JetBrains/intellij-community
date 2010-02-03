@@ -30,10 +30,13 @@ import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
-import com.intellij.ui.treeStructure.Tree;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.SmartExpander;
+import com.intellij.ui.TreeCopyProvider;
+import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.containers.Convertor;
@@ -134,6 +137,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
   public void updateModel(List<? extends ChangeList> changeLists, List<VirtualFile> unversionedFiles, final List<LocallyDeletedChange> locallyDeletedFiles,
                           List<VirtualFile> modifiedWithoutEditing,
                           MultiMap<String, VirtualFile> switchedFiles,
+                          @Nullable Map<VirtualFile, String> switchedRoots,
                           @Nullable List<VirtualFile> ignoredFiles,
                           final List<VirtualFile> lockedFolders,
                           @Nullable final Map<VirtualFile, LogicalLock> logicallyLockedFiles) {
@@ -141,7 +145,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
 
     TreeModelBuilder builder = new TreeModelBuilder(myProject, isShowFlatten());
     final DefaultTreeModel model = builder.buildModel(changeLists, unversionedFiles, locallyDeletedFiles, modifiedWithoutEditing, 
-                                                      switchedFiles, ignoredFiles, lockedFolders, logicallyLockedFiles);
+                                                      switchedFiles, switchedRoots, ignoredFiles, lockedFolders, logicallyLockedFiles);
     setModel(model);
     setCellRenderer(new ChangesBrowserNodeRenderer(myProject, isShowFlatten(), true));
 

@@ -44,6 +44,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.*;
@@ -59,9 +60,7 @@ import org.netbeans.lib.cvsclient.admin.Entry;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.text.ParseException;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author max
@@ -93,6 +92,9 @@ public class CvsChangeProvider implements ChangeProvider {
         }
       }
     };
+
+    showBranchImOn(builder, dirtyScope);
+
     for (FilePath path : dirtyScope.getRecursivelyDirtyDirectories()) {
       final VirtualFile dir = path.getVirtualFile();
       checkCanceled.run();
@@ -238,6 +240,61 @@ public class CvsChangeProvider implements ChangeProvider {
     return new CvsRevisionNumber(correctedRevision);
   }
 
+  private void showBranchImOn(final ChangelistBuilder builder, final VcsDirtyScope scope) {
+    final List<VirtualFile> dirs = ObjectsConvertor.fp2vf(scope.getRecursivelyDirtyDirectories());
+    final Collection<VirtualFile> roots = new ArrayList<VirtualFile>(scope.getAffectedContentRoots());
+
+    for (Iterator<VirtualFile> iterator = roots.iterator(); iterator.hasNext();) {
+      final VirtualFile root = iterator.next();
+      if (! dirs.contains(root)) iterator.remove();
+    }
+
+    if (roots.isEmpty()) return;
+    for (VirtualFile root : roots) {
+      checkTopLevelForBeingSwitched(root, builder);
+    }
+  }
+
+  private void checkTopLevelForBeingSwitched(final VirtualFile dir, final ChangelistBuilder builder) {
+    final CvsInfo info = myEntriesManager.getCvsInfoFor(dir);
+    if (info.getRepository() == null) return;
+    final String dirTag = info.getStickyTag();
+    if (dirTag != null) {
+      final String caption = getSwitchedTagCaption(dirTag, null, false);
+      if (caption != null) {
+        builder.processRootSwitch(dir, caption);
+      }
+    } else {
+      builder.processRootSwitch(dir, CvsUtil.HEAD);
+    }
+  }
+
+  @Nullable
+  private static String getSwitchedTagCaption(final String tag, final String parentTag, final boolean checkParentTag) {
+    if (tag == null) return CvsUtil.HEAD;
+    final String tagOnly = tag.substring(1);
+    if (CvsUtil.isNonDateTag(tag)) {
+      // a switch between a branch tag and a non-branch tag is not a switch
+      if (checkParentTag && parentTag != null && CvsUtil.isNonDateTag(parentTag)) {
+        String parentTagOnly = parentTag.substring(1);
+        if (tagOnly.equals(parentTagOnly)) {
+          return null;
+        }
+      }
+      return CvsBundle.message("switched.tag.format", tagOnly);
+    }
+    else if (tag.startsWith(CvsUtil.STICKY_DATE_PREFIX)) {
+      try {
+        Date date = Entry.STICKY_DATE_FORMAT.parse(tagOnly);
+        return CvsBundle.message("switched.date.format", date);
+      }
+      catch (ParseException e) {
+        return CvsBundle.message("switched.date.format", tagOnly);
+      }
+    }
+    return null;
+  }
+
   private void checkSwitchedDir(final VirtualFile dir, final ChangelistBuilder builder, final VcsDirtyScope scope) {
     VirtualFile parentDir = dir.getParent();
     if (parentDir == null || !myFileIndex.isInContent(parentDir)) {
@@ -253,28 +310,9 @@ public class CvsChangeProvider implements ChangeProvider {
     final CvsInfo parentInfo = myEntriesManager.getCvsInfoFor(parentDir);
     final String parentDirTag = parentInfo.getStickyTag();
     if (!Comparing.equal(dirTag, parentDirTag)) {
-      if (dirTag == null) {
-        builder.processSwitchedFile(dir, CvsUtil.HEAD, true);
-      }
-      else if (CvsUtil.isNonDateTag(dirTag)) {
-        final String tag = dirTag.substring(1);
-        // a switch between a branch tag and a non-branch tag is not a switch
-        if (parentDirTag != null && CvsUtil.isNonDateTag(parentDirTag)) {
-          String parentTag = parentDirTag.substring(1);
-          if (tag.equals(parentTag)) {
-            return;
-          }
-        }
-        builder.processSwitchedFile(dir, CvsBundle.message("switched.tag.format", tag), true);
-      }
-      else if (dirTag.startsWith(CvsUtil.STICKY_DATE_PREFIX)) {
-        try {
-          Date date = Entry.STICKY_DATE_FORMAT.parse(dirTag.substring(1));
-          builder.processSwitchedFile(dir, CvsBundle.message("switched.date.format", date), true);
-        }
-        catch (ParseException e) {
-          builder.processSwitchedFile(dir, CvsBundle.message("switched.date.format", dirTag.substring(1)), true);
-        }
+      final String caption = getSwitchedTagCaption(dirTag, parentDirTag, true);
+      if (caption != null) {
+        builder.processSwitchedFile(dir, caption, true);
       }
     }
     else if (!scope.belongsTo(VcsContextFactory.SERVICE.getInstance().createFilePathOn(parentDir))) {

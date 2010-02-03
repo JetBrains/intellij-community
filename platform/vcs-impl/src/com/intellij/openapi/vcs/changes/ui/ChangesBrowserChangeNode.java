@@ -59,6 +59,11 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> impleme
     final FilePath filePath = ChangesUtil.getFilePath(change);
     final String fileName = filePath.getName();
     VirtualFile vFile = filePath.getVirtualFile();
+
+    if (myDecorator != null) {
+      myDecorator.preDecorate(change, renderer, renderer.isShowFlatten());
+    }
+
     final Color changeColor = change.getFileStatus().getColor();
     renderer.appendFileName(vFile, fileName, changeColor);
 

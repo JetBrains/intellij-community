@@ -58,6 +58,9 @@ public class EmptyChangelistBuilder implements ChangelistBuilder {
   public void processSwitchedFile(final VirtualFile file, final String branch, final boolean recursive) {
   }
 
+  public void processRootSwitch(VirtualFile file, String branch) {
+  }
+
   public boolean isUpdatingUnversionedFiles() {
     return true;
   }

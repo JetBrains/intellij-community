@@ -492,6 +492,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
+  @Nullable
+  Map<VirtualFile, String> getSwitchedRoots() {
+    synchronized (myDataLock) {
+      return ((SwitchedFileHolder) myComposite.get(FileHolder.HolderType.ROOT_SWITCH)).getFilesMapCopy();
+    }
+  }
+
   public VcsException getUpdateException() {
     return myUpdateException;
   }

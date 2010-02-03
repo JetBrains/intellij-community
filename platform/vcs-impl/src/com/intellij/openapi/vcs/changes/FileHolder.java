@@ -28,6 +28,7 @@ interface FileHolder {
     MODIFIED_WITHOUT_EDITING,
     IGNORED,
     LOCKED,
-    LOGICALLY_LOCKED
+    LOGICALLY_LOCKED,
+    ROOT_SWITCH
   }
 }

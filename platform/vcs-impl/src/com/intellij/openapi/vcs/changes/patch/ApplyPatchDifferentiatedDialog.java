@@ -702,6 +702,9 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       }
       return null;
     }
+
+    public void preDecorate(Change change, ChangesBrowserNodeRenderer renderer, boolean showFlatten) {
+    }
   }
 
   public Collection<FilePatchInProgress> getIncluded() {
