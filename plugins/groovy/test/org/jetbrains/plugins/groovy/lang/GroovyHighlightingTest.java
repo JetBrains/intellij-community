@@ -149,6 +149,8 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testMissingReturnTryCatch() throws Throwable { doTest(new MissingReturnInspection()); }
   public void testMissingReturnLastNull() throws Throwable { doTest(new MissingReturnInspection()); }
   public void testMissingReturnImplicitReturns() throws Throwable {doTest(new MissingReturnInspection());}
+  public void testMissingReturnOvertReturnType() throws Throwable {doTest(new MissingReturnInspection());}
+  public void testMissingReturnFromClosure() throws Throwable {doTest(new MissingReturnInspection());}
 
   public void testUnresolvedMethodCallWithTwoDeclarations() throws Throwable{
     doTest();

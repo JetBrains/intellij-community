@@ -1,4 +1,4 @@
-def foo() {
+int foo() {
   if (i==5) {
     print 5;
   } else {
