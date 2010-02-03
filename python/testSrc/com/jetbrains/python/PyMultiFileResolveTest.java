@@ -134,6 +134,10 @@ public class PyMultiFileResolveTest extends PyLightFixtureTestCase {
     assertEquals("Context", ((PyClass) element).getName());
   }
 
+  public void testStackOverflowOnEmptyFile() throws Exception {
+    assertNull(doResolve());  // make sure we don't have a SOE here
+  }
+
   private PsiFile prepareFile() throws Exception {
     String testName = getTestName(true);
     String fileName = getTestName(false) + ".py";
