@@ -24,10 +24,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
  * @author ilyas
  */
 public interface GrNamedArgument extends GroovyPsiElement {
-  public static final GrNamedArgument[] EMPTY_ARRAY = new GrNamedArgument[0];
+  GrNamedArgument[] EMPTY_ARRAY = new GrNamedArgument[0];
 
   @Nullable
   GrArgumentLabel getLabel();
 
+  @Nullable
   GrExpression getExpression();
 }

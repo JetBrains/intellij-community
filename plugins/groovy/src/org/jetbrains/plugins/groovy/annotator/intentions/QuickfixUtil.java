@@ -32,17 +32,18 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.MyPair;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicElementSettings;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -225,6 +226,19 @@ public class QuickfixUtil {
     } else {
       settings.setMethod(false);
     }
+    return settings;
+  }
+
+  public static DynamicElementSettings createSettings(GrArgumentLabel label, PsiClass targetClass) {
+    DynamicElementSettings settings = new DynamicElementSettings();
+
+    assert targetClass != null;
+    String className = targetClass.getQualifiedName();
+    className = className == null ? targetClass.getContainingFile().getName() : className;
+
+    settings.setContainingClassName(className);
+    settings.setName(label.getName());
+
     return settings;
   }
 }

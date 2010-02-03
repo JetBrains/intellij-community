@@ -24,7 +24,9 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.MyPair;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesUtil;
 
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
@@ -41,9 +43,11 @@ import java.util.List;
  * Date: 18.02.2008
  */
 public class DynamicMethodDialog extends DynamicDialog {
-  public DynamicMethodDialog(GrReferenceExpression referenceExpression) {
-    super(referenceExpression);
+  private final GrReferenceExpression myReferenceExpression;
 
+  public DynamicMethodDialog(GrReferenceExpression referenceExpression) {
+    super(referenceExpression, QuickfixUtil.createSettings(referenceExpression), GroovyExpectedTypesUtil.calculateTypeConstraints((GrExpression)referenceExpression.getParent()));
+    myReferenceExpression = referenceExpression;
     assert getSettings().isMethod();
 
     final List<MyPair> pairs = getSettings().getPairs();
@@ -71,7 +75,7 @@ public class DynamicMethodDialog extends DynamicDialog {
         final int editingRow = table.getSelectedRow();
         if (editingRow < 0 || editingRow >= pairs.size()) return;
 
-        String newNameValue = ((MySuggestedNameCellEditor) e.getSource()).getCellEditorValue();
+        String newNameValue = ((MySuggestedNameCellEditor)e.getSource()).getCellEditorValue();
 
         final MyPair editingPair = pairs.get(editingRow);
         editingPair.setFirst(newNameValue);
@@ -133,7 +137,8 @@ public class DynamicMethodDialog extends DynamicDialog {
       PsiType type;
       try {
         type = GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(value).getType();
-      } catch (IncorrectOperationException e) {
+      }
+      catch (IncorrectOperationException e) {
         return;
       }
 
@@ -179,7 +184,7 @@ public class DynamicMethodDialog extends DynamicDialog {
 
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
       if (value instanceof String) {
-        myNameField.setText((String) value);
+        myNameField.setText((String)value);
       }
       return myNameField;
     }
