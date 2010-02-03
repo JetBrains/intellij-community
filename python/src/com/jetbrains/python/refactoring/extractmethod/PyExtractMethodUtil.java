@@ -100,12 +100,13 @@ public class PyExtractMethodUtil {
                 }
                 builder.append(s);
               }
+              final List<PsiElement> newMethodElements = new ArrayList<PsiElement>(elementsRange);
               final PsiElement returnStatement =
                 PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyElement.class, "return " + builder.toString());
-              elementsRange.add(returnStatement);
+              newMethodElements.add(returnStatement);
 
               // Generate method
-              PyFunction generatedMethod = generateMethodFromElements(project, methodName, variableData, elementsRange);
+              PyFunction generatedMethod = generateMethodFromElements(project, methodName, variableData, newMethodElements);
               generatedMethod = insertGeneratedMethod(statement1, generatedMethod);
 
               // Process parameters
