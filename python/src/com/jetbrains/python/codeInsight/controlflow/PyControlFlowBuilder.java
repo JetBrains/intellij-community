@@ -280,7 +280,8 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyRaiseStatement(final PyRaiseStatement node) {
-    myBuilder.startNode(node);
+    final Instruction instruction = myBuilder.startNode(node);
+    myBuilder.addPendingEdge(null, instruction);
     myBuilder.flowAbrupted();
   }
 
