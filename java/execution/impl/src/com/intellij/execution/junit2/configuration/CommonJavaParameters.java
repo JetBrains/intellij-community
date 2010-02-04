@@ -45,7 +45,6 @@ public class CommonJavaParameters extends JPanel {
   private LabeledComponent<TextFieldWithBrowseButton> myWorkingDirectory;
   private LabeledComponent<RawCommandLineEditor> myProgramParameters;
   private LabeledComponent<RawCommandLineEditor> myVMParameters;
-  private JCheckBox myUseModuleDirectoryAsCheckBox;
 
   private final LabeledComponent[] myFields = new LabeledComponent[3];
   private Module myModule = null;
@@ -70,13 +69,6 @@ public class CommonJavaParameters extends JPanel {
     myFields[RunJavaConfiguration.PROGRAM_PARAMETERS_PROPERTY] = myProgramParameters;
     myFields[RunJavaConfiguration.VM_PARAMETERS_PROPERTY] = myVMParameters;
     myFields[RunJavaConfiguration.WORKING_DIRECTORY_PROPERTY] = myWorkingDirectory;
-
-    myUseModuleDirectoryAsCheckBox.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        final boolean selected = ((JCheckBox)e.getSource()).isSelected();
-        myWorkingDirectory.getComponent().setEnabled(!selected);
-      }
-    });
   }
 
   private static void copyDialogCaption(final LabeledComponent<RawCommandLineEditor> component) {
@@ -107,11 +99,6 @@ public class CommonJavaParameters extends JPanel {
   }
 
   public void setText(final int property, final String value) {
-    if (RunJavaConfiguration.WORKING_DIRECTORY_PROPERTY == property && value != null && "$MODULE_DIR$".equals(value.trim())) {
-      myUseModuleDirectoryAsCheckBox.setSelected(true);
-      myWorkingDirectory.getComponent().setEnabled(false);
-    }
-
     final JComponent component = getLabeledComponent(property).getComponent();
     if (component instanceof TextFieldWithBrowseButton)
       ((TextFieldWithBrowseButton)component).setText(value);
@@ -121,10 +108,6 @@ public class CommonJavaParameters extends JPanel {
   }
 
   public String getText(final int property) {
-    if (RunJavaConfiguration.WORKING_DIRECTORY_PROPERTY == property && myUseModuleDirectoryAsCheckBox.isSelected()) {
-      return "$MODULE_DIR$";
-    }
-
     final JComponent component = getLabeledComponent(property).getComponent();
     if (component instanceof TextFieldWithBrowseButton)
       return ((TextFieldWithBrowseButton)component).getText();
