@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
 public class GroovyResultOfObjectAllocationIgnoredInspection extends BaseInspection {
 
@@ -60,6 +61,9 @@ public class GroovyResultOfObjectAllocationIgnoredInspection extends BaseInspect
 
     public void visitNewExpression(GrNewExpression newExpression) {
       super.visitNewExpression(newExpression);
+      final GrCodeReferenceElement refElement = newExpression.getReferenceElement();
+      if (refElement == null) return;      //new expression is not correct so we shouldn't check it
+      
       final PsiElement parent = newExpression.getParent();
       if (parent instanceof GrClosableBlock) {
         return;
@@ -72,7 +76,7 @@ public class GroovyResultOfObjectAllocationIgnoredInspection extends BaseInspect
             return;
           }
         }
-        registerError(newExpression.getReferenceElement(), newExpression.getArrayCount());
+        registerError(refElement, newExpression.getArrayCount());
       }
     }
   }

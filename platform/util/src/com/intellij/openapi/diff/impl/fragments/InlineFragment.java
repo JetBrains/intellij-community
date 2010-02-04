@@ -16,9 +16,8 @@
 package com.intellij.openapi.diff.impl.fragments;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.impl.highlighting.DiffMarkup;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
-import com.intellij.openapi.diff.impl.util.TextDiffType;
+import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 
@@ -28,15 +27,15 @@ public class InlineFragment implements Fragment {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.fragments.InlineFragment");
   private final TextRange myRange1;
   private final TextRange myRange2;
-  private final TextDiffType myType;
+  private final TextDiffTypeEnum myType;
 
-  public InlineFragment(TextDiffType type, TextRange range1, TextRange range2) {
+  public InlineFragment(TextDiffTypeEnum type, TextRange range1, TextRange range2) {
     myType = type;
     myRange1 = range1;
     myRange2 = range2;
   }
 
-  public TextDiffType getType() {
+  public TextDiffTypeEnum getType() {
     return myType;
   }
 
@@ -52,9 +51,8 @@ public class InlineFragment implements Fragment {
                               LineFragment.shiftRange(range2, myRange2));
   }
 
-  public void highlight(DiffMarkup appender1, DiffMarkup appender2, boolean isLast) {
-    appender1.highlightText(this, true);
-    appender2.highlightText(this, true);
+  public void highlight(FragmentHighlighter fragmentHighlighter) {
+    fragmentHighlighter.highlightInline(this);
   }
 
   public Fragment getSubfragmentAt(int offset, FragmentSide side, Condition<Fragment> condition) {

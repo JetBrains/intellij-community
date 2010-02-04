@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,19 +23,21 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.util.containers.Convertor;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 
 public class TextDiffType implements DiffStatusBar.LegendTypeDescriptor {
-  public static final TextDiffType INSERT = new TextDiffType(DiffBundle.message("diff.type.inserted.name"), DiffColors.DIFF_INSERTED);
-  public static final TextDiffType CHANGED = new TextDiffType(DiffBundle.message("diff.type.changed.name"), DiffColors.DIFF_MODIFIED);
-  public static final TextDiffType DELETED = new TextDiffType(DiffBundle.message("diff.type.deleted.name"), DiffColors.DIFF_DELETED);
-  public static final TextDiffType CONFLICT = new TextDiffType(DiffBundle.message("diff.type.conflict.name"), DiffColors.DIFF_CONFLICT);
+  public static final TextDiffType INSERT = new TextDiffType(TextDiffTypeEnum.INSERT, DiffBundle.message("diff.type.inserted.name"), DiffColors.DIFF_INSERTED);
+  public static final TextDiffType CHANGED = new TextDiffType(TextDiffTypeEnum.CHANGED, DiffBundle.message("diff.type.changed.name"), DiffColors.DIFF_MODIFIED);
+  public static final TextDiffType DELETED = new TextDiffType(TextDiffTypeEnum.DELETED, DiffBundle.message("diff.type.deleted.name"), DiffColors.DIFF_DELETED);
+  public static final TextDiffType CONFLICT = new TextDiffType(TextDiffTypeEnum.CONFLICT, DiffBundle.message("diff.type.conflict.name"), DiffColors.DIFF_CONFLICT);
 
-  public static final TextDiffType NONE = new TextDiffType(DiffBundle.message("diff.type.none.name"), null);
+  public static final TextDiffType NONE = new TextDiffType(TextDiffTypeEnum.NONE, DiffBundle.message("diff.type.none.name"), null);
 
+  private final TextDiffTypeEnum myType;
   public static final List<TextDiffType> DIFF_TYPES = Arrays.asList(new TextDiffType[]{DELETED, CHANGED, INSERT});
   public static final List<TextDiffType> MERGE_TYPES = Arrays.asList(new TextDiffType[]{DELETED, CHANGED, INSERT, CONFLICT});
   private final TextAttributesKey myAttributesKey;
@@ -46,7 +48,23 @@ public class TextDiffType implements DiffStatusBar.LegendTypeDescriptor {
     }
   };
 
-  private TextDiffType(String displayName, TextAttributesKey attrubutesKey) {
+  public static TextDiffType create(@NotNull final TextDiffTypeEnum type) {
+    if (TextDiffTypeEnum.INSERT.equals(type)) {
+      return INSERT;
+    } else if (TextDiffTypeEnum.CHANGED.equals(type)) {
+      return CHANGED;
+    } else if (TextDiffTypeEnum.DELETED.equals(type)) {
+      return DELETED;
+    } else if (TextDiffTypeEnum.CONFLICT.equals(type)) {
+      return CONFLICT;
+    } else {
+      // NONE
+      return NONE;
+    }
+  }
+
+  private TextDiffType(TextDiffTypeEnum type, String displayName, TextAttributesKey attrubutesKey) {
+    myType = type;
     myAttributesKey = attrubutesKey;
     myDisplayName = displayName;
   }
@@ -83,5 +101,9 @@ public class TextDiffType implements DiffStatusBar.LegendTypeDescriptor {
 
   public String toString(){
     return myDisplayName;
+  }
+
+  public TextDiffTypeEnum getType() {
+    return myType;
   }
 }

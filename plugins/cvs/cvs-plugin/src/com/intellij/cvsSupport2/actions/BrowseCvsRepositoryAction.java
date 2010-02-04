@@ -78,6 +78,7 @@ public class BrowseCvsRepositoryAction extends AbstractAction implements DumbAwa
                                    CvsTabbedWindow tabbedWindow,
                                    boolean successfully,
                                    CvsHandler handler) {
+    if (mySelectedConfiguration == null) return;
     if (! loginImpl(context.getProject(), new ModalityContextImpl(ModalityState.NON_MODAL, false),
                     new Consumer<VcsException>() {
                       public void consume(VcsException e) {

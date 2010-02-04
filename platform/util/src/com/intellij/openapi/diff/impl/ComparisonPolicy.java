@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,13 @@
  */
 package com.intellij.openapi.diff.impl;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.diff.ex.DiffFragment;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.highlighting.Util;
 import com.intellij.openapi.diff.impl.processing.DiffCorrection;
 import com.intellij.openapi.diff.impl.processing.Formatting;
 import com.intellij.openapi.diff.impl.processing.Word;
-import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -50,7 +50,7 @@ public abstract class ComparisonPolicy {
     return DiffFragmentBuilder.buildFragments(builder, change);
   }
 
-  public static final ComparisonPolicy DEFAULT = new ComparisonPolicy(DiffBundle.message("comparison.policy.default.name")) {
+  public static final ComparisonPolicy DEFAULT = new ComparisonPolicy(CommonBundle.message("comparison.policy.default.name")) {
     protected Object[] getWrappers(String[] strings) {
       return strings;
     }
@@ -69,7 +69,7 @@ public abstract class ComparisonPolicy {
     }
   };
 
-  public static final ComparisonPolicy TRIM_SPACE = new ComparisonPolicy(DiffBundle.message("comparison.policy.trim.space.name")) {
+  public static final ComparisonPolicy TRIM_SPACE = new ComparisonPolicy(CommonBundle.message("comparison.policy.trim.space.name")) {
     protected Object[] getLineWrappers(String[] lines) {
       return trimStrings(lines);
     }
@@ -182,7 +182,7 @@ public abstract class ComparisonPolicy {
 
   private static class IgnoreSpacePolicy extends ComparisonPolicy implements DiffCorrection.FragmentProcessor<DiffCorrection.FragmentsCollector> {
     public IgnoreSpacePolicy() {
-      super(DiffBundle.message("comparison.policy.ignore.spaces.name"));
+      super(CommonBundle.message("comparison.policy.ignore.spaces.name"));
     }
 
     protected Object[] getLineWrappers(String[] lines) {

@@ -18,6 +18,7 @@ package com.intellij.openapi.diff.impl.highlighting;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
+import com.intellij.openapi.diff.impl.fragments.FragmentHighlighterImpl;
 import com.intellij.openapi.diff.impl.fragments.FragmentList;
 import com.intellij.openapi.diff.impl.fragments.FragmentListImpl;
 import com.intellij.openapi.diff.impl.fragments.LineFragment;
@@ -60,7 +61,8 @@ public class SimpleDiffPanelState<DiffMarkupType extends DiffMarkup> implements 
       public void run() {
         for (Iterator<LineFragment> iterator = lines.iterator(); iterator.hasNext();) {
           LineFragment line = iterator.next();
-          line.highlight(myAppender1, myAppender2, !iterator.hasNext());
+          final FragmentHighlighterImpl fragmentHighlighter = new FragmentHighlighterImpl(myAppender1, myAppender2, !iterator.hasNext());
+          line.highlight(fragmentHighlighter);
         }
       }
     });

@@ -18,6 +18,7 @@ package com.intellij.openapi.diff.impl.splitter;
 import com.intellij.openapi.diff.impl.EditingSides;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.util.TextDiffType;
+import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.util.Comparing;
@@ -91,7 +92,9 @@ class DividerPoligon {
     ArrayList<DividerPoligon> poligons = new ArrayList<DividerPoligon>();
     for (int i = indecies.getStart(); i < indecies.getEnd(); i++) {
       Trapezium trapezium = lineBlocks.getTrapezium(i);
-      TextDiffType type = lineBlocks.getType(i);
+      final TextDiffTypeEnum diffTypeEnum = lineBlocks.getType(i);
+      if (diffTypeEnum == null) continue;
+      TextDiffType type = TextDiffType.create(diffTypeEnum);
       if (type == null) continue;
       Color color = type.getPoligonColor(editor1);
       poligons.add(createPoligon(transformations, trapezium, color, left));
