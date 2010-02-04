@@ -169,7 +169,7 @@ target('default': "Build artifacts") {
   layoutWin(paths.distWin)
   layoutMac(buildName: buildName,
             version: "1.0",
-            system_selector: "PY",
+            system_selector: "PyCharm10",
             jdk_req: "1.6*",
             vmoptions: "-Xms128m -Xmx512m -XX:MaxPermSize=250m -ea",
             paths.distMac)
