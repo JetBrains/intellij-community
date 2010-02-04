@@ -3,12 +3,13 @@ package com.intellij.compiler.artifacts.ui;
 import com.intellij.compiler.artifacts.ArtifactsTestUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
+import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeComponent;
 import com.intellij.openapi.roots.ui.configuration.artifacts.actions.ExtractArtifactAction;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.TestInputDialog;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.roots.ui.configuration.artifacts.actions.IExtractArtifactDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactType;
+import com.intellij.packaging.impl.artifacts.PlainArtifactType;
 
 /**
  * @author nik
@@ -20,12 +21,12 @@ public class ExtractArtifactActionTest extends ArtifactEditorActionTestCase {
     assertDisabled();
 
     selectNode("a.txt");
-    extract("new");
+    perform();
     assertLayout("<root>\n" +
-                 " artifact:new");
+                 " artifact:a_txt");
 
     applyChanges();
-    assertLayout(ArtifactsTestUtil.findArtifact(myProject, "new"), "<root>\n" +
+    assertLayout(ArtifactsTestUtil.findArtifact(myProject, "a_txt"), "<root>\n" +
                                                                    " file:" + getProjectBasePath() + "/a.txt");
   }
 
@@ -50,35 +51,31 @@ public class ExtractArtifactActionTest extends ArtifactEditorActionTestCase {
     assertWillNotBePerformed();
 
     selectNode("dir/b.txt");
-    extract("new");
+    perform();
     assertLayout("<root>\n" +
                  " artifact:included\n" +
                  " dir/\n" +
-                 "  artifact:new");
+                 "  artifact:b_txt");
     applyChanges();
-    assertLayout(ArtifactsTestUtil.findArtifact(myProject, "new"), "<root>\n" +
+    assertLayout(ArtifactsTestUtil.findArtifact(myProject, "b_txt"), "<root>\n" +
                                                                    " file:" + getProjectBasePath() + "/b.txt");
-  }
-
-  private void extract(final String name) {
-    final Ref<Boolean> shown = Ref.create(false);
-    final TestInputDialog old = Messages.setTestInputDialog(new TestInputDialog() {
-      public String show(String message) {
-        shown.set(true);
-        return name;
-      }
-    });
-    try {
-      perform();
-    }
-    finally {
-      Messages.setTestInputDialog(old);
-    }
-    assertTrue(shown.get());
   }
 
   @Override
   protected AnAction createAction(final ArtifactEditorEx artifactEditor) {
-    return new ExtractArtifactAction(artifactEditor);
+    return new ExtractArtifactAction(artifactEditor) {
+      @Override
+      protected IExtractArtifactDialog showDialog(LayoutTreeComponent treeComponent, final String initialName) {
+        return new IExtractArtifactDialog() {
+          public String getArtifactName() {
+            return initialName;
+          }
+
+          public ArtifactType getArtifactType() {
+            return PlainArtifactType.getInstance();
+          }
+        };
+      }
+    };
   }
 }
