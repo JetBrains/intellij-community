@@ -19,6 +19,10 @@ import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.lifecycle.AtomicSectionsAware;
 import com.intellij.lifecycle.ControlledAlarmFactory;
 import com.intellij.lifecycle.SlowlyClosingAlarm;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
@@ -127,6 +131,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public void projectOpened() {
     initializeForNewProject();
 
+    Notifications.Bus.notify(new Notification("TestGroup", "Check notifications are working", "Check notifications are working",
+                                                    NotificationType.ERROR), NotificationDisplayType.STICKY_BALLOON, myProject);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       myWorker.initialized();
       myUpdater.initialized();
