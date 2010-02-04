@@ -1811,6 +1811,44 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
   }
 
+  /**
+   * Delegate method for compatibility with older versions of IDEA 
+   */
+  @NotNull
+  public ActionCallback requestFocus(@NotNull Component c, boolean forced) {
+    return IdeFocusManager.getInstance(myProject).requestFocus(c, forced);
+  }
 
+  @NotNull
+  public ActionCallback requestFocus(@NotNull FocusCommand command, boolean forced) {
+    return IdeFocusManager.getInstance(myProject).requestFocus(command, forced);
+  }
 
+  public JComponent getFocusTargetFor(@NotNull JComponent comp) {
+    return IdeFocusManager.getInstance(myProject).getFocusTargetFor(comp);
+  }
+
+  public void doWhenFocusSettlesDown(@NotNull Runnable runnable) {
+    IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(runnable);
+  }
+
+  public Component getFocusedDescendantFor(Component comp) {
+    return IdeFocusManager.getInstance(myProject).getFocusedDescendantFor(comp);
+  }
+
+  public boolean dispatch(KeyEvent e) {
+    return IdeFocusManager.getInstance(myProject).dispatch(e);
+  }
+
+  public void suspendKeyProcessingUntil(@NotNull ActionCallback done) {
+    IdeFocusManager.getInstance(myProject).suspendKeyProcessingUntil(done);
+  }
+
+  public boolean isFocusBeingTransferred() {
+    return IdeFocusManager.getInstance(myProject).isFocusBeingTransferred();
+  }
+
+  public Expirable getTimestamp(boolean trackOnlyForcedCommands) {
+    return IdeFocusManager.getInstance(myProject).getTimestamp(trackOnlyForcedCommands);
+  }
 }
