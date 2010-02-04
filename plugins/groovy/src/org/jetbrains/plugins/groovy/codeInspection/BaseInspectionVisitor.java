@@ -23,6 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiWhiteSpace;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -119,14 +120,14 @@ public abstract class BaseInspectionVisitor extends GroovyRecursiveElementVisito
     registerError(((GrReferenceExpression) method.getInvokedExpression()).getReferenceNameElement(), description, fix);
   }
 
-  private void registerError(PsiElement location, String description,
+  private void registerError(@NotNull PsiElement location, String description,
                              LocalQuickFix[] fixes) {
     problemsHolder.registerProblem(location,
         description,
         ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fixes);
   }
 
-  protected void registerError(PsiElement location, Object... args) {
+  protected void registerError(@NotNull PsiElement location, Object... args) {
     final LocalQuickFix[] fix = createFixes(location);
     final String description = inspection.buildErrorString(args);
     registerError(location, description, fix);

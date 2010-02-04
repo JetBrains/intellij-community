@@ -17,17 +17,19 @@ package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.ui.ArtifactEditorContext;
-import com.intellij.packaging.ui.PackagingSourceItem;
-import com.intellij.packaging.ui.SourceItemPresentation;
-import com.intellij.packaging.ui.SourceItemWeights;
+import com.intellij.packaging.elements.PackagingElementFactory;
+import com.intellij.packaging.ui.*;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author nik
@@ -36,7 +38,7 @@ public class ModuleSourceItemGroup extends PackagingSourceItem {
   private final Module myModule;
 
   public ModuleSourceItemGroup(@NotNull Module module) {
-    super(false);
+    super(true);
     myModule = module;
   }
 
@@ -54,7 +56,47 @@ public class ModuleSourceItemGroup extends PackagingSourceItem {
 
   @NotNull
   public List<? extends PackagingElement<?>> createElements(@NotNull ArtifactEditorContext context) {
-    return Collections.emptyList();
+    final Set<Module> modules = new LinkedHashSet<Module>();
+    collectDependentModules(myModule, modules, context);
+
+    final Artifact artifact = context.getArtifact();
+    final ArtifactType artifactType = artifact.getArtifactType();
+    Set<PackagingSourceItem> items = new LinkedHashSet<PackagingSourceItem>();
+    for (Module module : modules) {
+      for (PackagingSourceItemsProvider provider : PackagingSourceItemsProvider.EP_NAME.getExtensions()) {
+        final ModuleSourceItemGroup parent = new ModuleSourceItemGroup(module);
+        for (PackagingSourceItem sourceItem : provider.getSourceItems(context, artifact, parent)) {
+          if (artifactType.isSuitableItem(sourceItem) && sourceItem.isProvideElements()) {
+            items.add(sourceItem);
+          }
+        }
+      }
+    }
+
+    List<PackagingElement<?>> result = new ArrayList<PackagingElement<?>>();
+    final PackagingElementFactory factory = PackagingElementFactory.getInstance();
+    for (PackagingSourceItem item : items) {
+      final String path = artifactType.getDefaultPathFor(item.getKindOfProducedElements());
+      if (path != null) {
+        result.addAll(factory.createParentDirectories(path, item.createElements(context)));
+      }
+    }
+    return result;
+  }
+
+  private static void collectDependentModules(final Module module, Set<Module> modules, ArtifactEditorContext context) {
+    if (!modules.add(module)) return;
+    
+    for (OrderEntry entry : context.getModulesProvider().getRootModel(module).getOrderEntries()) {
+      if (entry instanceof ModuleOrderEntry) {
+        final ModuleOrderEntry moduleEntry = (ModuleOrderEntry)entry;
+        final Module dependency = moduleEntry.getModule();
+        final DependencyScope scope = moduleEntry.getScope();
+        if (dependency != null && scope != DependencyScope.TEST && scope != DependencyScope.PROVIDED) {
+          collectDependentModules(dependency, modules, context);
+        }
+      }
+    }
   }
 
   public Module getModule() {

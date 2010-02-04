@@ -30,6 +30,7 @@ public interface GrNewExpression extends GrCallExpression {
   @Nullable
   GrExpression getQualifier();
 
+  @Nullable
   GrCodeReferenceElement getReferenceElement();
 
   GroovyResolveResult[] multiResolveConstructor();

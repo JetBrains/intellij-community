@@ -15,7 +15,6 @@
  */
 package com.intellij.compiler.impl.packagingCompiler;
 
-import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.make.BuildInstructionVisitor;
 import com.intellij.openapi.compiler.make.FileCopyInstruction;
 
@@ -35,7 +34,7 @@ public class FileCopyInstructionImpl extends BuildInstructionBase implements Fil
   }
 
   public String toString() {
-    return CompilerBundle.message("file.copy.instruction.file.to.file.message.text", getFile(), getOutputRelativePath());
+    return "Copy " + getFile() + "->" + getOutputRelativePath();
   }
 
   public boolean equals(Object o) {

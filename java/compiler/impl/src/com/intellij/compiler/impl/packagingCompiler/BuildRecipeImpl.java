@@ -19,7 +19,6 @@
  */
 package com.intellij.compiler.impl.packagingCompiler;
 
-import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.make.BuildInstruction;
 import com.intellij.openapi.compiler.make.BuildInstructionVisitor;
 import com.intellij.openapi.compiler.make.BuildRecipe;
@@ -71,7 +70,7 @@ public class BuildRecipeImpl implements BuildRecipe {
   }
 
   public String toString() {
-    String s = CompilerBundle.message("message.text.build.recipe");
+    String s = "Build recipe:";
     for (BuildInstruction buildInstruction : myInstructions) {
       s += "\n" + buildInstruction + "; ";
     }

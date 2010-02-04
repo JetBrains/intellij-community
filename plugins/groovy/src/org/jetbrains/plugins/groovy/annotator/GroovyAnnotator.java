@@ -1102,13 +1102,12 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       // Register quickfix
       final PsiElement nameElement = refElement.getReferenceNameElement();
       final PsiElement toHighlight = nameElement != null ? nameElement : refElement;
-      final Annotation annotation = holder.createErrorAnnotation(toHighlight, message);
+      final Annotation annotation = holder.createInfoAnnotation(toHighlight, message);
       // todo implement for nested classes
       if (refElement.getQualifier() == null) {
         registerCreateClassByTypeFix(refElement, annotation);
         registerAddImportFixes(refElement, annotation);
       }
-      annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
     }
     else if (!resolveResult.isAccessible()) {
       String message = GroovyBundle.message("cannot.access", refElement.getReferenceName());
