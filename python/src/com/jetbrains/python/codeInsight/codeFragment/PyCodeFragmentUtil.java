@@ -24,8 +24,8 @@ public class PyCodeFragmentUtil {
   }
 
   public static CodeFragment createCodeFragment(@NotNull final ScopeOwner owner,
-                                                  @NotNull final PsiElement startInScope,
-                                                  @NotNull final PsiElement endInScope) throws CannotCreateCodeFragmentException {
+                                                @NotNull final PsiElement startInScope,
+                                                @NotNull final PsiElement endInScope) throws CannotCreateCodeFragmentException {
     final int start = startInScope.getTextOffset();
     final int end = endInScope.getTextOffset() + endInScope.getTextLength();
 

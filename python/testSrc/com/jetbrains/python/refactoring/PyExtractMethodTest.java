@@ -101,7 +101,7 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
     doTest("context/methodindent.before.py", "bar", "context/methodindent.after.py");
   }
 
-  //public void testMethodReturn() throws Throwable {
-  //  doTest("context/methodreturn.before.py", "bar", "context/methodreturn.after.py");
-  //}
+  public void testMethodReturn() throws Throwable {
+    doTest("context/methodreturn.before.py", "bar", "context/methodreturn.after.py");
+  }
 }

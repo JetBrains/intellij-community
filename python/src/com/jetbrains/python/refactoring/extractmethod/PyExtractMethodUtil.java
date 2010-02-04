@@ -68,7 +68,7 @@ public class PyExtractMethodUtil {
               generatedMethod = insertGeneratedMethod(statement1, generatedMethod);
 
               // Process parameters
-              final boolean isMethod = isMethodContext(generatedMethod);
+              final boolean isMethod = PyPsiUtils.isMethodContext(generatedMethod);
               processParameters(project, generatedMethod, variableData, isMethod);
 
               // Generating call element
@@ -116,7 +116,7 @@ public class PyExtractMethodUtil {
               generatedMethod = insertGeneratedMethod(statement1, generatedMethod);
 
               // Process parameters
-              final boolean isMethod = isMethodContext(generatedMethod);
+              final boolean isMethod = PyPsiUtils.isMethodContext(generatedMethod);
               processParameters(project, generatedMethod, variableData, isMethod);
 
               // Generate call element
@@ -138,10 +138,6 @@ public class PyExtractMethodUtil {
         }
       }, "Extract method", null);
     }
-  }
-
-  private static boolean isMethodContext(PyFunction generatedMethod) {
-    return PsiTreeUtil.getParentOfType(generatedMethod, PyFile.class, PyClass.class) instanceof PyClass;
   }
 
   public static void extractFromExpression(final Project project,
@@ -179,7 +175,7 @@ public class PyExtractMethodUtil {
               generatedMethod = insertGeneratedMethod(expression, generatedMethod);
 
               // Process parameters
-              final boolean isMethod = isMethodContext(generatedMethod);
+              final boolean isMethod = PyPsiUtils.isMethodContext(generatedMethod);
               processParameters(project, generatedMethod, variableData, isMethod);
 
               // Generating call element
@@ -372,24 +368,24 @@ public class PyExtractMethodUtil {
         return LanguageNamesValidation.INSTANCE.forLanguage(PythonLanguage.getInstance()).isIdentifier(name, project);
       }
     };
-
+    final boolean isMethod = PyPsiUtils.isMethodContext(element);
     final ExtractMethodDecorator decorator = new ExtractMethodDecorator() {
       public String createMethodPreview(final String methodName, final AbstractVariableData[] variableDatas) {
         final StringBuilder builder = new StringBuilder();
-        builder.append("def ").append(methodName);
-        builder.append("(");
-        boolean first = true;
+        if (isMethod) {
+          builder.append("self");
+        }
         for (AbstractVariableData variableData : variableDatas) {
           if (variableData.passAsParameter) {
-            if (first) {
-              first = false;
-            }
-            else {
+            if (builder.length() != 0) {
               builder.append(", ");
             }
             builder.append(variableData.name);
           }
         }
+        builder.insert(0, "(");
+        builder.insert(0, methodName);
+        builder.insert(0, "def ");
         builder.append(")");
         return builder.toString();
       }

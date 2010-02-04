@@ -8,6 +8,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 
 import java.util.*;
 
@@ -59,6 +60,10 @@ public class PyCodeFragmentBuilder extends PyRecursiveElementVisitor {
     // Process import references
     if (PyImportStatementNavigator.getImportStatementByReference(element) != null){
       processDeclaration(element);
+      return;
+    }
+    // Ignore self as local variable usage in case of method context
+    if (PyPsiUtils.isMethodContext(element) && "self".equals(element.getName())){
       return;
     }
 
