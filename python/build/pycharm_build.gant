@@ -308,7 +308,7 @@ def buildTarGz() {
       include(name: "pycharm.sh")
     }
     tarfileset(dir: "$home/python/build", fullpath: "$tarRoot/bin/pycharm.vmoptions") {
-      include(name: "pycharm.exe.vmoptions")
+      include(name: "pycharm.vmoptions")
     }
     tarfileset(dir: "$home/python/help", includes: "pycharmhelp.jar", prefix: "$tarRoot/help")
   }
