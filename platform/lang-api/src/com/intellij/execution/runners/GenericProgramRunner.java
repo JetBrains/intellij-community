@@ -26,9 +26,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryConfiguration;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -75,15 +73,14 @@ public abstract class GenericProgramRunner<Settings extends JDOMExternalizable> 
 
   public void execute(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env, @Nullable final Callback callback)
       throws ExecutionException {
-    final DataContext dataContext = env.getDataContext();
     final RunProfile profile = env.getRunProfile();
 
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = env.getProject();
     if (project == null) {
       return;
     }
     final RunContentDescriptor reuseContent =
-      ExecutionManager.getInstance(project).getContentManager().getReuseContent(executor, dataContext);
+      ExecutionManager.getInstance(project).getContentManager().getReuseContent(executor, env.getContentToReuse());
 
     final RunProfileState state = env.getState(executor);
     if (state == null) {

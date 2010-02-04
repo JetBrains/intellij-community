@@ -15,11 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.patch;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diff.DiffRequestFactory;
-import com.intellij.openapi.diff.MergeRequest;
-import com.intellij.openapi.diff.impl.patch.ApplyPatchException;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
@@ -27,23 +23,25 @@ import com.intellij.openapi.diff.impl.patch.formove.PathMerger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.changes.SimpleContentRevision;
 import com.intellij.openapi.vcs.changes.actions.ChangeDiffRequestPresentable;
-import com.intellij.openapi.vcs.changes.actions.DiffPresentationReturnValue;
 import com.intellij.openapi.vcs.changes.actions.DiffRequestPresentable;
-import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 public class FilePatchInProgress implements Strippable {
   private final TextFilePatch myPatch;
@@ -235,36 +233,6 @@ public class FilePatchInProgress implements Strippable {
       } else {
         return new ChangeDiffRequestPresentable(project, this);
       }
-    }
-  }
-
-  private static class MergedDiffRequestPresentable implements DiffRequestPresentable {
-    private final Project myProject;
-    private final VirtualFile myFile;
-    private final String myAfterTitle;
-    private final ApplyPatchForBaseRevisionTexts myTexts;
-
-    private MergedDiffRequestPresentable(final Project project, final ApplyPatchForBaseRevisionTexts texts, final VirtualFile file, final String afterTitle) {
-      myTexts = texts;
-      myProject = project;
-      myFile = file;
-      myAfterTitle = afterTitle;
-    }
-
-    public MyResult step() {
-      final MergeRequest request = DiffRequestFactory.getInstance()
-        .create3WayDiffRequest(myTexts.getLocal().toString(), myTexts.getPatched(), myTexts.getBase().toString(), myProject, null);
-      request.setWindowTitle(VcsBundle.message("patch.apply.conflict.title", myFile.getPresentableUrl()));
-      request.setVersionTitles(new String[] {"Current Version", "Base Version", myAfterTitle});
-      return new MyResult(request, DiffPresentationReturnValue.useRequest);
-    }
-
-    public boolean haveStuff() {
-      return true;
-    }
-
-    public List<? extends AnAction> createActions(ShowDiffAction.DiffExtendUIFactory uiFactory) {
-      return Collections.emptyList();
     }
   }
 

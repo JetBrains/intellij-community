@@ -24,6 +24,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -47,13 +48,15 @@ public class DfaUtil {
   private DfaUtil() {
   }
 
+  private static final MultiValuesMap<PsiVariable, PsiExpression> TOO_COMPLEX = new MultiValuesMap<PsiVariable, PsiExpression>();
+  @Nullable("null means DFA analysis has failed (too complex to analyze)")
   public static Collection<PsiExpression> getCachedVariableValues(@Nullable final PsiVariable variable, @Nullable final PsiElement context) {
     if (variable == null || context == null) return Collections.emptyList();
 
     CachedValue<MultiValuesMap<PsiVariable, PsiExpression>> cachedValue = context.getUserData(DFA_VARIABLE_INFO_KEY);
     if (cachedValue == null) {
       final PsiElement codeBlock = getEnclosingCodeBlock(variable, context);
-      cachedValue = context.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<MultiValuesMap<PsiVariable, PsiExpression>>() {
+      cachedValue = CachedValuesManager.getManager(context.getProject()).createCachedValue(new CachedValueProvider<MultiValuesMap<PsiVariable, PsiExpression>>() {
         public Result<MultiValuesMap<PsiVariable, PsiExpression>> compute() {
           final MultiValuesMap<PsiVariable, PsiExpression> result;
           if (codeBlock == null) {
@@ -65,7 +68,7 @@ public class DfaUtil {
               result = visitor.myValues;
             }
             else {
-              result = null;
+              result = TOO_COMPLEX;
             }
           }
           return new Result<MultiValuesMap<PsiVariable, PsiExpression>>(result, codeBlock);
@@ -74,6 +77,7 @@ public class DfaUtil {
       context.putUserData(DFA_VARIABLE_INFO_KEY, cachedValue);
     }
     final MultiValuesMap<PsiVariable, PsiExpression> value = cachedValue.getValue();
+    if (value == TOO_COMPLEX) return null;
     final Collection<PsiExpression> expressions = value == null ? null : value.get(variable);
     return expressions == null ? Collections.<PsiExpression>emptyList() : expressions;
   }
@@ -81,7 +85,7 @@ public class DfaUtil {
   public static enum Nullness {
     NOT_NULL,NULL,UNKNOWN
   }
-  // TRUE->not null, FALSE->null, null->unknown
+
   @NotNull
   public static Nullness checkNullness(@Nullable final PsiVariable variable, @Nullable final PsiElement context) {
     if (variable == null || context == null) return Nullness.UNKNOWN;
@@ -139,6 +143,7 @@ public class DfaUtil {
     return codeBlock;
   }
 
+  @Nullable("null means DFA analysis has failed (too complex to analyze)")
   public static Collection<? extends PsiElement> getPossibleInitializationElements(final PsiElement qualifierExpression) {
     if (qualifierExpression instanceof PsiMethodCallExpression) {
       return Collections.singletonList(qualifierExpression);
@@ -146,7 +151,8 @@ public class DfaUtil {
     else if (qualifierExpression instanceof PsiReferenceExpression) {
       final PsiElement targetElement = ((PsiReferenceExpression)qualifierExpression).resolve();
       if (targetElement instanceof PsiVariable) {
-        final Collection<? extends PsiElement> variableValues = getCachedVariableValues((PsiVariable)targetElement, (PsiExpression)qualifierExpression);
+        final Collection<? extends PsiElement> variableValues = getCachedVariableValues((PsiVariable)targetElement, qualifierExpression);
+        if (variableValues == null) return null;
         if (variableValues.isEmpty() && targetElement instanceof PsiField) {
           return getVariableAssignmentsInFile((PsiVariable)targetElement, false);
         }
@@ -159,6 +165,7 @@ public class DfaUtil {
     return Collections.emptyList();
   }
 
+  @NotNull
   public static Collection<PsiExpression> getVariableAssignmentsInFile(final PsiVariable psiVariable, final boolean literalsOnly) {
     final Ref<Boolean> modificationRef = Ref.create(Boolean.FALSE);
     final List<PsiExpression> list = ContainerUtil.mapNotNull(

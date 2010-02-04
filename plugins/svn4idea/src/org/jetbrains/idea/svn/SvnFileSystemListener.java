@@ -513,10 +513,10 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
     if (!myAddedFiles.isEmpty()) {
       processAddedFiles(project);
     }
+    processMovedFiles(project);
     if (!myDeletedFiles.isEmpty()) {
       processDeletedFiles(project);
     }
-    processMovedFiles(project);
 
     final List<VcsException> exceptionList = myMoveExceptions.get(project);
     if (exceptionList != null && ! exceptionList.isEmpty()) {

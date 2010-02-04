@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
+import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.DefaultTreeExpander;
@@ -49,10 +51,8 @@ import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.elements.ArchivePackagingElement;
 import com.intellij.packaging.impl.elements.ManifestFileUtil;
 import com.intellij.packaging.ui.ManifestFileConfiguration;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.TabbedPaneWrapper;
-import com.intellij.ui.TreeToolTipHandler;
+import com.intellij.ui.*;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.ThreeStateCheckBox;
@@ -61,6 +61,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -90,6 +92,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   private TabbedPaneWrapper myTabbedPane;
   private ArtifactPropertiesEditors myPropertiesEditors;
   private ArtifactValidationManagerImpl myValidationManager;
+  private boolean myDisposed;
 
   public ArtifactEditorImpl(final @NotNull ArtifactsStructureConfigurableContext context, @NotNull Artifact artifact, @NotNull ArtifactEditorSettings settings) {
     myContext = createArtifactEditorContext(context);
@@ -200,9 +203,25 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
 
     final JPanel rightPanel = new JPanel(new BorderLayout());
     final JPanel rightTopPanel = new JPanel(new BorderLayout());
-    rightTopPanel.add(new JLabel("Available Elements (drag'n'drop to layout tree)"), BorderLayout.SOUTH);
+    final JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+    labelPanel.add(new JLabel("Available Elements"));
+    final HyperlinkLabel link = new HyperlinkLabel("");
+    link.setIcon(IconLoader.getIcon("/general/help.png"));
+    link.addHyperlinkListener(new HyperlinkListener() {
+      public void hyperlinkUpdate(HyperlinkEvent e) {
+        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          final JLabel label = new JLabel(ProjectBundle.message("artifact.source.items.tree.tooltip"));
+          label.setBorder(HintUtil.createHintBorder());
+          label.setBackground(HintUtil.INFORMATION_COLOR);
+          label.setOpaque(true);
+          HintManager.getInstance().showHint(label, RelativePoint.getSouthEastOf(link), HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE, -1);
+        }
+      }
+    });
+    labelPanel.add(link);
+    rightTopPanel.add(labelPanel, BorderLayout.SOUTH);
     rightPanel.add(rightTopPanel, BorderLayout.NORTH);
-    rightPanel.add(ScrollPaneFactory.createScrollPane(mySourceItemsTree.getTree()), BorderLayout.CENTER);
+    rightPanel.add(ScrollPaneFactory.createScrollPane(mySourceItemsTree), BorderLayout.CENTER);
     rightPanel.setBorder(border);
     splitter.setSecondComponent(rightPanel);
 
@@ -303,6 +322,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     popupActionGroup.add(new ExtractArtifactAction(this));
     popupActionGroup.add(new InlineArtifactAction(this));
     popupActionGroup.add(new RenamePackagingElementAction(this));
+    popupActionGroup.add(new SurroundElementWithAction(this));
     popupActionGroup.add(Separator.getInstance());
     popupActionGroup.add(new HideContentAction(this));
     popupActionGroup.add(new LayoutTreeNavigateAction(myLayoutTreeComponent));
@@ -350,6 +370,11 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   }
 
   public void dispose() {
+    myDisposed = true;
+  }
+
+  public boolean isDisposed() {
+    return myDisposed;
   }
 
   public LayoutTreeComponent getLayoutTreeComponent() {

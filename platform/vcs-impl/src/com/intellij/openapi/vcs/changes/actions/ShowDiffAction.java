@@ -23,7 +23,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.diff.DiffTool;
-import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.DumbAware;
@@ -90,9 +89,6 @@ public class ShowDiffAction extends AnAction implements DumbAware {
         int index = 0;
         if (convertedChanges.length == 1) {
           final Change selectedChange = convertedChanges[0];
-          if (checkNotifyBinaryDiff(selectedChange)) {
-            return;
-          }
           ChangeList changeList = ((ChangeListManagerImpl) ChangeListManager.getInstance(project)).getIdentityChangeList(selectedChange);
           if (changeList != null) {
             if (changesInListCopy == null) {

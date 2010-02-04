@@ -67,6 +67,9 @@ public class MockChangelistBuilder implements ChangelistBuilder {
   public void processSwitchedFile(VirtualFile file, String branch, final boolean recursive) {
   }
 
+  public void processRootSwitch(VirtualFile file, String branch) {
+  }
+
   public boolean isUpdatingUnversionedFiles() {
     return true;
   }

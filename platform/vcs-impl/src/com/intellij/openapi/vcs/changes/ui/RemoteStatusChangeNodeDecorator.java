@@ -48,4 +48,7 @@ public class RemoteStatusChangeNodeDecorator implements ChangeNodeDecorator {
   public List<Pair<String, Stress>> stressPartsOfFileName(Change change, String parentPath) {
     return null;
   }
+
+  public void preDecorate(Change change, ChangesBrowserNodeRenderer renderer, boolean showFlatten) {
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ public class StartupActionScriptManager {
 
     for (ActionCommand actionCommand : commands) {
       //noinspection HardCodedStringLiteral
-      System.out.println("Execute " + actionCommand);
+      LOG.info("Execute " + actionCommand);
       actionCommand.execute();
     }
     if (commands.size() > 0) {
@@ -78,8 +78,7 @@ public class StartupActionScriptManager {
         // problem with scrambled code
         // fas fixed, but still appear because corrupted file still exists
         // return empty list.
-        System.err.println("Internal file was corrupted. Problem is fixed.\nIf some plugins has been installed/uninstalled, please re-install/-uninstall them.");
-        e.printStackTrace();
+        LOG.error("Internal file was corrupted. Problem is fixed.\nIf some plugins has been installed/uninstalled, please re-install/-uninstall them.", e);        
 
         return new ArrayList<ActionCommand>();
       }
@@ -94,17 +93,20 @@ public class StartupActionScriptManager {
 
   private static void saveActionScript(List<ActionCommand> commands) throws IOException {
     File temp = new File(PathManager.getPluginTempPath());
+    boolean exists = true;
     if (!temp.exists()) {
-      temp.mkdirs();
+      exists = temp.mkdirs();
     }
 
-    File file = new File(getActionScriptPath());
-    ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file, false));
-    try {
-      oos.writeObject(commands);
-    }
-    finally {
-      oos.close();
+    if (exists) {
+      File file = new File(getActionScriptPath());
+      ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file, false));
+      try {
+        oos.writeObject(commands);
+      }
+      finally {
+        oos.close();
+      }
     }
   }
 
@@ -145,7 +147,7 @@ public class StartupActionScriptManager {
 
       if (!mySource.exists()) {
         //noinspection HardCodedStringLiteral
-        System.err.println("Source file " + mySource.getAbsolutePath() + " does not exist for action " + this);
+        LOG.error("Source file " + mySource.getAbsolutePath() + " does not exist for action " + this);
       }
       else if (!canCreateFile(myDestination)) {
         JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
@@ -184,7 +186,7 @@ public class StartupActionScriptManager {
     public void execute() throws IOException {
       if (!mySource.exists()) {
         //noinspection HardCodedStringLiteral
-        System.err.println("Source file " + mySource.getAbsolutePath() + " does not exist for action " + this);
+        LOG.error("Source file " + mySource.getAbsolutePath() + " does not exist for action " + this);
       }
       else if (!canCreateFile(myDestination)) {
         JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
@@ -222,7 +224,7 @@ public class StartupActionScriptManager {
     public void execute() throws IOException {
       if (mySource != null && mySource.exists() && !FileUtil.delete(mySource)) {
         //noinspection HardCodedStringLiteral
-        System.err.println("Action " + this + " failed.");
+        LOG.error("Action " + this + " failed.");
         JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
                                       MessageFormat.format("<html>Cannot delete {0}<br>Please, check your access rights on folder <br>{1}",
                                                            mySource.getAbsolutePath(), mySource.getAbsolutePath()),

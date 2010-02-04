@@ -15,26 +15,16 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateBuilderImpl;
-import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiModifier;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.editor.template.expressions.ChooseTypeExpression;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -42,18 +32,17 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 /**
  * @author ven
  */
-public class CreateFieldFromUsageFix implements IntentionAction {
-  private final GrMemberOwner myTargetClass;
+public class CreateFieldFromUsageFix extends CreateFieldFix {
   private final GrReferenceExpression myRefExpression;
 
   public CreateFieldFromUsageFix(GrReferenceExpression refExpression, GrMemberOwner targetClass) {
+    super(targetClass);
     myRefExpression = refExpression;
-    myTargetClass = targetClass;
   }
 
-  @NotNull
-  public String getText() {
-    return GroovyBundle.message("create.field.from.usage", myRefExpression.getReferenceName());
+  @Nullable
+  protected String getFieldName() {
+    return myRefExpression.getReferenceName();
   }
 
   @NotNull
@@ -62,37 +51,18 @@ public class CreateFieldFromUsageFix implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myTargetClass.isValid() && myRefExpression.isValid();
+    return super.isAvailable(project, editor, file) && myRefExpression.isValid();
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiClassType type = JavaPsiFacade.getInstance(project).getElementFactory().createTypeByFQClassName("Object", GlobalSearchScope.allScope(project));
-    String[] modifiers = PsiUtil.isInStaticContext(myRefExpression, myTargetClass) ? new String[]{PsiModifier.STATIC} : ArrayUtil.EMPTY_STRING_ARRAY;
-    GrVariableDeclaration fieldDecl = GroovyPsiElementFactory.getInstance(project).createFieldDeclaration(modifiers,
-        myRefExpression.getReferenceName(), null, type);
-    fieldDecl = myTargetClass.addMemberDeclaration(fieldDecl, null);
-    GrTypeElement typeElement = fieldDecl.getTypeElementGroovy();
-    assert typeElement != null;
-    TypeConstraint[] constraints = GroovyExpectedTypesUtil.calculateTypeConstraints(myRefExpression);
-    ChooseTypeExpression expr = new ChooseTypeExpression(constraints, PsiManager.getInstance(project));
-    TemplateBuilderImpl builder = new TemplateBuilderImpl(fieldDecl);
-    builder.replaceElement(typeElement, expr);
-    fieldDecl = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(fieldDecl);
-    if (fieldDecl == null) {
-      return;
+  protected String[] generateModifiers() {
+    if (myRefExpression != null && PsiUtil.isInStaticContext(myRefExpression, getTargetClass())) {
+      return new String[]{PsiModifier.STATIC};
     }
-
-    Template template = builder.buildTemplate();
-
-    Editor newEditor = QuickfixUtil.positionCursor(project, myTargetClass.getContainingFile(), fieldDecl);
-    TextRange range = fieldDecl.getTextRange();
-    newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
-
-    TemplateManager manager = TemplateManager.getInstance(project);
-    manager.startTemplate(newEditor, template);
+    return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
-  public boolean startInWriteAction() {
-    return true;
+  protected TypeConstraint[] calculateTypeConstrains() {
+    return GroovyExpectedTypesUtil.calculateTypeConstraints(myRefExpression);
+
   }
 }

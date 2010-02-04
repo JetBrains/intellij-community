@@ -29,7 +29,7 @@ public class RecursiveRootPolicy<R> extends RootPolicy<R> {
 
   public R visitModuleOrderEntry(final ModuleOrderEntry moduleOrderEntry, final R value) {
     final Module module = moduleOrderEntry.getModule();
-    if (!myProcessedModules.contains(module)) {
+    if (module != null && !myProcessedModules.contains(module)) {
       myProcessedModules.add(module);
       return ModuleRootManager.getInstance(module).processOrder(this, value);
     }

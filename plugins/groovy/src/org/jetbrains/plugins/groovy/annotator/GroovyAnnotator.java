@@ -34,7 +34,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.intentions.*;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicFix;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicMethodFix;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertyFix;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
@@ -374,7 +375,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     if (constructorResolveResult.getElement() != null) {
       checkMethodApplicability(constructorResolveResult, refElement, myHolder);
       final GrArgumentList argList = newExpression.getArgumentList();
-      if (argList != null && argList.getExpressionArguments().length == 0) checkDefaultMapConstructor(myHolder, argList);
+      if (argList != null && argList.getExpressionArguments().length == 0) checkDefaultMapConstructor(myHolder, argList, constructorResolveResult);
     }
     else {
       final GroovyResolveResult[] results = newExpression.multiResolveConstructor();
@@ -393,7 +394,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
             String message = GroovyBundle.message("cannot.find.default.constructor", ((PsiClass)element).getName());
             myHolder.createWarningAnnotation(toHighlight, message);
           }
-          else checkDefaultMapConstructor(myHolder, argList);
+          else checkDefaultMapConstructor(myHolder, argList, constructorResolveResult);
         }
       }
     }
@@ -999,8 +1000,12 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       return;
     }
 
-    annotation
-      .registerFix(new DynamicFix(QuickfixUtil.isCall(referenceExpression), referenceExpression), referenceExpression.getTextRange());
+    if (QuickfixUtil.isCall(referenceExpression)) {
+      annotation.registerFix(new DynamicMethodFix(referenceExpression), referenceExpression.getTextRange());
+    }
+    else {
+      annotation.registerFix(new DynamicPropertyFix(referenceExpression), referenceExpression.getTextRange());
+    }
   }
 
   private static void highlightMemberResolved(AnnotationHolder holder, GrReferenceExpression refExpr, PsiMember member) {
@@ -1097,13 +1102,12 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       // Register quickfix
       final PsiElement nameElement = refElement.getReferenceNameElement();
       final PsiElement toHighlight = nameElement != null ? nameElement : refElement;
-      final Annotation annotation = holder.createErrorAnnotation(toHighlight, message);
+      final Annotation annotation = holder.createInfoAnnotation(toHighlight, message);
       // todo implement for nested classes
       if (refElement.getQualifier() == null) {
         registerCreateClassByTypeFix(refElement, annotation);
         registerAddImportFixes(refElement, annotation);
       }
-      annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
     }
     else if (!resolveResult.isAccessible()) {
       String message = GroovyBundle.message("cannot.access", refElement.getReferenceName());
@@ -1111,7 +1115,9 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
   }
 
-  private static void checkDefaultMapConstructor(AnnotationHolder holder, GrArgumentList argList) {
+  private static void checkDefaultMapConstructor(AnnotationHolder holder,
+                                                 GrArgumentList argList,
+                                                 GroovyResolveResult constructorResolveResult) {
     if (argList != null) {
       final GrNamedArgument[] args = argList.getNamedArguments();
       for (GrNamedArgument arg : args) {
@@ -1133,7 +1139,18 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         else {
           final PsiElement resolved = label.resolve();
           if (resolved == null) {
-            holder.createWarningAnnotation(label, GroovyBundle.message("no.such.property", label.getName()));
+            final Annotation annotation = holder.createWarningAnnotation(label, GroovyBundle.message("no.such.property", label.getName()));
+
+            PsiElement element = constructorResolveResult.getElement();
+            if (element instanceof PsiMember) {
+              element = ((PsiMember)element).getContainingClass();
+            }
+            if (element instanceof GrMemberOwner) {
+              annotation.registerFix(new CreateFieldFromConstructorLabelFix((GrMemberOwner)element, label.getNamedArgument()));
+            }
+            if (element instanceof PsiClass) {
+              annotation.registerFix(new DynamicPropertyFix(label, (PsiClass)element));
+            }
           }
         }
       }

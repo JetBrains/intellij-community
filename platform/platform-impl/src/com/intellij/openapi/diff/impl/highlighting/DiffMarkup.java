@@ -24,6 +24,7 @@ import com.intellij.openapi.diff.impl.EditorSource;
 import com.intellij.openapi.diff.impl.fragments.Fragment;
 import com.intellij.openapi.diff.impl.util.GutterActionRenderer;
 import com.intellij.openapi.diff.impl.util.TextDiffType;
+import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -59,7 +60,9 @@ public abstract class DiffMarkup implements EditorSource {
   }
 
   public void highlightText(Fragment fragment, boolean drawBorder) {
-    TextDiffType type = fragment.getType();
+    final TextDiffTypeEnum diffTypeEnum = fragment.getType();
+    if (diffTypeEnum == null) return;
+    TextDiffType type = TextDiffType.create(diffTypeEnum);
     if (type == null) return;
     TextRange range = fragment.getRange(getSide());
     TextAttributes attributes = type.getTextAttributes(getEditor());

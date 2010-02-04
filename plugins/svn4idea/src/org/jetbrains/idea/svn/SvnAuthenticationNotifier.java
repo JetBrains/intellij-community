@@ -19,9 +19,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
 import com.intellij.openapi.vcs.impl.GenericNotifierImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
@@ -40,7 +38,7 @@ import org.tmatesoft.svn.core.wc.SVNWCClient;
 public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthenticationNotifier.AuthenticationRequest, SVNURL> {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnAuthenticationNotifier");
 
-  private static final String ourGroupId = "Subversion";
+  private static final String ourGroupId = "SubversionId";
   private final SvnVcs myVcs;
   private final RootsToWorkingCopies myRootsToWorkingCopies;
 
@@ -97,8 +95,8 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
 
   @Override
   public void ensureNotify(AuthenticationRequest obj) {
-    ChangesViewBalloonProblemNotifier.showMe(myVcs.getProject(), "You are not authenticated to '" + obj.getRealm() + "'." +
-      "To login, see pending notifications.", MessageType.ERROR);
+    /*ChangesViewBalloonProblemNotifier.showMe(myVcs.getProject(), "You are not authenticated to '" + obj.getRealm() + "'." +
+      "To login, see pending notifications.", MessageType.ERROR);*/
     super.ensureNotify(obj);
   }
 

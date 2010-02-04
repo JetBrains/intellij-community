@@ -50,6 +50,10 @@ import java.util.List;
 public class MarkTreeConflictResolvedAction extends AnAction implements DumbAware {
   private final static String myText = SvnBundle.message("action.mark.tree.conflict.resolved.text");
 
+  public MarkTreeConflictResolvedAction() {
+    super(myText);
+  }
+
   @Override
   public void update(AnActionEvent e) {
     final MyChecker checker = new MyChecker(e);

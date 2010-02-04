@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataCache;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -47,7 +48,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements SemEle
   private static final Key<CachedValue<XmlFileHeader>> ROOT_TAG_NS_KEY = Key.create("rootTag&ns");
   private static final UserDataCache<CachedValue<XmlFileHeader>,XmlFile,Object> ourRootTagCache = new UserDataCache<CachedValue<XmlFileHeader>, XmlFile, Object>() {
     protected CachedValue<XmlFileHeader> compute(final XmlFile file, final Object o) {
-      return file.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<XmlFileHeader>() {
+      return CachedValuesManager.getManager(file.getProject()).createCachedValue(new CachedValueProvider<XmlFileHeader>() {
         public Result<XmlFileHeader> compute() {
           return new Result<XmlFileHeader>(DomImplUtil.getXmlFileHeader(file), file);
         }

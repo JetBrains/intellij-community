@@ -29,6 +29,8 @@ public interface ChangeNodeDecorator {
   @Nullable
   List<Pair<String, Stress>> stressPartsOfFileName(final Change change, final String parentPath);
 
+  void preDecorate(Change change, ChangesBrowserNodeRenderer renderer, boolean showFlatten);
+
   enum Stress {
     BOLD(Font.BOLD),
     ITALIC(Font.ITALIC),

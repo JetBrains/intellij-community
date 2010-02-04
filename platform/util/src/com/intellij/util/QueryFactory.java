@@ -57,7 +57,7 @@ public class QueryFactory<Result, Parameters> {
    * @param parameters of the search
    */
   public final Query<Result> createUniqueResultsQuery(@NotNull Parameters parameters) {
-    return new UniqueResultsQuery<Result>(createQuery(parameters));
+    return new UniqueResultsQuery<Result, Result>(createQuery(parameters));
   }
 
   /**
@@ -66,6 +66,18 @@ public class QueryFactory<Result, Parameters> {
    * @param hashingStrategy strategy to factor results
    */
   public final Query<Result> createUniqueResultsQuery(@NotNull Parameters parameters, TObjectHashingStrategy<Result> hashingStrategy) {
-    return new UniqueResultsQuery<Result>(createQuery(parameters), hashingStrategy);
+    return new UniqueResultsQuery<Result, Result>(createQuery(parameters), hashingStrategy);
+  }
+
+  /** @return query to perform the search. Obtained results are mapped to whatever objects that are automatically filtered wrt. equals()
+   *  relation. Storing mapped objects instead of original elements may be wise wrt to memory consumption.
+   * @param parameters of the search
+   * @param hashingStrategy strategy to factor results
+   * @param mapper function that maps results to their mapping counterparts.
+   */
+  public final <T> Query<Result> createUniqueResultsQuery(@NotNull Parameters parameters,
+                                                      TObjectHashingStrategy<T> hashingStrategy,
+                                                      Function<Result, T> mapper) {
+    return new UniqueResultsQuery<Result, T>(createQuery(parameters), hashingStrategy, mapper);
   }
 }

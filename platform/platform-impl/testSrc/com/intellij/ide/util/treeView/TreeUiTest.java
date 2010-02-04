@@ -1423,6 +1423,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     public YieldingUpdate() {
       super(true, false);
     }
+
   }
 
   public static class BgLoadingSyncUpdate extends TreeUiTest {

@@ -1,0 +1,656 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Foo.java</file>
+    <line>87</line>
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>16</line>
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>17</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>17</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>18</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>18</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>19</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>19</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>25</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>27</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>27</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>28</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>28</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>29</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>29</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>30</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>30</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>34</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>35</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>35</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>36</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>36</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>37</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>37</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>38</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>38</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>39</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>39</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>43</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>43</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>44</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>44</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>45</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>45</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>47</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>47</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>48</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>48</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>51</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>52</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>52</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>53</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>53</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>54</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>54</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>55</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>55</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>56</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>56</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>60</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>60</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>62</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>62</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>63</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>63</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>64</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>64</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>65</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>65</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>67</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>67</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>68</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>68</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>69</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>69</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>71</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>71</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>72</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>72</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>72</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>72</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>73</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+
+
+  
+  <problem>
+    <file>Foo.java</file>
+    <line>73</line>
+    
+    <description>Numeric overflow in expression</description>
+  </problem>
+</problems>
+

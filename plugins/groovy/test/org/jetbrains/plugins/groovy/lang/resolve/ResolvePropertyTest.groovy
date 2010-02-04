@@ -16,10 +16,6 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 
-import com.intellij.psi.PsiClassType
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiReference
 import com.intellij.psi.util.PropertyUtil
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
@@ -34,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEn
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement
 import org.jetbrains.plugins.groovy.util.TestUtils
+import com.intellij.psi.*
 
 /**
  * @author ven
@@ -154,7 +151,7 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
     PsiReference ref = configureByFile("recursive2/A.groovy");
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof GrMethod);
-    assertNull(((GrMethod) resolved).getReturnType());
+    assertEquals(CommonClassNames.JAVA_LANG_OBJECT, ((GrMethod) resolved).returnType.canonicalText);
   }
 
   public void testNotAField() throws Exception {

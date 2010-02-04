@@ -266,7 +266,7 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessor {
     if (statementAtCaret instanceof GrBlockStatement) return null;
     if (statementAtCaret == null) return null;
 
-    GrControlStatement controlStatement = PsiTreeUtil.getParentOfType(statementAtCaret, GrControlStatement.class);
+    GrControlStatement controlStatement = PsiTreeUtil.getParentOfType(statementAtCaret, GrControlStatement.class, false);
 
     if (controlStatement != null && !PsiTreeUtil.hasErrorElements(statementAtCaret)) {
       return controlStatement;

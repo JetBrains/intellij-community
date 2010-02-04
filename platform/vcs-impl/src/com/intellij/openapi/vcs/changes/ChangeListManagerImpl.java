@@ -19,6 +19,10 @@ import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.lifecycle.AtomicSectionsAware;
 import com.intellij.lifecycle.ControlledAlarmFactory;
 import com.intellij.lifecycle.SlowlyClosingAlarm;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
@@ -489,6 +493,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   MultiMap<String, VirtualFile> getSwitchedFilesMap() {
     synchronized (myDataLock) {
       return myWorker.getSwitchedHolder().getBranchToFileMap();
+    }
+  }
+
+  @Nullable
+  Map<VirtualFile, String> getSwitchedRoots() {
+    synchronized (myDataLock) {
+      return ((SwitchedFileHolder) myComposite.get(FileHolder.HolderType.ROOT_SWITCH)).getFilesMapCopy();
     }
   }
 

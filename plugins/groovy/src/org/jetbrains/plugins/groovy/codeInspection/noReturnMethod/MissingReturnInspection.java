@@ -28,9 +28,7 @@ import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovySuppressableInspectionTool;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
@@ -85,6 +83,7 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
 
   private static void check(GrCodeBlock block, ProblemsHolder holder, boolean mustReturnValue) {
     final Ref<Boolean> always = new Ref<Boolean>(true);
+    final Ref<Boolean> hasExplicitReturn = new Ref<Boolean>(false);
     final Ref<Boolean> sometimes = new Ref<Boolean>(false);
     ControlFlowUtils.visitAllExitPoints(block, new ControlFlowUtils.ExitPointVisitor() {
       public boolean visit(Instruction instruction) {
@@ -98,7 +97,13 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
           return true;
         }
         final PsiElement element = instruction.getElement();
-        if (element instanceof GrReturnStatement || element instanceof GrThrowStatement || element instanceof GrAssertStatement) {
+        if (element instanceof GrReturnStatement) {
+          sometimes.set(true);
+          if (((GrReturnStatement)element).getReturnValue() != null) {
+            hasExplicitReturn.set(true);
+          }
+        }
+        else if (element instanceof GrThrowStatement || element instanceof GrAssertStatement) {
           sometimes.set(true);
         }
         else {
@@ -107,6 +112,12 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
         return true;
       }
     });
+    if (!hasExplicitReturn.get()) {
+      if (!mustReturnValue) {
+        return;
+      }
+      mustReturnValue = true;
+    }
     if ((mustReturnValue && !sometimes.get()) || (sometimes.get() && !always.get())) {
       addNoReturnMessage(block, holder);
     }

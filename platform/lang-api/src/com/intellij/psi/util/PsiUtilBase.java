@@ -599,4 +599,11 @@ public class PsiUtilBase {
     });
     return result[0];
   }
+
+  public static Language getNotAnyLanguage(ASTNode node) {
+    if (node == null) return Language.ANY;
+
+    final Language lang = node.getElementType().getLanguage();
+    return lang == Language.ANY ? getNotAnyLanguage(node.getTreeParent()) : lang;
+  }
 }

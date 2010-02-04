@@ -24,6 +24,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
@@ -31,11 +32,11 @@ import java.util.Set;
 public class InheritanceImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.InheritanceImplUtil");
 
-  public static boolean isInheritor(PsiClass candidateClass, final PsiClass baseClass, final boolean checkDeep) {
+  public static boolean isInheritor(@NotNull PsiClass candidateClass, @NotNull PsiClass baseClass, final boolean checkDeep) {
     return !(baseClass instanceof PsiAnonymousClass) && isInheritor(candidateClass, baseClass, checkDeep, null);
   }
 
-  private static boolean isInheritor(PsiClass candidateClass, PsiClass baseClass, boolean checkDeep, Set<PsiClass> checkedClasses) {
+  private static boolean isInheritor(@NotNull PsiClass candidateClass, @NotNull PsiClass baseClass, boolean checkDeep, Set<PsiClass> checkedClasses) {
     if (candidateClass instanceof PsiAnonymousClass) {
       final PsiClass baseCandidateClass = ((PsiAnonymousClass)candidateClass).getBaseClassType().resolve();
       return baseCandidateClass != null && InheritanceUtil.isInheritorOrSelf(baseCandidateClass, baseClass, checkDeep);
@@ -156,7 +157,7 @@ public class InheritanceImplUtil {
   }
 
   private static boolean checkInheritor(PsiClass aClass, PsiClass baseClass, boolean checkDeep, Set<PsiClass> checkedClasses) {
-    ProgressManager.getInstance().checkCanceled();
+    ProgressManager.checkCanceled();
     if (aClass != null) {
       PsiManager manager = baseClass.getManager();
       if (manager.areElementsEquivalent(baseClass, aClass)) {
@@ -174,7 +175,7 @@ public class InheritanceImplUtil {
     return false;
   }
 
-  public static boolean isInheritorDeep(final PsiClass candidateClass, final PsiClass baseClass, @Nullable final PsiClass classToByPass) {
+  public static boolean isInheritorDeep(@NotNull PsiClass candidateClass, @NotNull PsiClass baseClass, @Nullable final PsiClass classToByPass) {
     if (baseClass instanceof PsiAnonymousClass) {
       return false;
     }

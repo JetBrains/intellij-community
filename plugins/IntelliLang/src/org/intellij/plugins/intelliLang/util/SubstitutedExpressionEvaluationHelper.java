@@ -18,9 +18,7 @@ package org.intellij.plugins.intelliLang.util;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
-import com.intellij.psi.util.CachedValue;
 import com.intellij.util.containers.ConcurrentHashMap;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +35,6 @@ import java.util.concurrent.ConcurrentMap;
  * This is a quite simplified implementation at the moment.
  */
 public class SubstitutedExpressionEvaluationHelper {
-  private static final Key<CachedValue<ConcurrentMap<PsiElement, Object>>> COMPUTED_MAP_KEY = Key.create("COMPUTED_MAP_KEY");
 
   private final PsiConstantEvaluationHelper myHelper;
   private final Configuration myConfiguration;
@@ -78,12 +75,14 @@ public class SubstitutedExpressionEvaluationHelper {
             if (resolved instanceof PsiVariable) {
               resolvedType = ((PsiVariable)resolved).getType();
               final Collection<PsiExpression> values =
-                !useDfa? Collections.<PsiExpression>emptyList() : DfaUtil.getCachedVariableValues(((PsiVariable)resolved), o);
+                !useDfa? Collections.<PsiExpression>emptyList() : DfaUtil.getCachedVariableValues((PsiVariable)resolved, o);
               // return the first computed value as far as we do not support multiple injection
-              for (PsiExpression value : values) {
-                final Object computedValue = auxEvaluator.computeExpression(value, this);
-                if (computedValue != null) {
-                  return computedValue;
+              if (values != null) {
+                for (PsiExpression value : values) {
+                  final Object computedValue = auxEvaluator.computeExpression(value, this);
+                  if (computedValue != null) {
+                    return computedValue;
+                  }
                 }
               }
             }

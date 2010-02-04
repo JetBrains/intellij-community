@@ -65,6 +65,14 @@ public class ShelvedChange {
     return myAfterPath;
   }
 
+  @Nullable
+  public String getAfterFileName() {
+    if (myAfterPath == null) return null;
+    int pos = myAfterPath.lastIndexOf('/');
+    if (pos >= 0) return myAfterPath.substring(pos+1);
+    return myAfterPath;
+  }
+
   public String getBeforeFileName() {
     int pos = myBeforePath.lastIndexOf('/');
     if (pos >= 0) return myBeforePath.substring(pos+1);
@@ -230,5 +238,9 @@ public class ShelvedChange {
     public int compareTo(final VcsRevisionNumber o) {
       return 0;
     }
+  }
+
+  public String getPatchPath() {
+    return myPatchPath;
   }
 }

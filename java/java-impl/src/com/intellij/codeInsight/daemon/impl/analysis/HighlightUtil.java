@@ -68,7 +68,6 @@ public class HighlightUtil {
   private static final Map<String, Set<String>> ourClassInitializerIncompatibleModifiers;
   private static final Set<String> ourConstructorNotAllowedModifiers;
 
-  private static final Key<String> HAS_OVERFLOW_IN_CHILD = Key.create("HAS_OVERFLOW_IN_CHILD");
   @NonNls private static final String SERIAL_VERSION_UID_FIELD_NAME = "serialVersionUID";
   @NonNls private static final String SERIAL_PERSISTENT_FIELDS_FIELD_NAME = "serialPersistentFields";
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
@@ -1765,30 +1764,6 @@ public class HighlightUtil {
     return null;
   }
 
-
-  static HighlightInfo checkConstantExpressionOverflow(PsiExpression expr) {
-    boolean overflow = false;
-    try {
-      if (expr.getUserData(HAS_OVERFLOW_IN_CHILD) == null && TypeConversionUtil.isNumericType(expr.getType())) {
-        JavaPsiFacade.getInstance(expr.getProject()).getConstantEvaluationHelper().computeConstantExpression(expr, true);
-      }
-      else {
-        overflow = true;
-      }
-    }
-    catch (ConstantEvaluationOverflowException e) {
-      overflow = true;
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.OVERFLOW_WARNING, expr, JavaErrorMessages.message("numeric.overflow.in.expression"));
-    }
-    finally {
-      PsiElement parent = expr.getParent();
-      if (overflow && parent instanceof PsiExpression) {
-        parent.putUserData(HAS_OVERFLOW_IN_CHILD, "");
-      }
-    }
-
-    return null;
-  }
 
   @NonNls
   private static String redIfNotMatch(PsiType type, boolean matches) {

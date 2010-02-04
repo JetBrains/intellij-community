@@ -17,7 +17,7 @@ package com.intellij.openapi.diff.impl.processing;
 
 import com.intellij.openapi.diff.ex.DiffFragment;
 import com.intellij.openapi.diff.impl.fragments.LineFragment;
-import com.intellij.openapi.diff.impl.util.TextDiffType;
+import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 
@@ -30,7 +30,7 @@ class LineFragmentsCollector {
   private int myOffset1 = 0;
   private int myOffset2 = 0;
 
-  private LineFragment addFragment(TextDiffType type, String text1, String text2) {
+  private LineFragment addFragment(TextDiffTypeEnum type, String text1, String text2) {
     int lines1 = countLines(text1);
     int lines2 = countLines(text2);
     int endOffset1 = myOffset1 + getLength(text1);
@@ -65,11 +65,11 @@ class LineFragmentsCollector {
     return myLineFragments;
   }
 
-  static TextDiffType getType(DiffFragment fragment) {
-    TextDiffType type;
-    if (fragment.getText1() == null) type = TextDiffType.INSERT;
-    else if (fragment.getText2() == null) type = TextDiffType.DELETED;
-    else if (fragment.isModified()) type = TextDiffType.CHANGED;
+  static TextDiffTypeEnum getType(DiffFragment fragment) {
+    TextDiffTypeEnum type;
+    if (fragment.getText1() == null) type = TextDiffTypeEnum.INSERT;
+    else if (fragment.getText2() == null) type = TextDiffTypeEnum.DELETED;
+    else if (fragment.isModified()) type = TextDiffTypeEnum.CHANGED;
     else type = null;
     return type;
   }

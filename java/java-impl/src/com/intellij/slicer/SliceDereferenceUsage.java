@@ -17,8 +17,12 @@ package com.intellij.slicer;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
+import com.intellij.usages.TextChunk;
+import com.intellij.usages.UsagePresentation;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 /**
  * User: cdr
@@ -31,5 +35,31 @@ public class SliceDereferenceUsage extends SliceUsage {
   @Override
   public void processChildren(Processor<SliceUsage> processor) {
     // no children
+  }
+
+  @NotNull
+  @Override
+  public UsagePresentation getPresentation() {
+    final UsagePresentation presentation = super.getPresentation();
+
+    return new UsagePresentation() {
+      @NotNull
+      public TextChunk[] getText() {
+        return presentation.getText();
+      }
+
+      @NotNull
+      public String getPlainText() {
+        return presentation.getPlainText();
+      }
+
+      public Icon getIcon() {
+        return presentation.getIcon();
+      }
+
+      public String getTooltipText() {
+        return "Variable dereferenced";
+      }
+    };
   }
 }

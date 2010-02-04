@@ -284,9 +284,10 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
 
     for (List<MyUsageInfo> usageInfos : usagesInFiles.values()) {
       //this is to avoid elements to become invalid as a result of processUsage
-      RefactoringUtil.sortDepthFirstRightLeftOrder(usages);
+      final MyUsageInfo[] infos = usageInfos.toArray(new MyUsageInfo[usageInfos.size()]);
+      RefactoringUtil.sortDepthFirstRightLeftOrder(infos);
 
-      for (MyUsageInfo info : usageInfos) {
+      for (MyUsageInfo info : infos) {
         processUsage(info);
       }
     }

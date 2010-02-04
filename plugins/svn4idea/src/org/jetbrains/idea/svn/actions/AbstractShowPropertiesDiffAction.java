@@ -56,6 +56,10 @@ import java.util.Comparator;
 import java.util.List;
 
 abstract class AbstractShowPropertiesDiffAction extends AnAction implements DumbAware {
+  protected AbstractShowPropertiesDiffAction(String name) {
+    super(name);
+  }
+
   protected abstract DataKey<Change[]> getChangesKey();
   @Nullable
   protected abstract SVNRevision getBeforeRevisionValue(final Change change, final SvnVcs vcs) throws SVNException;

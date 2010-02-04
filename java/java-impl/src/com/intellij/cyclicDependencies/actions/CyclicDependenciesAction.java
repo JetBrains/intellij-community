@@ -36,12 +36,12 @@ import javax.swing.*;
  */
 public class CyclicDependenciesAction extends AnAction{
   private final String myAnalysisVerb;
-  private final String myAnalysisNoon;
+  private final String myAnalysisNoun;
   private final String myTitle;
 
   public CyclicDependenciesAction() {
     myAnalysisVerb = AnalysisScopeBundle.message("action.analyze.verb");
-    myAnalysisNoon = AnalysisScopeBundle.message("action.analysis.noun");
+    myAnalysisNoun = AnalysisScopeBundle.message("action.analysis.noun");
     myTitle = AnalysisScopeBundle.message("action.cyclic.dependency.title");
   }
 
@@ -167,7 +167,7 @@ public class CyclicDependenciesAction extends AnAction{
     }
 
     protected JComponent createCenterPanel() {
-      myScopePanel.setBorder(IdeBorderFactory.createTitledBorder(AnalysisScopeBundle.message("analysis.scope.title", myAnalysisNoon)));
+      myScopePanel.setBorder(IdeBorderFactory.createTitledBorder(AnalysisScopeBundle.message("analysis.scope.title", myAnalysisNoun)));
       myProjectButton.setText(AnalysisScopeBundle.message("cyclic.dependencies.scope.dialog.project.button", myAnalysisVerb));
       ButtonGroup group = new ButtonGroup();
       group.add(myProjectButton);

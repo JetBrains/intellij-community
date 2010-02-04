@@ -27,6 +27,7 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
@@ -174,8 +175,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
 
         if (name != null) {
           if (checkElementNameEquivalence(localName, namespace, name, tag)) {
-            final CachedValue<XmlElementDescriptor> cachedValue =
-              tag.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<XmlElementDescriptor>() {
+            final CachedValue<XmlElementDescriptor> cachedValue = CachedValuesManager.getManager(tag.getProject()).createCachedValue(new CachedValueProvider<XmlElementDescriptor>() {
                 public Result<XmlElementDescriptor> compute() {
                   final String name = tag.getAttributeValue("name");
 
@@ -311,7 +311,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
                 final XmlAttributeDescriptor attributeDescriptor = ((XmlNSDescriptorImpl)data).getAttributeImpl(localName, namespace,visited);
 
                 if(attributeDescriptor != null){
-                  final CachedValue<XmlAttributeDescriptor> value = includedDocument.getManager().getCachedValuesManager().createCachedValue(
+                  final CachedValue<XmlAttributeDescriptor> value = CachedValuesManager.getManager(includedDocument.getProject()).createCachedValue(
                     new CachedValueProvider<XmlAttributeDescriptor>(){
                       public Result<XmlAttributeDescriptor> compute() {
                         return new Result<XmlAttributeDescriptor>(attributeDescriptor, attributeDescriptor.getDependences());
@@ -509,8 +509,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
             if (document != null) {
               final Set<XmlTag> visited1 = visited;
 
-              final CachedValue<TypeDescriptor> value =
-                tag.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<TypeDescriptor>() {
+              final CachedValue<TypeDescriptor> value = CachedValuesManager.getManager(tag.getProject()).createCachedValue(new CachedValueProvider<TypeDescriptor>() {
                   public Result<TypeDescriptor> compute() {
                     final String currentName = tag.getAttributeValue("name");
 
@@ -584,7 +583,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
   }
 
   private CachedValue<TypeDescriptor> createAndPutTypesCachedValueSimpleType(final XmlTag tag, final Pair<QNameKey, XmlTag> pair) {
-    final CachedValue<TypeDescriptor> value = tag.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<TypeDescriptor>() {
+    final CachedValue<TypeDescriptor> value = CachedValuesManager.getManager(tag.getProject()).createCachedValue(new CachedValueProvider<TypeDescriptor>() {
       public CachedValueProvider.Result<TypeDescriptor> compute() {
         final SimpleTypeDescriptor simpleTypeDescriptor = new SimpleTypeDescriptor(tag);
         return new Result<TypeDescriptor>(simpleTypeDescriptor, tag);
@@ -595,7 +594,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
   }
 
   private CachedValue<TypeDescriptor> createAndPutTypesCachedValue(final XmlTag tag, final Pair<QNameKey, XmlTag> pair) {
-    final CachedValue<TypeDescriptor> value = tag.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<TypeDescriptor>() {
+    final CachedValue<TypeDescriptor> value = CachedValuesManager.getManager(tag.getProject()).createCachedValue(new CachedValueProvider<TypeDescriptor>() {
       public CachedValueProvider.Result<TypeDescriptor> compute() {
         final String name = tag.getAttributeValue("name");
         

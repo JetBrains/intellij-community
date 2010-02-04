@@ -49,7 +49,7 @@ public class AntTasksProvider {
 
   public AntTasksProvider(Project project) {
     myProject = project;
-    final CachedValuesManager manager = PsiManager.getInstance(myProject).getCachedValuesManager();
+    final CachedValuesManager manager = CachedValuesManager.getManager(myProject);
     myCachedValue = manager.createCachedValue(new CachedValueProvider<Set<String>>() {
       public Result<Set<String>> compute() {
         final Set<String> set = findAntTasks(myProject);

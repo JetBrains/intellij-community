@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -689,6 +690,14 @@ public class MavenProject {
     List<MavenArtifact> dependenciesCopy = new ArrayList<MavenArtifact>(state.myDependencies);
     dependenciesCopy.add(dependency);
     state.myDependencies = dependenciesCopy;
+  }
+
+  public List<MavenArtifact> findDependencies(MavenProject depProject) {
+    List<MavenArtifact> result = new SmartList<MavenArtifact>();
+    for (MavenArtifact each : getDependencies()) {
+      if (each.getMavenId().equals(depProject.getMavenId())) result.add(each);
+    }
+    return result;
   }
 
   public boolean hasUnresolvedArtifacts() {

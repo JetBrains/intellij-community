@@ -17,9 +17,9 @@ package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -32,6 +32,7 @@ public class ShowPropertiesDiffWithLocalAction extends AbstractShowPropertiesDif
   private final Icon myIcon;
 
   public ShowPropertiesDiffWithLocalAction() {
+    super(SvnBundle.message("action.Subversion.properties.diff.with.local.name"));
     myIcon = IconLoader.getIcon("/icons/PropertiesDiffWithLocal.png");
   }
 
@@ -39,7 +40,7 @@ public class ShowPropertiesDiffWithLocalAction extends AbstractShowPropertiesDif
   public void update(final AnActionEvent e) {
     super.update(e);
 
-    e.getPresentation().setText(SvnBundle.message("action.Subversion.properties.diff.with.local.name"));
+    //e.getPresentation().setText(SvnBundle.message("action.Subversion.properties.diff.with.local.name"));
     e.getPresentation().setIcon(myIcon);
   }
 

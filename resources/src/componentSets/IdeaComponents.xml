@@ -68,11 +68,6 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.notification.impl.ProjectNotificationsComponent</implementation-class>
-      <skipForDummyProject/>
-    </component>
-
-    <component>
       <implementation-class>
         com.intellij.codeInspection.ex.ProjectInspectionProfilesVisibleTreeState
       </implementation-class>

@@ -22,12 +22,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
 public class GroovyResultOfObjectAllocationIgnoredInspection extends BaseInspection {
 
@@ -45,7 +45,7 @@ public class GroovyResultOfObjectAllocationIgnoredInspection extends BaseInspect
 
   @Nullable
   protected String buildErrorString(Object... args) {
-    return "Result of <code>new #ref()</code> is ignored #loc";
+    return "Result of <code>new #ref" + (args[0].equals(new Integer(0)) ? "()" : "[]") + "</code> is ignored #loc";
 
   }
 
@@ -61,30 +61,23 @@ public class GroovyResultOfObjectAllocationIgnoredInspection extends BaseInspect
 
     public void visitNewExpression(GrNewExpression newExpression) {
       super.visitNewExpression(newExpression);
+      final GrCodeReferenceElement refElement = newExpression.getReferenceElement();
+      if (refElement == null) return;      //new expression is not correct so we shouldn't check it
+      
       final PsiElement parent = newExpression.getParent();
-      if (!(parent instanceof GrCodeBlock)) {
+      if (parent instanceof GrClosableBlock) {
         return;
       }
-      if (parent instanceof GrOpenBlock) {
-        final GrOpenBlock openBlock = (GrOpenBlock) parent;
-        if (ControlFlowUtils.openBlockCompletesWithStatement(openBlock, newExpression)) {
-          return;
-        }
-      } else if (parent instanceof GrClosableBlock) {
-        final PsiElement grandParent = parent.getParent();
-        if (grandParent instanceof GrMethodCallExpression) {
-          return;
-        } else if (grandParent instanceof GrReferenceExpression) {
-          final PsiElement greatGrandParent = grandParent.getParent();
-          if (greatGrandParent instanceof GrMethodCallExpression) {
+
+      if (parent instanceof GrCodeBlock || parent instanceof GroovyFile) {
+        if (parent instanceof GrOpenBlock) {
+          final GrOpenBlock openBlock = (GrOpenBlock)parent;
+          if (ControlFlowUtils.openBlockCompletesWithStatement(openBlock, newExpression)) {
             return;
           }
         }
+        registerError(refElement, newExpression.getArrayCount());
       }
-      if (newExpression.getArrayCount() != 0) {
-        return;
-      }
-      registerError(newExpression.getReferenceElement());
     }
   }
 }

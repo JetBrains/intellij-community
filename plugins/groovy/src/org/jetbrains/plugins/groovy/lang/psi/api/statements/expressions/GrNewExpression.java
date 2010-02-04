@@ -28,6 +28,7 @@ public interface GrNewExpression extends GrCallExpression, GrConstructorCall {
   @Nullable
   GrExpression getQualifier();
 
+  @Nullable
   GrCodeReferenceElement getReferenceElement();
 
   int getArrayCount();

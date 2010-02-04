@@ -15,12 +15,17 @@
  */
 package com.intellij.openapi.util;
 
+import com.intellij.openapi.diagnostic.Logger;
+
 import java.util.*;
 
 /**
  * Simple timer that keeps order of scheduled tasks
  */
 public class SimpleTimer {
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.SimpleTimer");
+
   private final Timer ourTimer;
 
   private static final SimpleTimer ourInstance = new SimpleTimer();
@@ -53,7 +58,7 @@ public class SimpleTimer {
       final long current = System.currentTimeMillis();
       final long targetTime = current + delay;
 
-      final SimpleTimerTask result = new SimpleTimerTask(targetTime, runnable);
+      final SimpleTimerTask result = new SimpleTimerTask(targetTime, runnable, this);
 
       ArrayList<SimpleTimerTask> tasks = myTime2Task.get(targetTime);
       if (tasks == null) {
@@ -77,7 +82,12 @@ public class SimpleTimer {
     myNextScheduledTime = targetTime;
     myNextProcessingTask = new TimerTask() {
       public void run() {
-        processNext();
+        try {
+          processNext();
+        }
+        catch (Exception e) {
+          LOG.error(e);            
+        }
       }
     };
     ourTimer.schedule(myNextProcessingTask, delay);
@@ -90,9 +100,12 @@ public class SimpleTimer {
       final long current = System.currentTimeMillis();
 
       final Iterator<Long> times = myTime2Task.keySet().iterator();
-      final Long time = times.next();
-      tasks.set(myTime2Task.get(time));
-      times.remove();
+
+      if (times.hasNext()) {
+        final Long time = times.next();
+        tasks.set(myTime2Task.get(time));
+        times.remove();
+      }
 
       if (!times.hasNext()) {
         myNextScheduledTime = Long.MAX_VALUE;
@@ -120,8 +133,8 @@ public class SimpleTimer {
     }
 
     final ArrayList<SimpleTimerTask> toRun = tasks.get();
-    for (SimpleTimerTask each : toRun) {
-      if (!each.isCancelled()) {
+    if (toRun != null) {
+      for (SimpleTimerTask each : toRun) {
         each.run();
       }
     }
@@ -135,4 +148,15 @@ public class SimpleTimer {
     return THREAD_NAME.equals(thread.getName());
   }
 
+  void onCancelled(SimpleTimerTask task) {
+    synchronized (myTime2Task) {
+      ArrayList<SimpleTimerTask> list = myTime2Task.get(task.getTargetTime());
+      if (list != null) {
+        list.remove(task);
+        if (list.size() == 0) {
+          myTime2Task.remove(task.getTargetTime());
+        }
+      }
+    }
+  }
 }

@@ -31,6 +31,7 @@ import com.intellij.psi.meta.MetaDataRegistrar;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,8 +52,7 @@ public class MetaRegistry extends MetaDataRegistrar {
   private static final Key<CachedValue<PsiMetaData>> META_DATA_KEY = Key.create("META DATA KEY");
 
   public static void bindDataToElement(final PsiElement element, final PsiMetaData data) {
-    CachedValue<PsiMetaData> value =
-      element.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<PsiMetaData>() {
+    CachedValue<PsiMetaData> value = CachedValuesManager.getManager(element.getProject()).createCachedValue(new CachedValueProvider<PsiMetaData>() {
       public Result<PsiMetaData> compute() {
         data.init(element);
         return new Result<PsiMetaData>(data, data.getDependences());
@@ -69,8 +69,7 @@ public class MetaRegistry extends MetaDataRegistrar {
   private static final UserDataCache<CachedValue<PsiMetaData>, PsiElement, Object> ourCachedMetaCache =
     new UserDataCache<CachedValue<PsiMetaData>, PsiElement, Object>() {
       protected CachedValue<PsiMetaData> compute(final PsiElement element, Object p) {
-        return element.getManager().getCachedValuesManager()
-        .createCachedValue(new CachedValueProvider<PsiMetaData>() {
+        return CachedValuesManager.getManager(element.getProject()).createCachedValue(new CachedValueProvider<PsiMetaData>() {
           public Result<PsiMetaData> compute() {
             try {
               ensureContributorsLoaded();

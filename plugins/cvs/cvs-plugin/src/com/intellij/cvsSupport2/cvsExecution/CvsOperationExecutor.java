@@ -211,6 +211,7 @@ public class CvsOperationExecutor {
                             final CvsTabbedWindow tabbedWindow) {
     if (!myShowErrors || myIsQuietOperation) return;
     if (tabbedWindow == null) {
+      if (errors.isEmpty() && warnings.isEmpty()) return;
       final List<String> messages = new ArrayList<String>();
       for (VcsException error : errors) {
         if (! StringUtil.isEmptyOrSpaces(error.getMessage())) {

@@ -29,10 +29,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiReferenceProcessor;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.*;
 import com.intellij.psi.xml.*;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.compiler.Utils;
@@ -342,7 +339,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
     CachedValue<CachedFormData> data = element.getUserData(CACHED_DATA);
 
     if(data == null) {
-      data = element.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<CachedFormData>() {
+      data = CachedValuesManager.getManager(element.getProject()).createCachedValue(new CachedValueProvider<CachedFormData>() {
         final Map<String, Pair<PsiType, TextRange>> map = new HashMap<String, Pair<PsiType, TextRange>>();
         public Result<CachedFormData> compute() {
           final PsiReferenceProcessor.CollectElements processor = new PsiReferenceProcessor.CollectElements() {

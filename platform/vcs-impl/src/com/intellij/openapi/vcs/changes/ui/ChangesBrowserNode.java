@@ -37,6 +37,8 @@ import java.util.List;
  * @author max
  */
 public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
+  private SimpleTextAttributes myAttributes;
+
   protected int myCount = -1;
   protected int myDirectoryCount = -1;
   public static final Object IGNORED_FILES_TAG = new Object() {
@@ -66,9 +68,15 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
       return VcsBundle.message("changes.nodetitle.switched.files");
     }
   };
+  public static final Object SWITCHED_ROOTS_TAG = new Object() {
+    public String toString() {
+      return VcsBundle.message("changes.nodetitle.switched.roots");
+    }
+  };
 
   protected ChangesBrowserNode(Object userObject) {
     super(userObject);
+    myAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
   }
 
   public static ChangesBrowserNode create(final Project project, @NotNull final LocallyDeletedChange change) {
@@ -190,7 +198,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
   }
 
   public void render(final ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
-    renderer.append(userObject.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    renderer.append(userObject.toString(), myAttributes);
     appendCount(renderer);
   }
 
@@ -243,5 +251,9 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
 
   public FilePath[] getFilePathsUnder() {
     return new FilePath[0];
+  }
+
+  public void setAttributes(SimpleTextAttributes attributes) {
+    myAttributes = attributes;
   }
 }

@@ -284,7 +284,8 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
       }
       final PsiElement parentElement = element.getParent();
       if (parentElement != null) {
-        if (parentElement.getParent() instanceof PsiClassObjectAccessExpression) {
+        final PsiElement grandPa = parentElement.getParent();
+        if (grandPa instanceof PsiClassObjectAccessExpression) {
           return "Class cannot be inlined because it has usages of its class literal";
         }
         if (ourCatchClausePattern.accepts(parentElement)) {

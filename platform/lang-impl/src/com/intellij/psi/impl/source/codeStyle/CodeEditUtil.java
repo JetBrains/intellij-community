@@ -34,6 +34,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -281,31 +282,13 @@ public class CodeEditUtil {
     right.getTreeParent().replaceChild(right, merged);
   }
 
-  private static Language getNotAnyLanguage(ASTNode node) {
-    if (node == null) return Language.ANY;
-
-    final Language lang = node.getElementType().getLanguage();
-    return lang == Language.ANY ? getNotAnyLanguage(node.getTreeParent()) : lang;
-  }
-
   private static void markToReformatBeforeOrInsertWhitespace(final ASTNode left, @NotNull final ASTNode right, PsiManager manager) {
-    final Language leftLang = left != null ? getNotAnyLanguage(left) : null;
-    final Language rightLang = getNotAnyLanguage(right);
+    final Language leftLang = left != null ? PsiUtilBase.getNotAnyLanguage(left) : null;
+    final Language rightLang = PsiUtilBase.getNotAnyLanguage(right);
     
-    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(rightLang);
-    LeafElement generatedWhitespace = null;
-    if(leftLang == rightLang && parserDefinition != null){
-      //noinspection EnumSwitchStatementWhichMissesCases
-      switch(parserDefinition.spaceExistanceTypeBetweenTokens(left, right)){
-        case MUST:
-          generatedWhitespace = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, " ", 0, 1, null, manager);
-          break;
-        case MUST_LINE_BREAK:
-          generatedWhitespace = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, "\n", 0, 1, null, manager);
-          break;
-        default:
-          generatedWhitespace = null;
-      }
+    ASTNode generatedWhitespace = null;
+    if(leftLang == rightLang) {
+      generatedWhitespace = LanguageTokenSeparatorGenerators.INSTANCE.forLanguage(leftLang).generateWhitespaceBetweenTokens(left, right);
     }
     if(generatedWhitespace != null){
       final TreeUtil.CommonParentState parentState = new TreeUtil.CommonParentState();

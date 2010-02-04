@@ -26,16 +26,17 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowserUseCase;
 import com.intellij.openapi.vcs.changes.committed.RepositoryChangesBrowser;
+import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
-import com.intellij.ui.SeparatorFactory;
 import com.intellij.ui.BrowserHyperlinkListener;
+import com.intellij.ui.SeparatorFactory;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -59,6 +60,7 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
   private final boolean myInAir;
   private Change[] myChanges;
   private NotNullFunction<Change, Change> myConvertor;
+  private JScrollPane commitMessageScroll;
 
   public ChangeListViewerDialog(Project project, CommittedChangeList changeList) {
     super(project, true);
@@ -96,9 +98,11 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
     myCommitMessageArea = new JEditorPane(UIUtil.HTML_MIME, "");
     myCommitMessageArea.setEditable(false);
     @NonNls final String text = IssueLinkHtmlRenderer.formatTextIntoHtml(project, changeList.getComment());
-    myCommitMessageArea.setText(text);
     myCommitMessageArea.setBackground(UIUtil.getComboBoxDisabledBackground());
     myCommitMessageArea.addHyperlinkListener(new BrowserHyperlinkListener());
+    commitMessageScroll = new JScrollPane(myCommitMessageArea);
+    myCommitMessageArea.setText(text);
+    myCommitMessageArea.setCaretPosition(0);
   }
 
 
@@ -120,6 +124,7 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
   public JComponent createCenterPanel() {
     final JPanel mainPanel = new JPanel();
     mainPanel.setLayout(new BorderLayout());
+    final Splitter splitter = new Splitter(true, 0.9f);
     myChangesBrowser = new RepositoryChangesBrowser(myProject, Collections.singletonList(myChangeList),
                                                     new ArrayList<Change>(myChangeList.getChanges()),
                                                     myChangeList) {
@@ -138,16 +143,18 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
       }
     };
     myChangesBrowser.setUseCase(myInAir ? CommittedChangesBrowserUseCase.IN_AIR : null);
-    mainPanel.add(myChangesBrowser, BorderLayout.CENTER);
+    splitter.setFirstComponent(myChangesBrowser);
 
     if (myCommitMessageArea != null) {
       JPanel commitPanel = new JPanel(new BorderLayout());
       JComponent separator = SeparatorFactory.createSeparator(VcsBundle.message("label.commit.comment"), myCommitMessageArea);
       commitPanel.add(separator, BorderLayout.NORTH);
-      commitPanel.add(new JScrollPane(myCommitMessageArea), BorderLayout.CENTER);
+      commitPanel.add(commitMessageScroll, BorderLayout.CENTER);
 
-      mainPanel.add(commitPanel, BorderLayout.SOUTH);
+      splitter.setSecondComponent(commitPanel);
+      splitter.setShowDividerControls(true);
     }
+    mainPanel.add(splitter, BorderLayout.CENTER);
 
     return mainPanel;
   }
