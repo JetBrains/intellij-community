@@ -15,13 +15,10 @@
  */
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Expirable;
 import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
-import com.intellij.ui.FocusTrackback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,52 +27,42 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 
 public class IdeFocusManagerImpl extends IdeFocusManager {
-  private final ToolWindowManagerImpl myToolWindowManager;
+  private ToolWindowManagerImpl myToolWindowManager;
 
-  public IdeFocusManagerImpl(ToolWindowManagerImpl toolWindowManager) {
-    myToolWindowManager = toolWindowManager;
+  public IdeFocusManagerImpl(ToolWindowManagerImpl twManager) {
+    myToolWindowManager = twManager;
   }
 
   @NotNull
   public ActionCallback requestFocus(@NotNull final Component c, final boolean forced) {
-    return myToolWindowManager.requestFocus(c, forced);
+    return getGlobalInstance().requestFocus(c, forced);
   }
 
   @NotNull
   public ActionCallback requestFocus(@NotNull final FocusCommand command, final boolean forced) {
-    return myToolWindowManager.requestFocus(command, forced);
+    return getGlobalInstance().requestFocus(command, forced);
   }
 
   public JComponent getFocusTargetFor(@NotNull final JComponent comp) {
-    return IdeFocusTraversalPolicy.getPreferredFocusedComponent(comp);
+    return getGlobalInstance().getFocusTargetFor(comp);
   }
 
   public void doWhenFocusSettlesDown(@NotNull final Runnable runnable) {
-    myToolWindowManager.doWhenFocusSettlesDown(runnable);
+    getGlobalInstance().doWhenFocusSettlesDown(runnable);
   }
 
   @Nullable
   public Component getFocusedDescendantFor(@NotNull final Component comp) {
-    final Component focused = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    if (focused == null) return null;
-
-    if (focused == comp || SwingUtilities.isDescendingFrom(focused, comp)) return focused;
-
-    java.util.List<JBPopup> popups = FocusTrackback.getChildPopups(comp);
-    for (JBPopup each : popups) {
-      if (each.isFocused()) return focused;
-    }
-
-    return null;
+    return getGlobalInstance().getFocusedDescendantFor(comp);
   }
 
   public boolean dispatch(KeyEvent e) {
-    return myToolWindowManager.dispatch(e);
+    return getGlobalInstance().dispatch(e);
   }
 
   @Override
   public void suspendKeyProcessingUntil(@NotNull ActionCallback done) {
-    myToolWindowManager.suspendKeyProcessingUntil(done);
+    getGlobalInstance().suspendKeyProcessingUntil(done);
   }
 
 
@@ -85,10 +72,10 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
 
   @Override
   public Expirable getTimestamp(boolean trackOnlyForcedCommands) {
-    return myToolWindowManager.getTimestamp(trackOnlyForcedCommands);
+    return getGlobalInstance().getTimestamp(trackOnlyForcedCommands);
   }
 
   public boolean isFocusBeingTransferred() {
-    return !myToolWindowManager.isFocusTransferReady();
+    return getGlobalInstance().isFocusBeingTransferred();
   }
 }

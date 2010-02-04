@@ -163,7 +163,7 @@ public class JBTabsImpl extends JComponent
   public JBTabsImpl(@Nullable Project project, ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
     myProject = project;
     myActionManager = actionManager;
-    myFocusManager = focusManager != null ? focusManager : PassThroughtIdeFocusManager.getInstance();
+    myFocusManager = focusManager != null ? focusManager : IdeFocusManager.getGlobalInstance();
 
     setOpaque(true);
     setPaintBorder(-1, -1, -1, -1);
@@ -252,7 +252,7 @@ public class JBTabsImpl extends JComponent
           myDragHelper.start();
         }
 
-        if (myProject != null && myFocusManager == PassThroughtIdeFocusManager.getInstance()) {
+        if (myProject != null && myFocusManager == IdeFocusManager.getGlobalInstance()) {
           myFocusManager = IdeFocusManager.getInstance(myProject);
         }
       }
