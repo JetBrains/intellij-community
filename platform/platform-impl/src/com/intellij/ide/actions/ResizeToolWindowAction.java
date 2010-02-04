@@ -35,7 +35,7 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
   private ToolWindow myLastWindow;
   private ToolWindowManager myLastManager;
 
-  protected JLabel myScrollHelper = new JLabel("W");
+  protected JLabel myScrollHelper;
 
   private ToolWindow myToolWindow;
 
@@ -289,7 +289,7 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
     }
 
     public int getNextHorizontalScroll() {
-      return myScrollHelper.getPreferredSize().width * Registry.intValue("ide.windowSystem.hScrollChars");
+      return getReferenceSize().width * Registry.intValue("ide.windowSystem.hScrollChars");
     }
 
     public boolean isVerticalScrollingNeeded() {
@@ -297,7 +297,19 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
     }
 
     public int getNextVerticalScroll() {
-      return myScrollHelper.getPreferredSize().height * Registry.intValue("ide.windowSystem.vScrollChars");
+      return getReferenceSize().height * Registry.intValue("ide.windowSystem.vScrollChars");
     }
+  }
+
+  private Dimension getReferenceSize() {
+    if (myScrollHelper == null) {
+      if (SwingUtilities.isEventDispatchThread()) {
+        myScrollHelper = new JLabel("W");
+      } else {
+        return new Dimension(1, 1);
+      }
+    }
+
+    return myScrollHelper.getPreferredSize();
   }
 }

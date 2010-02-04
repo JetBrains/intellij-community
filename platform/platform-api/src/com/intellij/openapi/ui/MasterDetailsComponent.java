@@ -273,7 +273,6 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
 
     updateSelectionFromTree();
 
-    SwingUtilities.updateComponentTreeUI(myWholePanel);
     final JPanel panel = new JPanel(new BorderLayout()) {
       public Dimension getPreferredSize() {
         return getPanelPrefferedSize();

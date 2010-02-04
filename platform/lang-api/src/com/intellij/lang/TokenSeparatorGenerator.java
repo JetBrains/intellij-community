@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.lang;
 
-package com.intellij.openapi.vcs.changes;
-
-import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * @author Konstantin Bulenkov
+ * @author yole
  */
-public class PsiElementFilter<T extends PsiElement> {
-  private final Class<T> filter;
-
-  public PsiElementFilter(Class<T> filter) {
-    this.filter = filter;
-  }
-
-  public boolean accept(T element) {
-    return true;
-  }
-
-  public final Class<T> getClassFilter() {
-    return filter; 
-  }
+public interface TokenSeparatorGenerator {
+  @Nullable
+  ASTNode generateWhitespaceBetweenTokens(ASTNode left, ASTNode right);
 }

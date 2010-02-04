@@ -4,6 +4,12 @@
       <implementation-class>com.intellij.ide.SwingCleanuper</implementation-class>
     </component>
     <component>
+      <interface-class>com.intellij.openapi.wm.IdeFocusManager</interface-class>
+      <implementation-class>com.intellij.openapi.wm.impl.FocusManagerImpl</implementation-class>
+      <headless-implementation-class>com.intellij.openapi.wm.impl.IdeFocusManagerHeadless</headless-implementation-class>
+      <skipForDummyProject/>
+    </component>
+    <component>
       <interface-class>com.intellij.ide.DataManager</interface-class>
       <implementation-class>com.intellij.ide.impl.DataManagerImpl</implementation-class>
       <headless-implementation-class>com.intellij.idea.CommandLineApplication$MyDataManagerImpl</headless-implementation-class>

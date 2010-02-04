@@ -17,10 +17,10 @@ package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
 
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
+import com.intellij.ide.dnd.AdvancedDnDSource;
 import com.intellij.ide.dnd.DnDAction;
 import com.intellij.ide.dnd.DnDDragStartBean;
 import com.intellij.ide.dnd.DnDManager;
-import com.intellij.ide.dnd.DnDSource;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -37,7 +37,6 @@ import com.intellij.packaging.ui.PackagingSourceItem;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.treeStructure.SimpleTreeBuilder;
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
-import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.WeightBasedComparator;
 import com.intellij.util.ui.tree.TreeUtil;
 
@@ -49,22 +48,24 @@ import java.util.List;
 /**
  * @author nik
  */
-public class SourceItemsTree implements DnDSource, Disposable{
-  private SimpleDnDAwareTree myTree;
+public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSource, Disposable{
   private final ArtifactEditorImpl myArtifactsEditor;
   private SimpleTreeBuilder myBuilder;
 
   public SourceItemsTree(ArtifactEditorContext editorContext, ArtifactEditorImpl artifactsEditor) {
     myArtifactsEditor = artifactsEditor;
-    myTree = new SimpleDnDAwareTree();
-    myBuilder = new SimpleTreeBuilder(myTree, myTree.getBuilderModel(), new SourceItemsTreeStructure(editorContext, artifactsEditor), new WeightBasedComparator(true));
-    myTree.setRootVisible(false);
-    myTree.setShowsRootHandles(true);
+    myBuilder = new SimpleTreeBuilder(this, this.getBuilderModel(), new SourceItemsTreeStructure(editorContext, artifactsEditor), new WeightBasedComparator(true));
+    setRootVisible(false);
+    setShowsRootHandles(true);
     Disposer.register(this, myBuilder);
+    PopupHandler.installPopupHandler(this, createPopupGroup(), ActionPlaces.UNKNOWN, ActionManager.getInstance());
+    installDnD();
+  }
+
+  private void installDnD() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      DnDManager.getInstance().registerSource(this, myTree);
+      DnDManager.getInstance().registerSource(this);
     }
-    PopupHandler.installPopupHandler(myTree, createPopupGroup(), ActionPlaces.UNKNOWN, ActionManager.getInstance());
   }
 
   private ActionGroup createPopupGroup() {
@@ -77,11 +78,11 @@ public class SourceItemsTree implements DnDSource, Disposable{
     group.add(new SourceItemNavigateAction(this));
     group.add(new SourceItemFindUsagesAction(this, myArtifactsEditor.getContext().getProject(), myArtifactsEditor.getContext().getParent()));
 
-    DefaultTreeExpander expander = new DefaultTreeExpander(myTree);
+    DefaultTreeExpander expander = new DefaultTreeExpander(this);
     final CommonActionsManager commonActionsManager = CommonActionsManager.getInstance();
     group.add(Separator.getInstance());
-    group.addAction(commonActionsManager.createExpandAllAction(expander, myTree));
-    group.addAction(commonActionsManager.createCollapseAllAction(expander, myTree));
+    group.addAction(commonActionsManager.createExpandAllAction(expander, this));
+    group.addAction(commonActionsManager.createCollapseAllAction(expander, this));
     return group;
   }
 
@@ -93,18 +94,14 @@ public class SourceItemsTree implements DnDSource, Disposable{
     myBuilder.initRootNode();
   }
 
-  public Tree getTree() {
-    return myTree;
-  }
-
   public void dispose() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      DnDManager.getInstance().unregisterSource(this, myTree);
+      DnDManager.getInstance().unregisterSource(this);
     }
   }
 
   private DefaultMutableTreeNode[] getSelectedTreeNodes() {
-    return myTree.getSelectedNodes(DefaultMutableTreeNode.class, null);
+    return getSelectedNodes(DefaultMutableTreeNode.class, null);
   }
 
   public boolean canStartDragging(DnDAction action, Point dragOrigin) {
@@ -141,9 +138,9 @@ public class SourceItemsTree implements DnDSource, Disposable{
   public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
     final DefaultMutableTreeNode[] nodes = getSelectedTreeNodes();
     if (nodes.length == 1) {
-      return DnDAwareTree.getDragImage(myTree, TreeUtil.getPathFromRoot(nodes[0]), dragOrigin);
+      return DnDAwareTree.getDragImage(this, TreeUtil.getPathFromRoot(nodes[0]), dragOrigin);
     }
-    return DnDAwareTree.getDragImage(myTree, ProjectBundle.message("drag.n.drop.text.0.packaging.elements", nodes.length), dragOrigin);
+    return DnDAwareTree.getDragImage(this, ProjectBundle.message("drag.n.drop.text.0.packaging.elements", nodes.length), dragOrigin);
   }
 
   public void dragDropEnd() {
