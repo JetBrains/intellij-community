@@ -2,9 +2,11 @@ package com.jetbrains.python.psi.types;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.util.ProcessingContext;
+import com.jetbrains.python.codeInsight.PyDynamicMember;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
@@ -56,6 +58,10 @@ public class PyClassType implements PyType {
   @Nullable
   public PsiElement resolveMember(final String name) {
     if (myClass == null) return null;
+    for(PyClassMembersProvider provider: Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
+      final PsiElement resolveResult = provider.resolveMember(myClass, name);
+      if (resolveResult != null) return resolveResult;
+    }
     ResolveProcessor processor = new ResolveProcessor(name);
     myClass.processDeclarations(processor, ResolveState.initial(), null, myClass); // our members are strictly within us.
     final PsiElement resolveResult = processor.getResult();
@@ -103,6 +109,11 @@ public class PyClassType implements PyType {
     final VariantsProcessor processor = new VariantsProcessor(new PyResolveUtil.FilterNotInstance(myClass));
     myClass.processDeclarations(processor, ResolveState.initial(), null, referenceExpression);
     List<Object> ret = new ArrayList<Object>();
+    for(PyClassMembersProvider provider: Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
+      for (PyDynamicMember member : provider.getMembers(myClass)) {
+        ret.add(LookupElementBuilder.create(member.getName()).setIcon(member.getIcon()).setTypeText(member.getShortType()));
+      }
+    }
     if (names_already != null) {
       for (LookupElement le : processor.getResultList()) {
         String name = le.getLookupString();

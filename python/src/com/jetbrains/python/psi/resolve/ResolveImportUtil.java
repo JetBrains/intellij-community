@@ -462,25 +462,25 @@ public class ResolveImportUtil {
   }
 
   static class LookupRootVisitor implements SdkRootVisitor {
-    String name;
+    String path;
     PsiManager psimgr;
     PsiElement result;
 
     public LookupRootVisitor(String name, PsiManager psimgr) {
-      this.name = name;
+      this.path = name.replace('.', '/');
       this.psimgr = psimgr;
       this.result = null;
     }
 
     public boolean visitRoot(final VirtualFile root) {
       if (result != null) return false;
-      final VirtualFile childFile = root.findChild(name + PyNames.DOT_PY);
+      final VirtualFile childFile = root.findFileByRelativePath(path + PyNames.DOT_PY);
       if (childFile != null) {
         result = psimgr.findFile(childFile);
         return (result == null);
       }
 
-      final VirtualFile childDir = root.findChild(name);
+      final VirtualFile childDir = root.findFileByRelativePath(path);
       if (childDir != null) {
         result = psimgr.findDirectory(childDir);
         return (result == null);
