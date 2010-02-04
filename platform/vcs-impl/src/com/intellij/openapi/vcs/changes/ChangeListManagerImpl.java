@@ -131,8 +131,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public void projectOpened() {
     initializeForNewProject();
 
-    Notifications.Bus.notify(new Notification("TestGroup", "Check notifications are working", "Check notifications are working",
-                                                    NotificationType.ERROR), NotificationDisplayType.STICKY_BALLOON, myProject);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       myWorker.initialized();
       myUpdater.initialized();
