@@ -26,7 +26,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.RawCommandLineEditor;
 
 import javax.swing.*;
@@ -43,9 +42,9 @@ public class CommonJavaParameters extends JPanel {
   };
 
   private JPanel myWholePanel;
+  private LabeledComponent<TextFieldWithBrowseButton> myWorkingDirectory;
   private LabeledComponent<RawCommandLineEditor> myProgramParameters;
   private LabeledComponent<RawCommandLineEditor> myVMParameters;
-  private LabeledComponent<ComboboxWithBrowseButton> myWorkingDirectoryCombo;
 
   private final LabeledComponent[] myFields = new LabeledComponent[3];
   private Module myModule = null;
@@ -55,27 +54,21 @@ public class CommonJavaParameters extends JPanel {
     add(myWholePanel, BorderLayout.CENTER);
     copyDialogCaption(myProgramParameters);
     copyDialogCaption(myVMParameters);
-
-    final JComboBox comboBox = myWorkingDirectoryCombo.getComponent().getChildComponent();
-    comboBox.setEditable(true);
-    comboBox.setModel(new DefaultComboBoxModel(new String[] {"$MODULE_DIR$"}));
-
-    myWorkingDirectoryCombo.getComponent()
+    myWorkingDirectory.getComponent()
       .addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
         fileChooserDescriptor.setTitle(ExecutionBundle.message("select.working.directory.message"));
         fileChooserDescriptor.putUserData(LangDataKeys.MODULE_CONTEXT, myModule);
-        VirtualFile[] files = FileChooser.chooseFiles(myWorkingDirectoryCombo, fileChooserDescriptor);
+        VirtualFile[] files = FileChooser.chooseFiles(myWorkingDirectory, fileChooserDescriptor);
         if (files.length != 0) {
           setText(RunJavaConfiguration.WORKING_DIRECTORY_PROPERTY, files[0].getPresentableUrl());
         }
       }
     });
-
     myFields[RunJavaConfiguration.PROGRAM_PARAMETERS_PROPERTY] = myProgramParameters;
     myFields[RunJavaConfiguration.VM_PARAMETERS_PROPERTY] = myVMParameters;
-    myFields[RunJavaConfiguration.WORKING_DIRECTORY_PROPERTY] = myWorkingDirectoryCombo;
+    myFields[RunJavaConfiguration.WORKING_DIRECTORY_PROPERTY] = myWorkingDirectory;
   }
 
   private static void copyDialogCaption(final LabeledComponent<RawCommandLineEditor> component) {
@@ -111,8 +104,6 @@ public class CommonJavaParameters extends JPanel {
       ((TextFieldWithBrowseButton)component).setText(value);
     else if (component instanceof RawCommandLineEditor)
       ((RawCommandLineEditor)component).setText(value);
-    else if (component instanceof ComboboxWithBrowseButton)
-      ((ComboboxWithBrowseButton)component).getChildComponent().setSelectedItem(value);
     else LOG.error(component.getClass().getName());
   }
 
@@ -122,8 +113,6 @@ public class CommonJavaParameters extends JPanel {
       return ((TextFieldWithBrowseButton)component).getText();
     else if (component instanceof RawCommandLineEditor)
       return ((RawCommandLineEditor)component).getText();
-    else if (component instanceof ComboboxWithBrowseButton)
-      return (String) ((ComboboxWithBrowseButton)component).getComboBox().getSelectedItem();
     else LOG.error(component.getClass().getName());
     return "";
   }
