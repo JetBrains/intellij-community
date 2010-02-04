@@ -31,6 +31,7 @@ import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -65,11 +66,8 @@ public class ExtractArtifactAction extends LayoutTreeActionBase {
     if (selectedElements.size() == 1) {
       initialName = PathUtil.suggestFileName(ContainerUtil.getFirstItem(selectedElements, null).createPresentation(myArtifactEditor.getContext()).getPresentableName());
     }
-    final ExtractArtifactDialog dialog = new ExtractArtifactDialog(myArtifactEditor.getContext(), treeComponent, initialName);
-    dialog.show();
-    if (!dialog.isOK()) {
-      return;
-    }
+    IExtractArtifactDialog dialog = showDialog(treeComponent, initialName);
+    if (dialog == null) return;
 
     final Project project = myArtifactEditor.getContext().getProject();
     final ModifiableArtifactModel model = myArtifactEditor.getContext().getOrCreateModifiableArtifactModel();
@@ -86,5 +84,15 @@ public class ExtractArtifactAction extends LayoutTreeActionBase {
       }
     });
     treeComponent.rebuildTree();
+  }
+
+  @Nullable
+  protected IExtractArtifactDialog showDialog(LayoutTreeComponent treeComponent, String initialName) {
+    final ExtractArtifactDialog dialog = new ExtractArtifactDialog(myArtifactEditor.getContext(), treeComponent, initialName);
+    dialog.show();
+    if (!dialog.isOK()) {
+      return null;
+    }
+    return dialog;
   }
 }
