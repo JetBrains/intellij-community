@@ -29,7 +29,7 @@ public class SourceItemNavigateAction extends ArtifactEditorNavigateActionBase {
   private final SourceItemsTree mySourceItemsTree;
 
   public SourceItemNavigateAction(SourceItemsTree sourceItemsTree) {
-    super(sourceItemsTree.getTree());
+    super(sourceItemsTree);
     mySourceItemsTree = sourceItemsTree;
   }
 
