@@ -15,14 +15,14 @@
  */
 package com.intellij.openapi.diff.impl.patch;
 
+import com.intellij.openapi.diff.LineTokenizer;
 import com.intellij.openapi.diff.ex.DiffFragment;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
-import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.diff.impl.fragments.LineFragment;
 import com.intellij.openapi.diff.impl.processing.DiffCorrection;
 import com.intellij.openapi.diff.impl.processing.DiffFragmentsProcessor;
 import com.intellij.openapi.diff.impl.processing.DiffPolicy;
-import com.intellij.openapi.diff.impl.util.TextDiffType;
+import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -104,14 +104,14 @@ public class PatchBuilder {
       if (afterContent == null) {
         throw new VcsException("Failed to fetch new content for changed file " + afterRevision.getFile().getPath());
       }
-      String[] beforeLines = DiffUtil.convertToLines(beforeContent);
-      String[] afterLines = DiffUtil.convertToLines(afterContent);
+      String[] beforeLines = new LineTokenizer(beforeContent).execute();
+      String[] afterLines = new LineTokenizer(afterContent).execute();
 
       DiffFragment[] woFormattingBlocks = DiffPolicy.LINES_WO_FORMATTING.buildFragments(beforeContent, afterContent);
       DiffFragment[] step1lineFragments = new DiffCorrection.TrueLineBlocks(ComparisonPolicy.DEFAULT).correctAndNormalize(woFormattingBlocks);
       ArrayList<LineFragment> fragments = new DiffFragmentsProcessor().process(step1lineFragments);
 
-      if (fragments.size() > 1 || (fragments.size() == 1 && fragments.get(0).getType() != null && fragments.get(0).getType() != TextDiffType.NONE)) {
+      if (fragments.size() > 1 || (fragments.size() == 1 && fragments.get(0).getType() != null && fragments.get(0).getType() != TextDiffTypeEnum.NONE)) {
         TextFilePatch patch = buildPatchHeading(basePath, beforeRevision, afterRevision);
         result.add(patch);
 
@@ -203,7 +203,7 @@ public class PatchBuilder {
     if (content == null) {
       throw new VcsException("Failed to fetch content for added file " + afterRevision.getFile().getPath());
     }
-    String[] lines = DiffUtil.convertToLines(content);
+    String[] lines = new LineTokenizer(content).execute();
     TextFilePatch result = buildPatchHeading(basePath, afterRevision, afterRevision);
     PatchHunk hunk = new PatchHunk(-1, -1, 0, lines.length);
     for(String line: lines) {
@@ -219,7 +219,7 @@ public class PatchBuilder {
     if (content == null) {
       throw new VcsException("Failed to fetch old content for deleted file " + beforeRevision.getFile().getPath());
     }
-    String[] lines = DiffUtil.convertToLines(content);
+    String[] lines = new LineTokenizer(content).execute();
     TextFilePatch result = buildPatchHeading(basePath, beforeRevision, beforeRevision);
     PatchHunk hunk = new PatchHunk(0, lines.length, -1, -1);
     for(String line: lines) {
@@ -235,7 +235,7 @@ public class PatchBuilder {
     int endLine = -1;
     while(!fragments.isEmpty()) {
       LineFragment fragment = fragments.get(0);
-      if (fragment.getType() == null || fragment.getType() == TextDiffType.NONE) {
+      if (fragment.getType() == null || fragment.getType() == TextDiffTypeEnum.NONE) {
         fragments.remove(0);
         continue;
       }

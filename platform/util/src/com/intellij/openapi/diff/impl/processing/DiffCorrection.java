@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.LineTokenizer;
 import com.intellij.openapi.diff.ex.DiffFragment;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
-import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.highlighting.Util;
 import com.intellij.openapi.util.text.StringUtil;
@@ -133,7 +132,7 @@ public interface DiffCorrection {
     }
 
     protected final void actualAdd(DiffFragment fragment) {
-      if (DiffUtil.isEmpty(fragment)) return;
+      if (isEmpty(fragment)) return;
       myItems.add(fragment);
     }
 
@@ -151,6 +150,16 @@ public interface DiffCorrection {
         DiffFragment fragment = myFragments[myIndex];
         processor.process(fragment, (ActualRunner)this);
       }
+    }
+
+    // todo think where
+    public static int getTextLength(String text) {
+      return text != null ? text.length() : 0;
+    }
+
+    public static boolean isEmpty(DiffFragment fragment) {
+      return getTextLength(fragment.getText1()) == 0 &&
+             getTextLength(fragment.getText2()) == 0;
     }
 
   }

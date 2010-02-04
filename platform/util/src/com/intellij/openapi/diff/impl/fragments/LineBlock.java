@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.fragments;
 
-import com.intellij.openapi.diff.impl.util.TextDiffType;
+import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
 
 import java.util.Comparator;
 
@@ -24,9 +24,9 @@ public class LineBlock {
   private final int myModifiedLines1;
   private final int myStartingLine2;
   private final int myModifiedLines2;
-  private final TextDiffType myType;
+  private final TextDiffTypeEnum myType;
 
-  public LineBlock(int startingLine1, int modifiedLines1, int startingLine2, int modifiedLines2, TextDiffType blockType) {
+  public LineBlock(int startingLine1, int modifiedLines1, int startingLine2, int modifiedLines2, TextDiffTypeEnum blockType) {
     myStartingLine1 = startingLine1;
     myModifiedLines1 = modifiedLines1;
     myStartingLine2 = startingLine2;
@@ -64,7 +64,7 @@ public class LineBlock {
     }
   };
 
-  public TextDiffType getType() {
+  public TextDiffTypeEnum getType() {
     return myType;
   }
 }

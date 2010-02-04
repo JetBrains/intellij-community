@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.diff.impl.processing;
 
+import com.intellij.openapi.diff.LineTokenizer;
 import com.intellij.openapi.diff.ex.DiffFragment;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
-import com.intellij.openapi.diff.impl.DiffUtil;
 
 public interface DiffPolicy {
   DiffFragment[] buildFragments(String text1, String text2);
@@ -33,8 +33,8 @@ public interface DiffPolicy {
     }
 
     public DiffFragment[] buildFragments(String text1, String text2) {
-      String[] strings1 = DiffUtil.convertToLines(text1);
-      String[] strings2 = DiffUtil.convertToLines(text2);
+      String[] strings1 = new LineTokenizer(text1).execute();
+      String[] strings2 = new LineTokenizer(text2).execute();
       return myComparisonPolicy.buildDiffFragmentsFromLines(strings1, strings2);
     }
 

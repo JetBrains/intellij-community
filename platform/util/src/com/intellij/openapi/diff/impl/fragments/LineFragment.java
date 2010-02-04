@@ -16,13 +16,8 @@
 package com.intellij.openapi.diff.impl.fragments;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.DiffColors;
-import com.intellij.openapi.diff.actions.MergeOperations;
-import com.intellij.openapi.diff.impl.highlighting.DiffMarkup;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
-import com.intellij.openapi.diff.impl.util.TextDiffType;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 
@@ -39,7 +34,7 @@ public class LineFragment extends LineBlock implements Fragment {
 
   public LineFragment(int startingLine1, int modifiedLines1,
                       int startingLine2, int modifiedLines2,
-                      TextDiffType blockType, TextRange range1, TextRange range2) {
+                      TextDiffTypeEnum blockType, TextRange range1, TextRange range2) {
     this(startingLine1, modifiedLines1,
          startingLine2, modifiedLines2,
          blockType, range1, range2, FragmentList.EMPTY);
@@ -47,7 +42,7 @@ public class LineFragment extends LineBlock implements Fragment {
 
   private LineFragment(int startingLine1, int modifiedLines1,
                        int startingLine2, int modifiedLines2,
-                       TextDiffType blockType, TextRange range1, TextRange range2, FragmentList children) {
+                       TextDiffTypeEnum blockType, TextRange range1, TextRange range2, FragmentList children) {
     super(startingLine1, modifiedLines1, startingLine2, modifiedLines2, blockType);
     LOG.assertTrue(modifiedLines1 > 0 || modifiedLines2 > 0);
     myRange1 = range1;
@@ -79,43 +74,8 @@ public class LineFragment extends LineBlock implements Fragment {
     return new TextRange(newStart, newEnd);
   }
 
-  public void highlight(DiffMarkup wrapper1, DiffMarkup wrapper2, boolean isLast) {
-    addModifyActions(wrapper1, wrapper2);
-    if (myChildren.isEmpty()) {
-      wrapper1.highlightText(this, false);
-      wrapper2.highlightText(this, false);
-    }
-    else {
-      for (Iterator<Fragment> iterator = myChildren.iterator(); iterator.hasNext();) {
-        Fragment fragment = iterator.next();
-        fragment.highlight(wrapper1, wrapper2, !iterator.hasNext());
-      }
-    }
-    if (isEqual() && isLast) return;
-    addBottomLine(wrapper1, getEndLine1());
-    addBottomLine(wrapper2, getEndLine2());
-  }
-
-  private void addModifyActions(DiffMarkup wrapper, DiffMarkup otherWrapper) {
-    if (isEqual()) return;
-    if (myHasLineChildren) return;
-    TextRange range = getRange(wrapper.getSide());
-    TextRange otherRange = getRange(wrapper.getSide().otherSide());
-    Document document = wrapper.getDocument();
-    Document otherDocument = otherWrapper.getDocument();
-    wrapper.addAction(MergeOperations.mostSensible(document, otherDocument, range, otherRange), range.getStartOffset());
-    otherWrapper.addAction(MergeOperations.mostSensible(otherDocument, document, otherRange, range), otherRange.getStartOffset());
-  }
-
-  private void addBottomLine(DiffMarkup appender, int endLine) {
-    if (endLine <= 0) return;
-    TextRange range = getRange(appender.getSide());
-    appender.addLineMarker(endLine - 1, getRangeType(range));
-  }
-
-  private TextAttributesKey getRangeType(TextRange range) {
-    if (range.getLength() == 0) return DiffColors.DIFF_DELETED;
-    return getType() == null ? null : DiffColors.DIFF_MODIFIED;
+  public void highlight(FragmentHighlighter fragmentHighlighter) {
+    fragmentHighlighter.highlightLine(this);
   }
 
   public boolean isOneSide() {
@@ -129,6 +89,10 @@ public class LineFragment extends LineBlock implements Fragment {
   public Fragment getSubfragmentAt(int offset, FragmentSide side, Condition<Fragment> condition) {
     Fragment childFragment = myChildren.getFragmentAt(offset, side, condition);
     return childFragment != null ? childFragment : this;
+  }
+
+  public Iterator<Fragment> getChildrenIterator() {
+    return myChildren == null || myChildren.isEmpty() ? null : myChildren.iterator();
   }
 
   public String getText(String text, FragmentSide side) {
@@ -190,5 +154,19 @@ public class LineFragment extends LineBlock implements Fragment {
   private boolean isSameRanges(Fragment fragment) {
     return getRange(FragmentSide.SIDE1).equals(fragment.getRange(FragmentSide.SIDE1)) &&
            getRange(FragmentSide.SIDE2).equals(fragment.getRange(FragmentSide.SIDE2));
+  }
+
+  public boolean isHasLineChildren() {
+    return myHasLineChildren;
+  }
+
+  @Override
+  public int getEndLine1() {
+    return super.getEndLine1();
+  }
+
+  @Override
+  public int getEndLine2() {
+    return super.getEndLine2();
   }
 }

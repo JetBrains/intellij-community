@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,32 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.diff.impl;
+package com.intellij.openapi.diff.impl.fragments;
 
-
-
-/**
- * @author Jeka
- */
-public class DiffRange implements DiffFragmentBuilder.Range {
-  private final int myStart;
-  private final int myEnd;
-
-  public DiffRange(int start, int end) {
-    myStart = start;
-    myEnd = end;
-  }
-
-  public int getStart() {
-    return myStart;
-  }
-
-  public int getEnd() {
-    return myEnd;
-  }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public String toString() {
-    return "DiffRange: " + myStart + "," + myEnd;
-  }
+public interface FragmentHighlighter {
+  void highlightInline(InlineFragment fragment);
+  void highlightLine(LineFragment fragment);
 }

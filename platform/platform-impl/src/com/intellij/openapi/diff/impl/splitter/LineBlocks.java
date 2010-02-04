@@ -20,7 +20,7 @@ import com.intellij.openapi.diff.impl.fragments.LineBlock;
 import com.intellij.openapi.diff.impl.fragments.LineFragment;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.incrementalMerge.Change;
-import com.intellij.openapi.diff.impl.util.TextDiffType;
+import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
 import com.intellij.util.containers.IntArrayList;
 
 import java.util.ArrayList;
@@ -29,12 +29,12 @@ import java.util.Comparator;
 import java.util.Iterator;
 
 public class LineBlocks {
-  public static final LineBlocks EMPTY = new LineBlocks(SimpleIntervalProvider.EMPTY, new TextDiffType[0]);
+  public static final LineBlocks EMPTY = new LineBlocks(SimpleIntervalProvider.EMPTY, new TextDiffTypeEnum[0]);
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.splitter.LineBlocks");
   private final IntervalsProvider myIntervalsProvider;
-  private final TextDiffType[] myTypes;
+  private final TextDiffTypeEnum[] myTypes;
 
-  private LineBlocks(IntervalsProvider intervalsProvider, TextDiffType[] types) {
+  private LineBlocks(IntervalsProvider intervalsProvider, TextDiffTypeEnum[] types) {
     myIntervalsProvider = intervalsProvider;
     myTypes = types;
   }
@@ -56,7 +56,7 @@ public class LineBlocks {
                          getIntervals(FragmentSide.SIDE2)[index]);
   }
 
-  public TextDiffType getType(int index) {
+  public TextDiffTypeEnum getType(int index) {
     return myTypes[index];
   }
 
@@ -151,7 +151,7 @@ public class LineBlocks {
     Arrays.sort(blocks, LineBlock.COMPARATOR);
     Interval[] intervals1 = new Interval[blocks.length];
     Interval[] intervals2 = new Interval[blocks.length];
-    TextDiffType[] types = new TextDiffType[blocks.length];
+    TextDiffTypeEnum[] types = new TextDiffTypeEnum[blocks.length];
     for (int i = 0; i < blocks.length; i++) {
       LineBlock block = blocks[i];
       intervals1[i] = new Interval(block.getStartingLine1(), block.getModifiedLines1());
@@ -161,14 +161,14 @@ public class LineBlocks {
     return create(intervals1, intervals2, types);
   }
 
-  private static LineBlocks create(Interval[] intervals1, Interval[] intervals2, TextDiffType[] types) {
+  private static LineBlocks create(Interval[] intervals1, Interval[] intervals2, TextDiffTypeEnum[] types) {
     return new LineBlocks(new SimpleIntervalProvider(intervals1, intervals2), types);
   }
 
   public static LineBlocks fromChanges(ArrayList<Change> changes) {
     ArrayList<Interval> intervals1 = new ArrayList<Interval>();
     ArrayList<Interval> intervals2 = new ArrayList<Interval>();
-    ArrayList<TextDiffType> types = new ArrayList<TextDiffType>();
+    ArrayList<TextDiffTypeEnum> types = new ArrayList<TextDiffTypeEnum>();
     //int prevEnd1 = 0;
     //int prevEnd2 = 0;
     for (Iterator<Change> iterator = changes.iterator(); iterator.hasNext();) {
@@ -185,7 +185,7 @@ public class LineBlocks {
       intervals1.add(Interval.fromTo(start1, end1));
       int end2 = change.getChangeSide(FragmentSide.SIDE2).getEndLine();
       intervals2.add(Interval.fromTo(start2, end2));
-      types.add(change.getType().getTypeKey());
+      types.add(change.getType().getTypeKey().getType());
       //prevEnd1 = end1;
       //prevEnd2 = end2;
     }
@@ -197,10 +197,10 @@ public class LineBlocks {
     //}
 
     return create(intervals1.toArray(new Interval[intervals1.size()]),
-                  intervals2.toArray(new Interval[intervals2.size()]), types.toArray(new TextDiffType[types.size()]));
+                  intervals2.toArray(new Interval[intervals2.size()]), types.toArray(new TextDiffTypeEnum[types.size()]));
   }
 
-  public TextDiffType[] getTypes() {
+  public TextDiffTypeEnum[] getTypes() {
     return myTypes;
   }
 
