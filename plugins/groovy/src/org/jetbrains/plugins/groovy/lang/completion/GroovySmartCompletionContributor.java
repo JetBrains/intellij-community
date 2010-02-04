@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.lang.completion;
 
-import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
@@ -34,12 +33,12 @@ import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.codeInsight.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
+import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -51,14 +50,14 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
  */
 public class GroovySmartCompletionContributor extends CompletionContributor {
   private static final ElementPattern<PsiElement> INSIDE_EXPRESSION = psiElement().withParent(GrExpression.class);
-  private static final TObjectHashingStrategy<ExpectedTypeInfo> EXPECTED_TYPE_INFO_STRATEGY =
-    new TObjectHashingStrategy<ExpectedTypeInfo>() {
-      public int computeHashCode(final ExpectedTypeInfo object) {
+  private static final TObjectHashingStrategy<TypeConstraint> EXPECTED_TYPE_INFO_STRATEGY =
+    new TObjectHashingStrategy<TypeConstraint>() {
+      public int computeHashCode(final TypeConstraint object) {
         return object.getType().hashCode();
       }
 
-      public boolean equals(final ExpectedTypeInfo o1, final ExpectedTypeInfo o2) {
-        return o1.getType().equals(o2.getType());
+      public boolean equals(final TypeConstraint o1, final TypeConstraint o2) {
+        return o1.getClass().equals(o2.getClass()) && o1.getType().equals(o2.getType());
       }
     };
 
@@ -71,15 +70,15 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
         final PsiElement position = params.getPosition();
         if (position.getParent() instanceof GrLiteral) return;
 
-        final THashSet<ExpectedTypeInfo> _infos = new THashSet<ExpectedTypeInfo>();
+        final THashSet<TypeConstraint> _infos = new THashSet<TypeConstraint>();
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
             _infos.addAll(Arrays.asList(getExpectedTypes(params)));
           }
         });
-        final Set<ExpectedTypeInfo> infos = ApplicationManager.getApplication().runReadAction(new Computable<Set<ExpectedTypeInfo>>() {
-          public Set<ExpectedTypeInfo> compute() {
-            return new THashSet<ExpectedTypeInfo>(_infos, EXPECTED_TYPE_INFO_STRATEGY);
+        final Set<TypeConstraint> infos = ApplicationManager.getApplication().runReadAction(new Computable<Set<TypeConstraint>>() {
+          public Set<TypeConstraint> compute() {
+            return new THashSet<TypeConstraint>(_infos, EXPECTED_TYPE_INFO_STRATEGY);
           }
         });
 
@@ -99,8 +98,8 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
                 }
               }
               if (type == null) return;
-              for (ExpectedTypeInfo info : infos) {
-                if (TypesUtil.isAssignableByMethodCallConversion(info.getType(), type, position.getManager(), GlobalSearchScope.allScope(position.getProject()))) {
+              for (TypeConstraint info : infos) {
+                if (info.satisfied(type, position.getManager(), GlobalSearchScope.allScope(position.getProject()))) {
                   final LookupElement lookupElement = LookupItemUtil.objectToLookupItem(variant);
                   result.addElement(lookupElement);
                   break;
@@ -115,12 +114,11 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
   }
 
   @Nullable
-  public static ExpectedTypeInfo[] getExpectedTypes(CompletionParameters params) {
+  public static TypeConstraint[] getExpectedTypes(CompletionParameters params) {
     final PsiElement position = params.getPosition();
     final GrExpression expression = PsiTreeUtil.getParentOfType(position, GrExpression.class);
     if (expression != null) {
-      return GroovyExpectedTypesProvider.getInstance(position.getProject())
-        .getExpectedTypes(expression, true, params.getCompletionType() == CompletionType.SMART);
+      return GroovyExpectedTypesProvider.calculateTypeConstraints(expression);
     }
     return null;
   }

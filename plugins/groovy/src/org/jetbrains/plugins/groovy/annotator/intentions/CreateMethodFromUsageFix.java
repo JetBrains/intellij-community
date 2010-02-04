@@ -33,7 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SupertypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -83,7 +83,7 @@ public class CreateMethodFromUsageFix implements IntentionAction {
     methodBuffer.append(") {\n}");
     GrMethod method = GroovyPsiElementFactory.getInstance(project).createMethodFromText(methodBuffer.toString());
     GrMemberOwner owner = myTargetClass;
-    TypeConstraint[] constraints = GroovyExpectedTypesUtil.calculateTypeConstraints((GrExpression) myRefExpression.getParent());
+    TypeConstraint[] constraints = GroovyExpectedTypesProvider.calculateTypeConstraints((GrExpression) myRefExpression.getParent());
     PsiElement parent = myTargetClass instanceof GrTypeDefinition ? ((GrTypeDefinition)myTargetClass).getBody() : ((GroovyScriptClass) myTargetClass).getContainingFile();
     if (PsiTreeUtil.isAncestor(parent, myRefExpression, false)) {
       PsiElement prevParent = PsiTreeUtil.findPrevParent(parent, myRefExpression);

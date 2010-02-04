@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
-import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -62,7 +62,7 @@ public class CreateFieldFromUsageFix extends CreateFieldFix {
   }
 
   protected TypeConstraint[] calculateTypeConstrains() {
-    return GroovyExpectedTypesUtil.calculateTypeConstraints(myRefExpression);
+    return GroovyExpectedTypesProvider.calculateTypeConstraints(myRefExpression);
 
   }
 }

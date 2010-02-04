@@ -82,7 +82,7 @@ public class GroovyCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy");
   }
 
-public void testEachMethodForMapWithKeyValue() throws Throwable {
+  public void testEachMethodForMapWithKeyValue() throws Throwable {
     doBasicTest();
   }
 
@@ -267,7 +267,7 @@ public void testEachMethodForMapWithKeyValue() throws Throwable {
   }
 
   public void testPropertyWithSecondUpperLetter() throws Exception {
-    myFixture.testCompletionVariants(getTestName(false)+".groovy", "geteMail", "getePost");
+    myFixture.testCompletionVariants(getTestName(false) + ".groovy", "geteMail", "getePost");
   }
 
   public void testSmartCompletionInAssignmentExpression() throws Throwable {
@@ -286,4 +286,7 @@ public void testEachMethodForMapWithKeyValue() throws Throwable {
     doSmartCompletion("d1", "d2");
   }
 
+  public void testReturnStatement() throws Exception {
+    doSmartCompletion("b", "b1", "b2", "foo");
+  }
 }

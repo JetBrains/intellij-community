@@ -208,8 +208,6 @@ public class TypesUtil {
       }
     }
 
-    if (lType.equalsToText(JAVA_LANG_STRING)) return true;
-
     rType = boxPrimitiveType(rType, manager, scope);
     lType = boxPrimitiveType(lType, manager, scope);
 
