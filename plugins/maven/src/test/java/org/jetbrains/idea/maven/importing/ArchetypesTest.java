@@ -18,10 +18,7 @@ package org.jetbrains.idea.maven.importing;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import gnu.trove.THashMap;
 import org.jetbrains.idea.maven.MavenTestCase;
-import org.jetbrains.idea.maven.execution.MavenExecutor;
-import org.jetbrains.idea.maven.execution.MavenExternalExecutor;
-import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
-import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
+import org.jetbrains.idea.maven.execution.*;
 
 import java.io.File;
 import java.util.Arrays;
@@ -36,7 +33,7 @@ public class ArchetypesTest extends MavenTestCase {
     dir.mkdirs();
 
     MavenRunnerParameters params = new MavenRunnerParameters(false, dir.getPath(),
-                                                             Arrays.asList("archetype:create"),
+                                                             Arrays.asList("org.apache.maven.plugins:maven-archetype-plugin:RELEASE:generate"),
                                                              Collections.<String>emptyList());
 
     MavenRunnerSettings settings = new MavenRunnerSettings();
@@ -44,6 +41,8 @@ public class ArchetypesTest extends MavenTestCase {
     props.put("archetypeGroupId", "org.apache.maven.archetypes");
     props.put("archetypeArtifactId", "maven-archetype-quickstart");
     props.put("archetypeVersion", "1.0");
+    props.put("interactiveMode", "false");
+    props.put("groupId", "foo");
     props.put("groupId", "foo");
     props.put("artifactId", "bar");
 

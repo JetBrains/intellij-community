@@ -58,6 +58,11 @@ public class MavenEmbedderWrapperTest extends MavenImportingTestCase {
     assertEquals(getRepositoryFile(), myEmbedder.getLocalRepositoryFile());
   }
 
+  public void testReleasingTwice() throws Exception {
+    myEmbedder.release();
+    myEmbedder.release();
+  }
+
   public void testExecutionGoals() throws Exception {
     createProjectSubFile("src/main/java/A.java", "public class A {}");
 
@@ -127,7 +132,7 @@ public class MavenEmbedderWrapperTest extends MavenImportingTestCase {
                      "  <dependency>" +
                      "    <groupId>com.adobe.flex.framework</groupId>" +
                      "    <artifactId>framework</artifactId>" +
-                     "    <version>3.2.0.3959</version>" +
+                     "    <version>3.2.0.3958</version>" +
                      "    <type>resource-bundle</type>" +
                      "    <classifier>en_US</classifier>" +
                      "  </dependency>" +
@@ -138,6 +143,7 @@ public class MavenEmbedderWrapperTest extends MavenImportingTestCase {
                      "    <plugin>" +
                      "      <groupId>org.sonatype.flexmojos</groupId>" +
                      "      <artifactId>flexmojos-maven-plugin</artifactId>" +
+                     "      <version>3.5.0</version>" +
                      "      <extensions>true</extensions>" +
                      "    </plugin>" +
                      "  </plugins>" +

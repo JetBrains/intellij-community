@@ -1,6 +1,6 @@
 PsiJavaFileStub [org.jetbrains.annotations]
   PsiClassStub[interface annotation name=Nullable fqn=org.jetbrains.annotations.Nullable]
-    PsiModifierListStub[mask=1025]
+    PsiModifierListStub[mask=1033]
       PsiAnnotationStub[@java.lang.annotation.Documented]
       PsiAnnotationStub[@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.CLASS)]
       PsiAnnotationStub[@java.lang.annotation.Target({java.lang.annotation.ElementType.METHOD,java.lang.annotation.ElementType.FIELD,java.lang.annotation.ElementType.PARAMETER,java.lang.annotation.ElementType.LOCAL_VARIABLE})]

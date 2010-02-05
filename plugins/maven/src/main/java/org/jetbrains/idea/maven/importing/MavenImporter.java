@@ -53,6 +53,10 @@ public abstract class MavenImporter {
 
   public abstract boolean isSupportedDependency(MavenArtifact artifact);
 
+  public boolean requiresResolvedPlugin(MavenPlugin plugin) {
+    return false;
+  }
+
   public abstract void preProcess(Module module,
                          MavenProject mavenProject,
                          MavenProjectChanges changes,
