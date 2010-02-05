@@ -16,6 +16,7 @@
 package com.intellij.openapi.application;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Computable;
@@ -105,6 +106,14 @@ public interface Application extends ComponentManager {
    * @param listener the listener to add
    */
   void addApplicationListener(ApplicationListener listener);
+
+  /**
+   * Adds an {@link ApplicationListener}.
+   *
+   * @param listener the listener to add
+   * @param parent the parent disposable which dispose will trigger this listener removal
+   */
+  void addApplicationListener(ApplicationListener listener, Disposable parent);
 
   /**
    * Removes an {@link ApplicationListener}.

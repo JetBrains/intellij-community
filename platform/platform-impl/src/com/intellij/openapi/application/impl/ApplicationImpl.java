@@ -25,6 +25,7 @@ import com.intellij.ide.IdeRepaintManager;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -55,9 +56,9 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.psi.PsiLock;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -82,7 +83,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private final ModalityState MODALITY_STATE_NONE = ModalityState.NON_MODAL;
   private final ModalityInvokator myInvokator = new ModalityInvokatorImpl();
 
-  private final List<ApplicationListener> myListeners = ContainerUtil.createEmptyCOWList();
+  private final EventDispatcher<ApplicationListener> myDispatcher = EventDispatcher.create(ApplicationListener.class);
 
   private boolean myTestModeFlag = false;
   private boolean myHeadlessMode = false;
@@ -655,7 +656,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   private boolean canExit() {
-    for (ApplicationListener applicationListener : myListeners) {
+    for (ApplicationListener applicationListener : myDispatcher.getListeners()) {
       if (!applicationListener.canExitApplication()) {
         return false;
       }
@@ -913,12 +914,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       if (myActive != active) {
         myActive = active;
         System.setProperty("idea.active", Boolean.valueOf(myActive).toString());
-        for (ApplicationListener each : myListeners) {
-          if (active) {
-            each.applicationActivated(ideFrame);
-          } else {
-            each.applicationDeactivated(ideFrame);
-          }
+        if (active) {
+          myDispatcher.getMulticaster().applicationActivated(ideFrame);
+        }
+        else {
+          myDispatcher.getMulticaster().applicationDeactivated(ideFrame);
         }
         return true;
       }
@@ -950,35 +950,31 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public void addApplicationListener(ApplicationListener l) {
-    myListeners.add(l);
+    myDispatcher.addListener(l);
+  }
+
+  public void addApplicationListener(ApplicationListener l, Disposable parent) {
+    myDispatcher.addListener(l, parent);
   }
 
   public void removeApplicationListener(ApplicationListener l) {
-    myListeners.remove(l);
+    myDispatcher.removeListener(l);
   }
 
   private void fireApplicationExiting() {
-    for (ApplicationListener applicationListener : myListeners) {
-      applicationListener.applicationExiting();
-    }
+    myDispatcher.getMulticaster().applicationExiting();
   }
 
   private void fireBeforeWriteActionStart(Runnable action) {
-    for (ApplicationListener listener : myListeners) {
-      listener.beforeWriteActionStart(action);
-    }
+    myDispatcher.getMulticaster().beforeWriteActionStart(action);
   }
 
   private void fireWriteActionStarted(Runnable action) {
-    for (ApplicationListener listener : myListeners) {
-      listener.writeActionStarted(action);
-    }
+    myDispatcher.getMulticaster().writeActionStarted(action);
   }
 
   private void fireWriteActionFinished(Runnable action) {
-    for (ApplicationListener listener : myListeners) {
-      listener.writeActionFinished(action);
-    }
+    myDispatcher.getMulticaster().writeActionFinished(action);
   }
 
   public void _saveSettings() { // for testing purposes
