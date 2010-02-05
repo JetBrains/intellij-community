@@ -30,6 +30,7 @@ import org.apache.maven.artifact.Artifact;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
+import org.jetbrains.idea.maven.importing.MavenImporter;
 import org.jetbrains.idea.maven.utils.*;
 
 import java.io.*;
@@ -384,7 +385,7 @@ public class MavenProjectsTree {
   }
 
   public Collection<Pair<String, MavenProfileState>> getProfilesWithStates() {
-    Collection<Pair<String,MavenProfileState>> result = new ArrayListSet<Pair<String,MavenProfileState>>();
+    Collection<Pair<String, MavenProfileState>> result = new ArrayListSet<Pair<String, MavenProfileState>>();
 
     Pair<Collection<String>, Collection<String>> profiles = getAvailableAndActiveProfiles(true, true);
     Collection<String> available = profiles.first;
@@ -393,7 +394,9 @@ public class MavenProjectsTree {
 
     for (String each : available) {
       MavenProfileState state = MavenProfileState.NONE;
-      if (explicitProfiles.contains(each)) state = MavenProfileState.EXPLICIT;
+      if (explicitProfiles.contains(each)) {
+        state = MavenProfileState.EXPLICIT;
+      }
       else if (active.contains(each)) state = MavenProfileState.IMPLICIT;
       result.add(Pair.create(each, state));
     }
@@ -1016,7 +1019,7 @@ public class MavenProjectsTree {
       for (MavenPlugin each : mavenProject.getDeclaredPlugins()) {
         process.checkCanceled();
         process.setText(ProjectBundle.message("maven.downloading.pom.plugins", mavenProject.getDisplayName()));
-        embedder.resolvePlugin(each, nativeMavenProject);
+        embedder.resolvePlugin(each, nativeMavenProject, false);
       }
       firePluginsResolved(mavenProject);
     }
@@ -1032,27 +1035,27 @@ public class MavenProjectsTree {
                              final MavenConsole console,
                              final MavenProgressIndicator process,
                              final Object message) throws MavenProcessCanceledException {
-    doWithEmbedder(mavenProject,
-                   embeddersManager,
-                   MavenEmbeddersManager.EmbedderKind.FOR_FOLDERS_RESOLVE,
-                   console,
-                   process,
-                   new EmbedderTask() {
-                     public void run(MavenEmbedderWrapper embedder) throws MavenProcessCanceledException {
-                       process.checkCanceled();
-                       process.setText(ProjectBundle.message("maven.updating.folders.pom", mavenProject.getDisplayName()));
-                       process.setText2("");
+    executeWithEmbedder(mavenProject,
+                        embeddersManager,
+                        MavenEmbeddersManager.EmbedderKind.FOR_FOLDERS_RESOLVE,
+                        console,
+                        process,
+                        new EmbedderTask() {
+                          public void run(MavenEmbedderWrapper embedder) throws MavenProcessCanceledException {
+                            process.checkCanceled();
+                            process.setText(ProjectBundle.message("maven.updating.folders.pom", mavenProject.getDisplayName()));
+                            process.setText2("");
 
-                       Pair<Boolean, MavenProjectChanges> resolveResult = mavenProject.resolveFolders(embedder,
-                                                                                                      generalSettings,
-                                                                                                      importingSettings,
-                                                                                                      new MavenProjectReader(),
-                                                                                                      console);
-                       if (resolveResult.first) {
-                         fireFoldersResolved(Pair.create(mavenProject, resolveResult.second), message);
-                       }
-                     }
-                   });
+                            Pair<Boolean, MavenProjectChanges> resolveResult = mavenProject.resolveFolders(embedder,
+                                                                                                           generalSettings,
+                                                                                                           importingSettings,
+                                                                                                           new MavenProjectReader(),
+                                                                                                           console);
+                            if (resolveResult.first) {
+                              fireFoldersResolved(Pair.create(mavenProject, resolveResult.second), message);
+                            }
+                          }
+                        });
   }
 
   public void downloadArtifacts(MavenProject mavenProject,
@@ -1091,12 +1094,12 @@ public class MavenProjectsTree {
     }
   }
 
-  public void doWithEmbedder(MavenProject mavenProject,
-                             MavenEmbeddersManager embeddersManager,
-                             MavenEmbeddersManager.EmbedderKind embedderKind,
-                             MavenConsole console,
-                             MavenProgressIndicator process,
-                             EmbedderTask task) throws MavenProcessCanceledException {
+  public void executeWithEmbedder(MavenProject mavenProject,
+                                  MavenEmbeddersManager embeddersManager,
+                                  MavenEmbeddersManager.EmbedderKind embedderKind,
+                                  MavenConsole console,
+                                  MavenProgressIndicator process,
+                                  EmbedderTask task) throws MavenProcessCanceledException {
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(embedderKind);
     embedder.customizeForStrictResolve(getProjectIdToFileMapping(), console, process);
     embedder.clearCachesFor(mavenProject);
