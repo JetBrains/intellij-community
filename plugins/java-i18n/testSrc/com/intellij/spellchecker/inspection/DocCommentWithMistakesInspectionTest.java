@@ -21,14 +21,14 @@ import com.intellij.spellchecker.inspections.SpellCheckerInspectionToolProvider;
  * Created by IntelliJ IDEA.
  * User: Ekaterina Shliakhovetskaja
  */
-public class ClassNameWithMistakesInspectionTest extends SpellcheckerInspectionTestCase {
+public class DocCommentWithMistakesInspectionTest extends JavaSpellcheckerInspectionTestCase {
+
+   
   protected String getBasePath() {
-    return getSpellcheckerTestDataPath() + "/inspection/classNameWithMistakes";
+    return getSpellcheckerTestDataPath() + "/inspection/docCommentWithMistakes";
   }
 
   public void testJava() throws Throwable {
-    doTest("TestUpgade.java",SpellCheckerInspectionToolProvider.getInspectionTools());
+    doTest("SPITest6.java", SpellCheckerInspectionToolProvider.getInspectionTools());
   }
-
-
 }
