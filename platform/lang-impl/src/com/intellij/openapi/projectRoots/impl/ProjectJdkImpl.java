@@ -219,7 +219,9 @@ public class ProjectJdkImpl implements JDOMExternalizable, Sdk, SdkModificator {
     final String name = getName();
     dest.setName(name);
     dest.setHomePath(getHomePath());
-    dest.setVersionString(getVersionString());
+    if (myVersionDefined) {
+      dest.setVersionString(getVersionString());
+    }
     dest.setSdkAdditionalData(getSdkAdditionalData());
     dest.myRootContainer.startChange();
     dest.myRootContainer.removeAllRoots();

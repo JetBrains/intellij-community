@@ -236,7 +236,6 @@ public abstract class MavenTestCase extends UsefulTestCase {
            "<mirrors>" +
            "  <mirror>" +
            "    <id>Nexus</id>" +
-           "    <name>Nexus Public Mirror</name>" +
            "    <url>" + mirror + "</url>" +
            "    <mirrorOf>*</mirrorOf>" +
            "  </mirror>" +
