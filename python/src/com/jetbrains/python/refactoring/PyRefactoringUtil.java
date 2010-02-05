@@ -61,6 +61,10 @@ public class PyRefactoringUtil {
     if (parent == null) {
       return null;
     }
+    // If it is PyIfPart for example, parent if statement, we should deny
+    if (!(parent instanceof PyExpression)){
+      return null;
+    }
     if ((element1 == PsiTreeUtil.getDeepestFirst(parent)) && (element2 == PsiTreeUtil.getDeepestLast(parent))) {
       return parent;
     }

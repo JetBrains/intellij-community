@@ -115,27 +115,9 @@ public class PyStatementListImpl extends PyElementImpl implements PyStatementLis
     return super.addAfter(element, anchor);
   }
 
-  /**
-   * Indents given element and creates pair of indented psiElement and psiWhitespace(indent)
-   */
   @Nullable
   private PsiElement preprocessElement(PsiElement element) {
     if (element instanceof PsiWhiteSpace) return element;
-    element = PyPsiUtils.preprocessElement(element);
-    final PsiElement sibling = getPrevSibling();
-    final String whitespace = sibling instanceof PsiWhiteSpace ? sibling.getText() : "";
-    final int i = whitespace.lastIndexOf("\n");
-    final int indent = i != -1 ? whitespace.length() - i - 1 : 0;
-    if (indent == 0) return element;
-    try {
-      final String newElementText = StringUtil.shiftIndentInside(element.getText(), indent, false);
-      final PyClass clazzz = PythonLanguage.getInstance().getElementGenerator().
-        createFromText(getProject(), PyClass.class, "class PyCharmRulezzzzz():\n" + newElementText);
-      final PyStatementList statementList = clazzz.getStatementList();
-      return statementList.getFirstChild();
-    }
-    catch (IOException e) {
-      return null;
-    }
+    return PyPsiUtils.preprocessElement(element);
   }
 }

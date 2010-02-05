@@ -29,7 +29,7 @@ public class PyCodeFragmentUtil {
     final int start = startInScope.getTextOffset();
     final int end = endInScope.getTextOffset() + endInScope.getTextLength();
 
-    // Check for class or function inside code fragment
+    // Check for statements inside code fragment
     owner.acceptChildren(new PyRecursiveElementVisitor(){
       @Override
       public void visitPyClass(final PyClass node) {
@@ -42,6 +42,13 @@ public class PyCodeFragmentUtil {
       public void visitPyFunction(final PyFunction node) {
         if (CodeFragmentUtil.getPosition(node, start, end) == Position.INSIDE){
           throw new CannotCreateCodeFragmentException(PyBundle.message("refactoring.extract.method.error.cannot.perform.refactoring.when.function.declaration.inside"));
+        }
+      }
+
+      @Override
+      public void visitPyFromImportStatement(PyFromImportStatement node) {
+        if (CodeFragmentUtil.getPosition(node, start, end) == Position.INSIDE){
+          throw new CannotCreateCodeFragmentException(PyBundle.message("refactoring.extract.method.error.cannot.perform.refactoring.when.from.import.inside"));
         }
       }
     });

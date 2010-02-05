@@ -24,7 +24,13 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
     final RefactoringActionHandler handler = LanguageRefactoringSupport.INSTANCE.forLanguage(PythonLanguage.getInstance()).getExtractMethodHandler();
     try {
       System.setProperty(PyExtractMethodUtil.NAME, name);
-      handler.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile(), new FileDataContext(myFixture.getFile()));
+      try {
+        handler.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile(), new FileDataContext(myFixture.getFile()));
+      }
+      catch (Exception e) {
+        assertEquals(result, e.getMessage());
+        return;
+      }
     } finally {
       System.clearProperty(PyExtractMethodUtil.NAME);
     }
@@ -103,5 +109,17 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
 
   public void testMethodReturn() throws Throwable {
     doTest("context/methodreturn.before.py", "bar", "context/methodreturn.after.py");
+  }
+
+  public void testWrongSelectionIfPart() throws Throwable {
+    doTest("wrongSelection/ifpart.before.py", "bar", "Cannot perform extract method using selected element(s)");
+  }
+
+  public void testFromImportStatement() throws Throwable {
+    doTest("wrongSelection/fromimport.before.py", "bar", "Cannot perform refactoring with from import statement inside code block");
+  }
+
+  public void testPy479() throws Throwable {
+    doTest("outEmpty/py479.before.py", "bar", "outEmpty/py479.after.py");
   }
 }
