@@ -8,6 +8,7 @@
     <lang.parserDefinition language="Python" implementationClass="com.jetbrains.python.PythonParserDefinition"/>
     <lang.commenter language="Python" implementationClass="com.jetbrains.python.PythonCommenter"/>
     <lang.foldingBuilder language="Python" implementationClass="com.jetbrains.python.PythonFoldingBuilder"/>
+    <lang.foldingBuilder language="DjangoTemplate" implementationClass="com.jetbrains.django.editor.DjangoTemplateFoldingBuilder"/>
     <lang.findUsagesProvider language="Python" implementationClass="com.jetbrains.python.findUsages.PythonFindUsagesProvider"/>
     <lang.formatter language="Python" implementationClass="com.jetbrains.python.PythonFormattingModelBuilder"/>
     <lang.namesValidator language="Python" implementationClass="com.jetbrains.python.refactoring.PythonNamesValidator"/>
