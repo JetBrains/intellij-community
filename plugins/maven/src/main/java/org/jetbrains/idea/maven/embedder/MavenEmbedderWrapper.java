@@ -49,6 +49,7 @@ import org.apache.maven.monitor.event.DefaultEventDispatcher;
 import org.apache.maven.monitor.event.DefaultEventMonitor;
 import org.apache.maven.monitor.event.EventDispatcher;
 import org.apache.maven.plugin.PluginManager;
+import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.profiles.DefaultProfileManager;
 import org.apache.maven.profiles.ProfileManager;
 import org.apache.maven.project.*;
@@ -66,6 +67,7 @@ import org.apache.maven.settings.Settings;
 import org.codehaus.plexus.DefaultPlexusContainer;
 import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.PlexusContainerException;
+import org.codehaus.plexus.component.repository.ComponentDependency;
 import org.codehaus.plexus.component.repository.ComponentDescriptor;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.codehaus.plexus.personality.plexus.lifecycle.phase.InitializationException;
@@ -299,21 +301,25 @@ public class MavenEmbedderWrapper {
     throws MavenProcessCanceledException {
     return doExecute(new Executor<Artifact>() {
       public Artifact execute() throws Exception {
-        Artifact artifact = getComponent(ArtifactFactory.class).createArtifactWithClassifier(id.getGroupId(),
-                                                                                             id.getArtifactId(),
-                                                                                             id.getVersion(),
-                                                                                             type,
-                                                                                             classifier);
-        try {
-          getComponent(ArtifactResolver.class).resolve(artifact, convertRepositories(remoteRepositories), myLocalRepository);
-          return artifact;
-        }
-        catch (Exception e) {
-          MavenLog.LOG.info(e);
-        }
-        return artifact;
+        return doResolve(id, type, classifier, convertRepositories(remoteRepositories));
       }
     });
+  }
+
+  private Artifact doResolve(MavenId id, String type, String classifier, List<ArtifactRepository> remoteRepositories) {
+    Artifact artifact = getComponent(ArtifactFactory.class).createArtifactWithClassifier(id.getGroupId(),
+                                                                                         id.getArtifactId(),
+                                                                                         id.getVersion(),
+                                                                                         type,
+                                                                                         classifier);
+    try {
+      getComponent(ArtifactResolver.class).resolve(artifact, remoteRepositories, myLocalRepository);
+      return artifact;
+    }
+    catch (Exception e) {
+      MavenLog.LOG.info(e);
+    }
+    return artifact;
   }
 
   private List<ArtifactRepository> convertRepositories(List<MavenRemoteRepository> repositories) {
@@ -330,7 +336,7 @@ public class MavenEmbedderWrapper {
     return result;
   }
 
-  public boolean resolvePlugin(@NotNull final MavenPlugin plugin, @NotNull final MavenProject nativeMavenProject)
+  public boolean resolvePlugin(@NotNull final MavenPlugin plugin, @NotNull final MavenProject nativeMavenProject, final boolean transitive)
     throws MavenProcessCanceledException {
     return doExecute(new Executor<Boolean>() {
       public Boolean execute() throws Exception {
@@ -339,7 +345,15 @@ public class MavenEmbedderWrapper {
           mavenPlugin.setGroupId(plugin.getGroupId());
           mavenPlugin.setArtifactId(plugin.getArtifactId());
           mavenPlugin.setVersion(plugin.getVersion());
-          getComponent(PluginManager.class).verifyPlugin(mavenPlugin, nativeMavenProject, mySettings, myLocalRepository);
+          PluginDescriptor result =
+            getComponent(PluginManager.class).verifyPlugin(mavenPlugin, nativeMavenProject, mySettings, myLocalRepository);
+          if (!transitive) return true;
+
+          for (ComponentDependency each : (List<ComponentDependency>)result.getDependencies()) {
+            List repos = nativeMavenProject.getRemoteArtifactRepositories();
+            // todo try to use parallel downloading
+            doResolve(new MavenId(each.getGroupId(), each.getArtifactId(), each.getVersion()), each.getType(), null, repos);
+          }
         }
         catch (Exception e) {
           MavenLog.LOG.info(e);

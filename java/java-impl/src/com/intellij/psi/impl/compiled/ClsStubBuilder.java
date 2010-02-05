@@ -66,7 +66,7 @@ public class ClsStubBuilder {
 
     final PsiJavaFileStubImpl file = new PsiJavaFileStubImpl("dont.know.yet", true);
     try {
-      final PsiClassStub result = buildClass(vFile, bytes, file, 0);
+      final PsiClassStub result = buildClass(vFile, bytes, file, Opcodes.ACC_STATIC);
       if (result == null) return null;
 
       file.setPackageName(getPackageName(result));
@@ -125,7 +125,7 @@ public class ClsStubBuilder {
 
       final String shortName = PsiNameHelper.getShortClassName(fqn);
 
-      final int flags = myAccess == 0 ? access : myAccess;
+      final int flags = myAccess | access;
 
       boolean isDeprecated = (flags & Opcodes.ACC_DEPRECATED) != 0;
       boolean isInterface = (flags & Opcodes.ACC_INTERFACE) != 0;
@@ -228,11 +228,14 @@ public class ClsStubBuilder {
 
       if ((access & Opcodes.ACC_PRIVATE) != 0) {
         flags |= ModifierFlags.PRIVATE_MASK;
-      } else if ((access & Opcodes.ACC_PROTECTED) != 0) {
+      }
+      else if ((access & Opcodes.ACC_PROTECTED) != 0) {
         flags |= ModifierFlags.PROTECTED_MASK;
-      } else if ((access & Opcodes.ACC_PUBLIC) != 0) {
+      }
+      else if ((access & Opcodes.ACC_PUBLIC) != 0) {
         flags |= ModifierFlags.PUBLIC_MASK;
-      } else {
+      }
+      else {
         flags |= ModifierFlags.PACKAGE_LOCAL_MASK;
       }
 
@@ -628,7 +631,8 @@ public class ClsStubBuilder {
       final double d = ((Double)value).doubleValue();
       if (Double.isInfinite(d)) {
         return d > 0 ? "1.0 / 0.0" : "-1.0 / 0.0";
-      } else if (Double.isNaN(d)) {
+      }
+      else if (Double.isNaN(d)) {
         return "0.0d / 0.0";
       }
       return Double.toString(d);
@@ -639,9 +643,11 @@ public class ClsStubBuilder {
 
       if (Float.isInfinite(v)) {
         return v > 0 ? "1.0f / 0.0" : "-1.0f / 0.0";
-      } else if (Float.isNaN(v)) {
+      }
+      else if (Float.isNaN(v)) {
         return "0.0f / 0.0";
-      } else {
+      }
+      else {
         return Float.toString(v) + "f";
       }
     }

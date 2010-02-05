@@ -1,6 +1,6 @@
 PsiJavaFileStub [java.util]
   PsiClassStub[interface name=List fqn=java.util.List]
-    PsiModifierListStub[mask=1025]
+    PsiModifierListStub[mask=1033]
     PsiTypeParameterListStub
       PsiTypeParameter[E]
         PsiRefListStub[EXTENDS_BOUNDS_LIST:]

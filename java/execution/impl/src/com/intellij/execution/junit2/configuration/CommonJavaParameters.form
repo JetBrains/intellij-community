@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.execution.junit2.configuration.CommonJavaParameters">
-  <grid id="d88e6" binding="myWholePanel" layout-manager="GridLayoutManager" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="10">
+  <grid id="d88e6" binding="myWholePanel" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="10">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="64" y="62" width="431" height="215"/>
+      <xy x="64" y="62" width="431" height="136"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -32,25 +32,13 @@
           <text resource-bundle="messages/ExecutionBundle" key="junit.configuration.test.runner.parameters.label"/>
         </properties>
       </component>
-      <component id="8c18f" class="com.intellij.openapi.ui.LabeledComponent" binding="myWorkingDirectory">
+      <component id="689d0" class="com.intellij.openapi.ui.LabeledComponent" binding="myWorkingDirectoryComponent" custom-create="true">
         <constraints>
-          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false">
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false">
             <minimum-size width="0" height="-1"/>
           </grid>
         </constraints>
-        <properties>
-          <componentClass value="com.intellij.openapi.ui.TextFieldWithBrowseButton"/>
-          <opaque value="true"/>
-          <text resource-bundle="messages/ExecutionBundle" key="junit.configuration.working.directory.label"/>
-        </properties>
-      </component>
-      <component id="dd2ea" class="javax.swing.JCheckBox" binding="myUseModuleDirectoryAsCheckBox" default-binding="true">
-        <constraints>
-          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties>
-          <text value="Use Module Directory as a Working Directory"/>
-        </properties>
+        <properties/>
       </component>
     </children>
   </grid>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,12 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
 
-public abstract class SpellcheckerInspectionTestCase extends CodeInsightFixtureTestCase {
+public abstract class JavaSpellcheckerInspectionTestCase extends JavaCodeInsightFixtureTestCase {
   protected static String getSpellcheckerTestDataPath() {
-    return PluginPathManager.getPluginHomePathRelative("spellchecker") + "/testData";
+    return PluginPathManager.getPluginHomePathRelative("java-i18n") + "/testData";
   }
 
   @NonNls

@@ -69,9 +69,9 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
       return;
     }
 
-    final HighlightUsagesHandlerBase handler = HighlightUsagesHandler.createCustomHandler(myEditor, myFile);
+    final HighlightUsagesHandlerBase<PsiElement> handler = HighlightUsagesHandler.createCustomHandler(myEditor, myFile);
     if (handler != null) {
-      final List targets = handler.getTargets();
+      List<PsiElement> targets = handler.getTargets();
       handler.computeUsages(targets);
       myReadAccessRanges.addAll(handler.getReadUsages());
       myWriteAccessRanges.addAll(handler.getWriteUsages());

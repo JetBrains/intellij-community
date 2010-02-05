@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.maven.importing;
 
+import junit.framework.Test;
+import junit.framework.TestSuite;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.indices.MavenCustomRepositoryHelper;
 
@@ -122,5 +124,13 @@ public class ArtifactsDownloadingTest extends MavenImportingTestCase {
                   "</build>");
 
     assertTrue(f.exists());
+  }
+
+  public static Test suite() {
+    TestSuite s = new TestSuite();
+    s.addTestSuite(ArtifactsDownloadingTest.class);
+    s.addTestSuite(ArtifactsDownloadingTest.class);
+    s.addTestSuite(ArtifactsDownloadingTest.class);
+    return s;
   }
 }
