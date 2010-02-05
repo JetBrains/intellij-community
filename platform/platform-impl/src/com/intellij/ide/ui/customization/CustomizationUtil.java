@@ -16,10 +16,13 @@
 package com.intellij.ide.ui.customization;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.PopupHandler;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -27,6 +30,9 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -282,4 +288,16 @@ public class CustomizationUtil {
     return result.toArray(new ActionUrl[result.size()]);
   }
 
+  public static MouseListener installPopupHandler(JComponent component, @NotNull final String groupId, final String place) {
+    if (ApplicationManager.getApplication() == null) return new MouseAdapter(){};
+    PopupHandler popupHandler = new PopupHandler() {
+      public void invokePopup(Component comp, int x, int y) {
+        ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(groupId);
+        final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(place, group);
+        popupMenu.getComponent().show(comp, x, y);
+      }
+    };
+    component.addMouseListener(popupHandler);
+    return popupHandler;
+  }
 }
