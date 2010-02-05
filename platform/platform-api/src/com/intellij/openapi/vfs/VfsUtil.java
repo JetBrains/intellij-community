@@ -431,7 +431,7 @@ public class VfsUtil {
   }
 
   @NotNull
-  private static String convertFromUrl(@NotNull URL url) {
+  public static String convertFromUrl(@NotNull URL url) {
     String protocol = url.getProtocol();
     String path = url.getPath();
     if (protocol.equals(JAR)) {
