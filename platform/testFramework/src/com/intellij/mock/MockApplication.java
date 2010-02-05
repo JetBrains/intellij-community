@@ -16,6 +16,7 @@
 package com.intellij.mock;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ModalityInvokator;
 import com.intellij.openapi.application.ModalityState;
@@ -148,6 +149,9 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   public void addApplicationListener(ApplicationListener listener) {
+  }
+
+  public void addApplicationListener(ApplicationListener listener, Disposable parent) {
   }
 
   public void removeApplicationListener(ApplicationListener listener) {
