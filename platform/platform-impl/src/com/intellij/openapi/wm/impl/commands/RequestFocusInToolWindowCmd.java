@@ -98,35 +98,22 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
         preferredFocusedComponent = IdeFocusTraversalPolicy.getPreferredFocusedComponent(component);
       }
 
-      final Window owner = SwingUtilities.getWindowAncestor(myToolWindow.getComponent());
-      //if (owner == null) {
-      //  System.out.println("owner = " + owner);
-      //  return;
-      //}
-      // if owner is active window or it has active child window which isn't floating decorator then
-      // don't bring owner window to font. If we will make toFront every time then it's possible
-      // the following situation:
-      // 1. user prform refactoring
-      // 2. "Do not show preview" dialog is popping up.
-      // 3. At that time "preview" tool window is being activated and modal "don't show..." dialog
-      // isn't active.
-      if (owner != null && owner.getFocusOwner() == null) {
-        final Window activeWindow = getActiveWindow(owner.getOwnedWindows());
-        if (activeWindow == null || (activeWindow instanceof FloatingDecorator)) {
-          LOG.debug("owner.toFront()");
-          //Thread.dumpStack();
-          //System.out.println("------------------------------------------------------");
-          owner.toFront();
-        }
-      }
       // Try to focus component which is preferred one for the tool window
       if (preferredFocusedComponent != null) {
-        requestFocus(preferredFocusedComponent);
+        requestFocus(preferredFocusedComponent).doWhenDone(new Runnable() {
+          public void run() {
+            bringOwnerToFront();
+          }
+        });
       }
       else {
         // If there is no preferred component then try to focus tool window itself
         final JComponent componentToFocus = myToolWindow.getComponent();
-        requestFocus(componentToFocus);
+        requestFocus(componentToFocus).doWhenDone(new Runnable() {
+          public void run() {
+            bringOwnerToFront();
+          }
+        });
       }
     }
     finally {
@@ -134,8 +121,33 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
     }
   }
 
+  private void bringOwnerToFront() {
+    final Window owner = SwingUtilities.getWindowAncestor(myToolWindow.getComponent());
+    //if (owner == null) {
+    //  System.out.println("owner = " + owner);
+    //  return;
+    //}
+    // if owner is active window or it has active child window which isn't floating decorator then
+    // don't bring owner window to font. If we will make toFront every time then it's possible
+    // the following situation:
+    // 1. user prform refactoring
+    // 2. "Do not show preview" dialog is popping up.
+    // 3. At that time "preview" tool window is being activated and modal "don't show..." dialog
+    // isn't active.
+    if (owner != null && owner.getFocusOwner() == null) {
+      final Window activeWindow = getActiveWindow(owner.getOwnedWindows());
+      if (activeWindow == null || (activeWindow instanceof FloatingDecorator)) {
+        LOG.debug("owner.toFront()");
+        //Thread.dumpStack();
+        //System.out.println("------------------------------------------------------");
+        owner.toFront();
+      }
+    }
+  }
 
-  private void requestFocus(final Component c) {
+
+  private ActionCallback requestFocus(final Component c) {
+    ActionCallback result = new ActionCallback();
     final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getPermanentFocusOwner();
     if (owner != null && owner == c) {
       myManager.getFocusManager().requestFocus(new FocusCommand() {
@@ -146,15 +158,17 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
         public void run() {
           updateToolWindow(c);
         }
-      });
+      }).notify(result);
     }
     else {
       myManager.getFocusManager().requestFocus(new FocusCommand.ByComponent(c, myToolWindow.getComponent()), myForced).doWhenProcessed(new Runnable() {
         public void run() {
           updateToolWindow(c);
         }
-      });
+      }).notify(result);
     }
+
+    return result;
   }
 
   private void updateToolWindow(Component c) {
