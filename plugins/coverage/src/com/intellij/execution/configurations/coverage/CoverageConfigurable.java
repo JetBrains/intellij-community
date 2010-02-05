@@ -17,14 +17,11 @@
 package com.intellij.execution.configurations.coverage;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.coverage.BaseCoverageSuite;
-import com.intellij.coverage.CoverageDataManager;
-import com.intellij.coverage.CoverageRunner;
-import com.intellij.coverage.CoverageSuite;
-import com.intellij.execution.CommonJavaRunConfigurationParameters;
+import com.intellij.coverage.*;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.util.JreVersionDetector;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
@@ -116,7 +113,7 @@ public class CoverageConfigurable<T extends ModuleBasedConfiguration & CommonJav
 
     myCoverageEnabledCheckbox.setEnabled(isJre50);
 
-    final CoverageEnabledConfiguration configuration = CoverageEnabledConfiguration.get(runConfiguration);
+    final JavaCoverageEnabledConfiguration configuration = (JavaCoverageEnabledConfiguration)CoverageEnabledConfiguration.get(runConfiguration);
     final CoverageRunner runner = configuration.getCoverageRunner();
     if (runner != null) {
       myCoverageRunnerCb.setSelectedItem(new CoverageRunnerItem(runner));
@@ -141,8 +138,8 @@ public class CoverageConfigurable<T extends ModuleBasedConfiguration & CommonJav
     myMergedCoverageSuiteCombo.setEnabled(myMergeDataCheckbox.isEnabled() && myMergeDataCheckbox.isSelected());
     final DefaultComboBoxModel model = (DefaultComboBoxModel)myMergedCoverageSuiteCombo.getModel();
     model.removeAllElements();
-    final BaseCoverageSuite[] suites = CoverageDataManager.getInstance(myProject).getSuites();
-    for (BaseCoverageSuite suite : suites) {
+    final CoverageSuite[] suites = CoverageDataManager.getInstance(myProject).getSuites();
+    for (CoverageSuite suite : suites) {
       if (suite.isValid()) {
         model.addElement(suite.getPresentableName());
       }
@@ -168,7 +165,7 @@ public class CoverageConfigurable<T extends ModuleBasedConfiguration & CommonJav
   }
 
   protected void applyEditorTo(final T runConfiguration) throws ConfigurationException {
-    final CoverageEnabledConfiguration configuration = CoverageEnabledConfiguration.get(runConfiguration);
+    final JavaCoverageEnabledConfiguration configuration = (JavaCoverageEnabledConfiguration)CoverageEnabledConfiguration.get(runConfiguration);
     configuration.setCoverageEnabled(myCoverageEnabledCheckbox.isSelected());
     configuration.setMergeWithPreviousResults(myMergeDataCheckbox.isSelected());
     configuration.setCoveragePatterns(myClassFilterEditor.getFilters());
