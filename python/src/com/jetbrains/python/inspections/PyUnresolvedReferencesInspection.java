@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
@@ -152,7 +153,7 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
       ProgressManager.checkCanceled(); // before expensive index searches
       // NOTE: current indices have limitations, only finding direct definitions of classes and functions.
       Project project = node.getProject();
-      GlobalSearchScope scope = null; // GlobalSearchScope.projectScope(project);
+      GlobalSearchScope scope = ProjectScope.getAllScope(project);
       List<PsiElement> symbols = new ArrayList<PsiElement>();
       symbols.addAll(StubIndex.getInstance().get(PyClassNameIndex.KEY, ref_text, project, scope));
       symbols.addAll(StubIndex.getInstance().get(PyFunctionNameIndex.KEY, ref_text, project, scope));

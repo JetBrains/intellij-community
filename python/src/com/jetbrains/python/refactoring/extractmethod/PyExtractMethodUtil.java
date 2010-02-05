@@ -68,12 +68,16 @@ public class PyExtractMethodUtil {
               generatedMethod = insertGeneratedMethod(statement1, generatedMethod);
 
               // Process parameters
-              processParameters(project, generatedMethod, variableData);
+              final boolean isMethod = PyPsiUtils.isMethodContext(generatedMethod);
+              processParameters(project, generatedMethod, variableData, isMethod);
 
               // Generating call element
               final StringBuilder builder = new StringBuilder();
               if (fragment.isReturnInstructonInside()) {
                 builder.append("return ");
+              }
+              if (isMethod){
+                builder.append("self.");
               }
               builder.append(methodName);
               builder.append("(").append(createCallArgsString(variableData)).append(")");
@@ -112,10 +116,15 @@ public class PyExtractMethodUtil {
               generatedMethod = insertGeneratedMethod(statement1, generatedMethod);
 
               // Process parameters
-              processParameters(project, generatedMethod, variableData);
+              final boolean isMethod = PyPsiUtils.isMethodContext(generatedMethod);
+              processParameters(project, generatedMethod, variableData, isMethod);
 
               // Generate call element
-              builder.append(" = ").append(methodName).append("(");
+              builder.append(" = ");
+              if (isMethod){
+                builder.append("self.");
+              }
+              builder.append(methodName).append("(");
               builder.append(createCallArgsString(variableData)).append(")");
               PsiElement callElement = PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyElement.class, builder.toString());
 
@@ -166,12 +175,16 @@ public class PyExtractMethodUtil {
               generatedMethod = insertGeneratedMethod(expression, generatedMethod);
 
               // Process parameters
-              processParameters(project, generatedMethod, variableData);
+              final boolean isMethod = PyPsiUtils.isMethodContext(generatedMethod);
+              processParameters(project, generatedMethod, variableData, isMethod);
 
               // Generating call element
               final StringBuilder builder = new StringBuilder();
               if (fragment.isReturnInstructonInside()) {
                 builder.append("return ");
+              }
+              if (isMethod){
+                builder.append("self.");
               }
               builder.append(methodName);
               builder.append("(").append(createCallArgsString(variableData)).append(")");
@@ -216,7 +229,10 @@ public class PyExtractMethodUtil {
     return builder.toString();
   }
 
-  private static void processParameters(final Project project, final PyFunction generatedMethod, final AbstractVariableData[] variableData) {
+  private static void processParameters(final Project project,
+                                        final PyFunction generatedMethod,
+                                        final AbstractVariableData[] variableData,
+                                        final boolean isMethod) {
     final Map<String, String> map = createMap(variableData);
     // Rename parameters
     for (PyParameter parameter : generatedMethod.getParameterList().getParameters()) {
@@ -226,17 +242,19 @@ public class PyExtractMethodUtil {
         RefactoringFactory.getInstance(project).createRename(parameter, newName).run();        
       }
     }
-    // Change signature according to pass settings
+    // Change signature according to pass settings and
     final StringBuilder builder = new StringBuilder();
-    for (AbstractVariableData data : variableData) {
-      if (data.isPassAsParameter()){
-        if (builder.length() != 0){
-          builder.append(", ");
-        }
-        builder.append(data.name);
+    builder.append("def foo(");
+    final String params = createMethodParamsString(variableData, false);
+    if (isMethod){
+      builder.append("self");
+      if (params.length() != 0){
+        builder.append(", ");
+        builder.append(params);
       }
+    } else {
+      builder.append(params);
     }
-    builder.insert(0, "def foo(");
     builder.append(")\n  pass");
     final PyParameterList pyParameterList =
       PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyFunction.class, builder.toString()).getParameterList();
@@ -350,24 +368,24 @@ public class PyExtractMethodUtil {
         return LanguageNamesValidation.INSTANCE.forLanguage(PythonLanguage.getInstance()).isIdentifier(name, project);
       }
     };
-
+    final boolean isMethod = PyPsiUtils.isMethodContext(element);
     final ExtractMethodDecorator decorator = new ExtractMethodDecorator() {
       public String createMethodPreview(final String methodName, final AbstractVariableData[] variableDatas) {
         final StringBuilder builder = new StringBuilder();
-        builder.append("def ").append(methodName);
-        builder.append("(");
-        boolean first = true;
+        if (isMethod) {
+          builder.append("self");
+        }
         for (AbstractVariableData variableData : variableDatas) {
           if (variableData.passAsParameter) {
-            if (first) {
-              first = false;
-            }
-            else {
+            if (builder.length() != 0) {
               builder.append(", ");
             }
             builder.append(variableData.name);
           }
         }
+        builder.insert(0, "(");
+        builder.insert(0, methodName);
+        builder.insert(0, "def ");
         builder.append(")");
         return builder.toString();
       }

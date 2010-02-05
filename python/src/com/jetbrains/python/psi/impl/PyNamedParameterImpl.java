@@ -118,6 +118,12 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
             return new PyClassType(containingClass, false); // TODO: check for @classmethod or @staticmethod node above us  
           }
         }
+        if (isKeywordContainer()) {
+          return PyBuiltinCache.getInstance(this).getDictType();
+        }
+        if (isPositionalContainer()) {
+          return PyBuiltinCache.getInstance(this).getTupleType();
+        }
         for(PyTypeProvider provider: Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
           PyType result = provider.getParameterType(this, func);
           if (result != null) return result;

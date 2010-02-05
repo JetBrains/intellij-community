@@ -88,12 +88,20 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
     doTest("comment.before.py", "bar", "comment.after.py");
   }
 
-  public void testClass() throws Throwable {
-    doTest("class.before.py", "bar", "class.after.py");
-  }
-
   public void testFile() throws Throwable {
     doTest("file.before.py", "bar", "file.after.py");
   }
-}
 
+
+  public void testMethod() throws Throwable {
+    doTest("context/method.before.py", "bar", "context/method.after.py");
+  }
+
+  public void testMethodIndent() throws Throwable {
+    doTest("context/methodindent.before.py", "bar", "context/methodindent.after.py");
+  }
+
+  public void testMethodReturn() throws Throwable {
+    doTest("context/methodreturn.before.py", "bar", "context/methodreturn.after.py");
+  }
+}

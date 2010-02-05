@@ -167,6 +167,11 @@ public class PyBuiltinCache {
   }
 
   @Nullable
+  public PyClassType getTupleType() {
+    return _getObjectType("tuple");
+  }
+
+  @Nullable
   public PyClassType getIntType() {
     return _getObjectType("int");
   }

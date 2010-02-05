@@ -280,7 +280,8 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyRaiseStatement(final PyRaiseStatement node) {
-    myBuilder.startNode(node);
+    final Instruction instruction = myBuilder.startNode(node);
+    myBuilder.addPendingEdge(null, instruction);
     myBuilder.flowAbrupted();
   }
 
@@ -292,20 +293,15 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       expression.accept(this);
     }
 // Here we process pending instructions!!!
-    final List<Pair<PsiElement, Instruction>> pending = myBuilder.pending;
-    List<Pair<PsiElement, Instruction>> newPending = new ArrayList<Pair<PsiElement, Instruction>>();
-
-    for (Pair<PsiElement, Instruction> pair : pending) {
-      final PsiElement pendingScope = pair.getFirst();
-      if (pendingScope != null && PsiTreeUtil.isAncestor(node, pendingScope, false)) {
-        final Instruction pendingInstruction = pair.getSecond();
-        myBuilder.addPendingEdge(null, pendingInstruction);
+    myBuilder.processPending(new ControlFlowBuilder.PendingProcessor() {
+      public void process(final PsiElement pendingScope, final Instruction instruction) {
+        if (pendingScope != null && PsiTreeUtil.isAncestor(node, pendingScope, false)) {
+          myBuilder.addPendingEdge(null, instruction);
+        } else {
+          myBuilder.addPendingEdge(pendingScope, instruction);
+        }        
       }
-      else {
-        newPending.add(pair);
-      }
-    }
-
+    });
     myBuilder.addPendingEdge(null, myBuilder.prevInstruction);
     myBuilder.flowAbrupted();
   }

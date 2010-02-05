@@ -138,6 +138,7 @@
     <extensionPoint qualifiedName="Pythonid.typeProvider" interface="com.jetbrains.python.psi.impl.PyTypeProvider"/>
     <extensionPoint qualifiedName="Pythonid.pySuperMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint qualifiedName="Pythonid.pyClassInheritorsSearch" interface="com.intellij.util.QueryExecutor"/>
+    <extensionPoint qualifiedName="Pythonid.pyClassMembersProvider" interface="com.jetbrains.python.psi.types.PyClassMembersProvider"/>
     <extensionPoint qualifiedName="Pythonid.pyOverridingMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint qualifiedName="Pythonid.runnableScriptFilter" interface="com.jetbrains.python.run.RunnableScriptFilter"/>
     <extensionPoint qualifiedName="Pythonid.unresolvedReferenceQuickFixProvider" interface="com.jetbrains.python.inspections.PyUnresolvedReferenceQuickFixProvider"/>
@@ -151,6 +152,7 @@
     <runnableScriptFilter implementation="com.jetbrains.python.testing.PythonUnitTestRunnableScriptFilter"/>
 
     <!-- Django -->
+    <pyClassMembersProvider implementation="com.jetbrains.django.codeInsight.DjangoClassMembersProvider"/>
     <unresolvedReferenceQuickFixProvider implementation="com.jetbrains.django.ref.DjangoViewReferenceQuickFixProvider"/>
   </extensions>
 

@@ -115,7 +115,11 @@ public class PythonSdkType extends SdkType {
       }
     }
     else if (SystemInfo.isMac) {
-      return "/Library/Frameworks/Python.framework/Versions/Current/";
+      final String pythonPath = "/Library/Frameworks/Python.framework/Versions/Current/";
+      if (new File(pythonPath).exists()) {
+        return pythonPath;
+      }
+      return "/System/Library/Frameworks/Python.framework/Versions/Current/";
     }
 
     if (candidates.size() > 0) {

@@ -209,4 +209,8 @@ public class PyPsiUtils {
       statements[0].delete();
     }
   }
+
+  public static boolean isMethodContext(final PsiElement element) {
+    return PsiTreeUtil.getParentOfType(element, PyFile.class, PyClass.class) instanceof PyClass;
+  }
 }
