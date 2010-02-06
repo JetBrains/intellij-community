@@ -16,9 +16,7 @@
  */
 package com.intellij.refactoring.inline;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -38,12 +36,19 @@ class InlineViewDescriptor implements UsageViewDescriptor{
   }
 
   public String getProcessedElementsHeader() {
+    if (myElement instanceof PsiField) {
+      return RefactoringBundle.message("inline.field.elements.header");
+    }
+    if (myElement instanceof PsiVariable) {
+      return RefactoringBundle.message("inline.vars.elements.header");
+    }
     if (myElement instanceof PsiClass) {
       return RefactoringBundle.message("inline.class.elements.header");
     }
-    return myElement instanceof PsiMethod ?
-           RefactoringBundle.message("inline.method.elements.header") :
-           RefactoringBundle.message("inline.field.elements.header");
+    if (myElement instanceof PsiMethod) {
+      return RefactoringBundle.message("inline.method.elements.header");
+    }
+    return "Unknown element";
   }
 
   public String getCodeReferencesText(int usagesCount, int filesCount) {

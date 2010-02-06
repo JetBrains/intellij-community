@@ -55,8 +55,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.util.Collection;
 
 public class ChangesViewManager extends AbstractProjectComponent implements JDOMExternalizable {
@@ -221,6 +221,7 @@ public class ChangesViewManager extends AbstractProjectComponent implements JDOM
                        changeListManager.getDeletedFiles(),
                        changeListManager.getModifiedWithoutEditing(),
                        changeListManager.getSwitchedFilesMap(),
+                       changeListManager.getSwitchedRoots(),
                        SHOW_IGNORED_MODE ? changeListManager.getIgnoredFiles() : null, changeListManager.getLockedFolders(),
                        changeListManager.getLogicallyLockedFolders());
   }

@@ -134,7 +134,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   }
 
   public MultiMap<PsiElement, String> getConflicts(final UsageInfo[] usages) {
-    MultiMap<PsiElement, String> result = new MultiMap<PsiElement, String>();
+    final MultiMap<PsiElement, String> result = new MultiMap<PsiElement, String>();
     ReferencedElementsCollector collector = new ReferencedElementsCollector() {
       protected void checkAddMember(@NotNull final PsiMember member) {
         if (PsiTreeUtil.isAncestor(myClass, member, false)) {
@@ -150,6 +150,53 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
       }
     };
     InlineMethodProcessor.addInaccessibleMemberConflicts(myClass, usages, collector, result);
+    myClass.accept(new JavaRecursiveElementVisitor(){
+      @Override
+      public void visitParameter(PsiParameter parameter) {
+        super.visitParameter(parameter);
+        if (PsiUtil.resolveClassInType(parameter.getType()) != myClass) return;
+
+        for (PsiReference psiReference : ReferencesSearch.search(parameter)) {
+          final PsiElement refElement = psiReference.getElement();
+          if (refElement instanceof PsiExpression) {
+            final PsiReferenceExpression referenceExpression = PsiTreeUtil.getParentOfType(refElement, PsiReferenceExpression.class);
+            if (referenceExpression != null && referenceExpression.getQualifierExpression() == refElement) {
+              final PsiElement resolvedMember = referenceExpression.resolve();
+              if (resolvedMember != null && PsiTreeUtil.isAncestor(myClass, resolvedMember, false)) {
+                if (resolvedMember instanceof PsiMethod) {
+                  if (myClass.findMethodsBySignature((PsiMethod)resolvedMember, true).length > 1) { //skip inherited methods
+                    continue;
+                  }
+                }
+                result.putValue(refElement, "Class cannot be inlined because a call to its member inside body");
+              }
+            }
+          }
+        }
+      }
+
+      @Override
+      public void visitNewExpression(PsiNewExpression expression) {
+        super.visitNewExpression(expression);
+        if (PsiUtil.resolveClassInType(expression.getType()) != myClass) return;
+        result.putValue(expression, "Class cannot be inlined because a call to its constructor inside body");
+      }
+
+      @Override
+      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        super.visitMethodCallExpression(expression);
+        final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+        final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
+        if (qualifierExpression != null && PsiUtil.resolveClassInType(qualifierExpression.getType()) != myClass) return;
+        final PsiElement resolved = methodExpression.resolve();
+        if (resolved instanceof PsiMethod) {
+          final PsiMethod method = (PsiMethod)resolved;
+          if ("getClass".equals(method.getName()) && method.getParameterList().getParametersCount() == 0) {
+            result.putValue(methodExpression, "Result of getClass() invocation would be changed");
+          }
+        }
+      }
+    });
     return result;
   }
 

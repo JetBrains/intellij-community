@@ -95,7 +95,9 @@ public class ASTDiffBuilder implements DiffTreeChangeBuilder<ASTNode, ASTNode> {
     ((TreeElement)child).rawRemove();
     ((CompositeElement)parent).subtreeChanged();
 
-    DebugUtil.checkTreeStructure(parent);
+    if (DEBUG) {
+      DebugUtil.checkTreeStructure(parent);
+    }
   }
 
   public void nodeInserted(@NotNull final ASTNode oldParent, @NotNull ASTNode node, final int pos) {
@@ -121,7 +123,9 @@ public class ASTDiffBuilder implements DiffTreeChangeBuilder<ASTNode, ASTNode> {
     ((TreeElement)node).clearCaches();
     ((CompositeElement)oldParent).subtreeChanged();
 
-    DebugUtil.checkTreeStructure(oldParent);
+    if (DEBUG) {
+      DebugUtil.checkTreeStructure(oldParent);
+    }
   }
 
   public TreeChangeEventImpl getEvent() {

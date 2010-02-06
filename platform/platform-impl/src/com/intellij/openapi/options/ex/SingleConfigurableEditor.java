@@ -41,6 +41,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
   private Configurable myConfigurable;
   private JComponent myCenterPanel;
   private String myDimensionKey;
+  private boolean myChangesWereApplied;
 
   public SingleConfigurableEditor(Project project, Configurable configurable, @NonNls String dimensionKey) {
     super(project, true);
@@ -108,6 +109,14 @@ public class SingleConfigurableEditor extends DialogWrapper {
     HelpManager.getInstance().invokeHelp(myConfigurable.getHelpTopic());
   }
 
+  @Override
+  public void doCancelAction() {
+    if (myChangesWereApplied) {
+      ApplicationManager.getApplication().saveAll();
+    }
+    super.doCancelAction();
+  }
+
   protected void doOKAction() {
     try {
       if (myConfigurable.isModified()) myConfigurable.apply();
@@ -165,6 +174,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
         myPerformAction = true;
         if (myConfigurable.isModified()) {
           myConfigurable.apply();
+          myChangesWereApplied = true;
           setCancelButtonText(CommonBundle.getCloseButtonText());
         }
       }

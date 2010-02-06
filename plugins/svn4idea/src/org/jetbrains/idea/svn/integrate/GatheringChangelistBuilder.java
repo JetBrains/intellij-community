@@ -24,11 +24,11 @@ import com.intellij.openapi.vcs.update.UpdatedFilesReverseSide;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.wc.SVNPropertyData;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -121,6 +121,9 @@ public class GatheringChangelistBuilder implements ChangelistBuilder {
 
   public void processSwitchedFile(final VirtualFile file, final String branch, final boolean recursive) {
 
+  }
+
+  public void processRootSwitch(VirtualFile file, String branch) {
   }
 
   public boolean isUpdatingUnversionedFiles() {

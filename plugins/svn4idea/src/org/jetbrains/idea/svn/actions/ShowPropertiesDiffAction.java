@@ -27,10 +27,14 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 public class ShowPropertiesDiffAction extends AbstractShowPropertiesDiffAction {
+  public ShowPropertiesDiffAction() {
+    super(SvnBundle.message("action.Subversion.properties.diff.name"));
+  }
+
   @Override
   public void update(final AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setText(SvnBundle.message("action.Subversion.properties.diff.name"));
+    //e.getPresentation().setText(SvnBundle.message("action.Subversion.properties.diff.name"));
   }
 
   protected DataKey<Change[]> getChangesKey() {

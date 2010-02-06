@@ -30,7 +30,6 @@ import com.intellij.ui.LoadingNode;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Time;
 import com.intellij.util.concurrency.WorkerThread;
 import com.intellij.util.containers.HashSet;
@@ -55,7 +54,6 @@ import java.security.AccessControlException;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 public class AbstractTreeUi {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.AbstractTreeBuilder");
@@ -100,7 +98,6 @@ public class AbstractTreeUi {
   private final Map<Object, List<NodeAction>> myNodeChildrenActions = new HashMap<Object, List<NodeAction>>();
 
   private long myClearOnHideDelay = -1;
-  private ScheduledExecutorService ourClearanceService;
   private final Map<AbstractTreeUi, Long> ourUi2Countdown = Collections.synchronizedMap(new WeakHashMap<AbstractTreeUi, Long>());
 
   private final Set<Runnable> myDeferredSelections = new HashSet<Runnable>();
@@ -157,6 +154,7 @@ public class AbstractTreeUi {
   private final RegistryValue myAutoExpandDepth = Registry.get("ide.tree.autoExpandMaxDepth");
 
   private Set<DefaultMutableTreeNode> myWillBeExpaned = new HashSet<DefaultMutableTreeNode>();
+  private SimpleTimerTask myCleanupTask;
 
   protected void init(AbstractTreeBuilder builder,
                       JTree tree,
@@ -232,17 +230,6 @@ public class AbstractTreeUi {
     }
   }
 
-  private void initClearanceServiceIfNeeded() {
-    if (ourClearanceService != null) return;
-
-    ourClearanceService = ConcurrencyUtil.newSingleScheduledThreadExecutor("AbstractTreeBuilder's janitor", Thread.MIN_PRIORITY + 1);
-    ourClearanceService.scheduleWithFixedDelay(new Runnable() {
-      public void run() {
-        cleanUpAll();
-      }
-    }, myJanitorPollPeriod, myJanitorPollPeriod, TimeUnit.MILLISECONDS);
-  }
-
   private void cleanUpAll() {
     final long now = System.currentTimeMillis();
     final AbstractTreeUi[] uis = ourUi2Countdown.keySet().toArray(new AbstractTreeUi[ourUi2Countdown.size()]);
@@ -254,6 +241,7 @@ public class AbstractTreeUi {
         ourUi2Countdown.remove(eachUi);
         Runnable runnable = new Runnable() {
           public void run() {
+            myCleanupTask = null;
             getBuilder().cleanUp();
           }
         };
@@ -282,19 +270,9 @@ public class AbstractTreeUi {
     }
   }
 
-  private void disposeClearanceService() {
-    try {
-      if (ourClearanceService != null) {
-        ourClearanceService.shutdown();
-        ourClearanceService = null;
-      }
-    }
-    catch (AccessControlException e) {
-      LOG.warn(e);
-    }
-  }
-
   public void activate(boolean byShowing) {
+    cancelCurrentCleanupTask();
+
     myCanProcessDeferredSelections = true;
     ourUi2Countdown.remove(this);
 
@@ -305,6 +283,13 @@ public class AbstractTreeUi {
     getUpdater().showNotify();
 
     myWasEverShown |= byShowing;
+  }
+
+  private void cancelCurrentCleanupTask() {
+    if (myCleanupTask != null) {
+      myCleanupTask.cancel();
+      myCleanupTask = null;
+    }
   }
 
   public void deactivate() {
@@ -320,8 +305,18 @@ public class AbstractTreeUi {
 
     if (getClearOnHideDelay() >= 0) {
       ourUi2Countdown.put(this, System.currentTimeMillis() + getClearOnHideDelay());
-      initClearanceServiceIfNeeded();
+      sheduleCleanUpAll();
     }
+  }
+
+  private void sheduleCleanUpAll() {
+    cancelCurrentCleanupTask();
+
+    myCleanupTask = SimpleTimer.getInstance().setUp(new Runnable() {
+      public void run() {
+        cleanUpAll();
+      }
+    }, getClearOnHideDelay());
   }
 
   public void requestRelease() {
@@ -352,7 +347,8 @@ public class AbstractTreeUi {
     if (myProgress != null) {
       myProgress.cancel();
     }
-    disposeClearanceService();
+
+    cancelCurrentCleanupTask();
 
     myTree = null;
     setUpdater(null);

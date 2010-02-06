@@ -17,6 +17,7 @@ package com.intellij.openapi.wm;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Expirable;
@@ -71,8 +72,10 @@ public abstract class IdeFocusManager {
 
   public abstract ActionCallback requestDefaultFocus(boolean forced);
 
-  public static IdeFocusManager getInstance(@NotNull Project project) {
-    if (project.isDisposed() || !project.isInitialized()) return PassThroughtIdeFocusManager.getInstance();
+  public static IdeFocusManager getInstance(@Nullable Project project) {
+    if (project == null) return getGlobalInstance();
+
+    if (project.isDisposed() || !project.isInitialized()) return getGlobalInstance();
     return project.getComponent(IdeFocusManager.class);
   }
 
@@ -88,7 +91,7 @@ public abstract class IdeFocusManager {
     }
 
     if (instance == null) {
-      instance = PassThroughtIdeFocusManager.getInstance();
+      instance = getGlobalInstance();
     }
 
     return instance;
@@ -127,5 +130,9 @@ public abstract class IdeFocusManager {
   }
 
   public abstract Expirable getTimestamp(boolean trackOnlyForcedCommands);
+
+  public static IdeFocusManager getGlobalInstance() {
+    return ApplicationManager.getApplication().getComponent(IdeFocusManager.class);
+  }
 
 }

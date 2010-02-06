@@ -24,6 +24,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
 
 import java.util.Collection;
@@ -34,7 +35,7 @@ public class AutomaticParametersRenamerFactory implements AutomaticRenamerFactor
   }
 
   public String getOptionName() {
-    return "Rename parameters in hierarchy";
+    return RefactoringBundle.message("rename.parameters.hierarchy");
   }
 
   public boolean isEnabled() {

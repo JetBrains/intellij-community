@@ -138,7 +138,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     if (CURRENT_TRACE_KEY == key) {
       final AbstractMessage msg = getMessageAt(myIndex);
       if (msg != null) {
-        sink.put(CURRENT_TRACE_KEY, msg.getThrowableText());
+        sink.put(CURRENT_TRACE_KEY, msg.getMessage() + msg.getThrowableText());
       }
     }
   }

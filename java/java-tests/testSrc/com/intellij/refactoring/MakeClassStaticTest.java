@@ -29,6 +29,8 @@ public class MakeClassStaticTest extends LightCodeInsightTestCase {
 
   public void testSimpleWithFields() throws Exception { performWithFields(); }
 
+  public void testFieldInitializerMoveToConstructor() throws Exception { performWithFields(); }
+
   public void testQualifiedThisInSibling() throws Exception { perform(); }
 
   public void testIDEADEV3247() throws Exception { perform(); }

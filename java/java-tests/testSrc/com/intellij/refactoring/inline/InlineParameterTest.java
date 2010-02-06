@@ -5,12 +5,15 @@ import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
 
 /**
  * @author yole
  */
+
 public class InlineParameterTest extends LightCodeInsightTestCase {
   @Override
   protected String getTestDataPath() {
@@ -77,6 +80,86 @@ public class InlineParameterTest extends LightCodeInsightTestCase {
     doTest(false);
   }
 
+  public void testRefOuterThis() throws Exception {
+    try {
+      doTest(false);
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Parameter initializer depends on this which is not available inside the method and cannot be inlined", e.getMessage());
+    }
+  }
+
+  public void testRefThis() throws Exception {
+    doTest(false);
+  }
+
+  public void testRefQualifiedThis() throws Exception {
+    doTest(false);
+  }
+
+  public void testRefSameNonFinalField() throws Exception {
+    doTest(false);
+  }
+
+  public void testRefSameNonFinalFieldOtherObject() throws Exception {
+    doTestCannotFindInitializer();
+  }
+
+  public void testRef2ConstantsWithTheSameValue() throws Exception {
+    doTest(false);
+  }
+
+  public void testRefConstantAndField() throws Exception {
+    doTestCannotFindInitializer();
+  }
+
+  public void testRefNewInner() throws Exception {
+    try {
+      doTest(false);
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Parameter initializer depends on class <b><code>User.Local</code></b> which is not available inside method and cannot be inlined", e.getMessage());
+    }
+  }
+
+  public void testRefNewInnerForMethod() throws Exception {
+    doTest(false);
+  }
+
+  public void testRefNewTopLevel() throws Exception {
+    doTest(false);
+  }
+
+  public void testRefNewLocal() throws Exception {
+    try {
+      doTest(false);
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Parameter initializer depends on class <b><code>Local</code></b> which is not available inside method and cannot be inlined", e.getMessage());
+    }
+  }
+
+  public void testRefArrayAccess() throws Exception {
+    try {
+      doTest(false);
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Parameter initializer depends on value which is not available inside method and cannot be inlined", e.getMessage());
+    }
+  }
+
+  public void testHandleExceptions() throws Exception {
+    doTest(false);
+  }
+
+  private void doTestCannotFindInitializer() throws Exception {
+    try {
+      doTest(false);
+    }
+    catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
+      assertEquals("Cannot find constant initializer for parameter", e.getMessage());
+    }
+  }
 
   private void doTest(final boolean createLocal) throws Exception {
     getProject().putUserData(InlineParameterExpressionProcessor.CREATE_LOCAL_FOR_TESTS,createLocal);

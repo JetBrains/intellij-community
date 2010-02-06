@@ -27,6 +27,7 @@ import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
+import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.ide.util.EditorHelper;
@@ -47,7 +48,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
-import com.intellij.ui.*;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
@@ -143,7 +147,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
       }
     });
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
-    myTreePopupHandler = PopupHandler.installPopupHandler(myTree, (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_FAVORITES_VIEW_POPUP), ActionPlaces.FAVORITES_VIEW_POPUP, ActionManager.getInstance());
+    myTreePopupHandler = CustomizationUtil.installPopupHandler(myTree, IdeActions.GROUP_FAVORITES_VIEW_POPUP, ActionPlaces.FAVORITES_VIEW_POPUP);
     add(scrollPane, BorderLayout.CENTER);
     //add(createActionsToolbar(), BorderLayout.NORTH);
 

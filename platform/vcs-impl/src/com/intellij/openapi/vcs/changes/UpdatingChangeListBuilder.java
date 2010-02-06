@@ -188,6 +188,14 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     }
   }
 
+  public void processRootSwitch(VirtualFile file, String branch) {
+    if (file == null) return;
+    checkIfDisposed();
+    if (myScope.belongsTo(new FilePathImpl(file))) {
+      ((SwitchedFileHolder) myComposite.get(FileHolder.HolderType.ROOT_SWITCH)).addFile(file, branch, false);
+    }
+  }
+
   public boolean isUpdatingUnversionedFiles() {
     return myUpdateUnversioned;
   }

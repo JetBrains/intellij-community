@@ -16,12 +16,15 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -30,7 +33,8 @@ public class DescindingFilesFilter {
   }
 
   @NotNull
-  public static FilePath[] filterDescindingFiles(@NotNull FilePath[] roots, Project project) {
+  public static FilePath[] filterDescindingFiles(@NotNull FilePath[] roots, Project project,
+                                                 @Nullable final Convertor<Pair<FilePath, AbstractVcs>, Boolean> pathsFilter) {
     final List<FilePath> result = new LinkedList<FilePath>();
     ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
 
@@ -44,6 +48,8 @@ public class DescindingFilesFilter {
         result.add(root);
         continue;
       }
+      //if (pathsFilter != null && (! pathsFilter.convert(new Pair<FilePath, AbstractVcs>(root, vcs)))) continue;
+      
       final List<FilePath> chain = chains.get(vcs.getKeyInstanceMethod());
       if (chain == null) {
         final LinkedList<FilePath> newList = new LinkedList<FilePath>();

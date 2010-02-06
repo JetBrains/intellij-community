@@ -49,7 +49,7 @@ public class FacetFinderImpl extends FacetFinder {
 
   public FacetFinderImpl(Project project) {
     myProject = project;
-    myCachedValuesManager = PsiManager.getInstance(project).getCachedValuesManager();
+    myCachedValuesManager = CachedValuesManager.getManager(project);
     myModuleManager = ModuleManager.getInstance(myProject);
   }
 

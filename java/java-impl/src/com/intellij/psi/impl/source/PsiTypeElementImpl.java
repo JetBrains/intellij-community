@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -172,7 +173,15 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     else {
       text = getText().trim();
     }
-    return JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeFromText(text, context);
+    try {
+      return JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeFromText(text, context);
+    }
+    catch (IncorrectOperationException e) {
+      String s = "Parent: " + DebugUtil.psiToString(getParent(), false);
+      s += "Context: " + DebugUtil.psiToString(context, false);
+      LOG.error(s,e);
+      return null;
+    }
   }
 
   @NotNull

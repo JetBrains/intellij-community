@@ -43,7 +43,7 @@ public class GetInvocation implements Invocation {
     if (value == null) {
       final DomManagerImpl domManager = handler.getManager();
       final Project project = domManager.getProject();
-      final CachedValuesManager cachedValuesManager = PsiManager.getInstance(project).getCachedValuesManager();
+      final CachedValuesManager cachedValuesManager = CachedValuesManager.getManager(project);
       handler.putUserData(DOM_VALUE_KEY, value = cachedValuesManager.createCachedValue(new CachedValueProvider<CopyOnWriteArrayList<Pair<Converter,Object>>>() {
         public Result<CopyOnWriteArrayList<Pair<Converter,Object>>> compute() {
           return Result.create(ContainerUtil.<Pair<Converter,Object>>createEmptyCOWList(), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, domManager,

@@ -108,16 +108,7 @@ public class ArtifactConfigurable extends ProjectStructureElementConfigurable<Ar
       artifactTypeBox.addItem(type);
     }
 
-    artifactTypeBox.setRenderer(new DefaultListCellRenderer() {
-      @Override
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        final ArtifactType type = (ArtifactType)value;
-        setIcon(type.getIcon());
-        setText(type.getPresentableName());
-        return component;
-      }
-    });
+    artifactTypeBox.setRenderer(new ArtifactTypeCellRenderer());
 
     artifactTypeBox.setSelectedItem(getArtifact().getArtifactType());
     artifactTypeBox.addActionListener(new ActionListener() {
@@ -148,4 +139,5 @@ public class ArtifactConfigurable extends ProjectStructureElementConfigurable<Ar
 
   public void disposeUIResources() {
   }
+
 }

@@ -200,7 +200,9 @@ public class TypesUtil {
     if (rType instanceof GrTupleType) {
       final GrTupleType tuple = (GrTupleType)rType;
       if (tuple.getComponentTypes().length == 0) {
-        if (lType instanceof PsiArrayType || InheritanceUtil.isInheritor(lType, JAVA_UTIL_LIST)) {
+        if (lType instanceof PsiArrayType ||
+            InheritanceUtil.isInheritor(lType, JAVA_UTIL_LIST) ||
+            InheritanceUtil.isInheritor(lType, JAVA_UTIL_SET)) {
           return true;
         }
       }
@@ -216,6 +218,17 @@ public class TypesUtil {
 
   public static boolean isAssignableByMethodCallConversion(PsiType lType, PsiType rType, PsiManager manager, GlobalSearchScope scope) {
     if (lType == null || rType == null) return false;
+
+    if (rType instanceof GrTupleType) {
+      final GrTupleType tuple = (GrTupleType)rType;
+      if (tuple.getComponentTypes().length == 0) {
+        if (lType instanceof PsiArrayType ||
+            InheritanceUtil.isInheritor(lType, JAVA_UTIL_LIST) ||
+            InheritanceUtil.isInheritor(lType, JAVA_UTIL_SET)) {
+          return true;
+        }
+      }
+    }
 
     if (rType.equalsToText(GrStringUtil.GROOVY_LANG_GSTRING)) {
       final PsiClass javaLangString = JavaPsiFacade.getInstance(manager.getProject()).findClass(JAVA_LANG_STRING, scope);
@@ -296,7 +309,7 @@ public class TypesUtil {
     return facade.getElementFactory().createTypeByFQClassName(fqName, context.getResolveScope());
   }
 
-  public static PsiClassType getJavaLangObject(GroovyPsiElement context) {
+  public static PsiClassType getJavaLangObject(PsiElement context) {
     return PsiType.getJavaLangObject(context.getManager(), context.getResolveScope());
   }
 

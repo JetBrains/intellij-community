@@ -46,6 +46,7 @@ import com.intellij.execution.ui.layout.LayoutViewOptions;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.actions.ContextHelpAction;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -422,8 +423,8 @@ public class DebuggerSessionTab extends DebuggerLogConsoleManagerBase implements
 
   protected void toFront() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      ((WindowManagerImpl)WindowManager.getInstance()).getFrame(getProject()).toFront();
       ExecutionManager.getInstance(getProject()).getContentManager().toFrontRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), myRunContentDescriptor);
+      ProjectUtil.focusProjectWindow(getProject());
     }
   }
 

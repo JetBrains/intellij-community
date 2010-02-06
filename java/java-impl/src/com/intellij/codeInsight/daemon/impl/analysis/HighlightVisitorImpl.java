@@ -354,7 +354,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkAssertOperatorTypes(expression));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkSynchronizedExpressionType(expression));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkConditionalExpressionBranchTypesMatch(expression));
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkConstantExpressionOverflow(expression));
     if (!myHolder.hasErrorResults()
         && expression.getParent() instanceof PsiThrowStatement
         && ((PsiThrowStatement)expression.getParent()).getException() == expression) {

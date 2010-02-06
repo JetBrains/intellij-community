@@ -22,6 +22,7 @@ import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.connections.CvsRootProvider;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.cvsoperations.common.FindAllRoots;
+import com.intellij.cvsSupport2.cvsoperations.common.FindAllRootsHelper;
 import com.intellij.cvsSupport2.cvsoperations.common.PostCvsActivity;
 import com.intellij.cvsSupport2.cvsoperations.cvsUpdate.MergedWithConflictProjectOrModuleFile;
 import com.intellij.cvsSupport2.cvsoperations.cvsUpdate.UpdateOperation;
@@ -74,7 +75,8 @@ public class UpdateHandler extends CommandCvsHandler implements PostCvsActivity 
     try {
       super.beforeLogin();
       FindAllRoots findAllRoots = new FindAllRoots(myProject);
-      myRoots.addAll(findAllRoots.executeOn(myFiles));
+      final FilePath[] filteredFiles = FindAllRootsHelper.findVersionedUnder(myFiles);
+      myRoots.addAll(findAllRoots.executeOn(filteredFiles));
       myNotProcessedRepositories.addAll(findAllRoots.getDirectoriesToBeUpdated());
       myDirectoriesToBeProcessedCount = myNotProcessedRepositories.size();
       for(VirtualFile file: myRoots) {

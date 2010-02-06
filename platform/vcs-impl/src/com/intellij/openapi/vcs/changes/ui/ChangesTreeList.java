@@ -36,6 +36,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.Icons;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -118,6 +119,12 @@ public abstract class ChangesTreeList<T> extends JPanel {
     myTree.setShowsRootHandles(true);
 
     myTree.setCellRenderer(new MyTreeCellRenderer());
+    new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
+      public String convert(TreePath o) {
+        ChangesBrowserNode node = (ChangesBrowserNode) o.getLastPathComponent();
+        return node.getTextPresentation();
+      }
+    });
 
     myList = new JList(new DefaultListModel());
     myList.setVisibleRowCount(10);

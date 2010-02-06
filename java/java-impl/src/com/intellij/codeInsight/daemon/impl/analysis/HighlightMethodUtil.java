@@ -29,6 +29,7 @@ import com.intellij.codeInsight.daemon.impl.RefCountHolder;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -1115,7 +1116,14 @@ public class HighlightMethodUtil {
 
       PsiMethod constructor = result == null ? null : result.getElement();
 
-      if (constructor == null || !result.isApplicable()) {
+      boolean applicable = true;
+      try {
+        applicable = result.isApplicable();
+      }
+      catch (IndexNotReadyException e) {
+        // ignore
+      }
+      if (constructor == null || !applicable) {
         final List<HighlightInfo> resultHighlighting = new ArrayList<HighlightInfo>();
         ChangeStringLiteralToCharInMethodCallFix.createHighLighting(constructors, constructorCall, resultHighlighting);
         holder.addAll(resultHighlighting);
@@ -1140,7 +1148,7 @@ public class HighlightMethodUtil {
          constructor.hasModifierProperty(PsiModifier.PROTECTED) && callingProtectedConstructorFromDerivedClass(constructorCall, aClass))) {
           holder.add(buildAccessProblem(classReference, result, constructor));
         }
-        else if (!result.isApplicable()) {
+        else if (!applicable) {
           String constructorName = HighlightMessageUtil.getSymbolName(constructor, result.getSubstitutor());
           String containerName = HighlightMessageUtil.getSymbolName(constructor.getContainingClass(), result.getSubstitutor());
           String argTypes = buildArgTypesList(list);

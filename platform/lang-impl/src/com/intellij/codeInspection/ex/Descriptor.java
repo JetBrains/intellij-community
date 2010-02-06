@@ -37,10 +37,10 @@ public class Descriptor {
   private final HighlightDisplayKey myKey;
   
   private final Element myConfig;
-  private InspectionProfileEntry myTool;
+  private final InspectionProfileEntry myTool;
   private final HighlightDisplayLevel myLevel;
   private boolean myEnabled = false;
-  private NamedScope myScope;
+  private final NamedScope myScope;
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.Descriptor");
   private final ScopeToolState myState;
 

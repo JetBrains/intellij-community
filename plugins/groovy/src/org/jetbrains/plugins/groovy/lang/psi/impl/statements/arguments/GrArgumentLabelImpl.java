@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
@@ -209,5 +210,11 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
     }
 
     return null;
+  }
+
+  public GrNamedArgument getNamedArgument() {
+    final PsiElement parent = getParent();
+    assert parent instanceof GrNamedArgument;
+    return (GrNamedArgument)parent;
   }
 }

@@ -54,7 +54,6 @@ public class SliceUsage extends UsageInfo2UsageAdapter {
   public void processChildren(Processor<SliceUsage> processor) {
     final PsiElement element = getElement();
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    //indicator.setText2("<html><body>Searching for usages of "+ StringUtil.trimStart(SliceManager.getElementDescription(element),"<html><body>")+"</body></html>");
     indicator.checkCanceled();
 
     final Processor<SliceUsage> uniqueProcessor =

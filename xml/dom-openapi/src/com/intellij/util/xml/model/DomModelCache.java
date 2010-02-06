@@ -50,7 +50,7 @@ public abstract class DomModelCache<T, H extends UserDataHolder> {
           return computeValue(dataHolder);
         }
       };
-      final CachedValuesManager manager = PsiManager.getInstance(myProject).getCachedValuesManager();
+      final CachedValuesManager manager = CachedValuesManager.getManager(myProject);
       cachedValue = manager.createCachedValue(myProvider, false);
       dataHolder.putUserData(myKey, cachedValue);
     }

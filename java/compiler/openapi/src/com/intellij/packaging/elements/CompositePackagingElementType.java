@@ -39,11 +39,11 @@ public abstract class CompositePackagingElementType<E extends CompositePackaging
 
 
   @Nullable
-  protected abstract PackagingElement<?> createComposite(@NotNull ArtifactEditorContext context, CompositePackagingElement<?> parent);
+  public abstract CompositePackagingElement<?> createComposite(CompositePackagingElement<?> parent, @Nullable String baseName, @NotNull ArtifactEditorContext context);
 
   @NotNull
   public List<? extends PackagingElement<?>> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact, @NotNull CompositePackagingElement<?> parent) {
-    final PackagingElement<?> composite = createComposite(context, parent);
+    final PackagingElement<?> composite = createComposite(parent, null, context);
     return composite != null ? Collections.singletonList(composite) : Collections.<E>emptyList();
   }
 }

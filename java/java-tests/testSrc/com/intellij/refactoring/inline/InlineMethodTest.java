@@ -147,6 +147,10 @@ public class InlineMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testWithSuperInside() throws Exception {
+    doTest();
+  }
+
   @Override
   protected Sdk getProjectJDK() {
     return JavaSdkImpl.getMockJdk15("java 1.5");

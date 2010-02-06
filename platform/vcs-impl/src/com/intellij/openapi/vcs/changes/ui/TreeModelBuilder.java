@@ -17,11 +17,15 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -102,6 +106,9 @@ public class TreeModelBuilder {
     protected void reportState(boolean state) {
       myReporter.report(state);
     }
+
+    public void preDecorate(Change change, ChangesBrowserNodeRenderer renderer, boolean showFlatten) {
+    }
   }
 
   public DefaultTreeModel buildModel(final List<? extends ChangeList> changeLists,
@@ -109,6 +116,7 @@ public class TreeModelBuilder {
                                      final List<LocallyDeletedChange> locallyDeletedFiles,
                                      final List<VirtualFile> modifiedWithoutEditing,
                                      final MultiMap<String, VirtualFile> switchedFiles,
+                                     @Nullable Map<VirtualFile, String> switchedRoots,
                                      @Nullable final List<VirtualFile> ignoredFiles, @Nullable final List<VirtualFile> lockedFolders,
                                      @Nullable final Map<VirtualFile, LogicalLock> logicallyLockedFiles) {
     buildModel(changeLists);
@@ -118,6 +126,9 @@ public class TreeModelBuilder {
     }
     if (!unversionedFiles.isEmpty()) {
       buildVirtualFiles(unversionedFiles, ChangesBrowserNode.UNVERSIONED_FILES_TAG);
+    }
+    if (switchedRoots != null && (! switchedRoots.isEmpty())) {
+      buildSwitchedRoots(switchedRoots);
     }
     if (!switchedFiles.isEmpty()) {
       buildSwitchedFiles(switchedFiles);
@@ -228,6 +239,34 @@ public class TreeModelBuilder {
         model.insertNodeInto(node, getParentNodeFor(node, foldersCache, policy, baseNode), 0);
         foldersCache.put(file.getIOFile().getAbsolutePath(), node);
       }
+    }
+  }
+
+  private void buildSwitchedRoots(final Map<VirtualFile, String> switchedRoots) {
+    final ChangesBrowserNode rootsHeadNode = ChangesBrowserNode.create(myProject, ChangesBrowserNode.SWITCHED_ROOTS_TAG);
+    rootsHeadNode.setAttributes(SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES);
+    model.insertNodeInto(rootsHeadNode, root, root.getChildCount());
+
+    for (VirtualFile vf : switchedRoots.keySet()) {
+      final HashMap<String, ChangesBrowserNode> foldersCache = new HashMap<String, ChangesBrowserNode>();
+      final ChangesGroupingPolicy policy = createGroupingPolicy();
+      final ContentRevision cr = new CurrentContentRevision(new FilePathImpl(vf));
+      final Change change = new Change(cr, cr, FileStatus.NOT_CHANGED);
+      final String branchName = switchedRoots.get(vf);
+      insertChangeNode(vf, foldersCache, policy, rootsHeadNode, new Computable<ChangesBrowserNode>() {
+        public ChangesBrowserNode compute() {
+          return new ChangesBrowserChangeNode(myProject, change, new ChangeNodeDecorator() {
+            public void decorate(Change change, SimpleColoredComponent component, boolean isShowFlatten) {
+            }
+            public List<Pair<String, Stress>> stressPartsOfFileName(Change change, String parentPath) {
+              return null;
+            }
+            public void preDecorate(Change change, ChangesBrowserNodeRenderer renderer, boolean showFlatten) {
+              renderer.append("[" + branchName + "] ", SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES);
+            }
+          });
+        }
+      });
     }
   }
 

@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -212,7 +213,7 @@ public class PatternValidator extends LocalInspectionTool {
           return Result.create(p, (Object[])annotations);
         }
       };
-      p = expression.getManager().getCachedValuesManager().createCachedValue(provider, false);
+      p = CachedValuesManager.getManager(expression.getProject()).createCachedValue(provider, false);
       psiAnnotation.putUserData(COMPLIED_PATTERN, p);
     }
 

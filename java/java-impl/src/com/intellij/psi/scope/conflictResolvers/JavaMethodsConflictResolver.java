@@ -37,14 +37,15 @@ import java.util.*;
 public class JavaMethodsConflictResolver implements PsiConflictResolver{
   private final PsiElement myArgumentsList;
   private final PsiType[] myActualParameterTypes;
+  private static final Function<PsiExpression,PsiType> EXPRESSION_TO_TYPE = new Function<PsiExpression, PsiType>() {
+    public PsiType fun(final PsiExpression expression) {
+      return expression.getType();
+    }
+  };
 
   public JavaMethodsConflictResolver(PsiExpressionList list) {
     myArgumentsList = list;
-    myActualParameterTypes = ContainerUtil.map2Array(list.getExpressions(), PsiType.class, new Function<PsiExpression, PsiType>() {
-      public PsiType fun(final PsiExpression expression) {
-        return expression.getType();
-      }
-    });
+    myActualParameterTypes = ContainerUtil.map2Array(list.getExpressions(), PsiType.class, EXPRESSION_TO_TYPE);
   }
 
   public JavaMethodsConflictResolver(final PsiElement argumentsList, final PsiType[] actualParameterTypes) {
@@ -376,9 +377,15 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         if (MethodSignatureUtil.isSubsignature(method1.getSignature(info1.getSubstitutor()), method2.getSignature(info2.getSubstitutor()))) {
           isMoreSpecific = Specifics.SECOND;
         }
+        else if (method1.hasModifierProperty(PsiModifier.STATIC) && method2.hasModifierProperty(PsiModifier.STATIC)) {
+          isMoreSpecific = Specifics.SECOND;
+        }
       }
       else if (class1.isInheritor(class2, true) || class2.isInterface()) {
         if (MethodSignatureUtil.isSubsignature(method2.getSignature(info2.getSubstitutor()), method1.getSignature(info1.getSubstitutor()))) {
+          isMoreSpecific = Specifics.FIRST;
+        }
+        else if (method1.hasModifierProperty(PsiModifier.STATIC) && method2.hasModifierProperty(PsiModifier.STATIC)) {
           isMoreSpecific = Specifics.FIRST;
         }
       }

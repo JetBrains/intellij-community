@@ -540,4 +540,10 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     final PsiElement resolved = ref.resolve();
     assertInstanceOf(resolved, PsiMethod.class);
   }
+
+  public void testNotInitializedVariable() throws Exception {
+    PsiReference ref = configureByFile("notInitializedVariable/A.groovy");
+    final PsiElement resolved = ref.resolve();
+    assertInstanceOf(resolved, PsiMethod.class);
+  }
 }

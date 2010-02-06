@@ -38,7 +38,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.*;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.ui.MasterDetailsStateService;
 import com.intellij.packaging.artifacts.*;
-import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.artifacts.PackagingElementPath;
 import com.intellij.packaging.impl.artifacts.PackagingElementProcessor;
@@ -245,10 +244,10 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
       }
 
       @Override
-      public CompositePackagingElement<?> createRootElement(@NotNull String artifactName) {
-        return type.createRootElement(artifactName);
+      public NewArtifactConfiguration createArtifact() {
+        final String name = "unnamed";
+        return new NewArtifactConfiguration(type.createRootElement(name), name, type);
       }
-
     };
 
     if (templates.isEmpty()) {
@@ -265,14 +264,24 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   }
 
   private void addArtifact(@NotNull ArtifactType type, @NotNull ArtifactTemplate artifactTemplate) {
-    final String baseName = artifactTemplate.suggestArtifactName();
+    final ArtifactTemplate.NewArtifactConfiguration configuration = artifactTemplate.createArtifact();
+    if (configuration == null) {
+      return;
+    }
+
+    final String baseName = configuration.getArtifactName();
     String name = baseName;
     int i = 2;
     while (myPackagingEditorContext.getArtifactModel().findArtifact(name) != null) {
       name = baseName + i;
       i++;
     }
-    final ModifiableArtifact artifact = myPackagingEditorContext.getOrCreateModifiableArtifactModel().addArtifact(name, type, artifactTemplate.createRootElement(name));
+
+    ArtifactType actualType = configuration.getArtifactType();
+    if (actualType == null) {
+      actualType = type;
+    }
+    final ModifiableArtifact artifact = myPackagingEditorContext.getOrCreateModifiableArtifactModel().addArtifact(name, actualType, configuration.getRootElement());
     selectNodeInTree(findNodeByObject(myRoot, artifact));
   }
 

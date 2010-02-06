@@ -308,7 +308,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     myPopupShown = true;
   }
 
-  void recreateMyPopup(IntentionListStep step) {
+  private void recreateMyPopup(IntentionListStep step) {
     if (myPopup != null) {
       Disposer.dispose(myPopup);
     }

@@ -48,7 +48,7 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
     private final XsltElementFactory myXsltElementFactory = XsltElementFactory.getInstance();
 
     public XsltReferenceProvider(Project project) {
-        myCacheManager = PsiManager.getInstance(project).getCachedValuesManager();
+      myCacheManager = CachedValuesManager.getManager(project);
     }
 
     @NotNull

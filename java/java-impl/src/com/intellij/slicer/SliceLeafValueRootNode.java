@@ -91,19 +91,4 @@ public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCe
       renderer.append("Other", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     }
   }
-
-  @Override
-  public void navigate(boolean requestFocus) {
-    getValue().navigate(requestFocus);
-  }
-
-  @Override
-  public boolean canNavigate() {
-    return getValue().canNavigate();
-  }
-
-  @Override
-  public boolean canNavigateToSource() {
-    return getValue().canNavigateToSource();
-  }
 }

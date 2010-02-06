@@ -427,7 +427,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       }
     }
 
-    private void processQualifierForSpreadDot(GrReferenceExpressionImpl refExpr, ResolverProcessor processor, GrExpression qualifier) {
+    private static void processQualifierForSpreadDot(GrReferenceExpressionImpl refExpr, ResolverProcessor processor, GrExpression qualifier) {
       PsiType qualifierType = qualifier.getType();
       if (qualifierType instanceof PsiClassType) {
         PsiClassType.ClassResolveResult result = ((PsiClassType) qualifierType).resolveGenerics();
@@ -449,13 +449,19 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       }
     }
 
-    private void processQualifier(GrReferenceExpressionImpl refExpr, ResolverProcessor processor, GrExpression qualifier) {
+    private static void processQualifier(GrReferenceExpressionImpl refExpr, ResolverProcessor processor, GrExpression qualifier) {
       PsiType qualifierType = qualifier.getType();
       if (qualifierType == null) {
         if (qualifier instanceof GrReferenceExpression) {
           PsiElement resolved = ((GrReferenceExpression) qualifier).resolve();
           if (resolved instanceof PsiPackage) {
-            if (!resolved.processDeclarations(processor, ResolveState.initial(), null, refExpr)) return;
+            if (!resolved.processDeclarations(processor, ResolveState.initial(), null, refExpr)) //noinspection UnnecessaryReturnStatement
+              return;
+          }
+          else {
+            qualifierType = JavaPsiFacade.getInstance(refExpr.getProject()).getElementFactory()
+              .createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, refExpr.getResolveScope());
+            processClassQualifierType(refExpr, processor, qualifierType);
           }
         }
       } else {
@@ -556,6 +562,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     return Kind.TYPE_OR_PROPERTY;
   }
 
+  @Nullable
   public String getCanonicalText() {
     return null;
   }

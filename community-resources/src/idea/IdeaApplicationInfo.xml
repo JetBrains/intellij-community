@@ -5,7 +5,7 @@
   <install-over minbuild="0" maxbuild="0" version="9.0"/>
   <logo url="/idea_community_logo.png" textcolor="FFFFFF"/>
   <about url="/idea_community_about.png"/>
-  <icon size32="/icon.png" size16="/icon_small.png" size32opaque="/icon_white.png" size12="/general/toolWindowProject.png"/>
+  <icon size32="/icon_CE.png" size16="/icon_CEsmall.png" size32opaque="/icon_CEwhite.png" size12="/general/toolWindowProject.png"/>
   <package code="__PACKAGE_CODE__"/>
   <names product="IDEA" fullname="IntelliJ IDEA"/>
 

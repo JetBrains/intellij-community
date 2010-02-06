@@ -32,8 +32,6 @@ public abstract class Wrap {
    */
   public abstract void ignoreParentWraps();
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.Wrap");
-
   private static WrapFactory myFactory;
 
   public static WrapType ALWAYS = WrapType.ALWAYS;

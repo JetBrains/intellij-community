@@ -32,7 +32,9 @@ import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -292,11 +294,7 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
   }
 
   protected static List<Change> sortChanges(final List<Change> list) {
-    Collections.sort(list, new Comparator<Change>() {
-      public int compare(final Change o1, final Change o2) {
-        return ChangesUtil.getFilePath(o1).getName().compareToIgnoreCase(ChangesUtil.getFilePath(o2).getName());
-      }
-    });
+    Collections.sort(list, ChangesComparator.getInstance());
     return list;
   }
 
@@ -346,4 +344,5 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     LOCAL_CHANGES,
     COMMITTED_CHANGES
   }
+
 }

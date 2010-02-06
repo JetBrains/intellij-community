@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import org.jetbrains.annotations.NonNls;
@@ -189,6 +190,14 @@ public class ShowImplementationsAction extends AnAction {
         for (PsiElement elt : targetElements) {
           PsiFile psiFile = elt.getContainingFile().getOriginalFile();
           if (psiFile.getVirtualFile() == null) unique.remove(elt);
+        }
+        // special case for Python (PY-237)
+        // if the definition is the tree parent of the target element, filter out the target element
+        for (int i = 1; i < targetElements.length; i++) {
+          if (PsiTreeUtil.isAncestor(targetElements[i], targetElements[0], true)) {
+            unique.remove(targetElements[0]);
+            break;
+          }
         }
         return unique.toArray(new PsiElement[unique.size()]);
       }

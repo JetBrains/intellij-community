@@ -1,6 +1,6 @@
 PsiJavaFileStub [java.util]
   PsiClassStub[name=HashMap fqn=java.util.HashMap]
-    PsiModifierListStub[mask=1]
+    PsiModifierListStub[mask=9]
     PsiTypeParameterListStub
       PsiTypeParameter[K]
         PsiRefListStub[EXTENDS_BOUNDS_LIST:]

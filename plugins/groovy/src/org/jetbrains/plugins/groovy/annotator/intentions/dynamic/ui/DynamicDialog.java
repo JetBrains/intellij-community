@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorTextField;
@@ -42,10 +43,7 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DItemE
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -76,28 +74,28 @@ public abstract class DynamicDialog extends DialogWrapper {
   private final DynamicManager myDynamicManager;
   private final Project myProject;
   private final EventListenerList myListenerList = new EventListenerList();
-  private final GrReferenceExpression myReferenceExpression;
+  private final PsiElement myContext;
   private final DynamicElementSettings mySettings;
 
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicDialog");
 
-  public DynamicDialog(GrReferenceExpression referenceExpression) {
-    super(referenceExpression.getProject(), true);
-    myProject = referenceExpression.getProject();
+  public DynamicDialog(PsiElement context, DynamicElementSettings settings, TypeConstraint[] typeConstraints) {
+    super(context.getProject(), true);
+    myProject = context.getProject();
 
     if (!isTableVisible()) {
       myParametersTable.setVisible(false);
       myTableLabel.setVisible(false);
     }
-    myReferenceExpression = referenceExpression;
+    myContext = context;
     setTitle(GroovyInspectionBundle.message("dynamic.element"));
     myDynamicManager = DynamicManager.getInstance(myProject);
 
     init();
 
-    mySettings = QuickfixUtil.createSettings(myReferenceExpression);
+    mySettings = settings;
 
-    setUpTypeComboBox();
+    setUpTypeComboBox(typeConstraints);
     setUpContainingClassComboBox();
     setUpStatusLabel();
     setUpStaticComboBox();
@@ -154,10 +152,13 @@ public abstract class DynamicDialog extends DialogWrapper {
     pack();
   }
 
+  @Nullable
+  public PsiClass getTargetClass() {
+    return JavaPsiFacade.getInstance(myProject).findClass(mySettings.getContainingClassName(), GlobalSearchScope.allScope(myProject));
+  }
 
   private void setUpContainingClassComboBox() {
-    PsiClass targetClass = QuickfixUtil.findTargetClass(myReferenceExpression);
-
+    PsiClass targetClass = getTargetClass();
     if (targetClass == null || targetClass instanceof SyntheticElement) {
       try {
         final GrTypeElement typeElement = GroovyPsiElementFactory.getInstance(myProject).createTypeElement("java.lang.Object");
@@ -188,11 +189,11 @@ public abstract class DynamicDialog extends DialogWrapper {
   @Nullable
   private Document createDocument(final String text) {
     GroovyCodeFragment fragment = new GroovyCodeFragment(myProject, text);
-    fragment.setContext(myReferenceExpression);
+    fragment.setContext(myContext);
     return PsiDocumentManager.getInstance(myProject).getDocument(fragment);
   }
 
-  private void setUpTypeComboBox() {
+  private void setUpTypeComboBox(TypeConstraint[] typeConstraints) {
     final EditorComboBoxEditor comboEditor = new EditorComboBoxEditor(myProject, GroovyFileType.GROOVY_FILE_TYPE);
 
     final Document document = createDocument("");
@@ -232,9 +233,10 @@ public abstract class DynamicDialog extends DialogWrapper {
       }
     });
 
-    final TypeConstraint[] constrants = GroovyExpectedTypesUtil.calculateTypeConstraints(QuickfixUtil.isCall(myReferenceExpression) ? (GrExpression) myReferenceExpression.getParent() : myReferenceExpression);
-
-    PsiType type = constrants.length == 1 ? constrants[0].getDefaultType() : TypesUtil.getJavaLangObject(myReferenceExpression);
+    PsiType type = typeConstraints.length == 1 ? typeConstraints[0].getDefaultType() : TypesUtil.getJavaLangObject(myContext);
+    if (type == null) {
+      type = TypesUtil.getJavaLangObject(myContext);
+    }
     myTypeComboBox.getEditor().setItem(createDocument(type.getCanonicalText()));
   }
 
@@ -328,7 +330,7 @@ public abstract class DynamicDialog extends DialogWrapper {
       }
     }
 
-    Document document = PsiDocumentManager.getInstance(myProject).getDocument(myReferenceExpression.getContainingFile());
+    Document document = PsiDocumentManager.getInstance(myProject).getDocument(myContext.getContainingFile());
     final DocumentReference[] refs = new DocumentReference[]{DocumentReferenceManager.getInstance().create(document)};
 
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {

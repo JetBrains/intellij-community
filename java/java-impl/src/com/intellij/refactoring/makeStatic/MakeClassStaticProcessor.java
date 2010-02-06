@@ -109,6 +109,18 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
           anchor = javaDocHelper.addParameterAfter(fieldParameter.name, anchor);
           addAssignmentToField(fieldParameter.name, constructor);
         }
+        for (UsageInfo usage : usages) {
+          if (usage instanceof InternalUsageInfo) {
+            final PsiElement element = usage.getElement();
+            final PsiElement referencedElement = ((InternalUsageInfo)usage).getReferencedElement();
+            if (referencedElement instanceof PsiField && mySettings.getNameForField((PsiField)referencedElement) != null) {
+              final PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class);
+              if (field != null) {
+                moveInitializerToConstructor(factory, constructor, field);
+              }
+            }
+          }
+        }
       }
     }
 
@@ -119,6 +131,34 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
     final PsiModifierList modifierList = myMember.getModifierList();
     modifierList.setModifierProperty(PsiModifier.STATIC, true);
     modifierList.setModifierProperty(PsiModifier.FINAL, false);
+  }
+
+  private static void moveInitializerToConstructor(PsiElementFactory factory, PsiMethod constructor, PsiField field) {
+    final PsiExpression initializer = field.getInitializer();
+    PsiExpression initializerCopy = (PsiExpression)initializer.copy();
+    final PsiCodeBlock body = constructor.getBody();
+    if (body != null) {
+      try {
+        String fieldName = field.getName();
+        final PsiReferenceExpression refExpr = (PsiReferenceExpression)factory.createExpressionFromText(fieldName, body);
+        if (refExpr.resolve() != null) fieldName = "this." + fieldName;
+        PsiExpressionStatement statement = (PsiExpressionStatement)factory.createStatementFromText(fieldName + "= y;", null);
+        if (initializerCopy instanceof PsiArrayInitializerExpression) {
+          PsiType type = initializer.getType();
+          PsiNewExpression newExpression =
+            (PsiNewExpression)factory.createExpressionFromText("new " + type.getCanonicalText() + "{}", body);
+          newExpression.getArrayInitializer().replace(initializerCopy);
+          initializerCopy = newExpression;
+        }
+        ((PsiAssignmentExpression)statement.getExpression()).getRExpression().replace(initializerCopy);
+        statement = (PsiExpressionStatement)field.getManager().getCodeStyleManager().reformat(statement);
+        body.add(statement);
+        initializer.delete();
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    }
   }
 
   private void addAssignmentToField(final String parameterName, final PsiMethod constructor) {

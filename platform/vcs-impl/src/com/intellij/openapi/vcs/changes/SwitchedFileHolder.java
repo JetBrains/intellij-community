@@ -18,6 +18,9 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class SwitchedFileHolder extends RecursiveFileHolder {
   public SwitchedFileHolder(Project project, HolderType holderType) {
     super(project, holderType);
@@ -45,5 +48,9 @@ public class SwitchedFileHolder extends RecursiveFileHolder {
     if (fileDropped(file)) return true;
     final VirtualFile parent = file.getParent();
     return (parent != null) && (scope.isRecursivelyDirty(parent));
+  }
+
+  public Map<VirtualFile, String> getFilesMapCopy() {
+    return new HashMap<VirtualFile, String>(myFiles);
   }
 }

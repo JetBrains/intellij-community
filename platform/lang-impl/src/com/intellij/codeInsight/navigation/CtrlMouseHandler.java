@@ -31,6 +31,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -159,6 +160,10 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
       myStoredModifiers = mouseEvent.getModifiers();
       BrowseMode browseMode = getBrowseMode(myStoredModifiers);
+
+      if (myTooltipProvider != null) {
+        myTooltipProvider.dispose();
+      }
 
       if (browseMode == BrowseMode.None || offset >= selStart && offset < selEnd) {
         disposeHighlighter();
@@ -439,10 +444,15 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     private final Editor myEditor;
     private final LogicalPosition myPosition;
     private BrowseMode myBrowseMode;
+    private boolean myDisposed;
 
     public TooltipProvider(Editor editor, LogicalPosition pos) {
       myEditor = editor;
       myPosition = pos;
+    }
+
+    public void dispose() {
+      myDisposed = true;
     }
 
     public BrowseMode getBrowseMode() {
@@ -451,6 +461,19 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
     public void execute(BrowseMode browseMode) {
       myBrowseMode = browseMode;
+
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        public void run() {
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            public void run() {
+              doExecute();
+            }
+          });
+        }
+      });
+    }
+
+    private void doExecute() {
       final Info info;
       try {
         info = getInfoAt(myEditor, myPosition, myBrowseMode);
@@ -461,6 +484,15 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       }
       if (info == null) return;
 
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          showHint(info);
+        }
+      });
+    }
+
+    private void showHint(Info info) {
+      if (myDisposed) return;
       Component internalComponent = myEditor.getContentComponent();
       if (myHighlighter != null) {
         if (!info.isSimilarTo(myStoredInfo)) {

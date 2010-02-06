@@ -15,18 +15,33 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui;
 
+import com.intellij.psi.PsiClass;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SupertypeConstraint;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 18.02.2008
  */
 public class DynamicPropertyDialog extends DynamicDialog {
-  public DynamicPropertyDialog(GrReferenceExpression referenceExpression) {
-    super(referenceExpression);
+  private final GrReferenceExpression myReferenceExpression;
+  private final GrArgumentLabel myLabel;
 
+  public DynamicPropertyDialog(GrReferenceExpression referenceExpression) {
+    super(referenceExpression, QuickfixUtil.createSettings(referenceExpression), GroovyExpectedTypesUtil.calculateTypeConstraints(referenceExpression));
+    myReferenceExpression = referenceExpression;
+    myLabel = null;
     setTitle(GroovyBundle.message("add.dynamic.property", referenceExpression.getReferenceName()));
     setUpTypeLabel(GroovyBundle.message("dynamic.method.property.type"));
+  }
+
+  public DynamicPropertyDialog(GrArgumentLabel label, PsiClass targetClass) {
+    super(label, QuickfixUtil.createSettings(label, targetClass), new SupertypeConstraint[]{SupertypeConstraint.create(label.getNamedArgument().getExpression().getType())});
+    myLabel = label;
+    myReferenceExpression = null;
   }
 }

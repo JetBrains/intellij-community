@@ -31,7 +31,7 @@ public class SourceItemFindUsagesAction extends ArtifactEditorFindUsagesActionBa
   private final SourceItemsTree myTree;
 
   public SourceItemFindUsagesAction(SourceItemsTree tree, Project project, ArtifactsStructureConfigurableContext artifactContext) {
-    super(tree.getTree(), project, artifactContext);
+    super(tree, project, artifactContext);
     myTree = tree;
   }
 

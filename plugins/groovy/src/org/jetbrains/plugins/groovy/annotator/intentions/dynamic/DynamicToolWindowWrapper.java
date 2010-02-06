@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -485,7 +486,7 @@ public class DynamicToolWindowWrapper {
     int row = tree.getRowForPath(path);
     myTreeTable.getSelectionModel().setSelectionInterval(row, row);
     myTreeTable.scrollRectToVisible(myTreeTable.getCellRect(row, 0, true));
-    ((ToolWindowManagerImpl)ToolWindowManager.getInstance(myProject)).requestFocus(myTreeTable, true);
+    IdeFocusManager.getInstance(myProject).requestFocus(myTreeTable, true);
   }
 
 

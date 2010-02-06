@@ -13,6 +13,8 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 
+import java.util.Iterator;
+
 /**
  * @author yole
  */
@@ -218,6 +220,14 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     doTest(false, true);
   }
 
+  public void testMultipleAssignments() throws Exception {
+    doTest(false, true);
+  }
+
+  public void testParamTypeReplacement() throws Exception {
+    doTest(false, true);
+  }
+
   public void testNoInlineAbstract() throws Exception {
     doTestNoInline("Abstract classes cannot be inlined");
   }
@@ -318,13 +328,29 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     doTestPreprocessUsages("Class is never used");
   }
 
+  public void testNoInlineRecursiveAccess() throws Exception {
+    doTestConflict("Class cannot be inlined because a call to its member inside body", "Class cannot be inlined because a call to its member inside body");
+  }
+
   public void testConflictInaccessibleOuterField() throws Exception {
+    doTestConflict(
+      "Field <b><code>C2.a</code></b> that is used in inlined method is not accessible from call site(s) in method <b><code>C2User.test()</code></b>");
+  }
+
+  public void testGetClassConflict() throws Exception {
+    doTestConflict("Result of getClass() invocation would be changed", "Result of getClass() invocation would be changed");
+  }
+
+  public void doTestConflict(final String... expected) throws Exception {
     InlineToAnonymousClassProcessor processor = prepareProcessor();
     UsageInfo[] usages = processor.findUsages();
     MultiMap<PsiElement,String> conflicts = processor.getConflicts(usages);
-    assertEquals(1, conflicts.size());
-    assertEquals("Field <b><code>C2.a</code></b> that is used in inlined method is not accessible from call site(s) in method <b><code>C2User.test()</code></b>",
-                 conflicts.values().iterator().next());
+    assertEquals(expected.length, conflicts.size());
+    final Iterator<? extends String> iterator = conflicts.values().iterator();
+    for (String s : expected) {
+      assertTrue(iterator.hasNext());
+      assertEquals(s, iterator.next());
+    }
   }
 
   private void doTestNoInline(final String expectedMessage) throws Exception {

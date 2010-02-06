@@ -22,21 +22,38 @@ public class SimpleTimerTask {
 
   private boolean myCancelled;
 
-  public SimpleTimerTask(long targetTime, Runnable runnable) {
+  private final Object LOCK = new Object();
+  private SimpleTimer myTimer;
+
+  public SimpleTimerTask(long targetTime, Runnable runnable, SimpleTimer timer) {
     myTargetTime = targetTime;
     myRunnable = runnable;
+    myTimer = timer;
   }
 
   public void cancel() {
-    myCancelled = true;
+    synchronized (LOCK) {
+      myCancelled = true;
+      myTimer.onCancelled(this);
+    }
   }
 
   public boolean isCancelled() {
-    return myCancelled;
+    synchronized (LOCK) {
+      return myCancelled;
+    }
   }
 
   public void run() {
-    myRunnable.run();
+    synchronized (LOCK) {
+      if (!myCancelled) {
+        myRunnable.run();
+      }
+    }
+  }
+
+  long getTargetTime() {
+    return myTargetTime;
   }
 
   @Override

@@ -15,10 +15,7 @@
  */
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
+import com.intellij.notification.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -97,11 +94,11 @@ public abstract class GenericNotifierImpl<T, Key> {
     }
     final Application application = ApplicationManager.getApplication();
     if (application.isDispatchThread()) {
-      Notifications.Bus.notify(notification, myProject);
+      Notifications.Bus.notify(notification, NotificationDisplayType.STICKY_BALLOON, myProject);
     } else {
       application.invokeLater(new Runnable() {
         public void run() {
-          Notifications.Bus.notify(notification, myProject);
+          Notifications.Bus.notify(notification, NotificationDisplayType.STICKY_BALLOON, myProject);
         }
       });
     }

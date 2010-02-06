@@ -1,5 +1,7 @@
 package com.intellij.ui;
 
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
@@ -11,7 +13,6 @@ import java.awt.event.*;
  * @author oleg
  */
 public class CheckBoxList extends JList {
-  private static final Border noFocusBorder = new EmptyBorder(1, 1, 1, 1);
   private static final int DEFAULT_CHECK_BOX_WIDTH = 20;
 
   public CheckBoxList(final ListModel dataModel, final CheckBoxListListener checkBoxListListener) {
@@ -64,15 +65,27 @@ public class CheckBoxList extends JList {
   }
 
   private class CellRenderer implements ListCellRenderer {
+    private Border mySelectedBorder;
+    private Border myBorder;
+
+    private CellRenderer() {
+      mySelectedBorder = UIManager.getBorder("List.focusCellHighlightBorder");
+      final Insets borderInsets = mySelectedBorder.getBorderInsets(new JCheckBox());
+      myBorder = new EmptyBorder(borderInsets);
+    }
+
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       JCheckBox checkbox = (JCheckBox)value;
-      checkbox.setBackground(getBackgound(isSelected, checkbox));
-      checkbox.setForeground(getForeGround(isSelected, checkbox));
+      if (!UIUtil.isUnderNimbusLookAndFeel()) {
+        checkbox.setBackground(getBackground(isSelected, checkbox));
+        checkbox.setForeground(getForeground(isSelected, checkbox));
+      }
       checkbox.setEnabled(isEnabled());
       checkbox.setFont(getFont(checkbox));
       checkbox.setFocusPainted(false);
       checkbox.setBorderPainted(true);
-      checkbox.setBorder(isSelected ? UIManager.getBorder("List.focusCellHighlightBorder") : noFocusBorder);
+
+      checkbox.setBorder(isSelected ? mySelectedBorder : myBorder);
       return checkbox;
     }
   }
@@ -81,11 +94,11 @@ public class CheckBoxList extends JList {
     return getFont();
   }
 
-  protected Color getBackgound(final boolean isSelected, final JCheckBox checkbox) {
+  protected Color getBackground(final boolean isSelected, final JCheckBox checkbox) {
       return isSelected ? getSelectionBackground() : getBackground();
     }
 
-  protected Color getForeGround(final boolean isSelected, final JCheckBox checkbox) {
+  protected Color getForeground(final boolean isSelected, final JCheckBox checkbox) {
     return isSelected ? getSelectionForeground() : getForeground();
   }
 

@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -447,6 +448,15 @@ public class MavenProject {
                                                             getActiveProfilesIds(),
                                                             locator);
     MavenProjectChanges changes = set(result, false, result.readingProblems.isEmpty(), false);
+
+    List<MavenImporter> importers = getSuitableImporters();
+    for (MavenPlugin eachPlugin : getPlugins()) {
+      for (MavenImporter eachImporter : importers) {
+        if (eachImporter.requiresResolvedPlugin(eachPlugin)) {
+          embedder.resolvePlugin(eachPlugin, result.nativeMavenProject, true);
+        }
+      }
+    }
     return Pair.create(changes, result.nativeMavenProject);
   }
 
@@ -691,6 +701,14 @@ public class MavenProject {
     state.myDependencies = dependenciesCopy;
   }
 
+  public List<MavenArtifact> findDependencies(MavenProject depProject) {
+    List<MavenArtifact> result = new SmartList<MavenArtifact>();
+    for (MavenArtifact each : getDependencies()) {
+      if (each.getMavenId().equals(depProject.getMavenId())) result.add(each);
+    }
+    return result;
+  }
+
   public boolean hasUnresolvedArtifacts() {
     State state = myState;
     return !isParentResolved(state)
@@ -750,7 +768,7 @@ public class MavenProject {
   @Nullable
   public MavenPlugin findPlugin(String groupId, String artifactId) {
     for (MavenPlugin each : getPlugins()) {
-      if (groupId.equals(each.getGroupId()) && artifactId.equals(each.getArtifactId())) return each;
+      if (each.getMavenId().equals(groupId, artifactId)) return each;
     }
     return null;
   }

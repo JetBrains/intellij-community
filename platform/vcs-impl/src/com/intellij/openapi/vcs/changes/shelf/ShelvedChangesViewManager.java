@@ -38,7 +38,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
@@ -48,9 +47,11 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -60,7 +61,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeModel;
+import javax.swing.tree.TreePath;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
@@ -112,27 +116,37 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     myTree.setCellRenderer(new ShelfTreeCellRenderer(project, myMoveRenameInfo));
     new TreeLinkMouseListener(new ShelfTreeCellRenderer(project, myMoveRenameInfo)).install(myTree);
 
-    ActionManager.getInstance().getAction("ShelvedChanges.Diff").registerCustomShortcutSet(CommonShortcuts.getDiff(), myTree);
+    final AnAction showDiffAction = ActionManager.getInstance().getAction("ShelvedChanges.Diff");
+    showDiffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), myTree);
 
     PopupHandler.installPopupHandler(myTree, "ShelvedChangesPopupMenu", ActionPlaces.UNKNOWN);
 
     myTree.addMouseListener(new MouseAdapter() {
       public void mouseClicked(final MouseEvent e) {
         if (e.getClickCount() != 2) return;
-        if (myTree.getPathForLocation(e.getX(), e.getY()) == null) return;
-        final TreePath selectionPath = myTree.getSelectionPath();
-        if (selectionPath == null) return;
-        final Object lastPathComponent = selectionPath.getLastPathComponent();
-        if (((TreeNode) lastPathComponent).isLeaf()) {
-          DataContext context = DataManager.getInstance().getDataContext(myTree);
-          final Change[] changes = VcsDataKeys.CHANGES.getData(context);
-          if (changes != null && changes.length > 0) {
-            ShowDiffAction.showDiffForChange(changes, 0, myProject);
-          }
-          e.consume();
-        }
+
+        DiffShelvedChangesAction.showShelvedChangesDiff(DataManager.getInstance().getDataContext(myTree));
       }
     });
+    new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
+      public String convert(TreePath o) {
+        final Object lc = o.getLastPathComponent();
+        final Object lastComponent = lc == null ? null : ((DefaultMutableTreeNode) lc).getUserObject();
+        if (lastComponent instanceof ShelvedChangeList) {
+          return ((ShelvedChangeList) lastComponent).DESCRIPTION;
+        } else if (lastComponent instanceof ShelvedChange) {
+          final ShelvedChange shelvedChange = (ShelvedChange)lastComponent;
+          return shelvedChange.getBeforeFileName() == null ? shelvedChange.getAfterFileName() : shelvedChange.getBeforeFileName();
+        } else if (lastComponent instanceof ShelvedBinaryFile) {
+          final ShelvedBinaryFile sbf = (ShelvedBinaryFile) lastComponent;
+          final String value = sbf.BEFORE_PATH == null ? sbf.AFTER_PATH : sbf.BEFORE_PATH;
+          int idx = value.lastIndexOf("/");
+          idx = (idx == -1) ? value.lastIndexOf("\\") : idx;
+          return idx > 0 ? value.substring(idx + 1) : value;
+        }
+        return null;
+      }
+    }, true);
   }
 
   public void projectOpened() {

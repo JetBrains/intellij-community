@@ -17,6 +17,7 @@ package com.intellij.notification;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
@@ -43,10 +44,20 @@ public interface Notifications {
       notify(notification, NotificationDisplayType.BALLOON, project);
     }
 
-    public static void notify(@NotNull final Notification notification, @NotNull final NotificationDisplayType defaultDisplayType, @Nullable Project project) {
-      final MessageBus bus = project != null ? project.getMessageBus() : ApplicationManager.getApplication().getMessageBus();
-      bus.syncPublisher(TOPIC).notify(notification, defaultDisplayType);
-
+    public static void notify(@NotNull final Notification notification, @NotNull final NotificationDisplayType defaultDisplayType, @Nullable final Project project) {
+      if (project != null) {
+        if (project.isInitialized()) {
+          project.getMessageBus().syncPublisher(TOPIC).notify(notification, defaultDisplayType);
+        } else {
+          StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
+            public void run() {
+              project.getMessageBus().syncPublisher(TOPIC).notify(notification, defaultDisplayType);
+            }
+          });
+        }
+      } else {
+        ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).notify(notification, defaultDisplayType);
+      }
     }
   }
 }
