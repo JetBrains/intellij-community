@@ -79,7 +79,9 @@ public class SettingsImpl implements EditorSettings {
   }
 
   public void setRightMarginShown(boolean val) {
-    myIsRightMarginShown = val ? Boolean.TRUE : Boolean.FALSE;
+    final Boolean newValue = val ? Boolean.TRUE : Boolean.FALSE;
+    if (newValue.equals(myIsRightMarginShown)) return;
+    myIsRightMarginShown = newValue;
     fireEditorRefresh();
   }
 
@@ -100,7 +102,9 @@ public class SettingsImpl implements EditorSettings {
   }
 
   public void setLineNumbersShown(boolean val) {
-    myAreLineNumbersShown = val ? Boolean.TRUE : Boolean.FALSE;
+    final Boolean newValue = val ? Boolean.TRUE : Boolean.FALSE;
+    if (newValue.equals(myAreLineNumbersShown)) return;
+    myAreLineNumbersShown = newValue;
     fireEditorRefresh();
   }
 
@@ -110,7 +114,9 @@ public class SettingsImpl implements EditorSettings {
   }
 
   public void setRightMargin(int rightMargin) {
-    myRightMargin = Integer.valueOf(rightMargin);
+    final Integer newValue = Integer.valueOf(rightMargin);
+    if (newValue.equals(myRightMargin)) return;
+    myRightMargin = newValue;
     fireEditorRefresh();
   }
 
@@ -119,6 +125,7 @@ public class SettingsImpl implements EditorSettings {
   }
 
   public void setAdditionalLinesCount(int additionalLinesCount) {
+    if (myAdditionalLinesCount == additionalLinesCount) return;
     myAdditionalLinesCount = additionalLinesCount;
     fireEditorRefresh();
   }
@@ -128,6 +135,7 @@ public class SettingsImpl implements EditorSettings {
   }
 
   public void setAdditionalColumnsCount(int additinalColumnsCount) {
+    if (myAdditionalColumnsCount == additinalColumnsCount) return;
     myAdditionalColumnsCount = additinalColumnsCount;
     fireEditorRefresh();
   }
@@ -137,6 +145,7 @@ public class SettingsImpl implements EditorSettings {
   }
 
   public void setLineMarkerAreaShown(boolean lineMarkerAreaShown) {
+    if (myLineMarkerAreaShown == lineMarkerAreaShown) return;
     myLineMarkerAreaShown = lineMarkerAreaShown;
     fireEditorRefresh();
   }
@@ -148,7 +157,9 @@ public class SettingsImpl implements EditorSettings {
   }
 
   public void setFoldingOutlineShown(boolean val) {
-    myIsFoldingOutlineShown = val ? Boolean.TRUE : Boolean.FALSE;
+    final Boolean newValue = val ? Boolean.TRUE : Boolean.FALSE;
+    if (newValue.equals(myIsFoldingOutlineShown)) return;
+    myIsFoldingOutlineShown = newValue;
     fireEditorRefresh();
   }
 
@@ -158,7 +169,9 @@ public class SettingsImpl implements EditorSettings {
   }
 
   public void setUseTabCharacter(boolean val) {
-    myUseTabCharacter = val ? Boolean.TRUE : Boolean.FALSE;
+    final Boolean newValue = val ? Boolean.TRUE : Boolean.FALSE;
+    if (newValue.equals(myUseTabCharacter)) return;
+    myUseTabCharacter = newValue;
     fireEditorRefresh();
   }
 
@@ -183,7 +196,9 @@ public class SettingsImpl implements EditorSettings {
   }
 
   public void setTabSize(int tabSize) {
-    myTabSize = Integer.valueOf(tabSize);
+    final Integer newValue = Integer.valueOf(tabSize);
+    if (newValue.equals(myTabSize)) return;
+    myTabSize = newValue;
     fireEditorRefresh();
   }
 
@@ -194,7 +209,9 @@ public class SettingsImpl implements EditorSettings {
   }
 
   public void setSmartHome(boolean val) {
-    myIsSmartHome = val ? Boolean.TRUE : Boolean.FALSE;
+    final Boolean newValue = val ? Boolean.TRUE : Boolean.FALSE;
+    if (newValue.equals(myIsSmartHome)) return;
+    myIsSmartHome = newValue;
     fireEditorRefresh();
   }
 
@@ -206,7 +223,9 @@ public class SettingsImpl implements EditorSettings {
   }
 
   public void setVirtualSpace(boolean val) {
-    myIsVirtualSpace = val ? Boolean.TRUE : Boolean.FALSE;
+    final Boolean newValue = val ? Boolean.TRUE : Boolean.FALSE;
+    if (newValue.equals(myIsVirtualSpace)) return;
+    myIsVirtualSpace = newValue;
     fireEditorRefresh();
   }
 
@@ -228,7 +247,9 @@ public class SettingsImpl implements EditorSettings {
   }
 
   public void setCaretInsideTabs(boolean val) {
-    myIsCaretInsideTabs = val ? Boolean.TRUE : Boolean.FALSE;
+    final Boolean newValue = val ? Boolean.TRUE : Boolean.FALSE;
+    if (newValue.equals(myIsCaretInsideTabs)) return;
+    myIsCaretInsideTabs = newValue;
     fireEditorRefresh();
   }
 
@@ -239,7 +260,9 @@ public class SettingsImpl implements EditorSettings {
   }
 
   public void setBlockCursor(boolean val) {
-    myIsBlockCursor = val ? Boolean.TRUE : Boolean.FALSE;
+    final Boolean newValue = val ? Boolean.TRUE : Boolean.FALSE;
+    if (newValue.equals(myIsBlockCursor)) return;
+    myIsBlockCursor = newValue;
     fireEditorRefresh();
   }
 
@@ -278,7 +301,9 @@ public class SettingsImpl implements EditorSettings {
   }
 
   public void setBlinkCaret(boolean val) {
-    myIsCaretBlinking = val ? Boolean.TRUE : Boolean.FALSE;
+    final Boolean newValue = val ? Boolean.TRUE : Boolean.FALSE;
+    if (newValue.equals(myIsCaretBlinking)) return;
+    myIsCaretBlinking = newValue;
     fireEditorRefresh();
   }
 
@@ -289,7 +314,9 @@ public class SettingsImpl implements EditorSettings {
   }
 
   public void setCaretBlinkPeriod(int blinkPeriod) {
-    myCaretBlinkingPeriod = Integer.valueOf(blinkPeriod);
+    final Integer newValue = Integer.valueOf(blinkPeriod);
+    if (newValue.equals(myCaretBlinkingPeriod)) return;
+    myCaretBlinkingPeriod = newValue;
     fireEditorRefresh();
   }
 

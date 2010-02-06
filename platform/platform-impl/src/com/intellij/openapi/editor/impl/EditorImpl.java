@@ -219,6 +219,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private EditorDropHandler myDropHandler;
 
+  private char[] myPrefixText;
+  private TextAttributes myPrefixAttributes;
+
   static {
     ourCaretBlinkingCommand = new RepaintCursorCommand();
     ourCaretBlinkingCommand.start();
@@ -334,6 +337,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
       });
     }
+  }
+
+  public void setPrefixTextAndAttributes(String prefixText, TextAttributes attributes) {
+    myPrefixText = prefixText == null? null: prefixText.toCharArray();
+    myPrefixAttributes = attributes;
   }
 
   public boolean isViewer() {
@@ -727,6 +735,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull
   public VisualPosition xyToVisualPosition(@NotNull Point p) {
     int line = yPositionToVisibleLineNumber(p.y);
+    int px = p.x;
+    if (line == 0 && myPrefixText != null) {
+      for (char c : myPrefixText) {
+        px -= EditorUtil.charWidth(c, myPrefixAttributes.getFontType(), this);
+      }
+    }
 
     int offset = logicalPositionToOffset(visualToLogicalPosition(new VisualPosition(line, 0)));
     int textLength = myDocument.getTextLength();
@@ -758,7 +772,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         for (char aPlaceholder : placeholder) {
           c = aPlaceholder;
           x += EditorUtil.charWidth(c, fontType, this);
-          if (x >= p.x) break outer;
+          if (x >= px) break outer;
           column++;
         }
         offset = region.getEndOffset();
@@ -776,7 +790,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           x += EditorUtil.charWidth(c, fontType, this);
         }
 
-        if (x >= p.x) break;
+        if (x >= px) break;
 
         if (c == '\t') {
           column += (x - prevX) / spaceSize;
@@ -791,23 +805,23 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     int charWidth = EditorUtil.charWidth(c, fontType, this);
 
-    if (x >= p.x && c == '\t') {
+    if (x >= px && c == '\t') {
       if (mySettings.isCaretInsideTabs()) {
-        column += (p.x - prevX) / spaceSize;
-        if ((p.x - prevX) % spaceSize > spaceSize / 2) column++;
+        column += (px - prevX) / spaceSize;
+        if ((px - prevX) % spaceSize > spaceSize / 2) column++;
       }
       else {
-        if ((x - p.x) * 2 < x - prevX) {
+        if ((x - px) * 2 < x - prevX) {
           column += (x - prevX) / spaceSize;
         }
       }
     }
     else {
-      if (x >= p.x) {
-        if ((x - p.x) * 2 < charWidth) column++;
+      if (x >= px) {
+        if ((x - px) * 2 < charWidth) column++;
       }
       else {
-        column += (p.x - x) / EditorUtil.getSpaceWidth(fontType, this);
+        column += (px - x) / EditorUtil.getSpaceWidth(fontType, this);
       }
     }
 
@@ -891,9 +905,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private int getTabbedTextWidth(int lineStartOffset, VisualPosition pos) {
-    if (pos.column == 0) return 0;
-
     int x = 0;
+    if (lineStartOffset == 0 && myPrefixText != null) {
+      for (char c : myPrefixText) {
+        x += EditorUtil.charWidth(c, myPrefixAttributes.getFontType(), this);
+      }
+    }
+    if (pos.column == 0) return x;    
     int offset = lineStartOffset;
     CharSequence text = myDocument.getCharsNoThreadCheck();
     int textLength = myDocument.getTextLength();
@@ -1332,7 +1350,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     int startLineNumber = xyToLogicalPosition(new Point(0, clip.y)).line;
 
+    Point position = new Point(0, visibleLineNumber * lineHeight);
+    if (startLineNumber == 0 && myPrefixText != null) {
+      position.x = drawBackground(g, myPrefixAttributes.getBackgroundColor(), new String(myPrefixText), position, myPrefixAttributes.getFontType(),
+                                  defaultBackground, clip);
+    }
+
     if (startLineNumber >= myDocument.getLineCount() || startLineNumber < 0) {
+      if (position.x > 0) flushBackground(g, clip);
       return;
     }
 
@@ -1351,7 +1376,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     TextAttributes attributes = iterationState.getMergedAttributes();
     Color backColor = getBackgroundColor(attributes);
-    Point position = new Point(0, visibleLineNumber * lineHeight);
     int fontType = attributes.getFontType();
     CharSequence text = myDocument.getCharsNoThreadCheck();
     int lastLineIndex = Math.max(0, myDocument.getLineCount() - 1);
@@ -1496,6 +1520,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void paintText(Graphics g, Rectangle clip) {
+    myCurrentFontType = null;
     myLastCache = null;
     final int plainSpaceWidth = EditorUtil.getSpaceWidth(Font.PLAIN, this);
     final int boldSpaceWidth = EditorUtil.getSpaceWidth(Font.BOLD, this);
@@ -1510,7 +1535,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     int startLineNumber = xyToLogicalPosition(new Point(0, clip.y)).line;
 
+    Point position = new Point(0, visibleLineNumber * lineHeight);
+    if (startLineNumber == 0 && myPrefixText != null) {
+      position.x = drawString(g, myPrefixText, 0, myPrefixText.length, position, clip, myPrefixAttributes.getEffectColor(),
+                              myPrefixAttributes.getEffectType(), myPrefixAttributes.getFontType(), myPrefixAttributes.getForegroundColor());
+    }
     if (startLineNumber >= myDocument.getLineCount() || startLineNumber < 0) {
+      if (position.x > 0) flushCachedChars(g);
       return;
     }
 
@@ -1532,9 +1563,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Color effectColor = attributes.getEffectColor();
     EffectType effectType = attributes.getEffectType();
     int fontType = attributes.getFontType();
-    myCurrentFontType = null;
     g.setColor(currentColor);
-    Point position = new Point(0, visibleLineNumber * lineHeight);
+
     final char[] chars = myDocument.getRawChars();
     while (!iterationState.atEnd() && !lIterator.atEnd()) {
       int hEnd = iterationState.getEndOffset();
@@ -2604,11 +2634,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (time > mySleepTime) {
           boolean toRepaint = true;
           if (myIsBlinkCaret) {
-            activeCursor.isVisible = !activeCursor.isVisible;
+            activeCursor.myIsShown = !activeCursor.myIsShown;
           }
           else {
-            toRepaint = !activeCursor.isVisible;
-            activeCursor.isVisible = true;
+            toRepaint = !activeCursor.myIsShown;
+            activeCursor.myIsShown = true;
           }
 
           if (toRepaint) {
@@ -2639,6 +2669,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public boolean setCaretVisible(boolean b) {
+    myCaretCursor.setVisible(b);
     boolean old = myCaretCursor.isActive();
     if (b) {
       myCaretCursor.activate();
@@ -2691,42 +2722,53 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private class CaretCursor {
     private Point myLocation;
     private int myWidth;
+    private boolean myIsVisible;
 
     @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
-    private boolean isVisible = false;
+    private boolean myIsShown = false;
     private long myStartTime = 0;
 
     private CaretCursor() {
       myLocation = new Point(0, 0);
+      myIsVisible = true;
+    }
+
+    public boolean isVisible() {
+      return myIsVisible;
+    }
+
+    public void setVisible(boolean visible) {
+      myIsVisible = visible;
     }
 
     private void activate() {
+      if (!myIsVisible) return;
       final boolean blink = mySettings.isBlinkCaret();
       final int blinkPeriod = mySettings.getCaretBlinkPeriod();
       synchronized (ourCaretBlinkingCommand) {
         ourCaretBlinkingCommand.myEditor = EditorImpl.this;
         ourCaretBlinkingCommand.setBlinkCaret(blink);
         ourCaretBlinkingCommand.setBlinkPeriod(blinkPeriod);
-        isVisible = true;
+        myIsShown = true;
       }
     }
 
     public boolean isActive() {
       synchronized (ourCaretBlinkingCommand) {
-        return isVisible;
+        return myIsShown;
       }
     }
 
     private void passivate() {
       synchronized (ourCaretBlinkingCommand) {
-        isVisible = false;
+        myIsShown = false;
       }
     }
 
     private void setPosition(Point location, int width) {
       myStartTime = System.currentTimeMillis();
       myLocation = location;
-      isVisible = true;
+      myIsShown = myIsVisible;
       myWidth = Math.max(width, 2);
       repaint();
     }
@@ -2736,7 +2778,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     private void paint(Graphics g) {
-      if (!isVisible || !IJSwingUtilities.hasFocus(getContentComponent()) || isRendererMode()) return;
+      if (!myIsShown || !IJSwingUtilities.hasFocus(getContentComponent()) || isRendererMode()) return;
 
       int x = myLocation.x;
       int lineHeight = getLineHeight();

@@ -162,7 +162,7 @@ public class ScrollingModelImpl implements ScrollingModel {
       hOffset = targetLocation.x - 4 * spaceWidth;
       hOffset = hOffset > 0 ? hOffset : 0;
     }
-    else if (targetLocation.x > viewRect.x + viewRect.width - xInsets) {
+    else if (targetLocation.x > viewRect.x + viewRect.width) {
       hOffset = targetLocation.x - viewRect.width + xInsets;
     }
 
@@ -201,26 +201,42 @@ public class ScrollingModelImpl implements ScrollingModel {
     JScrollPane scrollPane = myEditor.getScrollPane();
     hOffset = Math.max(0, hOffset);
     vOffset = Math.max(0, vOffset);
-    hOffset = Math.min(scrollPane.getHorizontalScrollBar().getMaximum(), hOffset);
-    vOffset = Math.min(scrollPane.getVerticalScrollBar().getMaximum(), vOffset);
+    hOffset = Math.min(scrollPane.getHorizontalScrollBar().getMaximum() - getExtent(scrollPane.getHorizontalScrollBar()), hOffset);
+    vOffset = Math.min(scrollPane.getVerticalScrollBar().getMaximum() - getExtent(scrollPane.getVerticalScrollBar()), vOffset);
 
     return new Point(hOffset, vOffset);
   }
 
-  public int getVerticalScrollOffset() {
+  @Nullable
+  public JScrollBar getVerticalScrollBar() {
     assertIsDispatchThread();
-    if (myEditor.getScrollPane() == null) return 0;
+    if (myEditor.getScrollPane() == null) return null;
 
-    JScrollBar scrollbar = myEditor.getScrollPane().getVerticalScrollBar();
-    return scrollbar.getValue();
+    return myEditor.getScrollPane().getVerticalScrollBar();
+  }
+
+  @Nullable
+  public JScrollBar getHorizontalScrollBar() {
+    assertIsDispatchThread();
+    if (myEditor.getScrollPane() == null) return null;
+
+    return myEditor.getScrollPane().getHorizontalScrollBar();
+  }
+
+  public int getVerticalScrollOffset() {
+    return getOffset(getVerticalScrollBar());
   }
 
   public int getHorizontalScrollOffset() {
-    assertIsDispatchThread();
-    if (myEditor.getScrollPane() == null) return 0;
+    return getOffset(getHorizontalScrollBar());
+  }
 
-    JScrollBar scrollbar = myEditor.getScrollPane().getHorizontalScrollBar();
-    return scrollbar.getValue();
+  private static int getOffset(JScrollBar scrollBar) {
+    return scrollBar == null ? 0 : scrollBar.getValue();
+  }
+
+  private static int getExtent(JScrollBar scrollBar) {
+    return scrollBar == null ? 0 : scrollBar.getModel().getExtent();
   }
 
   public void scrollVertically(int scrollOffset) {
@@ -422,7 +438,7 @@ public class ScrollingModelImpl implements ScrollingModel {
       _scrollHorizontally(hOffset);
       _scrollVertically(vOffset);
 
-      if (myTicksCount++ == myStepCount) {
+      if (++myTicksCount == myStepCount) {
         finish(true);
       }
     }
