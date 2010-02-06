@@ -63,6 +63,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -405,7 +406,7 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
     newPane.setTreeChangeListener(myTreeChangeListener);
     myAutoScrollToSourceHandler.install(newPane.myTree);
 
-    newPane.getComponentToFocus().requestFocus();
+    IdeFocusManager.getInstance(myProject).requestFocus(newPane.getComponentToFocus(), false);
     updateToolWindowTitle();
 
     newPane.restoreExpandedPaths();

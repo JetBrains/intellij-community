@@ -139,7 +139,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private boolean myIsFiringLoadingEvent = false;
   @NonNls private static final String WAS_EVER_SHOWN = "was.ever.shown";
 
-  private boolean myActive = true;
+  private Boolean myActive;
 
   protected void boostrapPicoContainer() {
     super.boostrapPicoContainer();
@@ -911,8 +911,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
     if (frame instanceof IdeFrame) {
       final IdeFrame ideFrame = (IdeFrame)frame;
-      if (myActive != active) {
-        myActive = active;
+      if (isActive() != active) {
+        myActive = Boolean.valueOf(active);
         System.setProperty("idea.active", Boolean.valueOf(myActive).toString());
         if (active) {
           myDispatcher.getMulticaster().applicationActivated(ideFrame);
@@ -928,6 +928,13 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public boolean isActive() {
+    if (isUnitTestMode()) return true;
+
+    if (myActive == null) {
+      Window active = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+      return active != null;
+    }
+
     return myActive;
   }
 
