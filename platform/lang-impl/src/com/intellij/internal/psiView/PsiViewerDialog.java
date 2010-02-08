@@ -18,10 +18,7 @@ package com.intellij.internal.psiView;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -59,6 +56,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,7 +74,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class PsiViewerDialog extends DialogWrapper {
+public class PsiViewerDialog extends DialogWrapper implements DataProvider {
   private final Project myProject;
 
   private final Tree myTree;
@@ -479,6 +477,36 @@ public class PsiViewerDialog extends DialogWrapper {
     myTree.setRootVisible(false);
   }
 
+  public Object getData(@NonNls String dataId) {
+    if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+      String fqn = null;
+      if (myTree.hasFocus()) {
+        final TreePath path = myTree.getSelectionPath();
+        if (path != null) {
+          DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+          if (!(node.getUserObject() instanceof ViewerNodeDescriptor)) return null;
+          ViewerNodeDescriptor descriptor = (ViewerNodeDescriptor)node.getUserObject();
+          Object elementObject = descriptor.getElement();
+          final PsiElement element = elementObject instanceof PsiElement
+                                     ? (PsiElement)elementObject
+                                     : elementObject instanceof ASTNode ? ((ASTNode)elementObject).getPsi() : null;
+          if (element != null) {
+            fqn = element.getClass().getName();
+          }
+        }
+      } else if (myRefs.hasFocus()) {
+        final Object value = myRefs.getSelectedValue();
+        if (value instanceof String) {
+          fqn = (String)value;
+        }
+      }
+      if (fqn != null) {
+        return getContainingFileForClass(fqn);
+      }
+    }
+    return null;
+  }
+
   private class MyTreeSelectionListener implements TreeSelectionListener {
     private final TextAttributes myAttributes;
 
@@ -518,7 +546,7 @@ public class PsiViewerDialog extends DialogWrapper {
           final int textLength = myEditor.getDocument().getTextLength();
           if (end <= textLength) {
             myEditor.getMarkupModel()
-              .addRangeHighlighter(start, end, HighlighterLayer.FIRST + 1, myAttributes, HighlighterTargetArea.EXACT_RANGE);
+              .addRangeHighlighter(start, end, HighlighterLayer.LAST, myAttributes, HighlighterTargetArea.EXACT_RANGE);
             if (myTree.hasFocus()) {
               myEditor.getCaretModel().moveToOffset(start);
               myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
@@ -595,6 +623,24 @@ public class PsiViewerDialog extends DialogWrapper {
   }
 
   @Nullable
+  private PsiFile getContainingFileForClass(String fqn) {
+    String filename = fqn;
+    if (fqn.contains(".")) {
+      filename = fqn.substring(fqn.lastIndexOf('.') + 1);
+    }
+    if (filename.contains("$")) {
+      filename = filename.substring(0, filename.indexOf('$'));
+    }
+    filename += ".java";
+    final PsiFile[] files = FilenameIndex.getFilesByName(myProject, filename, GlobalSearchScope.allScope(myProject));
+    if (files != null && files.length > 0) {
+      return files[0];
+    }
+    return null;
+  }
+
+
+  @Nullable
   public static TreeNode findNodeWithObject(final Object object, final TreeModel model, final Object parent) {
     for (int i = 0; i < model.getChildCount(parent); i++) {
       final DefaultMutableTreeNode childNode = (DefaultMutableTreeNode) model.getChild(parent, i);
@@ -637,18 +683,8 @@ public class PsiViewerDialog extends DialogWrapper {
       final Object value = myRefs.getSelectedValue();
       if (value instanceof String) {
         final String fqn = (String)value;
-        String filename = fqn;
-        if (fqn.contains(".")) {
-          filename = fqn.substring(fqn.lastIndexOf('.') + 1);
-        }
-        if (filename.contains("$")) {
-          filename = filename.substring(0, filename.indexOf('$'));
-        }
-        filename += ".java";
-        final PsiFile[] files = FilenameIndex.getFilesByName(myProject, filename, GlobalSearchScope.allScope(myProject));
-        if (files != null && files.length > 0) {
-          files[0].navigate(true);
-        }
+        final PsiFile file = getContainingFileForClass(fqn);
+        if (file != null) file.navigate(true);
       }
     }
 

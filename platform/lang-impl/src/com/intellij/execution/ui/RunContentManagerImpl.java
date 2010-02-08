@@ -248,6 +248,9 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   public void showRunContent(@NotNull final Executor executor, final RunContentDescriptor descriptor) {
     if(ApplicationManager.getApplication().isUnitTestMode()) return;
 
+    final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(executor.getToolWindowId());
+    final boolean wasInActiveWindow = toolWindow != null && toolWindow.isActive();
+
     final ContentManager contentManager  = getContentManagerForRunner(executor);
     RunContentDescriptor oldDescriptor = chooseReuseContentForDescriptor(contentManager, descriptor);
 
@@ -303,8 +306,12 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(executor.getToolWindowId());
-        toolWindow.show(null);
+        ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(executor.getToolWindowId());
+        if (wasInActiveWindow) {
+          window.activate(null, true, false);
+        } else {
+          window.show(null);
+        }
       }
     });
   }
