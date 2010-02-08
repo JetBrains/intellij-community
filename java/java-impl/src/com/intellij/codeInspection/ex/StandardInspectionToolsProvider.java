@@ -23,7 +23,7 @@ import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstan
 import com.intellij.codeInspection.canBeFinal.CanBeFinalInspection;
 import com.intellij.codeInspection.concurrencyAnnotations.*;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
-import com.intellij.codeInspection.deadCode.DeadCodeInspection;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.defUse.DefUseInspection;
 import com.intellij.codeInspection.defaultFileTemplateUsage.DefaultFileTemplateUsageInspection;
 import com.intellij.codeInspection.dependencyViolation.DependencyInspection;
@@ -66,7 +66,7 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider {
 
   public Class[] getInspectionClasses() {
     return new Class[] {
-      DeadCodeInspection.class,
+      UnusedDeclarationInspection.class,
       UnusedLibrariesInspection.class,
       InconsistentLanguageLevelInspection.class,
       VisibilityInspection.class,
