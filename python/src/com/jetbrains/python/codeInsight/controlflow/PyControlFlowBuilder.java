@@ -9,6 +9,8 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
+import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -43,6 +45,27 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   public void visitPyStatement(final PyStatement node) {
     myBuilder.startNode(node);
     super.visitPyStatement(node);
+  }
+
+  @Override
+  public void visitPyReferenceExpression(final PyReferenceExpression node) {
+    final PyExpression qualifier = node.getQualifier();
+    if (qualifier != null){
+      qualifier.accept(this);
+    }
+    if (PyImportStatementNavigator.getImportStatementByReference(node) != null){
+      return;
+    }
+
+    final ReadInstruction readInstruction = new ReadInstruction(myBuilder, node, node.getName());
+    myBuilder.addNode(readInstruction);
+    myBuilder.checkPending(readInstruction);
+
+    if (PyAugAssignmentStatementNavigator.getStatementByTarget(node) != null){
+      final WriteInstruction writeInstruction = new WriteInstruction(myBuilder, node, node.getName());
+      myBuilder.addNode(writeInstruction);
+      myBuilder.checkPending(writeInstruction);
+    }
   }
 
   @Override

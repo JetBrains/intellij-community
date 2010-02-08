@@ -1,7 +1,8 @@
 0(1) element: null
 1(2) element: PyWhileStatement
-2(3) element: PyStatementList. Condition: condition:true
-3(1,4) element: PyPrintStatement
-4(5) element: PyStatementList. Condition: condition:false
-5(6) element: PyPrintStatement
-6() element: null
+2(3) READ ACCESS: condition
+3(4) element: PyStatementList. Condition: condition:true
+4(1,5) element: PyPrintStatement
+5(6) element: PyStatementList. Condition: condition:false
+6(7) element: PyPrintStatement
+7() element: null

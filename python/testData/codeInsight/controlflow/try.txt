@@ -4,18 +4,31 @@
 3(4) element: PyTryExceptStatement
 4(5) element: PyTryPart
 5(6) element: PyAssignmentStatement
-6(7) WRITE ACCESS: f
-7(8) element: PyAssignmentStatement
-8(9) WRITE ACCESS: s
-9(10) element: PyAssignmentStatement
-10(11,15,17,20) WRITE ACCESS: i
-11(12) element: PyExceptPart
-12(13) WRITE ACCESS: errno
-13(14) WRITE ACCESS: strerror
-14(20) element: PyPrintStatement
-15(16) element: PyExceptPart
-16(20) element: PyPrintStatement
+6(7) READ ACCESS: open
+7(8) WRITE ACCESS: f
+8(9) element: PyAssignmentStatement
+9(10) READ ACCESS: f
+10(11) READ ACCESS: readline
+11(12) WRITE ACCESS: s
+12(13) element: PyAssignmentStatement
+13(14) READ ACCESS: int
+14(15) READ ACCESS: s
+15(16) READ ACCESS: strip
+16(17,25,28,33) WRITE ACCESS: i
 17(18) element: PyExceptPart
-18(19) element: PyPrintStatement
-19(20) element: PyRaiseStatement
-20() element: null
+18(19) READ ACCESS: IOError
+19(20) WRITE ACCESS: errno
+20(21) WRITE ACCESS: strerror
+21(22) element: PyPrintStatement
+22(23) READ ACCESS: format
+23(24) READ ACCESS: errno
+24(33) READ ACCESS: strerror
+25(26) element: PyExceptPart
+26(27) READ ACCESS: ValueError
+27(33) element: PyPrintStatement
+28(29) element: PyExceptPart
+29(30) element: PyPrintStatement
+30(31) READ ACCESS: sys
+31(32) READ ACCESS: exc_info
+32(33) element: PyRaiseStatement
+33() element: null

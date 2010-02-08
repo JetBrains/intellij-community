@@ -2,4 +2,5 @@
 1(2) element: PyAssignmentStatement
 2(3) WRITE ACCESS: aaa
 3(4) element: PyPrintStatement
-4() element: null
+4(5) READ ACCESS: aaa
+5() element: null
