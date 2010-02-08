@@ -227,10 +227,9 @@ public class OldReferenceResolver {
       if (JavaPsiFacade.getInstance(psiField.getProject()).getResolveHelper().isAccessible(getter, newExpr, null)) {
         PsiElementFactory factory = JavaPsiFacade.getInstance(newExpr.getProject()).getElementFactory();
         String id = getter.getName();
-        final PsiElement parent = newExpr.getParent();
         String qualifier = null;
-        if (parent instanceof PsiReferenceExpression) {
-          final PsiExpression qualifierExpression = ((PsiReferenceExpression)parent).getQualifierExpression();
+        if (newExpr instanceof PsiReferenceExpression) {
+          final PsiExpression qualifierExpression = ((PsiReferenceExpression)newExpr).getQualifierExpression();
           if (qualifierExpression != null) {
             qualifier = qualifierExpression.getText();
           }
@@ -238,8 +237,8 @@ public class OldReferenceResolver {
         PsiMethodCallExpression getterCall =
           (PsiMethodCallExpression)factory.createExpressionFromText((qualifier != null ? qualifier + "." : "") + id + "()", null);
         getterCall = (PsiMethodCallExpression)CodeStyleManager.getInstance(myProject).reformat(getterCall);
-        if (parent != null) {
-          newExpr = parent.replace(getterCall);
+        if (newExpr.getParent() != null) {
+          newExpr = newExpr.replace(getterCall);
         }
         else {
           newExpr = getterCall;

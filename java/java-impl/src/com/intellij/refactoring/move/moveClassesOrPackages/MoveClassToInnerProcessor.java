@@ -39,6 +39,7 @@ import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.VisibilityUtil;
@@ -142,7 +143,12 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
       for (PsiClass classToMove : myClassesToMove) {
         ChangeContextUtil.encodeContextInfo(classToMove, true);
         PsiClass newClass = (PsiClass)myTargetClass.addBefore(classToMove, myTargetClass.getRBrace());
-        PsiUtil.setModifierProperty(newClass, PsiModifier.STATIC, true);
+        if (myTargetClass.isInterface()) {
+          PsiUtil.setModifierProperty(newClass, PsiModifier.PACKAGE_LOCAL, true);
+        }
+        else {
+          PsiUtil.setModifierProperty(newClass, PsiModifier.STATIC, true);
+        }
         newClass = (PsiClass)ChangeContextUtil.decodeContextInfo(newClass, null, null);
         oldToNewElementsMapping.put(classToMove, newClass);
       }
@@ -290,7 +296,11 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
 
   protected String getCommandName() {
     return RefactoringBundle.message("move.class.to.inner.command.name",
-                                     myClassesToMove[0].getQualifiedName(),
+                                     (myClassesToMove.length > 1 ? "classes " : "class ") + StringUtil.join(myClassesToMove, new Function<PsiClass, String>() {
+                                       public String fun(PsiClass psiClass) {
+                                         return psiClass.getName();
+                                       }
+                                     }, ", "),
                                      myTargetClass.getQualifiedName());
   }
 
