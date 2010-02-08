@@ -542,7 +542,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     if (count[0] == 0 && !canbeReferencedViaWeirdNames(member)) return true;
 
     Query<PsiReference> query = member instanceof PsiMethod
-                                ? MethodReferencesSearch.search((PsiMethod)member, scope, false)
+                                ? MethodReferencesSearch.search((PsiMethod)member, scope, true)
                                 : ReferencesSearch.search(member, scope, true);
     return query.findFirst() == null;
   }
