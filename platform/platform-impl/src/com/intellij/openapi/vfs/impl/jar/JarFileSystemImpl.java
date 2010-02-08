@@ -280,6 +280,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     getHandler(file).setWritable(file, writableFlag);
   }
 
+  @NotNull
   public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException {
     throw new IOException(VfsBundle.message("jar.modification.not.supported.error", vDir.getUrl()));
   }

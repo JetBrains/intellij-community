@@ -23,13 +23,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class VFileContentChangeEvent extends VFileEvent {
   private final VirtualFile myFile;
   private final long myOldModificationStamp;
   private final long myNewModificationStamp;
 
-  public VFileContentChangeEvent(final Object requestor, final VirtualFile file, long oldModificationStamp, long newModificationStamp, boolean isFromRefresh) {
+  public VFileContentChangeEvent(final Object requestor, @NotNull VirtualFile file, long oldModificationStamp, long newModificationStamp, boolean isFromRefresh) {
     super(requestor, isFromRefresh);
 
     myFile = file;

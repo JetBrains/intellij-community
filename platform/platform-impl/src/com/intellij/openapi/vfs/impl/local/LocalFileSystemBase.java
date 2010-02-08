@@ -335,6 +335,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     }
   }
 
+  @NotNull
   public VirtualFile createChildDirectory(final Object requestor, @NotNull final VirtualFile parent, @NotNull final String dir) throws IOException {
     final File ioDir = new File(convertToIOFile(parent), dir);
     final boolean succ = auxCreateDirectory(parent, dir) || ioDir.mkdirs();

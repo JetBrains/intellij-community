@@ -69,6 +69,7 @@ public class TempFileSystem extends NewVirtualFileSystem {
     return VfsUtil.copyFile(requestor, file, newParent, copyName);
   }
 
+  @NotNull
   public VirtualFile createChildDirectory(final Object requestor, @NotNull final VirtualFile parent, @NotNull final String dir) throws IOException {
     final FSItem fsItem = convert(parent);
     assert fsItem != null && fsItem.isDirectory();
