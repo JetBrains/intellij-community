@@ -47,13 +47,13 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   private volatile ASTNode myNode;
   private final IElementType myElementType;
 
-  public StubBasedPsiElementBase(final T stub, @NotNull IStubElementType nodeType) {
+  public StubBasedPsiElementBase(@NotNull T stub, @NotNull IStubElementType nodeType) {
     myStub = stub;
     myElementType = nodeType;
     myNode = null;
   }
 
-  public StubBasedPsiElementBase(final ASTNode node) {
+  public StubBasedPsiElementBase(@NotNull ASTNode node) {
     myNode = node;
     myElementType = node.getElementType();
   }
@@ -212,7 +212,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   @NotNull
   public <Stub extends StubElement, Psi extends PsiElement> Psi getRequiredStubOrPsiChild(final IStubElementType<Stub, Psi> elementType) {
     Psi result = getStubOrPsiChild(elementType);
-    assert result != null: "Missing required child of type " + elementType;
+    assert result != null: "Missing required child of type " + elementType + "; tree: "+DebugUtil.psiToString(this, false);
     return result;
   }
 
