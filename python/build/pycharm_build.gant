@@ -22,7 +22,7 @@ setProperty("pluginFilter", [
         "JSInspections",
         "JSIntentionPowerPack",
         "SpellChecker", "spellchecker",
-        "yaml", "yaml-plugin"
+        "yaml", "yaml-plugin", "sass"
 ])
 
 private List platformImplementationModules() {
