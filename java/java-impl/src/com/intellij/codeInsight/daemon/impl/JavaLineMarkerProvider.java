@@ -207,9 +207,9 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
       boolean overrides = !method.hasModifierProperty(PsiModifier.ABSTRACT);
 
       final Icon icon = overrides ? OVERRIDEN_METHOD_MARKER_RENDERER : IMPLEMENTED_METHOD_MARKER_RENDERER;
-      final MarkerType type = MarkerType.OVERRIDEN_METHOD;
       PsiElement range = method.getNameIdentifier();
       if (range == null) range = method;
+      final MarkerType type = MarkerType.OVERRIDEN_METHOD;
       LineMarkerInfo info = new LineMarkerInfo<PsiElement>(range, range.getTextRange(), icon, Pass.UPDATE_OVERRIDEN_MARKERS, type.getTooltip(), type.getNavigationHandler(),
                                                           GutterIconRenderer.Alignment.RIGHT);
       result.add(info);

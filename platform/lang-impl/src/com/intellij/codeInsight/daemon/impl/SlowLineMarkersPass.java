@@ -58,7 +58,7 @@ public class SlowLineMarkersPass extends TextEditorHighlightingPass implements L
     List<LineMarkerInfo> markers = new SmartList<LineMarkerInfo>();
     for (Language language : relevantLanguages) {
       PsiElement psiRoot = viewProvider.getPsi(language);
-      if (!HighlightLevelUtil.shouldHighlight(psiRoot)) continue;
+      if (psiRoot == null || !HighlightLevelUtil.shouldHighlight(psiRoot)) continue;
       List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
       final List<LineMarkerProvider> providers = LineMarkersPass.getMarkerProviders(language, myProject);
       addLineMarkers(elements, providers, markers);
