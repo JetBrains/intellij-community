@@ -15,7 +15,9 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -643,23 +645,27 @@ public class MavenProjectsTree {
   private MavenProjectTimestamp calculateTimestamp(final MavenProject mavenProject,
                                                    final Collection<String> explicitProfiles,
                                                    final MavenGeneralSettings generalSettings) {
-    long pomTimestamp = getFileTimestamp(mavenProject.getFile());
-    MavenProject parent = findParent(mavenProject);
-    long parentLastReadStamp = parent == null ? -1 : parent.getLastReadStamp();
-    VirtualFile profilesXmlFile = mavenProject.getProfilesXmlFile();
-    long profilesTimestamp = getFileTimestamp(profilesXmlFile);
+    return ApplicationManager.getApplication().runReadAction(new Computable<MavenProjectTimestamp>() {
+      public MavenProjectTimestamp compute() {
+        long pomTimestamp = getFileTimestamp(mavenProject.getFile());
+        MavenProject parent = findParent(mavenProject);
+        long parentLastReadStamp = parent == null ? -1 : parent.getLastReadStamp();
+        VirtualFile profilesXmlFile = mavenProject.getProfilesXmlFile();
+        long profilesTimestamp = getFileTimestamp(profilesXmlFile);
 
-    long userSettingsTimestamp = getFileTimestamp(generalSettings.getEffectiveUserSettingsFile());
-    long globalSettingsTimestamp = getFileTimestamp(generalSettings.getEffectiveGlobalSettingsFile());
+        long userSettingsTimestamp = getFileTimestamp(generalSettings.getEffectiveUserSettingsFile());
+        long globalSettingsTimestamp = getFileTimestamp(generalSettings.getEffectiveGlobalSettingsFile());
 
-    int profilesHashCode = explicitProfiles.hashCode();
+        int profilesHashCode = explicitProfiles.hashCode();
 
-    return new MavenProjectTimestamp(pomTimestamp,
-                                     parentLastReadStamp,
-                                     profilesTimestamp,
-                                     userSettingsTimestamp,
-                                     globalSettingsTimestamp,
-                                     profilesHashCode);
+        return new MavenProjectTimestamp(pomTimestamp,
+                                         parentLastReadStamp,
+                                         profilesTimestamp,
+                                         userSettingsTimestamp,
+                                         globalSettingsTimestamp,
+                                         profilesHashCode);
+      }
+    });
   }
 
   private long getFileTimestamp(VirtualFile file) {
