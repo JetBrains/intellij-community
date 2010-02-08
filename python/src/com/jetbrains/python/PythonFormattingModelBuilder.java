@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
-public class PythonFormattingModelBuilder implements FormattingModelBuilder {
+public class PythonFormattingModelBuilder implements FormattingModelBuilder, CustomFormattingModelBuilder {
   private static final boolean DUMP_FORMATTING_AST = false;
 
   @NotNull
@@ -43,5 +43,10 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilder {
       printAST(node.getFirstChildNode(), indent + 2);
       node = node.getTreeNext();
     }
+  }
+
+  public boolean isEngagedToFormat(PsiElement context) {
+    PsiFile file = context.getContainingFile();
+    return file != null && file.getLanguage() == PythonLanguage.getInstance();
   }
 }
