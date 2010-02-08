@@ -102,10 +102,12 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   private boolean myFilterFocumentWasChanged;
   //[back/forward] private ActionToolbar myToolbar;
   private Window myWindow;
+  private PropertiesComponent myProperties;
 
   public OptionsEditor(Project project, ConfigurableGroup[] groups, Configurable preselectedConfigurable) {
     myProject = project;
     myGroups = groups;
+    myProperties = PropertiesComponent.getInstance(project);
 
     myFilter = new Filter();
     myContext = new OptionsEditorContext(myFilter);
@@ -244,7 +246,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   private float readPropertion(final float defaultValue, final String propertyName) {
     float proportion = defaultValue;
     try {
-      final String p = PropertiesComponent.getInstance(myProject).getValue(propertyName);
+      final String p = myProperties.getValue(propertyName);
       if (p != null) {
         proportion = Float.valueOf(p);
       }
@@ -829,10 +831,9 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   }
 
   public void dispose() {
-    final PropertiesComponent props = PropertiesComponent.getInstance(myProject);
-    props.setValue(MAIN_SPLITTER_PROPORTION, String.valueOf(myMainSplitter.getProportion()));
-    props.setValue(DETAILS_SPLITTER_PROPORTION, String.valueOf(myContentWrapper.myLastSplitterProproprtion));
-    props.setValue(SEARCH_VISIBLE, Boolean.valueOf(isFilterFieldVisible()).toString());
+    myProperties.setValue(MAIN_SPLITTER_PROPORTION, String.valueOf(myMainSplitter.getProportion()));
+    myProperties.setValue(DETAILS_SPLITTER_PROPORTION, String.valueOf(myContentWrapper.myLastSplitterProproprtion));
+    myProperties.setValue(SEARCH_VISIBLE, Boolean.valueOf(isFilterFieldVisible()).toString());
 
     Toolkit.getDefaultToolkit().removeAWTEventListener(this);
 
