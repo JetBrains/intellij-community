@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.embedder.CustomArtifact;
 import org.jetbrains.idea.maven.utils.MavenConstants;
 
@@ -146,10 +147,10 @@ public class MavenArtifact implements Serializable {
   }
 
   public String getRelativePath() {
-    return getRelativePathForExtraArtifact(null);
+    return getRelativePathForExtraArtifact(null, null);
   }
 
-  public String getRelativePathForExtraArtifact(String extraArtifactClassifier) {
+  public String getRelativePathForExtraArtifact(@Nullable String extraArtifactClassifier, @Nullable String customExtension) {
     StringBuilder result = new StringBuilder();
     result.append(myGroupId.replace('.', '/'));
     result.append('/');
@@ -167,24 +168,23 @@ public class MavenArtifact implements Serializable {
       }
       result.append('-');
       result.append(extraArtifactClassifier);
-      result.append(".jar");
     }
     else {
       if (!StringUtil.isEmptyOrSpaces(myClassifier)) {
         result.append('-');
         result.append(myClassifier);
       }
-      result.append(".");
-      result.append(myExtension);
     }
+    result.append(".");
+    result.append(customExtension == null ? myExtension : customExtension);
     return result.toString();
   }
 
   public String getUrl() {
-    return getUrlForExtraArtifact(null);
+    return getUrlForExtraArtifact(null, null);
   }
 
-  public String getUrlForExtraArtifact(String extraArtifactClassifier) {
+  public String getUrlForExtraArtifact(@Nullable String extraArtifactClassifier, @Nullable String customExtension) {
     String path = getPath();
 
     if (!StringUtil.isEmptyOrSpaces(extraArtifactClassifier)) {
@@ -195,11 +195,15 @@ public class MavenArtifact implements Serializable {
         int dotPos = path.lastIndexOf(".");
         if (dotPos != -1) {// sometimes path doesn't contain '.'; but i can't find any reason why.
           String withoutExtension = path.substring(0, dotPos);
-          path = MessageFormat.format("{0}-{1}.jar", withoutExtension, extraArtifactClassifier);
+          path = MessageFormat.format("{0}-{1}.{2}",
+                                      withoutExtension,
+                                      extraArtifactClassifier,
+                                      customExtension == null ? myExtension : customExtension);
         }
-      } else {
+      }
+      else {
         String repoPath = path.substring(0, repoEnd);
-        path = repoPath + getRelativePathForExtraArtifact(extraArtifactClassifier);
+        path = repoPath + getRelativePathForExtraArtifact(extraArtifactClassifier, customExtension);
       }
     }
     return VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, path) + JarFileSystem.JAR_SEPARATOR;

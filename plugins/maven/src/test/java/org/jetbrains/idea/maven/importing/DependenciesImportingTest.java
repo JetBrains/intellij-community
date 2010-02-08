@@ -1569,6 +1569,38 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                        Collections.<String>emptyList());
   }
 
+  public void testCustomSourcesAndJavadocPaths() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<packaging>swf</packaging>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>xxx</groupId>" +
+                  "    <artifactId>yyy</artifactId>" +
+                  "    <version>1</version>" +
+                  "    <type>swc</type>" +
+                  "  </dependency>" +
+                  "</dependencies>" +
+
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.sonatype.flexmojos</groupId>" +
+                  "      <artifactId>flexmojos-maven-plugin</artifactId>" +
+                  "      <version>3.5.0</version>" +
+                  "      <extensions>true</extensions>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    assertModuleLibDep("project", "Maven: xxx:yyy:swc:1",
+                       Arrays.asList("jar://" + getRepositoryPath() + "/xxx/yyy/1/yyy-1.swc!/"),
+                       Arrays.asList("jar://" + getRepositoryPath() + "/xxx/yyy/1/yyy-1-sources.jar!/"),
+                       Arrays.asList("jar://" + getRepositoryPath() + "/xxx/yyy/1/yyy-1-asdoc.zip!/"));
+  }
+
   public void testRemovingUnusedLibraries() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

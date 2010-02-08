@@ -351,7 +351,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
           }
           scheduleArtifactsDownloading(Collections.singleton(projectWithChanges.first),
                                        getImportingSettings().shouldDownloadSourcesAutomatically(),
-                                       getImportingSettings().shouldDownloadJavadocAutomatically());
+                                       getImportingSettings().shouldDownloadDocsAutomatically());
           scheduleForNextImport(projectWithChanges);
         }
         processMessage(message);
@@ -708,14 +708,14 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     });
   }
 
-  public void scheduleArtifactsDownloading(final Collection<MavenProject> projects, final boolean sources, final boolean javadoc) {
-    if (!sources && !javadoc) return;
+  public void scheduleArtifactsDownloading(final Collection<MavenProject> projects, final boolean sources, final boolean docs) {
+    if (!sources && !docs) return;
 
     runWhenFullyOpen(new Runnable() {
       public void run() {
         for (MavenProject each : projects) {
           myArtifactsDownloadingProcessor.scheduleTask(
-            new MavenProjectsProcessorArtifactsDownloadingTask(each, myProjectsTree, sources, javadoc));
+            new MavenProjectsProcessorArtifactsDownloadingTask(each, myProjectsTree, sources, docs));
         }
       }
     });

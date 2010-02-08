@@ -43,7 +43,7 @@ public class MavenImportingSettingsForm {
   private JComboBox myUpdateFoldersOnImportPhaseComboBox;
   private JCheckBox myUseMavenOutputCheckBox;
   private JCheckBox myDownloadSourcesCheckBox;
-  private JCheckBox myDownloadJavadocCheckBox;
+  private JCheckBox myDownloadDocsCheckBox;
 
   public MavenImportingSettingsForm(boolean isImportStep) {
     if (!isImportStep) {
@@ -101,7 +101,7 @@ public class MavenImportingSettingsForm {
     data.setUpdateFoldersOnImportPhase((String)myUpdateFoldersOnImportPhaseComboBox.getSelectedItem());
 
     data.setDownloadSourcesAutomatically(myDownloadSourcesCheckBox.isSelected());
-    data.setDownloadJavadocAutomatically(myDownloadJavadocCheckBox.isSelected());
+    data.setDownloadDocsAutomatically(myDownloadDocsCheckBox.isSelected());
   }
 
   public void setData(MavenImportingSettings data) {
@@ -119,7 +119,7 @@ public class MavenImportingSettingsForm {
     myUpdateFoldersOnImportPhaseComboBox.setSelectedItem(data.getUpdateFoldersOnImportPhase());
 
     myDownloadSourcesCheckBox.setSelected(data.shouldDownloadSourcesAutomatically());
-    myDownloadJavadocCheckBox.setSelected(data.shouldDownloadJavadocAutomatically());
+    myDownloadDocsCheckBox.setSelected(data.shouldDownloadDocsAutomatically());
 
     updateControls();
   }
