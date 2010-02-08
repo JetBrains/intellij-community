@@ -1,7 +1,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInspection.deadCode.DeadCodeInspection;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
@@ -10,8 +10,8 @@ import com.intellij.testFramework.InspectionTestCase;
 /**
  * @author max
  */
-public class DeadCodeTest extends InspectionTestCase {
-  private DeadCodeInspection myTool;
+public class UnusedDeclarationTest extends InspectionTestCase {
+  private UnusedDeclarationInspection myTool;
 
   @Override
   protected String getTestDataPath() {
@@ -20,7 +20,7 @@ public class DeadCodeTest extends InspectionTestCase {
 
   protected void setUp() throws Exception {
     super.setUp();
-    myTool = new DeadCodeInspection();
+    myTool = new UnusedDeclarationInspection();
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_3);
   }
 

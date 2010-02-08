@@ -28,7 +28,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.GlobalInspectionTool;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.deadCode.DeadCodeInspection;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -114,7 +114,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
     globalContext.setCurrentScope(scope);
 
     if (runDeadCodeFirst) {
-      runTool(new DeadCodeInspection(), scope, globalContext, inspectionManager);
+      runTool(new UnusedDeclarationInspection(), scope, globalContext, inspectionManager);
     }
     runTool(tool, scope, globalContext, inspectionManager);
   }
