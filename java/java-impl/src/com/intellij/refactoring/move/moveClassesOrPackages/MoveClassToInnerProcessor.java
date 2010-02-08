@@ -143,7 +143,12 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
       for (PsiClass classToMove : myClassesToMove) {
         ChangeContextUtil.encodeContextInfo(classToMove, true);
         PsiClass newClass = (PsiClass)myTargetClass.addBefore(classToMove, myTargetClass.getRBrace());
-        PsiUtil.setModifierProperty(newClass, PsiModifier.STATIC, true);
+        if (myTargetClass.isInterface()) {
+          PsiUtil.setModifierProperty(newClass, PsiModifier.PACKAGE_LOCAL, true);
+        }
+        else {
+          PsiUtil.setModifierProperty(newClass, PsiModifier.STATIC, true);
+        }
         newClass = (PsiClass)ChangeContextUtil.decodeContextInfo(newClass, null, null);
         oldToNewElementsMapping.put(classToMove, newClass);
       }
