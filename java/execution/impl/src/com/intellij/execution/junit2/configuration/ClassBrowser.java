@@ -20,7 +20,6 @@ import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.execution.configurations.ConfigurationUtil;
 import com.intellij.ide.util.TreeClassChooser;
-import com.intellij.ide.util.TreeClassChooserDialog;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -51,13 +50,17 @@ public abstract class ClassBrowser extends BrowseModuleValueActionListener {
       info.showNow();
       return null;
     }
-    final TreeClassChooser dialog = TreeClassChooserFactory.getInstance(getProject()).createWithInnerClassesScopeChooser(myTitle, classFilter.getScope(), classFilter, null);
+    final TreeClassChooser dialog = createClassChooser(classFilter);
     configureDialog(dialog);
     dialog.showDialog();
     final PsiClass psiClass = dialog.getSelectedClass();
     if (psiClass == null) return null;
     onClassChoosen(psiClass);
     return JavaExecutionUtil.getRuntimeQualifiedName(psiClass);
+  }
+
+  protected TreeClassChooser createClassChooser(TreeClassChooser.ClassFilterWithScope classFilter) {
+    return TreeClassChooserFactory.getInstance(getProject()).createWithInnerClassesScopeChooser(myTitle, classFilter.getScope(), classFilter, null);
   }
 
   protected abstract TreeClassChooser.ClassFilterWithScope getFilter() throws NoFilterException;
@@ -91,12 +94,16 @@ public abstract class ClassBrowser extends BrowseModuleValueActionListener {
 
   public static ClassBrowser createAppletClassBrowser(final Project project,
                                                       final ConfigurationModuleSelector moduleSelector) {
-    return new MainClassBrowser(project, moduleSelector, ExecutionBundle.message("choose.applet.class.dialog.title")) {
-      protected TreeClassChooser.ClassFilter createFilter(final Module module) {
+    final String title = ExecutionBundle.message("choose.applet.class.dialog.title");
+    return new MainClassBrowser(project, moduleSelector, title) {
+
+      @Override
+      protected TreeClassChooser createClassChooser(TreeClassChooser.ClassFilterWithScope classFilter) {
+        final Module module = moduleSelector.getModule();
         final GlobalSearchScope scope =
             module == null ? GlobalSearchScope.allScope(myProject) : GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
-        final PsiClass appletClass = JavaPsiFacade.getInstance(project).findClass("java.applet.Applet", scope);
-        return new TreeClassChooserDialog.InheritanceClassFilterImpl(appletClass, false, false, ConfigurationUtil.PUBLIC_INSTANTIATABLE_CLASS);
+         final PsiClass appletClass = JavaPsiFacade.getInstance(project).findClass("java.applet.Applet", scope);
+        return TreeClassChooserFactory.getInstance(getProject()).createInheritanceClassChooser(title, classFilter.getScope(), appletClass, false, false, ConfigurationUtil.PUBLIC_INSTANTIATABLE_CLASS);
       }
     };
   }
