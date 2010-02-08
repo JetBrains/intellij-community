@@ -41,6 +41,7 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.ui.EditKeymapsDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -66,7 +67,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class AntExplorer extends JPanel implements DataProvider {
+public class AntExplorer extends SimpleToolWindowPanel implements DataProvider {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.config.explorer.AntExplorer");
 
@@ -100,7 +101,7 @@ public class AntExplorer extends JPanel implements DataProvider {
   private static final Icon ICON_FILTER = IconLoader.getIcon("/ant/filter.png");
 
   public AntExplorer(final Project project) {
-    super(new BorderLayout(0, 2));
+    super(true, true);
     myProject = project;
     final DefaultTreeModel model = new DefaultTreeModel(new DefaultMutableTreeNode());
     myTree = new Tree(model);
@@ -135,8 +136,8 @@ public class AntExplorer extends JPanel implements DataProvider {
     myTree.expandRow(0);
     myTree.setLineStyleAngled();
     myAntBuildFilePropertiesAction = new AntBuildFilePropertiesAction(this);
-    add(createToolbarPanel(), BorderLayout.NORTH);
-    add(new JScrollPane(myTree), BorderLayout.CENTER);
+    setToolbar(createToolbarPanel());
+    setContent(new JScrollPane(myTree));
     ToolTipManager.sharedInstance().registerComponent(myTree);
     myKeymapListener = new KeymapListener();
   }
