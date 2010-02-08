@@ -15,6 +15,7 @@
  */
 package com.intellij.testAssistant;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.testFramework.UsefulTestCase;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +28,8 @@ import java.util.*;
 public class TestDataReferenceCollector {
   private final String myTestDataPath;
   private final String myTestName;
+  private final List<String> myLogMessages = new ArrayList<String>();
+  private boolean myFoundTestDataParameters = false;
 
   public TestDataReferenceCollector(String testDataPath, String testName) {
     myTestDataPath = testDataPath;
@@ -34,7 +37,11 @@ public class TestDataReferenceCollector {
   }
 
   List<String> collectTestDataReferences(final PsiMethod method) {
-    return collectTestDataReferences(method, new HashMap<String, String>());
+    final List<String> result = collectTestDataReferences(method, new HashMap<String, String>());
+    if (!myFoundTestDataParameters) {
+      myLogMessages.add("Found no parameters annotated with @TestDataFile");
+    }
+    return result;
   }
 
   private List<String> collectTestDataReferences(final PsiMethod method, final Map<String, String> argumentMap) {
@@ -52,6 +59,7 @@ public class TestDataReferenceCollector {
             PsiParameter psiParameter = psiParameters[i];
             final PsiModifierList modifierList = psiParameter.getModifierList();
             if (modifierList != null && modifierList.findAnnotation("com.intellij.testFramework.TestDataFile") != null) {
+              myFoundTestDataParameters = true;
               processCallArgument(expression, argumentMap, result, i);
               haveAnnotatedParameters = true;
             }
@@ -71,6 +79,9 @@ public class TestDataReferenceCollector {
       String testDataFile = evaluate(arguments [index], argumentMap);
       if (testDataFile != null) {
         result.add(myTestDataPath + testDataFile);
+      }
+      else {
+        myLogMessages.add("Failed to evaluate " + arguments [index].getText());
       }
     }
   }
@@ -134,5 +145,9 @@ public class TestDataReferenceCollector {
       }
     }
     return null;
+  }
+
+  public String getLog() {
+    return StringUtil.join(myLogMessages, "\n");
   }
 }
