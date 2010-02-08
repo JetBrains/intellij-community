@@ -16,10 +16,7 @@
 package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.execution.Location;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.text.StringUtil;
@@ -59,9 +56,11 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     myTree = tree;
 
     final ActionManager actionManager = ActionManager.getInstance();
-    JComponent toolbar = actionManager.createActionToolbar("New Maven Toolbar",
-                                                           (ActionGroup)actionManager.getAction("Maven.NavigatorToolbar"),
-                                                           true).getComponent();
+    ActionToolbar actionToolbar = actionManager.createActionToolbar("New Maven Toolbar",
+                                                                    (ActionGroup)actionManager.getAction("Maven.NavigatorToolbar"),
+                                                                    true);
+    actionToolbar.setTargetComponent(tree);
+    JComponent toolbar = actionToolbar.getComponent();
 
     setToolbar(toolbar);
     setContent(new JScrollPane(myTree));
