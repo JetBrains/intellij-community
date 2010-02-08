@@ -144,6 +144,7 @@ public class LightVirtualFile extends DeprecatedVirtualFile {
       throw new IOException("Cannot create files");
     }
 
+    @NotNull
     public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException {
       throw new IOException("Cannot create directories");
     }

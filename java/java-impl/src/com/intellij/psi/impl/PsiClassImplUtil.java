@@ -959,21 +959,29 @@ public class PsiClassImplUtil {
       PsiParameter parameter2 = parameters2[i];
       PsiType type1 = parameter1.getType();
       PsiType type2 = parameter2.getType();
-      if (!(type1 instanceof PsiClassType) || !(type2 instanceof PsiClassType)) {
-        if (!type1.equals(type2)) return false;
-      }
-      else {
-        PsiClass class1 = ((PsiClassType)type1).resolve();
-        PsiClass class2 = ((PsiClassType)type2).resolve();
-
-        if (class1 instanceof PsiTypeParameter && class2 instanceof PsiTypeParameter) {
-          return Comparing.equal(class1.getName(), class2.getName()) &&
-                 ((PsiTypeParameter)class1).getIndex() == ((PsiTypeParameter)class2).getIndex();
-        }
-
-        if (!manager.areElementsEquivalent(class1, class2)) return false;
-      }
+      if (!compareParamTypes(manager,type1, type2)) return false;
     }
     return true;
+  }
+
+  private static boolean compareParamTypes(@NotNull PsiManager manager, @NotNull PsiType type1, @NotNull PsiType type2) {
+    if (type1 instanceof PsiArrayType) {
+      if (!(type2 instanceof PsiArrayType)) return false;
+      return compareParamTypes(manager, ((PsiArrayType)type1).getComponentType(), ((PsiArrayType)type2).getComponentType());
+    }
+
+    if (!(type1 instanceof PsiClassType) || !(type2 instanceof PsiClassType)) {
+      return type1.equals(type2);
+    }
+
+    PsiClass class1 = ((PsiClassType)type1).resolve();
+    PsiClass class2 = ((PsiClassType)type2).resolve();
+
+    if (class1 instanceof PsiTypeParameter && class2 instanceof PsiTypeParameter) {
+      return Comparing.equal(class1.getName(), class2.getName()) &&
+             ((PsiTypeParameter)class1).getIndex() == ((PsiTypeParameter)class2).getIndex();
+    }
+
+    return manager.areElementsEquivalent(class1, class2);
   }
 }

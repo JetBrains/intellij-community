@@ -68,8 +68,9 @@ public class MockVirtualFileSystem extends DeprecatedVirtualFileSystem {
     return null;
   }
 
+  @NotNull
   public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException {
-    return null;
+    throw new IOException();
   }
 
   public VirtualFile refreshAndFindFileByPath(@NotNull String path) {

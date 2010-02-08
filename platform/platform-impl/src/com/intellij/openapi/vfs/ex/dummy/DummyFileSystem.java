@@ -141,6 +141,7 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements Appl
     super.fireContentsChanged(requestor, file, oldModificationStamp);
   }
 
+  @NotNull
   public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException {
     final VirtualFileDirectoryImpl dir = ((VirtualFileDirectoryImpl)vDir);
     VirtualFileImpl child = new VirtualFileDirectoryImpl(this, dir, dirName);
