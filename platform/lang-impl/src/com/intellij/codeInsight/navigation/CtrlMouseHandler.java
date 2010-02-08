@@ -201,19 +201,19 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   private static BrowseMode getBrowseMode(final int modifiers) {
     if ( modifiers != 0 ) {
       final Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
-      if (matchMouseShourtcut(activeKeymap, modifiers, IdeActions.ACTION_GOTO_DECLARATION)) return BrowseMode.Declaration;
-      if (matchMouseShourtcut(activeKeymap, modifiers, IdeActions.ACTION_GOTO_TYPE_DECLARATION)) return BrowseMode.TypeDeclaration;
-      if (matchMouseShourtcut(activeKeymap, modifiers, IdeActions.ACTION_GOTO_IMPLEMENTATION)) return BrowseMode.Implementation;
+      if (matchMouseShortcut(activeKeymap, modifiers, IdeActions.ACTION_GOTO_DECLARATION)) return BrowseMode.Declaration;
+      if (matchMouseShortcut(activeKeymap, modifiers, IdeActions.ACTION_GOTO_TYPE_DECLARATION)) return BrowseMode.TypeDeclaration;
+      if (matchMouseShortcut(activeKeymap, modifiers, IdeActions.ACTION_GOTO_IMPLEMENTATION)) return BrowseMode.Implementation;
     }
     return BrowseMode.None;
   }
 
-  private static boolean matchMouseShourtcut(final Keymap activeKeymap, final int modifiers, final String actionId) {
-    final MouseShortcut syntheticShortcat = new MouseShortcut(MouseEvent.BUTTON1, modifiers, 1);
+  private static boolean matchMouseShortcut(final Keymap activeKeymap, final int modifiers, final String actionId) {
+    final MouseShortcut syntheticShortcut = new MouseShortcut(MouseEvent.BUTTON1, modifiers, 1);
     for ( Shortcut shortcut : activeKeymap.getShortcuts(actionId)) {
       if ( shortcut instanceof MouseShortcut) {
         final MouseShortcut mouseShortcut = (MouseShortcut)shortcut;
-        if ( mouseShortcut.getModifiers() == syntheticShortcat.getModifiers() ) {
+        if ( mouseShortcut.getModifiers() == syntheticShortcut.getModifiers() ) {
           return true;
         }
       }
@@ -328,12 +328,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   }
 
   @Nullable
-  private Info getInfoAt(final Editor editor, LogicalPosition pos, BrowseMode browseMode) {
-    Document document = editor.getDocument();
-    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-    if (file == null) return null;
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-
+  private Info getInfoAt(final Editor editor, PsiFile file, LogicalPosition pos, BrowseMode browseMode) {
     if (TargetElementUtilBase.inVirtualSpace(editor, pos)) {
       return null;
     }
@@ -462,21 +457,26 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     public void execute(BrowseMode browseMode) {
       myBrowseMode = browseMode;
 
+      Document document = myEditor.getDocument();
+      final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+      if (file == null) return;
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         public void run() {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
-              doExecute();
+              doExecute(file);
             }
           });
         }
       });
     }
 
-    private void doExecute() {
+    private void doExecute(PsiFile file) {
       final Info info;
       try {
-        info = getInfoAt(myEditor, myPosition, myBrowseMode);
+        info = getInfoAt(myEditor, file, myPosition, myBrowseMode);
       }
       catch (IndexNotReadyException e) {
         showDumbModeNotification(myProject);
