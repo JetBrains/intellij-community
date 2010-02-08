@@ -148,7 +148,11 @@ public class MavenArtifactDownloader {
                 Artifact a = myEmbedder.resolve(id, eachTypeWithClassifier.second, eachTypeWithClassifier.first,
                                                 new ArrayList<MavenRemoteRepository>(data.repositories));
                 File file = a.getFile();
-                if (file != null && file.exists()) downloadedFiles.add(file);
+                if (file != null && file.exists()) {
+                  synchronized (downloadedFiles) {
+                    downloadedFiles.add(file);
+                  }
+                }
               }
               catch (MavenProcessCanceledException ignore) {
               }
