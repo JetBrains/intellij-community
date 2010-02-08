@@ -16,6 +16,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
@@ -27,6 +28,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,7 +42,6 @@ import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Semaphore;
-import org.jetbrains.plugins.groovy.compiler.GroovyCompilerLoader;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.util.TestUtils;
@@ -191,10 +192,15 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     final StringBuffer sb = new StringBuffer();
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
-    runner.execute(extension, environment, new ProgramRunner.Callback() {
-      public void processStarted(RunContentDescriptor descriptor) {
-        final ProcessHandler handler = descriptor.getProcessHandler();
 
+    runner.execute(extension, environment, new ProgramRunner.Callback() {
+      public void processStarted(final RunContentDescriptor descriptor) {
+        Disposer.register(myFixture.getProject(), new Disposable() {
+          public void dispose() {
+            descriptor.dispose();
+          }
+        });
+        final ProcessHandler handler = descriptor.getProcessHandler();
         assert handler != null;
         handler.addProcessListener(new ProcessAdapter() {
           public void onTextAvailable(ProcessEvent event, Key outputType) {
