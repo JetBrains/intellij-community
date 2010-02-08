@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
  * @author mike
  */
 class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTestFixture {
-  private LightProjectDescriptor myProjectDescriptor;
+  private final LightProjectDescriptor myProjectDescriptor;
 
   public LightIdeaTestFixtureImpl(LightProjectDescriptor projectDescriptor) {
     myProjectDescriptor = projectDescriptor;
@@ -68,7 +68,7 @@ class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTestFixtu
   public void tearDown() throws Exception {
     CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
     checkForSettingsDamage();
-    LightPlatformTestCase.doTearDown();
+    LightPlatformTestCase.doTearDown(getProject(), LightPlatformTestCase.getApplication(), true);
     super.tearDown();
   }
 
