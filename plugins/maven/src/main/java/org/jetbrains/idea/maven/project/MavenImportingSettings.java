@@ -43,7 +43,7 @@ public class MavenImportingSettings implements Cloneable {
   private String updateFoldersOnImportPhase = UPDATE_FOLDERS_DEFAULT_PHASE;
 
   private boolean downloadSourcesAutomatically = false;
-  private boolean downloadJavadocAutomatically = false;
+  private boolean downloadDocsAutomatically = false;
 
   private List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
 
@@ -115,12 +115,12 @@ public class MavenImportingSettings implements Cloneable {
     this.downloadSourcesAutomatically = Value;
   }
 
-  public boolean shouldDownloadJavadocAutomatically() {
-    return downloadJavadocAutomatically;
+  public boolean shouldDownloadDocsAutomatically() {
+    return downloadDocsAutomatically;
   }
 
-  public void setDownloadJavadocAutomatically(boolean value) {
-    this.downloadJavadocAutomatically = value;
+  public void setDownloadDocsAutomatically(boolean value) {
+    this.downloadDocsAutomatically = value;
   }
 
   @Override
@@ -133,7 +133,7 @@ public class MavenImportingSettings implements Cloneable {
     if (createModuleGroups != that.createModuleGroups) return false;
     if (createModulesForAggregators != that.createModulesForAggregators) return false;
     if (importAutomatically != that.importAutomatically) return false;
-    if (downloadJavadocAutomatically != that.downloadJavadocAutomatically) return false;
+    if (downloadDocsAutomatically != that.downloadDocsAutomatically) return false;
     if (downloadSourcesAutomatically != that.downloadSourcesAutomatically) return false;
     if (lookForNested != that.lookForNested) return false;
     if (useMavenOutput != that.useMavenOutput) return false;
@@ -157,7 +157,7 @@ public class MavenImportingSettings implements Cloneable {
     result = 31 * result + (useMavenOutput ? 1 : 0);
     result = 31 * result + (updateFoldersOnImportPhase != null ? updateFoldersOnImportPhase.hashCode() : 0);
     result = 31 * result + (downloadSourcesAutomatically ? 1 : 0);
-    result = 31 * result + (downloadJavadocAutomatically ? 1 : 0);
+    result = 31 * result + (downloadDocsAutomatically ? 1 : 0);
     return result;
   }
 

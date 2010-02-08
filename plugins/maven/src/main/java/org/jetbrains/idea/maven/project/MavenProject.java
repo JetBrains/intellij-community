@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
+import org.jetbrains.idea.maven.importing.MavenExtraArtifactType;
 import org.jetbrains.idea.maven.importing.MavenImporter;
 import org.jetbrains.idea.maven.utils.*;
 
@@ -823,6 +824,14 @@ public class MavenProject {
 
   public List<MavenImporter> getSuitableImporters() {
     return MavenImporter.getSuitableImporters(this);
+  }
+
+  public Pair<String, String> getClassifierAndExtension(MavenArtifact artifact, MavenExtraArtifactType type) {
+    for (MavenImporter each : getSuitableImporters()) {
+      Pair<String, String> result = each.getExtraArtifactClassifierAndExtension(artifact, type);
+      if (result != null) return result;
+    }
+    return Pair.create(type.getDefaultClassifier(), type.getDefaultExtension());
   }
 
   @Override

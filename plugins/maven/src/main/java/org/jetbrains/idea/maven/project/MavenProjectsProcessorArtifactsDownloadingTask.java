@@ -22,19 +22,19 @@ import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 public class MavenProjectsProcessorArtifactsDownloadingTask extends MavenProjectsProcessorBasicTask {
   private final boolean myDownloadSources;
-  private final boolean myDownloadJavadoc;
+  private final boolean myDownloadDocs;
 
   public MavenProjectsProcessorArtifactsDownloadingTask(MavenProject project,
                                                         MavenProjectsTree tree,
                                                         boolean downloadSources,
-                                                        boolean downloadJavadoc) {
+                                                        boolean downloadDocs) {
     super(project, tree);
     myDownloadSources = downloadSources;
-    myDownloadJavadoc = downloadJavadoc;
+    myDownloadDocs = downloadDocs;
   }
 
   public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
-    myTree.downloadArtifacts(myMavenProject, myDownloadSources, myDownloadJavadoc, embeddersManager, console, indicator);
+    myTree.downloadArtifacts(myMavenProject, myDownloadSources, myDownloadDocs, embeddersManager, console, indicator);
   }
 }

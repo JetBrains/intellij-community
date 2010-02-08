@@ -149,12 +149,12 @@
               <text value="Sou&amp;rces"/>
             </properties>
           </component>
-          <component id="a3f2e" class="javax.swing.JCheckBox" binding="myDownloadJavadocCheckBox" default-binding="true">
+          <component id="a3f2e" class="javax.swing.JCheckBox" binding="myDownloadDocsCheckBox" default-binding="true">
             <constraints>
               <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="&amp;Javadoc"/>
+              <text value="&amp;Documentaion"/>
             </properties>
           </component>
         </children>

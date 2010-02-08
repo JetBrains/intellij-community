@@ -30,7 +30,6 @@ import org.apache.maven.artifact.Artifact;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
-import org.jetbrains.idea.maven.importing.MavenImporter;
 import org.jetbrains.idea.maven.utils.*;
 
 import java.io.*;
@@ -1060,7 +1059,7 @@ public class MavenProjectsTree {
 
   public void downloadArtifacts(MavenProject mavenProject,
                                 boolean downloadSources,
-                                boolean downloadJavadoc,
+                                boolean downloadDocs,
                                 MavenEmbeddersManager embeddersManager,
                                 MavenConsole console,
                                 MavenProgressIndicator process) throws MavenProcessCanceledException {
@@ -1068,7 +1067,7 @@ public class MavenProjectsTree {
     embedder.customizeForResolve(console, process);
 
     try {
-      MavenArtifactDownloader.download(this, Collections.singletonList(mavenProject), downloadSources, downloadJavadoc, embedder, process);
+      MavenArtifactDownloader.download(this, Collections.singletonList(mavenProject), downloadSources, downloadDocs, embedder, process);
       fireArtifactsDownloaded(mavenProject);
     }
     finally {

@@ -549,7 +549,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myEditorComponent.addFocusListener(new FocusAdapter() {
       public void focusGained(FocusEvent e) {
-        myCaretCursor.activate();
+        myCaretCursor.activate(false);
         int caretLine = getCaretModel().getLogicalPosition().line;
         repaintLines(caretLine, caretLine);
         fireFocusGained();
@@ -2672,7 +2672,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myCaretCursor.setVisible(b);
     boolean old = myCaretCursor.isActive();
     if (b) {
-      myCaretCursor.activate();
+      myCaretCursor.activate(true);
     }
     else {
       myCaretCursor.passivate();
@@ -2741,7 +2741,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myIsVisible = visible;
     }
 
-    private void activate() {
+    private void activate(boolean enforceVisible) {
+      if (enforceVisible) {
+        setVisible(true);
+      }
+
       if (!myIsVisible) return;
       final boolean blink = mySettings.isBlinkCaret();
       final int blinkPeriod = mySettings.getCaretBlinkPeriod();

@@ -100,6 +100,7 @@
 
   <applicationService serviceInterface="com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable"
                       serviceImplementation="com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable"/>
+  <exportable serviceInterface="com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable"/>
 
   <applicationService serviceInterface="com.intellij.openapi.roots.libraries.LibraryTablesRegistrar"
                       serviceImplementation="com.intellij.openapi.roots.impl.libraries.LibraryTablesRegistrarImpl"/>
