@@ -96,6 +96,7 @@ public class VcsFileSystem extends DeprecatedVirtualFileSystem implements Applic
     throw new RuntimeException(COULD_NOT_IMPLEMENT_MESSAGE);
   }
 
+  @NotNull
   public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException {
     throw new RuntimeException(COULD_NOT_IMPLEMENT_MESSAGE);
   }

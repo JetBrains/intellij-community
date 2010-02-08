@@ -220,7 +220,10 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
   }
 
   private void writeExternal(Element element) {
-    for (Bookmark bookmark : myBookmarks) {
+    List<Bookmark> reversed = new ArrayList<Bookmark>(myBookmarks);
+    Collections.reverse(reversed);
+
+    for (Bookmark bookmark : reversed) {
       Element bookmarkElement = new Element("bookmark");
 
       bookmarkElement.setAttribute("url", bookmark.getFile().getUrl());

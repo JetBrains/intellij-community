@@ -35,11 +35,15 @@ public class TextConsoleBuilderImpl extends TextConsoleBuilder {
   }
 
   public ConsoleView getConsole() {
-    final ConsoleViewImpl consoleView = new ConsoleViewImpl(myProject, myViewer);
+    final ConsoleView consoleView = createConsole();
     for (final Filter filter : myFilters) {
       consoleView.addMessageFilter(filter);
     }
     return consoleView;
+  }
+
+  protected ConsoleViewImpl createConsole() {
+    return new ConsoleViewImpl(myProject, myViewer);
   }
 
   public void addFilter(final Filter filter) {

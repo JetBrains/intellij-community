@@ -39,6 +39,7 @@ import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,6 +75,8 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   private ModuleRuntimeClasspathScope myModuleRuntimeClasspathScope;
   public static final Object MODULE_RENAMING_REQUESTOR = new Object();
 
+  private String myName;
+
   public ModuleImpl(String filePath, Project project) {
     super(project);
 
@@ -98,6 +101,7 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
 
   private void init(String filePath) {
     getStateStore().setModuleFilePath(filePath);
+    myName = moduleNameByFileName(PathUtil.getFileName(filePath));
 
     MyVirtualFileListener myVirtualFileListener = new MyVirtualFileListener();
     VirtualFileManager.getInstance().addVirtualFileListener(myVirtualFileListener,this);
@@ -135,6 +139,7 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   }
 
   void rename(String newName) {
+    myName = newName;
     final VirtualFile file = getStateStore().getModuleFile();
     try {
       if (file != null) {
@@ -205,18 +210,9 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
     return myProject;
   }
 
-  private final Map<String, String> myFileToModuleName = new HashMap<String, String>();
-
   @NotNull
   public String getName() {
-    assert !isDisposed() : "Already Disposed!";
-    final String fileName = getStateStore().getModuleFileName();
-    String moduleName = myFileToModuleName.get(fileName); // TODO[wtf]: What this map is for???
-    if (moduleName == null) {
-      moduleName = moduleNameByFileName(fileName);
-      myFileToModuleName.put(fileName, moduleName);
-    }
-    return moduleName;
+    return myName;
   }
 
   public boolean isLoaded() {
@@ -351,6 +347,7 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
       final VirtualFile moduleFile = getModuleFile();
       if (moduleFile == null) return;
       if (moduleFile.equals(event.getFile())) {
+        myName = moduleNameByFileName(moduleFile.getName());
         ModuleManagerImpl.getInstanceImpl(getProject()).fireModuleRenamedByVfsEvent(ModuleImpl.this);
       }
     }

@@ -145,7 +145,7 @@ public class ProjectUtil {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : openProjects) {
       if (isSameProject(path, project)) {
-        focusProjectWindow(project);
+        focusProjectWindow(project, false);
         return project;
       }
     }
@@ -206,18 +206,24 @@ public class ProjectUtil {
     return FileUtil.pathsEqual(toOpen, existing);
   }
 
-  public static void focusProjectWindow(final Project p) {
-    IdeFocusManager.getInstance(p).requestFocus(new FocusCommand() {
+  public static void focusProjectWindow(final Project p, boolean executeIfAppInactive) {
+    FocusCommand cmd = new FocusCommand() {
       @Override
       public ActionCallback run() {
         JFrame f = WindowManager.getInstance().getFrame(p);
         if (f != null) {
           f.toFront();
-          f.requestFocus();
+          //f.requestFocus();
         }
         return new ActionCallback.Done();
       }
-    }, false);
+    };
+
+    if (executeIfAppInactive) {
+      cmd.run();
+    } else {
+      IdeFocusManager.getInstance(p).requestFocus(cmd, false);
+    }
   }
 
   public static boolean isProjectOrWorkspaceFile(final VirtualFile file) {

@@ -55,8 +55,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.impl.WindowManagerImpl;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.content.AlertIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerAdapter;
@@ -424,7 +423,7 @@ public class DebuggerSessionTab extends DebuggerLogConsoleManagerBase implements
   protected void toFront() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       ExecutionManager.getInstance(getProject()).getContentManager().toFrontRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), myRunContentDescriptor);
-      ProjectUtil.focusProjectWindow(getProject());
+      ProjectUtil.focusProjectWindow(getProject(), Registry.is("debugger.mayBringFrameToFrontOnBreakpoint"));
     }
   }
 

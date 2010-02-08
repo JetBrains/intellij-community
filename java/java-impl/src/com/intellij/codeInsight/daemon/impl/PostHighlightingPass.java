@@ -30,7 +30,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.deadCode.DeadCodeInspection;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
@@ -97,7 +97,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   private int myCurentEntryIndex;
   private boolean myHasMissortedImports;
   private final ImplicitUsageProvider[] myImplicitUsageProviders;
-  private DeadCodeInspection myDeadCodeInspection;
+  private UnusedDeclarationInspection myDeadCodeInspection;
   private UnusedSymbolLocalInspection myUnusedSymbolInspection;
   private HighlightDisplayKey myUnusedSymbolKey;
   private boolean myDeadCodeEnabled;
@@ -220,8 +220,8 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     myUnusedSymbolInspection = unusedSymbolTool == null ? null : (UnusedSymbolLocalInspection)unusedSymbolTool.getTool();
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || myUnusedSymbolInspection != null);
 
-    myDeadCodeKey = HighlightDisplayKey.find(DeadCodeInspection.SHORT_NAME);
-    myDeadCodeInspection = (DeadCodeInspection)profile.getInspectionTool(DeadCodeInspection.SHORT_NAME, myFile);
+    myDeadCodeKey = HighlightDisplayKey.find(UnusedDeclarationInspection.SHORT_NAME);
+    myDeadCodeInspection = (UnusedDeclarationInspection)profile.getInspectionTool(UnusedDeclarationInspection.SHORT_NAME, myFile);
     myDeadCodeEnabled = profile.isToolEnabled(myDeadCodeKey, myFile);
     if (unusedImportEnabled && JspPsiUtil.isInJspFile(myFile)) {
       final JspFile jspFile = JspPsiUtil.getJspFile(myFile);
@@ -542,7 +542,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     if (count[0] == 0 && !canbeReferencedViaWeirdNames(member)) return true;
 
     Query<PsiReference> query = member instanceof PsiMethod
-                                ? MethodReferencesSearch.search((PsiMethod)member, scope, false)
+                                ? MethodReferencesSearch.search((PsiMethod)member, scope, true)
                                 : ReferencesSearch.search(member, scope, true);
     return query.findFirst() == null;
   }

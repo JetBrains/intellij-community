@@ -97,7 +97,7 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
   private void initCommitMessageArea(final Project project, final CommittedChangeList changeList) {
     myCommitMessageArea = new JEditorPane(UIUtil.HTML_MIME, "");
     myCommitMessageArea.setEditable(false);
-    @NonNls final String text = IssueLinkHtmlRenderer.formatTextIntoHtml(project, changeList.getComment());
+    @NonNls final String text = IssueLinkHtmlRenderer.formatTextIntoHtml(project, changeList.getComment().trim());
     myCommitMessageArea.setBackground(UIUtil.getComboBoxDisabledBackground());
     myCommitMessageArea.addHyperlinkListener(new BrowserHyperlinkListener());
     commitMessageScroll = new JScrollPane(myCommitMessageArea);

@@ -37,7 +37,7 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.xdebugger.XDebugProcess;
@@ -259,7 +259,7 @@ public class XDebugSessionTab extends DebuggerLogConsoleManagerBase {
   public void toFront() {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        ProjectUtil.focusProjectWindow(getProject());
+        ProjectUtil.focusProjectWindow(getProject(), Registry.is("debugger.mayBringFrameToFrontOnBreakpoint"));
         ExecutionManager.getInstance(getProject()).getContentManager().toFrontRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), myRunContentDescriptor);
       }
     });
