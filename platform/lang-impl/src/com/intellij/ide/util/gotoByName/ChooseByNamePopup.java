@@ -39,10 +39,14 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
   private ChooseByNamePopup(final Project project, final ChooseByNameModel model, final ChooseByNamePopup oldPopup,
                             final PsiElement context, @Nullable final String predefinedText) {
-    super(project, model, oldPopup != null ? oldPopup.myTextField.getText() : predefinedText, context);
+    super(project, model, oldPopup != null ? oldPopup.getEnteredText() : predefinedText, context);
     if (oldPopup != null) { //inherit old focus owner
       myOldFocusOwner = oldPopup.myPreviouslyFocusedComponent;
     }
+  }
+
+  public String getEnteredText() {
+    return myTextField.getText();
   }
 
   protected void initUI(final Callback callback, final ModalityState modalityState, boolean allowMultipleSelection) {
@@ -130,7 +134,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       }
 
       if (!chosenElements.isEmpty()){
-        final String enteredText = myTextField.getText();
+        final String enteredText = getEnteredText();
         if (enteredText.indexOf('*') >= 0) {
           FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.wildcards");
         }
@@ -235,7 +239,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   }
 
   private int getLineOrColumn(final boolean line) {
-    final Matcher matcher = patternToDetectLinesAndColumns.matcher(myTextField.getText());
+    final Matcher matcher = patternToDetectLinesAndColumns.matcher(getEnteredText());
     if (matcher.matches()) {
       final int groupNumber = line ? 2:3;
       try {
