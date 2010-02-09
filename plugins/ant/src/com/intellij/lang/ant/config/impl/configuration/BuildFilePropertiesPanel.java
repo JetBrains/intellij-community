@@ -288,7 +288,7 @@ public class BuildFilePropertiesPanel {
       }
     };
     private static final ColumnInfo<TargetFilter, String> NAME_COLUMN = new ColumnInfo<TargetFilter, String>(
-      AntBundle.message("edit.ant.properties.target.column.name")) {
+      AntBundle.message("ant.target")) {
       public String valueOf(TargetFilter targetFilter) {
         return targetFilter.getTargetName();
       }

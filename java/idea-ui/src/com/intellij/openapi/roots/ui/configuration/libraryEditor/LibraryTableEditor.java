@@ -658,7 +658,7 @@ public class LibraryTableEditor implements Disposable, LibraryEditorListener {
     }
 
     protected VirtualFile[] scanForActualRoots(final VirtualFile[] rootCandidates) {
-      return PathUIUtils.scandAndSelectDetectedJavaSourceRoots(myPanel, rootCandidates);
+      return PathUIUtils.scanAndSelectDetectedJavaSourceRoots(myPanel, rootCandidates);
     }
   }
 

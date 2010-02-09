@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Pair;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.tasks.MavenBeforeRunTask;
 import org.jetbrains.idea.maven.tasks.MavenBeforeRunTasksProvider;
+import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
 import org.jetbrains.idea.maven.utils.actions.MavenToggleAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
@@ -45,7 +46,8 @@ public class ToggleBeforeRunTaskAction extends MavenToggleAction {
   @Override
   public void setSelected(final AnActionEvent e, boolean state) {
     Pair<MavenProject, String> desc = getTaskDesc(e);
-    new SelectBeforeRunTaskDialog(MavenActionUtil.getProject(e), desc.first, desc.second).show();
+    new MavenExecuteBeforeRunDialog(MavenActionUtil.getProject(e), desc.first, desc.second).show();
+    MavenTasksManager.getInstance(MavenActionUtil.getProject(e)).fireTasksChanged();
   }
 
   protected Pair<MavenProject, String> getTaskDesc(AnActionEvent e) {

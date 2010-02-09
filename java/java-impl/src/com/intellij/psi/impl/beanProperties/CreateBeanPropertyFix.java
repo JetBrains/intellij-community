@@ -63,6 +63,21 @@ public abstract class CreateBeanPropertyFix implements LocalQuickFix, IntentionA
       }
       type = facade.getElementFactory().createType(aClass);
     }
+    if (psiClass.isInterface()) {
+      return new CreateBeanPropertyFix[] {
+        new CreateBeanPropertyFix(propertyName, psiClass, type) {
+          @Override
+          protected void doFix() throws IncorrectOperationException {
+            createSetter(false);
+          }
+
+          @NotNull
+          public String getName() {
+            return QuickFixBundle.message("create.writable.property", myPropertyName);
+          }
+        }
+      };
+    }
     return new CreateBeanPropertyFix[] {
         new CreateBeanPropertyFix(propertyName, psiClass, type) {
 
@@ -168,19 +183,25 @@ public abstract class CreateBeanPropertyFix implements LocalQuickFix, IntentionA
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myPsiClass.getProject()).getElementFactory();
     final String methodName = PropertyUtil.suggestSetterName(myPropertyName);
     final String typeName = myType.getCanonicalText();
+
     @NonNls final String text;
-    if (createField) {
+    boolean isInterface = myPsiClass.isInterface();
+    if (isInterface) {
+      text = "public void " + methodName + "(" + typeName + " " + myPropertyName + ");";
+    }
+    else if (createField) {
       @NonNls String fieldName = getFieldName();
       if (fieldName.equals(myPropertyName)) {
         fieldName = "this." + fieldName;
       }
       text = "public void " + methodName + "(" + typeName + " " + myPropertyName + ") {" + fieldName + "=" + myPropertyName + ";}";
-    } else {
+    }
+    else {
       text = "public void " + methodName + "(" + typeName + " " + myPropertyName + ") {}";
     }
     final PsiMethod method = elementFactory.createMethodFromText(text, null);
     final PsiMethod psiElement = (PsiMethod)myPsiClass.add(method);
-    if (!createField) {
+    if (!isInterface && !createField) {
       CreateFromUsageUtils.setupMethodBody(psiElement);
     }
     return psiElement;
