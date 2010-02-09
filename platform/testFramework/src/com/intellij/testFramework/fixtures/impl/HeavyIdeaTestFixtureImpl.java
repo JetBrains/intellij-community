@@ -118,6 +118,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
 
     myEditorListenerTracker.checkListenersLeak();
     myThreadTracker.checkLeak();
+    LightPlatformTestCase.checkEditorsReleased();
   }
 
 

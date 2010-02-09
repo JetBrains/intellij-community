@@ -438,13 +438,17 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     CompletionProgressIndicator.cleanupForNextTest();
 
     if (checkForEditors) {
-      final Editor[] allEditors = EditorFactory.getInstance().getAllEditors();
-      if (allEditors.length > 0) {
-        for (Editor allEditor : allEditors) {
-          EditorFactory.getInstance().releaseEditor(allEditor);
-        }
-        fail("Unreleased editors: " + allEditors.length);
+      checkEditorsReleased();
+    }
+  }
+
+  public static void checkEditorsReleased() {
+    final Editor[] allEditors = EditorFactory.getInstance().getAllEditors();
+    if (allEditors.length > 0) {
+      for (Editor allEditor : allEditors) {
+        EditorFactory.getInstance().releaseEditor(allEditor);
       }
+      fail("Unreleased editors: " + allEditors.length);
     }
   }
 
