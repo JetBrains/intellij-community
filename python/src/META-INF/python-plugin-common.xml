@@ -131,6 +131,8 @@
                    serviceImplementation="com.jetbrains.django.model.TemplateManager"/>
 
     <facetType implementation="com.jetbrains.django.facet.DjangoFacetType"/>
+
+    <liveTemplateContext implementation="com.jetbrains.django.lang.template.DjangoTemplateContextType"/>
   </extensions>
 
   <extensionPoints>
