@@ -148,6 +148,16 @@ public class InlineParameterTest extends LightCodeInsightTestCase {
     }
   }
 
+  public void testRefCallerParameter() throws Exception {
+    try {
+      doTest(false);
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Parameter initializer depends on callers parameter", e.getMessage());
+    }
+  }
+
+
   public void testHandleExceptions() throws Exception {
     doTest(false);
   }
