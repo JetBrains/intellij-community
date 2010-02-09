@@ -15,6 +15,7 @@
     <orderEntry type="module" module-name="python" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="xdebugger-impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="sass" />
   </component>
 </module>
 
