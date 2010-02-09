@@ -30,14 +30,13 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
-import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.AndFilter;
 import com.intellij.psi.filters.ClassFilter;
+import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
 import com.intellij.psi.filters.element.ExcludeSillyAssignment;
 import com.intellij.psi.html.HtmlTag;
@@ -46,9 +45,9 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.scope.BaseScopeProcessor;
+import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
-import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
@@ -64,6 +63,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 public class JavaCompletionUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.JavaCompletionUtil");
@@ -909,7 +910,7 @@ public class JavaCompletionUtil {
     final PsiExpression newRef = JavaPsiFacade.getElementFactory(project).createExpressionFromText(newText, refExpr);
     ((PsiReferenceExpression)newRef).processVariants(processor);
 
-    final LookupElement castItem = PsiTypeLookupItem.createLookupItem(castTo);
+    final LookupElement castItem = PsiTypeLookupItem.createLookupItem(castTo, refExpr);
 
     for (CompletionElement completionElement : processor.getResults()) {
       final LookupElement item = createLookupElement(completionElement, castTo);

@@ -41,6 +41,7 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.ui.EditKeymapsDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -66,7 +67,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class AntExplorer extends JPanel implements DataProvider {
+public class AntExplorer extends SimpleToolWindowPanel implements DataProvider {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.config.explorer.AntExplorer");
 
@@ -100,7 +101,7 @@ public class AntExplorer extends JPanel implements DataProvider {
   private static final Icon ICON_FILTER = IconLoader.getIcon("/ant/filter.png");
 
   public AntExplorer(final Project project) {
-    super(new BorderLayout(0, 2));
+    super(true, true);
     myProject = project;
     final DefaultTreeModel model = new DefaultTreeModel(new DefaultMutableTreeNode());
     myTree = new Tree(model);
@@ -135,8 +136,8 @@ public class AntExplorer extends JPanel implements DataProvider {
     myTree.expandRow(0);
     myTree.setLineStyleAngled();
     myAntBuildFilePropertiesAction = new AntBuildFilePropertiesAction(this);
-    add(createToolbarPanel(), BorderLayout.NORTH);
-    add(new JScrollPane(myTree), BorderLayout.CENTER);
+    setToolbar(createToolbarPanel());
+    setContent(new JScrollPane(myTree));
     ToolTipManager.sharedInstance().registerComponent(myTree);
     myKeymapListener = new KeymapListener();
   }
@@ -384,7 +385,7 @@ public class AntExplorer extends JPanel implements DataProvider {
       executeOnGroup.add(new ExecuteOnEventAction(target, ExecuteBeforeCompilationEvent.getInstance()));
       executeOnGroup.add(new ExecuteOnEventAction(target, ExecuteAfterCompilationEvent.getInstance()));
       executeOnGroup.addSeparator();
-      executeOnGroup.add(new ExecuteBeforeRunAction(target, getCurrentBuildFile()));
+      executeOnGroup.add(new ExecuteBeforeRunAction(target));
       group.add(executeOnGroup);
       group.add(new AssignShortcutAction(target.getActionId()));
     }
@@ -611,22 +612,20 @@ public class AntExplorer extends JPanel implements DataProvider {
 
   private final class ExecuteBeforeRunAction extends AnAction {
     private final AntBuildTarget myTarget;
-    private final AntBuildFile myBuildFile;
 
-    public ExecuteBeforeRunAction(final AntBuildTarget target, final AntBuildFile buildFile) {
+    public ExecuteBeforeRunAction(final AntBuildTarget target) {
       super(AntBundle.message("executes.before.run.debug.acton.name"));
       myTarget = target;
-      myBuildFile = buildFile;
     }
 
     public void actionPerformed(AnActionEvent e) {
-      final ExecuteOnRunDialog dialog = new ExecuteOnRunDialog(myProject, myTarget, myBuildFile);
+      final AntExecuteBeforeRunDialog dialog = new AntExecuteBeforeRunDialog(myProject, myTarget);
       dialog.show();
       myBuilder.refresh();
     }
 
     public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(myBuildFile.exists());
+      e.getPresentation().setEnabled(myTarget.getModel().getBuildFile().exists());
     }
   }
 

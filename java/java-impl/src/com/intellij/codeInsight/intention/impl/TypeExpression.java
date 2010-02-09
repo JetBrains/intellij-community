@@ -64,7 +64,7 @@ public class TypeExpression extends Expression {
     for (final SmartTypePointer item : myItems) {
       final PsiType type = item.getType();
       if (type != null) {
-        result.add(PsiTypeLookupItem.createLookupItem(type));
+        result.add(PsiTypeLookupItem.createLookupItem(type, null));
       }
     }
     return result.toArray(new LookupElement[result.size()]);
