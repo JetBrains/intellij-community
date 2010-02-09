@@ -34,4 +34,7 @@ public abstract class TemplateEditingAdapter implements TemplateEditingListener 
 
   public void currentVariableChanged(TemplateState templateState, Template template, int oldIndex, int newIndex) {
   }
+
+  public void templateExpanded(Template template) {
+  }
 }
