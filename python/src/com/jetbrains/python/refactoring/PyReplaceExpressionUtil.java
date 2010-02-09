@@ -14,8 +14,8 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
 
   private PyReplaceExpressionUtil() {}
 
-  public static boolean isNeedParenthesis(@NotNull final PyExpression oldExpr, @NotNull final PyExpression newExpr) {
-    final PyExpression parentExpr = (PyExpression)oldExpr.getParent();
+  public static boolean isNeedParenthesis(@NotNull final PyElement oldExpr, @NotNull final PyElement newExpr) {
+    final PyElement parentExpr = (PyElement)oldExpr.getParent();
     int newPriority = getExpressionPriority(newExpr);
     int parentPriority = getExpressionPriority(parentExpr);
     if (parentPriority > newPriority) {
@@ -37,7 +37,7 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
            opType == DIV || opType == PERC || opType == EXP;
   }
 
-  private static int getExpressionPriority(PyExpression expr) {
+  private static int getExpressionPriority(PyElement expr) {
     int priority = 0;
     if (expr instanceof PySubscriptionExpression || expr instanceof PySliceExpression ||
         expr instanceof PyCallExpression) priority = 1;
