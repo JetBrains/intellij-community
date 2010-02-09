@@ -17,6 +17,7 @@ package com.intellij.openapi.wm;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
@@ -132,7 +133,8 @@ public abstract class IdeFocusManager {
   public abstract Expirable getTimestamp(boolean trackOnlyForcedCommands);
 
   public static IdeFocusManager getGlobalInstance() {
-    return ApplicationManager.getApplication().getComponent(IdeFocusManager.class);
+    Application app = ApplicationManager.getApplication();
+    return app != null ? app.getComponent(IdeFocusManager.class) : PassThroughtIdeFocusManager.getInstance(); 
   }
 
 }
