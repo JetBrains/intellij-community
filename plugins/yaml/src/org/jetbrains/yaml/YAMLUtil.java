@@ -221,7 +221,6 @@ public class YAMLUtil {
     }
   }
 
-  @Nullable
   public static PsiElement rename(final YAMLKeyValue element, final String newName) {
     if (newName.contains(".")){
       throw new IncorrectOperationException(YAMLBundle.message("rename.wrong.name"));

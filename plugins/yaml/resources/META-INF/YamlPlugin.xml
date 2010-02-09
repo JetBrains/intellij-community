@@ -10,11 +10,7 @@
     <fileTypeFactory implementation="org.jetbrains.yaml.YAMLFileTypeLoader"/>
     <lang.psiStructureViewFactory language="yaml" implementationClass="org.jetbrains.yaml.structureView.YAMLStructureViewFactory"/>
     <fileTypeIndentOptionsProvider implementation="org.jetbrains.yaml.YAMLIndentationOptionsProvider"/>
-    <psi.referenceContributor implementation="org.jetbrains.yaml.psi.YAMLReferenceContributor"/>
    </extensions>
-  <extensionPoints>
-    <extensionPoint name="com.intellij.yamlReferenceProvider" interface="com.intellij.psi.PsiReferenceProvider"/>
-  </extensionPoints>
   <project-components>
     <component>
         <implementation-class>org.jetbrains.yaml.psi.YAMLPsiManager</implementation-class>
