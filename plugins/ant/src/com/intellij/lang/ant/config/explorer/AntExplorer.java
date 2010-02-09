@@ -385,7 +385,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider {
       executeOnGroup.add(new ExecuteOnEventAction(target, ExecuteBeforeCompilationEvent.getInstance()));
       executeOnGroup.add(new ExecuteOnEventAction(target, ExecuteAfterCompilationEvent.getInstance()));
       executeOnGroup.addSeparator();
-      executeOnGroup.add(new ExecuteBeforeRunAction(target, getCurrentBuildFile()));
+      executeOnGroup.add(new ExecuteBeforeRunAction(target));
       group.add(executeOnGroup);
       group.add(new AssignShortcutAction(target.getActionId()));
     }
@@ -612,22 +612,20 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider {
 
   private final class ExecuteBeforeRunAction extends AnAction {
     private final AntBuildTarget myTarget;
-    private final AntBuildFile myBuildFile;
 
-    public ExecuteBeforeRunAction(final AntBuildTarget target, final AntBuildFile buildFile) {
+    public ExecuteBeforeRunAction(final AntBuildTarget target) {
       super(AntBundle.message("executes.before.run.debug.acton.name"));
       myTarget = target;
-      myBuildFile = buildFile;
     }
 
     public void actionPerformed(AnActionEvent e) {
-      final ExecuteOnRunDialog dialog = new ExecuteOnRunDialog(myProject, myTarget, myBuildFile);
+      final AntExecuteBeforeRunDialog dialog = new AntExecuteBeforeRunDialog(myProject, myTarget);
       dialog.show();
       myBuilder.refresh();
     }
 
     public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(myBuildFile.exists());
+      e.getPresentation().setEnabled(myTarget.getModel().getBuildFile().exists());
     }
   }
 
