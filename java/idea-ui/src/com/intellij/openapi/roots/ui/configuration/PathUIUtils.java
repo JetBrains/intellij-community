@@ -43,7 +43,7 @@ public class PathUIUtils {
    * @param rootCandidates a candidates for roots
    * @return a array of source folders or empty array if non was selected or dialog was canceled.
    */
-  public static VirtualFile[] scandAndSelectDetectedJavaSourceRoots(Object parent, final VirtualFile[] rootCandidates) {
+  public static VirtualFile[] scanAndSelectDetectedJavaSourceRoots(Object parent, final VirtualFile[] rootCandidates) {
     final Set<VirtualFile> result = new HashSet<VirtualFile>();
     final Map<VirtualFile, List<VirtualFile>> detectedRootsMap = new LinkedHashMap<VirtualFile, List<VirtualFile>>();
     // scan for roots

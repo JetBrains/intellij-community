@@ -113,7 +113,6 @@
   <extensionPoint name="lang.unwrapDescriptor" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="lang.parserDefinition" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="lang.treePatcher" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
-  <extensionPoint name="lang.tokenSeparatorGenerator" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 
   <extensionPoint name="lang.fileViewProviderFactory" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="fileType.fileViewProviderFactory" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint"/>
@@ -174,6 +173,7 @@
   <extensionPoint name="liveTemplateMacro" interface="com.intellij.codeInsight.template.Macro"/>
   <extensionPoint name="liveTemplateOptionalProcessor" interface="com.intellij.codeInsight.template.impl.TemplateOptionalProcessor"/>
   <extensionPoint name="liveTemplatePreprocessor" interface="com.intellij.codeInsight.template.impl.TemplatePreprocessor"/>
+  <extensionPoint name="customLiveTemplate" interface="com.intellij.codeInsight.template.CustomLiveTemplate"/>
 
   <extensionPoint name="fileTemplateGroup"
                   interface="com.intellij.ide.fileTemplates.FileTemplateGroupDescriptorFactory"/>

@@ -139,7 +139,6 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                           final int maxRowCount,
                                           final Condition<AnAction> preselectActionCondition) {
     final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
-    LOG.assertTrue(component != null);
 
     final ActionStepBuilder builder = new ActionStepBuilder(dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics);
     builder.buildGroup(actionGroup);
@@ -389,7 +388,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
     public Icon getIcon() {
       return myIcon;
-    }
+    }                                                                                                                           
 
     public boolean isPrependWithSeparator() {
       return myPrependWithSeparator;
@@ -469,7 +468,10 @@ public class PopupFactoryImpl extends JBPopupFactory {
     public PopupStep onChosen(final ActionItem actionChoice, final boolean finalChoice) {
       if (!actionChoice.isEnabled()) return FINAL_CHOICE;
       final AnAction action = actionChoice.getAction();
-      final DataContext dataContext = DataManager.getInstance().getDataContext(myContext);
+      DataManager mgr = DataManager.getInstance();
+
+      final DataContext dataContext = myContext != null ? mgr.getDataContext(myContext) : mgr.getDataContext();
+
       if (action instanceof ActionGroup && (!finalChoice || !((ActionGroup)action).canBePerformed())) {
           return JBPopupFactory.getInstance().createActionsStep((ActionGroup)action, dataContext, myEnableMnemonics, false, null, myContext, false);
       }

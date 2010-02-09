@@ -58,11 +58,25 @@ public class KeyboardGestureProcessor {
   }
 
   public boolean process() {
+    boolean wasNotInWaitState = myState != myWaitForStart;
+
+    if (Registry.is("ide.debugMode") && wasNotInWaitState) {
+      System.out.println("-- key gesture context: before process, state=" + myState);
+      System.out.println(myContext);
+    }
+
     myContext.keyToProcess = myDispatcher.getContext().getInputEvent();
     myContext.isModal = myDispatcher.getContext().isModalContext();
     myContext.dataContext = myDispatcher.getContext().getDataContext();
 
-    return myState.process();
+    boolean result = myState.process();
+
+    if (Registry.is("ide.debugMode") && (wasNotInWaitState || myState != myWaitForStart)) {
+      System.out.println("-- key gesture context: after process, state=" + myState);
+      System.out.println(myContext);
+    }
+
+    return result;
   }
 
   public boolean processInitState() {

@@ -67,7 +67,7 @@ public abstract class TemplateInsertHandler implements InsertHandler {
     final RangeMarker offsetRangeMarker = document.createRangeMarker(templateStartOffset, templateStartOffset);
 
     TemplateManager.getInstance(editor.getProject()).startTemplate(editor, template, new TemplateEditingAdapter() {
-      public void templateFinished(Template template) {
+      public void templateFinished(Template template, boolean brokenOff) {
         lookupItem.setAttribute(EXPANDED_TEMPLATE_ATTR, Boolean.TRUE);
 
         if (!offsetRangeMarker.isValid()) return;

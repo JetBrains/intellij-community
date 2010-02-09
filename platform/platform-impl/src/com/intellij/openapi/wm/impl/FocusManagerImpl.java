@@ -125,7 +125,9 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     final ActionCallback result = new ActionCallback();
 
     if (!forced) {
-      myFocusRequests.add(command);
+      if (!myFocusRequests.contains(command)) {
+        myFocusRequests.add(command);
+      }
 
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
@@ -191,7 +193,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
             }
           }).doWhenProcessed(new Runnable() {
             public void run() {
-              resetCommand(command, true);
+              resetCommand(command, false);
 
               if (forced) {
                 myForcedFocusRequestsAlarm.addRequest(new EdtRunnable() {
@@ -220,6 +222,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
     if (!forced && !isUnforcedRequestAllowed()) {
       if (cmd.equals(lastRequest)) {
+        resetCommand(cmd, false);
         result.setDone();
       }
       else {
@@ -240,6 +243,9 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     if (doNotExecuteBecauseAppIsInactive) {
       if (myCallbackOnActivation != null) {
         myCallbackOnActivation.setRejected();
+        if (myFocusCommandOnAppActivation != null) {
+          resetCommand(myFocusCommandOnAppActivation, true);
+        }
       }
 
       myFocusCommandOnAppActivation = cmd;

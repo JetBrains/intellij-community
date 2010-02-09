@@ -85,4 +85,9 @@ public class NewChangelistDialog extends DialogWrapper {
       }
     };
   }
+
+  @Override
+  protected String getHelpId() {
+    return "new_changelist_dialog";
+  }
 }

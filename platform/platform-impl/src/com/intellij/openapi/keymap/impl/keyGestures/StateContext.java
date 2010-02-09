@@ -34,4 +34,18 @@ class StateContext {
   Component focusOwner;
   KeyEvent keyToProcess;
   boolean isModal;
+
+  @Override
+  public String toString() {
+    return
+      "actionKey=" + actionKey + "\n"
+      + "actionShortcut=" + actionShortcut + "\n"
+      + "modifierType=" + modifierType + "\n"
+      + "actionPresentation=" + actionPresentation + "\n"
+      + "actionPlace=" + actionPlace + "\n"
+      + "dataContext=" + dataContext + "\n"
+      + "focusOwner=" + focusOwner + "\n"
+      + "keyToProcess=" + keyToProcess + "\n"
+      + "isModal=" + isModal + "\n";
+  }
 }

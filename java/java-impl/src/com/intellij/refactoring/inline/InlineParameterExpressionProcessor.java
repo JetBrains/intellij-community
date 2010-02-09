@@ -177,6 +177,8 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
           if (!mySameClass && !((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC)) {
             conflicts.putValue(expression, "Parameter initializer depend on non static member from some other class");
           }
+        } else if (element instanceof PsiParameter) {
+          conflicts.putValue(expression, "Parameter initializer depends on callers parameter");
         }
       }
 

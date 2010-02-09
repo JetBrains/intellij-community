@@ -15,6 +15,9 @@
  */
 package org.jetbrains.idea.maven.navigator;
 
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunManagerListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -162,6 +165,16 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
 
     myTasksManager.addListener(new MavenTasksManager.Listener() {
       public void compileTasksChanged() {
+        scheduleStructureRequest(new Runnable() {
+          public void run() {
+            myStructure.updateGoals();
+          }
+        });
+      }
+    });
+
+    RunManagerEx.getInstanceEx(myProject).addRunManagerListener(new RunManagerListener() {
+      public void beforeRunTasksChanged() {
         scheduleStructureRequest(new Runnable() {
           public void run() {
             myStructure.updateGoals();

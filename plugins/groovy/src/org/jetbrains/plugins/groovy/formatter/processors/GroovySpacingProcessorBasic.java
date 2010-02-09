@@ -18,8 +18,8 @@ package org.jetbrains.plugins.groovy.formatter.processors;
 
 import com.intellij.formatting.Spacing;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
@@ -97,8 +97,14 @@ public abstract class GroovySpacingProcessorBasic extends SpacingTokens implemen
       return Spacing.createSpacing(0, 0, settings.BLANK_LINES_AROUND_METHOD + 1, settings.KEEP_LINE_BREAKS, 100);
     }
 
+    IElementType rightType = rightNode.getElementType();
+    
+    if (leftType == mLCURLY && rightType == PARAMETERS_LIST) { //closure
+      return LAZY_SPACING;
+    }
+
     // For parentheses in arguments and typecasts
-    if (LEFT_BRACES.contains(leftType) || RIGHT_BRACES.contains(rightNode.getElementType())) {
+    if (LEFT_BRACES.contains(leftType) || RIGHT_BRACES.contains(rightType)) {
       return NO_SPACING_WITH_NEWLINE;
     }
     // For type parameters
@@ -179,7 +185,7 @@ public abstract class GroovySpacingProcessorBasic extends SpacingTokens implemen
       }
       return NO_SPACING;
     }
-    IElementType rightType = rightNode.getElementType();
+
     if (leftType == mGDOC_TAG_VALUE_TOKEN && rightType == mGDOC_COMMENT_DATA) {
       return LAZY_SPACING;
     }
@@ -197,6 +203,10 @@ public abstract class GroovySpacingProcessorBasic extends SpacingTokens implemen
         leftType == mGDOC_INLINE_TAG_START ||
         rightType == mGDOC_INLINE_TAG_START ||
         leftType == mGDOC_INLINE_TAG_END) {
+      return NO_SPACING;
+    }
+
+    if (leftType == CLASS_TYPE_ELEMENT && rightType == mTRIPLE_DOT) {
       return NO_SPACING;
     }
 
