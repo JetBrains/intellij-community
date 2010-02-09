@@ -99,6 +99,8 @@ public class AddSourcesNotificationProvider implements EditorNotifications.Provi
         }
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
+            final Library library = findLibrary(file);
+            assert library != null;
             Library.ModifiableModel model = library.getModifiableModel();
             for (VirtualFile virtualFile : files) {
               model.addRoot(virtualFile, OrderRootType.SOURCES);
