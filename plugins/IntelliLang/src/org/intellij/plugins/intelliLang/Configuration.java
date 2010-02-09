@@ -20,7 +20,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoableAction;
-import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -277,7 +276,7 @@ public final class Configuration implements PersistentStateComponent<Element> {
   }
 
   @Nullable
-  public static Configuration load(final InputStream is) throws IOException, JDOMException, InvalidDataException {
+  public static Configuration load(final InputStream is) throws IOException, JDOMException {
     try {
       final Document document = JDOMUtil.loadDocument(is);
       final ArrayList<Element> elements = new ArrayList<Element>();
@@ -465,11 +464,11 @@ public final class Configuration implements PersistentStateComponent<Element> {
                                 final List<? extends PsiElement> psiElementsToRemove,
                                 final PairProcessor<T, T> actualProcessor) {
     final UndoableAction action = new UndoableAction() {
-      public void undo() throws UnexpectedUndoException {
+      public void undo() {
         actualProcessor.process(remove, add);
       }
 
-      public void redo() throws UnexpectedUndoException {
+      public void redo() {
         actualProcessor.process(add, remove);
       }
 

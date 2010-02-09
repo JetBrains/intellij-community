@@ -95,7 +95,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * @param filePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
    * @throws Exception
    */
-  protected void configureByFile(@NonNls String filePath) throws Exception {
+  protected void configureByFile(@TestDataFile @NonNls String filePath) throws Exception {
     String fullPath = getTestDataPath() + filePath;
 
     final File ioFile = new File(fullPath);

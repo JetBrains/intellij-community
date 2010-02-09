@@ -75,7 +75,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 
-public class DeadCodeInspection extends FilteringInspectionTool {
+public class UnusedDeclarationInspection extends FilteringInspectionTool {
   public boolean ADD_MAINS_TO_ENTRIES = true;
 
   public boolean ADD_APPLET_TO_ENTRIES = true;
@@ -83,7 +83,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   public boolean ADD_NONJAVA_TO_ENTRIES = true;
 
   public JDOMExternalizableStringList ADDITIONAL_ANNOTATIONS = new JDOMExternalizableStringList();
-  private static final String[] ADDITIONAL_ANNOS = {
+  @NonNls private static final String[] ADDITIONAL_ANNOS = {
     "javax.ws.rs.*"
   };
 
@@ -104,7 +104,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
   public final UnusedCodeExtension[] myExtensions;
 
-  public DeadCodeInspection() {
+  public UnusedDeclarationInspection() {
     ADDITIONAL_ANNOTATIONS.addAll(Arrays.asList(ADDITIONAL_ANNOS));
     myQuickFixActions = new QuickFixAction[]{new PermanentDeleteAction(), new CommentOutBin(), new MoveToEntries()};
     ExtensionPoint<UnusedCodeExtension> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL);
@@ -317,8 +317,8 @@ public class DeadCodeInspection extends FilteringInspectionTool {
           final RefElementImpl refElement = (RefElementImpl)refEntity;
           final PsiElement element = refElement.getElement();
           if (element == null) return;
-          final boolean isSuppressed = ((RefElementImpl)refElement).isSuppressed(getShortName());
-          if (!getContext().isToCheckMember(element, DeadCodeInspection.this) || isSuppressed) {
+          final boolean isSuppressed = refElement.isSuppressed(getShortName());
+          if (!getContext().isToCheckMember(element, UnusedDeclarationInspection.this) || isSuppressed) {
             if (isSuppressed || !scope.contains(element)) {
               getEntryPointsManager().addEntryPoint(refElement, false);
             }
@@ -370,7 +370,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       checkForReachables();
       ProgressManager.getInstance().runProcess(new Runnable() {
         public void run() {
-          final RefFilter filter = new StrictUnreferencedFilter(DeadCodeInspection.this);
+          final RefFilter filter = new StrictUnreferencedFilter(UnusedDeclarationInspection.this);
           final PsiSearchHelper helper = PsiManager.getInstance(getRefManager().getProject()).getSearchHelper();
           getRefManager().iterate(new RefJavaVisitor() {
             @Override public void visitElement(final RefEntity refEntity) {
@@ -529,7 +529,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
                 if (isSerializablePatternMethod(psiMethod)) {
                   getEntryPointsManager().addEntryPoint(refMethod, false);
                 }
-                else if (!refMethod.isExternalOverride() && refMethod.getAccessModifier() != PsiModifier.PRIVATE) {
+                else if (!refMethod.isExternalOverride() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) {
                   for (final RefMethod derivedMethod : refMethod.getDerivedMethods()) {
                     myProcessedSuspicious.add(derivedMethod);
                   }
@@ -721,7 +721,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
   private class PermanentDeleteAction extends QuickFixAction {
     private PermanentDeleteAction() {
-      super(DELETE_QUICK_FIX, IconLoader.getIcon("/actions/cancel.png"), KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), DeadCodeInspection.this);
+      super(DELETE_QUICK_FIX, IconLoader.getIcon("/actions/cancel.png"), KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), UnusedDeclarationInspection.this);
     }
 
     protected boolean applyFix(final RefElement[] refElements) {
@@ -739,7 +739,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
           final Project project = getContext().getProject();
           SafeDeleteHandler.invoke(project, psiElements.toArray(new PsiElement[psiElements.size()]), false, new Runnable(){
             public void run() {
-              removeElements(refElements, project, DeadCodeInspection.this);
+              removeElements(refElements, project, UnusedDeclarationInspection.this);
             }
           });
         }
@@ -789,7 +789,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   private class CommentOutBin extends QuickFixAction {
     private CommentOutBin() {
       super(COMMENT_OUT_QUICK_FIX, null, KeyStroke.getKeyStroke(KeyEvent.VK_SLASH, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK),
-            DeadCodeInspection.this);
+            UnusedDeclarationInspection.this);
     }
 
     protected boolean applyFix(RefElement[] refElements) {
@@ -846,7 +846,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
   private class MoveToEntries extends QuickFixAction {
     private MoveToEntries() {
-      super(InspectionsBundle.message("inspection.dead.code.entry.point.quickfix"), null, KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, 0), DeadCodeInspection.this);
+      super(InspectionsBundle.message("inspection.dead.code.entry.point.quickfix"), null, KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, 0), UnusedDeclarationInspection.this);
     }
 
     protected boolean applyFix(RefElement[] refElements) {
@@ -871,7 +871,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
           final RefJavaElementImpl refElement = (RefJavaElementImpl)refEntity;
           final PsiElement element = refElement.getElement();
           if (element == null) return;
-          if (!getContext().isToCheckMember(refElement, DeadCodeInspection.this)) return;
+          if (!getContext().isToCheckMember(refElement, UnusedDeclarationInspection.this)) return;
           refElement.setReachable(false);
         }
       }

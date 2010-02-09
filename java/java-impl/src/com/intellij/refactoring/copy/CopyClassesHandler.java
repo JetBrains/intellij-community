@@ -52,10 +52,10 @@ public class CopyClassesHandler implements CopyHandlerDelegate {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.copyClass");
     PsiClass aClass = convertToTopLevelClass(elements);
     assert aClass != null;
-    Project project = aClass.getProject();
     if (defaultTargetDirectory == null) {
       defaultTargetDirectory = aClass.getContainingFile().getContainingDirectory();
     }
+    Project project = defaultTargetDirectory.getProject();
     CopyClassDialog dialog = new CopyClassDialog(aClass, defaultTargetDirectory, project, false);
     dialog.setTitle(RefactoringBundle.message("copy.handler.copy.class"));
     dialog.show();

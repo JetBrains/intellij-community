@@ -87,6 +87,8 @@ public interface EditorEx extends Editor {
 
   boolean setCaretVisible(boolean b);
 
+  boolean setCaretEnabled(boolean enabled);
+
   void addFocusListener(FocusChangeListener listener);
 
   void setOneLineMode(boolean b);

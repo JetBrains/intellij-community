@@ -1188,11 +1188,14 @@ public abstract class ChooseByNameBase{
   }
 
   private List<String> split(String s) {
-    for (String separator : myModel.getSeparators()) {
-      final List<String> result = StringUtil.split(s, separator);
-      if (!result.isEmpty()) return result;
+    List<String> answer = new ArrayList<String>();
+    for (String token : StringUtil.tokenize(s, StringUtil.join(myModel.getSeparators(), ""))) {
+      if (token.length() > 0) {
+        answer.add(token);
+      }
     }
-    return Collections.singletonList(s);
+    
+    return answer.isEmpty() ? Collections.singletonList(s) : answer;
   }
 
   private boolean matchesQualifier(final Object element, final String qualifierPattern) {

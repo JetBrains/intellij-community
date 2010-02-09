@@ -15,9 +15,12 @@
  */
 package com.intellij.refactoring.safeDelete;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.HelpID;
@@ -25,19 +28,22 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteOverridingMethodUsageInfo;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.ui.Table;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usages.impl.UsagePreviewPanel;
+import com.intellij.util.ui.Table;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author dsl
@@ -49,6 +55,7 @@ class OverridingMethodsDialog extends DialogWrapper {
 
   private static final int CHECK_COLUMN = 0;
   private Table myTable;
+   private final UsagePreviewPanel myUsagePreviewPanel;
 
   public OverridingMethodsDialog(Project project, List<UsageInfo> overridingMethods) {
     super(project, true);
@@ -67,7 +74,7 @@ class OverridingMethodsDialog extends DialogWrapper {
               PsiFormatUtil.SHOW_TYPE
       );
     }
-
+    myUsagePreviewPanel = new UsagePreviewPanel(project);
     setTitle(RefactoringBundle.message("unused.overriding.methods.title"));
     init();
   }
@@ -104,6 +111,12 @@ class OverridingMethodsDialog extends DialogWrapper {
 
   public JComponent getPreferredFocusedComponent() {
     return myTable;
+  }
+
+  @Override
+  protected void dispose() {
+    Disposer.dispose(myUsagePreviewPanel);
+    super.dispose();
   }
 
   protected JComponent createCenterPanel() {
@@ -157,7 +170,35 @@ class OverridingMethodsDialog extends DialogWrapper {
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
 
     panel.add(scrollPane, BorderLayout.CENTER);
-    return panel;
+    ListSelectionListener selectionListener = new ListSelectionListener() {
+      public void valueChanged(final ListSelectionEvent e) {
+        int index = myTable.getSelectionModel().getLeadSelectionIndex();
+        if (index != -1) {
+          UsageInfo usageInfo = myOverridingMethods.get(index);
+          myUsagePreviewPanel.updateLayout(Collections.singletonList(usageInfo));
+        }
+        else {
+          myUsagePreviewPanel.updateLayout(null);
+        }
+      }
+    };
+    myTable.getSelectionModel().addListSelectionListener(selectionListener);
+
+    final Splitter splitter = new Splitter(true, 0.3f);
+    splitter.setFirstComponent(panel);
+    splitter.setSecondComponent(myUsagePreviewPanel);
+    myUsagePreviewPanel.updateLayout(null);
+    
+    Disposer.register(myDisposable, new Disposable(){
+      public void dispose() {
+        splitter.dispose();
+      }
+    });
+
+    if (tableModel.getRowCount() != 0) {
+      myTable.getSelectionModel().addSelectionInterval(0,0);
+    }
+    return splitter;
   }
 
   class MyTableModel extends AbstractTableModel {

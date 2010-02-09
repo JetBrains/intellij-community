@@ -20,9 +20,11 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
@@ -67,7 +69,12 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
     final ProjectWizardStepFactory wizardFactory = ProjectWizardStepFactory.getInstance();
     ArrayList<ModuleWizardStep> steps = new ArrayList<ModuleWizardStep>();
     steps.add(wizardFactory.createSourcePathsStep(wizardContext, moduleBuilder, getWizardIcon(), "reference.dialogs.new.project.fromScratch.source"));
-    steps.add(wizardFactory.createProjectJdkStep(wizardContext));
+    steps.add(wizardFactory.createProjectJdkStep(wizardContext, JavaSdk.getInstance(), moduleBuilder, new Computable<Boolean>() {
+      public Boolean compute() {
+        final Sdk projectJdk = wizardContext.getProjectJdk();
+        return projectJdk == null || projectJdk.getSdkType() != JavaSdk.getInstance() ? Boolean.TRUE : Boolean.FALSE;
+      }
+    }, getWizardIcon(), "reference.dialogs.new.project.fromScratch.sdk"));
     final ModuleWizardStep supportForFrameworksStep = wizardFactory.createSupportForFrameworksStep(wizardContext, moduleBuilder);
     if (supportForFrameworksStep != null) {
       steps.add(supportForFrameworksStep);

@@ -549,7 +549,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myEditorComponent.addFocusListener(new FocusAdapter() {
       public void focusGained(FocusEvent e) {
-        myCaretCursor.activate(false);
+        myCaretCursor.activate();
         int caretLine = getCaretModel().getLogicalPosition().line;
         repaintLines(caretLine, caretLine);
         fireFocusGained();
@@ -2669,14 +2669,19 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public boolean setCaretVisible(boolean b) {
-    myCaretCursor.setVisible(b);
     boolean old = myCaretCursor.isActive();
     if (b) {
-      myCaretCursor.activate(true);
+      myCaretCursor.activate();
     }
     else {
       myCaretCursor.passivate();
     }
+    return old;
+  }
+
+  public boolean setCaretEnabled(boolean enabled) {
+    boolean old = myCaretCursor.isEnabled();
+    myCaretCursor.setEnabled(enabled);
     return old;
   }
 
@@ -2722,7 +2727,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private class CaretCursor {
     private Point myLocation;
     private int myWidth;
-    private boolean myIsVisible;
+    private boolean myEnabled;
 
     @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
     private boolean myIsShown = false;
@@ -2730,23 +2735,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     private CaretCursor() {
       myLocation = new Point(0, 0);
-      myIsVisible = true;
+      setEnabled(true);
     }
 
-    public boolean isVisible() {
-      return myIsVisible;
+    public boolean isEnabled() {
+      return myEnabled;
     }
 
-    public void setVisible(boolean visible) {
-      myIsVisible = visible;
+    public void setEnabled(boolean enabled) {
+      myEnabled = enabled;
     }
 
-    private void activate(boolean enforceVisible) {
-      if (enforceVisible) {
-        setVisible(true);
-      }
-
-      if (!myIsVisible) return;
+    private void activate() {
       final boolean blink = mySettings.isBlinkCaret();
       final int blinkPeriod = mySettings.getCaretBlinkPeriod();
       synchronized (ourCaretBlinkingCommand) {
@@ -2772,7 +2772,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private void setPosition(Point location, int width) {
       myStartTime = System.currentTimeMillis();
       myLocation = location;
-      myIsShown = myIsVisible;
       myWidth = Math.max(width, 2);
       repaint();
     }
@@ -2782,7 +2781,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     private void paint(Graphics g) {
-      if (!myIsShown || !IJSwingUtilities.hasFocus(getContentComponent()) || isRendererMode()) return;
+      if (!isEnabled() || !myIsShown || !IJSwingUtilities.hasFocus(getContentComponent()) || isRendererMode()) return;
 
       int x = myLocation.x;
       int lineHeight = getLineHeight();

@@ -294,6 +294,9 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
               processUsage(variable);
               return;
             }
+          } else if (classReference.getParent() instanceof PsiAnonymousClass) {
+            processUsage(classReference);
+            return;
           }
         }
         markNode(ref); //???
@@ -635,10 +638,17 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
         final PsiType type = ((PsiParameter)element).getType();
         final PsiClass aClass = PsiUtil.resolveClassInType(type);
         if (aClass != null) {
-          if (!myManager.isInProject(element) || !myManager.areElementsEquivalent(aClass, myClass)) {
-            if (!isSuperInheritor(aClass)) {
-              markNode(element);
+          if (aClass instanceof PsiTypeParameter) {
+            for (Node node : myElementToNode.get(element).mySuccessors) {
+              final PsiResolveHelper psiResolveHelper = JavaPsiFacade.getInstance(myProject).getResolveHelper();
+              final PsiType psiType = psiResolveHelper
+                .inferTypeForMethodTypeParameter((PsiTypeParameter)aClass, new PsiParameter[]{(PsiParameter)element},
+                                                 new PsiExpression[]{(PsiExpression)node.myMark.myElement}, PsiSubstitutor.EMPTY, null,
+                                                 false);
+              if (checkNode(element, PsiUtil.resolveClassInType(psiType))) break;
             }
+          } else {
+            checkNode(element, aClass);
           }
         }
         else { // unresolvable class
@@ -646,6 +656,16 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
         }
       }
     }
+  }
+
+  private boolean checkNode(PsiElement element, PsiClass psiClass) {
+    if (!myManager.isInProject(element) || !myManager.areElementsEquivalent(psiClass, myClass)) {
+      if (!isSuperInheritor(psiClass)) {
+        markNode(element);
+        return true;
+      }
+    }
+    return false;
   }
 
   protected abstract boolean isSuperInheritor(PsiClass aClass);

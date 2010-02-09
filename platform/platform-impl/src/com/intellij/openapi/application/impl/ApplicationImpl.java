@@ -328,6 +328,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         try {
           action.run();
         }
+        catch (ProcessCanceledException e) {
+          // ignore
+        }
         catch (Throwable t) {
           LOG.error(t);
         }
