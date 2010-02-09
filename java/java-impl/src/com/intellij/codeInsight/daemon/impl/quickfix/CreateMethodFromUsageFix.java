@@ -231,7 +231,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
 
     if (!shouldBeAbstract) {
       startTemplate(newEditor, template, project, new TemplateEditingAdapter() {
-        public void templateFinished(Template template) {
+        public void templateFinished(Template template, boolean brokenOff) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
               PsiDocumentManager.getInstance(project).commitDocument(newEditor.getDocument());

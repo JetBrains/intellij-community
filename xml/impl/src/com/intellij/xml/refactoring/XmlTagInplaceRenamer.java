@@ -99,7 +99,7 @@ public class XmlTagInplaceRenamer {
 
               final Template t = buildTemplate(tag, pair);
               TemplateManager.getInstance(project).startTemplate(myEditor, t, new TemplateEditingAdapter() {
-                public void templateFinished(final Template template) {
+                public void templateFinished(final Template template, boolean brokenOff) {
                   finish();
                 }
 

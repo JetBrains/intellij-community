@@ -93,7 +93,8 @@ public class CustomTemplateCallback {
       }
 
       @Override
-      public void templateFinished(Template template) {
+      public void templateFinished(Template template, boolean brokenOff) {
+        if (brokenOff) return;
         templateFinished[0] = true;
         if (templateEnded[0] && listener != null) {
           listener.finished(true, true);

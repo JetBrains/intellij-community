@@ -26,7 +26,7 @@ public abstract class TemplateEditingAdapter implements TemplateEditingListener 
   public void beforeTemplateFinished(final TemplateState state, final Template template) {
   }
 
-  public void templateFinished(Template template) {
+  public void templateFinished(Template template, boolean brokenOff) {
   }
 
   public void templateCancelled(Template template) {
