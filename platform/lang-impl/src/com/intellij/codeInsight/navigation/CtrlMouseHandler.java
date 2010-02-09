@@ -328,14 +328,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   }
 
   @Nullable
-  private Info getInfoAt(final Editor editor, PsiFile file, LogicalPosition pos, BrowseMode browseMode) {
-    final int offset = editor.logicalPositionToOffset(pos);
-
-    int selStart = editor.getSelectionModel().getSelectionStart();
-    int selEnd = editor.getSelectionModel().getSelectionEnd();
-
-    if (offset >= selStart && offset < selEnd) return null;
-
+  private Info getInfoAt(final Editor editor, PsiFile file, int offset, BrowseMode browseMode) {
     PsiElement targetElement = null;
 
     if (browseMode == BrowseMode.TypeDeclaration) {
@@ -462,21 +455,28 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         return;
       }
 
+      final int offset = myEditor.logicalPositionToOffset(myPosition);
+
+      int selStart = myEditor.getSelectionModel().getSelectionStart();
+      int selEnd = myEditor.getSelectionModel().getSelectionEnd();
+
+      if (offset >= selStart && offset < selEnd) return;
+
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         public void run() {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
-              doExecute(file);
+              doExecute(file, offset);
             }
           });
         }
       });
     }
 
-    private void doExecute(PsiFile file) {
+    private void doExecute(PsiFile file, int offset) {
       final Info info;
       try {
-        info = getInfoAt(myEditor, file, myPosition, myBrowseMode);
+        info = getInfoAt(myEditor, file, offset, myBrowseMode);
       }
       catch (IndexNotReadyException e) {
         showDumbModeNotification(myProject);
