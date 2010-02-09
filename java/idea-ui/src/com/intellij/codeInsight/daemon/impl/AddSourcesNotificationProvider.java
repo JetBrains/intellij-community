@@ -93,7 +93,7 @@ public class AddSourcesNotificationProvider implements EditorNotifications.Provi
         descriptor.setDescription(ProjectBundle.message("library.attach.sources.description"));
         VirtualFile[] roots = library.getFiles(OrderRootType.CLASSES);
         VirtualFile[] candidates = FileChooser.chooseFiles(myProject, descriptor, roots.length == 0 ? null : roots[0]);
-        final VirtualFile[] files = PathUIUtils.scandAndSelectDetectedJavaSourceRoots(myProject, candidates);
+        final VirtualFile[] files = PathUIUtils.scanAndSelectDetectedJavaSourceRoots(myProject, candidates);
         if (files.length == 0) {
           return;
         }
