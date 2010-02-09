@@ -20,6 +20,8 @@
  */
 package com.intellij.debugger.engine.evaluation.expression;
 
+import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.ContextUtil;
@@ -118,31 +120,40 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     @Override
     public void visitAssignmentExpression(PsiAssignmentExpression expression) {
-      PsiExpression rExpression = expression.getRExpression();
-      if(rExpression == null) throw new EvaluateRuntimeException(EvaluateExceptionUtil
-        .createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", expression.getText())));
+      final PsiExpression rExpression = expression.getRExpression();
+      if(rExpression == null) {
+        throw new EvaluateRuntimeException(
+          EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", expression.getText()))
+        );
+      }
 
       rExpression.accept(this);
       Evaluator rEvaluator = myResult;
 
       if(expression.getOperationSign().getTokenType() != JavaTokenType.EQ) {
-        throw new EvaluateRuntimeException(EvaluateExceptionUtil.createEvaluateException(
-          DebuggerBundle.message("evaluation.error.operation.not.supported", expression.getOperationSign().getText())));
+        throw new EvaluateRuntimeException(
+          EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.operation.not.supported", expression.getOperationSign().getText()))
+        );
       }
 
-      PsiExpression lExpression = expression.getLExpression();
+      final PsiExpression lExpression = expression.getLExpression();
 
-      if(lExpression.getType() == null) {
-        throw new EvaluateRuntimeException(EvaluateExceptionUtil
-          .createEvaluateException(DebuggerBundle.message("evaluation.error.unknown.expression.type", lExpression.getText())));
+      final PsiType lType = lExpression.getType();
+      if(lType == null) {
+        throw new EvaluateRuntimeException(
+          EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.unknown.expression.type", lExpression.getText()))
+        );
       }
 
-      if(!TypeConversionUtil.areTypesAssignmentCompatible(lExpression.getType(), rExpression)) {
+      if(!TypeConversionUtil.areTypesAssignmentCompatible(lType, rExpression)) {
         throw new EvaluateRuntimeException(EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.incompatible.types", expression.getOperationSign().getText())));
       }
       lExpression.accept(this);
       Evaluator lEvaluator = myResult;
 
+      if (TypeConversionUtil.boxingConversionApplicable(lType, rExpression.getType())) {
+        rEvaluator = (lType instanceof PsiPrimitiveType)? new UnBoxingEvaluator(rEvaluator) : new BoxingEvaluator(rEvaluator);
+      }
       myResult = new AssignmentEvaluator(lEvaluator, rEvaluator);
     }
 
@@ -266,9 +277,10 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       if (LOG.isDebugEnabled()) {
         LOG.debug("visitBinaryExpression " + expression);
       }
-      expression.getLOperand().accept(this);
+      final PsiExpression lOperand = expression.getLOperand();
+      lOperand.accept(this);
       Evaluator lResult = myResult;
-      PsiExpression rOperand = expression.getROperand();
+      final PsiExpression rOperand = expression.getROperand();
       if(rOperand == null) {
         throw new EvaluateRuntimeException(EvaluateExceptionUtil
           .createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", expression.getText())));
@@ -280,6 +292,18 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         throw new EvaluateRuntimeException(EvaluateExceptionUtil
           .createEvaluateException(DebuggerBundle.message("evaluation.error.unknown.expression.type", expression.getText())));
       }
+      // handle unboxing if neccesary
+      final PsiType lType = lOperand.getType();
+      final PsiType rType = rOperand.getType();
+      if (TypeConversionUtil.boxingConversionApplicable(lType, rType)) {
+        if (lType instanceof PsiPrimitiveType) {
+          myResult = new UnBoxingEvaluator(myResult);
+        }
+        else if (rType instanceof PsiPrimitiveType) {
+          lResult = new UnBoxingEvaluator(lResult);
+        }
+      }
+
       myResult = new BinaryExpressionEvaluator(lResult, myResult, opType, type.getCanonicalText());
     }
 
@@ -291,13 +315,13 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       for (PsiElement declaredElement : declaredElements) {
         if (declaredElement instanceof PsiLocalVariable) {
           if (myCurrentFragmentEvaluator != null) {
-            PsiLocalVariable localVariable = ((PsiLocalVariable)declaredElement);
+            final PsiLocalVariable localVariable = ((PsiLocalVariable)declaredElement);
 
-            PsiType type = localVariable.getType();
+            final PsiType lType = localVariable.getType();
 
             PsiElementFactory elementFactory = JavaPsiFacade.getInstance(localVariable.getProject()).getElementFactory();
             try {
-              PsiExpression initialValue = elementFactory.createExpressionFromText(PsiTypesUtil.getDefaultValueOfType(type), null);
+              PsiExpression initialValue = elementFactory.createExpressionFromText(PsiTypesUtil.getDefaultValueOfType(lType), null);
               Object value = JavaConstantExpressionEvaluator.computeConstantExpression(initialValue, true);
               myCurrentFragmentEvaluator.setInitialValue(localVariable.getName(), value);
             }
@@ -315,6 +339,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
                   throw new EvaluateRuntimeException(EvaluateExceptionUtil.createEvaluateException(
                     DebuggerBundle.message("evaluation.error.incompatible.variable.initializer.type", localVariable.getName())));
                 }
+                final PsiType rType = initializer.getType();
                 initializer.accept(this);
                 Evaluator rEvaluator = myResult;
 
@@ -323,7 +348,16 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
                 localVarReference.accept(this);
                 Evaluator lEvaluator = myResult;
 
-                evaluators.add(new AssignmentEvaluator(lEvaluator, rEvaluator));
+                Evaluator assignment = new AssignmentEvaluator(lEvaluator, rEvaluator);
+                if (TypeConversionUtil.boxingConversionApplicable(lType, rType)) {
+                  if (lType instanceof PsiPrimitiveType) {
+                    assignment = new UnBoxingEvaluator(assignment);
+                  }
+                  else {
+                    assignment = new BoxingEvaluator(assignment);
+                  }
+                }
+                evaluators.add(assignment);
               }
               catch (IncorrectOperationException e) {
                 LOG.error(e);
@@ -602,8 +636,8 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     @Override
     public void visitPrefixExpression(final PsiPrefixExpression expression) {
-      final PsiType type = expression.getType();
-      if(type == null) {
+      final PsiType expressionType = expression.getType();
+      if(expressionType == null) {
         throw new EvaluateRuntimeException(
           EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.unknown.expression.type", expression.getText()))
         );
@@ -616,6 +650,8 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         );
       }
       
+      final PsiType operandExpressionType = operandExpression.getType();
+
       operandExpression.accept(this);
       final Evaluator operand = myResult;
 
@@ -628,10 +664,22 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           PsiElementFactory elementFactory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
           PsiExpression one = elementFactory.createExpressionFromText("1", null);
           one.accept(this);
+          // handle unboxing issues
+          Evaluator left = operand;
+          if (!(operandExpressionType instanceof PsiPrimitiveType)) {
+            left = new UnBoxingEvaluator(left);
+          }
 
+          PsiType expected = expressionType;
+          final PsiPrimitiveType unboxedExpectedType = PsiPrimitiveType.getUnboxedType(expected);
+          if (unboxedExpectedType != null) {
+            expected = unboxedExpectedType;
+          }
+          final BinaryExpressionEvaluator rightEval = new BinaryExpressionEvaluator(
+            left, myResult, isPlus ? JavaTokenType.PLUS : JavaTokenType.MINUS, expected.getCanonicalText()
+          );
           myResult = new AssignmentEvaluator(
-            operand,
-            new BinaryExpressionEvaluator(operand, myResult, isPlus ? JavaTokenType.PLUS : JavaTokenType.MINUS, type.getCanonicalText())
+            operand, unboxedExpectedType != null? new BoxingEvaluator(rightEval) : rightEval
           );
         }
         catch (IncorrectOperationException e) {
@@ -639,7 +687,15 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         }
       }
       else {
-        myResult = new UnaryExpressionEvaluator(opType, type.getCanonicalText(), operand, expression.getOperationSign().getText());
+        PsiType expected = expressionType;
+        final PsiPrimitiveType unboxedExpectedType = PsiPrimitiveType.getUnboxedType(expected);
+        if (unboxedExpectedType != null) {
+          expected = unboxedExpectedType;
+        }
+        final UnaryExpressionEvaluator unaryEvaluator =
+          new UnaryExpressionEvaluator(opType, expected.getCanonicalText(), new UnBoxingEvaluator(operand),
+                                       expression.getOperationSign().getText());
+        myResult = unboxedExpectedType != null? new BoxingEvaluator(unaryEvaluator) : unaryEvaluator;
       }
     }
 
@@ -768,11 +824,42 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       myResult = new ArrayAccessEvaluator(arrayEvaluator, indexEvaluator);
     }
 
+    @SuppressWarnings({"ConstantConditions"})
     @Override
     public void visitTypeCastExpression(PsiTypeCastExpression expression) {
-      expression.getOperand().accept(this);
-      PsiType castType = expression.getCastType().getType();
-      myResult = new TypeCastEvaluator(myResult, castType.getCanonicalText(), castType instanceof PsiPrimitiveType);
+      final PsiExpression operandExpr = expression.getOperand();
+      operandExpr.accept(this);
+      Evaluator operandEvaluator = myResult;
+      final PsiType castType = expression.getCastType().getType();
+      final PsiType operandType = operandExpr.getType();
+
+      if (!TypeConversionUtil.areTypesConvertible(operandType, castType)) {
+        throw new EvaluateRuntimeException(
+          new EvaluateException(JavaErrorMessages.message("inconvertible.type.cast", HighlightUtil.formatType(operandType), HighlightUtil.formatType(castType)))
+        );
+      }
+
+      final boolean shouldPerformBoxingConversion = TypeConversionUtil.boxingConversionApplicable(castType, operandType);
+      final boolean castingToPrimitive = castType instanceof PsiPrimitiveType;
+      if (shouldPerformBoxingConversion && castingToPrimitive) {
+        operandEvaluator = new UnBoxingEvaluator(operandEvaluator);
+      }
+
+      final boolean performCastToWrapperClass = shouldPerformBoxingConversion && !castingToPrimitive;
+
+      String castTypeName = castType.getCanonicalText();
+      if (performCastToWrapperClass) {
+        final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(castType);
+        if (unboxedType != null) {
+          castTypeName = unboxedType.getCanonicalText();
+        }
+      }
+
+      myResult = new TypeCastEvaluator(operandEvaluator, castTypeName, castingToPrimitive);
+      
+      if (performCastToWrapperClass) {
+        myResult = new BoxingEvaluator(myResult);
+      }
     }
 
     @Override

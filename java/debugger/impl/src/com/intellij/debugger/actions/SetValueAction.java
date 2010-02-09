@@ -20,9 +20,7 @@ import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.evaluation.*;
-import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
-import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
-import com.intellij.debugger.engine.evaluation.expression.Modifier;
+import com.intellij.debugger.engine.evaluation.expression.*;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.*;
@@ -223,6 +221,19 @@ public class SetValueAction extends DebuggerAction {
       double dValue = ((DoubleValue) value).doubleValue();
       if(varType instanceof FloatType && Float.MIN_VALUE <= dValue && dValue <= Float.MAX_VALUE){
         value = context.getSuspendContext().getDebugProcess().getVirtualMachineProxy().mirrorOf((float)dValue);
+      }
+    }
+    if (value != null) {
+      if (varType instanceof PrimitiveType) {
+        if (!(value instanceof PrimitiveValue)) {
+          value = (Value)new UnBoxingEvaluator(new IdentityEvaluator(value)).evaluate(context);
+        }
+      }
+      else if (UnBoxingEvaluator.isTypeUnboxable(varType.name())) {
+        // variable is not primitive and boxing/unboxing is applicable
+        if (value instanceof PrimitiveValue) {
+          value = (Value)new BoxingEvaluator(new IdentityEvaluator(value)).evaluate(context);
+        }
       }
     }
     return value;
