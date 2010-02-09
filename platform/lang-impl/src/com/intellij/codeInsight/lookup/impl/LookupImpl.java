@@ -65,7 +65,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.impl.LookupImpl");
   private static final int MAX_PREFERRED_COUNT = 5;
 
-  private static final LookupItem EMPTY_LOOKUP_ITEM = new LookupItem("preselect", "preselect");
+  private static final LookupItem EMPTY_LOOKUP_ITEM = LookupItem.fromString("preselect");
 
   private final Project myProject;
   private final Editor myEditor;
@@ -928,7 +928,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       Dimension preferredSize = getComponent().getPreferredSize();
       setBounds(point.x,point.y,preferredSize.width,preferredSize.height);
 
-      HintManagerImpl.getInstanceImpl().adjustEditorHintPosition(this, myEditor, point);
+      HintManagerImpl.adjustEditorHintPosition(this, myEditor, point);
     }
   }
 

@@ -11,6 +11,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -45,12 +46,12 @@ public abstract class CompletionSortingTestCase extends LightCompletionTestCase 
 
   protected abstract String getBasePath();
 
-  protected void checkPreferredItems(final int selected, final String... expected) throws Exception {
+  protected void checkPreferredItems(final int selected, @NonNls final String... expected) throws Exception {
     invokeCompletion(getBasePath() + "/" + getTestName(false) + ".java");
     assertPreferredItems(selected, expected);
   }
 
-  protected static void assertPreferredItems(final int selected, final String... expected) {
+  protected static void assertPreferredItems(final int selected, @NonNls final String... expected) {
     final LookupImpl lookup = getLookup();
     final JList list = lookup.getList();
     final List<LookupElement> model = lookup.getItems();

@@ -5,13 +5,10 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.psi.statistics.StatisticsManager;
 
-@SuppressWarnings({"ALL"})
 public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
-  private static final String BASE_PATH = "/codeInsight/completion/smartTypeSorting";
+  private static final String BASE_PATH = "/codeInsight/completion/smartTypeSorting"; 
 
   public SmartTypeCompletionOrderingTest() {
     super(CompletionType.SMART);
@@ -235,9 +232,5 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
 
   protected String getBasePath() {
     return BASE_PATH;
-  }
-
-  protected Sdk getTestProjectJdk() {
-    return JavaSdkImpl.getMockJdk15("java 1.5");
   }
 }

@@ -305,7 +305,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
           if (IdeaLogger.ourErrorsOccurred != null) {
             throw IdeaLogger.ourErrorsOccurred;
           }
-          assertTrue("Logger errors occurred in " + getFullName(), IdeaLogger.ourErrorsOccurred == null);
+          assertNull("Logger errors occurred in " + getFullName(), IdeaLogger.ourErrorsOccurred);
         }
       }
       finally {
@@ -623,8 +623,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   private static void setTmpDir(String path) {
     System.setProperty("java.io.tmpdir", path);
-    Class<File> ioFile = File.class;
     try {
+      Class<File> ioFile = File.class;
       Field field = ioFile.getDeclaredField("tmpdir");
 
       field.setAccessible(true);

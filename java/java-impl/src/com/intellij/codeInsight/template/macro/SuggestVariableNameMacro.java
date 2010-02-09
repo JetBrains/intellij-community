@@ -16,19 +16,18 @@
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiVariable;
+import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.LinkedList;
-
-import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.NotNull;
 
 public class SuggestVariableNameMacro implements Macro {
 
@@ -60,24 +59,24 @@ public class SuggestVariableNameMacro implements Macro {
     LookupItem[] items = new LookupItem[names.length];
     for(int i = 0; i < names.length; i++) {
       String name = names[i];
-      items[i] = new LookupItem(name, name);
+      items[i] = LookupItem.fromString(name);
     }
     return items;
   }
 
-  private String[] getNames (final ExpressionContext context) {
+  private static String[] getNames (final ExpressionContext context) {
     String[] names = ExpressionUtil.getNames(context);
     if (names == null || names.length == 0) return names;
     PsiFile file = PsiDocumentManager.getInstance(context.getProject()).getPsiFile(context.getEditor().getDocument());
     PsiElement e = file.findElementAt(context.getStartOffset());
     PsiVariable[] vars = MacroUtil.getVariablesVisibleAt(e, "");
-    LinkedList namesList = new LinkedList(Arrays.asList(names));
+    LinkedList<String> namesList = new LinkedList<String>(Arrays.asList(names));
     for (PsiVariable var : vars) {
       if (e.equals(var.getNameIdentifier())) continue;
       namesList.remove(var.getName());
     }
 
-    if (namesList.size() == 0) {
+    if (namesList.isEmpty()) {
       String name = names[0];
       index:
       for (int j = 1; ; j++) {
@@ -89,7 +88,7 @@ public class SuggestVariableNameMacro implements Macro {
       }
     }
 
-    return (String[])ArrayUtil.toStringArray(namesList);
+    return ArrayUtil.toStringArray(namesList);
   }
 
 }

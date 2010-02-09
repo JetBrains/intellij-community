@@ -106,7 +106,7 @@ public class LookupItemUtil{
       return new ExpressionLookupItem((PsiExpression) object);
     }
     if (object instanceof PsiType) {
-      return PsiTypeLookupItem.createLookupItem((PsiType)object);
+      return PsiTypeLookupItem.createLookupItem((PsiType)object, null);
     }
 
     String s = null;
