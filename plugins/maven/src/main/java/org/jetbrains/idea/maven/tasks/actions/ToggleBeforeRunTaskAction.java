@@ -47,7 +47,6 @@ public class ToggleBeforeRunTaskAction extends MavenToggleAction {
   public void setSelected(final AnActionEvent e, boolean state) {
     Pair<MavenProject, String> desc = getTaskDesc(e);
     new MavenExecuteBeforeRunDialog(MavenActionUtil.getProject(e), desc.first, desc.second).show();
-    MavenTasksManager.getInstance(MavenActionUtil.getProject(e)).fireTasksChanged();
   }
 
   protected Pair<MavenProject, String> getTaskDesc(AnActionEvent e) {
