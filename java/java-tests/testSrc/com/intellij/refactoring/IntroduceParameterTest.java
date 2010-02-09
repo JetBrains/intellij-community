@@ -22,10 +22,12 @@ import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor;
 import com.intellij.refactoring.introduceParameter.Util;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.TestDataPath;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+@TestDataPath("$CONTENT_ROOT/testData")
 public class IntroduceParameterTest extends LightCodeInsightTestCase {
   @Override
   protected String getTestDataPath() {
@@ -232,6 +234,10 @@ public class IntroduceParameterTest extends LightCodeInsightTestCase {
   public void testIncompleteEnumDefinition() throws Exception {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false, false, false, "Incomplete call(Root()): 2 parameters expected but only 0 found\n" +
                                                                                                       "Incomplete call(Root()): expected to delete the 1 parameter but only 0 parameters found");
+  }
+
+  public void testStaticFieldWithGetterReplacement() throws Exception {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL, true, false, true, false);
   }
 
   private void doTestThroughHandler() throws Exception {

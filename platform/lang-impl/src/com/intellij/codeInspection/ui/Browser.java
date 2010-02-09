@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -231,6 +232,9 @@ public class Browser extends JPanel {
                 String fileURL = url.toExternalForm();
                 fileURL = fileURL.substring(0, fileURL.indexOf('#'));
                 VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(fileURL);
+                if (vFile == null) {
+                  vFile = VfsUtil.findFileByURL(url);
+                }
                 if (vFile != null) {
                   fireClickEvent(vFile, offset, offset);
                 }

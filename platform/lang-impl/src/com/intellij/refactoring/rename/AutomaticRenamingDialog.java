@@ -16,11 +16,14 @@
 
 package com.intellij.refactoring.rename;
 
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
@@ -211,7 +214,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
   }
 
   protected void dispose() {
-    myUsagePreviewPanel.dispose();
+    Disposer.dispose(myUsagePreviewPanel);
     super.dispose();
   }
 
@@ -241,7 +244,15 @@ public class AutomaticRenamingDialog extends DialogWrapper {
         case CHECK_COLUMN:
           return Boolean.valueOf(myShouldRename[rowIndex]);
         case OLD_NAME_COLUMN:
-          return myRenames[rowIndex].getName();
+          final PsiNamedElement namedElement = myRenames[rowIndex];
+          String location = null;
+          if (namedElement instanceof NavigationItem) {
+            final ItemPresentation presentation = ((NavigationItem)namedElement).getPresentation();
+            if (presentation != null) {
+              location = presentation.getLocationString();
+            }
+          }
+          return namedElement.getName() + (location != null ? " " + location : "");
         case NEW_NAME_COLUMN:
           return myNewNames[rowIndex];
         default:

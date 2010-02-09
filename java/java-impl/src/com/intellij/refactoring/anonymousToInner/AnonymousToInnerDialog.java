@@ -20,19 +20,20 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
-import com.intellij.ui.EditorTextField;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
+import com.intellij.util.Function;
 import com.intellij.util.containers.HashMap;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -45,7 +46,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
   private final PsiAnonymousClass myAnonClass;
   private final boolean myNeedsThis;
 
-  private EditorTextField myNameField;
+  private NameSuggestionsField myNameField;
   private final ParameterTablePanel.VariableData[] myVariableData;
   private final Map<PsiVariable,VariableInfo> myVariableToInfoMap = new HashMap<PsiVariable, VariableInfo>();
   private JCheckBox myCbMakeStatic;
@@ -79,11 +80,20 @@ class AnonymousToInnerDialog extends DialogWrapper{
 
     init();
 
+    final String[] names;
     String name = myAnonClass.getBaseClassReference().getReferenceName();
-    @NonNls final String prefix = "My";
-    name = prefix + name; //?
-    myNameField.setText(name);
-    myNameField.selectAll();
+    PsiType[] typeParameters = myAnonClass.getBaseClassReference().getTypeParameters();
+    if (typeParameters.length > 0) {
+      names = new String[]{StringUtil.join(typeParameters, new Function<PsiType, String>() {
+        public String fun(PsiType psiType) {
+          return psiType.getPresentableText();
+        }
+      }, "") + name, "My" + name};
+    } else {
+      names = new String[]{"My" + name};
+    }
+    myNameField.setSuggestions(names);
+    myNameField.selectNameWithoutExtension();
   }
 
   protected Action[] createActions(){
@@ -104,7 +114,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
   }
 
   public String getClassName() {
-    return myNameField.getText().trim();
+    return myNameField.getEnteredName();
   }
 
   public VariableInfo[] getVariableInfos() {
@@ -183,7 +193,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
     JLabel namePrompt = new JLabel(RefactoringBundle.message("anonymousToInner.class.name.label.text"));
     panel.add(namePrompt, gbConstraints);
 
-    myNameField = new EditorTextField("");
+    myNameField = new NameSuggestionsField(myProject);
     gbConstraints.gridwidth = 1;
     gbConstraints.weightx = 1;
     gbConstraints.gridx = 1;

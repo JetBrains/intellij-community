@@ -8,12 +8,14 @@ import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.TestDataPath;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
 
 /**
  * @author ven
  */
+@TestDataPath("$CONTENT_ROOT/testData")
 public class IntroduceConstantTest extends LightCodeInsightTestCase {
   @NonNls private static final String BASE_PATH = "/refactoring/introduceConstant/";
 
