@@ -918,7 +918,13 @@ public abstract class DebugProcessImpl implements DebugProcess {
             return invokeMethodAndFork(suspendContext);
             }
           catch (ClassNotLoadedException e) {
-            ReferenceType loadedClass = evaluationContext.isAutoLoadClasses()? loadClass(evaluationContext, e.className(), evaluationContext.getClassLoader()) : null;
+            ReferenceType loadedClass = null;
+            try {
+              loadedClass = evaluationContext.isAutoLoadClasses()? loadClass(evaluationContext, e.className(), evaluationContext.getClassLoader()) : null;
+            }
+            catch (EvaluateException ignored) {
+              loadedClass = null;
+            }
             if (loadedClass == null) {
               throw EvaluateExceptionUtil.createEvaluateException(e);
             }
