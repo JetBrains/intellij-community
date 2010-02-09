@@ -329,10 +329,6 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
   @Nullable
   private Info getInfoAt(final Editor editor, PsiFile file, LogicalPosition pos, BrowseMode browseMode) {
-    if (TargetElementUtilBase.inVirtualSpace(editor, pos)) {
-      return null;
-    }
-
     final int offset = editor.logicalPositionToOffset(pos);
 
     int selStart = editor.getSelectionModel().getSelectionStart();
@@ -461,6 +457,10 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
       if (file == null) return;
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+
+      if (TargetElementUtilBase.inVirtualSpace(myEditor, myPosition)) {
+        return;
+      }
 
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         public void run() {
