@@ -39,6 +39,11 @@ abstract class KeyGestureState {
     myProcessor.myDblClickTimer.stop();
   }
 
+  @Override
+  public String toString() {
+    return getClass().getName();
+  }
+
   boolean isPureModifierEvent(int eventType) {
     final KeyEvent event = myContext.keyToProcess;
     if (event.getID() != eventType) return false;
