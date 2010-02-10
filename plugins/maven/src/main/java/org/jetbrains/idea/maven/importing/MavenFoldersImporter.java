@@ -116,10 +116,8 @@ public class MavenFoldersImporter {
       myModel.useModuleOutput(myMavenProject.getOutputDirectory(),
                               myMavenProject.getTestOutputDirectory());
     }
-    else {
-      myModel.addExcludedFolder(myMavenProject.getOutputDirectory());
-      myModel.addExcludedFolder(myMavenProject.getTestOutputDirectory());
-    }
+    myModel.addExcludedFolder(myMavenProject.getOutputDirectory());
+    myModel.addExcludedFolder(myMavenProject.getTestOutputDirectory());
   }
 
   private void configExcludedFolders() {
