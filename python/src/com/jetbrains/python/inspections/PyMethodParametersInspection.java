@@ -12,8 +12,6 @@ import com.jetbrains.python.actions.RenameParameterQuickFix;
 import com.jetbrains.python.psi.*;
 import static com.jetbrains.python.psi.PyFunction.Flag.CLASSMETHOD;
 import static com.jetbrains.python.psi.PyFunction.Flag.STATICMETHOD;
-
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -75,7 +73,7 @@ public class PyMethodParametersInspection extends LocalInspectionTool {
         Set<PyFunction.Flag> flags = PyUtil.detectDecorationsAndWrappersOf(node);
         if (params.length == 0) {
           // check for "staticmetod"
-          if (flags.contains(STATICMETHOD) || !PyPsiUtils.isMethodContext(plist)) return; // no params may be fine
+          if (flags.contains(STATICMETHOD)) return; // no params may be fine
           // check actual param list
           ASTNode name_node = node.getNameNode();
           if (name_node != null) {
