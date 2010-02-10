@@ -22,7 +22,7 @@ public class PyDefUseUtil {
   private PyDefUseUtil() {}
 
   @NotNull
-  public static PyElement[] getLatestDefs(ScopeOwner block, PyTargetExpression var, PyElement anchor) {
+  public static PyElement[] getLatestDefs(ScopeOwner block, PyTargetExpression var, PsiElement anchor) {
     final ControlFlow controlFlow = block.getControlFlow();
     final Instruction[] instructions = controlFlow.getInstructions();
     final int instr = ControlFlowUtil.findInstructionNumberByElement(instructions, anchor);

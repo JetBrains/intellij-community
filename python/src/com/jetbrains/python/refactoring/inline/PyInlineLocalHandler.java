@@ -65,6 +65,7 @@ public class PyInlineLocalHandler extends InlineActionHandler {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, local)) return;
 
     final HighlightManager highlightManager = HighlightManager.getInstance(project);
+    final TextAttributes writeAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES);
 
     final String localName = local.getName();
     final ScopeOwner containerBlock = getContext(local);
@@ -81,7 +82,6 @@ public class PyInlineLocalHandler extends InlineActionHandler {
     }
 
     if (def instanceof PyAssignmentStatement && ((PyAssignmentStatement)def).getTargets().length > 1){
-      final TextAttributes writeAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES);
       highlightManager.addOccurrenceHighlights(editor, new PsiElement[] {def}, writeAttributes, true, null);
       String message = RefactoringBundle.getCannotRefactorMessage(PyBundle.message("refactoring.inline.local.multiassignment", localName));
       CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, "refactoring.inlineVariable");
@@ -120,6 +120,23 @@ public class PyInlineLocalHandler extends InlineActionHandler {
       }
     }
 
+    for (final PsiElement ref : refsToInline) {
+      final PsiElement[] defs = PyDefUseUtil.getLatestDefs(containerBlock, local, ref);
+      boolean isSameDefinition = true;
+      for (PsiElement otherDef : defs) {
+        isSameDefinition &= isSameDefinition(def, otherDef);
+      }
+      if (!isSameDefinition) {
+        highlightManager.addOccurrenceHighlights(editor, defs, writeAttributes, true, null);
+        highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{ref}, attributes, true, null);
+        String message =
+          RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.is.accessed.for.writing.and.used.with.inlined", localName));
+        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, "refactoring.inlineVariable");
+        WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+        return;
+      }
+    }
+
 
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       public void run() {
@@ -139,10 +156,6 @@ public class PyInlineLocalHandler extends InlineActionHandler {
             final PsiElement next = def.getNextSibling();
             if (next instanceof PsiWhiteSpace) {
               PyPsiUtils.removeElements(next);
-              final PsiElement prev = findPrevWhiteSpace(def);
-              if (prev != null) {
-                PyPsiUtils.removeElements(prev);
-              }
             }
             PyPsiUtils.removeElements(def);
             if (editor != null && !ApplicationManager.getApplication().isUnitTestMode()) {
@@ -154,6 +167,11 @@ public class PyInlineLocalHandler extends InlineActionHandler {
         });
       }
     }, RefactoringBundle.message("inline.command", localName), null);
+  }
+
+  private static boolean isSameDefinition(PyStatement def, PsiElement otherDef) {
+    if (otherDef instanceof PyTargetExpression) otherDef = otherDef.getParent();
+    return otherDef == def;
   }
 
   private static ScopeOwner getContext(PyTargetExpression local) {
@@ -217,11 +235,5 @@ public class PyInlineLocalHandler extends InlineActionHandler {
       return PythonLanguage.getInstance().getElementGenerator().createExpressionFromText(project, localName + " " + op + value.getText() + ")");
     }
     return value;
-  }
-
-  @Nullable
-  private static PsiElement findPrevWhiteSpace(PyElement def) {
-    PsiElement prev = def.getPrevSibling();
-    return prev instanceof PsiWhiteSpace ? prev : null;
   }
 }

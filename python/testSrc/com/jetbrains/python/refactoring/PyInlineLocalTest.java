@@ -48,6 +48,10 @@ public class PyInlineLocalTest extends LightMarkedTestCase {
     doTest("Cannot perform refactoring.\nCannot find a single definition to inline.");
   }
 
+  public void testDoubleDefinition() throws Exception {
+    doTest("Cannot perform refactoring.\nAnother variable 'foo' definition is used together with inlined one.");
+  }
+
   public void testMultiple() throws Exception {
     doTest();
   }
