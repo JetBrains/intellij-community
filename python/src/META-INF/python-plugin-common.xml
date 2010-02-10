@@ -61,7 +61,7 @@
     <gotoTargetRendererProvider implementation="com.jetbrains.python.codeInsight.PyGotoTargetRendererProvider"/>
 
     <typeHierarchyProvider language="Python" implementationClass="com.jetbrains.python.hierarchy.PyTypeHierachyProvider"/>
-
+    <highlightUsagesHandlerFactory implementation="com.jetbrains.python.codeInsight.highlighting.PyHighlightExitPointsHandlerFactory"/>
     <intentionAction factoryClass="com.jetbrains.python.PyExtensionFactory"
                      factoryArgument="intentions/PyDemorganIntention.py">
       <className>PyDemorganIntention</className>
