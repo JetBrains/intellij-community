@@ -32,6 +32,7 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.AsynchConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
@@ -167,6 +168,45 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     }
   }
 
+  public void loadCommittedChanges(ChangeBrowserSettings settings,
+                                   RepositoryLocation location,
+                                   int maxCount,
+                                   final AsynchConsumer<CommittedChangeList> consumer)
+    throws VcsException {
+    try {
+      final SvnRepositoryLocation svnLocation = (SvnRepositoryLocation) location;
+      final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
+      if (progress != null) {
+        progress.setText(SvnBundle.message("progress.text.changes.collecting.changes"));
+        progress.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", location));
+      }
+
+      final String repositoryRoot;
+      try {
+        final SVNRepository repository = myVcs.createRepository(svnLocation.getURL());
+        repositoryRoot = repository.getRepositoryRoot(true).toString();
+        repository.closeSession();
+      }
+      catch (SVNException e) {
+        throw new VcsException(e);
+      }
+
+      final ChangeBrowserSettings.Filter filter = settings.createFilter();
+
+      getCommittedChangesImpl(settings, svnLocation.getURL(), new String[]{""}, maxCount, new Consumer<SVNLogEntry>() {
+        public void consume(final SVNLogEntry svnLogEntry) {
+          final SvnChangeList cl = new SvnChangeList(myVcs, svnLocation, svnLogEntry, repositoryRoot);
+          if (filter.accepts(cl)) {
+            consumer.consume(cl);
+          }
+        }
+      });
+    }
+    finally {
+      consumer.finished();
+    }
+  }
+
   public List<SvnChangeList> getCommittedChanges(ChangeBrowserSettings settings, final RepositoryLocation location, final int maxCount) throws VcsException {
     final SvnRepositoryLocation svnLocation = (SvnRepositoryLocation) location;
     final ArrayList<SvnChangeList> result = new ArrayList<SvnChangeList>();
@@ -232,6 +272,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
         revisionAfter = SVNRevision.create(1);
       }
 
+      // todo log in committed provider
       logger.doLog(SVNURL.parseURIEncoded(url), filterUrls, revisionBefore, revisionBefore, revisionAfter,
                    settings.STOP_ON_COPY, true, maxCount,
                    new ISVNLogEntryHandler() {
