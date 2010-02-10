@@ -368,8 +368,6 @@ public class MavenIndex {
   }
 
   private void updateData(ProgressIndicator progress) throws IOException, UnsupportedExistingLuceneIndexException {
-    progress.setText2(IndicesBundle.message("maven.indices.updating.saving"));
-
     String newDataDirName;
     IndexData newData;
 
@@ -391,7 +389,6 @@ public class MavenIndex {
 
     synchronized (this) {
       IndexData oldData = myData;
-      String oldDataDir = myDataDirName;
 
       myData = newData;
       myDataDirName = newDataDirName;
