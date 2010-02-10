@@ -4,3 +4,5 @@ print "Hello"\
 print 'Hello "World" '
 
 """Foo "bar """
+
+'''Here the ' is just another character'''
