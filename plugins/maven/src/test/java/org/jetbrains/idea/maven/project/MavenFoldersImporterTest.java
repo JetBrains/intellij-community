@@ -28,7 +28,7 @@ import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 
 import java.io.File;
 
-public class MavenFoldersConfiguratorTest extends MavenImportingTestCase {
+public class MavenFoldersImporterTest extends MavenImportingTestCase {
   public void testUpdatingExternallyCreatedFolders() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
