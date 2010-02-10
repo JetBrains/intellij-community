@@ -98,7 +98,7 @@ public class ExtendedTagInsertHandler extends XmlTagInsertHandler {
     try {
       final String prefixByNamespace = getPrefixByNamespace(file, myNamespace);
       if (myNamespacePrefix != null || StringUtil.isEmpty(prefixByNamespace)) {
-        final String nsPrefix = myNamespacePrefix == null ? suggestPrefix(file) : myNamespacePrefix;
+        final String nsPrefix = myNamespacePrefix == null ? suggestPrefix(file, myNamespace) : myNamespacePrefix;
         extension.insertNamespaceDeclaration(file, editor, Collections.singleton(myNamespace), nsPrefix, runAfter);
         FeatureUsageTracker.getInstance().triggerFeatureUsed(XmlCompletionContributor.TAG_NAME_COMPLETION_FEATURE);
       } else {
@@ -130,12 +130,12 @@ public class ExtendedTagInsertHandler extends XmlTagInsertHandler {
   }
 
   @Nullable
-  protected String suggestPrefix(XmlFile file) {
-    if (myNamespace == null) {
+  public static String suggestPrefix(XmlFile file, @Nullable String namespace) {
+    if (namespace == null) {
       return null;
     }
     for (XmlSchemaProvider provider : XmlSchemaProvider.getAvailableProviders(file)) {
-      String prefix = provider.getDefaultPrefix(myNamespace, file);
+      String prefix = provider.getDefaultPrefix(namespace, file);
       if (prefix != null) {
         return prefix;
       }

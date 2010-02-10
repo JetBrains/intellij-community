@@ -131,19 +131,26 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
       project,
       new StringToAttributeProcessor() {
         public void doSomethingWithGivenStringToProduceXmlAttributeNowPlease(@NotNull final String namespace) throws IncorrectOperationException {
-          if (StringUtil.isEmpty(myNamespacePrefix)) {
+          String prefix = myNamespacePrefix;
+          if (StringUtil.isEmpty(prefix)) {
             final XmlExtension extension = XmlExtension.getExtension(myFile);
             final XmlFile xmlFile = extension.getContainingFile(myElement);
-            final String prefixByNamespace = ExtendedTagInsertHandler.getPrefixByNamespace(xmlFile, namespace);
-            if (prefixByNamespace != null) {
-              ExtendedTagInsertHandler.qualifyWithPrefix(prefixByNamespace, myElement);
+            prefix = ExtendedTagInsertHandler.getPrefixByNamespace(xmlFile, namespace);
+            if (StringUtil.isNotEmpty(prefix)) {
+              ExtendedTagInsertHandler.qualifyWithPrefix(prefix, myElement);
               return;
+            } else {
+              prefix = ExtendedTagInsertHandler.suggestPrefix(xmlFile, namespace);
+              if (StringUtil.isNotEmpty(prefix)) {
+                ExtendedTagInsertHandler.qualifyWithPrefix(prefix, myElement);
+                PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
+              }
             }
           }
           final int offset = editor.getCaretModel().getOffset();
           final RangeMarker marker = editor.getDocument().createRangeMarker(offset, offset);
           final XmlExtension extension = XmlExtension.getExtension(file);
-          extension.insertNamespaceDeclaration((XmlFile)file, editor, Collections.singleton(namespace), myNamespacePrefix, new XmlExtension.Runner<String, IncorrectOperationException>() {
+          extension.insertNamespaceDeclaration((XmlFile)file, editor, Collections.singleton(namespace), prefix, new XmlExtension.Runner<String, IncorrectOperationException>() {
             public void run(final String param) throws IncorrectOperationException {
               if (namespace.length() > 0) {
                 editor.getCaretModel().moveToOffset(marker.getStartOffset());

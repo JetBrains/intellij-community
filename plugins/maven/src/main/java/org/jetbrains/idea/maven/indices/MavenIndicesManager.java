@@ -89,11 +89,6 @@ public class MavenIndicesManager implements ApplicationComponent {
   }
 
   public void initComponent() {
-    ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
-      public void run() {
-        doShutdown();
-      }
-    });
   }
 
   @TestOnly
@@ -114,6 +109,12 @@ public class MavenIndicesManager implements ApplicationComponent {
     myIndices = new MavenIndices(myEmbedder, getIndicesDir(), new MavenIndex.IndexListener() {
       public void indexIsBroken(MavenIndex index) {
         scheduleUpdate(null, Collections.singletonList(index), false);
+      }
+    });
+
+    ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
+      public void run() {
+        doShutdown();
       }
     });
 
