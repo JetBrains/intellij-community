@@ -23,7 +23,7 @@ public class GrImplicitVariableImpl extends LightVariableBase implements GrImpli
         myInnerModifierList = modifierList != null ? modifierList : myModifierList;
     }
 
-  public GrImplicitVariableImpl(PsiModifierList modifierList, PsiManager manager, @NonNls String name, @NonNls String type, PsiElement referenceExpression) {
+  public GrImplicitVariableImpl(PsiModifierList modifierList, PsiManager manager, @NonNls String name, @NonNls @NotNull String type, PsiElement referenceExpression) {
     this(modifierList, manager, null, JavaPsiFacade.getElementFactory(manager.getProject()).
       createTypeFromText(type, referenceExpression), false, referenceExpression);
     myNameIdentifier = new GrLightIdentifier(myManager, name);

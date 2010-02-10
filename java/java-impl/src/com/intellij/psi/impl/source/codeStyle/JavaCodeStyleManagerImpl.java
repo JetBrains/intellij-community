@@ -680,7 +680,10 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       }
 
       if (method != null) {
-        method = (PsiMethod)method.getNavigationElement();
+        final PsiElement navElement = method.getNavigationElement();
+        if (navElement instanceof PsiMethod) {
+          method = (PsiMethod)navElement;
+        }
         PsiExpression[] expressions = list.getExpressions();
         int index = -1;
         for (int i = 0; i < expressions.length; i++) {

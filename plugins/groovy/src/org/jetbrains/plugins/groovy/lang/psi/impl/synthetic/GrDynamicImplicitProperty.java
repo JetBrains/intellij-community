@@ -49,7 +49,7 @@ public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements
   private final Project myProject;
   private final PsiElement myNavigationalElement;
 
-  public GrDynamicImplicitProperty(PsiManager manager, @NonNls String name, @NonNls String type, String containingClassName,
+  public GrDynamicImplicitProperty(PsiManager manager, @NonNls String name, @NonNls @NotNull String type, String containingClassName,
                                    LightModifierList modifierList, PsiElement navigationalElement) {
     super(modifierList, manager, name, type, navigationalElement);
     myContainingClassName = containingClassName;
