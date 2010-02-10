@@ -5,9 +5,8 @@ import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
-import com.jetbrains.python.codeInsight.controlflow.ReadInstruction;
+import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
-import com.jetbrains.python.codeInsight.controlflow.WriteInstruction;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
@@ -41,10 +40,11 @@ public class PyDefUseUtil {
                                     final Collection<PyElement> result) {
     if (visited[instr]) return;
     visited[instr] = true;
-    if (instructions[instr] instanceof WriteInstruction) {
-      final WriteInstruction instruction = (WriteInstruction)instructions[instr];
+    if (instructions[instr] instanceof ReadWriteInstruction) {
+      final ReadWriteInstruction instruction = (ReadWriteInstruction)instructions[instr];
       final String name = ((PyElement)instruction.getElement()).getName();
-      if (Comparing.strEqual(name, var.getName())) {
+      final ReadWriteInstruction.ACCESS access = instruction.getAccess();
+      if (isWriteAccess(access) && Comparing.strEqual(name, var.getName())) {
         result.add((PyElement) instruction.getElement());
         return;
       }
@@ -52,6 +52,10 @@ public class PyDefUseUtil {
     for (Instruction instruction : instructions[instr].allPred()) {
       getLatestDefs(var, instructions, instruction.num(), visited, result);
     }
+  }
+
+  private static boolean isWriteAccess(ReadWriteInstruction.ACCESS access) {
+    return access == ReadWriteInstruction.ACCESS.WRITE || access == ReadWriteInstruction.ACCESS.READWRITE;
   }
 
   @NotNull
@@ -71,10 +75,14 @@ public class PyDefUseUtil {
   private static void getPostRefs(PyTargetExpression var, Instruction[] instructions, int instr, boolean[] visited, Collection<PyElement> result) {
     if (visited[instr]) return;
     visited[instr] = true;
-    if (instructions[instr] instanceof ReadInstruction) {
-      final ReadInstruction instruction = (ReadInstruction)instructions[instr];
+    if (instructions[instr] instanceof ReadWriteInstruction) {
+      final ReadWriteInstruction instruction = (ReadWriteInstruction)instructions[instr];
       final String name = ((PyElement)instruction.getElement()).getName();
       if (Comparing.strEqual(name, var.getName())) {
+        final ReadWriteInstruction.ACCESS access = instruction.getAccess();
+        if (isWriteAccess(access)) {
+          return;
+        }
         result.add((PyElement)instruction.getElement());
       }
     }

@@ -56,16 +56,12 @@ public class PyInlineLocalHandler extends InlineActionHandler {
 
   @Override
   public void inlineElement(Project project, Editor editor, PsiElement element) {
-    inline(project, editor, element);
-  }
-
-  public static void inline(Project project, Editor editor, PsiElement element) {
     final PsiReference psiReference = TargetElementUtilBase.findReference(editor);
     final PyReferenceExpression refExpr = psiReference instanceof PyReferenceExpression ? ((PyReferenceExpression)psiReference) : null;
-    invoke(project, editor, (PyTargetExpression) element, refExpr);
+    invoke(project, editor, (PyTargetExpression)element, refExpr);
   }
 
-  private static void invoke(final Project project, final Editor editor, PyTargetExpression local, PyReferenceExpression refExpr) {
+  public static void invoke(final Project project, final Editor editor, PyTargetExpression local, PyReferenceExpression refExpr) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, local)) return;
 
     final HighlightManager highlightManager = HighlightManager.getInstance(project);

@@ -3,6 +3,7 @@ package com.jetbrains.python.refactoring;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.refactoring.inline.PyInlineLocalHandler;
 
 import java.util.Map;
@@ -20,8 +21,12 @@ public class PyInlineLocalTest extends LightMarkedTestCase {
     final Map<String,PsiElement> map = configureByFile("/refactoring/inlinelocal/" + name + ".before.py");
     try {
       PsiElement element = map.values().iterator().next().getParent();
-      if (element instanceof PyReferenceExpression) element = ((PyReferenceExpression)element).resolve();
-      PyInlineLocalHandler.inline(myFixture.getProject(), myFixture.getEditor(), element);
+      PyReferenceExpression ref = null;
+      if (element instanceof PyReferenceExpression) {
+        ref = (PyReferenceExpression)element;
+        element = ((PyReferenceExpression)element).resolve();
+      }
+      PyInlineLocalHandler.invoke(myFixture.getProject(), myFixture.getEditor(), (PyTargetExpression)element, ref);
       if (expectedError != null) fail("expected error: '" + expectedError + "', got none");
     }
     catch (Exception e) {
@@ -40,7 +45,7 @@ public class PyInlineLocalTest extends LightMarkedTestCase {
   }
 
   public void testNoDominator() throws Exception {
-    doTest("Cannot find a single definition to inline.");
+    doTest("Cannot perform refactoring.\nCannot find a single definition to inline.");
   }
 
   public void testMultiple() throws Exception {
