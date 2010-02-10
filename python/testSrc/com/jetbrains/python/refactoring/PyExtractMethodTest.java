@@ -122,4 +122,8 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   public void testPy479() throws Throwable {
     doTest("outEmpty/py479.before.py", "bar", "outEmpty/py479.after.py");
   }
+
+  public void testClass() throws Throwable {
+    doTest("context/class.before.py", "bar", "context/class.after.py");
+  }
 }
