@@ -30,11 +30,12 @@ import java.util.Set;
  */
 public class FileTreeAccessFilter implements VirtualFileFilter {
   protected final Set<VirtualFile> myAddedClasses = new THashSet<VirtualFile>();
+  private boolean myTreeAccessAllowed;
 
   public boolean accept(VirtualFile file) {
     if (file instanceof VirtualFileWindow) return false;
 
-    if (myAddedClasses.contains(file)) return false;
+    if (myAddedClasses.contains(file) || myTreeAccessAllowed) return false;
 
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
     return (fileType == StdFileTypes.JAVA || fileType == StdFileTypes.CLASS) && !file.getName().equals("package-info.java");
@@ -42,5 +43,9 @@ public class FileTreeAccessFilter implements VirtualFileFilter {
 
   public void allowTreeAccessForFile(VirtualFile file) {
     myAddedClasses.add(file);
+  }
+
+  public void allowTreeAccessForAllFiles() {
+    myTreeAccessAllowed = true;
   }
 }

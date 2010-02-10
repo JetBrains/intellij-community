@@ -1194,6 +1194,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     myJavaFilesFilter.allowTreeAccessForFile(file);
   }
 
+  public void allowTreeAccessForAllFiles() {
+    myJavaFilesFilter.allowTreeAccessForAllFiles();
+  }
+
   static class SelectionAndCaretMarkupLoader {
     final String newFileText;
     final RangeMarker caretMarker;

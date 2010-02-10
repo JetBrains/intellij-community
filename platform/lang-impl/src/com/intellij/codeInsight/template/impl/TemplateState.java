@@ -318,9 +318,11 @@ public class TemplateState implements Disposable {
         calcResults(false);  //Fixed SCR #[vk500] : all variables should be recalced twice on start.
         doReformat();
 
+        fireTemplateExpanded();
+
         int nextVariableNumber = getNextVariableNumber(-1);
         if (nextVariableNumber == -1) {
-          finishTemplateEditing();
+          finishTemplateEditing(false);
         }
         else {
           setCurrentVariableNumber(nextVariableNumber);
@@ -536,7 +538,7 @@ public class TemplateState implements Disposable {
       final TextResult value = getVariableValue(variableName);
       if (value != null && value.getText().length() > 0) {
         if (!myProcessor.process(variableName, value.getText())) {
-          finishTemplateEditing(); // nextTab(); ?
+          finishTemplateEditing(false); // nextTab(); ?
           return;
         }
       }
@@ -684,7 +686,7 @@ public class TemplateState implements Disposable {
           reformat();
         }
       });
-      finishTemplateEditing();
+      finishTemplateEditing(false);
       return;
     }
     focusCurrentHighlighter(false);
@@ -733,13 +735,17 @@ public class TemplateState implements Disposable {
     };
   }
 
-  public void gotoEnd() {
+  public void gotoEnd(boolean brokenOff) {
     calcResults(false);
     doReformat();
-    finishTemplateEditing();
+    finishTemplateEditing(brokenOff);
   }
 
-  private void finishTemplateEditing() {
+  public void gotoEnd() {
+    gotoEnd(false);
+  }
+
+  private void finishTemplateEditing(boolean brokenOff) {
     if (myTemplate == null) return;
 
     LookupManager.getInstance(myProject).hideActiveLookup();
@@ -772,7 +778,7 @@ public class TemplateState implements Disposable {
     setCurrentVariableNumber(-1);
     currentVariableChanged(oldVar);
     ((TemplateManagerImpl)TemplateManager.getInstance(myProject)).clearTemplateState(editor);
-    fireTemplateFinished();
+    fireTemplateFinished(brokenOff);
     myListeners.clear();
     myProject = null;
   }
@@ -990,12 +996,12 @@ public class TemplateState implements Disposable {
     myListeners.add(listener);
   }
 
-  private void fireTemplateFinished() {
+  private void fireTemplateFinished(boolean brokenOff) {
     if (myFinished) return;
     myFinished = true;
     TemplateEditingListener[] listeners = myListeners.toArray(new TemplateEditingListener[myListeners.size()]);
     for (TemplateEditingListener listener : listeners) {
-      listener.templateFinished(myTemplate);
+      listener.templateFinished(myTemplate, brokenOff);
     }
   }
 
@@ -1003,6 +1009,13 @@ public class TemplateState implements Disposable {
     TemplateEditingListener[] listeners = myListeners.toArray(new TemplateEditingListener[myListeners.size()]);
     for (TemplateEditingListener listener : listeners) {
       listener.beforeTemplateFinished(this, myTemplate);
+    }
+  }
+
+  private void fireTemplateExpanded() {
+    TemplateEditingListener[] listeners = myListeners.toArray(new TemplateEditingListener[myListeners.size()]);
+    for (TemplateEditingListener listener : listeners) {
+      listener.templateExpanded(myTemplate);
     }
   }
 

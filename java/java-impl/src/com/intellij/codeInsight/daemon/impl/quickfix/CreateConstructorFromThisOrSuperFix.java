@@ -108,7 +108,7 @@ public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsag
       editor.getCaretModel().moveToOffset(textRange.getStartOffset());
 
       startTemplate(editor, template, project, new TemplateEditingAdapter() {
-        public void templateFinished(Template template) {
+        public void templateFinished(Template template, boolean brokenOff) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
               try {

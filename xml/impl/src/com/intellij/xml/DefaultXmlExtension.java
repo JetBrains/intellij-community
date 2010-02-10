@@ -185,7 +185,7 @@ public class DefaultXmlExtension extends XmlExtension {
       prefix = provider.getDefaultPrefix(namespace, file);
     }
     if (prefix == null) {
-      prefix = "x";
+      prefix = "";
     }
     final XmlElementFactory elementFactory = XmlElementFactory.getInstance(project);
 

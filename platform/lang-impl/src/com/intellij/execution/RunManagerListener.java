@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.execution;
 
-package com.intellij.codeInsight.template;
-
-import com.intellij.codeInsight.template.impl.TemplateState;
-
-/**
- * @author Mike
- */
-public interface TemplateEditingListener {
-  void beforeTemplateFinished(TemplateState state, Template template);
-  void templateFinished(Template template, boolean brokenOff);
-  void templateCancelled(Template template);
-  void currentVariableChanged(TemplateState templateState, Template template, int oldIndex, int newIndex);
-  void templateExpanded(Template template); 
+public interface RunManagerListener {
+  void beforeRunTasksChanged();
 }

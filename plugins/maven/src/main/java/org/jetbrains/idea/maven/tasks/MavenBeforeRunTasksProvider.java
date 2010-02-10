@@ -94,8 +94,6 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
 
     task.setProjectPath(dialog.getSelectedProjectPath());
     task.setGoal(dialog.getSelectedGoal());
-
-    MavenTasksManager.getInstance(myProject).fireTasksChanged();
     return true;
   }
 

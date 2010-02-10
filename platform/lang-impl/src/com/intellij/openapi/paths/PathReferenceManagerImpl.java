@@ -252,7 +252,7 @@ public class PathReferenceManagerImpl extends PathReferenceManager {
     for (Iterator<PsiReference> it = set.iterator(); it.hasNext();) {
       PsiReference reference = it.next();
       final TextRange range = reference.getRangeInElement();
-      if (endOffset == -1 || range.getStartOffset() < endOffset) {
+      if (endOffset == -1 || range.getStartOffset() <= endOffset) {
         startOffset = Math.min(startOffset, range.getStartOffset());
         endOffset = Math.max(range.getEndOffset(), endOffset);
         toAdd.add(reference);

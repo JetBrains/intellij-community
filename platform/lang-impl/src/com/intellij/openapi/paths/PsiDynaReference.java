@@ -42,7 +42,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   implements FileReferenceOwner, PsiPolyVariantReference, QuickFixProvider<PsiDynaReference>, LocalQuickFixProvider, EmptyResolveMessageProvider {
 
   private final List<PsiReference> myReferences = new ArrayList<PsiReference>();
-  private int myChoosenOne = -1;
+  private int myChosenOne = -1;
   private ResolveResult[] myCachedResult;
 
   public PsiDynaReference(final T psiElement) {
@@ -170,23 +170,23 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
 
   @Nullable
   private PsiReference chooseReference(){
-    if(myChoosenOne != -1){
-      return myReferences.get(myChoosenOne);
+    if(myChosenOne != -1){
+      return myReferences.get(myChosenOne);
     }
     boolean flag = false;
     for(int i = 0; i < myReferences.size(); i++){
       final PsiReference reference = myReferences.get(i);
       if(reference.isSoft() && flag) continue;
       if(!reference.isSoft() && !flag){
-        myChoosenOne = i;
+        myChosenOne = i;
         flag = true;
         continue;
       }
       if(reference.resolve() != null){
-        myChoosenOne = i;
+        myChosenOne = i;
       }
     }
-    return myChoosenOne >= 0 ? myReferences.get(myChoosenOne) : null;
+    return myChosenOne >= 0 ? myReferences.get(myChosenOne) : null;
   }
 
   public void registerQuickfix(final HighlightInfo info, final PsiDynaReference reference) {

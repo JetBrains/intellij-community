@@ -192,6 +192,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     return _text;
   }
 
+  @NotNull
   public Object[] getVariants() {
     final String s = getText();
     if (s != null && s.equals("/")) {

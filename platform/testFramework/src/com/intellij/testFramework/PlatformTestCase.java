@@ -279,7 +279,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   protected void tearDown() throws Exception {
-    LightPlatformTestCase.doTearDown(getProject(), ourApplication, true);
+    LightPlatformTestCase.doTearDown(getProject(), ourApplication, false);
 
     try {
       checkForSettingsDamage();
@@ -317,6 +317,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       //cleanTheWorld();
       myEditorListenerTracker.checkListenersLeak();
       myThreadTracker.checkLeak();
+      LightPlatformTestCase.checkEditorsReleased();
     }
     finally {
       myProjectManager = null;

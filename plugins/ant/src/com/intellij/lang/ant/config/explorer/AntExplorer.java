@@ -15,6 +15,8 @@
  */
 package com.intellij.lang.ant.config.explorer;
 
+import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunManagerListener;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.TreeExpander;
@@ -140,6 +142,12 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider {
     setContent(new JScrollPane(myTree));
     ToolTipManager.sharedInstance().registerComponent(myTree);
     myKeymapListener = new KeymapListener();
+
+    RunManagerEx.getInstanceEx(myProject).addRunManagerListener(new RunManagerListener() {
+      public void beforeRunTasksChanged() {
+        myBuilder.refresh();
+      }
+    });
   }
 
   public void dispose() {
@@ -621,7 +629,6 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider {
     public void actionPerformed(AnActionEvent e) {
       final AntExecuteBeforeRunDialog dialog = new AntExecuteBeforeRunDialog(myProject, myTarget);
       dialog.show();
-      myBuilder.refresh();
     }
 
     public void update(AnActionEvent e) {
