@@ -3,8 +3,6 @@ package com.jetbrains.python.codeInsight.controlflow;
 import com.intellij.codeInsight.controlflow.ControlFlowBuilder;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.Instruction;
-import com.intellij.codeInsight.controlflow.impl.InstructionImpl;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -14,7 +12,6 @@ import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author oleg
@@ -57,15 +54,12 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       return;
     }
 
-    final ReadInstruction readInstruction = new ReadInstruction(myBuilder, node, node.getName());
-    myBuilder.addNode(readInstruction);
-    myBuilder.checkPending(readInstruction);
-
-    if (PyAugAssignmentStatementNavigator.getStatementByTarget(node) != null){
-      final WriteInstruction writeInstruction = new WriteInstruction(myBuilder, node, node.getName());
-      myBuilder.addNode(writeInstruction);
-      myBuilder.checkPending(writeInstruction);
-    }
+    final ReadWriteInstruction.ACCESS access = PyAugAssignmentStatementNavigator.getStatementByTarget(node) != null
+                                               ? ReadWriteInstruction.ACCESS.READWRITE
+                                               : ReadWriteInstruction.ACCESS.READ;
+    final ReadWriteInstruction readWriteInstruction = new ReadWriteInstruction(myBuilder, node, node.getName(), access);
+    myBuilder.addNode(readWriteInstruction);
+    myBuilder.checkPending(readWriteInstruction);
   }
 
   @Override
@@ -92,14 +86,14 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyTargetExpression(final PyTargetExpression node) {
-    final WriteInstruction instruction = new WriteInstruction(myBuilder, node, node.getName());
+    final ReadWriteInstruction instruction = new ReadWriteInstruction(myBuilder, node, node.getName(), ReadWriteInstruction.ACCESS.WRITE);
     myBuilder.addNode(instruction);
     myBuilder.checkPending(instruction);
   }
 
   @Override
   public void visitPyNamedParameter(final PyNamedParameter node) {
-    final WriteInstruction instruction = new WriteInstruction(myBuilder, node, node.getName());
+    final ReadWriteInstruction instruction = new ReadWriteInstruction(myBuilder, node, node.getName(), ReadWriteInstruction.ACCESS.WRITE);
     myBuilder.addNode(instruction);
     myBuilder.checkPending(instruction);
   }
@@ -110,7 +104,8 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     for (PyImportElement importElement : node.getImportElements()) {
       final PyReferenceExpression importReference = importElement.getImportReference();
       if (importReference != null) {
-        final WriteInstruction instruction = new WriteInstruction(myBuilder, importElement, importReference.getReferencedName());
+        final ReadWriteInstruction instruction =
+          new ReadWriteInstruction(myBuilder, importElement, importReference.getReferencedName(), ReadWriteInstruction.ACCESS.WRITE);
         myBuilder.addNode(instruction);
         myBuilder.checkPending(instruction);
       }
