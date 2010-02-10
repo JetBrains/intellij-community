@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
@@ -211,6 +212,11 @@ public class PyPsiUtils {
   }
 
   public static boolean isMethodContext(final PsiElement element) {
-    return PsiTreeUtil.getParentOfType(element, PyFile.class, PyClass.class) instanceof PyClass;
+    final PsiNamedElement parent = PsiTreeUtil.getParentOfType(element, PyFile.class, PyFunction.class, PyClass.class);
+    // In case if element is inside method which is inside class
+    if (parent instanceof PyFunction && PsiTreeUtil.getParentOfType(parent, PyFile.class, PyClass.class) instanceof PyClass){
+      return true;
+    }
+    return false;
   }
 }

@@ -5,7 +5,7 @@ import com.intellij.codeInsight.dataflow.DFAMap;
 import com.intellij.codeInsight.dataflow.DfaInstance;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.codeInsight.controlflow.WriteInstruction;
+import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeVariable;
 import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeVariableImpl;
@@ -41,9 +41,9 @@ public class PyReachingDefsDfaInstance implements DfaInstance<ScopeVariable> {
   private static DFAMap<ScopeVariable> processReducedMap(final DFAMap<ScopeVariable> map,
                                                          final Instruction instruction,
                                                          final PsiElement element) {
-    if (instruction instanceof WriteInstruction) {
-      final WriteInstruction wInstruction = (WriteInstruction)instruction;
-      final String name = wInstruction.getName();
+    if (instruction instanceof ReadWriteInstruction) {
+      final ReadWriteInstruction rwInstruction = (ReadWriteInstruction)instruction;
+      final String name = rwInstruction.getName();
       final ScopeVariable variable = map.get(name);
       // If parameter
       if (UsageAnalyzer.isParameter(element)) {

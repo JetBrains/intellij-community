@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.IncorrectOperationException;
@@ -648,6 +649,24 @@ public class PyUtil {
       }
     }
     return flags;
+  }
+
+  /**
+   * Returns child element in the psi tree
+   *
+   * @param filter  Types of expected child
+   * @param number  number
+   * @param element tree parent node
+   * @return PsiElement - child psiElement
+   */
+  @Nullable
+  public static PsiElement getChildByFilter(@NotNull final PsiElement element, final @NotNull TokenSet filter, final int number) {
+    final ASTNode node = element.getNode();
+    if (node != null) {
+      final ASTNode[] children = node.getChildren(filter);
+      return (0 <= number && number < children.length) ? children [number].getPsi() : null;
+    }
+    return null;
   }
 
 }

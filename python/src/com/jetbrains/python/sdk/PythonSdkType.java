@@ -289,6 +289,7 @@ public class PythonSdkType extends SdkType {
     if (indicator != null) {
       indicator.setText("Adding library roots");
     }
+    // Add folders from sys.path
     final List<String> paths = getSysPath(sdk_path, bin_path);
     if ((paths != null) && paths.size() > 0) {
       // add every path as root.
@@ -319,6 +320,16 @@ public class PythonSdkType extends SdkType {
       generateBuiltinStubs(sdk_path, stubs_path);
       sdkModificator.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByPath(stubs_path), BUILTIN_ROOT_TYPE);
     }
+
+    // Add python-django installed as package in Linux
+    if (SystemInfo.isLinux){
+      final VirtualFile file = LocalFileSystem.getInstance().findFileByPath("/usr/lib/python-django");
+      if (file != null){
+        sdkModificator.addRoot(file, OrderRootType.SOURCES);
+        sdkModificator.addRoot(file, OrderRootType.CLASSES);
+      }
+    }
+
     if (!new File(stubs_path).exists()) {
       generateBinaryStubs(sdk_path, stubs_path, indicator);
     }

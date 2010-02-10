@@ -68,7 +68,7 @@ public class PyExtractMethodUtil {
               generatedMethod = insertGeneratedMethod(statement1, generatedMethod);
 
               // Process parameters
-              final boolean isMethod = PyPsiUtils.isMethodContext(generatedMethod);
+              final boolean isMethod = PyPsiUtils.isMethodContext(elementsRange.get(0));
               processParameters(project, generatedMethod, variableData, isMethod);
 
               // Generating call element
@@ -116,7 +116,7 @@ public class PyExtractMethodUtil {
               generatedMethod = insertGeneratedMethod(statement1, generatedMethod);
 
               // Process parameters
-              final boolean isMethod = PyPsiUtils.isMethodContext(generatedMethod);
+              final boolean isMethod = PyPsiUtils.isMethodContext(elementsRange.get(0));
               processParameters(project, generatedMethod, variableData, isMethod);
 
               // Generate call element
@@ -175,7 +175,7 @@ public class PyExtractMethodUtil {
               generatedMethod = insertGeneratedMethod(expression, generatedMethod);
 
               // Process parameters
-              final boolean isMethod = PyPsiUtils.isMethodContext(generatedMethod);
+              final boolean isMethod = PyPsiUtils.isMethodContext(expression);
               processParameters(project, generatedMethod, variableData, isMethod);
 
               // Generating call element
@@ -276,7 +276,7 @@ public class PyExtractMethodUtil {
     }
     final PsiNamedElement parent = PsiTreeUtil.getParentOfType(anchor, PyFile.class, PyClass.class, PyFunction.class);
 
-    if (parent instanceof PyFile) {
+    if (parent instanceof PyFile || parent instanceof PyClass) {
       final PsiElement statement = PyPsiUtils.getStatement(parent, anchor);
       return (PyFunction) parent.addBefore(generatedMethod, statement);
     }
