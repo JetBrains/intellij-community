@@ -92,6 +92,7 @@
     <inspectionToolProvider implementation="com.jetbrains.python.inspections.PythonInspectionToolProvider"/>
 
     <liveTemplateContext implementation="com.jetbrains.python.codeInsight.PythonTemplateContextType"/>
+    <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.CollectionElementNameMacro"/>
 
     <codeInsight.overrideMethod language="Python" implementationClass="com.jetbrains.python.codeInsight.override.PyOverrideMethodsHandler"/>
     <lang.refactoringSupport language="Python" implementationClass="com.jetbrains.python.refactoring.RefactoringProvider"/>
@@ -135,6 +136,7 @@
     <facetType implementation="com.jetbrains.django.facet.DjangoFacetType"/>
 
     <liveTemplateContext implementation="com.jetbrains.django.lang.template.DjangoTemplateContextType"/>
+    <liveTemplateMacro implementation="com.jetbrains.django.lang.template.DjangoVariableMacro"/>
   </extensions>
 
   <extensionPoints>
