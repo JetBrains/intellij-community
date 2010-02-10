@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.lang.ant.config.explorer;
+package com.intellij.execution.impl;
 
+import com.intellij.execution.BeforeRunTask;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
-import com.intellij.lang.ant.AntBundle;
-import com.intellij.lang.ant.config.AntBuildFile;
-import com.intellij.lang.ant.config.AntBuildTarget;
-import com.intellij.lang.ant.config.impl.AntBeforeRunTask;
-import com.intellij.lang.ant.config.impl.AntBeforeRunTaskProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.Key;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.ui.treeStructure.Tree;
@@ -51,21 +46,21 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Set;
 
-public final class ExecuteOnRunDialog extends DialogWrapper {
+
+public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extends DialogWrapper {
   private final Project myProject;
-  private final AntBuildTarget myTarget;
-  private final AntBuildFile myFile;
   private DefaultMutableTreeNode myRoot;
 
-  public ExecuteOnRunDialog(final Project project, final AntBuildTarget target, final AntBuildFile file) {
+  public BaseExecuteBeforeRunDialog(final Project project) {
     super(project, true);
     myProject = project;
-    myTarget = target;
-    myFile = file;
-    setTitle(AntBundle.message("execute.target.before.run.debug.dialog.title"));
-    init();
   }
 
+  @Override
+  protected void init() {
+    super.init();
+    setTitle(ExecutionBundle.message("execute.before.run.debug.dialog.title", getTargetDisplayString()));
+  }
 
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
@@ -183,16 +178,14 @@ public final class ExecuteOnRunDialog extends DialogWrapper {
     final RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
     for (ConfigurationFactory factory : type.getConfigurationFactories()) {
       final RunnerAndConfigurationSettingsImpl settings = ((RunManagerImpl)runManager).getConfigurationTemplate(factory);
-      final AntBeforeRunTask task = runManager.getBeforeRunTask(settings.getConfiguration(), AntBeforeRunTaskProvider.ID);
-      if (task != null && task.isRunningTarget(myTarget)) {
-        return true;
-      }
+      if (isConfigurationAssigned(settings.getConfiguration())) return true;
     }
     return false;
   }
+
   private boolean isConfigurationAssigned(RunConfiguration configuration) {
-    final AntBeforeRunTask task = RunManagerEx.getInstanceEx(myProject).getBeforeRunTask(configuration, AntBeforeRunTaskProvider.ID);
-    return task != null && task.isRunningTarget(myTarget);
+    final T task = RunManagerEx.getInstanceEx(myProject).getBeforeRunTask(configuration, getTaskID());
+    return task != null && isRunning(task);
   }
 
   protected void doOKAction() {
@@ -201,42 +194,50 @@ public final class ExecuteOnRunDialog extends DialogWrapper {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)nodes.nextElement();
       final Descriptor descriptor = (Descriptor)node.getUserObject();
       final boolean isChecked = descriptor.isChecked();
-      final String targetName;
-      final String antfileUrl;
-      if (isChecked) {
-        final VirtualFile vFile = myTarget.getModel().getBuildFile().getVirtualFile();
-        targetName = vFile != null? myTarget.getName() : null;
-        antfileUrl = vFile != null? vFile.getUrl() : null;
-      }
-      else {
-        targetName = null;
-        antfileUrl = null;
-      }
+
       if (descriptor instanceof ConfigurationTypeDescriptor) {
-        final ConfigurationTypeDescriptor configurationTypeDescriptor = (ConfigurationTypeDescriptor)descriptor;
-        for (ConfigurationFactory factory : configurationTypeDescriptor.getConfigurationType().getConfigurationFactories()) {
-          final RunnerAndConfigurationSettingsImpl settings = runManager.getConfigurationTemplate(factory);
-          final AntBeforeRunTask task = runManager.getBeforeRunTask(settings.getConfiguration(), AntBeforeRunTaskProvider.ID);
-          if (task != null && (isChecked || task.isRunningTarget(myTarget))) {
-            task.setEnabled(isChecked);
-            task.setAntFileUrl(antfileUrl);
-            task.setTargetName(targetName);
-          }
+        ConfigurationTypeDescriptor typeDesc = (ConfigurationTypeDescriptor)descriptor;
+        for (ConfigurationFactory factory : typeDesc.getConfigurationType().getConfigurationFactories()) {
+          RunnerAndConfigurationSettingsImpl settings = runManager.getConfigurationTemplate(factory);
+          update(settings.getConfiguration(), isChecked, runManager);
         }
       }
       else if (descriptor instanceof ConfigurationDescriptor) {
-        final ConfigurationDescriptor configurationDescriptor = (ConfigurationDescriptor)descriptor;
-        final AntBeforeRunTask task = runManager.getBeforeRunTask(configurationDescriptor.getConfiguration(), AntBeforeRunTaskProvider.ID);
-        if (task != null && (isChecked || task.isRunningTarget(myTarget))) {
-          task.setEnabled(isChecked);
-          task.setAntFileUrl(antfileUrl);
-          task.setTargetName(targetName);
-        }
+        ConfigurationDescriptor configDesc = (ConfigurationDescriptor)descriptor;
+        update(configDesc.getConfiguration(), isChecked, runManager);
       }
     }
 
+    ((RunManagerImpl)RunManagerEx.getInstanceEx(myProject)).fireBeforeRunTasksUpdated();
     close(OK_EXIT_CODE);
   }
+
+  protected abstract String getTargetDisplayString();
+
+  protected abstract Key<T> getTaskID();
+
+  protected abstract boolean isRunning(T task);
+
+  private void update(RunConfiguration config, boolean enabled, RunManagerImpl runManager) {
+    T task = runManager.getBeforeRunTask(config, getTaskID());
+    if (task == null) return;
+
+    if (enabled) {
+      task.setEnabled(true);
+      update(task);
+    }
+    else {
+      if (isRunning(task)) {
+        task.setEnabled(false);
+        clear(task);
+      }
+      // do not change the task otherwise 
+    }
+  }
+
+  protected abstract void update(T task);
+
+  protected abstract void clear(T task);
 
   private static class Descriptor {
     private boolean myChecked;

@@ -38,7 +38,7 @@ class SmartCastProvider extends CompletionProvider<CompletionParameters> {
       final boolean overwrite = INSIDE_TYPECAST_TYPE.accepts(parameters.getOriginalPosition());
 
       final LookupElement item = AutoCompletionPolicy.ALWAYS_AUTOCOMPLETE.applyPolicy(new LookupElementDecorator<LookupItem>(
-        PsiTypeLookupItem.createLookupItem(type.getDefaultType())) {
+        PsiTypeLookupItem.createLookupItem(type.getDefaultType(), parameters.getPosition())) {
 
         @Override
         public void handleInsert(InsertionContext context) {

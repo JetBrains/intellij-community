@@ -145,7 +145,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     editor.getCaretModel().moveToOffset(offset);
     editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
     TemplateManager.getInstance(myProject).startTemplate(editor, template, new TemplateEditingAdapter() {
-      public void templateFinished(Template template) {
+      public void templateFinished(Template template, boolean brokenOff) {
         if (index + 1 < templates.size()){
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {

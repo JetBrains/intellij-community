@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PsiFilter<T extends PsiElement> {
   private final Class<T> filter;
+  public static final PsiFilter<?>[] EMPTY = {}; 
 
   public PsiFilter(@NotNull Class<T> filter) {
     this.filter = filter;

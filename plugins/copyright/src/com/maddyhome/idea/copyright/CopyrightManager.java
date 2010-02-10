@@ -250,6 +250,14 @@ public class CopyrightManager extends AbstractProjectComponent implements JDOMEx
     return myOptions;
   }
 
+  public void replaceCopyright(String displayName, CopyrightProfile copyrightProfile) {
+    if (myDefaultCopyright != null && Comparing.strEqual(myDefaultCopyright.getName(), displayName)) {
+      myDefaultCopyright = copyrightProfile;
+    }
+    myCopyrights.remove(displayName);
+    addCopyright(copyrightProfile);
+  }
+
   public static class CopyrightStateSplitter implements StateSplitter {
     public List<Pair<Element, String>> splitState(Element e) {
       final UniqueNameGenerator generator = new UniqueNameGenerator();

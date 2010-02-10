@@ -79,4 +79,7 @@ public abstract class RunManagerEx extends RunManager {
   public abstract Collection<RunnerAndConfigurationSettingsImpl> getSortedConfigurations();
 
   public abstract void removeConfiguration(RunnerAndConfigurationSettingsImpl settings);
+
+  public abstract void addRunManagerListener(RunManagerListener listener);
+  public abstract void removeRunManagerListener(RunManagerListener listener);
 }

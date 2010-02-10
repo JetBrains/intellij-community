@@ -36,7 +36,7 @@ public class EscapeHandler extends EditorActionHandler {
       final TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
       if (templateState != null && !templateState.isFinished()) {
         CommandProcessor.getInstance().setCurrentCommandName(CodeInsightBundle.message("finish.template.command"));
-        templateState.gotoEnd();
+        templateState.gotoEnd(true);
         return;
       }
     }

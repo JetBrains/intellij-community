@@ -121,7 +121,8 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
         processor.run();
       }
       else {
-        InlineParameterDialog dlg = new InlineParameterDialog(refMethodCall.get(), method, psiParameter, refInitializer.get());
+        final boolean createLocal = ReferencesSearch.search(psiParameter).findAll().size() > 1;
+        InlineParameterDialog dlg = new InlineParameterDialog(refMethodCall.get(), method, psiParameter, refInitializer.get(), createLocal);
         dlg.show();
       }
       return;

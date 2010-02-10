@@ -1004,7 +1004,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     @Override
     public boolean isVisible() {
       // show regardless absence of children
-      return getDisplayKind() != DisplayKind.NEVER;
+      return super.isVisible() || getDisplayKind() != DisplayKind.NEVER;
     }
   }
 

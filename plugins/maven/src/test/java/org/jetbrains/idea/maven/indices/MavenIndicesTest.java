@@ -127,6 +127,16 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     assertUnorderedElementsAreEqual(i.getGroupIds(), "jmock");
   }
 
+  public void testClearingUpdateDirAfterUpdate() throws Exception {
+    ignore();
+    //MavenIndex i = myIndices.add("id", myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
+    //
+    //myIndices.updateOrRepair(i, myEmbedder, true, new EmptyProgressIndicator());
+    //assertUnorderedElementsAreEqual(i.getGroupIds(), "junit");
+    //
+    //assertFalse(i.getUpdateDir().exists());
+  }
+
   public void testAddingRemote() throws Exception {
     MavenIndex i = myIndices.add("id", "file:///" + myRepositoryHelper.getTestDataPath("remote"), MavenIndex.Kind.REMOTE);
     myIndices.updateOrRepair(i, myEmbedder, true, new EmptyProgressIndicator());
@@ -140,6 +150,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
 
     //shouldn't throw 'The existing index is for repository [remote] and not for repository [xxx]'
     myIndices.updateOrRepair(i, myEmbedder, true, new EmptyProgressIndicator());
+    assertUnorderedElementsAreEqual(i.getGroupIds(), "junit");
   }
 
   public void testDoNotAddSameIndexTwice() throws Exception {

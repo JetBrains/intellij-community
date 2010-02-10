@@ -15,25 +15,33 @@
  */
 package org.jetbrains.idea.maven.navigator;
 
+import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunManagerListener;
+import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.containers.ContainerUtil;
+import org.jdom.Element;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 import org.jetbrains.idea.maven.utils.MavenIcons;
+import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.SimpleProjectComponent;
 
@@ -43,7 +51,6 @@ import java.awt.*;
 import java.net.URL;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @State(name = "MavenProjectNavigator", storages = {@Storage(id = "default", file = "$WORKSPACE_FILE$")})
 public class MavenProjectsNavigator extends SimpleProjectComponent implements PersistentStateComponent<MavenProjectsNavigatorState> {
@@ -51,8 +58,6 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
 
   private static final URL ADD_ICON_URL = MavenProjectsNavigator.class.getResource("/general/add.png");
   private static final URL SYNC_ICON_URL = MavenProjectsNavigator.class.getResource("/actions/sync.png");
-
-  private final AtomicBoolean myInitialized = new AtomicBoolean(false);
 
   private MavenProjectsNavigatorState myState = new MavenProjectsNavigatorState();
 
@@ -79,6 +84,17 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
   }
 
   public MavenProjectsNavigatorState getState() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (myStructure != null) {
+      try {
+        myState.treeState = new Element("root");
+        TreeState.createOn(myTree).writeExternal(myState.treeState);
+      }
+      catch (WriteExternalException e) {
+        MavenLog.LOG.warn(e);
+      }
+
+    }
     return myState;
   }
 
@@ -162,6 +178,16 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
 
     myTasksManager.addListener(new MavenTasksManager.Listener() {
       public void compileTasksChanged() {
+        scheduleStructureRequest(new Runnable() {
+          public void run() {
+            myStructure.updateGoals();
+          }
+        });
+      }
+    });
+
+    RunManagerEx.getInstanceEx(myProject).addRunManagerListener(new RunManagerListener() {
+      public void beforeRunTasksChanged() {
         scheduleStructureRequest(new Runnable() {
           public void run() {
             myStructure.updateGoals();
@@ -254,10 +280,26 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
     MavenUtil.invokeLater(myProject, new Runnable() {
       public void run() {
         if (!myToolWindow.isVisible()) return;
-        if (myStructure == null) {
+
+        boolean shouldCreate = myStructure == null;
+        if (shouldCreate) {
           initStructure();
         }
+
         r.run();
+
+        if (shouldCreate) {
+          if (myState.treeState != null) {
+            TreeState treeState = new TreeState();
+            try {
+              treeState.readExternal(myState.treeState);
+              treeState.applyTo(myTree);
+            }
+            catch (InvalidDataException e) {
+              MavenLog.LOG.info(e);
+            }
+          }
+        }
       }
     });
   }

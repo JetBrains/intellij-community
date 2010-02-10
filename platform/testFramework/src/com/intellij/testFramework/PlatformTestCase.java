@@ -279,7 +279,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   protected void tearDown() throws Exception {
-    LightPlatformTestCase.doTearDown(getProject(), ourApplication, true);
+    LightPlatformTestCase.doTearDown(getProject(), ourApplication, false);
 
     try {
       checkForSettingsDamage();
@@ -305,7 +305,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
           if (IdeaLogger.ourErrorsOccurred != null) {
             throw IdeaLogger.ourErrorsOccurred;
           }
-          assertTrue("Logger errors occurred in " + getFullName(), IdeaLogger.ourErrorsOccurred == null);
+          assertNull("Logger errors occurred in " + getFullName(), IdeaLogger.ourErrorsOccurred);
         }
       }
       finally {
@@ -317,6 +317,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       //cleanTheWorld();
       myEditorListenerTracker.checkListenersLeak();
       myThreadTracker.checkLeak();
+      LightPlatformTestCase.checkEditorsReleased();
     }
     finally {
       myProjectManager = null;
@@ -623,8 +624,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   private static void setTmpDir(String path) {
     System.setProperty("java.io.tmpdir", path);
-    Class<File> ioFile = File.class;
     try {
+      Class<File> ioFile = File.class;
       Field field = ioFile.getDeclaredField("tmpdir");
 
       field.setAccessible(true);

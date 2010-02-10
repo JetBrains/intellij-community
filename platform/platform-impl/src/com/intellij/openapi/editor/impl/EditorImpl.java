@@ -2773,6 +2773,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myStartTime = System.currentTimeMillis();
       myLocation = location;
       myWidth = Math.max(width, 2);
+      myIsShown = true;
       repaint();
     }
 

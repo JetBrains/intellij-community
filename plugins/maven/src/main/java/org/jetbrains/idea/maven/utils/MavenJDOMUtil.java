@@ -55,7 +55,7 @@ public class MavenJDOMUtil {
     return doRead(text, handler);
   }
 
-  @NotNull
+  @Nullable
   public static Element read(byte[] bytes, @Nullable ErrorHandler handler) {
     return doRead(CharsetToolkit.bytesToString(bytes), handler);
   }

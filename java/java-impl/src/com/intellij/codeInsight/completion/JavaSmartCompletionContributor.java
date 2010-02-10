@@ -23,10 +23,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
-import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.patterns.PsiJavaPatterns;
-import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
-import static com.intellij.patterns.StandardPatterns.*;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementExtractorFilter;
 import com.intellij.psi.filters.ElementFilter;
@@ -58,6 +55,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.patterns.PlatformPatterns.psiElement;
+import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
+import static com.intellij.patterns.StandardPatterns.*;
 
 /**
  * @author peter
@@ -277,7 +278,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
         if (tryBlock == null) return;
 
         for (final PsiClassType type : ExceptionUtil.getThrownExceptions(tryBlock.getStatements())) {
-          result.addElement(TailTypeDecorator.withTail(PsiTypeLookupItem.createLookupItem(type).setInsertHandler(new DefaultInsertHandler()), TailType.SPACE));
+          result.addElement(TailTypeDecorator.withTail(PsiTypeLookupItem.createLookupItem(type, tryBlock).setInsertHandler(new DefaultInsertHandler()), TailType.SPACE));
         }
       }
     });
@@ -322,7 +323,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
                            .getSubstitutionForTypeParameter(targetParameter, paramSubstitution, argSubstitution, false,
                                                             PsiUtil.getLanguageLevel(context));
                        if (substitution != null && substitution != PsiType.NULL) {
-                         final LookupItem item = PsiTypeLookupItem.createLookupItem(substitution);
+                         final LookupItem item = PsiTypeLookupItem.createLookupItem(substitution, context);
                          resultSet.addElement(TailTypeDecorator.withTail(item.setInsertHandler(new DefaultInsertHandler()), tail));
                        }
                      }
@@ -378,7 +379,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
         for (final PsiArrayType type : expectedArrayTypes) {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
-              final LookupItem item = PsiTypeLookupItem.createLookupItem(JavaCompletionUtil.eliminateWildcards(type));
+              final LookupItem item = PsiTypeLookupItem.createLookupItem(JavaCompletionUtil.eliminateWildcards(type), identifierCopy);
               item.setAttribute(LookupItem.DONT_CHECK_FOR_INNERS, "");
               if (item.getObject() instanceof PsiClass) {
                 JavaCompletionUtil.setShowFQN(item);
@@ -425,7 +426,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
             substitutor = substitutor.put(typeParameter, wildcard);
           }
           final PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
-          return PsiTypeLookupItem.createLookupItem(factory.createType(psiClass, substitutor));
+          return PsiTypeLookupItem.createLookupItem(factory.createType(psiClass, substitutor), psiClass);
         }
       }
     }
@@ -565,7 +566,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
       return;
     }
 
-    final LookupItem item = PsiTypeLookupItem.createLookupItem(JavaCompletionUtil.eliminateWildcards(type));
+    final LookupItem item = PsiTypeLookupItem.createLookupItem(JavaCompletionUtil.eliminateWildcards(type), parameters.getPosition());
     item.setAttribute(LookupItem.DONT_CHECK_FOR_INNERS, "");
     JavaCompletionUtil.setShowFQN(item);
     item.setAttribute(LookupItem.NEW_OBJECT_ATTR, "");

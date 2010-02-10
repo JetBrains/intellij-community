@@ -15,9 +15,10 @@
  */
 package com.intellij.codeInsight.lookup;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -40,11 +41,11 @@ public class PsiTypeLookupItem extends LookupItem {
   }
 
   public int getBracketsCount() {
-    final Integer integer = (Integer)getUserData(LookupItem.BRACKETS_COUNT_ATTR);
+    final Integer integer = (Integer)getUserData(BRACKETS_COUNT_ATTR);
     return integer == null ? 0 : integer;
   }
 
-  public static LookupItem createLookupItem(PsiType type) {
+  public static LookupItem createLookupItem(@NotNull PsiType type, @Nullable PsiElement context) {
     final PsiType original = type;
     int dim = 0;
     while (type instanceof PsiArrayType) {
@@ -59,12 +60,30 @@ public class PsiTypeLookupItem extends LookupItem {
       final PsiSubstitutor substitutor = classResolveResult.getSubstitutor();
       final String text = type.getCanonicalText();
       String typeString = text;
+      String typeParams = "";
       if (text.indexOf('<') > 0 && text.endsWith(">")) {
         typeString = text.substring(0, text.indexOf('<'));
+        typeParams = text.substring(text.indexOf('<'));
       }
-      String s = text.substring(typeString.lastIndexOf('.') + 1);
-      item = psiClass != null ? new PsiTypeLookupItem(psiClass, s) : new PsiTypeLookupItem(text, s);
-      item.setAttribute(LookupItem.SUBSTITUTOR, substitutor);
+
+      String lookupString = text.substring(typeString.lastIndexOf('.') + 1);
+      if (psiClass != null) {
+        PsiClass resolved =
+          JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper().resolveReferencedClass(psiClass.getName(), context);
+        if (!psiClass.getManager().areElementsEquivalent(resolved, psiClass)) {
+          // inner class name should be shown qualified if its not accessible by single name
+          PsiClass aClass = psiClass;
+          lookupString = "";
+          while (aClass != null) {
+            lookupString = aClass.getName() + (lookupString == "" ? "" : ".") + lookupString;
+            aClass = aClass.getContainingClass();
+          }
+          lookupString += typeParams;
+        }
+      }
+
+      item = new PsiTypeLookupItem(psiClass == null ? text : psiClass, lookupString);
+      item.setAttribute(SUBSTITUTOR, substitutor);
     }
     else {
       item = new LookupItem(type, type.getPresentableText());
@@ -75,11 +94,11 @@ public class PsiTypeLookupItem extends LookupItem {
       for (int i = 0; i < dim; i++) {
         tail.append("[]");
       }
-      item.setAttribute(LookupItem.TAIL_TEXT_ATTR, " " + tail.toString());
-      item.setAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR, "");
-      item.putUserData(LookupItem.BRACKETS_COUNT_ATTR, dim);
+      item.setAttribute(TAIL_TEXT_ATTR, " " + tail.toString());
+      item.setAttribute(TAIL_TEXT_SMALL_ATTR, "");
+      item.putUserData(BRACKETS_COUNT_ATTR, dim);
     }
-    item.setAttribute(LookupItem.TYPE, original);
+    item.setAttribute(TYPE, original);
     return item;
   }
 }
