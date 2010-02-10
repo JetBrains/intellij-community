@@ -17,6 +17,7 @@
     <lang.psiStructureViewFactory language="Python" implementationClass="com.jetbrains.python.structureView.PyStructureViewFactory"/>
     <lang.documentationProvider language="Python" implementationClass="com.jetbrains.python.PythonDocumentationProvider"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyAnnotatingVisitor"/>
+    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyDumbAwareAnnotator"/>
     <backspaceHandlerDelegate implementation="com.jetbrains.python.editor.PythonBackspaceHandler"/>
     <quoteHandler fileType="Python" className="com.jetbrains.python.editor.PythonQuoteHandler"/>
     <sdkType implementation="com.jetbrains.python.sdk.PythonSdkType"/>
@@ -145,6 +146,7 @@
     <extensionPoint qualifiedName="Pythonid.pyOverridingMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint qualifiedName="Pythonid.runnableScriptFilter" interface="com.jetbrains.python.run.RunnableScriptFilter"/>
     <extensionPoint qualifiedName="Pythonid.unresolvedReferenceQuickFixProvider" interface="com.jetbrains.python.inspections.PyUnresolvedReferenceQuickFixProvider"/>
+    <extensionPoint qualifiedName="Pythonid.dumbAnnotator" interface="com.jetbrains.python.validation.PyAnnotator"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -153,6 +155,8 @@
     <pyOverridingMethodsSearch implementation="com.jetbrains.python.psi.search.PyOverridingMethodsSearchExecutor"/>
     <runnableScriptFilter implementation="com.jetbrains.python.testing.pytest.PyTestRunnableScriptFilter"/>
     <runnableScriptFilter implementation="com.jetbrains.python.testing.PythonUnitTestRunnableScriptFilter"/>
+    <dumbAnnotator implementation="com.jetbrains.python.validation.DocStringAnnotator"/>
+    <dumbAnnotator implementation="com.jetbrains.python.validation.PyDefinitionsAnnotator"/>
 
     <!-- Django -->
     <pyClassMembersProvider implementation="com.jetbrains.django.codeInsight.DjangoClassMembersProvider"/>
