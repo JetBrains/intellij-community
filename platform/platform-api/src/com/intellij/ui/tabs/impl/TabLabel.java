@@ -213,21 +213,21 @@ public class TabLabel extends JPanel {
 
 
   public void setText(final SimpleColoredText text) {
-    clear(false);
-    if (text != null) {
-      text.appendToComponent(myLabel);
-    }
+    myLabel.change(new Runnable() {
+      public void run() {
+        myLabel.clear();
+        myLabel.setIcon(myIcon);
+
+         if (text != null) {
+          text.appendToComponent(myLabel);
+        }
+      }
+    }, false);
+
+
     invalidateIfNeeded();
   }
 
-  private void clear(final boolean invalidate) {
-    myLabel.clear();
-    myLabel.setIcon(myIcon);
-
-    if (invalidate) {
-      invalidateIfNeeded();
-    }
-  }
 
   private void invalidateIfNeeded() {
     if (myLabel.getRootPane() == null) return;
@@ -235,7 +235,10 @@ public class TabLabel extends JPanel {
     if (myLabel.getSize() != null && myLabel.getSize().equals(myLabel.getPreferredSize())) return;
 
     setInactiveStateImage(null);
-    myLabel.getParent().invalidate();
+
+    myLabel.invalidate();
+    myActionPanel.invalidate();
+
     myTabs.revalidateAndRepaint(false);
   }
 
