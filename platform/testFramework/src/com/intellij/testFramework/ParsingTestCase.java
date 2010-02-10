@@ -84,7 +84,7 @@ public abstract class ParsingTestCase extends LightPlatformTestCase {
     }
   }
 
-  protected void checkResult(@NonNls String targetDataName, final String text) throws Exception {
+  protected void checkResult(@TestDataFile @NonNls String targetDataName, final String text) throws Exception {
     doCheckResult(myFullDataPath, targetDataName, text);
   }
 
