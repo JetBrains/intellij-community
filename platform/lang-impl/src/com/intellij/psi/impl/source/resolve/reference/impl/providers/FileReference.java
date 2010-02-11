@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -127,7 +128,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
 
   protected void innerResolveInContext(@NotNull final String text, @NotNull final PsiFileSystemItem context, final Collection<ResolveResult> result,
                                        final boolean caseSensitive) {
-    if (text.length() == 0 && !myFileReferenceSet.isEndingSlashNotAllowed() && isLast() || ".".equals(text) || "/".equals(text)) {
+    if (isAllowedEmptyPath(text) || ".".equals(text) || "/".equals(text)) {
       result.add(new PsiElementResolveResult(context));
     }
     else if ("..".equals(text)) {
@@ -170,6 +171,12 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
         }
       }
     }
+  }
+
+  private boolean isAllowedEmptyPath(String text) {
+    return text.length() == 0 && isLast() &&
+           (StringUtil.isEmpty(myFileReferenceSet.getPathString()) && myFileReferenceSet.isEmptyPathAllowed() ||
+           !myFileReferenceSet.isEndingSlashNotAllowed() && myIndex > 0);
   }
 
   @Nullable
