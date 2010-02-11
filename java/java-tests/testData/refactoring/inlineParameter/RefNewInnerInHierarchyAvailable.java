@@ -9,9 +9,10 @@ public class Subject {
 class User {
   private void oper() throws IOException {
     Subject subj = new Subject();
-    subj.withClass(new Local());
+    subj.withClass(new Local().new InnerLocal());
   }
 
-  private class Local {
+  class Local {
+    class InnerLocal {}
   }
 }

@@ -126,6 +126,23 @@ public class InlineParameterTest extends LightCodeInsightTestCase {
     doTest(false);
   }
 
+  public void testRefNewInnerAvailable() throws Exception {
+    doTest(false);
+  }
+
+  public void testRefNewInnerFromMethod() throws Exception {
+    try {
+      doTest(false);
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Parameter initializer depends on class <b><code>Local</code></b> which is not available inside method and cannot be inlined", e.getMessage());
+    }
+  }
+
+  public void testRefNewInnerInHierarchyAvailable() throws Exception {
+    doTest(false);
+  }
+
   public void testRefNewTopLevel() throws Exception {
     doTest(false);
   }

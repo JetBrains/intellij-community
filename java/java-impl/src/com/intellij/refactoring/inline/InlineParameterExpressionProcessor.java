@@ -218,8 +218,16 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
             else {
               final PsiClass methodContainingClass = myMethod.getContainingClass();
               LOG.assertTrue(methodContainingClass != null);
-              if (!(refClass.getParent() instanceof PsiFile) && !PsiTreeUtil.isAncestor(methodContainingClass, refClass, false)) {
-                conflicts.putValue(expression, classUnavailableMessage);
+              if (!PsiTreeUtil.isAncestor(myMethod, refClass, false)) {
+                PsiElement parent = refClass;
+                while ((parent = parent.getParent()) instanceof PsiClass) {
+                  if (!PsiUtil.isAccessible((PsiClass)parent, myMethod, null)) {
+                    break;
+                  }
+                }
+                if (!(parent instanceof PsiFile)) {
+                  conflicts.putValue(expression, classUnavailableMessage);
+                }
               }
             }
           }

@@ -12,6 +12,6 @@ class User {
     subj.withClass(new Local());
   }
 
-  private class Local {
+  class Local {
   }
 }
