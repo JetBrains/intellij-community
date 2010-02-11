@@ -121,6 +121,13 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
             else if (elements[0] instanceof PsiAssignmentExpression) {
               localInitializer = ((PsiAssignmentExpression)elements[0]).getRExpression();
             }
+            else if (elements[0] instanceof PsiReferenceExpression) {
+              final PsiReferenceExpression refElement = (PsiReferenceExpression)elements[0];
+              final PsiElement parent = refElement.getParent();
+              if (parent instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)parent).getLExpression() == refElement) {
+                localInitializer = ((PsiAssignmentExpression)parent).getRExpression();
+              }
+            }
             if (localInitializer != null) {
               final PsiElement replacement;
               if (localToParamRef.containsKey(localVariable)) {

@@ -228,6 +228,15 @@ public class InlineParameterTest extends LightCodeInsightTestCase {
     }
   }
 
+  public void testWriteAccess() throws Exception {
+    try {
+      doTest(false);
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Parameter initializer depends on value which is not available inside method and cannot be inlined", e.getMessage());
+    }
+  }
+
   private void doTest(final boolean createLocal) throws Exception {
     getProject().putUserData(InlineParameterExpressionProcessor.CREATE_LOCAL_FOR_TESTS,createLocal);
 
