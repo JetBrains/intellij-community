@@ -187,7 +187,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
   }
 
   public void startTemplate(@NotNull final Editor editor, @NotNull final Template template, TemplateEditingListener listener) {
-    startTemplate(editor, null, template, listener, null, false);
+    startTemplate(editor, null, template, listener, null, true);
   }
 
   public void startTemplate(@NotNull final Editor editor,
