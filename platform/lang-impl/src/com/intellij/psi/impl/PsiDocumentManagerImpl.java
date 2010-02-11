@@ -220,7 +220,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     }
   }
 
-  public void commitDocument(final Document doc) {
+  public void commitDocument(@NotNull final Document doc) {
     final Document document = doc instanceof DocumentWindow ? ((DocumentWindow)doc).getDelegate() : doc;
     if (isUncommited(document)) {
       doCommit(document, null);
@@ -459,11 +459,12 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     return true;
   }
 
+  @NotNull
   public Document[] getUncommittedDocuments() {
     return myUncommittedDocuments.toArray(new Document[myUncommittedDocuments.size()]);
   }
 
-  public boolean isUncommited(Document document) {
+  public boolean isUncommited(@NotNull Document document) {
     if(getSynchronizer().isInSynchronization(document)) return false;
     return ((DocumentEx)document).isInEventsHandling() || myUncommittedDocuments.contains(document);
   }

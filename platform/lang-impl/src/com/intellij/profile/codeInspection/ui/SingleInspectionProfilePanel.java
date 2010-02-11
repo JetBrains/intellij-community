@@ -47,7 +47,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -72,7 +71,10 @@ import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.DefaultTreeSelectionModel;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -95,7 +97,6 @@ public class SingleInspectionProfilePanel extends JPanel {
   private InspectionProfileImpl mySelectedProfile;
   private JEditorPane myBrowser;
   private JPanel myOptionsPanel;
-  private final UserActivityWatcher myUserActivityWatcher = new UserActivityWatcher();
   private final JPanel myInspectionProfilePanel = new JPanel(new BorderLayout());
   private FilterComponent myProfileFilter;
   private final InspectionConfigTreeNode myRoot =
@@ -121,7 +122,8 @@ public class SingleInspectionProfilePanel extends JPanel {
     mySelectedProfile = (InspectionProfileImpl)profile;
     myInitialProfile = inspectionProfileName;
     add(createInspectionProfileSettingsPanel(), BorderLayout.CENTER);
-    myUserActivityWatcher.addUserActivityListener(new UserActivityListener() {
+    UserActivityWatcher userActivityWatcher = new UserActivityWatcher();
+    userActivityWatcher.addUserActivityListener(new UserActivityListener() {
       public void stateChanged() {
         //invoke after all other listeners
         SwingUtilities.invokeLater(new Runnable() {
@@ -133,7 +135,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         });
       }
     });
-    myUserActivityWatcher.register(myOptionsPanel);
+    userActivityWatcher.register(myOptionsPanel);
     updateSelectedProfileState();
   }
 
@@ -150,9 +152,11 @@ public class SingleInspectionProfilePanel extends JPanel {
 
 
   private void wereToolSettingsModified() {
-    for (Descriptor defaultDescriptor : myDescriptors.keySet()) {
-      if (wereToolSettingsModified(defaultDescriptor)) return;
-      for (Descriptor descriptor : myDescriptors.get(defaultDescriptor)) {
+    for (Map.Entry<Descriptor, List<Descriptor>> entry : myDescriptors.entrySet()) {
+      Descriptor desc = entry.getKey();
+      if (wereToolSettingsModified(desc)) return;
+      List<Descriptor> descriptors = entry.getValue();
+      for (Descriptor descriptor : descriptors) {
         if (wereToolSettingsModified(descriptor)) return;
       }
     }
@@ -161,27 +165,26 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private boolean wereToolSettingsModified(Descriptor descriptor) {
     InspectionProfileEntry tool = descriptor.getTool();
-    if (tool != null) {
-      if (mySelectedProfile.isToolEnabled(descriptor.getKey())) {
-        Element oldConfig = descriptor.getConfig();
-        @NonNls Element newConfig = new Element("options");
-        try {
-          tool.writeSettings(newConfig);
+    if (tool == null || !mySelectedProfile.isToolEnabled(descriptor.getKey())) {
+      return false;
+    }
+    Element oldConfig = descriptor.getConfig();
+    @NonNls Element newConfig = new Element("options");
+    try {
+      tool.writeSettings(newConfig);
+    }
+    catch (WriteExternalException e) {
+      LOG.error(e);
+    }
+    if (!JDOMUtil.areElementsEqual(oldConfig, newConfig)) {
+      myAlarm.cancelAllRequests();
+      myAlarm.addRequest(new Runnable() {
+        public void run() {
+          myTree.repaint();
         }
-        catch (WriteExternalException e) {
-          LOG.error(e);
-        }
-        if (!JDOMUtil.areElementsEqual(oldConfig, newConfig)) {
-          myAlarm.cancelAllRequests();
-          myAlarm.addRequest(new Runnable() {
-            public void run() {
-              myTree.repaint();
-            }
-          }, 300);
-          myModified = true;
-          return true;
-        }
-      }
+      }, 300);
+      myModified = true;
+      return true;
     }
     return false;
   }
@@ -976,14 +979,15 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   private boolean descriptorsAreChanged() {
-    for (Descriptor defaultDescriptor : myDescriptors.keySet()) {
-      if (mySelectedProfile.isToolEnabled(defaultDescriptor.getKey(), (NamedScope)null) != defaultDescriptor.isEnabled()){
+    for (Map.Entry<Descriptor, List<Descriptor>> entry : myDescriptors.entrySet()) {
+      Descriptor desc = entry.getKey();
+      if (mySelectedProfile.isToolEnabled(desc.getKey(), (NamedScope)null) != desc.isEnabled()){
         return true;
       }
-      if (mySelectedProfile.getErrorLevel(defaultDescriptor.getKey(), defaultDescriptor.getScope()) != defaultDescriptor.getLevel()) {
+      if (mySelectedProfile.getErrorLevel(desc.getKey(), desc.getScope()) != desc.getLevel()) {
         return true;
       }
-      final List<Descriptor> descriptors = myDescriptors.get(defaultDescriptor);
+      final List<Descriptor> descriptors = entry.getValue();
       for (Descriptor descriptor : descriptors) {
         if (mySelectedProfile.isToolEnabled(descriptor.getKey(), descriptor.getScope()) != descriptor.isEnabled()) {
           return true;
@@ -993,7 +997,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         }
       }
 
-      final List<ScopeToolState> tools = mySelectedProfile.getNonDefaultTools(defaultDescriptor.getKey().toString());
+      final List<ScopeToolState> tools = mySelectedProfile.getNonDefaultTools(desc.getKey().toString());
       if (tools.size() != descriptors.size()) {
         return true;
       }

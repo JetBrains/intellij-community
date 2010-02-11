@@ -41,7 +41,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
   public void onInitialize(RefElement refElement) {
     ((RefElementImpl)refElement).setFlag(true, CAN_BE_FINAL_MASK);
     if (refElement instanceof RefClass) {
-      final RefClass refClass = ((RefClass)refElement);
+      final RefClass refClass = (RefClass)refElement;
       final PsiClass psiClass = refClass.getElement();
       if (RefUtil.isEntryPoint(refClass)) {
         ((RefClassImpl)refClass).setFlag(false, CAN_BE_FINAL_MASK);

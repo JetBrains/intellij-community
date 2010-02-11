@@ -25,8 +25,6 @@ import java.util.List;
  */
 public abstract class PsiRecursiveElementVisitor extends PsiElementVisitor {
   private final boolean myVisitAllFileRoots;
-  private int level = 0;
-  private static final int MAX_LEVEL_DEPTH = 200; // all elements beneath this level are ignored to avoid stack overflow
 
   protected PsiRecursiveElementVisitor() {
     this(false);
@@ -37,13 +35,8 @@ public abstract class PsiRecursiveElementVisitor extends PsiElementVisitor {
   }
 
   public void visitElement(final PsiElement element) {
-    level++;
-    if (level < MAX_LEVEL_DEPTH) {
-      ProgressManager.checkCanceled();
-
-      element.acceptChildren(this);
-    }
-    level--;
+    ProgressManager.checkCanceled();
+    element.acceptChildren(this);
   }
 
   @Override
@@ -54,6 +47,7 @@ public abstract class PsiRecursiveElementVisitor extends PsiElementVisitor {
       if (allFiles.size() > 1) {
         if (file == viewProvider.getPsi(viewProvider.getBaseLanguage())) {
           for (PsiFile lFile : allFiles) {
+            ProgressManager.checkCanceled();
             lFile.acceptChildren(this);
           }
           return;
