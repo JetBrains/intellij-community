@@ -201,11 +201,15 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     int i = caretOffset - 1;
     for (; i >= 0; i--) {
       char c = text.charAt(i);
-      if (!Character.isJavaIdentifierPart(c)) {
+      if (isDelimiter(c)) {
         break;
       }
     }
     return i + 1;
+  }
+
+  private static boolean isDelimiter(char c) {
+    return !Character.isJavaIdentifierPart(c);
   }
 
   private static <T, U> void addToMap(@NotNull Map<T, U> map, @NotNull Collection<? extends T> keys, U value) {
@@ -340,8 +344,13 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
                                       @Nullable final PairProcessor<String, String> processor,
                                       @Nullable String argument) {
     final int caretOffset = editor.getCaretModel().getOffset();
-    int startOffset = caretOffset - template.getKey().length();
+    String key = template.getKey();
+    int startOffset = caretOffset - key.length();
     if (argument != null) {
+      if (!isDelimiter(key.charAt(key.length() - 1))) {
+        // pass space
+        startOffset--;
+      }
       startOffset -= argument.length();
     }
     startTemplateWithPrefix(editor, template, startOffset, processor, argument);
