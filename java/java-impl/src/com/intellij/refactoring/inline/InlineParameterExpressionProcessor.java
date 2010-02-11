@@ -173,6 +173,11 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
       public void visitReferenceExpression(final PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         final PsiElement element = expression.resolve();
+        if (element instanceof PsiMember && !((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC)) {
+          if (myMethod.hasModifierProperty(PsiModifier.STATIC)) {
+            conflicts.putValue(expression, "Parameter initializer depends on " + RefactoringUIUtil.getDescription(element, false) + " which is not available inside the static method");
+          }
+        }
         if (element instanceof PsiMethod || element instanceof PsiField) {
           if (!mySameClass && !((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC)) {
             conflicts.putValue(expression, "Parameter initializer depend on non static member from some other class");
@@ -198,6 +203,20 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
         if (!PsiTreeUtil.isAncestor(containingClass, methodContainingClass, false)) {
           conflicts.putValue(thisExpression,
                              "Parameter initializer depends on this which is not available inside the method and cannot be inlined");
+        }
+        if (myMethod.hasModifierProperty(PsiModifier.STATIC)) {
+          conflicts.putValue(thisExpression, "Parameter initializer depends on this which is not available inside the static method");
+        }
+      }
+
+      @Override
+      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+        super.visitReferenceElement(reference);
+        if (myMethod.hasModifierProperty(PsiModifier.STATIC)) {
+          final PsiElement resolved = reference.resolve();
+          if (resolved instanceof PsiClass && !((PsiClass)resolved).hasModifierProperty(PsiModifier.STATIC)) {
+            conflicts.putValue(reference, "Parameter initializer depends on non static class which is not available inside static method");
+          }
         }
       }
 
