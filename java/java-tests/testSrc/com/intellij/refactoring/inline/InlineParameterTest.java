@@ -80,6 +80,10 @@ public class InlineParameterTest extends LightCodeInsightTestCase {
     doTest(false);
   }
 
+  public void testRefStaticMethod() throws Exception {
+    doTest(true);
+  }
+
   public void testRefOuterThis() throws Exception {
     try {
       doTest(false);

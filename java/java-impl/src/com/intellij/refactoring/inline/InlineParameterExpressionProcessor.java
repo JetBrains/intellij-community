@@ -293,6 +293,11 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
         factory.createVariableDeclarationStatement(myParameter.getName(), myParameter.getType(), myInitializer);
       final PsiLocalVariable declaredVar = (PsiLocalVariable)localDeclaration.getDeclaredElements()[0];
       PsiUtil.setModifierProperty(declaredVar, PsiModifier.FINAL, myParameter.hasModifierProperty(PsiModifier.FINAL));
+      final PsiExpression localVarInitializer =
+        InlineUtil.inlineVariable(myParameter, myInitializer, (PsiReferenceExpression)factory.createExpressionFromText(myParameter.getName(), myMethod));
+      final PsiExpression initializer = declaredVar.getInitializer();
+      LOG.assertTrue(initializer != null);
+      initializer.replace(localVarInitializer);
       final PsiCodeBlock body = myMethod.getBody();
       if (body != null) {
         body.addAfter(localDeclaration, body.getLBrace());
