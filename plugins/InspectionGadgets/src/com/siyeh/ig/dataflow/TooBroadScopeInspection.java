@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -154,7 +154,10 @@ public class TooBroadScopeInspection extends BaseInspection
             final PsiElement firstReferenceScope =
                     PsiTreeUtil.getParentOfType(referenceElement,
                             PsiCodeBlock.class, PsiForStatement.class);
-            assert firstReferenceScope != null;
+            if (firstReferenceScope == null)
+            {
+                return;
+            }
             PsiDeclarationStatement newDeclaration;
             if (firstReferenceScope.equals(commonParent))
             {
@@ -166,7 +169,10 @@ public class TooBroadScopeInspection extends BaseInspection
                 final PsiElement commonParentChild =
                         ScopeUtils.getChildWhichContainsElement(
                                 commonParent, referenceElement);
-                assert commonParentChild != null;
+                if (commonParentChild == null)
+                {
+                    return;
+                }
                 final PsiElement location = commonParentChild.getPrevSibling();
                 newDeclaration = createNewDeclaration(variable, initializer);
                 newDeclaration = (PsiDeclarationStatement)
@@ -188,7 +194,10 @@ public class TooBroadScopeInspection extends BaseInspection
         {
             final PsiDeclarationStatement declaration =
                     (PsiDeclarationStatement)variable.getParent();
-            assert declaration != null;
+            if (declaration == null)
+            {
+                return;
+            }
             final PsiElement[] declaredElements =
                     declaration.getDeclaredElements();
             if (declaredElements.length == 1)
@@ -252,20 +261,24 @@ public class TooBroadScopeInspection extends BaseInspection
             return newDeclaration;
         }
 
-        private String getCommentText(PsiVariable variable) {
+        private String getCommentText(PsiVariable variable)
+        {
             final PsiDeclarationStatement parentDeclaration =
                     (PsiDeclarationStatement)variable.getParent();
             final PsiElement[] declaredElements =
                     parentDeclaration.getDeclaredElements();
-            if (declaredElements.length != 1) {
+            if (declaredElements.length != 1)
+            {
                 return "";
             }
             final PsiElement lastChild = parentDeclaration.getLastChild();
-            if (!(lastChild instanceof PsiComment)) {
+            if (!(lastChild instanceof PsiComment))
+            {
                 return "";
             }
             final PsiElement prevSibling = lastChild.getPrevSibling();
-            if (prevSibling instanceof PsiWhiteSpace) {
+            if (prevSibling instanceof PsiWhiteSpace)
+            {
                 return prevSibling.getText() + lastChild.getText();
             }
             return lastChild.getText();
@@ -350,7 +363,8 @@ public class TooBroadScopeInspection extends BaseInspection
             return true;
         }
         if (PsiUtil.isConstantExpression(expression) ||
-            ExpressionUtils.isNullLiteral(expression)) {
+            ExpressionUtils.isNullLiteral(expression))
+        {
             return true;
         }
         if (expression instanceof PsiNewExpression)
@@ -386,7 +400,8 @@ public class TooBroadScopeInspection extends BaseInspection
             else if (!m_allowConstructorAsInitializer)
             {
                 final PsiType type = newExpression.getType();
-                if (!ClassUtils.isImmutable(type)) {
+                if (!ClassUtils.isImmutable(type))
+                {
                     return false;
                 }
             }
@@ -404,15 +419,18 @@ public class TooBroadScopeInspection extends BaseInspection
             }
             return result;
         }
-        if (expression instanceof PsiReferenceExpression) {
+        if (expression instanceof PsiReferenceExpression)
+        {
             final PsiReferenceExpression referenceExpression =
                     (PsiReferenceExpression)expression;
             final PsiElement target = referenceExpression.resolve();
-            if (!(target instanceof PsiField)) {
+            if (!(target instanceof PsiField))
+            {
                 return false;
             }
             final PsiField field = (PsiField)target;
-            if (ExpressionUtils.isConstant(field)) {
+            if (ExpressionUtils.isConstant(field))
+            {
                 return true;
             }
         }
