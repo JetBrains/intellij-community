@@ -16,16 +16,19 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Eugene.Kudelevsky
@@ -33,7 +36,10 @@ import java.util.List;
 public class XmlCustomLiveTemplate implements CustomLiveTemplate {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.XmlCustomLiveTemplate");
 
+  private static final String ATTRS = "ATTRS";
+
   private static final String POSSIBLE_OPERATIONS = ">+*";
+  private static final String HTML_SELECTORS = ".#";
   private static final char MARKER = '$';
 
   private static enum MyState {
@@ -83,6 +89,16 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
     return -1;
   }
 
+  private static String getPrefix(@NotNull String templateKey) {
+    for (int i = 0, n = templateKey.length(); i < n; i++) {
+      char c = templateKey.charAt(i);
+      if (HTML_SELECTORS.indexOf(c) >= 0) {
+        return templateKey.substring(0, i);
+      }
+    }
+    return templateKey;
+  }
+
   @Nullable
   private static List<MyToken> parse(@NotNull String text, @NotNull CustomTemplateCallback callback) {
     text += MARKER;
@@ -101,7 +117,13 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
           if (key.length() == 0) {
             return null;
           }
-          if (!callback.isLiveTemplateApplicable(key) && key.indexOf('<') >= 0) {
+          String prefix = getPrefix(key);
+          if (callback.isLiveTemplateApplicable(prefix)) {
+            if (!prefix.equals(key) && !callback.isTemplateContainsVars(prefix, ATTRS)) {
+              return null;
+            }
+          }
+          else if (prefix.indexOf('<') >= 0) {
             return null;
           }
           result.add(new MyTemplateToken(key));
@@ -183,16 +205,89 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
     LOG.error("Input string was checked incorrectly during isApplicable() invokation");
   }
 
-  private static boolean invokeTemplate(String key, CustomTemplateCallback callback, TemplateInvokationListener listener) {
+  @NotNull
+  private static String buildAttributesString(@Nullable String id, @NotNull List<String> classes) {
+    StringBuilder result = new StringBuilder();
+    if (id != null) {
+      result.append("id=\"").append(id).append('"');
+      if (classes.size() > 0) {
+        result.append(' ');
+      }
+    }
+    if (classes.size() > 0) {
+      result.append("class=\"");
+      for (int i = 0; i < classes.size(); i++) {
+        result.append(classes.get(i));
+        if (i < classes.size() - 1) {
+          result.append(' ');
+        }
+      }
+      result.append('"');
+    }
+    return result.toString();
+  }
+
+  private static boolean invokeTemplate(String key, final CustomTemplateCallback callback, final TemplateInvokationListener listener) {
+    if (callback.getFile().getFileType() instanceof HtmlFileType) {
+      String templateKey = null;
+      String id = null;
+      final List<String> classes = new ArrayList<String>();
+      StringBuilder builder = new StringBuilder();
+      char lastDelim = 0;
+      key += MARKER;
+      for (int i = 0, n = key.length(); i < n; i++) {
+        char c = key.charAt(i);
+        if (c == '#' || c == '.' || i == n - 1) {
+          switch (lastDelim) {
+            case 0:
+              templateKey = builder.toString();
+              break;
+            case '#':
+              id = builder.toString();
+              break;
+            case '.':
+              if (builder.length() > 0) {
+                classes.add(builder.toString());
+              }
+              break;
+          }
+          lastDelim = c;
+          builder = new StringBuilder();
+        }
+        else {
+          builder.append(c);
+        }
+      }
+      String attributes = buildAttributesString(id, classes);
+      return startTemplate(templateKey, callback, listener, attributes.length() > 0 ? ' ' + attributes : null);
+    }
+    return startTemplate(key, callback, listener, null);
+  }
+
+  private static boolean startTemplate(String key,
+                                       CustomTemplateCallback callback,
+                                       TemplateInvokationListener listener,
+                                       @Nullable String attributes) {
+    Map<String, String> predefinedValues = null;
+    if (attributes != null) {
+      predefinedValues = new HashMap<String, String>();
+      predefinedValues.put(ATTRS, attributes);
+    }
     if (callback.isLiveTemplateApplicable(key)) {
-      return callback.startTemplate(key, listener);
+      return callback.startTemplate(key, predefinedValues, listener);
     }
     else {
       TemplateImpl template = new TemplateImpl("", "");
-      template.addTextSegment('<' + key + '>');
+      template.addTextSegment('<' + key);
+      if (attributes != null) {
+        template.addVariable(ATTRS, "", "", false);
+        template.addVariableSegment(ATTRS);
+      }
+      template.addTextSegment(">");
       template.addVariableSegment(TemplateImpl.END);
       template.addTextSegment("</" + key + ">");
-      return callback.startTemplate(template, listener);
+      template.setToReformat(true);
+      return callback.startTemplate(template, predefinedValues, listener);
     }
   }
 
