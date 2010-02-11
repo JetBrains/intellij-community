@@ -76,15 +76,17 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
   }
 
   private static String unwrapVals(String[] vals) {
-    final String list = getCommaSeparatedNamesList(vals);
-    return "java.util.ArrayList resList = new java.util.ArrayList();" +
-                 "java.lang.Object[] vals = new java.lang.Object[]{" +
-                 list +
-                 "};" +
-                 "for (int iii =0; iii<vals.length; iii++){java.lang.Object o = vals[iii];" +
-                 "if (o instanceof groovy.lang.Reference) {o = ((groovy.lang.Reference)o).get();}" +
-                 "resList.add(o);}" +
-                 "java.lang.Object[] resVals = resList.toArray(new java.lang.Object[resList.size()]);";
+    StringBuilder sb = new StringBuilder();
+    sb.append("java.util.ArrayList resList = new java.util.ArrayList();\n");
+    sb.append("java.lang.Object[] resVals = new java.lang.Object[").append(vals.length).append("];\n");
+    sb.append("java.lang.Object o;\n");
+    for (int i = 0; i < vals.length; i++) {
+      String s = vals[i];
+      sb.append("  o = ").append(s).append(";\n");
+      sb.append("  if (o instanceof groovy.lang.Reference) {o = ((groovy.lang.Reference)o).get();}\n");
+      sb.append("  resVals[").append(i).append("] = o;\n");
+    }
+    return sb.toString();
   }
 
   public JavaCodeFragment createCodeFragment(TextWithImports textWithImports, PsiElement context, Project project) {
@@ -231,12 +233,7 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
   }
 
   private static String getCommaSeparatedNamesList(String[] names) {
-    StringBuffer buffer = new StringBuffer();
-    for (int i = 0; i < names.length; i++) {
-      if (i > 0) buffer.append(", ");
-      buffer.append(names[i]);
-    }
-    return buffer.toString();
+    return StringUtil.join(names, ",");
   }
 
   private static boolean isStaticContext(PsiElement context) {
