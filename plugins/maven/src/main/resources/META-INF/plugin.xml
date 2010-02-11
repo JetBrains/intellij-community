@@ -44,8 +44,10 @@
     <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenDomSettingsModelDescription"/>
     <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenDomPluginModelDescription"/>
 
-    <lang.documentationProvider language="XML" implementationClass="org.jetbrains.idea.maven.dom.MavenModelDocumentationProvider" order="first"/>
-    <lang.documentationProvider language="XML" implementationClass="org.jetbrains.idea.maven.dom.MavenPluginModelDocumentationProvider" order="first"/>
+    <lang.documentationProvider language="XML" implementationClass="org.jetbrains.idea.maven.dom.MavenModelDocumentationProvider"
+                                order="first"/>
+    <lang.documentationProvider language="XML" implementationClass="org.jetbrains.idea.maven.dom.MavenPluginModelDocumentationProvider"
+                                order="first"/>
     <elementDescriptionProvider implementation="org.jetbrains.idea.maven.dom.MavenModelDocumentationProvider" order="first"/>
 
     <inspectionToolProvider implementation="org.jetbrains.idea.maven.dom.MavenModelInspection"/>
@@ -54,7 +56,8 @@
     <dom.extender domClass="org.jetbrains.idea.maven.dom.model.MavenDomConfigurationParameter"
                   extenderClass="org.jetbrains.idea.maven.dom.MavenPluginConfigurationParameterDomExtender"/>
 
-    <completion.contributor language="any" implementationClass="org.jetbrains.idea.maven.dom.references.MavenPropertyCompletionContributor" id="Maven"/>
+    <completion.contributor language="any" implementationClass="org.jetbrains.idea.maven.dom.references.MavenPropertyCompletionContributor"
+                            id="Maven"/>
 
     <psi.referenceContributor implementation="org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReferenceContributor"/>
     <usageTargetProvider implementation="org.jetbrains.idea.maven.dom.references.MavenUsageTargetProvider"/>
@@ -66,6 +69,9 @@
 
     <projectService serviceInterface="org.jetbrains.idea.maven.dom.MavenDomElementDescriptorHolder"
                     serviceImplementation="org.jetbrains.idea.maven.dom.MavenDomElementDescriptorHolder"/>
+
+    <applicationService serviceInterface="org.jetbrains.idea.maven.dom.converters.repositories.MavenRepositoriesProvider"
+                    serviceImplementation="org.jetbrains.idea.maven.dom.converters.repositories.MavenRepositoriesProvider"/>
 
     <typedHandler implementation="org.jetbrains.idea.maven.dom.code.MavenTypedHandlerDelegate"/>
     <backspaceHandlerDelegate implementation="org.jetbrains.idea.maven.dom.code.MavenBackspaceHandlerDelegate"/>
@@ -80,6 +86,8 @@
     <gotoFileContributor implementation="org.jetbrains.idea.maven.vfs.MavenGotoPropertyFileContibutor"/>
     <gotoFileContributor implementation="org.jetbrains.idea.maven.utils.MavenGotoSettingsFileContibutor"/>
     <fileTemplateGroup implementation="org.jetbrains.idea.maven.utils.MavenFileTemplateGroupFactory"/>
+
+    <completion.contributor language="XML" implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenGroupIdSmartCompletionContributor"/>
   </extensions>
 
   <application-components>
@@ -91,6 +99,9 @@
     </component>
     <component>
       <implementation-class>org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.idea.maven.utils.MavenDomApplicationComponent</implementation-class>
     </component>
   </application-components>
 
@@ -274,6 +285,10 @@
       <action id="Maven.AssignShortcut"
               class="org.jetbrains.idea.maven.tasks.actions.AssignShortcutAction" text="Assign Shortcut..."
               description="Assign shortcutto selected phase/goal">
+      </action>
+
+      <action id="Generate.Dom.Elements" class="org.jetbrains.idea.maven.dom.generate.MavenGenerateDomActionGroup" text="Generate">
+        <add-to-group anchor="last" group-id="GenerateGroup"/>
       </action>
     </group>
 

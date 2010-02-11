@@ -30,6 +30,7 @@ public class MavenIcons {
   public static final Icon OPEN_PLUGINS_ICON = IconLoader.getIcon("/images/phasesOpen.png");
   public static final Icon CLOSED_PLUGINS_ICON = IconLoader.getIcon("/images/phasesClosed.png");
   public static final Icon PLUGIN_ICON = IconLoader.getIcon("/images/mavenPlugin.png");
+  public static final Icon REPOSITORY_ICON = IconLoader.getIcon("/images/mavenPlugin.png");
   public static final Icon PLUGIN_GOAL_ICON = IconLoader.getIcon("/images/pluginGoal.png");
   public static final Icon OPEN_DEPENDENCIES_ICON = IconLoader.getIcon("/nodes/ppLibOpen.png");
   public static final Icon CLOSED_DEPENDENCIES_ICON = IconLoader.getIcon("/nodes/ppLibClosed.png");
