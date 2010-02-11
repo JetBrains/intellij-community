@@ -1,0 +1,13 @@
+def aa = """
+aaa
+  bbb
+"""
+def x = "aaa"<caret>
+def z = ""
+-----
+def x = "aaa"<caret>
+def aa = """
+aaa
+  bbb
+"""
+def z = ""
