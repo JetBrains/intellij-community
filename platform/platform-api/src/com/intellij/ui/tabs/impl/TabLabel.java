@@ -237,7 +237,10 @@ public class TabLabel extends JPanel {
     setInactiveStateImage(null);
 
     myLabel.invalidate();
-    myActionPanel.invalidate();
+
+    if (myActionPanel != null) {
+      myActionPanel.invalidate();
+    }
 
     myTabs.revalidateAndRepaint(false);
   }
