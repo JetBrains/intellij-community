@@ -310,6 +310,9 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     if (myControlFlowRef != null){
       myControlFlowRef.clear();
     }
+    if (myScopeRef != null){
+      myScopeRef.clear();
+    }
   }
 
   private SoftReference<ControlFlow> myControlFlowRef;
