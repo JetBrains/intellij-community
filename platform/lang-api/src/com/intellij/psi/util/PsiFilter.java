@@ -37,4 +37,8 @@ public class PsiFilter<T extends PsiElement> {
   public final Class<T> getParentClass() {
     return filter; 
   }
+
+  public boolean areEquivalent(T e1, T e2) {
+    return e1.isEquivalentTo(e2);
+  }
 }
