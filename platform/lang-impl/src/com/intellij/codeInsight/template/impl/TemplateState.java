@@ -1025,7 +1025,7 @@ public class TemplateState implements Disposable {
   private void fireTemplateExpanded() {
     TemplateEditingListener[] listeners = myListeners.toArray(new TemplateEditingListener[myListeners.size()]);
     for (TemplateEditingListener listener : listeners) {
-      listener.templateExpanded(this, myTemplate);
+      listener.templateExpanded(myTemplate);
     }
   }
 
