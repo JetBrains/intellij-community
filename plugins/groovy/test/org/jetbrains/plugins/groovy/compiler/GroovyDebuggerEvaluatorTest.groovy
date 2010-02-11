@@ -19,22 +19,25 @@ public class GroovyDebuggerEvaluatorTest extends LightGroovyTestCase {
   public void testSimpleVariable() throws Exception {
     evaluates """def a = 2
 <caret>a++""",
-              "a", "2"
+              "a",
+              "[a:a] -> a"
+  }
+
+  public void testVariableInsideClosure() throws Exception {
+    evaluates """def a = 2
+Closure c = { a++; <caret>a }
+c()
+a++""",
+              "a",
+              "[a:this.a] -> a"
   }
 
   private void evaluates(String text, String expression, String expected) throws IOException {
     myFixture.configureByText("_.groovy", text);
     def context = myFixture.file.findElementAt(myFixture.editor.caretModel.offset);
-    def factory = CodeFragmentFactory.EXTENSION_POINT_NAME.findExtension(GroovyCodeFragmentFactory.class);
-    def fragment = factory.createCodeFragment(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expression), context, project);
-    def children = fragment.children;
-    def last = children[children.length - 1].text;
+    def pair = GroovyCodeFragmentFactory.externalParameters(expression, context)
 
-    final String fragmentText = fragment.getText();
-    text = text.replace("<caret>", "\n${fragmentText[0..-last.size()-1]}return $last;\n")
-    System.out.println(text);
-    String result = new GroovyShell().evaluate(text).toString();
-    assertEquals(expected, result);
+    assertEquals expected, pair.first.toString() + " -> " + pair.second.text
   }
 
   @Override
