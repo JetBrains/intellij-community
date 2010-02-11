@@ -7,12 +7,14 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyExceptPartNavigator;
 import com.jetbrains.python.psi.impl.PyForStatementNavigator;
 import com.jetbrains.python.psi.impl.PyListCompExpressionNavigator;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author oleg
  */
 public class ScopeUtil {
-  public static PsiElement getScopeElement(final PsiElement element) {
+  @Nullable
+  public static PsiElement getParameterScope(final PsiElement element){
     if (element instanceof PyNamedParameter){
       final PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class, false);
       if (function != null){
@@ -34,9 +36,6 @@ public class ScopeUtil {
     if (listCompExpression != null){
       return listCompExpression;
     }
-
-    final ScopeOwner owner = PsiTreeUtil.getParentOfType(element, ScopeOwner.class, false);
-    assert owner != null : "element should have not null controlflow owner";
-    return owner;
+    return null;
   }
 }

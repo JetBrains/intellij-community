@@ -44,7 +44,7 @@ public class PyDefUseUtil {
       final ReadWriteInstruction instruction = (ReadWriteInstruction)instructions[instr];
       final String name = ((PyElement)instruction.getElement()).getName();
       final ReadWriteInstruction.ACCESS access = instruction.getAccess();
-      if (isWriteAccess(access) && Comparing.strEqual(name, var.getName())) {
+      if (access.isWriteAccess() && Comparing.strEqual(name, var.getName())) {
         result.add((PyElement) instruction.getElement());
         return;
       }
@@ -52,10 +52,6 @@ public class PyDefUseUtil {
     for (Instruction instruction : instructions[instr].allPred()) {
       getLatestDefs(var, instructions, instruction.num(), visited, result);
     }
-  }
-
-  private static boolean isWriteAccess(ReadWriteInstruction.ACCESS access) {
-    return access == ReadWriteInstruction.ACCESS.WRITE || access == ReadWriteInstruction.ACCESS.READWRITE;
   }
 
   @NotNull
@@ -80,7 +76,7 @@ public class PyDefUseUtil {
       final String name = ((PyElement)instruction.getElement()).getName();
       if (Comparing.strEqual(name, var.getName())) {
         final ReadWriteInstruction.ACCESS access = instruction.getAccess();
-        if (isWriteAccess(access)) {
+        if (access.isWriteAccess()) {
           return;
         }
         result.add((PyElement)instruction.getElement());

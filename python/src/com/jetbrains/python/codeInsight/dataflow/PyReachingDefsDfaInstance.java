@@ -25,40 +25,24 @@ public class PyReachingDefsDfaInstance implements DfaInstance<ScopeVariable> {
     //if (element == null || element.getUserData(ReferenceCompletionUtil.REFERENCE_BEING_COMPLETED)!=null){
     //  return map;
     //}
-
-    // Scope reduction
-    final DFAMap<ScopeVariable> reducedMap = new DFAMap<ScopeVariable>();
-    for (Map.Entry<String, ScopeVariable> entry : map.entrySet()) {
-      final ScopeVariable value = entry.getValue();
-      if (element != null && PsiTreeUtil.isAncestor(value.getScope(), element, false)){
-        reducedMap.put(entry.getKey(), value);
-      }
-    }
-
-    return processReducedMap(reducedMap, instruction, element);
-  }
-
-  private static DFAMap<ScopeVariable> processReducedMap(final DFAMap<ScopeVariable> map,
-                                                         final Instruction instruction,
-                                                         final PsiElement element) {
     if (instruction instanceof ReadWriteInstruction) {
       final ReadWriteInstruction rwInstruction = (ReadWriteInstruction)instruction;
       final String name = rwInstruction.getName();
       final ScopeVariable variable = map.get(name);
-      // If parameter
-      if (UsageAnalyzer.isParameter(element)) {
-        final PsiElement scope = ScopeUtil.getScopeElement(element);
-        final ScopeVariable scopeVariable = new ScopeVariableImpl(name, true, scope, element);
+      // Parameter case
+      final PsiElement parameterScope = ScopeUtil.getParameterScope(element);
+      if (parameterScope != null) {
+        final ScopeVariable scopeVariable = new ScopeVariableImpl(name, true, element);
         map.put(name, scopeVariable);
-      } else {
+      }
+      // Local variable case
+      else {
         final ScopeVariableImpl scopeVariable;
         final boolean isParameter = variable != null && variable.isParameter();
         if (variable == null) {
-          final PsiElement scope = ScopeUtil.getScopeElement(element);
-          scopeVariable = new ScopeVariableImpl(name, isParameter, scope, element);
+          scopeVariable = new ScopeVariableImpl(name, isParameter, element);
         } else {
-          scopeVariable = new ScopeVariableImpl(name, isParameter, variable.getScope(),
-                                                variable.getDeclarations());
+          scopeVariable = new ScopeVariableImpl(name, isParameter, variable.getDeclarations());
         }
         map.put(name, scopeVariable);
       }

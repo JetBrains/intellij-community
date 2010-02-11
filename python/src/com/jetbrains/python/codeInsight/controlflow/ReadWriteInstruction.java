@@ -8,7 +8,23 @@ import org.jetbrains.annotations.NonNls;
 public class ReadWriteInstruction extends InstructionImpl {
 
   public enum ACCESS {
-    READ, WRITE, READWRITE
+    READ(true, false),
+    WRITE(false, true),
+    READWRITE(true, true);
+
+    private boolean isWrite;
+    private boolean isRead;
+
+    ACCESS(boolean read, boolean write) {
+      isWrite = write;
+      isRead = read;
+    }
+    public boolean isWriteAccess(){
+      return isWrite;
+    }
+    public boolean isReadAccess(){
+      return isRead;
+    }
   }
 
   public String myName;

@@ -13,18 +13,16 @@ import java.util.Collections;
 public class ScopeVariableImpl implements ScopeVariable {
   private String myName;
   private final Collection<PsiElement> myDeclarations;
-  private PsiElement myScope;
   private boolean isParameter;
 
-  public ScopeVariableImpl(final String name, final boolean parameter, final PsiElement scope, final Collection<PsiElement> declarations) {
+  public ScopeVariableImpl(final String name, final boolean parameter, final Collection<PsiElement> declarations) {
     myName = name;
     myDeclarations = declarations;
-    myScope = scope;
     isParameter = parameter;
   }
 
-  public ScopeVariableImpl(final String name, final boolean parameter, final PsiElement scope, PsiElement declaration) {
-    this(name, parameter, scope, Collections.singletonList(declaration));
+  public ScopeVariableImpl(final String name, final boolean parameter, PsiElement declaration) {
+    this(name, parameter, Collections.singletonList(declaration));
   }
 
   @NotNull
@@ -35,10 +33,6 @@ public class ScopeVariableImpl implements ScopeVariable {
   @NotNull
   public Collection<PsiElement> getDeclarations() {
     return myDeclarations;
-  }
-
-  public PsiElement getScope() {
-    return myScope;
   }
 
   public boolean isParameter() {

@@ -71,4 +71,9 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
     LocalInspectionTool inspection = new PyTrailingSemicolonInspection();
     doTest(getTestName(false), inspection);
   }
+
+  public void testPyUnusedLocalVariableInspection() throws Throwable {
+    LocalInspectionTool inspection = new PyUnusedLocalVariableInspection();
+    doTest(getTestName(false), inspection);
+  }
 }

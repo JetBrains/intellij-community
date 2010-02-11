@@ -31,7 +31,5 @@ public interface ScopeVariable {
   @NotNull
   Collection<PsiElement> getDeclarations();
 
-  PsiElement getScope();
-
   boolean isParameter();
 }
