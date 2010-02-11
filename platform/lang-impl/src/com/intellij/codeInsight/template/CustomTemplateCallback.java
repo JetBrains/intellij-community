@@ -22,10 +22,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Eugene.Kudelevsky
@@ -56,18 +59,39 @@ public class CustomTemplateCallback {
     return templates.size() > 0;
   }
 
+  public boolean isTemplateContainsVars(@NotNull String key, String... varNames) {
+    List<TemplateImpl> templates = getMatchingTemplates(key);
+    templates = TemplateManagerImpl.filterApplicableCandidates(myFile, myStartOffset, templates);
+    if (templates.size() == 0) {
+      return false;
+    }
+    TemplateImpl template = templates.get(0);
+    Set<String> varSet = new HashSet<String>();
+    for (int i = 0; i < template.getVariableCount(); i++) {
+      varSet.add(template.getVariableNameAt(i));
+    }
+    for (String varName : varNames) {
+      if (!varSet.contains(varName)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   /**
    * @param key
-   * @param listener
-   * @return returns if template invokation is finished
+   * @param predefinedVarValues
+   * @param listener            @return returns if template invokation is finished
    */
-  public boolean startTemplate(@NotNull String key, @Nullable TemplateInvokationListener listener) {
+  public boolean startTemplate(@NotNull String key,
+                               Map<String, String> predefinedVarValues,
+                               @Nullable TemplateInvokationListener listener) {
     int caretOffset = myEditor.getCaretModel().getOffset();
     List<TemplateImpl> templates = getMatchingTemplates(key);
     templates = TemplateManagerImpl.filterApplicableCandidates(myFile, caretOffset, templates);
-    if (templates.size() == 1) {
+    if (templates.size() > 0) {
       TemplateImpl template = templates.get(0);
-      return startTemplate(template, listener);
+      return startTemplate(template, predefinedVarValues, listener);
     }
     else if (listener != null) {
       listener.finished(false, false);
@@ -77,30 +101,28 @@ public class CustomTemplateCallback {
 
   /**
    * @param template
+   * @param predefinedVarValues
    * @param listener
    * @return returns if template invokation is finished
    */
-  public boolean startTemplate(@NotNull Template template, @Nullable final TemplateInvokationListener listener) {
+  public boolean startTemplate(@NotNull Template template,
+                               Map<String, String> predefinedVarValues,
+                               @Nullable final TemplateInvokationListener listener) {
     final boolean[] templateEnded = new boolean[]{false};
     final boolean[] templateFinished = new boolean[]{false};
-    myTemplateManager.startTemplate(myEditor, template, new TemplateEditingAdapter() {
-
+    myTemplateManager.startTemplate(myEditor, template, false, predefinedVarValues, new TemplateEditingAdapter() {
       @Override
-      public void templateExpanded(Template template) {
+      public void templateFinished(Template template, boolean brokenOff) {
         int lengthAfter = myEditor.getDocument().getCharsSequence().length();
         CodeStyleManager style = CodeStyleManager.getInstance(myProject);
         style.reformatText(myFile, myStartOffset, myStartOffset + lengthAfter - myStartLength);
-      }
-
-      @Override
-      public void templateFinished(Template template, boolean brokenOff) {
         if (brokenOff) return;
         templateFinished[0] = true;
         if (templateEnded[0] && listener != null) {
           listener.finished(true, true);
         }
       }
-    }, false);
+    });
     templateEnded[0] = true;
     if (templateFinished[0] && listener != null) {
       listener.finished(false, true);
