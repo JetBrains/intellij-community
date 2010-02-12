@@ -157,10 +157,8 @@ public class GrClassImplUtil {
       }
     }
 
-//    addGroovyObjectMethods(clazz, allMethods);
-
     final PsiClass[] supers = clazz.getSupers();
-    if (supers.length<2) {
+    if (supers.length < 2) {
       addGroovyObjectMethods(clazz, allMethods);
     }
     for (PsiClass aSuper : supers) {

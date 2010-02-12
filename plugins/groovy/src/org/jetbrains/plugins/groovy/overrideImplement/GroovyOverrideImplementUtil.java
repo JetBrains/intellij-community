@@ -118,9 +118,9 @@ public class GroovyOverrideImplementUtil {
             modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
             modifierList.setModifierProperty(PsiModifier.NATIVE, false);
 
-            setupOverridingMethodBody(project, method, result, template, substitutor, editor);
+            setupOverridingMethodBody(project, method, result, template, substitutor);
 
-            final GrTypeDefinitionBody classBody = ((GrTypeDefinition) aClass).getBody();
+            final GrTypeDefinitionBody classBody = aClass.getBody();
             final PsiMethod[] methods = aClass.getMethods();
 
             PsiElement anchor = null;
@@ -281,7 +281,11 @@ public class GroovyOverrideImplementUtil {
     return (GrMethod) GroovyPsiElementFactory.getInstance(project).createTopElementFromText(buffer.toString());
   }
 
-  private static void setupOverridingMethodBody(Project project, PsiMethod method, GrMethod resultMethod, FileTemplate template, PsiSubstitutor substitutor, final Editor editor) {
+  private static void setupOverridingMethodBody(Project project,
+                                                PsiMethod method,
+                                                GrMethod resultMethod,
+                                                FileTemplate template,
+                                                PsiSubstitutor substitutor) {
     final PsiType returnType = substitutor.substitute(method.getReturnType());
 
     String returnTypeText = "";
@@ -300,7 +304,8 @@ public class GroovyOverrideImplementUtil {
       final GrCodeBlock newBody = GroovyPsiElementFactory.getInstance(project).createMethodBodyFromText("\n" + bodyText + "\n");
 
       resultMethod.setBlock(newBody);
-    } catch (IOException e) {
+    }
+    catch (IOException e) {
       LOG.error(e);
     }
   }
