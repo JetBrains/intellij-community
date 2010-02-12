@@ -69,18 +69,17 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
     doTest("controlFlow/while_output.before.py", "bar", "controlFlow/while_output.after.py");
   }
 
-  // TODO[oleg] implement me!!!
-  //public void testNameCollisionClass() throws Throwable {
-  //  doTest("namesCollision/class.before.py", "hello", "Method name clashes with already existing method name");
-  //}
-  //
-  //public void testNameCollisionFile() throws Throwable {
-  //  doTest("namesCollision/file.before.py", "hello", "Method name clashes with already existing method name");
-  //}
-  //
-  //public void testNameCollisionSuperClass() throws Throwable {
-  //  doTest("namesCollision/superclass.before.py", "hello", "Method name clashes with already existing method name");
-  //}
+  public void testNameCollisionClass() throws Throwable {
+    doTest("namesCollision/class.before.py", "hello", "Method name clashes with already existing method name");
+  }
+
+  public void testNameCollisionFile() throws Throwable {
+    doTest("namesCollision/file.before.py", "hello", "Method name clashes with already existing method name");
+  }
+
+  public void testNameCollisionSuperClass() throws Throwable {
+    doTest("namesCollision/superclass.before.py", "hello", "Method name clashes with already existing method name");
+  }
 
   public void testOutNotEmptyStatements() throws Throwable {
     doTest("outNotEmpty/statements.before.py", "sum_squares", "outNotEmpty/statements.after.py");
