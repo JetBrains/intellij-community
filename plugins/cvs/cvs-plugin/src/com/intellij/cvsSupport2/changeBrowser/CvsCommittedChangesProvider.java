@@ -156,10 +156,13 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
         dateFrom = calendar.getTime();
       }
       final ChangeBrowserSettings.Filter filter = settings.createFilter();
+      final Set<Date> controlSet = new HashSet<Date>();
       final CvsResult executionResult = runRLogOperation(connectionSettings, module, dateFrom, dateTo, new Consumer<LogInformationWrapper>() {
         public void consume(LogInformationWrapper wrapper) {
           final RevisionWrapper revisionWrapper = builder.revisionWrapperFromLog(wrapper);
           final CvsChangeList changeList = builder.addRevision(revisionWrapper);
+          if (controlSet.contains(changeList.getCommitDate())) return;
+          controlSet.add(changeList.getCommitDate());
           if (filter.accepts(changeList)) {
             consumer.consume(changeList);
           }

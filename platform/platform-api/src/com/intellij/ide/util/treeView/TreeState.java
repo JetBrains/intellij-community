@@ -78,10 +78,12 @@ public class TreeState implements JDOMExternalizable {
 
   private final List<List<PathElement>> myExpandedPaths;
   private final List<List<PathElement>> mySelectedPaths;
+  private boolean myScrollToSelection;
 
   private TreeState(List<List<PathElement>> expandedPaths, final List<List<PathElement>> selectedPaths) {
     myExpandedPaths = expandedPaths;
     mySelectedPaths = selectedPaths;
+    myScrollToSelection = true;
   }
 
   public TreeState() {
@@ -256,11 +258,12 @@ public class TreeState implements JDOMExternalizable {
     }
   }
 
+  // todo
   private void applySelected(final JTree tree, final DefaultMutableTreeNode node) {
     TreeUtil.unselect(tree, node);
     List<TreePath> selectionPaths = new ArrayList<TreePath>();
     for (List<PathElement> pathElements : mySelectedPaths) {
-      applySelectedTo(pathElements, tree.getModel().getRoot(), tree, selectionPaths);
+      applySelectedTo(pathElements, tree.getModel().getRoot(), tree, selectionPaths, myScrollToSelection);
     }
 
     if (selectionPaths.size() > 1) {
@@ -344,7 +347,7 @@ public class TreeState implements JDOMExternalizable {
   private static void applySelectedTo(final List<PathElement> path,
                                       Object root,
                                       JTree tree,
-                                      final List<TreePath> outSelectionPaths) {
+                                      final List<TreePath> outSelectionPaths, final boolean scrollToSelection) {
 
     for (int i = 1; i < path.size(); i++) {
       if (!(root instanceof DefaultMutableTreeNode)) return;
@@ -355,7 +358,11 @@ public class TreeState implements JDOMExternalizable {
     if (!(root instanceof DefaultMutableTreeNode)) return;
 
     final TreePath pathInNewTree = new TreePath(((DefaultMutableTreeNode) root).getPath());
-    TreeUtil.selectPath(tree, pathInNewTree);
+    if (scrollToSelection) {
+      TreeUtil.selectPath(tree, pathInNewTree);
+    } else {
+      tree.setSelectionPath(pathInNewTree);
+    }
     outSelectionPaths.add(pathInNewTree);
   }
 
@@ -419,5 +426,8 @@ public class TreeState implements JDOMExternalizable {
     }
   }
 
+  public void setScrollToSelection(boolean scrollToSelection) {
+    myScrollToSelection = scrollToSelection;
+  }
 }
 
