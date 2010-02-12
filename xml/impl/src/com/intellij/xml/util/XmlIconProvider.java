@@ -18,6 +18,7 @@ package com.intellij.xml.util;
 import com.intellij.ide.IconProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NonNls;
@@ -38,9 +39,12 @@ public class XmlIconProvider extends IconProvider implements DumbAware {
   @Nullable
   public Icon getIcon(@NotNull final PsiElement element, final int flags) {
     if (element instanceof XmlFile) {
-      final String extension = ((XmlFile)element).getVirtualFile().getExtension();
-      if(XSD_FILE_EXTENSION.equals(extension)) return ourXsdIcon;
-      if(WSDL_FILE_EXTENSION.equals(extension)) return ourWsdlIcon;
+      final VirtualFile vf = ((XmlFile)element).getVirtualFile();
+      if (vf != null) {
+        final String extension = vf.getExtension();
+        if (XSD_FILE_EXTENSION.equals(extension)) return ourXsdIcon;
+        if (WSDL_FILE_EXTENSION.equals(extension)) return ourWsdlIcon;
+      }
     }
     return null;
   }
