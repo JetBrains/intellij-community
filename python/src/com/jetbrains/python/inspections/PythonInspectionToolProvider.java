@@ -20,7 +20,8 @@ public class PythonInspectionToolProvider implements InspectionToolProvider {
       PyMethodOverridingInspection.class,
       PyTrailingSemicolonInspection.class,
       PyReturnFromInitInspection.class,
-      PyUnusedLocalVariableInspection.class
+      PyUnusedLocalVariableInspection.class,
+      PyUnsupportedFeaturesInspection.class
     };
   }
 }
