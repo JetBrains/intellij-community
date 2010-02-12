@@ -19,7 +19,6 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.changes.PsiChangeTracker;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -66,8 +65,14 @@ public class PropertyChangeTracker extends UmlChangeTracker<PropertiesFile, Prop
   public Map<PropertiesFile, FileStatus> getNodeElements() {
     if (map == null) {
       map = new HashMap<PropertiesFile, FileStatus>();
-      for (PsiFilter<PropertiesFile> filter : getNodeFilters()) {
-        map.putAll(PsiChangeTracker.getElementsChanged(getAfter(), getBefore(), filter));
+      final PropertiesFile after = (PropertiesFile)getAfter();
+      final PropertiesFile before = (PropertiesFile)getBefore();
+      if (after == null) {
+        map.put(before, FileStatus.DELETED);
+      } else if (before == null) {
+        map.put(after, FileStatus.ADDED);
+      } else {
+        map.put(after, FileStatus.MODIFIED);
       }
     }
     return map;
