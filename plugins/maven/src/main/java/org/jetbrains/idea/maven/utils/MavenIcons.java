@@ -37,4 +37,7 @@ public class MavenIcons {
   public static final Icon DEPENDENCY_ICON = IconLoader.getIcon("/nodes/ppLib.png");
   public static final Icon OPEN_MODULES_ICON = IconLoader.getIcon("/images/modulesOpen.png");
   public static final Icon CLOSED_MODULES_ICON = IconLoader.getIcon("/images/modulesClosed.png");
+  
+  public static final Icon OVERRIDING_DEPENDENCY = IconLoader.getIcon("/images/overridingDependency.png");
+  public static final Icon OVERRIDEN_DEPENDENCY = IconLoader.getIcon("/images/overridenDependency.png");
 }
