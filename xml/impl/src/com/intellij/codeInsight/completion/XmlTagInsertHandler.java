@@ -220,7 +220,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
 
     final boolean weInsertedSomeCodeThatCouldBeInvalidated1 = weInsertedSomeCodeThatCouldBeInvalidated;
     templateManager.startTemplate(editor, template, new TemplateEditingAdapter() {
-      public void templateFinished(final Template template) {
+      public void templateFinished(final Template template, boolean brokenOff) {
         final int offset = editor.getCaretModel().getOffset();
 
         if (weInsertedSomeCodeThatCouldBeInvalidated1 &&

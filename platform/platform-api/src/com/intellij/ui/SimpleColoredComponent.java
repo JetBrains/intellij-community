@@ -76,6 +76,8 @@ public class SimpleColoredComponent extends JComponent {
 
   private boolean myIconOpaque = true;
 
+  private boolean myAutoInvalidate = true;
+
   public SimpleColoredComponent() {
     myFragments = new ArrayList<String>(3);
     myAttributes = new ArrayList<SimpleTextAttributes>(3);
@@ -109,7 +111,14 @@ public class SimpleColoredComponent extends JComponent {
         myMainTextLastIndex = myFragments.size() - 1;
       }
     }
-    revalidate();
+    revalidateAndRepaint();
+  }
+
+  private void revalidateAndRepaint() {
+    if (myAutoInvalidate) {
+      revalidate();
+    }
+
     repaint();
   }
 
@@ -124,8 +133,7 @@ public class SimpleColoredComponent extends JComponent {
       }
       myFragmentTags.add(tag);
     }
-    revalidate();
-    repaint();
+    revalidateAndRepaint();
   }
 
   public synchronized void appendAlign(int alignWidth) {
@@ -148,8 +156,7 @@ public class SimpleColoredComponent extends JComponent {
       myAlignIndex = -1;
       myAlignWidth = -1;
     }
-    revalidate();
-    repaint();
+    revalidateAndRepaint();
   }
 
   /**
@@ -165,8 +172,7 @@ public class SimpleColoredComponent extends JComponent {
    */
   public final void setIcon(final Icon icon) {
     myIcon = icon;
-    revalidate();
-    repaint();
+    revalidateAndRepaint();
   }
 
   /**
@@ -182,8 +188,7 @@ public class SimpleColoredComponent extends JComponent {
   public void setIpad(final Insets ipad) {
     myIpad = ipad;
 
-    revalidate();
-    repaint();
+    revalidateAndRepaint();
   }
 
   /**
@@ -206,8 +211,7 @@ public class SimpleColoredComponent extends JComponent {
     }
     myIconTextGap = iconTextGap;
 
-    revalidate();
-    repaint();
+    revalidateAndRepaint();
   }
 
   /**
@@ -486,8 +490,7 @@ public class SimpleColoredComponent extends JComponent {
   protected void setBorderInsets(Insets insets) {
     myBorder.setInsets(insets);
 
-    revalidate();
-    repaint();
+    revalidateAndRepaint();
   }
 
   private static final class MyBorder implements Border {
@@ -523,5 +526,16 @@ public class SimpleColoredComponent extends JComponent {
     }
 
     return result.toString();
+  }
+
+
+  public void change(@NotNull Runnable runnable, boolean autoInvalidate) {
+    boolean old = myAutoInvalidate;
+    myAutoInvalidate = autoInvalidate;
+    try {
+      runnable.run();
+    } finally {
+      myAutoInvalidate = old;
+    }
   }
 }

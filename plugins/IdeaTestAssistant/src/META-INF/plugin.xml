@@ -5,6 +5,14 @@
   <version>1.0.0</version>
   <vendor url="http://www.jetbrains.com" logo="/general/ijLogo.png">JetBrains</vendor>
 
+  <actions>
+    <action id="TestData.Navigate"
+            class="com.intellij.testAssistant.NavigateToTestDataAction"
+            text="Navigate to testdata">
+      <keyboard-shortcut first-keystroke="control shift D" keymap="$default"/>
+    </action>
+  </actions>
+
   <extensions defaultExtensionNs="com.intellij">
     <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.testAssistant.TestDataLineMarkerProvider"/>
     <fileEditorProvider implementation="com.intellij.testAssistant.TestDataGroupEditorProvider"/>

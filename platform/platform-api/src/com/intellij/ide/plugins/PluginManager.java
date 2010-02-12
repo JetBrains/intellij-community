@@ -398,7 +398,13 @@ public class PluginManager {
   }
 
   public static boolean isIncompatible(final IdeaPluginDescriptor descriptor) {
-    BuildNumber buildNumber = getBuildNumber();
+    BuildNumber buildNumber = null;
+    try {
+      buildNumber = getBuildNumber();
+    }
+    catch (RuntimeException e) {
+      return false;
+    }
 
     if (!StringUtil.isEmpty(descriptor.getSinceBuild())) {
       BuildNumber sinceBuild = BuildNumber.fromString(descriptor.getSinceBuild());

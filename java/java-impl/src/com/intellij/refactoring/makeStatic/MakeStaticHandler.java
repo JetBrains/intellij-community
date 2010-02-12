@@ -80,6 +80,11 @@ public class MakeStaticHandler implements RefactoringActionHandler {
       return;
     }
 
+    invoke(member);
+  }
+
+  public static void invoke(PsiTypeParameterListOwner member) {
+    final Project project = member.getProject();
     final InternalUsageInfo[] classRefsInMember = MakeStaticUtil.findClassRefsInMember(member, false);
 
     /*
@@ -91,7 +96,7 @@ public class MakeStaticHandler implements RefactoringActionHandler {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
 
       if (classRefsInMember.length > 0) {
-        final PsiType type = JavaPsiFacade.getInstance(member.getProject()).getElementFactory().createType(member.getContainingClass());
+        final PsiType type = JavaPsiFacade.getInstance(project).getElementFactory().createType(member.getContainingClass());
         //TODO: callback
         String[] nameSuggestions =
                 JavaCodeStyleManager.getInstance(project).suggestVariableName(VariableKind.PARAMETER, null, null, type).names;

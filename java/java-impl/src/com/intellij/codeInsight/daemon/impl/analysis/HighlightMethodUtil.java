@@ -1118,12 +1118,12 @@ public class HighlightMethodUtil {
 
       boolean applicable = true;
       try {
-        applicable = result.isApplicable();
+        applicable = constructor != null && result.isApplicable();
       }
       catch (IndexNotReadyException e) {
         // ignore
       }
-      if (constructor == null || !applicable) {
+      if (!applicable) {
         final List<HighlightInfo> resultHighlighting = new ArrayList<HighlightInfo>();
         ChangeStringLiteralToCharInMethodCallFix.createHighLighting(constructors, constructorCall, resultHighlighting);
         holder.addAll(resultHighlighting);

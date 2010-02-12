@@ -314,11 +314,12 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
       myModel.setArtifactsList(allArtifacts);
       myModificationCount++;
       final ArtifactListener publisher = myProject.getMessageBus().syncPublisher(TOPIC);
-      for (ArtifactImpl artifact : added) {
-        publisher.artifactAdded(artifact);
-      }
       for (ArtifactImpl artifact : removed) {
         publisher.artifactRemoved(artifact);
+      }
+      //it's important to send 'removed' events before 'added'. Otherwise when artifacts are reloaded from xml artifact pointers will be damaged
+      for (ArtifactImpl artifact : added) {
+        publisher.artifactAdded(artifact);
       }
       for (Pair<ArtifactImpl, String> pair : changed) {
         publisher.artifactChanged(pair.getFirst(), pair.getSecond());

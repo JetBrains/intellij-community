@@ -780,8 +780,14 @@ public class AbstractTreeUi {
   }
 
   private boolean _update(NodeDescriptor nodeDescriptor) {
-    nodeDescriptor.setUpdateCount(nodeDescriptor.getUpdateCount() + 1);
-    return getBuilder().updateNodeDescriptor(nodeDescriptor);
+    try {
+      nodeDescriptor.setUpdateCount(nodeDescriptor.getUpdateCount() + 1);
+      return getBuilder().updateNodeDescriptor(nodeDescriptor);
+    }
+    catch (IndexNotReadyException e) {
+      warnOnIndexNotReady();
+      return false;
+    }
   }
 
   private void assertIsDispatchThread() {
@@ -1283,10 +1289,7 @@ public class AbstractTreeUi {
       passOne = getTreeStructure().getChildElements(element);
     }
     catch (IndexNotReadyException e) {
-      if (!myWasEverIndexNotReady) {
-        myWasEverIndexNotReady = true;
-        LOG.warn("Tree is not dumb-mode-aware; treeBuilder=" + getBuilder() + " treeStructure=" + getTreeStructure());
-      }
+      warnOnIndexNotReady();
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
@@ -1313,6 +1316,13 @@ public class AbstractTreeUi {
     }
 
     return passOne;
+  }
+
+  private void warnOnIndexNotReady() {
+    if (!myWasEverIndexNotReady) {
+      myWasEverIndexNotReady = true;
+      LOG.warn("Tree is not dumb-mode-aware; treeBuilder=" + getBuilder() + " treeStructure=" + getTreeStructure());
+    }
   }
 
   private void updateNodesToInsert(final ArrayList<TreeNode> nodesToInsert,

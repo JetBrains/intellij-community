@@ -36,13 +36,15 @@ public class InlineParameterDialog extends RefactoringDialog {
   private final PsiParameter myParameter;
   private final PsiExpression myInitializer;
 
-  public InlineParameterDialog(PsiCallExpression methodCall, PsiMethod method, PsiParameter psiParameter, PsiExpression initializer) {
+  public InlineParameterDialog(PsiCallExpression methodCall, PsiMethod method, PsiParameter psiParameter, PsiExpression initializer,
+                               boolean createLocal) {
     super(method.getProject(), true);
     myMethodCall = methodCall;
     myMethod = method;
     myParameter = psiParameter;
     myInitializer = initializer;
     init();
+    myCreateLocalCheckbox.setSelected(createLocal);
     setTitle(InlineParameterHandler.REFACTORING_NAME);
   }
 

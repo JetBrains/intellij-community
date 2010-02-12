@@ -1236,7 +1236,7 @@ public class StringUtil {
     @NonNls StringBuilder result = new StringBuilder();
     for (int i = 0; i < text.length(); i++) {
       final char c = text.charAt(i);
-      if (c == ' ' || Character.isLetter(c) || Character.isDigit(c)) {
+      if (c == ' ' || Character.isLetter(c) || Character.isDigit(c) || c == '_') {
         result.append(c);
       }
       else if (c == '\n') {

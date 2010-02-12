@@ -121,6 +121,13 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
             else if (elements[0] instanceof PsiAssignmentExpression) {
               localInitializer = ((PsiAssignmentExpression)elements[0]).getRExpression();
             }
+            else if (elements[0] instanceof PsiReferenceExpression) {
+              final PsiReferenceExpression refElement = (PsiReferenceExpression)elements[0];
+              final PsiElement parent = refElement.getParent();
+              if (parent instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)parent).getLExpression() == refElement) {
+                localInitializer = ((PsiAssignmentExpression)parent).getRExpression();
+              }
+            }
             if (localInitializer != null) {
               final PsiElement replacement;
               if (localToParamRef.containsKey(localVariable)) {
@@ -173,10 +180,19 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
       public void visitReferenceExpression(final PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         final PsiElement element = expression.resolve();
+        if (element instanceof PsiMember && !((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC)) {
+          if (myMethod.hasModifierProperty(PsiModifier.STATIC)) {
+            conflicts.putValue(expression, "Parameter initializer depends on " + RefactoringUIUtil.getDescription(element, false) + " which is not available inside the static method");
+          }
+        }
         if (element instanceof PsiMethod || element instanceof PsiField) {
           if (!mySameClass && !((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC)) {
             conflicts.putValue(expression, "Parameter initializer depend on non static member from some other class");
+          } else if (!PsiUtil.isAccessible((PsiMember)element, myMethod, null)) {
+            conflicts.putValue(expression, "Parameter initializer depends on value which is not available inside method");
           }
+        } else if (element instanceof PsiParameter) {
+          conflicts.putValue(expression, "Parameter initializer depends on callers parameter");
         }
       }
 
@@ -196,6 +212,19 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
         if (!PsiTreeUtil.isAncestor(containingClass, methodContainingClass, false)) {
           conflicts.putValue(thisExpression,
                              "Parameter initializer depends on this which is not available inside the method and cannot be inlined");
+        } else if (myMethod.hasModifierProperty(PsiModifier.STATIC)) {
+          conflicts.putValue(thisExpression, "Parameter initializer depends on this which is not available inside the static method");
+        }
+      }
+
+      @Override
+      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+        super.visitReferenceElement(reference);
+        if (myMethod.hasModifierProperty(PsiModifier.STATIC)) {
+          final PsiElement resolved = reference.resolve();
+          if (resolved instanceof PsiClass && !((PsiClass)resolved).hasModifierProperty(PsiModifier.STATIC)) {
+            conflicts.putValue(reference, "Parameter initializer depends on non static class which is not available inside static method");
+          }
         }
       }
 
@@ -216,8 +245,16 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
             else {
               final PsiClass methodContainingClass = myMethod.getContainingClass();
               LOG.assertTrue(methodContainingClass != null);
-              if (!(refClass.getParent() instanceof PsiFile) && !PsiTreeUtil.isAncestor(methodContainingClass, refClass, false)) {
-                conflicts.putValue(expression, classUnavailableMessage);
+              if (!PsiTreeUtil.isAncestor(myMethod, refClass, false)) {
+                PsiElement parent = refClass;
+                while ((parent = parent.getParent()) instanceof PsiClass) {
+                  if (!PsiUtil.isAccessible((PsiClass)parent, myMethod, null)) {
+                    break;
+                  }
+                }
+                if (!(parent instanceof PsiFile)) {
+                  conflicts.putValue(expression, classUnavailableMessage);
+                }
               }
             }
           }
@@ -283,6 +320,11 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
         factory.createVariableDeclarationStatement(myParameter.getName(), myParameter.getType(), myInitializer);
       final PsiLocalVariable declaredVar = (PsiLocalVariable)localDeclaration.getDeclaredElements()[0];
       PsiUtil.setModifierProperty(declaredVar, PsiModifier.FINAL, myParameter.hasModifierProperty(PsiModifier.FINAL));
+      final PsiExpression localVarInitializer =
+        InlineUtil.inlineVariable(myParameter, myInitializer, (PsiReferenceExpression)factory.createExpressionFromText(myParameter.getName(), myMethod));
+      final PsiExpression initializer = declaredVar.getInitializer();
+      LOG.assertTrue(initializer != null);
+      initializer.replace(localVarInitializer);
       final PsiCodeBlock body = myMethod.getBody();
       if (body != null) {
         body.addAfter(localDeclaration, body.getLBrace());

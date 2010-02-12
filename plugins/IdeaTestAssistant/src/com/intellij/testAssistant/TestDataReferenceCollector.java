@@ -15,6 +15,8 @@
  */
 package com.intellij.testAssistant;
 
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.testFramework.UsefulTestCase;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +29,8 @@ import java.util.*;
 public class TestDataReferenceCollector {
   private final String myTestDataPath;
   private final String myTestName;
+  private final List<String> myLogMessages = new ArrayList<String>();
+  private boolean myFoundTestDataParameters = false;
 
   public TestDataReferenceCollector(String testDataPath, String testName) {
     myTestDataPath = testDataPath;
@@ -34,10 +38,14 @@ public class TestDataReferenceCollector {
   }
 
   List<String> collectTestDataReferences(final PsiMethod method) {
-    return collectTestDataReferences(method, new HashMap<String, String>());
+    final List<String> result = collectTestDataReferences(method, new HashMap<String, Computable<String>>());
+    if (!myFoundTestDataParameters) {
+      myLogMessages.add("Found no parameters annotated with @TestDataFile");
+    }
+    return result;
   }
 
-  private List<String> collectTestDataReferences(final PsiMethod method, final Map<String, String> argumentMap) {
+  private List<String> collectTestDataReferences(final PsiMethod method, final Map<String, Computable<String>> argumentMap) {
     final List<String> result = new ArrayList<String>();
     method.accept(new JavaRecursiveElementVisitor() {
       @Override
@@ -52,6 +60,7 @@ public class TestDataReferenceCollector {
             PsiParameter psiParameter = psiParameters[i];
             final PsiModifierList modifierList = psiParameter.getModifierList();
             if (modifierList != null && modifierList.findAnnotation("com.intellij.testFramework.TestDataFile") != null) {
+              myFoundTestDataParameters = true;
               processCallArgument(expression, argumentMap, result, i);
               haveAnnotatedParameters = true;
             }
@@ -65,7 +74,7 @@ public class TestDataReferenceCollector {
     return result;
   }
 
-  private void processCallArgument(PsiMethodCallExpression expression, Map<String, String> argumentMap, List<String> result, final int index) {
+  private void processCallArgument(PsiMethodCallExpression expression, Map<String, Computable<String>> argumentMap, List<String> result, final int index) {
     final PsiExpression[] arguments = expression.getArgumentList().getExpressions();
     if (arguments.length > index) {
       String testDataFile = evaluate(arguments [index], argumentMap);
@@ -75,21 +84,23 @@ public class TestDataReferenceCollector {
     }
   }
 
-  private Map<String, String> buildArgumentMap(PsiMethodCallExpression expression, PsiMethod method) {
-    Map<String, String> result = new HashMap<String, String>();
+  private Map<String, Computable<String>> buildArgumentMap(PsiMethodCallExpression expression, PsiMethod method) {
+    Map<String, Computable<String>> result = new HashMap<String, Computable<String>>();
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     final PsiExpression[] arguments = expression.getArgumentList().getExpressions();
     for (int i = 0; i < arguments.length && i < parameters.length; i++) {
-      String value = evaluate(arguments [i], Collections.<String, String>emptyMap());
-      if (value != null) {
-        result.put(parameters [i].getName(), value);
-      }
+      final int finalI = i;
+      result.put(parameters [i].getName(), new Computable<String>() {
+        public String compute() {
+          return evaluate(arguments [finalI], Collections.<String, Computable<String>>emptyMap());
+        }
+      });
     }
     return result;
   }
 
   @Nullable
-  private String evaluate(PsiExpression expression, Map<String, String> arguments) {
+  private String evaluate(PsiExpression expression, Map<String, Computable<String>> arguments) {
     if (expression instanceof PsiBinaryExpression) {
       PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
       if (binaryExpression.getOperationTokenType() == JavaTokenType.PLUS) {
@@ -110,7 +121,7 @@ public class TestDataReferenceCollector {
       final PsiElement result = ((PsiReferenceExpression)expression).resolve();
       if (result instanceof PsiParameter) {
         final String name = ((PsiParameter)result).getName();
-        return arguments.get(name);
+        return arguments.get(name).compute();
       }
       if (result instanceof PsiVariable) {
         final PsiExpression initializer = ((PsiVariable)result).getInitializer();
@@ -133,6 +144,11 @@ public class TestDataReferenceCollector {
         }
       }
     }
+    myLogMessages.add("Failed to evaluate " + expression.getText());
     return null;
+  }
+
+  public String getLog() {
+    return StringUtil.join(myLogMessages, "\n");
   }
 }

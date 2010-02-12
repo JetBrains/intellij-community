@@ -132,21 +132,22 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
   }
 
   public void startTemplate(@NotNull Editor editor, String selectionString, @NotNull Template template) {
-    startTemplate(editor, selectionString, template, null, null);
+    startTemplate(editor, selectionString, template, null, null, true);
   }
 
   public void startTemplate(@NotNull Editor editor,
                             @NotNull Template template,
                             TemplateEditingListener listener,
                             final PairProcessor<String, String> processor) {
-    startTemplate(editor, null, template, listener, processor);
+    startTemplate(editor, null, template, listener, processor, true);
   }
 
   private void startTemplate(final Editor editor,
                              final String selectionString,
                              final Template template,
                              TemplateEditingListener listener,
-                             final PairProcessor<String, String> processor) {
+                             final PairProcessor<String, String> processor,
+                             boolean inSeparateCommand) {
     final TemplateState templateState = initTemplateState(editor);
 
     templateState.getProperties().put(ExpressionContext.SELECTION, selectionString);
@@ -154,7 +155,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     if (listener != null) {
       templateState.addTemplateStateListener(listener);
     }
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+    Runnable r = new Runnable() {
       public void run() {
         if (selectionString != null) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -168,7 +169,13 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
         }
         templateState.start((TemplateImpl)template, processor, null);
       }
-    }, CodeInsightBundle.message("insert.code.template.command"), null);
+    };
+    if (inSeparateCommand) {
+      CommandProcessor.getInstance().executeCommand(myProject, r, CodeInsightBundle.message("insert.code.template.command"), null);
+    }
+    else {
+      r.run();
+    }
 
     if (shouldSkipInTests()) {
       if (!templateState.isFinished()) templateState.gotoEnd();
@@ -180,18 +187,29 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
   }
 
   public void startTemplate(@NotNull final Editor editor, @NotNull final Template template, TemplateEditingListener listener) {
-    startTemplate(editor, null, template, listener, null);
+    startTemplate(editor, null, template, listener, null, true);
+  }
+
+  public void startTemplate(@NotNull final Editor editor,
+                            @NotNull final Template template,
+                            TemplateEditingListener listener,
+                            boolean inSeparateCommand) {
+    startTemplate(editor, null, template, listener, null, inSeparateCommand);
   }
 
   private static int passArgumentBack(CharSequence text, int caretOffset) {
     int i = caretOffset - 1;
     for (; i >= 0; i--) {
       char c = text.charAt(i);
-      if (!Character.isJavaIdentifierPart(c)) {
+      if (isDelimiter(c)) {
         break;
       }
     }
     return i + 1;
+  }
+
+  private static boolean isDelimiter(char c) {
+    return !Character.isJavaIdentifierPart(c);
   }
 
   private static <T, U> void addToMap(@NotNull Map<T, U> map, @NotNull Collection<? extends T> keys, U value) {
@@ -200,12 +218,47 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     }
   }
 
+  private static String getCurrentLineBeforeCaret(@NotNull Editor editor) {
+    CaretModel caretModel = editor.getCaretModel();
+    int line = caretModel.getLogicalPosition().line;
+    int lineStart = editor.getDocument().getLineStartOffset(line);
+    int offset = caretModel.getOffset();
+    String s = editor.getDocument().getCharsSequence().subSequence(lineStart, offset).toString();
+    int index = 0;
+    while (index < s.length() && Character.isWhitespace(s.charAt(index))) {
+      index++;
+    }
+    return index < s.length() ? s.substring(index) : s;
+  }
+
   public boolean startTemplate(final Editor editor, char shortcutChar, final PairProcessor<String, String> processor) {
-    final Document document = editor.getDocument();
     PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, myProject);
     if (file == null) return false;
-
     TemplateSettings templateSettings = TemplateSettings.getInstance();
+    if (shortcutChar == templateSettings.getDefaultShortcutChar()) {
+      for (final CustomLiveTemplate customLiveTemplate : CustomLiveTemplate.EP_NAME.getExtensions()) {
+        final String currentLineBeforeCaret = getCurrentLineBeforeCaret(editor);
+        final CustomTemplateCallback callback = new CustomTemplateCallback(editor, file);
+        if (customLiveTemplate.isApplicable(currentLineBeforeCaret, callback)) {
+          int offset = editor.getCaretModel().getOffset();
+          final int startOffset = offset - currentLineBeforeCaret.length();
+          editor.getDocument().deleteString(startOffset, offset);
+          callback.fixInitialEditorState();
+          customLiveTemplate.execute(currentLineBeforeCaret, callback, null);
+          return true;
+        }
+      }
+    }
+    return startNonCustomTemplate(templateSettings, file, editor, shortcutChar, processor);
+  }
+
+  private boolean startNonCustomTemplate(TemplateSettings templateSettings,
+                                         PsiFile file,
+                                         Editor editor,
+                                         char shortcutChar,
+                                         PairProcessor<String, String> processor) {
+    final Document document = editor.getDocument();
+
     CharSequence text = document.getCharsSequence();
 
     final int caretOffset = editor.getCaretModel().getOffset();
@@ -258,15 +311,14 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     else {
       ListTemplatesHandler.showTemplatesLookup(myProject, editor, candidate2Argument);
     }
-
     return true;
   }
 
-  private static List<TemplateImpl> findMatchingTemplates(CharSequence text,
-                                                          int caretOffset,
-                                                          char shortcutChar,
-                                                          TemplateSettings settings,
-                                                          boolean hasArgument) {
+  public static List<TemplateImpl> findMatchingTemplates(CharSequence text,
+                                                         int caretOffset,
+                                                         char shortcutChar,
+                                                         TemplateSettings settings,
+                                                         boolean hasArgument) {
     String key;
     List<TemplateImpl> candidates = Collections.emptyList();
     for (int i = settings.getMaxKeyLength(); i >= 1; i--) {
@@ -292,8 +344,13 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
                                       @Nullable final PairProcessor<String, String> processor,
                                       @Nullable String argument) {
     final int caretOffset = editor.getCaretModel().getOffset();
-    int startOffset = caretOffset - template.getKey().length();
+    String key = template.getKey();
+    int startOffset = caretOffset - key.length();
     if (argument != null) {
+      if (!isDelimiter(key.charAt(key.length() - 1))) {
+        // pass space
+        startOffset--;
+      }
       startOffset -= argument.length();
     }
     startTemplateWithPrefix(editor, template, startOffset, processor, argument);
@@ -318,7 +375,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     }, CodeInsightBundle.message("insert.code.template.command"), null);
   }
 
-  private static List<TemplateImpl> filterApplicableCandidates(PsiFile file, int caretOffset, List<TemplateImpl> candidates) {
+  public static List<TemplateImpl> filterApplicableCandidates(PsiFile file, int caretOffset, List<TemplateImpl> candidates) {
     List<TemplateImpl> result = new ArrayList<TemplateImpl>();
     for (TemplateImpl candidate : candidates) {
       if (isApplicable(file, caretOffset - candidate.getKey().length(), candidate)) {

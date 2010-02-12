@@ -119,6 +119,7 @@ public class HttpFileSystemImpl extends HttpFileSystem {
 
   public void initComponent() { }
 
+  @NotNull
   public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException {
     throw new UnsupportedOperationException();
   }

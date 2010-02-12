@@ -80,7 +80,7 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
     }
     final String[] strings = info != null ? info.names : ArrayUtil.EMPTY_STRING_ARRAY;
     ArrayList<String> list = new ArrayList<String>(Arrays.asList(strings));
-    final String properlyCased = suggestProperlyCasedName(element);
+    final String[] properlyCased = suggestProperlyCasedName(element);
     if (!list.contains(initialName)) {
       list.add(0, initialName);
     }
@@ -89,8 +89,10 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
       list.remove(i);
       list.add(0, initialName);
     }
-    if (properlyCased != null && !properlyCased.equals(initialName)) {
-      list.add(1, properlyCased);
+    if (properlyCased != null) {
+      for (String properlyCasedSuggestion : properlyCased) {
+        list.add(1, properlyCasedSuggestion);
+      }
     }
     if (parameterName != null && !list.contains(parameterName)) {
       list.add(parameterName);
@@ -137,7 +139,7 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
   }
 
   @Nullable
-  private static String suggestProperlyCasedName(PsiElement psiElement) {
+  private static String[] suggestProperlyCasedName(PsiElement psiElement) {
     if (!(psiElement instanceof PsiNamedElement)) return null;
     String name = ((PsiNamedElement)psiElement).getName();
     if (name == null) return null;
@@ -145,36 +147,44 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(psiElement.getProject());
       final VariableKind kind = codeStyleManager.getVariableKind((PsiVariable)psiElement);
       final String prefix = codeStyleManager.getPrefixByVariableKind(kind);
-      if (name.startsWith(prefix)) {
-        name = name.substring(prefix.length());
-      }
-      final String[] words = NameUtil.splitNameIntoWords(name);
       if (kind == VariableKind.STATIC_FINAL_FIELD) {
+        final String[] words = NameUtil.splitNameIntoWords(name);
         StringBuilder buffer = new StringBuilder();
         for (int i = 0; i < words.length; i++) {
           String word = words[i];
           if (i > 0) buffer.append('_');
           buffer.append(word.toUpperCase());
         }
-        return buffer.toString();
+        return new String[] {buffer.toString()};
       }
       else {
-        StringBuilder buffer = new StringBuilder(prefix);
-        for (int i = 0; i < words.length; i++) {
-          String word = words[i];
-          final boolean prefixRequiresCapitalization = prefix.length() > 0 && !StringUtil.endsWithChar(prefix, '_');
-          if (i > 0 || prefixRequiresCapitalization) {
-            buffer.append(StringUtil.capitalize(word));
-          }
-          else {
-            buffer.append(StringUtil.decapitalize(word));
-          }
+        final List<String> result = new ArrayList<String>();
+        result.add(suggestProperlyCasedName(prefix, NameUtil.splitNameIntoWords(name)));
+        if (name.startsWith(prefix)) {
+          name = name.substring(prefix.length());
+          result.add(suggestProperlyCasedName(prefix, NameUtil.splitNameIntoWords(name)));
         }
-        return buffer.toString();
+        result.add(suggestProperlyCasedName(prefix, NameUtil.splitNameIntoWords(name.toLowerCase())));
+        return result.toArray(new String[result.size()]);
       }
 
     }
-    return name;
+    return new String[]{name};
+  }
+
+  private static String suggestProperlyCasedName(String prefix, String[] words) {
+    StringBuilder buffer = new StringBuilder(prefix);
+    for (int i = 0; i < words.length; i++) {
+      String word = words[i];
+      final boolean prefixRequiresCapitalization = prefix.length() > 0 && !StringUtil.endsWithChar(prefix, '_');
+      if (i > 0 || prefixRequiresCapitalization) {
+        buffer.append(StringUtil.capitalize(word));
+      }
+      else {
+        buffer.append(StringUtil.decapitalize(word));
+      }
+    }
+    return buffer.toString();
   }
 
   @Nullable

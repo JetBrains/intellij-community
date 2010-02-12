@@ -23,7 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
@@ -36,7 +36,7 @@ import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashSet;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -192,11 +192,11 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
     }
 
     if (getter != null) {
-      addOverriddenAndImplemented(aClass, getter, newGetterName, allRenames);
+      addOverriddenAndImplemented(getter, newGetterName, allRenames);
     }
 
     if (setter != null) {
-      addOverriddenAndImplemented(aClass, setter, newSetterName, allRenames);
+      addOverriddenAndImplemented(setter, newSetterName, allRenames);
     }
 
     if (shouldRenameSetterParameter) {
@@ -211,18 +211,16 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
     return Messages.showYesNoDialog(project, text, RefactoringBundle.message("rename.title"), Messages.getQuestionIcon()) != 0;
   }
 
-  private static void addOverriddenAndImplemented(PsiClass aClass, PsiMethod methodPrototype, String newName,
-                                           final Map<PsiElement, String> allRenames) {
-    final HashSet<PsiClass> superClasses = new HashSet<PsiClass>();
-    InheritanceUtil.getSuperClasses(aClass, superClasses, true);
-    superClasses.add(aClass);
-
-    for (PsiClass superClass : superClasses) {
-      PsiMethod method = superClass.findMethodBySignature(methodPrototype, false);
-
-      if (method != null) {
-        allRenames.put(method, newName);
-      }
+  private static void addOverriddenAndImplemented(PsiMethod methodPrototype, final String newName, final Map<PsiElement, String> allRenames) {
+    allRenames.put(methodPrototype, newName);
+    for (PsiMethod method : methodPrototype.findDeepestSuperMethods()) {
+      OverridingMethodsSearch.search(method).forEach(new Processor<PsiMethod>() {
+        public boolean process(PsiMethod psiMethod) {
+          allRenames.put(psiMethod, newName);
+          return true;
+        }
+      });
+      allRenames.put(method, newName);
     }
   }
 

@@ -814,7 +814,8 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
           URL nextURL = (URL)systemResources.nextElement();
           if (!urls.contains(nextURL)) {
             urls.add(nextURL);
-            VirtualFile dir = VfsUtil.findFileByURL(nextURL);
+            String vfUrl = VfsUtil.convertFromUrl(nextURL);
+            VirtualFile dir = VirtualFileManager.getInstance().refreshAndFindFileByUrl(vfUrl);
             if (dir == null) {
               LOG.error("Cannot find file by URL: " + nextURL);
             }

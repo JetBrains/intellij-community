@@ -46,6 +46,7 @@ import com.intellij.execution.ui.layout.LayoutViewOptions;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.actions.ContextHelpAction;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -54,8 +55,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.impl.WindowManagerImpl;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.content.AlertIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerAdapter;
@@ -422,8 +422,8 @@ public class DebuggerSessionTab extends DebuggerLogConsoleManagerBase implements
 
   protected void toFront() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      ((WindowManagerImpl)WindowManager.getInstance()).getFrame(getProject()).toFront();
       ExecutionManager.getInstance(getProject()).getContentManager().toFrontRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), myRunContentDescriptor);
+      ProjectUtil.focusProjectWindow(getProject(), Registry.is("debugger.mayBringFrameToFrontOnBreakpoint"));
     }
   }
 

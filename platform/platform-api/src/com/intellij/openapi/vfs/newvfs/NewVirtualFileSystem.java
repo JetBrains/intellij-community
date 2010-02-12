@@ -147,6 +147,7 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
   public abstract int getRank();
 
   public abstract VirtualFile copyFile(final Object requestor, @NotNull final VirtualFile file, @NotNull final VirtualFile newParent, @NotNull final String copyName) throws IOException;
+  @NotNull
   public abstract VirtualFile createChildDirectory(final Object requestor, @NotNull final VirtualFile parent, @NotNull final String dir) throws IOException;
   public abstract VirtualFile createChildFile(final Object requestor, @NotNull final VirtualFile parent, @NotNull final String file) throws IOException;
   public abstract void deleteFile(final Object requestor, @NotNull final VirtualFile file) throws IOException;

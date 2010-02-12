@@ -31,6 +31,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -160,6 +161,10 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       myStoredModifiers = mouseEvent.getModifiers();
       BrowseMode browseMode = getBrowseMode(myStoredModifiers);
 
+      if (myTooltipProvider != null) {
+        myTooltipProvider.dispose();
+      }
+
       if (browseMode == BrowseMode.None || offset >= selStart && offset < selEnd) {
         disposeHighlighter();
         myTooltipProvider = null;
@@ -196,19 +201,19 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   private static BrowseMode getBrowseMode(final int modifiers) {
     if ( modifiers != 0 ) {
       final Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
-      if (matchMouseShourtcut(activeKeymap, modifiers, IdeActions.ACTION_GOTO_DECLARATION)) return BrowseMode.Declaration;
-      if (matchMouseShourtcut(activeKeymap, modifiers, IdeActions.ACTION_GOTO_TYPE_DECLARATION)) return BrowseMode.TypeDeclaration;
-      if (matchMouseShourtcut(activeKeymap, modifiers, IdeActions.ACTION_GOTO_IMPLEMENTATION)) return BrowseMode.Implementation;
+      if (matchMouseShortcut(activeKeymap, modifiers, IdeActions.ACTION_GOTO_DECLARATION)) return BrowseMode.Declaration;
+      if (matchMouseShortcut(activeKeymap, modifiers, IdeActions.ACTION_GOTO_TYPE_DECLARATION)) return BrowseMode.TypeDeclaration;
+      if (matchMouseShortcut(activeKeymap, modifiers, IdeActions.ACTION_GOTO_IMPLEMENTATION)) return BrowseMode.Implementation;
     }
     return BrowseMode.None;
   }
 
-  private static boolean matchMouseShourtcut(final Keymap activeKeymap, final int modifiers, final String actionId) {
-    final MouseShortcut syntheticShortcat = new MouseShortcut(MouseEvent.BUTTON1, modifiers, 1);
+  private static boolean matchMouseShortcut(final Keymap activeKeymap, final int modifiers, final String actionId) {
+    final MouseShortcut syntheticShortcut = new MouseShortcut(MouseEvent.BUTTON1, modifiers, 1);
     for ( Shortcut shortcut : activeKeymap.getShortcuts(actionId)) {
       if ( shortcut instanceof MouseShortcut) {
         final MouseShortcut mouseShortcut = (MouseShortcut)shortcut;
-        if ( mouseShortcut.getModifiers() == syntheticShortcat.getModifiers() ) {
+        if ( mouseShortcut.getModifiers() == syntheticShortcut.getModifiers() ) {
           return true;
         }
       }
@@ -323,23 +328,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   }
 
   @Nullable
-  private Info getInfoAt(final Editor editor, LogicalPosition pos, BrowseMode browseMode) {
-    Document document = editor.getDocument();
-    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-    if (file == null) return null;
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-
-    if (TargetElementUtilBase.inVirtualSpace(editor, pos)) {
-      return null;
-    }
-
-    final int offset = editor.logicalPositionToOffset(pos);
-
-    int selStart = editor.getSelectionModel().getSelectionStart();
-    int selEnd = editor.getSelectionModel().getSelectionEnd();
-
-    if (offset >= selStart && offset < selEnd) return null;
-
+  private Info getInfoAt(final Editor editor, PsiFile file, int offset, BrowseMode browseMode) {
     PsiElement targetElement = null;
 
     if (browseMode == BrowseMode.TypeDeclaration) {
@@ -439,10 +428,15 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     private final Editor myEditor;
     private final LogicalPosition myPosition;
     private BrowseMode myBrowseMode;
+    private boolean myDisposed;
 
     public TooltipProvider(Editor editor, LogicalPosition pos) {
       myEditor = editor;
       myPosition = pos;
+    }
+
+    public void dispose() {
+      myDisposed = true;
     }
 
     public BrowseMode getBrowseMode() {
@@ -451,9 +445,38 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
     public void execute(BrowseMode browseMode) {
       myBrowseMode = browseMode;
+
+      Document document = myEditor.getDocument();
+      final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+      if (file == null) return;
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+
+      if (TargetElementUtilBase.inVirtualSpace(myEditor, myPosition)) {
+        return;
+      }
+
+      final int offset = myEditor.logicalPositionToOffset(myPosition);
+
+      int selStart = myEditor.getSelectionModel().getSelectionStart();
+      int selEnd = myEditor.getSelectionModel().getSelectionEnd();
+
+      if (offset >= selStart && offset < selEnd) return;
+
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        public void run() {
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            public void run() {
+              doExecute(file, offset);
+            }
+          });
+        }
+      });
+    }
+
+    private void doExecute(PsiFile file, int offset) {
       final Info info;
       try {
-        info = getInfoAt(myEditor, myPosition, myBrowseMode);
+        info = getInfoAt(myEditor, file, offset, myBrowseMode);
       }
       catch (IndexNotReadyException e) {
         showDumbModeNotification(myProject);
@@ -461,6 +484,15 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       }
       if (info == null) return;
 
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          showHint(info);
+        }
+      });
+    }
+
+    private void showHint(Info info) {
+      if (myDisposed) return;
       Component internalComponent = myEditor.getContentComponent();
       if (myHighlighter != null) {
         if (!info.isSimilarTo(myStoredInfo)) {

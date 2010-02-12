@@ -16,6 +16,7 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Computable;
@@ -57,6 +58,9 @@ public abstract class ProjectWizardStepFactory {
   public abstract ModuleWizardStep createProjectJdkStep(WizardContext context, SdkType type, JavaModuleBuilder builder, Computable<Boolean> isVisibile, Icon icon, @NonNls String helpId);
 
   public abstract ModuleWizardStep createProjectJdkStep(final WizardContext wizardContext);
+
+  @Nullable
+  public abstract Sdk getNewProjectSdk(WizardContext wizardContext);
 
   @Nullable
   public abstract ModuleWizardStep createSupportForFrameworksStep(WizardContext context, ModuleBuilder builder);

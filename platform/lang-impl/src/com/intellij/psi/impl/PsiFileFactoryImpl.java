@@ -81,8 +81,8 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
   }
 
   @Nullable
-  private PsiFile trySetupPsiForFile(final LightVirtualFile virtualFile, Language language,
-                                     final boolean physical, final boolean markAsCopy) {
+  public PsiFile trySetupPsiForFile(final LightVirtualFile virtualFile, Language language,
+                                    final boolean physical, final boolean markAsCopy) {
     final FileViewProviderFactory factory = LanguageFileViewProviders.INSTANCE.forLanguage(language);
     FileViewProvider viewProvider = factory != null ? factory.createFileViewProvider(virtualFile, language, myManager, physical) : null;
     if (viewProvider == null) viewProvider = new SingleRootFileViewProvider(myManager, virtualFile, physical);

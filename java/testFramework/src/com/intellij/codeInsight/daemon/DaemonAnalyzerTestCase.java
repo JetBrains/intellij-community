@@ -59,6 +59,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.FileTreeAccessFilter;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
@@ -90,7 +91,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       enableInspectionTool(tool);
     }
 
-    final InspectionProfileImpl profile = new InspectionProfileImpl(PROFILE) {
+    final InspectionProfileImpl profile = new InspectionProfileImpl(LightPlatformTestCase.PROFILE) {
       @NotNull
       public ModifiableModel getModifiableModel() {
         mySource = this;
@@ -127,10 +128,10 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     };
     final InspectionProfileManager inspectionProfileManager = InspectionProfileManager.getInstance();
     inspectionProfileManager.addProfile(profile);
-    inspectionProfileManager.setRootProfile(PROFILE);
+    inspectionProfileManager.setRootProfile(LightPlatformTestCase.PROFILE);
     Disposer.register(getProject(), new Disposable() {
       public void dispose() {
-        inspectionProfileManager.deleteProfile(PROFILE);
+        inspectionProfileManager.deleteProfile(LightPlatformTestCase.PROFILE);
       }
     });
     InspectionProjectProfileManager.getInstance(getProject()).updateProfile(profile);

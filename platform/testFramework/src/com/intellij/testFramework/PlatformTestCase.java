@@ -15,8 +15,6 @@
  */
 package com.intellij.testFramework;
 
-import com.intellij.codeInsight.completion.CompletionProgressIndicator;
-import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
@@ -32,10 +30,6 @@ import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.impl.EditorFactoryImpl;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.Module;
@@ -43,7 +37,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.TooManyProjectLeakedException;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -61,13 +54,12 @@ import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.impl.PsiDocumentManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.util.PatchedWeakReference;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
@@ -85,7 +77,6 @@ import java.util.HashSet;
  * @author yole
  */
 public abstract class PlatformTestCase extends UsefulTestCase implements DataProvider {
-  protected static final String PROFILE = "Configurable";
   protected static IdeaTestApplication ourApplication;
   protected boolean myRunCommandForTest = false;
   protected ProjectManagerEx myProjectManager;
@@ -265,7 +256,12 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     return EmptyModuleType.getInstance();
   }
 
-  private void cleanupApplicationCaches() {
+  public static void cleanupApplicationCaches(Project project) {
+    if (project != null) {
+      ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests();
+      ((PsiManagerEx)PsiManager.getInstance(project)).getFileManager().cleanupForNextTest();
+    }
+
     try {
       LocalFileSystemImpl localFileSystem = (LocalFileSystemImpl)LocalFileSystem.getInstance();
       if (localFileSystem != null) {
@@ -280,36 +276,16 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       virtualFilePointerManager.cleanupForNextTest();
     }
     PatchedWeakReference.clearAll();
-    resetAllFields();
   }
 
   protected void tearDown() throws Exception {
-    checkAllTimersAreDisposed();
-    if (myProject != null) {
-      ((StartupManagerImpl)StartupManager.getInstance(myProject)).prepareForNextTest();
-      final LookupManager lookupManager = LookupManager.getInstance(myProject);
-      if (lookupManager != null) {
-        lookupManager.hideActiveLookup();
-      }
+    LightPlatformTestCase.doTearDown(getProject(), ourApplication, false);
 
-      ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).clearUncommitedDocuments();
-    }
-
-    InspectionProfileManager.getInstance().deleteProfile(PROFILE);
     try {
       checkForSettingsDamage();
 
-      assertNotNull("Application components damaged", ProjectManager.getInstance());
-
-      ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance()); // Flash posponed formatting if any.
-      FileDocumentManager.getInstance().saveAllDocuments();
-
-      doPostponedFormatting(myProject);
-
       try {
         disposeProject();
-
-        ((UndoManagerImpl)UndoManager.getGlobalInstance()).dropHistoryInTests();
 
         for (final File fileToDelete : myFilesToDelete) {
           delete(fileToDelete);
@@ -329,30 +305,19 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
           if (IdeaLogger.ourErrorsOccurred != null) {
             throw IdeaLogger.ourErrorsOccurred;
           }
-          assertTrue("Logger errors occurred in " + getFullName(), IdeaLogger.ourErrorsOccurred == null);
+          assertNull("Logger errors occurred in " + getFullName(), IdeaLogger.ourErrorsOccurred);
         }
-
-        ourApplication.setDataProvider(null);
-
       }
       finally {
         ourTestCase = null;
       }
-      CompletionProgressIndicator.cleanupForNextTest();
 
       super.tearDown();
-
-      EditorFactory editorFactory = EditorFactory.getInstance();
-      final Editor[] allEditors = editorFactory.getAllEditors();
-      ((EditorFactoryImpl)editorFactory).validateEditorsAreReleased(getProject());
-      for (Editor editor : allEditors) {
-        editorFactory.releaseEditor(editor);
-      }
-      assertEquals(0, allEditors.length);
 
       //cleanTheWorld();
       myEditorListenerTracker.checkListenersLeak();
       myThreadTracker.checkLeak();
+      LightPlatformTestCase.checkEditorsReleased();
     }
     finally {
       myProjectManager = null;
@@ -450,7 +415,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
           try {
             ApplicationManager.getApplication().invokeAndWait(new Runnable() {
               public void run() {
-                cleanupApplicationCaches();
+                cleanupApplicationCaches(getProject());
+                resetAllFields();
               }
             }, ModalityState.NON_MODAL);
           }
@@ -658,8 +624,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   private static void setTmpDir(String path) {
     System.setProperty("java.io.tmpdir", path);
-    Class<File> ioFile = File.class;
     try {
+      Class<File> ioFile = File.class;
       Field field = ioFile.getDeclaredField("tmpdir");
 
       field.setAccessible(true);

@@ -131,9 +131,8 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         return;
       }
 
-      checkSingleResolvedElement(myHolder, refElement, resolveResult);
+      checkSingleResolvedElement(myHolder, refElement, resolveResult, true);
     }
-
   }
 
   @Override
@@ -165,7 +164,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       if (qualifier == null && isDeclarationAssignment(referenceExpression)) return;
 
       if (parent instanceof GrReferenceExpression && "class".equals(((GrReferenceExpression)parent).getReferenceName())) {
-        checkSingleResolvedElement(myHolder, referenceExpression, resolveResult);
+        checkSingleResolvedElement(myHolder, referenceExpression, resolveResult, false);
       }
     }
 
@@ -1094,7 +1093,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     return false;
   }
 
-  private static void checkSingleResolvedElement(AnnotationHolder holder, GrReferenceElement refElement, GroovyResolveResult resolveResult) {
+  private static void checkSingleResolvedElement(AnnotationHolder holder, GrReferenceElement refElement, GroovyResolveResult resolveResult, boolean highlightError) {
     final PsiElement resolved = resolveResult.getElement();
     if (resolved == null) {
       String message = GroovyBundle.message("cannot.resolve", refElement.getReferenceName());
@@ -1102,7 +1101,15 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       // Register quickfix
       final PsiElement nameElement = refElement.getReferenceNameElement();
       final PsiElement toHighlight = nameElement != null ? nameElement : refElement;
-      final Annotation annotation = holder.createInfoAnnotation(toHighlight, message);
+
+      final Annotation annotation;
+      if (highlightError) {
+        annotation = holder.createErrorAnnotation(toHighlight, message);
+        annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+      }
+      else {
+        annotation = holder.createInfoAnnotation(toHighlight, message);
+      }
       // todo implement for nested classes
       if (refElement.getQualifier() == null) {
         registerCreateClassByTypeFix(refElement, annotation);

@@ -410,9 +410,6 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     if (myLibraryTable != null) {
       ApplicationManager.getApplication().assertWriteAccessAllowed();
     }
-    else if (myRootModel != null) {
-      LOG.assertTrue(myRootModel.isWritable());
-    }
     if (!Comparing.equal(fromModel.myName, myName)) {
       myName = fromModel.myName;
       if (myLibraryTable instanceof LibraryTableBase) {

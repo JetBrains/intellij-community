@@ -37,6 +37,7 @@ public class LightVirtualFile extends DeprecatedVirtualFile {
   private String myName = "";
   private long myModStamp = LocalTimeCounter.currentTime();
   private boolean myIsWritable = true;
+  private boolean myValid = true;
   private Language myLanguage;
 
   public LightVirtualFile() {
@@ -143,6 +144,7 @@ public class LightVirtualFile extends DeprecatedVirtualFile {
       throw new IOException("Cannot create files");
     }
 
+    @NotNull
     public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException {
       throw new IOException("Cannot create directories");
     }
@@ -178,7 +180,11 @@ public class LightVirtualFile extends DeprecatedVirtualFile {
   }
 
   public boolean isValid() {
-    return true;
+    return myValid;
+  }
+
+  public void setValid(boolean valid) {
+    myValid = valid;
   }
 
   public VirtualFile getParent() {

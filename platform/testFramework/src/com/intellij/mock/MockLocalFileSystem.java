@@ -131,6 +131,7 @@ public class MockLocalFileSystem extends LocalFileSystem {
     return myDelegate.createChildFile(requestor, vDir, fileName);
   }
 
+  @NotNull
   public VirtualFile createChildDirectory(final Object requestor, @NotNull final VirtualFile vDir, @NotNull final String dirName) throws IOException {
     return myDelegate.createChildDirectory(requestor, vDir, dirName);
   }

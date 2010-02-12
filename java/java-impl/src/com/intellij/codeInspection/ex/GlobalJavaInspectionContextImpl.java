@@ -26,7 +26,7 @@ import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.GlobalJavaInspectionContext;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.deadCode.DeadCodeInspection;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
@@ -393,8 +393,8 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
     getEntryPointsManager(context.getRefManager()).resolveEntryPoints(context.getRefManager());
     ContainerUtil.quickSort(globalTools, new Comparator<Tools>() {
       public int compare(Tools o1, Tools o2) {
-        if (o1.getTool() instanceof DeadCodeInspection) return -1;
-        if (o2.getTool() instanceof DeadCodeInspection) return 1;
+        if (o1.getTool() instanceof UnusedDeclarationInspection) return -1;
+        if (o2.getTool() instanceof UnusedDeclarationInspection) return 1;
         return 0;
       }
     });

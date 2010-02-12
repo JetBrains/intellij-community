@@ -17,6 +17,7 @@ package com.intellij.testFramework;
 
 import com.intellij.ProjectTopics;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -60,17 +61,14 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
-import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.util.IncorrectOperationException;
@@ -98,7 +96,7 @@ import java.util.Map;
  * @author yole
  */
 public abstract class LightPlatformTestCase extends UsefulTestCase implements DataProvider {
-  protected static final String PROFILE = "Configurable";
+  public static final String PROFILE = "Configurable";
   private static IdeaTestApplication ourApplication;
   protected static Project ourProject;
   private static Module ourModule;
@@ -141,20 +139,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ourApplication.setDataProvider(dataProvider);
   }
 
-  private void cleanupApplicationCaches() {
-    ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).cleanupForNextTest();
-    if (ourProject != null) {
-      ((UndoManagerImpl)UndoManager.getInstance(ourProject)).dropHistoryInTests();
-      ((PsiManagerEx)getPsiManager()).getFileManager().cleanupForNextTest();
-    }
-
-    resetAllFields();
-
-    /*
-    if (ourPsiManager != null) {
-      ((PsiManagerImpl)ourPsiManager).cleanupForNextTest();
-    }
-    */
+  public static IdeaTestApplication getApplication() {
+    return ourApplication;
   }
 
   protected void resetAllFields() {
@@ -219,7 +205,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
         FileBasedIndex.getInstance().registerIndexableSet(new IndexableFileSet() {
           public boolean isInSet(final VirtualFile file) {
-            return file.getFileSystem() == ourSourceRoot.getFileSystem();
+            return ourSourceRoot != null && file.getFileSystem() == ourSourceRoot.getFileSystem();
           }
 
           public void iterateIndexableFilesIn(final VirtualFile file, final ContentIterator iterator) {
@@ -272,7 +258,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         });
 
 
-        //((PsiManagerImpl) PsiManager.getInstance(ourProject)).runPreStartupActivity();
         ((StartupManagerImpl)StartupManager.getInstance(getProject())).runStartupActivities();
       }
     });
@@ -390,12 +375,9 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   protected void tearDown() throws Exception {
-    ((StartupManagerImpl)StartupManager.getInstance(getProject())).prepareForNextTest();
-    checkAllTimersAreDisposed();
-
     CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
     checkForSettingsDamage();
-    doTearDown();
+    doTearDown(getProject(), ourApplication, true);
 
     super.tearDown();
 
@@ -403,50 +385,64 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     checkInjectorsAreDisposed();
   }
 
-  public static void doTearDown() throws Exception {
-    UsefulTestCase.doPostponedFormatting(ourProject);
+  public static void doTearDown(Project project, IdeaTestApplication application, boolean checkForEditors) throws Exception {
+    checkAllTimersAreDisposed();
+    UsefulTestCase.doPostponedFormatting(project);
 
-    LookupManager.getInstance(ourProject).hideActiveLookup();
+    LookupManager lookupManager = LookupManager.getInstance(project);
+    if (lookupManager != null) {
+      lookupManager.hideActiveLookup();
+    }
+    ((StartupManagerImpl)StartupManager.getInstance(project)).prepareForNextTest();
     InspectionProfileManager.getInstance().deleteProfile(PROFILE);
     assertNotNull("Application components damaged", ProjectManager.getInstance());
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        try {
-          final VirtualFile[] children = ourSourceRoot.getChildren();
-          for (VirtualFile child : children) {
-            child.delete(this);
+        if (ourSourceRoot != null) {
+          try {
+            final VirtualFile[] children = ourSourceRoot.getChildren();
+            for (VirtualFile child : children) {
+              child.delete(this);
+            }
           }
-        }
-        catch (IOException e) {
-          //noinspection CallToPrintStackTrace
-          e.printStackTrace();
+          catch (IOException e) {
+            //noinspection CallToPrintStackTrace
+            e.printStackTrace();
+          }
         }
         FileDocumentManager manager = FileDocumentManager.getInstance();
         if (manager instanceof FileDocumentManagerImpl) {
           ((FileDocumentManagerImpl)manager).dropAllUnsavedDocuments();
         }
+        ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance()); // Flash posponed formatting if any.
+        manager.saveAllDocuments();
       }
     });
-//    final Project[] openProjects = ProjectManagerEx.getInstanceEx().getOpenProjects();
-//    assertTrue(Arrays.asList(openProjects).contains(ourProject));
-    assertFalse(PsiManager.getInstance(getProject()).isDisposed());
+    assertFalse(PsiManager.getInstance(project).isDisposed());
     if (!ourAssertionsInTestDetected) {
       if (IdeaLogger.ourErrorsOccurred != null) {
         throw IdeaLogger.ourErrorsOccurred;
       }
-      //assertTrue("Logger errors occurred. ", IdeaLogger.ourErrorsOccurred == null);
     }
-    ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).clearUncommitedDocuments();
+    ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project)).clearUncommitedDocuments();
 
 
     ((UndoManagerImpl)UndoManager.getGlobalInstance()).dropHistoryInTests();
 
     ProjectManagerEx.getInstanceEx().setCurrentTestProject(null);
-    ourApplication.setDataProvider(null);
+    application.setDataProvider(null);
     ourTestCase = null;
-    ((PsiManagerImpl)ourPsiManager).cleanupForNextTest();
+    ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest();
 
+    CompletionProgressIndicator.cleanupForNextTest();
+
+    if (checkForEditors) {
+      checkEditorsReleased();
+    }
+  }
+
+  public static void checkEditorsReleased() {
     final Editor[] allEditors = EditorFactory.getInstance().getAllEditors();
     if (allEditors.length > 0) {
       for (Editor allEditor : allEditors) {
@@ -475,7 +471,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         finally {
           ourTestThread = null;
           try {
-            cleanupApplicationCaches();
+            PlatformTestCase.cleanupApplicationCaches(ourProject);
+            resetAllFields();
           }
           catch (Throwable e) {
             e.printStackTrace();

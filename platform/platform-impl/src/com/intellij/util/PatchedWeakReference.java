@@ -17,6 +17,7 @@ package com.intellij.util;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.TestOnly;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
@@ -83,6 +84,7 @@ public class PatchedWeakReference<T> extends WeakReference<T>{
     }
   }
 
+  @TestOnly
   public static void clearAll() {
     synchronized (ourQueue) {
       while (ourQueue.poll() != null);

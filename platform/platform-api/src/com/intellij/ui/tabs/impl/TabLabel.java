@@ -144,8 +144,8 @@ public class TabLabel extends JPanel {
     int dXs = 0;
     int dY = 0;
     int dYs = 0;
-    int selected = 1;
-    int plain = 2;
+    int selected = getSelectedOffset();
+    int plain = getNonSelectedOffset();
 
     switch (pos) {
       case bottom:
@@ -175,10 +175,31 @@ public class TabLabel extends JPanel {
     super.paint(g);
 
     if (myTabs.getSelectedInfo() != myInfo) {
-      g.translate(dX, -dY);
+      g.translate(-dX, -dY);
     } else {
-      g.translate(dX, dY);
+      g.translate(-dXs, -dYs);
     }
+  }
+
+  private int getNonSelectedOffset() {
+    return 2;
+  }
+
+  private int getSelectedOffset() {
+    return 1;
+  }
+
+  @Override
+  public Dimension getPreferredSize() {
+    final Dimension size = super.getPreferredSize();
+
+    final JBTabsPosition pos = myTabs.getTabsPosition();
+    switch (pos) {
+      case top: case bottom: size.height += getSelectedOffset(); break;
+      case left: case right: size.width += getSelectedOffset(); break;
+    }
+
+    return size;
   }
 
   private void handlePopup(final MouseEvent e) {
@@ -213,21 +234,21 @@ public class TabLabel extends JPanel {
 
 
   public void setText(final SimpleColoredText text) {
-    clear(false);
-    if (text != null) {
-      text.appendToComponent(myLabel);
-    }
+    myLabel.change(new Runnable() {
+      public void run() {
+        myLabel.clear();
+        myLabel.setIcon(myIcon);
+
+         if (text != null) {
+          text.appendToComponent(myLabel);
+        }
+      }
+    }, false);
+
+
     invalidateIfNeeded();
   }
 
-  private void clear(final boolean invalidate) {
-    myLabel.clear();
-    myLabel.setIcon(myIcon);
-
-    if (invalidate) {
-      invalidateIfNeeded();
-    }
-  }
 
   private void invalidateIfNeeded() {
     if (myLabel.getRootPane() == null) return;
@@ -235,7 +256,13 @@ public class TabLabel extends JPanel {
     if (myLabel.getSize() != null && myLabel.getSize().equals(myLabel.getPreferredSize())) return;
 
     setInactiveStateImage(null);
-    myLabel.getParent().invalidate();
+
+    myLabel.invalidate();
+
+    if (myActionPanel != null) {
+      myActionPanel.invalidate();
+    }
+
     myTabs.revalidateAndRepaint(false);
   }
 

@@ -22,6 +22,7 @@ import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -70,7 +71,22 @@ public class GroovyScriptRunConfigurationType implements LocatableConfigurationT
   }
 
   public boolean isConfigurationByLocation(RunConfiguration configuration, Location location) {
-    return false;
+    final String path = ((GroovyScriptRunConfiguration)configuration).scriptPath;
+    if (path == null) {
+      return false;
+    }
+
+    final PsiFile file = location.getPsiElement().getContainingFile();
+    if (file == null) {
+      return false;
+    }
+
+    final VirtualFile vfile = file.getVirtualFile();
+    if (vfile == null) {
+      return false;
+    }
+    
+    return FileUtil.toSystemIndependentName(path).equals(vfile.getPath());
   }
 
   private RunnerAndConfigurationSettings createConfiguration(final PsiClass aClass) {

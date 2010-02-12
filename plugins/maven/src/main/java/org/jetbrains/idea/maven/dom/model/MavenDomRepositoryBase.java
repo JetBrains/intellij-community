@@ -26,17 +26,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomElement;
 import org.jetbrains.idea.maven.dom.converters.MavenRepositoryLayoutConverter;
 import org.jetbrains.idea.maven.dom.converters.MavenUrlConverter;
+import org.jetbrains.idea.maven.dom.converters.repositories.MavenRepositoryConverter;
 
 public interface MavenDomRepositoryBase extends MavenDomElement {
   @NotNull
   @Required
+  @Convert(MavenRepositoryConverter.Id.class)
   GenericDomValue<String> getId();
 
   @NotNull
+  @Convert(MavenRepositoryConverter.Name.class)
   GenericDomValue<String> getName();
 
   @NotNull
-  @Convert(MavenUrlConverter.class)
+  @Convert(MavenRepositoryConverter.Url.class)
   GenericDomValue<String> getUrl();
 
   @NotNull

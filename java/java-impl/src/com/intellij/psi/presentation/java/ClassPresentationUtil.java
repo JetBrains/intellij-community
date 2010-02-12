@@ -16,11 +16,12 @@
 package com.intellij.psi.presentation.java;
 
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -28,23 +29,26 @@ public class ClassPresentationUtil {
   private ClassPresentationUtil() {
   }
 
-  public static String getNameForClass(PsiClass aClass, boolean qualified) {
+  public static String getNameForClass(@NotNull PsiClass aClass, boolean qualified) {
     if (aClass instanceof PsiAnonymousClass) {
+      if (aClass instanceof PsiEnumConstantInitializer) {
+        PsiEnumConstant enumConstant = ((PsiEnumConstantInitializer)aClass).getEnumConstant();
+        String name = enumConstant.getName();
+        return PsiBundle.message("enum.constant.context", name, getContextName(enumConstant, qualified));
+      }
       return PsiBundle.message("anonymous.class.context.display", getContextName(aClass, qualified));
     }
-    else {
-      if (qualified){
-        String qName = aClass.getQualifiedName();
-        if (qName != null) return qName;
-      }
-
-      String className = aClass.getName();
-      String contextName = getContextName(aClass, qualified);
-      return contextName != null ? PsiBundle.message("class.context.display", className, contextName) : className;
+    if (qualified){
+      String qName = aClass.getQualifiedName();
+      if (qName != null) return qName;
     }
+
+    String className = aClass.getName();
+    String contextName = getContextName(aClass, qualified);
+    return contextName != null ? PsiBundle.message("class.context.display", className, contextName) : className;
   }
 
-  private static String getNameForElement(PsiElement element, boolean qualified) {
+  private static String getNameForElement(@NotNull PsiElement element, boolean qualified) {
     if (element instanceof PsiClass){
       return getNameForClass((PsiClass)element, qualified);
     }
@@ -64,17 +68,18 @@ public class ClassPresentationUtil {
     }
   }
 
-  private static String getContextName(PsiElement element, boolean qualified) {
+  private static String getContextName(@NotNull PsiElement element, boolean qualified) {
     PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiMember.class, PsiFile.class);
     while(true){
+      if (parent == null) return null;
       String name = getNameForElement(parent, qualified);
       if (name != null) return name;
-      if (parent instanceof PsiFile || parent == null) return null;
+      if (parent instanceof PsiFile) return null;
       parent = parent.getParent();
     }
   }
 
-  public static ItemPresentation getPresentation(final PsiClass psiClass) {
+  public static ItemPresentation getPresentation(@NotNull final PsiClass psiClass) {
     if (psiClass instanceof PsiAnonymousClass) return null;
     return new ItemPresentation() {
       public String getPresentableText() {

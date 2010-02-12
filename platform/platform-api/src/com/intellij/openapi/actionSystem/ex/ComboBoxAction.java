@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -81,7 +82,11 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         new ActionListener() {
           public void actionPerformed(ActionEvent e) {
             if (!myForcePressed) {
-              showPopup();
+              IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(new Runnable() {
+                public void run() {
+                  showPopup();
+                }
+              });
             }
           }
         }

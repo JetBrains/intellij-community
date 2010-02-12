@@ -74,24 +74,27 @@ public final class RequestFocusInEditorComponentCmd extends FinalizableCommand{
       if(owner==null){
         return;
       }
-      // if owner is active window or it has active child window which isn't floating decorator then
-      // don't bring owner window to font. If we will make toFront every time then it's possible
-      // the following situation:
-      // 1. user prform refactoring
-      // 2. "Do not show preview" dialog is popping up.
-      // 3. At that time "preview" tool window is being activated and modal "don't show..." dialog
-      // isn't active.
-      if(!owner.isActive()){
-        final Window activeWindow=getActiveWindow(owner.getOwnedWindows());
-        if(activeWindow == null || (activeWindow instanceof FloatingDecorator)){
-          //Thread.dumpStack();
-          //System.out.println("------------------------------------------------------");
-          owner.toFront();
-        }
-      }
 
       if(myComponent != null){
-        myFocusManager.requestFocus(myComponent, myForced).notifyWhenDone(myDoneCallback);
+        myFocusManager.requestFocus(myComponent, myForced).notifyWhenDone(myDoneCallback).doWhenDone(new Runnable() {
+          public void run() {
+            // if owner is active window or it has active child window which isn't floating decorator then
+            // don't bring owner window to font. If we will make toFront every time then it's possible
+            // the following situation:
+            // 1. user prform refactoring
+            // 2. "Do not show preview" dialog is popping up.
+            // 3. At that time "preview" tool window is being activated and modal "don't show..." dialog
+            // isn't active.
+            if(!owner.isActive()){
+              final Window activeWindow=getActiveWindow(owner.getOwnedWindows());
+              if(activeWindow == null || (activeWindow instanceof FloatingDecorator)){
+                //Thread.dumpStack();
+                //System.out.println("------------------------------------------------------");
+                owner.toFront();
+              }
+            }
+          }
+        });
       } else {
         myDoneCallback.setRejected();
       }

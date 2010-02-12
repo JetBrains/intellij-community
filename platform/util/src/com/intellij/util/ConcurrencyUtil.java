@@ -80,16 +80,18 @@ public class ConcurrencyUtil {
    * @return defaultValue if there is no entry in the map (in that case defaultValue is placed into the map), or corresponding value if entry already exists
    */
   @NotNull
-  public static <K,V> V cacheOrGet(ConcurrentMap<K, V> map, @NotNull final K key, @NotNull final V defaultValue) {
+  public static <K,V> V cacheOrGet(@NotNull ConcurrentMap<K, V> map, @NotNull final K key, @NotNull final V defaultValue) {
     V prev = map.putIfAbsent(key, defaultValue);
     return prev == null ? defaultValue : prev;
   }
 
-  public static ThreadPoolExecutor newSingleThreadExecutor(@NonNls final String threadFactoryName) {
+  @NotNull
+  public static ThreadPoolExecutor newSingleThreadExecutor(@NotNull @NonNls final String threadFactoryName) {
     return newSingleThreadExecutor(threadFactoryName, Thread.NORM_PRIORITY);
   }
 
-  public static ThreadPoolExecutor newSingleThreadExecutor(final String threadFactoryName, final int threadPriority) {
+  @NotNull
+  public static ThreadPoolExecutor newSingleThreadExecutor(@NotNull final String threadFactoryName, final int threadPriority) {
     return new ThreadPoolExecutor(1, 1,
                                     0L, TimeUnit.MILLISECONDS,
                                     new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
@@ -101,11 +103,13 @@ public class ConcurrencyUtil {
     });
   }
 
-  public static ScheduledThreadPoolExecutor newSingleScheduledThreadExecutor(@NonNls final String threadFactoryName) {
+  @NotNull
+  public static ScheduledThreadPoolExecutor newSingleScheduledThreadExecutor(@NotNull @NonNls final String threadFactoryName) {
     return newSingleScheduledThreadExecutor(threadFactoryName, Thread.NORM_PRIORITY);
   }
 
-  public static ScheduledThreadPoolExecutor newSingleScheduledThreadExecutor(final String threadFactoryName, final int threadPriority) {
+  @NotNull
+  public static ScheduledThreadPoolExecutor newSingleScheduledThreadExecutor(@NotNull final String threadFactoryName, final int threadPriority) {
     ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1, new ThreadFactory() {
       public Thread newThread(final Runnable r) {
         final Thread thread = new Thread(r, threadFactoryName);
