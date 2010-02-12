@@ -84,7 +84,6 @@ public class PyUnusedLocalVariableInspection extends LocalInspectionTool {
         final HashMap<String, List<PsiElement>> unusedMap = new HashMap<String, List<PsiElement>>();
 
         final ControlFlow flow = owner.getControlFlow();
-        final Scope scope = owner.getScope();
         final Instruction[] instructions = flow.getInstructions();
 
         // Iteration over write accesses
@@ -92,6 +91,9 @@ public class PyUnusedLocalVariableInspection extends LocalInspectionTool {
           final Instruction instruction = instructions[i];
           if (instruction instanceof ReadWriteInstruction) {
             final String name = ((ReadWriteInstruction)instruction).getName();
+            if (name == null){
+              continue;
+            }
             final PsiElement element = instruction.getElement();
             final ReadWriteInstruction.ACCESS access = ((ReadWriteInstruction)instruction).getAccess();
             // WriteAccess
@@ -107,6 +109,9 @@ public class PyUnusedLocalVariableInspection extends LocalInspectionTool {
           final Instruction instruction = instructions[i];
           if (instruction instanceof ReadWriteInstruction) {
             final String name = ((ReadWriteInstruction)instruction).getName();
+            if (name == null){
+              continue;
+            }
             final PsiElement element = instruction.getElement();
             final ReadWriteInstruction.ACCESS access = ((ReadWriteInstruction)instruction).getAccess();
             // Read or self assign access
