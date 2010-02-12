@@ -200,13 +200,13 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
   IntentionListStep getSubStep(final IntentionActionWithTextCaching action, final String title) {
     ShowIntentionsPass.IntentionsInfo intentions = new ShowIntentionsPass.IntentionsInfo();
     for (final IntentionAction optionIntention : action.getOptionIntentions()) {
-      intentions.intentionsToShow.add(new HighlightInfo.IntentionActionDescriptor(optionIntention, null));
+      intentions.intentionsToShow.add(new HighlightInfo.IntentionActionDescriptor(optionIntention, getIcon(optionIntention)));
     }
     for (final IntentionAction optionFix : action.getOptionErrorFixes()) {
-      intentions.errorFixesToShow.add(new HighlightInfo.IntentionActionDescriptor(optionFix, null));
+      intentions.errorFixesToShow.add(new HighlightInfo.IntentionActionDescriptor(optionFix, getIcon(optionFix)));
     }
     for (final IntentionAction optionFix : action.getOptionInspectionFixes()) {
-      intentions.inspectionFixesToShow.add(new HighlightInfo.IntentionActionDescriptor(optionFix, null));
+      intentions.inspectionFixesToShow.add(new HighlightInfo.IntentionActionDescriptor(optionFix, getIcon(optionFix)));
     }
 
     return new IntentionListStep(myIntentionHintComponent, intentions,myEditor, myFile, myProject){
@@ -214,6 +214,10 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
         return title;
       }
     };
+  }
+
+  private static Icon getIcon(IntentionAction optionIntention) {
+    return optionIntention instanceof Iconable ? ((Iconable)optionIntention).getIcon(0) : null;
   }
 
   public boolean hasSubstep(final IntentionActionWithTextCaching action) {
