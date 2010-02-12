@@ -36,6 +36,11 @@
       <add-to-group group-id="FileOpenGroup" anchor="first"/>
     </group>
 
+    <action id="NewElement" class="com.intellij.ide.actions.NewElementAction">
+      <add-to-group group-id="PlatformOpenProjectGroup" anchor="after" relative-to-action="NewDirectoryProject"/>
+    </action>
+
+
     <group id="AnalyzePlatformMenu">
       <separator/>
       <action id="Unscramble" class="com.intellij.unscramble.AnalyzeStacktraceAction"/>
