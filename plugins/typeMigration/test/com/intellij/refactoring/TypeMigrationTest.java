@@ -495,4 +495,11 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
                     myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<java.util.List<char[]>>", null),
                     myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<java.util.List<int[]>>", null));
   }
+
+  //non formatted type
+  public void testT100() throws Exception {
+    doTestFieldType("f",
+                    myJavaFacade.getElementFactory().createTypeFromText("java.util.Map<java.lang.String,java.lang.String>", null),
+                    myJavaFacade.getElementFactory().createTypeFromText("java.util.Map<java.lang.String,java.lang.Integer>", null));
+  }
 }

@@ -171,7 +171,7 @@ public class TypeMigrationLabeler {
         for (Map.Entry<TypeMigrationUsageInfo, PsiType> info : myNewExpressionTypeChange.entrySet()) {
           final PsiElement expressionToReplace = info.getKey().getElement();
           if (expression.equals(expressionToReplace)) {
-            TypeMigrationReplacementUtil.replaceNewExpressionType(project, (PsiExpression)expressionToReplace, info);
+            TypeMigrationReplacementUtil.replaceNewExpressionType(project, (PsiNewExpression)expressionToReplace, info);
           }
         }
       }

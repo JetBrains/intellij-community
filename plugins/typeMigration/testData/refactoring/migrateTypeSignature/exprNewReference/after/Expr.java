@@ -12,12 +12,10 @@ class Expr {
 
 		myField = new Subject();
 		myField = this.new Subject();
-		myField = new Subject() {
-        };
+		myField = new Subject() {};
 
 		myField = new Descendant();
 		myField = this.new Descendant();
-		myField = new Descendant() {
-        };
+		myField = new Descendant() {};
 	}
 }

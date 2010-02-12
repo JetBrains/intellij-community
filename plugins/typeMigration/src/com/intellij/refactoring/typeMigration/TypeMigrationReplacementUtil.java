@@ -8,6 +8,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
@@ -131,22 +133,38 @@ public class TypeMigrationReplacementUtil {
     }
   }
 
-  static void replaceNewExpressionType(final Project project, final PsiExpression expression, final Map.Entry<TypeMigrationUsageInfo, PsiType> info) {
+  static void replaceNewExpressionType(final Project project, final PsiNewExpression expression, final Map.Entry<TypeMigrationUsageInfo, PsiType> info) {
     final PsiType changeType = info.getValue();
     if (changeType != null) {
-      final String image = expression.getText();
-      PsiType type = expression.getType().getDeepComponentType();
-
       try {
-        final String with = type.getPresentableText().replace("[", "\\[").replace("]", "\\]");
-        final String replacement =
-            image.replaceFirst(with, changeType.getDeepComponentType().getPresentableText());
-        expression.replace(
-            JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText(replacement, expression));
+        final PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
+        final PsiType componentType = changeType.getDeepComponentType();
+        if (classReference != null) {
+          replaceTypeWithClassReferenceOrKeyword(project, componentType, classReference);
+        }
+        else {
+          final PsiElement typeKeyword = getTypeKeyword(expression);
+          if (typeKeyword != null) {
+            replaceTypeWithClassReferenceOrKeyword(project, componentType, typeKeyword);
+          }
+        }
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
     }
+  }
+
+  private static void replaceTypeWithClassReferenceOrKeyword(Project project, PsiType componentType, PsiElement typePlace) {
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    if (componentType instanceof PsiClassType) {
+      typePlace.replace(factory.createReferenceElementByType((PsiClassType)componentType));
+    } else {
+      typePlace.replace(getTypeKeyword(((PsiNewExpression)factory.createExpressionFromText("new " + componentType.getPresentableText() + "[0]", typePlace))));
+    }
+  }
+
+  private static PsiElement getTypeKeyword(PsiNewExpression expression) {
+    return ((CompositeElement)expression).findChildByRoleAsPsiElement(ChildRole.TYPE_KEYWORD);
   }
 }
