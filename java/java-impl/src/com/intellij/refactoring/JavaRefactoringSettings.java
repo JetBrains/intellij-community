@@ -41,6 +41,9 @@ public class JavaRefactoringSettings implements PersistentStateComponent<JavaRef
 
   public boolean RENAME_SEARCH_FOR_TEXT_FOR_PACKAGE = true;
   public boolean RENAME_SEARCH_FOR_TEXT_FOR_CLASS = true;
+  public boolean RENAME_SEARCH_FOR_TEXT_FOR_METHOD = true;
+  public boolean RENAME_SEARCH_FOR_TEXT_FOR_FIELD = true;
+  public boolean RENAME_SEARCH_FOR_TEXT_FOR_VARIABLE = true;
 
   //public boolean ENCAPSULATE_FIELDS_PREVIEW_USAGES = true;
   public boolean ENCAPSULATE_FIELDS_USE_ACCESSORS_WHEN_ACCESSIBLE = true;
