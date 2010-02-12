@@ -1,13 +1,15 @@
 package com.jetbrains.python.codeInsight;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.search.ProjectAndLibrariesScope;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubIndex;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.impl.PyElementImpl;
 import com.jetbrains.python.psi.impl.PyReferenceExpressionImpl;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
@@ -57,10 +59,9 @@ public class PyDynamicMember {
   }
 
   @Nullable
-  public PsiElement resolve(Module module, PyClass modelClass) {
-    final Project project = module.getProject();
+  public PsiElement resolve(Project project, PyClass modelClass) {
     final Collection<PyClass> classes = StubIndex.getInstance().get(PyClassNameIndex.KEY, myTypeShortName, project,
-                                                                    ProjectAndLibrariesScope.moduleWithLibrariesScope(module));
+                                                                    GlobalSearchScope.allScope(project));
     for (PyClass clazz : classes) {
       final String moduleName = ResolveImportUtil.findShortestImportableName(modelClass, clazz.getContainingFile().getVirtualFile());
       if (myTypeModuleName.equals(moduleName)) {
