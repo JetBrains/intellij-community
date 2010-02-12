@@ -289,4 +289,8 @@ public class GroovyCompletionTest extends LightCodeInsightFixtureTestCase {
   public void testReturnStatement() throws Exception {
     doSmartCompletion("b", "b1", "b2", "foo");
   }
+
+  public void testIncSmartCompletion() throws Exception {
+    doSmartCompletion("a", "b");
+  }
 }

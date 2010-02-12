@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.expectedTypes;
 
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -31,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -155,6 +157,24 @@ public class GroovyExpectedTypesProvider {
     public void visitThrowStatement(GrThrowStatement throwStatement) {
       final PsiClassType trowable = PsiType.getJavaLangTrowable(myExpression.getManager(), throwStatement.getResolveScope());
       myResult = new TypeConstraint[]{SubtypeConstraint.create(trowable)};
+    }
+
+    @Override
+    public void visitUnaryExpression(final GrUnaryExpression expression) {
+      TypeConstraint constraint = new TypeConstraint(PsiType.INT) {
+        @Override
+        public boolean satisfied(PsiType type, PsiManager manager, GlobalSearchScope scope) {
+          return TypesUtil
+            .getOverloadedOperatorCandidates(TypesUtil.boxPrimitiveType(type, manager, scope), expression.getOperationTokenType(),
+                                             expression, PsiType.EMPTY_ARRAY).length > 0;
+        }
+
+        @Override
+        public PsiType getDefaultType() {
+          return PsiType.INT;
+        }
+      };
+      myResult = new TypeConstraint[]{constraint};
     }
 
     public TypeConstraint[] getResult() {

@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.ResolveState;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -53,6 +54,7 @@ public class CompletionProcessor extends ResolverProcessor {
     return new CompletionProcessor(place, EnumSet.of(ResolveKind.PACKAGE, ResolveKind.CLASS), null);
   }
 
+  @NotNull
   public GroovyResolveResult[] getCandidates() {
     if (myCandidates.size() == 0) return GroovyResolveResult.EMPTY_ARRAY;
     return ResolveUtil.filterSameSignatureCandidates(myCandidates);

@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -97,6 +98,7 @@ public class PropertyResolverProcessor extends ResolverProcessor {
     return containingClass.findFieldByName(fieldName, false) != null;
   }
 
+  @NotNull
   public GroovyResolveResult[] getCandidates() {
     if (myProperty != null) {
       if (myCandidates.isEmpty()) {
