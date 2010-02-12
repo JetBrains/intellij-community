@@ -960,7 +960,7 @@ public class MavenProjectsTree {
     return findProject(project.getParentId());
   }
 
-  private Set<MavenProject> findInheritors(MavenProject project) {
+  public Set<MavenProject> findInheritors(MavenProject project) {
     Set<MavenProject> result = new THashSet<MavenProject>();
     MavenId id = project.getMavenId();
 

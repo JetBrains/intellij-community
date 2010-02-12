@@ -43,6 +43,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.Update;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
@@ -544,6 +545,12 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   public Module findModule(MavenProject project) {
     if (!isInitialized()) return null;
     return ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(project.getFile());
+  }
+
+  @NotNull
+  public Set<MavenProject> findInheritors(@Nullable MavenProject parent) {
+    if (parent == null || !isInitialized()) return Collections.emptySet();
+    return myProjectsTree.findInheritors(parent);
   }
 
   public MavenProject findContainingProject(VirtualFile file) {

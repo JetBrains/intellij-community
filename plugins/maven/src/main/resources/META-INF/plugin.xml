@@ -88,6 +88,7 @@
     <fileTemplateGroup implementation="org.jetbrains.idea.maven.utils.MavenFileTemplateGroupFactory"/>
 
     <completion.contributor language="XML" implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenGroupIdSmartCompletionContributor"/>
+    <annotator language="XML" implementationClass="org.jetbrains.idea.maven.dom.annotator.MavenDomGutterAnnotator"/>
   </extensions>
 
   <application-components>
