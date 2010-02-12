@@ -175,94 +175,18 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
   @Override
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
-    myInitializer.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override
-      public void visitReferenceExpression(final PsiReferenceExpression expression) {
-        super.visitReferenceExpression(expression);
-        final PsiElement element = expression.resolve();
-        if (element instanceof PsiMember && !((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC)) {
-          if (myMethod.hasModifierProperty(PsiModifier.STATIC)) {
-            conflicts.putValue(expression, "Parameter initializer depends on " + RefactoringUIUtil.getDescription(element, false) + " which is not available inside the static method");
-          }
-        }
-        if (element instanceof PsiMethod || element instanceof PsiField) {
-          if (!mySameClass && !((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC)) {
-            conflicts.putValue(expression, "Parameter initializer depend on non static member from some other class");
-          } else if (!PsiUtil.isAccessible((PsiMember)element, myMethod, null)) {
-            conflicts.putValue(expression, "Parameter initializer depends on value which is not available inside method");
-          }
-        } else if (element instanceof PsiParameter) {
-          conflicts.putValue(expression, "Parameter initializer depends on callers parameter");
-        }
-      }
-
-      @Override
-      public void visitThisExpression(PsiThisExpression thisExpression) {
-        super.visitThisExpression(thisExpression);
-        final PsiJavaCodeReferenceElement qualifier = thisExpression.getQualifier();
-        PsiElement containingClass;
-        if (qualifier != null) {
-          containingClass = qualifier.resolve();
-        }
-        else {
-          containingClass = PsiTreeUtil.getParentOfType(myMethodCall, PsiClass.class);
-        }
-        final PsiClass methodContainingClass = myMethod.getContainingClass();
-        LOG.assertTrue(methodContainingClass != null);
-        if (!PsiTreeUtil.isAncestor(containingClass, methodContainingClass, false)) {
-          conflicts.putValue(thisExpression,
-                             "Parameter initializer depends on this which is not available inside the method and cannot be inlined");
-        } else if (myMethod.hasModifierProperty(PsiModifier.STATIC)) {
-          conflicts.putValue(thisExpression, "Parameter initializer depends on this which is not available inside the static method");
-        }
-      }
-
-      @Override
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-        super.visitReferenceElement(reference);
-        if (myMethod.hasModifierProperty(PsiModifier.STATIC)) {
-          final PsiElement resolved = reference.resolve();
-          if (resolved instanceof PsiClass && !((PsiClass)resolved).hasModifierProperty(PsiModifier.STATIC)) {
-            conflicts.putValue(reference, "Parameter initializer depends on non static class which is not available inside static method");
-          }
-        }
-      }
-
-      @Override
-      public void visitNewExpression(PsiNewExpression expression) {
-        super.visitNewExpression(expression);
-        final PsiJavaCodeReferenceElement reference = expression.getClassOrAnonymousClassReference();
-        if (reference != null) {
-          final PsiElement resolved = reference.resolve();
-          if (resolved instanceof PsiClass) {
-            final PsiClass refClass = (PsiClass)resolved;
-            final String classUnavailableMessage = "Parameter initializer depends on " +
-                                                   RefactoringUIUtil.getDescription(refClass, true) +
-                                                   " which is not available inside method and cannot be inlined";
-            if (!PsiUtil.isAccessible(refClass, myMethod, null)) {
-              conflicts.putValue(expression, classUnavailableMessage);
-            }
-            else {
-              final PsiClass methodContainingClass = myMethod.getContainingClass();
-              LOG.assertTrue(methodContainingClass != null);
-              if (!PsiTreeUtil.isAncestor(myMethod, refClass, false)) {
-                PsiElement parent = refClass;
-                while ((parent = parent.getParent()) instanceof PsiClass) {
-                  if (!PsiUtil.isAccessible((PsiClass)parent, myMethod, null)) {
-                    break;
-                  }
-                }
-                if (!(parent instanceof PsiFile)) {
-                  conflicts.putValue(expression, classUnavailableMessage);
-                }
-              }
-            }
-          }
-        }
-      }
-    });
-
     final UsageInfo[] usages = refUsages.get();
+    final InaccessibleExpressionsDetector detector = new InaccessibleExpressionsDetector(conflicts);
+    myInitializer.accept(detector);
+    for (UsageInfo usage : usages) {
+      if (usage instanceof LocalReplacementUsageInfo) {
+        final PsiElement replacement = ((LocalReplacementUsageInfo)usage).getReplacement();
+        if (replacement != null) {
+          replacement.accept(detector);
+        }
+      }
+    }
+
     final Set<PsiVariable> vars = new HashSet<PsiVariable>();
     for (UsageInfo usageInfo : usages) {
       if (usageInfo instanceof LocalReplacementUsageInfo) {
@@ -375,6 +299,99 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
     @Nullable
     public PsiVariable getVariable() {
       return myVariable != null && myVariable.isValid() ? myVariable : null;
+    }
+  }
+
+  private class InaccessibleExpressionsDetector extends JavaRecursiveElementWalkingVisitor {
+    private final MultiMap<PsiElement, String> myConflicts;
+
+    public InaccessibleExpressionsDetector(MultiMap<PsiElement, String> conflicts) {
+      myConflicts = conflicts;
+    }
+
+    @Override
+    public void visitReferenceExpression(final PsiReferenceExpression expression) {
+      super.visitReferenceExpression(expression);
+      final PsiElement element = expression.resolve();
+      if (element instanceof PsiMember && !((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC)) {
+        if (myMethod.hasModifierProperty(PsiModifier.STATIC)) {
+          myConflicts.putValue(expression, "Parameter initializer depends on " + RefactoringUIUtil.getDescription(element, false) + " which is not available inside the static method");
+        }
+      }
+      if (element instanceof PsiMethod || element instanceof PsiField) {
+        if (!mySameClass && !((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC)) {
+          myConflicts.putValue(expression, "Parameter initializer depend on non static member from some other class");
+        } else if (!PsiUtil.isAccessible((PsiMember)element, myMethod, null)) {
+          myConflicts.putValue(expression, "Parameter initializer depends on value which is not available inside method");
+        }
+      } else if (element instanceof PsiParameter) {
+        myConflicts.putValue(expression, "Parameter initializer depends on callers parameter");
+      }
+    }
+
+    @Override
+    public void visitThisExpression(PsiThisExpression thisExpression) {
+      super.visitThisExpression(thisExpression);
+      final PsiJavaCodeReferenceElement qualifier = thisExpression.getQualifier();
+      PsiElement containingClass;
+      if (qualifier != null) {
+        containingClass = qualifier.resolve();
+      }
+      else {
+        containingClass = PsiTreeUtil.getParentOfType(myMethodCall, PsiClass.class);
+      }
+      final PsiClass methodContainingClass = myMethod.getContainingClass();
+      LOG.assertTrue(methodContainingClass != null);
+      if (!PsiTreeUtil.isAncestor(containingClass, methodContainingClass, false)) {
+        myConflicts.putValue(thisExpression,
+                           "Parameter initializer depends on this which is not available inside the method and cannot be inlined");
+      } else if (myMethod.hasModifierProperty(PsiModifier.STATIC)) {
+        myConflicts.putValue(thisExpression, "Parameter initializer depends on this which is not available inside the static method");
+      }
+    }
+
+    @Override
+    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      super.visitReferenceElement(reference);
+      if (myMethod.hasModifierProperty(PsiModifier.STATIC)) {
+        final PsiElement resolved = reference.resolve();
+        if (resolved instanceof PsiClass && !((PsiClass)resolved).hasModifierProperty(PsiModifier.STATIC)) {
+          myConflicts.putValue(reference, "Parameter initializer depends on non static class which is not available inside static method");
+        }
+      }
+    }
+
+    @Override
+    public void visitNewExpression(PsiNewExpression expression) {
+      super.visitNewExpression(expression);
+      final PsiJavaCodeReferenceElement reference = expression.getClassOrAnonymousClassReference();
+      if (reference != null) {
+        final PsiElement resolved = reference.resolve();
+        if (resolved instanceof PsiClass) {
+          final PsiClass refClass = (PsiClass)resolved;
+          final String classUnavailableMessage = "Parameter initializer depends on " +
+                                                 RefactoringUIUtil.getDescription(refClass, true) +
+                                                 " which is not available inside method and cannot be inlined";
+          if (!PsiUtil.isAccessible(refClass, myMethod, null)) {
+            myConflicts.putValue(expression, classUnavailableMessage);
+          }
+          else {
+            final PsiClass methodContainingClass = myMethod.getContainingClass();
+            LOG.assertTrue(methodContainingClass != null);
+            if (!PsiTreeUtil.isAncestor(myMethod, refClass, false)) {
+              PsiElement parent = refClass;
+              while ((parent = parent.getParent()) instanceof PsiClass) {
+                if (!PsiUtil.isAccessible((PsiClass)parent, myMethod, null)) {
+                  break;
+                }
+              }
+              if (!(parent instanceof PsiFile)) {
+                myConflicts.putValue(expression, classUnavailableMessage);
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

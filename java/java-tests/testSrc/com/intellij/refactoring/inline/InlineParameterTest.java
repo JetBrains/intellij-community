@@ -237,6 +237,15 @@ public class InlineParameterTest extends LightCodeInsightTestCase {
     }
   }
 
+  public void testRefCallerParameterInCallChain() throws Exception {
+    try {
+      doTest(false);
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Parameter initializer depends on callers parameter", e.getMessage());
+    }
+  }
+
   private void doTest(final boolean createLocal) throws Exception {
     getProject().putUserData(InlineParameterExpressionProcessor.CREATE_LOCAL_FOR_TESTS,createLocal);
 
