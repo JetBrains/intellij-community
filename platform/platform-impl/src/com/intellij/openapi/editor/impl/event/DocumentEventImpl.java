@@ -132,7 +132,7 @@ public class DocumentEventImpl extends DocumentEvent {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "DocumentEventImpl[myOffset=" + myOffset + ", myOldLength=" + myOldLength + ", myNewLength=" + myNewLength +
-           ", myOldString='" + myOldString + "', myNewString='" + myNewString + "']";
+           ", myOldString='" + myOldString + "', myNewString='" + myNewString + "']" + (isWholeTextReplaced() ? " Whole." : ".");
   }
 
   public boolean isWholeTextReplaced() {
