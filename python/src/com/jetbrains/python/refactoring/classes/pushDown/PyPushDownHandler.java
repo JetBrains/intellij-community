@@ -7,10 +7,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.Query;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.search.PyClassInheritorsSearch;
 import com.jetbrains.python.refactoring.classes.PyClassMembersRefactoringSupport;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringHandler;
 import com.jetbrains.python.refactoring.classes.PyMemberInfoStorage;
@@ -27,6 +28,14 @@ public class PyPushDownHandler extends PyClassRefactoringHandler {
 
     final PyClass clazz = PyUtil.getContainingClassOrSelf(element1);
     if (!inClass(clazz, project, editor, "refactoring.pull.up.error.cannot.perform.refactoring.not.inside.class")) return;
+
+    final Query<PyClass> query = PyClassInheritorsSearch.search(clazz, false);
+    if (query.findFirst() == null) {
+      assert clazz != null;
+      final String message = RefactoringBundle.message("class.0.does.not.have.inheritors", clazz.getName());
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getTitle(), getHelpId());
+      return;
+    }
 
     final PyMemberInfoStorage infoStorage = PyClassMembersRefactoringSupport.getSelectedMemberInfos(clazz, element1, element2);
 
