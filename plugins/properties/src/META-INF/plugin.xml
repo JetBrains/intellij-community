@@ -3,6 +3,7 @@
   <name>Properties Support</name>
   <depends>com.intellij.modules.xml</depends>
   <depends optional="true" config-file="spellchecker.xml">com.intellij.spellchecker</depends>
+  <depends optional="true" config-file="uml.xml">com.intellij.uml</depends>
   <description>
     This plugin enables smart editing of properties files.
   </description>
