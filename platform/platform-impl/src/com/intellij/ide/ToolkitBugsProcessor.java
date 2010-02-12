@@ -16,21 +16,24 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ToolkitBugsProcessor {
 
-  private static final Logger LOG = Logger.getInstance("ToolkirBugProcessor");
+  private static final Logger LOG = Logger.getInstance("ToolkitBugProcessor");
 
   List<Handler> myHandlers = new ArrayList<Handler>();
 
   public ToolkitBugsProcessor() {
     Class<?>[] classes = getClass().getDeclaredClasses();
     for (Class<?> each : classes) {
-      if (each.equals(Handler.class)) continue;
+      if ((each.getModifiers() & Modifier.ABSTRACT) > 0) continue;
       if (Handler.class.isAssignableFrom(each)) {
         try {
           Handler eachHandler = (Handler)each.newInstance();
@@ -49,9 +52,10 @@ public class ToolkitBugsProcessor {
   public boolean process(Throwable e) {
     if (!Registry.is("ide.consumeKnownToolkitBugs")) return false;
 
+    StackTraceElement[] stack = e.getStackTrace();
     for (Handler each : myHandlers) {
-      if (each.process(e)) {
-        LOG.info("Ignored exception by toolkit bug processor, bug id=" + each.toString());
+      if (each.process(e, stack)) {
+        LOG.info("Ignored exception by toolkit bug processor, bug id=" + each.toString() + " desc=" + each.getDetails());
         return true;
       }
     }
@@ -61,10 +65,24 @@ public class ToolkitBugsProcessor {
 
   abstract static class Handler {
 
-    abstract boolean process(Throwable e);
+    private String myDetails;
+
+    protected Handler() {
+      myDetails = StringUtil.getShortName(getClass().getName());
+    }
+
+    protected Handler(String details) {
+      myDetails = details;
+    }
+
+    abstract boolean process(Throwable e, StackTraceElement[] stack);
 
     boolean isActual() {
       return true;
+    }
+
+    public String getDetails() {
+      return myDetails;
     }
 
     @Override
@@ -80,20 +98,42 @@ public class ToolkitBugsProcessor {
   }
 
   static class Sun_6857057 extends Handler {
+    Sun_6857057() {
+      super("text editor component - sync between model and view while dnd operations");
+    }
+
     @Override
-    public boolean process(Throwable e) {
-      if (e instanceof ArrayIndexOutOfBoundsException) {
-        StackTraceElement[] stack = e.getStackTrace();
-        if (stack.length > 5) {
-          if (stack[0].getClassName().equals("sun.font.FontDesignMetrics")
-              && stack[0].getMethodName().equals("charsWidth")
-              && stack[5].getClassName().equals("javax.swing.text.CompositeView")
-              && stack[5].getMethodName().equals("viewToModel")) {
-            return true;
-          }
-        }
+    public boolean process(Throwable e, StackTraceElement[] stack) {
+      if (e instanceof ArrayIndexOutOfBoundsException && stack.length > 5) {
+        return stack[0].getClassName().equals("sun.font.FontDesignMetrics")
+            && stack[0].getMethodName().equals("charsWidth")
+            && stack[5].getClassName().equals("javax.swing.text.CompositeView")
+            && stack[5].getMethodName().equals("viewToModel");
       }
       return false;
+    }
+  }
+
+  static class Apple_ExceptionOnChangingMonitors extends Handler {
+
+    @Override
+    boolean isActual() {
+      return SystemInfo.isMac;
+    }
+
+    @Override
+    boolean process(Throwable e, StackTraceElement[] stack) {
+      if (e instanceof ArrayIndexOutOfBoundsException && stack.length > 1) {
+        return stack[0].getClassName().equals("apple.awt.CWindow")
+          && stack[0].getMethodName().equals("displayChanged");
+      }
+
+      return false;
+    }
+
+    @Override
+    public String toString() {
+      return "http://www.jetbrains.net/devnet/thread/278896";
     }
   }
 }
