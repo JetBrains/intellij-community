@@ -42,8 +42,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
     return execute(null);
   }
 
-  public ExecutionResult execute(CommandLinePatcher patcher) throws ExecutionException {
-    final ProcessHandler processHandler = startProcess(patcher);
+  public ExecutionResult execute(CommandLinePatcher... patchers) throws ExecutionException {
+    final ProcessHandler processHandler = startProcess(patchers);
     final ConsoleView console = createAndAttachConsole(getConfig().getProject(), processHandler);
 
     return new DefaultExecutionResult(console, processHandler, createActions(console, processHandler));
@@ -65,10 +65,18 @@ public abstract class PythonCommandLineState extends CommandLineState {
     return startProcess(null);
   }
 
-  protected OSProcessHandler startProcess(CommandLinePatcher patcher) throws ExecutionException {
+  /**
+   * Patches the command line parameters applying patchers from first to last, and then runs it.
+   * @param patchers any number of patchers; any patcher may be null, and the whole argument may be null.
+   * @return handler of the started process
+   * @throws ExecutionException
+   */
+  protected OSProcessHandler startProcess(CommandLinePatcher... patchers) throws ExecutionException {
     GeneralCommandLine commandLine = generateCommandLine();
-    if (patcher != null) {
-      patcher.patchCommandLine(commandLine);
+    if (patchers != null) {
+      for (CommandLinePatcher patcher: patchers) {
+        if (patcher != null) patcher.patchCommandLine(commandLine);
+      }
     }
 
     final OSProcessHandler processHandler = new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString());

@@ -11,9 +11,12 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -23,7 +26,9 @@ import java.util.Map;
 /**
  * @author yole
  */
-public class PythonRunConfiguration extends AbstractPythonRunConfiguration implements AbstractPythonRunConfigurationParams, PythonRunConfigurationParams {
+public class PythonRunConfiguration extends AbstractPythonRunConfiguration 
+  implements AbstractPythonRunConfigurationParams, PythonRunConfigurationParams, CommandLinePatcher
+{
   private String myScriptName;
   private String myScriptParameters;
 
@@ -34,7 +39,8 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration imple
 
   private void addDefaultEnvs() {
     Map<String, String> envs = getEnvs();
-    envs.put("PYTHONUNBUFFERED", "1"); // unbuffered I/O is easier for IDE to handle
+    // unbuffered I/O is easier for IDE to handle
+    envs.put("PYTHONUNBUFFERED", "1");
   }
 
   protected ModuleBasedConfiguration createInstance() {
@@ -108,5 +114,38 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration imple
     AbstractPythonRunConfiguration.copyParams(source.getBaseParams(), target.getBaseParams());
     target.setScriptName(source.getScriptName());
     target.setScriptParameters(source.getScriptParameters());
+  }
+
+  /**
+   * Some setups (e.g. virtualenv) provide a script that alters environment variables before running a python interpreter or other tools.
+   * Such settings are not directly stored but applied right before running using this method.
+   * @param commandLine what to patch
+   */
+  public void patchCommandLine(GeneralCommandLine commandLine) {
+    // prepend virtualenv bin if it's not already on PATH
+    final String sdk_home = getSdkHome();
+    if (sdk_home != null) {
+      File virtualenv_root = PythonSdkType.getVirtualEnvRoot(sdk_home);
+      if (virtualenv_root != null) {
+        String virtualenv_bin = new File(virtualenv_root, "bin").getPath();
+        String path_value;
+        if (isPassParentEnvs()) {
+          // append to PATH
+          path_value = System.getenv("PATH");
+          if (path_value != null) path_value = virtualenv_bin + File.pathSeparator + path_value;
+          else path_value = virtualenv_bin;
+        }
+        else path_value = virtualenv_bin;
+        Map<String, String> new_env; // we need a copy lest we change config's map.
+        Map<String, String> cmd_env = commandLine.getEnvParams();
+        if (cmd_env != null) new_env = new HashMap<String, String>(cmd_env);
+        else new_env = new HashMap<String, String>();
+        String existing_path = new_env.get("PATH");
+        if (existing_path == null || existing_path.indexOf(virtualenv_bin) < 0) {
+          new_env.put("PATH", path_value);
+          commandLine.setEnvParams(new_env);
+        }
+      }
+    }
   }
 }

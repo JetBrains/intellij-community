@@ -3,9 +3,11 @@ package com.jetbrains.python.sdk;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,6 +17,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -49,13 +52,27 @@ public class SdkUtil {
    * @param homePath process run directory
    * @param command command to execute and its arguments
    * @param timeout how many milliseconds to wait until the process terminates; non-positive means inifinity.
-   * @return a tuple of (stdout lines, stderr lines, exit_code), lines in them have line terminators stripped, or may be null. If
-   * the process timed out, exit code is ProcessCallInfo.TIMEOUT_CODE.
+   * @return a tuple of (stdout lines, stderr lines, exit_code), lines in them have line terminators stripped, or may be null.
    */
   @NotNull
   public static ProcessOutput getProcessOutput(String homePath, @NonNls String[] command, final int timeout) {
+    return getProcessOutput(homePath, command, null, timeout);
+  }
+
+  /**
+   * Executes a process and returns its stdout and stderr outputs as lists of lines.
+   * Waits for process for possibly limited duration.
+   * @param homePath process run directory
+   * @param command command to execute and its arguments
+   * @param addEnv items are prepended to same-named values of inherited process environment. 
+   * @param timeout how many milliseconds to wait until the process terminates; non-positive means inifinity.
+   * @return a tuple of (stdout lines, stderr lines, exit_code), lines in them have line terminators stripped, or may be null.
+   */
+  @NotNull
+  public static ProcessOutput getProcessOutput(String homePath, @NonNls String[] command, @NonNls String[] addEnv, final int timeout) {
+    final ProcessOutput failure_output = new ProcessOutput();
     if (homePath == null || !new File(homePath).exists()) {
-      return new ProcessOutput();
+      return failure_output;
     }
     try {
       List<String> commands = new ArrayList<String>();
@@ -64,13 +81,42 @@ public class SdkUtil {
         commands.add("/c");
       }
       Collections.addAll(commands, command);
-      Process process = Runtime.getRuntime().exec(ArrayUtil.toStringArray(commands), null, new File(homePath));
+      String[] new_env = null;
+      if (addEnv != null) {
+        Map<String, String> env_map = new HashMap<String, String>(System.getenv());
+        // turn additional ent into map
+        Map<String, String> add_map = new HashMap<String, String>();
+        for (String env_item : addEnv) {
+          int pos = env_item.indexOf('=');
+          if (pos > 0) {
+            String key = env_item.substring(0, pos);
+            String value = env_item.substring(pos+1, env_item.length());
+            add_map.put(key, value);
+          }
+          else LOG.warn(String.format("Invalid env value: '%s'", env_item));
+        }
+        // fuse old and new
+        for (Map.Entry<String, String> entry : add_map.entrySet()) {
+          final String key = entry.getKey();
+          final String value = entry.getValue();
+          final String old_value = env_map.get(key);
+          if (old_value != null) env_map.put(key, value + old_value);
+          else env_map.put(key, value);
+        }
+        new_env = new String[env_map.size()];
+        int i = 0;
+        for (Map.Entry<String, String> entry : env_map.entrySet()) {
+          new_env[i] = entry.getKey() + "=" + entry.getValue();
+          i += 1;
+        }
+      }
+      Process process = Runtime.getRuntime().exec(ArrayUtil.toStringArray(commands), new_env, new File(homePath));
       CapturingProcessHandler processHandler = new CapturingProcessHandler(process);
       return processHandler.runProcess(timeout);
     }
     catch (IOException ex) {
-      LOG.info(ex);
-      return new ProcessOutput();
+      LOG.warn(ex);
+      return failure_output;
     }
   }
 

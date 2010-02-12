@@ -20,10 +20,12 @@ import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.PythonCommandLineState;
+import com.jetbrains.python.run.PythonRunConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.Map;
 
 /**
  * @author yole
@@ -53,21 +55,25 @@ public class PyDebugRunner extends GenericProgramRunner {
     }
 
     PythonCommandLineState pyState = (PythonCommandLineState) state;
-    final ExecutionResult result = pyState.execute(new CommandLinePatcher() {
+    final CommandLinePatcher debug_server_patcher = new CommandLinePatcher() {
       public void patchCommandLine(GeneralCommandLine commandLine) {
         final String[] args = new String[]{
           PythonHelpersLocator.getHelperPath("pydev/pydevd.py"),
-          "--client",
-          "127.0.0.1",
-          "--port",
-          String.valueOf(serverSocket.getLocalPort()),
+          "--client", "127.0.0.1",
+          "--port", String.valueOf(serverSocket.getLocalPort()),
           "--file"
         };
-        for (int i=0; i<args.length; i++) {
+        for (int i = 0; i < args.length; i++) {
           commandLine.getParametersList().addAt(i, args[i]);
         }
       }
-    });
+    };
+    RunProfile profile = env.getRunProfile();
+    CommandLinePatcher run_config_patcher = null;
+    if (state instanceof PythonCommandLineState && profile instanceof PythonRunConfiguration) {
+      run_config_patcher = (PythonRunConfiguration)profile;
+    }
+    final ExecutionResult result = pyState.execute(debug_server_patcher, run_config_patcher);
 
     final XDebugSession session = XDebuggerManager.getInstance(project).
         startSession(this, env, contentToReuse, new XDebugProcessStarter() {

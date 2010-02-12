@@ -11,6 +11,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -27,6 +28,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.facet.PythonFacetSettings;
@@ -44,14 +47,16 @@ import java.io.PrintStream;
 import java.util.Collections;
 import java.util.List;
 import java.util.TreeSet;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.jetbrains.python.psi.PyUtil.sure;
 
 /**
  * @author yole
  */
 public class PythonSdkType extends SdkType {
   private static final Logger LOG = Logger.getInstance("#" + PythonSdkType.class.getName());
+  private static final String[] WINDOWS_EXECUTABLE_SUFFIXES = new String[]{"cmd", "exe", "bat", "com"};
 
   public static PythonSdkType getInstance() {
     return SdkType.findInstance(PythonSdkType.class);
@@ -79,7 +84,7 @@ public class PythonSdkType extends SdkType {
    */
   @NotNull
   @NonNls
-  public String getBuiltinsFileName(Sdk sdk) {
+  public static String getBuiltinsFileName(Sdk sdk) {
     final String version = sdk.getVersionString(); 
     if (version != null && version.startsWith("Python 3")) {
       return PyBuiltinCache.BUILTIN_FILE_3K;
@@ -104,14 +109,15 @@ public class PythonSdkType extends SdkType {
       }
     }
     else if (SystemInfo.isLinux) {
-      VirtualFile rootDir = LocalFileSystem.getInstance().findFileByPath("/usr/lib");
+      VirtualFile rootDir = LocalFileSystem.getInstance().findFileByPath("/usr/bin");
       if (rootDir != null) {
-        VirtualFile[] suspect_dirs = rootDir.getChildren();
-        for (VirtualFile dir : suspect_dirs) {
-          if (dir.isDirectory() && dir.getName().startsWith(PYTHON_STR)) {
-            candidates.add(dir.getPath());
+        VirtualFile[] suspects = rootDir.getChildren();
+        for (VirtualFile child : suspects) {
+          if (!child.isDirectory() && child.getName().startsWith(PYTHON_STR)) {
+            candidates.add(child.getPath());
           }
         }
+        candidates.add(rootDir.getPath());
       }
     }
     else if (SystemInfo.isMac) {
@@ -134,29 +140,54 @@ public class PythonSdkType extends SdkType {
     return isPythonSdkHome(path) || isJythonSdkHome(path);
   }
 
+  @Override
+  public FileChooserDescriptor getHomeChooserDescriptor() {
+    final boolean is_windows = SystemInfo.isWindows;
+    FileChooserDescriptor result = new FileChooserDescriptor(true, false, false, false, false, false) {
+      public void validateSelectedFiles(VirtualFile[] files) throws Exception {
+        if (files.length != 0){
+          if (!isValidSdkHome(files[0].getPath())){
+            throw new Exception(PyBundle.message("sdk.error.invalid.interpreter.name.$0", files[0].getName()));
+          }
+        }
+      }
+
+      @Override
+      public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
+        // TODO: add a better, customizable filtering
+        if (! file.isDirectory()) {
+          if (is_windows) {
+            String path = file.getPath();
+            boolean looks_executable = false;
+            for (String ext : WINDOWS_EXECUTABLE_SUFFIXES) {
+              if (path.endsWith(ext)) {
+                looks_executable = true;
+                break;
+              }
+            }
+            return looks_executable && super.isFileVisible(file, showHiddenFiles);
+          }
+        }
+        return super.isFileVisible(file, showHiddenFiles);
+      }
+    };
+    result.setTitle(PyBundle.message("sdk.select.path"));
+    return result;
+  }
+
   /**
    * Checks if the path is a valid home.
-   * Valid CPython home must contain some standard libraries. Of them we look for re.py, __future__.py and site-packages/.
+   * <s>Valid CPython home must contain some standard libraries. Of them we look for re.py, __future__.py and site-packages/.</s>
+   * Valid SDK home must contain either an executable Python interpreter or a bin directory with it. The rest is done
+   * by calling the interpreter.
    *
    * @param path path to check.
    * @return true if paths points to a valid home.
    */
   @NonNls
   private static boolean isPythonSdkHome(final String path) {
-    final File f = getPythonBinaryPath(path);
-    if (f == null || !f.exists()) {
-      return false;
-    }
-    // Extra check for linuxes
-    if (SystemInfo.isLinux) {
-      // on Linux, Python SDK home points to the /lib directory of a particular Python version
-      File f_re = new File(path, "re.py");
-      File f_future = new File(path, "__future__.py");
-      File f_site = new File(path, "site-packages"); // 2.x
-      File f_dist = new File(path, "dist-packages"); // 3.0
-      return (f_re.exists() && f_future.exists() && (f_site.exists() && f_site.isDirectory()) || (f_dist.exists() && f_dist.isDirectory()));
-    }
-    return true;
+    File bin = getPythonBinaryPath(path);
+    return bin != null && bin.exists();
   }
 
   private static boolean isJythonSdkHome(final String path) {
@@ -181,36 +212,113 @@ public class PythonSdkType extends SdkType {
     return null;
   }
 
+    /**
+   * @param path where to look
+   * @return Python interpreter executable on the path, or null.
+   */
   @Nullable
   @NonNls
   private static File getPythonBinaryPath(final String path) {
+    File interpreter = new File(path);
+    if (seemsExecutable(interpreter)) return interpreter;
+    else return null;
+  }
+
+  /**
+   * @param file pathname
+   * @return true if pathname is known to be executable, or hard to tell; false is pathname is definitely not executable.
+   */
+  private static boolean seemsExecutable(File file) {
     if (SystemInfo.isWindows) {
-      return new File(path, "python.exe");
+      try {
+        final String path = file.getCanonicalPath();
+        for (String suffix : WINDOWS_EXECUTABLE_SUFFIXES) {
+          if (file.exists() && path.endsWith(suffix)) return true;
+          // TODO: check permissions?
+        }
+      }
+      catch (IOException ignored) { }
     }
-    else if (SystemInfo.isMac) {
-      return new File(new File(path, "bin"), "python");
+    else if (SystemInfo.isUnix) {
+      /*
+      try {
+        // NOTE: on 1.6, there's .isExecutable(), but we stick to 1.5 
+        ProcessOutput run_result = SdkUtil.getProcessOutput(file.getParent(), new String[] {"/usr/bin/[ -x " + file.getCanonicalPath() + " ]"});
+        if (run_result.getExitCode() > 1) {
+          LOG.warn(run_result.getStderr());
+        }
+        return run_result.getExitCode() == 0;  
+      }
+      catch (IOException ex) {
+        LOG.warn(ex);
+        return false;
+      }
+      */
     }
-    else if (SystemInfo.isLinux) {
-      // most probably path is like "/usr/lib/pythonX.Y"; executable is most likely /usr/bin/pythonX.Y
-      Matcher m = Pattern.compile(".*/(python\\d\\.\\d)").matcher(path);
-      File py_binary;
-      if (m.matches()) {
-        String py_name = m.group(1); // $1
-        py_binary = new File("/usr/bin/" + py_name); // XXX broken logic! can't match the lib to the bin
+    return true;
+  }
+
+  /**
+   * @param binaryPath must point to a Python interpreter
+   * @return if the surroundings look like a virtualenv installation, its root is returned (normally the grandparent of binaryPath).
+   */
+  @Nullable
+  public static File getVirtualEnvRoot(@NotNull final String binaryPath) {
+    // binaryPath should contain an 'activate' script, and root should have bin (with us) and include and lib.
+    try {
+      File parent = new File(binaryPath).getParentFile();
+      sure("bin".equals(parent.getName()));
+      File activate_script = new File(parent, "activate_this.py");
+      sure(activate_script.exists());
+      File activate_source = null;
+      if (SystemInfo.isWindows || SystemInfo.isOS2) {
+        for (String suffix : WINDOWS_EXECUTABLE_SUFFIXES) {
+          File file = new File(parent, "activate"+suffix);
+          if (file.exists()) {
+            activate_source = file;
+            break;
+          }
+        }
       }
-      else {
-        py_binary = new File("/usr/bin/python"); // TODO: search in $PATH
+      else if (SystemInfo.isUnix) {
+        File file = new File(parent, "activate");
+        if (file.exists()) {
+          activate_source = file;
+        }
       }
-      if (py_binary.exists()) {
-        return py_binary;
-      }
+      sure(activate_source);
+      // NOTE: maybe read activate_source and see if it handles "VIRTUAL_ENV"
+      File root = parent.getParentFile();
+      sure(new File(root, "lib").exists());
+      sure(new File(root, "include").exists());
+      return root;
+    }
+    catch (IncorrectOperationException ignore) {
+      // did not succeed
     }
     return null;
   }
 
+  // /home/joe/foo -> ~/foo
+  private static String shortenDirName(String path) {
+    String home = System.getProperty("user.home");
+    if (path.startsWith(home)) {
+      return "~" + path.substring(home.length());
+    }
+    else return path;
+  }
+
   public String suggestSdkName(final String currentSdkName, final String sdkHome) {
     String name = getVersionString(sdkHome);
-    if (name == null) name = "Unknown at " + sdkHome; // last resort
+    final String short_home_name = shortenDirName(sdkHome);
+    if (name != null) {
+      File virtualenv_root = getVirtualEnvRoot(sdkHome);
+      if (virtualenv_root != null) {
+        name += " virtualenv at " + shortenDirName(virtualenv_root.getAbsolutePath());
+      }
+      else name += "(" + short_home_name + ")";
+    }
+    else name = "Unknown at " + short_home_name; // last resort
     return name;
   }
 
@@ -228,8 +336,17 @@ public class PythonSdkType extends SdkType {
       final String path = VfsUtil.urlToPath(url);
       File stubs_dir = new File(path);
       if (!stubs_dir.exists()) {
-        generateBuiltinStubs(currentSdk.getHomePath(), path);
-        generateBinaryStubs(currentSdk.getHomePath(), path, null); // TODO: add a nice progress indicator somehow
+        final ProgressManager progman = ProgressManager.getInstance();
+        final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+        final Task.Modal setup_task = new Task.Modal(project, "Setting up library files", false) {
+
+          public void run(@NotNull final ProgressIndicator indicator) {
+            generateBuiltinStubs(currentSdk.getHomePath(), path);
+            generateBinaryStubs(currentSdk.getHomePath(), path, indicator);
+          }
+
+        };
+        progman.run(setup_task);
       }
     }
     return null;
@@ -258,22 +375,17 @@ public class PythonSdkType extends SdkType {
     final Task.Modal setup_task = new Task.Modal(project, "Setting up library files", false) {
 
       public void run(@NotNull final ProgressIndicator indicator) {
-        sdkModificatorRef.set(setupSdkPathsUnderProgress(sdk, indicator));
+        final SdkModificator sdkModificator = sdk.getSdkModificator();
+        setupSdkPaths(sdkModificator, indicator);
+        //sdkModificator.commitChanges() must happen outside, in dispatch thread.
+        sdkModificatorRef.set(sdkModificator);
       }
 
     };
     progman.run(setup_task);
-    if (sdkModificatorRef.get() != null) sdkModificatorRef.get().commitChanges(); // commit in dispatch thread, not task's
+    if (sdkModificatorRef.get() != null) sdkModificatorRef.get().commitChanges(); 
   }
 
-
-  protected SdkModificator setupSdkPathsUnderProgress(final Sdk sdk, @Nullable ProgressIndicator indicator) {
-    final SdkModificator sdkModificator = sdk.getSdkModificator();
-    setupSdkPaths(sdkModificator, indicator);
-
-    return sdkModificator;
-    //sdkModificator.commitChanges() must happen outside, and probably in a different thread.
-  }
 
   /**
    * In which root type built-in skeletons are put.
@@ -281,19 +393,20 @@ public class PythonSdkType extends SdkType {
   public static final OrderRootType BUILTIN_ROOT_TYPE = OrderRootType.CLASSES;
 
   public static void setupSdkPaths(SdkModificator sdkModificator, ProgressIndicator indicator) {
-    String sdk_path = sdkModificator.getHomePath();
-    String bin_path = getInterpreterPath(sdk_path);
-    @NonNls final String stubs_path =
-      PathManager.getSystemPath() + File.separator + SKELETON_DIR_NAME + File.separator + sdk_path.hashCode() + File.separator;
+    String bin_path = getInterpreterPath(sdkModificator.getHomePath());
+    assert bin_path != null;
+    String working_dir = new File(bin_path).getParent();
+    final String sep = File.separator;
+    @NonNls final String stubs_path = PathManager.getSystemPath() + sep + SKELETON_DIR_NAME + sep + working_dir.hashCode() + sep;
     // we have a number of lib dirs, those listed in python's sys.path
     if (indicator != null) {
       indicator.setText("Adding library roots");
     }
-    final List<String> paths = getSysPath(sdk_path, bin_path);
+    final List<String> paths = getSysPath(working_dir, bin_path);
     if ((paths != null) && paths.size() > 0) {
       // add every path as root.
       for (String path : paths) {
-        if (path.indexOf(File.separator) < 0) continue; // TODO: interpret possible 'special' paths reasonably
+        if (path.indexOf(sep) < 0) continue; // TODO: interpret possible 'special' paths reasonably
         if (indicator != null) {
           indicator.setText2(path);
         }
@@ -316,18 +429,21 @@ public class PythonSdkType extends SdkType {
         indicator.setText("Generating skeletons of __builtins__");
         indicator.setText2("");
       }
-      generateBuiltinStubs(sdk_path, stubs_path);
+      generateBuiltinStubs(bin_path, stubs_path);
       sdkModificator.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByPath(stubs_path), BUILTIN_ROOT_TYPE);
     }
-    if (!new File(stubs_path).exists()) {
-      generateBinaryStubs(sdk_path, stubs_path, indicator);
-    }
+    final File stubs_dir = new File(stubs_path);
+    if (!stubs_dir.exists()) stubs_dir.mkdirs();
+    generateBinaryStubs(bin_path, stubs_path, indicator);
   }
 
   private static List<String> getSysPath(String sdk_path, String bin_path) {
     @NonNls String script = // a script printing sys.path
-      "import sys\n" + "import os.path\n" + "for x in sys.path:\n" + "  if x != os.path.dirname(sys.argv [0]): sys.stdout.write(x+chr(10))";
-
+      "import sys\n" +
+      "import os.path\n" +
+      "for x in sys.path:\n" +
+      "  if x != os.path.dirname(sys.argv [0]): sys.stdout.write(x+chr(10))"
+    ;
     try {
       final File scriptFile = File.createTempFile("script", ".py");
       try {
@@ -338,8 +454,8 @@ public class PythonSdkType extends SdkType {
         finally {
           out.close();
         }
-
-        return SdkUtil.getProcessOutput(sdk_path, new String[]{bin_path, scriptFile.getPath()}).getStdoutLines();
+        String[] add_environment = getVirtualEnvAdditionalEnv(bin_path);
+        return SdkUtil.getProcessOutput(sdk_path, new String[]{bin_path, scriptFile.getPath()}, add_environment, 10*1000).getStdoutLines();
       }
       finally {
         FileUtil.delete(scriptFile);
@@ -349,6 +465,17 @@ public class PythonSdkType extends SdkType {
       LOG.info(e);
       return Collections.emptyList();
     }
+  }
+
+  // Returns a piece of env good as additional env for getProcessOutput.
+  @Nullable
+  private static String[] getVirtualEnvAdditionalEnv(String bin_path) {
+    File virtualenv_root = getVirtualEnvRoot(bin_path);
+    String[] add_environment = null;
+    if (virtualenv_root != null) {
+      add_environment = new String[] {"PATH=" + virtualenv_root + File.pathSeparator};
+    }
+    return add_environment;
   }
 
   @Nullable
@@ -368,7 +495,12 @@ public class PythonSdkType extends SdkType {
       version_opt = "-V";
     }
     Pattern pattern = Pattern.compile(version_regexp);
-    String version = SdkUtil.getFirstMatch(SdkUtil.getProcessOutput(sdkHome, new String[]{binaryPath, version_opt}).getStderrLines(), pattern);
+    String run_dir = new File(binaryPath).getParent();
+    final ProcessOutput process_output = SdkUtil.getProcessOutput(run_dir, new String[]{binaryPath, version_opt});
+    if (process_output.getExitCode() != 0) {
+      LOG.error(process_output.getStderr() + " (exit code " + process_output.getExitCode() + ")");
+    }
+    String version = SdkUtil.getFirstMatch(process_output.getStderrLines(), pattern);
     return version;
   }
 
@@ -381,11 +513,28 @@ public class PythonSdkType extends SdkType {
   private final static String GENERATOR3 = "generator3.py";
   private final static String FIND_BINARIES = "find_binaries.py";
 
-  public static void generateBuiltinStubs(String sdkPath, final String stubsRoot) {
+  public static void generateBuiltinStubs(String binary_path, final String stubsRoot) {
     new File(stubsRoot).mkdirs();
 
+
+    final ProcessOutput run_result = SdkUtil.getProcessOutput(
+      new File(binary_path).getParent(),
+      new String[]{
+        binary_path,
+        PythonHelpersLocator.getHelperPath(GENERATOR3),
+        "-d", stubsRoot, // output dir
+        "-b", // for builtins
+        "-u", // for update-only mode
+      },
+      getVirtualEnvAdditionalEnv(binary_path),
+      10*1000
+    );
+    if (run_result.getExitCode() != 0) {
+      LOG.error(run_result.getStderr());
+    }
+    /*
     GeneralCommandLine commandLine = new GeneralCommandLine();
-    commandLine.setExePath(getInterpreterPath(sdkPath));    // python
+    commandLine.setExePath(binary_path);    // python
     commandLine.addParameter(PythonHelpersLocator.getHelperPath(GENERATOR3));
 
     commandLine.addParameter("-d");
@@ -401,25 +550,29 @@ public class PythonSdkType extends SdkType {
     catch (ExecutionException e) {
       LOG.error(e);
     }
+    */
   }
 
   /**
    * (Re-)generates skeletons for all binary python modules. Up-to-date stubs not regenerated.
    * Does one module at a time: slower, but avoids certain conflicts.
    *
-   * @param sdkPath   where to find interpreter.
+   * @param binaryPath   where to find interpreter.
    * @param stubsRoot where to put results (expected to exist).
    * @param indicator ProgressIndicator to update, or null.
    */
-  public static void generateBinaryStubs(final String sdkPath, final String stubsRoot, ProgressIndicator indicator) {
+  public static void generateBinaryStubs(final String binaryPath, final String stubsRoot, ProgressIndicator indicator) {
     if (indicator != null) {
       indicator.setText("Generating skeletons of binary libs");
     }
     final int RUN_TIMEOUT = 10 * 1000; // 10 seconds per call is plenty enough; anything more is clearly wrong.
-    final String bin_path = getInterpreterPath(sdkPath);
+    final String parent_dir = new File(binaryPath).getParent();
 
-    final ProcessOutput run_result =
-      SdkUtil.getProcessOutput(sdkPath, new String[]{bin_path, PythonHelpersLocator.getHelperPath(FIND_BINARIES)});
+    final ProcessOutput run_result = SdkUtil.getProcessOutput(parent_dir,
+      new String[]{binaryPath, PythonHelpersLocator.getHelperPath(FIND_BINARIES)},
+      getVirtualEnvAdditionalEnv(binaryPath),
+      RUN_TIMEOUT
+    );
 
     if (run_result.getExitCode() == 0) {
       for (String line : run_result.getStdoutLines()) {
@@ -438,9 +591,12 @@ public class PythonSdkType extends SdkType {
             indicator.setText2(modname);
           }
           LOG.info("Skeleton for " + modname);
-          final ProcessOutput gen_result = SdkUtil
-            .getProcessOutput(sdkPath, new String[]{bin_path, PythonHelpersLocator.getHelperPath(GENERATOR3), "-d", stubsRoot, modname},
-                              RUN_TIMEOUT);
+          final ProcessOutput gen_result = SdkUtil.getProcessOutput(
+            parent_dir,
+            new String[]{binaryPath, PythonHelpersLocator.getHelperPath(GENERATOR3), "-d", stubsRoot, modname},
+            getVirtualEnvAdditionalEnv(binaryPath),
+            RUN_TIMEOUT
+          );
           if (gen_result.getExitCode() != 0) {
             StringBuffer sb = new StringBuffer("Skeleton for ");
             sb.append(modname).append(" failed. stderr: --");
