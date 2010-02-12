@@ -62,7 +62,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams 
   }
 
   public void setScriptName(String scriptName) {
-    myScriptTextField.setText(FileUtil.toSystemDependentName(scriptName));
+    myScriptTextField.setText(scriptName == null ? "" : FileUtil.toSystemDependentName(scriptName));
   }
 
   public String getScriptParameters() {
