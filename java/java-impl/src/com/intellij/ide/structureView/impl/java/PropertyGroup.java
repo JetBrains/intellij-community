@@ -147,7 +147,15 @@ public class PropertyGroup implements Group, ItemPresentation, AccessLevelProvid
     final PropertyGroup propertyGroup = (PropertyGroup)o;
 
     if (myPropertyName != null ? !myPropertyName.equals(propertyGroup.myPropertyName) : propertyGroup.myPropertyName != null) return false;
-    if (myPropertyType != null ? !myPropertyType.equals(propertyGroup.myPropertyType) : propertyGroup.myPropertyType != null) return false;
+
+    if (myPropertyType != null && !myPropertyType.isValid()) return false;
+    if (propertyGroup.myPropertyType != null && !propertyGroup.myPropertyType.isValid()) return false;
+
+    if (myPropertyType != null && myPropertyType.isValid()
+        ? !myPropertyType.equals(propertyGroup.myPropertyType) 
+        : propertyGroup.myPropertyType != null) {
+      return false;
+    }
     return true;
   }
 
