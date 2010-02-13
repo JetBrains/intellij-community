@@ -45,11 +45,15 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.EclipseXml;
 import org.jetbrains.idea.eclipse.IdeaXml;
 import org.jetbrains.idea.eclipse.config.EclipseModuleManager;
+import org.jetbrains.idea.eclipse.importWizard.EclipseProjectFinder;
 import org.jetbrains.idea.eclipse.util.ErrorLog;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 public class EclipseClasspathReader {
   private final String myRootPath;
@@ -413,7 +417,7 @@ public class EclipseClasspathReader {
                                                final @NotNull String rootPath,
                                                final @Nullable String relativeToRootPath) {
     for (String currentRoot : currentRoots) {
-      if (currentRoot.endsWith(rootPath)) { //rootPath = content_root <=> applicable root: abs_path/content_root
+      if (currentRoot.endsWith(rootPath) || Comparing.strEqual(rootPath, EclipseProjectFinder.findProjectName(currentRoot))) { //rootPath = content_root <=> applicable root: abs_path/content_root
         if (relativeToRootPath == null) {
           return VfsUtil.pathToUrl(currentRoot);
         }

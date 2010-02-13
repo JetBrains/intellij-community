@@ -117,6 +117,9 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest();
   }
 
+  public void testSuperClassNotExists() throws Exception {
+    doTest();
+  }
   public void testDontSimplifyString() throws Throwable { doTest(new GroovyTrivialIfInspection(), new GroovyTrivialConditionalInspection()); }
 
   public void testRawMethodAccess() throws Throwable { doTest(new GroovyUncheckedAssignmentOfMemberOfRawTypeInspection()); }

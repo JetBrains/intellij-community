@@ -22,6 +22,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -32,9 +34,11 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.makeStatic.MakeStaticHandler;
 import com.intellij.refactoring.move.MoveInstanceMembersUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -66,7 +70,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
     invoke(project, new PsiElement[]{element}, dataContext);
   }
 
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, final DataContext dataContext) {
     if (elements.length != 1 || !(elements[0] instanceof PsiMethod)) return;
     final PsiMethod method = (PsiMethod)elements[0];
     String message = null;
@@ -91,53 +95,75 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
         }
       }
     }
-
-    List<PsiVariable> suitableVariables = new ArrayList<PsiVariable>();
-    if (message == null) {
-      List<PsiVariable> allVariables = new ArrayList<PsiVariable>();
-      allVariables.addAll(Arrays.asList(method.getParameterList().getParameters()));
-      allVariables.addAll(Arrays.asList(method.getContainingClass().getFields()));
-      boolean classTypesFound = false;
-      boolean resolvableClassesFound = false;
-      boolean classesInProjectFound = false;
-      for (PsiVariable variable : allVariables) {
-        final PsiType type = variable.getType();
-        if (type instanceof PsiClassType && !((PsiClassType)type).hasParameters()) {
-          classTypesFound = true;
-          final PsiClass psiClass = ((PsiClassType)type).resolve();
-          if (psiClass != null && !(psiClass instanceof PsiTypeParameter)) {
-            resolvableClassesFound = true;
-            final boolean inProject = method.getManager().isInProject(psiClass);
-            if (inProject) {
-              classesInProjectFound = true;
-              suitableVariables.add(variable);
-            }
-          }
-        }
-      }
-
-      if (suitableVariables.isEmpty()) {
-        if (!classTypesFound) {
-          message = RefactoringBundle.message("there.are.no.variables.that.have.reference.type");
-        }
-        else if (!resolvableClassesFound) {
-          message = RefactoringBundle.message("all.candidate.variables.have.unknown.types");
-        }
-        else if (!classesInProjectFound) {
-          message = RefactoringBundle.message("all.candidate.variables.have.types.not.in.project");
-        }
-      }
+    if (message != null) {
+      showErrorHint(project, dataContext, message);
+      return;
     }
 
+    final List<PsiVariable> suitableVariables = new ArrayList<PsiVariable>();
+    message = collectSuitableVariables(method, suitableVariables);
     if (message != null) {
-      Editor editor = dataContext == null ? null : PlatformDataKeys.EDITOR.getData(dataContext);
-      CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(message), REFACTORING_NAME, HelpID.MOVE_INSTANCE_METHOD);
+      final String unableToMakeStaticMessage = MakeStaticHandler.validateTarget(method);
+      if (unableToMakeStaticMessage != null) {
+        showErrorHint(project, dataContext, message);
+      }
+      else {
+        final String suggestToMakeStaticMessage = "Would you like to make method \'" + method.getName() + "\' static and then move?";
+        if (Messages
+          .showYesNoCancelDialog(project, message + ". " + suggestToMakeStaticMessage,
+                                 REFACTORING_NAME, Messages.getErrorIcon()) == DialogWrapper.OK_EXIT_CODE) {
+          MakeStaticHandler.invoke(method);
+        }
+      }
       return;
     }
 
     new MoveInstanceMethodDialog(
       method,
       suitableVariables.toArray(new PsiVariable[suitableVariables.size()])).show();
+  }
+
+  private static void showErrorHint(Project project, DataContext dataContext, String message) {
+    Editor editor = dataContext == null ? null : PlatformDataKeys.EDITOR.getData(dataContext);
+    CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(message), REFACTORING_NAME, HelpID.MOVE_INSTANCE_METHOD);
+  }
+
+  @Nullable
+  private static String collectSuitableVariables(final PsiMethod method, final List<PsiVariable> suitableVariables) {
+    final List<PsiVariable> allVariables = new ArrayList<PsiVariable>();
+    allVariables.addAll(Arrays.asList(method.getParameterList().getParameters()));
+    allVariables.addAll(Arrays.asList(method.getContainingClass().getFields()));
+    boolean classTypesFound = false;
+    boolean resolvableClassesFound = false;
+    boolean classesInProjectFound = false;
+    for (PsiVariable variable : allVariables) {
+      final PsiType type = variable.getType();
+      if (type instanceof PsiClassType && !((PsiClassType)type).hasParameters()) {
+        classTypesFound = true;
+        final PsiClass psiClass = ((PsiClassType)type).resolve();
+        if (psiClass != null && !(psiClass instanceof PsiTypeParameter)) {
+          resolvableClassesFound = true;
+          final boolean inProject = method.getManager().isInProject(psiClass);
+          if (inProject) {
+            classesInProjectFound = true;
+            suitableVariables.add(variable);
+          }
+        }
+      }
+    }
+
+    if (suitableVariables.isEmpty()) {
+      if (!classTypesFound) {
+        return RefactoringBundle.message("there.are.no.variables.that.have.reference.type");
+      }
+      else if (!resolvableClassesFound) {
+        return RefactoringBundle.message("all.candidate.variables.have.unknown.types");
+      }
+      else if (!classesInProjectFound) {
+        return RefactoringBundle.message("all.candidate.variables.have.types.not.in.project");
+      }
+    }
+    return null;
   }
 
   public static String suggestParameterNameForThisClass(final PsiClass thisClass) {

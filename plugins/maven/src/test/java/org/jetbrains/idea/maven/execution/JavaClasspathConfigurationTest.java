@@ -441,6 +441,8 @@ public class JavaClasspathConfigurationTest extends MavenImportingTestCase {
                           JavaParameters.CLASSES_AND_TESTS,
                           getProjectPath() + "/m1/target/test-classes",
                           getProjectPath() + "/m1/target/classes",
+                          getProjectPath() + "/m2/target/classes",
+                          getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar",
                           getProjectPath() + "/m3/target/classes",
                           getRepositoryPath() + "/jmock/jmock/4.0/jmock-4.0.jar");
   }
@@ -487,13 +489,25 @@ public class JavaClasspathConfigurationTest extends MavenImportingTestCase {
     setupJdkForModules("m1", "m2");
 
     assertModuleClasspath("m1",
+                          JavaParameters.CLASSES_ONLY,
+                          getProjectPath() + "/m1/target/classes",
+                          getProjectPath() + "/m2/target/classes");
+
+    assertModuleClasspath("m2",
+                          JavaParameters.CLASSES_ONLY,
+                          getProjectPath() + "/m2/target/classes");
+
+    assertModuleClasspath("m1",
+                          JavaParameters.CLASSES_AND_TESTS,
                           getProjectPath() + "/m1/target/test-classes",
                           getProjectPath() + "/m1/target/classes",
                           getProjectPath() + "/m2/target/classes");
 
     assertModuleClasspath("m2",
+                          JavaParameters.CLASSES_AND_TESTS,
                           getProjectPath() + "/m2/target/test-classes",
                           getProjectPath() + "/m2/target/classes",
+                          getRepositoryPath() + "/jmock/jmock/1.0/jmock-1.0.jar",
                           getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar");
   }
 

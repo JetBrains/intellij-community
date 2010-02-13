@@ -32,12 +32,12 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.Collections;
+import java.util.Set;
 import java.util.Stack;
 
 public abstract class RefJavaElementImpl extends RefElementImpl implements RefJavaElement {
-  private static final HashSet<RefClass> EMPTY_TYPE_REFERENCES_LIST = new HashSet<RefClass>(0);
-  private THashSet<RefClass> myOutTypeReferences;
+  private Set<RefClass> myOutTypeReferences;
   private static final int ACCESS_MODIFIER_MASK = 0x03;
   private static final int ACCESS_PRIVATE = 0x00;
   private static final int ACCESS_PROTECTED = 0x01;
@@ -51,22 +51,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
   protected RefJavaElementImpl(String name, RefJavaElement owner) {
     super(name, owner);
     String am = owner.getAccessModifier();
-    final int access_id;
-
-    if (PsiModifier.PRIVATE.equals(am)) {
-      access_id = ACCESS_PRIVATE;
-    }
-    else if (PsiModifier.PUBLIC.equals(am)) {
-      access_id = ACCESS_PUBLIC;
-    }
-    else if (PsiModifier.PACKAGE_LOCAL.equals(am)) {
-      access_id = ACCESS_PACKAGE;
-    }
-    else {
-      access_id = ACCESS_PROTECTED;
-    }
-
-    myFlags = ((myFlags >> 2) << 2) | access_id;
+    doSetAccessModifier(am);
 
     final boolean synthOwner = owner.isSyntheticJSP();
     if (synthOwner) {
@@ -102,7 +87,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
   @NotNull
   public Collection<RefClass> getOutTypeReferences() {
     if (myOutTypeReferences == null){
-      return EMPTY_TYPE_REFERENCES_LIST;
+      return Collections.emptySet();
     }
     return myOutTypeReferences;
   }
@@ -118,7 +103,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
    if (element instanceof PsiAnonymousClass) {
      PsiAnonymousClass psiAnonymousClass = (PsiAnonymousClass)element;
      PsiClass psiBaseClass = psiAnonymousClass.getBaseClassType().resolve();
-     return InspectionsBundle.message("inspection.reference.anonymous.name", (psiBaseClass != null ? psiBaseClass.getQualifiedName() : ""));
+     return InspectionsBundle.message("inspection.reference.anonymous.name", psiBaseClass == null ? "" : psiBaseClass.getQualifiedName());
    }
 
    if (element instanceof JspClass) {
@@ -175,6 +160,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     setFlag(b, IS_SYNTHETIC_JSP_ELEMENT);
   }
 
+  @Modifier
   @Nullable
   public String getAccessModifier() {
     long access_id = myFlags & ACCESS_MODIFIER_MASK;
@@ -185,6 +171,10 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
   }
 
   public void setAccessModifier(String am) {
+    doSetAccessModifier(am);
+  }
+
+  private void doSetAccessModifier(String am) {
     final int access_id;
 
     if (PsiModifier.PRIVATE.equals(am)) {
@@ -200,7 +190,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
       access_id = ACCESS_PROTECTED;
     }
 
-    myFlags = ((myFlags >> 2) << 2) | access_id;
+    myFlags = myFlags & ~0x3 | access_id;
   }
 
   public boolean isSuspiciousRecursive() {
@@ -209,12 +199,12 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
 
   private boolean isCalledOnlyFrom(RefJavaElement refElement, Stack<RefJavaElement> callStack) {
     if (callStack.contains(this)) return refElement == this;
-    if (getInReferences().size() == 0) return false;
+    if (getInReferences().isEmpty()) return false;
 
     if (refElement instanceof RefMethod) {
       RefMethod refMethod = (RefMethod) refElement;
       for (RefMethod refSuper : refMethod.getSuperMethods()) {
-        if (refSuper.getInReferences().size() > 0) return false;
+        if (!refSuper.getInReferences().isEmpty()) return false;
       }
       if (refMethod.isConstructor()){
         boolean unreachable = true;
@@ -241,10 +231,10 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     if (refWhat != null) {
       if (refWhat instanceof RefParameter) {
         if (forWriting) {
-          ((RefParameterImpl)refWhat).parameterReferenced(true);
+          ((RefParameter)refWhat).parameterReferenced(true);
         }
         if (forReading) {
-          ((RefParameterImpl)refWhat).parameterReferenced(false);
+          ((RefParameter)refWhat).parameterReferenced(false);
         }
       }
       addOutReference(refWhat);

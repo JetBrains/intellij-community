@@ -16,23 +16,19 @@
 
 package com.intellij.psi.impl.smartPointers;
 
-import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx<E> {
-  private static final Logger LOG = Logger.getInstance(
-    "#com.intellij.psi.impl.smartPointers.SmartPsiElementPointerImpl");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.smartPointers.SmartPsiElementPointerImpl");
 
   private E myElement;
   private SmartPointerElementInfo myElementInfo;
@@ -92,10 +88,10 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
       }
     }
 
-    if (myElementInfo != null && myElement != null) {
-      Document document = myElementInfo.getDocumentToSynchronize();
-      if (document != null && PsiDocumentManager.getInstance(myProject).isUncommited(document)) return myElement; // keep element info if document is modified
-    }
+    //if (myElementInfo != null && myElement != null) {
+    //  Document document = myElementInfo.getDocumentToSynchronize();
+    //  if (document != null && PsiDocumentManager.getInstance(myProject).isUncommited(document)) return myElement; // keep element info if document is modified
+    //}
     // myElementInfo = null;
 
     return myElement;
@@ -106,7 +102,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
       return myElement.getContainingFile();
     }
 
-    final Document doc = myElementInfo != null ? myElementInfo.getDocumentToSynchronize() : null;
+    final Document doc = myElementInfo == null ? null : myElementInfo.getDocumentToSynchronize();
     if (doc == null) {
       final E resolved = getElement();
       return resolved != null ? resolved.getContainingFile() : null;
@@ -129,7 +125,8 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
       }
     }
 
-    return containingFile.getContext() != null ? new InjectedSelfElementInfo(myElement) : new SelfElementInfo(myElement);
+    return containingFile.getContext() != null ? new InjectedSelfElementInfo(myElement) :
+           myElement instanceof PsiFile ? new FileElementInfo((PsiFile)myElement) : new SelfElementInfo(myElement);
   }
 
   private static boolean areElementKindEqual(PsiElement element1, PsiElement element2) {
@@ -150,120 +147,4 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     }
   }
 
-  private static class InjectedSelfElementInfo extends SelfElementInfo {
-    private DocumentWindow myDocument;
-
-    InjectedSelfElementInfo(PsiElement anchor) {
-      super(anchor);
-
-      assert myFile.getContext() != null;
-    }
-
-    protected TextRange getPersistentAnchorRange(final PsiElement anchor, final Document document) {
-      final TextRange textRange = super.getPersistentAnchorRange(anchor, document);
-      if (!(document instanceof DocumentWindow)) return textRange;
-      myDocument = ((DocumentWindow)document);
-      return myDocument.injectedToHost(textRange);
-    }
-
-    protected int getSyncEndOffset() {
-      int syncEndOffset = super.getSyncEndOffset();
-      return (myDocument != null ? myDocument.hostToInjected(syncEndOffset):syncEndOffset);
-    }
-
-    protected int getSyncStartOffset() {
-      int syncStartOffset = super.getSyncStartOffset();
-      return (myDocument != null ? myDocument.hostToInjected(syncStartOffset):syncStartOffset);
-    }
-  }
-
-  private static class SelfElementInfo implements SmartPointerElementInfo {
-    protected final PsiFile myFile;
-    private final RangeMarker myMarker;
-    private int mySyncStartOffset;
-    private int mySyncEndOffset;
-    private boolean mySyncMarkerIsValid;
-    private Class myType;
-
-    public SelfElementInfo(PsiElement anchor) {
-      LOG.assertTrue(anchor.isPhysical());
-      myFile = anchor.getContainingFile();
-      TextRange range = anchor.getTextRange();
-
-      final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myFile.getProject());
-      Document document = documentManager.getDocument(myFile);
-
-      // LOG.assertTrue(!documentManager.isUncommited(document));
-
-      assert document != null : myFile.getName();
-      if (documentManager.isUncommited(document)) {
-        mySyncMarkerIsValid = false;
-        myMarker = document.createRangeMarker(0, 0, false);
-      }
-      else {
-        myMarker = document.createRangeMarker(range.getStartOffset(), range.getEndOffset(), true);
-        range = getPersistentAnchorRange(anchor, document);
-
-        mySyncStartOffset = range.getStartOffset();
-        mySyncEndOffset = range.getEndOffset();
-        mySyncMarkerIsValid = true;
-        myType = anchor.getClass();
-      }
-    }
-
-    protected TextRange getPersistentAnchorRange(final PsiElement anchor, final Document document) {
-      return anchor.getTextRange();
-    }
-
-    public Document getDocumentToSynchronize() {
-      return myMarker.getDocument();
-    }
-
-    public void documentAndPsiInSync() {
-      if (!myMarker.isValid()) {
-        mySyncMarkerIsValid = false;
-        return;
-      }
-
-      mySyncStartOffset = myMarker.getStartOffset();
-      mySyncEndOffset = myMarker.getEndOffset();
-    }
-
-    public PsiElement restoreElement() {
-      if (!mySyncMarkerIsValid) return null;
-      if (!myFile.isValid()) return null;
-
-      final int syncStartOffset = getSyncStartOffset();
-      final int syncEndOffset = getSyncEndOffset();
-
-      PsiElement anchor = myFile.getViewProvider().findElementAt(syncStartOffset, myFile.getLanguage());
-      if (anchor == null) return null;
-
-      TextRange range = anchor.getTextRange();
-
-      if (range.getStartOffset() != syncStartOffset) return null;
-      while (range.getEndOffset() < syncEndOffset) {
-        anchor = anchor.getParent();
-        if (anchor == null || anchor.getTextRange() == null) break;
-        range = anchor.getTextRange();
-      }
-
-      while (range.getEndOffset() == syncEndOffset && anchor != null && !myType.equals(anchor.getClass())) {
-        anchor = anchor.getParent();
-        if (anchor == null || anchor.getTextRange() == null) break;
-        range = anchor.getTextRange();
-      }
-
-      if (range.getEndOffset() == syncEndOffset) return anchor;
-      return null;
-    }
-
-    protected int getSyncEndOffset() {
-      return mySyncEndOffset;
-    }
-
-    protected int getSyncStartOffset() {
-      return mySyncStartOffset;
-    }
-  }
 }

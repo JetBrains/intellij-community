@@ -78,6 +78,11 @@ public class GroovyMoveStatementTest extends LightCodeInsightFixtureTestCase {
   public void testMultiLineVariable() throws Throwable { downTest(); }
   public void testClosureVariableByRBrace() throws Throwable { upTest(); }
 
+  public void testInsideMultilineString() throws Throwable { downTest(); }
+  public void _testAroundMultilineString() throws Throwable { downTest(); } //todo
+  public void testAroundMultilineString2() throws Throwable { downTest(); }
+  public void _testAroundMultilineStringUp() throws Throwable { upTest(); }
+
   private void downTest() throws Exception {
     doTest(GroovyEditorActionsManager.MOVE_STATEMENT_DOWN_ACTION);
   }

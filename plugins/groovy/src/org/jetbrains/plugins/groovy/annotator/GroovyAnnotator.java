@@ -16,7 +16,6 @@
 
 package org.jetbrains.plugins.groovy.annotator;
 
-import com.intellij.codeInsight.ClassUtil;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
@@ -27,6 +26,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import gnu.trove.TObjectHashingStrategy;
@@ -76,6 +76,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
+import org.jetbrains.plugins.groovy.overrideImplement.GroovyOverrideImplementUtil;
 import org.jetbrains.plugins.groovy.overrideImplement.quickFix.ImplementMethodsQuickFix;
 
 import java.util.*;
@@ -131,9 +132,8 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         return;
       }
 
-      checkSingleResolvedElement(myHolder, refElement, resolveResult);
+      checkSingleResolvedElement(myHolder, refElement, resolveResult, true);
     }
-
   }
 
   @Override
@@ -165,7 +165,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       if (qualifier == null && isDeclarationAssignment(referenceExpression)) return;
 
       if (parent instanceof GrReferenceExpression && "class".equals(((GrReferenceExpression)parent).getReferenceName())) {
-        checkSingleResolvedElement(myHolder, referenceExpression, resolveResult);
+        checkSingleResolvedElement(myHolder, referenceExpression, resolveResult, false);
       }
     }
 
@@ -645,12 +645,12 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     if (typeDefinition.isEnum() || typeDefinition.isAnnotationType()) return;
     if (typeDefinition instanceof GrTypeParameter) return;
 
-    Collection<HierarchicalMethodSignature> allMethods = typeDefinition.getVisibleSignatures();
-    PsiMethod abstractMethod = ClassUtil.getAnyAbstractMethod(typeDefinition, allMethods);
+    Collection<CandidateInfo> collection = GroovyOverrideImplementUtil.getMethodsToImplement(typeDefinition);
+    if (collection.isEmpty()) return;
 
-    if (abstractMethod == null) return;
-
-    String notImplementedMethodName = abstractMethod.getName();
+    final PsiElement element = collection.iterator().next().getElement();
+    assert element instanceof PsiNamedElement;
+    String notImplementedMethodName = ((PsiNamedElement)element).getName();
 
     final int startOffset = typeDefinition.getTextOffset();
     int endOffset = typeDefinition.getNameIdentifierGroovy().getTextRange().getEndOffset();
@@ -1094,7 +1094,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     return false;
   }
 
-  private static void checkSingleResolvedElement(AnnotationHolder holder, GrReferenceElement refElement, GroovyResolveResult resolveResult) {
+  private static void checkSingleResolvedElement(AnnotationHolder holder, GrReferenceElement refElement, GroovyResolveResult resolveResult, boolean highlightError) {
     final PsiElement resolved = resolveResult.getElement();
     if (resolved == null) {
       String message = GroovyBundle.message("cannot.resolve", refElement.getReferenceName());
@@ -1102,7 +1102,15 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       // Register quickfix
       final PsiElement nameElement = refElement.getReferenceNameElement();
       final PsiElement toHighlight = nameElement != null ? nameElement : refElement;
-      final Annotation annotation = holder.createInfoAnnotation(toHighlight, message);
+
+      final Annotation annotation;
+      if (highlightError) {
+        annotation = holder.createErrorAnnotation(toHighlight, message);
+        annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+      }
+      else {
+        annotation = holder.createInfoAnnotation(toHighlight, message);
+      }
       // todo implement for nested classes
       if (refElement.getQualifier() == null) {
         registerCreateClassByTypeFix(refElement, annotation);

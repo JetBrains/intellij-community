@@ -43,6 +43,5 @@ public abstract class Iteration {
     return myIndex >= myMaxIndex;
   }
 
-  // returns if next() is going to be invoked
   protected abstract void iter();
 }

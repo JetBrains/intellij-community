@@ -44,6 +44,7 @@ import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
+import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -819,6 +820,9 @@ public class FileManagerImpl implements FileManager {
         if (!fire) return; // do not fire event if parent directory was never accessed via PSI
       }
 
+      if (oldPsiFile != null && oldPsiFile.isPhysical()) {
+        SmartPointerManagerImpl.fastenBelts(oldPsiFile);
+      }
       ApplicationManager.getApplication().runWriteAction(
         new ExternalChangeAction() {
           public void run() {
@@ -851,7 +855,7 @@ public class FileManagerImpl implements FileManager {
                   }
                 }
               }
-              else if (oldFileViewProvider != null){
+              else {
                 final FileViewProvider fileViewProvider = createFileViewProvider(vFile, true);
                 final PsiFile newPsiFile = fileViewProvider.getPsi(fileViewProvider.getBaseLanguage());
                 if(oldPsiFile != null) {
@@ -860,33 +864,31 @@ public class FileManagerImpl implements FileManager {
 
                     treeEvent.setChild(oldPsiFile);
                     myManager.childRemoved(treeEvent);
-                }
+                  }
                   else if (!newPsiFile.getClass().equals(oldPsiFile.getClass()) ||
                            newPsiFile.getFileType() != myFileTypeManager.getFileTypeByFileName((String)event.getOldValue()) ||
                            languageDialectChanged(newPsiFile, (String)event.getOldValue()) ||
                            !oldFileViewProvider.getLanguages().equals(fileViewProvider.getLanguages()) ||
                            FileContentUtil.FORCE_RELOAD_REQUESTOR.equals(event.getRequestor())
-                          ) {
+                    ) {
                     myVFileToViewProviderMap.put(vFile, fileViewProvider);
 
                     treeEvent.setOldChild(oldPsiFile);
                     treeEvent.setNewChild(newPsiFile);
                     myManager.childReplaced(treeEvent);
-              }
+                  }
                   else {
                     treeEvent.setElement(oldPsiFile);
                     treeEvent.setPropertyName(PsiTreeChangeEvent.PROP_FILE_NAME);
                     treeEvent.setOldValue(event.getOldValue());
                     treeEvent.setNewValue(event.getNewValue());
                     myManager.propertyChanged(treeEvent);
-            }
-                }
-                else {
-                  if (newPsiFile != null) {
-                    myVFileToViewProviderMap.put(vFile, fileViewProvider);
-                    treeEvent.setChild(newPsiFile);
-                    myManager.childAdded(treeEvent);
                   }
+                }
+                else if (newPsiFile != null) {
+                  myVFileToViewProviderMap.put(vFile, fileViewProvider);
+                  treeEvent.setChild(newPsiFile);
+                  myManager.childAdded(treeEvent);
                 }
               }
             }

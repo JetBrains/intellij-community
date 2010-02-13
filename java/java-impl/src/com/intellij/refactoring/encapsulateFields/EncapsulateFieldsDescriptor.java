@@ -49,4 +49,6 @@ public interface EncapsulateFieldsDescriptor {
 
   @Modifier
   String getAccessorsVisibility();
+
+  int getJavadocPolicy();
 }

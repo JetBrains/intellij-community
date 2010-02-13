@@ -103,7 +103,13 @@ public class ArtifactPointerManagerImpl extends ArtifactPointerManager {
   public ArtifactPointer createPointer(@NotNull Artifact artifact) {
     ArtifactPointerImpl pointer = myPointers.get(artifact);
     if (pointer == null) {
-      pointer = new ArtifactPointerImpl(artifact);
+      pointer = myUnresolvedPointers.get(artifact.getName());
+      if (pointer != null) {
+        pointer.setArtifact(artifact);
+      }
+      else {
+        pointer = new ArtifactPointerImpl(artifact);
+      }
       myPointers.put(artifact, pointer);
     }
     return pointer;

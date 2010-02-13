@@ -80,6 +80,10 @@ public class InlineParameterTest extends LightCodeInsightTestCase {
     doTest(false);
   }
 
+  public void testRefStaticMethod() throws Exception {
+    doTest(true);
+  }
+
   public void testRefOuterThis() throws Exception {
     try {
       doTest(false);
@@ -126,6 +130,23 @@ public class InlineParameterTest extends LightCodeInsightTestCase {
     doTest(false);
   }
 
+  public void testRefNewInnerAvailable() throws Exception {
+    doTest(false);
+  }
+
+  public void testRefNewInnerFromMethod() throws Exception {
+    try {
+      doTest(false);
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Parameter initializer depends on class <b><code>Local</code></b> which is not available inside method and cannot be inlined", e.getMessage());
+    }
+  }
+
+  public void testRefNewInnerInHierarchyAvailable() throws Exception {
+    doTest(false);
+  }
+
   public void testRefNewTopLevel() throws Exception {
     doTest(false);
   }
@@ -168,6 +189,60 @@ public class InlineParameterTest extends LightCodeInsightTestCase {
     }
     catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
       assertEquals("Cannot find constant initializer for parameter", e.getMessage());
+    }
+  }
+
+  public void testRefNonStatic() throws Exception {
+    try {
+      doTest(false);
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Parameter initializer depends on method <b><code>provideObject()</code></b> which is not available inside the static method", e.getMessage());
+    }
+  }
+
+  public void testRefNonStaticClass() throws Exception {
+    try {
+      doTest(false);
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Parameter initializer depends on non static class which is not available inside static method", e.getMessage());
+    }
+  }
+
+  public void testRefThisFromStatic() throws Exception {
+    try {
+      doTest(false);
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Parameter initializer depends on this which is not available inside the static method", e.getMessage());
+    }
+  }
+
+  public void testVisibility() throws Exception {
+    try {
+      doTest(false);
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Parameter initializer depends on value which is not available inside method", e.getMessage());
+    }
+  }
+
+  public void testWriteAccess() throws Exception {
+    try {
+      doTest(false);
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Parameter initializer depends on value which is not available inside method and cannot be inlined", e.getMessage());
+    }
+  }
+
+  public void testRefCallerParameterInCallChain() throws Exception {
+    try {
+      doTest(false);
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Parameter initializer depends on callers parameter", e.getMessage());
     }
   }
 

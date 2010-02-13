@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.DateFilterComponent;
+import com.intellij.util.AsynchConsumer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -83,6 +84,13 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
 
   public List<CommittedChangeList> getCommittedChanges(CompositeCommittedChangesProvider.CompositeChangeBrowserSettings settings,
                                                        RepositoryLocation location, final int maxCount) throws VcsException {
+    throw new UnsupportedOperationException();
+  }
+
+  public void loadCommittedChanges(CompositeChangeBrowserSettings settings,
+                                   RepositoryLocation location,
+                                   int maxCount,
+                                   AsynchConsumer<CommittedChangeList> consumer) throws VcsException {
     throw new UnsupportedOperationException();
   }
 

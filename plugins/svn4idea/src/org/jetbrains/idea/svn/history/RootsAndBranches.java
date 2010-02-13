@@ -852,6 +852,12 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
       myListener = null;
     }
 
+    public void resetFilterBase() {
+    }
+
+    public void appendFilterBase(List<CommittedChangeList> changeLists) {
+    }
+
     @NotNull
     public List<CommittedChangeList> filterChangeLists(final List<CommittedChangeList> changeLists) {
       if ((! myFilterAlien.isSelected(null)) && (! myFilterNotMerged.isSelected(null)) && (! myFilterMerged.isSelected(null))) {

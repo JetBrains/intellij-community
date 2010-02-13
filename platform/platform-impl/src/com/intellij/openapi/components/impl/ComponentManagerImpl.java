@@ -17,22 +17,19 @@ package com.intellij.openapi.components.impl;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.notification.Notification;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.BaseComponent;
+import com.intellij.openapi.components.ComponentConfig;
+import com.intellij.openapi.components.ComponentManager;
+import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.project.impl.ProjectMacrosUtil;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.ArrayUtil;
@@ -52,7 +49,9 @@ import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
 import java.io.IOException;
 import java.lang.reflect.Array;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author mike

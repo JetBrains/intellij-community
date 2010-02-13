@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -237,10 +238,22 @@ public class MethodUtils{
 
     public static boolean isOverriddenInHierarchy(PsiMethod method,
                                                   PsiClass baseClass) {
-        final Query<PsiMethod> search = OverridingMethodsSearch.search(method);
-        for (PsiMethod overridingMethod : search) {
-            final PsiClass aClass = overridingMethod.getContainingClass();
-            if (InheritanceUtil.isCorrectDescendant(aClass, baseClass, true)) {
+        // previous implementation:
+        // final Query<PsiMethod> search = OverridingMethodsSearch.search(method);
+        //for (PsiMethod overridingMethod : search) {
+        //    final PsiClass aClass = overridingMethod.getContainingClass();
+        //    if (InheritanceUtil.isCorrectDescendant(aClass, baseClass, true)) {
+        //        return true;
+        //    }
+        //}
+        // was extremely slow and used an enormous amount of memory for clone()
+        final Query<PsiClass> search =
+                ClassInheritorsSearch.search(baseClass, baseClass.getUseScope(),
+                        true, true, true);
+        for (PsiClass inheritor : search) {
+            final PsiMethod overridingMethod =
+                    inheritor.findMethodBySignature(method, false);
+            if (overridingMethod != null) {
                 return true;
             }
         }

@@ -62,6 +62,7 @@ public class FileReferenceSet {
   private final String myPathString;
   private Collection<PsiFileSystemItem> myDefaultContexts;
   private final boolean myEndingSlashNotAllowed;
+  private boolean myEmptyPathAllowed;
   private @Nullable Map<CustomizableReferenceProvider.CustomizationKey, Object> myOptions;
   private FileType[] mySuitableFileTypes;
 
@@ -77,6 +78,7 @@ public class FileReferenceSet {
     myCaseSensitive = caseSensitive;
     myPathString = str.trim();
     myEndingSlashNotAllowed = endingSlashNotAllowed;
+    myEmptyPathAllowed = !endingSlashNotAllowed;
     myOptions = provider instanceof CustomizableReferenceProvider ? ((CustomizableReferenceProvider)provider).getOptions() : null;
     mySuitableFileTypes = suitableFileTypes;
 
@@ -390,5 +392,13 @@ public class FileReferenceSet {
   @NotNull
   public FileType[] getSuitableFileTypes() {
     return mySuitableFileTypes == null ? EMPTY_FILE_TYPES : mySuitableFileTypes;
+  }
+
+  public boolean isEmptyPathAllowed() {
+    return myEmptyPathAllowed;
+  }
+
+  public void setEmptyPathAllowed(boolean emptyPathAllowed) {
+    myEmptyPathAllowed = emptyPathAllowed;
   }
 }

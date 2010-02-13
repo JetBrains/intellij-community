@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.*;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -254,7 +255,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
     }
 
 
-    private class CopyAction extends AnAction {
+    private class CopyAction extends DumbAwareAction {
         public CopyAction() {
             super("Copy", "Copy", MasterDetailsComponent.COPY_ICON);
             registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, KeyEvent.CTRL_MASK)), myTree);
@@ -281,7 +282,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
     protected void onItemCloned(T clone) {
     }
 
-  private class AddAction extends AnAction {
+  private class AddAction extends DumbAwareAction {
         public AddAction() {
             super("Add", "Add", Icons.ADD_ICON);
             registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);

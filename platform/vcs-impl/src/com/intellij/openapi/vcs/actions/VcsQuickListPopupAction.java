@@ -128,6 +128,9 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
     addSeparator(group);
     addAction("Start.Use.Vcs", group);
     addAction("Vcs.Checkout", group);
+
+    // local history
+    addLocalHistoryActions(group);
   }
 
   private void addLocalHistoryActions(DefaultActionGroup group) {

@@ -23,7 +23,10 @@ import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.ui.TestableUi;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.FocusCommand;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeGlassPane;
+import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.CaptionPanel;
 import com.intellij.ui.tabs.*;
@@ -901,11 +904,9 @@ public class JBTabsImpl extends JComponent
 
   private void updateTab(Runnable update, TabInfo info) {
     final TabLabel label = myInfo2Label.get(info);
-    final Dimension before = label.getPreferredSize();
     update.run();
     if (label.getRootPane() != null) {
-      final Dimension after = label.getPreferredSize();
-      if (after.equals(before)) {
+      if (label.isValid()) {
         label.repaint();
       }
       else {

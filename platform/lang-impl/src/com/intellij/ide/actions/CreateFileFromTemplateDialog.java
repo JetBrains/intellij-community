@@ -16,19 +16,26 @@
 
 package com.intellij.ide.actions;
 
+import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.ui.ComboboxSpeedSearch;
+import com.intellij.util.Icons;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 
 /**
  * @author peter
@@ -38,6 +45,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
   private JTextField myNameField;
   private JComboBox myKindCombo;
   private JPanel myPanel;
+  private JLabel myUpDownHint;
 
   private ElementCreator myCreator;
 
@@ -69,6 +77,30 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
       }
     };
 
+    final AnAction arrow = new AnAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        if (e.getInputEvent() instanceof KeyEvent) {
+          final int code = ((KeyEvent)e.getInputEvent()).getKeyCode();
+          final int delta = code == KeyEvent.VK_DOWN ? 1 : code == KeyEvent.VK_UP ? -1 : 0;
+
+          final int size = myKindCombo.getModel().getSize();
+          int next = myKindCombo.getSelectedIndex() + delta;
+          if (next < 0 || next >= size) {
+            if (!UISettings.getInstance().CYCLE_SCROLLING) {
+              return;
+            }
+            next = (next + size) % size;
+          }
+          myKindCombo.setSelectedIndex(next);
+        }
+      }
+    };
+    final KeyboardShortcut up = new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), null);
+    final KeyboardShortcut down = new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), null);
+    arrow.registerCustomShortcutSet(new CustomShortcutSet(up, down), myNameField);
+
+    myUpDownHint.setIcon(Icons.UP_DOWN_ARROWS);
     init();
   }
 

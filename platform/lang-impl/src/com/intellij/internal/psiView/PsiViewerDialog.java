@@ -205,7 +205,15 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
       items.add(p);
     }
 
-    for (FileType fileType : FileTypeManager.getInstance().getRegisteredFileTypes()) {
+    Set<FileType> allFileTypes = new HashSet<FileType>();
+    Collections.addAll(allFileTypes, FileTypeManager.getInstance().getRegisteredFileTypes());
+    for (Language language : Language.getRegisteredLanguages()) {
+      FileType fileType = language.getAssociatedFileType();
+      if (fileType != null) {
+        allFileTypes.add(fileType);
+      }
+    }
+    for (FileType fileType : allFileTypes) {
       if (fileType != StdFileTypes.GUI_DESIGNER_FORM &&
           fileType != StdFileTypes.IDEA_MODULE &&
           fileType != StdFileTypes.IDEA_PROJECT &&

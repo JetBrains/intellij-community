@@ -59,7 +59,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public class GroovyPositionManager implements PositionManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.PositionManagerImpl");
@@ -103,8 +106,12 @@ public class GroovyPositionManager implements PositionManager {
     PsiFile file = position.getFile();
     if (!(file instanceof GroovyFileBase)) return null;
     PsiElement element = file.findElementAt(position.getOffset());
-    if (element == null) return null;
-    return PsiTreeUtil.getParentOfType(element, GrTypeDefinition.class);
+    while (true) {
+      element = PsiTreeUtil.getParentOfType(element, GrTypeDefinition.class);
+      if (element == null || !((GrTypeDefinition)element).isAnonymous()) {
+        return (GrTypeDefinition)element;
+      }
+    }
   }
 
   public ClassPrepareRequest createPrepareRequest(final ClassPrepareRequestor requestor, final SourcePosition position)

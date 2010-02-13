@@ -30,10 +30,14 @@ public class MavenIcons {
   public static final Icon OPEN_PLUGINS_ICON = IconLoader.getIcon("/images/phasesOpen.png");
   public static final Icon CLOSED_PLUGINS_ICON = IconLoader.getIcon("/images/phasesClosed.png");
   public static final Icon PLUGIN_ICON = IconLoader.getIcon("/images/mavenPlugin.png");
+  public static final Icon REPOSITORY_ICON = IconLoader.getIcon("/images/mavenPlugin.png");
   public static final Icon PLUGIN_GOAL_ICON = IconLoader.getIcon("/images/pluginGoal.png");
   public static final Icon OPEN_DEPENDENCIES_ICON = IconLoader.getIcon("/nodes/ppLibOpen.png");
   public static final Icon CLOSED_DEPENDENCIES_ICON = IconLoader.getIcon("/nodes/ppLibClosed.png");
   public static final Icon DEPENDENCY_ICON = IconLoader.getIcon("/nodes/ppLib.png");
   public static final Icon OPEN_MODULES_ICON = IconLoader.getIcon("/images/modulesOpen.png");
   public static final Icon CLOSED_MODULES_ICON = IconLoader.getIcon("/images/modulesClosed.png");
+  
+  public static final Icon OVERRIDING_DEPENDENCY = IconLoader.getIcon("/images/overridingDependency.png");
+  public static final Icon OVERRIDEN_DEPENDENCY = IconLoader.getIcon("/images/overridenDependency.png");
 }

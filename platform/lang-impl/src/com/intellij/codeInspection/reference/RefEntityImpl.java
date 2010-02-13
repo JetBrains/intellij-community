@@ -39,7 +39,7 @@ public abstract class RefEntityImpl implements RefEntity {
   protected ArrayList<RefEntity> myChildren;
   private final String myName;
   private THashMap myUserMap = null;
-  protected long myFlags = 0;
+  protected int myFlags = 0;
   protected final RefManagerImpl myManager;
 
   protected RefEntityImpl(String name, final RefManager manager) {
@@ -118,7 +118,7 @@ public abstract class RefEntityImpl implements RefEntity {
       }
       else{
         myUserMap.remove(key);
-        if (myUserMap.size() == 0){
+        if (myUserMap.isEmpty()){
           myUserMap = null;
         }
       }
@@ -132,7 +132,8 @@ public abstract class RefEntityImpl implements RefEntity {
   public void setFlag(boolean b, int mask) {
     if (b) {
       myFlags |= mask;
-    } else {
+    }
+    else {
       myFlags &= ~mask;
     }
   }

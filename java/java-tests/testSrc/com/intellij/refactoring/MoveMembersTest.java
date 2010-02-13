@@ -98,6 +98,10 @@ public class MoveMembersTest extends MultiFileTestCase {
     }
   }
 
+  public void testInnerToInterface() throws Exception {
+    doTest("A", "B", 0);
+  }
+
   protected String getTestRoot() {
     return "/refactoring/moveMembers/";
   }

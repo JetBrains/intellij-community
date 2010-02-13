@@ -17,6 +17,7 @@
     <orderEntry type="module" module-name="annotations" />
     <orderEntry type="module" module-name="testFramework" />
     <orderEntry type="module" module-name="spellchecker" />
+    <orderEntry type="module" module-name="uml-api" />
   </component>
 </module>
 
