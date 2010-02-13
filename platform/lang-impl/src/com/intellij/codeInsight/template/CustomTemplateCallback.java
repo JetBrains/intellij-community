@@ -146,12 +146,24 @@ public class CustomTemplateCallback {
   }
 
   public void gotoEndOfTemplate(@NotNull Object key) {
+    myEditor.getCaretModel().moveToOffset(getEndOfTemplate(key));
+  }
+
+  public int getEndOfTemplate(@NotNull Object key) {
     MyCheckpoint checkpoint = myCheckpoints.get(key);
     if (checkpoint == null) {
       throw new IllegalArgumentException();
     }
     int length = myEditor.getDocument().getTextLength();
-    myEditor.getCaretModel().moveToOffset(checkpoint.myFixedOffset + length - checkpoint.myFixedLength);
+    return checkpoint.myFixedOffset + length - checkpoint.myFixedLength;
+  }
+
+  public int getStartOfTemplate(@NotNull Object key) {
+    MyCheckpoint checkpoint = myCheckpoints.get(key);
+    if (checkpoint == null) {
+      throw new IllegalArgumentException();
+    }
+    return checkpoint.myFixedOffset;
   }
 
   private static List<TemplateImpl> getMatchingTemplates(@NotNull String templateKey) {
@@ -162,6 +174,10 @@ public class CustomTemplateCallback {
   @NotNull
   public Editor getEditor() {
     return myEditor;
+  }
+
+  public int getOffset() {
+    return myEditor.getCaretModel().getOffset();
   }
 
   public PsiFile getFile() {
