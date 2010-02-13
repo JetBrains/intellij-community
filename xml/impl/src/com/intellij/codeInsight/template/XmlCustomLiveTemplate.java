@@ -472,8 +472,8 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
       final Object key = new Object();
       myCallback.fixStartOfTemplate(key);
       for (int i = 0; i < count; i++) {
-        final boolean[] flag = new boolean[]{false};
         final int finalI = i;
+        final boolean[] flag = new boolean[]{false};
         TemplateInvokationListener listener = new TemplateInvokationListener() {
           public void finished(boolean inSeparateEvent) {
             MyInterpreter interpreter = new MyInterpreter(myTokens, myCallback, MyState.WORD, new TemplateInvokationListener() {
