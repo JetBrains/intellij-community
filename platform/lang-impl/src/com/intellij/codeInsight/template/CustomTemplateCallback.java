@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +41,13 @@ public class CustomTemplateCallback {
   private int myStartOffset;
   private int myStartLength;
   private Project myProject;
+
+  private final Map<Object, MyCheckpoint> myCheckpoints = new HashMap<Object, MyCheckpoint>();
+
+  private static class MyCheckpoint {
+    int myFixedLength = -1;
+    int myFixedOffset;
+  }
 
   public CustomTemplateCallback(Editor editor, PsiFile file) {
     myEditor = editor;
@@ -94,7 +102,7 @@ public class CustomTemplateCallback {
       return startTemplate(template, predefinedVarValues, listener);
     }
     else if (listener != null) {
-      listener.finished(false, false);
+      listener.finished(false);
     }
     return true;
   }
@@ -119,15 +127,31 @@ public class CustomTemplateCallback {
         if (brokenOff) return;
         templateFinished[0] = true;
         if (templateEnded[0] && listener != null) {
-          listener.finished(true, true);
+          listener.finished(true);
         }
       }
     });
     templateEnded[0] = true;
     if (templateFinished[0] && listener != null) {
-      listener.finished(false, true);
+      listener.finished(false);
     }
     return templateFinished[0];
+  }
+
+  public void fixStartOfTemplate(@NotNull Object key) {
+    MyCheckpoint checkpoint = new MyCheckpoint();
+    checkpoint.myFixedOffset = myEditor.getCaretModel().getOffset();
+    checkpoint.myFixedLength = myEditor.getDocument().getTextLength();
+    myCheckpoints.put(key, checkpoint);
+  }
+
+  public void gotoEndOfTemplate(@NotNull Object key) {
+    MyCheckpoint checkpoint = myCheckpoints.get(key);
+    if (checkpoint == null) {
+      throw new IllegalArgumentException();
+    }
+    int length = myEditor.getDocument().getTextLength();
+    myEditor.getCaretModel().moveToOffset(checkpoint.myFixedOffset + length - checkpoint.myFixedLength);
   }
 
   private static List<TemplateImpl> getMatchingTemplates(@NotNull String templateKey) {

@@ -197,8 +197,8 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
   public void execute(@NotNull String key, @NotNull CustomTemplateCallback callback, @Nullable TemplateInvokationListener listener) {
     List<MyToken> tokens = parse(key, callback);
     assert tokens != null;
-    MyInterpreter interpreter = new MyInterpreter(tokens, 0, callback, MyState.WORD, listener);
-    interpreter.iter();
+    MyInterpreter interpreter = new MyInterpreter(tokens, callback, MyState.WORD, listener);
+    interpreter.invoke(0);
   }
 
   private static void fail() {
@@ -291,7 +291,7 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
     }
   }
 
-  private class MyInterpreter extends Iteration {
+  private class MyInterpreter {
     private final List<MyToken> myTokens;
     private final CustomTemplateCallback myCallback;
     private final TemplateInvokationListener myListener;
@@ -299,11 +299,9 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
     private int myEndOffset = -1;
 
     private MyInterpreter(List<MyToken> tokens,
-                          int startIndex,
                           CustomTemplateCallback callback,
                           MyState initialState,
                           TemplateInvokationListener listener) {
-      super(startIndex, tokens.size(), null);
       myTokens = tokens;
       myCallback = callback;
       myListener = listener;
@@ -320,14 +318,6 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
       return myCallback.getEditor().getCaretModel().getOffset();
     }
 
-    private int getTextLength() {
-      return myCallback.getEditor().getDocument().getCharsSequence().length();
-    }
-
-    private void moveCaret(int delta) {
-      myCallback.getEditor().getCaretModel().moveToOffset(delta);
-    }
-
     private void finish(boolean inSeparateEvent) {
       Editor editor = myCallback.getEditor();
       if (myEndOffset >= 0) {
@@ -335,52 +325,45 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
       }
       editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
       if (myListener != null) {
-        myListener.finished(inSeparateEvent, true);
+        myListener.finished(inSeparateEvent);
       }
     }
 
-    @Override
-    protected void next() {
-      if (myIndex == myMaxIndex - 1) {
-        finish(true);
-      }
-      super.next();
-    }
-
-    @Override
-    protected void iter() {
+    public boolean invoke(int startIndex) {
+      final int n = myTokens.size();
       String templateKey = null;
       int number = -1;
-      for (; myIndex < myMaxIndex; myIndex++) {
-        MyToken token = myTokens.get(myIndex);
+      for (int i = startIndex; i < n; i++) {
+        final int finalI = i;
+        MyToken token = myTokens.get(i);
         switch (myState) {
           case OPERATION:
             if (templateKey != null) {
               if (token instanceof MyMarkerToken || token instanceof MyOperationToken) {
                 final char sign = token instanceof MyOperationToken ? ((MyOperationToken)token).mySign : MARKER;
                 if (sign == MARKER || sign == '+') {
-                  final int offsetBefore = getOffset();
-                  final int lengthBefore = getTextLength();
+                  final Object key = new Object();
+                  myCallback.fixStartOfTemplate(key);
                   TemplateInvokationListener listener = new TemplateInvokationListener() {
-                    public void finished(boolean inSeparateEvent, boolean success) {
+                    public void finished(boolean inSeparateEvent) {
                       myState = MyState.WORD;
                       fixEndOffset();
                       if (sign == '+') {
-                        moveCaret(offsetBefore + getTextLength() - lengthBefore);
+                        myCallback.gotoEndOfTemplate(key);
                       }
                       if (inSeparateEvent) {
-                        next();
+                        invoke(finalI + 1);
                       }
                     }
                   };
                   if (!invokeTemplate(templateKey, myCallback, listener)) {
-                    return;
+                    return false;
                   }
                   templateKey = null;
                 }
                 else if (sign == '>') {
-                  if (!startTemplate(templateKey)) {
-                    return;
+                  if (!startTemplate(templateKey, finalI)) {
+                    return false;
                   }
                   templateKey = null;
                 }
@@ -415,27 +398,18 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
             if (token instanceof MyMarkerToken || token instanceof MyOperationToken) {
               char sign = token instanceof MyOperationToken ? ((MyOperationToken)token).mySign : MARKER;
               if (sign == MARKER || sign == '+') {
-                ConsecutiveTemplateInvokation iteration = new ConsecutiveTemplateInvokation(templateKey, number);
-                iteration.iter();
-                if (!iteration.isFinished()) {
-                  return;
+                if (!invokeTemplateSeveralTimes(templateKey, number, finalI)) {
+                  return false;
                 }
                 templateKey = null;
               }
               else if (number > 1) {
-                ConsecutiveTemplateWithTailInvokation iteration =
-                  new ConsecutiveTemplateWithTailInvokation(templateKey, myTokens, myIndex + 1, number);
-                iteration.iter();
-                if (iteration.isFinished()) {
-                  myIndex = myMaxIndex;
-                  finish(false);
-                }
-                return;
+                return invokeTemplateAndProcessTail(templateKey, i + 1, number);
               }
               else {
                 assert number == 1;
-                if (!startTemplate(templateKey)) {
-                  return;
+                if (!startTemplate(templateKey, finalI)) {
+                  return false;
                 }
                 templateKey = null;
               }
@@ -447,15 +421,16 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
             break;
         }
       }
-      finish(false);
+      finish(startIndex == n);
+      return true;
     }
 
-    private boolean startTemplate(String templateKey) {
+    private boolean startTemplate(String templateKey, final int index) {
       TemplateInvokationListener listener = new TemplateInvokationListener() {
-        public void finished(boolean inSeparateEvent, boolean success) {
+        public void finished(boolean inSeparateEvent) {
           myState = MyState.WORD;
           if (inSeparateEvent) {
-            next();
+            invoke(index + 1);
           }
         }
       };
@@ -465,90 +440,67 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
       return true;
     }
 
-    private class ConsecutiveTemplateInvokation extends Iteration {
-      private final String myTemplateKey;
-
-      public ConsecutiveTemplateInvokation(String templateKey, int count) {
-        super(0, count, MyInterpreter.this);
-        myTemplateKey = templateKey;
-      }
-
-      @Override
-      protected void iter() {
-        final int offsetBefore = getOffset();
-        final int lengthBefore = getTextLength();
-        for (; myIndex < myMaxIndex; myIndex++) {
-          TemplateInvokationListener listener = new TemplateInvokationListener() {
-            public void finished(boolean inSeparateEvent, boolean success) {
-              myState = MyState.WORD;
-              fixEndOffset();
-              moveCaret(offsetBefore + getTextLength() - lengthBefore);
-              if (inSeparateEvent) {
-                next();
+    private boolean invokeTemplateSeveralTimes(final String templateKey, final int count, final int index) {
+      final Object key = new Object();
+      myCallback.fixStartOfTemplate(key);
+      for (int i = 0; i < count; i++) {
+        final int finalI = i;
+        TemplateInvokationListener listener = new TemplateInvokationListener() {
+          public void finished(boolean inSeparateEvent) {
+            myState = MyState.WORD;
+            fixEndOffset();
+            myCallback.gotoEndOfTemplate(key);
+            if (inSeparateEvent) {
+              int newCount = count - finalI - 1;
+              if (newCount > 0) {
+                invokeTemplateSeveralTimes(templateKey, newCount, index);
+              }
+              else {
+                invoke(index + 1);
               }
             }
-          };
-          if (!invokeTemplate(myTemplateKey, myCallback, listener)) {
-            return;
           }
+        };
+        if (!invokeTemplate(templateKey, myCallback, listener)) {
+          return false;
         }
       }
+      return true;
     }
 
-    private class ConsecutiveTemplateWithTailInvokation extends Iteration {
-      private final String myTemplateKey;
-      private final List<MyToken> myTokens;
-      private final int myTailStart;
-
-      public ConsecutiveTemplateWithTailInvokation(String templateKey, List<MyToken> tokens, int tailStart, int count) {
-        super(0, count, null);
-        assert count > 1;
-        assert tailStart < tokens.size();
-        myTemplateKey = templateKey;
-        myTailStart = tailStart;
-        myTokens = tokens;
-      }
-
-      @Override
-      protected void next() {
-        if (myIndex == myMaxIndex - 1) {
-          finish(true);
-        }
-        super.next();
-      }
-
-      @Override
-      protected void iter() {
-        final int offsetBefore = getOffset();
-        final int lengthBefore = getTextLength();
-        for (; myIndex < myMaxIndex; myIndex++) {
-          final boolean[] flag = new boolean[]{false};
-          TemplateInvokationListener listener = new TemplateInvokationListener() {
-            public void finished(boolean inSeparateEvent, boolean success) {
-              MyInterpreter interpreter =
-                new MyInterpreter(myTokens, myTailStart, myCallback, MyState.WORD, new TemplateInvokationListener() {
-                  public void finished(boolean inSeparateEvent, boolean success) {
-                    fixEndOffset();
-                    moveCaret(offsetBefore + getTextLength() - lengthBefore);
-                    if (inSeparateEvent) {
-                      next();
-                    }
-                  }
-                });
-              interpreter.iter();
-              if (inSeparateEvent && interpreter.isFinished()) {
-                next();
+    private boolean invokeTemplateAndProcessTail(final String templateKey, final int tailStart, final int count) {
+      final Object key = new Object();
+      myCallback.fixStartOfTemplate(key);
+      for (int i = 0; i < count; i++) {
+        final boolean[] flag = new boolean[]{false};
+        final int finalI = i;
+        TemplateInvokationListener listener = new TemplateInvokationListener() {
+          public void finished(boolean inSeparateEvent) {
+            MyInterpreter interpreter = new MyInterpreter(myTokens, myCallback, MyState.WORD, new TemplateInvokationListener() {
+              public void finished(boolean inSeparateEvent) {
+                fixEndOffset();
+                myCallback.gotoEndOfTemplate(key);
+                if (inSeparateEvent) {
+                  invokeTemplateAndProcessTail(templateKey, tailStart, count - finalI - 1);
+                }
               }
-              if (!interpreter.isFinished()) {
-                flag[0] = true;
+            });
+            if (interpreter.invoke(tailStart)) {
+              if (inSeparateEvent) {
+                invokeTemplateAndProcessTail(templateKey, tailStart, count - finalI - 1);
               }
             }
-          };
-          if (!invokeTemplate(myTemplateKey, myCallback, listener) || flag[0]) {
-            return;
+            else {
+              flag[0] = true;
+            }
           }
+        };
+        if (!invokeTemplate(templateKey, myCallback, listener) || flag[0]) {
+          return false;
         }
       }
+      finish(count == 0);
+      return true;
     }
   }
 }
