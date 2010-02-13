@@ -65,7 +65,7 @@ public class PsiChangeTracker {
 
     if (file == null) {
       oldFile.accept(new MyVisitor<T>(filter, oldElements));
-      calculateStatuses(elements, oldElements, result);
+      calculateStatuses(elements, oldElements, result, filter);
       return result;
     }
 
@@ -89,18 +89,18 @@ public class PsiChangeTracker {
 
     if (oldFile == null) return result;
     oldFile.accept(new MyVisitor<T>(filter, oldElements));
-    calculateStatuses(elements, oldElements, result);
+    calculateStatuses(elements, oldElements, result, filter);
 
     return result;
   }
 
   private static <T extends PsiElement> Map<T, FileStatus> calculateStatuses(List<T> elements,
                                                                              List<T> oldElements,
-                                                                             Map<T, FileStatus> result) {
+                                                                             Map<T, FileStatus> result, PsiFilter<T> filter) {
     for (T element : elements) {
       T e = null;
       for (T oldElement : oldElements) {
-        if (element.isEquivalentTo(oldElement)) {
+        if (filter.areEquivalent(element, oldElement)) {
           e = oldElement;
           break;
         }

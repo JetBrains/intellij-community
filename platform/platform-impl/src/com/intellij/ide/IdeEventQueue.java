@@ -84,6 +84,8 @@ public class IdeEventQueue extends EventQueue {
   private final IdePopupManager myPopupManager = new IdePopupManager();
 
 
+  private final ToolkitBugsProcessor myToolkitBugsProcessor = new ToolkitBugsProcessor();
+
   private boolean mySuspendMode;
 
   /**
@@ -611,7 +613,9 @@ public class IdeEventQueue extends EventQueue {
       throw pce;
     }
     catch (Throwable exc) {
-      LOG.error("Error during dispatching of " + e, exc);
+      if (!myToolkitBugsProcessor.process(exc)) {
+        LOG.error("Error during dispatching of " + e, exc);
+      }
     }
   }
 

@@ -45,9 +45,9 @@ public class LoadHistoryOperation extends LocalPathIndifferentOperation {
   public LoadHistoryOperation(CvsEnvironment environment, String module,
                               @NotNull Date dateFrom,
                               @Nullable Date dateTo,
-                              final List<LogInformationWrapper> log) {
+                              @Nullable final List<LogInformationWrapper> log) {
     super(environment);
-    myLog = log;
+    myLog = log == null ? new ArrayList<LogInformationWrapper>() : log;
     myModule = module;
     myDateFrom = dateFrom;
     myDateTo = dateTo;
@@ -86,8 +86,12 @@ public class LoadHistoryOperation extends LocalPathIndifferentOperation {
       LogInformationWrapper wrapper = LogInformationWrapper.wrap(myEnvironment.getRepository(), logInfo);
       if (wrapper != null) {
         myLog.add(wrapper);
+        wrapperAdded(wrapper);
       }
     }
+  }
+
+  protected void wrapperAdded(final LogInformationWrapper wrapper) {
   }
 
   public boolean runInReadThread() {

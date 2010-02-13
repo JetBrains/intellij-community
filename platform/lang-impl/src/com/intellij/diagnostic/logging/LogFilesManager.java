@@ -42,6 +42,7 @@ public class LogFilesManager implements Disposable {
   private final Runnable myUpdateRequest;
   private final LogConsoleManager myManager;
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, this);
+  private boolean myDisposed;
 
   public LogFilesManager(final Project project, LogConsoleManager manager, Disposable parentDisposable) {
     myManager = manager;
@@ -49,8 +50,7 @@ public class LogFilesManager implements Disposable {
 
     myUpdateRequest = new Runnable() {
       public void run() {
-        if (project.isDisposed()) return;
-        if (myUpdateAlarm == null) return; //already disposed
+        if (project.isDisposed() || myDisposed) return;
         myUpdateAlarm.cancelAllRequests();
         for (final LogFileOptions logFile : myLogFileManagerMap.keySet()) {
           final Set<String> oldFiles = myLogFileManagerMap.get(logFile);
@@ -62,6 +62,8 @@ public class LogFilesManager implements Disposable {
 
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
+              if (project.isDisposed() || myDisposed) return;
+
               addConfigurationConsoles(logFile, new Condition<String>() {
                 public boolean value(final String file) {
                   return !oldFiles.contains(file);
@@ -93,6 +95,7 @@ public class LogFilesManager implements Disposable {
   }
 
   public void dispose() {
+    myDisposed = true;
     if (myUpdateAlarm != null) {
       myUpdateAlarm.cancelAllRequests();
     }

@@ -108,6 +108,7 @@
     <orderEntry type="library" exported="" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="testFramework-java" exported="" scope="TEST" />
     <orderEntry type="module" module-name="jetgroovy" scope="TEST" />
+    <orderEntry type="module" module-name="jam-support-openapi" />
   </component>
   <component name="copyright">
     <Base>

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.committed;
 
+import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -24,8 +25,8 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer;
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +37,6 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -71,7 +71,8 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
     if (myUI == null) {
       myUI = new MyUI();
     }
-    myUI.buildModel(changeLists);
+    myUI.reset();
+    myUI.append(changeLists);
   }
 
   public void addChangeListener(ChangeListener listener) {
@@ -80,6 +81,14 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
 
   public void removeChangeListener(ChangeListener listener) {
     myListeners.remove(listener);
+  }
+
+  public void resetFilterBase() {
+    myUI.reset();
+  }
+
+  public void appendFilterBase(List<CommittedChangeList> changeLists) {
+    myUI.append(changeLists);
   }
 
   @NotNull
@@ -111,6 +120,8 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
   private class MyUI extends JPanel {
     private final Tree myStructureTree;
     private boolean myRendererInitialized;
+    private final TreeModelBuilder myBuilder;
+    private TreeState myState;
 
     public MyUI() {
       setLayout(new BorderLayout());
@@ -129,35 +140,40 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
         }
       });
       add(new JScrollPane(myStructureTree), BorderLayout.CENTER);
+      myBuilder = new TreeModelBuilder(myProject, false);
     }
 
-    public void buildModel(final List<CommittedChangeList> changeLists) {
-      final Set<FilePath> filePaths = new HashSet<FilePath>();
-      for(CommittedChangeList changeList: changeLists) {
-        for(Change change: changeList.getChanges()) {
-          filePaths.add(ChangesUtil.getFilePath(change));
-        }
-      }
-      final TreeModelBuilder builder = new TreeModelBuilder(myProject, false);
-      final DefaultTreeModel model = builder.buildModelFromFilePaths(filePaths);
-      deleteLeafNodes((DefaultMutableTreeNode) model.getRoot());
-      myStructureTree.setModel(model);
+    public void initRenderer() {
       if (!myRendererInitialized) {
         myRendererInitialized = true;
         myStructureTree.setCellRenderer(new ChangesBrowserNodeRenderer(myProject, false, false));
       }
     }
 
-    private void deleteLeafNodes(final DefaultMutableTreeNode node) {
-      for(int i=node.getChildCount()-1; i >= 0; i--) {
-        final TreeNode child = node.getChildAt(i);
-        if (child.isLeaf()) {
-          node.remove(i);
-        }
-        else {
-          deleteLeafNodes((DefaultMutableTreeNode) child);
+    public void reset() {
+      myState = TreeState.createOn(myStructureTree, (DefaultMutableTreeNode) myStructureTree.getModel().getRoot());
+      myStructureTree.setModel(myBuilder.clearAndGetModel());
+    }
+
+    public void append(final List<CommittedChangeList> changeLists) {
+      final TreeState localState = (myState != null) && myBuilder.isEmpty() ? myState : TreeState.createOn(myStructureTree, (DefaultMutableTreeNode) myStructureTree.getModel().getRoot());
+
+      final Set<FilePath> filePaths = new HashSet<FilePath>();
+      for(CommittedChangeList changeList: changeLists) {
+        for(Change change: changeList.getChanges()) {
+          final FilePath path = ChangesUtil.getFilePath(change);
+          if (path.getParentPath() != null) {
+            filePaths.add(path.getParentPath());
+          }
         }
       }
+
+      final DefaultTreeModel model = myBuilder.buildModelFromFilePaths(filePaths);
+      myStructureTree.setModel(model);
+      localState.applyTo(myStructureTree, (DefaultMutableTreeNode) myStructureTree.getModel().getRoot());
+      myStructureTree.revalidate();
+      myStructureTree.repaint();
+      initRenderer();
     }
   }
 }

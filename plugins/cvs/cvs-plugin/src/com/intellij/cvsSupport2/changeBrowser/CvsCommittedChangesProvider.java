@@ -38,6 +38,8 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.AsynchConsumer;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -133,6 +135,52 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     return loadCommittedChanges(settings, cvsLocation.getModuleName(), cvsLocation.getEnvironment(), cvsLocation.getRootFile());
   }
 
+  public void loadCommittedChanges(ChangeBrowserSettings settings,
+                                   RepositoryLocation location,
+                                   int maxCount,
+                                   final AsynchConsumer<CommittedChangeList> consumer)
+    throws VcsException {
+    try {
+      CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation) location;
+      final String module = cvsLocation.getModuleName();
+      final CvsEnvironment connectionSettings = cvsLocation.getEnvironment();
+      if (connectionSettings.isOffline()) {
+        return;
+      }
+      final CvsChangeListsBuilder builder = new CvsChangeListsBuilder(module, connectionSettings, myProject, cvsLocation.getRootFile());
+      Date dateTo = settings.getDateBeforeFilter();
+      Date dateFrom = settings.getDateAfterFilter();
+      if (dateFrom == null) {
+        final Calendar calendar = Calendar.getInstance();
+        calendar.set(1970, 2, 2);
+        dateFrom = calendar.getTime();
+      }
+      final ChangeBrowserSettings.Filter filter = settings.createFilter();
+      final Set<Date> controlSet = new HashSet<Date>();
+      final CvsResult executionResult = runRLogOperation(connectionSettings, module, dateFrom, dateTo, new Consumer<LogInformationWrapper>() {
+        public void consume(LogInformationWrapper wrapper) {
+          final RevisionWrapper revisionWrapper = builder.revisionWrapperFromLog(wrapper);
+          final CvsChangeList changeList = builder.addRevision(revisionWrapper);
+          if (controlSet.contains(changeList.getCommitDate())) return;
+          controlSet.add(changeList.getCommitDate());
+          if (filter.accepts(changeList)) {
+            consumer.consume(changeList);
+          }
+        }
+      });
+
+      if (executionResult.isCanceled()) {
+        throw new ProcessCanceledException();
+      }
+      else if (!executionResult.hasNoErrors()) {
+        throw executionResult.composeError();
+      }
+    }
+    finally {
+      consumer.finished();
+    }
+  }
+
   private List<CvsChangeList> loadCommittedChanges(final ChangeBrowserSettings settings,
                                                    final String module,
                                                    final CvsEnvironment connectionSettings,
@@ -163,6 +211,44 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
       settings.filterChanges(versions);
       return versions;
     }
+  }
+
+  private CvsResult runRLogOperation(final CvsEnvironment settings,
+                                     final String module,
+                                     final Date dateFrom,
+                                     final Date dateTo,
+                                     final Consumer<LogInformationWrapper> consumer) {
+    final CvsResult executionResult = runRLogOperationImpl(settings, module, dateFrom, dateTo, consumer);
+
+    for (VcsException error : executionResult.getErrors()) {
+      for (String message : error.getMessages()) {
+        if (message.indexOf(INVALID_OPTION_S) >= 0) {
+          LoadHistoryOperation.doesNotSuppressEmptyHeaders(settings);
+          // try only once
+          return runRLogOperationImpl(settings, module, dateFrom, dateTo, consumer);
+        }
+      }
+    }
+    return executionResult;
+  }
+
+  private CvsResult runRLogOperationImpl(final CvsEnvironment settings,
+                                     final String module,
+                                     final Date dateFrom,
+                                     final Date dateTo,
+                                     final Consumer<LogInformationWrapper> consumer) {
+    LoadHistoryOperation operation = new LoadHistoryOperation(settings, module, dateFrom, dateTo, null) {
+      @Override
+      protected void wrapperAdded(final LogInformationWrapper wrapper) {
+        consumer.consume(wrapper);
+      }
+    };
+
+    CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
+    executor.performActionSync(new CommandCvsHandler(CvsBundle.message("browse.changes.load.history.progress.title"), operation),
+                               CvsOperationExecutorCallback.EMPTY);
+
+    return executor.getResult();
   }
 
   private CvsResult runRLogOperation(final CvsEnvironment settings,

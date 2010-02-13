@@ -56,9 +56,12 @@ public abstract class UndoRedoAction extends DumbAwareAction {
     FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
 
     // do not allow global undo in dialogs
-    if (editor == null && PlatformDataKeys.IS_MODAL_CONTEXT.getData(dataContext)) {
-      presentation.setEnabled(false);
-      return;
+    if (editor == null) {
+      final Boolean isModalContext = PlatformDataKeys.IS_MODAL_CONTEXT.getData(dataContext);
+      if (isModalContext != null && isModalContext) {
+        presentation.setEnabled(false);
+        return;
+      }
     }
 
     UndoManager undoManager = getUndoManager(editor, dataContext);

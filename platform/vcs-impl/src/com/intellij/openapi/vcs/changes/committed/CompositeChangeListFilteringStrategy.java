@@ -56,6 +56,18 @@ public class CompositeChangeListFilteringStrategy implements ChangeListFiltering
     }
   }
 
+  public void resetFilterBase() {
+    for (ChangeListFilteringStrategy delegate : myDelegates.values()) {
+      delegate.resetFilterBase();
+    }
+  }
+
+  public void appendFilterBase(List<CommittedChangeList> changeLists) {
+    for (ChangeListFilteringStrategy delegate : myDelegates.values()) {
+      delegate.appendFilterBase(changeLists);
+    }
+  }
+
   @NotNull
   public List<CommittedChangeList> filterChangeLists(final List<CommittedChangeList> changeLists) {
     List<CommittedChangeList> result = new ArrayList<CommittedChangeList>(changeLists);
