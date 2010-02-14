@@ -49,6 +49,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 /**
  * @author ven
@@ -141,12 +142,35 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
     }
     javaText.append("res");
 
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(toEval.getProject()).getElementFactory();
-    JavaCodeFragment result = elementFactory.createCodeBlockCodeFragment(javaText.toString(), null, true);
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(toEval.getProject()).getElementFactory();
+    JavaCodeFragment result = factory.createCodeBlockCodeFragment(javaText.toString(), null, true);
+    hideInternalJavaVariables(factory, result);
     if (contextClass != null) {
-      result.setThisType(elementFactory.createType(contextClass));
+      result.setThisType(factory.createType(contextClass));
     }
     return result;
+  }
+
+  private static void hideInternalJavaVariables(final PsiElementFactory factory, JavaCodeFragment result) {
+    final String varPrefix = "_$$_$$$_$$$$$$$$$_" + new Random().nextInt(42);
+    result.accept(new PsiRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(PsiElement element) {
+        if (element instanceof PsiReferenceExpression && ((PsiReferenceExpression)element).resolve() instanceof PsiLocalVariable) {
+          element.replace(factory.createExpressionFromText(varPrefix + element.getText(), element));
+        }
+        super.visitElement(element);
+      }
+    });
+    result.accept(new PsiRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(PsiElement element) {
+        if (element instanceof PsiLocalVariable) {
+          ((PsiLocalVariable)element).setName(varPrefix + ((PsiLocalVariable)element).getName());
+        }
+        super.visitElement(element);
+      }
+    });
   }
 
   public static Pair<Map<String, String>, GroovyFile> externalParameters(String text, @NotNull final PsiElement context) {
