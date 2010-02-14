@@ -71,7 +71,7 @@ public class TemplateState implements Disposable {
 
   private TemplateImpl myTemplate;
   private TemplateSegments mySegments = null;
-  private String myArgument;
+  private Map<String, String> myPredefinedVariableValues;
 
   private RangeMarker myTemplateRange = null;
   private final ArrayList<RangeHighlighter> myTabStopHighlighters = new ArrayList<RangeHighlighter>();
@@ -172,10 +172,9 @@ public class TemplateState implements Disposable {
     if (variableName.equals(TemplateImpl.END)) {
       return new TextResult("");
     }
-    if (variableName.equals(TemplateImpl.ARG) && myArgument != null) {
-      return new TextResult(myArgument);
+    if (myPredefinedVariableValues != null && myPredefinedVariableValues.containsKey(variableName)) {
+      return new TextResult(myPredefinedVariableValues.get(variableName));
     }
-
     CharSequence text = myDocument.getCharsSequence();
     int segmentNumber = myTemplate.getVariableSegmentNumber(variableName);
     if (segmentNumber < 0) {
@@ -235,7 +234,9 @@ public class TemplateState implements Disposable {
     }
   }
 
-  public void start(TemplateImpl template, @Nullable final PairProcessor<String, String> processor, @Nullable String argument) {
+  public void start(TemplateImpl template,
+                    @Nullable final PairProcessor<String, String> processor,
+                    @Nullable Map<String, String> predefinedVarValues) {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     myProcessor = processor;
@@ -271,8 +272,8 @@ public class TemplateState implements Disposable {
     myCurrentVariableNumber = -1;
     mySegments = new TemplateSegments(myEditor);
     myTemplate = template;
-    myArgument = argument;
-
+    //myArgument = argument;
+    myPredefinedVariableValues = predefinedVarValues;
 
     if (template.isInline()) {
       int caretOffset = myEditor.getCaretModel().getOffset();
@@ -316,7 +317,7 @@ public class TemplateState implements Disposable {
 
         calcResults(false);
         calcResults(false);  //Fixed SCR #[vk500] : all variables should be recalced twice on start.
-        doReformat();
+        doReformat(null);
 
         fireTemplateExpanded();
 
@@ -335,12 +336,19 @@ public class TemplateState implements Disposable {
     });
   }
 
-  private void doReformat() {
+  public void doReformat(final TextRange range) {
+    RangeMarker rangeMarker = null;
+    if (range != null) {
+      rangeMarker = myDocument.createRangeMarker(range);
+      rangeMarker.setGreedyToLeft(true);
+      rangeMarker.setGreedyToRight(true);
+    }
+    final RangeMarker finalRangeMarker = rangeMarker;
     final Runnable action = new Runnable() {
       public void run() {
         IntArrayList indices = initEmptyVariables();
         mySegments.setSegmentsGreedy(false);
-        reformat();
+        reformat(finalRangeMarker);
         mySegments.setSegmentsGreedy(true);
         restoreEmptyVariables(indices);
       }
@@ -660,7 +668,7 @@ public class TemplateState implements Disposable {
     if (previousVariableNumber >= 0) {
       focusCurrentHighlighter(false);
       calcResults(false);
-      doReformat();
+      doReformat(null);
       setCurrentVariableNumber(previousVariableNumber);
       focusCurrentExpression();
       currentVariableChanged(oldVar);
@@ -683,7 +691,7 @@ public class TemplateState implements Disposable {
       calcResults(false);
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          reformat();
+          reformat(null);
         }
       });
       finishTemplateEditing(false);
@@ -691,7 +699,7 @@ public class TemplateState implements Disposable {
     }
     focusCurrentHighlighter(false);
     calcResults(false);
-    doReformat();
+    doReformat(null);
     setCurrentVariableNumber(nextVariableNumber);
     focusCurrentExpression();
     currentVariableChanged(oldVar);
@@ -737,7 +745,7 @@ public class TemplateState implements Disposable {
 
   public void gotoEnd(boolean brokenOff) {
     calcResults(false);
-    doReformat();
+    doReformat(null);
     finishTemplateEditing(brokenOff);
   }
 
@@ -807,7 +815,7 @@ public class TemplateState implements Disposable {
       return false;
     }
     String variableName = myTemplate.getVariableNameAt(currentVariableNumber);
-    if (!(TemplateImpl.ARG.equals(variableName) && myArgument != null)) {
+    if (!(myPredefinedVariableValues != null && myPredefinedVariableValues.containsKey(variableName))) {
       if (myTemplate.isAlwaysStopAt(currentVariableNumber)) {
         return true;
       }
@@ -915,7 +923,7 @@ public class TemplateState implements Disposable {
     }
   }
 
-  private void reformat() {
+  private void reformat(RangeMarker rangeMarkerToReformat) {
     final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
     if (file != null) {
       CodeStyleManager style = CodeStyleManager.getInstance(myProject);
@@ -932,7 +940,9 @@ public class TemplateState implements Disposable {
             PsiElement marker = style.insertNewLineIndentMarker(file, endVarOffset);
             if (marker != null) rangeMarker = myDocument.createRangeMarker(marker.getTextRange());
           }
-          style.reformatText(file, myTemplateRange.getStartOffset(), myTemplateRange.getEndOffset());
+          int startOffset = rangeMarkerToReformat != null ? rangeMarkerToReformat.getStartOffset() : myTemplateRange.getStartOffset();
+          int endOffset = rangeMarkerToReformat != null ? rangeMarkerToReformat.getEndOffset() : myTemplateRange.getEndOffset();
+          style.reformatText(file, startOffset, endOffset);
           PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
           PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myDocument);
 
