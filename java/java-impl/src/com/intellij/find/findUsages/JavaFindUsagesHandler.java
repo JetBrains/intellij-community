@@ -172,7 +172,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
         PsiMethod setter = PropertyUtil.
           findPropertySetterWithType(propertyName, field.hasModifierProperty(PsiModifier.STATIC), field.getType(),
                                      ContainerUtil.iterate(containingClass.getMethods()));
-        if (getter != null || setter != null) {
+        if (getter != null && getter.isPhysical() || setter != null && setter.isPhysical()) {
           if (Messages.showDialog(FindBundle.message("find.field.accessors.prompt", field.getName()),
                                   FindBundle.message("find.field.accessors.title"),
                                   new String[]{CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()}, 0,
