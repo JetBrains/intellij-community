@@ -42,6 +42,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 
 public class JavaDirectoryServiceImpl extends JavaDirectoryService {
@@ -58,13 +59,16 @@ public class JavaDirectoryServiceImpl extends JavaDirectoryService {
   public PsiClass[] getClasses(@NotNull PsiDirectory dir) {
     LOG.assertTrue(dir.isValid());
 
-    ArrayList<PsiClass> classes = new ArrayList<PsiClass>();
+    List<PsiClass> classes = null;
     for (PsiFile file : dir.getFiles()) {
       if (file instanceof PsiClassOwner) {
-        classes.addAll(Arrays.asList(((PsiClassOwner)file).getClasses()));
+        PsiClass[] psiClasses = ((PsiClassOwner)file).getClasses();
+        if (psiClasses.length == 0) continue;
+        if (classes == null) classes = new ArrayList<PsiClass>();
+        classes.addAll(Arrays.asList(psiClasses));
       }
     }
-    return classes.toArray(new PsiClass[classes.size()]);
+    return classes == null ? PsiClass.EMPTY_ARRAY : classes.toArray(new PsiClass[classes.size()]);
   }
 
   @NotNull
