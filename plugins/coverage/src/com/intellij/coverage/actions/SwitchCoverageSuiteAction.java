@@ -12,6 +12,8 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TitledSeparator;
+import com.intellij.util.Function;
+import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -81,7 +83,15 @@ public class SwitchCoverageSuiteAction extends AnAction {
     final JBPopup popup = new PopupChooserBuilder(list).
       setTitle(CodeInsightBundle.message("title.popup.show.coverage")).
       setMovable(true).
-      setItemChoosenCallback(chosen).
+      setItemChoosenCallback(chosen).  
+      setFilteringEnabled(new Function<Object, String>() {
+        public String fun(Object o) {
+          if (o instanceof CoverageSuite) {
+            return ((CoverageSuite)o).getPresentableName();
+          }
+          return CodeInsightBundle.message("no.coverage");
+        }
+      }).
       createPopup();
 
     list.registerKeyboardAction(
@@ -131,7 +141,7 @@ public class SwitchCoverageSuiteAction extends AnAction {
                                               SimpleTextAttributes.REGULAR_ATTRIBUTES;
       append(suite != null ? suite.getPresentableName() : CodeInsightBundle.message("no.coverage"), attributes);
       if (suite != null) {
-        final String date = " ( " + new Date(suite.getLastCoverageTimeStamp()).toString() + " )";
+        final String date = " (" + DateFormatUtil.formatDate(new Date(), new Date(suite.getLastCoverageTimeStamp())) + ")";
         append(date, SimpleTextAttributes.GRAY_ATTRIBUTES);
       }
     }
