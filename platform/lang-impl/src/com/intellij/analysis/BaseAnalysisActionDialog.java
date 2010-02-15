@@ -36,6 +36,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.ui.TitledSeparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -186,12 +187,25 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     if (additionalPanel!= null){
       wholePanel.add(additionalPanel, BorderLayout.CENTER);
     }
+    new RadioUpDownListener(myProjectButton, myModuleButton, myUncommitedFilesButton, myFileButton, myCustomScopeButton);
     return wholePanel;
   }
 
   private void onScopeRadioButtonPressed() {
     myScopeCombo.setEnabled(myCustomScopeButton.isSelected());
     myChangeLists.setEnabled(myUncommitedFilesButton.isSelected());
+  }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    final Enumeration<AbstractButton> enumeration = myGroup.getElements();
+    while (enumeration.hasMoreElements()) {
+      final AbstractButton button = enumeration.nextElement();
+      if (button.isSelected()) {
+        return button;
+      }
+    }
+    return myPanel;
   }
 
   @Nullable

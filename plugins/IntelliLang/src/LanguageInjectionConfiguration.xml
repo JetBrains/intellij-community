@@ -405,4 +405,18 @@
     <place><![CDATA[xmlAttribute().withLocalName(not(string().matches("id|type"))).withText(string().matches("[^${}/\\]+")).inside(xmlTag().withNamespace(string().matches("http://tapestry.apache.org/schema/tapestry_5_1_0.xsd|http://tapestry.apache.org/schema/tapestry_5_0_0.xsd")))]]></place>
     <place><![CDATA[xmlAttribute().withLocalName(not(string().matches("id|type"))).withText(string().matches("[^${}/\\]+")).withNamespace(string().matches("http://tapestry.apache.org/schema/tapestry_5_1_0.xsd|http://tapestry.apache.org/schema/tapestry_5_0_0.xsd"))]]></place>
   </injection>
+  <!--
+  <injection language="CSS" injector-id="php">
+    <display-name>&lt;&lt;&lt; CSS</display-name>
+    <place><![CDATA[heredocWithName("CSS")]]></place>
+  </injection>
+  <injection language="SQL" injector-id="php">
+    <display-name>&lt;&lt;&lt; SQL</display-name>
+    <place><![CDATA[heredocWithName("SQL")]]></place>
+  </injection>
+  <injection language="HTML" injector-id="php">
+    <display-name>&lt;&lt;&lt; HTML</display-name>
+    <place><![CDATA[heredocWithName("HTML")]]></place>
+  </injection>
+  -->
 </component>
