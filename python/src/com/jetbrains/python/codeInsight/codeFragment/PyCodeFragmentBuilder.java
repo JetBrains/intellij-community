@@ -74,6 +74,12 @@ public class PyCodeFragmentBuilder extends PyRecursiveElementVisitor {
     if (position == Position.INSIDE) {
       for (ResolveResult result : element.multiResolve(false)) {
         final PsiElement declaration = result.getElement();
+        // Ignore classes and methods declared somewhere else
+        if ((declaration instanceof PyClass || declaration instanceof PyFunction) &&
+            (!PsiTreeUtil.isAncestor(myOwner, declaration, false) ||
+             CodeFragmentUtil.getPosition(declaration, startOffset, endOffset) != Position.INSIDE)){
+          continue;
+        }
         // Handle resolve via import statement
         if (declaration instanceof PyFile){
           inElements.add(name);
