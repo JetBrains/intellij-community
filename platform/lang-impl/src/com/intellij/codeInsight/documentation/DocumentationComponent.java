@@ -250,8 +250,12 @@ public class DocumentationComponent extends JPanel implements Disposable{
     }
 
     public void setText(String text, boolean clean) {
+        if (clean && myElement != null) {
+          myBackStack.push(saveContext());
+          myForwardStack.clear();
+        }
         updateControlState();
-        setDataInternal(myElement, text, new Rectangle(0, 0), true);
+        setDataInternal(myElement, text, new Rectangle(0, 0), !clean);
         if (clean) {
             myIsEmpty = false;
         }
