@@ -40,6 +40,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.ImageLoader;
+import com.intellij.util.Processor;
 import com.intellij.util.ui.ChildFocusWatcher;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
@@ -177,7 +178,8 @@ public class AbstractPopup implements JBPopup {
                      @Nullable String adText,
                      final boolean headerAlwaysFocusable,
                      @NotNull List<Pair<ActionListener, KeyStroke>> keyboardActions,
-                     Component settingsButtons) {
+                     Component settingsButtons,
+                     @Nullable final Processor<JBPopup> pinCallback) {
 
     if (requestFocus && !focusable) {
       assert false : "Incorrect argument combination: requestFocus=" + requestFocus + " focusable=" + focusable;
@@ -217,7 +219,16 @@ public class AbstractPopup implements JBPopup {
       else {
         myCaption = new CaptionPanel();
       }
-      if (cancelButton != null) {
+
+      if (pinCallback != null) {
+        myCaption.setButtonComponent(new InplaceButton(new IconButton("Pin", IconLoader.getIcon("/general/autohideOff.png"),
+                                                       IconLoader.getIcon("/general/autohideOff.png"),
+                                                       IconLoader.getIcon("/general/autohideOffInactive.png")), new ActionListener() {
+          public void actionPerformed(final ActionEvent e) {
+            pinCallback.process(AbstractPopup.this);
+          }
+        }));
+      } else if (cancelButton != null) {
         myCaption.setButtonComponent(new InplaceButton(cancelButton, new ActionListener() {
           public void actionPerformed(final ActionEvent e) {
             cancel();
