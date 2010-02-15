@@ -22,11 +22,15 @@ import com.intellij.util.ui.UIUtil;
 import javax.swing.*;
 import java.awt.*;
 
-public class Splash extends JWindow {
+public class Splash extends JDialog {
   private final Icon myImage;
   private final JLabel myLabel;
 
   public Splash(String imageName, final Color textColor) {
+    setUndecorated(true);
+    setResizable(false);
+    setModal(false);
+
     Icon originalImage = IconLoader.getIcon(imageName);
     myImage = new MyIcon(originalImage, textColor);
     myLabel = new JLabel(myImage);
@@ -41,6 +45,7 @@ public class Splash extends JWindow {
 
   public void show() {
     super.show();
+    toFront();
     myLabel.paintImmediately(0, 0, myImage.getIconWidth(), myImage.getIconHeight());
   }
 
