@@ -71,7 +71,7 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
     steps.add(wizardFactory.createSourcePathsStep(wizardContext, moduleBuilder, getWizardIcon(), "reference.dialogs.new.project.fromScratch.source"));
     steps.add(wizardFactory.createProjectJdkStep(wizardContext, JavaSdk.getInstance(), moduleBuilder, new Computable<Boolean>() {
       public Boolean compute() {
-        final Sdk projectJdk = wizardContext.getProjectJdk();
+        final Sdk projectJdk = wizardFactory.getNewProjectSdk(wizardContext);
         return projectJdk == null || projectJdk.getSdkType() != JavaSdk.getInstance() ? Boolean.TRUE : Boolean.FALSE;
       }
     }, getWizardIcon(), "reference.dialogs.new.project.fromScratch.sdk"));

@@ -663,7 +663,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
            : problems.toArray(new ProblemDescriptor[problems.size()]);
   }
 
-  private static boolean isFound(final PsiDocTag[] tags, final PsiElement param) {
+  public static boolean isFound(final PsiDocTag[] tags, final PsiElement param) {
     for (PsiDocTag tag : tags) {
       if ("param".equals(tag.getName())) {
         PsiDocTagValue value = tag.getValueElement();

@@ -19,10 +19,10 @@ import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.command.log.Revision;
 import org.netbeans.lib.cvsclient.command.log.SymbolicName;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
@@ -87,7 +87,7 @@ public class CvsChangeListsBuilder {
     return result;
   }
 
-  private void addRevision(RevisionWrapper revision) {
+  public CvsChangeList addRevision(RevisionWrapper revision) {
     final Revision cvsRevision = revision.getRevision();
     CvsChangeList version = findOrCreateVersionFor(cvsRevision.getMessage(),
                                                    revision.getTime(),
@@ -96,6 +96,7 @@ public class CvsChangeListsBuilder {
                                                    revision.getFile());
 
     version.addFileRevision(revision);
+    return version;
   }
 
   private CvsChangeList findOrCreateVersionFor(final String message, final long date, final String author,
@@ -121,24 +122,33 @@ public class CvsChangeListsBuilder {
     return result;
   }
 
+  @Nullable
+  public RevisionWrapper revisionWrapperFromLog(final LogInformationWrapper log) {
+    final String file = log.getFile();
+    if (CvsChangeList.isAncestor(myRootPath, file)) {
+      for (Revision revision : log.getRevisions()) {
+        if (revision != null) {
+          if (revision.getState().equals(CvsChangeList.DEAD_STATE) &&
+              revision.getMessage().indexOf(INITIALLY_ADDED_ON_BRANCH) >= 0) {
+            // ignore dead revision (otherwise it'll get stuck in incoming changes forever - it's considered a deletion and
+            // the file is never actually deleted)
+            continue;
+          }
+          String branchName = getBranchName(revision, log.getSymbolicNames());
+          return new RevisionWrapper(stripAttic(file), revision, branchName);
+        }
+      }
+    }
+    return null;
+  }
+
   public void addLogs(final List<LogInformationWrapper> logs) {
     List<RevisionWrapper> revisionWrappers = new ArrayList<RevisionWrapper>();
 
     for (LogInformationWrapper log : logs) {
-      final String file = log.getFile();
-      if (CvsChangeList.isAncestor(myRootPath, file)) {
-        for (Revision revision : log.getRevisions()) {
-          if (revision != null) {
-            if (revision.getState().equals(CvsChangeList.DEAD_STATE) &&
-                revision.getMessage().indexOf(INITIALLY_ADDED_ON_BRANCH) >= 0) {
-              // ignore dead revision (otherwise it'll get stuck in incoming changes forever - it's considered a deletion and
-              // the file is never actually deleted)              
-              continue;
-            }
-            String branchName = getBranchName(revision, log.getSymbolicNames());
-            revisionWrappers.add(new RevisionWrapper(stripAttic(file), revision, branchName));
-          }
-        }
+      final RevisionWrapper revisionWrapper = revisionWrapperFromLog(log);
+      if (revisionWrapper != null) {
+        revisionWrappers.add(revisionWrapper);
       }
     }
 

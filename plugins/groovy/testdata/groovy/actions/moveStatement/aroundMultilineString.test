@@ -1,0 +1,11 @@
+def x = "aa"<caret>
+def a = """
+aaa
+  bbb
+"""
+-----
+def a = """
+aaa
+  bbb
+"""
+def x = "aa"<caret>

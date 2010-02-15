@@ -199,7 +199,11 @@ public class NameSuggester {
           propertyWordToInsertBefore = matches.get(first);
         }
         else {
-          propertyWordToInsertBefore = propertyWords.length;
+          if (matches.contains(last)) {
+            propertyWordToInsertBefore = matches.get(last) + 1;
+          } else {
+            propertyWordToInsertBefore = propertyWords.length;
+          }
         }
         replacements.put(Pair.create(propertyWordToInsertBefore, propertyWordToInsertBefore - 1), newString);
       }

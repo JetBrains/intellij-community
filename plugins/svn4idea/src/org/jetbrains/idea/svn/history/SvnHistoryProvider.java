@@ -271,6 +271,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
     SVNLogClient client = myVcs.createLogClient();
     final boolean supports15 = SvnUtil.checkRepositoryVersion15(myVcs, root);
     supports15Ref.set(supports15);
+    // todo log in history provider
     client.doLog(myURL, new String[] {}, SVNRevision.UNDEFINED, SVNRevision.HEAD, SVNRevision.create(1), false, true, supports15, 0, null,
                  new RepositoryLogEntryHandler(url, SVNRevision.UNDEFINED, relativeUrl, result));
   }

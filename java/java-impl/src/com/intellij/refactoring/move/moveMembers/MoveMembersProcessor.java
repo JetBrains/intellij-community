@@ -192,7 +192,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
         PsiMember newMember=handler.doMove(myOptions, member, anchors.get(member), targetClass);
         elementListener.elementMoved(newMember);
 
-        fixVisibility(newMember, usages);
+        fixModifierList(newMember, usages);
         for (PsiReference reference : refsToBeRebind) {
           reference.bindToElement(newMember);
         }
@@ -213,13 +213,16 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private void fixVisibility(PsiMember newMember, final UsageInfo[] usages) throws IncorrectOperationException {
+  private void fixModifierList(PsiMember newMember, final UsageInfo[] usages) throws IncorrectOperationException {
     PsiModifierList modifierList = newMember.getModifierList();
 
     if(myTargetClass.isInterface()) {
       modifierList.setModifierProperty(PsiModifier.PUBLIC, false);
       modifierList.setModifierProperty(PsiModifier.PROTECTED, false);
       modifierList.setModifierProperty(PsiModifier.PRIVATE, false);
+      if (newMember instanceof PsiClass) {
+        modifierList.setModifierProperty(PsiModifier.STATIC, false);
+      }
       return;
     }
 

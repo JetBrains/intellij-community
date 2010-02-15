@@ -54,6 +54,10 @@ public class ChangesModuleGroupingPolicy implements ChangesGroupingPolicy {
     return null;
   }
 
+  public void clear() {
+    myModuleCache.clear();
+  }
+
   private ChangesBrowserNode getNodeForModule(Module module, ChangesBrowserNode root) {
     ChangesBrowserNode node = myModuleCache.get(module);
     if (node == null) {

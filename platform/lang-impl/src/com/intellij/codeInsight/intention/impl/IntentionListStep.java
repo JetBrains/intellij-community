@@ -36,6 +36,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
@@ -49,6 +50,7 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
   private final Set<IntentionActionWithTextCaching> myCachedInspectionFixes = new THashSet<IntentionActionWithTextCaching>(ACTION_TEXT_AND_CLASS_EQUALS);
   private final Set<IntentionActionWithTextCaching> myCachedGutters = new THashSet<IntentionActionWithTextCaching>(ACTION_TEXT_AND_CLASS_EQUALS);
   private final IntentionManagerSettings mySettings;
+  @Nullable
   private final IntentionHintComponent myIntentionHintComponent;
   private final Editor myEditor;
   private final PsiFile myFile;
@@ -64,7 +66,7 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
   };
   private Runnable myFinalRunnable;
 
-  IntentionListStep(IntentionHintComponent intentionHintComponent, ShowIntentionsPass.IntentionsInfo intentions, Editor editor, PsiFile file,
+  IntentionListStep(@Nullable IntentionHintComponent intentionHintComponent, ShowIntentionsPass.IntentionsInfo intentions, Editor editor, PsiFile file,
                     Project project) {
     myIntentionHintComponent = intentionHintComponent;
     myEditor = editor;
@@ -102,29 +104,34 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     for (HighlightInfo.IntentionActionDescriptor descriptor : descriptors) {
       IntentionAction action = descriptor.getAction();
       if (!isAvailable(action, element)) continue;
-      IntentionActionWithTextCaching cachedAction = new IntentionActionWithTextCaching(action, descriptor.getDisplayName(), descriptor.getIcon());
-      result &= !cachedActions.add(cachedAction);
       if (element == null) continue;
-      final List<IntentionAction> options = descriptor.getOptions(element);
-      if (options != null) {
-        for (IntentionAction option : options) {
-          if (!option.isAvailable(myProject, myEditor, element.getContainingFile())) continue;
-          IntentionActionWithTextCaching textCaching = new IntentionActionWithTextCaching(option, option.getText());
-          boolean isErrorFix = myCachedErrorFixes.contains(textCaching);
-          if (isErrorFix) {
-            cachedAction.addErrorFix(option);
-          }
-          boolean isInspectionFix = myCachedInspectionFixes.contains(textCaching);
-          if (isInspectionFix) {
-            cachedAction.addInspectionFix(option);
-          }
-          else {
-            cachedAction.addIntention(option);
-          }
+      IntentionActionWithTextCaching cachedAction = wrapAction(element, descriptor);
+      result &= !cachedActions.add(cachedAction);
+    }
+    return result;
+  }
+
+  IntentionActionWithTextCaching wrapAction(PsiElement element, HighlightInfo.IntentionActionDescriptor descriptor) {
+    IntentionActionWithTextCaching cachedAction = new IntentionActionWithTextCaching(descriptor);
+    final List<IntentionAction> options = descriptor.getOptions(element);
+    if (options != null) {
+      for (IntentionAction option : options) {
+        if (!option.isAvailable(myProject, myEditor, element.getContainingFile())) continue;
+        IntentionActionWithTextCaching textCaching = new IntentionActionWithTextCaching(option);
+        boolean isErrorFix = myCachedErrorFixes.contains(textCaching);
+        if (isErrorFix) {
+          cachedAction.addErrorFix(option);
+        }
+        boolean isInspectionFix = myCachedInspectionFixes.contains(textCaching);
+        if (isInspectionFix) {
+          cachedAction.addInspectionFix(option);
+        }
+        else {
+          cachedAction.addIntention(option);
         }
       }
     }
-    return result;
+    return cachedAction;
   }
 
   private boolean removeInvalidActions(final Collection<IntentionActionWithTextCaching> cachedActions, final PsiElement element) {
@@ -160,7 +167,7 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     }
 
     if (hasSubstep(action)) {
-      return getSubStep(action);
+      return getSubStep(action, action.getToolName());
     }
 
     return FINAL_CHOICE;
@@ -190,23 +197,27 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     };
   }
 
-  private PopupStep getSubStep(final IntentionActionWithTextCaching action) {
+  IntentionListStep getSubStep(final IntentionActionWithTextCaching action, final String title) {
     ShowIntentionsPass.IntentionsInfo intentions = new ShowIntentionsPass.IntentionsInfo();
     for (final IntentionAction optionIntention : action.getOptionIntentions()) {
-      intentions.intentionsToShow.add(new HighlightInfo.IntentionActionDescriptor(optionIntention, null));
+      intentions.intentionsToShow.add(new HighlightInfo.IntentionActionDescriptor(optionIntention, getIcon(optionIntention)));
     }
     for (final IntentionAction optionFix : action.getOptionErrorFixes()) {
-      intentions.errorFixesToShow.add(new HighlightInfo.IntentionActionDescriptor(optionFix, null));
+      intentions.errorFixesToShow.add(new HighlightInfo.IntentionActionDescriptor(optionFix, getIcon(optionFix)));
     }
     for (final IntentionAction optionFix : action.getOptionInspectionFixes()) {
-      intentions.inspectionFixesToShow.add(new HighlightInfo.IntentionActionDescriptor(optionFix, null));
+      intentions.inspectionFixesToShow.add(new HighlightInfo.IntentionActionDescriptor(optionFix, getIcon(optionFix)));
     }
 
     return new IntentionListStep(myIntentionHintComponent, intentions,myEditor, myFile, myProject){
       public String getTitle() {
-        return action.getToolName();
+        return title;
       }
     };
+  }
+
+  private static Icon getIcon(IntentionAction optionIntention) {
+    return optionIntention instanceof Iconable ? ((Iconable)optionIntention).getIcon(0) : null;
   }
 
   public boolean hasSubstep(final IntentionActionWithTextCaching action) {
@@ -284,7 +295,9 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
   }
 
   public void canceled() {
-    myIntentionHintComponent.canceled(this);
+    if (myIntentionHintComponent != null) {
+      myIntentionHintComponent.canceled(this);
+    }
   }
 
   public int getDefaultOptionIndex() { return 0; }

@@ -9,6 +9,7 @@ import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
+import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -40,6 +41,7 @@ import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.TreeWithEmptyText;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -92,6 +94,12 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
   private final WiseSplitter myInnerSplitter;
   private MessageBusConnection myConnection;
+  private List<CommittedChangeList> myFilteredChangeLists;
+  private Object[] mySelectedFiltering;
+  private JLabel myLoadingLabel;
+  private int[] mySelectionRows;
+  private TreeState myState;
+  private JPanel myLoadingPanel;
 
   public CommittedChangesTreeBrowser(final Project project, final List<CommittedChangeList> changeLists) {
     super(new BorderLayout());
@@ -121,7 +129,16 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     myToolbarPanel = new JPanel(new BorderLayout());
     myLeftPanel.add(myToolbarPanel, BorderLayout.NORTH);
     myFilterSplitter = new Splitter(false, 0.5f);
+
+    myLoadingPanel = new JPanel(new BorderLayout());
+    myLoadingPanel.setBackground(UIUtil.getToolTipBackground());
+    myLoadingLabel = new JLabel("Loading...");
+
+    myLoadingPanel.add(myLoadingLabel, BorderLayout.CENTER);
+
+    myToolbarPanel.add(myLoadingPanel, BorderLayout.CENTER);
     myFilterSplitter.setSecondComponent(new JScrollPane(myChangesTree));
+    myLoadingPanel.setVisible(false);
     myLeftPanel.add(myFilterSplitter, BorderLayout.CENTER);
     final Splitter splitter = new Splitter(false, 0.7f);
     splitter.setFirstComponent(myLeftPanel);
@@ -163,6 +180,11 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     });
   }
 
+  public void addFilter(final ChangeListFilteringStrategy strategy) {
+    myFilteringStrategy.addStrategy("permanent", strategy);
+    strategy.addChangeListener(myFilterChangeListener);
+  }
+
   private void updateGrouping() {
     if (myGroupingStrategy.changedSinceApply()) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -173,8 +195,8 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     }
   }
 
-  private TreeModel buildTreeModel() {
-    final List<CommittedChangeList> filteredChangeLists = myFilteringStrategy.filterChangeLists(myChangeLists);
+  private TreeModel buildTreeModel(final List<CommittedChangeList> filteredChangeLists) {
+    myFilteredChangeLists = filteredChangeLists;
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     DefaultTreeModel model = new DefaultTreeModel(root);
     DefaultMutableTreeNode lastGroupNode = null;
@@ -236,7 +258,8 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   }
 
   private void updateModel() {
-    myChangesTree.setModel(buildTreeModel());
+    final List<CommittedChangeList> filteredChangeLists = myFilteringStrategy.filterChangeLists(myChangeLists);
+    myChangesTree.setModel(buildTreeModel(filteredChangeLists));
     TreeUtil.expandAll(myChangesTree);
   }
 
@@ -421,6 +444,29 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     }); 
   }
 
+  // for appendable view
+  public void reset() {
+    myChangeLists.clear();
+    myFilteringStrategy.resetFilterBase();
+
+    myState = TreeState.createOn(myChangesTree, (DefaultMutableTreeNode)myChangesTree.getModel().getRoot());
+    updateModel();
+  }
+
+  public void append(final List<CommittedChangeList> list) {
+    final TreeState state = (myChangeLists.isEmpty() && myState != null) ? myState :
+      TreeState.createOn(myChangesTree, (DefaultMutableTreeNode)myChangesTree.getModel().getRoot());
+    state.setScrollToSelection(false);
+    myChangeLists.addAll(list);
+
+    myFilteringStrategy.appendFilterBase(list);
+
+    myChangesTree.setModel(buildTreeModel(myFilteringStrategy.filterChangeLists(myChangeLists)));
+    state.applyTo(myChangesTree, (DefaultMutableTreeNode)myChangesTree.getModel().getRoot());
+    TreeUtil.expandAll(myChangesTree);
+    myProject.getMessageBus().syncPublisher(ITEMS_RELOADED).itemsReloaded();
+  }
+
   public static class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
     private final static DateFormat myDateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
     private static final SimpleTextAttributes LINK_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, Color.blue);
@@ -584,7 +630,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
   private class ChangesBrowserTree extends TreeWithEmptyText implements TypeSafeDataProvider {
     public ChangesBrowserTree() {
-      super(buildTreeModel());
+      super(buildTreeModel(myFilteringStrategy.filterChangeLists(myChangeLists)));
     }
 
     @Override
@@ -686,5 +732,15 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   public interface CommittedChangesReloadListener {
     void itemsReloaded();
     void emptyRefresh();
+  }
+
+  public void setLoading(final boolean value) {
+    new AbstractCalledLater(myProject, ModalityState.NON_MODAL) {
+      public void run() {
+        myLoadingPanel.setVisible(value);
+        myToolbarPanel.revalidate();
+        myToolbarPanel.repaint();
+      }
+    }.callMe();
   }
 }

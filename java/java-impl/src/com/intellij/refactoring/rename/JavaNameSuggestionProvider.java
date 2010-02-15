@@ -147,11 +147,8 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(psiElement.getProject());
       final VariableKind kind = codeStyleManager.getVariableKind((PsiVariable)psiElement);
       final String prefix = codeStyleManager.getPrefixByVariableKind(kind);
-      if (name.startsWith(prefix)) {
-        name = name.substring(prefix.length());
-      }
-      final String[] words = NameUtil.splitNameIntoWords(name);
       if (kind == VariableKind.STATIC_FINAL_FIELD) {
+        final String[] words = NameUtil.splitNameIntoWords(name);
         StringBuilder buffer = new StringBuilder();
         for (int i = 0; i < words.length; i++) {
           String word = words[i];
@@ -161,7 +158,14 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
         return new String[] {buffer.toString()};
       }
       else {
-        return new String[]{suggestProperlyCasedName(prefix, words), suggestProperlyCasedName(prefix, NameUtil.splitNameIntoWords(name.toLowerCase()))};
+        final List<String> result = new ArrayList<String>();
+        result.add(suggestProperlyCasedName(prefix, NameUtil.splitNameIntoWords(name)));
+        if (name.startsWith(prefix)) {
+          name = name.substring(prefix.length());
+          result.add(suggestProperlyCasedName(prefix, NameUtil.splitNameIntoWords(name)));
+        }
+        result.add(suggestProperlyCasedName(prefix, NameUtil.splitNameIntoWords(name.toLowerCase())));
+        return result.toArray(new String[result.size()]);
       }
 
     }

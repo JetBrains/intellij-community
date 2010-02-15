@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.changes.committed.VcsCommittedViewAuxiliary;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.util.AsynchConsumer;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -42,6 +43,9 @@ public interface CommittedChangesProvider<T extends CommittedChangeList, U exten
   VcsCommittedListsZipper getZipper();
 
   List<T> getCommittedChanges(U settings, RepositoryLocation location, final int maxCount) throws VcsException;
+
+  void loadCommittedChanges(U settings, RepositoryLocation location, final int maxCount, final AsynchConsumer<CommittedChangeList> consumer) throws VcsException;
+
   ChangeListColumn[] getColumns();
 
   @Nullable

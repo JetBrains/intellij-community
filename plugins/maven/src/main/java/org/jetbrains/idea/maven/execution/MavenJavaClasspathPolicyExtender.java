@@ -26,7 +26,6 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenConstants;
 
 import java.util.Collections;
-import java.util.List;
 
 public class MavenJavaClasspathPolicyExtender implements JavaClasspathPolicyExtender {
   @NotNull
@@ -50,12 +49,12 @@ public class MavenJavaClasspathPolicyExtender implements JavaClasspathPolicyExte
     final Module originalModule,
     final MavenProjectsManager manager,
     final ProjectRootsTraversing.RootTraversePolicy.Visit<T> original,
-    final boolean ignoredDependencyModules) {
+    final boolean skipDependencyModules) {
 
     return new ProjectRootsTraversing.RootTraversePolicy.Visit<T>() {
       public void visit(T entry, ProjectRootsTraversing.TraverseState state, RootPolicy<ProjectRootsTraversing.TraverseState> policy) {
         Module ownerModule = entry.getOwnerModule();
-        if (ignoredDependencyModules && originalModule != ownerModule && manager.findProject(ownerModule) != null) return;
+        if (skipDependencyModules && originalModule != ownerModule) return;
 
         if (originalModule != ownerModule && entry instanceof ModuleSourceOrderEntry) {
           MavenProject project = manager.findProject(originalModule);
@@ -67,15 +66,21 @@ public class MavenJavaClasspathPolicyExtender implements JavaClasspathPolicyExte
           }
 
           for (MavenArtifact each : project.findDependencies(depProject)) {
-            if (MavenConstants.SCOPE_PROVIDEED.equals(each.getScope())) continue;
-            if (original == ProjectClasspathTraversing.ALL_OUTPUTS || !MavenConstants.SCOPE_TEST.equals(each.getScope())) {
+            boolean isTestClasspath = original == ProjectClasspathTraversing.ALL_OUTPUTS;
+
+            if (!isTestClasspath && MavenConstants.SCOPE_PROVIDEED.equals(each.getScope())) continue;
+            if (isTestClasspath || !MavenConstants.SCOPE_TEST.equals(each.getScope())) {
               addOutput(ownerModule, MavenConstants.TYPE_TEST_JAR.equals(each.getType()), state);
             }
           }
         }
         else {
           // should be in some generic place
-          if (entry instanceof ExportableOrderEntry && ((ExportableOrderEntry)entry).getScope() == DependencyScope.PROVIDED) return;
+          if (entry instanceof ExportableOrderEntry) {
+            boolean isTestClasspath = original == ProjectRootsTraversing.RootTraversePolicy.ADD_CLASSES
+                                      || original == ProjectRootsTraversing.RootTraversePolicy.RECURSIVE;
+            if (!isTestClasspath && ((ExportableOrderEntry)entry).getScope() == DependencyScope.PROVIDED) return;
+          }
           original.visit(entry, state, policy);
         }
       }

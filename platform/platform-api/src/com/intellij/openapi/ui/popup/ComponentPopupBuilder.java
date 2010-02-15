@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.InplaceButton;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,6 +109,9 @@ public interface ComponentPopupBuilder {
 
   @NotNull
   ComponentPopupBuilder setCommandButton(@NotNull InplaceButton commandButton);
+
+  @NotNull
+  ComponentPopupBuilder setCouldPin(@Nullable Processor<JBPopup> callback);
 
   @NotNull
   ComponentPopupBuilder setKeyboardActions(@NotNull List<Pair<ActionListener, KeyStroke>> keyboardActions);

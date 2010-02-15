@@ -144,8 +144,8 @@ public class TabLabel extends JPanel {
     int dXs = 0;
     int dY = 0;
     int dYs = 0;
-    int selected = 1;
-    int plain = 2;
+    int selected = getSelectedOffset();
+    int plain = getNonSelectedOffset();
 
     switch (pos) {
       case bottom:
@@ -175,10 +175,31 @@ public class TabLabel extends JPanel {
     super.paint(g);
 
     if (myTabs.getSelectedInfo() != myInfo) {
-      g.translate(dX, -dY);
+      g.translate(-dX, -dY);
     } else {
-      g.translate(dX, dY);
+      g.translate(-dXs, -dYs);
     }
+  }
+
+  private int getNonSelectedOffset() {
+    return 2;
+  }
+
+  private int getSelectedOffset() {
+    return 1;
+  }
+
+  @Override
+  public Dimension getPreferredSize() {
+    final Dimension size = super.getPreferredSize();
+
+    final JBTabsPosition pos = myTabs.getTabsPosition();
+    switch (pos) {
+      case top: case bottom: size.height += getSelectedOffset(); break;
+      case left: case right: size.width += getSelectedOffset(); break;
+    }
+
+    return size;
   }
 
   private void handlePopup(final MouseEvent e) {

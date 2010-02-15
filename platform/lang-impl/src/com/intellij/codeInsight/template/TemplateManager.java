@@ -24,6 +24,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
+
 public abstract class TemplateManager {
   public static TemplateManager getInstance(Project project) {
     return project.getComponent(TemplateManager.class);
@@ -37,8 +39,9 @@ public abstract class TemplateManager {
 
   public abstract void startTemplate(@NotNull final Editor editor,
                                      @NotNull final Template template,
-                                     TemplateEditingListener listener,
-                                     boolean inSeparateCommand);
+                                     boolean inSeparateCommand,
+                                     Map<String, String> predefinedVarValues,
+                                     TemplateEditingListener listener);
 
   public abstract void startTemplate(@NotNull Editor editor,
                                      @NotNull Template template,

@@ -116,7 +116,21 @@ public class NameSuggesterTest extends TestCase {
     doSuggestionTest("Transaction", "StrictTransactionPolicyHandler", "transaction", "strictTransactionPolicyHandler");
   }
 
+  public void testSuggestions18() throws Exception {
+    doSuggestionTest("Foo", "FooTask", "fooImpl", "fooTaskImpl");
+  }
 
+  public void testSuggestions19() throws Exception {
+    doSuggestionTest("Foo", "FooTask", "implFoo", "implFooTask");
+  }
+
+  public void testSuggestions20() throws Exception {
+    doSuggestionTest("Foo", "TaskFoo", "fooImpl", "taskFooImpl");
+  }
+
+   public void testSuggestions21() throws Exception {
+    doSuggestionTest("Foo", "TaskFoo", "implFoo", "implTaskFoo");
+  }
 
   private void doChangesTest(final String oldClassName, final String newClassName, final String changes) {
     final NameSuggester suggester = new NameSuggester(oldClassName, newClassName);

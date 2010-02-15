@@ -1030,6 +1030,21 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
   }
 
+  @Override
+  public KeyboardShortcut getKeyboardShortcut(@NotNull String actionId) {
+    AnAction action = ActionManager.getInstance().getAction(actionId);
+    final ShortcutSet shortcutSet = action.getShortcutSet();
+    final Shortcut[] shortcuts = shortcutSet.getShortcuts();
+    for (final Shortcut shortcut : shortcuts) {
+      KeyboardShortcut kb = (KeyboardShortcut)shortcut;
+      if (kb.getSecondKeyStroke() == null) {
+        return (KeyboardShortcut)shortcut;
+      }
+    }
+
+    return null;
+  }
+
   public void fireBeforeEditorTyping(char c, DataContext dataContext) {
     myLastTimeEditorWasTypedIn = System.currentTimeMillis();
     AnActionListener[] listeners = getActionListeners();

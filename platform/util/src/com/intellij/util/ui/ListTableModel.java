@@ -15,10 +15,7 @@
  */
 package com.intellij.util.ui;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRemovable {
   private ColumnInfo[] myColumnInfos;
@@ -184,6 +181,12 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRe
   public void addRow(Item item) {
     myItems.add(item);
     fireTableRowsInserted(myItems.size() - 1, myItems.size() - 1);
+  }
+
+  public void addRows(final Collection<Item> items) {
+    myItems.addAll(items);
+    fireTableRowsInserted(myItems.size() - items.size(), myItems.size() - 1);
+//    resort();
   }
 
   public Object getItem(final int rowIndex) {

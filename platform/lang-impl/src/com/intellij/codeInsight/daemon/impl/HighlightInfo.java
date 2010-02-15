@@ -384,6 +384,10 @@ public class HighlightInfo {
       this(action, options, displayName, null);
     }
 
+    public IntentionActionDescriptor(@NotNull IntentionAction action, final Icon icon) {
+      this(action, null, null, icon);
+    }
+
     public IntentionActionDescriptor(@NotNull IntentionAction action, final List<IntentionAction> options, final String displayName, Icon icon) {
       myAction = action;
       myOptions = options;

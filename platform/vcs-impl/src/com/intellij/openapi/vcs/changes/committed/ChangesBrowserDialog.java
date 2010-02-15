@@ -22,9 +22,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.util.AsynchConsumer;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 /**
  * @author max
@@ -34,6 +36,7 @@ public class ChangesBrowserDialog extends DialogWrapper {
   private CommittedChangesTableModel myChanges;
   private Mode myMode;
   private CommittedChangesBrowser myCommittedChangesBrowser;
+  private AsynchConsumer<List<CommittedChangeList>> myAppender;
 
   public enum Mode { Simple, Browse, Choose }
 
@@ -53,11 +56,44 @@ public class ChangesBrowserDialog extends DialogWrapper {
     myMode = mode;
     setTitle(VcsBundle.message("dialog.title.changes.browser"));
     setCancelButtonText(CommonBundle.getCloseButtonText());
-    if ((mode != Mode.Choose) && (ModalityState.NON_MODAL.equals(ModalityState.current()))) {
+    final ModalityState currentState = ModalityState.current();
+    if ((mode != Mode.Choose) && (ModalityState.NON_MODAL.equals(currentState))) {
       setModal(false);
     }
+    myAppender = new AsynchConsumer<List<CommittedChangeList>>() {
+
+      public void finished() {
+        new AbstractCalledLater(myProject, ModalityState.stateForComponent(myCommittedChangesBrowser)) {
+          public void run() {
+            myCommittedChangesBrowser.stopLoading();
+          }
+        }.callMe();
+      }
+
+      public void consume(final List<CommittedChangeList> committedChangeLists) {
+        new AbstractCalledLater(myProject, ModalityState.stateForComponent(myCommittedChangesBrowser)) {
+          public void run() {
+            final boolean selectFirst = (myChanges.getRowCount() == 0) && (!committedChangeLists.isEmpty());
+            myChanges.addRows(committedChangeLists);
+            if (selectFirst) {
+              myCommittedChangesBrowser.selectFirstIfAny();
+            } else {
+              myCommittedChangesBrowser.resortKeepSelection();
+            }
+          }
+        }.callMe();
+      }
+    };
 
     init();
+  }
+
+  public AsynchConsumer<List<CommittedChangeList>> getAppender() {
+    return myAppender;
+  }
+
+  public void startLoading() {
+    myCommittedChangesBrowser.startLoading();
   }
 
   protected String getDimensionServiceKey() {

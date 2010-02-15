@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.AsynchConsumer;
 import com.intellij.util.Consumer;
 import git4idea.GitBranch;
 import git4idea.GitRemote;
@@ -40,6 +41,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -130,10 +132,38 @@ public class GitCommittedChangeListProvider implements CachingCommittedChangesPr
     return null;
   }
 
+  public void loadCommittedChanges(ChangeBrowserSettings settings,
+                                   RepositoryLocation location,
+                                   int maxCount,
+                                   AsynchConsumer<CommittedChangeList> consumer)
+    throws VcsException {
+    try {
+      getCommittedChangesImpl(settings, location, maxCount, consumer);
+    }
+    finally {
+      consumer.finished();
+    }
+  }
+
   /**
    * {@inheritDoc}
    */
   public List<CommittedChangeList> getCommittedChanges(ChangeBrowserSettings settings, RepositoryLocation location, final int maxCount)
+    throws VcsException {
+
+    final List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
+
+    getCommittedChangesImpl(settings, location, maxCount, new Consumer<CommittedChangeList>() {
+      public void consume(CommittedChangeList committedChangeList) {
+        result.add(committedChangeList);
+      }
+    });
+
+    return result;
+  }
+
+  private void getCommittedChangesImpl(ChangeBrowserSettings settings, RepositoryLocation location, final int maxCount,
+                                                            final Consumer<CommittedChangeList> consumer)
     throws VcsException {
     GitRepositoryLocation l = (GitRepositoryLocation)location;
     final Long beforeRev = settings.getChangeBeforeFilter();
@@ -146,7 +176,7 @@ public class GitCommittedChangeListProvider implements CachingCommittedChangesPr
       throw new VcsException("The repository does not exists anymore: " + l.getRoot());
     }
 
-    return GitUtil.getLocalCommittedChanges(myProject, root, new Consumer<GitSimpleHandler>() {
+    GitUtil.getLocalCommittedChanges(myProject, root, new Consumer<GitSimpleHandler>() {
       public void consume(GitSimpleHandler h) {
         if (!StringUtil.isEmpty(author)) {
           h.addParameters("--author=" + author);
@@ -170,9 +200,8 @@ public class GitCommittedChangeListProvider implements CachingCommittedChangesPr
           h.addParameters(GitUtil.formatLongRev(afterRev) + "..");
         }
       }
-    });
+    }, consumer);
   }
-
 
   /**
    * {@inheritDoc}

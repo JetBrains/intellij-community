@@ -132,22 +132,23 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
   }
 
   public void startTemplate(@NotNull Editor editor, String selectionString, @NotNull Template template) {
-    startTemplate(editor, selectionString, template, null, null, true);
+    startTemplate(editor, selectionString, template, true, null, null, null);
   }
 
   public void startTemplate(@NotNull Editor editor,
                             @NotNull Template template,
                             TemplateEditingListener listener,
                             final PairProcessor<String, String> processor) {
-    startTemplate(editor, null, template, listener, processor, true);
+    startTemplate(editor, null, template, true, listener, processor, null);
   }
 
   private void startTemplate(final Editor editor,
                              final String selectionString,
                              final Template template,
+                             boolean inSeparateCommand,
                              TemplateEditingListener listener,
                              final PairProcessor<String, String> processor,
-                             boolean inSeparateCommand) {
+                             final Map<String, String> predefinedVarValues) {
     final TemplateState templateState = initTemplateState(editor);
 
     templateState.getProperties().put(ExpressionContext.SELECTION, selectionString);
@@ -167,7 +168,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
         else {
           editor.getSelectionModel().removeSelection();
         }
-        templateState.start((TemplateImpl)template, processor, null);
+        templateState.start((TemplateImpl)template, processor, predefinedVarValues);
       }
     };
     if (inSeparateCommand) {
@@ -187,14 +188,15 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
   }
 
   public void startTemplate(@NotNull final Editor editor, @NotNull final Template template, TemplateEditingListener listener) {
-    startTemplate(editor, null, template, listener, null, true);
+    startTemplate(editor, null, template, true, listener, null, null);
   }
 
   public void startTemplate(@NotNull final Editor editor,
                             @NotNull final Template template,
-                            TemplateEditingListener listener,
-                            boolean inSeparateCommand) {
-    startTemplate(editor, null, template, listener, null, inSeparateCommand);
+                            boolean inSeparateCommand,
+                            Map<String, String> predefinedVarValues,
+                            TemplateEditingListener listener) {
+    startTemplate(editor, null, template, inSeparateCommand, listener, null, predefinedVarValues);
   }
 
   private static int passArgumentBack(CharSequence text, int caretOffset) {
@@ -231,13 +233,27 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     return index < s.length() ? s.substring(index) : s;
   }
 
+  @NotNull
+  private static String normalize(@NotNull String key) {
+    int lastWhitespaceIndex = -1;
+    for (int i = 0; i < key.length(); i++) {
+      if (Character.isWhitespace(key.charAt(i))) {
+        lastWhitespaceIndex = i;
+      }
+    }
+    if (lastWhitespaceIndex >= 0 && lastWhitespaceIndex < key.length() - 1) {
+      return key.substring(lastWhitespaceIndex + 1);
+    }
+    return key;
+  }
+
   public boolean startTemplate(final Editor editor, char shortcutChar, final PairProcessor<String, String> processor) {
     PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, myProject);
     if (file == null) return false;
     TemplateSettings templateSettings = TemplateSettings.getInstance();
     if (shortcutChar == templateSettings.getDefaultShortcutChar()) {
       for (final CustomLiveTemplate customLiveTemplate : CustomLiveTemplate.EP_NAME.getExtensions()) {
-        final String currentLineBeforeCaret = getCurrentLineBeforeCaret(editor);
+        final String currentLineBeforeCaret = normalize(getCurrentLineBeforeCaret(editor));
         final CustomTemplateCallback callback = new CustomTemplateCallback(editor, file);
         if (customLiveTemplate.isApplicable(currentLineBeforeCaret, callback)) {
           int offset = editor.getCaretModel().getOffset();
@@ -370,7 +386,12 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
         editor.getCaretModel().moveToOffset(templateStart);
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
         editor.getSelectionModel().removeSelection();
-        templateState.start(template, processor, argument);
+        Map<String, String> predefinedVarValues = null;
+        if (argument != null) {
+          predefinedVarValues = new HashMap<String, String>();
+          predefinedVarValues.put(TemplateImpl.ARG, argument);
+        }
+        templateState.start(template, processor, predefinedVarValues);
       }
     }, CodeInsightBundle.message("insert.code.template.command"), null);
   }
