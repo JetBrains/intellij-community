@@ -26,6 +26,7 @@ import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
@@ -574,19 +575,8 @@ public class ShowUsagesAction extends AnAction {
   }
 
   private static KeyboardShortcut getSettingsShortcut() {
-    AnAction action = ActionManager.getInstance().getAction("ShowUsagesSettings");
-    final ShortcutSet shortcutSet = action.getShortcutSet();
-    final Shortcut[] shortcuts = shortcutSet.getShortcuts();
-    for (final Shortcut shortcut : shortcuts) {
-      KeyboardShortcut kb = (KeyboardShortcut)shortcut;
-      if (kb.getSecondKeyStroke() == null) {
-        return (KeyboardShortcut)shortcut;
-      }
-    }
-
-    return null;
+    return ActionManagerEx.getInstanceEx().getKeyboardShortcut("ShowUsagesSettings");
   }
-
 
   private static void addUsageNodes(GroupNode root, final UsageViewImpl usageView, List<UsageNode> outNodes) {
     for (UsageNode node : root.getUsageNodes()) {

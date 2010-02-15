@@ -206,6 +206,22 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     return myScreenBounds;
   }
 
+  @Override
+  public Rectangle getScreenBounds(@NotNull Project project) {
+    final GraphicsEnvironment environment = GraphicsEnvironment.getLocalGraphicsEnvironment();
+    final Point onScreen = getFrame(project).getLocationOnScreen();
+    final GraphicsDevice[] devices = environment.getScreenDevices();
+    for (final GraphicsDevice device : devices) {
+      final Rectangle bounds = device.getDefaultConfiguration().getBounds();
+      if (bounds.contains(onScreen)) {
+        return bounds;
+      }
+    }
+
+    return null;
+
+  }
+
   public final boolean isInsideScreenBounds(final int x, final int y, final int width) {
     return
       x >= myScreenBounds.x + 50 - width &&

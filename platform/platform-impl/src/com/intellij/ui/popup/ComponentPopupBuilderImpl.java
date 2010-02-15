@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.Processor;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.ui.InplaceButton;
 import org.jetbrains.annotations.NotNull;
@@ -60,6 +61,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private boolean myCancelKeyEnabled = true;
   private boolean myLocateByContent = false;
   private boolean myPlacewithinScreen = true;
+  private Processor<JBPopup> myPinCallback = null;
   private Dimension myMinSize;
   private MaskProvider myMaskProvider;
   private float myAlpha;
@@ -162,6 +164,12 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   }
 
   @NotNull
+  public ComponentPopupBuilder setCouldPin(@Nullable final Processor<JBPopup> callback) {
+    myPinCallback = callback;
+    return this;
+  }
+
+  @NotNull
   public ComponentPopupBuilder setKeyboardActions(@NotNull List<Pair<ActionListener, KeyStroke>> keyboardActions) {
     myKeyboardActions = keyboardActions;
     return this;
@@ -193,7 +201,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
                                               myCancelButton,
                                               myCancelOnMouseOutCallback, myCancelOnWindow, myTitleIcon, myCancelKeyEnabled, myLocateByContent,
                                               myPlacewithinScreen, myMinSize, myAlpha, myMaskProvider, myInStack, myModalContext, myFocusOwners, myAd,
-                                              myHeaderAlwaysFocusable, myKeyboardActions, mySettingsButtons);
+                                              myHeaderAlwaysFocusable, myKeyboardActions, mySettingsButtons, myPinCallback);
     if (myUserData != null) {
       popup.setUserData(myUserData);
     }

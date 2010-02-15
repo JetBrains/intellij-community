@@ -89,6 +89,11 @@ public abstract class WindowManagerEx extends WindowManager {
   public abstract Rectangle getScreenBounds();
 
   /**
+   * @return bounds for the screen device for the given project frame
+   */
+  public abstract Rectangle getScreenBounds(@NotNull final Project project);
+
+  /**
    * @return <code>true</code> is and only if current OS supports alpha mode for windows and
    * all native libraries were successfully loaded.
    */
