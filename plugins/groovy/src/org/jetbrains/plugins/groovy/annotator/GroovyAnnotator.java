@@ -26,8 +26,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -76,10 +76,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
-import org.jetbrains.plugins.groovy.overrideImplement.GroovyOverrideImplementUtil;
 import org.jetbrains.plugins.groovy.overrideImplement.quickFix.ImplementMethodsQuickFix;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author ven
@@ -645,12 +647,11 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     if (typeDefinition.isEnum() || typeDefinition.isAnnotationType()) return;
     if (typeDefinition instanceof GrTypeParameter) return;
 
-    Collection<CandidateInfo> collection = GroovyOverrideImplementUtil.getMethodsToImplement(typeDefinition);
-    if (collection.isEmpty()) return;
+    PsiMethod abstractMethod = ClassUtil.getAnyAbstractMethod(typeDefinition);
 
-    final PsiElement element = collection.iterator().next().getElement();
-    assert element instanceof PsiNamedElement;
-    String notImplementedMethodName = ((PsiNamedElement)element).getName();
+    if (abstractMethod == null) return;
+
+    String notImplementedMethodName = abstractMethod.getName();
 
     final int startOffset = typeDefinition.getTextOffset();
     int endOffset = typeDefinition.getNameIdentifierGroovy().getTextRange().getEndOffset();

@@ -149,7 +149,7 @@ public class PsiSuperMethodImplUtil {
       if (superClass == null) continue;
       if (!visited.add(superClass)) continue; // cyclic inheritance
       final PsiSubstitutor superSubstitutor = superTypeResolveResult.getSubstitutor();
-      PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(superClass, superSubstitutor, substitutor);
+      PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(superClass, superSubstitutor, substitutor, isInRawContext);
 
       final boolean isInRawContextSuper = (isInRawContext || PsiUtil.isRawSubstitutor(superClass, superSubstitutor)) && superClass.getTypeParameters().length != 0;
       Map<MethodSignature, HierarchicalMethodSignature> superResult = buildMethodHierarchy(superClass, finalSubstitutor, false, visited, isInRawContextSuper);
@@ -263,7 +263,10 @@ public class PsiSuperMethodImplUtil {
 
   private static PsiSubstitutor obtainFinalSubstitutor(PsiClass superClass,
                                                        PsiSubstitutor superSubstitutor,
-                                                       PsiSubstitutor derivedSubstitutor) {
+                                                       PsiSubstitutor derivedSubstitutor, boolean inRawContext) {
+    if (inRawContext) {
+      superSubstitutor = JavaPsiFacadeEx.getElementFactory(superClass.getProject()).createRawSubstitutor(derivedSubstitutor, superSubstitutor.getSubstitutionMap().keySet().toArray(PsiTypeParameter.EMPTY_ARRAY));
+    }
     Map<PsiTypeParameter, PsiType> map = null;
     for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(superClass)) {
       PsiType type = superSubstitutor.substitute(typeParameter);

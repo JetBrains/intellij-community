@@ -31,13 +31,13 @@ import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -72,30 +72,43 @@ public class HighlightClassUtil {
              && parent.getParent() instanceof PsiNewExpression
              && !PsiUtilBase.hasErrorElementChild(parent.getParent())) {
       PsiAnonymousClass aClass = (PsiAnonymousClass)parent;
-      highlightInfo = checkClassWithAbstractMethods(aClass, ref);
+      highlightInfo = checkClassWithAbstractMethods(aClass, ref.getTextRange());
     }
     return highlightInfo;
   }
 
-  public static HighlightInfo checkClassWithAbstractMethods(PsiClass aClass, PsiElement highlightElement) {
-    Collection<HierarchicalMethodSignature> allMethods = aClass.getVisibleSignatures();
-    PsiMethod abstractMethod = ClassUtil.getAnyAbstractMethod(aClass, allMethods);
+  static HighlightInfo checkClassWithAbstractMethods(PsiClass aClass, TextRange textRange) {
+    PsiMethod abstractMethod = ClassUtil.getAnyAbstractMethod(aClass);
 
-    if (abstractMethod != null && abstractMethod.getContainingClass() != null) {
-      String baseClassName = HighlightUtil.formatClass(aClass, false);
-      String methodName = HighlightUtil.formatMethod(abstractMethod);
-      String message = JavaErrorMessages.message("class.must.be.abstract",
-                                                 baseClassName,
-                                                 methodName,
-                                                 HighlightUtil.formatClass(abstractMethod.getContainingClass(), false));
-
-      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, highlightElement, message);
-      if (ClassUtil.getAnyMethodToImplement(aClass, allMethods) != null) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createImplementMethodsFix(aClass));
-      }
-      return highlightInfo;
+    if (abstractMethod == null || abstractMethod.getContainingClass() == null) {
+      return null;
     }
-    return null;
+    String baseClassName = HighlightUtil.formatClass(aClass, false);
+    String methodName = HighlightUtil.formatMethod(abstractMethod);
+    String message = JavaErrorMessages.message("class.must.be.abstract",
+                                               baseClassName,
+                                               methodName,
+                                               HighlightUtil.formatClass(abstractMethod.getContainingClass(), false));
+
+    HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, message);
+    if (ClassUtil.getAnyMethodToImplement(aClass) != null) {
+      QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createImplementMethodsFix(aClass));
+    }
+    if (!(aClass instanceof PsiAnonymousClass)
+        && HighlightUtil.getIncompatibleModifier(PsiModifier.ABSTRACT, aClass.getModifierList()) == null) {
+      IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(aClass, PsiModifier.ABSTRACT, true, false);
+      QuickFixAction.registerQuickFixAction(errorResult, fix);
+    }
+    return errorResult;
+  }
+
+  static HighlightInfo checkClassMustBeAbstract(final PsiClass aClass, final TextRange textRange) {
+    if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) || aClass.getRBrace() == null
+        || aClass.isEnum() && hasEnumConstants(aClass)
+      ) {
+      return null;
+    }
+    return checkClassWithAbstractMethods(aClass, textRange);
   }
 
 
@@ -105,39 +118,9 @@ public class HighlightClassUtil {
       String baseClassName = aClass.getName();
       String message = JavaErrorMessages.message("abstract.cannot.be.instantiated", baseClassName);
       errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, highlighElement, message);
-      if (!aClass.isInterface() && ClassUtil.getAnyAbstractMethod(aClass, aClass.getVisibleSignatures()) == null) {
+      if (!aClass.isInterface() && ClassUtil.getAnyAbstractMethod(aClass) == null) {
         // suggest to make not abstract only if possible
         IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(aClass, PsiModifier.ABSTRACT, false, false);
-        QuickFixAction.registerQuickFixAction(errorResult, fix);
-      }
-    }
-    return errorResult;
-  }
-
-
-  static HighlightInfo checkClassMustBeAbstract(PsiClass aClass) {
-    if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) || aClass.getRBrace() == null ||
-        aClass.isEnum() && hasEnumConstants(aClass)
-    ) {
-      return null;
-    }
-    HighlightInfo errorResult = null;
-    Collection<HierarchicalMethodSignature> allMethods = aClass.getVisibleSignatures();
-    PsiMethod abstractMethod = ClassUtil.getAnyAbstractMethod(aClass, allMethods);
-    if (abstractMethod != null) {
-      String message = JavaErrorMessages.message("class.must.be.abstract",
-                                                 HighlightUtil.formatClass(aClass, false),
-                                                 HighlightUtil.formatMethod(abstractMethod),
-                                                 HighlightUtil.formatClass(abstractMethod.getContainingClass()));
-
-      TextRange textRange = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
-      errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, message);
-      if (ClassUtil.getAnyMethodToImplement(aClass, allMethods) != null) {
-        QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createImplementMethodsFix(aClass));
-      }
-      if (!(aClass instanceof PsiAnonymousClass)
-          && HighlightUtil.getIncompatibleModifier(PsiModifier.ABSTRACT, aClass.getModifierList()) == null) {
-        IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(aClass, PsiModifier.ABSTRACT, true, false);
         QuickFixAction.registerQuickFixAction(errorResult, fix);
       }
     }
