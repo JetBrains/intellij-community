@@ -403,15 +403,17 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     PyExpression prevCondition = null;
     for (ComprhIfComponent component : node.getIfComponents()) {
       final PyExpression condition = component.getTest();
-      condition.accept(this);
-      final Instruction head = myBuilder.prevInstruction;
-      final Instruction prevInstruction =
-        prevCondition != null ? myBuilder.startConditionalNode(condition, prevCondition, true) : myBuilder.startNode(condition);
-      prevCondition = condition;
-      // restore head
-      myBuilder.prevInstruction = head;
-      myBuilder.addPendingEdge(node, head); // false condition
-      myBuilder.prevInstruction = prevInstruction;
+      if (condition != null){
+        condition.accept(this);
+        final Instruction head = myBuilder.prevInstruction;
+        final Instruction prevInstruction =
+          prevCondition != null ? myBuilder.startConditionalNode(condition, prevCondition, true) : myBuilder.startNode(condition);
+        prevCondition = condition;
+        // restore head
+        myBuilder.prevInstruction = head;
+        myBuilder.addPendingEdge(node, head); // false condition
+        myBuilder.prevInstruction = prevInstruction;
+      }
     }
 
     for (ComprhForComponent forComponent : node.getForComponents()) {
