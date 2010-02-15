@@ -103,6 +103,8 @@ public final class FloatingDecorator extends JDialog{
   }
 
   public final void show(){
+    setFocusableWindowState(myInfo.isActive());
+
     super.show();
     final UISettings uiSettings=UISettings.getInstance();
     if(uiSettings.ENABLE_ALPHA_MODE){
@@ -117,6 +119,7 @@ public final class FloatingDecorator extends JDialog{
     paint(getGraphics()); // This prevents annoying flick
 
     //
+    setFocusableWindowState(true);
 
     uiSettings.addUISettingsListener(myUISettingsListener);
   }
