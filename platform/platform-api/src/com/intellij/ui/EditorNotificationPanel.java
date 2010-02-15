@@ -43,6 +43,7 @@ public class EditorNotificationPanel extends JPanel {
 
     setPreferredSize(new Dimension(-1, 24));
     add(myLabel, BorderLayout.CENTER);
+    myLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
 
     myLinksPanel = new JPanel(new FlowLayout());
     myLinksPanel.setBackground(LightColors.YELLOW);
