@@ -101,7 +101,7 @@
     <lang.foldingBuilder language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.folding.GroovyFoldingBuilder"/>
     <lang.formatter language="Groovy" implementationClass="org.jetbrains.plugins.groovy.formatter.GroovyFormattingModelBuilder"/>
 
-    <enterHandlerDelegate implementation="org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEnterHandler"/>
+    <enterHandlerDelegate implementation="org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEnterHandler" order="after EnterBetweenBracesHandler"/>
     <typedHandler implementation="org.jetbrains.plugins.groovy.lang.editor.actions.GStringTypedActionHandler"/>
     <backspaceHandlerDelegate implementation="org.jetbrains.plugins.groovy.lang.editor.actions.GStringBackspaceHandlerDelegate"/>
 

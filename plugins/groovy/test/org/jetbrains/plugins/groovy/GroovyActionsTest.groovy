@@ -43,13 +43,35 @@ public class GroovyActionsTest extends LightCodeInsightFixtureTestCase {
   public void testSWInGString5() throws Exception {doTestForSelectWord(5);}
   public void testSWInParameterList() throws Exception {doTestForSelectWord(3);}
 
+  public void testSWListLiteralArgument() throws Exception {
+    doTestForSelectWord 2,
+"foo([a<caret>], b)",
+"foo(<selection>[a<caret>]</selection>, b)"
+  }
+
+  public void testSWMethodParametersBeforeQualifier() throws Exception {
+    doTestForSelectWord 2,
+"a.fo<caret>o(b)",
+"a.<selection>foo(b)</selection>"
+  }
+
+  private void doTestForSelectWord(int count, String input, String expected) throws Exception {
+    myFixture.configureByText("a.groovy", input);
+    selectWord(count)
+    myFixture.checkResult(expected);
+  }
+
   private void doTestForSelectWord(int count) throws Exception {
     myFixture.configureByFile(getTestName(false) + ".groovy");
+    selectWord(count)
+    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+  }
+
+  private def selectWord(int count) {
     myFixture.getEditor().getSettings().setCamelWords(true);
     for (int i = 0; i < count; i++) {
       performEditorAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET);
     }
-    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
   }
 
   private void performEditorAction(final String actionId) {

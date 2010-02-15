@@ -328,7 +328,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override public void visitEnumConstantInitializer(PsiEnumConstantInitializer enumConstantInitializer) {
     super.visitEnumConstantInitializer(enumConstantInitializer);
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkClassMustBeAbstract(enumConstantInitializer));
+    if (!myHolder.hasErrorResults()) {
+      TextRange textRange = HighlightNamesUtil.getClassDeclarationTextRange(enumConstantInitializer);
+      myHolder.add(HighlightClassUtil.checkClassMustBeAbstract(enumConstantInitializer, textRange));
+    }
   }
 
   @Override public void visitExpression(PsiExpression expression) {
@@ -599,7 +602,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     else if (parent instanceof PsiClass) {
       PsiClass aClass = (PsiClass)parent;
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkDuplicateNestedClass(aClass));
-      if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkClassMustBeAbstract(aClass));
+      if (!myHolder.hasErrorResults()) {
+        TextRange textRange = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
+        myHolder.add(HighlightClassUtil.checkClassMustBeAbstract(aClass, textRange));
+      }
       if (!myHolder.hasErrorResults()) {
         myHolder.add(HighlightClassUtil.checkClassDoesNotCallSuperConstructorOrHandleExceptions(aClass, myRefCountHolder, myResolveHelper));
       }

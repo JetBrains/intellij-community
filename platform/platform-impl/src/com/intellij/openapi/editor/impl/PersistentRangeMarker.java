@@ -38,10 +38,16 @@ public class PersistentRangeMarker extends RangeMarkerImpl {
     if (getStartOffset() < myDocument.getTextLength()) {
       myStartLine = myDocument.getLineNumber(getStartOffset());
       myStartColumn = getStartOffset() - myDocument.getLineStartOffset(myStartLine);
+      if (myStartColumn < 0) {
+        invalidate();
+      }
     }
     if (getEndOffset() < myDocument.getTextLength()) {
       myEndLine = myDocument.getLineNumber(getEndOffset());
       myEndColumn = getEndOffset() - myDocument.getLineStartOffset(myEndLine);
+      if (myEndColumn < 0) {
+        invalidate();
+      }
     }
   }
 
@@ -64,15 +70,15 @@ public class PersistentRangeMarker extends RangeMarkerImpl {
       else{
         myEnd = getDocument().getLineStartOffset(myEndLine) + myEndColumn;
       }
-      if (myEnd < myStart) {
-        invalidate();
-      }
     }
-    else{
+    else {
       super.changedUpdateImpl(e);
       if (isValid()){
         storeLinesAndCols();
       }
+    }
+    if (myEnd < myStart || myEnd > getDocument().getTextLength()) {
+      invalidate();
     }
   }
 }

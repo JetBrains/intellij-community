@@ -22,16 +22,24 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 
 public class SideBorder extends LineBorder {
+
   public static final int LEFT = 0x01;
   public static final int TOP = 0x02;
   public static final int RIGHT = 0x04;
   public static final int BOTTOM = 0x08;
   public static final int ALL = LEFT | TOP | RIGHT | BOTTOM;
+
   private final int mySideMask;
+  private final boolean myDotted;
 
   public SideBorder(Color color, int mask) {
+    this(color, mask, false);
+  }
+
+  public SideBorder(Color color, int mask, boolean dotted) {
     super(color, 1);
     mySideMask = mask;
+    myDotted = dotted;
   }
 
   public Insets getBorderInsets(Component component) {
@@ -58,19 +66,28 @@ public class SideBorder extends LineBorder {
     g.setColor(getLineColor());
     for(i = 0; i < getThickness(); i++){
       if ((mySideMask & LEFT) != 0){
-        UIUtil.drawLine(g, x + i, y + i, x + i, height - i - i - 1);
+        drawLine(g, x + i, y + i, x + i, height - i - i - 1);
       }
       if ((mySideMask & TOP) != 0){
-        UIUtil.drawLine(g, x + i, y + i, width - i - i - 1, y + i);
+        drawLine(g, x + i, y + i, width - i - i - 1, y + i);
       }
       if ((mySideMask & RIGHT) != 0){
-        UIUtil.drawLine(g, width - i - i - 1, y + i, width - i - i - 1, height - i - i - 1);
+        drawLine(g, width - i - i - 1, y + i, width - i - i - 1, height - i - i - 1);
       }
       if ((mySideMask & BOTTOM) != 0){
-        UIUtil.drawLine(g, x + i, height - i - i - 1, width - i - i - 1, height - i - i - 1);
+        drawLine(g, x + i, height - i - i - 1, width - i - i - 1, height - i - i - 1);
       }
     }
     g.setColor(oldColor);
+  }
+
+  private void drawLine(Graphics g, int x1, int y1, int x2, int y2) {
+    if (myDotted) {
+      UIUtil.drawDottedLine((Graphics2D)g, x1, y1, x2, y2, ((Graphics2D)g).getBackground(), getLineColor());
+    }
+    else {
+      UIUtil.drawLine(g, x1, y1, x2, y2);
+    }
   }
 
   public void setLineColor(Color color) {

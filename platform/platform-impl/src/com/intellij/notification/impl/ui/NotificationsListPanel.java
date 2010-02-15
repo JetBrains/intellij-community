@@ -53,8 +53,6 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
   private static final Logger LOG = Logger.getInstance("#com.intellij.notification.impl.ui.NotificationsListPanel");
   private static final String REMOVE_KEY = "REMOVE";
 
-  private WeakReference<JBPopup> myPopupRef;
-
   private Project myProject;
   private Wrapper myWrapper;
   private JComponent myActiveComponent;
@@ -132,17 +130,6 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
     size.width *= 0.1d;
     size.height *= 0.1d;
     return size;
-  }
-
-  public void clear() {
-    if (myPopupRef != null) {
-      final JBPopup jbPopup = myPopupRef.get();
-      if (jbPopup != null) {
-        jbPopup.cancel();
-      }
-
-      myPopupRef = null;
-    }
   }
 
   public JComponent getPreferredFocusedComponent() {

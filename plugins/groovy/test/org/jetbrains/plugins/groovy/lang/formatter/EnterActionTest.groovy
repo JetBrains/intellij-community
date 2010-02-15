@@ -35,8 +35,12 @@ public class EnterActionTest extends GroovyFormatterTestCase {
   private void doTest() throws Throwable {
     final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, data.get(0));
-    myFixture.type('\n');
+    doEnter();
     myFixture.checkResult(data.get(1));
+  }
+
+  private def doEnter() {
+    myFixture.type((char)'\n')
   }
 
   public void testClos1() throws Throwable { doTest(); }
@@ -79,6 +83,64 @@ public class EnterActionTest extends GroovyFormatterTestCase {
   public void testString4() throws Throwable { doTest(); }
   public void testString5() throws Throwable { doTest(); }
   public void testString6() throws Throwable { doTest(); }
+
+  public void testAfterClosureArrow() throws Throwable {
+    myFixture.configureByText "a.groovy", """
+def c = { a -><caret> }
+"""
+    doEnter()
+    myFixture.checkResult """
+def c = { a ->
+  <caret>
+}
+"""
+  }
+  public void testAfterClosureArrowWithBody() throws Throwable {
+    myFixture.configureByText "a.groovy", """
+def c = { a -><caret> zzz }
+"""
+    doEnter()
+    myFixture.checkResult """
+def c = { a ->
+<caret>  zzz }
+"""
+  }
+  public void testAfterClosureArrowWithBody2() throws Throwable {
+    myFixture.configureByText "a.groovy", """
+def c = { a -> <caret>zzz }
+"""
+    doEnter()
+    myFixture.checkResult """
+def c = { a ->
+  <caret>zzz }
+""", true
+  }
+
+  public void testBeforeClosingClosureBrace() throws Throwable {
+    myFixture.configureByText "a.groovy", """
+def c = { a ->
+  zzz <caret>}
+"""
+    doEnter()
+    myFixture.checkResult """
+def c = { a ->
+  zzz 
+<caret>}
+"""
+  }
+  
+  public void testAlmostBeforeClosingClosureBrace() throws Throwable {
+    myFixture.configureByText "a.groovy", """
+def c = { a ->
+  zzz<caret> }
+"""
+    doEnter()
+    myFixture.checkResult """
+def c = { a ->
+  zzz
+<caret>}
+"""
+  }
 
 }
 

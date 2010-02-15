@@ -21,8 +21,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.HyperlinkLabel;
-import com.intellij.ui.LightColors;
+import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -30,11 +29,8 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.ProjectBundle;
 
 import javax.swing.*;
-import javax.swing.border.LineBorder;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
-import java.awt.*;
 
+// todo: migrate to EditorNotifications
 public class MavenImportNotifier extends SimpleProjectComponent {
   private static final Key<NotifierPanel> PANEL_KEY = new Key<NotifierPanel>(NotifierPanel.class.getName());
 
@@ -116,60 +112,22 @@ public class MavenImportNotifier extends SimpleProjectComponent {
     panel.update();
   }
 
-  private class NotifierPanel extends JPanel {
-    private JLabel myLabel;
+  private class NotifierPanel extends EditorNotificationPanel {
 
     private NotifierPanel() {
-      super(new GridBagLayout());
 
-      setBackground(LightColors.YELLOW);
-      setBorder(BorderFactory.createEmptyBorder(7, 15, 7, 15));
-      myLabel = new JLabel(MavenIcons.MAVEN_ICON, JLabel.LEFT);
+      myLabel.setIcon(MavenIcons.MAVEN_ICON);
 
-      JComponent importChangedButton = createButton(ProjectBundle.message("maven.project.import.changed"), new Runnable() {
+      createActionLabel(ProjectBundle.message("maven.project.import.changed"), new Runnable() {
         public void run() {
           myMavenProjectsManager.performScheduledImport();
         }
       });
-      JComponent enableAutoImportButton = createButton(ProjectBundle.message("maven.project.import.enable.auto"), new Runnable() {
+      createActionLabel(ProjectBundle.message("maven.project.import.enable.auto"), new Runnable() {
         public void run() {
           myMavenProjectsManager.getImportingSettings().setImportAutomatically(true);
         }
       });
-
-      JPanel buttonsPanel = new JPanel();
-      buttonsPanel.setOpaque(false);
-      buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.X_AXIS));
-      buttonsPanel.add(myLabel);
-      buttonsPanel.add(importChangedButton);
-      buttonsPanel.add(Box.createHorizontalStrut(10));
-      buttonsPanel.add(enableAutoImportButton);
-
-      GridBagConstraints c = new GridBagConstraints();
-      c.fill = GridBagConstraints.HORIZONTAL;
-
-      c.gridx = 0;
-      c.anchor = GridBagConstraints.WEST;
-      c.weightx = 1;
-      add(myLabel, c);
-
-      c.gridx = 1;
-      c.weightx = 0;
-      c.anchor = GridBagConstraints.EAST;
-      add(buttonsPanel, c);
-    }
-
-    private JComponent createButton(String text, final Runnable action) {
-      HyperlinkLabel result = new HyperlinkLabel(text, Color.BLUE, LightColors.YELLOW, Color.BLUE);
-      result.addHyperlinkListener(new HyperlinkListener() {
-        public void hyperlinkUpdate(HyperlinkEvent e) {
-          if (myProject.isDisposed()) return;
-          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-            action.run();
-          }
-        }
-      });
-      return result;
     }
 
     public void update() {

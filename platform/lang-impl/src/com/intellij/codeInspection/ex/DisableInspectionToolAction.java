@@ -27,16 +27,20 @@ import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.io.IOException;
 
-public class DisableInspectionToolAction implements IntentionAction {
+public class DisableInspectionToolAction implements IntentionAction, Iconable {
   private final String myToolId;
   public static final String NAME = InspectionsBundle.message("disable.inspection.action.name");
+  private static final Icon ICON = IconLoader.getIcon("/general/inspectionsOff.png");
 
   public DisableInspectionToolAction(LocalInspectionTool tool) {
     myToolId = tool.getShortName();
@@ -76,5 +80,9 @@ public class DisableInspectionToolAction implements IntentionAction {
 
   public boolean startInWriteAction() {
     return false;
+  }
+
+  public Icon getIcon(int flags) {
+    return ICON;
   }
 }

@@ -23,7 +23,9 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
@@ -38,15 +40,19 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.Update;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
+import org.jetbrains.idea.maven.dom.model.MavenDomDependencies;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.execution.SoutMavenConsole;
@@ -62,8 +68,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @State(name = "MavenProjectsManager", storages = {@Storage(id = "default", file = "$PROJECT_FILE$")})
-public class MavenProjectsManager extends SimpleProjectComponent implements PersistentStateComponent<MavenProjectsManagerState>,
-                                                                            SettingsSavingComponent {
+public class MavenProjectsManager extends SimpleProjectComponent
+  implements PersistentStateComponent<MavenProjectsManagerState>, SettingsSavingComponent {
   private static final int IMPORT_DELAY = 1000;
 
   static final Object SCHEDULE_IMPORT_MESSAGE = "SCHEDULE_IMPORT_MESSAGE";
@@ -92,8 +98,8 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
   private MavenMergingUpdateQueue mySchedulesQueue;
 
-  private final EventDispatcher<MavenProjectsTree.Listener> myProjectsTreeDispatcher
-    = EventDispatcher.create(MavenProjectsTree.Listener.class);
+  private final EventDispatcher<MavenProjectsTree.Listener> myProjectsTreeDispatcher =
+    EventDispatcher.create(MavenProjectsTree.Listener.class);
   private final List<Listener> myManagerListeners = ContainerUtil.createEmptyCOWList();
 
   public static MavenProjectsManager getInstance(Project p) {
@@ -238,30 +244,15 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   private void initWorkers() {
     myEmbeddersManager = new MavenEmbeddersManager(getGeneralSettings());
 
-    myReadingProcessor = new MavenProjectsProcessor(myProject,
-                                                    ProjectBundle.message("maven.reading"),
-                                                    false,
-                                                    myEmbeddersManager);
-    myResolvingProcessor = new MavenProjectsProcessor(myProject,
-                                                      ProjectBundle.message("maven.resolving"),
-                                                      true,
-                                                      myEmbeddersManager);
-    myPluginsResolvingProcessor = new MavenProjectsProcessor(myProject,
-                                                             ProjectBundle.message("maven.downloading.plugins"),
-                                                             true,
-                                                             myEmbeddersManager);
-    myFoldersResolvingProcessor = new MavenProjectsProcessor(myProject,
-                                                             ProjectBundle.message("maven.updating.folders"),
-                                                             true,
-                                                             myEmbeddersManager);
-    myArtifactsDownloadingProcessor = new MavenProjectsProcessor(myProject,
-                                                                 ProjectBundle.message("maven.downloading"),
-                                                                 true,
-                                                                 myEmbeddersManager);
-    myPostProcessor = new MavenProjectsProcessor(myProject,
-                                                 ProjectBundle.message("maven.post.processing"),
-                                                 true,
-                                                 myEmbeddersManager);
+    myReadingProcessor = new MavenProjectsProcessor(myProject, ProjectBundle.message("maven.reading"), false, myEmbeddersManager);
+    myResolvingProcessor = new MavenProjectsProcessor(myProject, ProjectBundle.message("maven.resolving"), true, myEmbeddersManager);
+    myPluginsResolvingProcessor =
+      new MavenProjectsProcessor(myProject, ProjectBundle.message("maven.downloading.plugins"), true, myEmbeddersManager);
+    myFoldersResolvingProcessor =
+      new MavenProjectsProcessor(myProject, ProjectBundle.message("maven.updating.folders"), true, myEmbeddersManager);
+    myArtifactsDownloadingProcessor =
+      new MavenProjectsProcessor(myProject, ProjectBundle.message("maven.downloading"), true, myEmbeddersManager);
+    myPostProcessor = new MavenProjectsProcessor(myProject, ProjectBundle.message("maven.post.processing"), true, myEmbeddersManager);
 
     myWatcher = new MavenProjectsManagerWatcher(myProject, myProjectsTree, getGeneralSettings(), myReadingProcessor, myEmbeddersManager);
 
@@ -665,10 +656,7 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
         while (it.hasNext()) {
           MavenProject each = it.next();
           Object message = it.hasNext() ? null : (forceImport ? FORCE_IMPORT_MESSAGE : SCHEDULE_IMPORT_MESSAGE);
-          myResolvingProcessor.scheduleTask(new MavenProjectsProcessorResolvingTask(each,
-                                                                                    myProjectsTree,
-                                                                                    getGeneralSettings(),
-                                                                                    message));
+          myResolvingProcessor.scheduleTask(new MavenProjectsProcessorResolvingTask(each, myProjectsTree, getGeneralSettings(), message));
         }
       }
     });
@@ -691,11 +679,8 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
         while (it.hasNext()) {
           MavenProject each = it.next();
           Object message = it.hasNext() ? null : FORCE_IMPORT_MESSAGE;
-          myFoldersResolvingProcessor.scheduleTask(new MavenProjectsProcessorFoldersResolvingTask(each,
-                                                                                                  getGeneralSettings(), 
-                                                                                                  getImportingSettings(),
-                                                                                                  myProjectsTree,
-                                                                                                  message));
+          myFoldersResolvingProcessor.scheduleTask(
+            new MavenProjectsProcessorFoldersResolvingTask(each, getGeneralSettings(), getImportingSettings(), myProjectsTree, message));
         }
       }
     });
@@ -708,9 +693,8 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
   private void schedulePluginsResolving(final MavenProject project, final org.apache.maven.project.MavenProject nativeMavenProject) {
     runWhenFullyOpen(new Runnable() {
       public void run() {
-        myPluginsResolvingProcessor.scheduleTask(new MavenProjectsProcessorPluginsResolvingTask(project,
-                                                                                                nativeMavenProject,
-                                                                                                myProjectsTree));
+        myPluginsResolvingProcessor
+          .scheduleTask(new MavenProjectsProcessorPluginsResolvingTask(project, nativeMavenProject, myProjectsTree));
       }
     });
   }
@@ -721,8 +705,8 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     runWhenFullyOpen(new Runnable() {
       public void run() {
         for (MavenProject each : projects) {
-          myArtifactsDownloadingProcessor.scheduleTask(
-            new MavenProjectsProcessorArtifactsDownloadingTask(each, myProjectsTree, sources, docs));
+          myArtifactsDownloadingProcessor
+            .scheduleTask(new MavenProjectsProcessorArtifactsDownloadingTask(each, myProjectsTree, sources, docs));
         }
       }
     });
@@ -953,13 +937,9 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
 
     final Runnable r = new Runnable() {
       public void run() {
-        importer.set(new MavenProjectImporter(myProject,
-                                              myProjectsTree,
-                                              getFileToModuleMapping(modelsProvider),
-                                              projectsToImportWithChanges,
-                                              importModuleGroupsRequired,
-                                              modelsProvider,
-                                              getImportingSettings()));
+        importer.set(
+          new MavenProjectImporter(myProject, myProjectsTree, getFileToModuleMapping(modelsProvider), projectsToImportWithChanges,
+                                   importModuleGroupsRequired, modelsProvider, getImportingSettings()));
         postTasks.set(importer.get().importProject());
       }
     };
@@ -1024,10 +1004,8 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     MavenDomDependency result = new WriteCommandAction<MavenDomDependency>(myProject, "Add Maven Dependency", psiFile) {
       protected void run(Result<MavenDomDependency> result) throws Throwable {
         MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(myProject, mavenProject.getFile());
-        MavenDomDependency domDependency = model.getDependencies().addDependency();
-        domDependency.getGroupId().setStringValue(artifact[0].getGroupId());
-        domDependency.getArtifactId().setStringValue(artifact[0].getArtifactId());
-        domDependency.getVersion().setStringValue(artifact[0].getVersion());
+
+        MavenDomDependency domDependency = MavenDomUtil.createDomDependency(model, artifact[0], getEditor());
 
         mavenProject.addDependency(artifact[0]);
         result.setResult(domDependency);
@@ -1039,7 +1017,12 @@ public class MavenProjectsManager extends SimpleProjectComponent implements Pers
     return result;
   }
 
-  public void addManagerListener(Listener listener) {
+  @Nullable
+  private Editor getEditor() {
+    return FileEditorManager.getInstance(myProject).getSelectedTextEditor();
+  }
+
+   public void addManagerListener(Listener listener) {
     myManagerListeners.add(listener);
   }
 

@@ -242,6 +242,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
   public void loadState(final FacetManagerState state) {
     ModifiableFacetModel model = new FacetModelImpl(this);
 
+    myInvalidFacets.clear();
     addFacets(state.getFacets(), null, model);
 
     commit(model, false);

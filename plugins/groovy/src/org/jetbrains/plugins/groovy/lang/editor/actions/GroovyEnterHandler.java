@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang.editor.actions;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -31,16 +32,19 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.editor.HandlerUtils;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
+
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 /**
  * @author ilyas
@@ -53,7 +57,46 @@ public class GroovyEnterHandler implements EnterHandlerDelegate {
                                 Ref<Integer> caretAdvance,
                                 DataContext dataContext,
                                 EditorActionHandler originalHandler) {
-    if (handleEnter(editor, dataContext, file.getProject(), originalHandler)) {
+    String text = editor.getDocument().getText();
+    if (StringUtil.isEmpty(text)) {
+      return Result.Continue;
+    }
+
+    final int caret = editor.getCaretModel().getOffset();
+    final EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
+    if (caret >= 1 && caret < text.length() && CodeInsightSettings.getInstance().SMART_INDENT_ON_ENTER) {
+      HighlighterIterator iterator = highlighter.createIterator(caret);
+      iterator.retreat();
+      while (!iterator.atEnd() && mWS == iterator.getTokenType()) {
+        iterator.retreat();
+      }
+      boolean afterArrow = !iterator.atEnd() && iterator.getTokenType() == mCLOSABLE_BLOCK_OP;
+      if (afterArrow) {
+        originalHandler.execute(editor, dataContext);
+        PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
+        CodeStyleManager.getInstance(file.getProject()).adjustLineIndent(file, editor.getCaretModel().getOffset());
+      }
+
+      iterator = highlighter.createIterator(editor.getCaretModel().getOffset());
+      while (mWS == iterator.getTokenType() && !iterator.atEnd()) {
+        iterator.advance();
+      }
+      if (!iterator.atEnd() && mRCURLY == iterator.getTokenType()) {
+        PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
+        final PsiElement element = file.findElementAt(iterator.getStart());
+        if (element != null &&
+            element.getNode().getElementType() == mRCURLY &&
+            element.getParent() instanceof GrClosableBlock &&
+            text.length() > caret) {
+          return Result.DefaultForceIndent;
+        }
+      }
+      if (afterArrow) {
+        return Result.Stop;
+      }
+    }
+
+    if (handleEnter(editor, dataContext, file.getProject(), originalHandler, file)) {
       return Result.Stop;
     }
     return Result.Continue;
@@ -62,17 +105,14 @@ public class GroovyEnterHandler implements EnterHandlerDelegate {
   protected static boolean handleEnter(Editor editor,
                                        DataContext dataContext,
                                        @NotNull Project project,
-                                       EditorActionHandler originalHandler) {
-    if (!HandlerUtils.canBeInvoked(editor, project)) {
+                                       EditorActionHandler originalHandler, PsiFile file) {
+    if (HandlerUtils.isReadOnly(editor)) {
       return false;
     }
     int caretOffset = editor.getCaretModel().getOffset();
     if (caretOffset < 1) return false;
 
     if (handleBetweenSquareBraces(editor, caretOffset, dataContext, project, originalHandler)) {
-      return true;
-    }
-    if (handleBeforeCurlyBrace(editor, caretOffset, dataContext, originalHandler)) {
       return true;
     }
     if (handleInString(editor, caretOffset, dataContext, originalHandler)) {
@@ -102,33 +142,6 @@ public class GroovyEnterHandler implements EnterHandlerDelegate {
           editor.getCaretModel().moveCaretRelatively(0, -1, false, false, true);
           GroovyEditorActionUtil.insertSpacesByGroovyContinuationIndent(editor, project);
           return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  private static boolean handleBeforeCurlyBrace(Editor editor, int caret, DataContext context, EditorActionHandler originalHandler) {
-    String text = editor.getDocument().getText();
-    if (text == null || text.length() == 0) return false;
-    final EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
-    if (caret < 1 || caret > text.length() - 1) {
-      return false;
-    }
-    HighlighterIterator iterator = highlighter.createIterator(caret);
-    if (mRCURLY == iterator.getTokenType()) {
-      PsiFile file = DataKeys.PSI_FILE.getData(context);
-      if (file != null) {
-        final PsiElement element = file.findElementAt(caret);
-        if (element != null &&
-            element.getNode().getElementType() == mRCURLY &&
-            element.getParent() instanceof GrClosableBlock &&
-            text.length() > caret) {
-          iterator = highlighter.createIterator(caret);
-          if (mRCURLY == iterator.getTokenType()) {
-            originalHandler.execute(editor, context);
-            return true;
-          }
         }
       }
     }

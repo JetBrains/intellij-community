@@ -263,7 +263,10 @@ public class VariableInplaceRenamer {
           for (final PsiNamedElement element : renamer.getElements()) {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
               public void run() {
-                RenameUtil.doRenameGenericNamedElement(element, renamer.getRenames().get(element), RenameProcessor.extractUsagesForElement(element, usageInfos), null);
+                final String newElementName = renamer.getNewName(element);
+                if (newElementName != null) {
+                  RenameUtil.doRenameGenericNamedElement(element, newElementName, RenameProcessor.extractUsagesForElement(element, usageInfos), null);
+                }
               }
             });
           }

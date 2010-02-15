@@ -16,8 +16,6 @@
 
 package com.intellij.openapi.fileEditor.impl;
 
-import com.intellij.ui.IdeBorderFactory;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -61,7 +59,6 @@ public class FileEditorInfoPane extends JPanel {
         updateButtons();
       }
     });
-    setBorder(IdeBorderFactory.createBorder());
 
     add(myButtonsPanel, BorderLayout.EAST);
     myButtonsPanel.setVisible(false);

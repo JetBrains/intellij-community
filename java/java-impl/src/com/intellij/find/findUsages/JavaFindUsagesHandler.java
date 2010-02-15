@@ -173,10 +173,16 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
           findPropertySetterWithType(propertyName, field.hasModifierProperty(PsiModifier.STATIC), field.getType(),
                                      ContainerUtil.iterate(containingClass.getMethods()));
         if (getter != null || setter != null) {
-          if (Messages.showDialog(FindBundle.message("find.field.accessors.prompt", field.getName()),
-                                  FindBundle.message("find.field.accessors.title"),
-                                  new String[]{CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()}, 0,
-                                  Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE) {
+          final boolean doSearch;
+          if ((getter == null || !getter.isPhysical()) && (setter == null || !setter.isPhysical())) {
+            doSearch = true;
+          } else {
+            doSearch = Messages.showDialog(FindBundle.message("find.field.accessors.prompt", field.getName()),
+                                           FindBundle.message("find.field.accessors.title"),
+                                           new String[]{CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()}, 0,
+                                           Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE;
+          }
+          if (doSearch) {
             final List<PsiElement> elements = new ArrayList<PsiElement>();
             if (getter != null) {
               elements.addAll(Arrays.asList(SuperMethodWarningUtil.checkSuperMethods(getter, ACTION_STRING)));

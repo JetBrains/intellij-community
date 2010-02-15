@@ -128,28 +128,36 @@ public class TreeModelBuilder {
     buildModel(changeLists);
 
     if (!modifiedWithoutEditing.isEmpty()) {
+      myFoldersCache.clear();
       buildVirtualFiles(modifiedWithoutEditing, ChangesBrowserNode.MODIFIED_WITHOUT_EDITING_TAG);
     }
     if (!unversionedFiles.isEmpty()) {
+      myFoldersCache.clear();
       buildVirtualFiles(unversionedFiles, ChangesBrowserNode.UNVERSIONED_FILES_TAG);
     }
     if (switchedRoots != null && (! switchedRoots.isEmpty())) {
+      myFoldersCache.clear();
       buildSwitchedRoots(switchedRoots);
     }
     if (!switchedFiles.isEmpty()) {
+      myFoldersCache.clear();
       buildSwitchedFiles(switchedFiles);
     }
     if (ignoredFiles != null && !ignoredFiles.isEmpty()) {
+      myFoldersCache.clear();
       buildVirtualFiles(ignoredFiles, ChangesBrowserNode.IGNORED_FILES_TAG);
     }
     if (lockedFolders != null && !lockedFolders.isEmpty()) {
+      myFoldersCache.clear();
       buildVirtualFiles(lockedFolders, ChangesBrowserNode.LOCKED_FOLDERS_TAG);
     }
     if (logicallyLockedFiles != null && (! logicallyLockedFiles.isEmpty())) {
+      myFoldersCache.clear();
       buildLogicallyLockedFiles(logicallyLockedFiles);
     }
 
     if (!locallyDeletedFiles.isEmpty()) {
+      myFoldersCache.clear();
       ChangesBrowserNode locallyDeletedNode = ChangesBrowserNode.create(myProject, VcsBundle.message("changes.nodetitle.locally.deleted.files"));
       model.insertNodeInto(locallyDeletedNode, root, root.getChildCount());
       buildLocallyDeletedPaths(locallyDeletedFiles, locallyDeletedNode);
