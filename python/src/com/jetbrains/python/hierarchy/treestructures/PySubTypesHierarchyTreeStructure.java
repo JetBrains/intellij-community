@@ -3,6 +3,7 @@ package com.jetbrains.python.hierarchy.treestructures;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Query;
 import com.jetbrains.python.hierarchy.PyTypeHierarchyNodeDescriptor;
 import com.jetbrains.python.psi.PyClass;
@@ -37,6 +38,6 @@ public class PySubTypesHierarchyTreeStructure extends HierarchyTreeStructure {
       res.add(new PyTypeHierarchyNodeDescriptor(descriptor, cl, false));
     }
 
-    return res.toArray(new Object[res.size()]);
+    return ArrayUtil.toObjectArray(res);
   }
 }

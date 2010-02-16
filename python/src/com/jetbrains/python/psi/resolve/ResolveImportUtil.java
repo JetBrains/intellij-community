@@ -9,6 +9,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyNames;
@@ -689,7 +690,7 @@ public class ResolveImportUtil {
       }
     }
 
-    return variants.toArray(new Object[variants.size()]);
+    return ArrayUtil.toObjectArray(variants);
   }
 
   // adds variants found under given dir
