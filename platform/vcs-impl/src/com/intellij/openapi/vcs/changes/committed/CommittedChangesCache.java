@@ -549,6 +549,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
 
     for(ChangesCacheFile cache: caches) {
       try {
+        if (! cache.getVcs().isVcsBackgroundOperationsAllowed(cache.getRootPath().getVirtualFile())) continue;
         if (!cache.isEmpty()) {
           debug("Loading incoming changes for " + cache.getLocation());
           final List<CommittedChangeList> incomingChanges = cache.loadIncomingChanges();
