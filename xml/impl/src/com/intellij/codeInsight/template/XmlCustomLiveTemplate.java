@@ -42,6 +42,7 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
   private static final char MARKER = '$';
   private static final String ID = "id";
   private static final String CLASS = "class";
+  private static final String NUMBER_IN_ITERATION_PLACE_HOLDER = "$";
 
   private static enum MyState {
     OPERATION, WORD, AFTER_NUMBER, NUMBER
@@ -293,12 +294,12 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
   }
 
   @NotNull
-  private static String buildAttributesString(List<Pair<String, String>> attribute2value) {
+  private static String buildAttributesString(List<Pair<String, String>> attribute2value, int numberInIteration) {
     StringBuilder result = new StringBuilder();
     for (Iterator<Pair<String, String>> it = attribute2value.iterator(); it.hasNext();) {
       Pair<String, String> pair = it.next();
       String name = pair.first;
-      String value = pair.second;
+      String value = pair.second.replace(NUMBER_IN_ITERATION_PLACE_HOLDER, Integer.toString(numberInIteration + 1));
       result.append(name).append("=\"").append(value).append('"');
       if (it.hasNext()) {
         result.append(' ');
@@ -309,8 +310,9 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
 
   private static boolean invokeTemplate(MyTemplateToken token,
                                         final CustomTemplateCallback callback,
-                                        final TemplateInvokationListener listener) {
-    String attributes = buildAttributesString(token.myAttribute2Value);
+                                        final TemplateInvokationListener listener,
+                                        int numberInIteration) {
+    String attributes = buildAttributesString(token.myAttribute2Value, numberInIteration);
     attributes = attributes.length() > 0 ? ' ' + attributes : null;
     Map<String, String> predefinedValues = null;
     if (attributes != null) {
@@ -503,7 +505,7 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
                       }
                     }
                   };
-                  if (!invokeTemplate(templateToken, myCallback, listener)) {
+                  if (!invokeTemplate(templateToken, myCallback, listener, -1)) {
                     return false;
                   }
                   templateToken = null;
@@ -545,13 +547,13 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
             if (token instanceof MyMarkerToken || token instanceof MyOperationToken) {
               char sign = token instanceof MyOperationToken ? ((MyOperationToken)token).mySign : MARKER;
               if (sign == MARKER || sign == '+') {
-                if (!invokeTemplateSeveralTimes(templateToken, number, finalI)) {
+                if (!invokeTemplateSeveralTimes(templateToken, 0, number, finalI)) {
                   return false;
                 }
                 templateToken = null;
               }
               else if (number > 1) {
-                return invokeTemplateAndProcessTail(templateToken, i + 1, number);
+                return invokeTemplateAndProcessTail(templateToken, 0, number, i + 1);
               }
               else {
                 assert number == 1;
@@ -584,16 +586,19 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
           }
         }
       };
-      if (!invokeTemplate(templateToken, myCallback, listener)) {
+      if (!invokeTemplate(templateToken, myCallback, listener, -1)) {
         return false;
       }
       return true;
     }
 
-    private boolean invokeTemplateSeveralTimes(final MyTemplateToken templateToken, final int count, final int index) {
+    private boolean invokeTemplateSeveralTimes(final MyTemplateToken templateToken,
+                                               final int startIndex,
+                                               final int count,
+                                               final int globalIndex) {
       final Object key = new Object();
       myCallback.fixStartOfTemplate(key);
-      for (int i = 0; i < count; i++) {
+      for (int i = startIndex; i < count; i++) {
         final int finalI = i;
         TemplateInvokationListener listener = new TemplateInvokationListener() {
           public void finished(boolean inSeparateEvent) {
@@ -601,27 +606,29 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
             fixEndOffset();
             myCallback.gotoEndOfTemplate(key);
             if (inSeparateEvent) {
-              int newCount = count - finalI - 1;
-              if (newCount > 0) {
-                invokeTemplateSeveralTimes(templateToken, newCount, index);
+              if (finalI + 1 < count) {
+                invokeTemplateSeveralTimes(templateToken, finalI + 1, count, globalIndex);
               }
               else {
-                invoke(index + 1);
+                invoke(globalIndex + 1);
               }
             }
           }
         };
-        if (!invokeTemplate(templateToken, myCallback, listener)) {
+        if (!invokeTemplate(templateToken, myCallback, listener, i)) {
           return false;
         }
       }
       return true;
     }
 
-    private boolean invokeTemplateAndProcessTail(final MyTemplateToken templateToken, final int tailStart, final int count) {
+    private boolean invokeTemplateAndProcessTail(final MyTemplateToken templateToken,
+                                                 final int startIndex,
+                                                 final int count,
+                                                 final int tailStart) {
       final Object key = new Object();
       myCallback.fixStartOfTemplate(key);
-      for (int i = 0; i < count; i++) {
+      for (int i = startIndex; i < count; i++) {
         final int finalI = i;
         final boolean[] flag = new boolean[]{false};
         TemplateInvokationListener listener = new TemplateInvokationListener() {
@@ -632,13 +639,13 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
                 fixEndOffset();
                 myCallback.gotoEndOfTemplate(key);
                 if (inSeparateEvent) {
-                  invokeTemplateAndProcessTail(templateToken, tailStart, count - finalI - 1);
+                  invokeTemplateAndProcessTail(templateToken, finalI + 1, count, tailStart);
                 }
               }
             });
             if (interpreter.invoke(tailStart)) {
               if (inSeparateEvent) {
-                invokeTemplateAndProcessTail(templateToken, tailStart, count - finalI - 1);
+                invokeTemplateAndProcessTail(templateToken, finalI + 1, count, tailStart);
               }
             }
             else {
@@ -646,7 +653,7 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
             }
           }
         };
-        if (!invokeTemplate(templateToken, myCallback, listener) || flag[0]) {
+        if (!invokeTemplate(templateToken, myCallback, listener, i) || flag[0]) {
           return false;
         }
       }
