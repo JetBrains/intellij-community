@@ -29,10 +29,15 @@ public class PythonMockSdk {
   }
 
   public static Sdk create() {
-    String sdkHome = new File(PathManager.getHomePath(), "python/lib").getPath();
+    String sdkHome = new File(PathManager.getHomePath(), "python/lib/mock_interpreter").getPath();
     SdkType sdkType = PythonSdkType.getInstance();
 
-    final Sdk sdk = new ProjectJdkImpl(MOCK_SDK_NAME, sdkType);
+    final Sdk sdk = new ProjectJdkImpl(MOCK_SDK_NAME, sdkType) {
+      @Override
+      public String getVersionString() {
+        return "Jython 2.5 Mock SDK"; // TODO: implement language level here
+      }
+    };
     final SdkModificator sdkModificator = sdk.getSdkModificator();
     sdkModificator.setHomePath(sdkHome);
     PythonSdkType.setupSdkPaths(sdkModificator, null);

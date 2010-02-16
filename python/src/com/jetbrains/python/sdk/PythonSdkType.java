@@ -1,14 +1,13 @@
 package com.jetbrains.python.sdk;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetConfiguration;
 import com.intellij.facet.FacetManager;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -35,6 +34,7 @@ import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.facet.PythonFacetSettings;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.sun.tools.javac.resources.version;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -44,6 +44,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.TreeSet;
@@ -57,6 +58,8 @@ import static com.jetbrains.python.psi.PyUtil.sure;
 public class PythonSdkType extends SdkType {
   private static final Logger LOG = Logger.getInstance("#" + PythonSdkType.class.getName());
   private static final String[] WINDOWS_EXECUTABLE_SUFFIXES = new String[]{"cmd", "exe", "bat", "com"};
+
+  static final int RUN_TIMEOUT = 10 * 1000; // 10 seconds per script invocation is plenty enough; anything more is clearly wrong.
 
   public static PythonSdkType getInstance() {
     return SdkType.findInstance(PythonSdkType.class);
@@ -393,6 +396,9 @@ public class PythonSdkType extends SdkType {
   public static final OrderRootType BUILTIN_ROOT_TYPE = OrderRootType.CLASSES;
 
   public static void setupSdkPaths(SdkModificator sdkModificator, ProgressIndicator indicator) {
+    Application application = ApplicationManager.getApplication();
+    boolean not_in_unit_test_mode = (application != null && !application.isUnitTestMode());
+
     String bin_path = getInterpreterPath(sdkModificator.getHomePath());
     assert bin_path != null;
     String working_dir = new File(bin_path).getParent();
@@ -430,7 +436,7 @@ public class PythonSdkType extends SdkType {
         indicator.setText("Generating skeletons of __builtins__");
         indicator.setText2("");
       }
-      generateBuiltinStubs(bin_path, stubs_path);
+      if (not_in_unit_test_mode) generateBuiltinStubs(bin_path, stubs_path);
       sdkModificator.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByPath(stubs_path), BUILTIN_ROOT_TYPE);
     }
     // Add python-django installed as package in Linux
@@ -442,39 +448,49 @@ public class PythonSdkType extends SdkType {
       }
     }
 
-    // regenerate stubs, existing or not
-    final File stubs_dir = new File(stubs_path);
-    if (!stubs_dir.exists()) stubs_dir.mkdirs();
-    generateBinaryStubs(bin_path, stubs_path, indicator);
+    if (not_in_unit_test_mode) {
+      // regenerate stubs, existing or not
+      final File stubs_dir = new File(stubs_path);
+      if (!stubs_dir.exists()) stubs_dir.mkdirs();
+      generateBinaryStubs(bin_path, stubs_path, indicator);
+    }
   }
 
   private static List<String> getSysPath(String sdk_path, String bin_path) {
-    @NonNls String script = // a script printing sys.path
-      "import sys\n" +
-      "import os.path\n" +
-      "for x in sys.path:\n" +
-      "  if x != os.path.dirname(sys.argv [0]): sys.stdout.write(x+chr(10))"
-    ;
-    try {
-      final File scriptFile = File.createTempFile("script", ".py");
+    Application application = ApplicationManager.getApplication();
+    if (application != null && !application.isUnitTestMode()) {
+      @NonNls String script = // a script printing sys.path
+        "import sys\n" +
+        "import os.path\n" +
+        "for x in sys.path:\n" +
+        "  if x != os.path.dirname(sys.argv [0]): sys.stdout.write(x+chr(10))"
+        ;
       try {
-        PrintStream out = new PrintStream(scriptFile);
+        final File scriptFile = File.createTempFile("script", ".py");
         try {
-          out.print(script);
+          PrintStream out = new PrintStream(scriptFile);
+          try {
+            out.print(script);
+          }
+          finally {
+            out.close();
+          }
+          String[] add_environment = getVirtualEnvAdditionalEnv(bin_path);
+          return SdkUtil.getProcessOutput(sdk_path, new String[]{bin_path, scriptFile.getPath()}, add_environment, RUN_TIMEOUT).getStdoutLines();
         }
         finally {
-          out.close();
+          FileUtil.delete(scriptFile);
         }
-        String[] add_environment = getVirtualEnvAdditionalEnv(bin_path);
-        return SdkUtil.getProcessOutput(sdk_path, new String[]{bin_path, scriptFile.getPath()}, add_environment, 10*1000).getStdoutLines();
       }
-      finally {
-        FileUtil.delete(scriptFile);
+      catch (IOException e) {
+        LOG.info(e);
+        return Collections.emptyList();
       }
     }
-    catch (IOException e) {
-      LOG.info(e);
-      return Collections.emptyList();
+    else { // mock sdk
+      List<String> ret = new ArrayList<String>(1);
+      ret.add(sdk_path);
+      return ret;
     }
   }
 
@@ -537,8 +553,7 @@ public class PythonSdkType extends SdkType {
         "-b", // for builtins
         "-u", // for update-only mode
       },
-      getVirtualEnvAdditionalEnv(binary_path),
-      10*1000
+      getVirtualEnvAdditionalEnv(binary_path), RUN_TIMEOUT
     );
     if (run_result.getExitCode() != 0) {
       LOG.error(run_result.getStderr());
@@ -557,7 +572,6 @@ public class PythonSdkType extends SdkType {
     if (indicator != null) {
       indicator.setText("Generating skeletons of binary libs");
     }
-    final int RUN_TIMEOUT = 10 * 1000; // 10 seconds per call is plenty enough; anything more is clearly wrong.
     final String parent_dir = new File(binaryPath).getParent();
 
     final ProcessOutput run_result = SdkUtil.getProcessOutput(parent_dir,
