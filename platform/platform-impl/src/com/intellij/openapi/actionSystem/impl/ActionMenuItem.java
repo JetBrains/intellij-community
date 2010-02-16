@@ -47,8 +47,8 @@ public class ActionMenuItem extends JMenuItem {
   private final AnAction myAction;
   private final Presentation myPresentation;
   private final String myPlace;
-  private final DataContext myContext;
-  private final AnActionEvent myEvent;
+  private DataContext myContext;
+  private AnActionEvent myEvent;
   private MenuItemSynchronizer myMenuItemSynchronizer;
   private boolean myEnableMnemonics;
 
@@ -181,6 +181,11 @@ public class ActionMenuItem extends JMenuItem {
 
   public String getFirstShortcutText() {
     return KeymapUtil.getFirstKeyboardShortcutText(myAction);
+  }
+
+  public void updateContext(DataContext context) {
+    myContext = context;
+    myEvent = new AnActionEvent(null, context, myPlace, myPresentation, ActionManager.getInstance(), 0);
   }
 
   private final class ActionTransmitter implements ActionListener {

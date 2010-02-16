@@ -100,6 +100,13 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
     }
   }
 
+  public boolean haveStoredCredentials(final String kind, final SVNURL url, final String realm, final SVNErrorMessage errorMessage,
+                                                         final SVNAuthentication previousAuth) {
+    final SVNAuthentication result =
+      myPersistentAuthenticationProviderProxy.requestClientAuthentication(kind, url, realm, errorMessage, previousAuth, false);
+    return result != null;
+  }
+
   public ISVNProxyManager getProxyManager(SVNURL url) throws SVNException {
     // this code taken from default manager (changed for system properties reading)
       String host = url.getHost();
