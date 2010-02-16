@@ -148,8 +148,6 @@ public class CodeFormatterFacade {
         try {
           ranges.preprocess(file.getNode());
           FormattingModel originalModel = builder.createModel(file, mySettings);
-          FormattingModelDumper.dumpFormattingModel(originalModel.getRootBlock(), 2, System.out);
-          System.out.println("Ranges: " + ranges);
           Project project = file.getProject();
           final FormattingModel model = new DocumentBasedFormattingModel(originalModel.getRootBlock(),
             PsiDocumentManager.getInstance(project).getDocument(file),
