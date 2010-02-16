@@ -103,7 +103,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         return todoPattern;
       }
     }
-    LOG.assertTrue(false, "Could not find matching TODO pattern for index pattern " + pattern.getPatternString());
+    LOG.error("Could not find matching TODO pattern for index pattern " + pattern.getPatternString());
     return null;
   }
 

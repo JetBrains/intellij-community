@@ -436,7 +436,7 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
       }
     }
     else {
-      LOG.assertTrue(false, "Wrong element type: " + original.getElementType());
+      LOG.error("Wrong element type: " + original.getElementType());
     }
   }
 

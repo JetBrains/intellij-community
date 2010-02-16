@@ -245,7 +245,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
   @SuppressWarnings({"HardCodedStringLiteral"})
   protected void commitVM(VirtualMachine vm) {
     if (!isInInitialState()) {
-      LOG.assertTrue(false, "State is invalid " + myState.get());
+      LOG.error("State is invalid " + myState.get());
     }
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myPositionManager = createPositionManager();

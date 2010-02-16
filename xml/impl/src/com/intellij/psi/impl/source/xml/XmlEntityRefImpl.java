@@ -25,6 +25,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.XmlUtil;
@@ -207,7 +208,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
         }
       }
 
-      return new CachedValueProvider.Result<XmlEntityDecl>(result[0], deps.toArray(new Object[deps.size()]));
+      return new CachedValueProvider.Result<XmlEntityDecl>(result[0], ArrayUtil.toObjectArray(deps));
     }
     finally {
       targetElement.putUserData(EVALUATION_IN_PROCESS, null);

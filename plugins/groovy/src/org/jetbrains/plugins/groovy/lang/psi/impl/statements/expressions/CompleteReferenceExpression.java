@@ -94,12 +94,12 @@ public class CompleteReferenceExpression {
           variantList.add(variant);
         }
 
-        propertyVariants = variantList.toArray(new Object[variantList.size()]);
+        propertyVariants = ArrayUtil.toObjectArray(variantList);
       }
     }
 
     propertyVariants =
-      ArrayUtil.mergeArrays(propertyVariants, namedArgsVariants.toArray(new Object[namedArgsVariants.size()]), Object.class);
+      ArrayUtil.mergeArrays(propertyVariants, ArrayUtil.toObjectArray(namedArgsVariants), Object.class);
 
     if (refExpr.getKind() == GrReferenceExpressionImpl.Kind.TYPE_OR_PROPERTY) {
       ResolverProcessor classVariantsCollector = CompletionProcessor.createClassCompletionProcessor(refExpr);

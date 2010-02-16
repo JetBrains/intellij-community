@@ -193,7 +193,7 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
         message += "\n     contentsText:\n" + getContents().toString();
         message += "\n     jspText:\n" + getPsi(getBaseLanguage()).getNode().getText();
       }
-      LOG.assertTrue(false, message);
+      LOG.error(message);
       assert false;
     }
   }

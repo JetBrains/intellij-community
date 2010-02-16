@@ -126,7 +126,7 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
 
     switch (context) {
       default :
-        LOG.assertTrue(false, "Entity: " + getName() + " context: " + context);
+        LOG.error("Entity: " + getName() + " context: " + context);
         return null;
 
       case CONTEXT_ELEMENT_CONTENT_SPEC:

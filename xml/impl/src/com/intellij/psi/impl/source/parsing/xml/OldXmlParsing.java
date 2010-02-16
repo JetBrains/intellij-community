@@ -938,7 +938,7 @@ public class OldXmlParsing implements XmlElementType {
 
         IElementType type = lexer.getTokenType();
         if (!XML_WHITE_SPACE_OR_COMMENT_BIT_SET.contains(type)) {
-          LOG.assertTrue(false, "Missed token should be white space or comment:" + type);
+          LOG.error("Missed token should be white space or comment:" + type);
           throw new RuntimeException();
         }
 

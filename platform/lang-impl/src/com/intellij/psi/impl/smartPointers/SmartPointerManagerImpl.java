@@ -126,7 +126,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   @NotNull
   public <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(E element) {
     if (!element.isValid()) {
-      LOG.assertTrue(false, "Invalid element:" + element);
+      LOG.error("Invalid element:" + element);
     }
 
     PsiFile file = element.getContainingFile();

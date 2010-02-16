@@ -209,9 +209,8 @@ public class GridDropLocation implements ComponentDropLocation {
 
       RadComponent old = container.findComponentInRect(row + relativeRow, column + relativeCol, rowSpan, colSpan);
       if (old != null) {
-        LOG.assertTrue(false,
-                       "Drop rectangle not empty: (" + (row + relativeRow) + ", " + (column + relativeCol)
-                       + ", " + rowSpan + ", " + colSpan + "), component ID=" + old.getId());
+        LOG.error("Drop rectangle not empty: (" + (row + relativeRow) + ", " + (column + relativeCol) + ", " + rowSpan + ", " + colSpan +
+                  "), component ID=" + old.getId());
       }
 
       final GridConstraints constraints = c.getConstraints();

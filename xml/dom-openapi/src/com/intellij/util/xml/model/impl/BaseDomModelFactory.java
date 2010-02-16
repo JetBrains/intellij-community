@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.ModelMerger;
@@ -91,7 +92,7 @@ public abstract class BaseDomModelFactory<S extends UserDataHolder, T extends Do
     if (scope != null) {
       dependencies.add(ProjectRootManager.getInstance(getProject()));
     }
-    return dependencies.toArray(new Object[dependencies.size()]);
+    return ArrayUtil.toObjectArray(dependencies);
   }
 
   @Nullable

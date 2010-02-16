@@ -99,7 +99,7 @@ public class Utils{
       AnAction child = children[i];
       if (child == null) {
         String groupId = ActionManager.getInstance().getId(group);
-        LOG.assertTrue(false, "action is null: i=" + i + " group=" + group + " group id=" + groupId);
+        LOG.error("action is null: i=" + i + " group=" + group + " group id=" + groupId);
         continue;
       }
 

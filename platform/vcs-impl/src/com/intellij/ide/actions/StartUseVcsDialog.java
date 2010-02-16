@@ -19,6 +19,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -113,7 +114,7 @@ public class StartUseVcsDialog extends DialogWrapper {
     keys.add("");
     keys.addAll(displayNames);
     Collections.sort(keys);
-    return keys.toArray(new Object[keys.size()]);
+    return ArrayUtil.toObjectArray(keys);
   }
 
   private static class VcsCombo extends JComboBox {

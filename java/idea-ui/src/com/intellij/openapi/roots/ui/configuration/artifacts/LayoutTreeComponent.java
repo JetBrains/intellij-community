@@ -44,6 +44,7 @@ import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTreeBuilder;
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
 import com.intellij.ui.treeStructure.WeightBasedComparator;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -288,7 +289,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     myBuilder.addSubtreeToUpdate(treeNode, new Runnable() {
       public void run() {
         List<PackagingElementNode<?>> nodes = myTree.findNodes(toSelect);
-        myBuilder.select(nodes.toArray(new Object[nodes.size()]), null);
+        myBuilder.select(ArrayUtil.toObjectArray(nodes), null);
       }
     });
   }

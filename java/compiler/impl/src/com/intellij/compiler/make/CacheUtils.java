@@ -47,7 +47,7 @@ public class CacheUtils {
     String descriptor = symbolTable.getSymbol(methodDeclarationId.getDescriptor());
     int endIndex = descriptor.indexOf(')');
     if (endIndex <= 0) {
-      LOG.assertTrue(false, "Corrupted method descriptor: "+descriptor);
+      LOG.error("Corrupted method descriptor: " + descriptor);
     }
     return parseSignature(descriptor.substring(1, endIndex));
   }

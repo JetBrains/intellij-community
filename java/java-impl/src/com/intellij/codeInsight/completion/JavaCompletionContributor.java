@@ -222,12 +222,11 @@ public class JavaCompletionContributor extends CompletionContributor {
 
             final Object[] variants = reference.getVariants();
             if (variants == null) {
-              LOG.assertTrue(false, "Reference=" + reference);
+              LOG.error("Reference=" + reference);
             }
             for (Object completion : variants) {
               if (completion == null) {
-                LOG.assertTrue(false, "Position=" + insertedElement + "\n;Reference=" + reference + "\n;variants=" + Arrays.toString(
-                  variants));
+                LOG.error("Position=" + insertedElement + "\n;Reference=" + reference + "\n;variants=" + Arrays.toString(variants));
               }
               if (completion instanceof LookupElement) {
                 result.addElement((LookupElement)completion);

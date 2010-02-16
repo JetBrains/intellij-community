@@ -186,7 +186,7 @@ public class ClassInstanceScanner extends DelegatingClassReferenceVisitor {
       visitor.visitReadUsage(expression, null, referencedElement);
     }
     else {
-      LOG.assertTrue(false, "Unknown variation of class instance usage");
+      LOG.error("Unknown variation of class instance usage");
     }
   }
 

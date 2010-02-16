@@ -440,7 +440,7 @@ public class SSHMain {
       database.addHostkeys(knownHostFile);
     }
     final List<String> algorithms = myHost.getHostKeyAlgorithms();
-    c.setServerHostKeyAlgorithms(algorithms.toArray(new String[algorithms.size()]));
+    c.setServerHostKeyAlgorithms(ArrayUtil.toStringArray(algorithms));
   }
 
   /**
@@ -520,7 +520,7 @@ public class SSHMain {
         return rc;
       }
       else {
-        return result.toArray(new String[result.size()]);
+        return ArrayUtil.toStringArray(result);
       }
     }
   }

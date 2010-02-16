@@ -171,8 +171,7 @@ public class PendingEventDispatcher <T extends EventListener> {
   private void dispatch(Method method, Object[] args) {
     assertDispatchThread();
     if(myCurrentDispatchMethod != null) {
-      LOG.assertTrue(false,
-                     "Event cannot be raised when dispatching another event is in progress. Dispatching " + myCurrentDispatchMethod.getName());
+      LOG.error("Event cannot be raised when dispatching another event is in progress. Dispatching " + myCurrentDispatchMethod.getName());
     }
 
     method.setAccessible(true);

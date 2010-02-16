@@ -266,7 +266,7 @@ public class FileReferenceSet {
   private PsiFile getContainingFile() {
     PsiFile file = myElement.getContainingFile();
     if (file == null) {
-      LOG.assertTrue(false, "Invalid element: " + myElement);
+      LOG.error("Invalid element: " + myElement);
     }
 
     return file.getOriginalFile();

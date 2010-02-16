@@ -243,7 +243,7 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
   protected <T> T findNotNullChildByClass(Class<T> aClass) {
     final T child = findChildByClass(aClass);
     if (child == null) {
-      LOG.assertTrue(false, getText() + "\n parent=" + getParent().getText());
+      LOG.error(getText() + "\n parent=" + getParent().getText());
     }
     return child;
   }

@@ -33,7 +33,7 @@ public class InputObjectRegistry {
   public TestProxy getByKey(final String key) {
     final TestProxy result = myKnownObjects.get(key);
     if (result == null) {
-      LOG.assertTrue(false, "Unknwon key: " + key);
+      LOG.error("Unknwon key: " + key);
       LOG.info("Known keys:");
       final ArrayList<String> knownKeys = new ArrayList<String>(myKnownObjects.keySet());
       Collections.sort(knownKeys);

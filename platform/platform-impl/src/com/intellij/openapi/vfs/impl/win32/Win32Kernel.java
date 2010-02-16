@@ -58,7 +58,7 @@ public class Win32Kernel {
       names.add(info.name);
     }
 
-    return names.toArray(new String[names.size()]);
+    return ArrayUtil.toStringArray(names);
   }
 
   public boolean exists(String path) {
