@@ -95,8 +95,11 @@ public class ControlFlowUtil {
                                             TObjectIntHashMap<String> namesIndex,
                                             int[] postorder,
                                             int[] invpostorder) {
+    //skip instructions that are not reachable from the start
+    int start = 0;
+    while (invpostorder[start] != 0) start++;
 
-    for (int i = 0; i < flow.length; i++) {
+    for (int i = start; i < flow.length; i++) {
       int j = invpostorder[i];
       Instruction curr = flow[j];
       if (curr instanceof ReadWriteVariableInstruction) {
