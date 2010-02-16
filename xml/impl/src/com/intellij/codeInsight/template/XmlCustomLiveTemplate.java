@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,9 +55,9 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
 
   private static class MyTemplateToken extends MyToken {
     final String myKey;
-    final Map<String, String> myAttribute2Value;
+    final List<Pair<String, String>> myAttribute2Value;
 
-    MyTemplateToken(String key, Map<String, String> attribute2value) {
+    MyTemplateToken(String key, List<Pair<String, String>> attribute2value) {
       myKey = key;
       myAttribute2Value = attribute2value;
     }
@@ -113,11 +114,13 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
   @Nullable
   private static MyTemplateToken parseSelectors(@NotNull String text) {
     String templateKey = null;
-    Map<String, String> attribute2value = new HashMap<String, String>();
+    List<Pair<String, String>> attributes = new ArrayList<Pair<String, String>>();
+    Set<String> definedAttrs = new HashSet<String>();
     final List<String> classes = new ArrayList<String>();
     StringBuilder builder = new StringBuilder();
     char lastDelim = 0;
     text += MARKER;
+    int classAttrPosition = -1;
     for (int i = 0, n = text.length(); i < n; i++) {
       char c = text.charAt(i);
       if (c == '#' || c == '.' || c == '[' || c == ']' || i == n - 1) {
@@ -127,15 +130,19 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
               templateKey = builder.toString();
               break;
             case '#':
-              attribute2value.put(ID, builder.toString());
-              break;
-            case '.':
-              if (builder.length() > 0) {
-                classes.add(builder.toString());
-              }
-              else {
+              if (!definedAttrs.add(ID)) {
                 return null;
               }
+              attributes.add(new Pair<String, String>(ID, builder.toString()));
+              break;
+            case '.':
+              if (builder.length() <= 0) {
+                return null;
+              }
+              if (classAttrPosition < 0) {
+                classAttrPosition = attributes.size();
+              }
+              classes.add(builder.toString());
               break;
             case ']':
               if (builder.length() > 0) {
@@ -151,10 +158,10 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
         }
         else {
           Pair<String, String> pair = parseAttrNameAndValue(builder.toString());
-          if (pair == null || attribute2value.containsKey(pair.first)) {
+          if (pair == null || !definedAttrs.add(pair.first)) {
             return null;
           }
-          attribute2value.put(pair.first, pair.second);
+          attributes.add(pair);
         }
         lastDelim = c;
         builder = new StringBuilder();
@@ -164,7 +171,7 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
       }
     }
     if (classes.size() > 0) {
-      if (attribute2value.containsKey(CLASS)) {
+      if (definedAttrs.contains(CLASS)) {
         return null;
       }
       StringBuilder classesAttrValue = new StringBuilder();
@@ -174,9 +181,10 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
           classesAttrValue.append(' ');
         }
       }
-      attribute2value.put(CLASS, classesAttrValue.toString());
+      assert classAttrPosition >= 0;
+      attributes.add(classAttrPosition, new Pair<String, String>(CLASS, classesAttrValue.toString()));
     }
-    return new MyTemplateToken(templateKey, attribute2value);
+    return new MyTemplateToken(templateKey, attributes);
   }
 
   @Nullable
@@ -285,13 +293,12 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
   }
 
   @NotNull
-  private static String buildAttributesString(Map<String, String> attribute2value) {
+  private static String buildAttributesString(List<Pair<String, String>> attribute2value) {
     StringBuilder result = new StringBuilder();
-    Set<Map.Entry<String, String>> entries = attribute2value.entrySet();
-    for (Iterator<Map.Entry<String, String>> it = entries.iterator(); it.hasNext();) {
-      Map.Entry<String, String> entry = it.next();
-      String name = entry.getKey();
-      String value = entry.getValue();
+    for (Iterator<Pair<String, String>> it = attribute2value.iterator(); it.hasNext();) {
+      Pair<String, String> pair = it.next();
+      String name = pair.first;
+      String value = pair.second;
       result.append(name).append("=\"").append(value).append('"');
       if (it.hasNext()) {
         result.append(' ');
