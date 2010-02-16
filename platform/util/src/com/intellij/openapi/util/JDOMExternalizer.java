@@ -74,7 +74,7 @@ public class JDOMExternalizer {
     else {
       mapRoot = root;
     }
-    final String[] names = map.keySet().toArray(ArrayUtil.EMPTY_STRING_ARRAY);
+    final String[] names = ArrayUtil.toStringArray(map.keySet());
     Arrays.sort(names);
     for (String name : names) {
       @NonNls final Element element = new Element(entryName);

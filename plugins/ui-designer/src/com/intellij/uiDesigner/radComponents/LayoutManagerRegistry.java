@@ -61,7 +61,7 @@ public class LayoutManagerRegistry {
   }
 
   public static String[] getLayoutManagerNames() {
-    final String[] layoutManagerNames = ourLayoutManagerRegistry.keySet().toArray(ArrayUtil.EMPTY_STRING_ARRAY);
+    final String[] layoutManagerNames = ArrayUtil.toStringArray(ourLayoutManagerRegistry.keySet());
     Arrays.sort(layoutManagerNames);
     return layoutManagerNames;
   }

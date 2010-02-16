@@ -76,7 +76,7 @@ public class EditMavenPropertyDialog extends DialogWrapper {
   }
 
   private void fillAvailableProperties() {
-    String[] keys = myAvailableProperties.keySet().toArray(ArrayUtil.EMPTY_STRING_ARRAY);
+    String[] keys = ArrayUtil.toStringArray(myAvailableProperties.keySet());
     myNameBox.setModel(new DefaultComboBoxModel(keys));
   }
 

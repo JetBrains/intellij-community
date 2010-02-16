@@ -63,8 +63,9 @@ class RenameViewDescriptor implements UsageViewDescriptor{
     }
 
 
-    myProcessedElementsHeader = StringUtil.join(processedElementsHeaders.toArray(ArrayUtil.EMPTY_STRING_ARRAY),", ");
-    myCodeReferencesText =  RefactoringBundle.message("references.in.code.to.0", StringUtil.join(codeReferences.toArray(ArrayUtil.EMPTY_STRING_ARRAY), ", "));
+    myProcessedElementsHeader = StringUtil.join(ArrayUtil.toStringArray(processedElementsHeaders), ", ");
+    myCodeReferencesText =  RefactoringBundle.message("references.in.code.to.0", StringUtil.join(ArrayUtil.toStringArray(codeReferences),
+                                                                                                 ", "));
   }
 
   @NotNull
