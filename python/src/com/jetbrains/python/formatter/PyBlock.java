@@ -12,7 +12,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -28,15 +27,15 @@ import static com.jetbrains.python.psi.PyUtil.sure;
  * @author yole
  */
 public class PyBlock implements Block {
-  private final PythonLanguage myLanguage;
-  private final Alignment myAlignment;
-  private final Indent myIndent;
-  private final ASTNode myNode;
-  private final Wrap myWrap;
+  private final PythonLanguage _language;
+  private final Alignment _alignment;
+  private final Indent _indent;
+  private final ASTNode _node;
+  private final Wrap _wrap;
   private final CodeStyleSettings mySettings;
-  private List<Block> mySubBlocks = null;
-  private final Alignment myChildListAlignment;
-  private final TokenSet myListElementTypes;
+  private List<Block> _subBlocks = null;
+  private final Alignment _childListAlignment;
+  private final TokenSet _listElementTypes;
   private static final boolean DUMP_FORMATTING_BLOCKS = false;
 
   public PyBlock(PythonLanguage language,
@@ -45,47 +44,43 @@ public class PyBlock implements Block {
                  final Indent indent,
                  final Wrap wrap,
                  final CodeStyleSettings settings) {
-    myLanguage = language;
-    myAlignment = alignment;
-    myIndent = indent;
-    myNode = node;
-    myWrap = wrap;
+    _language = language;
+    _alignment = alignment;
+    _indent = indent;
+    _node = node;
+    _wrap = wrap;
     mySettings = settings;
-    myChildListAlignment = Alignment.createAlignment();
+    _childListAlignment = Alignment.createAlignment();
 
-    myListElementTypes = TokenSet.create(
-      PyElementTypes.LIST_LITERAL_EXPRESSION,
-      PyElementTypes.LIST_COMP_EXPRESSION,
-      PyElementTypes.DICT_LITERAL_EXPRESSION,
-      PyElementTypes.ARGUMENT_LIST,
-      PyElementTypes.PARAMETER_LIST
-    );
+    _listElementTypes = TokenSet.create(PyElementTypes.LIST_LITERAL_EXPRESSION, PyElementTypes.LIST_COMP_EXPRESSION,
+                                        PyElementTypes.DICT_LITERAL_EXPRESSION, PyElementTypes.ARGUMENT_LIST,
+                                        PyElementTypes.PARAMETER_LIST);
   }
 
   @NotNull
   public ASTNode getNode() {
-    return myNode;
+    return _node;
   }
 
   @NotNull
   public TextRange getTextRange() {
-    return myNode.getTextRange();
+    return _node.getTextRange();
   }
 
   @NotNull
   public List<Block> getSubBlocks() {
-    if (mySubBlocks == null) {
-      mySubBlocks = buildSubBlocks();
+    if (_subBlocks == null) {
+      _subBlocks = buildSubBlocks();
       if (DUMP_FORMATTING_BLOCKS) {
         dumpSubBlocks();
       }
     }
-    return new ArrayList<Block>(mySubBlocks);
+    return new ArrayList<Block>(_subBlocks);
   }
 
   private List<Block> buildSubBlocks() {
     List<Block> blocks = new ArrayList<Block>();
-    for (ASTNode child = myNode.getFirstChildNode(); child != null; child = child.getTreeNext()) {
+    for (ASTNode child = _node.getFirstChildNode(); child != null; child = child.getTreeNext()) {
 
       IElementType childType = child.getElementType();
 
@@ -109,7 +104,7 @@ public class PyBlock implements Block {
   }
 
   private PyBlock buildSubBlock(ASTNode child) {
-    IElementType parentType = myNode.getElementType();
+    IElementType parentType = _node.getElementType();
     IElementType childType = child.getElementType();
     Wrap wrap = null;
     Indent childIndent = Indent.getNoneIndent();
@@ -119,10 +114,10 @@ public class PyBlock implements Block {
         childIndent = Indent.getNormalIndent();
       }
     }
-    if (myListElementTypes.contains(parentType)) {
+    if (_listElementTypes.contains(parentType)) {
       wrap = Wrap.createWrap(WrapType.NORMAL, true);
       if (!PyTokenTypes.OPEN_BRACES.contains(childType) && !PyTokenTypes.CLOSE_BRACES.contains(childType)) {
-        childAlignment = myChildListAlignment;
+        childAlignment = _childListAlignment;
       }
     }
     if (parentType == PyElementTypes.LIST_LITERAL_EXPRESSION || parentType == PyElementTypes.ARGUMENT_LIST) {
@@ -131,15 +126,15 @@ public class PyBlock implements Block {
     try { // maybe enter was pressed and cut us from a previous (nested) statement list
       PsiElement prev = sure(child.getPsi().getPrevSibling());
       sure(prev instanceof PyStatement);
-      PsiElement last_child = PsiTreeUtil.getDeepestLast(prev);
-      sure(last_child.getParent() instanceof PyStatementList);
+      PsiElement lastchild = PsiTreeUtil.getDeepestLast(prev);
+      sure(lastchild.getParent() instanceof PyStatementList);
       childIndent = Indent.getNormalIndent();
     }
     catch (IncorrectOperationException ignored) {
       // not our cup of tea
     }
 
-    return new PyBlock(myLanguage, child, childAlignment, childIndent, wrap, mySettings);
+    return new PyBlock(_language, child, childAlignment, childIndent, wrap, mySettings);
   }
 
   private static boolean hasLineBreakBefore(ASTNode child) {
@@ -154,8 +149,8 @@ public class PyBlock implements Block {
   }
 
   private void dumpSubBlocks() {
-    System.out.println("Subblocks of " + myNode.getPsi() + ":");
-    for (Block block : mySubBlocks) {
+    System.out.println("Subblocks of " + _node.getPsi() + ":");
+    for (Block block : _subBlocks) {
       if (block instanceof PyBlock) {
         System.out.println("  " + ((PyBlock)block).getNode().getPsi().toString() + " " + block.getTextRange().getStartOffset() + ":" + block
             .getTextRange().getLength());
@@ -168,46 +163,31 @@ public class PyBlock implements Block {
 
   @Nullable
   public Wrap getWrap() {
-    return myWrap;
+    return _wrap;
   }
 
   @Nullable
   public Indent getIndent() {
-    assert myIndent != null;
-    return myIndent;
+    assert _indent != null;
+    return _indent;
   }
 
   @Nullable
   public Alignment getAlignment() {
-    return myAlignment;
+    return _alignment;
   }
 
   @Nullable
   public Spacing getSpacing(Block child1, Block child2) {
     ASTNode childNode1 = ((PyBlock)child1).getNode();
     ASTNode childNode2 = ((PyBlock)child2).getNode();
-    IElementType parentType = myNode.getElementType();
+    IElementType parentType = _node.getElementType();
     IElementType type1 = childNode1.getElementType();
     IElementType type2 = childNode2.getElementType();
 
     if (type1 == PyElementTypes.FUNCTION_DECLARATION) {
-      PyStatementList func_statement_list = ((PyFunction)(childNode1.getPsi())).getStatementList();
-      if (childNode2.getTreeParent().getPsi() == func_statement_list) {
-        // statements inside the list
-        int blankLines = mySettings.BLANK_LINES_AROUND_METHOD + 1;
-        return Spacing.createSpacing(0, 0, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
-      }
-      else if (func_statement_list.getStatements().length == 0) {
-        // misaligned statements intended for the list
-        Document doc = func_statement_list.getContainingFile().getViewProvider().getDocument();
-        if (doc != null) {
-          final int declaration_offset = childNode1.getStartOffset();
-          int line = doc.getLineNumber(declaration_offset);
-          int declaration_indent = declaration_offset - doc.getLineStartOffset(line);
-          final int indent_size = mySettings.getIndentSize(PythonFileType.INSTANCE) + declaration_indent;
-          return Spacing.createSpacing(indent_size, indent_size, 0, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
-        }
-      }
+      int blankLines = mySettings.BLANK_LINES_AROUND_METHOD + 1;
+      return Spacing.createSpacing(0, 0, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
     }
 
     if (isStatementOrDeclaration(type1) && isStatementOrDeclaration(type2)) {
@@ -248,11 +228,11 @@ public class PyBlock implements Block {
     int statementListsBelow = 0;
     if (newChildIndex > 0) {
       // always pass decision to a sane block from top level from file or definition
-      if (myNode.getPsi() instanceof PyFile || myNode.getElementType() == PyTokenTypes.COLON) {
+      if (_node.getPsi() instanceof PyFile || _node.getElementType() == PyTokenTypes.COLON) {
         return ChildAttributes.DELEGATE_TO_PREV_CHILD;
       }
       
-      PyBlock insertAfterBlock = (PyBlock)mySubBlocks.get(newChildIndex - 1);
+      PyBlock insertAfterBlock = (PyBlock)_subBlocks.get(newChildIndex - 1);
 
       ASTNode prevNode = insertAfterBlock.getNode();
       PsiElement prevElt = prevNode.getPsi();
@@ -275,7 +255,7 @@ public class PyBlock implements Block {
         else if (statementListsBelow > 0 && lastChild.getPsi() instanceof PsiErrorElement) {
           statementListsBelow++;
         }
-        if (myNode.getElementType() == PyElementTypes.STATEMENT_LIST && lastChild.getPsi() instanceof PsiErrorElement) {
+        if (_node.getElementType() == PyElementTypes.STATEMENT_LIST && lastChild.getPsi() instanceof PsiErrorElement) {
           return ChildAttributes.DELEGATE_TO_PREV_CHILD;
         }
         lastChild = getLastNonSpaceChild(lastChild, true);
@@ -291,13 +271,13 @@ public class PyBlock implements Block {
     // delegation sometimes causes NPEs in formatter core, so we calculate the
     // correct indent manually.
     if (statementListsBelow > 0) { // was 1... strange
-      int indent = mySettings.getIndentSize(myLanguage.getAssociatedFileType());
+      int indent = mySettings.getIndentSize(_language.getAssociatedFileType());
       return new ChildAttributes(Indent.getSpaceIndent(indent * statementListsBelow), null);
     }
 
     /*
     // it might be something like "def foo(): # comment" or "[1, # comment"; jump up to the real thing
-    if (myNode instanceof PsiComment || myNode instanceof PsiWhiteSpace) {
+    if (_node instanceof PsiComment || _node instanceof PsiWhiteSpace) {
       get
     }
     */
@@ -307,16 +287,16 @@ public class PyBlock implements Block {
   }
 
   private Alignment getChildAlignment() {
-    if (myListElementTypes.contains(myNode.getElementType())) {
-      return myChildListAlignment;
+    if (_listElementTypes.contains(_node.getElementType())) {
+      return _childListAlignment;
     }
     return null;
   }
 
   private Indent getChildIndent(int newChildIndex) {
-    ASTNode lastChild = getLastNonSpaceChild(myNode, false);
-    if (lastChild != null && lastChild.getElementType() == PyElementTypes.STATEMENT_LIST && mySubBlocks.size() >= newChildIndex) {
-      PyBlock insertAfterBlock = (PyBlock)mySubBlocks.get(newChildIndex - 1);
+    ASTNode lastChild = getLastNonSpaceChild(_node, false);
+    if (lastChild != null && lastChild.getElementType() == PyElementTypes.STATEMENT_LIST && _subBlocks.size() >= newChildIndex) {
+      PyBlock insertAfterBlock = (PyBlock)_subBlocks.get(newChildIndex - 1);
       ASTNode afterNode = insertAfterBlock.getNode();
 
 
@@ -373,7 +353,7 @@ public class PyBlock implements Block {
     }
 
     // constructs that imply indent for their children
-    if (myListElementTypes.contains(myNode.getElementType()) || myNode.getPsi() instanceof PyStatementPart) {
+    if (_listElementTypes.contains(_node.getElementType()) || _node.getPsi() instanceof PyStatementPart) {
       return Indent.getNormalIndent();
     }
 
@@ -391,7 +371,6 @@ public class PyBlock implements Block {
 */
   }
 
-  @Nullable
   private static ASTNode getLastNonSpaceChild(ASTNode node, boolean acceptError) {
     ASTNode lastChild = node.getLastChildNode();
     while (lastChild != null &&
@@ -402,7 +381,7 @@ public class PyBlock implements Block {
   }
 
   public boolean isIncomplete() {
-    ASTNode lastChild = getLastNonSpaceChild(myNode, false);
+    ASTNode lastChild = getLastNonSpaceChild(_node, false);
     if (lastChild != null && lastChild.getElementType() == PyElementTypes.STATEMENT_LIST) {
       // only multiline statement lists are considered incomplete
       ASTNode statementListPrev = lastChild.getTreePrev();
@@ -415,6 +394,6 @@ public class PyBlock implements Block {
   }
 
   public boolean isLeaf() {
-    return myNode.getFirstChildNode() == null;
+    return _node.getFirstChildNode() == null;
   }
 }
