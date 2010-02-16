@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -229,40 +228,37 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
   }
 
   private static boolean invokeTemplate(String key, final CustomTemplateCallback callback, final TemplateInvokationListener listener) {
-    if (callback.getFile().getFileType() instanceof HtmlFileType) {
-      String templateKey = null;
-      String id = null;
-      final List<String> classes = new ArrayList<String>();
-      StringBuilder builder = new StringBuilder();
-      char lastDelim = 0;
-      key += MARKER;
-      for (int i = 0, n = key.length(); i < n; i++) {
-        char c = key.charAt(i);
-        if (c == '#' || c == '.' || i == n - 1) {
-          switch (lastDelim) {
-            case 0:
-              templateKey = builder.toString();
-              break;
-            case '#':
-              id = builder.toString();
-              break;
-            case '.':
-              if (builder.length() > 0) {
-                classes.add(builder.toString());
-              }
-              break;
-          }
-          lastDelim = c;
-          builder = new StringBuilder();
+    String templateKey = null;
+    String id = null;
+    final List<String> classes = new ArrayList<String>();
+    StringBuilder builder = new StringBuilder();
+    char lastDelim = 0;
+    key += MARKER;
+    for (int i = 0, n = key.length(); i < n; i++) {
+      char c = key.charAt(i);
+      if (c == '#' || c == '.' || i == n - 1) {
+        switch (lastDelim) {
+          case 0:
+            templateKey = builder.toString();
+            break;
+          case '#':
+            id = builder.toString();
+            break;
+          case '.':
+            if (builder.length() > 0) {
+              classes.add(builder.toString());
+            }
+            break;
         }
-        else {
-          builder.append(c);
-        }
+        lastDelim = c;
+        builder = new StringBuilder();
       }
-      String attributes = buildAttributesString(id, classes);
-      return startTemplate(templateKey, callback, listener, attributes.length() > 0 ? ' ' + attributes : null);
+      else {
+        builder.append(c);
+      }
     }
-    return startTemplate(key, callback, listener, null);
+    String attributes = buildAttributesString(id, classes);
+    return startTemplate(templateKey, callback, listener, attributes.length() > 0 ? ' ' + attributes : null);
   }
 
   private static boolean startTemplate(String key,
