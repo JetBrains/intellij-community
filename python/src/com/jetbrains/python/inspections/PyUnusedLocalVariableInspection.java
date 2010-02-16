@@ -18,6 +18,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -136,6 +137,10 @@ public class PyUnusedLocalVariableInspection extends LocalInspectionTool {
         for (List<PsiElement> list : unusedMap.values()) {
           for (PsiElement element : list) {
             final String name = element.getText();
+            // Ignore unused self parameters as obligatory
+            if (PyPsiUtils.isMethodContext(element) && "self".equals(name)){
+              continue;
+            }
             if (element instanceof PyNamedParameter) {
               registerWarning(element, PyBundle.message("INSP.unused.locals.parameter.isnot.used", name));
             }
