@@ -3791,7 +3791,7 @@ public class AbstractTreeUi {
     private Map<NodeDescriptor, Boolean> myChanges = new HashMap<NodeDescriptor, Boolean>();
 
     LoadedChildren(Object[] elements) {
-      myElements = Arrays.asList(elements != null ? elements : new Object[0]);
+      myElements = Arrays.asList(elements != null ? elements : ArrayUtil.EMPTY_OBJECT_ARRAY);
     }
 
     void putDescriptor(Object element, NodeDescriptor descriptor, boolean isChanged) {

@@ -156,7 +156,7 @@ public class QuickfixUtil {
   public static String[] getArgumentsTypes(List<MyPair> listOfPairs) {
     final List<String> result = new ArrayList<String>();
 
-    if (listOfPairs == null) return new String[0];
+    if (listOfPairs == null) return ArrayUtil.EMPTY_STRING_ARRAY;
     for (MyPair listOfPair : listOfPairs) {
       String type = PsiTypesUtil.unboxIfPossible(listOfPair.second);
       result.add(type);

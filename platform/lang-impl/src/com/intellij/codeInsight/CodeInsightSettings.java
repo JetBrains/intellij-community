@@ -22,6 +22,7 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Property;
 import org.jdom.Element;
@@ -127,13 +128,11 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public boolean OPTIMIZE_IMPORTS_ON_THE_FLY = false;
   public boolean ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false;
 
-  @Property(surroundWithTag = false)
-  @AbstractCollection(
+  @Property(surroundWithTag = false) @AbstractCollection(
     surroundWithTag = false,
     elementTag = "EXCLUDED_PACKAGE",
-    elementValueAttribute = "NAME"
-  )
-  public String[] EXCLUDED_PACKAGES = new String[0];
+    elementValueAttribute = "NAME")
+  public String[] EXCLUDED_PACKAGES = ArrayUtil.EMPTY_STRING_ARRAY;
 
   public void loadState(final Element state) {
     try {

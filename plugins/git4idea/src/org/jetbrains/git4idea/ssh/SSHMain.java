@@ -16,6 +16,7 @@
 package org.jetbrains.git4idea.ssh;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.ArrayUtil;
 import com.trilead.ssh2.*;
 import com.trilead.ssh2.crypto.PEMDecoder;
 import git4idea.i18n.GitBundle;
@@ -501,7 +502,7 @@ public class SSHMain {
                                      final String[] prompt,
                                      final boolean[] echo) throws Exception {
       if (numPrompts == 0) {
-        return new String[0];
+        return ArrayUtil.EMPTY_STRING_ARRAY;
       }
       myPromptCount++;
       Vector<String> vPrompts = new Vector<String>(prompt.length);
