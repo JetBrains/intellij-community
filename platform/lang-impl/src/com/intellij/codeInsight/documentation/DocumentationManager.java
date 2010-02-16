@@ -69,8 +69,10 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 public class DocumentationManager {
   private static final String SHOW_DOCUMENTATION_IN_TOOL_WINDOW = "ShowDocumentationInToolWindow";
@@ -133,15 +135,19 @@ public class DocumentationManager {
     PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(element.getProject()) {
       public void updatePopup(Object lookupItemObject) {
         if (lookupItemObject instanceof PsiElement) {
-          doShowJavaDocInfo((PsiElement)lookupItemObject, true, false, this, original);
+          doShowJavaDocInfo((PsiElement)lookupItemObject, true, false, this, original, false);
         }
       }
     };
 
-    doShowJavaDocInfo(element, true, false, updateProcessor, original);
+    doShowJavaDocInfo(element, true, false, updateProcessor, original, false);
   }
 
   public void showJavaDocInfo(final Editor editor, @Nullable final PsiFile file, boolean requestFocus) {
+    showJavaDocInfo(editor, file, requestFocus, false);
+  }
+
+  private void showJavaDocInfo(final Editor editor, @Nullable final PsiFile file, boolean requestFocus, final boolean autoupdate) {
     myEditor = editor;
     final Project project = getProject(file);
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -181,7 +187,7 @@ public class DocumentationManager {
     final PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(project) {
       public void updatePopup(Object lookupIteObject) {
         if (lookupIteObject instanceof PsiElement) {
-          doShowJavaDocInfo((PsiElement)lookupIteObject, false, false, this, originalElement);
+          doShowJavaDocInfo((PsiElement)lookupIteObject, false, false, this, originalElement, autoupdate);
           return;
         }
 
@@ -207,43 +213,52 @@ public class DocumentationManager {
           }
         }
         else {
-          doShowJavaDocInfo(element, false, false, this, originalElement);
+          doShowJavaDocInfo(element, false, false, this, originalElement, autoupdate);
         }
       }
     };
 
-    doShowJavaDocInfo(element, false, requestFocus, updateProcessor, originalElement);
+    doShowJavaDocInfo(element, false, requestFocus, updateProcessor, originalElement, autoupdate);
   }
 
-  private void doShowJavaDocInfo(final PsiElement element, boolean heavyWeight, boolean requestFocus, PopupUpdateProcessor updateProcessor, final PsiElement originalElement) {
+  private void doShowJavaDocInfo(final PsiElement element, boolean heavyWeight, boolean requestFocus, PopupUpdateProcessor updateProcessor, final PsiElement originalElement, final boolean autoupdate) {
     Project project = getProject(element);
 
     if (myToolWindow == null && PropertiesComponent.getInstance().isTrueValue(SHOW_DOCUMENTATION_IN_TOOL_WINDOW)) {
-      createToolWindow(element, originalElement);
-    } else if (myToolWindow != null) {
+      createToolWindow(element, originalElement, true);
+      return;
+    }
+    else if (myToolWindow != null) {
       final Content content = myToolWindow.getContentManager().getSelectedContent();
       if (content != null) {
-        final DocumentationComponent component = (DocumentationComponent) content.getComponent();
+        final DocumentationComponent component = (DocumentationComponent)content.getComponent();
         if (component.getElement() != element) {
           content.setDisplayName(getTitle(element, true));
           fetchDocInfo(getDefaultCollector(element, originalElement), component, true);
+          if (!myToolWindow.isVisible()) myToolWindow.show(null);
+          return;
+        } else {
+          if (element != null && !autoupdate) {
+            restorePopupBehavior();
+          } else {
+            return;
+          }
         }
-
-        if (!myToolWindow.isVisible()) myToolWindow.show(null);
       }
-    } else {
-      final DocumentationComponent component = new DocumentationComponent(this);
-      Processor<JBPopup> pinCallback = new Processor<JBPopup>() {
-        public boolean process(JBPopup popup) {
-          createToolWindow(element, originalElement);
-          popup.cancel();
-          return false;
-        }
-      };
+    }
 
-      final List<Pair<ActionListener, KeyStroke>> actions = Collections.singletonList(Pair.<ActionListener, KeyStroke>create(new ActionListener() {
+    final DocumentationComponent component = new DocumentationComponent(this);
+    Processor<JBPopup> pinCallback = new Processor<JBPopup>() {
+      public boolean process(JBPopup popup) {
+        createToolWindow(element, originalElement, true);
+        popup.cancel();
+        return false;
+      }
+    };
+
+    final List<Pair<ActionListener, KeyStroke>> actions = Collections.singletonList(Pair.<ActionListener, KeyStroke>create(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          createToolWindow(element, originalElement);
+          createToolWindow(element, originalElement, false);
           final JBPopup hint = getDocInfoHint();
           if (hint != null && hint.isVisible()) hint.cancel();
         }
@@ -300,10 +315,9 @@ public class DocumentationManager {
       if (fromQuickSearch()) {
         ((ChooseByNameBase.JPanelProvider)myPreviouslyFocused.getParent()).registerHint(hint);
       }
-    }
   }
 
-  private void createToolWindow(final PsiElement element, PsiElement originalElement) {
+  private void createToolWindow(final PsiElement element, PsiElement originalElement, final boolean automatic) {
     assert myToolWindow == null;
 
     final DocumentationComponent component = new DocumentationComponent(this, new AnAction[]{
@@ -348,6 +362,11 @@ public class DocumentationManager {
       @Override
       public void contentRemoved(ContentManagerEvent event) {
         if (contentManager.getContentCount() == 0) {
+          final JComponent c = event.getContent().getComponent();
+          if (c instanceof DocumentationComponent) {
+            Disposer.dispose((DocumentationComponent) c);
+          }
+          
           restorePopupBehavior();
         }
       }
@@ -383,13 +402,13 @@ public class DocumentationManager {
               if (injectedEditor != null) {
                 final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(injectedEditor, myProject);
                 if (psiFile != null) {
-                  showJavaDocInfo(injectedEditor, psiFile, false);
+                  showJavaDocInfo(injectedEditor, psiFile, false, true);
                   return;
                 }
               }
 
               if (file != null) {
-                showJavaDocInfo(editor, file, false);
+                showJavaDocInfo(editor, file, false, true);
               }
             }
           }
@@ -408,6 +427,15 @@ public class DocumentationManager {
   private void restorePopupBehavior() {
     if (myToolWindow != null) {
       PropertiesComponent.getInstance().setValue(SHOW_DOCUMENTATION_IN_TOOL_WINDOW, Boolean.FALSE.toString());
+
+      final Content[] contents = myToolWindow.getContentManager().getContents();
+      for (final Content content : contents) {
+        final JComponent c = content.getComponent();
+        if (c instanceof DocumentationComponent) {
+          Disposer.dispose((DocumentationComponent) c);
+        }
+      }
+
       ToolWindowManagerEx.getInstanceEx(myProject).unregisterToolWindow(ToolWindowId.DOCUMENTATION);
       myToolWindow = null;
       restartAutoUpdate(false);
