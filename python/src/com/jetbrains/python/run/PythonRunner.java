@@ -42,8 +42,8 @@ public class PythonRunner extends DefaultProgramRunner {
 
     ExecutionResult executionResult;
     RunProfile profile = env.getRunProfile();
-    if (state instanceof PythonCommandLineState && profile instanceof PythonRunConfiguration) {
-      executionResult = ((PythonCommandLineState)state).execute((PythonRunConfiguration)profile); // may patch env prior to run 
+    if (state instanceof PythonCommandLineState && profile instanceof CommandLinePatcher) {
+      executionResult = ((PythonCommandLineState)state).execute((CommandLinePatcher)profile);
     }
     else executionResult = state.execute(executor, this);
     if (executionResult == null) return null;

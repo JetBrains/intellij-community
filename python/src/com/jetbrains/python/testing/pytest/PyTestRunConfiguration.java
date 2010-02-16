@@ -75,16 +75,26 @@ public class PyTestRunConfiguration extends AbstractPythonRunConfiguration {
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
-    if (!new File(getRunnerScriptPath()).exists()) {
+    final String path = getRunnerScriptPath();
+    if (path == null || !new File(path).exists()) {
       throw new RuntimeConfigurationError("No py.test runner found in selected interpreter");
     }    
   }
 
   @Nullable
   public String getRunnerScriptPath() {
-    String sdkHome = getSdkHome();
-    String runnerExt = SystemInfo.isWindows ? ".exe" : "";
-    File runner = new File(sdkHome, "scripts/py.test" + runnerExt);
-    return runner.getPath();
+    // HACK -- current getSdkHome logic is somehow broken, because interpreter and its home are not linked
+    File bin_path = new File(getSdkHome()); // this is actually a binary path
+    final String PY_TEST = "py.test" + (SystemInfo.isWindows ? ".exe" : "");
+    // poke around and see if we got something like runner
+    File runner = null;
+    File bin_dir = bin_path.getParentFile();
+    runner = new File(bin_dir, PY_TEST);
+    if (runner.exists()) return runner.getPath();
+    runner = new File(new File(bin_dir, "scripts"), PY_TEST);
+    if (runner.exists()) return runner.getPath();
+    runner = new File(new File(bin_dir.getParentFile(), "scripts"), PY_TEST);
+    if (runner.exists()) return runner.getPath();
+    return null;
   }
 }

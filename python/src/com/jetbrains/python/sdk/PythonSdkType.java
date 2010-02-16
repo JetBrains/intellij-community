@@ -532,25 +532,6 @@ public class PythonSdkType extends SdkType {
     if (run_result.getExitCode() != 0) {
       LOG.error(run_result.getStderr());
     }
-    /*
-    GeneralCommandLine commandLine = new GeneralCommandLine();
-    commandLine.setExePath(binary_path);    // python
-    commandLine.addParameter(PythonHelpersLocator.getHelperPath(GENERATOR3));
-
-    commandLine.addParameter("-d");
-    commandLine.addParameter(stubsRoot); // -d stubs_root
-    commandLine.addParameter("-b"); // for builtins
-    commandLine.addParameter("-u"); // for update-only mode
-    try {
-      final OSProcessHandler handler = new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString());
-      handler.startNotify();
-      handler.waitFor();
-      handler.destroyProcess();
-    }
-    catch (ExecutionException e) {
-      LOG.error(e);
-    }
-    */
   }
 
   /**

@@ -27,7 +27,7 @@ import java.util.Map;
  * @author yole
  */
 public class PythonRunConfiguration extends AbstractPythonRunConfiguration 
-  implements AbstractPythonRunConfigurationParams, PythonRunConfigurationParams, CommandLinePatcher
+  implements AbstractPythonRunConfigurationParams, PythonRunConfigurationParams
 {
   private String myScriptName;
   private String myScriptParameters;
@@ -116,36 +116,4 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     target.setScriptParameters(source.getScriptParameters());
   }
 
-  /**
-   * Some setups (e.g. virtualenv) provide a script that alters environment variables before running a python interpreter or other tools.
-   * Such settings are not directly stored but applied right before running using this method.
-   * @param commandLine what to patch
-   */
-  public void patchCommandLine(GeneralCommandLine commandLine) {
-    // prepend virtualenv bin if it's not already on PATH
-    final String sdk_home = getSdkHome();
-    if (sdk_home != null) {
-      File virtualenv_root = PythonSdkType.getVirtualEnvRoot(sdk_home);
-      if (virtualenv_root != null) {
-        String virtualenv_bin = new File(virtualenv_root, "bin").getPath();
-        String path_value;
-        if (isPassParentEnvs()) {
-          // append to PATH
-          path_value = System.getenv("PATH");
-          if (path_value != null) path_value = virtualenv_bin + File.pathSeparator + path_value;
-          else path_value = virtualenv_bin;
-        }
-        else path_value = virtualenv_bin;
-        Map<String, String> new_env; // we need a copy lest we change config's map.
-        Map<String, String> cmd_env = commandLine.getEnvParams();
-        if (cmd_env != null) new_env = new HashMap<String, String>(cmd_env);
-        else new_env = new HashMap<String, String>();
-        String existing_path = new_env.get("PATH");
-        if (existing_path == null || existing_path.indexOf(virtualenv_bin) < 0) {
-          new_env.put("PATH", path_value);
-          commandLine.setEnvParams(new_env);
-        }
-      }
-    }
-  }
 }

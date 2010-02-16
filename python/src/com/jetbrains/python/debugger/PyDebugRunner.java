@@ -4,6 +4,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultDebugExecutor;
@@ -63,8 +64,11 @@ public class PyDebugRunner extends GenericProgramRunner {
           "--port", String.valueOf(serverSocket.getLocalPort()),
           "--file"
         };
+        // script name is the last parameter; all other params are for python interpreter; insert just before name
+        final ParametersList parameters_list = commandLine.getParametersList();
+        int parameter_offset = parameters_list.getList().size() - 1;
         for (int i = 0; i < args.length; i++) {
-          commandLine.getParametersList().addAt(i, args[i]);
+          parameters_list.addAt(i + parameter_offset, args[i]);
         }
       }
     };
