@@ -1,23 +1,6 @@
-/*
- *  Copyright 2005 Pythonid Project
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS"; BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.ResolveState;
@@ -25,19 +8,15 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PsiCached;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.PyStatementList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 29.05.2005
- * Time: 16:39:47
- * To change this template use File | Settings | File Templates.
+ * @author yole
  */
 public class PyStatementListImpl extends PyElementImpl implements PyStatementList {
   public PyStatementListImpl(ASTNode astNode) {
@@ -92,7 +71,13 @@ public class PyStatementListImpl extends PyElementImpl implements PyStatementLis
   public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
     final PsiElement preprocessed = preprocessElement(element);
     if (preprocessed != null){
-      return super.add(preprocessed);
+      final PsiElement result = super.add(preprocessed.copy());
+      /*
+      if (result instanceof PyFunction) {
+        CodeStyleManager.getInstance(getManager()).adjustLineIndent(getContainingFile(), result.getTextRange());
+      }
+      */
+      return result;
     }
     return super.add(element);
   }
@@ -118,6 +103,7 @@ public class PyStatementListImpl extends PyElementImpl implements PyStatementLis
   @Nullable
   private PsiElement preprocessElement(PsiElement element) {
     if (element instanceof PsiWhiteSpace) return element;
-    return PyPsiUtils.preprocessElement(element);
+    return PyPsiUtils.removeIndentation(element);
+    //return element;
   }
 }

@@ -159,6 +159,7 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
   }
 
   public PsiElement replace(@NotNull PsiElement element) throws IncorrectOperationException {
+    /*
     PsiElement parent = getParent();
     if (parent != null) {
       return replacePyChild(this, element);
@@ -166,6 +167,8 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
     else {
       return super.replace(element);
     }
+    */
+    return super.replace(element);
   }
 
   public static PsiElement replacePyChild(final PyElement oldel, final PsiElement newel) throws IncorrectOperationException {

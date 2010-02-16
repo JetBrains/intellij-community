@@ -32,7 +32,7 @@ public class PyTokenSeparatorGenerator implements TokenSeparatorGenerator {
       final PsiElement leftPrevAncestor = PsiTreeUtil.findPrevParent(commonParent, left.getPsi());
       final PsiElement rightPrevAncestor = PsiTreeUtil.findPrevParent(commonParent, right.getPsi());
 
-      if (leftPrevAncestor instanceof PyFunction && rightPrevAncestor instanceof PyFunction) {
+      if (isStatementOrFunction(leftPrevAncestor) && isStatementOrFunction(rightPrevAncestor)) {
         int leftIndent = PyPsiUtils.getElementIndentation(leftPrevAncestor);
         int rightIndent = PyPsiUtils.getElementIndentation(rightPrevAncestor);
         int maxIndent = Math.max(leftIndent, rightIndent);
@@ -55,6 +55,10 @@ public class PyTokenSeparatorGenerator implements TokenSeparatorGenerator {
       return createSpace(manager);
     }
     return null;
+  }
+
+  private static boolean isStatementOrFunction(PsiElement element) {
+    return element instanceof PyFunction || element instanceof PyStatement;
   }
 
   private static ASTNode createSpace(PsiManager manager) {

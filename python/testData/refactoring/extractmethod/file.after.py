@@ -3,5 +3,5 @@ def bar(base_new, self_new):
     except AttributeError: pass
 
 def __init__(self):
-  for base in self__class__.__bases__:
-    bar(base, self)
+    for base in self__class__.__bases__:
+        bar(base, self)
