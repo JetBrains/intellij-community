@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.Nullable;
@@ -99,7 +100,7 @@ public class YAMLUtil {
   }
 
   public List<String> getAllKeys(final YAMLFile file){
-    return getAllKeys(file, new String[0]);
+    return getAllKeys(file, ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
   public List<String> getAllKeys(final YAMLFile file, final String[] key){
