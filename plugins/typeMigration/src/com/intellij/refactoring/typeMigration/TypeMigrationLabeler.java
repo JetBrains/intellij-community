@@ -450,7 +450,7 @@ public class TypeMigrationLabeler {
         return JavaPsiFacade.getElementFactory(resolved.getProject()).createType((PsiClass)resolved, PsiSubstitutor.EMPTY);
       }
     }
-    LOG.assertTrue(false, "should not happen: " + resolved.getClass());
+    LOG.error("should not happen: " + resolved.getClass());
     return null;
   }
 
