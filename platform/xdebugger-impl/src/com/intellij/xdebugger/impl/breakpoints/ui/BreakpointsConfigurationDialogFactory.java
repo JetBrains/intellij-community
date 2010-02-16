@@ -16,10 +16,12 @@
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.containers.ContainerUtil;
@@ -47,8 +49,7 @@ public class BreakpointsConfigurationDialogFactory {
   private static final @NonNls String BREAKPOINT_PANEL = "breakpoint_panel";
   private final Project myProject;
   private final List<BreakpointPanelProvider> myBreakpointPanelProviders;
-
-  private int myLastSelectedTabIndex = 0;
+  private int myLastSelectedTabIndex = -1;
 
   public static BreakpointsConfigurationDialogFactory getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, BreakpointsConfigurationDialogFactory.class);
@@ -116,7 +117,11 @@ public class BreakpointsConfigurationDialogFactory {
 
       JComponent contentComponent = null;
       if (myPanels.size() > 1) {
-        final TabbedPaneWrapper tabbedPane = new TabbedPaneWrapper(getDisposable());
+        final Disposable tabbedPaneDisposable = new Disposable() {
+          public void dispose() {
+          }
+        };
+        final TabbedPaneWrapper tabbedPane = new TabbedPaneWrapper(tabbedPaneDisposable);
         for (AbstractBreakpointPanel breakpointPanel : myPanels) {
           addPanel(breakpointPanel, tabbedPane);
         }
@@ -133,6 +138,7 @@ public class BreakpointsConfigurationDialogFactory {
         myDisposeActions.add(new Runnable() {
           public void run() {
             tabbedPane.removeChangeListener(tabPaneChangeListener);
+            Disposer.dispose(tabbedPaneDisposable);
           }
         });
 
@@ -140,7 +146,9 @@ public class BreakpointsConfigurationDialogFactory {
         contentComponent = tabbedPane.getComponent();
       }
       else if (myPanels.size() == 1) {
-        contentComponent = myPanels.get(0).getPanel();
+        final AbstractBreakpointPanel panel = myPanels.get(0);
+        setTitle(panel.getTabTitle());
+        contentComponent = panel.getPanel();
       }
 
       myPanel = new JPanel(new BorderLayout());
@@ -154,11 +162,8 @@ public class BreakpointsConfigurationDialogFactory {
           close(CANCEL_EXIT_CODE);
         }
       };
-      myPanel.registerKeyboardAction(
-        closeAction,
-        KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
-        JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT
-      );
+      myPanel.registerKeyboardAction(closeAction, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
+                                     JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
       myPanel.setPreferredSize(new Dimension(600, 500));
       return myPanel;
     }
@@ -216,6 +221,9 @@ public class BreakpointsConfigurationDialogFactory {
 
     public void dispose() {
       apply();
+      if (myTabbedPane != null) {
+        myLastSelectedTabIndex = myTabbedPane.getSelectedIndex();
+      }
       for (Runnable runnable : myDisposeActions) {
         runnable.run();
       }
@@ -223,9 +231,6 @@ public class BreakpointsConfigurationDialogFactory {
       if (myPanel != null) {
         for (AbstractBreakpointPanel panel : myPanels) {
           panel.dispose();
-        }
-        if (myTabbedPane != null) {
-          myLastSelectedTabIndex = myTabbedPane.getSelectedIndex();
         }
         myPanel.removeAll();
         myPanel = null;
@@ -255,6 +260,13 @@ public class BreakpointsConfigurationDialogFactory {
         }
         if (myLastSelectedTabIndex >= tabbedPane.getTabCount() || myLastSelectedTabIndex < 0) {
           myLastSelectedTabIndex = 0;
+          for (int i = 0; i < myPanels.size(); i++) {
+            AbstractBreakpointPanel panel = myPanels.get(i);
+            if (panel.hasBreakpoints()) {
+              myLastSelectedTabIndex = i;
+              break;
+            }
+          }
         }
         tabbedPane.setSelectedIndex(myLastSelectedTabIndex);
       }
