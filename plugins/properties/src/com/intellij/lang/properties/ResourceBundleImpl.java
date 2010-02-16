@@ -33,7 +33,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -77,7 +76,7 @@ public class ResourceBundleImpl implements ResourceBundle {
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     PsiManager psiManager = PsiManager.getInstance(project);
     for (VirtualFile file : children) {
-      if (!file.isValid() || fileTypeManager.getFileTypeByFile(file) != StdFileTypes.PROPERTIES) continue;
+      if (!file.isValid() || !fileTypeManager.isFileOfType(file, StdFileTypes.PROPERTIES)) continue;
       if (Comparing.strEqual(PropertiesUtil.getBaseName(file), myBaseName)) {
         PsiFile psiFile = psiManager.findFile(file);
         if (psiFile instanceof PropertiesFile) {

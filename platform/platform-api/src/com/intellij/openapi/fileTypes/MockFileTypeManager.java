@@ -109,4 +109,8 @@ class MockFileTypeManager extends FileTypeManager {
   public FileType getStdFileType(@NotNull @NonNls String fileTypeName) {
     return MockLanguageFileType.INSTANCE;
   }
+
+  public boolean isFileOfType(VirtualFile file, FileType type) {
+    return false;
+  }
 }

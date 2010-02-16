@@ -18,6 +18,7 @@ package com.intellij.codeInsight.template;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -62,12 +63,18 @@ public class CustomTemplateCallback {
   }
 
   public boolean isLiveTemplateApplicable(@NotNull String key) {
-    List<TemplateImpl> templates = getMatchingTemplates(key);
-    templates = TemplateManagerImpl.filterApplicableCandidates(myFile, myStartOffset, templates);
-    return templates.size() > 0;
+    return findApplicableTemplate(key) != null;
   }
 
-  public boolean isTemplateContainsVars(@NotNull String key, String... varNames) {
+  @Nullable
+  public TemplateImpl findApplicableTemplate(@NotNull String key) {
+    List<TemplateImpl> templates = getMatchingTemplates(key);
+    templates = TemplateManagerImpl.filterApplicableCandidates(myFile, myStartOffset, templates);
+    return templates.size() > 0 ? templates.get(0) : null;
+  }
+
+
+  public boolean templateContainsVars(@NotNull String key, String... varNames) {
     List<TemplateImpl> templates = getMatchingTemplates(key);
     templates = TemplateManagerImpl.filterApplicableCandidates(myFile, myStartOffset, templates);
     if (templates.size() == 0) {
@@ -121,9 +128,13 @@ public class CustomTemplateCallback {
     myTemplateManager.startTemplate(myEditor, template, false, predefinedVarValues, new TemplateEditingAdapter() {
       @Override
       public void templateFinished(Template template, boolean brokenOff) {
-        int lengthAfter = myEditor.getDocument().getCharsSequence().length();
-        CodeStyleManager style = CodeStyleManager.getInstance(myProject);
-        style.reformatText(myFile, myStartOffset, myStartOffset + lengthAfter - myStartLength);
+        final int lengthAfter = myEditor.getDocument().getCharsSequence().length();
+        final CodeStyleManager style = CodeStyleManager.getInstance(myProject);
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            style.reformatText(myFile, myStartOffset, myStartOffset + lengthAfter - myStartLength);
+          }
+        });
         if (brokenOff) return;
         templateFinished[0] = true;
         if (templateEnded[0] && listener != null) {

@@ -125,39 +125,40 @@ public class TreeModelBuilder {
                                      @Nullable Map<VirtualFile, String> switchedRoots,
                                      @Nullable final List<VirtualFile> ignoredFiles, @Nullable final List<VirtualFile> lockedFolders,
                                      @Nullable final Map<VirtualFile, LogicalLock> logicallyLockedFiles) {
+    resetGrouping();
     buildModel(changeLists);
 
     if (!modifiedWithoutEditing.isEmpty()) {
-      myFoldersCache.clear();
+      resetGrouping();
       buildVirtualFiles(modifiedWithoutEditing, ChangesBrowserNode.MODIFIED_WITHOUT_EDITING_TAG);
     }
     if (!unversionedFiles.isEmpty()) {
-      myFoldersCache.clear();
+      resetGrouping();
       buildVirtualFiles(unversionedFiles, ChangesBrowserNode.UNVERSIONED_FILES_TAG);
     }
     if (switchedRoots != null && (! switchedRoots.isEmpty())) {
-      myFoldersCache.clear();
+      resetGrouping();
       buildSwitchedRoots(switchedRoots);
     }
     if (!switchedFiles.isEmpty()) {
-      myFoldersCache.clear();
+      resetGrouping();
       buildSwitchedFiles(switchedFiles);
     }
     if (ignoredFiles != null && !ignoredFiles.isEmpty()) {
-      myFoldersCache.clear();
+      resetGrouping();
       buildVirtualFiles(ignoredFiles, ChangesBrowserNode.IGNORED_FILES_TAG);
     }
     if (lockedFolders != null && !lockedFolders.isEmpty()) {
-      myFoldersCache.clear();
+      resetGrouping();
       buildVirtualFiles(lockedFolders, ChangesBrowserNode.LOCKED_FOLDERS_TAG);
     }
     if (logicallyLockedFiles != null && (! logicallyLockedFiles.isEmpty())) {
-      myFoldersCache.clear();
+      resetGrouping();
       buildLogicallyLockedFiles(logicallyLockedFiles);
     }
 
     if (!locallyDeletedFiles.isEmpty()) {
-      myFoldersCache.clear();
+      resetGrouping();
       ChangesBrowserNode locallyDeletedNode = ChangesBrowserNode.create(myProject, VcsBundle.message("changes.nodetitle.locally.deleted.files"));
       model.insertNodeInto(locallyDeletedNode, root, root.getChildCount());
       buildLocallyDeletedPaths(locallyDeletedFiles, locallyDeletedNode);
@@ -169,6 +170,11 @@ public class TreeModelBuilder {
     return model;
   }
 
+  private void resetGrouping() {
+    myFoldersCache.clear();
+    myPolicyInitialized = false;
+  }
+
   public DefaultTreeModel buildModel(List<? extends ChangeList> changeLists) {
     final RemoteRevisionsCache revisionsCache = RemoteRevisionsCache.getInstance(myProject);
     for (ChangeList list : changeLists) {
@@ -176,6 +182,7 @@ public class TreeModelBuilder {
       final ChangeListRemoteState listRemoteState = new ChangeListRemoteState(changes.size());
       ChangesBrowserNode listNode = new ChangesBrowserChangeListNode(myProject, list, listRemoteState);
       model.insertNodeInto(listNode, root, 0);
+      resetGrouping();
       final ChangesGroupingPolicy policy = createGroupingPolicy();
       int i = 0;
       for (final Change change : changes) {

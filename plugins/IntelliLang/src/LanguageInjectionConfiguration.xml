@@ -405,18 +405,20 @@
     <place><![CDATA[xmlAttribute().withLocalName(not(string().matches("id|type"))).withText(string().matches("[^${}/\\]+")).inside(xmlTag().withNamespace(string().matches("http://tapestry.apache.org/schema/tapestry_5_1_0.xsd|http://tapestry.apache.org/schema/tapestry_5_0_0.xsd")))]]></place>
     <place><![CDATA[xmlAttribute().withLocalName(not(string().matches("id|type"))).withText(string().matches("[^${}/\\]+")).withNamespace(string().matches("http://tapestry.apache.org/schema/tapestry_5_1_0.xsd|http://tapestry.apache.org/schema/tapestry_5_0_0.xsd"))]]></place>
   </injection>
-  <!--
   <injection language="CSS" injector-id="php">
     <display-name>&lt;&lt;&lt; CSS</display-name>
-    <place><![CDATA[heredocWithName("CSS")]]></place>
+    <place><![CDATA[phpLiteralExpression("CSS")]]></place>
   </injection>
   <injection language="SQL" injector-id="php">
     <display-name>&lt;&lt;&lt; SQL</display-name>
-    <place><![CDATA[heredocWithName("SQL")]]></place>
+    <place><![CDATA[phpLiteralExpression("SQL")]]></place>
   </injection>
   <injection language="HTML" injector-id="php">
     <display-name>&lt;&lt;&lt; HTML</display-name>
-    <place><![CDATA[heredocWithName("HTML")]]></place>
+    <place><![CDATA[phpLiteralExpression("HTML")]]></place>
   </injection>
-  -->
+  <injection language="JavaScript" injector-id="php">
+    <display-name>&lt;&lt;&lt; JS</display-name>
+    <place><![CDATA[phpLiteralExpression("JS")]]></place>
+  </injection>
 </component>

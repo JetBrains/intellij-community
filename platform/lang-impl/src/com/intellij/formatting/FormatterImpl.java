@@ -80,11 +80,11 @@ public class FormatterImpl extends FormatterEx
   public void format(final FormattingModel model, final CodeStyleSettings settings,
                      final CodeStyleSettings.IndentOptions indentOptions,
                      final CodeStyleSettings.IndentOptions javaIndentOptions,
-                     final TextRange affectedRange, final boolean processHeadingWhitespace) throws IncorrectOperationException {
+                     final FormatTextRanges affectedRanges) throws IncorrectOperationException {
     disableFormatting();
     try {
       FormatProcessor processor = new FormatProcessor(model.getDocumentModel(), model.getRootBlock(), settings, indentOptions,
-                                                      affectedRange, processHeadingWhitespace);
+                                                      affectedRanges);
       processor.setJavaIndentOptions(javaIndentOptions);
       processor.format(model);
     } finally {
@@ -123,11 +123,10 @@ public class FormatterImpl extends FormatterEx
   public void format(FormattingModel model,
                      CodeStyleSettings settings,
                      CodeStyleSettings.IndentOptions indentOptions,
-                     TextRange affectedRange,
-                     final boolean processHeadingWhitespace) throws IncorrectOperationException {
+                     FormatTextRanges affectedRanges) throws IncorrectOperationException {
     disableFormatting();
     try {
-      new FormatProcessor(model.getDocumentModel(), model.getRootBlock(), settings, indentOptions, affectedRange, processHeadingWhitespace).format(model);
+      new FormatProcessor(model.getDocumentModel(), model.getRootBlock(), settings, indentOptions, affectedRanges).format(model);
     } finally {
       enableFormatting();
     }
@@ -141,7 +140,7 @@ public class FormatterImpl extends FormatterEx
                                          TextRange affectedRange) throws IncorrectOperationException {
     disableFormatting();
     try {
-      new FormatProcessor(model, rootBlock, settings, indentOptions, affectedRange, true).formatWithoutRealModifications();
+      new FormatProcessor(model, rootBlock, settings, indentOptions, new FormatTextRanges(affectedRange, true)).formatWithoutRealModifications();
     } finally {
       enableFormatting();
     }
@@ -155,7 +154,7 @@ public class FormatterImpl extends FormatterEx
                                         final TextRange affectedRange, final boolean mayChangeLineFeeds) {
     disableFormatting();
     try {
-      final FormatProcessor processor = new FormatProcessor(model, block, settings, indentOptions, affectedRange, true);
+      final FormatProcessor processor = new FormatProcessor(model, block, settings, indentOptions, new FormatTextRanges(affectedRange, true));
       final LeafBlockWrapper blockBefore = processor.getBlockAfter(affectedRange.getStartOffset());
       LOG.assertTrue(blockBefore != null);
       WhiteSpace whiteSpace = blockBefore.getWhiteSpace();
@@ -181,8 +180,8 @@ public class FormatterImpl extends FormatterEx
     try {
       final FormattingDocumentModel documentModel = model.getDocumentModel();
       final Block block = model.getRootBlock();
-      final FormatProcessor processor = new FormatProcessor(documentModel, block, settings, indentOptions, rangeToAdjust,
-                                                            true);
+      final FormatProcessor processor = new FormatProcessor(documentModel, block, settings, indentOptions,
+                                                            new FormatTextRanges(rangeToAdjust, true));
       LeafBlockWrapper tokenBlock = processor.getFirstTokenBlock();
       while (tokenBlock != null) {
         final WhiteSpace whiteSpace = tokenBlock.getWhiteSpace();
@@ -210,7 +209,7 @@ public class FormatterImpl extends FormatterEx
       final FormattingDocumentModel documentModel = model.getDocumentModel();
       final Block block = model.getRootBlock();
       final FormatProcessor processor = new FormatProcessor(documentModel, block, settings,
-                                                            settings.getIndentOptions(fileType), null, true);
+                                                            settings.getIndentOptions(fileType), null);
       LeafBlockWrapper tokenBlock = processor.getFirstTokenBlock();
       while (tokenBlock != null) {
         final WhiteSpace whiteSpace = tokenBlock.getWhiteSpace();
@@ -250,8 +249,9 @@ public class FormatterImpl extends FormatterEx
     try {
       final FormattingDocumentModel documentModel = model.getDocumentModel();
       final Block block = model.getRootBlock();
-      final FormatProcessor processor = new FormatProcessor(documentModel, block, settings, indentOptions, affectedRange,
-                                                            true, offset);
+      final FormatProcessor processor = new FormatProcessor(documentModel, block, settings, indentOptions,
+                                                            new FormatTextRanges(affectedRange, true),
+                                                            offset);
 
       final LeafBlockWrapper blockAfterOffset = processor.getBlockAfter(offset);
 
@@ -316,7 +316,8 @@ public class FormatterImpl extends FormatterEx
                               final TextRange affectedRange) {
     final FormattingDocumentModel documentModel = model.getDocumentModel();
     final Block block = model.getRootBlock();
-    final FormatProcessor processor = new FormatProcessor(documentModel, block, settings, indentOptions, affectedRange, true, offset);
+    final FormatProcessor processor = new FormatProcessor(documentModel, block, settings, indentOptions,
+                                                          new FormatTextRanges(affectedRange, true), offset);
 
     final LeafBlockWrapper blockAfterOffset = processor.getBlockAfter(offset);
 
@@ -390,8 +391,8 @@ public class FormatterImpl extends FormatterEx
                               @Nullable final IndentInfoStorage indentInfoStorage) {
     disableFormatting();
     try {
-      final FormatProcessor processor = new FormatProcessor(model.getDocumentModel(), model.getRootBlock(), settings, indentOptions, affectedRange,
-                                                            true);
+      final FormatProcessor processor = new FormatProcessor(model.getDocumentModel(), model.getRootBlock(), settings, indentOptions,
+                                                            new FormatTextRanges(affectedRange, true));
       LeafBlockWrapper current = processor.getFirstTokenBlock();
       while (current != null) {
         WhiteSpace whiteSpace = current.getWhiteSpace();
@@ -454,8 +455,8 @@ public class FormatterImpl extends FormatterEx
                               final TextRange affectedRange) {
     disableFormatting();
     try {
-      final FormatProcessor processor = new FormatProcessor(model.getDocumentModel(), model.getRootBlock(), settings, indentOptions, affectedRange,
-                                                            true);
+      final FormatProcessor processor = new FormatProcessor(model.getDocumentModel(), model.getRootBlock(), settings, indentOptions,
+                                                            new FormatTextRanges(affectedRange, true));
       LeafBlockWrapper current = processor.getFirstTokenBlock();
       while (current != null) {
         WhiteSpace whiteSpace = current.getWhiteSpace();
@@ -481,8 +482,8 @@ public class FormatterImpl extends FormatterEx
                           final CodeStyleSettings settings,
                           final CodeStyleSettings.IndentOptions indentOptions) {
     final Block block = model.getRootBlock();
-    final FormatProcessor processor = new FormatProcessor(model.getDocumentModel(), block, settings, indentOptions, affectedRange,
-                                                          true);
+    final FormatProcessor processor = new FormatProcessor(model.getDocumentModel(), block, settings, indentOptions,
+                                                          new FormatTextRanges(affectedRange, true));
     LeafBlockWrapper current = processor.getFirstTokenBlock();
     while (current != null) {
       WhiteSpace whiteSpace = current.getWhiteSpace();

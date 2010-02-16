@@ -126,6 +126,8 @@ public abstract class FileTypeManager{
   @NotNull
   public abstract List<FileNameMatcher> getAssociations(@NotNull FileType type);
 
+  public abstract boolean isFileOfType(VirtualFile file, FileType type);
+
   /**
    * Adds a listener for receiving notifications about changes in the list of
    * registered file types.

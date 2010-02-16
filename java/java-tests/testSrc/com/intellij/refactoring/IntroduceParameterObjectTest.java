@@ -4,6 +4,7 @@
  */
 package com.intellij.refactoring;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -13,7 +14,6 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.introduceparameterobject.IntroduceParameterObjectProcessor;
 import com.intellij.refactoring.util.ParameterTablePanel;
-import com.intellij.JavaTestUtil;
 import com.intellij.util.VisibilityUtil;
 
 public class IntroduceParameterObjectTest extends MultiFileTestCase{

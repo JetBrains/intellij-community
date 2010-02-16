@@ -949,13 +949,16 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
       if (psiMethod != null) {
         // handle autoboxing
-        for (int i = 0, parametersLength = psiMethod.getParameterList().getParameters().length; i < parametersLength; i++) {
-          PsiParameter parameter = psiMethod.getParameterList().getParameters()[i];
-          final PsiType paramType = parameter.getType();
-          final PsiType realArgType = argExpressions[i].getType();
-          if (TypeConversionUtil.boxingConversionApplicable(paramType, realArgType)) {
+        final PsiParameter[] declaredParams = psiMethod.getParameterList().getParameters();
+        for (int i = 0, parametersLength = declaredParams.length; i < parametersLength; i++) {
+          if (i >= argExpressions.length) {
+            break; // actual arguments count is less than number of declared params 
+          }
+          final PsiType declaredParamType = declaredParams[i].getType();
+          final PsiType actualArgType = argExpressions[i].getType();
+          if (TypeConversionUtil.boxingConversionApplicable(declaredParamType, actualArgType)) {
             final Evaluator argEval = argumentEvaluators.get(i);
-            argumentEvaluators.set(i, (paramType instanceof PsiPrimitiveType)? new UnBoxingEvaluator(argEval) : new BoxingEvaluator(argEval));
+            argumentEvaluators.set(i, (declaredParamType instanceof PsiPrimitiveType)? new UnBoxingEvaluator(argEval) : new BoxingEvaluator(argEval));
           }
         }
       }

@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -119,12 +118,7 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
             return null;
           }
           String prefix = getPrefix(key);
-          if (callback.isLiveTemplateApplicable(prefix)) {
-            if (!prefix.equals(key) && !callback.isTemplateContainsVars(prefix, ATTRS)) {
-              return null;
-            }
-          }
-          else if (prefix.indexOf('<') >= 0) {
+          if (!callback.isLiveTemplateApplicable(prefix) && prefix.indexOf('<') >= 0) {
             return null;
           }
           result.add(new MyTemplateToken(key));
@@ -228,41 +222,75 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
     return result.toString();
   }
 
-  private static boolean invokeTemplate(String key, final CustomTemplateCallback callback, final TemplateInvokationListener listener) {
-    if (callback.getFile().getFileType() instanceof HtmlFileType) {
-      String templateKey = null;
-      String id = null;
-      final List<String> classes = new ArrayList<String>();
-      StringBuilder builder = new StringBuilder();
-      char lastDelim = 0;
-      key += MARKER;
-      for (int i = 0, n = key.length(); i < n; i++) {
-        char c = key.charAt(i);
-        if (c == '#' || c == '.' || i == n - 1) {
-          switch (lastDelim) {
-            case 0:
-              templateKey = builder.toString();
-              break;
-            case '#':
-              id = builder.toString();
-              break;
-            case '.':
-              if (builder.length() > 0) {
-                classes.add(builder.toString());
-              }
-              break;
-          }
-          lastDelim = c;
-          builder = new StringBuilder();
+  private static boolean prepareAndInvokeTemplate(String key,
+                                                  final CustomTemplateCallback callback,
+                                                  final TemplateInvokationListener listener) {
+    String templateKey = null;
+    String id = null;
+    final List<String> classes = new ArrayList<String>();
+    StringBuilder builder = new StringBuilder();
+    char lastDelim = 0;
+    key += MARKER;
+    for (int i = 0, n = key.length(); i < n; i++) {
+      char c = key.charAt(i);
+      if (c == '#' || c == '.' || i == n - 1) {
+        switch (lastDelim) {
+          case 0:
+            templateKey = builder.toString();
+            break;
+          case '#':
+            id = builder.toString();
+            break;
+          case '.':
+            if (builder.length() > 0) {
+              classes.add(builder.toString());
+            }
+            break;
         }
-        else {
-          builder.append(c);
-        }
+        lastDelim = c;
+        builder = new StringBuilder();
       }
-      String attributes = buildAttributesString(id, classes);
-      return startTemplate(templateKey, callback, listener, attributes.length() > 0 ? ' ' + attributes : null);
+      else {
+        builder.append(c);
+      }
     }
-    return startTemplate(key, callback, listener, null);
+    String attributes = buildAttributesString(id, classes);
+    return startTemplate(templateKey, callback, listener, attributes.length() > 0 ? ' ' + attributes : null);
+  }
+
+  private static int findPlaceToInsertAttrs(@NotNull TemplateImpl template) {
+    String s = template.getString();
+    if (s.length() > 0) {
+      if (s.charAt(0) != '<') {
+        return -1;
+      }
+      int i = 1;
+      while (i < s.length() && !Character.isWhitespace(s.charAt(i)) && s.charAt(i) != '>') {
+        i++;
+      }
+      if (i == 1) {
+        return -1;
+      }
+      if (s.indexOf('>', i) >= i) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  @Nullable
+  private static TemplateImpl generateTemplateWithAttributes(String key, String attributes, CustomTemplateCallback callback) {
+    TemplateImpl template = callback.findApplicableTemplate(key);
+    assert template != null;
+    String templateString = template.getString();
+    int offset = findPlaceToInsertAttrs(template);
+    if (offset >= 0) {
+      String newTemplateString = templateString.substring(0, offset) + attributes + templateString.substring(offset);
+      TemplateImpl newTemplate = template.copy();
+      newTemplate.setString(newTemplateString);
+      return newTemplate;
+    }
+    return null;
   }
 
   private static boolean startTemplate(String key,
@@ -275,6 +303,12 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
       predefinedValues.put(ATTRS, attributes);
     }
     if (callback.isLiveTemplateApplicable(key)) {
+      if (attributes != null && !callback.templateContainsVars(key, ATTRS)) {
+        TemplateImpl newTemplate = generateTemplateWithAttributes(key, attributes, callback);
+        if (newTemplate != null) {
+          return callback.startTemplate(newTemplate, predefinedValues, listener);
+        }
+      }
       return callback.startTemplate(key, predefinedValues, listener);
     }
     else {
@@ -419,7 +453,7 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
                       }
                     }
                   };
-                  if (!invokeTemplate(templateKey, myCallback, listener)) {
+                  if (!prepareAndInvokeTemplate(templateKey, myCallback, listener)) {
                     return false;
                   }
                   templateKey = null;
@@ -500,7 +534,7 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
           }
         }
       };
-      if (!invokeTemplate(templateKey, myCallback, listener)) {
+      if (!prepareAndInvokeTemplate(templateKey, myCallback, listener)) {
         return false;
       }
       return true;
@@ -527,7 +561,7 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
             }
           }
         };
-        if (!invokeTemplate(templateKey, myCallback, listener)) {
+        if (!prepareAndInvokeTemplate(templateKey, myCallback, listener)) {
           return false;
         }
       }
@@ -562,7 +596,7 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
             }
           }
         };
-        if (!invokeTemplate(templateKey, myCallback, listener) || flag[0]) {
+        if (!prepareAndInvokeTemplate(templateKey, myCallback, listener) || flag[0]) {
           return false;
         }
       }
