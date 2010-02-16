@@ -3,8 +3,6 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -29,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.List;
@@ -295,16 +292,16 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   @Override
   public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
-    return super.add(PyPsiUtils.preprocessElement(element));
+    return super.add(PyPsiUtils.removeIndentation(element));
   }
 
   @Override
   public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
-    return super.addBefore(PyPsiUtils.preprocessElement(element), anchor);
+    return super.addBefore(PyPsiUtils.removeIndentation(element), anchor);
   }
 
   @Override
   public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
-    return super.addAfter(PyPsiUtils.preprocessElement(element), anchor);
+    return super.addAfter(PyPsiUtils.removeIndentation(element), anchor);
   }
 }

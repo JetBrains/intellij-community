@@ -26,7 +26,7 @@ import static com.jetbrains.python.psi.PyUtil.sure;
 /**
  * @author yole
  */
-public class PyBlock implements Block {
+public class PyBlock implements ASTBlock {
   private final PythonLanguage _language;
   private final Alignment _alignment;
   private final Indent _indent;
@@ -192,6 +192,10 @@ public class PyBlock implements Block {
 
     if (isStatementOrDeclaration(type1) && isStatementOrDeclaration(type2)) {
       return Spacing.createSpacing(0, Integer.MAX_VALUE, 1, false, 1);
+    }
+
+    if (type1 == PyTokenTypes.COLON && type2 == PyElementTypes.STATEMENT_LIST) {
+      return Spacing.createSpacing(1, Integer.MAX_VALUE, 0, true, 0);
     }
 /*
         if (type1 == PyTokenTypes.COLON && type2 == PyElementTypes.STATEMENT_LIST) {
