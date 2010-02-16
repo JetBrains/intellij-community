@@ -64,7 +64,8 @@ public class Matcher extends MatcherImpl {
    * @throws MalformedPatternException
    * @throws UnsupportedPatternException
    */
-  public @Nullable MatchResult isMatchedByDownUp(PsiElement element,MatchOptions options) throws
+  @Nullable
+  public MatchResult isMatchedByDownUp(PsiElement element,MatchOptions options) throws
     MalformedPatternException, UnsupportedPatternException
   {
     return super.isMatchedByDownUp(element, options);

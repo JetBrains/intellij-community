@@ -86,7 +86,13 @@ public class SSBasedInspection extends BaseJavaLocalInspectionTool {
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     Project project = file.getProject();
     if (compiledConfigurations == null) return null;
-    Collection<Pair<MatchResult,Configuration>> matches = new Matcher(project).findMatchesInFile(compiledConfigurations, file);
+    Collection<Pair<MatchResult,Configuration>> matches;
+    try {
+      matches = new Matcher(project).findMatchesInFile(compiledConfigurations, file);
+    }
+    catch (StackOverflowError e) {
+      return null;
+    }
 
     List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
     for (Pair<MatchResult,Configuration> pair : matches) {
