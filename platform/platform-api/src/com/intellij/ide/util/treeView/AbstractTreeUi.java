@@ -42,10 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.TreeExpansionEvent;
-import javax.swing.event.TreeExpansionListener;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
+import javax.swing.event.*;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
@@ -165,6 +162,7 @@ public class AbstractTreeUi {
     myBuilder = builder;
     myTree = tree;
     myTreeModel = treeModel;
+    addModelListenerToDianoseAccessOutsideEdt();
     TREE_NODE_WRAPPER = getBuilder().createSearchingTreeNodeWrapper();
     myTree.setModel(myTreeModel);
     setRootNode((DefaultMutableTreeNode)treeModel.getRoot());
@@ -3949,4 +3947,25 @@ public class AbstractTreeUi {
     Application app = ApplicationManager.getApplication();
     return app != null && app.isUnitTestMode();
   }
+
+  private void addModelListenerToDianoseAccessOutsideEdt() {
+    myTreeModel.addTreeModelListener(new TreeModelListener() {
+      public void treeNodesChanged(TreeModelEvent e) {
+        assertIsDispatchThread();
+      }
+
+      public void treeNodesInserted(TreeModelEvent e) {
+        assertIsDispatchThread();
+      }
+
+      public void treeNodesRemoved(TreeModelEvent e) {
+        assertIsDispatchThread();
+      }
+
+      public void treeStructureChanged(TreeModelEvent e) {
+        assertIsDispatchThread();
+      }
+    });
+  }
+  
 }

@@ -35,9 +35,8 @@ class InitialInfoBuilder {
 
   private WhiteSpace myCurrentWhiteSpace;
   private final FormattingDocumentModel myModel;
-  private final TextRange myAffectedRange;
+  private final FormatTextRanges myAffectedRanges;
   private final int myPositionOfInterest;
-  private final boolean myProcessHeadingWhitespace;
   private final Map<AbstractBlockWrapper, Block> myResult = new THashMap<AbstractBlockWrapper, Block>();
   private CompositeBlockWrapper myRootBlockWrapper;
   private LeafBlockWrapper myPreviousBlock;
@@ -48,14 +47,12 @@ class InitialInfoBuilder {
   private ReadOnlyBlockInformationProvider myReadOnlyBlockInformationProvider;
 
   private InitialInfoBuilder(final FormattingDocumentModel model,
-                             final TextRange affectedRange,
+                             final FormatTextRanges affectedRanges,
                              final CodeStyleSettings.IndentOptions options,
-                             final boolean processHeadingWhitespace,
                              final int positionOfInterest
                              ) {
     myModel = model;
-    myAffectedRange = affectedRange;
-    myProcessHeadingWhitespace = processHeadingWhitespace;
+    myAffectedRanges = affectedRanges;
     myCurrentWhiteSpace = new WhiteSpace(0, true);
     myOptions = options;
     myPositionOfInterest = positionOfInterest;
@@ -63,10 +60,10 @@ class InitialInfoBuilder {
 
   public static InitialInfoBuilder buildBlocks(Block root,
                                                FormattingDocumentModel model,
-                                               final TextRange affectedRange,
+                                               final FormatTextRanges affectedRanges,
                                                final CodeStyleSettings.IndentOptions options,
-                                               final boolean processHeadingWhitespace, int interestingOffset) {
-    final InitialInfoBuilder builder = new InitialInfoBuilder(model, affectedRange, options, processHeadingWhitespace, interestingOffset);
+                                               int interestingOffset) {
+    final InitialInfoBuilder builder = new InitialInfoBuilder(model, affectedRanges, options, interestingOffset);
     final AbstractBlockWrapper wrapper = builder.buildFrom(root, 0, null, null, root.getTextRange(), null, true);
     wrapper.setIndent((IndentImpl)Indent.getNoneIndent());
     return builder;
@@ -253,24 +250,18 @@ class InitialInfoBuilder {
       return true;
     }
     else {
-      if (myAffectedRange == null) return false;
-
-      if (myCurrentWhiteSpace.getStartOffset() >= myAffectedRange.getEndOffset()) return true;
-      if (myProcessHeadingWhitespace) {
-        return myCurrentWhiteSpace.getEndOffset() < myAffectedRange.getStartOffset();
-      }
-      else {
-        return myCurrentWhiteSpace.getEndOffset() <= myAffectedRange.getStartOffset();
-      }
+      if (myAffectedRanges == null) return false;
+      final boolean readOnly = myAffectedRanges.isWhitespaceReadOnly(myCurrentWhiteSpace.getTextRange());
+      System.out.println("whitespace at " + myCurrentWhiteSpace.getTextRange() + (readOnly ? " is read-only" : " is not read-only"));
+      return readOnly;
     }
   }
 
   private boolean isReadOnly(final TextRange textRange, boolean rootIsRightBlock) {
-    if (myAffectedRange == null) return false;
-    if (myAffectedRange.getStartOffset() >= textRange.getEndOffset() && rootIsRightBlock) {
-      return false;
-    }
-    return textRange.getStartOffset() > myAffectedRange.getEndOffset() || textRange.getEndOffset() < myAffectedRange.getStartOffset();
+    if (myAffectedRanges == null) return false;
+    final boolean readOnly = myAffectedRanges.isReadOnly(textRange, rootIsRightBlock);
+    System.out.println("range at " + textRange + (readOnly ? " is read-only" : " is not read-only"));
+    return readOnly;
   }
 
   public Map<AbstractBlockWrapper,Block> getBlockToInfoMap() {

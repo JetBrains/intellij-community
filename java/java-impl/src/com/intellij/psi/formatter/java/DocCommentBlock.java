@@ -39,7 +39,7 @@ public class DocCommentBlock extends AbstractJavaBlock{
       if (child.getElementType() == ElementType.DOC_COMMENT_START) {
         result.add(createJavaBlock(child, mySettings, Indent.getNoneIndent(),
                                    null, null));
-      } else if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
+      } else if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getText().trim().length() > 0){
         result.add(createJavaBlock(child, mySettings, Indent.getSpaceIndent(1), null, null));
       }
       child = child.getTreeNext();
