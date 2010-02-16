@@ -8,6 +8,7 @@ import com.intellij.coverage.IDEACoverageRunner;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.rt.execution.junit.IDEAJUnitListener;
+import com.intellij.util.ArrayUtil;
 
 @SuppressWarnings({"UnnecessaryFullyQualifiedName"})
 public class IDEAJUnitCoverageListener implements IDEAJUnitListener {
@@ -29,7 +30,7 @@ public class IDEAJUnitCoverageListener implements IDEAJUnitListener {
 
   private static Object getData() {
     try {
-      return Class.forName("com.intellij.rt.coverage.data.ProjectData").getMethod("getProjectData", new Class[0]).invoke(null);
+      return Class.forName("com.intellij.rt.coverage.data.ProjectData").getMethod("getProjectData", ArrayUtil.EMPTY_CLASS_ARRAY).invoke(null);
     }
     catch (Exception e) {
       return null;

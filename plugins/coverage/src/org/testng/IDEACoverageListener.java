@@ -7,6 +7,7 @@ package org.testng;
 import com.intellij.coverage.IDEACoverageRunner;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
+import com.intellij.util.ArrayUtil;
 
 public class IDEACoverageListener implements IDEATestNGListener {
 
@@ -19,8 +20,8 @@ public class IDEACoverageListener implements IDEATestNGListener {
 
   private static Object getProjectData() {
     try {
-      return Class.forName("com.intellij.rt.coverage.data.ProjectData").getMethod("getProjectData", new Class[0])
-        .invoke(null, new Object[0]);
+      return Class.forName("com.intellij.rt.coverage.data.ProjectData").getMethod("getProjectData", ArrayUtil.EMPTY_CLASS_ARRAY)
+        .invoke(null, ArrayUtil.EMPTY_OBJECT_ARRAY);
     }
     catch (Exception e) {
       return null;
