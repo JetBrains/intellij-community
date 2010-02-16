@@ -76,24 +76,32 @@ public class ChangelistConflictTracker {
           return;
         }
         Document document = e.getDocument();
-        VirtualFile file = myDocumentManager.getFile(document);
-        if (file != null && !isFromActiveChangelist(file)) {
-          String path = file.getPath();
-          Conflict conflict = myConflicts.get(path);
-          boolean newConflict = false;
-          if (conflict == null) {
-            conflict = new Conflict();
-            myConflicts.put(path, conflict);
-            newConflict = true;
-          }
-          conflict.timestamp = System.currentTimeMillis();
-          conflict.changelistId = myChangeListManager.getDefaultChangeList().getId();
-
-          if (newConflict && myOptions.HIGHLIGHT_CONFLICTS) {
-            myFileStatusManager.fileStatusChanged(file);
-            myEditorNotifications.updateNotifications(file);
-          }
+        final VirtualFile file = myDocumentManager.getFile(document);
+        if (file == null) {
+          return;
         }
+        myChangeListManager.invokeAfterUpdate(new Runnable() {
+          public void run() {
+
+            if (!isFromActiveChangelist(file)) {
+              String path = file.getPath();
+              Conflict conflict = myConflicts.get(path);
+              boolean newConflict = false;
+              if (conflict == null) {
+                conflict = new Conflict();
+                myConflicts.put(path, conflict);
+                newConflict = true;
+              }
+              conflict.timestamp = System.currentTimeMillis();
+              conflict.changelistId = myChangeListManager.getDefaultChangeList().getId();
+
+              if (newConflict && myOptions.HIGHLIGHT_CONFLICTS) {
+                myFileStatusManager.fileStatusChanged(file);
+                myEditorNotifications.updateNotifications(file);
+              }
+            }
+          }
+        }, InvokeAfterUpdateMode.SILENT, null, null);
       }
     };
 
