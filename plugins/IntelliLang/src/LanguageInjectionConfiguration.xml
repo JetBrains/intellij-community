@@ -417,4 +417,8 @@
     <display-name>&lt;&lt;&lt; HTML</display-name>
     <place><![CDATA[phpLiteralExpression("HTML")]]></place>
   </injection>
+  <injection language="JavaScript" injector-id="php">
+    <display-name>&lt;&lt;&lt; JS</display-name>
+    <place><![CDATA[phpLiteralExpression("JS")]]></place>
+  </injection>
 </component>
