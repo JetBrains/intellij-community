@@ -21,7 +21,7 @@ import com.intellij.psi.PsiKeyword;
 import javax.swing.*;
 import java.io.File;
 
-final class JavadocConfigurable implements Configurable {
+public final class JavadocConfigurable implements Configurable {
   private JavadocGenerationPanel myPanel;
   private final JavadocConfiguration myConfiguration;
 

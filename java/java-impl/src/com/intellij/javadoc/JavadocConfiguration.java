@@ -15,6 +15,7 @@
  */
 package com.intellij.javadoc;
 
+import com.intellij.analysis.AnalysisScope;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
@@ -28,9 +29,6 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.BrowserUtil;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -38,7 +36,10 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootsTraversing;
+import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -47,7 +48,6 @@ import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
@@ -76,24 +76,10 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
   public boolean OPEN_IN_BROWSER = true;
 
   private final Project myProject;
-  private GenerationOptions myGenerationOptions;
+  private AnalysisScope myGenerationScope;
 
-  public static final class GenerationOptions {
-    public final String myPackageFQName;
-    public final PsiDirectory myDirectory;
-    public final boolean isGenerationForPackage;
-    public final boolean isGenerationWithSubpackages;
-
-    public GenerationOptions(String packageFQName, PsiDirectory directory, boolean generationForPackage, boolean generationWithSubpackages) {
-      myPackageFQName = packageFQName;
-      myDirectory = directory;
-      isGenerationForPackage = generationForPackage;
-      isGenerationWithSubpackages = generationWithSubpackages;
-    }
-  }
-
-  public void setGenerationOptions(GenerationOptions generationOptions) {
-    myGenerationOptions = generationOptions;
+  public void setGenerationScope(AnalysisScope generationScope) {
+    myGenerationScope = generationScope;
   }
 
   public JavadocConfiguration(Project project) {
@@ -101,7 +87,7 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
   }
 
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
-    return new MyJavaCommandLineState(myProject, myGenerationOptions);
+    return new MyJavaCommandLineState(myProject, myGenerationScope);
   }
 
   public String getName() {
@@ -109,7 +95,7 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
   }
 
   public void checkConfiguration() throws RuntimeConfigurationException {
-    if (myGenerationOptions == null) {
+    if (myGenerationScope == null) {
       throw new RuntimeConfigurationError(JavadocBundle.message("javadoc.settings.not.specified"));
     }
   }
@@ -136,11 +122,11 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
   }
 
   private class MyJavaCommandLineState extends CommandLineState {
-    private final GenerationOptions myGenerationOptions;
+    private final AnalysisScope myGenerationOptions;
     private final Project myProject;
     @NonNls private static final String INDEX_HTML = "index.html";
 
-    public MyJavaCommandLineState(Project project, GenerationOptions generationOptions) {
+    public MyJavaCommandLineState(Project project, AnalysisScope generationOptions) {
       super(null);
       myGenerationOptions = generationOptions;
       myProject = project;
@@ -256,28 +242,7 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
 
       final Collection<String> packages = new HashSet<String>();
       final Collection<String> sources = new HashSet<String>();
-      ApplicationManager.getApplication().runReadAction(
-        new Runnable(){
-          public void run() {
-            FileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-            VirtualFile startingFile = null;
-            if (myGenerationOptions.isGenerationForPackage) {
-              if (!myGenerationOptions.isGenerationWithSubpackages) {
-                packages.add(myGenerationOptions.myPackageFQName);
-                return;
-              }
-              startingFile = myGenerationOptions.myDirectory.getVirtualFile();
-            }
-            MyContentIterator contentIterator = new MyContentIterator(myProject, packages, sources);
-            if (startingFile == null) {
-              fileIndex.iterateContent(contentIterator);
-            }
-            else {
-              fileIndex.iterateContentUnderDirectory(startingFile, contentIterator);
-            }
-          }
-        }
-      );
+      myGenerationOptions.accept(new MyContentIterator(myProject, packages, sources));
       if (packages.size() + sources.size() == 0) {
         throw new CantRunException(JavadocBundle.message("javadoc.generate.no.classes.in.selected.packages.error"));
       }
@@ -302,7 +267,7 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
     }
   }
 
-  private static class MyContentIterator implements ContentIterator {
+  private static class MyContentIterator extends PsiRecursiveElementWalkingVisitor {
     private final PsiManager myPsiManager;
     private final Collection<String> myPackages;
     private final Collection<String> mySourceFiles;
@@ -313,72 +278,37 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
       mySourceFiles = sources;
     }
 
-    public boolean processFile(VirtualFile fileOrDir) {
-      if (!fileOrDir.isInLocalFileSystem()) {
-        return true;
-      }
+    @Override
+    public void visitFile(PsiFile file) {
+      final VirtualFile fileOrDir = file.getVirtualFile();
+      if (fileOrDir == null) return;
+      if (!fileOrDir.isInLocalFileSystem()) return;
       final Module module = ModuleUtil.findModuleForFile(fileOrDir, myPsiManager.getProject());
-      final PsiDirectory directory = getPsiDirectory(fileOrDir);
-      if (directory == null) {
-        if (!StdFileTypes.JAVA.equals(FileTypeManager.getInstance().getFileTypeByFile(fileOrDir))) {
-          return true;
-        }
-        PsiPackage psiPackage = getPsiPackage(fileOrDir.getParent());
-        if (psiPackage != null) {
-          if (psiPackage.getQualifiedName().length() == 0  || containsPackagePrefix(module, psiPackage.getQualifiedName())) {
-            mySourceFiles.add(PathUtil.getLocalPath(fileOrDir));
-          }
-        }
-        return true;
-      }
-      else {
-        processDirWithJavaFiles(directory, myPackages, mySourceFiles, module);
-      }
-
-      return true;
-    }
-
-    @Nullable
-    private PsiDirectory getPsiDirectory(VirtualFile fileOrDir) {
-      return fileOrDir != null ? myPsiManager.findDirectory(fileOrDir) : null;
-    }
-
-    @Nullable
-    private PsiPackage getPsiPackage(VirtualFile dir) {
-      PsiDirectory directory = getPsiDirectory(dir);
-      return directory != null ? JavaDirectoryService.getInstance().getPackage(directory) : null;
-    }
-  }
-
-  private static boolean processDirWithJavaFiles(PsiDirectory dir, Collection<String> packages, final Collection<String> sources, final Module module) {
-    PsiFile[] files = dir.getFiles();
-    for (PsiFile file : files) {
       if (file instanceof PsiJavaFile) {
         final PsiJavaFile javaFile = (PsiJavaFile)file;
         if (containsPackagePrefix(module, javaFile.getPackageName())) {
-          sources.add(PathUtil.getLocalPath(javaFile.getVirtualFile()));
-        } else {
-          packages.add(javaFile.getPackageName());
+          mySourceFiles.add(PathUtil.getLocalPath(javaFile.getVirtualFile()));
         }
-        return true;
+        else {
+          myPackages.add(javaFile.getPackageName());
+        }
       }
     }
-    return false;
-  }
 
-  public static boolean containsPackagePrefix(Module module, String packageFQName) {
-    if (module == null) return false;
-    final ContentEntry[] contentEntries = ModuleRootManager.getInstance(module).getContentEntries();
-    for (ContentEntry contentEntry : contentEntries) {
-      final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
-      for (SourceFolder sourceFolder : sourceFolders) {
-        final String packagePrefix = sourceFolder.getPackagePrefix();
-        final int prefixLength = packagePrefix.length();
-        if (prefixLength > 0 && packageFQName.startsWith(packagePrefix)) {
-          return true;
+    private static boolean containsPackagePrefix(Module module, String packageFQName) {
+      if (module == null) return false;
+      final ContentEntry[] contentEntries = ModuleRootManager.getInstance(module).getContentEntries();
+      for (ContentEntry contentEntry : contentEntries) {
+        final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
+        for (SourceFolder sourceFolder : sourceFolders) {
+          final String packagePrefix = sourceFolder.getPackagePrefix();
+          final int prefixLength = packagePrefix.length();
+          if (prefixLength > 0 && packageFQName.startsWith(packagePrefix)) {
+            return true;
+          }
         }
       }
+      return false;
     }
-    return false;
   }
 }

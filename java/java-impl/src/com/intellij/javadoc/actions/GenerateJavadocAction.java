@@ -15,52 +15,50 @@
  */
 package com.intellij.javadoc.actions;
 
+import com.intellij.analysis.AnalysisScope;
+import com.intellij.analysis.BaseAnalysisAction;
+import com.intellij.analysis.BaseAnalysisActionDialog;
+import com.intellij.ide.DataManager;
+import com.intellij.javadoc.JavadocBundle;
+import com.intellij.javadoc.JavadocConfigurable;
 import com.intellij.javadoc.JavadocGenerationManager;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
-public final class GenerateJavadocAction extends AnAction{
+import javax.swing.*;
 
-  public void actionPerformed(AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    final PsiDirectory dir = getDirectoryFromContext(dataContext);
-    JavadocGenerationManager.getInstance(project).generateJavadoc(dir, dataContext);
+public final class GenerateJavadocAction extends BaseAnalysisAction{
+  private JavadocConfigurable myConfigurable;
+
+  public GenerateJavadocAction() {
+    super(JavadocBundle.message("javadoc.generate.title"), JavadocBundle.message("javadoc.generate.start.button"));
   }
 
-  public void update(AnActionEvent event){
-    final Presentation presentation = event.getPresentation();
-    presentation.setEnabled(PlatformDataKeys.PROJECT.getData(event.getDataContext()) != null);
+  @Override
+  protected void analyze(@NotNull Project project, AnalysisScope scope) {
+    myConfigurable.apply();
+    JavadocGenerationManager.getInstance(project).generateJavadoc(scope, DataManager.getInstance().getDataContext());
+    dispose();
   }
 
-  private static PsiDirectory getDirectoryFromContext(final DataContext dataContext) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    if (project == null) return null;
-    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-    if (editor != null){
-      PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      if (psiFile != null) return psiFile.getContainingDirectory();
-    } else {
-      PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
-      if (element != null) {
-        if (element instanceof PsiDirectory) return (PsiDirectory)element;
-        else{
-          PsiFile psiFile = element.getContainingFile();
-          if (psiFile != null) return psiFile.getContainingDirectory();
-        }
-      } else {
-        //This is the case with GUI designer
-        VirtualFile virtualFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
-        if (virtualFile != null && virtualFile.isValid()) {
-          PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
-          if (psiFile != null) return psiFile.getContainingDirectory();
-        }
-      }
+  @Override
+  protected JComponent getAdditionalActionSettings(Project project, BaseAnalysisActionDialog dialog) {
+    myConfigurable = JavadocGenerationManager.getInstance(project).getConfiguration().createConfigurable();
+    final JComponent component = myConfigurable.createComponent();
+    myConfigurable.reset();
+    return component;
+  }
+
+  @Override
+  protected void canceled() {
+    super.canceled();
+    dispose();
+  }
+
+  private void dispose() {
+    if (myConfigurable != null) {
+      myConfigurable.disposeUIResources();
+      myConfigurable = null;
     }
-    return null;
   }
-
 }
