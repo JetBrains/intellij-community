@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -18,14 +19,14 @@ import javax.swing.*;
  * Time: 5:44:51 PM
  */
 public class PyMethodMember extends PsiElementMemberChooserObject implements ClassMember {
-  public PyMethodMember(final PsiElement psiElement, final String text, @Nullable final Icon icon) {
-    super(psiElement, text, icon);
+  public PyMethodMember(final PyElement function) {
+    super(function, function.getName(), function.getIcon(0));
   }
 
   public MemberChooserObject getParentNodeDelegate() {
     final PyElement element = (PyElement)getPsiElement();
     final PyClass parent = PsiTreeUtil.getParentOfType(element, PyClass.class, false);
     assert (parent != null);
-    return new PyMethodMember(parent, parent.getName(), parent.getIcon(0));
+    return new PyMethodMember(parent);
   }
 }

@@ -42,7 +42,6 @@ public class PyReachingDefsSemilattice implements Semilattice<ScopeVariable> {
 
       boolean isParameter = true;
       Set<PsiElement> declarations = new HashSet<PsiElement>();
-      PsiElement scope = null;
 
       // iterating over all maps
       for (DFAMap<ScopeVariable> map : ins) {
@@ -50,17 +49,10 @@ public class PyReachingDefsSemilattice implements Semilattice<ScopeVariable> {
         if (variable == null) {
           continue;
         }
-        final PsiElement valueScope = variable.getScope();
-        if (scope == null || scope == valueScope) {
-          scope = valueScope;
-          declarations.addAll(variable.getDeclarations());
-        } else
-        if (PsiTreeUtil.isAncestor(valueScope, scope, false)){
-          scope = valueScope;
-          declarations = new HashSet<PsiElement>(variable.getDeclarations());
-        }
+        isParameter = isParameter && variable.isParameter();
+        declarations.addAll(variable.getDeclarations());
       }
-      final ScopeVariable scopeVariable = new ScopeVariableImpl(name, isParameter, scope, declarations);
+      final ScopeVariable scopeVariable = new ScopeVariableImpl(name, isParameter, declarations);
       result.put(name, scopeVariable);
     }
     return result;

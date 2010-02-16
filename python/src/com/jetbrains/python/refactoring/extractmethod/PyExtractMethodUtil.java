@@ -20,10 +20,13 @@ import com.intellij.refactoring.extractMethod.AbstractVariableData;
 import com.intellij.refactoring.extractMethod.ExtractMethodDecorator;
 import com.intellij.refactoring.extractMethod.ExtractMethodValidator;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.Function;
 import com.intellij.util.containers.hash.HashMap;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,7 +71,7 @@ public class PyExtractMethodUtil {
               generatedMethod = insertGeneratedMethod(statement1, generatedMethod);
 
               // Process parameters
-              final boolean isMethod = PyPsiUtils.isMethodContext(generatedMethod);
+              final boolean isMethod = PyPsiUtils.isMethodContext(elementsRange.get(0));
               processParameters(project, generatedMethod, variableData, isMethod);
 
               // Generating call element
@@ -116,7 +119,7 @@ public class PyExtractMethodUtil {
               generatedMethod = insertGeneratedMethod(statement1, generatedMethod);
 
               // Process parameters
-              final boolean isMethod = PyPsiUtils.isMethodContext(generatedMethod);
+              final boolean isMethod = PyPsiUtils.isMethodContext(elementsRange.get(0));
               processParameters(project, generatedMethod, variableData, isMethod);
 
               // Generate call element
@@ -175,7 +178,7 @@ public class PyExtractMethodUtil {
               generatedMethod = insertGeneratedMethod(expression, generatedMethod);
 
               // Process parameters
-              final boolean isMethod = PyPsiUtils.isMethodContext(generatedMethod);
+              final boolean isMethod = PyPsiUtils.isMethodContext(expression);
               processParameters(project, generatedMethod, variableData, isMethod);
 
               // Generating call element
@@ -276,7 +279,7 @@ public class PyExtractMethodUtil {
     }
     final PsiNamedElement parent = PsiTreeUtil.getParentOfType(anchor, PyFile.class, PyClass.class, PyFunction.class);
 
-    if (parent instanceof PyFile) {
+    if (parent instanceof PyFile || parent instanceof PyClass) {
       final PsiElement statement = PyPsiUtils.getStatement(parent, anchor);
       return (PyFunction) parent.addBefore(generatedMethod, statement);
     }
@@ -341,11 +344,15 @@ public class PyExtractMethodUtil {
   private static Pair<String, AbstractVariableData[]> getNameAndVariableData(final Project project,
                                                                              final CodeFragment fragment,
                                                                              final PsiElement element) {
+      final ExtractMethodValidator validator = new PyExtractMethodValidator(element, project);
     if (ApplicationManager.getApplication().isUnitTestMode()){
-
       String name = System.getProperty(NAME);
       if (name == null){
         name = "foo";
+      }
+      final String result = validator.check(name);
+      if (result != null){
+        throw new CommonRefactoringUtil.RefactoringErrorHintException(result);
       }
       final List<AbstractVariableData> data = new ArrayList<AbstractVariableData>();
       for (String in : fragment.getInputVariables()) {
@@ -358,16 +365,6 @@ public class PyExtractMethodUtil {
       return Pair.create(name, data.toArray(new AbstractVariableData[data.size()]));
     }
 
-    final ExtractMethodValidator validator = new ExtractMethodValidator() {
-      public String check(final String name) {
-        // TODO[oleg] implement context for name clashes
-        return null;
-      }
-
-      public boolean isValidName(final String name) {
-        return LanguageNamesValidation.INSTANCE.forLanguage(PythonLanguage.getInstance()).isIdentifier(name, project);
-      }
-    };
     final boolean isMethod = PyPsiUtils.isMethodContext(element);
     final ExtractMethodDecorator decorator = new ExtractMethodDecorator() {
       public String createMethodPreview(final String methodName, final AbstractVariableData[] variableDatas) {
@@ -402,5 +399,49 @@ public class PyExtractMethodUtil {
     return Pair.create(dialog.getMethodName(), dialog.getVariableData());
   }
 
+  private static class PyExtractMethodValidator implements ExtractMethodValidator {
+    private final PsiElement myElement;
+    private final Project myProject;
+    private final Function<String, Boolean> myFunction;
+
+    public PyExtractMethodValidator(final PsiElement element, final Project project) {
+      myElement = element;
+      myProject = project;
+      final PsiNamedElement parent = PsiTreeUtil.getParentOfType(myElement, PyFile.class, PyClass.class);
+      if (parent instanceof PyFile){
+        final List<PyFunction> functions = ((PyFile)parent).getTopLevelFunctions();
+        myFunction = new Function<String, Boolean>() {
+          public Boolean fun(@NotNull final String s) {
+            for (PyFunction function : functions) {
+              if (s.equals(function.getName())){
+                return false;
+              }
+            }
+            return true;
+          }
+        };
+      } else
+      if (parent instanceof PyClass){
+        myFunction = new Function<String, Boolean>() {
+          public Boolean fun(@NotNull final String s) {
+            return ((PyClass) parent).findMethodByName(s, true) == null;
+          }
+        };
+      } else {
+        myFunction = null;
+      }
+    }
+
+    public String check(final String name) {
+      if (myFunction != null && !myFunction.fun(name)){
+        return PyBundle.message("refactoring.extract.method.error.name.clash");
+      }
+      return null;
+    }
+
+    public boolean isValidName(final String name) {
+      return LanguageNamesValidation.INSTANCE.forLanguage(PythonLanguage.getInstance()).isIdentifier(name, myProject);
+    }
+  }
 }
 

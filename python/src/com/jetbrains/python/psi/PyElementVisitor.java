@@ -213,4 +213,8 @@ public class PyElementVisitor extends PsiElementVisitor {
   public void visitPyImportStatement(PyImportStatement node) {
     visitPyStatement(node);
   }
+
+  public void visitPyReprExpression(PyReprExpression node) {
+    visitPyExpression(node);
+  }
 }

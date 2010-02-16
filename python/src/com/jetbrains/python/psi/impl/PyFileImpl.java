@@ -259,6 +259,9 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     if (myControlFlowRef != null){
       myControlFlowRef.clear();
     }
+    if (myScopeRef != null){
+      myScopeRef.clear();
+    }
   }
 
   private SoftReference<ControlFlow> myControlFlowRef;

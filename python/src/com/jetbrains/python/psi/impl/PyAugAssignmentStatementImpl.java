@@ -17,6 +17,9 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
+import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyAugAssignmentStatement;
@@ -53,5 +56,10 @@ public class PyAugAssignmentStatementImpl extends PyElementImpl implements PyAug
   @Nullable
   public PyExpression getValue() {
     return childToPsi(PyElementTypes.EXPRESSIONS, 1);
+  }
+
+  @Nullable
+  public PsiElement getOperation() {
+    return PyUtil.getChildByFilter(this, PyTokenTypes.AUG_ASSIGN_OPERATIONS, 0);
   }
 }

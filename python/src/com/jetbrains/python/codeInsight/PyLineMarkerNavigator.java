@@ -16,8 +16,8 @@ import java.util.List;
 /**
  * @author yole
  */
-public abstract class PyLineMarkerNavigator<T extends PsiElement> implements GutterIconNavigationHandler {
-  public void navigate(final MouseEvent e, final PsiElement elt) {
+public abstract class PyLineMarkerNavigator<T extends PsiElement> implements GutterIconNavigationHandler<T> {
+  public void navigate(final MouseEvent e, final T elt) {
     final List<NavigatablePsiElement> navElements = new ArrayList<NavigatablePsiElement>();
     Query<T> elementQuery = search(elt);
     if (elementQuery == null) return;
@@ -33,8 +33,8 @@ public abstract class PyLineMarkerNavigator<T extends PsiElement> implements Gut
     PsiElementListNavigator.openTargets(e, methods, getTitle(elt), new DefaultPsiElementCellRenderer());
   }
 
-  protected abstract String getTitle(PsiElement elt);
+  protected abstract String getTitle(T elt);
 
   @Nullable
-  protected abstract Query<T> search(PsiElement elt);
+  protected abstract Query<T> search(T elt);
 }

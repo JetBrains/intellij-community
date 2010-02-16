@@ -22,7 +22,7 @@ setProperty("pluginFilter", [
         "JSInspections",
         "JSIntentionPowerPack",
         "SpellChecker", "spellchecker",
-        "yaml", "yaml-plugin"
+        "yaml", "yaml-plugin", "sass"
 ])
 
 private List platformImplementationModules() {
@@ -319,7 +319,7 @@ def buildTarGz() {
 
 def layoutFull(String target, Set usedJars) {
   def openapiModules = platformApiModules()
-  def implementationModules = [platformImplementationModules(), "python", "python-ide", "python-py"].flatten()
+  def implementationModules = [platformImplementationModules(), "python", "python-ide", "python-py", "sass"].flatten()
 
   layout(target) {
     dir("lib") {

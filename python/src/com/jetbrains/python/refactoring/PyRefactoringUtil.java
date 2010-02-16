@@ -65,6 +65,10 @@ public class PyRefactoringUtil {
     if (!(parent instanceof PyExpression)){
       return null;
     }
+    // We cannot extract anything within import statements
+    if (PsiTreeUtil.getParentOfType(parent, PyImportStatement.class, PyFromImportStatement.class) != null){
+      return null;
+    }
     if ((element1 == PsiTreeUtil.getDeepestFirst(parent)) && (element2 == PsiTreeUtil.getDeepestLast(parent))) {
       return parent;
     }

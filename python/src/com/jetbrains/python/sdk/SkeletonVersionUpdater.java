@@ -5,6 +5,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,21 +20,28 @@ public class SkeletonVersionUpdater implements ProjectComponent {
 
   public static int SKELETONS_VERSION = 1;
 
-  public void projectOpened() {
-    final File skeletonDir = new File(PathManager.getSystemPath(), PythonSdkType.SKELETON_DIR_NAME);
-    if (skeletonDir.isDirectory()) {
-      final File versionFile = new File(skeletonDir, "version");
-      if (!versionFile.exists() || readVersion(versionFile) != SKELETONS_VERSION) {
-        writeVersion(versionFile, SKELETONS_VERSION);
-        final List<Sdk> sdkList = PythonSdkType.getAllSdks();
-        for (Sdk sdk : sdkList) {
-          final String url = PythonSdkType.findSkeletonsUrl(sdk);
-          final String path = VfsUtil.urlToPath(url);
-          PythonSdkType.generateBuiltinStubs(sdk.getHomePath(), path);
-          PythonSdkType.generateBinaryStubs(sdk.getHomePath(), path, ProgressManager.getInstance().getProgressIndicator());
+  public SkeletonVersionUpdater(StartupManager startupManager) {
+    startupManager.registerStartupActivity(new Runnable() {
+      public void run() {
+        final File skeletonDir = new File(PathManager.getSystemPath(), PythonSdkType.SKELETON_DIR_NAME);
+        if (skeletonDir.isDirectory()) {
+          final File versionFile = new File(skeletonDir, "version");
+          if (!versionFile.exists() || readVersion(versionFile) != SKELETONS_VERSION) {
+            writeVersion(versionFile, SKELETONS_VERSION);
+            final List<Sdk> sdkList = PythonSdkType.getAllSdks();
+            for (Sdk sdk : sdkList) {
+              final String url = PythonSdkType.findSkeletonsUrl(sdk);
+              final String path = VfsUtil.urlToPath(url);
+              PythonSdkType.generateBuiltinStubs(sdk.getHomePath(), path);
+              PythonSdkType.generateBinaryStubs(sdk.getHomePath(), path, ProgressManager.getInstance().getProgressIndicator());
+            }
+          }
         }
       }
-    }
+    });
+  }
+
+  public void projectOpened() {
   }
 
   private static int readVersion(File versionFile) {

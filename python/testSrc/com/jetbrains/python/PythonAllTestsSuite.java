@@ -1,6 +1,7 @@
 package com.jetbrains.python;
 
 import com.jetbrains.python.refactoring.PyExtractMethodTest;
+import com.jetbrains.python.refactoring.PyInlineLocalTest;
 import com.jetbrains.python.refactoring.PyRenameTest;
 import com.jetbrains.python.refactoring.classes.PyExtractSuperclassTest;
 import com.jetbrains.python.refactoring.classes.PyPullUpTest;
@@ -44,6 +45,7 @@ public class PythonAllTestsSuite {
     PyPullUpTest.class,
     PyPushDownTest.class,
     PyExtractSuperclassTest.class,
+    PyInlineLocalTest.class,
   };
 
   public static TestSuite suite() {

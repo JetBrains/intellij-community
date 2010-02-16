@@ -11,6 +11,7 @@ import com.jetbrains.python.psi.PyStringLiteralExpression;
 public class StringConstantAnnotator extends PyAnnotator {
   public static final String MISSING_Q = "Missing closing quote";
   private static final String TRIPLE_QUOTES = "\"\"\"";
+  private static final String TRIPLE_APOS = "'''";
 
   //public static final String PREMATURE_Q = "Premature closing quote";
   public void visitPyStringLiteralExpression(final PyStringLiteralExpression node) {
@@ -25,13 +26,9 @@ public class StringConstantAnnotator extends PyAnnotator {
     first_quote = s.charAt(index);
     if ((first_quote == 'r') || (first_quote == 'R')) index += 1;
 
-    if (StringUtil.startsWith(s.substring(index, s.length()), TRIPLE_QUOTES)) {
-      if (s.length() < 6 + index || !s.endsWith(TRIPLE_QUOTES)) {
-        getHolder().createErrorAnnotation(node, "Missing closing triple quotes");
-      }
-      return;
-    }
-    
+    if (checkTripleQuotedString(node, s, index, TRIPLE_QUOTES)) return;
+    if (checkTripleQuotedString(node, s, index, TRIPLE_APOS)) return;
+
     first_quote = s.charAt(index);
     // s can't begin with a non-quote, else parser would not say it's a string
     index += 1;
@@ -71,5 +68,15 @@ public class StringConstantAnnotator extends PyAnnotator {
     if (! ok) {
       getHolder().createErrorAnnotation(node, msg);
     }
+  }
+
+  private boolean checkTripleQuotedString(PyStringLiteralExpression node, String s, int index, final String quotes) {
+    if (StringUtil.startsWith(s.substring(index, s.length()), quotes)) {
+      if (s.length() < 6 + index || !s.endsWith(quotes)) {
+        getHolder().createErrorAnnotation(node, "Missing closing triple quotes");
+      }
+      return true;
+    }
+    return false;
   }
 }

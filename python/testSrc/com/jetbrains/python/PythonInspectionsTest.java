@@ -19,6 +19,17 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   private void doTest(String testName, LocalInspectionTool localInspectionTool) throws Throwable {
     myFixture.testInspection("inspections/" + testName, new LocalInspectionToolWrapper(localInspectionTool));
   }
+  
+  private void doTestWithPy3k(String testName, LocalInspectionTool localInspectionTool) throws Throwable {
+    PythonLanguageLevelPusher.FORCE_LANGUAGE_LEVEL = LanguageLevel.PYTHON30;
+    PythonLanguageLevelPusher.pushLanguageLevel(myFixture.getProject());
+    try {
+      doTest(testName, localInspectionTool);
+    }
+    finally {
+      PythonLanguageLevelPusher.FORCE_LANGUAGE_LEVEL = null;
+    }
+  }
 
   public void testPyMethodFirstArgAssignmentInspection() throws Throwable {
     LocalInspectionTool inspection = new PyMethodFirstArgAssignmentInspection();
@@ -41,15 +52,8 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   }
 
   public void testPyArgumentListInspection3K() throws Throwable {
-    PythonLanguageLevelPusher.FORCE_LANGUAGE_LEVEL = LanguageLevel.PYTHON30;
-    PythonLanguageLevelPusher.pushLanguageLevel(myFixture.getProject());
-    try {
-      LocalInspectionTool inspection = new PyArgumentListInspection();
-      doTest(getTestName(false), inspection);
-    }
-    finally {
-      PythonLanguageLevelPusher.FORCE_LANGUAGE_LEVEL = null;
-    }
+    LocalInspectionTool inspection = new PyArgumentListInspection();
+    doTestWithPy3k(getTestName(false), inspection);
   }
 
   public void testPyRedeclarationInspection() throws Throwable {
@@ -70,5 +74,15 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   public void testPyTrailingSemicolonInspection() throws Throwable {
     LocalInspectionTool inspection = new PyTrailingSemicolonInspection();
     doTest(getTestName(false), inspection);
+  }
+
+  public void testPyUnusedLocalVariableInspection() throws Throwable {
+    LocalInspectionTool inspection = new PyUnusedLocalVariableInspection();
+    doTest(getTestName(false), inspection);
+  }
+
+  public void testPyUnsupportedFeaturesInspection() throws Throwable {
+    LocalInspectionTool inspection = new PyUnsupportedFeaturesInspection();
+    doTestWithPy3k(getTestName(false), inspection);
   }
 }

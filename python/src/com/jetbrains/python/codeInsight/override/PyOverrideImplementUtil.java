@@ -77,7 +77,7 @@ public class PyOverrideImplementUtil {
         continue;
       }
       if (pyClass.findMethodByName(name, false) == null) {
-        elements.add(new PyMethodMember(function, name, function.getIcon(0)));
+        elements.add(new PyMethodMember(function));
       }
     }
     if (elements.size() == 0) {
@@ -92,14 +92,19 @@ public class PyOverrideImplementUtil {
     if (chooser.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
       return;
     }
-    final List<String> newMembers = generateCode(chooser.getSelectedElements());
+    List<PyMethodMember> membersToOverride = chooser.getSelectedElements();
+    overrideMethods(editor, pyClass, membersToOverride);
+  }
+
+  public static void overrideMethods(final Editor editor, final PyClass pyClass, List<PyMethodMember> membersToOverride) {
+    final List<String> newMembers = generateCode(membersToOverride);
     if (newMembers.isEmpty()) {
       return;
     }
 
-    new WriteCommandAction(project, pyClass.getContainingFile()) {
+    new WriteCommandAction(pyClass.getProject(), pyClass.getContainingFile()) {
       protected void run(final Result result) throws Throwable {
-        write(pyClass, newMembers, project, editor);
+        write(pyClass, newMembers, pyClass.getProject(), editor);
       }
     }.execute();
   }

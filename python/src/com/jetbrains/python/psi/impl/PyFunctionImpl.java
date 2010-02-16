@@ -178,10 +178,13 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     return super.toString() + "('" + getName() + "')";
   }
 
-   public void subtreeChanged() {
+  public void subtreeChanged() {
     super.subtreeChanged();
     if (myControlFlowRef != null){
       myControlFlowRef.clear();
+    }
+    if (myScopeRef != null){
+      myScopeRef.clear();
     }
   }
 

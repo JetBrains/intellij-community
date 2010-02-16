@@ -315,8 +315,7 @@ public class PyBlock implements Block {
 
   private Indent getChildIndent(int newChildIndex) {
     ASTNode lastChild = getLastNonSpaceChild(myNode, false);
-    if (lastChild != null && lastChild.getElementType() == PyElementTypes.STATEMENT_LIST) {
-
+    if (lastChild != null && lastChild.getElementType() == PyElementTypes.STATEMENT_LIST && mySubBlocks.size() >= newChildIndex) {
       PyBlock insertAfterBlock = (PyBlock)mySubBlocks.get(newChildIndex - 1);
       ASTNode afterNode = insertAfterBlock.getNode();
 
