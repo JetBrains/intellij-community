@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,12 +24,15 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 
 /**
@@ -198,13 +202,16 @@ public class Utils{
   }
 
 
-  public static void fillMenu(@NotNull ActionGroup group,JComponent component, boolean enableMnemonics, PresentationFactory presentationFactory, DataContext context, String place, boolean isWindowMenu){
+  public static void fillMenu(@NotNull final ActionGroup group,
+                              final JComponent component, boolean enableMnemonics, final PresentationFactory presentationFactory, DataContext context, final String place, boolean isWindowMenu){
+    final ActionCallback menuBuilt = new ActionCallback();
+
     ArrayList<AnAction> list = new ArrayList<AnAction>();
     expandActionGroup(group, list, presentationFactory, context, place, ActionManager.getInstance());
 
     final boolean fixMacScreenMenu = SystemInfo.isMacSystemMenu && isWindowMenu && Registry.is("actionSystem.mac.screenMenuNotUpdatedFix");
 
-    final ArrayList<ActionMenuItem> menuItems = new ArrayList<ActionMenuItem>();
+    final ArrayList<Component> children = new ArrayList<Component>();
 
     for (int i = 0; i < list.size(); i++) {
       AnAction action = list.get(i);
@@ -214,13 +221,15 @@ public class Utils{
         }
       }
       else if (action instanceof ActionGroup) {
-        component.add(new ActionMenu(context, place, (ActionGroup)action, presentationFactory, enableMnemonics));
+        ActionMenu menu = new ActionMenu(context, place, (ActionGroup)action, presentationFactory, enableMnemonics);
+        component.add(menu);
+        children.add(menu);
       }
       else {
         final ActionMenuItem each =
           new ActionMenuItem(action, presentationFactory.getPresentation(action), place, context, enableMnemonics, !fixMacScreenMenu);
         component.add(each);
-        menuItems.add(each);
+        children.add(each);
       }
     }
 
@@ -229,19 +238,47 @@ public class Utils{
         new ActionMenuItem(EMPTY_MENU_FILLER, presentationFactory.getPresentation(EMPTY_MENU_FILLER), place, context, enableMnemonics,
                            !fixMacScreenMenu);
       component.add(each);
-      menuItems.add(each);
+      children.add(each);
     }
 
     if (fixMacScreenMenu) {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          for (ActionMenuItem each : menuItems) {
-            if (each.getParent() != null) {
-              each.prepare();
+          for (Component each : children) {
+            if (each.getParent() != null && each instanceof ActionMenuItem) {
+              ((ActionMenuItem)each).prepare();
             }
           }
+          menuBuilt.setDone();
         }
       });
+    } else {
+      menuBuilt.setDone();
     }
+
+
+    menuBuilt.doWhenDone(new Runnable() {
+      public void run() {
+        if (IdeFocusManager.getInstance(null).isFocusBeingTransferred()) {
+          IdeFocusManager.getInstance(null).doWhenFocusSettlesDown(new Runnable() {
+            public void run() {
+              if (!component.isShowing()) return;
+
+              DataContext context = DataManager.getInstance().getDataContext();
+              expandActionGroup(group, new ArrayList<AnAction>(), presentationFactory, context, place, ActionManager.getInstance());
+
+              for (Component each : children) {
+                if (each instanceof ActionMenuItem) {
+                  ((ActionMenuItem)each).updateContext(context);
+                } else if (each instanceof ActionMenu) {
+                  ((ActionMenu)each).updateContext(context);
+                }
+              }
+            }
+          });
+        }
+      }
+    });
+
   }
 }

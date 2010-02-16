@@ -30,6 +30,7 @@ public class Splash extends JDialog {
     setUndecorated(true);
     setResizable(false);
     setModal(false);
+    setFocusableWindowState(false);
 
     Icon originalImage = IconLoader.getIcon(imageName);
     myImage = new MyIcon(originalImage, textColor);

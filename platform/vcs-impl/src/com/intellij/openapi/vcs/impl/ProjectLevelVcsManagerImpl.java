@@ -33,6 +33,7 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
@@ -287,7 +288,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return ! myMappings.isEmpty();
   }
 
-  public void addMessageToConsoleWindow(final String message, final TextAttributes attributes) {
+public void addMessageToConsoleWindow(final String message, final TextAttributes attributes) {
+    if (!Registry.is("vcs.showConsole")) return;
+
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         // for default and disposed projects the ContentManager is not available.

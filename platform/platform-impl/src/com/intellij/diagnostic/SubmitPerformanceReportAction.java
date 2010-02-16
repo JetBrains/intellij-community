@@ -54,7 +54,7 @@ public class SubmitPerformanceReportAction extends AnAction implements DumbAware
     String reportFileName = "perf_" + ApplicationInfo.getInstance().getBuild().asString() + "_" +
                             SystemProperties.getUserName() + "_" + myDateFormat.format(new Date()) + ".zip";
     final File reportPath = new File(SystemProperties.getUserHome(), reportFileName);
-    final File logDir = new File(PathManager.getSystemPath(), "log");
+    final File logDir = new File(PathManager.getLogPath());
     final Project project = e.getData(PlatformDataKeys.PROJECT);
 
     final boolean[] archiveCreated = new boolean[1];
@@ -65,7 +65,7 @@ public class SubmitPerformanceReportAction extends AnAction implements DumbAware
           ZipUtil.addDirToZipRecursively(zip, reportPath, logDir, "", new FileFilter() {
             public boolean accept(final File pathname) {
               ProgressManager.checkCanceled();
-              
+
               if (logDir.equals(pathname.getParentFile())) {
                 return pathname.getPath().contains("threadDumps");
               }
@@ -103,7 +103,7 @@ public class SubmitPerformanceReportAction extends AnAction implements DumbAware
                 Messages.showErrorDialog(error, MESSAGE_TITLE);
               }
             });
-          } 
+          }
         }
       });
     }
