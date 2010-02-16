@@ -420,7 +420,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
           public void run() {
             LOG.info("Code inspection finished");
 
-            final InspectionResultsView view = new InspectionResultsView(myProject, getCurrentProfile(),
+            InspectionResultsView view = new InspectionResultsView(myProject, getCurrentProfile(),
                                                                          scope, GlobalInspectionContextImpl.this,
                                                                          new InspectionRVContentProviderImpl(myProject));
             if (!view.update() && !getUIOptions().SHOW_ONLY_DIFF) {
@@ -469,11 +469,11 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   }
 
   private void runTools(final List<InspectionProfileEntry> needRepeatSearchRequest, final AnalysisScope scope, final InspectionManager manager) {
-    final List<Tools> usedTools = new ArrayList<Tools>();
+    final List<Tools> globalTools = new ArrayList<Tools>();
     final List<Tools> localTools = new ArrayList<Tools>();
-    initializeTools(usedTools, localTools);
+    initializeTools(globalTools, localTools);
     ((RefManagerImpl)getRefManager()).initializeAnnotators();
-    for (Tools tools : usedTools) {
+    for (Tools tools : globalTools) {
       for (ScopeToolState state : tools.getTools()) {
         final InspectionTool tool = (InspectionTool)state.getTool();
         try {
@@ -510,14 +510,13 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     scope.accept(new PsiRecursiveElementVisitor() {
       @Override
       public void visitFile(PsiFile file) {
-
         final VirtualFile virtualFile = file.getVirtualFile();
         if (virtualFile != null) {
           incrementJobDoneAmount(LOCAL_ANALYSIS, ProjectUtil.calcRelativeToProjectPath(virtualFile, myProject));
         }
 
         final FileViewProvider viewProvider = psiManager.findViewProvider(virtualFile);
-        final com.intellij.openapi.editor.Document document = viewProvider != null ? viewProvider.getDocument() : null;
+        final com.intellij.openapi.editor.Document document = viewProvider == null ? null : viewProvider.getDocument();
         if (document == null || virtualFile.getFileType().isBinary()) return; //do not inspect binary files
         final LocalInspectionsPass pass = new LocalInspectionsPass(file, document, 0, file.getTextLength());
         try {
@@ -528,7 +527,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
               lTools.add(enabledTool);
             }
           }
-          pass.doInspectInBatch((InspectionManagerEx)manager, lTools.toArray(new InspectionProfileEntry[lTools.size()]), true);
+          pass.doInspectInBatch((InspectionManagerEx)manager, lTools, true);
         }
         catch (ProcessCanceledException e) {
           throw e;
@@ -540,7 +539,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     });
   }
 
-  public void initializeTools(List<Tools> tools, List<Tools> localTools) {
+  public void initializeTools(List<Tools> globalTools, List<Tools> localTools) {
     myJobDescriptors = new ArrayList<JobDescriptor>();
     final InspectionProfileImpl profile = new InspectionProfileImpl((InspectionProfileImpl)getCurrentProfile());
     final List<ToolsImpl> usedTools = profile.getAllEnabledInspectionTools();
@@ -553,7 +552,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
         appendJobDescriptor(LOCAL_ANALYSIS);
       }
       else {
-        tools.add(currentTools);
+        globalTools.add(currentTools);
         JobDescriptor[] jobDescriptors = tool.getJobDescriptors();
         for (JobDescriptor jobDescriptor : jobDescriptors) {
           appendJobDescriptor(jobDescriptor);
@@ -565,7 +564,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
       }
     }
     for (GlobalInspectionContextExtension extension : myExtensions.values()) {
-      extension.performPreRunActivities(tools, localTools, this);
+      extension.performPreRunActivities(globalTools, localTools, this);
     }
   }
 
