@@ -31,8 +31,12 @@ public class YAMLFoldingBuilder implements FoldingBuilder, DumbAware {
   private void collectDescriptors(@NotNull final ASTNode node, @NotNull final List<FoldingDescriptor> descriptors) {
     final IElementType type = node.getElementType();
     if (!StringUtil.isEmptyOrSpaces(node.getText())) {
-      if (type == YAMLElementTypes.KEY_VALUE_PAIR && node.getChildren(COMPOUND_VALUE).length > 0){
-        descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
+      if (type == YAMLElementTypes.KEY_VALUE_PAIR) {
+        final ASTNode[] children = node.getChildren(COMPOUND_VALUE);
+        // We should ignore empty compound values
+        if (children.length > 0 && !StringUtil.isEmpty(children[0].getText().trim())){
+          descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
+        }
       }
       if (type == YAMLElementTypes.DOCUMENT &&
           node.getTreeParent().getChildren(TokenSet.create(YAMLElementTypes.DOCUMENT)).length > 1){
