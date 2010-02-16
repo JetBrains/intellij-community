@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.SimpleColoredComponent;
@@ -424,7 +425,7 @@ public final class TreeUtil {
     return showAndSelect(tree, top, bottom, row, previous, addToSelection, true);
   }
 
-  public static ActionCallback showAndSelect(final JTree tree, int top, int bottom, final int row, final int previous, boolean addToSelection, final boolean scroll) {
+  public static ActionCallback showAndSelect(final JTree tree, int top, int bottom, final int row, final int previous, final boolean addToSelection, final boolean scroll) {
     final TreePath path = tree.getPathForRow(row);
 
     if (path == null) return new ActionCallback.Done();
@@ -443,11 +444,30 @@ public final class TreeUtil {
 
     if (row >= tree.getRowCount()) return new ActionCallback.Done();
 
+    boolean okToScroll = true;
     if (tree.isShowing()) {
       if (!tree.isValid()) {
         tree.validate();
       }
     } else {
+      okToScroll = false;
+    }
+
+    Runnable selectRunnable = new Runnable() {
+      public void run() {
+        if (!tree.isRowSelected(row)) {
+          if (addToSelection) {
+            tree.getSelectionModel().addSelectionPath(tree.getPathForRow(row));
+          } else {
+            tree.setSelectionRow(row);
+          }
+        }
+      }
+    };
+
+
+    if (!okToScroll) {
+      selectRunnable.run();
       return new ActionCallback.Done();
     }
 
@@ -486,13 +506,7 @@ public final class TreeUtil {
     final ActionCallback callback = new ActionCallback();
 
 
-    if (!tree.isRowSelected(row)) {
-      if (addToSelection) {
-        tree.getSelectionModel().addSelectionPath(tree.getPathForRow(row));        
-      } else {
-        tree.setSelectionRow(row);
-      }
-    }
+    selectRunnable.run();
 
     if (bounds != null) {
       final Range<Integer> range = getExpandControlRange(tree, path);
