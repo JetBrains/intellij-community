@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NonNls;
@@ -75,7 +76,7 @@ public class BreakpointsConfigurationDialogFactory {
 
   public class BreakpointsConfigurationDialog extends DialogWrapper {
     private JPanel myPanel;
-    private TabbedPaneWrapper myTabbedPane;
+    private @Nullable TabbedPaneWrapper myTabbedPane;
     private JComponent myPreferredComponent;
     @Nullable private Runnable myPreparePreferredComponent;
     private final List<Runnable> myDisposeActions = new ArrayList<Runnable>();
@@ -99,14 +100,7 @@ public class BreakpointsConfigurationDialogFactory {
     }
 
     protected void doHelpAction() {
-      final JComponent selectedComponent = myTabbedPane.getSelectedComponent();
-      AbstractBreakpointPanel currentPanel = null;
-      for (AbstractBreakpointPanel breakpointPanel : myPanels) {
-        if (selectedComponent == breakpointPanel.getPanel()) {
-          currentPanel = breakpointPanel;
-          break;
-        }
-      }
+      AbstractBreakpointPanel currentPanel = getSelectedPanel();
       if (currentPanel != null && currentPanel.getHelpID() != null) {
         HelpManager.getInstance().invokeHelp(currentPanel.getHelpID());
       }
@@ -116,28 +110,43 @@ public class BreakpointsConfigurationDialogFactory {
     }
 
     protected JComponent createCenterPanel() {
-      myTabbedPane = new TabbedPaneWrapper(getDisposable());
-      myPanel = new JPanel(new BorderLayout());
-
       for (BreakpointPanelProvider<?> panelProvider : myBreakpointPanelProviders) {
         addPanels(panelProvider);
       }
 
-      final ChangeListener tabPaneChangeListener = new ChangeListener() {
-        public void stateChanged(ChangeEvent e) {
-          AbstractBreakpointPanel panel = getSelectedPanel();
-          if (panel != null) {
-            panel.ensureSelectionExists();
+      JComponent contentComponent = null;
+      if (myPanels.size() > 1) {
+        final TabbedPaneWrapper tabbedPane = new TabbedPaneWrapper(getDisposable());
+        for (AbstractBreakpointPanel breakpointPanel : myPanels) {
+          addPanel(breakpointPanel, tabbedPane);
+        }
+
+        final ChangeListener tabPaneChangeListener = new ChangeListener() {
+          public void stateChanged(ChangeEvent e) {
+            AbstractBreakpointPanel panel = getSelectedPanel();
+            if (panel != null) {
+              panel.ensureSelectionExists();
+            }
           }
-        }
-      };
-      myTabbedPane.addChangeListener(tabPaneChangeListener);
-      myDisposeActions.add(new Runnable() {
-        public void run() {
-          myTabbedPane.removeChangeListener(tabPaneChangeListener);
-        }
-      });
-      myPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
+        };
+        tabbedPane.addChangeListener(tabPaneChangeListener);
+        myDisposeActions.add(new Runnable() {
+          public void run() {
+            tabbedPane.removeChangeListener(tabPaneChangeListener);
+          }
+        });
+
+        myTabbedPane = tabbedPane;
+        contentComponent = tabbedPane.getComponent();
+      }
+      else if (myPanels.size() == 1) {
+        contentComponent = myPanels.get(0).getPanel();
+      }
+
+      myPanel = new JPanel(new BorderLayout());
+      if (contentComponent != null) {
+        myPanel.add(contentComponent, BorderLayout.CENTER);
+      }
 
       // "Enter" and "Esc" keys work like "Close" button.
       ActionListener closeAction = new ActionListener() {
@@ -158,18 +167,17 @@ public class BreakpointsConfigurationDialogFactory {
       Collection<AbstractBreakpointPanel<B>> panels = panelProvider.getBreakpointPanels(myProject, this);
       for (AbstractBreakpointPanel<B> breakpointPanel : panels) {
         myPanels.add(breakpointPanel);
-        addPanel(breakpointPanel, breakpointPanel.getTabTitle());
       }
     }
 
-    private void addPanel(final AbstractBreakpointPanel panel, final String title) {
-      JPanel jpanel = panel.getPanel();
-      jpanel.putClientProperty(BREAKPOINT_PANEL, panel);
-      myTabbedPane.addTab(title, jpanel);
-      final int tabIndex = myTabbedPane.getTabCount() - 1;
+    private void addPanel(final AbstractBreakpointPanel panel, final TabbedPaneWrapper tabbedPane) {
+      JPanel jPanel = panel.getPanel();
+      jPanel.putClientProperty(BREAKPOINT_PANEL, panel);
+      tabbedPane.addTab(panel.getTabTitle(), jPanel);
+      final int tabIndex = tabbedPane.getTabCount() - 1;
       final AbstractBreakpointPanel.ChangesListener changesListener = new AbstractBreakpointPanel.ChangesListener() {
         public void breakpointsChanged() {
-          updateTabTitle(tabIndex);
+          updateTabTitle(tabbedPane, tabIndex);
         }
       };
       panel.addChangesListener(changesListener);
@@ -182,8 +190,11 @@ public class BreakpointsConfigurationDialogFactory {
 
     @Nullable
     public AbstractBreakpointPanel getSelectedPanel() {
-      JComponent selectedComponent = myTabbedPane.getSelectedComponent();
-      return selectedComponent != null ? (AbstractBreakpointPanel)selectedComponent.getClientProperty(BREAKPOINT_PANEL) : null;
+      if (myTabbedPane != null) {
+        JComponent selectedComponent = myTabbedPane.getSelectedComponent();
+        return selectedComponent != null ? (AbstractBreakpointPanel)selectedComponent.getClientProperty(BREAKPOINT_PANEL) : null;
+      }
+      return ContainerUtil.getFirstItem(myPanels, null);
     }
 
     public JComponent getPreferredFocusedComponent() {
@@ -213,7 +224,9 @@ public class BreakpointsConfigurationDialogFactory {
         for (AbstractBreakpointPanel panel : myPanels) {
           panel.dispose();
         }
-        myLastSelectedTabIndex = myTabbedPane.getSelectedIndex();
+        if (myTabbedPane != null) {
+          myLastSelectedTabIndex = myTabbedPane.getSelectedIndex();
+        }
         myPanel.removeAll();
         myPanel = null;
         myTabbedPane = null;
@@ -235,11 +248,16 @@ public class BreakpointsConfigurationDialogFactory {
       for (AbstractBreakpointPanel panel : myPanels) {
         panel.resetBreakpoints();
       }
-      updateAllTabTitles();
-      if (myLastSelectedTabIndex >= myTabbedPane.getTabCount() || myLastSelectedTabIndex < 0) {
-        myLastSelectedTabIndex = 0;
+      final TabbedPaneWrapper tabbedPane = myTabbedPane;
+      if (tabbedPane != null) {
+        for (int idx = 0; idx < tabbedPane.getTabCount(); idx++) {
+          updateTabTitle(tabbedPane, idx);
+        }
+        if (myLastSelectedTabIndex >= tabbedPane.getTabCount() || myLastSelectedTabIndex < 0) {
+          myLastSelectedTabIndex = 0;
+        }
+        tabbedPane.setSelectedIndex(myLastSelectedTabIndex);
       }
-      myTabbedPane.setSelectedIndex(myLastSelectedTabIndex);
     }
 
     private void selectBreakpoint(@Nullable Object breakpoint) {
@@ -256,7 +274,10 @@ public class BreakpointsConfigurationDialogFactory {
       if (aClass.isInstance(breakpoint)) {
         B b = aClass.cast(breakpoint);
         if (breakpointPanel.canSelectBreakpoint(b)) {
-          myTabbedPane.setSelectedComponent(breakpointPanel.getPanel());
+          final JPanel panel = breakpointPanel.getPanel();
+          if (myTabbedPane != null) {
+            myTabbedPane.setSelectedComponent(panel);
+          }
           breakpointPanel.selectBreakpoint(b);
           return true;
         }
@@ -264,18 +285,12 @@ public class BreakpointsConfigurationDialogFactory {
       return false;
     }
 
-    private void updateAllTabTitles() {
-      for (int idx = 0; idx < myTabbedPane.getTabCount(); idx++) {
-        updateTabTitle(idx);
-      }
-    }
-
-    private void updateTabTitle(final int idx) {
-      JComponent component = myTabbedPane.getComponentAt(idx);
+    private void updateTabTitle(final TabbedPaneWrapper tabbedPane, final int idx) {
+      JComponent component = tabbedPane.getComponentAt(idx);
       for (AbstractBreakpointPanel breakpointPanel : myPanels) {
         if (component == breakpointPanel.getPanel()) {
           Icon icon = breakpointPanel.getTabIcon();
-          myTabbedPane.setIconAt(idx, icon);
+          tabbedPane.setIconAt(idx, icon);
           break;
         }
       }
