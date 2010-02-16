@@ -23,14 +23,12 @@ import com.intellij.psi.*;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
 public class ClassUtil {
-  public static PsiMethod getAnyAbstractMethod(PsiClass aClass, Collection<HierarchicalMethodSignature> allMethodsCollection) {
-    PsiMethod methodToImplement = getAnyMethodToImplement(aClass, allMethodsCollection);
+  public static PsiMethod getAnyAbstractMethod(@NotNull PsiClass aClass) {
+    PsiMethod methodToImplement = getAnyMethodToImplement(aClass);
     if (methodToImplement != null) {
       return methodToImplement;
     }
@@ -39,116 +37,62 @@ public class ClassUtil {
       if (method.hasModifierProperty(PsiModifier.ABSTRACT)) return method;
     }
 
-    return abstractPackageLocalMethod(aClass, allMethodsCollection);
-/*
-    // the only remaining possiblity for class to have abstract method here is
-    //  from package local abstract method defined in inherited class from other package
-    PsiManager manager = aClass.getManager();
-    for (List<MethodSignatureBackedByPsiMethod> sameSignatureMethods : allMethodsCollection.values()) {
-      // look for abstract package locals
-      for (int i = sameSignatureMethods.size() - 1; i >= 0; i--) {
-        MethodSignatureBackedByPsiMethod methodSignature1 = sameSignatureMethods.get(i);
-        PsiMethod method1 = methodSignature1.getMethod();
-        PsiClass class1 = method1.getContainingClass();
-        if (class1 == null) {
-          sameSignatureMethods.remove(i);
-          continue;
-        }
-        if (!method1.hasModifierProperty(PsiModifier.ABSTRACT)
-            || !method1.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)
-            || manager.arePackagesTheSame(class1, aClass)) {
-          continue;
-        }
-        // check if abstract package local method gets overriden by not abstract
-        // i.e. there is direct subclass in the same package which overrides this method
-        for (int j = sameSignatureMethods.size() - 1; j >= 0; j--) {
-          MethodSignatureBackedByPsiMethod methodSignature2 = sameSignatureMethods.get(j);
-          PsiMethod method2 = methodSignature2.getMethod();
-          PsiClass class2 = method2.getContainingClass();
-          if (i == j || class2 == null) continue;
-          if (class2.isInheritor(class1, true)
-              // NB! overriding method may be abstract
-//              && !method2.hasModifierProperty(PsiModifier.ABSTRACT)
-&& manager.arePackagesTheSame(class1, class2)) {
-            sameSignatureMethods.remove(i);
-            break;
-          }
-        }
-      }
-      for (int i = sameSignatureMethods.size() - 1; i >= 0; i--) {
-        MethodSignatureBackedByPsiMethod methodSignature = sameSignatureMethods.get(i);
-        PsiMethod method = methodSignature.getMethod();
-        PsiClass class1 = method.getContainingClass();
-        if (class1 == null
-            || !method.hasModifierProperty(PsiModifier.ABSTRACT)
-            || !method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)
-            || manager.arePackagesTheSame(class1, aClass)) {
-          continue;
-        }
-        return method;
-      }
-    }
     return null;
-*/
   }
 
-  private static PsiMethod abstractPackageLocalMethod(PsiClass aClass, Collection<HierarchicalMethodSignature> allMethodsCollection) {
-    Set<PsiMethod> allMethods = new THashSet<PsiMethod>(Arrays.asList(aClass.getAllMethods()));
-    Set<PsiMethod> suspects = new THashSet<PsiMethod>();
-    // check all methods collection first for sibling overrides
-    for (HierarchicalMethodSignature signature : allMethodsCollection) {
-      removeSupers(signature, allMethods, suspects);
-      PsiMethod method = signature.getMethod();
-      if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        suspects.add(method);
+  public static PsiMethod getAnyMethodToImplement(PsiClass aClass) {
+    Set<PsiMethod> alreadyImplemented = new THashSet<PsiMethod>();
+    for (HierarchicalMethodSignature signatureHierarchical : aClass.getVisibleSignatures()) {
+      for (PsiMethod superS : signatureHierarchical.getMethod().findSuperMethods()) {
+        add(superS, alreadyImplemented);
       }
-      allMethods.remove(method);
     }
-    while (!allMethods.isEmpty()) {
-      PsiMethod method = allMethods.iterator().next();
-      removeSupers(method.getHierarchicalMethodSignature(), allMethods, suspects);
-      if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        suspects.add(method);
-      }
-      allMethods.remove(method);
-    }
-    return suspects.isEmpty() ? null : suspects.iterator().next();
-  }
-
-  private static void removeSupers(@NotNull HierarchicalMethodSignature hierarchicalMethodSignature, Set<PsiMethod> allMethods, Set<PsiMethod> suspects) {
-    for (HierarchicalMethodSignature superS : hierarchicalMethodSignature.getSuperSignatures()) {
-      PsiMethod superMethod = superS.getMethod();
-      allMethods.remove(superMethod);
-      suspects.remove(superMethod);
-      assert superS != hierarchicalMethodSignature;
-      removeSupers(superS, allMethods, suspects);
-    }
-  }
-
-  public static PsiMethod getAnyMethodToImplement(PsiClass aClass, Collection<HierarchicalMethodSignature> allMethodsCollection) {
-    for (HierarchicalMethodSignature signatureHierarchical : allMethodsCollection) {
-      final PsiMethod method = signatureHierarchical.getMethod();
+    PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(aClass.getProject()).getResolveHelper();
+    for (HierarchicalMethodSignature signatureHierarchical : aClass.getVisibleSignatures()) {
+      PsiMethod method = signatureHierarchical.getMethod();
       PsiClass containingClass = method.getContainingClass();
       if (containingClass == null) {
         continue;
       }
-      if (!aClass.equals(containingClass) &&
-          method.hasModifierProperty(PsiModifier.ABSTRACT)
+      if (!aClass.equals(containingClass)
+          && method.hasModifierProperty(PsiModifier.ABSTRACT)
           && !method.hasModifierProperty(PsiModifier.STATIC)
-          && !method.hasModifierProperty(PsiModifier.PRIVATE)) {
+          && !method.hasModifierProperty(PsiModifier.PRIVATE)
+          && !alreadyImplemented.contains(method)) {
         return method;
       }
-      else {
-        final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(aClass.getProject()).getResolveHelper();
-        final List<HierarchicalMethodSignature> superSignatures = signatureHierarchical.getSuperSignatures();
-        for (HierarchicalMethodSignature superSignatureHierarchical : superSignatures) {
-          final PsiMethod superMethod = superSignatureHierarchical.getMethod();
-          if (superMethod.hasModifierProperty(PsiModifier.ABSTRACT) && !resolveHelper.isAccessible(superMethod, method, null)) return superMethod;
+      final List<HierarchicalMethodSignature> superSignatures = signatureHierarchical.getSuperSignatures();
+      for (HierarchicalMethodSignature superSignatureHierarchical : superSignatures) {
+        final PsiMethod superMethod = superSignatureHierarchical.getMethod();
+        if (superMethod.hasModifierProperty(PsiModifier.ABSTRACT) && !resolveHelper.isAccessible(superMethod, method, null)) {
+          return superMethod;
         }
       }
     }
 
+    return checkPackageLocalInSuperClass(aClass);
+  }
+
+  private static PsiMethod checkPackageLocalInSuperClass(PsiClass aClass) {
+    // super class can have package local sbstract methods not accessible for overriding
+    PsiClass superClass = aClass.getSuperClass();
+    if (superClass == null) return null;
+    if ("java.lang.Object".equals(aClass.getQualifiedName())) return null;
+    if (JavaPsiFacade.getInstance(aClass.getProject()).arePackagesTheSame(aClass, superClass)) return null;
+
+    for (HierarchicalMethodSignature methodSignature : superClass.getVisibleSignatures()) {
+      PsiMethod method = methodSignature.getMethod();
+      if (method.hasModifierProperty(PsiModifier.ABSTRACT) && method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) return method;
+    }
     return null;
   }
 
+  private static boolean add(PsiMethod method, Set<PsiMethod> alreadyImplemented) {
+    boolean already = alreadyImplemented.add(method);
+
+    for (PsiMethod superSig : method.findSuperMethods()) {
+      already &= add(superSig, alreadyImplemented);
+    }
+    return already;
+  }
 }

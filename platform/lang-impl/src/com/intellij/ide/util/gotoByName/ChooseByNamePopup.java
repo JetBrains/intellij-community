@@ -25,6 +25,7 @@ import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,11 +36,17 @@ import java.util.regex.Pattern;
 public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNamePopupComponent{
   private static final Key<ChooseByNamePopup> CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY = new Key<ChooseByNamePopup>("ChooseByNamePopup");
   private Component myOldFocusOwner = null;
-  private ChooseByNamePopup(final Project project, final ChooseByNameModel model, final ChooseByNamePopup oldPopup, final PsiElement context) {
-    super(project, model, oldPopup != null ? oldPopup.myTextField.getText() : null, context);
+
+  private ChooseByNamePopup(final Project project, final ChooseByNameModel model, final ChooseByNamePopup oldPopup,
+                            final PsiElement context, @Nullable final String predefinedText) {
+    super(project, model, oldPopup != null ? oldPopup.getEnteredText() : predefinedText, context);
     if (oldPopup != null) { //inherit old focus owner
       myOldFocusOwner = oldPopup.myPreviouslyFocusedComponent;
     }
+  }
+
+  public String getEnteredText() {
+    return myTextField.getText();
   }
 
   protected void initUI(final Callback callback, final ModalityState modalityState, boolean allowMultipleSelection) {
@@ -127,7 +134,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       }
 
       if (!chosenElements.isEmpty()){
-        final String enteredText = myTextField.getText();
+        final String enteredText = getEnteredText();
         if (enteredText.indexOf('*') >= 0) {
           FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.wildcards");
         }
@@ -196,11 +203,15 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   }
 
   public static ChooseByNamePopup createPopup(final Project project, final ChooseByNameModel model, final PsiElement context) {
+    return createPopup(project, model, context, null);
+  }
+  public static ChooseByNamePopup createPopup(final Project project, final ChooseByNameModel model, final PsiElement context,
+                                              @Nullable final String predefinedText) {
     final ChooseByNamePopup oldPopup = project.getUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY);
     if (oldPopup != null) {
       oldPopup.close(false);
     }
-    ChooseByNamePopup newPopup = new ChooseByNamePopup(project, model, oldPopup, context);
+    ChooseByNamePopup newPopup = new ChooseByNamePopup(project, model, oldPopup, context, predefinedText);
 
     project.putUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, newPopup);
     return newPopup;
@@ -228,7 +239,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   }
 
   private int getLineOrColumn(final boolean line) {
-    final Matcher matcher = patternToDetectLinesAndColumns.matcher(myTextField.getText());
+    final Matcher matcher = patternToDetectLinesAndColumns.matcher(getEnteredText());
     if (matcher.matches()) {
       final int groupNumber = line ? 2:3;
       try {

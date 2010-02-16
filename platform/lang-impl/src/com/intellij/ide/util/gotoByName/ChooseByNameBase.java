@@ -388,15 +388,6 @@ public abstract class ChooseByNameBase{
             ListScrollingUtil.movePageDown(myList);
             break;
           case KeyEvent.VK_ENTER:
-            // Diagnostics for Enter key problems with IdeaVim installed
-            if (myTextField.getActionMap().get("notify-field-accept") == null){
-              LOG.error("Text field has no action for 'notify-field-accept' input map entry");
-              for (Object o : myTextField.getActionMap().allKeys()) {
-                if (o instanceof String && ((String)o).contains("vim")){
-                  LOG.error("Text field action map contains ExEditorKit action: " + o);
-                }
-              }
-            }
             if (myList.getSelectedValue() == EXTRA_ELEM) {
               myMaximumListSizeLimit += MAXIMUM_LIST_SIZE_LIMIT;
               rebuildList(myList.getSelectedIndex(), REBUILD_DELAY, null, ModalityState.current());

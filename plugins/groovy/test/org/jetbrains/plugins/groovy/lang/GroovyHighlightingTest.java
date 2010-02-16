@@ -117,6 +117,9 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest();
   }
 
+  public void testSuperClassNotExists() throws Exception {
+    doTest();
+  }
   public void testDontSimplifyString() throws Throwable { doTest(new GroovyTrivialIfInspection(), new GroovyTrivialConditionalInspection()); }
 
   public void testRawMethodAccess() throws Throwable { doTest(new GroovyUncheckedAssignmentOfMemberOfRawTypeInspection()); }
@@ -198,7 +201,10 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testStringAndGStringUpperBound() throws Exception {doTest();}
 
   public void testWithMethod() throws Exception {doTest();}
-  
+
+  public void testForLoopWithNestedEndlessLoop() throws Exception {doTest(new UnassignedVariableAccessInspection());}
+  public void testIfIncrementElseReturn() throws Exception {doTest(new UnusedDefInspection()); }
+
   public void testArrayLikeAccess() throws Exception {doTest();}
 
   public void testSetInitializing() throws Exception {doTest();}

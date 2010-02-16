@@ -55,11 +55,11 @@ class BinaryExpressionEvaluator implements Evaluator {
 
   }
 
-  static Object evaluateOperation(Value leftResult,
-                                          IElementType opType,
-                                          Evaluator rightOperand,
-                                          String expectedType,
-                                          EvaluationContextImpl context) throws EvaluateException {
+  static Object evaluateOperation(final Value leftResult,
+                                  final IElementType opType,
+                                  final Evaluator rightOperand,
+                                  final String expectedType,
+                                  final EvaluationContextImpl context) throws EvaluateException {
     VirtualMachineProxyImpl vm = context.getDebugProcess().getVirtualMachineProxy();
     if (leftResult instanceof BooleanValue) {
       boolean v1 = ((PrimitiveValue)leftResult).booleanValue();

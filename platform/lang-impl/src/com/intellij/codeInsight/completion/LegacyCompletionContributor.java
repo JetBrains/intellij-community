@@ -112,8 +112,11 @@ public class LegacyCompletionContributor extends CompletionContributor {
       }
     }
     else if (ref instanceof PsiDynaReference) {
+      int offset = startOffset - ref.getElement().getTextRange().getStartOffset();
       for (final PsiReference reference : ((PsiDynaReference<?>)ref).getReferences()) {
-        processReference(result, startOffset, consumer, reference);
+        if (reference.getRangeInElement().contains(offset)) {
+          processReference(result, startOffset, consumer, reference);
+        }
       }
     }
     else if (ref != null) {

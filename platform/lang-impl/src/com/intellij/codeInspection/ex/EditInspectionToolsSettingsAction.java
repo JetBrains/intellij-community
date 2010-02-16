@@ -24,6 +24,8 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
@@ -38,8 +40,9 @@ import javax.swing.*;
  * User: anna
  * Date: Feb 7, 2005
  */
-public class EditInspectionToolsSettingsAction implements IntentionAction {
+public class EditInspectionToolsSettingsAction implements IntentionAction, Iconable {
   private final String myShortName;
+  private static final Icon ICON = IconLoader.getIcon("/general/ideOptions.png");
 
   public EditInspectionToolsSettingsAction(@NotNull LocalInspectionTool tool) {
     myShortName = tool.getShortName();
@@ -109,4 +112,7 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
     return false;
   }
 
+  public Icon getIcon(int flags) {
+    return ICON;
+  }
 }

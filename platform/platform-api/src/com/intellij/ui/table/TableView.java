@@ -24,10 +24,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
+import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
-import javax.swing.table.JTableHeader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -147,6 +147,16 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
 
   public java.util.List<Item> getItems() {
     return ((ListTableModel<Item>)getModel()).getItems();
+  }
+
+  public void resortKeepSelection() {
+    final int column = getSelectedColumn();
+    if (column != -1) {
+      SortableColumnModel model = getListTableModel();
+      Collection selection = getSelection();
+      model.sortByColumn(column);
+      setSelection(selection);
+    }
   }
 
   protected void onHeaderClicked(int column) {

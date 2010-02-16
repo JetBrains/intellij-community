@@ -15,16 +15,15 @@
  */
 package org.jetbrains.idea.svn.branchConfig;
 
-import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.integrate.SvnBranchItem;
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -40,9 +39,11 @@ public class BranchesLoader {
 
   public static List<SvnBranchItem> loadBranches(final Project project, final String url) throws SVNException {
     final List<SvnBranchItem> result = new LinkedList<SvnBranchItem>();
-    final ProjectLevelVcsManager vcsManager = PeriodicalTasksCloser.safeGetComponent(project, ProjectLevelVcsManager.class);
-    final SvnVcs svnVcs = (SvnVcs) vcsManager.findVcsByName(SvnVcs.VCS_NAME);
-    final SVNLogClient logClient = svnVcs.createLogClient();
+
+    final SvnConfiguration configuration = SvnConfiguration.getInstance(project);
+    final ISVNAuthenticationManager passiveManager = configuration.getPassiveAuthenticationManager();
+
+    final SVNLogClient logClient = new SVNLogClient(passiveManager, configuration.getOptions(project));
     final SVNURL branchesUrl = SVNURL.parseURIEncoded(url);
     logClient.doList(branchesUrl, SVNRevision.UNDEFINED, SVNRevision.HEAD, false, false, new ISVNDirEntryHandler() {
       public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {

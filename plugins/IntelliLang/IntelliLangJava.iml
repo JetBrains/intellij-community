@@ -20,6 +20,7 @@
     <orderEntry type="module" module-name="jetgroovy" />
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="library" name="Jaxen" level="project" />
+    <orderEntry type="module" module-name="php" />
   </component>
   <component name="copyright">
     <Base>

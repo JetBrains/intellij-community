@@ -107,20 +107,34 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
   public void addBrowseFolderListener(String title, String description, @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,
                                       TextComponentAccessor<Comp> accessor) {
-    addBrowseFolderListener(project, new BrowseFolderActionListener<Comp>(title, description, this, project, fileChooserDescriptor, accessor));
+    addBrowseFolderListener(title, description, project, fileChooserDescriptor, accessor, true);
+  }
+
+  public void addBrowseFolderListener(String title, String description, @Nullable Project project,
+                                      FileChooserDescriptor fileChooserDescriptor,
+                                      TextComponentAccessor<Comp> accessor, boolean autoRemoveOnHide) {
+    addBrowseFolderListener(project, new BrowseFolderActionListener<Comp>(title, description, this, project, fileChooserDescriptor, accessor), autoRemoveOnHide);
   }
 
   public void addBrowseFolderListener(@Nullable Project project, final BrowseFolderActionListener<Comp> actionListener) {
-    new LazyUiDisposable<ComponentWithBrowseButton<Comp>>(null, this, this) {
-      protected void initialize(@NotNull Disposable parent, @NotNull ComponentWithBrowseButton<Comp> child, @Nullable Project project) {
-        addActionListener(actionListener);
-        Disposer.register(child, new Disposable() {
-          public void dispose() {
-            removeActionListener(actionListener);
-          }
-        });
-      }
-    };
+    addBrowseFolderListener(project, actionListener, true);  
+  }
+
+  public void addBrowseFolderListener(@Nullable Project project, final BrowseFolderActionListener<Comp> actionListener, boolean autoRemoveOnHide) {
+    if (autoRemoveOnHide) {
+      new LazyUiDisposable<ComponentWithBrowseButton<Comp>>(null, this, this) {
+        protected void initialize(@NotNull Disposable parent, @NotNull ComponentWithBrowseButton<Comp> child, @Nullable Project project) {
+          addActionListener(actionListener);
+          Disposer.register(child, new Disposable() {
+            public void dispose() {
+              removeActionListener(actionListener);
+            }
+          });
+        }
+      };
+    } else {
+      addActionListener(actionListener);
+    }
   }
 
   public void dispose() {

@@ -26,6 +26,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.ui.DocCommentPanel;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
@@ -84,6 +85,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
   private final JRadioButton myRbAccessorPrivate = new JRadioButton();
   private final JRadioButton myRbAccessorPackageLocal = new JRadioButton();
   private static final String REFACTORING_NAME = RefactoringBundle.message("encapsulate.fields.title");
+  private DocCommentPanel myJavadocPolicy;
 
   {
     myCbEncapsulateGet.setFocusable(false);
@@ -224,6 +226,10 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     }
   }
 
+  public int getJavadocPolicy() {
+    return myJavadocPolicy.getPolicy();
+  }
+
   protected String getDimensionServiceKey() {
     return "#com.intellij.refactoring.encapsulateFields.EncalpsulateFieldsDialog";
   }
@@ -310,22 +316,25 @@ public String getAccessorsVisibility() {
     myCbEncapsulateGet.setPreferredSize(myCbUseAccessorsWhenAccessible.getPreferredSize());
     leftBox.add(myCbEncapsulateGet);
     leftBox.add(myCbEncapsulateSet);
+    leftBox.add(Box.createVerticalStrut(10));
+    leftBox.add(myCbUseAccessorsWhenAccessible);
     JPanel leftPanel = new JPanel(new BorderLayout());
     leftPanel.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("encapsulate.fields.encapsulate.border.title")));
     leftPanel.add(leftBox, BorderLayout.CENTER);
     leftPanel.add(Box.createHorizontalStrut(5), BorderLayout.WEST);
 
-    Box rightBox = Box.createVerticalBox();
-    rightBox.add(myCbUseAccessorsWhenAccessible);
-    JPanel rightPanel = new JPanel(new BorderLayout());
-    rightPanel.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("encapsulate.fields.options.border.title")));
-    rightPanel.add(rightBox, BorderLayout.CENTER);
-    rightPanel.add(Box.createHorizontalStrut(5), BorderLayout.WEST);
-
-    Box encapsulateBox = Box.createHorizontalBox();
-    encapsulateBox.add(leftPanel);
-    encapsulateBox.add(Box.createHorizontalStrut(5));
-    encapsulateBox.add(rightPanel);
+    JPanel encapsulateBox = new JPanel(new BorderLayout());
+    encapsulateBox.add(leftPanel, BorderLayout.CENTER);
+    myJavadocPolicy = new DocCommentPanel("JavaDoc");
+    encapsulateBox.add(myJavadocPolicy, BorderLayout.EAST);
+    boolean hasJavadoc = false;
+    for (PsiField field : myFields) {
+      if (field.getDocComment() != null) {
+        hasJavadoc = true;
+        break;
+      }
+    }
+    myJavadocPolicy.setVisible(hasJavadoc);
 
     Box fieldsBox = Box.createVerticalBox();
     fieldsBox.add(myRbFieldPrivate);

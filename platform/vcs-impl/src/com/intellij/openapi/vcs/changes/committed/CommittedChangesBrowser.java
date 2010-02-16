@@ -52,12 +52,15 @@ import java.util.List;
  */
 public class CommittedChangesBrowser extends JPanel {
   private final Project myProject;
+  // left view
   private final TableView<CommittedChangeList> myChangeListsView;
+  // right view
   private final ChangesBrowser myChangesView;
   private CommittedChangesTableModel myTableModel;
   private final JEditorPane myCommitMessageArea;
   private CommittedChangeList mySelectedChangeList;
   private final JPanel myLeftPanel;
+  private JPanel myLoadingLabelPanel;
 
   public CommittedChangesBrowser(final Project project, final CommittedChangesTableModel tableModel) {
     super(new BorderLayout());
@@ -89,7 +92,35 @@ public class CommittedChangesBrowser extends JPanel {
     commitPanel.add(separator, BorderLayout.NORTH);
 
     myLeftPanel = new JPanel(new GridBagLayout());
-    myLeftPanel.add(new JScrollPane(myChangeListsView), new GridBagConstraints(0, 0, 2, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(2,2,2,2), 0, 0));
+    final JLabel loadingLabel = new JLabel("Loading...");
+
+    myLoadingLabelPanel = new JPanel(new BorderLayout()) {
+      @Override
+      public Dimension getPreferredSize() {
+        return new Dimension(myLoadingLabelPanel.getWidth(), loadingLabel.getHeight());
+      }
+    };
+    myLoadingLabelPanel.setBackground(UIUtil.getToolTipBackground());
+    myLoadingLabelPanel.add(loadingLabel, BorderLayout.NORTH);
+
+    final JPanel listContainer = new JPanel(new GridBagLayout());
+    final GridBagConstraints innerGb =
+      new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0);
+    ++ innerGb.gridy;
+    innerGb.weighty = 0;
+    innerGb.fill = GridBagConstraints.HORIZONTAL;
+    if (myTableModel.isAsynchLoad()) {
+      listContainer.add(myLoadingLabelPanel, innerGb);
+    }
+    ++ innerGb.gridy;
+    innerGb.weighty = 1;
+    innerGb.fill = GridBagConstraints.BOTH;
+    listContainer.add(new JScrollPane(myChangeListsView), innerGb);
+
+    final GridBagConstraints gb =
+      new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(1, 1, 1, 1), 0, 0);
+
+    myLeftPanel.add(listContainer, gb);
     if (tableModel instanceof CommittedChangesNavigation) {
       final CommittedChangesNavigation navigation = (CommittedChangesNavigation) tableModel;
 
@@ -128,12 +159,14 @@ public class CommittedChangesBrowser extends JPanel {
     JSplitPane leftSplitter = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
     leftSplitter.setTopComponent(myLeftPanel);
     leftSplitter.setBottomComponent(commitPanel);
-    leftSplitter.setDividerLocation(0.6);
-    leftSplitter.setResizeWeight(0.5);
+    leftSplitter.setDividerLocation(0.8);
+    leftSplitter.setResizeWeight(0.8);
 
     JSplitPane splitter = new JSplitPane();
     splitter.setLeftComponent(leftSplitter);
     splitter.setRightComponent(myChangesView);
+    splitter.setDividerLocation(0.5);
+    splitter.setResizeWeight(0.5);
 
     add(splitter, BorderLayout.CENTER);
 
@@ -142,9 +175,15 @@ public class CommittedChangesBrowser extends JPanel {
     myChangesView.getDiffAction().registerCustomShortcutSet(CommonShortcuts.getDiff(), myChangeListsView);
   }
 
-  private void selectFirstIfAny() {
+  public void selectFirstIfAny() {
     if (myTableModel.getRowCount() > 0) {
       TableUtil.selectRows(myChangeListsView, new int[]{0});
+    }
+  }
+
+  public void resortKeepSelection() {
+    if (myTableModel.getRowCount() > 0) {
+      myChangeListsView.resortKeepSelection();
     }
   }
 
@@ -191,5 +230,13 @@ public class CommittedChangesBrowser extends JPanel {
 
   public void setTableContextMenu(final ActionGroup group) {
     PopupHandler.installPopupHandler(myChangeListsView, group, ActionPlaces.UNKNOWN, ActionManager.getInstance());
+  }
+
+  public void startLoading() {
+  }
+
+  public void stopLoading() {
+    myLoadingLabelPanel.setVisible(false);
+    myLoadingLabelPanel.repaint();
   }
 }

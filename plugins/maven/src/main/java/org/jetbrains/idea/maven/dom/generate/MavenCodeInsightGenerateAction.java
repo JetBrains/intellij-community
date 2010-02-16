@@ -33,7 +33,7 @@ public class MavenCodeInsightGenerateAction extends GenerateDomElementAction {
     super(new MavenGenerateDomElementProvider(description, childElementClass, mappingId, parentFunction));
 
     getTemplatePresentation().setIcon(ElementPresentationManager.getIconForClass(childElementClass));
-  }
+  }                       
 
   public MavenCodeInsightGenerateAction(final GenerateDomElementProvider generateProvider) {
     super(generateProvider);

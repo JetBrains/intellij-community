@@ -18,11 +18,9 @@ package com.intellij.openapi.actionSystem.ex;
 
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.PluginId;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -54,6 +52,8 @@ public abstract class ActionManagerEx extends ActionManager{
 
   public abstract void fireAfterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event);
 
+  @Nullable
+  public abstract KeyboardShortcut getKeyboardShortcut(@NotNull String actionId);
 
 
   public abstract void fireBeforeEditorTyping(char c, DataContext dataContext);

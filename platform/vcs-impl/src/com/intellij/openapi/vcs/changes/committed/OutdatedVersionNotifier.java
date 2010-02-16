@@ -41,6 +41,7 @@ import java.util.List;
 
 /**
  * @author yole
+ * todo: use EditorNotifications
  */
 public class OutdatedVersionNotifier implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.committed.OutdatedVersionNotifier");
@@ -78,7 +79,7 @@ public class OutdatedVersionNotifier implements ProjectComponent {
           myIncomingChangesRequested = false;
           updateAllEditorsLater();
         }
-      });
+      }, true);
     }
   }
 

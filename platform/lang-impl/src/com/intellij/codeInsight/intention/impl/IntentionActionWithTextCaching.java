@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,11 +38,15 @@ class IntentionActionWithTextCaching implements Comparable<IntentionActionWithTe
   private final List<IntentionAction> myOptionInspectionFixes;
   private final Icon myIcon;
 
-  IntentionActionWithTextCaching(IntentionAction action, String displayName){
-    this(action, displayName, null);
+  IntentionActionWithTextCaching(IntentionAction action){
+    this(action, action.getText(), null);
   }
 
-  IntentionActionWithTextCaching(IntentionAction action, String displayName, Icon icon) {
+  IntentionActionWithTextCaching(HighlightInfo.IntentionActionDescriptor action){
+    this(action.getAction(), action.getDisplayName(), action.getIcon());
+  }
+
+  private IntentionActionWithTextCaching(IntentionAction action, String displayName, Icon icon) {
     myIcon = icon;
     myOptionIntentions = new ArrayList<IntentionAction>();
     myOptionErrorFixes = new ArrayList<IntentionAction>();

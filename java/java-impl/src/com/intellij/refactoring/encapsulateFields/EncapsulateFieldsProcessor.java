@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
@@ -32,6 +33,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
@@ -256,16 +258,26 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     myNameToGetter = new HashMap<String, PsiMethod>();
     myNameToSetter = new HashMap<String, PsiMethod>();
     for(int i = 0; i < myFields.length; i++){
+      final DocCommentPolicy<PsiDocComment> commentPolicy = new DocCommentPolicy<PsiDocComment>(myDescriptor.getJavadocPolicy());
       PsiField field = myFields[i];
+      final PsiDocComment docComment = field.getDocComment();
       if (myDescriptor.isToEncapsulateGet()){
         PsiMethod[] prototypes = myDescriptor.getGetterPrototypes();
         assert prototypes != null;
-        addOrChangeAccessor(prototypes[i], myNameToGetter);
+        final PsiMethod getter = addOrChangeAccessor(prototypes[i], myNameToGetter);
+        if (docComment != null) {
+          final PsiDocComment getterJavadoc = (PsiDocComment)getter.addBefore(docComment, getter.getFirstChild());
+          commentPolicy.processNewJavaDoc(getterJavadoc);
+        }
       }
       if (myDescriptor.isToEncapsulateSet() && !field.hasModifierProperty(PsiModifier.FINAL)){
         PsiMethod[] prototypes = myDescriptor.getSetterPrototypes();
         assert prototypes != null;
         addOrChangeAccessor(prototypes[i], myNameToSetter);
+      }
+
+      if (docComment != null) {
+        commentPolicy.processOldJavaDoc(docComment);
       }
     }
 
@@ -305,7 +317,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private void addOrChangeAccessor(PsiMethod prototype, HashMap<String,PsiMethod> nameToAncestor) {
+  private PsiMethod addOrChangeAccessor(PsiMethod prototype, HashMap<String,PsiMethod> nameToAncestor) {
     PsiMethod existing = myClass.findMethodBySignature(prototype, false);
     PsiMethod result = existing;
     try{
@@ -317,10 +329,12 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
         //TODO : change visibility
       }
       nameToAncestor.put(prototype.getName(), result);
+      return result;
     }
     catch(IncorrectOperationException e){
       LOG.error(e);
     }
+    return null;
   }
 
   private boolean isUsedInExistingAccessor(PsiMethod prototype, PsiElement element) {

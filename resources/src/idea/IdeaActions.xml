@@ -60,6 +60,10 @@
 
       <add-to-group group-id="FileOpenGroup" anchor="first"/>
     </group>
+    <action id="NewElement" class="com.intellij.ide.actions.NewElementAction">
+      <add-to-group group-id="OpenProjectGroup" anchor="after" relative-to-action="NewModule"/>
+    </action>
+
 
     <action id="SaveAsNewFormat" class="com.intellij.ide.actions.SaveAsDirectoryBasedFormatAction" text="Save as Directory-Based Format...">
       <add-to-group group-id="ExportImportGroup" anchor="first"/>

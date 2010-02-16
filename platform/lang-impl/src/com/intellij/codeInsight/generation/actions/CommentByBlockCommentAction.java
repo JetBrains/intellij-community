@@ -24,10 +24,11 @@ import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 
-public class CommentByBlockCommentAction extends BaseCodeInsightAction {
+public class CommentByBlockCommentAction extends BaseCodeInsightAction implements DumbAware {
   public CommentByBlockCommentAction() {
     setEnabledInModalContext(true);
   }

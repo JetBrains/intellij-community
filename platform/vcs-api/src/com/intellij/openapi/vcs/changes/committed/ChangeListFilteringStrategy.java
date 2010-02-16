@@ -33,6 +33,10 @@ public interface ChangeListFilteringStrategy {
   void addChangeListener(ChangeListener listener);
   void removeChangeListener(ChangeListener listener);
 
+  @Nullable
+  void resetFilterBase();
+  void appendFilterBase(List<CommittedChangeList> changeLists);
+
   @NotNull
   List<CommittedChangeList> filterChangeLists(List<CommittedChangeList> changeLists);
 
@@ -53,6 +57,13 @@ public interface ChangeListFilteringStrategy {
     }
 
     public void removeChangeListener(ChangeListener listener) {
+    }
+
+    @Nullable
+    public void resetFilterBase() {
+    }
+
+    public void appendFilterBase(List<CommittedChangeList> changeLists) {
     }
 
     @NotNull

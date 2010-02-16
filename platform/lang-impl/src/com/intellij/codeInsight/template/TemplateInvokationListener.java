@@ -19,5 +19,5 @@ package com.intellij.codeInsight.template;
  * @author Eugene.Kudelevsky
  */
 public interface TemplateInvokationListener {
-  void finished(boolean inSeparateEvent, boolean success);
+  void finished(boolean inSeparateEvent);
 }

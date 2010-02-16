@@ -29,7 +29,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.ChangeUtil;
@@ -304,16 +303,17 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
 
   @Override
   public PsiElement replace(@NotNull final PsiElement newElement) throws IncorrectOperationException {
+    CheckUtil.checkWritable(this);
+    TreeElement elementCopy = ChangeUtil.copyToElement(newElement);
     if (getParent() instanceof ASTDelegatePsiElement) {
       final ASTDelegatePsiElement parentElement = (ASTDelegatePsiElement)getParent();
-      CheckUtil.checkWritable(this);
-      TreeElement elementCopy = ChangeUtil.copyToElement(newElement);
       parentElement.replaceChildInternal(this, elementCopy);
-      elementCopy = ChangeUtil.decodeInformation(elementCopy);
-      return SourceTreeToPsiMap.treeElementToPsi(elementCopy);
     }
-
-    return super.replace(newElement);
+    else {
+      CodeEditUtil.replaceChild(getParent().getNode(), getNode(), elementCopy);
+    }
+    elementCopy = ChangeUtil.decodeInformation(elementCopy);
+    return SourceTreeToPsiMap.treeElementToPsi(elementCopy);
   }
 
   public void replaceChildInternal(final PsiElement child, final TreeElement newElement) {

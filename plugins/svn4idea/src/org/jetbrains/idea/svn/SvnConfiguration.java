@@ -223,7 +223,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
     return myAuthManager;
   }
 
-  public ISVNAuthenticationManager getPassiveAuthenticationManager() {
+  public SvnAuthenticationManager getPassiveAuthenticationManager() {
     if (myPassiveAuthManager == null) {
         myPassiveAuthManager = new SvnAuthenticationManager(myProject, new File(getConfigurationDirectory()));
         myPassiveAuthManager.setRuntimeStorage(RUNTIME_AUTH_CACHE);
