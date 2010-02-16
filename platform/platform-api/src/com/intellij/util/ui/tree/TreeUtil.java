@@ -443,9 +443,14 @@ public final class TreeUtil {
 
     if (row >= tree.getRowCount()) return new ActionCallback.Done();
 
-    if (!tree.isValid()) {
-      tree.validate();
+    if (tree.isShowing()) {
+      if (!tree.isValid()) {
+        tree.validate();
+      }
+    } else {
+      return new ActionCallback.Done();
     }
+
 
     final Rectangle rowBounds = tree.getRowBounds(row);
     if (rowBounds == null) return new ActionCallback.Done();
