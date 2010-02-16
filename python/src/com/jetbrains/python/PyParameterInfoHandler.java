@@ -23,11 +23,11 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     return true;
   }
   public Object[] getParametersForLookup(final LookupElement item, final ParameterInfoContext context) {
-    return new Object[0];  // we don't
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;  // we don't
   }
 
   public Object[] getParametersForDocumentation(final PyArgumentList.AnalysisResult p, final ParameterInfoContext context) {
-    return new Object[0];  // we don't
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;  // we don't
   }
 
   public PyArgumentList findElementForParameterInfo(final CreateParameterInfoContext context) {

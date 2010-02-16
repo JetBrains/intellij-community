@@ -12,6 +12,7 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
@@ -427,8 +428,8 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     return false;
   }
 
-  
-  private static final Object[] NO_VARIANTS = new Object[0];
+
+  private static final Object[] NO_VARIANTS = ArrayUtil.EMPTY_OBJECT_ARRAY;
 
   @NotNull
   public Object[] getVariants() {
