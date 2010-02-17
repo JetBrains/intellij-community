@@ -17,12 +17,13 @@ package com.intellij.cvsSupport2.cvsoperations.common;
 
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.Convertor;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 public class FindAllRootsHelper {
@@ -30,23 +31,37 @@ public class FindAllRootsHelper {
   }
 
   public static FilePath[] findVersionedUnder(final FilePath[] roots) {
-    final List<FilePath> result = new ArrayList<FilePath>();
-
-    final Processor<VirtualFile> processor = new Processor<VirtualFile>() {
-      public boolean process(VirtualFile file) {
-        final boolean underCvs = CvsUtil.fileIsUnderCvs(file);
-        if (underCvs) {
-          result.add(new FilePathImpl(file));
-        }
-        return ! underCvs;
-      }
-    };
+    final MyProcessor processor = new MyProcessor();
 
     for (FilePath root : roots) {
       final VirtualFile vf = root.getVirtualFile();
       if (vf == null) continue;
-      VfsUtil.processFilesRecursively(vf, processor);
+      VfsUtil.processFilesRecursively(vf, processor, processor);
     }
-    return result.toArray(new FilePath[result.size()]);
+    final List<VirtualFile> found = processor.getFound();
+    return ObjectsConvertor.vf2fp(found).toArray(new FilePath[found.size()]);
+  }
+
+  private static class MyProcessor implements Processor<VirtualFile>, Convertor<VirtualFile, Boolean> {
+    private final List<VirtualFile> myFound;
+
+    private MyProcessor() {
+      myFound = new LinkedList<VirtualFile>();
+    }
+
+    public Boolean convert(VirtualFile o) {
+      return ! myFound.contains(o);
+    }
+
+    public boolean process(VirtualFile file) {
+      if (CvsUtil.fileIsUnderCvs(file)) {
+        myFound.add(file);
+      }
+      return true;
+    }
+
+    public List<VirtualFile> getFound() {
+      return myFound;
+    }
   }
 }
