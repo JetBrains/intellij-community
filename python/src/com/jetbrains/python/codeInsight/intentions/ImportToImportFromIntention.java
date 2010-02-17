@@ -10,6 +10,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyBundle;
@@ -97,7 +98,7 @@ public class ImportToImportFromIntention implements IntentionAction {
   }
 
 
-  private static String[] EMPTY_STRINGS = new String[0];
+  private static String[] EMPTY_STRINGS = ArrayUtil.EMPTY_STRING_ARRAY;
 
   private void collectReferencesAndOtherData(PsiFile file) {
     //PyImportElement myImportElement = findImportElement(editor, file);

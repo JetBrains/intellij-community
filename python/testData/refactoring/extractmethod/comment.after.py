@@ -3,4 +3,4 @@ def bar():
     print("Hello")
 
 def foo():
-  bar()
+    bar()

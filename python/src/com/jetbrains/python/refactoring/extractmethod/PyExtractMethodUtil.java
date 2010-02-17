@@ -10,8 +10,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringFactory;
@@ -25,6 +27,7 @@ import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -246,21 +249,16 @@ public class PyExtractMethodUtil {
       }
     }
     // Change signature according to pass settings and
-    final StringBuilder builder = new StringBuilder();
-    builder.append("def foo(");
-    final String params = createMethodParamsString(variableData, false);
-    if (isMethod){
-      builder.append("self");
-      if (params.length() != 0){
-        builder.append(", ");
-        builder.append(params);
-      }
-    } else {
-      builder.append(params);
+    PyFunctionBuilder builder = new PyFunctionBuilder("foo");
+    if (isMethod) {
+      builder.parameter("self");
     }
-    builder.append(")\n  pass");
-    final PyParameterList pyParameterList =
-      PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyFunction.class, builder.toString()).getParameterList();
+    for (AbstractVariableData data : variableData) {
+      if (data.isPassAsParameter()) {
+        builder.parameter(data.getName());
+      }
+    }
+    final PyParameterList pyParameterList = builder.buildFunction(project).getParameterList();
     generatedMethod.getParameterList().replace(pyParameterList);
   }
 
@@ -274,48 +272,39 @@ public class PyExtractMethodUtil {
 
   private static PyFunction insertGeneratedMethod(PsiElement anchor, final PyFunction generatedMethod) {
     final Pair<PsiElement, TextRange> data = anchor.getUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE);
-    if (data != null){
+    if (data != null) {
       anchor = data.first;
     }
     final PsiNamedElement parent = PsiTreeUtil.getParentOfType(anchor, PyFile.class, PyClass.class, PyFunction.class);
 
+    PsiElement result;
     if (parent instanceof PyFile || parent instanceof PyClass) {
-      final PsiElement statement = PyPsiUtils.getStatement(parent, anchor);
-      return (PyFunction) parent.addBefore(generatedMethod, statement);
+      PsiElement target = parent instanceof PyClass ? ((PyClass)parent).getStatementList() : parent;
+      final PsiElement anchorStatement = PyPsiUtils.getStatement(target, anchor);
+      result = target.addBefore(generatedMethod, anchorStatement);
     }
-    return (PyFunction) parent.getParent().addBefore(generatedMethod, parent);
-  }
-
-  //  Creates string for method parameters
-  private static String createMethodParamsString(final AbstractVariableData[] variableDatas, final boolean fakeSignature) {
-    final StringBuilder builder = new StringBuilder();
-    for (AbstractVariableData data : variableDatas) {
-      if (fakeSignature || data.isPassAsParameter()) {
-        if (builder.length() != 0) {
-          builder.append(", ");
-        }
-        builder.append(fakeSignature ? data.getOriginalName() : data.getName());
+    else {
+      result = parent.getParent().addBefore(generatedMethod, parent);
+    }
+    // to ensure correct reformatting, mark the entire method as generated
+    result.accept(new PsiRecursiveElementVisitor() {
+      @Override
+      public void visitElement(PsiElement element) {
+        super.visitElement(element);
+        CodeEditUtil.setNodeGenerated(element.getNode(), true);
       }
-    }
-    return builder.toString();
-  }
-
-  private static String generateSignature(final String methodName, final AbstractVariableData[] variableData, final PsiElement expression) {
-    final StringBuilder builder = new StringBuilder();
-    builder.append("def ").append(methodName).append("(");
-    builder.append(createMethodParamsString(variableData, true));
-    builder.append("):\n");
-    return builder.toString();
+    });
+    return (PyFunction)result;
   }
 
   private static PyFunction generateMethodFromExpression(final Project project,
                                                          final String methodName,
                                                          final AbstractVariableData[] variableData,
                                                          final PsiElement expression) {
-    final StringBuilder builder = new StringBuilder();
-    builder.append(generateSignature(methodName, variableData, expression));
-    builder.append("  return ").append(expression.getText());
-    return PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyFunction.class, builder.toString());
+    final PyFunctionBuilder builder = new PyFunctionBuilder(methodName);
+    addFakeParameters(builder, variableData);
+    builder.statement("return " + expression.getText());
+    return builder.buildFunction(project);
   }
 
   private static PyFunction generateMethodFromElements(final Project project,
@@ -323,13 +312,12 @@ public class PyExtractMethodUtil {
                                                        final AbstractVariableData[] variableData,
                                                        final List<PsiElement> elementsRange) {
     assert !elementsRange.isEmpty() : "Empty statements list was selected!";
-    final StringBuilder builder = new StringBuilder();
-    builder.append(generateSignature(methodName, variableData, elementsRange.get(0)));
-    builder.append("  pass\n");
-    final PyElementGenerator pyElementGenerator = PythonLanguage.getInstance().getElementGenerator();
-    final PyFunction method =
-      pyElementGenerator.createFromText(project, PyFunction.class, builder.toString());
+
+    final PyFunctionBuilder builder = new PyFunctionBuilder(methodName);
+    addFakeParameters(builder, variableData);
+    final PyFunction method = builder.buildFunction(project);
     final PyStatementList statementList = method.getStatementList();
+
     for (PsiElement element : elementsRange) {
       if (element instanceof PsiWhiteSpace){
         continue;
@@ -339,6 +327,12 @@ public class PyExtractMethodUtil {
     // remove last instruction
     statementList.getFirstChild().delete();
     return method;
+  }
+
+  private static void addFakeParameters(PyFunctionBuilder builder, AbstractVariableData[] variableData) {
+    for (AbstractVariableData data : variableData) {
+      builder.parameter(data.getOriginalName());
+    }
   }
 
   private static Pair<String, AbstractVariableData[]> getNameAndVariableData(final Project project,
