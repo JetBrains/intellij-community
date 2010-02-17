@@ -27,6 +27,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.impl.ProjectMacrosUtil;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
@@ -152,9 +153,7 @@ public class ClasspathStorage implements StateStorage {
     assert state.getClass() == ModuleRootManagerImpl.ModuleRootManagerState.class;
 
     try {
-      final ModifiableRootModel model = ((ModuleRootManagerImpl)component).getModifiableModel();
-      myConverter.setClasspath(model);
-      model.dispose();
+      myConverter.setClasspath(((ModuleRootManagerImpl)component));
     }
     catch (WriteExternalException e) {
       throw new StateStorageException(e.getMessage());
@@ -383,7 +382,7 @@ public class ClasspathStorage implements StateStorage {
           throw new InvalidDataException(getDescription());
         }
 
-        public void setClasspath(final ModifiableRootModel model) throws IOException, WriteExternalException {
+        public void setClasspath(ModuleRootModel model) throws IOException, WriteExternalException {
           throw new WriteExternalException(getDescription());
         }
       };
