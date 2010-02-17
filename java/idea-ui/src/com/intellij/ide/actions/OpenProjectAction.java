@@ -26,11 +26,14 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.projectImport.ProjectOpenProcessorBase;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -51,7 +54,16 @@ public class OpenProjectAction extends AnAction implements DumbAware {
       }
     }
     descriptor.setDescription(IdeBundle.message("filter.project.files", StringUtil.join(extensions, ", ")));
-    final VirtualFile[] files = FileChooser.chooseFiles(project, descriptor);
+
+    VirtualFile userHomeDir = null;
+    if (SystemInfo.isMac || SystemInfo.isLinux) {
+      final String home = System.getProperty("user.home");
+      if (home != null) {
+        userHomeDir = LocalFileSystem.getInstance().findFileByIoFile(new File(home));
+      }
+    }
+
+    final VirtualFile[] files = FileChooser.chooseFiles(project, descriptor, userHomeDir);
 
     if (files.length == 0 || files[0] == null) return;
 
