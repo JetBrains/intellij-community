@@ -52,15 +52,15 @@ public class AccessStaticViaInstance extends BaseJavaLocalInspectionTool {
   }
 
   @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
-        checkAccessStaticMemberViaInstanceReference(expression, holder);
+        checkAccessStaticMemberViaInstanceReference(expression, holder, isOnTheFly);
       }
     };
   }
 
-  private static void checkAccessStaticMemberViaInstanceReference(PsiReferenceExpression expr, ProblemsHolder holder) {
+  private static void checkAccessStaticMemberViaInstanceReference(PsiReferenceExpression expr, ProblemsHolder holder, boolean onTheFly) {
     JavaResolveResult result = expr.advancedResolve(false);
     PsiElement resolved = result.getElement();
 
@@ -79,6 +79,6 @@ public class AccessStaticViaInstance extends BaseJavaLocalInspectionTool {
     String description = JavaErrorMessages.message("static.member.accessed.via.instance.reference",
                                                    HighlightUtil.formatType(qualifierExpression.getType()),
                                                    HighlightMessageUtil.getSymbolName(resolved, result.getSubstitutor()));
-    holder.registerProblem(expr, description, new AccessStaticViaInstanceFix(expr, result));
+    holder.registerProblem(expr, description, new AccessStaticViaInstanceFix(expr, result, onTheFly));
   }
 }
