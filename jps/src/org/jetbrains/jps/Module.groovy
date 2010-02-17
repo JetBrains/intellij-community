@@ -1,5 +1,7 @@
 package org.jetbrains.jps
 
+import org.jetbrains.jps.idea.Facet
+
 /**
  * @author max
  */
@@ -14,6 +16,7 @@ class Module extends LazyInitializeableObject implements ClasspathItem {
   List testRoots = []
   List excludes = []
   
+  Map<String, Facet> facets = [:]
   Map<String, Object> props = [:]
   Map<String, String> sourceRootPrefixes = [:]
 

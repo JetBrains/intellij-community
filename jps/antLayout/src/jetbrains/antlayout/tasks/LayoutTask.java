@@ -4,6 +4,7 @@ import org.apache.tools.ant.Task;
 import org.apache.tools.ant.BuildException;
 import jetbrains.antlayout.datatypes.*;
 import jetbrains.antlayout.util.TempFileFactory;
+import org.apache.tools.ant.types.FileSet;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -26,6 +27,14 @@ public class LayoutTask extends Task {
 
     public void addZip(ZipContainer container) {
         containers.add(container);
+    }
+
+    public void addRenamedFile(RenamedFileContainer container) {
+        containers.add(container);
+    }
+
+    public void addFileset(FileSet fileSet) {
+        containers.add(new FileSetContainer(fileSet));
     }
 
     public void setTodir(File dir) {

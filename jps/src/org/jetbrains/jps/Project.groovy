@@ -11,6 +11,8 @@ import org.jetbrains.jps.builders.JavacBuilder
 import org.jetbrains.jps.builders.GroovycBuilder
 import org.jetbrains.jps.builders.ResourceCopier
 import org.jetbrains.jps.builders.JetBrainsInstrumentations
+import org.jetbrains.jps.artifacts.Artifact
+import org.jetbrains.jps.artifacts.ArtifactBuilder
 
 /**
  * @author max
@@ -23,10 +25,12 @@ class Project {
   final List<ModuleBuilder> translatingBuilders = []
   final List<ModuleBuilder> weavingBuilders = []
   final List<Resolver> resolvers = []
+  final ArtifactBuilder artifactBuilder
   final Map<String, Object> props = [:]
 
   final Map<String, Module> modules = [:]
   final Map<String, Library> libraries = [:]
+  final Map<String, Artifact> artifacts = [:]
 
   Closure stagePrinter;
 
@@ -37,7 +41,7 @@ class Project {
   def Project(GantBinding binding) {
     builder = new ProjectBuilder(binding, this)
     this.binding = binding;
-
+    artifactBuilder = new ArtifactBuilder(this)
     sourceGeneratingBuilders << new GroovyStubGenerator(this)
     translatingBuilders << new JavacBuilder()
     translatingBuilders << new GroovycBuilder(this)
@@ -128,6 +132,10 @@ class Project {
 
   def makeProduction() {
     builder.buildProduction()
+  }
+
+  def buildArtifacts() {
+    artifactBuilder.buildArtifacts()
   }
 
   def clean() {

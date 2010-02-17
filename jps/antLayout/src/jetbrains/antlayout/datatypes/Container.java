@@ -42,6 +42,10 @@ public abstract class Container extends Content {
         children.add(container);
     }
 
+    public void addRenamedFile(RenamedFileContainer container) {
+        children.add(container);
+    }
+
     public void addContainer(Container container) {
         children.add(container);
     }

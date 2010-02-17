@@ -41,6 +41,13 @@ final class Jps {
         })
       }
 
+      binding.setVariable("renamedFile", {Object[] args ->
+        if (args.length != 2) {
+          project.error("unexpected number of parameters for renamedFile")
+        }
+        binding.ant."renamedFile"(filePath: args[0], newName: args[1])
+      })
+
       try {
         def meta = new Expando()
         body.delegate = meta

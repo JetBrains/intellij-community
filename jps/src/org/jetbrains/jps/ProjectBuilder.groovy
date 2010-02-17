@@ -1,6 +1,8 @@
 package org.jetbrains.jps
 
 import org.codehaus.gant.GantBinding
+import org.jetbrains.jps.dag.DagBuilder
+import org.jetbrains.jps.artifacts.Artifact
 
 /**
  * @author max
@@ -11,7 +13,7 @@ class ProjectBuilder {
   final Map<ModuleChunk, String> testOutputs = [:]
   final Map<ModuleChunk, List<String>> cp = [:]
   final Map<ModuleChunk, List<String>> testCp = [:]
-  
+
   final Project project;
   final GantBinding binding;
 
@@ -24,7 +26,15 @@ class ProjectBuilder {
 
   private def buildChunks() {
     if (chunks == null) {
-      chunks = new ChunkDAG().build(project, project.modules.values())
+      def iterator = { Module module, Closure processor ->
+        module.classpath.each {entry ->
+          if (entry instanceof Module) {
+            processor(entry)
+          }
+        }
+      }
+      def dagBuilder = new DagBuilder<Module>({new ModuleChunk()}, iterator)
+      chunks = dagBuilder.build(project, project.modules.values())
       chunks.each { ModuleChunk chunk ->
         chunk.modules.each {
           mapping[it] = chunk

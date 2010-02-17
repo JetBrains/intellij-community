@@ -2,6 +2,7 @@ package org.jetbrains.jps.idea
 
 import org.jetbrains.jps.Project
 import org.jetbrains.jps.Library
+import org.jetbrains.jps.artifacts.Artifact
 
 /**
  * @author max
@@ -28,6 +29,7 @@ public class IdeaProjectLoader {
 
     if (fileAtPath.isFile() && path.endsWith(".ipr")) {
       loadFromIpr(project, path)
+      return
     }
     else {
       File directoryBased = null;
@@ -51,7 +53,13 @@ public class IdeaProjectLoader {
   }
 
   def loadFromIpr(Project project, String path) {
-    project.error("Loading from .ipr files is not yet supported. Please switch to directory based format")
+    def iprFile = new File(path)
+    def projectBasePath = iprFile.getParentFile().getAbsolutePath()
+
+    def root = new XmlParser(false, false).parse(iprFile)
+    loadModules(getComponent(root, "ProjectModuleManager"), project, projectBasePath)
+    loadProjectLibraries(getComponent(root, "libraryTable"), project, projectBasePath)
+    loadArtifacts(getComponent(root, "ArtifactManager"), project, projectBasePath)
   }
 
   def loadFromDirectoryBased(Project project, File dir) {
@@ -60,28 +68,50 @@ public class IdeaProjectLoader {
 
     Node modulesXmlRoot = new XmlParser(false, false).parse(modulesXml)
 
-    def projectBasePath = dir.getParentFile().getAbsolutePath()
-    loadModules(project, modulesXmlRoot, projectBasePath)
+    def projectBasePath = dir.parentFile.absolutePath
+    loadModules(modulesXmlRoot.component[0], project, projectBasePath)
 
     def librariesFolder = new File(dir, "libraries")
     if (librariesFolder.isDirectory()) {
       librariesFolder.eachFile {File file ->
-        NodeList libs = new XmlParser(false, false).parse(file).library
-        libs.each {Node libTag ->
-          project.createLibrary(attr(libTag, "name"), libraryInitializer(libTag, projectBasePath, null))
-        }
+        Node librariesComponent = new XmlParser(false, false).parse(file)
+        loadProjectLibraries(librariesComponent, project, projectBasePath)
+      }
+    }
+
+    def artifactsFolder = new File(dir, "artifacts")
+    if (artifactsFolder.isDirectory()) {
+      artifactsFolder.eachFile {File file ->
+        def artifactsComponent = new XmlParser(false, false).parse(file)
+        loadArtifacts(artifactsComponent, project, projectBasePath)
       }
     }
   }
 
-  private def loadModules(Project project, Node modulesXmlRoot, projectBasePath) {
-    modulesXmlRoot.component.modules.module.each {Node moduleTag ->
-      loadModule(project, projectBasePath, expandMacro(attr(moduleTag, "filepath"), projectBasePath, null))
+  private NodeList loadProjectLibraries(Node librariesComponent, Project project, String projectBasePath) {
+    return librariesComponent?.library.each {Node libTag ->
+      project.createLibrary(libTag."@name", libraryInitializer(libTag, projectBasePath, null))
     }
   }
 
-  private String expandMacro(String path, String projectDir, String moduleDir) {
-    String answer = path.replace("\$PROJECT_DIR\$", projectDir)
+  def loadArtifacts(Node artifactsComponent, Project project, String projectBasePath) {
+    ArtifactLoader artifactLoader = new ArtifactLoader(project, projectBasePath)
+    artifactsComponent.artifact.each {Node artifactTag ->
+      def artifactName = artifactTag."@name"
+      def root = artifactLoader.loadLayoutElement(artifactTag.root[0], artifactName)
+      def artifact = new Artifact(name: artifactName, rootElement: root)
+      project.artifacts[artifact.name] = artifact;
+    }
+  }
+
+  private def loadModules(Node modulesComponent, Project project, String projectBasePath) {
+    modulesComponent?.modules.module.each {Node moduleTag ->
+      loadModule(project, projectBasePath, expandMacro(moduleTag."@filepath", projectBasePath, null))
+    }
+  }
+
+  public static String expandMacro(String path, String projectDir, String moduleDir) {
+    String answer = expandProjectMacro(path, projectDir)
 
     if (moduleDir != null) {
       answer = path.replace("\$MODULE_DIR\$", moduleDir)
@@ -90,8 +120,12 @@ public class IdeaProjectLoader {
     return answer
   }
 
+  public static String expandProjectMacro(String path, String projectDir) {
+    return path.replace("\$PROJECT_DIR\$", projectDir)
+  }
+
   private Library loadNamedLibrary(Project project, Node libraryTag, String projectBasePath, String moduleBasePath) {
-    loadLibrary(project, attr(libraryTag, "name"), libraryTag, projectBasePath, moduleBasePath)
+    loadLibrary(project, libraryTag."@name", libraryTag, projectBasePath, moduleBasePath)
   }
 
   private Library loadLibrary(Project project, String name, Node libraryTag, String projectBasePath, String moduleBasePath) {
@@ -102,113 +136,121 @@ public class IdeaProjectLoader {
     return {
       libraryTag.CLASSES.root.each {Node rootTag ->
         classpath expandMacro(
-                pathFromUrl(attr(rootTag, "url")),
+                pathFromUrl(rootTag."@url"),
                 projectBasePath,
                 moduleBasePath)
       }
 
       libraryTag.SOURCES.root.each {Node rootTag ->
-        src expandMacro(attr(rootTag, "url"), projectBasePath, moduleBasePath)
+        src expandMacro(rootTag."@url", projectBasePath, moduleBasePath)
       }
     }
   }
 
   Object loadModule(Project project, String projectBasePath, String imlPath) {
-    def moduleBasePath = new File(imlPath).getParentFile().getAbsolutePath()
+    def moduleFile = new File(imlPath)
+    if (!moduleFile.exists()) {
+      project.error("Module file $imlPath not found")
+      return 
+    }
+
+    def moduleBasePath = moduleFile.getParentFile().getAbsolutePath()
     def currentModuleName = moduleName(imlPath)
     project.createModule(currentModuleName) {
-      def root = new XmlParser(false, false).parse(new File(imlPath))
-      root.component.each {Node componentTag ->
-        if ("NewModuleRootManager" == componentTag.attribute("name")) {
-          componentTag.orderEntry.each {Node entryTag ->
-            String type = attr(entryTag, "type")
-            String scope = attr(entryTag, "scope")
-            switch (type) {
-              case "module":
-                def moduleName = entryTag.attribute("module-name")
-                def module = project.modules[moduleName]
-                if (module == null) {
-                  project.warning("Cannot resolve module $moduleName in $currentModuleName")
+      def root = new XmlParser(false, false).parse(moduleFile)
+      def componentTag = getComponent(root, "NewModuleRootManager")
+      if (componentTag != null) {
+        componentTag.orderEntry.each {Node entryTag ->
+          String type = entryTag."@type"
+          String scope = entryTag."@scope"
+          switch (type) {
+            case "module":
+              def moduleName = entryTag.attribute("module-name")
+              def module = project.modules[moduleName]
+              if (module == null) {
+                project.warning("Cannot resolve module $moduleName in $currentModuleName")
+              }
+              else {
+                if (scope == "TEST") {
+                  testclasspath module
                 }
                 else {
-                  if (scope == "TEST") {
-                    testclasspath module
+                  classpath module
+                }
+              }
+              break
+
+            case "module-library":
+              def moduleLibrary = loadLibrary(project, "moduleLibrary#${libraryCount++}", entryTag.library.first(), projectBasePath, moduleBasePath)
+              if (scope == "PROVIDED") {
+                providedClasspath moduleLibrary
+              }
+              else if (scope == "TEST") {
+                testclasspath moduleLibrary
+              }
+              else {
+                classpath moduleLibrary
+              }
+              break;
+
+            case "library":
+              def name = entryTag.attribute("name")
+              switch (entryTag.attribute("level")) {
+                case "project":
+                  def library = project.libraries[name]
+                  if (library == null) {
+                    project.warning("Cannot resolve library $name in $currentModuleName")
                   }
                   else {
-                    classpath module
-                  }
-                }
-                break
-
-              case "module-library":
-                def moduleLibrary = loadLibrary(project, "moduleLibrary#${libraryCount++}", entryTag.library.first(), projectBasePath, moduleBasePath)
-                if (scope == "PROVIDED") {
-                  providedClasspath moduleLibrary
-                }
-                else if (scope == "TEST") {
-                  testclasspath moduleLibrary
-                }
-                else {
-                  classpath moduleLibrary
-                }
-                break;
-
-              case "library":
-                def name = entryTag.attribute("name")
-                switch (entryTag.attribute("level")) {
-                  case "project":
-                    def library = project.libraries[name]
-                    if (library == null) {
-                      project.warning("Cannot resolve library $name in $currentModuleName")
+                    if (scope == "PROVIDED") {
+                      providedClasspath library
+                    }
+                    else if (scope == "TEST") {
+                      testclasspath library
                     }
                     else {
-                      if (scope == "PROVIDED") {
-                        providedClasspath library
-                      }
-                      else if (scope == "TEST") {
-                        testclasspath library
-                      }
-                      else {
-                        classpath library
-                      }
+                      classpath library
                     }
-                    break
+                  }
+                  break
 
-                  case "application":
-                    project.warning("Application level libraries are not supported: ${name}")
-                    break
-                }
-            }
-          }
-
-          componentTag.content.sourceFolder.each {Node folderTag ->
-            String path = expandMacro(pathFromUrl(attr(folderTag, "url")), projectBasePath, moduleBasePath)
-            String prefix = attr(folderTag, "packagePrefix")
-
-            if (folderTag.attribute("isTestSource") == "true") {
-              testSrc path
-            }
-            else {
-              src path
-            }
-
-            if (prefix != null && prefix != "") {
-              project.modules[currentModuleName].sourceRootPrefixes[path] = (prefix.replace('.', '/'))
-            }
-          }
-
-          componentTag.content.excludeFolder.each {Node exTag ->
-            String path = expandMacro(pathFromUrl(attr(exTag, "url")), projectBasePath, moduleBasePath)
-            exclude path
-          }
-
-          def languageLevel = attr(componentTag, "LANGUAGE_LEVEL")
-          if (languageLevel != null) {
-            def ll = convertLanguageLevel(languageLevel)
-            project.modules[currentModuleName]["sourceLevel"] = ll
-            project.modules[currentModuleName]["targetLevel"] = ll
+                case "application":
+                  project.warning("Application level libraries are not supported: ${name}")
+                  break
+              }
           }
         }
+        componentTag.content.sourceFolder.each {Node folderTag ->
+          String path = expandMacro(pathFromUrl(folderTag."@url"), projectBasePath, moduleBasePath)
+          String prefix = folderTag."@packagePrefix"
+
+          if (folderTag.attribute("isTestSource") == "true") {
+            testSrc path
+          }
+          else {
+            src path
+          }
+
+          if (prefix != null && prefix != "") {
+            project.modules[currentModuleName].sourceRootPrefixes[path] = (prefix.replace('.', '/'))
+          }
+        }
+        componentTag.content.excludeFolder.each {Node exTag ->
+          String path = expandMacro(pathFromUrl(exTag."@url"), projectBasePath, moduleBasePath)
+          exclude path
+        }
+        def languageLevel = componentTag."@LANGUAGE_LEVEL"
+        if (languageLevel != null) {
+          def ll = convertLanguageLevel(languageLevel)
+          project.modules[currentModuleName]["sourceLevel"] = ll
+          project.modules[currentModuleName]["targetLevel"] = ll
+        }
+      }
+
+      def facetManagerTag = getComponent(root, "FacetManager")
+      if (facetManagerTag != null) {
+        def facetLoader = new FacetLoader(project.modules[currentModuleName], projectBasePath, moduleBasePath)
+        facetLoader.loadFacets(facetManagerTag)
       }
     }
   }
@@ -225,7 +267,7 @@ public class IdeaProjectLoader {
     return "1.6"
   }
 
-  private String pathFromUrl(String url) {
+  static String pathFromUrl(String url) {
     if (url.startsWith("file://")) {
       return url.substring("file://".length())
     }
@@ -242,7 +284,7 @@ public class IdeaProjectLoader {
     return fileName.substring(0, fileName.length() - ".iml".length())
   }
 
-  private String attr(Node tag, String name) {
-    return tag.attribute(name)
+  Node getComponent(Node root, String name) {
+    return root.component.find {it."@name" == name}
   }
 }

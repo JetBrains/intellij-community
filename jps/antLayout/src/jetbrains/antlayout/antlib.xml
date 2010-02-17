@@ -4,5 +4,6 @@
     <typedef name="jar" classname="jetbrains.antlayout.datatypes.JarContainer"/>
     <typedef name="zip" classname="jetbrains.antlayout.datatypes.ZipContainer"/>
     <typedef name="dir" classname="jetbrains.antlayout.datatypes.DirContainer"/>
+    <typedef name="renamedFile" classname="jetbrains.antlayout.datatypes.RenamedFileContainer"/>
     <typedef name="module" classname="jetbrains.antlayout.datatypes.IdeaModule"/>
 </antlib>
