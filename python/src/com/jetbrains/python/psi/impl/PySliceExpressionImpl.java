@@ -1,9 +1,11 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PySliceExpression;
+import com.jetbrains.python.psi.PySliceItem;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,16 +25,8 @@ public class PySliceExpressionImpl extends PyElementImpl implements PySliceExpre
     return childToPsiNotNull(PyElementTypes.EXPRESSIONS, 0);
   }
 
-  public PyExpression getLowerBound() {
-    return childToPsiNotNull(PyElementTypes.EXPRESSIONS, 1);
-  }
-
-  public PyExpression getUpperBound() {
-    return childToPsi(PyElementTypes.EXPRESSIONS, 2);
-  }
-
   @Nullable
-  public PyExpression getStride() {
-    return childToPsi(PyElementTypes.EXPRESSIONS, 3);
+  public PySliceItem getSliceItem() {
+    return PsiTreeUtil.getChildOfType(this, PySliceItem.class);
   }
 }
