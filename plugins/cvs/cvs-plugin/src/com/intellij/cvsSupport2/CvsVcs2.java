@@ -33,6 +33,7 @@ import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsOperation;
+import com.intellij.cvsSupport2.cvsoperations.common.FindAllRootsHelper;
 import com.intellij.cvsSupport2.cvsoperations.cvsAnnotate.AnnotateOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsAnnotate.Annotation;
 import com.intellij.cvsSupport2.cvsoperations.cvsEdit.ui.EditOptionsDialog;
@@ -436,6 +437,15 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
 
   public CvsCheckoutProvider getCheckoutProvider() {
     return myCvsCheckoutProvider;
+  }
+
+  @Override
+  public RootsConvertor getCustomConvertor() {
+    return new RootsConvertor() {
+      public List<VirtualFile> convertRoots(List<VirtualFile> result) {
+        return FindAllRootsHelper.findVersionedUnder(result);
+      }
+    };
   }
 
   @Override

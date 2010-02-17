@@ -23,6 +23,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.Convertor;
 
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -30,16 +32,26 @@ public class FindAllRootsHelper {
   private FindAllRootsHelper() {
   }
 
+  public static List<VirtualFile> findVersionedUnder(final List<VirtualFile> coll) {
+    final List<FilePath> pathList = ObjectsConvertor.vf2fp(coll);
+    return impl(pathList.iterator());
+  }
+
   public static FilePath[] findVersionedUnder(final FilePath[] roots) {
+    final List<VirtualFile> found = impl(Arrays.asList(roots).iterator());
+    return ObjectsConvertor.vf2fp(found).toArray(new FilePath[found.size()]);
+  }
+
+  private static List<VirtualFile> impl(final Iterator<FilePath> iterator) {
     final MyProcessor processor = new MyProcessor();
 
-    for (FilePath root : roots) {
+    for (; iterator.hasNext();) {
+      final FilePath root = iterator.next();
       final VirtualFile vf = root.getVirtualFile();
       if (vf == null) continue;
       VfsUtil.processFilesRecursively(vf, processor, processor);
     }
-    final List<VirtualFile> found = processor.getFound();
-    return ObjectsConvertor.vf2fp(found).toArray(new FilePath[found.size()]);
+    return processor.getFound();
   }
 
   private static class MyProcessor implements Processor<VirtualFile>, Convertor<VirtualFile, Boolean> {
