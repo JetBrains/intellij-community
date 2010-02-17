@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,6 +73,9 @@ public class UtilityClassWithoutPrivateConstructorInspection
             final Query<PsiReference> query =
                     ReferencesSearch.search(aClass, aClass.getUseScope());
             for (PsiReference reference : query) {
+                if (reference == null) {
+                    continue;
+                }
                 final PsiElement element = reference.getElement();
                 final PsiElement parent = element.getParent();
                 if (parent instanceof PsiNewExpression) {

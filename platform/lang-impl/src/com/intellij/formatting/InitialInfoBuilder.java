@@ -252,7 +252,7 @@ class InitialInfoBuilder {
     else {
       if (myAffectedRanges == null) return false;
       final boolean readOnly = myAffectedRanges.isWhitespaceReadOnly(myCurrentWhiteSpace.getTextRange());
-      System.out.println("whitespace at " + myCurrentWhiteSpace.getTextRange() + (readOnly ? " is read-only" : " is not read-only"));
+      //System.out.println("whitespace at " + myCurrentWhiteSpace.getTextRange() + (readOnly ? " is read-only" : " is not read-only"));
       return readOnly;
     }
   }
@@ -260,7 +260,7 @@ class InitialInfoBuilder {
   private boolean isReadOnly(final TextRange textRange, boolean rootIsRightBlock) {
     if (myAffectedRanges == null) return false;
     final boolean readOnly = myAffectedRanges.isReadOnly(textRange, rootIsRightBlock);
-    System.out.println("range at " + textRange + (readOnly ? " is read-only" : " is not read-only"));
+    //System.out.println("range at " + textRange + (readOnly ? " is read-only" : " is not read-only"));
     return readOnly;
   }
 

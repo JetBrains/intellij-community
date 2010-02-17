@@ -349,6 +349,11 @@ public class BreakpointPanel extends AbstractBreakpointPanel<Breakpoint> {
     }
   }
 
+  @Override
+  public boolean hasBreakpoints() {
+    return getBreakpointManager().getBreakpoints(getBreakpointCategory()).length > 0;
+  }
+
   public void selectBreakpoints(Breakpoint[] breakpoints) {
     if (isTreeShowing()) {
       myTree.selectBreakpoints(breakpoints);
