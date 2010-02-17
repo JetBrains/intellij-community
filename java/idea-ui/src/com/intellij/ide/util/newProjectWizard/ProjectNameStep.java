@@ -30,6 +30,8 @@ import com.intellij.projectImport.ProjectFormatPanel;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 
 /**
@@ -73,6 +75,17 @@ public class ProjectNameStep extends ModuleWizardStep {
 
     myNamePathComponent.setVisible(myWizardContext.getProject() == null);
     myFormatPanel.setVisible(myWizardContext.getProject() == null);
+
+    final Object selectedProjectFormat = myFormatPanel.getStorageFormatComboBox().getSelectedItem();
+    myNamePathComponent.syncNameToPath(ProjectFormatPanel.DIR_BASED.equals(selectedProjectFormat));
+
+    myFormatPanel.getStorageFormatComboBox().addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        final Object o = myFormatPanel.getStorageFormatComboBox().getSelectedItem();
+        myNamePathComponent.syncNameToPath(ProjectFormatPanel.DIR_BASED.equals(o));
+      }
+    });
+
     myAdditionalContentPanel = new JPanel(new GridBagLayout());
     myPanel.add(myAdditionalContentPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
   }

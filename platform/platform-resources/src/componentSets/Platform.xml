@@ -150,10 +150,6 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.openapi.project.impl.ProjectDetailsComponent</implementation-class>
-    </component>
-
-    <component>
       <implementation-class>com.intellij.openapi.project.DumbModeIndicator</implementation-class>
     </component>
 

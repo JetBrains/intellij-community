@@ -263,9 +263,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
     project.loadProjectComponents();
     project.init();
-    if (projectName != null) {
-      ProjectDetailsComponent.getInstance(project).setProjectName(projectName);
-    }
 
     return project;
   }
