@@ -107,7 +107,7 @@ public class ImportToImportFromIntention implements IntentionAction {
     PyReferenceExpression reference = myImportElement.getImportReference();
     if (reference != null) {
       myModuleName = PyResolveUtil.toPath(reference, ".");
-      myQualifierName = myImportElement.getVisibleName();
+      myQualifierName = myImportElement.getVisibleName(); 
       myReferee = reference.resolve();
       myHasModuleReference = false;
       if (myReferee != null && myModuleName != null && myQualifierName != null) {

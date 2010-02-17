@@ -47,9 +47,13 @@ public class PyImportElementImpl extends PyElementImpl implements PyImportElemen
   public String getVisibleName() {
     PyTargetExpression asname = getAsName();
     if (asname != null) return asname.getName();
+    final PyReferenceExpression import_ref = getImportReference();
+    if (import_ref != null) return PyResolveUtil.toPath(import_ref, ".");
+    /*
     for (PyElement name_elt : iterateNames()) {
       return name_elt.getName(); // first to come must be right
     }
+    */
     return null; // we might have not found any names
   }
 
