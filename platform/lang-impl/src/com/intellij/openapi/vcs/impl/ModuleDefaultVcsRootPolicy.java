@@ -121,12 +121,10 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
   }
 
   public void markDefaultRootsDirty(final DirtBuilder builder, final VcsGuess vcsGuess) {
-    final VirtualFile baseDir = myProject.getBaseDir();
-
     final Module[] modules = myModuleManager.getModules();
     final StorageScheme storageScheme = ((ProjectEx) myProject).getStateStore().getStorageScheme();
     if (StorageScheme.DIRECTORY_BASED.equals(storageScheme)) {
-      final FilePathImpl fp = new FilePathImpl(baseDir, Project.DIRECTORY_STORE_FOLDER, true);
+      final FilePathImpl fp = new FilePathImpl(myBaseDir, Project.DIRECTORY_STORE_FOLDER, true);
       final AbstractVcs vcs = vcsGuess.getVcsForDirty(fp);
       if (vcs != null) {
         builder.addDirtyDirRecursively(new FilePathUnderVcs(fp, vcs));
@@ -147,9 +145,9 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
     final String defaultMapping = ((ProjectLevelVcsManagerEx)plVcsManager).haveDefaultMapping();
     final boolean haveDefaultMapping = (defaultMapping != null) && (defaultMapping.length() > 0);
     if (haveDefaultMapping) {
-      final AbstractVcs vcs = vcsGuess.getVcsForDirty(baseDir);
+      final AbstractVcs vcs = vcsGuess.getVcsForDirty(myBaseDir);
       if (vcs != null) {
-        builder.addDirtyFile(new VcsRoot(vcs, baseDir));
+        builder.addDirtyFile(new VcsRoot(vcs, myBaseDir));
       }
     }
 
