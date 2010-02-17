@@ -164,21 +164,22 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
       }
       else {
         boolean foundConstructor = false;
-        final PsiCodeBlock methodBody = method.getBody();
-        assert methodBody != null;
         final Set<PsiType> returnTypes = new HashSet<PsiType>();
         returnTypes.add(method.getReturnType());
-        methodBody.accept(new JavaRecursiveElementWalkingVisitor() {
-          @Override
-          public void visitReturnStatement(final PsiReturnStatement statement) {
-            super.visitReturnStatement(statement);
-            if (PsiTreeUtil.getParentOfType(statement, PsiMethod.class) != method) return;
-            final PsiExpression returnValue = statement.getReturnValue();
-            if (returnValue != null) {
-              returnTypes.add(returnValue.getType());
+        final PsiCodeBlock methodBody = method.getBody();
+        if (methodBody != null) {
+          methodBody.accept(new JavaRecursiveElementWalkingVisitor() {
+            @Override
+            public void visitReturnStatement(final PsiReturnStatement statement) {
+              super.visitReturnStatement(statement);
+              if (PsiTreeUtil.getParentOfType(statement, PsiMethod.class) != method) return;
+              final PsiExpression returnValue = statement.getReturnValue();
+              if (returnValue != null) {
+                returnTypes.add(returnValue.getType());
+              }
             }
-          }
-        });
+          });
+        }
 
         final PsiMethod[] constructors = existingClass.getConstructors();
         constr: for (PsiMethod constructor : constructors) {
