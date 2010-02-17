@@ -5,7 +5,7 @@ includeTool << Jps
 def projectHome = "$basedir"
 def libs = "$projectHome/lib/"
 
-def gantHome = "/Users/max/libs/gant-1.7.0"
+def gantHome = GANT_HOME
 
 project.targetFolder = "${projectHome}/build"
     
@@ -21,7 +21,7 @@ library("gant") {
 
 module("JPS") {
   targetLevel ="1.5"
-  classpath antLayout
+  classpath antLayout, gant
   src "${projectHome}/src"
 }
 
