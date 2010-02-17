@@ -119,7 +119,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
             if (parent != null) {
               myFileSystemTree.select(parent, null);
             }
-          }
+          } else if (file.isDirectory()) myFileSystemTree.expand(file);
         }
       });
     }
