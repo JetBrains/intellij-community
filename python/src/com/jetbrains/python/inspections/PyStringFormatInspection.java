@@ -88,7 +88,8 @@ public class PyStringFormatInspection extends LocalInspectionTool {
 
       private int inspectArguments(@Nullable final PyExpression rightExpression) {
         final Class[] SIMPLE_RHS_EXPRESSIONS =
-          {PyLiteralExpression.class, PyReferenceExpression.class, PyCallExpression.class, PySubscriptionExpression.class};
+          {PyLiteralExpression.class, PyReferenceExpression.class, PyCallExpression.class, PySubscriptionExpression.class,
+          PyBinaryExpression.class,  PyConditionalExpression.class};
 
         if (PyUtil.instanceOf(rightExpression, SIMPLE_RHS_EXPRESSIONS)) {
           if (myFormatSpec.get("1") != null) {
@@ -141,14 +142,19 @@ public class PyStringFormatInspection extends LocalInspectionTool {
         else if (rightExpression instanceof PyListLiteralExpression) {
           if (myFormatSpec.get("1") != null) {
             simpleCheckType(rightExpression, "str", myFormatSpec.get("1"));
+            return 1;
           }
-          return ((PyListLiteralExpression)rightExpression).getElements().length;
         }
         else if (rightExpression instanceof PySliceExpression) {
           if (myFormatSpec.get("1") != null) {
             simpleCheckType(rightExpression, "str", myFormatSpec.get("1"));
+            return 1;
           }
-          return 1;
+        } else if (rightExpression instanceof PyListCompExpression) {
+          if (myFormatSpec.get("1") != null) {
+            simpleCheckType(rightExpression, "str", myFormatSpec.get("1"));
+            return 1;
+          }
         }
         return 0;
       }
