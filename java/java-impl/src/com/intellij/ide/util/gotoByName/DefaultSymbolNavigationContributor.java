@@ -136,7 +136,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
         return 3;
       }
       else{
-        LOG.error(element.toString());
+        LOG.error(element);
         return 0;
       }
     }

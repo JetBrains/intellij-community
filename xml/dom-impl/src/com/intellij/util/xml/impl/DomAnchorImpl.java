@@ -73,7 +73,7 @@ public abstract class DomAnchorImpl<T extends DomElement> {
         }
       }
       diag.append("Child name: ").append(t.getXmlElementName()).append(";").append(t.getXmlElementNamespaceKey());
-      LOG.error(diag.toString());
+      LOG.error(diag);
     }
     return new IndexedAnchor<T>(parentAnchor, description, index);
   }

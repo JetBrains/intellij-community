@@ -511,7 +511,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
       removeParametersFromCall(argList);
     }
     else {
-      LOG.error(element.getParent().toString());
+      LOG.error(element.getParent());
     }
   }
 

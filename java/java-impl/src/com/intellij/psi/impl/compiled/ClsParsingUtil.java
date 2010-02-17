@@ -63,7 +63,7 @@ public class ClsParsingUtil {
         return new ClsLiteralExpressionImpl(parent, exprText, expr.getType(), value); //it seems ok to make literal expression with non-literal text
       }
     }
-    LOG.error(expr.toString());
+    LOG.error(expr);
     return null;
   }
 }

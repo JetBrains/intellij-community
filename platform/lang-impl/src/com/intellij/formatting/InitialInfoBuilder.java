@@ -315,6 +315,6 @@ class InitialInfoBuilder {
       buffer.append('\n');
     }
 
-    LOG.error(buffer.toString());
+    LOG.error(buffer);
   }
 }
