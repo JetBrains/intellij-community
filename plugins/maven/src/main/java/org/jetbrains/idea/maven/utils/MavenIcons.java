@@ -22,6 +22,7 @@ import javax.swing.*;
 public class MavenIcons {
   public static final Icon MAVEN_ICON = IconLoader.getIcon("/images/mavenLogo.png");
   public static final Icon MAVEN_PROJECT_ICON = IconLoader.getIcon("/images/mavenProject.png");
+
   public static final Icon OPEN_PROFILES_ICON = IconLoader.getIcon("/images/profilesOpen.png");
   public static final Icon CLOSED_PROFILES_ICON = IconLoader.getIcon("/images/profilesClosed.png");
   public static final Icon OPEN_PHASES_ICON = IconLoader.getIcon("/images/phasesOpen.png");
@@ -40,4 +41,7 @@ public class MavenIcons {
   
   public static final Icon OVERRIDING_DEPENDENCY = IconLoader.getIcon("/images/overridingDependency.png");
   public static final Icon OVERRIDEN_DEPENDENCY = IconLoader.getIcon("/images/overridenDependency.png");
+
+  public static final Icon PARENT_PROJECT = IconLoader.getIcon("/images/parentProject.png");
+  public static final Icon CHILDREN_PROJECTS = IconLoader.getIcon("/images/childrenProjects.png");
 }

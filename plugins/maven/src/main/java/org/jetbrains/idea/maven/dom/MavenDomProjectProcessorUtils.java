@@ -130,6 +130,22 @@ public class MavenDomProjectProcessorUtils {
     }
   }
 
+  @NotNull
+  public static Set<MavenDomDependency> collectManagingDependencies(@NotNull MavenDomProjectModel model) {
+    final Set<MavenDomDependency> dependencies = new HashSet<MavenDomDependency>();
+
+    Processor<MavenDomDependencies> collectProcessor = new Processor<MavenDomDependencies>() {
+      public boolean process(MavenDomDependencies mavenDomDependencies) {
+          dependencies.addAll(mavenDomDependencies.getDependencies());
+        return false;
+      }
+    };
+
+    processDependenciesInDependencyManagement(model, collectProcessor, model.getManager().getProject());
+
+    return dependencies;
+  }
+
   @Nullable
   public static MavenDomDependency searchManagingDependency(@NotNull final MavenDomDependency dependency, @NotNull final Project project) {
     final MavenDomDependency[] parent = new MavenDomDependency[]{null};
