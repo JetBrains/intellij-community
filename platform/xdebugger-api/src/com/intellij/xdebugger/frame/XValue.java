@@ -19,6 +19,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Represents a value in debugger tree.
+ * Override {@link XValueContainer#computeChildren} if value has a properties which should be shown as child nodes
+ *
  * @author nik
  */
 public abstract class XValue extends XValueContainer {

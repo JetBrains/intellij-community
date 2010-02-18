@@ -23,6 +23,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 /**
+ * Represents a node in debugger tree. This interface isn't supposed to be implemented by a plugin.
+ *
+ * @see XValue
+ *
  * @author nik
  */
 public interface XValueNode extends Obsolescent {

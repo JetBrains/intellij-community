@@ -40,6 +40,9 @@ import java.util.Comparator;
  * &nbsp;&nbsp;&lt;xdebugger.breakpointType implementation="qualified-class-name"/&gt;<br>
  * &lt;/extensions&gt;
  *
+ * Use this class only for breakpoints like an exception breakpoints in Java. If a breakpoint will be put on some line in a file use
+ * {@link XLineBreakpointType} instead 
+ *
  * @author nik
  */
 public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreakpointProperties> {
