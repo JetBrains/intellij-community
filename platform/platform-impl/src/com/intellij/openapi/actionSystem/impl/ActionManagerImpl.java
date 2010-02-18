@@ -1163,10 +1163,14 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
         return;
       }
 
-      TimerListener[] listeners = myTimerListeners.toArray(new TimerListener[myTimerListeners.size()]);
-      for (TimerListener listener : listeners) {
-        runListenerAction(listener);
-      }
+      final TimerListener[] listeners = myTimerListeners.toArray(new TimerListener[myTimerListeners.size()]);
+      IdeFocusManager.getInstance(null).doWhenFocusSettlesDown(new Runnable() {
+        public void run() {
+          for (TimerListener listener : listeners) {
+            runListenerAction(listener);
+          }
+        }
+      });
     }
 
     private void runListenerAction(final TimerListener listener) {
