@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
  * Date: 10.02.2010
  * Time: 17:45:58
  */
-public class ReamoveTrailingLQuickFix implements LocalQuickFix {
+public class RemoveTrailingLQuickFix implements LocalQuickFix {
   @NotNull
   public String getName() {
     return PyBundle.message("QFIX.remove.trailing.l");

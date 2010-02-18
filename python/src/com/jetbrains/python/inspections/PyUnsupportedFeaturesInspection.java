@@ -71,7 +71,7 @@ public class PyUnsupportedFeaturesInspection extends LocalInspectionTool {
       VirtualFile virtualFile = node.getContainingFile().getVirtualFile();
       if (virtualFile != null && LanguageLevel.forFile(virtualFile).isPy3K()) {
         if (node.isOperator("<>")) {
-          registerProblem(node, "<> not supported in Python3, use != instead", new ReplaceNotEqOperatorQuickFix());
+          registerProblem(node, "<> is not supported in Python 3, use != instead", new ReplaceNotEqOperatorQuickFix());
         }
       }
     }
@@ -82,10 +82,10 @@ public class PyUnsupportedFeaturesInspection extends LocalInspectionTool {
       if (virtualFile != null && LanguageLevel.forFile(virtualFile).isPy3K()) {
         String text = node.getText();
         if (text.endsWith("l") || text.endsWith("L")) {
-          registerProblem(node, "Integer literals no support trailing \'l\' or \'L\' in Python3", new ReamoveTrailingLQuickFix());
+          registerProblem(node, "Integer literals do not support trailing \'l\' or \'L\' in Python3", new RemoveTrailingLQuickFix());
         }
         if (text.charAt(0) == '0' && (text.charAt(1) != 'o' || text.charAt(1) != 'b')) {
-          registerProblem(node, "Python3 not supported such syntax", new ReplaceOctalNumericLiteralQuickFix());
+          registerProblem(node, "Python 3 requires '0o' prefix for octal literals", new ReplaceOctalNumericLiteralQuickFix());
         }
       }
     }
@@ -96,7 +96,7 @@ public class PyUnsupportedFeaturesInspection extends LocalInspectionTool {
       if (virtualFile != null && LanguageLevel.forFile(virtualFile).isPy3K()) {
         String text = node.getText();
         if (text.startsWith("u") || text.startsWith("U")) {
-          registerProblem(node, "String literals no support a leading \'u\' or \'U\' in Python3", new ReamoveLeadingUQuickFix());
+          registerProblem(node, "String literals do not support a leading \'u\' or \'U\' in Python 3", new ReamoveLeadingUQuickFix());
         }
       }
     }
@@ -107,7 +107,7 @@ public class PyUnsupportedFeaturesInspection extends LocalInspectionTool {
       for (ComprhForComponent forComponent: forComponents) {
         PyExpression iteratedList = forComponent.getIteratedList();
         if (iteratedList instanceof PyTupleExpression) {
-          registerProblem(iteratedList, "List comprehensions no support such syntax in Python3", new ReplaceListComprehensionsQuickFix());
+          registerProblem(iteratedList, "List comprehensions do not support such syntax in Python 3", new ReplaceListComprehensionsQuickFix());
         }
       }
     }
@@ -124,15 +124,7 @@ public class PyUnsupportedFeaturesInspection extends LocalInspectionTool {
               element = element.getNextSibling();
             }
             if (element != null && ",".equals(element.getText())) {
-              registerProblem(node, "Python3 not supported such syntax", new ReplaceExceptPartQuickFix(true));
-            }
-          } else {
-            PsiElement element = exceptClass.getNextSibling();
-            while (element instanceof PsiWhiteSpace) {
-              element = element.getNextSibling();
-            }
-            if (element != null && "as".equals(element.getText())) {
-              registerProblem(node, "Python2 not supported such syntax", new ReplaceExceptPartQuickFix(false));
+              registerProblem(node, "Python 3 does not support this syntax", new ReplaceExceptPartQuickFix(true));
             }
           }
         }
@@ -151,7 +143,7 @@ public class PyUnsupportedFeaturesInspection extends LocalInspectionTool {
       if (virtualFile != null) {
         if (LanguageLevel.forFile(virtualFile).isPy3K()) {
           if (expressions.length == 3) {
-            registerProblem(node, "Python3 not supported such syntax", new ReplaceRaiseStatementQuickFix());
+            registerProblem(node, "Python 3 does not support such syntax", new ReplaceRaiseStatementQuickFix());
             return;
           }
           PsiElement element = expressions[0].getNextSibling();
@@ -159,7 +151,7 @@ public class PyUnsupportedFeaturesInspection extends LocalInspectionTool {
             element = element.getNextSibling();
           }
           if (element != null && ",".equals(element.getText())) {
-            registerProblem(node, "Python3 not supported such syntax", new ReplaceRaiseStatementQuickFix());
+            registerProblem(node, "Python 3 does not support such syntax", new ReplaceRaiseStatementQuickFix());
           }
         } else {
           if (expressions.length == 2) {
@@ -168,7 +160,7 @@ public class PyUnsupportedFeaturesInspection extends LocalInspectionTool {
               element = element.getNextSibling();
             }
             if (element != null && "from".equals(element.getText())) {
-              registerProblem(node, "Python2 not supported such syntax");
+              registerProblem(node, "Python 2 does not support raise ... from syntax");
             }
           }
         }
