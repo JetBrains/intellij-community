@@ -22,8 +22,8 @@ import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Represents position in a source file. Use {@link XDebuggerUtil#createPosition(com.intellij.openapi.vfs.VirtualFile, int)} to create 
- * instances of this interface.
+ * Represents position in a source file. Use {@link XDebuggerUtil#createPosition} and {@link XDebuggerUtil#createPositionByOffset} to
+ * create instances of this interface.
  * @author nik
  */
 public interface XSourcePosition {
