@@ -62,7 +62,8 @@ public class PyTestRunConfigurationType implements LocatableConfigurationType {
     configuration.setUseModuleSdk(true);
     configuration.setModule(ModuleUtil.findModuleForPsiElement(element));
 
-    if (!new File(configuration.getRunnerScriptPath()).exists()) {
+    final String scriptPath = configuration.getRunnerScriptPath();
+    if (scriptPath == null || !new File(scriptPath).exists()) {
       return null;
     }
 
