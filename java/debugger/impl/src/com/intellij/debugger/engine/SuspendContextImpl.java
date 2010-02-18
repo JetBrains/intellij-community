@@ -102,7 +102,7 @@ public abstract class SuspendContextImpl implements SuspendContext {
   private void assertNotResumed() {
     if (myIsResumed) {
       if (myDebugProcess.isAttached()) {
-        LOG.assertTrue(false, "Cannot access SuspendContext. SuspendContext is resumed.");
+        LOG.error("Cannot access SuspendContext. SuspendContext is resumed.");
       }
     }
   }

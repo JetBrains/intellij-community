@@ -184,8 +184,8 @@ public class NameSuggester {
           final int propertyWordFirst = matches.get(first);
 
           if (first >= myOldClassName.length || last >= myOldClassName.length) {
-            LOG.assertTrue(false, "old class name = " + myOldClassNameAsGiven + ", new class name = " + myNewClassNameAsGiven +
-                                  ", propertyWords = " + Arrays.asList(propertyWords).toString());
+            LOG.error("old class name = " + myOldClassNameAsGiven + ", new class name = " + myNewClassNameAsGiven + ", propertyWords = " +
+                      Arrays.asList(propertyWords).toString());
           }
 
           final String replacement = suggestReplacement(propertyWords[propertyWordFirst], newString);

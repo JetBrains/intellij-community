@@ -15,7 +15,6 @@
  */
 package com.intellij.refactoring.introduceField;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.TestUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,21 +24,20 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
-import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR;
-import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.EnumConstantsUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+
+import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR;
+import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION;
 
 public class LocalToFieldHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceField.LocalToFieldHandler");
@@ -125,9 +123,7 @@ public class LocalToFieldHandler {
 
     final boolean isStatic = tempIsStatic;
 
-    PsiExpression[] occurences = CodeInsightUtil.findReferenceExpressions(RefactoringUtil.getVariableScope(local),
-                                                                          local
-    );
+    final PsiExpression[] occurences = CodeInsightUtil.findReferenceExpressions(RefactoringUtil.getVariableScope(local), local);
     if (editor != null) {
       RefactoringUtil.highlightAllOccurences(myProject, occurences, editor);
     }
@@ -138,7 +134,6 @@ public class LocalToFieldHandler {
     final String variableName = local.getName();
     final String fieldName = settings.getFieldName();
     final BaseExpressionToFieldHandler.InitializationPlace initializerPlace = settings.getInitializerPlace();
-    final boolean declareFinal = settings.isDeclareFinal();
     @Modifier final String fieldVisibility = settings.getFieldVisibility();
     final PsiClass destinationClass = settings.getDestinationClass();
     boolean rebindNeeded = false;
@@ -146,7 +141,6 @@ public class LocalToFieldHandler {
       aClass = destinationClass;
       rebindNeeded = true;
     }
-    final boolean annotateAsNonNls = settings.isAnnotateAsNonNls();
 
     final PsiClass aaClass = aClass;
     final boolean rebindNeeded1 = rebindNeeded;
@@ -165,22 +159,8 @@ public class LocalToFieldHandler {
           final PsiMethod enclosingConstructor = BaseExpressionToFieldHandler.getEnclosingConstructor(aaClass, local);
           PsiField field = settings.isIntroduceEnumConstant() ? EnumConstantsUtil.createEnumConstant(aaClass, local, fieldName)
                                                               : createField(local, fieldName, initializerPlace == IN_FIELD_DECLARATION);
-          if (!settings.isIntroduceEnumConstant()) {
-            if (isStatic) {
-              PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
-            }
-            if (declareFinal) {
-              PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
-            }
-            if (annotateAsNonNls) {
-              PsiAnnotation annotation = JavaPsiFacade.getInstance(local.getProject()).getElementFactory().createAnnotationFromText("@" + AnnotationUtil.NON_NLS, field);
-              field.getModifierList().addAfter(annotation, null);
-            }
-            PsiUtil.setModifierProperty(field, fieldVisibility, true);
-          }
-
           field = (PsiField)aaClass.add(field);
-          JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(field);
+          BaseExpressionToFieldHandler.setModifiers(field, settings, isStatic, occurences);
 
           local.normalizeDeclaration();
           PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)local.getParent();

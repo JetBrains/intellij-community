@@ -143,4 +143,16 @@ public class VisibilityUtil  {
     modifierList.setModifierProperty(PsiModifier.PROTECTED, false);
     modifierList.setModifierProperty(newVisibility, true);
   }
+
+  public static void fixVisibility(PsiExpression[] expressions, PsiMember member, String newVisibility) {
+    if (newVisibility == null) return;
+    if (ESCALATE_VISIBILITY.equals(newVisibility)) {
+      for (PsiExpression element : expressions) {
+        escalateVisibility(member, element);
+      }
+    }
+    else {
+      setVisibility(member.getModifierList(), newVisibility);
+    }
+  }
 }

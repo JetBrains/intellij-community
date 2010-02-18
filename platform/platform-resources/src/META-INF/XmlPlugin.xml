@@ -304,11 +304,17 @@
   </extensions>
 
   <actions>
-
     <group id="NewXml" text="XML">
       <action id="NewHtmlType" class="com.intellij.ide.actions.CreateHtmlAction" text="HTML File"/>
       <action id="NewXhtmlType" class="com.intellij.ide.actions.CreateXhtmlAction" text="XHTML File"/>
       <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFromTemplate"/>
     </group>
+
+    <action id="OpenInBrowser" class="com.intellij.ide.browsers.OpenFileInBrowserAction"
+            icon="/nodes/ppWeb.png">
+      <add-to-group group-id="ViewMenu" anchor="after" relative-to-action="ViewSource"/>
+      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="CutCopyPasteGroup"/>
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="EditSource"/>
+    </action>
   </actions>
 </idea-plugin>

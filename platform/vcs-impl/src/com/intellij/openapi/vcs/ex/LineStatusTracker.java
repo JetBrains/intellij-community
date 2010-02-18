@@ -390,7 +390,7 @@ public class LineStatusTracker {
         myRanges.addAll(rangesAfterChange);
 
         if (myHighlighterCount != myRanges.size()) {
-          LOG.assertTrue(false, "Highlighters: " + myHighlighterCount + ", ranges: " + myRanges.size());
+          LOG.error("Highlighters: " + myHighlighterCount + ", ranges: " + myRanges.size());
         }
 
         myRanges = mergeRanges(myRanges);
@@ -401,7 +401,7 @@ public class LineStatusTracker {
         }
 
         if (myHighlighterCount != myRanges.size()) {
-          LOG.assertTrue(false, "Highlighters: " + myHighlighterCount + ", ranges: " + myRanges.size());
+          LOG.error("Highlighters: " + myHighlighterCount + ", ranges: " + myRanges.size());
         }
       }
 

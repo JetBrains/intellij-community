@@ -68,7 +68,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
           methods.add(new GroovyResolveResultImpl(element, true));
         }
       }
-      return methods.toArray(new Object[methods.size()]);
+      return ArrayUtil.toObjectArray(methods);
     }
 
     return null;
@@ -143,7 +143,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
         return groovyResolveResult.getElement() instanceof PsiNamedElement;
       }
     });
-    context.setItemsToShow(namedElements.toArray(new Object[namedElements.size()]));
+    context.setItemsToShow(ArrayUtil.toObjectArray(namedElements));
     context.showHint(place, place.getTextRange().getStartOffset(), this);
   }
 

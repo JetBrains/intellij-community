@@ -354,7 +354,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   public JavaResolveResult[] multiResolve(final boolean incompleteCode) {
     final PsiManagerEx manager = getManager();
     if (manager == null) {
-      LOG.assertTrue(false, "getManager() == null!");
+      LOG.error("getManager() == null!");
       return JavaResolveResult.EMPTY_ARRAY;
     }
 
@@ -400,7 +400,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
           return JavaResolveResult.EMPTY_ARRAY;
         }
         else {
-          LOG.assertTrue(false, "Invalid java reference!");
+          LOG.error("Invalid java reference!");
           return JavaResolveResult.EMPTY_ARRAY;
         }
 

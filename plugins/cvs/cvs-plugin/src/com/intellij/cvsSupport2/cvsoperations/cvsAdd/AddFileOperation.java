@@ -45,7 +45,7 @@ public class AddFileOperation extends CvsOperationOnFiles {
     List<AbstractFileObject> fileObjects = command.getFileObjects().getFileObjects();
     for (final AbstractFileObject fileObject: fileObjects) {
       if (fileObject.getParent() == null) {
-        LOG.assertTrue(false, "Local Root: " + getLocalRootFor(root) + ", Files: " + myFiles);
+        LOG.error("Local Root: " + getLocalRootFor(root) + ", Files: " + myFiles);
       }
     }
   }

@@ -117,7 +117,7 @@ public class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBa
           final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext(false);
           tool.initialize(context);
           ((RefManagerImpl)context.getRefManager()).inspectionReadActionStarted();
-          pass.doInspectInBatch(managerEx, new InspectionProfileEntry[]{tool}, false);
+          pass.doInspectInBatch(managerEx, Collections.<InspectionProfileEntry>singletonList(tool), false);
           for (HighlightInfo info : pass.getInfos()) {
             final PsiElement element = CollectHighlightsUtil.findCommonParent(myFile, info.startOffset, info.endOffset);
             if (element != null) {

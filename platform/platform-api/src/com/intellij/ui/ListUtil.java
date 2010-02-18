@@ -268,7 +268,7 @@ public class ListUtil {
     if (model instanceof FilteringListModel) return FILTERED_MODEL;
 
     if (model == null) LOG.assertTrue(false);
-    else LOG.assertTrue(false, "Unknown model class: " + model.getClass().getName());
+    else LOG.error("Unknown model class: " + model.getClass().getName());
     return null;
   }
 

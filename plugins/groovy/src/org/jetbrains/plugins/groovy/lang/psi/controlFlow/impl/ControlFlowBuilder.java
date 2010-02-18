@@ -64,6 +64,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   private Stack<ExceptionInfo> myCatchedExceptionInfos;
   private InstructionImpl myHead;
   private boolean myNegate;
+  private boolean myAssertionsOnly;
 
   private List<Pair<InstructionImpl, GroovyPsiElement>> myPending;
   private GroovyPsiElement myStartInScope;
@@ -331,7 +332,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
     super.visitReferenceExpression(referenceExpression);
     if (referenceExpression.getQualifierExpression() == null) {
-      if (isIncOrDecOperand(referenceExpression)) {
+      if (isIncOrDecOperand(referenceExpression) && !myAssertionsOnly) {
         final ReadWriteVariableInstructionImpl i = new ReadWriteVariableInstructionImpl(referenceExpression, myInstructionNumber++, false);
         addNode(i);
         addNode(new ReadWriteVariableInstructionImpl(referenceExpression, myInstructionNumber++, true));
@@ -339,7 +340,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       }
       else {
         final ReadWriteVariableInstructionImpl i =
-          new ReadWriteVariableInstructionImpl(referenceExpression, myInstructionNumber++, PsiUtil.isLValue(referenceExpression));
+          new ReadWriteVariableInstructionImpl(referenceExpression, myInstructionNumber++, !myAssertionsOnly && PsiUtil.isLValue(referenceExpression));
         addNode(i);
         checkPending(i);
       }
@@ -376,8 +377,11 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     if (elseBranch != null) {
       if (condition != null) {
         myNegate = !myNegate;
+        final boolean old = myAssertionsOnly;
+        myAssertionsOnly = true;
         condition.accept(this);
         myNegate = !myNegate;
+        myAssertionsOnly = old;
       }
       elseBranch.accept(this);
       addPendingEdge(ifStatement, myHead);

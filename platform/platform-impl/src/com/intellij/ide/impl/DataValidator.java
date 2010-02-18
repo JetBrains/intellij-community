@@ -85,8 +85,8 @@ public abstract class DataValidator<T> {
     public T[] findInvalid(final String dataId, T[] array, final Object dataSource) {
       for (T element : array) {
         if (element == null) {
-          LOG.assertTrue(false, "Data isn't valid. " + dataId + "=null Provided by: " + dataSource.getClass().getName() +
-                                " (" + dataSource.toString() + ")");
+          LOG.error(
+            "Data isn't valid. " + dataId + "=null Provided by: " + dataSource.getClass().getName() + " (" + dataSource.toString() + ")");
         }
         T invalid = myElementValidator.findInvalid(dataId, element, dataSource);
         if (invalid != null) {

@@ -16,6 +16,7 @@
 
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.formatting.FormatTextRanges;
 import com.intellij.formatting.FormatterEx;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
@@ -148,10 +149,10 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     final PsiElement start = findElementInTreeWithFormatterEnabled(file, startOffset);
     final PsiElement end = findElementInTreeWithFormatterEnabled(file, endOffset);
     if (start != null && !start.isValid()) {
-      LOG.assertTrue(false, "start=" + start + "; file=" + file);
+      LOG.error("start=" + start + "; file=" + file);
     }
     if (end != null && !end.isValid()) {
-      LOG.assertTrue(false, "end=" + start + "; end=" + file);
+      LOG.error("end=" + start + "; end=" + file);
     }
 
     boolean formatFromStart = startOffset == 0;
@@ -162,7 +163,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
 
     final SmartPsiElementPointer endPointer = end == null ? null : smartPointerManager.createSmartPsiElementPointer(end);
 
-    codeFormatter.processText(file, startOffset, endOffset);
+    codeFormatter.processTextWithPostponedFormatting(file, new FormatTextRanges(new TextRange(startOffset, endOffset), true));
     final PsiElement startElement = startPointer == null ? null : startPointer.getElement();
     final PsiElement endElement = endPointer == null ? null : endPointer.getElement();
 

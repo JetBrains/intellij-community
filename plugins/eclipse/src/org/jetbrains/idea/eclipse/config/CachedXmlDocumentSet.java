@@ -16,13 +16,12 @@
 package org.jetbrains.idea.eclipse.config;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.storage.FileSet;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.project.Project;
-import com.intellij.util.JDOMCompare;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Document;
 import org.jdom.JDOMException;
@@ -192,8 +191,10 @@ public class CachedXmlDocumentSet implements FileSet {
     final Document content = modifiedContent.get(key);
     final Document physical1 = content == null ? null : content;
     final Document physical2 = savedContent.get(key);
-    return (physical1 == null && physical2 != null) || (physical1 != null && physical2 == null) ||
-           (physical1 != null && !(null == JDOMCompare.diffDocuments(physical1, physical2)));
+    if (physical1 != null && physical2 != null) {
+      return !JDOMUtil.areDocumentsEqual(physical1, physical2);
+    }
+    return physical1 != physical2;
   }
 
   public void commit() throws IOException {

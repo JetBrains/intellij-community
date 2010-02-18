@@ -316,14 +316,9 @@ public class ExternalDocumentValidator {
   private static void assertValidElement(PsiElement currentElement, PsiElement originalElement, String message) {
     if (currentElement==null) {
       XmlTag tag = PsiTreeUtil.getParentOfType(originalElement, XmlTag.class);
-      LOG.assertTrue(
-        false,
-        "The validator message:"+ message+ " is bound to null node,\n" +
-        "initial element:"+originalElement.getText()+",\n"+
-        "parent:" + originalElement.getParent()+",\n" +
-        "tag:" + (tag != null? tag.getText():"null") + ",\n" +
-        "offset in tag: " + (originalElement.getTextOffset() - (tag == null ? 0 : tag.getTextOffset()))
-      );
+      LOG.error("The validator message:" + message + " is bound to null node,\n" + "initial element:" + originalElement.getText() + ",\n" +
+                "parent:" + originalElement.getParent() + ",\n" + "tag:" + (tag != null ? tag.getText() : "null") + ",\n" +
+                "offset in tag: " + (originalElement.getTextOffset() - (tag == null ? 0 : tag.getTextOffset())));
     }
   }
 

@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.dialogs.browser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,7 +93,7 @@ public class DeleteOptionsDialog extends DialogWrapper {
     final ArrayList<String> messages = VcsConfiguration.getInstance(myProject).getRecentMessages();
     Collections.reverse(messages);
 
-    final String[] model = messages.toArray(new String[messages.size()]);
+    final String[] model = ArrayUtil.toStringArray(messages);
     final JComboBox messagesBox = new JComboBox(model);
     messagesBox.setRenderer(new MessageBoxCellRenderer());
     panel.add(messagesBox, gc);

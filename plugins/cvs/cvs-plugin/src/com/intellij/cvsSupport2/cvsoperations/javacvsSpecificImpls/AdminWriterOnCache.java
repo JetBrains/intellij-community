@@ -118,7 +118,7 @@ public class AdminWriterOnCache implements IAdminWriter {
   }
 
   public void pruneDirectory(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) {
-    LOG.assertTrue(false, "Cannot be called");
+    LOG.error("Cannot be called");
   }
 
   public void editFile(FileObject fileObject,

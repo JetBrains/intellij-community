@@ -96,7 +96,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   public void markEverythingDirty() {
-    if (myProject.isDisposed()) return;
+    if (myProject.isDisposed() || myVcsManager.getAllActiveVcss().length == 0) return;
 
     final LifeDrop lifeDrop = myLife.doIfAlive(new Runnable() {
       public void run() {

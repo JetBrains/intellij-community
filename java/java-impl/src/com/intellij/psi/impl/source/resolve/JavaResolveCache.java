@@ -56,7 +56,7 @@ public class JavaResolveCache {
   private final Map<PsiVariable,Object> myVarToConstValueMap2;
 
   private static final Object NULL = Key.create("NULL");
-  private static final PsiType NULL_TYPE = new PsiEllipsisType(PsiType.NULL){
+  public static final PsiType NULL_TYPE = new PsiEllipsisType(PsiType.NULL){
     public boolean isValid() {
       return true;
     }

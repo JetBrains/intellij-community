@@ -61,6 +61,11 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
     PsiExpression lOperand = param.getLOperand();
     PsiExpression rOperand = param.getROperand();
     if (rOperand == null) return null;
+    PsiType rType = rOperand.getType();
+    IElementType sign = param.getOperationSign().getNode().getElementType();
+    // optimization: if we can calculate type based on right type only
+    PsiType type = calcTypeForBinaryExpression(null, rType, sign, false);
+    if (type != JavaResolveCache.NULL_TYPE) return type;
 
     if (lOperand instanceof PsiBinaryExpressionImpl && !JavaResolveCache.getInstance(param.getProject()).isTypeCached(lOperand)) {
       // cache all intermediate expression types from bottom up
@@ -80,9 +85,8 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
         }
       });
     }
-    PsiType rType = rOperand.getType();
     PsiType lType = lOperand.getType();
-    return calcTypeForBinaryExpression(lType, rType, param.getOperationSign().getNode().getElementType());
+    return calcTypeForBinaryExpression(lType, rType, sign, true);
   }
 
   private static final Function<PsiBinaryExpressionImpl,PsiType> MY_TYPE_EVALUATOR = new Function<PsiBinaryExpressionImpl, PsiType>() {
@@ -144,13 +148,14 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
   }
 
   @Nullable
-  public static PsiType calcTypeForBinaryExpression(PsiType lType, PsiType rType, IElementType sign) {
+  public static PsiType calcTypeForBinaryExpression(PsiType lType, PsiType rType, IElementType sign, boolean accessLType) {
     if (sign == JavaTokenType.PLUS) {
       // evaluate right argument first, since '+-/*%' is left associative and left operand tends to be bigger
       if (rType == null) return null;
       if (rType.equalsToText("java.lang.String")) {
         return rType;
       }
+      if (!accessLType) return JavaResolveCache.NULL_TYPE;
       if (lType == null) return null;
       if (lType.equalsToText("java.lang.String")) {
         return lType;
@@ -158,10 +163,13 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
       return TypeConversionUtil.unboxAndBalanceTypes(lType, rType);
     }
     if (sign == JavaTokenType.MINUS || sign == JavaTokenType.ASTERISK || sign == JavaTokenType.DIV || sign == JavaTokenType.PERC) {
-      if (lType == null && rType == null) return null;
+      if (rType == null) return null;
+      if (!accessLType) return JavaResolveCache.NULL_TYPE;
+      if (lType == null) return null;
       return TypeConversionUtil.unboxAndBalanceTypes(lType, rType);
     }
     if (sign == JavaTokenType.LTLT || sign == JavaTokenType.GTGT || sign == JavaTokenType.GTGTGT) {
+      if (!accessLType) return JavaResolveCache.NULL_TYPE;
       if (PsiType.BYTE.equals(lType) || PsiType.CHAR.equals(lType) || PsiType.SHORT.equals(lType)) {
         return PsiType.INT;
       }
@@ -178,11 +186,15 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
       return PsiType.BOOLEAN;
     }
     if (sign == JavaTokenType.OR || sign == JavaTokenType.XOR || sign == JavaTokenType.AND) {
-      if (lType instanceof PsiClassType) lType = PsiPrimitiveType.getUnboxedType(lType);
       if (rType instanceof PsiClassType) rType = PsiPrimitiveType.getUnboxedType(rType);
 
-      if (lType == null && rType == null) return null;
-      if (PsiType.BOOLEAN.equals(lType) || PsiType.BOOLEAN.equals(rType)) return PsiType.BOOLEAN;
+      if (lType instanceof PsiClassType) lType = PsiPrimitiveType.getUnboxedType(lType);
+
+      if (rType == null) return null;
+      if (PsiType.BOOLEAN.equals(rType)) return PsiType.BOOLEAN;
+      if (!accessLType) return JavaResolveCache.NULL_TYPE;
+      if (lType == null) return null;
+      if (PsiType.BOOLEAN.equals(lType)) return PsiType.BOOLEAN;
       if (PsiType.LONG.equals(lType) || PsiType.LONG.equals(rType)) return PsiType.LONG;
       return PsiType.INT;
     }

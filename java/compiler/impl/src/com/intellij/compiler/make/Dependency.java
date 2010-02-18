@@ -97,7 +97,7 @@ public class Dependency {
         String descriptorStr = symbolTable.getSymbol(descriptor);
         int endIndex = descriptorStr.indexOf(')');
         if (endIndex <= 0) {
-          LOG.assertTrue(false, "Corrupted method descriptor: "+ descriptorStr);
+          LOG.error("Corrupted method descriptor: " + descriptorStr);
         }
         myParameterDescriptors = parseParameterDescriptors(descriptorStr.substring(1, endIndex));
       }

@@ -190,7 +190,7 @@ public class IdeaSpecificSettings {
     }
   }
 
-  public static boolean writeIDEASpecificClasspath(final Element root, ModifiableRootModel model) throws WriteExternalException {
+  public static boolean writeIDEASpecificClasspath(final Element root, ModuleRootModel model) throws WriteExternalException {
 
     boolean isModified = false;
 
@@ -292,14 +292,14 @@ public class IdeaSpecificSettings {
     return isModified;
   }
 
-  public static boolean appendModuleRelatedRoot(Element element, String classesUrl, final String rootMame, ModifiableRootModel model) {
+  public static boolean appendModuleRelatedRoot(Element element, String classesUrl, final String rootMame, ModuleRootModel model) {
     VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(classesUrl);
     if (file != null) {
       if (file.getFileSystem() instanceof JarFileSystem) {
         file = JarFileSystem.getInstance().getVirtualFileForJar(file);
         assert file != null;
       }
-      final Module module = ModuleUtil.findModuleForFile(file, model.getProject());
+      final Module module = ModuleUtil.findModuleForFile(file, model.getModule().getProject());
       if (module != null && module != model.getModule()) {
         final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
         if (contentRoots.length > 0 && VfsUtil.isAncestor(contentRoots[0], file, false)) {

@@ -112,7 +112,7 @@ public class LibrariesConfigurationManager implements Disposable {
   }
 
   private static String[] getSplitted(@Nullable final String s) {
-    if (StringUtil.isEmptyOrSpaces(s)) return new String[0];
+    if (StringUtil.isEmptyOrSpaces(s)) return ArrayUtil.EMPTY_STRING_ARRAY;
 
     return ArrayUtil.toStringArray(StringUtil.split(s, STRING_DELIMITER));
   }

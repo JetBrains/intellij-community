@@ -133,7 +133,7 @@ public class RemoveUnusedVariableFix implements IntentionAction {
              ? SideEffectWarningDialog.MAKE_STATEMENT
              : SideEffectWarningDialog.DELETE_ALL;
     }
-    Project project = variable.getProject();
+    Project project = editor.getProject();
     HighlightManager highlightManager = HighlightManager.getInstance(project);
     PsiElement[] elements = sideEffects.toArray(new PsiElement[sideEffects.size()]);
     EditorColorsManager manager = EditorColorsManager.getInstance();

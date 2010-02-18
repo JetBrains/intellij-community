@@ -99,13 +99,8 @@ public abstract class AutomaticRenamer {
         String canonicalName = nameToCanonicalName(name, element);
         final String newCanonicalName = suggester.suggestName(canonicalName);
         if (newCanonicalName.length() == 0) {
-          LOG.assertTrue(false,
-                         "oldClassName = " + oldClassName +
-                         ", newClassName = " + newClassName +
-                         ", name = " + name +
-                         ", canonicalName = " +  canonicalName +
-                         ", newCanonicalName = " + newCanonicalName
-                         );
+          LOG.error("oldClassName = " + oldClassName + ", newClassName = " + newClassName + ", name = " + name + ", canonicalName = " +
+                    canonicalName + ", newCanonicalName = " + newCanonicalName);
         }
         String newName = canonicalNameToName(newCanonicalName, element);
         if (!newName.equals(name)) {

@@ -269,7 +269,7 @@ public class DocumentationComponent extends JPanel implements Disposable {
       myForwardStack.clear();
     }
     updateControlState();
-    setData(element, text, !clean);
+    setData(element, text, clearHistory);
     if (clean) {
       myIsEmpty = false;
     }

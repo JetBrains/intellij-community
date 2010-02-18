@@ -45,13 +45,8 @@ public abstract class PsiNamedElementAutomaticRenamer<T extends PsiNamedElement>
     String canonicalName = nameToCanonicalName(elementName, element);
     final String newCanonicalName = suggester.suggestName(canonicalName);
     if (newCanonicalName.length() == 0) {
-      LOG.assertTrue(false,
-          "oldName = " + getOldName() +
-              ", newName = " + getNewName() +
-              ", name = " + elementName +
-              ", canonicalName = " +  canonicalName +
-              ", newCanonicalName = " + newCanonicalName
-      );
+      LOG.error("oldName = " + getOldName() + ", newName = " + getNewName() + ", name = " + elementName + ", canonicalName = " +
+                canonicalName + ", newCanonicalName = " + newCanonicalName);
     }
     return canonicalNameToName(newCanonicalName, element);
   }

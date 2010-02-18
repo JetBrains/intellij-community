@@ -17,6 +17,7 @@ package com.intellij.debugger.engine.requests;
 
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ArrayUtil;
 import com.sun.jdi.Method;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.Value;
@@ -56,7 +57,7 @@ public class MethodReturnValueWatcher  {
       try {
         if (myReturnValueMethod == null) {
           //noinspection HardCodedStringLiteral
-          myReturnValueMethod = MethodExitEvent.class.getDeclaredMethod("returnValue", new Class[0]);
+          myReturnValueMethod = MethodExitEvent.class.getDeclaredMethod("returnValue", ArrayUtil.EMPTY_CLASS_ARRAY);
         }
         myLastMethodReturnValue = (Value)myReturnValueMethod.invoke(event);
       }

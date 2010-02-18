@@ -48,6 +48,7 @@ public class NamePathComponent extends JPanel{
 
   private FieldPanel myPathPanel;
   private JLabel myNameLabel;
+  private boolean myForceSync;
 
   public NamePathComponent(String nameLabelText, String pathLabelText, char nameMnemonic, char locationMnemonic, final String pathChooserTitle, final String pathChooserDescription) {
     this(nameLabelText, pathLabelText, pathChooserTitle, pathChooserDescription, true);
@@ -186,6 +187,11 @@ public class NamePathComponent extends JPanel{
     myIsNamePathSyncEnabled = isNamePathSyncEnabled;
   }
 
+  public void syncNameToPath(boolean b) {
+    myForceSync = b;
+    if (b) ((PathFieldDocument)myTfPath.getDocument()).syncPathAndName();
+  }
+
   private class NameFieldDocument extends PlainDocument {
     public NameFieldDocument() {
       addDocumentListener(new DocumentAdapter() {
@@ -208,7 +214,7 @@ public class NamePathComponent extends JPanel{
     }
 
     private void syncNameAndPath() {
-      if (isNamePathSyncEnabled() && !myIsPathChangedByUser) {
+      if (isNamePathSyncEnabled() && (myForceSync || !myIsPathChangedByUser)) {
         try {
           setPathNameSyncEnabled(false);
           final String name = getText(0, getLength());
@@ -239,7 +245,7 @@ public class NamePathComponent extends JPanel{
     }
 
     private void syncPathAndName() {
-      if (isPathNameSyncEnabled() && !myIsNameChangedByUser) {
+      if (isPathNameSyncEnabled() && (myForceSync || !myIsNameChangedByUser)) {
         try {
           setNamePathSyncEnabled(false);
           final String path = getText(0, getLength());

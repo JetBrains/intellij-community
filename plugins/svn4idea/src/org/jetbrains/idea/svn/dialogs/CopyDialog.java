@@ -22,7 +22,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
@@ -32,7 +31,6 @@ import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.idea.svn.SvnBranchConfiguration;
 import org.jetbrains.idea.svn.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -124,20 +122,10 @@ public class CopyDialog extends DialogWrapper {
         String url = myToURLText.getText();
         String dstName = SVNPathUtil.tail(mySrcURL);
         dstName = SVNEncodingUtil.uriDecode(dstName);
-        try {
-          SelectLocationDialog dialog = new SelectLocationDialog(myProject, SVNPathUtil.removeTail(url), SvnBundle.message("label.copy.select.location.dialog.copy.as"), dstName, false);
-          dialog.show();
-          if (dialog.isOK()) {
-            url = dialog.getSelectedURL();
-            String name = dialog.getDestinationName();
-            url = SVNPathUtil.append(url, name);
-            myToURLText.setText(url);
-          }
-        }
-        catch (SVNException e1) {
-          Messages.showErrorDialog(project, SvnBundle.message("select.location.invalid.url.message", url),
-                                   SvnBundle.message("dialog.title.select.repository.location"));
-          //typed text can not be parsed - no information on what repository to use
+        url = SelectLocationDialog.selectCopyDestination(myProject, SVNPathUtil.removeTail(url),
+                                                  SvnBundle.message("label.copy.select.location.dialog.copy.as"), dstName, false);
+        if (url != null) {
+          myToURLText.setText(url);
         }
       }
     });

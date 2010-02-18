@@ -21,6 +21,7 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.StringRef;
@@ -63,7 +64,7 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
     final GrModifierList modifiers = psi.getModifierList();
     String[] annNames;
     if (modifiers == null) {
-      annNames = new String[0];
+      annNames = ArrayUtil.EMPTY_STRING_ARRAY;
     }
     else {
       final GrAnnotation[] annotations = modifiers.getAnnotations();

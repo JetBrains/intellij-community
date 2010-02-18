@@ -129,12 +129,12 @@ public class ClassesScopeTreeStructureExpander implements ScopeTreeStructureExpa
         final TreeNode childNode = node.getChildAt(i);
         if (childNode instanceof ClassNode) {
           final ClassNode classNode = (ClassNode)childNode;
-          final PsiElement psiElement = classNode.getPsiElement();
-          if (psiElement != null && psiElement.isValid()) {
+          final PsiFile containingFile = classNode.getContainingFile();
+          if (containingFile != null && containingFile.isValid()) {
             if (fileNodes == null) {
               fileNodes = new HashSet<FileNode>();
             }
-            fileNodes.add(new FileNode(psiElement.getContainingFile(), true));
+            fileNodes.add(new FileNode(containingFile, true));
           }
           node.remove(classNode);
         }

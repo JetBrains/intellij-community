@@ -46,6 +46,7 @@ import com.intellij.ui.RecentsManager;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 
@@ -77,11 +78,6 @@ class IntroduceConstantDialog extends DialogWrapper {
   private NameSuggestionsField myNameField;
   private JCheckBox myCbReplaceAll;
 
-  private JRadioButton myRbPrivate;
-  private JRadioButton myRbProtected;
-  private JRadioButton myRbpackageLocal;
-  private JRadioButton myRbPublic;
-
   private TypeSelector myTypeSelector;
   private StateRestoringCheckBox myCbDeleteVariable;
   private final JavaCodeStyleManager myCodeStyleManager;
@@ -95,6 +91,8 @@ class IntroduceConstantDialog extends DialogWrapper {
   private JLabel myNameSuggestionLabel;
   private JLabel myTargetClassNameLabel;
   private JCheckBox myCbNonNls;
+  private JPanel myVisibilityPanel;
+  private VisibilityPanel myVPanel;
   private final JCheckBox myIntroduceEnumConstantCb = new JCheckBox(RefactoringBundle.message("introduce.constant.enum.cb"), true);
 
   IntroduceConstantDialog(Project project,
@@ -119,20 +117,11 @@ class IntroduceConstantDialog extends DialogWrapper {
 
     setTitle(IntroduceConstantHandler.REFACTORING_NAME);
     myCodeStyleManager = JavaCodeStyleManager.getInstance(myProject);
+    myVPanel = new VisibilityPanel(false, true);
+    myVisibilityPanel.add(myVPanel, BorderLayout.CENTER);
     init();
 
-    final String ourLastVisibility = JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY;
-    if (PsiModifier.PUBLIC.equals(ourLastVisibility)) {
-      myRbPublic.setSelected(true);
-    } else if (PsiModifier.PROTECTED.equals(ourLastVisibility)) {
-      myRbProtected.setSelected(true);
-    } else if (PsiModifier.PACKAGE_LOCAL.equals(ourLastVisibility)) {
-      myRbpackageLocal.setSelected(true);
-    } else if (PsiModifier.PRIVATE.equals(ourLastVisibility)) {
-      myRbPrivate.setSelected(true);
-    } else {
-      myRbPrivate.setSelected(true);
-    }
+    myVPanel.setVisibility(JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY);
     myIntroduceEnumConstantCb.setEnabled(EnumConstantsUtil.isSuitableForEnumConstant(getSelectedType(), myTargetClass));
     updateVisibilityPanel();
   }
@@ -155,20 +144,7 @@ class IntroduceConstantDialog extends DialogWrapper {
 
   @Modifier
   public String getFieldVisibility() {
-    if (myRbPublic.isSelected()) {
-      return PsiModifier.PUBLIC;
-    }
-    if (myRbpackageLocal.isSelected()) {
-      return PsiModifier.PACKAGE_LOCAL;
-    }
-    if (myRbProtected.isSelected()) {
-      return PsiModifier.PROTECTED;
-    }
-    if (myRbPrivate.isSelected()) {
-      return PsiModifier.PRIVATE;
-    }
-    LOG.assertTrue(false);
-    return null;
+    return myVPanel.getVisibility();
   }
 
   public boolean isReplaceAllOccurrences() {
@@ -301,11 +277,6 @@ class IntroduceConstantDialog extends DialogWrapper {
 
     updateTypeSelector();
 
-    ButtonGroup bg = new ButtonGroup();
-    bg.add(myRbPrivate);
-    bg.add(myRbpackageLocal);
-    bg.add(myRbProtected);
-    bg.add(myRbPublic);
     enableEnumDependant(introduceEnumConstant());
     return myPanel;
   }
@@ -319,11 +290,7 @@ class IntroduceConstantDialog extends DialogWrapper {
 
   private void enableEnumDependant(boolean enable) {
     if (enable) {
-      myRbPrivate.setEnabled(false);
-      myRbProtected.setEnabled(false);
-      myRbpackageLocal.setEnabled(false);
-      myRbPublic.setEnabled(true);
-      myRbPublic.setSelected(true);
+      myVPanel.disableAllButPublic();
     } else {
       updateVisibilityPanel();
     }
@@ -361,19 +328,11 @@ class IntroduceConstantDialog extends DialogWrapper {
   }
 
   private void updateVisibilityPanel() {
-    if (myTargetClass == null) return;
-    if (myTargetClass.isInterface()) {
-      myRbPrivate.setEnabled(false);
-      myRbProtected.setEnabled(false);
-      myRbpackageLocal.setEnabled(false);
-      myRbPublic.setEnabled(true);
-      myRbPublic.setSelected(true);
+    if (myTargetClass != null && myTargetClass.isInterface()) {
+      myVPanel.disableAllButPublic();
     }
     else {
-      myRbPrivate.setEnabled(true);
-      myRbProtected.setEnabled(true);
-      myRbpackageLocal.setEnabled(true);
-      myRbPublic.setEnabled(true);
+      UIUtil.setEnabled(myVisibilityPanel, true, true);
       // exclude all modifiers not visible from all occurences
       final Set<String> visible = new THashSet<String>();
       visible.add(PsiModifier.PRIVATE);
@@ -397,10 +356,12 @@ class IntroduceConstantDialog extends DialogWrapper {
           }
         }
       }
-      if (visible.contains(PsiModifier.PUBLIC)) myRbPublic.setSelected(true);
-      if (visible.contains(PsiModifier.PACKAGE_LOCAL)) myRbpackageLocal.setSelected(true);
-      if (visible.contains(PsiModifier.PROTECTED)) myRbProtected.setSelected(true);
-      if (visible.contains(PsiModifier.PRIVATE)) myRbPrivate.setSelected(true);
+      if (!visible.contains(getFieldVisibility())) {
+        if (visible.contains(PsiModifier.PUBLIC)) myVPanel.setVisibility(PsiModifier.PUBLIC);
+        if (visible.contains(PsiModifier.PACKAGE_LOCAL)) myVPanel.setVisibility(PsiModifier.PACKAGE_LOCAL);
+        if (visible.contains(PsiModifier.PROTECTED)) myVPanel.setVisibility(PsiModifier.PROTECTED);
+        if (visible.contains(PsiModifier.PRIVATE)) myVPanel.setVisibility(PsiModifier.PRIVATE);
+      }
     }
   }
 

@@ -281,7 +281,7 @@ public class ControlFlowWrapper {
         if (myFlowStart <= startOffset && endOffset <= myFlowEnd) continue;
       }
       else {
-        LOG.assertTrue(false, exitStatement);
+        LOG.error(String.valueOf(exitStatement));
         continue;
       }
 

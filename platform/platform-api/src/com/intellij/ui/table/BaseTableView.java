@@ -101,8 +101,7 @@ public abstract class BaseTableView extends Table {
       final int modelIndex = column.getModelIndex();
       storage.put(orderPropertyName(i), String.valueOf(modelIndex));
       if (storedColumns[modelIndex]) {
-        LOG.assertTrue(false,
-                       "columnCount: " + columnCount + " current: " + i + " modelINdex: " + modelIndex);
+        LOG.error("columnCount: " + columnCount + " current: " + i + " modelINdex: " + modelIndex);
       }
       storedColumns[modelIndex] = true;
     }
@@ -160,7 +159,7 @@ public abstract class BaseTableView extends Table {
     for (int i = 0; i < model.getColumnCount(); i++)
       if (model.getColumn(i).getModelIndex() == index)
         return i;
-    LOG.assertTrue(false, "Total: " + model.getColumnCount() + " index: "+ index);
+    LOG.error("Total: " + model.getColumnCount() + " index: " + index);
     return index;
   }
 }
