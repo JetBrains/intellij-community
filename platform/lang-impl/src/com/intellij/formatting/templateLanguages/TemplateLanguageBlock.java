@@ -17,6 +17,7 @@ package com.intellij.formatting.templateLanguages;
 
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.common.AbstractBlock;
@@ -118,6 +119,15 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
 
   public void setParent(BlockWithParent newParent) {
     myParent = newParent;
+  }
+
+  /**
+   * Checks if DataLanguageBlockFragmentWrapper must be created for the given text range.
+   * @param range The range to check.
+   * @return True by default.
+   */
+  public boolean isRequiredRange(TextRange range) {
+    return true;
   }
 }
 
