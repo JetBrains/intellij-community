@@ -7,7 +7,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyParenthesizedExpression;
+import com.jetbrains.python.psi.PyExpressionStatement;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -30,6 +30,8 @@ public class ReplaceListComprehensionsQuickFix implements LocalQuickFix {
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PyExpression expression = (PyExpression) descriptor.getPsiElement();
     PyElementGenerator elementGenerator = PythonLanguage.getInstance().getElementGenerator();
-    expression.replace(elementGenerator.createFromText(project, PyParenthesizedExpression.class, "(" + expression.getText() + ")"));
+    PyExpressionStatement statement = elementGenerator.createFromText(project, PyExpressionStatement.class,
+                                                                      "(" + expression.getText() + ")");
+    expression.replace(statement.getExpression());
   }
 }
