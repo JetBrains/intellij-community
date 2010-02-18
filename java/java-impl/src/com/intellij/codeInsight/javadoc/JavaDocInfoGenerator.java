@@ -359,8 +359,19 @@ public class JavaDocInfoGenerator {
     return null;
   }
 
+  @Nullable
   private static PsiDocComment getDocComment(final PsiDocCommentOwner docOwner) {
-    return ((PsiDocCommentOwner)docOwner.getNavigationElement()).getDocComment();
+    PsiDocComment comment = ((PsiDocCommentOwner)docOwner.getNavigationElement()).getDocComment();
+    if (comment == null) { //check for non-normalized fields
+      final PsiModifierList modifierList = docOwner.getModifierList();
+      if (modifierList != null) {
+        final PsiElement parent = modifierList.getParent();
+        if (parent instanceof PsiDocCommentOwner) {
+          return ((PsiDocCommentOwner)parent.getNavigationElement()).getDocComment();
+        }
+      }
+    }
+    return comment;
   }
 
   private void generateFieldJavaDoc(@NonNls StringBuilder buffer, PsiField field) {
