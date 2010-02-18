@@ -437,10 +437,9 @@ public class PythonSdkType extends SdkType {
       }
       if (not_in_unit_test_mode) generateBuiltinStubs(bin_path, stubs_path);
       VirtualFile stubsPath = LocalFileSystem.getInstance().refreshAndFindFileByPath(stubs_path);
-      if (!not_in_unit_test_mode && stubsPath == null) {
-        throw new RuntimeException("Failed to configure SDK: stubs path " + stubs_path + " not found");
+      if (stubsPath != null) {
+        sdkModificator.addRoot(stubsPath, BUILTIN_ROOT_TYPE);
       }
-      sdkModificator.addRoot(stubsPath, BUILTIN_ROOT_TYPE);
     }
     // Add python-django installed as package in Linux
     if (SystemInfo.isLinux){
