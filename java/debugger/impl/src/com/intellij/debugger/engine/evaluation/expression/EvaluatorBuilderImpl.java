@@ -1026,13 +1026,13 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       final PsiType castType = expression.getCastType().getType();
       final PsiType operandType = operandExpr.getType();
 
-      if (!TypeConversionUtil.areTypesConvertible(operandType, castType)) {
+      if (castType != null && operandType != null && !TypeConversionUtil.areTypesConvertible(operandType, castType)) {
         throw new EvaluateRuntimeException(
           new EvaluateException(JavaErrorMessages.message("inconvertible.type.cast", HighlightUtil.formatType(operandType), HighlightUtil.formatType(castType)))
         );
       }
 
-      final boolean shouldPerformBoxingConversion = TypeConversionUtil.boxingConversionApplicable(castType, operandType);
+      final boolean shouldPerformBoxingConversion = castType != null && operandType != null && TypeConversionUtil.boxingConversionApplicable(castType, operandType);
       final boolean castingToPrimitive = castType instanceof PsiPrimitiveType;
       if (shouldPerformBoxingConversion && castingToPrimitive) {
         operandEvaluator = new UnBoxingEvaluator(operandEvaluator);
