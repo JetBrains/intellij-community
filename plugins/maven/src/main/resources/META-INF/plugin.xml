@@ -351,7 +351,8 @@
     <group id="Maven.GenerateGroup" text="Generate">
       <add-to-group group-id="GenerateGroup" anchor="first"/>
 
-      <action id="GenerateDependency" text="Dependency" class="org.jetbrains.idea.maven.dom.generate.GenerateDependencyAction"/>
+      <action id="GenerateDependency" class="org.jetbrains.idea.maven.dom.generate.GenerateDependencyAction"/>
+      <action id="OverrideDependency" class="org.jetbrains.idea.maven.dom.generate.GenerateOverridingDependencyAction"/>
       <action id="GenerateParent" text="Parent" class="org.jetbrains.idea.maven.dom.generate.GenerateParentAction"/>
     </group>
   </actions>
