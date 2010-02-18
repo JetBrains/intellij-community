@@ -550,7 +550,7 @@ public class JavaDocInfoGenerator {
             }
             buffer.append(")");
           }
-          buffer.append("\n");
+          buffer.append("&nbsp;");
         }
       }
     }
