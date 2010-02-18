@@ -284,7 +284,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
   public JavaResolveResult[] multiResolve(boolean incompleteCode) {
     final PsiManagerEx manager = getManager();
     if (manager == null) {
-      LOG.assertTrue(false, "getManager() == null!");
+      LOG.error("getManager() == null!");
       return null;
     }
     ResolveResult[] results = manager.getResolveCache().resolveWithCaching(this, OurGenericsResolver.INSTANCE, true, incompleteCode);
@@ -619,7 +619,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     if (nameChild == null) {
       final TreeElement dot = (TreeElement)findChildByRole(ChildRole.DOT);
       if (dot == null) {
-        LOG.assertTrue(false, this);
+        LOG.error(toString());
       }
       return new TextRange(dot.getStartOffsetInParent() + dot.getTextLength(), getTextLength());
     }

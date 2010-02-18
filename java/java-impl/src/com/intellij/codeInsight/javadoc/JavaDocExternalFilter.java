@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.javadoc;
 
+import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,10 +29,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.io.UrlConnectionUtil;
 import com.intellij.util.net.HttpConfigurable;
@@ -66,7 +64,7 @@ public class JavaDocExternalFilter {
   private static @NonNls final Pattern ourHREFselector = Pattern.compile("<A.*?HREF=\"([^>\"]*)\"");
   private static @NonNls final Pattern ourAnnihilator = Pattern.compile("/[^/^.]*/[.][.]/");
   private static @NonNls final Pattern ourIMGselector = Pattern.compile("<IMG[ \\t\\n\\r\\f]+SRC=\"([^>]*)\"");
-  private static @NonNls final Pattern ourMethodHeading = Pattern.compile("<H3>(.+)</H3>");
+  private static @NonNls final Pattern ourMethodHeading = Pattern.compile("<H3>(.+?)</H3>", Pattern.CASE_INSENSITIVE|Pattern.DOTALL);
   protected static @NonNls final String DOC_ELEMENT_PROTOCOL = "doc_element://";
   protected static @NonNls final String PSI_ELEMENT_PROTOCOL = "psi_element://";
   private static @NonNls final String JAR_PROTOCOL = "jar:";
@@ -344,8 +342,10 @@ public class JavaDocExternalFilter {
        if (element instanceof PsiMethod) {
          String className = ((PsiMethod) element).getContainingClass().getQualifiedName();
          Matcher matcher = ourMethodHeading.matcher(externalDoc);
+         final StringBuilder buffer = new StringBuilder();
+         DocumentationManager.createHyperlink(buffer, className, className, false);
          //noinspection HardCodedStringLiteral
-         return matcher.replaceFirst("<H3>" + className + "</H3>");
+         return matcher.replaceFirst("<H3>" + buffer.toString() + "</H3>");
       }
     }
     return externalDoc;

@@ -30,8 +30,7 @@ class PreferWholeLines implements DiffCorrection {
       DiffFragment nextFragment = fragments[i + 1];
       FragmentSide side = FragmentSide.chooseSide(fragment);
       if (nextFragment.isOneSide()) {
-        LOG.assertTrue(false,
-                       "<" + side.getText(fragment) + "> <" + side.getOtherText(nextFragment) + ">");
+        LOG.error("<" + side.getText(fragment) + "> <" + side.getOtherText(nextFragment) + ">");
       }
       if (StringUtil.startsWithChar(side.getText(fragment), '\n') &&
           StringUtil.startsWithChar(side.getText(nextFragment), '\n') &&

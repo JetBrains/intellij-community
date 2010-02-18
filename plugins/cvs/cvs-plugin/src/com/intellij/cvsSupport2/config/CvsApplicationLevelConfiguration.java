@@ -147,7 +147,7 @@ public class CvsApplicationLevelConfiguration implements ApplicationComponent, J
       return result;
     }
     catch (Exception ex) {
-      LOG.assertTrue(false, "userHome = " + userHome + ", presenation = " + presentation);
+      LOG.error("userHome = " + userHome + ", presenation = " + presentation);
       return "";
     }
   }

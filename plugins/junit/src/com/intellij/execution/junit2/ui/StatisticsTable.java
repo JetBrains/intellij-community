@@ -73,7 +73,7 @@ public class StatisticsTable extends ListTableModel {
   }
 
   public void setValueAt(final Object aValue, final int rowIndex, final int columnIndex) {
-    LOG.assertTrue(false, "value: " + aValue + " row: " + rowIndex + " column: " + columnIndex);
+    LOG.error("value: " + aValue + " row: " + rowIndex + " column: " + columnIndex);
   }
 
   public boolean isCellEditable(final int rowIndex, final int columnIndex) {

@@ -54,7 +54,7 @@ public abstract class IntroduceHandlerBase {
       invokeImpl(project, (PsiLocalVariable)tempExpr, editor);
     }
     else {
-      LOG.assertTrue(false, "elements[0] should be PsiExpression or PsiLocalVariable");
+      LOG.error("elements[0] should be PsiExpression or PsiLocalVariable");
     }
   }
 

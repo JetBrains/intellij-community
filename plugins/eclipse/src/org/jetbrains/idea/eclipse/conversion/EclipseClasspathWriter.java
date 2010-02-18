@@ -43,18 +43,30 @@ import org.jetbrains.idea.eclipse.config.EclipseModuleManager;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class EclipseClasspathWriter {
-  private ModifiableRootModel myModel;
+  private ModuleRootModel myModel;
+  private Map<String, Element> myOldEntries = new HashMap<String, Element>();
 
-  public EclipseClasspathWriter(final ModifiableRootModel model) {
+  public EclipseClasspathWriter(final ModuleRootModel model) {
     myModel = model;
   }
 
   public void writeClasspath(Element classpathElement, @Nullable Element oldRoot) throws ConversionException {
+    if (oldRoot != null) {
+      for (Object o : oldRoot.getChildren(EclipseXml.CLASSPATHENTRY_TAG)) {
+        final Element oldChild = (Element)o;
+        final String oldKind = oldChild.getAttributeValue(EclipseXml.KIND_ATTR);
+        final String oldPath = oldChild.getAttributeValue(EclipseXml.PATH_ATTR);
+        myOldEntries.put(oldKind + oldPath, oldChild);
+      }
+    }
+
     for (OrderEntry orderEntry : myModel.getOrderEntries()) {
-      createClasspathEntry(orderEntry, classpathElement, oldRoot);
+      createClasspathEntry(orderEntry, classpathElement);
     }
 
     @NonNls String outputPath = "bin";
@@ -71,22 +83,22 @@ public class EclipseClasspathWriter {
         }
       }
     }
-    final Element orderEntry = addOrderEntry(EclipseXml.OUTPUT_KIND, outputPath, classpathElement, oldRoot);
+    final Element orderEntry = addOrderEntry(EclipseXml.OUTPUT_KIND, outputPath, classpathElement);
     setAttributeIfAbsent(orderEntry, EclipseXml.PATH_ATTR, EclipseXml.BIN_DIR);
   }
 
-  private void createClasspathEntry(OrderEntry entry, Element classpathRoot, Element oldRoot) throws ConversionException {
+  private void createClasspathEntry(OrderEntry entry, Element classpathRoot) throws ConversionException {
     if (entry instanceof ModuleSourceOrderEntry) {
       final ContentEntry[] entries = ((ModuleSourceOrderEntry)entry).getRootModel().getContentEntries();
       if (entries.length > 0) {
         final ContentEntry contentEntry = entries[0];
         for (SourceFolder sourceFolder : contentEntry.getSourceFolders()) {
-          addOrderEntry(EclipseXml.SRC_KIND, getRelativePath(sourceFolder.getUrl()), classpathRoot, oldRoot);
+          addOrderEntry(EclipseXml.SRC_KIND, getRelativePath(sourceFolder.getUrl()), classpathRoot);
         }
       }
     }
     else if (entry instanceof ModuleOrderEntry) {
-      Element orderEntry = addOrderEntry(EclipseXml.SRC_KIND, "/" + ((ModuleOrderEntry)entry).getModuleName(), classpathRoot, oldRoot);
+      Element orderEntry = addOrderEntry(EclipseXml.SRC_KIND, "/" + ((ModuleOrderEntry)entry).getModuleName(), classpathRoot);
       setAttributeIfAbsent(orderEntry, EclipseXml.COMBINEACCESSRULES_ATTR, EclipseXml.FALSE_VALUE);
       setExported(orderEntry, ((ExportableOrderEntry)entry));
     }
@@ -101,17 +113,17 @@ public class EclipseClasspathWriter {
               Comparing.strEqual(files[0], EclipseClasspathReader.getJunitClsUrl(libraryName.contains("4")))) {
             final Element orderEntry =
               addOrderEntry(EclipseXml.CON_KIND, EclipseXml.JUNIT_CONTAINER + "/" + libraryName.substring(IdeaXml.JUNIT.length()),
-                            classpathRoot, oldRoot);
+                            classpathRoot);
             setExported(orderEntry, libraryOrderEntry);
           }
           else {
             final String eclipseVariablePath = EclipseModuleManager.getInstance(libraryOrderEntry.getOwnerModule()).getEclipseVariablePath(files[0]);
             final Element orderEntry;
             if (eclipseVariablePath != null) {
-              orderEntry = addOrderEntry(EclipseXml.VAR_KIND, eclipseVariablePath, classpathRoot, oldRoot);
+              orderEntry = addOrderEntry(EclipseXml.VAR_KIND, eclipseVariablePath, classpathRoot);
             }
             else {
-              orderEntry = addOrderEntry(EclipseXml.LIB_KIND, getRelativePath(files[0]), classpathRoot, oldRoot);
+              orderEntry = addOrderEntry(EclipseXml.LIB_KIND, getRelativePath(files[0]), classpathRoot);
             }
 
             final String srcRelativePath;
@@ -146,17 +158,17 @@ public class EclipseClasspathWriter {
       else {
         final Element orderEntry;
         if (Comparing.strEqual(libraryName, IdeaXml.ECLIPSE_LIBRARY)) {
-          orderEntry = addOrderEntry(EclipseXml.CON_KIND, EclipseXml.ECLIPSE_PLATFORM, classpathRoot, oldRoot);
+          orderEntry = addOrderEntry(EclipseXml.CON_KIND, EclipseXml.ECLIPSE_PLATFORM, classpathRoot);
         }
         else {
-          orderEntry = addOrderEntry(EclipseXml.CON_KIND, EclipseXml.USER_LIBRARY + "/" + libraryName, classpathRoot, oldRoot);
+          orderEntry = addOrderEntry(EclipseXml.CON_KIND, EclipseXml.USER_LIBRARY + "/" + libraryName, classpathRoot);
         }
         setExported(orderEntry, libraryOrderEntry);
       }
     }
     else if (entry instanceof JdkOrderEntry) {
       if (entry instanceof InheritedJdkOrderEntry) {
-        addOrderEntry(EclipseXml.CON_KIND, EclipseXml.JRE_CONTAINER, classpathRoot, oldRoot);
+        addOrderEntry(EclipseXml.CON_KIND, EclipseXml.JRE_CONTAINER, classpathRoot);
       }
       else {
         final Sdk jdk = ((JdkOrderEntry)entry).getJdk();
@@ -171,7 +183,7 @@ public class EclipseClasspathWriter {
           }
           jdkLink += "/" + jdk.getName();
         }
-        addOrderEntry(EclipseXml.CON_KIND, jdkLink, classpathRoot, oldRoot);
+        addOrderEntry(EclipseXml.CON_KIND, jdkLink, classpathRoot);
       }
     }
     else {
@@ -254,7 +266,7 @@ public class EclipseClasspathWriter {
       if (!Comparing.strEqual(protocol, HttpFileSystem.getInstance().getProtocol())) {
         final String path = VfsUtil.urlToPath(javadocPath);
         final VirtualFile contentRoot = getContentRoot();
-        final VirtualFile baseDir = contentRoot != null ? contentRoot.getParent() : myModel.getProject().getBaseDir();
+        final VirtualFile baseDir = contentRoot != null ? contentRoot.getParent() : myModel.getModule().getProject().getBaseDir();
         if (Comparing.strEqual(protocol, JarFileSystem.getInstance().getProtocol())) {
           final VirtualFile javadocFile =
             JarFileSystem.getInstance().getVirtualFileForJar(VirtualFileManager.getInstance().findFileByUrl(javadocPath));
@@ -281,18 +293,12 @@ public class EclipseClasspathWriter {
     }
   }
 
-  private static Element addOrderEntry(String kind, String path, Element classpathRoot, Element oldRoot) {
-    if (oldRoot != null) {
-      for (Object o : oldRoot.getChildren(EclipseXml.CLASSPATHENTRY_TAG)) {
-        final Element oldChild = (Element)o;
-        final String oldKind = oldChild.getAttributeValue(EclipseXml.KIND_ATTR);
-        final String oldPath = oldChild.getAttributeValue(EclipseXml.PATH_ATTR);
-        if (Comparing.strEqual(kind, oldKind) && Comparing.strEqual(path, oldPath)) {
-          final Element element = (Element)oldChild.clone();
-          classpathRoot.addContent(element);
-          return element;
-        }
-      }
+  private Element addOrderEntry(String kind, String path, Element classpathRoot) {
+    final Element element = myOldEntries.get(kind + path);
+    if (element != null){
+      final Element clonedElement = (Element)element.clone();
+      classpathRoot.addContent(clonedElement);
+      return clonedElement;
     }
     Element orderEntry = new Element(EclipseXml.CLASSPATHENTRY_TAG);
     orderEntry.setAttribute(EclipseXml.KIND_ATTR, kind);

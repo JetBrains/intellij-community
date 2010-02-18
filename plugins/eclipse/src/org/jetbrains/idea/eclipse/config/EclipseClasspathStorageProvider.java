@@ -192,7 +192,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
       }
     }
 
-    public void setClasspath(final ModifiableRootModel model) throws IOException, WriteExternalException {
+    public void setClasspath(final ModuleRootModel model) throws IOException, WriteExternalException {
       try {
         final Element classpathElement = new Element(EclipseXml.CLASSPATH_TAG);
         final EclipseClasspathWriter classpathWriter = new EclipseClasspathWriter(model);

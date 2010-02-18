@@ -113,9 +113,7 @@ public class IgnoreFileAction extends AnAction {
           VirtualFile cvsIgnoreFile = CvsVfsUtil.refreshAndfFindChild(parent, CvsUtil.CVS_IGNORE_FILE);
           if (cvsIgnoreFile == null) {
             String path = parent.getPath() + "/" + CvsUtil.CVS_IGNORE_FILE;
-            LOG.assertTrue(false,
-                           String.valueOf(CvsVfsUtil.findFileByPath(path)) + " " + parent.getPath() + " " +
-                           new File(VfsUtil.virtualToIoFile(parent), CvsUtil.CVS_IGNORE_FILE).isFile());
+            LOG.error(String.valueOf(CvsVfsUtil.findFileByPath(path)) + " " + parent.getPath() + " " + new File(VfsUtil.virtualToIoFile(parent), CvsUtil.CVS_IGNORE_FILE).isFile());
             return;
           }
 

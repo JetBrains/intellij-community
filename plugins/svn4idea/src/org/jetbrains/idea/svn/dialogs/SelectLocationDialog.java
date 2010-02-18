@@ -16,10 +16,12 @@
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -28,6 +30,7 @@ import org.jetbrains.idea.svn.dialogs.browser.UrlOpeningExpander;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 import javax.swing.*;
@@ -51,14 +54,34 @@ public class SelectLocationDialog extends DialogWrapper {
 
   @NonNls private static final String HELP_ID = "vcs.subversion.common";
 
+  // todo check that works when authenticated
   @Nullable
   public static String selectLocation(Project project, String url) {
     try {
       SVNURL.parseURIEncoded(url);
-      SelectLocationDialog dialog = new SelectLocationDialog(project, url);
+      final SVNURL svnurl = initRoot(project, url);
+      SelectLocationDialog dialog = new SelectLocationDialog(project, svnurl, null, null, true);
       dialog.show();
       if (!dialog.isOK()) return null;
       return dialog.getSelectedURL();
+    } catch (SVNException e) {
+      Messages.showErrorDialog(project, e.getMessage(), SvnBundle.message("dialog.title.select.repository.location"));
+      return null;
+    }
+  }
+
+  @Nullable
+  public static String selectCopyDestination(Project project, String url, String dstLabel, String dstName, boolean showFiles) {
+    try {
+      SVNURL.parseURIEncoded(url);
+      final SVNURL svnurl = initRoot(project, url);
+      SelectLocationDialog dialog = new SelectLocationDialog(project, svnurl, dstLabel, dstName, showFiles);
+      dialog.show();
+      if (!dialog.isOK()) return null;
+
+      final String result = dialog.getSelectedURL();
+      final String name = dialog.getDestinationName();
+      return SVNPathUtil.append(result, name);
     } catch (SVNException e) {
       Messages.showErrorDialog(project, SvnBundle.message("select.location.invalid.url.message", url),
                                SvnBundle.message("dialog.title.select.repository.location"));
@@ -66,17 +89,13 @@ public class SelectLocationDialog extends DialogWrapper {
     }
   }
 
-  public SelectLocationDialog(Project project, String url) throws SVNException {
-    this(project, url, null, null, true);
-  }
-
-  public SelectLocationDialog(Project project, String url,
+  private SelectLocationDialog(Project project, SVNURL url,
                               String dstLabel, String dstName, boolean showFiles) throws SVNException {
     super(project, true);
     myProject = project;
     myDstLabel = dstLabel;
     myDstName = dstName;
-    myURL = SVNURL.parseURIEncoded(url);
+    myURL = url;
     myIsShowFiles = showFiles;
     setTitle(SvnBundle.message("dialog.title.select.repository.location"));
     getHelpAction().setEnabled(true);
@@ -95,16 +114,30 @@ public class SelectLocationDialog extends DialogWrapper {
     return "svn.repositoryBrowser";
   }
 
+  private static SVNURL initRoot(final Project project, final String urlString) throws SVNException {
+    final Ref<SVNURL> result = new Ref<SVNURL>();
+    final Ref<SVNException> excRef = new Ref<SVNException>();
+
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      public void run() {
+        try {
+          SVNRepository repos = SvnVcs.getInstance(project).createRepository(urlString);
+          result.set(repos.getRepositoryRoot(true));
+          repos.closeSession();
+        } catch (SVNException e) {
+          excRef.set(e);
+        }
+      }
+    }, "Detecting repository root", true, project);
+    if (! excRef.isNull()) {
+      throw excRef.get();
+    }
+    return result.get();
+  }
+
   protected void init() {
     super.init();
-    String urlString = myURL.toString();
-    try {
-      SVNRepository repos = SvnVcs.getInstance(myProject).createRepository(urlString);
-      myURL = repos.getRepositoryRoot(true);
-      repos.closeSession();
-    } catch (SVNException e) {
-      // show error dialog.
-    }
+    final String urlString = myURL.toString();
     myRepositoryBrowser.setRepositoryURL(myURL, myIsShowFiles, new UrlOpeningExpander.Factory(urlString, urlString));
     myRepositoryBrowser.addChangeListener(new TreeSelectionListener() {
       public void valueChanged(TreeSelectionEvent e) {

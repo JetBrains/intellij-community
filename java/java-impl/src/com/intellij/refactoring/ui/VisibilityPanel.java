@@ -144,6 +144,20 @@ public class VisibilityPanel extends JPanel {
     }
   }
 
+  public void disableAllButPublic() {
+    myRbPrivate.setEnabled(false);
+    myRbProtected.setEnabled(false);
+    myRbPackageLocal.setEnabled(false);
+    if (myRbEscalate != null) {
+      myRbEscalate.setEnabled(false);
+    }
+    if (myRbAsIs != null) {
+      myRbAsIs.setEnabled(false);
+    }
+    myRbPublic.setEnabled(true);
+    myRbPublic.setSelected(true);
+  }
+
   public static interface StateChanged extends EventListener {
     void visibilityChanged();
   }

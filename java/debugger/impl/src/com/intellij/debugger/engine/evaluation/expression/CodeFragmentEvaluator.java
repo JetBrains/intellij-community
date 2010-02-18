@@ -86,7 +86,7 @@ public class CodeFragmentEvaluator extends BlockStatementEvaluator{
       return vm.mirrorOf((String)value);
     }
     else {
-      LOG.assertTrue(false, "unknown default initializer type " + value.getClass().getName());
+      LOG.error("unknown default initializer type " + value.getClass().getName());
       return null;
     }
   }

@@ -27,6 +27,7 @@ import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
@@ -81,7 +82,7 @@ public class PackagingElementNode<E extends PackagingElement<?>> extends Artifac
 
   @Override
   public Object[] getEqualityObjects() {
-    return myPackagingElements.toArray(new Object[myPackagingElements.size()]);
+    return ArrayUtil.toObjectArray(myPackagingElements);
   }
 
   @Override

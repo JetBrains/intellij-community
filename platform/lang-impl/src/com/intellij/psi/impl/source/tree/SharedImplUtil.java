@@ -85,7 +85,7 @@ public class SharedImplUtil {
       if (tree instanceof FileElement) return ((FileElement)tree).getCharTable();
       tree = tree.getTreeParent();
     }
-    LOG.assertTrue(false, "Invalid root element");
+    LOG.error("Invalid root element");
     return null;
   }
 

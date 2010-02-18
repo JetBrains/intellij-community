@@ -60,6 +60,8 @@ import java.util.List;
 import java.util.Map;
 
 public class FileChooserDialogImpl extends DialogWrapper implements FileChooserDialog, FileLookup {
+  public static final DataKey<Boolean> PREFER_LAST_OVER_TO_SELECT = DataKey.create("PREFER_LAST_OVER_TO_SELECT");
+
   private final FileChooserDescriptor myChooserDescriptor;
   protected FileSystemTreeImpl myFileSystemTree;
 
@@ -106,7 +108,8 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
         selectFile = project.getBaseDir();
       }
     } else {
-      selectFile = (toSelect == null) ? ourLastFile : toSelect;
+      selectFile = (toSelect == null) ? ourLastFile : (ourLastFile == null ? toSelect : myChooserDescriptor.getUserData(
+        PREFER_LAST_OVER_TO_SELECT.getName()) == null ? toSelect : ourLastFile);
     }
 
     final VirtualFile file = selectFile;
@@ -119,7 +122,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
             if (parent != null) {
               myFileSystemTree.select(parent, null);
             }
-          }
+          } else if (file.isDirectory()) myFileSystemTree.expand(file);
         }
       });
     }

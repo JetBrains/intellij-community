@@ -230,7 +230,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
         result.add(variant);
       }
     }
-    return result.toArray(new Object[result.size()]);
+    return ArrayUtil.toObjectArray(result);
   }
 
   private Object[] getVariantsImpl(ReferenceKind kind) {

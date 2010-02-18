@@ -90,7 +90,7 @@ public class MergeList implements ChangeList.Parent, UserDataHolder {
             rightChanges.add(SimpleChange.fromRanges(ranges[1], new TextRange(rightTextLength, rightTextLength), mergeList.myChanges[1]));
             leftChanges.add(SimpleChange.fromRanges(ranges[1], new TextRange(leftTextLength, leftTextLength), mergeList.myChanges[0]));
           } else {
-            LOG.assertTrue(false, "Left Text: " + leftText + "\n" + "Right Text: " + rightText + "\nBase Text: " + baseText);
+            LOG.error("Left Text: " + leftText + "\n" + "Right Text: " + rightText + "\nBase Text: " + baseText);
           }
         } else {
           rightChanges.add(SimpleChange.fromRanges(ranges[1], ranges[2], mergeList.myChanges[1]));
@@ -98,7 +98,7 @@ public class MergeList implements ChangeList.Parent, UserDataHolder {
       }
       else if (ranges[2] == null) {
         if (ranges[0] == null) {
-          LOG.assertTrue(false, "Left Text: " + leftText + "\n" + "Right Text: " + rightText + "\nBase Text: " + baseText);
+          LOG.error("Left Text: " + leftText + "\n" + "Right Text: " + rightText + "\nBase Text: " + baseText);
         }
         leftChanges.add(SimpleChange.fromRanges(ranges[1], ranges[0], mergeList.myChanges[0]));
       }

@@ -308,7 +308,7 @@ public class DumbServiceImpl extends DumbService {
                     final IndexUpdateRunnable nextUpdateRunnable = myUpdatesQueue.pullFirst();
                     // run next action under already existing progress indicator
                     if (!myActionQueue.offer(new Ref<CacheUpdateRunner>(nextUpdateRunnable.myAction))) {
-                      LOG.assertTrue(false, "Action queue rejected next updateRunnable!");
+                      LOG.error("Action queue rejected next updateRunnable!");
                       nextUpdateRunnable.run();
                     }
                   }

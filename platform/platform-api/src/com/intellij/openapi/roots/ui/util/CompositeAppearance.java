@@ -68,7 +68,7 @@ public class CompositeAppearance implements ModifiableCellAppearance {
       for (Iterator<TextSection> iterator = mySections.iterator(); iterator.hasNext();) {
         TextSection textSection = iterator.next();
         if (textSection == null) {
-          LOG.assertTrue(false, "index: " + index + " size: " + mySections.size());
+          LOG.error("index: " + index + " size: " + mySections.size());
           iterator.remove();
         }
       }

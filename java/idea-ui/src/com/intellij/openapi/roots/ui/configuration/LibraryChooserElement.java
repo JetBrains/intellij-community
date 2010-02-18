@@ -56,7 +56,7 @@ public class LibraryChooserElement {
     myLibrary = library;
     myOrderEntry = orderEntry;
     if (myLibrary == null && myOrderEntry == null) {
-      LOG.assertTrue(false, "Both library and order entry are null");
+      LOG.error("Both library and order entry are null");
       myName = ProjectBundle.message("module.libraries.unknown.item");
     }
     else {

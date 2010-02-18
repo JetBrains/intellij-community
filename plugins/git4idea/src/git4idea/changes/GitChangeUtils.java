@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
@@ -293,7 +294,7 @@ public class GitChangeUtils {
     final Date commitDate = GitUtil.parseTimestamp(s.line());
     final String revisionNumber = s.line();
     final String parentsLine = s.line();
-    final String[] parents = parentsLine.length() == 0 ? new String[0] : parentsLine.split(" ");
+    final String[] parents = parentsLine.length() == 0 ? ArrayUtil.EMPTY_STRING_ARRAY : parentsLine.split(" ");
     String authorName = s.line();
     String committerName = s.line();
     committerName = GitUtil.adjustAuthorName(authorName, committerName);

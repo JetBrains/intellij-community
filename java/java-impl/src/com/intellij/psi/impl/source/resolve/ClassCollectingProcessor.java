@@ -48,7 +48,7 @@ public class ClassCollectingProcessor extends BaseScopeProcessor implements Elem
 
   public boolean execute(PsiElement element, ResolveState state) {
     if (element instanceof PsiNamedElement) {
-      PsiNamedElement named = ((PsiNamedElement)element);
+      PsiNamedElement named = (PsiNamedElement)element;
       String name = named.getName();
       if (name != null) {
         myResult.add(name, new ResultWithContext(named, myCurrentFileContext));

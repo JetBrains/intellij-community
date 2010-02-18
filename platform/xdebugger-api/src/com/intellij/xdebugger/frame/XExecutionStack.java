@@ -24,6 +24,9 @@ import javax.swing.*;
 import java.util.List;
 
 /**
+ * Represents a stack of executions frames usually corresponding to a thread. It is shown in 'Frames' panel of
+ * 'Debug' tool window
+ *
  * @author nik
  */
 public abstract class XExecutionStack {
@@ -58,7 +61,8 @@ public abstract class XExecutionStack {
   public abstract XStackFrame getTopFrame();
 
   /**
-   * Start computing stack frames top-down starting from <code>firstFrameIndex</code>   
+   * Start computing stack frames top-down starting from <code>firstFrameIndex</code>. This method is called from the Event Dispatch Thread
+   * so it should return quickly
    * @param firstFrameIndex frame index to start from (<code>1</code> corresponds to the frame just under the top frame)
    * @param container callback
    */

@@ -44,9 +44,8 @@ public class VcsGroupsWrapper extends DefaultActionGroup {
                                                                          0));
       for (AnAction child : children) {
         if (!(child instanceof StandardVcsGroup)) {
-          LOG.assertTrue(false,
-                         "Any version control group should extends com.intellij.openapi.vcs.actions.StandardVcsGroup class. Groupd class: " +
-                         child.getClass().getName() + ", group ID: " + ActionManager.getInstance().getId(child));
+          LOG.error("Any version control group should extends com.intellij.openapi.vcs.actions.StandardVcsGroup class. Groupd class: " +
+                    child.getClass().getName() + ", group ID: " + ActionManager.getInstance().getId(child));
         }
         else {
           validChildren.add(child);

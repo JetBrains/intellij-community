@@ -38,7 +38,7 @@ public class ParametersListTest extends TestCase {
   private void checkTokenizer(String parmsString, String[] expected) {
     ParametersList params = new ParametersList();
     params.addParametersString(parmsString);
-    String[] strings = params.getList().toArray(ArrayUtil.EMPTY_STRING_ARRAY);
+    String[] strings = ArrayUtil.toStringArray(params.getList());
     CHECK.compareAll(expected, strings);
   }
 }

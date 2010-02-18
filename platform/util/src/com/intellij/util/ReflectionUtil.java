@@ -65,10 +65,8 @@ public class ReflectionUtil {
         final TypeVariable typeVariable = (TypeVariable)resolved;
         index = ArrayUtil.find(ReflectionCache.getTypeParameters(anInterface), typeVariable);
         if (index < 0) {
-          LOG.assertTrue(false, "Cannot resolve type variable:\n" +
-                              "typeVariable = " + typeVariable + "\n" +
-                              "genericDeclaration = " + declarationToString(typeVariable.getGenericDeclaration()) + "\n" +
-                              "searching in " + declarationToString(anInterface));
+          LOG.error("Cannot resolve type variable:\n" + "typeVariable = " + typeVariable + "\n" + "genericDeclaration = " +
+                    declarationToString(typeVariable.getGenericDeclaration()) + "\n" + "searching in " + declarationToString(anInterface));
         }
         final Type type = i < genericInterfaces.length ? genericInterfaces[i] : aClass.getGenericSuperclass();
         if (type instanceof Class) {

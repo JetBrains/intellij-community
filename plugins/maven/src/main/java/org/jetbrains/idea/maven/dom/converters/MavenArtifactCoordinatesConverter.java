@@ -312,7 +312,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     private String[] getGroupIdVariants(MavenProjectIndicesManager manager, MavenDomShortArtifactCoordinates coordinates) {
       if (DomUtil.hasXml(coordinates.getGroupId())) {
         Set<String> strings = manager.getGroupIds();
-        return strings.toArray(new String[strings.size()]);
+        return ArrayUtil.toStringArray(strings);
       }
       return MavenArtifactUtil.DEFAULT_GROUPS;
     }

@@ -26,19 +26,18 @@ import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
-import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.util.Disposer;
@@ -48,6 +47,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
@@ -459,29 +459,25 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
 
     private PsiDirectory getDirectory() {
       if (myBuilder == null) return null;
-      final FavoritesTreeNodeDescriptor[] selectedNodeDescriptors = getSelectedNodeDescriptors();
-      if (selectedNodeDescriptors.length != 1) return null;
-      final FavoritesTreeNodeDescriptor currentDescriptor = selectedNodeDescriptors[0];
-      if (currentDescriptor != null) {
-        if (currentDescriptor.getElement() != null) {
-          final AbstractTreeNode currentNode = currentDescriptor.getElement();
-          if (currentNode.getValue() instanceof PsiDirectory) {
-            return (PsiDirectory)currentNode.getValue();
-          }
-        }
-        final NodeDescriptor parentDescriptor = currentDescriptor.getParentDescriptor();
-        if (parentDescriptor != null) {
-          final Object parentElement = parentDescriptor.getElement();
-          if (parentElement instanceof AbstractTreeNode) {
-            final AbstractTreeNode parentNode = (AbstractTreeNode)parentElement;
-            final Object directory = parentNode.getValue();
-            if (directory instanceof PsiDirectory) {
-              return (PsiDirectory)directory;
+      final Object[] selectedNodeElements = getSelectedNodeElements();
+      if (selectedNodeElements.length != 1) return null;
+      for (FavoriteNodeProvider nodeProvider : Extensions.getExtensions(FavoriteNodeProvider.EP_NAME, myProject)) {
+        final PsiElement psiElement = nodeProvider.getPsiElement(selectedNodeElements[0]);
+        if (psiElement instanceof PsiDirectory) {
+          return (PsiDirectory)psiElement;
+        } else if (psiElement instanceof PsiDirectoryContainer) {
+          final String moduleName = nodeProvider.getElementModuleName(selectedNodeElements[0]);
+          GlobalSearchScope searchScope = GlobalSearchScope.projectScope(myProject);
+          if (moduleName != null) {
+            final Module module = ModuleManager.getInstance(myProject).findModuleByName(moduleName);
+            if (module != null) {
+              searchScope = GlobalSearchScope.moduleScope(module);
             }
           }
+          final PsiDirectory[] directories = ((PsiDirectoryContainer)psiElement).getDirectories(searchScope);
+          if (directories.length == 1) return directories[0];
         }
       }
-
       return null;
     }
 

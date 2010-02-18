@@ -145,7 +145,7 @@ public class XmlCompletionData extends CompletionData {
         if (simpleContent != null) {
           final HashSet<String> variants = new HashSet<String>();
           XmlUtil.collectEnumerationValues(simpleContent, variants);
-          return variants.toArray(new Object[variants.size()]);
+          return ArrayUtil.toObjectArray(variants);
         }
       }
 

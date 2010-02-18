@@ -114,6 +114,21 @@ public class ToolkitBugsProcessor {
     }
   }
 
+  static class Sun_6785663 extends Handler {
+    Sun_6785663() {
+      super("Numbus L&F problem -- update style");
+    }
+
+    @Override
+    boolean process(Throwable e, StackTraceElement[] stack) {
+      if (e instanceof ClassCastException && stack.length > 1) {
+        return stack[0].getClassName().equals("javax.swing.plaf.synth.SynthButtonUI")
+          && stack[0].getMethodName().equals("updateStyle");
+      }
+      return false;
+    }
+  }
+
   static class Apple_ExceptionOnChangingMonitors extends Handler {
 
     @Override

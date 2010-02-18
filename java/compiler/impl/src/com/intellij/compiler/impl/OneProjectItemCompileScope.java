@@ -71,7 +71,7 @@ public class OneProjectItemCompileScope extends UserDataHolderBase implements Co
   public Module[] getAffectedModules() {
     final Module module = ModuleUtil.findModuleForFile(myFile, myProject);
     if (module == null) {
-      LOG.assertTrue(false, "Module is null for file " + myFile.getPresentableUrl());
+      LOG.error("Module is null for file " + myFile.getPresentableUrl());
       return Module.EMPTY_ARRAY;
     }
     return new Module[] {module};

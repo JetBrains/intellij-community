@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2008 Bas Leijdekkers
+ * Copyright 2007-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,12 +31,14 @@ import org.jetbrains.annotations.Nullable;
 
 public class ImplicitArrayToStringInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "implicit.array.to.string.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         if (infos[0] instanceof PsiMethodCallExpression) {
@@ -48,10 +50,12 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
         }
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
+    @Override
     @Nullable
     protected InspectionGadgetsFix buildFix(Object... infos) {
         final PsiExpression expression = (PsiExpression)infos[0];
@@ -85,6 +89,7 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
                     "implicit.array.to.string.quickfix", expressionText);
         }
 
+        @Override
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiExpression expression =
@@ -102,6 +107,7 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new ImplicitArrayToStringVisitor();
     }
@@ -176,18 +182,34 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
                 @NonNls final String methodName =
                         methodExpression.getReferenceName();
                 if (!"print".equals(methodName) &&
-                        !"println".equals(methodName)) {
+                        !"println".equals(methodName) &&
+                        !"printf".equals(methodName) &&
+                        !"format".equals(methodName)) {
                     return false;
                 }
                 final PsiExpression qualifier =
                         methodExpression.getQualifierExpression();
-	            if (!TypeUtils.expressionHasTypeOrSubtype(qualifier,
-			            "java.io.PrintStream")) {
-		            return false;
-	            }
-	            final PsiArrayType arrayType = (PsiArrayType)type;
-	            final PsiType componentType = arrayType.getComponentType();
-	            return componentType != PsiType.CHAR;
+                if (TypeUtils.expressionHasTypeOrSubtype(qualifier,
+                        "java.io.PrintStream", "java.util.Formatter",
+                        "java.io.PrintWriter") == null) {
+                    if (!(qualifier instanceof PsiReferenceExpression)) {
+                        return false;
+                    }
+                    final PsiReferenceExpression referenceExpression =
+                            (PsiReferenceExpression)qualifier;
+                    final PsiElement target = referenceExpression.resolve();
+                    if (!(target instanceof PsiClass)) {
+                        return false;
+                    }
+                    final PsiClass aClass = (PsiClass)target;
+                    final String className = aClass.getQualifiedName();
+                    if (!"java.lang.String".equals(className)) {
+                        return false;
+                    }
+                }
+                final PsiArrayType arrayType = (PsiArrayType)type;
+                final PsiType componentType = arrayType.getComponentType();
+                return componentType != PsiType.CHAR;
             }
             return false;
         }

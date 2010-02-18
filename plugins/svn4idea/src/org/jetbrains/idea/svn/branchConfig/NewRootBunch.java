@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.integrate.SvnBranchItem;
 import org.tmatesoft.svn.core.SVNException;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -114,17 +115,24 @@ public class NewRootBunch implements SvnBranchConfigManager {
     }
 
     public void run() {
+      boolean callbackCalled = false;
       try {
         final List<SvnBranchItem> items = BranchesLoader.loadBranches(myProject, myUrl);
         myBunch.updateBranches(myRoot, myUrl, new InfoStorage<List<SvnBranchItem>>(items, myInfoReliability));
         if (myCallback != null) {
           myCallback.consume(items);
+          callbackCalled = true;
         }
       }
       catch (SVNException e) {
         // already logged inside
         if (InfoReliability.setByUser.equals(myInfoReliability)) {
           ChangesViewBalloonProblemNotifier.showMe(myProject, "Branches load error: " + e.getMessage(), MessageType.ERROR);
+        }
+      } finally {
+        // callback must be called by contract
+        if (myCallback != null && (! callbackCalled)) {
+          myCallback.consume(Collections.<SvnBranchItem>emptyList());
         }
       }
     }

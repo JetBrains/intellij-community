@@ -685,7 +685,7 @@ public class TypeConversionUtil {
              IS_ASSIGNABLE_BIT_SET[rightTypeIndex][leftTypeIndex];
     }
     if (!(right instanceof PsiClassType)) {
-      LOG.error(right.toString());
+      LOG.error(right);
     }
     if (left instanceof PsiPrimitiveType) {
       return isUnboxable((PsiPrimitiveType)left, (PsiClassType)right);

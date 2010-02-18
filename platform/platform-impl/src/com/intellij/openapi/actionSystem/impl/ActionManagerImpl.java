@@ -839,7 +839,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
 
   private static void assertActionIsGroupOrStub(final AnAction action) {
     if (!(action instanceof ActionGroup || action instanceof ActionStub)) {
-      LOG.assertTrue(false, "Action : "+action + "; class: "+action.getClass());
+      LOG.error("Action : " + action + "; class: " + action.getClass());
     }
   }
 
@@ -1147,7 +1147,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     public void removeTimerListener(TimerListener listener){
       final boolean removed = myTimerListeners.remove(listener);
       if (!removed) {
-        LOG.assertTrue(false, "Unknown listener " + listener);
+        LOG.error("Unknown listener " + listener);
       }
     }
 

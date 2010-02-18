@@ -31,6 +31,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 /**
+ * Instances of this class are created by the debugging subsystem when {@link XDebuggerManager#startSession} or
+ * {@link XDebuggerManager#startSessionAndShowTab} method is called. It isn't supposed to be implemented by a plugin.
+ *
+ * Instance of this class can be obtained from {@link XDebugProcess#getSession()} method and used to control debugging process
  * @author nik
  */
 public interface XDebugSession extends AbstractDebuggerSession {

@@ -34,6 +34,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -145,7 +146,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
             while (qualifier instanceof GrParenthesizedExpression) {
               qualifier = ((GrParenthesizedExpression) qualifier).getOperand();
             }
-            qualifierDeclaration = factory.createVariableDeclaration(new String[0], qualifier, null, qualName);
+            qualifierDeclaration = factory.createVariableDeclaration(ArrayUtil.EMPTY_STRING_ARRAY, qualifier, null, qualName);
             innerQualifier = ((GrReferenceExpression) factory.createExpressionFromText(qualName));
           } else {
             innerQualifier = ((GrReferenceExpression) qualifier);
@@ -212,7 +213,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       // Process method return statements
       if (returnCount > 1 && PsiType.VOID != methodType && !isTailMethodCall) {
         PsiType type = methodType != null && methodType.equalsToText("java.lang.Object") ? null : methodType;
-        GrVariableDeclaration resultDecl = factory.createVariableDeclaration(new String[0], null, type, resultName);
+        GrVariableDeclaration resultDecl = factory.createVariableDeclaration(ArrayUtil.EMPTY_STRING_ARRAY, null, type, resultName);
         GrStatement statement = ((GrStatementOwner) owner).addStatementBefore(resultDecl, anchor);
         PsiUtil.shortenReferences(statement);
 

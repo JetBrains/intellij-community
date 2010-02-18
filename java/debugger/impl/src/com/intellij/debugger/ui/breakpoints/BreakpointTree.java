@@ -18,6 +18,7 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -42,7 +43,7 @@ public class BreakpointTree extends CheckboxTree {
   private boolean myGroupByClasses = true;
   private boolean myFlattenPackages = true;
   
-  private final NodeAppender[] myAppenders = new NodeAppender[] {
+  private final NodeAppender[] myAppenders = {
     new BreakpointToMethodAppender(),
     new BreakpointToClassAppender(),
     new BreakpointToPackageAppender(),
@@ -186,12 +187,13 @@ public class BreakpointTree extends CheckboxTree {
     public BreakpointDescriptor(Breakpoint breakpoint) {
       myBreakpoint = breakpoint;
     }
-    public @NotNull Breakpoint getBreakpoint() {
+    @NotNull
+    public Breakpoint getBreakpoint() {
       return myBreakpoint;
     }
 
     protected Icon getDisplayIcon() {
-      return (myBreakpoint instanceof BreakpointWithHighlighter)?
+      return myBreakpoint instanceof BreakpointWithHighlighter ?
         myBreakpoint.ENABLED? ((BreakpointWithHighlighter)myBreakpoint).getSetIcon() : ((BreakpointWithHighlighter)myBreakpoint).getDisabledIcon() :
         myBreakpoint.getIcon();
     }
@@ -224,7 +226,7 @@ public class BreakpointTree extends CheckboxTree {
   private static final class MethodDescriptor extends TreeDescriptor {
     private final String myClassName;
     private final String myMethodName;
-    private final @NotNull String myPackageName;
+    @NotNull private final String myPackageName;
 
     public MethodDescriptor(String methodName, String className, @NotNull String packageName) {
       myClassName = className;
@@ -232,7 +234,8 @@ public class BreakpointTree extends CheckboxTree {
       myPackageName = packageName;
     }
 
-    public @NotNull String getPackageName() {
+    @NotNull
+    public String getPackageName() {
       return myPackageName;
     }
 
@@ -267,26 +270,27 @@ public class BreakpointTree extends CheckboxTree {
     }
 
     public int hashCode() {
-      int result;
-      result = myClassName.hashCode();
+      int result = myClassName.hashCode();
       result = 29 * result + myMethodName.hashCode();
       return result;
     }
   }
 
   private static final class ClassDescriptor extends TreeDescriptor {
-    private final @NotNull String myClassName;
-    private final @NotNull String myPackageName;
+    @NotNull private final String myClassName;
+    @NotNull private final String myPackageName;
 
     public ClassDescriptor(@NotNull String className, @NotNull String packageName) {
       myClassName = className;
       myPackageName = packageName.length() == 0? DEFAULT_PACKAGE_NAME : packageName;
     }
 
+    @NotNull
     public String getPackageName() {
       return myPackageName;
     }
 
+    @NotNull
     public String getClassName() {
       return myClassName;
     }
@@ -383,7 +387,7 @@ public class BreakpointTree extends CheckboxTree {
     myBreakpointManager = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager();
     myNodeUpdateListener = new BreakpointManagerListener() {
       public void breakpointsChanged() {
-        BreakpointTree.this.repaint();
+        repaint();
       }
     };
     myBreakpointManager.addBreakpointManagerListener(myNodeUpdateListener);
@@ -554,7 +558,8 @@ public class BreakpointTree extends CheckboxTree {
     }
   }
   
-  private @NotNull CheckedTreeNode  createNode(final TreeDescriptor descriptor) {
+  @NotNull
+  private CheckedTreeNode  createNode(final TreeDescriptor descriptor) {
     final CheckedTreeNode node = new CheckedTreeNode(descriptor);
     myDescriptorToNodeMap.put(descriptor, node);
     return node;
@@ -615,7 +620,7 @@ public class BreakpointTree extends CheckboxTree {
     }
   }
 
-  private static abstract class NodeAppender {
+  private abstract static class NodeAppender {
     public abstract CheckedTreeNode append(CheckedTreeNode node);
   }
 
@@ -676,10 +681,10 @@ public class BreakpointTree extends CheckboxTree {
       final Breakpoint breakpoint = ((BreakpointDescriptor)descriptor).getBreakpoint();
       final String packageName;
       if (breakpoint instanceof ExceptionBreakpoint) {
-        packageName = ((ExceptionBreakpoint)breakpoint).getPackageName();
+        packageName = breakpoint.getPackageName();
       }
       else if (breakpoint instanceof BreakpointWithHighlighter) {
-        packageName = ((BreakpointWithHighlighter)breakpoint).getPackageName();
+        packageName = breakpoint.getPackageName();
       }
       else {
         packageName = null;
@@ -768,7 +773,6 @@ public class BreakpointTree extends CheckboxTree {
   private static class TreeStateSnapshot {
     private final Object[] myExpandedUserObjects;
     private final Object[] mySelectedUserObjects;
-    private static final Object[][] EMPTY = new Object[0][];
 
     public TreeStateSnapshot(BreakpointTree tree) {
       final List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(tree);
@@ -776,9 +780,9 @@ public class BreakpointTree extends CheckboxTree {
       mySelectedUserObjects =getUserObjects(tree.getSelectionPaths());
     }
 
-    private Object[] getUserObjects(final TreePath[] treePaths) {
+    private static Object[] getUserObjects(final TreePath[] treePaths) {
       if (treePaths == null) {
-        return EMPTY;
+        return ArrayUtil.EMPTY_OBJECT_ARRAY;
       }
       Object[] userObjects = new Object[treePaths.length];
       int index = 0;
@@ -790,18 +794,18 @@ public class BreakpointTree extends CheckboxTree {
 
     public void restore(BreakpointTree tree) {
       final List<TreePath> pathsToExpand = getPaths(tree, myExpandedUserObjects);
-      if (pathsToExpand.size() > 0) {
+      if (!pathsToExpand.isEmpty()) {
         TreeUtil.restoreExpandedPaths(tree, pathsToExpand);
       }
 
       final List<TreePath> pathsToSelect = getPaths(tree, mySelectedUserObjects);
-      if (pathsToSelect.size() > 0) {
+      if (!pathsToSelect.isEmpty()) {
         tree.getSelectionModel().clearSelection();
         tree.setSelectionPaths(pathsToSelect.toArray(new TreePath[pathsToSelect.size()]));
       }
     }
 
-    private List<TreePath> getPaths(BreakpointTree tree, final Object[] userObjects) {
+    private static List<TreePath> getPaths(BreakpointTree tree, final Object[] userObjects) {
       final List<TreePath> paths = new ArrayList<TreePath>(userObjects.length);
       for (Object descriptor : userObjects) {
         final CheckedTreeNode node = tree.myDescriptorToNodeMap.get(descriptor);

@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.fs.IFile;
 import org.jdom.Document;
@@ -363,7 +364,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   public String[] listSubFiles(final String fileSpec) {
-    return new String[0];
+    return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
   public boolean isEnabled() {

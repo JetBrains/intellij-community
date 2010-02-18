@@ -39,7 +39,7 @@ public class DependencyCacheNavigator {
     int superQName = myCache.getSuperQualifiedName(classQName);
 
     if (classQName == superQName) {
-      LOG.assertTrue(false, "Superclass qualified name is the same as class' name: " + classQName);
+      LOG.error("Superclass qualified name is the same as class' name: " + classQName);
       return;
     }
 
@@ -70,7 +70,7 @@ public class DependencyCacheNavigator {
   public void walkSubClasses(int fromClassQName, ClassInfoProcessor processor) throws CacheCorruptedException {
     for (int subQName : myCache.getSubclasses(fromClassQName)) {
       if (fromClassQName == subQName) {
-        LOG.assertTrue(false, "Subclass qualified name is the same as class' name: " + fromClassQName);
+        LOG.error("Subclass qualified name is the same as class' name: " + fromClassQName);
         return;
       }
       if (subQName != Cache.UNKNOWN) {

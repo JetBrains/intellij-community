@@ -181,7 +181,7 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
         PsiElement restoredElement = FoldingPolicy.restoreBySignature(psiElement.getContainingFile(), signature);
         if (!psiElement.equals(restoredElement)){
           restoredElement = FoldingPolicy.restoreBySignature(psiElement.getContainingFile(), signature);
-          LOG.assertTrue(false, "element:" + psiElement + ", signature:" + signature + ", file:" + psiElement.getContainingFile());
+          LOG.error("element:" + psiElement + ", signature:" + signature + ", file:" + psiElement.getContainingFile());
         }
 
         Element e = new Element(ELEMENT_TAG);

@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.DepthCombo;
@@ -165,7 +166,7 @@ public class ImportOptionsDialog extends DialogWrapper implements ActionListener
     final ArrayList<String> messages = VcsConfiguration.getInstance(myProject).getRecentMessages();
     Collections.reverse(messages);
 
-    final String[] model = messages.toArray(new String[messages.size()]);
+    final String[] model = ArrayUtil.toStringArray(messages);
     final JComboBox messagesBox = new JComboBox(model);
     messagesBox.setRenderer(new MessageBoxCellRenderer());
     panel.add(messagesBox, gc);
