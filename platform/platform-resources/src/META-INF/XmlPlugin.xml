@@ -310,7 +310,8 @@
       <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFromTemplate"/>
     </group>
 
-    <action id="OpenInBrowser" class="com.intellij.ide.browsers.OpenFileInBrowserAction">
+    <action id="OpenInBrowser" class="com.intellij.ide.browsers.OpenFileInBrowserAction"
+            icon="/nodes/ppWeb.png">
       <add-to-group group-id="ViewMenu" anchor="after" relative-to-action="ViewSource"/>
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="CutCopyPasteGroup"/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="EditSource"/>
