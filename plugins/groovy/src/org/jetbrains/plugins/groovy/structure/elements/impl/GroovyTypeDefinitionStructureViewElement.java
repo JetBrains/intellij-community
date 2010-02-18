@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrSyntheticMethod;
 import org.jetbrains.plugins.groovy.structure.elements.GroovyStructureViewElement;
-import org.jetbrains.plugins.groovy.structure.itemsPresentations.impl.GroovyTypeDefinitionItemPresentation;
+import org.jetbrains.plugins.groovy.structure.itemsPresentations.GroovyItemPresentation;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,7 +35,11 @@ public class GroovyTypeDefinitionStructureViewElement extends GroovyStructureVie
   }
 
   public ItemPresentation getPresentation() {
-    return new GroovyTypeDefinitionItemPresentation(((GrTypeDefinition)myElement));
+    return new GroovyItemPresentation(myElement) {
+      public String getPresentableText() {
+        return ((GrTypeDefinition) myElement).getNameIdentifierGroovy().getText();
+      }
+    };
   }
 
   public TreeElement[] getChildren() {

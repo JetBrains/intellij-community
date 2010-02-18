@@ -17,15 +17,15 @@ package org.jetbrains.plugins.groovy.structure.itemsPresentations.impl;
 
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.PsiMethod;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.structure.GroovyElementPresentation;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.structure.itemsPresentations.GroovyItemPresentation;
-
-import javax.swing.*;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -37,7 +37,29 @@ public class GroovyMethodItemPresentation extends GroovyItemPresentation {
     @NotNull
     @Override
     protected String compute() {
-      return GroovyElementPresentation.getMethodPresentableText(((PsiMethod) myElement));
+      final PsiMethod method = (PsiMethod)myElement;
+      StringBuilder presentableText = new StringBuilder();
+      presentableText.append(method.getName());
+      presentableText.append(" ");
+
+      PsiParameterList paramList = method.getParameterList();
+      PsiParameter[] parameters = paramList.getParameters();
+
+      presentableText.append("(");
+      for (int i = 0; i < parameters.length; i++) {
+        if (i > 0) presentableText.append(", ");
+        presentableText.append(parameters[i].getType().getPresentableText());
+      }
+      presentableText.append(")");
+
+      PsiType returnType = method instanceof GrMethod ? ((GrMethod)method).getDeclaredReturnType() : method.getReturnType();
+
+      if (returnType != null) {
+        presentableText.append(":");
+        presentableText.append(returnType.getPresentableText());
+      }
+
+      return presentableText.toString();
     }
   };
 
@@ -49,16 +71,6 @@ public class GroovyMethodItemPresentation extends GroovyItemPresentation {
   public String getPresentableText() {
     return myPresentableText.getValue();
   }
-
-  @Nullable
-  public String getLocationString() {
-    return null;
-  }
-
-  @Nullable
-  public Icon getIcon(boolean open) {
-       return myElement.getIcon(Iconable.ICON_FLAG_OPEN);
-     }
 
   @Nullable
   public TextAttributesKey getTextAttributesKey() {
