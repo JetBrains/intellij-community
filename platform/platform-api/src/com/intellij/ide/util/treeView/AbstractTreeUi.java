@@ -3670,6 +3670,8 @@ public class AbstractTreeUi {
 
       if (myRequestedExpand != null && !myRequestedExpand.equals(path)) return;
 
+      //myRequestedExpand = null;
+
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
 
       if (!myUnbuiltNodes.contains(node)) {

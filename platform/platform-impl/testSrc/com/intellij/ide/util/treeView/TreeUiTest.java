@@ -1,6 +1,7 @@
 package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.Time;
@@ -1341,6 +1342,35 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     });
   }
 
+  public void testStickyLoadingNodeIssue() throws Exception {
+    buildStructure(myRoot);
+
+    final boolean[] done = new boolean[] {false};
+    getBuilder().select(new NodeElement("jetbrains"), new Runnable() {
+      public void run() {
+        getBuilder().expand(new NodeElement("fabrique"), new Runnable() {
+          public void run() {
+            done[0] = true;
+          }
+        });
+      }
+    });
+
+    waitBuilderToCome(new Condition() {
+      public boolean value(Object o) {
+        return done[0];
+      }
+    });
+
+    assertTree("-/\n" +
+               " +com\n" +
+               " -[jetbrains]\n" +
+               "  -fabrique\n" +
+               "   ide\n" +
+               " +org\n" +
+               " +xunit\n");
+  }
+
   public void testReleaseBuilderDuringGetChildren() throws Exception {
     assertReleaseDuringBuilding("getChildren", "fabrique", new Runnable() {
       public void run() {
@@ -1463,6 +1493,10 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       //todo
     }
 
+    @Override
+    public void testStickyLoadingNodeIssue() throws Exception {
+      super.testStickyLoadingNodeIssue();
+    }
   }
 
   public static TestSuite suite() {
