@@ -13,15 +13,16 @@
     </ul>
    ]]>
   </description>
-  <version>1.1.3</version>
+  <version>1.1.4</version>
   <depends>com.intellij.javaee</depends>
+  <depends optional="true" config-file="gwt-integration.xml">com.intellij.gwt</depends>
   <depends>com.intellij.modules.ultimate</depends>
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
   <category>Web/JavaEE Technologies</category>
   <change-notes>
       <![CDATA[
         <ul>
-          <li> support for AppEngine SDK 1.2.6
+          <li> integration with GWT Dev Mode run configurations
         </ul>
       ]]>
   </change-notes>

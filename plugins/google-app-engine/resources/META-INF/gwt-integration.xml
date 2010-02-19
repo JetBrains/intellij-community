@@ -1,0 +1,5 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <gwt.devModeServerProvider implementation="com.intellij.appengine.gwt.AppEngineGwtServerProvider"/>
+  </extensions>
+</idea-plugin>

@@ -23,6 +23,7 @@
     <orderEntry type="module" module-name="jpa-openapi" />
     <orderEntry type="module" module-name="jpa-impl" />
     <orderEntry type="module" module-name="debugger-openapi" />
+    <orderEntry type="module" module-name="GwtStudio" />
   </component>
 </module>
 
