@@ -1,1 +1,1 @@
-<caret><warning descr="Python3 not supported such syntax">raise a, b, c</warning>
+<caret><warning descr="Python 3 does not support this syntax">raise a, b, c</warning>

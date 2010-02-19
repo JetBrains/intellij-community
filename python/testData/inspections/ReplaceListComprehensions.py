@@ -1,1 +1,1 @@
-[x * 2 for x in <caret><warning descr="List comprehensions no support such syntax in Python3">[1, 2], [2, 3]</warning>]
+[x * 2 for x in <caret><warning descr="List comprehensions do not support this syntax in Python 3">[1, 2], [2, 3]</warning>]

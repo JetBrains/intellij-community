@@ -91,7 +91,8 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
                      true, true);
   }
 
-  public void testReplaceExceptPartTo2() throws Exception {
+  // we don't really need quickfixes for convering Py3 syntax into Py2
+  public void _testReplaceExceptPartTo2() throws Exception {
     doInspectionTest("ReplaceExceptPartTo2.py", PyUnsupportedFeaturesInspection.class, PyBundle.message("QFIX.replace.except.part"), true,
                      true);
   }

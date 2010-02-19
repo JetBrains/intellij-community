@@ -82,7 +82,7 @@ public class PyUnsupportedFeaturesInspection extends LocalInspectionTool {
       if (virtualFile != null && LanguageLevel.forFile(virtualFile).isPy3K()) {
         String text = node.getText();
         if (text.endsWith("l") || text.endsWith("L")) {
-          registerProblem(node, "Integer literals do not support trailing \'l\' or \'L\' in Python3", new RemoveTrailingLQuickFix());
+          registerProblem(node, "Integer literals do not support a trailing \'l\' or \'L\' in Python 3", new RemoveTrailingLQuickFix());
         }
         if (text.charAt(0) == '0' && (text.charAt(1) != 'o' || text.charAt(1) != 'b')) {
           registerProblem(node, "Python 3 requires '0o' prefix for octal literals", new ReplaceOctalNumericLiteralQuickFix());
@@ -107,7 +107,7 @@ public class PyUnsupportedFeaturesInspection extends LocalInspectionTool {
       for (ComprhForComponent forComponent: forComponents) {
         PyExpression iteratedList = forComponent.getIteratedList();
         if (iteratedList instanceof PyTupleExpression) {
-          registerProblem(iteratedList, "List comprehensions do not support such syntax in Python 3", new ReplaceListComprehensionsQuickFix());
+          registerProblem(iteratedList, "List comprehensions do not support this syntax in Python 3", new ReplaceListComprehensionsQuickFix());
         }
       }
     }
@@ -143,7 +143,7 @@ public class PyUnsupportedFeaturesInspection extends LocalInspectionTool {
       if (virtualFile != null) {
         if (LanguageLevel.forFile(virtualFile).isPy3K()) {
           if (expressions.length == 3) {
-            registerProblem(node, "Python 3 does not support such syntax", new ReplaceRaiseStatementQuickFix());
+            registerProblem(node, "Python 3 does not support this syntax", new ReplaceRaiseStatementQuickFix());
             return;
           }
           PsiElement element = expressions[0].getNextSibling();
@@ -151,7 +151,7 @@ public class PyUnsupportedFeaturesInspection extends LocalInspectionTool {
             element = element.getNextSibling();
           }
           if (element != null && ",".equals(element.getText())) {
-            registerProblem(node, "Python 3 does not support such syntax", new ReplaceRaiseStatementQuickFix());
+            registerProblem(node, "Python 3 does not support this syntax", new ReplaceRaiseStatementQuickFix());
           }
         } else {
           if (expressions.length == 2) {
@@ -171,7 +171,7 @@ public class PyUnsupportedFeaturesInspection extends LocalInspectionTool {
     public void visitPyReprExpression(PyReprExpression node) {
       VirtualFile virtualFile = node.getContainingFile().getVirtualFile();
       if (virtualFile != null && LanguageLevel.forFile(virtualFile).isPy3K()) {
-        registerProblem(node, "Backquote not supported in Python3, use repr() instead", new ReplaceBackquoteExpressionQuickFix());
+        registerProblem(node, "Backquote is not supported in Python 3, use repr() instead", new ReplaceBackquoteExpressionQuickFix());
       }
     }
 

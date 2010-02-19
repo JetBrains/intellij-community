@@ -1,1 +1,1 @@
-<caret><warning descr="Backquote not supported in Python3, use repr() instead">`a + b, 34 + a`</warning>
+<caret><warning descr="Backquote is not supported in Python 3, use repr() instead">`a + b, 34 + a`</warning>
