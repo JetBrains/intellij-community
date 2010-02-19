@@ -4,15 +4,16 @@
  */
 package com.intellij.refactoring;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.extractclass.ExtractClassProcessor;
-import com.intellij.JavaTestUtil;
 import junit.framework.Assert;
 
 import java.util.ArrayList;
@@ -214,4 +215,25 @@ public class ExtractClassTest extends MultiFileTestCase{
     doTestField(null);
   }
 
+  public void testPublicVisibility() throws Exception {
+    doTest(new PerformAction() {
+      public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
+        PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(myProject));
+
+        assertNotNull("Class Test not found", aClass);
+
+        final ArrayList<PsiMethod> methods = new ArrayList<PsiMethod>();
+        methods.add(aClass.findMethodsByName("foos", false)[0]);
+
+        final ArrayList<PsiField> fields = new ArrayList<PsiField>();
+        fields.add(aClass.findFieldByName("myT", false));
+
+        final ExtractClassProcessor processor =
+          new ExtractClassProcessor(aClass, fields, methods, new ArrayList<PsiClass>(), "", "Extracted", PsiModifier.PUBLIC, false);
+        processor.run();
+        LocalFileSystem.getInstance().refresh(false);
+        FileDocumentManager.getInstance().saveAllDocuments();
+      }
+    });
+  }
 }
