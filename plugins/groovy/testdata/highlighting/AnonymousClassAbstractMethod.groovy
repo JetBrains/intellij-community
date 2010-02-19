@@ -6,6 +6,6 @@ def x=new ActionListener() {
 
   }
 
-  <error descr="not abstract class cannot have abstract method">abstract</error> void foo();
+  <error descr="anonymous class cannot have abstract method">abstract</error> void foo();
 }
 
