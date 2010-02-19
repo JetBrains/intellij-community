@@ -915,7 +915,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
       dependenciesSet.addAll(redefineProcessingSet);
     }
     collectDependencies(myTag, myFile, dependenciesSet);
-    dependencies = dependenciesSet.toArray(ArrayUtil.EMPTY_OBJECT_ARRAY);
+    dependencies = ArrayUtil.toObjectArray(dependenciesSet);
   }
 
   public Object[] getDependences() {

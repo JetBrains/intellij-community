@@ -148,7 +148,7 @@ public final class EditorsSplitters extends JPanel {
       return res;
     }
     else {
-      LOG.assertTrue(false, comp != null ? comp.getClass().getName() : null);
+      LOG.error(comp != null ? comp.getClass().getName() : null);
       return null;
     }
   }

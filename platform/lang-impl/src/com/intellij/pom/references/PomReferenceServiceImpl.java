@@ -127,7 +127,7 @@ public class PomReferenceServiceImpl extends PomReferenceService {
       @SuppressWarnings({"unchecked"}) final PomReferenceProvider<PsiElement> provider = trinity.getFirst();
       for (PomReference reference : provider.getReferencesByElement(context, trinity.getSecond())) {
         if (reference == null) {
-          LOG.error(context.toString());
+          LOG.error(context);
         }
         if (offsetMatches(offset, reference)) {
           result.add(reference);

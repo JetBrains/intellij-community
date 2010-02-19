@@ -52,9 +52,9 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
 
   public boolean equals(Object object) {
     if (object == this) return true;
-    if (object.getClass() != LibraryRuntimeClasspathScope.class) return false;
+    if (object == null || object.getClass() != LibraryRuntimeClasspathScope.class) return false;
 
-    final LibraryRuntimeClasspathScope that = ((LibraryRuntimeClasspathScope)object);
+    final LibraryRuntimeClasspathScope that = (LibraryRuntimeClasspathScope)object;
     return that.myModules.equals(myModules);
   }
 

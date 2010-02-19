@@ -29,6 +29,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextComponentAccessor;
+import com.intellij.util.ArrayUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -199,7 +200,7 @@ public class EditorComboBox extends JComboBox implements DocumentListener {
         objects.add(itemAt);
       }
     }
-    setModel(new DefaultComboBoxModel(objects.toArray(new Object[objects.size()])));
+    setModel(new DefaultComboBoxModel(ArrayUtil.toObjectArray(objects)));
   }
 
   private class MyEditor implements ComboBoxEditor {

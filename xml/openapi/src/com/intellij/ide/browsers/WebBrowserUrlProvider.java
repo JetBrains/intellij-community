@@ -17,7 +17,9 @@ package com.intellij.ide.browsers;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author spleaner
@@ -44,4 +46,14 @@ public abstract class WebBrowserUrlProvider {
    * Invariant: element has not null containing psi file with not null virtual file
    */
   public abstract boolean canHandleElement(@NotNull final PsiElement element);
+
+  @Nullable
+  public String getOpenInBrowserActionText(@NotNull PsiFile file) {
+    return null;
+  }
+
+  @Nullable
+  public String getOpenInBrowserActionDescription(@NotNull PsiFile file) {
+    return null;
+  }
 }

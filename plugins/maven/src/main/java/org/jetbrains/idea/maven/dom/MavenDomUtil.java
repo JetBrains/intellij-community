@@ -18,7 +18,6 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -30,8 +29,8 @@ import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -58,9 +57,9 @@ public class MavenDomUtil {
     if (!(file instanceof XmlFile)) return false;
 
     String name = file.getName();
-    return name.equals(MavenConstants.POM_XML)
-           || name.endsWith("." + MavenConstants.POM_EXTENSION)
-           || name.equals(MavenConstants.SUPER_POM_XML);
+    return name.equals(MavenConstants.POM_XML) ||
+           name.endsWith("." + MavenConstants.POM_EXTENSION) ||
+           name.equals(MavenConstants.SUPER_POM_XML);
   }
 
   public static boolean isProfilesFile(PsiFile file) {
@@ -88,8 +87,7 @@ public class MavenDomUtil {
   }
 
   public static String calcRelativePath(VirtualFile parent, VirtualFile child) {
-    String result = FileUtil.getRelativePath(new File(parent.getPath()),
-                                             new File(child.getPath()));
+    String result = FileUtil.getRelativePath(new File(parent.getPath()), new File(child.getPath()));
     return FileUtil.toSystemIndependentName(result);
   }
 
@@ -313,15 +311,21 @@ public class MavenDomUtil {
 
 
   @NotNull
-  public static MavenDomDependency createDomDependency(MavenDomProjectModel model, MavenArtifact mavenArtifact, Editor editor) {
+  public static MavenDomDependency createDomDependency(MavenDomProjectModel model,
+                                                       MavenArtifact mavenArtifact,
+                                                       Editor editor,
+                                                       boolean overriden) {
     MavenDomDependency domDependency = createMavenDomDependency(model, editor);
 
     domDependency.getGroupId().setStringValue(mavenArtifact.getGroupId());
     domDependency.getArtifactId().setStringValue(mavenArtifact.getArtifactId());
-    domDependency.getVersion().setStringValue(mavenArtifact.getVersion());
+    if (!overriden) {
+      domDependency.getVersion().setStringValue(mavenArtifact.getVersion());
+    }
 
     return domDependency;
   }
+
 
   @NotNull
   private static MavenDomDependency createMavenDomDependency(@NotNull MavenDomProjectModel model, @Nullable Editor editor) {
@@ -359,6 +363,4 @@ public class MavenDomUtil {
     }
     return -1;
   }
-
-
 }

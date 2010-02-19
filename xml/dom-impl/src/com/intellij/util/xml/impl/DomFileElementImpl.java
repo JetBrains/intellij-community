@@ -270,7 +270,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
         if (fileElement == null) {
           final FileDescriptionCachedValueProvider<DomElement> provider = myManager.getOrCreateCachedValueProvider(myFile);
           String s = provider.getFileElementWithLogging();
-          LOG.assertTrue(false, "Null, log=" + s);
+          LOG.error("Null, log=" + s);
         } else {
           assert false: this + " does not equal to " + fileElement;
         }

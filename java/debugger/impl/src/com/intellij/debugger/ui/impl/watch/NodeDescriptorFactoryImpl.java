@@ -138,7 +138,7 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
     final DescriptorData<FieldDescriptorImpl> descriptorData;
     if (objRef == null ) {
       if (!field.isStatic()) {
-        LOG.assertTrue(false, "Object reference is null for non-static field: " + field);
+        LOG.error("Object reference is null for non-static field: " + field);
       }
       descriptorData = new StaticFieldData(field);
     }

@@ -18,6 +18,7 @@ package com.intellij.util.xmlb;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.util.ArrayUtil;
 import org.jdom.Attribute;
 import org.jdom.Content;
 import org.jdom.Element;
@@ -87,7 +88,7 @@ class OptionTagBinding implements Binding {
       }
 
       if (children.size() > 0) {
-        Object value = myBinding.deserialize(accessor.read(o), children.toArray(new Object[children.size()]));
+        Object value = myBinding.deserialize(accessor.read(o), ArrayUtil.toObjectArray(children));
         accessor.write(o, value);
       }
       else {

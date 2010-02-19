@@ -184,16 +184,24 @@ class BlockUtil {
     final List<Block> children = new ArrayList<Block>(5);
     final TextRange range = block.getTextRange();
     int childStartOffset = range.getStartOffset();
+    TemplateLanguageBlock lastTLBlock = null;
     for (TemplateLanguageBlock tlBlock : subBlocks) {
       final TextRange tlTextRange = tlBlock.getTextRange();
       if (tlTextRange.getStartOffset() > childStartOffset) {
-        children.add(new DataLanguageBlockFragmentWrapper(block, new TextRange(childStartOffset, tlTextRange.getStartOffset())));
+        TextRange dataBlockTextRange = new TextRange(childStartOffset, tlTextRange.getStartOffset());
+        if (tlBlock.isRequiredRange(dataBlockTextRange)) {
+          children.add(new DataLanguageBlockFragmentWrapper(block, dataBlockTextRange));
+        }
       }
       children.add(tlBlock);
+      lastTLBlock = tlBlock;
       childStartOffset = tlTextRange.getEndOffset();
     }
     if (range.getEndOffset() > childStartOffset) {
-      children.add(new DataLanguageBlockFragmentWrapper(block, new TextRange(childStartOffset, range.getEndOffset())));
+      TextRange dataBlockTextRange = new TextRange(childStartOffset, range.getEndOffset());
+      if (lastTLBlock == null || lastTLBlock.isRequiredRange(dataBlockTextRange) ) {
+        children.add(new DataLanguageBlockFragmentWrapper(block, dataBlockTextRange));
+      }
     }
     return children;
   }

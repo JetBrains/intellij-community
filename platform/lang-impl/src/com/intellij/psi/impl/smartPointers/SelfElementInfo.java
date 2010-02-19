@@ -21,7 +21,11 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
 * User: cdr
@@ -111,7 +115,7 @@ class SelfElementInfo implements SmartPointerElementInfo {
     return null;
   }
 
-  public static PsiFile restoreFile(PsiFile file, Project project) {
+  public static PsiFile restoreFile(PsiFile file,@NotNull Project project) {
     if (file == null) return null;
     if (file.isValid()) return file;
     VirtualFile virtualFile = file.getVirtualFile();
@@ -120,7 +124,7 @@ class SelfElementInfo implements SmartPointerElementInfo {
     if (vParent == null || !vParent.isDirectory()) return null;
     String name = file.getName();
     VirtualFile child = vParent.findChild(name);
-    if (child == null) return null;
+    if (child == null || !child.isValid()) return null;
     file = PsiManager.getInstance(project).findFile(child);
     if (file == null || !file.isValid()) return null;
     return file;

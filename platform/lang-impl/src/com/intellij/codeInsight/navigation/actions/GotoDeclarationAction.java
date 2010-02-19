@@ -155,6 +155,11 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       return null;
     }
 
+    return findTargetElementNoVS(project, editor, offset);
+  }
+
+  @Nullable
+  public static PsiElement findTargetElementNoVS(Project project, Editor editor, int offset) {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (file == null) {
       return null;

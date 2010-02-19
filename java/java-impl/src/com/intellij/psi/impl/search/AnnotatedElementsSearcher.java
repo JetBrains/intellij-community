@@ -79,7 +79,7 @@ public class AnnotatedElementsSearcher implements QueryExecutor<PsiModifierListO
     if (found instanceof PsiAnnotation) return false;
 
     VirtualFile faultyContainer = PsiUtil.getVirtualFile(found);
-    LOG.error("Non annotation in annotations list: " + faultyContainer);
+    LOG.error("Non annotation in annotations list: " + faultyContainer+"; element:"+found);
     if (faultyContainer != null && faultyContainer.isValid()) {
       FileBasedIndex.getInstance().requestReindex(faultyContainer);
     }

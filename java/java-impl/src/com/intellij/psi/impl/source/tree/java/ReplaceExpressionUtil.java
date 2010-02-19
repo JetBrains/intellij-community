@@ -154,7 +154,7 @@ public class ReplaceExpressionUtil implements Constants {
       return 14;
     }
     else {
-      LOG.assertTrue(false, "Unknown element type:"+i);
+      LOG.error("Unknown element type:" + i);
       return -1;
     }
   }

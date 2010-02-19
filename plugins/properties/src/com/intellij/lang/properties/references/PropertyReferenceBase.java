@@ -105,7 +105,7 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
     else {*/
       ElementManipulator<PsiElement> manipulator = ElementManipulators.getManipulator(myElement);
       if (manipulator == null) {
-        LOG.assertTrue(false, "Cannot find manipulator for " + myElement + " of class " + myElement.getClass());
+        LOG.error("Cannot find manipulator for " + myElement + " of class " + myElement.getClass());
       }
       return manipulator.handleContentChange(myElement, getRangeInElement(), newElementName);
     /*}*/

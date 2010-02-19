@@ -461,7 +461,7 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
           else {
             String presentable = pane.getPresentableSubIdName(subId);
             if (index == -1) {
-              setText(pane.getTitle() + ": " + presentable);
+              setText(presentable);
               setIcon(pane.getIcon());
             }
             else {

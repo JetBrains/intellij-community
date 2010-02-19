@@ -116,14 +116,15 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
 
   @NotNull
   public PsiDirectory[] getDirectories(@NotNull GlobalSearchScope scope) {
-    final List<PsiDirectory> result = new ArrayList<PsiDirectory>();
+    List<PsiDirectory> result = null;
     final Collection<PsiDirectory> directories = getAllDirectories();
     for (final PsiDirectory directory : directories) {
       if (scope.contains(directory.getVirtualFile())) {
+        if (result == null) result = new ArrayList<PsiDirectory>();
         result.add(directory);
       }
     }
-    return result.toArray(new PsiDirectory[result.size()]);
+    return result == null ? PsiDirectory.EMPTY_ARRAY : result.toArray(new PsiDirectory[result.size()]);
   }
 
   public RowIcon getElementIcon(final int elementFlags) {

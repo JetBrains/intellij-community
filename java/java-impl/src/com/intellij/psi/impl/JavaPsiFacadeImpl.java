@@ -77,7 +77,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
   private final ConcurrentMap<String, PsiPackage> myPackageCache = new ConcurrentHashMap<String, PsiPackage>();
   private final Project myProject;
   private final JavaFileManager myFileManager;
-  private final ProgressManager myProgressManager;
   private final PackagePrefixIndex myPackagePrefixIndex;
 
 
@@ -114,7 +113,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     }
 
     myFileManager = new JavaFileManagerImpl(psiManager, projectRootManagerEx, psiManager.getFileManager(), bus);
-    myProgressManager = ProgressManager.getInstance();
 
     final PsiModificationTrackerImpl modificationTracker = (PsiModificationTrackerImpl) psiManager.getModificationTracker();
     psiManager.addTreeChangePreprocessor(new JavaCodeBlockModificationListener(modificationTracker));
@@ -308,13 +306,15 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
   }
 
   public PsiClass[] getClasses(PsiPackageImpl psiPackage, GlobalSearchScope scope) {
-    List<PsiClass> result = new ArrayList<PsiClass>();
+    List<PsiClass> result = null;
     for (PsiElementFinder finder : myElementFinders) {
       PsiClass[] classes = finder.getClasses(psiPackage, scope);
+      if (classes.length == 0) continue;
+      if (result == null) result = new ArrayList<PsiClass>();
       result.addAll(Arrays.asList(classes));
     }
 
-    return result.toArray(new PsiClass[result.size()]);
+    return result == null ? PsiClass.EMPTY_ARRAY : result.toArray(new PsiClass[result.size()]);
   }
 
   public PsiPackage[] getSubPackages(PsiPackageImpl psiPackage, GlobalSearchScope scope) {
@@ -414,13 +414,21 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
 
     @NotNull
     public PsiClass[] getClasses(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
-      List<PsiClass> list = new ArrayList<PsiClass>();
+      List<PsiClass> list = null;
       final PsiDirectory[] dirs = psiPackage.getDirectories(scope);
+      String packageName = psiPackage.getQualifiedName();
       for (PsiDirectory dir : dirs) {
         PsiClass[] classes = JavaDirectoryService.getInstance().getClasses(dir);
-        list.addAll(Arrays.asList(classes));
+        if (classes.length == 0) continue;
+        if (list == null) list = new ArrayList<PsiClass>();
+        for (PsiClass aClass : classes) {
+          // class file can be located in wrong place inside file system
+          if (Comparing.strEqual(((PsiClassOwner)aClass.getContainingFile()).getPackageName(), packageName)) {
+            list.add(aClass);
+          }
+        }
       }
-      return list.toArray(new PsiClass[list.size()]);
+      return list == null ? PsiClass.EMPTY_ARRAY : list.toArray(new PsiClass[list.size()]);
     }
   }
 

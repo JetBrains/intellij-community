@@ -56,4 +56,18 @@ public class GlobalInspectionUtil {
       descriptor
     );
   }
+
+  public static void createProblem(PsiElement elt, String message, ProblemHighlightType problemHighlightType, TextRange range,
+                                    InspectionManager manager, ProblemDescriptionsProcessor problemDescriptionsProcessor,
+                                    GlobalInspectionContext globalContext, LocalQuickFix fix) {
+    ProblemDescriptor descriptor = manager.createProblemDescriptor(
+        elt,
+        range,
+        createInspectionMessage(message),
+        problemHighlightType, false, fix);
+    problemDescriptionsProcessor.addProblemElement(
+      retrieveRefElement(elt, globalContext),
+      descriptor
+    );
+  }
 }

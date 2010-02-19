@@ -20,6 +20,7 @@ import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -78,6 +79,23 @@ public class IndexCacheManagerImpl implements CacheManager{
   }
 
   public boolean processFilesWithWord(@NotNull final Processor<PsiFile> psiFileProcessor, @NotNull final String word, final short occurrenceMask, @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
+    final Set<VirtualFile> vFiles = new THashSet<VirtualFile>();
+    final GlobalSearchScope projectScope = GlobalSearchScope.allScope(myProject);
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        FileBasedIndex.getInstance().processValues(IdIndex.NAME, new IdIndexEntry(word, caseSensitively), null, new FileBasedIndex.ValueProcessor<Integer>() {
+          public boolean process(final VirtualFile file, final Integer value) {
+            ProgressManager.checkCanceled();
+            final int mask = value.intValue();
+            if ((mask & occurrenceMask) != 0) {
+              vFiles.add(file);
+            }
+            return true;
+          }
+        }, projectScope);
+      }
+    });
+
     final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
 
     final Processor<VirtualFile> virtualFileProcessor = new Processor<VirtualFile>() {
@@ -97,29 +115,14 @@ public class IndexCacheManagerImpl implements CacheManager{
       }
     };
 
-    final Set<VirtualFile> vFiles = new THashSet<VirtualFile>();
-    final GlobalSearchScope projectScope = GlobalSearchScope.allScope(myProject);
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        FileBasedIndex.getInstance().processValues(IdIndex.NAME, new IdIndexEntry(word, caseSensitively), null, new FileBasedIndex.ValueProcessor<Integer>() {
-          public boolean process(final VirtualFile file, final Integer value) {
-            final int mask = value.intValue();
-            if ((mask & occurrenceMask) != 0) {
-              vFiles.add(file);
-            }
-            return true;
-          }
-        }, projectScope);
-      }
-    });
 
     // IMPORTANT!!!
     // Since implementation of virtualFileProcessor.process() may call indices dierctly or indirectly,
     // we cannot call it inside FileBasedIndex.processValues() method
     // If we do, deadlocks are possible (IDEADEV-42137). So first we obtain files with the word specified,
     // and then process them not holding indices' read lock.
-
     for (VirtualFile vFile : vFiles) {
+      ProgressManager.checkCanceled();
       if (!virtualFileProcessor.process(vFile)) {
         return false;
       }

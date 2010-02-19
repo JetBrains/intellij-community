@@ -229,6 +229,10 @@ public class XBreakpointsPanel<B extends XBreakpoint<?>> extends AbstractBreakpo
     return getBreakpointManager().getBreakpoints(myType);
   }
 
+  public boolean hasBreakpoints() {
+    return !getBreakpoints().isEmpty();
+  }
+
   public JPanel getPanel() {
     return myMainPanel;
   }

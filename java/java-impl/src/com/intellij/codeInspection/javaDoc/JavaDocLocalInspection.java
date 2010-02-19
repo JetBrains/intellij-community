@@ -881,19 +881,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       JavadocTagInfo tagInfo = manager.getTagInfo(tagName);
 
       if (tagInfo == null || !tagInfo.isValidInContext(context)) {
-        final StringTokenizer tokenizer = new StringTokenizer(myAdditionalJavadocTags, ", ");
-        while (tokenizer.hasMoreTokens()) {
-          if (Comparing.strEqual(tagName, tokenizer.nextToken())) continue nextTag;
-        }
-
-        if (tagInfo == null){
-          problems.add(createDescriptor(tag.getNameElement(), InspectionsBundle.message("inspection.javadoc.problem.wrong.tag", "<code>" + tagName + "</code>"), new AddUnknownTagToCustoms(tag), inspectionManager,
-                                        isOnTheFly));
-        } else {
-          problems.add(createDescriptor(tag.getNameElement(), InspectionsBundle.message("inspection.javadoc.problem.disallowed.tag", "<code>" + tagName + "</code>"), new AddUnknownTagToCustoms(tag), inspectionManager,
-                                        isOnTheFly));
-        }
-
+        if (checkTagInfo(inspectionManager, tagInfo, tag, isOnTheFly, problems)) continue nextTag;
       }
 
       PsiDocTagValue value = tag.getValueElement();
@@ -929,6 +917,29 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     return problems.isEmpty() ? null : problems;
   }
 
+  private boolean checkTagInfo(InspectionManager inspectionManager, JavadocTagInfo tagInfo, PsiDocTag tag, boolean isOnTheFly, ArrayList<ProblemDescriptor> problems) {
+    final String tagName = tag.getName();
+    final StringTokenizer tokenizer = new StringTokenizer(myAdditionalJavadocTags, ", ");
+    while (tokenizer.hasMoreTokens()) {
+      if (Comparing.strEqual(tagName, tokenizer.nextToken())) return true;
+    }
+
+    final PsiElement nameElement = tag.getNameElement();
+    if (nameElement != null) {
+      if (tagInfo == null) {
+        problems.add(
+          createDescriptor(nameElement, InspectionsBundle.message("inspection.javadoc.problem.wrong.tag", "<code>" + tagName + "</code>"),
+                           new AddUnknownTagToCustoms(tag), inspectionManager, isOnTheFly));
+      }
+      else {
+        problems.add(createDescriptor(nameElement, InspectionsBundle.message("inspection.javadoc.problem.disallowed.tag",
+                                                                             "<code>" + tagName + "</code>"),
+                                      new AddUnknownTagToCustoms(tag), inspectionManager, isOnTheFly));
+      }
+    }
+    return false;
+  }
+
   private void checkInlineTags(final InspectionManager inspectionManager,
                                final ArrayList<ProblemDescriptor> problems,
                                final PsiElement[] dataElements,
@@ -938,10 +949,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
         final PsiInlineDocTag inlineDocTag = (PsiInlineDocTag)dataElement;
         final PsiElement nameElement = inlineDocTag.getNameElement();
         if (manager.getTagInfo(inlineDocTag.getName()) == null) {
-          if (nameElement != null) {
-            problems.add(createDescriptor(nameElement, InspectionsBundle.message("inspection.javadoc.problem.wrong.tag", "<code>" + inlineDocTag.getName() + "</code>"), new AddUnknownTagToCustoms(inlineDocTag), inspectionManager,
-                                          isOnTheFly));
-          }
+          checkTagInfo(inspectionManager, null, inlineDocTag, isOnTheFly, problems);
         }
         final PsiDocTagValue value = inlineDocTag.getValueElement();
         if (value != null) {

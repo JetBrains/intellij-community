@@ -18,8 +18,8 @@ package com.intellij.openapi.vcs.changes.committed;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 
 /**
  * @author yole
@@ -37,7 +37,7 @@ public class RefreshIncomingChangesAction extends AnAction implements DumbAware 
     if (!cache.hasCachesForAnyRoot() && !CacheSettingsDialog.showSettingsDialog(project)) {
       return;
     }
-    cache.refreshAllCachesAsync(true);
+    cache.refreshAllCachesAsync(true, false);
     cache.refreshIncomingChangesAsync();
   }
 

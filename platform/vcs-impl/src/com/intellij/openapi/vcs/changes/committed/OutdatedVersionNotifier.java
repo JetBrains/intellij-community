@@ -79,7 +79,7 @@ public class OutdatedVersionNotifier implements ProjectComponent {
           myIncomingChangesRequested = false;
           updateAllEditorsLater();
         }
-      });
+      }, true);
     }
   }
 

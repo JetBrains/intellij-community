@@ -27,7 +27,7 @@ import com.intellij.openapi.components.StorageScheme;
 import javax.swing.*;
 
 public class ProjectFormatPanel {
-  private static final String DIR_BASED = ".idea (directory based)";
+  public static final String DIR_BASED = ".idea (directory based)";
   private static final String FILE_BASED = ".ipr (file based)";
   private JComboBox myStorageFormatCombo;
   private JPanel myWholePanel;

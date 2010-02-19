@@ -17,14 +17,16 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.lang.LanguageExtension;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author yole
  */
 public class LineMarkerProviders extends LanguageExtension<LineMarkerProvider> {
   public static LineMarkerProviders INSTANCE = new LineMarkerProviders();
+  @NonNls public static final String EP_NAME = "com.intellij.codeInsight.lineMarkerProvider";
 
   private LineMarkerProviders() {
-    super("com.intellij.codeInsight.lineMarkerProvider");
+    super(EP_NAME);
   }
 }

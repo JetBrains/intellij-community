@@ -59,7 +59,7 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
     myBrowser.setTableContextMenu(group, Collections.<AnAction>emptyList());
     myConnection = myBus.connect();
     myConnection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, new MyCommittedChangesListener());
-    loadChangesToBrowser();
+    loadChangesToBrowser(false);
 
     JPanel contentPane = new JPanel(new BorderLayout());
     contentPane.add(myBrowser, BorderLayout.CENTER);
@@ -73,18 +73,18 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
     myBrowser = null;
   }
 
-  private void updateModel() {
+  private void updateModel(final boolean inBackground) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         if (myProject.isDisposed()) return;
         if (myBrowser != null) {
-          loadChangesToBrowser();
+          loadChangesToBrowser(inBackground);
         }
       }
     });
   }
 
-  private void loadChangesToBrowser() {
+  private void loadChangesToBrowser(boolean inBackground) {
     final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
     if (cache.hasCachesForAnyRoot()) {
       final List<CommittedChangeList> list = cache.getCachedIncomingChanges();
@@ -93,18 +93,18 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
         myBrowser.setItems(list, false, CommittedChangesBrowserUseCase.INCOMING);
       }
       else {
-        cache.loadIncomingChangesAsync(null);
+        cache.loadIncomingChangesAsync(null, inBackground);
       }
     }
   }
 
   private class MyCommittedChangesListener extends CommittedChangesAdapter {
     public void changesLoaded(final RepositoryLocation location, final List<CommittedChangeList> changes) {
-      updateModel();
+      updateModel(true);
     }
 
     public void incomingChangesUpdated(final List<CommittedChangeList> receivedChanges) {
-      updateModel();
+      updateModel(true);
     }
 
     public void refreshErrorStatusChanged(@Nullable final VcsException lastError) {

@@ -17,6 +17,7 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -30,6 +31,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.xml.XmlTokenImpl;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlElementDescriptor;
@@ -160,7 +162,59 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
       if (nameToken != null && nameToken.getTextRange().getStartOffset() > offset) return Result.CONTINUE;
 
       HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(tagOffset);
-      if (BraceMatchingUtil.matchBrace(editor.getDocument().getCharsSequence(), editedFile.getFileType(), iterator, true,true)) return Result.CONTINUE;
+      if (BraceMatchingUtil.matchBrace(editor.getDocument().getCharsSequence(), editedFile.getFileType(), iterator, true,true)) {
+        PsiElement parent = tag.getParent();
+        boolean hasBalance = true;
+        
+        while(parent instanceof XmlTag && name.equals(((XmlTag)parent).getName())) {
+          ASTNode astNode = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(parent.getNode());
+          if (astNode == null) {
+            hasBalance = false;
+            break;
+          }
+
+          parent = parent.getParent();
+        }
+        
+        if (hasBalance) {
+          hasBalance = false;
+          for(ASTNode node=parent.getNode().getLastChildNode(); node != null; node = node.getTreePrev()) {
+            ASTNode leaf = node;
+            if (leaf.getElementType() == TokenType.ERROR_ELEMENT) {
+              ASTNode firstChild = leaf.getFirstChildNode();
+              if (firstChild != null) leaf = firstChild;
+              else {
+                PsiElement psiElement = PsiTreeUtil.nextLeaf(leaf.getPsi());
+                leaf = psiElement != null ? psiElement.getNode() : null;
+              }
+              if (leaf != null && leaf.getElementType() == TokenType.WHITE_SPACE) {
+                PsiElement psiElement = PsiTreeUtil.nextLeaf(leaf.getPsi());
+                if (psiElement != null) leaf = psiElement.getNode();
+              }
+            }
+            
+            if (leaf != null && leaf.getElementType() == XmlTokenType.XML_END_TAG_START) {
+              ASTNode treeNext = leaf.getTreeNext();
+              IElementType treeNextType;
+              if (treeNext != null && 
+                  ((treeNextType = treeNext.getElementType()) == XmlTokenType.XML_NAME ||
+                   treeNextType == XmlTokenType.XML_TAG_NAME
+                  )
+                ) {
+                if (name.equals(treeNext.getText())) {
+                  ASTNode parentEndName = parent instanceof XmlTag ?
+                                          XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(parent.getNode()):null;
+                  hasBalance = !(parent instanceof XmlTag) || 
+                    parentEndName != null && !parentEndName.getText().equals(name);
+                  break;
+                }
+              }
+            }
+          }
+        }
+        
+        if (hasBalance) return Result.CONTINUE; 
+      }
 
       boolean insertedCData = false;
       final XmlElementDescriptor descriptor = tag.getDescriptor();

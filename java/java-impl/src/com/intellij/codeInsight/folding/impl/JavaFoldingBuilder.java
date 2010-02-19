@@ -516,15 +516,8 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
 
               final String baseClassName = quick ? anonymousClass.getBaseClassReference().getReferenceName() : anonymousClass.getBaseClassType().resolve().getName();
               if (lastLineEnd >= seq.length() || firstLineStart >= seq.length() || firstLineStart < 0) {
-                LOG.assertTrue(false, "llE=" +
-                                      lastLineEnd +
-                                      "; fLS=" +
-                                      firstLineStart +
-                                      "; len=" +
-                                      seq.length() +
-                                      "rE=" +
-                                      rangeEnd +
-                                      "; class=" + baseClassName);
+                LOG.error("llE=" + lastLineEnd + "; fLS=" + firstLineStart + "; len=" + seq.length() + "rE=" + rangeEnd + "; class=" +
+                          baseClassName);
               }
 
               final String params = StringUtil.join(method.getParameterList().getParameters(), new Function<PsiParameter, String>() {

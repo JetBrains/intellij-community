@@ -149,10 +149,10 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     final PsiElement start = findElementInTreeWithFormatterEnabled(file, startOffset);
     final PsiElement end = findElementInTreeWithFormatterEnabled(file, endOffset);
     if (start != null && !start.isValid()) {
-      LOG.assertTrue(false, "start=" + start + "; file=" + file);
+      LOG.error("start=" + start + "; file=" + file);
     }
     if (end != null && !end.isValid()) {
-      LOG.assertTrue(false, "end=" + start + "; end=" + file);
+      LOG.error("end=" + start + "; end=" + file);
     }
 
     boolean formatFromStart = startOffset == 0;

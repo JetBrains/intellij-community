@@ -79,7 +79,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
         converter =  myManager.getConverterManager().getConverterByClass(parameter);
       }
       if (converter == null) {
-        LOG.assertTrue(false, "No converter specified: String<->" + parameter.getName());
+        LOG.error("No converter specified: String<->" + parameter.getName());
       }
       return converter;
     }
@@ -139,7 +139,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
   protected final void checkIsValid() {
     if (!isValid()) {
-      LOG.assertTrue(false, myType.toString() + " @" + hashCode() + "\nclass=" + getClass() + "\nxml=" + getXmlElement());
+      LOG.error(myType.toString() + " @" + hashCode() + "\nclass=" + getClass() + "\nxml=" + getXmlElement());
     }
   }
 

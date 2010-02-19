@@ -170,7 +170,7 @@ public final class IconLoader {
     Icon disabledIcon = ourIcon2DisabledIcon.get(icon);
     if (disabledIcon == null) {
       if (!ImageLoader.isGoodSize(icon)) {
-        LOG.error(icon.toString()); // # 22481
+        LOG.error(icon); // # 22481
         return EMPTY_ICON;
       }
       final BufferedImage image = new BufferedImage(icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);

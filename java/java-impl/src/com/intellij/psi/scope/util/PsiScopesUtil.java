@@ -233,7 +233,7 @@ public class PsiScopesUtil {
             }
           }
           else{
-            LOG.assertTrue(false, "Unknown name element " + referenceNameElement + " in reference " + ref.getText() + "(" + ref + ")");
+            LOG.error("Unknown name element " + referenceNameElement + " in reference " + ref.getText() + "(" + ref + ")");
           }
         }
         else if (referenceNameElement instanceof PsiIdentifier){
@@ -243,7 +243,7 @@ public class PsiScopesUtil {
           resolveAndWalk(processor, ref, null);
         }
         else{
-          LOG.assertTrue(false, "Unknown name element " + referenceNameElement + " in reference " + ref.getText() + "(" + ref + ")");
+          LOG.error("Unknown name element " + referenceNameElement + " in reference " + ref.getText() + "(" + ref + ")");
         }
       }
       else{

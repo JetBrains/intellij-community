@@ -396,7 +396,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     if (fileCopy == null) {
       PsiElement elementAfterCommit = findElementAt(hostFile, hostStartOffset);
       if (wasInjected) {
-        LOG.assertTrue(false, "No injected fragmnent found at offset " + hostStartOffset + " in the patched file copy, found: " + elementAfterCommit);
+        LOG.error("No injected fragmnent found at offset " + hostStartOffset + " in the patched file copy, found: " + elementAfterCommit);
       }
       fileCopy = elementAfterCommit == null ? oldFileCopy : elementAfterCommit.getContainingFile();
     }
@@ -420,11 +420,8 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
           final String allDoc = hostFile.getViewProvider().getDocument().getText();
           String docText = allDoc.substring(Math.max(0, context.getStartOffset() - 10), Math.min(allDoc.length(), context.getStartOffset() + 10));
 
-          LOG.assertTrue(false, "offset " + newContext.getStartOffset() + " at:\n" +
-                                "text=\"" + injectedFile.getText() + "\"\n" +
-                                "instance=" + injectedFile + "\n" +
-                                "patcher=" + patcher + "\n" +
-                                "docText=" + docText);
+          LOG.error("offset " + newContext.getStartOffset() + " at:\n" + "text=\"" + injectedFile.getText() + "\"\n" + "instance=" +
+                    injectedFile + "\n" + "patcher=" + patcher + "\n" + "docText=" + docText);
         }
         EditorFactory.getInstance().releaseEditor(editor);
         return Pair.create(newContext, element);
@@ -433,7 +430,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
     PsiElement element = findElementAt(fileCopy, context.getStartOffset());
     if (element == null) {
-      LOG.assertTrue(false, "offset " + context.getStartOffset() + " at:\ntext=\"" + fileCopy.getText() + "\"\ninstance=" + fileCopy);
+      LOG.error("offset " + context.getStartOffset() + " at:\ntext=\"" + fileCopy.getText() + "\"\ninstance=" + fileCopy);
     }
     return Pair.create(context, element);
   }
@@ -463,7 +460,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     Project project = context.project;
     Editor editor = context.editor;
     if (!ApplicationManager.getApplication().isUnitTestMode() && context.editor.getComponent().getRootPane() == null) {
-      LOG.assertTrue(false, "null root pane");
+      LOG.error("null root pane");
     }
 
     for (final CompletionContributor contributor : CompletionContributor.forParameters(parameters)) {

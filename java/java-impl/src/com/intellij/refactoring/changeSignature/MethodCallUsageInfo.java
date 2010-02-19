@@ -52,7 +52,7 @@ public class MethodCallUsageInfo extends UsageInfo {
     else if (parent instanceof PsiAnonymousClass) {
       return ((PsiNewExpression)parent.getParent()).resolveConstructor();
     }
-    LOG.assertTrue(false, "Unknown reference");
+    LOG.error("Unknown reference");
 
     return null;
   }

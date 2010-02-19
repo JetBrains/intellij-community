@@ -17,13 +17,11 @@ package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.FilePath;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.SelectLocationDialog;
-import org.tmatesoft.svn.core.SVNException;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -87,24 +85,11 @@ public class SvnIntegrateRootOptionsPanel implements SvnPanel{
 
   private boolean chooseUrl(final TextFieldWithBrowseButton textField, final SvnVcs vcs) {
     String url = textField.getText();
-    try {
-      SelectLocationDialog dialog = new SelectLocationDialog(vcs.getProject(), url, null, null, true);
-      dialog.show();
-      if (dialog.isOK()) {
-        url = dialog.getSelectedURL();
-        if (url != null) {
-          textField.setText(url);
-          return true;
-        } else {
-          return false;
-        }
-      } else {
-        return false;
-      }
-    }
-    catch (SVNException e) {
-      Messages.showErrorDialog(myVcs.getProject(), SvnBundle.message("select.location.invalid.url.message", url),
-                               SvnBundle.message("dialog.title.select.repository.location"));
+    final String selectedUrl = SelectLocationDialog.selectLocation(vcs.getProject(), url);
+    if (selectedUrl != null) {
+      textField.setText(selectedUrl);
+      return true;
+    } else {
       return false;
     }
   }

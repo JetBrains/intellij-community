@@ -424,7 +424,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     Dimension dim = getComponent().getPreferredSize();
     int lookupStart = getLookupStart();
     if (lookupStart < 0) {
-      LOG.assertTrue(false, lookupStart + "; minprefix=" + myMinPrefixLength + "; offset=" + myEditor.getCaretModel().getOffset() + "; element=" + getPsiElement());
+      LOG.error(lookupStart + "; minprefix=" + myMinPrefixLength + "; offset=" + myEditor.getCaretModel().getOffset() + "; element=" +
+                getPsiElement());
     }
 
     LogicalPosition pos = myEditor.offsetToLogicalPosition(lookupStart);
@@ -434,7 +435,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     JComponent internalComponent = myEditor.getContentComponent();
     final JRootPane rootPane = editorComponent.getRootPane();
     if (rootPane == null) {
-      LOG.assertTrue(false, myArranger);
+      LOG.error(myArranger);
     }
     JLayeredPane layeredPane = rootPane.getLayeredPane();
     Point layeredPanePoint=SwingUtilities.convertPoint(internalComponent,location, layeredPane);
@@ -921,7 +922,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
     if (isVisible() && !ApplicationManager.getApplication().isUnitTestMode()) {
       if (myEditor.getComponent().getRootPane() == null) {
-        LOG.assertTrue(false, "Null root pane");
+        LOG.error("Null root pane");
       }
 
       Point point = calculatePosition();

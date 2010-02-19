@@ -57,7 +57,7 @@ public class MemberInfoExternalizer {
     else if (tag == FIELD_INFO_TAG) {
       return new FieldInfo(in);
     }
-    LOG.assertTrue(false, "Unknown member info");
+    LOG.error("Unknown member info");
     return null;
   }
 
@@ -69,7 +69,7 @@ public class MemberInfoExternalizer {
     else if (tag == MEMBER_REFERENCE_INFO_TAG) {
       return new MemberReferenceInfo(in);
     }
-    LOG.assertTrue(false, "Unknown declaration info tag: " + tag);
+    LOG.error("Unknown declaration info tag: " + tag);
     return null;
   }
 
@@ -108,7 +108,7 @@ public class MemberInfoExternalizer {
     else if (tag == ENUM_CONSTANT_VALUE_TAG) {
       return new EnumConstantValue(in);
     }
-    LOG.assertTrue(false, "Unknown constant value type " + tag);
+    LOG.error("Unknown constant value type " + tag);
     return null;
   }
 
@@ -120,7 +120,7 @@ public class MemberInfoExternalizer {
       out.writeByte(FIELD_INFO_TAG);
     }
     else {
-      LOG.assertTrue(false, "Unknown member info");
+      LOG.error("Unknown member info");
     }
     info.save(out);
   }

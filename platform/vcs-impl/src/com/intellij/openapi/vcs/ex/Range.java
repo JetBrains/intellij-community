@@ -53,7 +53,7 @@ public class Range {
     if ((change.deleted > 0) && (change.inserted > 0)) return MODIFIED;
     if ((change.deleted > 0)) return DELETED;
     if ((change.inserted > 0)) return INSERTED;
-    LOG.assertTrue(false, "Unknown change type");
+    LOG.error("Unknown change type");
     return 0;
   }
 
