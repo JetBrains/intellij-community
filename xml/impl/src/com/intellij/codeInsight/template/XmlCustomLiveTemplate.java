@@ -20,6 +20,7 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
@@ -465,7 +466,7 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
     private final CustomTemplateCallback myCallback;
     private final TemplateInvokationListener myListener;
     private MyState myState;
-    private int myEndOffset = -1;
+    private RangeMarker myEndOffsetMarker = null;
 
     private MyInterpreter(List<MyToken> tokens,
                           CustomTemplateCallback callback,
@@ -478,15 +479,16 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
     }
 
     private void fixEndOffset() {
-      if (myEndOffset < 0) {
-        myEndOffset = myCallback.getOffset();
+      if (myEndOffsetMarker == null) {
+        int offset = myCallback.getOffset();
+        myEndOffsetMarker = myCallback.getEditor().getDocument().createRangeMarker(offset, offset);
       }
     }
 
     private void finish(boolean inSeparateEvent) {
       Editor editor = myCallback.getEditor();
-      if (myEndOffset >= 0) {
-        editor.getCaretModel().moveToOffset(myEndOffset);
+      if (myEndOffsetMarker != null) {
+        editor.getCaretModel().moveToOffset(myEndOffsetMarker.getStartOffset());
       }
       editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
       if (myListener != null) {
