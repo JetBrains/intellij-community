@@ -84,7 +84,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     return processHandler;
   }
 
-  protected GeneralCommandLine generateCommandLine() {
+  protected GeneralCommandLine generateCommandLine() throws ExecutionException {
     GeneralCommandLine commandLine = new GeneralCommandLine();
 
     setRunnerPath(commandLine);
@@ -96,8 +96,12 @@ public abstract class PythonCommandLineState extends CommandLineState {
     return commandLine;
   }
 
-  protected void setRunnerPath(GeneralCommandLine commandLine) {
-    commandLine.setExePath(myConfig.getInterpreterPath());
+  protected void setRunnerPath(GeneralCommandLine commandLine) throws ExecutionException {
+    String interpreterPath = myConfig.getInterpreterPath();
+    if (interpreterPath == null) {
+      throw new ExecutionException("Cannot find Python interpreter for this run configuration");
+    }
+    commandLine.setExePath(interpreterPath);
   }
 
   protected void buildCommandLineParameters(GeneralCommandLine commandLine) {

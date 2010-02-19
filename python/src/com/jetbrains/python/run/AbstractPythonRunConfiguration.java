@@ -94,10 +94,12 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
     return sdkHome;
   }
 
+  @Nullable
   public String getInterpreterPath() {
     String sdkHome;
     if (myUseModuleSdk) {
       Sdk sdk = PythonSdkType.findPythonSdk(getModule());
+      if (sdk == null) return null;
       sdkHome = sdk.getHomePath();
     }
     else {

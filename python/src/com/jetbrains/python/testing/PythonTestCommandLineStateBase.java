@@ -47,7 +47,7 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
     return consoleView;
   }
 
-  protected GeneralCommandLine generateCommandLine() {
+  protected GeneralCommandLine generateCommandLine() throws ExecutionException {
     GeneralCommandLine cmd = new GeneralCommandLine();
 
     setRunnerPath(cmd);
