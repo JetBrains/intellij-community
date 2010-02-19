@@ -324,7 +324,7 @@ public class MatcherImpl {
         if (psiElement == null) continue;
         final Language language = psiElement.getLanguage();
 
-        if (language == ourPatternLanguage || language == ourPatternLanguage2) { // prevent duplicated usages
+        if (language == ourPatternLanguage || language == ourPatternLanguage2) { // prevent duplicate usages
           scheduler.addOneTask(new MatchOneFile(psiElement));
         }
         if (ourOptimizedScope) elementsToScan[i] = null; // to prevent long PsiElement reference
