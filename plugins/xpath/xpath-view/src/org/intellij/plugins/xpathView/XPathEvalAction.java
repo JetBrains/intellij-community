@@ -17,6 +17,7 @@ package org.intellij.plugins.xpathView;
 
 import com.intellij.find.FindProgressIndicator;
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -38,9 +39,11 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.usageView.UsageInfo;
@@ -60,7 +63,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * <p>This class implements the core action to enter, evaluate and display the results of an XPath expression.</p>
@@ -184,6 +190,14 @@ public class XPathEvalAction extends XPathAction {
             if (contextNode == null) {
                 // in XPath data model, / is the document itself, including comments, PIs and the root element
                 contextNode = ((XmlFile)psiFile).getDocument();
+                if (contextNode == null) {
+                  FileViewProvider fileViewProvider = psiFile.getViewProvider();
+                  if (fileViewProvider instanceof TemplateLanguageFileViewProvider) {
+                    Language dataLanguage = ((TemplateLanguageFileViewProvider)fileViewProvider).getTemplateDataLanguage();
+                    PsiFile templateDataFile = fileViewProvider.getPsi(dataLanguage);
+                    if (templateDataFile instanceof XmlFile) contextNode = ((XmlFile)templateDataFile).getDocument();
+                  }
+                }
             }
 
             input = inputXPathExpression(project, contextNode);
@@ -195,7 +209,7 @@ public class XPathEvalAction extends XPathAction {
             }
 
             HighlighterUtil.clearHighlighters(editor);
-        } while (evaluateExpression(input, contextNode, editor, cfg));
+        } while (contextNode != null && evaluateExpression(input, contextNode, editor, cfg));
     }
 
     private boolean evaluateExpression(EvalExpressionDialog.Context context, XmlElement contextNode, Editor editor, Config cfg) {
