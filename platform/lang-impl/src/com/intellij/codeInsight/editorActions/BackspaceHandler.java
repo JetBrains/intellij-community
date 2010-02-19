@@ -90,14 +90,13 @@ public class BackspaceHandler extends EditorWriteActionHandler {
 
     myOriginalHandler.execute(editor, dataContext);
 
-    if (offset >= editor.getDocument().getTextLength()) return true;
-
     for(BackspaceHandlerDelegate delegate: delegates) {
       if (delegate.charDeleted(c, file, editor)) {
         return true;
       }
     }
 
+    if (offset >= editor.getDocument().getTextLength()) return true;
 
     chars = editor.getDocument().getCharsSequence();
     if (c == '(' || c == '[' || c == '{'){
