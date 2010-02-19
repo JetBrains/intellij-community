@@ -21,6 +21,7 @@ import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -43,6 +44,7 @@ public class CustomTemplateCallback {
   private int myStartOffset;
   private Project myProject;
   private RangeMarker myGlobalMarker;
+  private RangeMarker myEndOffsetMarker;
 
   //private final Map<Object, MyCheckpoint> myCheckpoints = new HashMap<Object, MyCheckpoint>();
   private final Map<Object, RangeMarker> myCheckpoints = new HashMap<Object, RangeMarker>();
@@ -64,6 +66,13 @@ public class CustomTemplateCallback {
     myGlobalMarker = myEditor.getDocument().createRangeMarker(myStartOffset, myStartOffset);
     myGlobalMarker.setGreedyToLeft(true);
     myGlobalMarker.setGreedyToRight(true);
+  }
+
+  public void fixEndOffset() {
+    if (myEndOffsetMarker == null) {
+      int offset = myEditor.getCaretModel().getOffset();
+      myEndOffsetMarker = myEditor.getDocument().createRangeMarker(offset, offset);
+    }
   }
 
   public boolean isLiveTemplateApplicable(@NotNull String key) {
@@ -131,12 +140,13 @@ public class CustomTemplateCallback {
     final boolean[] templateFinished = new boolean[]{false};
     myTemplateManager.startTemplate(myEditor, template, false, predefinedVarValues, new TemplateEditingAdapter() {
       @Override
-      public void templateFinished(Template template, boolean brokenOff) {
-        final CodeStyleManager style = CodeStyleManager.getInstance(myProject);
+      public void templateFinished(Template template, final boolean brokenOff) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            //style.reformatText(myFile, myStartOffset, myStartOffset + lengthAfter - myStartLength);
-            style.reformatText(myFile, myGlobalMarker.getStartOffset(), myGlobalMarker.getEndOffset());
+            if (brokenOff) {
+              CodeStyleManager style = CodeStyleManager.getInstance(myProject);
+              style.reformatText(myFile, myGlobalMarker.getStartOffset(), myGlobalMarker.getEndOffset());
+            }
           }
         });
         if (brokenOff) return;
@@ -179,6 +189,19 @@ public class CustomTemplateCallback {
       throw new IllegalArgumentException();
     }
     return marker.getStartOffset();
+  }
+
+  public void gotoEndOffset() {
+    if (myEndOffsetMarker != null) {
+      myEditor.getCaretModel().moveToOffset(myEndOffsetMarker.getStartOffset());
+    }
+  }
+
+  public void finish() {
+    myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    final CodeStyleManager style = CodeStyleManager.getInstance(myProject);
+    style.reformatText(myFile, myGlobalMarker.getStartOffset(), myGlobalMarker.getEndOffset());
+    gotoEndOffset();
   }
 
   private static List<TemplateImpl> getMatchingTemplates(@NotNull String templateKey) {
