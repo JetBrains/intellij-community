@@ -89,9 +89,17 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyTargetExpression(final PyTargetExpression node) {
-    final ReadWriteInstruction instruction = new ReadWriteInstruction(myBuilder, node, node.getName(), ReadWriteInstruction.ACCESS.WRITE);
-    myBuilder.addNode(instruction);
-    myBuilder.checkPending(instruction);
+    final PsiElement[] children = node.getChildren();
+    // Case of non qualified reference
+    if (children.length == 0){
+      final ReadWriteInstruction instruction = new ReadWriteInstruction(myBuilder, node, node.getName(), ReadWriteInstruction.ACCESS.WRITE);
+      myBuilder.addNode(instruction);
+      myBuilder.checkPending(instruction);
+    } else {
+      for (PsiElement child : children) {
+        child.accept(this);
+      }
+    }
   }
 
   @Override
