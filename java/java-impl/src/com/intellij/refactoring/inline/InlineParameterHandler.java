@@ -82,7 +82,7 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
           occurrences.add(psiReference);
           containingFiles.add(element.getContainingFile());
           final PsiExpression[] expressions = methodCall.getArgumentList().getExpressions();
-          if (expressions.length >= index) return false;
+          if (expressions.length <= index) return false;
           PsiExpression argument = expressions[index];
           if (!refInitializer.isNull()) {
             return argument != null
