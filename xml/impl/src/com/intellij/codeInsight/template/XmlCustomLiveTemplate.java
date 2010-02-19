@@ -417,7 +417,7 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
     return null;
   }
 
-  private static boolean hasClosingTag(CharSequence text, CharSequence tagName, int offset, int rightBound) {
+  /*private static boolean hasClosingTag(CharSequence text, CharSequence tagName, int offset, int rightBound) {
     if (offset + 1 < text.length() && text.charAt(offset) == '<' && text.charAt(offset + 1) == '/') {
       CharSequence closingTagName = parseTagName(text, offset + 2, rightBound);
       if (tagName.equals(closingTagName)) {
@@ -425,7 +425,7 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
       }
     }
     return false;
-  }
+  }*/
 
   @Nullable
   private static CharSequence getPrecedingTagName(CharSequence text, int index, int leftBound) {
@@ -503,15 +503,15 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
       CharSequence text = document.getCharsSequence();
       CharSequence tagName = getPrecedingTagName(text, offset, startOfTemplate);
       if (tagName != null) {
-        if (!hasClosingTag(text, tagName, offset, endOfTemplate)) {
+        /*if (!hasClosingTag(text, tagName, offset, endOfTemplate)) {
           document.insertString(offset, "</" + tagName + '>');
-        }
+        }*/
       }
       else if (offset != endOfTemplate) {
         tagName = getPrecedingTagName(text, endOfTemplate, startOfTemplate);
         if (tagName != null) {
-          fixEndOffset();
-          document.insertString(endOfTemplate, "</" + tagName + '>');
+          /*fixEndOffset();
+          document.insertString(endOfTemplate, "</" + tagName + '>');*/
           editor.getCaretModel().moveToOffset(endOfTemplate);
         }
       }
@@ -535,7 +535,9 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
                   TemplateInvokationListener listener = new TemplateInvokationListener() {
                     public void finished(boolean inSeparateEvent) {
                       myState = MyState.WORD;
-                      fixEndOffset();
+                      if (myCallback.getOffset() != myCallback.getEndOfTemplate(key)) {
+                        fixEndOffset();
+                      }
                       if (sign == '+') {
                         myCallback.gotoEndOfTemplate(key);
                       }
@@ -642,7 +644,9 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
         TemplateInvokationListener listener = new TemplateInvokationListener() {
           public void finished(boolean inSeparateEvent) {
             myState = MyState.WORD;
-            fixEndOffset();
+            if (myCallback.getOffset() != myCallback.getEndOfTemplate(key)) {
+              fixEndOffset();
+            }
             myCallback.gotoEndOfTemplate(key);
             if (inSeparateEvent) {
               if (finalI + 1 < count) {
@@ -675,7 +679,9 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
             gotoChild(key);
             MyInterpreter interpreter = new MyInterpreter(myTokens, myCallback, MyState.WORD, new TemplateInvokationListener() {
               public void finished(boolean inSeparateEvent) {
-                fixEndOffset();
+                if (myCallback.getOffset() != myCallback.getEndOfTemplate(key)) {
+                  fixEndOffset();
+                }
                 myCallback.gotoEndOfTemplate(key);
                 if (inSeparateEvent) {
                   invokeTemplateAndProcessTail(templateToken, finalI + 1, count, tailStart);
