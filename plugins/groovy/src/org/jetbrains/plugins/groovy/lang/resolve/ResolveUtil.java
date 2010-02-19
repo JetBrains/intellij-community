@@ -348,7 +348,7 @@ public class ResolveUtil {
     return elements;
   }
 
-  public static GroovyResolveResult[] filterSameSignatureCandidates(Collection<GroovyResolveResult> candidates) {
+  public static GroovyResolveResult[] filterSameSignatureCandidates(Collection<GroovyResolveResult> candidates, int argumentCount) {
     GroovyResolveResult[] array = candidates.toArray(new GroovyResolveResult[candidates.size()]);
     if (array.length == 1) return array;
 
@@ -365,10 +365,10 @@ public class ResolveUtil {
           PsiElement element = otherResolveResult.getElement();
           if (element instanceof PsiMethod) {
             PsiMethod method = (PsiMethod)element;
-            if (dominated(currentMethod, array[i].getSubstitutor(), method, otherResolveResult.getSubstitutor())) {
+            if (dominated(currentMethod, array[i].getSubstitutor(), method, otherResolveResult.getSubstitutor(), argumentCount)) {
               continue Outer;
             }
-            else if (dominated(method, otherResolveResult.getSubstitutor(), currentMethod, array[i].getSubstitutor())) {
+            else if (dominated(method, otherResolveResult.getSubstitutor(), currentMethod, array[i].getSubstitutor(), argumentCount)) {
               iterator.remove();
             }
           }
@@ -384,11 +384,13 @@ public class ResolveUtil {
   public static boolean dominated(PsiMethod method1,
                                   PsiSubstitutor substitutor1,
                                   PsiMethod method2,
-                                  PsiSubstitutor substitutor2) {  //method1 has more general parameter types thn method2
+                                  PsiSubstitutor substitutor2,
+                                  int argumentCount) {  //method1 has more general parameter types then method2
     if (!method1.getName().equals(method2.getName())) return false;
 
     PsiParameter[] params1 = method1.getParameterList().getParameters();
     PsiParameter[] params2 = method2.getParameterList().getParameters();
+    if (argumentCount != params1.length && argumentCount == params2.length) return true;
 
     if (params1.length != params2.length) return false;
 
