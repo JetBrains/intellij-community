@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -273,18 +274,54 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
     return state == MyState.OPERATION || state == MyState.AFTER_NUMBER;
   }
 
-  public boolean isApplicable(@NotNull String key, @NotNull CustomTemplateCallback callback) {
-    PsiFile file = callback.getFile();
-    if (file.getLanguage() instanceof XMLLanguage) {
-      List<MyToken> tokens = parse(key, callback);
-      if (tokens != null) {
-        return check(tokens);
+  private static String computeKey(Editor editor, int startOffset) {
+    int offset = editor.getCaretModel().getOffset();
+    String s = editor.getDocument().getCharsSequence().subSequence(startOffset, offset).toString();
+    int index = 0;
+    while (index < s.length() && Character.isWhitespace(s.charAt(index))) {
+      index++;
+    }
+    String key = s.substring(index);
+    int lastWhitespaceIndex = -1;
+    for (int i = 0; i < key.length(); i++) {
+      if (Character.isWhitespace(key.charAt(i))) {
+        lastWhitespaceIndex = i;
       }
     }
-    return false;
+    if (lastWhitespaceIndex >= 0 && lastWhitespaceIndex < key.length() - 1) {
+      return key.substring(lastWhitespaceIndex + 1);
+    }
+    return key;
   }
 
-  public void execute(@NotNull String key, @NotNull CustomTemplateCallback callback, @Nullable TemplateInvokationListener listener) {
+  public String computeTemplateKey(@NotNull CustomTemplateCallback callback) {
+    PsiFile file = callback.getFile();
+    if (file.getLanguage() instanceof XMLLanguage) {
+      Editor editor = callback.getEditor();
+      PsiElement element = file.findElementAt(editor.getCaretModel().getOffset() - 1);
+      int line = editor.getCaretModel().getLogicalPosition().line;
+      int lineStart = editor.getDocument().getLineStartOffset(line);
+      int parentStart;
+      do {
+        parentStart = element != null ? element.getTextRange().getStartOffset() : 0;
+        int startOffset = parentStart > lineStart ? parentStart : lineStart;
+        String key = computeKey(editor, startOffset);
+        List<MyToken> tokens = parse(key, callback);
+        if (tokens != null) {
+          if (check(tokens)) {
+            return key;
+          }
+        }
+        if (element != null) {
+          element = element.getParent();
+        }
+      }
+      while (element != null && parentStart > lineStart);
+    }
+    return null;
+  }
+
+  public void execute(String key, @NotNull CustomTemplateCallback callback, @Nullable TemplateInvokationListener listener) {
     List<MyToken> tokens = parse(key, callback);
     assert tokens != null;
     MyInterpreter interpreter = new MyInterpreter(tokens, callback, MyState.WORD, listener);
