@@ -15,9 +15,9 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.controlflow.PyControlFlowUtil;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
-import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
+import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import org.jetbrains.annotations.Nls;
@@ -96,6 +96,10 @@ public class PyUnusedLocalVariableInspection extends LocalInspectionTool {
               continue;
             }
             final PsiElement element = instruction.getElement();
+            // Ignore arguments of import statement
+            if (PyImportStatementNavigator.getImportStatementByElement(element) != null){
+              continue;
+            }
             final ReadWriteInstruction.ACCESS access = ((ReadWriteInstruction)instruction).getAccess();
             // WriteAccess
             if (access.isWriteAccess() &&

@@ -11,13 +11,13 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PyImportStatementNavigator {
   @Nullable
-  public static PyImportStatement getImportStatementByReference(final PsiElement element){
+  public static PyImportStatement getImportStatementByElement(final PsiElement element){
     final PyImportStatement statement = PsiTreeUtil.getParentOfType(element, PyImportStatement.class, false);
     if (statement == null){
       return null;
     }
     for (PyImportElement importElement : statement.getImportElements()) {
-      if (element == importElement.getImportReference()){
+      if (element == importElement || element == importElement.getImportReference()){
         return statement;
       }
     }
