@@ -89,6 +89,7 @@ public class PyTestRunConfiguration extends AbstractPythonRunConfiguration {
     // poke around and see if we got something like runner
     File runner = null;
     File bin_dir = bin_path.getParentFile();
+    if (bin_dir == null) return null;
     runner = new File(bin_dir, PY_TEST);
     if (runner.exists()) return runner.getPath();
     runner = new File(new File(bin_dir, "scripts"), PY_TEST);
