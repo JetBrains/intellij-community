@@ -1145,10 +1145,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
 
     public void removeTimerListener(TimerListener listener){
-      final boolean removed = myTimerListeners.remove(listener);
-      if (!removed) {
-        LOG.error("Unknown listener " + listener);
-      }
+      myTimerListeners.remove(listener);
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -1167,7 +1164,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       IdeFocusManager.getInstance(null).doWhenFocusSettlesDown(new Runnable() {
         public void run() {
           for (TimerListener listener : listeners) {
-            runListenerAction(listener);
+            if (myTimerListeners.contains(listener)) {
+              runListenerAction(listener);
+            }
           }
         }
       });
