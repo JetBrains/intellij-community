@@ -22,8 +22,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The 'for/else' statement.
  */
-public interface PyForStatement extends PyStatement, NameDefiner {
+public interface PyForStatement extends PyLoopStatement, NameDefiner {
   @NotNull PyForPart getForPart();
   @Nullable PyElsePart getElsePart();
-
 }

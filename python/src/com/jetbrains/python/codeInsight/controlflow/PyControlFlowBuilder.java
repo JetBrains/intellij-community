@@ -3,6 +3,8 @@ package com.jetbrains.python.codeInsight.controlflow;
 import com.intellij.codeInsight.controlflow.ControlFlowBuilder;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.Instruction;
+import com.intellij.codeInsight.controlflow.impl.InstructionImpl;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -12,6 +14,7 @@ import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author oleg
@@ -259,10 +262,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     myBuilder.prevInstruction = head;
     if (elsePart != null) {
       elsePart.accept(this);
-      myBuilder.addPendingEdge(node, myBuilder.prevInstruction); // exit
-    }
-    else {
-      myBuilder.addPendingEdge(null, myBuilder.prevInstruction);
+      myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     }
     myBuilder.flowAbrupted();
   }
@@ -346,14 +346,21 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     }
 
     final ArrayList<Instruction> exceptInstructions = new ArrayList<Instruction>();
+    // Store pending and clear it
+    final List<Pair<PsiElement, Instruction>> myPending = myBuilder.pending;
+    myBuilder.pending = new ArrayList<Pair<PsiElement, Instruction>>();
     for (PyExceptPart exceptPart : node.getExceptParts()) {
       myBuilder.prevInstruction = lastBlockInstruction;
-      final Instruction exceptInstruction = myBuilder.startNode(exceptPart);
+      final Instruction exceptInstruction = new InstructionImpl(myBuilder, exceptPart);
+      myBuilder.addNode(exceptInstruction);
       exceptInstructions.add(exceptInstruction);
       exceptPart.accept(this);
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     }
-
+    // Restore pending
+    for (Pair<PsiElement, Instruction> pair : myPending) {
+      myBuilder.addPendingEdge(pair.first, pair.second);
+    }
     final PyFinallyPart finallyPart = node.getFinallyPart();
     Instruction finallyInstruction = null;
     Instruction lastFinallyInstruction = null;

@@ -82,6 +82,14 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
     doTest();
   }
 
+  public void testTryBreak() throws Exception {
+    final String testName = getTestName(false).toLowerCase();
+    configureByFile(testName + ".py");
+    final ControlFlow flow = ((PyFunction)((PyFile)myFile).getStatements().get(0)).getControlFlow();
+    final String fullPath = getTestDataPath() + testName + ".txt";
+    check(fullPath, flow);
+  }
+
   public void testFunction() throws Exception {
     final String testName = getTestName(false).toLowerCase();
     configureByFile(testName + ".py");
