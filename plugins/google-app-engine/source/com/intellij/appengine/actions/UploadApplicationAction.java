@@ -1,7 +1,9 @@
 package com.intellij.appengine.actions;
 
 import com.intellij.CommonBundle;
+import com.intellij.appengine.facet.AppEngineFacet;
 import com.intellij.appengine.util.AppEngineUtil;
+import com.intellij.facet.ProjectFacetManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
@@ -18,7 +20,7 @@ public class UploadApplicationAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
     final Project project = e.getData(DataKeys.PROJECT);
-    e.getPresentation().setEnabled(project != null);
+    e.getPresentation().setVisible(project != null && !ProjectFacetManager.getInstance(project).getFacets(AppEngineFacet.ID).isEmpty());
   }
 
   public void actionPerformed(AnActionEvent e) {
