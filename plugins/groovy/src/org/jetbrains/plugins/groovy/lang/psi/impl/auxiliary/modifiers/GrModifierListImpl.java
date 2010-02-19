@@ -196,19 +196,26 @@ public class GrModifierListImpl extends GroovyBaseElementImpl<GrModifierListStub
   }
 
   public void setModifierProperty(@NotNull @NonNls String name, boolean doSet) throws IncorrectOperationException {
-    if (GrModifier.PACKAGE_LOCAL.equals(name)) {
-      return;
+    if (hasModifierProperty(name) == doSet) return;
+
+    if (doSet) {
+      if (GrModifier.PRIVATE.equals(name) ||
+          GrModifier.PROTECTED.equals(name) ||
+          GrModifier.PUBLIC.equals(name) ||
+          GrModifier.PACKAGE_LOCAL.equals(name)) {
+        setModifierPropertyInternal(GrModifier.PUBLIC, false);
+        setModifierPropertyInternal(GrModifier.PROTECTED, false);
+        setModifierPropertyInternal(GrModifier.PRIVATE, false);
+      }
     }
+    if (!GrModifier.PACKAGE_LOCAL.equals(name)) {
+      setModifierPropertyInternal(name, doSet);
+    }
+  }
+
+  private void setModifierPropertyInternal(String name, boolean doSet) {
     if (doSet) {
       final ASTNode modifierNode = GroovyPsiElementFactory.getInstance(getProject()).createModifierFromText(name).getNode();
-      assert modifierNode != null;
-      if (!GrModifier.DEF.equals(name)) {
-        final PsiElement[] modifiers = getModifiers();
-        if (modifiers.length == 1 && modifiers[0].getText().equals(GrModifier.DEF)) {
-          getNode().replaceChild(findChildByType(GroovyTokenTypes.kDEF).getNode(), modifierNode);
-          return;
-        }
-      }
       addInternal(modifierNode, modifierNode, null, null);
     }
     else {

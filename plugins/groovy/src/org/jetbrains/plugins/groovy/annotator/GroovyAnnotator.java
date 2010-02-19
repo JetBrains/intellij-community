@@ -16,12 +16,14 @@
 
 package org.jetbrains.plugins.groovy.annotator;
 
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,6 +31,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -152,11 +156,15 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       }
       if (!resolveResult.isAccessible()) {
         String message = GroovyBundle.message("cannot.access", referenceExpression.getReferenceName());
-        myHolder.createWarningAnnotation(referenceExpression.getReferenceNameElement(), message);
+        final Annotation annotation = myHolder.createWarningAnnotation(referenceExpression.getReferenceNameElement(), message);
+        if (resolved instanceof PsiMember) {
+          registerAccessFix(annotation, referenceExpression, ((PsiMember)resolved));
+        }
       }
       if (!resolveResult.isStaticsOK() && resolved instanceof PsiModifierListOwner) {
         if (!((PsiModifierListOwner)resolved).hasModifierProperty(GrModifier.STATIC)) {
-          myHolder.createWarningAnnotation(referenceExpression, GroovyBundle.message("cannot.reference.nonstatic", referenceExpression.getReferenceName()));
+          myHolder.createWarningAnnotation(referenceExpression,
+                                           GroovyBundle.message("cannot.reference.nonstatic", referenceExpression.getReferenceName()));
         }
       }
     }
@@ -204,6 +212,39 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       }
       registerReferenceFixes(referenceExpression, annotation);
       annotation.setTextAttributes(DefaultHighlighter.UNRESOLVED_ACCESS);
+    }
+  }
+
+  private static void registerAccessFix(Annotation annotation, GrReferenceExpression place, PsiMember refElement) {
+    if (refElement instanceof PsiCompiledElement) return;
+    PsiModifierList modifierList = refElement.getModifierList();
+    if (modifierList == null) return;
+
+    try {
+      Project project = refElement.getProject();
+      JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+      PsiModifierList modifierListCopy = facade.getElementFactory().createFieldFromText("int a;", null).getModifierList();
+      modifierListCopy.setModifierProperty(PsiModifier.STATIC, modifierList.hasModifierProperty(PsiModifier.STATIC));
+      @Modifier String minModifier = PsiModifier.PROTECTED;
+      if (refElement.hasModifierProperty(PsiModifier.PROTECTED)) {
+        minModifier = PsiModifier.PUBLIC;
+      }
+      String[] modifiers = {PsiModifier.PROTECTED, PsiModifier.PUBLIC,};
+      PsiClass accessObjectClass = PsiTreeUtil.getParentOfType(place, PsiClass.class, false);
+      if (accessObjectClass == null) {
+        accessObjectClass = ((GroovyFile)place.getContainingFile()).getScriptClass();
+      }
+      for (int i = ArrayUtil.indexOf(modifiers, minModifier); i < modifiers.length; i++) {
+        String modifier = modifiers[i];
+        modifierListCopy.setModifierProperty(modifier, true);
+        if (facade.getResolveHelper().isAccessible(refElement, modifierListCopy, place, accessObjectClass, null)) {
+          IntentionAction fix = new GrModifierFix(refElement, modifier, true);
+          annotation.registerFix(fix);
+        }
+      }
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
     }
   }
 
