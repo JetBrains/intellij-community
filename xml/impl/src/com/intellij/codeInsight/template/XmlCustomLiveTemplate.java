@@ -16,12 +16,13 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -273,7 +274,8 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
   }
 
   public boolean isApplicable(@NotNull String key, @NotNull CustomTemplateCallback callback) {
-    if (callback.getFile() instanceof XmlFile) {
+    PsiFile file = callback.getFile();
+    if (file.getLanguage() instanceof XMLLanguage) {
       List<MyToken> tokens = parse(key, callback);
       if (tokens != null) {
         return check(tokens);
