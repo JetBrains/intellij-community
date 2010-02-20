@@ -19,9 +19,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.CharFilter;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -43,10 +46,9 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.TreeSet;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.*;
 import java.util.regex.Pattern;
 
 import static com.jetbrains.python.psi.PyUtil.sure;
@@ -94,40 +96,59 @@ public class PythonSdkType extends SdkType {
     return PyBuiltinCache.BUILTIN_FILE;
   }
 
+  @NonNls static final private String PYTHON_STR = "python";
+
   @NonNls
   @Nullable
   public String suggestHomePath() {
-    @NonNls final String PYTHON_STR = "python";
-    TreeSet<String> candidates = new TreeSet<String>();
+    TreeSet<String> candidates = new TreeSet<String>(new Comparator<String>() {
+      public int compare(String o1, String o2) {
+        return findDigits(o1).compareTo(findDigits(o2));
+      }
+    });
     if (SystemInfo.isWindows) {
-      VirtualFile rootDir = LocalFileSystem.getInstance().findFileByPath("C:\\");
-      if (rootDir != null) {
-        VirtualFile[] topLevelDirs = rootDir.getChildren();
-        for (VirtualFile dir : topLevelDirs) {
-          if (dir.isDirectory() && dir.getName().toLowerCase().startsWith(PYTHON_STR)) {
-            candidates.add(dir.getPath());
+      findSubdirInstallations(candidates, "C:\\", PYTHON_STR, "python.exe");
+      findSubdirInstallations(candidates, "C:\\Program Files\\", PYTHON_STR, "python.exe");
+      findSubdirInstallations(candidates, "C:\\", "jython", "jython.bat");
+    }
+    else if (SystemInfo.isMac) {
+      final String pythonPath = "/Library/Frameworks/Python.framework/Versions";
+      VirtualFile rootVDir = LocalFileSystem.getInstance().findFileByPath(pythonPath);
+      if (rootVDir != null) {
+        for (VirtualFile dir : rootVDir.getChildren()) {
+          final String dir_name = dir.getName().toLowerCase();
+          if (dir.isDirectory()) {
+            if ("Current".equals(dir_name) || dir_name.startsWith("2") || dir_name.startsWith("3") || dir_name.startsWith("jython")) {
+              VirtualFile bin_dir = dir.findChild("bin");
+              if (bin_dir != null && bin_dir.isDirectory()) {
+                VirtualFile python_exe = dir.findChild(PYTHON_STR);
+                if (python_exe != null) candidates.add(python_exe.getPath());
+                python_exe = dir.findChild("jython"); // maybe it's in bin/
+                if (python_exe != null) candidates.add(python_exe.getPath());
+              }
+              else {
+                VirtualFile python_exe = dir.findChild("jython"); // maybe it's not in bin/
+                if (python_exe != null) candidates.add(python_exe.getPath());
+              }
+            }
           }
         }
       }
     }
-    else if (SystemInfo.isLinux) {
+    else if (SystemInfo.isUnix) {
       VirtualFile rootDir = LocalFileSystem.getInstance().findFileByPath("/usr/bin");
       if (rootDir != null) {
         VirtualFile[] suspects = rootDir.getChildren();
         for (VirtualFile child : suspects) {
-          if (!child.isDirectory() && child.getName().startsWith(PYTHON_STR)) {
-            candidates.add(child.getPath());
+          if (!child.isDirectory()) {
+            final String child_name = child.getName();
+            if (child_name.startsWith(PYTHON_STR) || child_name.startsWith("jython")) {
+              candidates.add(child.getPath());
+            }
           }
         }
         candidates.add(rootDir.getPath());
       }
-    }
-    else if (SystemInfo.isMac) {
-      final String pythonPath = "/Library/Frameworks/Python.framework/Versions/Current/";
-      if (new File(pythonPath).exists()) {
-        return pythonPath;
-      }
-      return "/System/Library/Frameworks/Python.framework/Versions/Current/";
     }
 
     if (candidates.size() > 0) {
@@ -136,6 +157,30 @@ public class PythonSdkType extends SdkType {
       return candidateArray[candidateArray.length - 1];
     }
     return null;
+  }
+
+  private static String findDigits(String s) {
+    int pos = StringUtil.findFirst(s, new CharFilter() {
+      public boolean accept(char ch) {
+        return Character.isDigit(ch);
+      }
+    });
+    if (pos >= 0) {
+      return s.substring(pos);
+    }
+    return s;
+  }
+
+  private static void findSubdirInstallations(TreeSet<String> candidates, String rootDir, String dir_prefix, String exe_name) {
+    VirtualFile rootVDir = LocalFileSystem.getInstance().findFileByPath("C:\\");
+    if (rootVDir != null) {
+      for (VirtualFile dir : rootVDir.getChildren()) {
+        if (dir.isDirectory() && dir.getName().toLowerCase().startsWith(dir_prefix)) {
+          VirtualFile python_exe = dir.findChild(exe_name);
+          if (python_exe != null) candidates.add(python_exe.getPath());
+        }
+      }
+    }
   }
 
   public boolean isValidSdkHome(final String path) {
@@ -178,43 +223,27 @@ public class PythonSdkType extends SdkType {
   }
 
   /**
-   * Checks if the path is a valid home.
-   * <s>Valid CPython home must contain some standard libraries. Of them we look for re.py, __future__.py and site-packages/.</s>
-   * Valid SDK home must contain either an executable Python interpreter or a bin directory with it. The rest is done
-   * by calling the interpreter.
+   * Checks if the path is the name of a Python intepreter.
    *
    * @param path path to check.
    * @return true if paths points to a valid home.
    */
   @NonNls
   private static boolean isPythonSdkHome(final String path) {
-    File bin = getPythonBinaryPath(path);
-    return bin != null && bin.exists();
+    return FileUtil.getNameWithoutExtension(new File(path)).toLowerCase().startsWith("python");
   }
 
+  /**
+   * Checks if the path is the name of a Jython intepreter.
+   *
+   * @param path path to check.
+   * @return true if paths points to a valid home.
+   */
   private static boolean isJythonSdkHome(final String path) {
-    File f = getJythonBinaryPath(path);
-    return f != null && f.exists();
+    return FileUtil.getNameWithoutExtension(new File(path)).toLowerCase().startsWith("jython");
   }
 
-  @Nullable
-  private static File getJythonBinaryPath(final String path) {
-    if (SystemInfo.isWindows) {
-      return new File(path, "jython.bat");
-    }
-    else if (SystemInfo.isMac) {
-      return new File(new File(path, "bin"), "jython"); // TODO: maybe use a smarter way
-    }
-    else if (SystemInfo.isLinux) {
-      File jy_binary = new File(path, "jython"); // probably /usr/bin/jython
-      if (jy_binary.exists()) {
-        return jy_binary;
-      }
-    }
-    return null;
-  }
-
-    /**
+  /**
    * @param path where to look
    * @return Python interpreter executable on the path, or null.
    */
@@ -222,15 +251,45 @@ public class PythonSdkType extends SdkType {
   @NonNls
   private static File getPythonBinaryPath(final String path) {
     File interpreter = new File(path);
-    if (seemsExecutable(interpreter)) return interpreter;
-    else return null;
+      if (seemsExecutable(interpreter)) {
+        return interpreter;
+      }
+      else {
+        return null;
+      }
   }
 
   /**
-   * @param file pathname
-   * @return true if pathname is known to be executable, or hard to tell; false is pathname is definitely not executable.
+   * Invokes File.isExectable() by reflection.
+   * @param file what to test
+   * @return result of invocation, or null if method is not available
+   */
+  @Nullable
+  private static Boolean isExecutableUnder16(File file) {
+    try {
+      Method method = File.class.getMethod("canExecute", File.class);
+      Object ret = method.invoke(file);
+      if (ret instanceof Boolean) return ((Boolean)ret);
+    }
+    catch (NoSuchMethodException ignored) { }
+    catch (InvocationTargetException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    }
+    catch (IllegalAccessException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    }
+    return null;
+  }
+
+  /**
+   * @param file what to test
+   * @return true if file is known to be executable, or hard to tell; false is file is definitely not executable.
    */
   private static boolean seemsExecutable(File file) {
+    if (file.isDirectory()) return false;
+    Boolean is_executable = isExecutableUnder16(file); // java 1.6 and above
+    if (is_executable != null) return is_executable;
+    // but we need to support 1.5 too
     if (SystemInfo.isWindows) {
       try {
         final String path = file.getCanonicalPath();
@@ -244,12 +303,11 @@ public class PythonSdkType extends SdkType {
     else if (SystemInfo.isUnix) {
       /*
       try {
-        // NOTE: on 1.6, there's .isExecutable(), but we stick to 1.5 
         ProcessOutput run_result = SdkUtil.getProcessOutput(file.getParent(), new String[] {"/usr/bin/[ -x " + file.getCanonicalPath() + " ]"});
         if (run_result.getExitCode() > 1) {
           LOG.warn(run_result.getStderr());
         }
-        return run_result.getExitCode() == 0;  
+        return run_result.getExitCode() == 0;
       }
       catch (IOException ex) {
         LOG.warn(ex);
@@ -307,7 +365,9 @@ public class PythonSdkType extends SdkType {
     if (path.startsWith(home)) {
       return "~" + path.substring(home.length());
     }
-    else return path;
+    else {
+      return path;
+    }
   }
 
   public String suggestSdkName(final String currentSdkName, final String sdkHome) {
@@ -318,9 +378,13 @@ public class PythonSdkType extends SdkType {
       if (virtualenv_root != null) {
         name += " virtualenv at " + shortenDirName(virtualenv_root.getAbsolutePath());
       }
-      else name += "(" + short_home_name + ")";
+      else {
+        name += " (" + short_home_name + ")";
+      }
     }
-    else name = "Unknown at " + short_home_name; // last resort
+    else {
+      name = "Unknown at " + short_home_name;
+    } // last resort
     return name;
   }
 
@@ -333,6 +397,34 @@ public class PythonSdkType extends SdkType {
 
   @Override
   public SdkAdditionalData loadAdditionalData(final Sdk currentSdk, final Element additional) {
+    // try to upgrade from previous version(s)
+    String sdk_path = currentSdk.getHomePath();
+    boolean sdk_updated = false;
+    if (sdk_path != null) {
+      // in versions up to 94.239, path points to lib dir; later it points to the interpreter itself
+      if (! isValidSdkHome(sdk_path)) {
+        if (SystemInfo.isWindows) {
+          sdk_updated = switchPathToInterpreter(currentSdk, "python.exe", "jython.bat"); // can't be in the same dir, safe to try
+        }
+        else if (SystemInfo.isMac) {
+          // NOTE: not sure about jython
+          sdk_updated = switchPathToInterpreter(currentSdk, "bin/python", "bin/jython", "jython"); // can't be in the same dir, safe to try
+        }
+        else if (SystemInfo.isUnix) {
+          String sdk_name = currentSdk.getName().toLowerCase();
+          if (sdk_name.contains("jython")) {
+            // NOTE: can't distinguish different installations in /usr/bin
+            sdk_updated = switchPathToInterpreter(currentSdk, "jython", "/usr/bin/jython", "/usr/local/bin/jython");
+          }
+          else if (sdk_name.contains("python")) {
+            String sdk_home = new File(sdk_path).getName().toLowerCase(); // usually /usr/blahblah/pythonX.Y
+            String version = sdk_home.substring("python".length());
+            sdk_updated = switchPathToInterpreter(currentSdk, "python"+version, "/usr/bin/python"+version, "/usr/local/bin/python"+version);
+          }
+        }
+      }
+    }
+    // fix skeletons as needed
     String url = findSkeletonsUrl(currentSdk);
     if (url != null) {
       final String path = VfsUtil.urlToPath(url);
@@ -352,6 +444,33 @@ public class PythonSdkType extends SdkType {
       }
     }
     return null;
+  }
+
+  private boolean switchPathToInterpreter(Sdk currentSdk, String... variants) {
+    final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+    File sdk_file = new File(currentSdk.getHomePath());
+    String sdk_name = currentSdk.getName();
+    boolean success = false;
+    for (String interpreter : variants) {
+      File binary = interpreter.startsWith("/")? new File(interpreter) : new File(sdk_file, interpreter);
+      if (binary.exists()) {
+        if (currentSdk instanceof SdkModificator) {
+          final SdkModificator sdk_as_modificator = (SdkModificator)currentSdk;
+          sdk_as_modificator.setHomePath(binary.getPath());
+          sdk_as_modificator.setName(suggestSdkName(currentSdk.getName(), binary.getAbsolutePath()));
+          //setupSdkPaths(currentSdk);
+          success = true;
+          break;
+        }
+      }
+    }
+    if (!success) {
+      Messages.showWarningDialog(project,
+        "Failed to convert Python SDK '" + sdk_name + "'\nplease delete and re-create it",
+        "Converting Python SDK"
+      );
+    }
+    return success;
   }
 
   @Nullable
@@ -374,7 +493,7 @@ public class PythonSdkType extends SdkType {
     final Ref<SdkModificator> sdkModificatorRef = new Ref<SdkModificator>();
     final ProgressManager progman = ProgressManager.getInstance();
     final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-    final Task.Modal setup_task = new Task.Modal(project, "Setting up library files", false) {
+    final Task.Modal setup_task = new Task.Modal(project, "Setting up library files for " + sdk.getName(), false) {
 
       public void run(@NotNull final ProgressIndicator indicator) {
         final SdkModificator sdkModificator = sdk.getSdkModificator();
@@ -429,20 +548,21 @@ public class PythonSdkType extends SdkType {
             sdkModificator.addRoot(child, OrderRootType.CLASSES);
           }
         }
-        else LOG.info("Bogus sys.path entry " + path);
+        else {
+          LOG.info("Bogus sys.path entry " + path);
+        }
       }
       if (indicator != null) {
         indicator.setText("Generating skeletons of __builtins__");
         indicator.setText2("");
       }
-      if (not_in_unit_test_mode) generateBuiltinStubs(bin_path, stubs_path);
-      VirtualFile stubsPath = LocalFileSystem.getInstance().refreshAndFindFileByPath(stubs_path);
-      if (stubsPath != null) {
-        sdkModificator.addRoot(stubsPath, BUILTIN_ROOT_TYPE);
+      if (not_in_unit_test_mode) {
+        generateBuiltinStubs(bin_path, stubs_path);
+        sdkModificator.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByPath(stubs_path), BUILTIN_ROOT_TYPE);
       }
     }
     // Add python-django installed as package in Linux
-    if (SystemInfo.isLinux){
+    if (SystemInfo.isLinux && not_in_unit_test_mode) {
       final VirtualFile file = LocalFileSystem.getInstance().findFileByPath("/usr/lib/python-django");
       if (file != null){
         sdkModificator.addRoot(file, OrderRootType.SOURCES);
@@ -535,7 +655,7 @@ public class PythonSdkType extends SdkType {
 
   @Nullable
   public static String getInterpreterPath(final String sdkHome) {
-    final File file = isJythonSdkHome(sdkHome) ? getJythonBinaryPath(sdkHome) : getPythonBinaryPath(sdkHome);
+    final File file = getPythonBinaryPath(sdkHome);
     return file != null ? file.getPath() : null;
   }
 
