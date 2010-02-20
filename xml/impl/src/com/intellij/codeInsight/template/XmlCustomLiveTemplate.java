@@ -20,8 +20,10 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -273,18 +275,54 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
     return state == MyState.OPERATION || state == MyState.AFTER_NUMBER;
   }
 
-  public boolean isApplicable(@NotNull String key, @NotNull CustomTemplateCallback callback) {
-    PsiFile file = callback.getFile();
-    if (file.getLanguage() instanceof XMLLanguage) {
-      List<MyToken> tokens = parse(key, callback);
-      if (tokens != null) {
-        return check(tokens);
+  private static String computeKey(Editor editor, int startOffset) {
+    int offset = editor.getCaretModel().getOffset();
+    String s = editor.getDocument().getCharsSequence().subSequence(startOffset, offset).toString();
+    int index = 0;
+    while (index < s.length() && Character.isWhitespace(s.charAt(index))) {
+      index++;
+    }
+    String key = s.substring(index);
+    int lastWhitespaceIndex = -1;
+    for (int i = 0; i < key.length(); i++) {
+      if (Character.isWhitespace(key.charAt(i))) {
+        lastWhitespaceIndex = i;
       }
     }
-    return false;
+    if (lastWhitespaceIndex >= 0 && lastWhitespaceIndex < key.length() - 1) {
+      return key.substring(lastWhitespaceIndex + 1);
+    }
+    return key;
   }
 
-  public void execute(@NotNull String key, @NotNull CustomTemplateCallback callback, @Nullable TemplateInvokationListener listener) {
+  public String computeTemplateKey(@NotNull CustomTemplateCallback callback) {
+    PsiFile file = callback.getFile();
+    if (file.getLanguage() instanceof XMLLanguage) {
+      Editor editor = callback.getEditor();
+      PsiElement element = file.findElementAt(editor.getCaretModel().getOffset() - 1);
+      int line = editor.getCaretModel().getLogicalPosition().line;
+      int lineStart = editor.getDocument().getLineStartOffset(line);
+      int parentStart;
+      do {
+        parentStart = element != null ? element.getTextRange().getStartOffset() : 0;
+        int startOffset = parentStart > lineStart ? parentStart : lineStart;
+        String key = computeKey(editor, startOffset);
+        List<MyToken> tokens = parse(key, callback);
+        if (tokens != null) {
+          if (check(tokens)) {
+            return key;
+          }
+        }
+        if (element != null) {
+          element = element.getParent();
+        }
+      }
+      while (element != null && parentStart > lineStart);
+    }
+    return null;
+  }
+
+  public void execute(String key, @NotNull CustomTemplateCallback callback, @Nullable TemplateInvokationListener listener) {
     List<MyToken> tokens = parse(key, callback);
     assert tokens != null;
     MyInterpreter interpreter = new MyInterpreter(tokens, callback, MyState.WORD, listener);
@@ -380,7 +418,7 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
     return null;
   }
 
-  private static boolean hasClosingTag(CharSequence text, CharSequence tagName, int offset, int rightBound) {
+  /*private static boolean hasClosingTag(CharSequence text, CharSequence tagName, int offset, int rightBound) {
     if (offset + 1 < text.length() && text.charAt(offset) == '<' && text.charAt(offset + 1) == '/') {
       CharSequence closingTagName = parseTagName(text, offset + 2, rightBound);
       if (tagName.equals(closingTagName)) {
@@ -388,7 +426,7 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
       }
     }
     return false;
-  }
+  }*/
 
   @Nullable
   private static CharSequence getPrecedingTagName(CharSequence text, int index, int leftBound) {
@@ -428,7 +466,7 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
     private final CustomTemplateCallback myCallback;
     private final TemplateInvokationListener myListener;
     private MyState myState;
-    private int myEndOffset = -1;
+    private RangeMarker myEndOffsetMarker = null;
 
     private MyInterpreter(List<MyToken> tokens,
                           CustomTemplateCallback callback,
@@ -441,15 +479,16 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
     }
 
     private void fixEndOffset() {
-      if (myEndOffset < 0) {
-        myEndOffset = myCallback.getOffset();
+      if (myEndOffsetMarker == null) {
+        int offset = myCallback.getOffset();
+        myEndOffsetMarker = myCallback.getEditor().getDocument().createRangeMarker(offset, offset);
       }
     }
 
     private void finish(boolean inSeparateEvent) {
       Editor editor = myCallback.getEditor();
-      if (myEndOffset >= 0) {
-        editor.getCaretModel().moveToOffset(myEndOffset);
+      if (myEndOffsetMarker != null) {
+        editor.getCaretModel().moveToOffset(myEndOffsetMarker.getStartOffset());
       }
       editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
       if (myListener != null) {
@@ -466,15 +505,15 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
       CharSequence text = document.getCharsSequence();
       CharSequence tagName = getPrecedingTagName(text, offset, startOfTemplate);
       if (tagName != null) {
-        if (!hasClosingTag(text, tagName, offset, endOfTemplate)) {
+        /*if (!hasClosingTag(text, tagName, offset, endOfTemplate)) {
           document.insertString(offset, "</" + tagName + '>');
-        }
+        }*/
       }
       else if (offset != endOfTemplate) {
         tagName = getPrecedingTagName(text, endOfTemplate, startOfTemplate);
         if (tagName != null) {
-          fixEndOffset();
-          document.insertString(endOfTemplate, "</" + tagName + '>');
+          /*fixEndOffset();
+          document.insertString(endOfTemplate, "</" + tagName + '>');*/
           editor.getCaretModel().moveToOffset(endOfTemplate);
         }
       }
@@ -498,7 +537,9 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
                   TemplateInvokationListener listener = new TemplateInvokationListener() {
                     public void finished(boolean inSeparateEvent) {
                       myState = MyState.WORD;
-                      fixEndOffset();
+                      if (myCallback.getOffset() != myCallback.getEndOfTemplate(key)) {
+                        fixEndOffset();
+                      }
                       if (sign == '+') {
                         myCallback.gotoEndOfTemplate(key);
                       }
@@ -605,7 +646,9 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
         TemplateInvokationListener listener = new TemplateInvokationListener() {
           public void finished(boolean inSeparateEvent) {
             myState = MyState.WORD;
-            fixEndOffset();
+            if (myCallback.getOffset() != myCallback.getEndOfTemplate(key)) {
+              fixEndOffset();
+            }
             myCallback.gotoEndOfTemplate(key);
             if (inSeparateEvent) {
               if (finalI + 1 < count) {
@@ -638,7 +681,9 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
             gotoChild(key);
             MyInterpreter interpreter = new MyInterpreter(myTokens, myCallback, MyState.WORD, new TemplateInvokationListener() {
               public void finished(boolean inSeparateEvent) {
-                fixEndOffset();
+                if (myCallback.getOffset() != myCallback.getEndOfTemplate(key)) {
+                  fixEndOffset();
+                }
                 myCallback.gotoEndOfTemplate(key);
                 if (inSeparateEvent) {
                   invokeTemplateAndProcessTail(templateToken, finalI + 1, count, tailStart);

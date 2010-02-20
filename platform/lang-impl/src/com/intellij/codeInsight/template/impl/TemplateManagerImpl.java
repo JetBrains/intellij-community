@@ -220,47 +220,19 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     }
   }
 
-  private static String getCurrentLineBeforeCaret(@NotNull Editor editor) {
-    CaretModel caretModel = editor.getCaretModel();
-    int line = caretModel.getLogicalPosition().line;
-    int lineStart = editor.getDocument().getLineStartOffset(line);
-    int offset = caretModel.getOffset();
-    String s = editor.getDocument().getCharsSequence().subSequence(lineStart, offset).toString();
-    int index = 0;
-    while (index < s.length() && Character.isWhitespace(s.charAt(index))) {
-      index++;
-    }
-    return index < s.length() ? s.substring(index) : s;
-  }
-
-  @NotNull
-  private static String normalize(@NotNull String key) {
-    int lastWhitespaceIndex = -1;
-    for (int i = 0; i < key.length(); i++) {
-      if (Character.isWhitespace(key.charAt(i))) {
-        lastWhitespaceIndex = i;
-      }
-    }
-    if (lastWhitespaceIndex >= 0 && lastWhitespaceIndex < key.length() - 1) {
-      return key.substring(lastWhitespaceIndex + 1);
-    }
-    return key;
-  }
-
   public boolean startTemplate(final Editor editor, char shortcutChar, final PairProcessor<String, String> processor) {
     PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, myProject);
     if (file == null) return false;
     TemplateSettings templateSettings = TemplateSettings.getInstance();
     if (shortcutChar == templateSettings.getDefaultShortcutChar()) {
       for (final CustomLiveTemplate customLiveTemplate : CustomLiveTemplate.EP_NAME.getExtensions()) {
-        final String currentLineBeforeCaret = normalize(getCurrentLineBeforeCaret(editor));
         final CustomTemplateCallback callback = new CustomTemplateCallback(editor, file);
-        if (customLiveTemplate.isApplicable(currentLineBeforeCaret, callback)) {
-          int offset = editor.getCaretModel().getOffset();
-          final int startOffset = offset - currentLineBeforeCaret.length();
-          editor.getDocument().deleteString(startOffset, offset);
+        String key = customLiveTemplate.computeTemplateKey(callback);
+        if (key != null) {
+          int offset = callback.getEditor().getCaretModel().getOffset();
+          callback.getEditor().getDocument().deleteString(offset - key.length(), offset);
           callback.fixInitialEditorState();
-          customLiveTemplate.execute(currentLineBeforeCaret, callback, null);
+          customLiveTemplate.execute(key, callback, null);
           return true;
         }
       }
