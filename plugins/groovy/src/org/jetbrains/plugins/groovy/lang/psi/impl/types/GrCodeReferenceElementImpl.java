@@ -16,13 +16,15 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementFactory;
+import com.intellij.codeInsight.lookup.MutableLookupElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
@@ -120,10 +122,6 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
   }
 
   private ReferenceKind getKind(boolean forCompletion) {
-    if (isClassReferenceForNew()) {
-      return CLASS_OR_PACKAGE;
-    }
-
     PsiElement parent = getParent();
     if (parent instanceof GrCodeReferenceElement) {
       ReferenceKind parentKind = ((GrCodeReferenceElementImpl) parent).getKind(forCompletion);
@@ -199,7 +197,11 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
 
   @NotNull
   public Object[] getVariants() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    if (isClassReferenceForNew()) {
+      return getVariantsForNewExpression();
+    }
+
+    return getVariantsImpl(getKind(true));
   }
 
   private boolean isClassReferenceForNew() {
@@ -208,7 +210,30 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
     return parent instanceof GrNewExpression;
   }
 
-  private void processVariantsImpl(ReferenceKind kind, Consumer<Object> consumer) {
+  private Object[] getVariantsForNewExpression() {
+    final Object[] classVariants = getVariantsImpl(CLASS_OR_PACKAGE);
+    List<Object> result = new ArrayList<Object>();
+    for (Object variant : classVariants) {
+      if (variant instanceof PsiClass) {
+        final PsiClass clazz = (PsiClass) variant;
+        final MutableLookupElement<PsiClass> lookupElement = LookupElementFactory.getInstance().createLookupElement(clazz);
+        result.add(GroovyCompletionUtil.setTailTypeForConstructor(clazz, lookupElement));
+      } else if (variant instanceof LookupElement) {
+        final LookupElement lookupElement = (LookupElement) variant;
+        final Object obj = lookupElement.getObject();
+        if (obj instanceof PsiClass) {
+          result.add(GroovyCompletionUtil.setTailTypeForConstructor((PsiClass) obj, lookupElement));
+        } else {
+          result.add(lookupElement);
+        }
+      } else {
+        result.add(variant);
+      }
+    }
+    return ArrayUtil.toObjectArray(result);
+  }
+
+  private Object[] getVariantsImpl(ReferenceKind kind) {
     switch (kind) {
       case STATIC_MEMBER_FQ: {
         final GrCodeReferenceElement qualifier = getQualifier();
@@ -216,19 +241,21 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
           final PsiElement resolve = qualifier.resolve();
           if (resolve instanceof PsiClass) {
             final PsiClass clazz = (PsiClass) resolve;
+            List<PsiElement> result = new ArrayList<PsiElement>();
 
             for (PsiField field : clazz.getFields()) {
               if (field.hasModifierProperty(PsiModifier.STATIC)) {
-                consumer.consume(field);
+                result.add(field);
               }
             }
 
             for (PsiMethod method : clazz.getMethods()) {
               if (method.hasModifierProperty(PsiModifier.STATIC)) {
-                consumer.consume(method);
+                result.add(method);
               }
             }
-            return;
+
+            return result.toArray(new PsiElement[result.size()]);
           }
         }
       }
@@ -244,26 +271,17 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
         if (parentPackage != null) {
           final GlobalSearchScope scope = getResolveScope();
           if (kind == PACKAGE_FQ) {
-            for (PsiPackage aPackage : parentPackage.getSubPackages(scope)) {
-              consumer.consume(aPackage);
-            }
-            return;
+            return parentPackage.getSubPackages(scope);
           } else {
             if (kind == CLASS_FQ) {
-              for (PsiClass aClass : parentPackage.getClasses(scope)) {
-                consumer.consume(aClass);
-              }
-              return;
+              return parentPackage.getClasses(scope);
             } else {
               final PsiPackage[] subpackages = parentPackage.getSubPackages(scope);
               final PsiClass[] classes = parentPackage.getClasses(scope);
-              for (PsiPackage aPackage : subpackages) {
-                consumer.consume(aPackage);
-              }
-              for (PsiClass aClass : classes) {
-                consumer.consume(aClass);
-              }
-              return;
+              PsiElement[] result = new PsiElement[subpackages.length + classes.length];
+              System.arraycopy(subpackages, 0, result, 0, subpackages.length);
+              System.arraycopy(classes, 0, result, subpackages.length, classes.length);
+              return result;
             }
           }
         }
@@ -278,31 +296,21 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
           if (qualifierResolved instanceof PsiPackage) {
             PsiPackage aPackage = (PsiPackage) qualifierResolved;
             PsiClass[] classes = aPackage.getClasses(getResolveScope());
-
-            for (PsiClass aClass : classes) {
-              consumer.consume(aClass);
-            }
-            if (kind == CLASS) return;
-
+            if (kind == CLASS) return classes;
             PsiPackage[] subpackages = aPackage.getSubPackages();
-            for (PsiPackage subpackage : subpackages) {
-              consumer.consume(subpackage);
-            }
+            return ArrayUtil.mergeArrays(classes, subpackages, Object.class);
           } else if (qualifierResolved instanceof PsiClass) {
-            for (PsiClass aClass : ((PsiClass)qualifierResolved).getInnerClasses()) {
-              consumer.consume(aClass);
-            }
+            return ((PsiClass) qualifierResolved).getInnerClasses();
           }
         } else {
-          ResolverProcessor classProcessor = CompletionProcessor.createClassCompletionProcessor(this);
-          ResolveUtil.treeWalkUp(this, classProcessor, false);
-
-          for (Object o : GroovyCompletionUtil.getCompletionVariants(classProcessor.getCandidates())) {
-            consumer.consume(o);
-          }
+          ResolverProcessor processor = CompletionProcessor.createClassCompletionProcessor(this);
+          ResolveUtil.treeWalkUp(this, processor, false);
+          return GroovyCompletionUtil.getCompletionVariants(processor.getCandidates());
         }
       }
     }
+
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   public boolean isSoft() {
@@ -480,9 +488,5 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
     }
 
     return (GroovyResolveResult[])results;
-  }
-
-  public void processVariants(Consumer<Object> consumer) {
-    processVariantsImpl(getKind(true), consumer);
   }
 }
