@@ -1,5 +1,8 @@
 package com.jetbrains.python.actions;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.template.TemplateBuilder;
+import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.Language;
@@ -65,13 +68,26 @@ public class AddFieldQuickFix implements LocalQuickFix {
     PyClass cls = myQualifierClass;
     String item_name = myIdentifier;
     if (cls != null) {
-      if (addFieldToInit(project, cls, item_name, new CreateFieldCallback(project, item_name))) return;
+      PsiElement initStatement = addFieldToInit(project, cls, item_name, new CreateFieldCallback(project, item_name));
+      if (initStatement != null) {
+        showTemplateBuilder(initStatement);
+        return;
+      }
     }
     // somehow we failed. tell about this
     PyUtil.showBalloon(project, PyBundle.message("QFIX.failed.to.add.field"), MessageType.ERROR);
   }
 
-  public static boolean addFieldToInit(Project project, PyClass cls, String item_name, FieldCallback callback) {
+  private static void showTemplateBuilder(PsiElement initStatement) {
+    initStatement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(initStatement);
+    if (initStatement instanceof PyAssignmentStatement) {
+      final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(initStatement);
+      builder.replaceElement(((PyAssignmentStatement) initStatement).getAssignedValue(), "None");
+      builder.run();
+    }
+  }
+
+  public static PsiElement addFieldToInit(Project project, PyClass cls, String item_name, FieldCallback callback) {
     if (cls != null && item_name != null) {
       PyFunction init = cls.findMethodByName(PyNames.INIT, false);
       Language language = cls.getLanguage();
@@ -80,8 +96,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
         PyElementGenerator generator = pythonLanguage.getElementGenerator();
         callback.setGenerator(generator);
         if (init != null) {
-          appendToInit(init, callback);
-          return true;
+          return appendToInit(init, callback);
         }
         else { // no init! boldly copy ancestor's.
           for (PyClass ancestor : cls.iterateAncestors()) {
@@ -97,15 +112,15 @@ public class AddFieldQuickFix implements LocalQuickFix {
           PyFunction[] meths = cls.getMethods();
           if (meths.length > 0) add_anchor = meths[0].getPrevSibling();
           PyStatementList cls_content = cls.getStatementList();
-          cls_content.addAfter(new_init, add_anchor);
+          new_init = (PyFunction) cls_content.addAfter(new_init, add_anchor);
 
           PyUtil.showBalloon(project, PyBundle.message("QFIX.added.constructor.$0.for.field.$1", cls.getName(), item_name), MessageType.INFO);
-          return true;
+          return new_init.getStatementList().getStatements()[0];
           //else  // well, that can't be
         }
       }
     }
-    return false;
+    return null;
   }
 
   private static PyFunction createInitMethod(Project project, PyClass cls, @Nullable PyFunction ancestorInit, PyElementGenerator generator) {
