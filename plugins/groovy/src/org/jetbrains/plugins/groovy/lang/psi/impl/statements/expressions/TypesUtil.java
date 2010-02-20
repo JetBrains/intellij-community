@@ -211,19 +211,15 @@ public class TypesUtil {
   }
 
   public static boolean isAssignable(PsiType lType, PsiType rType, PsiManager manager, GlobalSearchScope scope) {
+    if (isAssignableByMethodCallConversion(lType, rType, manager, scope)){
+      return true;
+    }
     //all numeric types are assignable
     if (isNumericType(lType)) {
       return isNumericType(rType) || rType.equals(PsiType.NULL);
     }
-    if (rType instanceof GrTupleType) {
-      final GrTupleType tuple = (GrTupleType)rType;
-      if (tuple.getComponentTypes().length == 0) {
-        if (lType instanceof PsiArrayType ||
-            InheritanceUtil.isInheritor(lType, JAVA_UTIL_LIST) ||
-            InheritanceUtil.isInheritor(lType, JAVA_UTIL_SET)) {
-          return true;
-        }
-      }
+    else if (lType.equalsToText(JAVA_LANG_STRING)) {
+      return true;
     }
 
     rType = boxPrimitiveType(rType, manager, scope);
