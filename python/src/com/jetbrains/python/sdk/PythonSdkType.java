@@ -230,7 +230,8 @@ public class PythonSdkType extends SdkType {
    */
   @NonNls
   private static boolean isPythonSdkHome(final String path) {
-    return FileUtil.getNameWithoutExtension(new File(path)).toLowerCase().startsWith("python");
+    File file = new File(path);
+    return file.isFile() && FileUtil.getNameWithoutExtension(file).toLowerCase().startsWith("python");
   }
 
   /**
@@ -240,7 +241,8 @@ public class PythonSdkType extends SdkType {
    * @return true if paths points to a valid home.
    */
   private static boolean isJythonSdkHome(final String path) {
-    return FileUtil.getNameWithoutExtension(new File(path)).toLowerCase().startsWith("jython");
+    File file = new File(path);
+    return file.isFile() && FileUtil.getNameWithoutExtension(file).toLowerCase().startsWith("jython");
   }
 
   /**
@@ -399,27 +401,26 @@ public class PythonSdkType extends SdkType {
   public SdkAdditionalData loadAdditionalData(final Sdk currentSdk, final Element additional) {
     // try to upgrade from previous version(s)
     String sdk_path = currentSdk.getHomePath();
-    boolean sdk_updated = false;
     if (sdk_path != null) {
       // in versions up to 94.239, path points to lib dir; later it points to the interpreter itself
       if (! isValidSdkHome(sdk_path)) {
         if (SystemInfo.isWindows) {
-          sdk_updated = switchPathToInterpreter(currentSdk, "python.exe", "jython.bat"); // can't be in the same dir, safe to try
+          switchPathToInterpreter(currentSdk, "python.exe", "jython.bat"); // can't be in the same dir, safe to try
         }
         else if (SystemInfo.isMac) {
           // NOTE: not sure about jython
-          sdk_updated = switchPathToInterpreter(currentSdk, "bin/python", "bin/jython", "jython"); // can't be in the same dir, safe to try
+          switchPathToInterpreter(currentSdk, "bin/python", "bin/jython", "jython"); // can't be in the same dir, safe to try
         }
         else if (SystemInfo.isUnix) {
           String sdk_name = currentSdk.getName().toLowerCase();
           if (sdk_name.contains("jython")) {
             // NOTE: can't distinguish different installations in /usr/bin
-            sdk_updated = switchPathToInterpreter(currentSdk, "jython", "/usr/bin/jython", "/usr/local/bin/jython");
+            switchPathToInterpreter(currentSdk, "jython", "/usr/bin/jython", "/usr/local/bin/jython");
           }
           else if (sdk_name.contains("python")) {
             String sdk_home = new File(sdk_path).getName().toLowerCase(); // usually /usr/blahblah/pythonX.Y
             String version = sdk_home.substring("python".length());
-            sdk_updated = switchPathToInterpreter(currentSdk, "python"+version, "/usr/bin/python"+version, "/usr/local/bin/python"+version);
+            switchPathToInterpreter(currentSdk, "python"+version, "/usr/bin/python"+version, "/usr/local/bin/python"+version);
           }
         }
       }
