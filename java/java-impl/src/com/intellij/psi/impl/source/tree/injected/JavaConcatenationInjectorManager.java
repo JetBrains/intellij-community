@@ -150,6 +150,7 @@ public class JavaConcatenationInjectorManager implements ProjectComponent, Modif
   }
 
   private static final Key<ParameterizedCachedValue<Places, PsiElement>> INJECTED_PSI_IN_CONCATENATION = Key.create("INJECTED_PSI_IN_CONCATENATION");
+  private final Concatenation2InjectorAdapter myConcatenation2InjectorAdapter = new Concatenation2InjectorAdapter();
   private class Concatenation2InjectorAdapter implements MultiHostInjector {
     public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
       if (myConcatenationInjectors.isEmpty()) return;
@@ -206,9 +207,8 @@ public class JavaConcatenationInjectorManager implements ProjectComponent, Modif
       }
     }
     else {
-      MultiHostInjector adapter = new Concatenation2InjectorAdapter();
-      if (myRegisteredConcatenationAdapter.compareAndSet(null, adapter)) {
-        myInjectedLanguageManager.registerMultiHostInjector(adapter);
+      if (myRegisteredConcatenationAdapter.compareAndSet(null, myConcatenation2InjectorAdapter)) {
+        myInjectedLanguageManager.registerMultiHostInjector(myConcatenation2InjectorAdapter);
       }
     }
   }

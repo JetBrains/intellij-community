@@ -26,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.lang.TitledHandler;
 import com.intellij.refactoring.util.RadioUpDownListener;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,7 +81,7 @@ public class RenameHandlerRegistry {
     }
     if (availableHandlers.size() == 1) return availableHandlers.values().iterator().next();
     if (availableHandlers.size() > 1) {
-      final String[] strings = availableHandlers.keySet().toArray(new String[availableHandlers.keySet().size()]);
+      final String[] strings = ArrayUtil.toStringArray(availableHandlers.keySet());
       final HandlersChooser chooser = new HandlersChooser(PlatformDataKeys.PROJECT.getData(dataContext), strings);
       chooser.show();
       if (chooser.isOK()) {

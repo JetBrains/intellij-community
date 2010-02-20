@@ -59,6 +59,11 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
     return null;
   }
 
+  @Override
+  public Rectangle getScreenBounds(@NotNull Project project) {
+    return null;
+  }
+
   public void setWindowMask(final Window window, final Shape mask) {
   }
 

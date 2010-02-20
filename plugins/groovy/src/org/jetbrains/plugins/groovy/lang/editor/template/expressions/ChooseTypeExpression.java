@@ -53,9 +53,9 @@ public class ChooseTypeExpression extends Expression {
 
     for (TypeConstraint constraint : constraints) {
       if (constraint instanceof TypeEquals) {
-        result.add(PsiTypeLookupItem.createLookupItem(constraint.getType()));
+        result.add(PsiTypeLookupItem.createLookupItem(constraint.getType(), null));
       } else if (constraint instanceof SubtypeConstraint) {
-        result.add(PsiTypeLookupItem.createLookupItem(constraint.getDefaultType()));
+        result.add(PsiTypeLookupItem.createLookupItem(constraint.getDefaultType(), null));
       } else if (constraint instanceof SupertypeConstraint) {
         processSupertypes(constraint.getType(), result);
       }
@@ -72,7 +72,7 @@ public class ChooseTypeExpression extends Expression {
     if (unboxed != null && !unboxed.equals(text)) {
       result.add(LookupElementBuilder.create(unboxed).setBold());
     } else {
-      result.add(PsiTypeLookupItem.createLookupItem(type));
+      result.add(PsiTypeLookupItem.createLookupItem(type, null));
     }
     PsiType[] superTypes = type.getSuperTypes();
     for (PsiType superType : superTypes) {

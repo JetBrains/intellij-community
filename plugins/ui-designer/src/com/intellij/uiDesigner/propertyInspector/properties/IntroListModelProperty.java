@@ -25,6 +25,7 @@ import com.intellij.uiDesigner.propertyInspector.editors.ListModelEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.snapShooter.SnapshotContext;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,7 +70,7 @@ public class IntroListModelProperty extends IntrospectedProperty<String[]> {
   @Override public String[] getValue(final RadComponent component) {
     final String[] strings = (String[])component.getDelegee().getClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName());
     if (strings == null) {
-      return new String[0];
+      return ArrayUtil.EMPTY_STRING_ARRAY;
     }
     return strings;
   }

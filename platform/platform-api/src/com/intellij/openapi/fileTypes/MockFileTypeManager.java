@@ -20,6 +20,7 @@
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -64,7 +65,7 @@ class MockFileTypeManager extends FileTypeManager {
   @NotNull
   @Override
   public String[] getAssociatedExtensions(@NotNull FileType type) {
-    return new String[0];
+    return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
   @NotNull
@@ -108,5 +109,9 @@ class MockFileTypeManager extends FileTypeManager {
   @Override
   public FileType getStdFileType(@NotNull @NonNls String fileTypeName) {
     return MockLanguageFileType.INSTANCE;
+  }
+
+  public boolean isFileOfType(VirtualFile file, FileType type) {
+    return false;
   }
 }

@@ -293,6 +293,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   void checkResult(final String text) throws IOException;
 
+  void checkResult(final String text, boolean stripTrailingSpaces) throws IOException;
+
   Document getDocument(PsiFile file);
 
   void setFileContext(@Nullable PsiElement context);
@@ -325,4 +327,6 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   void renameElement(PsiElement element, String newName) throws Exception;
 
   void allowTreeAccessForFile(VirtualFile file);
+
+  void allowTreeAccessForAllFiles();
 }

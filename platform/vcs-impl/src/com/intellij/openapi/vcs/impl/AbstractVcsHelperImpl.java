@@ -16,11 +16,12 @@
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.ide.actions.CloseTabToolbarAction;
-import com.intellij.ide.errorTreeView.HotfixData;
 import com.intellij.ide.errorTreeView.ErrorTreeElementKind;
+import com.intellij.ide.errorTreeView.HotfixData;
 import com.intellij.ide.errorTreeView.SimpleErrorData;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
@@ -29,18 +30,20 @@ import com.intellij.openapi.diff.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.Annotater;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
+import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.*;
 import com.intellij.openapi.vcs.changes.ui.*;
@@ -61,6 +64,8 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.MessageView;
+import com.intellij.util.AsynchConsumer;
+import com.intellij.util.BufferedListConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.ContentsUtil;
 import com.intellij.util.ui.ConfirmationDialog;
@@ -394,7 +399,21 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   public void showChangesBrowser(List<CommittedChangeList> changelists, @Nls String title) {
-    showChangesBrowser(new CommittedChangesTableModel(changelists), title, false, null);
+    showChangesBrowser(new CommittedChangesTableModel(changelists, false), title, false, null);
+  }
+
+  private ChangesBrowserDialog createChangesBrowserDialog(CommittedChangesTableModel changelists,
+                                  String title,
+                                  boolean showSearchAgain,
+                                  @Nullable final Component parent) {
+    final ChangesBrowserDialog.Mode mode = showSearchAgain ? ChangesBrowserDialog.Mode.Browse : ChangesBrowserDialog.Mode.Simple;
+    final ChangesBrowserDialog dlg = parent != null
+                                     ? new ChangesBrowserDialog(myProject, parent, changelists, mode)
+                                     : new ChangesBrowserDialog(myProject, changelists, mode);
+    if (title != null) {
+      dlg.setTitle(title);
+    }
+    return dlg;
   }
 
   private void showChangesBrowser(CommittedChangesTableModel changelists,
@@ -454,42 +473,33 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       if (myProject.isDefault() || (ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss().length == 0) ||
           (! ModalityState.NON_MODAL.equals(ModalityState.current()))) {
         final List<CommittedChangeList> versions = new ArrayList<CommittedChangeList>();
-        final List<VcsException> exceptions = new ArrayList<VcsException>();
-        final Ref<CommittedChangesTableModel> tableModelRef = new Ref<CommittedChangesTableModel>();
 
-        final ChangeBrowserSettings settings1 = settings;
-        final boolean done = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-          public void run() {
-            try {
-              versions.addAll(provider.getCommittedChanges(settings1, location, 0));
-            }
-            catch (VcsException e) {
-              exceptions.add(e);
-            }
-            tableModelRef.set(new CommittedChangesTableModel(versions, provider.getColumns()));
-          }
-        }, VcsBundle.message("browse.changes.progress.title"), true, myProject);
+        if (parent == null || !parent.isValid()) {
+          parent = WindowManager.getInstance().suggestParentWindow(myProject);
+        }
+        final CommittedChangesTableModel model = new CommittedChangesTableModel(versions, true);
+        final ChangesBrowserDialog dlg = createChangesBrowserDialog(model, title, filterUI != null, parent);
 
-        if (!done) return;
+        final AsynchronousListsLoader task = new AsynchronousListsLoader(myProject, provider, location, settings, dlg);
+        ProgressManager.getInstance().run(task);
+        dlg.show();
+        dlg.startLoading();
+        task.cancel();
 
-        if (!exceptions.isEmpty()) {
+        final List<VcsException> exceptions = task.getExceptions();
+        if (! exceptions.isEmpty()) {
           Messages.showErrorDialog(myProject, VcsBundle.message("browse.changes.error.message", exceptions.get(0).getMessage()),
                                    VcsBundle.message("browse.changes.error.title"));
           return;
         }
 
-        if (versions.isEmpty()) {
+        if (! task.isRevisionsReturned()) {
           Messages.showInfoMessage(myProject, VcsBundle.message("browse.changes.nothing.found"),
                                    VcsBundle.message("browse.changes.nothing.found.title"));
-          return;
         }
-
-        if (parent == null || !parent.isValid()) {
-          parent = WindowManager.getInstance().suggestParentWindow(myProject);
-        }
-        showChangesBrowser(tableModelRef.get(), title, filterUI != null, parent);
       }
       else {
+        // todo
         openCommittedChangesTab(provider, location, settings, 0, title);
       }
     }
@@ -506,7 +516,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       return null;
     }
     final ChangesBrowserDialog dlg = new ChangesBrowserDialog(myProject, new CommittedChangesTableModel((List<CommittedChangeList>)changes,
-                                                                                                        provider.getColumns()),
+                                                                                                        provider.getColumns(), false),
                                                                          ChangesBrowserDialog.Mode.Choose);
     dlg.show();
     if (dlg.isOK()) {
@@ -590,4 +600,75 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     }
   }
 
+  private static class AsynchronousListsLoader extends Task.Backgroundable {
+    private final CommittedChangesProvider myProvider;
+    private final RepositoryLocation myLocation;
+    private final ChangeBrowserSettings mySettings;
+    private final ChangesBrowserDialog myDlg;
+    private final List<VcsException> myExceptions;
+    private volatile boolean myCanceled;
+    private boolean myRevisionsReturned;
+
+    private AsynchronousListsLoader(@Nullable Project project, final CommittedChangesProvider provider,
+                                    final RepositoryLocation location, final ChangeBrowserSettings settings, final ChangesBrowserDialog dlg) {
+      super(project, VcsBundle.message("browse.changes.progress.title"), true, BackgroundFromStartOption.getInstance());
+      myProvider = provider;
+      myLocation = location;
+      mySettings = settings;
+      myDlg = dlg;
+      myExceptions = new LinkedList<VcsException>();
+    }
+
+    public void cancel() {
+      myCanceled = true;
+    }
+
+    @Override
+    public void run(@NotNull final ProgressIndicator indicator) {
+      final AsynchConsumer<List<CommittedChangeList>> appender = myDlg.getAppender();
+      final BufferedListConsumer<CommittedChangeList> bufferedListConsumer = new BufferedListConsumer<CommittedChangeList>(10, appender);
+
+      final Application application = ApplicationManager.getApplication();
+      try {
+        myProvider.loadCommittedChanges(mySettings, myLocation, 0, new AsynchConsumer<CommittedChangeList>() {
+          public void consume(CommittedChangeList committedChangeList) {
+            myRevisionsReturned = true;
+            bufferedListConsumer.consumeOne(committedChangeList);
+            if (myCanceled) {
+              indicator.cancel();
+            }
+          }
+
+          public void finished() {
+            bufferedListConsumer.flush();
+            appender.finished();
+
+            if (! myRevisionsReturned) {
+              application.invokeLater(new Runnable() {
+                public void run() {
+                  myDlg.close(-1);
+                }
+              }, ModalityState.stateForComponent(myDlg.getWindow()));
+            }
+          }
+        });
+      }
+      catch (VcsException e) {
+        myExceptions.add(e);
+        application.invokeLater(new Runnable() {
+          public void run() {
+            myDlg.close(-1);
+          }
+        }, ModalityState.stateForComponent(myDlg.getWindow()));
+      }
+    }
+
+    public List<VcsException> getExceptions() {
+      return myExceptions;
+    }
+
+    public boolean isRevisionsReturned() {
+      return myRevisionsReturned;
+    }
+  }
 }

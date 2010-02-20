@@ -48,7 +48,7 @@ public class DescindingFilesFilter {
         result.add(root);
         continue;
       }
-      if (pathsFilter != null && (! pathsFilter.convert(new Pair<FilePath, AbstractVcs>(root, vcs)))) continue;
+      //if (pathsFilter != null && (! pathsFilter.convert(new Pair<FilePath, AbstractVcs>(root, vcs)))) continue;
       
       final List<FilePath> chain = chains.get(vcs.getKeyInstanceMethod());
       if (chain == null) {

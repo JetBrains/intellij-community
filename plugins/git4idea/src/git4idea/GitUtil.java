@@ -654,9 +654,10 @@ public class GitUtil {
     return getPossibleBase(file, n - 1, path);
   }
 
-  public static List<CommittedChangeList> getLocalCommittedChanges(final Project project,
+  public static void getLocalCommittedChanges(final Project project,
                                                                    final VirtualFile root,
-                                                                   final Consumer<GitSimpleHandler> parametersSpecifier)
+                                                                   final Consumer<GitSimpleHandler> parametersSpecifier,
+                                                                   final Consumer<CommittedChangeList> consumer)
     throws VcsException {
     final List<CommittedChangeList> rc = new ArrayList<CommittedChangeList>();
 
@@ -670,11 +671,25 @@ public class GitUtil {
     StringScanner s = new StringScanner(output);
     while (s.hasMoreData() && s.startsWith('\u000C')) {
       s.nextLine();
-      rc.add(GitChangeUtils.parseChangeList(project, root, s));
+      consumer.consume(GitChangeUtils.parseChangeList(project, root, s));
     }
     if (s.hasMoreData()) {
       throw new IllegalStateException("More input is avaialble: " + s.line());
     }
+  }
+
+  public static List<CommittedChangeList> getLocalCommittedChanges(final Project project,
+                                                                   final VirtualFile root,
+                                                                   final Consumer<GitSimpleHandler> parametersSpecifier)
+    throws VcsException {
+    final List<CommittedChangeList> rc = new ArrayList<CommittedChangeList>();
+
+    getLocalCommittedChanges(project, root, parametersSpecifier, new Consumer<CommittedChangeList>() {
+      public void consume(CommittedChangeList committedChangeList) {
+        rc.add(committedChangeList);
+      }
+    });
+
     return rc;
   }
 

@@ -32,6 +32,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
@@ -174,7 +175,7 @@ public class ShowFilePathAction extends AnAction {
       try {
         File parent = ioFile.getParentFile();
         if (parent != null) {
-          Runtime.getRuntime().exec(cmd + " " + path, new String[0], parent);
+          Runtime.getRuntime().exec(cmd + " " + path, ArrayUtil.EMPTY_STRING_ARRAY, parent);
         } else {
           Runtime.getRuntime().exec(cmd + " " + path);
         }

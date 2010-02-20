@@ -425,11 +425,11 @@ public class I18nInspection extends BaseLocalInspectionTool {
           fixes.add(createIntroduceConstantFix(expression));
         }
 
-        final PsiManager manager = expression.getManager();
-        if (PsiUtil.getLanguageLevel(expression).hasEnumKeywordAndAutoboxing() &&
-            JavaPsiFacade.getInstance(manager.getProject()).findClass(AnnotationUtil.NON_NLS, expression.getResolveScope()) != null) {
-          for(PsiModifierListOwner element: nonNlsTargets) {
-            if (!AnnotationUtil.isAnnotated(element, AnnotationUtil.NLS, true)) {
+        final JavaPsiFacade facade = JavaPsiFacade.getInstance(expression.getManager().getProject());
+        if (PsiUtil.getLanguageLevel(expression).hasEnumKeywordAndAutoboxing()) {
+          for (PsiModifierListOwner element : nonNlsTargets) {
+            if (!AnnotationUtil.isAnnotated(element, AnnotationUtil.NLS, true) &&
+                facade.findClass(AnnotationUtil.NON_NLS, element.getResolveScope()) != null) {
               fixes.add(new AddAnnotationFix(AnnotationUtil.NON_NLS, element));
             }
           }

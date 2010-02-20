@@ -839,7 +839,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
 
   private static void assertActionIsGroupOrStub(final AnAction action) {
     if (!(action instanceof ActionGroup || action instanceof ActionStub)) {
-      LOG.assertTrue(false, "Action : "+action + "; class: "+action.getClass());
+      LOG.error("Action : " + action + "; class: " + action.getClass());
     }
   }
 
@@ -1030,6 +1030,21 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
   }
 
+  @Override
+  public KeyboardShortcut getKeyboardShortcut(@NotNull String actionId) {
+    AnAction action = ActionManager.getInstance().getAction(actionId);
+    final ShortcutSet shortcutSet = action.getShortcutSet();
+    final Shortcut[] shortcuts = shortcutSet.getShortcuts();
+    for (final Shortcut shortcut : shortcuts) {
+      KeyboardShortcut kb = (KeyboardShortcut)shortcut;
+      if (kb.getSecondKeyStroke() == null) {
+        return (KeyboardShortcut)shortcut;
+      }
+    }
+
+    return null;
+  }
+
   public void fireBeforeEditorTyping(char c, DataContext dataContext) {
     myLastTimeEditorWasTypedIn = System.currentTimeMillis();
     AnActionListener[] listeners = getActionListeners();
@@ -1130,10 +1145,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
 
     public void removeTimerListener(TimerListener listener){
-      final boolean removed = myTimerListeners.remove(listener);
-      if (!removed) {
-        LOG.assertTrue(false, "Unknown listener " + listener);
-      }
+      myTimerListeners.remove(listener);
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -1148,10 +1160,16 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
         return;
       }
 
-      TimerListener[] listeners = myTimerListeners.toArray(new TimerListener[myTimerListeners.size()]);
-      for (TimerListener listener : listeners) {
-        runListenerAction(listener);
-      }
+      final TimerListener[] listeners = myTimerListeners.toArray(new TimerListener[myTimerListeners.size()]);
+      IdeFocusManager.getInstance(null).doWhenFocusSettlesDown(new Runnable() {
+        public void run() {
+          for (TimerListener listener : listeners) {
+            if (myTimerListeners.contains(listener)) {
+              runListenerAction(listener);
+            }
+          }
+        }
+      });
     }
 
     private void runListenerAction(final TimerListener listener) {

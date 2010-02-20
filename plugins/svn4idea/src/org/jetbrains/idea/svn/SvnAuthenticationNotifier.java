@@ -128,7 +128,13 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
   public ThreeState isAuthenticatedFor(final VirtualFile vf) {
     final WorkingCopy wcCopy = myRootsToWorkingCopies.getWcRoot(vf);
     if (wcCopy == null) return ThreeState.UNSURE;
-    return getStateFor(wcCopy.getUrl()) ? ThreeState.NO : ThreeState.YES;
+
+    // check there's no cancellation yet
+    final boolean haveCancellation = getStateFor(wcCopy.getUrl());
+    if (! haveCancellation) return ThreeState.NO;
+
+    // check have credentials
+    return passiveValidation(myVcs.getProject(), wcCopy.getUrl()) ? ThreeState.YES : ThreeState.NO;
   }
 
   @NotNull
@@ -196,11 +202,10 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     LOG.debug(s);
   }
 
-  public static boolean passiveValidation(final Project project, final SVNURL url, final boolean checkWrite,
-                                          final String realm, final String kind) {
+  public static boolean passiveValidation(final Project project, final SVNURL url) {
     final SvnConfiguration configuration = SvnConfiguration.getInstance(project);
     final ISVNAuthenticationManager passiveManager = configuration.getPassiveAuthenticationManager();
-    return validationImpl(project, url, configuration, passiveManager, checkWrite, realm, kind);
+    return validationImpl(project, url, configuration, passiveManager, false, null, null);
   }
 
   public static boolean interactiveValidation(final Project project, final SVNURL url, final String realm, final String kind) {

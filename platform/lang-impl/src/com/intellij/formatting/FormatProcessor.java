@@ -72,24 +72,22 @@ class FormatProcessor {
                          Block rootBlock,
                          CodeStyleSettings settings,
                          CodeStyleSettings.IndentOptions indentOptions,
-                         TextRange affectedRange,
-                         final boolean processHeadingWhitespace
-                         ) {
-    this(docModel, rootBlock, settings, indentOptions, affectedRange, processHeadingWhitespace, -1);
+                         @Nullable FormatTextRanges affectedRanges) {
+    this(docModel, rootBlock, settings, indentOptions, affectedRanges, -1);
   }
+
   public FormatProcessor(final FormattingDocumentModel docModel,
                          Block rootBlock,
                          CodeStyleSettings settings,
                          CodeStyleSettings.IndentOptions indentOptions,
-                         TextRange affectedRange,
-                         final boolean processHeadingWhitespace, int interestingOffset) {
+                         @Nullable FormatTextRanges affectedRanges,
+                         int interestingOffset) {
     myIndentOption = indentOptions;
     mySettings = settings;
     final InitialInfoBuilder builder = InitialInfoBuilder.buildBlocks(rootBlock,
                                                                       docModel,
-                                                                      affectedRange,
+                                                                      affectedRanges,
                                                                       indentOptions,
-                                                                      processHeadingWhitespace,
                                                                       interestingOffset);
     myInfos = builder.getBlockToInfoMap();
     myRootBlockWrapper = builder.getRootBlockWrapper();

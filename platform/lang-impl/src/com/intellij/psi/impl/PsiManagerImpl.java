@@ -107,7 +107,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   private static final Key<PsiFile> CACHED_PSI_FILE_COPY_IN_FILECONTENT = Key.create("CACHED_PSI_FILE_COPY_IN_FILECONTENT");
 
   private final List<LanguageInjector> myLanguageInjectors = ContainerUtil.createEmptyCOWList();
-  private final ProgressManager myProgressManager;
 
   public PsiManagerImpl(Project project,
                         final ProjectRootManagerEx projectRootManagerEx,
@@ -144,7 +143,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     myResolveCache = new ResolveCache(this);
 
     if (startupManager != null) {
-      ((StartupManagerEx)startupManager).registerPreStartupActivity(
+      startupManager.registerPreStartupActivity(
         new Runnable() {
           public void run() {
             runPreStartupActivity();
@@ -152,8 +151,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
         }
       );
     }
-
-    myProgressManager = ProgressManager.getInstance();
   }
 
   public void initComponent() {
@@ -226,7 +223,15 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     try {
       ((FormatterImpl)FormatterEx.getInstance()).disableFormatting();
       component.disablePostprocessFormattingInside(new Computable<Object>() {
-        public Object compute() { try { r.run(); } catch (Throwable t) { throwable[0] = t; } return null; }
+        public Object compute() {
+          try {
+            r.run();
+          }
+          catch (Throwable t) {
+            throwable[0] = t;
+          }
+          return null;
+        }
       });
     }
     finally {

@@ -223,7 +223,7 @@ public class ProjectViewDirectoryHelper {
         }
       }
       else {
-        LOG.assertTrue(false, "Either PsiFile or PsiDirectory expected as a child of " + child.getParent() + ", but was " + child);
+        LOG.error("Either PsiFile or PsiDirectory expected as a child of " + child.getParent() + ", but was " + child);
       }
     }
   }

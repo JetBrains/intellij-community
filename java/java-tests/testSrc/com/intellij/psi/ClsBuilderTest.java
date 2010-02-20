@@ -27,40 +27,39 @@ public class ClsBuilderTest extends LightIdeaTestCase {
     return JavaSdkImpl.getMockJdk15("1.5");
   }
 
-  public void testSimple() throws Exception {
-    doTest("java/util/List.class", "UtilList.txt");
+  public void testUtilList() throws Exception {
+    doTest("java/util/List.class");
   }
 
-  public void testWithAnnotations() throws Exception {
-    doTest("org/jetbrains/annotations/Nullable.class", "Nullable.txt");
+  public void testNullable() throws Exception {
+    doTest("org/jetbrains/annotations/Nullable.class");
   }
 
-  public void testManyGenerics() throws Exception {
-    doTest("java/util/Collections.class", "UtilCollections.txt");
+  public void testUtilCollections() throws Exception {
+    doTest("java/util/Collections.class");
   }
 
-  public void testHashMap() throws Exception {
-    doTest("java/util/HashMap.class", "UtilHashMap.txt");
+  public void testUtilHashMap() throws Exception {
+    doTest("java/util/HashMap.class");
   }
 
-  public void testMap() throws Exception {
-    doTest("java/util/Map.class", "UtilMap.txt");
+  public void testUtilMap() throws Exception {
+    doTest("java/util/Map.class");
   }
 
   public void testTimeUnit() throws Exception {
-    doTest("java/util/concurrent/TimeUnit.class", "TimeUnit.txt");
+    doTest("java/util/concurrent/TimeUnit.class");
   }
 
-  public void testParameterNames() throws Exception {
+  public void testTestSuite() throws Exception {
     final String clsFilePath = JavaTestUtil.getJavaTestDataPath() + "/psi/cls/stubBuilder/TestSuite.class";
     VirtualFile clsFile = LocalFileSystem.getInstance().findFileByPath(clsFilePath);
     doTest(clsFile, "TestSuite.txt");
   }
 
-  private void doTest(final String classname, final String goldFile) throws IOException, ClsFormatException {
+  private void doTest(final String classname) throws IOException, ClsFormatException {
     VirtualFile vFile = findFile(classname);
-
-    doTest(vFile, goldFile);
+    doTest(vFile, getTestName(false)+".txt");
   }
 
   private static void doTest(VirtualFile vFile, String goldFile) throws ClsFormatException, IOException {

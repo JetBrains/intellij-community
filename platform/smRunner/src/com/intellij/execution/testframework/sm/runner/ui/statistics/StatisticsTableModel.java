@@ -136,7 +136,7 @@ public class StatisticsTableModel extends ListTableModel<SMTestProxy> {
 
   public void setValueAt(final Object aValue, final int rowIndex, final int columnIndex) {
     // Setting value is prevented!
-    LOG.assertTrue(false, "value: " + aValue + " row: " + rowIndex + " column: " + columnIndex);
+    LOG.error("value: " + aValue + " row: " + rowIndex + " column: " + columnIndex);
   }
 
   @Nullable

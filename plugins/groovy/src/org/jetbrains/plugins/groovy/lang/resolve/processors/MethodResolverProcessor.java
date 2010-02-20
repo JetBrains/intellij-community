@@ -214,7 +214,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
       return filterCandidates();
     }
     if (!myInapplicableCandidates.isEmpty()) {
-      return ResolveUtil.filterSameSignatureCandidates(myInapplicableCandidates);
+      return ResolveUtil.filterSameSignatureCandidates(myInapplicableCandidates, myArgumentTypes != null ? myArgumentTypes.length : -1);
     }
     return GroovyResolveResult.EMPTY_ARRAY;
   }

@@ -24,22 +24,30 @@ package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.FilterComponent;
+import com.intellij.util.AsynchConsumer;
+import com.intellij.util.BufferedListConsumer;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -54,10 +62,12 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
   private ChangeBrowserSettings mySettings;
   private final RepositoryLocation myLocation;
   private int myMaxCount = 0;
-  private final FilterComponent myFilterComponent = new MyFilterComponent();
+  private final MyFilterComponent myFilterComponent = new MyFilterComponent();
   private List<CommittedChangeList> myChangesFromProvider;
   private final JLabel myErrorLabel = new JLabel();
   private final List<Runnable> myShouldBeCalledOnDispose;
+  private volatile boolean myDisposed;
+  private volatile boolean myInLoad;
 
   public CommittedChangesPanel(Project project, final CommittedChangesProvider provider, final ChangeBrowserSettings settings,
                                @Nullable final RepositoryLocation location, @Nullable ActionGroup extraActions) {
@@ -94,6 +104,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     
     final AnAction anAction = ActionManager.getInstance().getAction("CommittedChanges.Refresh");
     anAction.registerCustomShortcutSet(CommonShortcuts.getRerun(), this);
+    myBrowser.addFilter(myFilterComponent);
   }
 
   public RepositoryLocation getRepositoryLocation() {
@@ -121,26 +132,54 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
   }
 
   private void refreshChangesFromLocation() {
-    final Ref<VcsException> refEx = new Ref<VcsException>();
-    final Ref<List<CommittedChangeList>> changes = new Ref<List<CommittedChangeList>>();
-    boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      public void run() {
+    myBrowser.reset();
+
+    myInLoad = true;
+    myBrowser.setLoading(true);
+    ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Loading changes", true, BackgroundFromStartOption.getInstance()) {
+      @Override
+      public void run(@NotNull final ProgressIndicator indicator) {
         try {
-          changes.set(myProvider.getCommittedChanges(mySettings, myLocation, myMaxCount));
+          final AsynchConsumer<List<CommittedChangeList>> appender = new AsynchConsumer<List<CommittedChangeList>>() {
+            public void finished() {
+            }
+
+            public void consume(final List<CommittedChangeList> list) {
+              new AbstractCalledLater(myProject, ModalityState.stateForComponent(myBrowser)) {
+                public void run() {
+                  myBrowser.append(list);
+                }
+              }.callMe();
+            }
+          };
+          final BufferedListConsumer<CommittedChangeList> bufferedListConsumer = new BufferedListConsumer<CommittedChangeList>(30, appender);
+
+          myProvider.loadCommittedChanges(mySettings, myLocation, myMaxCount, new AsynchConsumer<CommittedChangeList>() {
+            public void finished() {
+              bufferedListConsumer.flush();
+            }
+            public void consume(CommittedChangeList committedChangeList) {
+              if (myDisposed) {
+                indicator.cancel();
+              }
+              ProgressManager.checkCanceled();
+              bufferedListConsumer.consumeOne(committedChangeList);
+            }
+          });
         }
-        catch (VcsException ex) {
-          refEx.set(ex);
+        catch (final VcsException e) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              LOG.info(e);
+              Messages.showErrorDialog(myProject, "Error refreshing view: " + StringUtil.join(e.getMessages(), "\n"), "Committed Changes");
+            }
+          });
+        } finally {
+          myInLoad = false;
+          myBrowser.setLoading(false);
         }
       }
-    }, "Loading changes", true, myProject);
-    if (!refEx.isNull()) {
-      LOG.info(refEx.get());
-      Messages.showErrorDialog(myProject, "Error refreshing view: " + StringUtil.join(refEx.get().getMessages(), "\n"), "Committed Changes");
-    }
-    else if (completed) {
-      myChangesFromProvider = changes.get();
-      updateFilteredModel(false);
-    }
+    });
   }
 
   private void refreshChangesFromCache(final boolean cacheOnly) {
@@ -166,6 +205,34 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
                                  });
   }
 
+  private static class FilterHelper {
+    private final String[] myParts;
+
+    FilterHelper(final String filterString) {
+      myParts = filterString.split(" ");
+      for(int i = 0; i < myParts.length; ++ i) {
+        myParts [i] = myParts [i].toLowerCase();
+      }
+    }
+
+    public boolean filter(@NotNull final CommittedChangeList cl) {
+      return changeListMatches(cl, myParts);
+    }
+
+    private static boolean changeListMatches(@NotNull final CommittedChangeList changeList, final String[] filterWords) {
+      for(String word: filterWords) {
+        final String comment = changeList.getComment();
+        final String committer = changeList.getCommitterName();
+        if ((comment != null && comment.toLowerCase().indexOf(word) >= 0) ||
+            (committer != null && committer.toLowerCase().indexOf(word) >= 0) ||
+            Long.toString(changeList.getNumber()).indexOf(word) >= 0) {
+          return true;
+        }
+      }
+      return false;
+    }
+  }
+
   private void updateFilteredModel(final boolean keepFilter) {
     if (myChangesFromProvider == null) {
       return;
@@ -175,31 +242,15 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
       myBrowser.setItems(myChangesFromProvider, keepFilter, CommittedChangesBrowserUseCase.COMMITTED);
     }
     else {
-      final String[] strings = myFilterComponent.getFilter().split(" ");
-      for(int i=0; i<strings.length; i++) {
-        strings [i] = strings [i].toLowerCase();
-      }
+      final FilterHelper filterHelper = new FilterHelper(myFilterComponent.getFilter());
       List<CommittedChangeList> filteredChanges = new ArrayList<CommittedChangeList>();
       for(CommittedChangeList changeList: myChangesFromProvider) {
-        if (changeListMatches(changeList, strings)) {
+        if (filterHelper.filter(changeList)) {
           filteredChanges.add(changeList);
         }
       }
       myBrowser.setItems(filteredChanges, keepFilter, CommittedChangesBrowserUseCase.COMMITTED);
     }
-  }
-
-  private static boolean changeListMatches(@NotNull final CommittedChangeList changeList, final String[] filterWords) {
-    for(String word: filterWords) {
-      final String comment = changeList.getComment();
-      final String committer = changeList.getCommitterName();
-      if ((comment != null && comment.toLowerCase().indexOf(word) >= 0) ||
-          (committer != null && committer.toLowerCase().indexOf(word) >= 0) ||
-          Long.toString(changeList.getNumber()).indexOf(word) >= 0) {
-        return true;
-      }
-    }
-    return false;
   }
 
   public void setChangesFilter() {
@@ -222,19 +273,51 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     for (Runnable runnable : myShouldBeCalledOnDispose) {
       runnable.run();
     }
+    myDisposed = true;
   }
 
   public void setErrorText(String text) {
     myErrorLabel.setText(text);
   }
 
-  private class MyFilterComponent extends FilterComponent {
+  private class MyFilterComponent extends FilterComponent implements ChangeListFilteringStrategy {
+    private final List<ChangeListener> myList;
+
     public MyFilterComponent() {
       super("COMMITTED_CHANGES_FILTER_HISTORY", 20);
+      myList = new ArrayList<ChangeListener>();
     }
 
     public void filter() {
-      updateFilteredModel(true);
+      for (ChangeListener changeListener : myList) {
+        changeListener.stateChanged(new ChangeEvent(this));
+      }
+    }
+    public JComponent getFilterUI() {
+      return null;
+    }
+    public void setFilterBase(List<CommittedChangeList> changeLists) {
+    }
+    public void addChangeListener(ChangeListener listener) {
+      myList.add(listener);
+    }
+    public void removeChangeListener(ChangeListener listener) {
+      myList.remove(listener);
+    }
+    public void resetFilterBase() {
+    }
+    public void appendFilterBase(List<CommittedChangeList> changeLists) {
+    }
+    @NotNull
+    public List<CommittedChangeList> filterChangeLists(List<CommittedChangeList> changeLists) {
+      final FilterHelper filterHelper = new FilterHelper(myFilterComponent.getFilter());
+      final List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
+      for (CommittedChangeList list : changeLists) {
+        if (filterHelper.filter(list)) {
+          result.add(list);
+        }
+      }
+      return result;
     }
   }
 
@@ -243,5 +326,9 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     if ((myChangesFromProvider != null) && (! myChangesFromProvider.isEmpty())) {
       notification.execute(project, root, myChangesFromProvider);
     }
+  }
+
+  public boolean isInLoad() {
+    return myInLoad;
   }
 }

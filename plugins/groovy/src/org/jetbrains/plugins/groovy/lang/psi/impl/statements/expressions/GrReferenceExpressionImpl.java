@@ -572,7 +572,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     if (element instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod) element)) {
       final PsiElement target = resolve();
       if (element instanceof GrAccessorMethod && getManager().areElementsEquivalent(((GrAccessorMethod)element).getProperty(), target)) {
-        return true;
+        return false;
       }
 
       return getManager().areElementsEquivalent(element, target);

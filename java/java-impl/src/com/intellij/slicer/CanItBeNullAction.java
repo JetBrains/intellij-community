@@ -54,7 +54,7 @@ public class CanItBeNullAction  extends AnAction {
     else {
       type = null;
     }
-    return type instanceof PsiClassType;
+    return type instanceof PsiClassType || type instanceof PsiArrayType;
   }
 
   @Override

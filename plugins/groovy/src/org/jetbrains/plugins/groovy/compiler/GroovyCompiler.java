@@ -167,6 +167,10 @@ public class GroovyCompiler extends GroovyCompilerBase {
             LOG.error(e);
             //prevent our PSI errors from failing the entire compilation
           }
+          catch (AssertionError e) {
+            LOG.error(e);
+            //prevent our PSI errors from failing the entire compilation
+          }
         }
 
         element.acceptChildren(this);

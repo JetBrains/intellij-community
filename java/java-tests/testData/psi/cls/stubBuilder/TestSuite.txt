@@ -1,6 +1,6 @@
 PsiJavaFileStub [junit.framework]
   PsiClassStub[name=TestSuite fqn=junit.framework.TestSuite]
-    PsiModifierListStub[mask=1]
+    PsiModifierListStub[mask=9]
     PsiTypeParameterListStub
     PsiRefListStub[EXTENDS_LIST:]
     PsiRefListStub[IMPLEMENTS_LIST:junit.framework.Test]

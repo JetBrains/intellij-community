@@ -398,7 +398,13 @@ public class PluginManager {
   }
 
   public static boolean isIncompatible(final IdeaPluginDescriptor descriptor) {
-    BuildNumber buildNumber = getBuildNumber();
+    BuildNumber buildNumber = null;
+    try {
+      buildNumber = getBuildNumber();
+    }
+    catch (RuntimeException e) {
+      return false;
+    }
 
     if (!StringUtil.isEmpty(descriptor.getSinceBuild())) {
       BuildNumber sinceBuild = BuildNumber.fromString(descriptor.getSinceBuild());
@@ -464,7 +470,7 @@ public class PluginManager {
 
       final ClassLoader loader = pluginDescriptor.getPluginClassLoader();
       if (loader == null) {
-        getLogger().assertTrue(false, "Plugin class loader should be initialized for plugin " + id);
+        getLogger().error("Plugin class loader should be initialized for plugin " + id);
       }
       classLoaders.add(loader);
     }

@@ -81,7 +81,9 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
           final PsiCallExpression methodCall = (PsiCallExpression)parent;
           occurrences.add(psiReference);
           containingFiles.add(element.getContainingFile());
-          PsiExpression argument = methodCall.getArgumentList().getExpressions()[index];
+          final PsiExpression[] expressions = methodCall.getArgumentList().getExpressions();
+          if (expressions.length <= index) return false;
+          PsiExpression argument = expressions[index];
           if (!refInitializer.isNull()) {
             return argument != null
                    && PsiEquivalenceUtil.areElementsEquivalent(refInitializer.get(), argument)
@@ -121,7 +123,8 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
         processor.run();
       }
       else {
-        InlineParameterDialog dlg = new InlineParameterDialog(refMethodCall.get(), method, psiParameter, refInitializer.get());
+        final boolean createLocal = ReferencesSearch.search(psiParameter).findAll().size() > 1;
+        InlineParameterDialog dlg = new InlineParameterDialog(refMethodCall.get(), method, psiParameter, refInitializer.get(), createLocal);
         dlg.show();
       }
       return;

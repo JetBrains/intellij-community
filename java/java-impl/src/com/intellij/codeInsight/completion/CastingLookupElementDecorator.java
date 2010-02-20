@@ -17,6 +17,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -39,7 +40,7 @@ public class CastingLookupElementDecorator extends LookupElementDecorator<Lookup
   private CastingLookupElementDecorator(LookupElement delegate, PsiType castType) {
     super(delegate);
     myCastType = castType;
-    myCastItem = PsiTypeLookupItem.createLookupItem(castType);
+    myCastItem = PsiTypeLookupItem.createLookupItem(castType, (PsiElement)delegate.getObject());
   }
 
   public PsiType getType() {

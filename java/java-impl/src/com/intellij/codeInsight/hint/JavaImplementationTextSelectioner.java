@@ -46,7 +46,7 @@ public class JavaImplementationTextSelectioner implements ImplementationTextSele
         return element.getTextRange().getStartOffset();
       }
       else {
-        LOG.assertTrue(false, "Element should not be null: " + parent.getText());
+        LOG.error("Element should not be null: " + parent.getText());
         return parent.getTextRange().getStartOffset();
       }
     }

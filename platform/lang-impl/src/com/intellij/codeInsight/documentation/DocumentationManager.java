@@ -25,15 +25,14 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDocumentation;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -44,26 +43,40 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.ui.content.*;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.util.Alarm;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 public class DocumentationManager {
+  private static final String SHOW_DOCUMENTATION_IN_TOOL_WINDOW = "ShowDocumentationInToolWindow";
+  private static final String DOCUMENTATION_AUTO_UPDATE_ENABLED = "DocumentationAutoUpdateEnabled";
   @NonNls public static final String JAVADOC_LOCATION_AND_SIZE = "javadoc.popup";
   private final Project myProject;
   private Editor myEditor = null;
@@ -74,10 +87,13 @@ public class DocumentationManager {
   public static final Key<SmartPsiElementPointer> ORIGINAL_ELEMENT_KEY = Key.create("Original element");
   @NonNls public static final String PSI_ELEMENT_PROTOCOL = "psi_element://";
   @NonNls private static final String DOC_ELEMENT_PROTOCOL = "doc_element://";
+  private ToolWindow myToolWindow = null;
 
   private final ActionManagerEx myActionManagerEx;
 
   private static final int ourFlagsForTargetElements = TargetElementUtilBase.getInstance().getAllAccepted();
+  private boolean myAutoUpdateDocumentation = PropertiesComponent.getInstance().isTrueValue(DOCUMENTATION_AUTO_UPDATE_ENABLED);
+  private Runnable myAutoUpdateRequest;
 
   public static DocumentationManager getInstance(Project project) {
     return ServiceManager.getService(project, DocumentationManager.class);
@@ -115,19 +131,23 @@ public class DocumentationManager {
     myUpdateDocAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD,myProject);
   }
 
-  public JBPopup showJavaDocInfo(@NotNull final PsiElement element, final PsiElement original) {
+  public void showJavaDocInfo(@NotNull final PsiElement element, final PsiElement original) {
     PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(element.getProject()) {
       public void updatePopup(Object lookupItemObject) {
         if (lookupItemObject instanceof PsiElement) {
-          doShowJavaDocInfo((PsiElement)lookupItemObject, true, false, this, original);
+          doShowJavaDocInfo((PsiElement)lookupItemObject, true, false, this, original, false);
         }
       }
     };
-    return doShowJavaDocInfo(element, true, false, updateProcessor, original);
+
+    doShowJavaDocInfo(element, true, false, updateProcessor, original, false);
   }
 
-  @Nullable
-  public JBPopup showJavaDocInfo(final Editor editor, @Nullable final PsiFile file, boolean requestFocus) {
+  public void showJavaDocInfo(final Editor editor, @Nullable final PsiFile file, boolean requestFocus) {
+    showJavaDocInfo(editor, file, requestFocus, false);
+  }
+
+  private void showJavaDocInfo(final Editor editor, @Nullable final PsiFile file, boolean requestFocus, final boolean autoupdate) {
     myEditor = editor;
     final Project project = getProject(file);
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -151,13 +171,13 @@ public class DocumentationManager {
       }
     }
 
-    if (element == null && file == null) return null; //file == null for text field editor
+    if (element == null && file == null) return; //file == null for text field editor
 
     if (element == null) { // look if we are within a javadoc comment
       element = originalElement;
-      if (element == null) return null;
+      if (element == null) return;
       PsiComment comment = PsiTreeUtil.getParentOfType(element, PsiComment.class);
-      if (comment == null) return null;
+      if (comment == null) return;
       element = comment.getParent();
       //if (!(element instanceof PsiDocCommentOwner)) return null;
     }
@@ -167,7 +187,7 @@ public class DocumentationManager {
     final PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(project) {
       public void updatePopup(Object lookupIteObject) {
         if (lookupIteObject instanceof PsiElement) {
-          doShowJavaDocInfo((PsiElement)lookupIteObject, false, false, this, originalElement);
+          doShowJavaDocInfo((PsiElement)lookupIteObject, false, false, this, originalElement, autoupdate);
           return;
         }
 
@@ -193,74 +213,238 @@ public class DocumentationManager {
           }
         }
         else {
-          doShowJavaDocInfo(element, false, false, this, originalElement);
+          doShowJavaDocInfo(element, false, false, this, originalElement, autoupdate);
         }
       }
     };
 
-    return doShowJavaDocInfo(element, false, requestFocus, updateProcessor, originalElement);
+    doShowJavaDocInfo(element, false, requestFocus, updateProcessor, originalElement, autoupdate);
   }
 
-  private JBPopup doShowJavaDocInfo(PsiElement element, boolean heavyWeight, boolean requestFocus, PopupUpdateProcessor updateProcessor, PsiElement originalElement) {
+  private void doShowJavaDocInfo(final PsiElement element, boolean heavyWeight, boolean requestFocus, PopupUpdateProcessor updateProcessor, final PsiElement originalElement, final boolean autoupdate) {
     Project project = getProject(element);
-    final DocumentationComponent component = new DocumentationComponent(this);
 
-    final JBPopup hint = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
-        .setRequestFocusCondition(project, NotLookupOrSearchCondition.INSTANCE)
-        .setProject(project)
-        .addListener(updateProcessor)
-        .addUserData(updateProcessor)
-        .setForceHeavyweight(heavyWeight)
-        .setDimensionServiceKey(myProject, JAVADOC_LOCATION_AND_SIZE, false)
-        .setResizable(true)
-        .setMovable(true)
-        .setTitle(getTitle(element))
-        .setCancelCallback(new Computable<Boolean>() {
-          public Boolean compute() {
-            if (fromQuickSearch()) {
-              ((ChooseByNameBase.JPanelProvider)myPreviouslyFocused.getParent()).unregisterHint();
-            }
-
-            Disposer.dispose(component);
-            myEditor = null;
-            myPreviouslyFocused = null;
-            myParameterInfoController = null;
-            return Boolean.TRUE;
+    if (myToolWindow == null && PropertiesComponent.getInstance().isTrueValue(SHOW_DOCUMENTATION_IN_TOOL_WINDOW)) {
+      createToolWindow(element, originalElement, true);
+      return;
+    }
+    else if (myToolWindow != null) {
+      final Content content = myToolWindow.getContentManager().getSelectedContent();
+      if (content != null) {
+        final DocumentationComponent component = (DocumentationComponent)content.getComponent();
+        if (component.getElement() != element) {
+          content.setDisplayName(getTitle(element, true));
+          fetchDocInfo(getDefaultCollector(element, originalElement), component, true);
+          if (!myToolWindow.isVisible()) myToolWindow.show(null);
+          return;
+        } else {
+          if (element != null && !autoupdate) {
+            restorePopupBehavior();
+          } else {
+            return;
           }
-        })
-        .createPopup();
-
-
-    AbstractPopup oldHint = (AbstractPopup)getDocInfoHint();
-    if (oldHint != null) {
-      DocumentationComponent oldComponent = (DocumentationComponent)oldHint.getComponent();
-      PsiElement element1 = oldComponent.getElement();
-      if (Comparing.equal(element, element1)) {
-        if (requestFocus) {
-          component.getComponent().requestFocus();
         }
-        return oldHint;
       }
-      oldHint.cancel();
     }
 
-    component.setHint(hint);
+    final DocumentationComponent component = new DocumentationComponent(this);
+    Processor<JBPopup> pinCallback = new Processor<JBPopup>() {
+      public boolean process(JBPopup popup) {
+        createToolWindow(element, originalElement, true);
+        popup.cancel();
+        return false;
+      }
+    };
 
-    fetchDocInfo(getDefaultCollector(element, originalElement), component);
+    final List<Pair<ActionListener, KeyStroke>> actions = Collections.singletonList(Pair.<ActionListener, KeyStroke>create(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          createToolWindow(element, originalElement, false);
+          final JBPopup hint = getDocInfoHint();
+          if (hint != null && hint.isVisible()) hint.cancel();
+        }
+      }, ActionManagerEx.getInstanceEx().getKeyboardShortcut("QuickJavaDoc").getFirstKeyStroke()));
 
-    myDocInfoHintRef = new WeakReference<JBPopup>(hint);
-    myPreviouslyFocused = WindowManagerEx.getInstanceEx().getFocusedComponent(project);
+      final JBPopup hint = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
+          .setRequestFocusCondition(project, NotLookupOrSearchCondition.INSTANCE)
+          .setProject(project)
+          .addListener(updateProcessor)
+          .addUserData(updateProcessor)
+          .setKeyboardActions(actions)
+          .setForceHeavyweight(heavyWeight)
+          .setDimensionServiceKey(myProject, JAVADOC_LOCATION_AND_SIZE, false)
+          .setResizable(true)
+          .setMovable(true)
+          .setTitle(getTitle(element, false))
+          .setCouldPin(pinCallback)
+          .setCancelCallback(new Computable<Boolean>() {
+            public Boolean compute() {
+              if (fromQuickSearch()) {
+                ((ChooseByNameBase.JPanelProvider)myPreviouslyFocused.getParent()).unregisterHint();
+              }
 
-    if (fromQuickSearch()) {
-      ((ChooseByNameBase.JPanelProvider)myPreviouslyFocused.getParent()).registerHint(hint);
-    }
+              Disposer.dispose(component);
+              myEditor = null;
+              myPreviouslyFocused = null;
+              myParameterInfoController = null;
+              return Boolean.TRUE;
+            }
+          })
+          .createPopup();
 
-    return hint;
+
+      AbstractPopup oldHint = (AbstractPopup)getDocInfoHint();
+      if (oldHint != null) {
+        DocumentationComponent oldComponent = (DocumentationComponent)oldHint.getComponent();
+        PsiElement element1 = oldComponent.getElement();
+        if (Comparing.equal(element, element1)) {
+          if (requestFocus) {
+            component.getComponent().requestFocus();
+          }
+          return;
+        }
+        oldHint.cancel();
+      }
+
+      component.setHint(hint);
+
+      fetchDocInfo(getDefaultCollector(element, originalElement), component);
+
+      myDocInfoHintRef = new WeakReference<JBPopup>(hint);
+      myPreviouslyFocused = WindowManagerEx.getInstanceEx().getFocusedComponent(project);
+
+      if (fromQuickSearch()) {
+        ((ChooseByNameBase.JPanelProvider)myPreviouslyFocused.getParent()).registerHint(hint);
+      }
   }
 
-  private static String getTitle(@NotNull final PsiElement element) {
+  private void createToolWindow(final PsiElement element, PsiElement originalElement, final boolean automatic) {
+    assert myToolWindow == null;
+
+    final DocumentationComponent component = new DocumentationComponent(this, new AnAction[]{
+      new ToggleAction("Auto show documentation for selected element", "Show documentation for current element automatically",
+                          IconLoader.getIcon("/general/autoscrollFromSource.png")) {
+        @Override
+        public boolean isSelected(AnActionEvent e) {
+          return myAutoUpdateDocumentation;
+        }
+
+        @Override
+        public void setSelected(AnActionEvent e, boolean state) {
+          PropertiesComponent.getInstance().setValue(DOCUMENTATION_AUTO_UPDATE_ENABLED, Boolean.TRUE.toString());
+          myAutoUpdateDocumentation = state;
+          restartAutoUpdate(state);
+        }
+      },
+      new AnAction("Restore popup behavior", "Restore documentation popup behavior", IconLoader.getIcon("/actions/cancel.png")) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          restorePopupBehavior();
+        }
+      }});
+
+    final ToolWindowManagerEx toolWindowManagerEx = ToolWindowManagerEx.getInstanceEx(myProject);
+    myToolWindow = toolWindowManagerEx.registerToolWindow(ToolWindowId.DOCUMENTATION, true, ToolWindowAnchor.RIGHT, myProject);
+    myToolWindow.setIcon(IconLoader.getIcon("/general/documentation.png"));
+
+    myToolWindow.setAvailable(true, null);
+    myToolWindow.setToHideOnEmptyContent(false);
+    myToolWindow.setAutoHide(false);
+
+    final Rectangle rectangle = WindowManager.getInstance().getIdeFrame(myProject).suggestChildFrameBounds();
+    myToolWindow.setDefaultState(ToolWindowAnchor.RIGHT, ToolWindowType.FLOATING, rectangle);
+
+    final ContentManager contentManager = myToolWindow.getContentManager();
+    final ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
+    final Content content = contentFactory.createContent(component, getTitle(element, true), false);
+    contentManager.addContent(content);
+
+    contentManager.addContentManagerListener(new ContentManagerAdapter() {
+      @Override
+      public void contentRemoved(ContentManagerEvent event) {
+        if (contentManager.getContentCount() == 0) {
+          final JComponent c = event.getContent().getComponent();
+          if (c instanceof DocumentationComponent) {
+            Disposer.dispose((DocumentationComponent) c);
+          }
+          
+          restorePopupBehavior();
+        }
+      }
+    });
+
+    new UiNotifyConnector(component, new Activatable() {
+      public void showNotify() {
+        restartAutoUpdate(myAutoUpdateDocumentation);
+      }
+
+      public void hideNotify() {
+        restartAutoUpdate(false);
+      }
+    });
+
+    myToolWindow.show(null);
+    PropertiesComponent.getInstance().setValue(SHOW_DOCUMENTATION_IN_TOOL_WINDOW, Boolean.TRUE.toString());
+    restartAutoUpdate(PropertiesComponent.getInstance().isTrueValue(DOCUMENTATION_AUTO_UPDATE_ENABLED));
+    fetchDocInfo(getDefaultCollector(element, originalElement), component);
+  }
+
+  private void restartAutoUpdate(final boolean state) {
+    if (state && myToolWindow != null) {
+      if (myAutoUpdateRequest == null) {
+        myAutoUpdateRequest = new Runnable() {
+          public void run() {
+            final DataContext dataContext = DataManager.getInstance().getDataContext();
+            final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+            if (editor != null) {
+              final PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, myProject);
+
+              final Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file);
+              if (injectedEditor != null) {
+                final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(injectedEditor, myProject);
+                if (psiFile != null) {
+                  showJavaDocInfo(injectedEditor, psiFile, false, true);
+                  return;
+                }
+              }
+
+              if (file != null) {
+                showJavaDocInfo(editor, file, false, true);
+              }
+            }
+          }
+        };
+
+        IdeEventQueue.getInstance().addIdleListener(myAutoUpdateRequest, 500);
+      }
+    } else {
+      if (myAutoUpdateRequest != null) {
+        IdeEventQueue.getInstance().removeIdleListener(myAutoUpdateRequest);
+        myAutoUpdateRequest = null;
+      }
+    }
+  }
+
+  private void restorePopupBehavior() {
+    if (myToolWindow != null) {
+      PropertiesComponent.getInstance().setValue(SHOW_DOCUMENTATION_IN_TOOL_WINDOW, Boolean.FALSE.toString());
+
+      final Content[] contents = myToolWindow.getContentManager().getContents();
+      for (final Content content : contents) {
+        final JComponent c = content.getComponent();
+        if (c instanceof DocumentationComponent) {
+          Disposer.dispose((DocumentationComponent) c);
+        }
+      }
+
+      ToolWindowManagerEx.getInstanceEx(myProject).unregisterToolWindow(ToolWindowId.DOCUMENTATION);
+      myToolWindow = null;
+      restartAutoUpdate(false);
+    }
+  }
+
+  private static String getTitle(@NotNull final PsiElement element, final boolean _short) {
     final String title = SymbolPresentationUtil.getSymbolPresentableText(element);
-    return CodeInsightBundle.message("javadoc.info.title", title != null ? title : element.getText());
+    return _short ? title != null ? title : element.getText() : CodeInsightBundle.message("javadoc.info.title", title != null ? title : element.getText());
   }
 
   public static void storeOriginalElement(final Project project, final PsiElement originalElement, final PsiElement element) {
@@ -394,29 +578,33 @@ public class DocumentationManager {
   }
 
   public void fetchDocInfo(final DocumentationCollector provider, final DocumentationComponent component) {
-    doFetchDocInfo(component, provider, true);
+    doFetchDocInfo(component, provider, true, false);
+  }
+
+  public void fetchDocInfo(final DocumentationCollector provider, final DocumentationComponent component, final boolean clearHistory) {
+    doFetchDocInfo(component, provider, true, clearHistory);
   }
 
   public void fetchDocInfo(final PsiElement element, final DocumentationComponent component) {
-    doFetchDocInfo(component, getDefaultCollector(element, null), true);
+    doFetchDocInfo(component, getDefaultCollector(element, null), true, false);
   }
 
-  public ActionCallback queueFetchDocInfo(final DocumentationCollector provider, final DocumentationComponent component) {
-    return doFetchDocInfo(component, provider, false);
+  public ActionCallback queueFetchDocInfo(final DocumentationCollector provider, final DocumentationComponent component, final boolean clearHistory) {
+    return doFetchDocInfo(component, provider, false, clearHistory);
   }
 
   public ActionCallback queueFetchDocInfo(final PsiElement element, final DocumentationComponent component) {
-    return queueFetchDocInfo(getDefaultCollector(element, null), component);
+    return queueFetchDocInfo(getDefaultCollector(element, null), component, false);
   }
 
-  private ActionCallback doFetchDocInfo(final DocumentationComponent component, final DocumentationCollector provider, final boolean cancelRequests) {
+  private ActionCallback doFetchDocInfo(final DocumentationComponent component, final DocumentationCollector provider, final boolean cancelRequests, final boolean clearHistory) {
     final ActionCallback callback = new ActionCallback();
     component.startWait();
     if (cancelRequests) {
       myUpdateDocAlarm.cancelAllRequests();
     }
     if (component.isEmpty()) {
-      component.setText(CodeInsightBundle.message("javadoc.fetching.progress"));
+      component.setText(CodeInsightBundle.message("javadoc.fetching.progress"), null, clearHistory);
     }
 
     myUpdateDocAlarm.addRequest(new Runnable() {
@@ -441,7 +629,7 @@ public class DocumentationManager {
               String message = ex[0] instanceof IndexNotReadyException
                              ? "Documentation is not available until indices are built."
                              : CodeInsightBundle.message("javadoc.external.fetch.error.message", ex[0].getLocalizedMessage());
-              component.setText(message, true);
+              component.setText(message, null, true);
               callback.setDone();
             }
           });
@@ -472,13 +660,13 @@ public class DocumentationManager {
             }
 
             if (text == null) {
-              component.setText(CodeInsightBundle.message("no.documentation.found"), true);
+              component.setText(CodeInsightBundle.message("no.documentation.found"), element, true);
             }
             else if (text.length() == 0) {
-              component.setText(component.getText(), true);
+              component.setText(component.getText(), element, true, clearHistory);
             }
             else {
-              component.setData(element, text);
+              component.setData(element, text, clearHistory);
             }
 
             final AbstractPopup jbPopup = (AbstractPopup)getDocInfoHint();
@@ -486,7 +674,7 @@ public class DocumentationManager {
               callback.setDone();
               return;
             }
-            jbPopup.setCaption(getTitle(element));
+            jbPopup.setCaption(getTitle(element, false));
             final String dimensionServiceKey = jbPopup.getDimensionServiceKey();
             Dimension dimension = component.getPreferredSize();
             final Dimension storedSize = dimensionServiceKey != null ? DimensionService.getInstance().getSize(dimensionServiceKey, getProject(element)) : null;

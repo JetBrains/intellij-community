@@ -59,6 +59,7 @@ import com.intellij.refactoring.util.EnumConstantsUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.occurences.OccurenceManager;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -194,21 +195,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
           ChangeContextUtil.encodeContextInfo(initializer, true);
           PsiField field = settings.isIntroduceEnumConstant() ? EnumConstantsUtil.createEnumConstant(destClass, fieldName, initializer) : createField(fieldName, type, initializer, initializerPlace == InitializationPlace.IN_FIELD_DECLARATION && initializer != null);
-          if (!settings.isIntroduceEnumConstant()) {
-            PsiUtil.setModifierProperty(field, settings.getFieldVisibility(), true);
-            if (settings.isDeclareFinal()) {
-              PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
-            }
-            if (settings.isDeclareStatic()) {
-              PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
-            }
-            if (settings.isAnnotateAsNonNls()) {
-              PsiAnnotation annotation = JavaPsiFacade.getInstance(myParentClass.getProject()).getElementFactory()
-                .createAnnotationFromText("@" + AnnotationUtil.NON_NLS, myParentClass);
-              field.getModifierList().addAfter(annotation, null);
-              JavaCodeStyleManager.getInstance(myParentClass.getProject()).shortenClassReferences(field.getModifierList());
-            }
-          }
+
           PsiElement finalAnchorElement = null;
           if (destClass == myParentClass) {
             for (finalAnchorElement = anchorElement;
@@ -230,6 +217,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           else {
             field = (PsiField)destClass.add(field);
           }
+          setModifiers(field, settings, settings.isDeclareStatic(), occurrences);
           PsiStatement assignStatement = null;
           PsiElement anchorElementHere = null;
           if (initializerPlace == InitializationPlace.IN_CURRENT_METHOD && initializer != null ||
@@ -324,6 +312,26 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       );
 
     return true;
+  }
+
+  public static void setModifiers(PsiField field, Settings settings, final boolean declareStatic, PsiExpression[] occurrences) {
+    if (!settings.isIntroduceEnumConstant()) {
+      VisibilityUtil.fixVisibility(occurrences, field, settings.getFieldVisibility());
+      if (declareStatic) {
+        PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
+      }
+      if (settings.isDeclareFinal()) {
+        PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
+      }
+      if (settings.isAnnotateAsNonNls()) {
+        PsiAnnotation annotation = JavaPsiFacade.getInstance(field.getProject()).getElementFactory()
+          .createAnnotationFromText("@" + AnnotationUtil.NON_NLS, field);
+        final PsiModifierList modifierList = field.getModifierList();
+        LOG.assertTrue(modifierList != null);
+        modifierList.addAfter(annotation, null);
+      }
+    }
+    JavaCodeStyleManager.getInstance(field.getProject()).shortenClassReferences(field);
   }
 
   private static PsiElement getPhysicalElement(final PsiExpression selectedExpr) {

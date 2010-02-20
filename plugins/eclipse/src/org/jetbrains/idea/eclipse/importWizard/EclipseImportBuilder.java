@@ -295,7 +295,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
     StringBuffer message = new StringBuffer();
     refsToModules.removeAll(getParameters().existingModuleNames);
     for (String path : getParameters().projectsToConvert) {
-      final String projectName = EclipseClasspathReader.getLastPathComponent(FileUtil.toSystemIndependentName(path));
+      final String projectName = EclipseProjectFinder.findProjectName(path);
       if (projectName != null) {
         refsToModules.remove(projectName);
         getParameters().existingModuleNames.add(projectName);

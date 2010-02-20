@@ -108,7 +108,7 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
     myCopyrightProfile.setNotice(EntityUtil.encode(myCopyrightPane.getText().trim()));
     myCopyrightProfile.setKeyword(myKeywordTf.getText());
     myCopyrightProfile.setAllowReplaceKeyword(myAllowReplaceTextField.getText());
-    CopyrightManager.getInstance(myProject).addCopyright(myCopyrightProfile);
+    CopyrightManager.getInstance(myProject).replaceCopyright(myDisplayName, myCopyrightProfile);
     myDisplayName = myCopyrightProfile.getName();
     myModified = false;
   }

@@ -13,7 +13,7 @@ class Test {
         private final String s;
 
         /**
-          * @param s long description
+         * @param s long description
          */
         private Param(String s) {
             this.s = s;

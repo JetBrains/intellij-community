@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2008 Bas Leijdekkers
+ * Copyright 2007-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,12 +48,11 @@ public class InstanceOfUtils {
                     PsiBinaryExpression.class, PsiIfStatement.class,
                     PsiConditionalExpression.class);
         }
+        if (checker.hasAgreeingInstanceof()) {
+            return null;
+        }
         return checker.getConflictingInstanceof();
     }
-
-  public static boolean hasConflictingInstanceof(@NotNull PsiTypeCastExpression expression) {
-    return getConflictingInstanceof(expression) != null;
-  }
 
     public static boolean hasAgreeingInstanceof(
             @NotNull PsiTypeCastExpression expression) {
@@ -103,22 +102,29 @@ public class InstanceOfUtils {
             visitExpression(expression);
         }
 
-        @Override public void visitBinaryExpression(PsiBinaryExpression expression) {
+        @Override public void visitBinaryExpression(
+                PsiBinaryExpression expression) {
             final PsiJavaToken sign =
                     expression.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
             if (tokenType == JavaTokenType.ANDAND) {
-              checkExpression(expression.getLOperand());
-              checkExpression(expression.getROperand());
-              if (!inElse && conflictingInstanceof != null) {
-                agreeingInstanceof = false;
-              }
+                checkExpression(expression.getLOperand());
+                if (agreeingInstanceof) {
+                    return;
+                }
+                checkExpression(expression.getROperand());
+                if (agreeingInstanceof) {
+                    return;
+                }
+                if (!inElse && conflictingInstanceof != null) {
+                    agreeingInstanceof = false;
+                }
             } else if (tokenType == JavaTokenType.OROR) {
-              checkExpression(expression.getLOperand());
-              checkExpression(expression.getROperand());
-              if (inElse && conflictingInstanceof != null) {
-                agreeingInstanceof = false;
-              }
+                checkExpression(expression.getLOperand());
+                checkExpression(expression.getROperand());
+                if (inElse && conflictingInstanceof != null) {
+                    agreeingInstanceof = false;
+                }
             }
         }
 
@@ -202,14 +208,15 @@ public class InstanceOfUtils {
         }
 
         private void checkInstanceOfExpression(PsiExpression expression) {
-            if (expression instanceof PsiInstanceOfExpression) {
-                final PsiInstanceOfExpression instanceOfExpression =
-                        (PsiInstanceOfExpression)expression;
-                if (isAgreeing(instanceOfExpression)) {
-                    agreeingInstanceof = true;
-                } else if (isConflicting(instanceOfExpression)) {
-                    conflictingInstanceof = instanceOfExpression;
-                }
+            if (!(expression instanceof PsiInstanceOfExpression)) {
+                return;
+            }
+            final PsiInstanceOfExpression instanceOfExpression =
+                    (PsiInstanceOfExpression)expression;
+            if (isAgreeing(instanceOfExpression)) {
+                agreeingInstanceof = true;
+            } else if (isConflicting(instanceOfExpression)) {
+                conflictingInstanceof = instanceOfExpression;
             }
         }
 
@@ -251,10 +258,6 @@ public class InstanceOfUtils {
 
         public boolean hasAgreeingInstanceof() {
             return agreeingInstanceof;
-        }
-
-        public boolean hasConflictingInstanceof() {
-            return conflictingInstanceof != null;
         }
 
         public PsiInstanceOfExpression getConflictingInstanceof() {

@@ -157,6 +157,8 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
       if (! vcs.isVcsBackgroundOperationsAllowed(myRoot)) return;
 
       for (String newBranchUrl : next.getBranchUrls()) {
+        // check if cancel had been put 
+        if (! vcs.isVcsBackgroundOperationsAllowed(myRoot)) return;
         if (myAll || (! oldUrls.contains(newBranchUrl))) {
           new NewRootBunch.BranchesLoadRunnable(myProject, myBunch, newBranchUrl, InfoReliability.defaultValues, myRoot, null).run();
         }

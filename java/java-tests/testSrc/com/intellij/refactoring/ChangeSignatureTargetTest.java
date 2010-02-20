@@ -40,7 +40,7 @@ public class ChangeSignatureTargetTest extends LightCodeInsightTestCase {
   }
 
   private void doTest(String expectedMemberName) throws Exception {
-    String basePath = "/refactoring/changeSignatureTarget/" + getTestName(false);
+    String basePath = "/refactoring/changeSignatureTarget/" + getTestName(true);
     @NonNls final String filePath = basePath + ".java";
     configureByFile(filePath);
     final PsiMember member = ChangeSignatureTargetUtil.findTargetMember(getFile(), getEditor());

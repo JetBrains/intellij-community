@@ -42,10 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.TreeExpansionEvent;
-import javax.swing.event.TreeExpansionListener;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
+import javax.swing.event.*;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
@@ -165,6 +162,7 @@ public class AbstractTreeUi {
     myBuilder = builder;
     myTree = tree;
     myTreeModel = treeModel;
+    addModelListenerToDianoseAccessOutsideEdt();
     TREE_NODE_WRAPPER = getBuilder().createSearchingTreeNodeWrapper();
     myTree.setModel(myTreeModel);
     setRootNode((DefaultMutableTreeNode)treeModel.getRoot());
@@ -268,6 +266,25 @@ public class AbstractTreeUi {
     } else {
       UIUtil.invokeLaterIfNeeded(cleanup);
     }
+  }
+
+  private ActionCallback invokeLaterIfNeeded(@NotNull final Runnable runnable) {
+    final ActionCallback result = new ActionCallback();
+
+    Runnable actual = new Runnable() {
+      public void run() {
+        runnable.run();
+        result.setDone();
+      }
+    };
+
+    if (isPassthroughMode() || (!isEdt() && !isTreeShowing())) {
+      actual.run();
+    } else {
+      UIUtil.invokeLaterIfNeeded(actual);
+    }
+
+    return result;
   }
 
   public void activate(boolean byShowing) {
@@ -780,8 +797,14 @@ public class AbstractTreeUi {
   }
 
   private boolean _update(NodeDescriptor nodeDescriptor) {
-    nodeDescriptor.setUpdateCount(nodeDescriptor.getUpdateCount() + 1);
-    return getBuilder().updateNodeDescriptor(nodeDescriptor);
+    try {
+      nodeDescriptor.setUpdateCount(nodeDescriptor.getUpdateCount() + 1);
+      return getBuilder().updateNodeDescriptor(nodeDescriptor);
+    }
+    catch (IndexNotReadyException e) {
+      warnOnIndexNotReady();
+      return false;
+    }
   }
 
   private void assertIsDispatchThread() {
@@ -1283,10 +1306,7 @@ public class AbstractTreeUi {
       passOne = getTreeStructure().getChildElements(element);
     }
     catch (IndexNotReadyException e) {
-      if (!myWasEverIndexNotReady) {
-        myWasEverIndexNotReady = true;
-        LOG.warn("Tree is not dumb-mode-aware; treeBuilder=" + getBuilder() + " treeStructure=" + getTreeStructure());
-      }
+      warnOnIndexNotReady();
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
@@ -1313,6 +1333,13 @@ public class AbstractTreeUi {
     }
 
     return passOne;
+  }
+
+  private void warnOnIndexNotReady() {
+    if (!myWasEverIndexNotReady) {
+      myWasEverIndexNotReady = true;
+      LOG.warn("Tree is not dumb-mode-aware; treeBuilder=" + getBuilder() + " treeStructure=" + getTreeStructure());
+    }
   }
 
   private void updateNodesToInsert(final ArrayList<TreeNode> nodesToInsert,
@@ -1888,13 +1915,17 @@ public class AbstractTreeUi {
 
     final Runnable finalizeRunnable = new Runnable() {
       public void run() {
-        removeLoading(node, true);
-        removeFromLoadedInBackground(elementFromDescriptor.get());
-        removeFromLoadedInBackground(oldElementFromDescriptor);
+        invokeLaterIfNeeded(new Runnable() {
+          public void run() {
+            removeLoading(node, true);
+            removeFromLoadedInBackground(elementFromDescriptor.get());
+            removeFromLoadedInBackground(oldElementFromDescriptor);
 
-        if (nodeToProcessActions[0] != null) {
-          processNodeActionsIfReady(nodeToProcessActions[0]);
-        }
+            if (nodeToProcessActions[0] != null) {
+              processNodeActionsIfReady(nodeToProcessActions[0]);
+            }
+          }
+        });
       }
     };
 
@@ -2054,7 +2085,7 @@ public class AbstractTreeUi {
       List<NodeAction> secondary = secondaryNodeAction != null ? secondaryNodeAction.get(element) : null;
       for (NodeAction each : actions) {
         if (secondary != null && secondary.contains(each)) {
-          secondary.remove(each);          
+          secondary.remove(each);
         }
         each.onReady(node);
       }
@@ -2258,7 +2289,7 @@ public class AbstractTreeUi {
               NodeDescriptor parentDescriptor = getDescriptorFrom(parentNode);
               if (parentDescriptor != null) {
                 parentDescriptor.setChildrenSortingStamp(-1);
-              } 
+              }
             }
 
             if (index == null) {
@@ -2859,7 +2890,7 @@ public class AbstractTreeUi {
                final Runnable onDone,
                final boolean addToSelection,
                boolean scroll) {
-    _select(elements, onDone, addToSelection, true, false, scroll, false, true, true);    
+    _select(elements, onDone, addToSelection, true, false, scroll, false, true, true);
   }
 
   void _select(final Object[] elements,
@@ -3639,6 +3670,8 @@ public class AbstractTreeUi {
 
       if (myRequestedExpand != null && !myRequestedExpand.equals(path)) return;
 
+      //myRequestedExpand = null;
+
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
 
       if (!myUnbuiltNodes.contains(node)) {
@@ -3783,7 +3816,7 @@ public class AbstractTreeUi {
     private Map<NodeDescriptor, Boolean> myChanges = new HashMap<NodeDescriptor, Boolean>();
 
     LoadedChildren(Object[] elements) {
-      myElements = Arrays.asList(elements != null ? elements : new Object[0]);
+      myElements = Arrays.asList(elements != null ? elements : ArrayUtil.EMPTY_OBJECT_ARRAY);
     }
 
     void putDescriptor(Object element, NodeDescriptor descriptor, boolean isChanged) {
@@ -3916,7 +3949,7 @@ public class AbstractTreeUi {
     }
   }
 
-  
+
   public void setPassthroughMode(boolean passthrough) {
     myPassthroughMode = passthrough;
     AbstractTreeUpdater updater = getUpdater();
@@ -3939,4 +3972,25 @@ public class AbstractTreeUi {
     Application app = ApplicationManager.getApplication();
     return app != null && app.isUnitTestMode();
   }
+
+  private void addModelListenerToDianoseAccessOutsideEdt() {
+    myTreeModel.addTreeModelListener(new TreeModelListener() {
+      public void treeNodesChanged(TreeModelEvent e) {
+        assertIsDispatchThread();
+      }
+
+      public void treeNodesInserted(TreeModelEvent e) {
+        assertIsDispatchThread();
+      }
+
+      public void treeNodesRemoved(TreeModelEvent e) {
+        assertIsDispatchThread();
+      }
+
+      public void treeStructureChanged(TreeModelEvent e) {
+        assertIsDispatchThread();
+      }
+    });
+  }
+
 }

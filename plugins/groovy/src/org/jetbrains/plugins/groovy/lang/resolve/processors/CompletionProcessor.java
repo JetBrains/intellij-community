@@ -57,6 +57,6 @@ public class CompletionProcessor extends ResolverProcessor {
   @NotNull
   public GroovyResolveResult[] getCandidates() {
     if (myCandidates.size() == 0) return GroovyResolveResult.EMPTY_ARRAY;
-    return ResolveUtil.filterSameSignatureCandidates(myCandidates);
+    return ResolveUtil.filterSameSignatureCandidates(myCandidates, -1);
   }
 }

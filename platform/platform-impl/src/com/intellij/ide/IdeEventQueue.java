@@ -84,6 +84,8 @@ public class IdeEventQueue extends EventQueue {
   private final IdePopupManager myPopupManager = new IdePopupManager();
 
 
+  private final ToolkitBugsProcessor myToolkitBugsProcessor = new ToolkitBugsProcessor();
+
   private boolean mySuspendMode;
 
   /**
@@ -232,7 +234,7 @@ public class IdeEventQueue extends EventQueue {
     synchronized (myLock) {
       final boolean wasRemoved = myIdleListeners.remove(runnable);
       if (!wasRemoved) {
-        LOG.assertTrue(false, "unknown runnable: " + runnable);
+        LOG.error("unknown runnable: " + runnable);
       }
       final MyFireIdleRequest request = myListener2Request.remove(runnable);
       LOG.assertTrue(request != null);
@@ -258,7 +260,7 @@ public class IdeEventQueue extends EventQueue {
     synchronized (myLock) {
       final boolean wasRemoved = myActivityListeners.remove(runnable);
       if (!wasRemoved) {
-        LOG.assertTrue(false, "unknown runnable: " + runnable);
+        LOG.error("unknown runnable: " + runnable);
       }
     }
   }
@@ -611,7 +613,9 @@ public class IdeEventQueue extends EventQueue {
       throw pce;
     }
     catch (Throwable exc) {
-      LOG.error("Error during dispatching of " + e, exc);
+      if (!myToolkitBugsProcessor.process(exc)) {
+        LOG.error("Error during dispatching of " + e, exc);
+      }
     }
   }
 

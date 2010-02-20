@@ -118,12 +118,12 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     inspect(tools, iManager, true, true);
   }
 
-  public void doInspectInBatch(final InspectionManagerEx iManager, InspectionProfileEntry[] toolWrappers, boolean ignoreSuppressed) {
+  public void doInspectInBatch(final InspectionManagerEx iManager, List<InspectionProfileEntry> toolWrappers, boolean ignoreSuppressed) {
     myDescriptors = new ArrayList<ProblemDescriptor>();
     myLevels = new ArrayList<HighlightInfoType>();
     myTools = new ArrayList<LocalInspectionTool>();
 
-    Map<LocalInspectionTool, LocalInspectionToolWrapper> tool2Wrapper = new THashMap<LocalInspectionTool, LocalInspectionToolWrapper>(toolWrappers.length);
+    Map<LocalInspectionTool, LocalInspectionToolWrapper> tool2Wrapper = new THashMap<LocalInspectionTool, LocalInspectionToolWrapper>(toolWrappers.size());
     for (InspectionProfileEntry toolWrapper : toolWrappers) {
       tool2Wrapper.put(((LocalInspectionToolWrapper)toolWrapper).getTool(), (LocalInspectionToolWrapper)toolWrapper);
     }

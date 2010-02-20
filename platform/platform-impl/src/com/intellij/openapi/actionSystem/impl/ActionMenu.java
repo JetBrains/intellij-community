@@ -38,7 +38,7 @@ import java.beans.PropertyChangeListener;
 
 public final class ActionMenu extends JMenu {
   private final String myPlace;
-  private final DataContext myContext;
+  private DataContext myContext;
   private final ActionGroup myGroup;
   private final PresentationFactory myPresentationFactory;
   private final Presentation myPresentation;
@@ -68,6 +68,10 @@ public final class ActionMenu extends JMenu {
     if (SystemInfo.isMacSystemMenu) {
       installSynchronizer();
     }
+  }
+
+  public void updateContext(DataContext context) {
+    myContext = context;
   }
 
   public void addNotify() {
@@ -173,6 +177,7 @@ public final class ActionMenu extends JMenu {
       }
     }
   }
+
 
   private class MenuListenerImpl implements MenuListener {
     public void menuCanceled(MenuEvent e) {

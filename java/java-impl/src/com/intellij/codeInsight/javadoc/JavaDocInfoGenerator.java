@@ -236,9 +236,9 @@ public class JavaDocInfoGenerator {
     if (file instanceof PsiJavaFile) {
       String packageName = ((PsiJavaFile)file).getPackageName();
       if (packageName.length() > 0) {
-        buffer.append("<font size=\"-1\"><b>");
+        buffer.append("<small><b>");
         buffer.append(packageName);
-        buffer.append("</b></font>");
+        buffer.append("</b></small>");
         //buffer.append("<br>");
       }
     }
@@ -318,26 +318,60 @@ public class JavaDocInfoGenerator {
   private void generateTypeParametersSection(final StringBuilder buffer, final PsiClass aClass) {
     final PsiDocComment docComment = aClass.getDocComment();
     if (docComment == null) return;
-    PsiDocTag[] parmTag = docComment.findTagsByName("param");
-    final LinkedList<Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>> result = new LinkedList<Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>>();
+    final LinkedList<Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>> result =
+      new LinkedList<Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>>();
     final PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
     for (PsiTypeParameter typeParameter : typeParameters) {
-      final String paramName = "<" + typeParameter.getName() + ">";
-      for (PsiDocTag docTag : parmTag) {
-        final PsiDocTagValue value = docTag.getValueElement();
-        if (value != null) {
-          final String tagName = value.getText();
-          if (Comparing.strEqual(tagName, paramName)) {
-            result.add(Pair.<PsiDocTag, InheritDocProvider<PsiDocTag>>create(docTag, null));
-          }
-        }
+      final DocTagLocator<PsiDocTag> locator = parameterLocator("<" + typeParameter.getName() + ">");
+      final Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> pair = findInHierarchy(aClass, locator);
+      if (pair != null) {
+        result.add(pair);
       }
     }
     generateTypeParametersSection(buffer, result);
   }
 
+  private static Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> findInHierarchy(PsiClass psiClass, final DocTagLocator<PsiDocTag> locator) {
+    for (final PsiClass superClass : psiClass.getSupers()) {
+      final Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> pair = findInClassComment(superClass, locator);
+      if (pair != null) return pair;
+    }
+    for (PsiClass superInterface : psiClass.getInterfaces()) {
+      final Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> pair = findInClassComment(superInterface, locator);
+      if (pair != null) return pair;
+    }
+    return findInClassComment(psiClass, locator);
+  }
+
+  private static Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> findInClassComment(final PsiClass psiClass, final DocTagLocator<PsiDocTag> locator) {
+    final PsiDocTag tag = locator.find(getDocComment(psiClass));
+    if (tag != null) {
+      return new Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>(tag, new InheritDocProvider<PsiDocTag>() {
+        public Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> getInheritDoc() {
+          return findInHierarchy(psiClass, locator);
+        }
+
+        public PsiClass getElement() {
+          return psiClass;
+        }
+      });
+    }
+    return null;
+  }
+
+  @Nullable
   private static PsiDocComment getDocComment(final PsiDocCommentOwner docOwner) {
-    return ((PsiDocCommentOwner)docOwner.getNavigationElement()).getDocComment();
+    PsiDocComment comment = ((PsiDocCommentOwner)docOwner.getNavigationElement()).getDocComment();
+    if (comment == null) { //check for non-normalized fields
+      final PsiModifierList modifierList = docOwner.getModifierList();
+      if (modifierList != null) {
+        final PsiElement parent = modifierList.getParent();
+        if (parent instanceof PsiDocCommentOwner) {
+          return ((PsiDocCommentOwner)parent.getNavigationElement()).getDocComment();
+        }
+      }
+    }
+    return comment;
   }
 
   private void generateFieldJavaDoc(@NonNls StringBuilder buffer, PsiField field) {
@@ -347,10 +381,10 @@ public class JavaDocInfoGenerator {
     if (parentClass != null) {
       String qName = parentClass.getQualifiedName();
       if (qName != null) {
-        buffer.append("<font size=\"-1\"><b>");
+        buffer.append("<small><b>");
         //buffer.append(qName);
         generateLink(buffer, qName, qName, field, false);
-        buffer.append("</b></font>");
+        buffer.append("</b></small>");
         //buffer.append("<br>");
       }
     }
@@ -527,7 +561,7 @@ public class JavaDocInfoGenerator {
             }
             buffer.append(")");
           }
-          buffer.append("\n");
+          buffer.append("&nbsp;");
         }
       }
     }
@@ -576,10 +610,10 @@ public class JavaDocInfoGenerator {
     if (parentClass != null) {
       String qName = parentClass.getQualifiedName();
       if (qName != null) {
-        buffer.append("<font size=\"-1\"><b>");
+        buffer.append("<small><b>");
         generateLink(buffer, qName, qName, method, false);
         //buffer.append(qName);
-        buffer.append("</b></font>");
+        buffer.append("</b></small>");
         //buffer.append("<br>");
       }
     }

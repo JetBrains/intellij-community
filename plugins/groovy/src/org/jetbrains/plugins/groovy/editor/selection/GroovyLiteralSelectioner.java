@@ -21,11 +21,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mGSTRING_CONTENT;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 import java.util.List;
+
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mGSTRING_CONTENT;
 
 /**
  * @author ilyas
@@ -33,10 +35,14 @@ import java.util.List;
 public class GroovyLiteralSelectioner extends GroovyBasicSelectioner {
   public boolean canSelect(PsiElement e) {
     PsiElement parent = e.getParent();
-    return isStringLiteral(e) || isStringLiteral(parent);
+    return isLiteral(e) || isLiteral(parent);
   }
 
-  private static boolean isStringLiteral(PsiElement element) {
+  private static boolean isLiteral(PsiElement element) {
+    if (element instanceof GrListOrMap) {
+      return true;
+    }
+
     if (!(element instanceof GrLiteral)) return false;
     ASTNode node = element.getNode();
     if (node == null) return false;
@@ -49,13 +55,9 @@ public class GroovyLiteralSelectioner extends GroovyBasicSelectioner {
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
     List<TextRange> result = super.select(e, editorText, cursorOffset, editor);
 
-/*    TextRange range = e.getTextRange();
-    if (range.getLength() <= 2) {
-      result.add(range);
+    if (e instanceof GrListOrMap) {
+      return result;
     }
-    else {
-      result.add(new TextRange(range.getStartOffset() + 1, range.getEndOffset() - 1));
-    }*/
 
     int startOffset = -1;
     int endOffset = -1;

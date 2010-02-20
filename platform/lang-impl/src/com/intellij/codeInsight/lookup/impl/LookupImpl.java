@@ -65,7 +65,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.impl.LookupImpl");
   private static final int MAX_PREFERRED_COUNT = 5;
 
-  private static final LookupItem EMPTY_LOOKUP_ITEM = new LookupItem("preselect", "preselect");
+  private static final LookupItem EMPTY_LOOKUP_ITEM = LookupItem.fromString("preselect");
 
   private final Project myProject;
   private final Editor myEditor;
@@ -424,7 +424,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     Dimension dim = getComponent().getPreferredSize();
     int lookupStart = getLookupStart();
     if (lookupStart < 0) {
-      LOG.assertTrue(false, lookupStart + "; minprefix=" + myMinPrefixLength + "; offset=" + myEditor.getCaretModel().getOffset() + "; element=" + getPsiElement());
+      LOG.error(lookupStart + "; minprefix=" + myMinPrefixLength + "; offset=" + myEditor.getCaretModel().getOffset() + "; element=" +
+                getPsiElement());
     }
 
     LogicalPosition pos = myEditor.offsetToLogicalPosition(lookupStart);
@@ -434,7 +435,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     JComponent internalComponent = myEditor.getContentComponent();
     final JRootPane rootPane = editorComponent.getRootPane();
     if (rootPane == null) {
-      LOG.assertTrue(false, myArranger);
+      LOG.error(myArranger);
     }
     JLayeredPane layeredPane = rootPane.getLayeredPane();
     Point layeredPanePoint=SwingUtilities.convertPoint(internalComponent,location, layeredPane);
@@ -921,14 +922,14 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
     if (isVisible() && !ApplicationManager.getApplication().isUnitTestMode()) {
       if (myEditor.getComponent().getRootPane() == null) {
-        LOG.assertTrue(false, "Null root pane");
+        LOG.error("Null root pane");
       }
 
       Point point = calculatePosition();
       Dimension preferredSize = getComponent().getPreferredSize();
       setBounds(point.x,point.y,preferredSize.width,preferredSize.height);
 
-      HintManagerImpl.getInstanceImpl().adjustEditorHintPosition(this, myEditor, point);
+      HintManagerImpl.adjustEditorHintPosition(this, myEditor, point);
     }
   }
 

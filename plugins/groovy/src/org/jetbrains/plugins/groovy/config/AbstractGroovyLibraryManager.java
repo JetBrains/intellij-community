@@ -148,7 +148,7 @@ public abstract class AbstractGroovyLibraryManager extends LibraryManager {
 
     if (addVersion && !AbstractConfigUtils.UNDEFINED_VERSION.equals(newVersion)) {
       final Project project = container.getProject();
-      final String name = generatePointerName(newVersion, getLibraryPrefix(), container, usedLibraryNames);
+      final String name = generatePointerName(newVersion, getLibraryPrefix() + "-", container, usedLibraryNames);
       final CreateLibraryDialog dialog = new CreateLibraryDialog(project, "Create " + libraryKind + " library",
                                                                  "Create Project " + libraryKind + " library '" + name + "'",
                                                                  "Create Global " + libraryKind + " library '" + name + "'");

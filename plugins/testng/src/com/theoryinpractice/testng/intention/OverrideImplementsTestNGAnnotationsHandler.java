@@ -21,6 +21,7 @@
 package com.theoryinpractice.testng.intention;
 
 import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsHandler;
+import com.intellij.util.ArrayUtil;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,6 +33,6 @@ public class OverrideImplementsTestNGAnnotationsHandler implements OverrideImple
 
   @NotNull
   public String[] annotationsToRemove(@NotNull final String fqName) {
-    return new String[0];
+    return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 }

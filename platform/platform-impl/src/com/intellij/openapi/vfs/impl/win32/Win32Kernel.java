@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.vfs.impl.win32;
 
+import com.intellij.util.ArrayUtil;
+
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,7 +42,7 @@ public class Win32Kernel {
 
     FileInfo[] fileInfos = myKernel.listChildren(absolutePath.replace('/', '\\') + "\\*.*");
     if (fileInfos == null) {
-      return new String[0];
+      return ArrayUtil.EMPTY_STRING_ARRAY;
     }
     ArrayList<String> names = new ArrayList<String>(fileInfos.length);
     for (int i = 0, fileInfosLength = fileInfos.length; i < fileInfosLength; i++) {
@@ -56,7 +58,7 @@ public class Win32Kernel {
       names.add(info.name);
     }
 
-    return names.toArray(new String[names.size()]);
+    return ArrayUtil.toStringArray(names);
   }
 
   public boolean exists(String path) {

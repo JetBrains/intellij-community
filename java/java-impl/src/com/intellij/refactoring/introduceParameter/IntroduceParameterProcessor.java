@@ -33,8 +33,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
@@ -253,7 +255,15 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
         for (final UsageInfo usageInfo : usageArray) {
           if (usageInfo instanceof ExternalUsageInfo && isMethodUsage(usageInfo)) {
             final PsiElement place = usageInfo.getElement();
-            for (final PsiElement element : result) {
+            for (PsiElement element : result) {
+              if (element instanceof PsiField && myReplaceFieldsWithGetters != IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE) { //check getter access instead
+                final PsiClass psiClass = ((PsiField)element).getContainingClass();
+                LOG.assertTrue(psiClass != null);
+                final PsiMethod method = psiClass.findMethodBySignature(PropertyUtil.generateGetterPrototype((PsiField)element), true);
+                if (method != null){
+                  element = method;
+                }
+              }
               if (element instanceof PsiMember &&
                   !JavaPsiFacade.getInstance(myProject).getResolveHelper().isAccessible((PsiMember)element, place, null)) {
                 String message =
@@ -501,7 +511,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
       removeParametersFromCall(argList);
     }
     else {
-      LOG.error(element.getParent().toString());
+      LOG.error(element.getParent());
     }
   }
 

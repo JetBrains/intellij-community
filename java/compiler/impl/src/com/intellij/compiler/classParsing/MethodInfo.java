@@ -161,7 +161,7 @@ public class MethodInfo extends MemberInfo {
       String descriptor = symbolTable.getSymbol(getDescriptor());
       int endIndex = descriptor.indexOf(')');
       if (endIndex <= 0) {
-        LOG.assertTrue(false, "Corrupted method descriptor: "+descriptor);
+        LOG.error("Corrupted method descriptor: " + descriptor);
       }
       myParameterDescriptors = parseParameterDescriptors(descriptor.substring(1, endIndex));
     }

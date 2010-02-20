@@ -14,6 +14,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.refactoring.encapsulateFields.EncapsulateFieldsDescriptor;
 import com.intellij.refactoring.encapsulateFields.EncapsulateFieldsProcessor;
+import com.intellij.refactoring.util.DocCommentPolicy;
 import junit.framework.Assert;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +37,18 @@ public class EncapsulateFieldsTest extends MultiFileTestCase{
 
   public void testHideOuterclassMethod() throws Exception {
     doTest("i", "A.B", "There is already a <b><code>method <b><code>A.getI()</code></b></code></b> which would be hidden by generated getter");
+  }
+
+  public void testMoveJavadocToGetter() throws Exception {
+    doTest(new PerformAction() {
+      public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
+        final PsiClass aClass = myJavaFacade.findClass("A", GlobalSearchScope.projectScope(myProject));
+        assertNotNull("Tested class not found", aClass);
+        final PsiField field = aClass.findFieldByName("i", false);
+        assertNotNull(field);
+        doTest(aClass, field, null, true, true);
+      }
+    });
   }
 
   @Override
@@ -114,6 +127,10 @@ public class EncapsulateFieldsTest extends MultiFileTestCase{
         @Modifier
         public String getAccessorsVisibility() {
           return PsiModifier.PUBLIC;
+        }
+
+        public int getJavadocPolicy() {
+          return DocCommentPolicy.MOVE;
         }
       });
       processor.run();

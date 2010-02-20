@@ -19,6 +19,7 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -32,6 +33,7 @@ import org.jetbrains.idea.maven.utils.Path;
 import org.jetbrains.idea.maven.utils.Url;
 
 import java.io.File;
+import java.util.List;
 
 public class MavenRootModelAdapter {
   private static final String MAVEN_LIB_PREFIX = "Maven: ";
@@ -215,43 +217,54 @@ public class MavenRootModelAdapter {
   public void addLibraryDependency(MavenArtifact artifact,
                                    boolean isExportable,
                                    DependencyScope scope,
-                                   MavenModifiableModelsProvider provider) {
+                                   MavenModifiableModelsProvider provider,
+                                   MavenProject project) {
     String libraryName = makeLibraryName(artifact);
 
     Library library = provider.getLibraryByName(libraryName);
     if (library == null) {
       library = provider.createLibrary(libraryName);
     }
-
     Library.ModifiableModel libraryModel = provider.getLibraryModel(library);
 
-    setUrl(libraryModel, OrderRootType.CLASSES, artifact, null);
-    setUrl(libraryModel, OrderRootType.SOURCES, artifact, MavenConstants.CLASSIFIER_SOURCES);
-    setUrl(libraryModel, JavadocOrderRootType.getInstance(), artifact, MavenConstants.CLASSIFIER_JAVADOC);
+    updateUrl(libraryModel, OrderRootType.CLASSES, artifact, null, null, true);
+    if (!MavenConstants.SCOPE_SYSTEM.equals(artifact.getScope())) {
+      updateUrl(libraryModel, OrderRootType.SOURCES, artifact, MavenExtraArtifactType.SOURCES, project, false);
+      updateUrl(libraryModel, JavadocOrderRootType.getInstance(), artifact, MavenExtraArtifactType.DOCS, project, false);
+    }
 
     LibraryOrderEntry e = myRootModel.addLibraryEntry(library);
     e.setExported(isExportable);
     e.setScope(scope);
-
-    removeOldLibraryDependency(artifact);
   }
 
-  private void setUrl(Library.ModifiableModel libraryModel,
-                      OrderRootType type,
-                      MavenArtifact artifact,
-                      String classifier) {
-    String newUrl = artifact.getUrlForExtraArtifact(classifier);
-    for (String url : libraryModel.getUrls(type)) {
+  private void updateUrl(Library.ModifiableModel library,
+                         OrderRootType type,
+                         MavenArtifact artifact,
+                         MavenExtraArtifactType artifactType,
+                         MavenProject project,
+                         boolean clearAll) {
+    String classifier = null;
+    String extension = null;
+
+    if (artifactType != null) {
+      Pair<String, String> result = project.getClassifierAndExtension(artifact, artifactType);
+      classifier = result.first;
+      extension = result.second;
+    }
+
+    String newUrl = artifact.getUrlForExtraArtifact(classifier, extension);
+    for (String url : library.getUrls(type)) {
       if (newUrl.equals(url)) return;
-      if (MavenConstants.SCOPE_SYSTEM.equals(artifact.getScope()) || isRepositoryUrl(artifact, url, classifier)) {
-        libraryModel.removeRoot(url, type);
+      if (clearAll || isRepositoryUrl(artifact, url, classifier, extension)) {
+        library.removeRoot(url, type);
       }
     }
-    libraryModel.addRoot(newUrl, type);
+    library.addRoot(newUrl, type);
   }
 
-  private boolean isRepositoryUrl(MavenArtifact artifact, String url, String classifier) {
-    return url.endsWith(artifact.getRelativePathForExtraArtifact(classifier) + JarFileSystem.JAR_SEPARATOR);
+  private boolean isRepositoryUrl(MavenArtifact artifact, String url, String classifier, String extension) {
+    return url.endsWith(artifact.getRelativePathForExtraArtifact(classifier, extension) + JarFileSystem.JAR_SEPARATOR);
   }
 
   public static boolean isChangedByUser(Library library) {
@@ -266,33 +279,25 @@ public class MavenRootModelAdapter {
     if (dotPos == -1) return true;
     String pathToJar = classes.substring(0, dotPos);
 
-    String[] sources = library.getUrls(OrderRootType.SOURCES);
-    if (sources.length != 1 || !FileUtil.startsWith(sources[0], pathToJar)) return true;
-
-    String[] javadoc = library.getUrls(JavadocOrderRootType.getInstance());
-    if (javadoc.length != 1 || !FileUtil.startsWith(javadoc[0], pathToJar)) return true;
+    if (hasUserPaths(OrderRootType.SOURCES, library, pathToJar)) return true;
+    if (hasUserPaths(JavadocOrderRootType.getInstance(), library, pathToJar)) return true;
 
     return false;
   }
 
-  private void removeOldLibraryDependency(MavenArtifact artifact) {
-    Library lib = findLibrary(artifact, false);
-    if (lib == null) return;
-    LibraryOrderEntry entry = myRootModel.findLibraryOrderEntry(lib);
-    if (entry == null) return;
-
-    myRootModel.removeOrderEntry(entry);
+  private static boolean hasUserPaths(OrderRootType rootType, Library library, String pathToJar) {
+    String[] sources = library.getUrls(rootType);
+    for (String each : sources) {
+      if (!FileUtil.startsWith(each, pathToJar)) return true;
+    }
+    return false;
   }
 
-  public Library findLibrary(MavenArtifact artifact) {
-    return findLibrary(artifact, true);
-  }
-
-  private Library findLibrary(final MavenArtifact artifact, final boolean newType) {
+  public Library findLibrary(final MavenArtifact artifact) {
     return myRootModel.processOrder(new RootPolicy<Library>() {
       @Override
       public Library visitLibraryOrderEntry(LibraryOrderEntry e, Library result) {
-        String name = newType ? makeLibraryName(artifact) : artifact.getDisplayStringForLibraryName();
+        String name = makeLibraryName(artifact);
         return name.equals(e.getLibraryName()) ? e.getLibrary() : result;
       }
     }, null);

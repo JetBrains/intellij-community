@@ -140,6 +140,7 @@ public class SvnVcs extends AbstractVcs {
   private final SvnAuthenticationNotifier myAuthNotifier;
 
   static {
+    SVNJNAUtil.setJNAEnabled(true);
     SvnHttpAuthMethodsDefaultChecker.check();
 
     //noinspection UseOfArchaicSystemPropertyAccessors

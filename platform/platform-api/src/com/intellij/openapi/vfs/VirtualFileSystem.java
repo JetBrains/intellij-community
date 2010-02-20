@@ -154,6 +154,7 @@ public abstract class VirtualFileSystem {
    *
    * @see VirtualFile#createChildDirectory(Object,String)
    */
+  @NotNull
   protected abstract VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException;
 
   /**

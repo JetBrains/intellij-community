@@ -474,6 +474,10 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
     return myDelegate.setCaretVisible(b);
   }
 
+  public boolean setCaretEnabled(boolean enabled) {
+    return myDelegate.setCaretEnabled(enabled);
+  }
+
   public void addFocusListener(final FocusChangeListener listener) {
     myDelegate.addFocusListener(listener);
   }

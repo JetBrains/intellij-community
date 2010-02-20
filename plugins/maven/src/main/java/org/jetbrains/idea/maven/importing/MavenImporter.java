@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.Pair;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.*;
@@ -52,6 +53,15 @@ public abstract class MavenImporter {
   public abstract boolean isApplicable(MavenProject mavenProject);
 
   public abstract boolean isSupportedDependency(MavenArtifact artifact);
+
+  @Nullable
+  public Pair<String, String> getExtraArtifactClassifierAndExtension(MavenArtifact artifact, MavenExtraArtifactType type) {
+    return null;
+  }
+
+  public boolean requiresResolvedPlugin(MavenPlugin plugin) {
+    return false;
+  }
 
   public abstract void preProcess(Module module,
                          MavenProject mavenProject,

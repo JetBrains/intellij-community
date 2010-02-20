@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PsiFilter<T extends PsiElement> {
   private final Class<T> filter;
+  public static final PsiFilter<?>[] EMPTY = {}; 
 
   public PsiFilter(@NotNull Class<T> filter) {
     this.filter = filter;
@@ -35,5 +36,9 @@ public class PsiFilter<T extends PsiElement> {
 
   public final Class<T> getParentClass() {
     return filter; 
+  }
+
+  public boolean areEquivalent(T e1, T e2) {
+    return e1.isEquivalentTo(e2);
   }
 }

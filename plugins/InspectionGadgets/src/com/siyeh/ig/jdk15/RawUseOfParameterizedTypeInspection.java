@@ -64,7 +64,12 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
         return optionsPanel;
     }
 
-    public BaseInspectionVisitor buildVisitor() {
+    @Override
+    public String getAlternativeID() {
+      return "unchecked";
+    }
+
+  public BaseInspectionVisitor buildVisitor() {
         return new RawUseOfParameterizedTypeVisitor();
     }
 

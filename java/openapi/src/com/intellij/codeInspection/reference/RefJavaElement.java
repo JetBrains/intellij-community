@@ -71,5 +71,5 @@ public interface RefJavaElement extends RefElement {
    */
   @Nullable
   @Modifier
-    String getAccessModifier();
+  String getAccessModifier();
 }

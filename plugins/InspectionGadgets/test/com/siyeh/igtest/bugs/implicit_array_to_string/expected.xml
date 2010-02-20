@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>ImplicitArrayToString.java</file>
+    <line>13</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Implicit call to array '.toString()'</problem_class>
+    <description>Implicit call to method 'toString()' on array &lt;code&gt;interfaces&lt;/code&gt;</description>
+  </problem>
+
+
+  <problem>
+    <file>ImplicitArrayToString.java</file>
+    <line>14</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Implicit call to array '.toString()'</problem_class>
+    <description>Implicit call to method 'toString()' on array &lt;code&gt;interfaces&lt;/code&gt;</description>
+  </problem>
+
+
+  <problem>
+    <file>ImplicitArrayToString.java</file>
+    <line>15</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Implicit call to array '.toString()'</problem_class>
+    <description>Implicit call to method 'toString()' on array &lt;code&gt;interfaces&lt;/code&gt;</description>
+  </problem>
+</problems>

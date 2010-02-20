@@ -37,6 +37,8 @@ import com.intellij.rt.execution.junit.segments.PacketProcessor;
 import com.intellij.rt.execution.junit.segments.PoolOfDelimiters;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -130,8 +132,11 @@ public class TestsPacketsReceiver implements PacketProcessor, Disposable {
 
   public void notifyFinish(ObjectReader reader) {
     myIsTerminated = true;
-    myModel.getNotifier().fireRunnerStateChanged(new CompletionEvent(true, reader.readInt()));
-    terminateStillRunning();
+    final JUnitRunningModel model = getModel();
+    if (model != null) {
+      model.getNotifier().fireRunnerStateChanged(new CompletionEvent(true, reader.readInt()));
+      terminateStillRunning(model);
+    }
   }
 
   public boolean isRunning() {
@@ -142,11 +147,13 @@ public class TestsPacketsReceiver implements PacketProcessor, Disposable {
     myIsTerminated = terminated;
   }
 
+  @Nullable
   public JUnitRunningModel getModel() {
     return myModel;
   }
 
   public void dispose() {
+    myModel = null;
   }
 
   public void checkTerminated() {
@@ -156,15 +163,15 @@ public class TestsPacketsReceiver implements PacketProcessor, Disposable {
         final JUnitListenersNotifier notifier = model.getNotifier();
         if (notifier != null) {
           notifier.fireRunnerStateChanged(new CompletionEvent(false, -1));
-          terminateStillRunning();
+          terminateStillRunning(model);
         }
       }
       setTerminated(true);
     }
   }
 
-  private void terminateStillRunning() {
-    if (myModel.getRoot() != null) {
+  private void terminateStillRunning(@NotNull JUnitRunningModel model) {
+    if (model.getRoot() != null) {
       final List<AbstractTestProxy> runningTests = TestStateUpdater.RUNNING_LEAF.select(myModel.getRoot().getAllTests());
       for (final AbstractTestProxy runningTest : runningTests) {
         final TestProxy testProxy = (TestProxy)runningTest;

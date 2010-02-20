@@ -218,7 +218,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     final String rootUrl = getUrl();
     try {
       if (!FileUtil.isAncestor(new File(rootUrl), new File(url), false)) {
-        LOG.assertTrue(false, "The file " + url + " is not under content entry root " + rootUrl);
+        LOG.error("The file " + url + " is not under content entry root " + rootUrl);
       }
     }
     catch (IOException e) {

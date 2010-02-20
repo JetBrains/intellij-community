@@ -33,12 +33,14 @@ import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.actions.ContextHelpAction;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
+import com.intellij.util.ArrayUtil;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -131,7 +133,7 @@ public class XDebugSessionTab extends DebuggerLogConsoleManagerBase {
 
   public XDebugSessionData saveData() {
     final List<String> watchExpressions = myWatchesView.getWatchExpressions();
-    return new XDebugSessionData(watchExpressions.toArray(new String[watchExpressions.size()]));
+    return new XDebugSessionData(ArrayUtil.toStringArray(watchExpressions));
   }
 
   public ExecutionConsole getConsole() {
@@ -258,7 +260,7 @@ public class XDebugSessionTab extends DebuggerLogConsoleManagerBase {
   public void toFront() {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        WindowManagerEx.getInstanceEx().getFrame(getProject()).toFront();
+        ProjectUtil.focusProjectWindow(getProject(), Registry.is("debugger.mayBringFrameToFrontOnBreakpoint"));
         ExecutionManager.getInstance(getProject()).getContentManager().toFrontRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), myRunContentDescriptor);
       }
     });

@@ -23,7 +23,8 @@ import com.intellij.codeInsight.template.impl.TemplateState;
  */
 public interface TemplateEditingListener {
   void beforeTemplateFinished(TemplateState state, Template template);
-  void templateFinished(Template template);
+  void templateFinished(Template template, boolean brokenOff);
   void templateCancelled(Template template);
   void currentVariableChanged(TemplateState templateState, Template template, int oldIndex, int newIndex);
+  void templateExpanded(Template template);
 }

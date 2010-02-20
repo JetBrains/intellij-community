@@ -76,7 +76,7 @@ public class CodeFormatterFacade {
       if (containingFile.getTextLength() > 0) {
         try {
           FormatterEx.getInstanceEx().format(model, mySettings,
-                                             mySettings.getIndentOptions(fileType), range, true);
+                                             mySettings.getIndentOptions(fileType), new FormatTextRanges(range, true));
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
@@ -103,11 +103,7 @@ public class CodeFormatterFacade {
     return element;
   }
 
-  public void processText(final PsiFile file, final int startOffset, final int endOffset) {
-    processText(file, startOffset, endOffset, true);
-  }
-
-  private void processText(final PsiFile file, final int startOffset, final int endOffset, boolean headWhitespace) {
+  public void processTextWithPostponedFormatting(final PsiFile file, final FormatTextRanges ranges) {
     final FileType fileType = myHelper.getFileType();
 
     final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
@@ -115,7 +111,7 @@ public class CodeFormatterFacade {
     if (builder != null) {
       if (file.getTextLength() > 0) {
         try {
-          TextRange range = preprocess(file.getNode(), startOffset, endOffset);
+          ranges.preprocess(file.getNode());
           final PostprocessReformattingAspect component = file.getProject().getComponent(PostprocessReformattingAspect.class);
           component.doPostponedFormatting(file.getViewProvider());
           Block rootBlock= builder.createModel(file, mySettings).getRootBlock();
@@ -126,8 +122,7 @@ public class CodeFormatterFacade {
 
           //printToConsole(rootBlock, model);
 
-          FormatterEx.getInstanceEx().format(model, mySettings,
-                                             mySettings.getIndentOptions(fileType), range, headWhitespace);
+          FormatterEx.getInstanceEx().format(model, mySettings, mySettings.getIndentOptions(fileType), ranges);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
@@ -143,7 +138,7 @@ public class CodeFormatterFacade {
     System.out.println("---/TREE---");
   }
 
-  public void processTextWithoutHeadWhitespace(final PsiFile file, final int startOffset, final int endOffset) {
+  public void processText(final PsiFile file, final FormatTextRanges ranges) {
     final FileType fileType = myHelper.getFileType();
 
     final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
@@ -151,15 +146,14 @@ public class CodeFormatterFacade {
     if (builder != null) {
       if (file.getTextLength() > 0) {
         try {
-          TextRange range = preprocess(file.getNode(), startOffset, endOffset);
+          ranges.preprocess(file.getNode());
           FormattingModel originalModel = builder.createModel(file, mySettings);
           Project project = file.getProject();
           final FormattingModel model = new DocumentBasedFormattingModel(originalModel.getRootBlock(),
             PsiDocumentManager.getInstance(project).getDocument(file),
             project, mySettings, fileType, file);
 
-          FormatterEx.getInstanceEx().format(model, mySettings,
-                                             mySettings.getIndentOptions(fileType), range, false);
+          FormatterEx.getInstanceEx().format(model, mySettings, mySettings.getIndentOptions(fileType), ranges);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
@@ -172,7 +166,7 @@ public class CodeFormatterFacade {
     TextRange result = new TextRange(startOffset, endOffset);
     for(PreFormatProcessor processor: Extensions.getExtensions(PreFormatProcessor.EP_NAME)) {
       result = processor.process(node, result);
-  }
+    }
     return result;
   }
 }

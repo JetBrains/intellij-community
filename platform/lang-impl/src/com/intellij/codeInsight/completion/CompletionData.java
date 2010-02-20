@@ -248,7 +248,7 @@ public class CompletionData {
       s = ((PresentableLookupValue)object).getPresentation();
     }
     else {
-      LOG.assertTrue(false, "Null string for object: " + object + " of class " + (object != null ?object.getClass():null));
+      LOG.error("Null string for object: " + object + " of class " + (object != null ? object.getClass() : null));
     }
 
     LookupItem item = new LookupItem(object, s);
@@ -311,7 +311,7 @@ public class CompletionData {
 
       for (Object completion : completions) {
         if (completion == null) {
-          LOG.assertTrue(false, "Position=" + position + "\n;Reference=" + reference + "\n;variants=" + Arrays.toString(completions));
+          LOG.error("Position=" + position + "\n;Reference=" + reference + "\n;variants=" + Arrays.toString(completions));
         }
         if (completion instanceof PsiElement) {
           final PsiElement psiElement = (PsiElement)completion;

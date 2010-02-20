@@ -102,7 +102,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
   }
 
   public static IntentionHintComponent showIntentionHint(Project project, final PsiFile file, Editor editor,
-                                                         ShowIntentionsPass.IntentionsInfo intentions,
+                                                         @NotNull ShowIntentionsPass.IntentionsInfo intentions,
                                                          boolean showExpanded,
                                                          final Point position) {
     final IntentionHintComponent component = new IntentionHintComponent(project, file, editor, intentions);
@@ -199,7 +199,8 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     return new Point(location.x, location.y);
   }
 
-  private IntentionHintComponent(@NotNull Project project, @NotNull PsiFile file, @NotNull Editor editor, ShowIntentionsPass.IntentionsInfo intentions) {
+  private IntentionHintComponent(@NotNull Project project, @NotNull PsiFile file, @NotNull Editor editor,
+                                 @NotNull ShowIntentionsPass.IntentionsInfo intentions) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     myFile = file;
     myEditor = editor;

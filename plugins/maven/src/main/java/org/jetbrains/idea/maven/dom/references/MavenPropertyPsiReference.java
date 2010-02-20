@@ -28,8 +28,11 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagChild;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.xml.XmlElementDescriptor;
@@ -37,17 +40,16 @@ import com.intellij.xml.XmlNSDescriptor;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.MavenSchemaProvider;
 import org.jetbrains.idea.maven.dom.model.*;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenIcons;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -100,13 +102,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     PsiElement result = resolveSystemPropety();
     if (result != null) return result;
 
-    result = processProperties(myProjectDom, new PropertyProcessor<PsiElement>() {
-      @Nullable
-      public PsiElement process(@NotNull XmlTag property) {
-        if (property.getName().equals(myText)) return property;
-        return null;
-      }
-    });
+    result = MavenDomProjectProcessorUtils.searchProperty(myText, myProjectDom, myProject);
     if (result != null) return result;
 
     if (myText.startsWith("settings.")) {
@@ -143,94 +139,6 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
 
   private PsiDirectory getBaseDir() {
     return PsiManager.getInstance(myProject).findDirectory(myMavenProject.getDirectoryFile());
-  }
-
-  @Nullable
-  private <T> T processProperties(@NotNull MavenDomProjectModel projectDom, final PropertyProcessor<T> processor) {
-    T result;
-    MavenProject mavenProjectOrNull = MavenDomUtil.findProject(projectDom);
-
-    result = processSettingsXmlProperties(mavenProjectOrNull, processor);
-    if (result != null) return result;
-
-    result = processProjectProperties(projectDom, mavenProjectOrNull, processor);
-    if (result != null) return result;
-
-    return new MyMavenParentProjectFileProcessor<T>() {
-      protected T doProcessParent(VirtualFile parentFile) {
-        MavenDomProjectModel parentProjectDom = MavenDomUtil.getMavenDomProjectModel(myProject, parentFile);
-        if (parentProjectDom == null) return null;
-        MavenProject parentMavenProject = MavenDomUtil.findProject(parentProjectDom);
-        return processProjectProperties(parentProjectDom, parentMavenProject, processor);
-      }
-    }.process(projectDom);
-  }
-
-  @Nullable
-  private <T> T processSettingsXmlProperties(@Nullable MavenProject mavenProject, PropertyProcessor<T> processor) {
-    MavenGeneralSettings settings = myProjectsManager.getGeneralSettings();
-    T result;
-
-    for (VirtualFile each : settings.getEffectiveSettingsFiles()) {
-      MavenDomSettingsModel settingsDom = MavenDomUtil.getMavenDomModel(myProject, each, MavenDomSettingsModel.class);
-      if (settingsDom == null) continue;
-
-      result = processProfilesProperties(settingsDom.getProfiles(), mavenProject, processor);
-      if (result != null) return result;
-    }
-    return null;
-  }
-
-  @Nullable
-  private <T> T processProjectProperties(MavenDomProjectModel projectDom,
-                                         MavenProject mavenProjectOrNull,
-                                         PropertyProcessor<T> processor) {
-    T result;
-
-    result = processProfilesXmlProperties(MavenDomUtil.getVirtualFile(projectDom), mavenProjectOrNull, processor);
-    if (result != null) return result;
-
-    result = processProfilesProperties(projectDom.getProfiles(), mavenProjectOrNull, processor);
-    if (result != null) return result;
-
-    return processProperties(projectDom.getProperties(), processor);
-  }
-
-  @Nullable
-  private <T> T processProfilesXmlProperties(VirtualFile projectFile, MavenProject mavenProjectOrNull, PropertyProcessor<T> processor) {
-    VirtualFile profilesFile = MavenUtil.findProfilesXmlFile(projectFile);
-    if (profilesFile == null) return null;
-
-    MavenDomProfiles profiles = MavenDomUtil.getMavenDomProfilesModel(myProject, profilesFile);
-    if (profiles == null) return null;
-
-    return processProfilesProperties(profiles, mavenProjectOrNull, processor);
-  }
-
-  @Nullable
-  private <T> T processProfilesProperties(MavenDomProfiles profilesDom, MavenProject mavenProjectOrNull, PropertyProcessor<T> processor) {
-    Collection<String> activePropfiles = mavenProjectOrNull == null ? null : mavenProjectOrNull.getActiveProfilesIds();
-    for (MavenDomProfile each : profilesDom.getProfiles()) {
-      XmlTag idTag = each.getId().getXmlTag();
-      if (idTag == null) continue;
-      if (activePropfiles != null && !activePropfiles.contains(idTag.getValue().getText())) continue;
-
-      T result = processProperties(each.getProperties(), processor);
-      if (result != null) return result;
-    }
-    return null;
-  }
-
-  @Nullable
-  private <T> T processProperties(MavenDomProperties propertiesDom, PropertyProcessor<T> processor) {
-    XmlTag propertiesTag = propertiesDom.getXmlTag();
-    if (propertiesTag != null) {
-      for (XmlTag each : propertiesTag.getSubTags()) {
-        T result = processor.process(each);
-        if (result != null) return result;
-      }
-    }
-    return null;
   }
 
   @Nullable
@@ -292,7 +200,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
   public Object[] getVariants() {
     List<Object> result = new ArrayList<Object>();
     collectVariants(result);
-    return result.toArray(new Object[result.size()]);
+    return ArrayUtil.toObjectArray(result);
   }
 
   protected void collectVariants(List<Object> result) {
@@ -332,12 +240,12 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
   }
 
   private void collectPropertiesVariants(final List<Object> result) {
-    processProperties(myProjectDom, new PropertyProcessor<Object>() {
-      public Object process(@NotNull XmlTag property) {
-        result.add(createLookupElement(property, property.getName()));
-        return null;
+    Set<XmlTag> properties = MavenDomProjectProcessorUtils.collectProperties(myProjectDom, myProject);
+    result.addAll(ContainerUtil.map(properties, new Function<XmlTag, LookupElement>() {
+      public LookupElement fun(XmlTag xmlTag) {
+        return createLookupElement(xmlTag, xmlTag.getName());
       }
-    });
+    })) ;
   }
 
   private void collectSystemEnvProperties(String propertiesFileName, String prefix, List<Object> result) {
@@ -376,7 +284,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     return doProcessSchema(descriptors, null, processor, new THashSet<XmlElementDescriptor>());
   }
 
-  private <T> T doProcessSchema(XmlElementDescriptor[] descriptors,
+  private static <T> T doProcessSchema(XmlElementDescriptor[] descriptors,
                                 String prefix,
                                 SchemaProcessor<T> processor,
                                 Set<XmlElementDescriptor> recursionGuard) {
@@ -403,7 +311,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     return null;
   }
 
-  private <T> boolean isCollection(XmlElementDescriptor each) {
+  private static <T> boolean isCollection(XmlElementDescriptor each) {
     XmlTag declaration = (XmlTag)each.getDeclaration();
     if (declaration != null) {
       XmlTag complexType = declaration.findFirstSubTag("xs:complexType");
@@ -419,17 +327,12 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     return mySoft;
   }
 
-  private interface PropertyProcessor<T> {
-    @Nullable
-    T process(@NotNull XmlTag property);
-  }
-
   private interface SchemaProcessor<T> {
     @Nullable
     T process(@NotNull String property, XmlElementDescriptor descriptor);
   }
 
-  private class CollectingSchemaProcessor implements SchemaProcessor {
+  private static class CollectingSchemaProcessor implements SchemaProcessor {
     private final List<Object> myResult;
 
     public CollectingSchemaProcessor(List<Object> result) {

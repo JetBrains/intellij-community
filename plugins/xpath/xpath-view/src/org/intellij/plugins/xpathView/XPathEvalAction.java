@@ -235,7 +235,7 @@ public class XPathEvalAction extends XPathAction {
             } else if (result instanceof Boolean) {
                 Messages.showMessageDialog(result.toString(), "XPath result (Boolean)", Messages.getInformationIcon());
             } else {
-                LOG.assertTrue(false, "Unknown XPath result: " + result);
+              LOG.error("Unknown XPath result: " + result);
             }
         } catch (XPathSyntaxException e) {
             LOG.debug(e);

@@ -290,6 +290,19 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return getFileTypeByFileName(file.getName());
   }
 
+  public boolean isFileOfType(VirtualFile file, FileType type) {
+    if (type instanceof FileTypeIdentifiableByVirtualFile) {
+      return ((FileTypeIdentifiableByVirtualFile) type).isMyFileType(file);
+    }
+    final List<FileNameMatcher> matchers = getAssociations(type);
+    for (FileNameMatcher matcher : matchers) {
+      if (matcher.accept(file.getName())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   @NotNull
   public FileType getFileTypeByExtension(@NotNull String extension) {
     return getFileTypeByFileName("IntelliJ_IDEA_RULES." + extension);

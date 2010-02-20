@@ -16,25 +16,31 @@
 package org.jetbrains.idea.maven.dom.generate;
 
 import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.xml.ui.actions.generate.GenerateDomElementAction;
+import org.jetbrains.idea.maven.dom.MavenDomBundle;
+import org.jetbrains.idea.maven.dom.model.MavenDomBuild;
 import org.jetbrains.idea.maven.project.MavenId;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.indices.MavenArtifactSearchDialog;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenIcons;
 
 public class GenerateDependencyAction extends GenerateDomElementAction {
   public GenerateDependencyAction() {
-    super(new MavenGenerateProvider<MavenDomDependency>("Generate Dependency", MavenDomDependency.class) {
+    super(new MavenGenerateProvider<MavenDomDependency>(MavenDomBundle.message("generate.dependency"), MavenDomDependency.class) {
       @Override
       protected MavenDomDependency doGenerate(MavenDomProjectModel mavenModel, Editor editor) {
         MavenId id = MavenArtifactSearchDialog.searchForArtifact(editor.getProject());
         if (id == null) return null;
 
+        PsiDocumentManager.getInstance(mavenModel.getManager().getProject()).commitAllDocuments();
+
         MavenProjectsManager manager = MavenProjectsManager.getInstance(editor.getProject());
         return manager.addDependency(manager.findProject(mavenModel.getModule()), id);
       }
-    });
+    }, MavenIcons.DEPENDENCY_ICON);
   }
 
   @Override

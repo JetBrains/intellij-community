@@ -25,11 +25,16 @@ import com.intellij.xdebugger.ui.DebuggerIcons;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Represents a frame of execution stack. The selected frame is shown in 'Variables' panel of 'Debug' tool window.
+ * Override {@link XValueContainer#computeChildren} to show local variable, parameters, fields available in the frame
+ *
  * @author nik
  */
 public abstract class XStackFrame extends XValueContainer {
 
   /**
+   * If stack frame is not changed after step expanded nodes and selection will be restored in 'Variables' tree. A stack frame is assumed
+   * unchanged if this method return equal non-null values before and after step
    * @return an object which will be used to determine if stack frame changed after step
    */
   @Nullable

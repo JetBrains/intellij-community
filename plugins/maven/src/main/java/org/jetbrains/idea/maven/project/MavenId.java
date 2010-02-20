@@ -77,9 +77,14 @@ public class MavenId implements Serializable {
     return getDisplayString();
   }
 
-  public boolean equals(String groupId, String artifactId, String version) {
+  public boolean equals(String groupId, String artifactId) {
     if (myGroupId != null ? !myGroupId.equals(groupId) : groupId != null) return false;
     if (myArtifactId != null ? !myArtifactId.equals(artifactId) : artifactId != null) return false;
+    return true;
+  }
+
+  public boolean equals(String groupId, String artifactId, String version) {
+    if (!equals(groupId, artifactId)) return false;
     if (myVersion != null ? !myVersion.equals(version) : version != null) return false;
     return true;
   }

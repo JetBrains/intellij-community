@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,32 +74,55 @@ public class FileContentQueue {
   }
 
   private void put(VirtualFile file) throws InterruptedException {
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
 
     FileContent content = new FileContent(file);
 
     if (file.isValid()) {
+      final long contentLength = content.getLength();
+      boolean counterUpdated = false;
       try {
-        final long contentLength = content.getLength();
-        if (contentLength < SIZE_THRESHOLD) {
+        if (contentLength < FileManagerImpl.MAX_INTELLISENSE_FILESIZE) {
           synchronized (this) {
             while (myTotalSize > SIZE_THRESHOLD) {
-              if (indicator != null) indicator.checkCanceled();
+              if (indicator != null) {
+                indicator.checkCanceled();
+              }
               wait(300);
             }
             myTotalSize += contentLength;
+            counterUpdated = true;
           }
 
           content.getBytes(); // Reads the content bytes and caches them.
         }
       }
       catch (IOException e) {
+        LOG.info(e);
+        if (counterUpdated) {
+          synchronized (this) {
+            myTotalSize -= contentLength;   // revert size counter
+            notifyAll();
+          }
+        }
         content.setEmptyContent();
       }
       catch (ProcessCanceledException e) {
+        if (counterUpdated) {
+          synchronized (this) {
+            myTotalSize -= contentLength;   // revert size counter
+            notifyAll();
+          }
+        }
         throw e;
       }
       catch (InterruptedException e) {
+        if (counterUpdated) {
+          synchronized (this) {
+            myTotalSize -= contentLength;   // revert size counter
+            notifyAll();
+          }
+        }
         return;
       }
       catch (Throwable e) {
@@ -129,15 +153,18 @@ public class FileContentQueue {
       throw new RuntimeException(e);
     }
 
-    synchronized (this) {
-      try {
-        final VirtualFile file = result.getVirtualFile();
-        if (file == null) return null;
-        if (!file.isValid() || result.getLength() >= SIZE_THRESHOLD) return result;
-        myTotalSize -= result.getLength();
-      }
-      finally {
-        notifyAll();
+    final VirtualFile file = result.getVirtualFile();
+    if (file == null) {
+      return null;
+    }
+    if (result.getLength() < FileManagerImpl.MAX_INTELLISENSE_FILESIZE) {
+      synchronized (this) {
+        try {
+          myTotalSize -= result.getLength();
+        }
+        finally {
+          notifyAll();
+        }
       }
     }
 

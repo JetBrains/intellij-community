@@ -69,7 +69,7 @@ public abstract class XDebuggerEvaluator {
   }
 
   /**
-   * @deprecated override {@link XDebuggerEvaluator#evaluate(String, XEvaluationCallback, com.intellij.xdebugger.XSourcePosition)} instead
+   * @deprecated override {@link #evaluate(String, XEvaluationCallback, com.intellij.xdebugger.XSourcePosition)} instead
    */
   @Deprecated
   public void evaluate(@NotNull String expression, XEvaluationCallback callback) {

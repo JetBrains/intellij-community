@@ -331,7 +331,7 @@ public class JavadocParsing extends Parsing {
         LeafElement tokenElement = myParsing.createTokenElement(lexer);
         IElementType type = lexer.getTokenType();
         if (!TOKEN_FILTER.contains(type)) {
-          LOG.assertTrue(false, "Missed token should be space or asterisks:" + tokenElement);
+          LOG.error("Missed token should be space or asterisks:" + tokenElement);
           throw new RuntimeException();
         }
         if (last != null) {

@@ -45,7 +45,7 @@ final class OutputParser2 extends OutputParser implements PacketProcessor, Input
     SegmentReader reader = new SegmentReader(packet);
     int index = reader.readInt();
     if (myLastPacketIndex + 1 < index) {
-      LOG.assertTrue(false, "last: " + myLastPacketIndex + " current: " + index);
+      LOG.error("last: " + myLastPacketIndex + " current: " + index);
     }
     if (myLastPacketIndex + 1 > index) return;
     myLastPacketIndex++;

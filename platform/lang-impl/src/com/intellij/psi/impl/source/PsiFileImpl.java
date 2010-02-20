@@ -167,9 +167,10 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   public boolean isValid() {
-    if (!getViewProvider().isPhysical()) return true; // "dummy" file
     final VirtualFile vFile = getViewProvider().getVirtualFile();
-    return vFile.isValid() && isPsiUpToDate(vFile);
+    if (!vFile.isValid()) return false;
+    if (!getViewProvider().isPhysical()) return true; // "dummy" file
+    return isPsiUpToDate(vFile);
 
     //FileViewProvider viewProvider = getViewProvider();
     //if (!viewProvider.isPhysical()) return true; // "dummy" file

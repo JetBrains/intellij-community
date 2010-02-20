@@ -120,7 +120,7 @@ public class SuspendManagerImpl implements SuspendManager {
         if (thread != null) { // check that thread is suspended at the moment
           try {
             if (!thread.isSuspended()) {
-              LOG.assertTrue(false, "Context thread must be suspended");
+              LOG.error("Context thread must be suspended");
             }
           }
           catch (ObjectCollectedException ignored) {}

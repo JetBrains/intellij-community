@@ -33,14 +33,17 @@ import java.util.Comparator;
 import java.util.List;
 
 public class CommittedChangesTableModel extends ListTableModel<CommittedChangeList> {
+  private final boolean myAsynchLoad;
   private static final ChangeListColumn[] ourDefaultColumns = new ChangeListColumn[] { ChangeListColumn.DATE, ChangeListColumn.NAME };
 
-  public CommittedChangesTableModel(final List<CommittedChangeList> changeLists) {
+  public CommittedChangesTableModel(final List<CommittedChangeList> changeLists, boolean asynchLoad) {
     super(buildColumnInfos(ourDefaultColumns), changeLists, 0);
+    myAsynchLoad = asynchLoad;
   }
 
-  public CommittedChangesTableModel(final List<CommittedChangeList> changeLists, final ChangeListColumn[] columns) {
+  public CommittedChangesTableModel(final List<CommittedChangeList> changeLists, final ChangeListColumn[] columns, boolean asynchLoad) {
     super(buildColumnInfos(columns), changeLists, 0);
+    myAsynchLoad = asynchLoad;
   }
 
   public void sortByChangesColumn(final ChangeListColumn column, int sortingType) {
@@ -93,5 +96,9 @@ public class CommittedChangesTableModel extends ListTableModel<CommittedChangeLi
     public ChangeListColumn getColumn() {
       return myColumn;
     }
+  }
+
+  public boolean isAsynchLoad() {
+    return myAsynchLoad;
   }
 }

@@ -102,10 +102,8 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
             if (modules.length > 0) {
               for (Module module : modules) {
                 if (module == null) {
-                  LOG.assertTrue(
-                    false,
-                    "RunConfiguration should not return null modules. Configuration=" + runConfiguration.getName() + "; class=" + runConfiguration.getClass().getName()
-                  );
+                  LOG.error("RunConfiguration should not return null modules. Configuration=" + runConfiguration.getName() + "; class=" +
+                            runConfiguration.getClass().getName());
                 }
               }
               scope = compilerManager.createModulesCompileScope(modules, true);

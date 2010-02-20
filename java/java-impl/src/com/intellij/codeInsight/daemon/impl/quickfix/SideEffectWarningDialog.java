@@ -108,23 +108,24 @@ public class SideEffectWarningDialog extends DialogWrapper {
   }
 
   protected JComponent createCenterPanel() {
-    JPanel panel = new JPanel(new BorderLayout());
+    final JPanel panel = new JPanel(new BorderLayout());
+    final String text = sideEffectsDescription();
+    final JLabel label = new JLabel(text);
+    label.setIcon(Messages.getWarningIcon());
+    panel.add(label, BorderLayout.NORTH);
+    return panel;
+  }
 
-    String text;
+  protected String sideEffectsDescription() {
     if (myCanCopeWithSideEffects) {
-      text = QuickFixBundle.message("side.effect.message2",
+      return QuickFixBundle.message("side.effect.message2",
                                     myVariable.getName(),
                                     myVariable.getType().getPresentableText(),
                                     myBeforeText,
                                     myAfterText);
     }
     else {
-      text = QuickFixBundle.message("side.effect.message1", myVariable.getName());
+      return QuickFixBundle.message("side.effect.message1", myVariable.getName());
     }
-
-    JLabel label = new JLabel(text);
-    label.setIcon(Messages.getWarningIcon());
-    panel.add(label, BorderLayout.NORTH);
-    return panel;
   }
 }

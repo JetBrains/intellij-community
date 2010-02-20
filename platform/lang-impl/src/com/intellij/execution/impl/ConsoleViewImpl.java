@@ -88,7 +88,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-public final class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableConsoleView, DataProvider, OccurenceNavigator {
+public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableConsoleView, DataProvider, OccurenceNavigator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.ConsoleViewImpl");
 
   private static final int FLUSH_DELAY = 200; //TODO : make it an option
@@ -334,7 +334,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
     if (myEditor == null){
       myEditor = createEditor();
       requestFlushImmediately();
-      add(myEditor.getComponent(), BorderLayout.CENTER);
+      add(createCenterComponent(), BorderLayout.CENTER);
 
       myEditor.getDocument().addDocumentListener(new DocumentAdapter() {
         public void documentChanged(DocumentEvent e) {
@@ -361,6 +361,10 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
     return this;
   }
 
+  protected JComponent createCenterComponent() {
+    return myEditor.getComponent();
+  }
+
   public void setModalityStateForUpdate(Computable<ModalityState> stateComputable) {
     myStateForUpdate = stateComputable;
   }
@@ -372,13 +376,17 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
     if (myEditor != null){
       myFlushAlarm.cancelAllRequests();
       mySpareTimeAlarm.cancelAllRequests();
-      if (!myEditor.isDisposed()) {
-        EditorFactory.getInstance().releaseEditor(myEditor);
-      }
+      disposeEditor();
       synchronized (LOCK) {
         myDeferredOutput = new StringBuffer();
       }
       myEditor = null;
+    }
+  }
+
+  protected void disposeEditor() {
+    if (!myEditor.isDisposed()) {
+      EditorFactory.getInstance().releaseEditor(myEditor);
     }
   }
 
@@ -418,7 +426,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
   }
 
   private ModalityState getStateForUpdate() {
-    return myStateForUpdate != null ? myStateForUpdate.compute() : ModalityState.stateForComponent(myEditor.getComponent());
+    return myStateForUpdate != null ? myStateForUpdate.compute() : ModalityState.stateForComponent(this);
   }
 
   private void requestFlushImmediately() {
@@ -559,57 +567,19 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
   }
 
   private Editor doCreateEditor() {
-    final EditorFactoryImpl editorFactory = (EditorFactoryImpl) EditorFactory.getInstance();
-    final Document editorDocument = editorFactory.createDocument(true);
-    editorDocument.addDocumentListener(new DocumentListener() {
-      public void beforeDocumentChange(DocumentEvent event) {
-      }
-
-      public void documentChanged(DocumentEvent event) {
-        if (myFileType != null) {
-          highlightUserTokens();
-        }
-      }
-    });
-
-    final int bufferSize = USE_CYCLIC_BUFFER ? CYCLIC_BUFFER_SIZE : 0;
-    editorDocument.setCyclicBufferSize(bufferSize);
-
-    final EditorEx editor = (EditorEx) editorFactory.createViewer(editorDocument,myProject);
-    final EditorHighlighter highlighter = new MyHighlighter();
-    editor.setHighlighter(highlighter);
-    editor.putUserData(CONSOLE_VIEW_IN_EDITOR_VIEW, this);
-
-    final EditorSettings editorSettings = editor.getSettings();
-    editorSettings.setLineMarkerAreaShown(false);
-    editorSettings.setLineNumbersShown(false);
-    editorSettings.setFoldingOutlineShown(false);
-    editorSettings.setAdditionalPageAtBottom(false);
-    editorSettings.setAdditionalColumnsCount(0);
-    editorSettings.setAdditionalLinesCount(0);
-
-    final EditorColorsScheme scheme = editor.getColorsScheme();
-    editor.setBackgroundColor(scheme.getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY));
-    scheme.setColor(EditorColors.CARET_ROW_COLOR, null);
-    scheme.setColor(EditorColors.RIGHT_MARGIN_COLOR, null);
-
-    editor.addEditorMouseListener(new EditorPopupHandler(){
+    final EditorEx editor = createRealEditor();
+    editor.addEditorMouseListener(new EditorPopupHandler() {
       public void invokePopup(final EditorMouseEvent event) {
         final MouseEvent mouseEvent = event.getMouseEvent();
         popupInvoked(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
       }
     });
 
-    editor.addEditorMouseListener(
-      new EditorMouseAdapter(){
-        public void mouseReleased(final EditorMouseEvent e){
-          final MouseEvent mouseEvent = e.getMouseEvent();
-          if (!mouseEvent.isPopupTrigger()){
-            navigate(e);
-          }
-        }
-      }
-    );
+
+    final int bufferSize = USE_CYCLIC_BUFFER ? CYCLIC_BUFFER_SIZE : 0;
+    editor.getDocument().setCyclicBufferSize(bufferSize);
+
+    editor.putUserData(CONSOLE_VIEW_IN_EDITOR_VIEW, this);
 
     editor.getContentComponent().addMouseMotionListener(
       new MouseMotionAdapter(){
@@ -624,6 +594,47 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
         }
       }
     );
+    return editor;
+  }
+
+  protected EditorEx createRealEditor() {
+    final EditorFactoryImpl document = (EditorFactoryImpl) EditorFactory.getInstance();
+    final Document editorDocument = document.createDocument(true);
+    editorDocument.addDocumentListener(new DocumentListener() {
+      public void beforeDocumentChange(DocumentEvent event) {
+      }
+
+      public void documentChanged(DocumentEvent event) {
+        if (myFileType != null) {
+          highlightUserTokens();
+        }
+      }
+    });
+    final EditorEx editor = (EditorEx)document.createViewer(editorDocument, myProject);
+    final EditorHighlighter highlighter = new MyHighlighter();
+    editor.setHighlighter(highlighter);
+
+    final EditorSettings editorSettings = editor.getSettings();
+    editorSettings.setLineMarkerAreaShown(false);
+    editorSettings.setLineNumbersShown(false);
+    editorSettings.setFoldingOutlineShown(false);
+    editorSettings.setAdditionalPageAtBottom(false);
+    editorSettings.setAdditionalColumnsCount(0);
+    editorSettings.setAdditionalLinesCount(0);
+
+    final EditorColorsScheme scheme = editor.getColorsScheme();
+    editor.setBackgroundColor(scheme.getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY));
+    scheme.setColor(EditorColors.CARET_ROW_COLOR, null);
+    scheme.setColor(EditorColors.RIGHT_MARGIN_COLOR, null);
+
+    editor.addEditorMouseListener(new EditorMouseAdapter() {
+      public void mouseReleased(final EditorMouseEvent e) {
+        final MouseEvent mouseEvent = e.getMouseEvent();
+        if (!mouseEvent.isPopupTrigger()) {
+          navigate(e);
+        }
+      }
+    });
 
     final ConsoleViewImpl consoleView = this;
     editor.getContentComponent().addKeyListener(new KeyListener() {
@@ -643,13 +654,15 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
             if (historyPosition < 0) historyPosition = 0;
             replaceString();
             e.consume();
-          } else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+          }
+          else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
             historyPosition++;
             if (historyPosition > myHistory.size()) historyPosition = myHistory.size();
             replaceString();
             e.consume();
           }
-        } else {
+        }
+        else {
           historyPosition = myHistory.size();
         }
       }
@@ -664,7 +677,8 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
           final TokenInfo info = myTokens.get(myTokens.size() - 1);
           if (info.contentType != ConsoleViewContentType.USER_INPUT) {
             consoleView.insertUserText(str, 0);
-          } else {
+          }
+          else {
             consoleView.replaceUserText(str, info.startOffset, info.endOffset);
           }
         }
@@ -672,7 +686,6 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
     });
 
     setEditorUpActions(editor);
-
     return editor;
   }
 
@@ -1012,7 +1025,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
         s = (String)content.getTransferData(DataFlavor.stringFlavor);
       }
       catch(Exception e) {
-        consoleView.myEditor.getComponent().getToolkit().beep();
+        consoleView.getToolkit().beep();
       }
       if (s == null) return;
       Editor editor = consoleView.myEditor;

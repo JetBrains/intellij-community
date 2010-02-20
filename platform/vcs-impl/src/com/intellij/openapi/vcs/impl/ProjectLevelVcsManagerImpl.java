@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.DisposableEditorPanel;
 import com.intellij.openapi.editor.Editor;
@@ -27,11 +28,12 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareRunnable;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
@@ -286,7 +288,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return ! myMappings.isEmpty();
   }
 
-  public void addMessageToConsoleWindow(final String message, final TextAttributes attributes) {
+public void addMessageToConsoleWindow(final String message, final TextAttributes attributes) {
+    if (!Registry.is("vcs.showConsole")) return;
+
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         // for default and disposed projects the ContentManager is not available.
@@ -635,5 +639,26 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
         myInitialization.add(vcsInitObject, runnable);
       }
     });
+  }
+
+  public boolean isFileInContent(final VirtualFile vf) {
+    final ExcludedFileIndex excludedIndex = ExcludedFileIndex.getInstance(myProject);
+    return (vf != null) && (excludedIndex.isInContent(vf) || isFileInBaseDir(vf) || vf.equals(myProject.getBaseDir()) ||
+                            hasExplicitMapping(vf) || isInDirectoryBasedRoot(vf)) && (! excludedIndex.isExcludedFile(vf));
+  }
+
+  private boolean isInDirectoryBasedRoot(final VirtualFile file) {
+    if (file == null) return false;
+    final StorageScheme storageScheme = ((ProjectEx) myProject).getStateStore().getStorageScheme();
+    if (StorageScheme.DIRECTORY_BASED.equals(storageScheme)) {
+      final VirtualFile ideaDir = myProject.getBaseDir().findChild(Project.DIRECTORY_STORE_FOLDER);
+      return (ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory() && VfsUtil.isAncestor(ideaDir, file, false));
+    }
+    return false;
+  }
+
+  private boolean isFileInBaseDir(final VirtualFile file) {
+    VirtualFile parent = file.getParent();
+    return !file.isDirectory() && parent != null && parent.equals(myProject.getBaseDir());
   }
 }

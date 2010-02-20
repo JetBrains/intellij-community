@@ -65,7 +65,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
     myProject = project;
     myDumbService = dumbService;
 
-    final ExtensionPoint<MultiHostInjector> multiPoint = Extensions.getArea(project).getExtensionPoint(MULTIHOST_INJECTOR_EP_NAME);
+    final ExtensionPoint<MultiHostInjector> multiPoint = Extensions.getArea(project).getExtensionPoint(MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME);
     multiPoint.addExtensionPointListener(new ExtensionPointListener<MultiHostInjector>() {
       public void extensionAdded(MultiHostInjector injector, @Nullable PluginDescriptor pluginDescriptor) {
         registerMultiHostInjector(injector);

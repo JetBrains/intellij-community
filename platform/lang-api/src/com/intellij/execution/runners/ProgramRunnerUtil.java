@@ -44,7 +44,7 @@ public class ProgramRunnerUtil {
 
     String message = ExecutionBundle.message("error.running.configuration.with.error.error.message", runProfile != null? runProfile.getName() : "Run profile", e.getMessage());
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      LOG.assertTrue(false, message);
+      LOG.error(message);
     }
     else {
       if (message.contains("87") && e instanceof ProcessNotCreatedException) {

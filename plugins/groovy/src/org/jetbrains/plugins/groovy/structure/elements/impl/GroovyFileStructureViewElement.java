@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.structure.elements.GroovyStructureViewElement;
-import org.jetbrains.plugins.groovy.structure.itemsPresentations.impl.GroovyFileItemPresentation;
+import org.jetbrains.plugins.groovy.structure.itemsPresentations.GroovyItemPresentation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +40,11 @@ public class GroovyFileStructureViewElement extends GroovyStructureViewElement {
   }
 
   public ItemPresentation getPresentation() {
-    return new GroovyFileItemPresentation((GroovyFileBase) myElement);
+    return new GroovyItemPresentation(myElement) {
+      public String getPresentableText() {
+        return ((GroovyFileBase) myElement).getName();
+      }
+    };
   }
 
   public TreeElement[] getChildren() {

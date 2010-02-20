@@ -111,6 +111,21 @@ public class FormatterTest extends GroovyFormatterTestCase {
   public void testClosureAfterLineComment() throws Throwable { doTest(); }
   public void testAnnotationOnSeparateLine() throws Throwable { doTest(); }
 
+  public void testElseIfs() throws Throwable {
+    myTempSettings.SPECIAL_ELSE_IF_TREATMENT = false;
+    doTest();
+  }
+
+  public void testElseIfsSpecial() throws Throwable { doTest(); }
+  public void testVarargDeclaration() throws Throwable { doTest(); }
+  public void testPreserveSpaceBeforeClosureParameters() throws Throwable { doTest(); }
+  
+  public void testCaseInSwitch() throws Throwable {
+    myTempSettings.INDENT_CASE_FROM_SWITCH = false;
+    doTest();
+  }
+  public void testCaseInSwitchIndented() throws Throwable { doTest(); }
+
   public void doTest() throws Throwable {
     final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
     checkFormatting(data.get(0), data.get(1));

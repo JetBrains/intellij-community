@@ -588,7 +588,10 @@ public class FoldersImportingTest extends MavenImportingTestCase {
 
     assertModules("project");
 
-    assertExcludes("project", "targetCustom");
+    assertExcludes("project",
+                   "targetCustom",
+                   "outputCustom",
+                   "testCustom");
     assertModuleOutput("project",
                        getProjectPath() + "/outputCustom",
                        getProjectPath() + "/testCustom");

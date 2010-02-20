@@ -94,7 +94,7 @@ public abstract class PsiDocumentManager {
    *
    * @param document the document to commit.
    */
-  public abstract void commitDocument(Document document);
+  public abstract void commitDocument(@NotNull Document document);
 
   /**
    * Returns the list of documents which have been modified but not committed.
@@ -102,6 +102,7 @@ public abstract class PsiDocumentManager {
    * @return the list of uncommitted documents.
    * @see #commitDocument(com.intellij.openapi.editor.Document)
    */
+  @NotNull
   public abstract Document[] getUncommittedDocuments();
 
   /**
@@ -111,7 +112,7 @@ public abstract class PsiDocumentManager {
    * @return true if the document was modified but not committed, false otherwise
    * @see #commitDocument(com.intellij.openapi.editor.Document)
    */
-  public abstract boolean isUncommited(Document document);
+  public abstract boolean isUncommited(@NotNull Document document);
 
   /**
    * Checks if any modified documents have not been committed.

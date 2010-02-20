@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,9 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
         final String indexText =
                 codeStyleManager.suggestUniqueVariableName("i", statement, true);
         final String variableNameRoot;
-        final String iteratedValueText = iteratedValue.getText();
+        final CodeStyleSettings codeStyleSettings =
+                CodeStyleSettingsManager.getSettings(project);
+        final String iteratedValueText;
         if (iteratedValue instanceof PsiMethodCallExpression) {
             final PsiMethodCallExpression methodCallExpression =
                     (PsiMethodCallExpression)iteratedValue;
@@ -80,40 +82,6 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
             } else {
                 variableNameRoot = name;
             }
-        } else if (iteratedValue instanceof PsiTypeCastExpression) {
-            final PsiTypeCastExpression castExpression =
-                    (PsiTypeCastExpression) iteratedValue;
-            final PsiExpression operand = castExpression.getOperand();
-            final PsiExpression strippedOperand =
-                    ParenthesesUtils.stripParentheses(operand);
-            if (strippedOperand == null) {
-                variableNameRoot = "";
-            } else {
-                variableNameRoot = strippedOperand.getText();
-            }
-        } else if (iteratedValue instanceof PsiJavaCodeReferenceElement) {
-            final PsiJavaCodeReferenceElement referenceElement =
-                    (PsiJavaCodeReferenceElement) iteratedValue;
-            final String referenceName = referenceElement.getReferenceName();
-            if (referenceName == null) {
-                variableNameRoot = iteratedValueText;
-            } else {
-                variableNameRoot = referenceName;
-            }
-        } else {
-            variableNameRoot = iteratedValueText;
-        }
-        final String lengthText;
-        if (isArray) {
-            lengthText = codeStyleManager.suggestUniqueVariableName(
-                    variableNameRoot + "Length", statement, true);
-        } else {
-            lengthText = codeStyleManager.suggestUniqueVariableName(
-                    variableNameRoot + "Size", statement, true);
-        }
-        final CodeStyleSettings codeStyleSettings =
-                CodeStyleSettingsManager.getSettings(project);
-        if (iteratedValue instanceof PsiMethodCallExpression) {
             final String variableName =
                     codeStyleManager.suggestUniqueVariableName(
                             variableNameRoot, statement, true);
@@ -125,7 +93,7 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
             declaration.append(' ');
             declaration.append(variableName);
             declaration.append('=');
-            declaration.append(iteratedValueText);
+            declaration.append(iteratedValue.getText());
             declaration.append(';');
             final PsiElementFactory elementFactory =
                     JavaPsiFacade.getElementFactory(project);
@@ -133,12 +101,45 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
                     elementFactory.createStatementFromText(
                             declaration.toString(), statement);
             statement.getParent().addBefore(declarationStatement, statement);
+            iteratedValueText = variableName;
+        } else if (iteratedValue instanceof PsiTypeCastExpression) {
+            iteratedValueText = iteratedValue.getText();
+            final PsiTypeCastExpression castExpression =
+                    (PsiTypeCastExpression) iteratedValue;
+            final PsiExpression operand = castExpression.getOperand();
+            final PsiExpression strippedOperand =
+                    ParenthesesUtils.stripParentheses(operand);
+            if (strippedOperand == null) {
+                variableNameRoot = "";
+            } else {
+                variableNameRoot = strippedOperand.getText();
+            }
+        } else if (iteratedValue instanceof PsiJavaCodeReferenceElement) {
+            iteratedValueText = iteratedValue.getText();
+            final PsiJavaCodeReferenceElement referenceElement =
+                    (PsiJavaCodeReferenceElement) iteratedValue;
+            final String referenceName = referenceElement.getReferenceName();
+            if (referenceName == null) {
+                variableNameRoot = iteratedValueText;
+            } else {
+                variableNameRoot = referenceName;
+            }
+        } else {
+            iteratedValueText = iteratedValue.getText();
+            variableNameRoot = iteratedValueText;
+        }
+        final String lengthText;
+        if (isArray) {
+            lengthText = codeStyleManager.suggestUniqueVariableName(
+                    variableNameRoot + "Length", statement, true);
+        } else {
+            lengthText = codeStyleManager.suggestUniqueVariableName(
+                    variableNameRoot + "Size", statement, true);
         }
         @NonNls final StringBuilder newStatement = new StringBuilder();
         newStatement.append("for(int ");
         newStatement.append(indexText);
         newStatement.append(" = 0, ");
-
         newStatement.append(lengthText);
         newStatement.append(" = ");
         if (iteratedValue instanceof PsiTypeCastExpression) {

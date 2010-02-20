@@ -33,7 +33,7 @@ import javax.swing.event.DocumentEvent;
 /**
  * @author nik
  */
-public class ExtractArtifactDialog extends DialogWrapper {
+public class ExtractArtifactDialog extends DialogWrapper implements IExtractArtifactDialog {
   private JPanel myMainPanel;
   private JTextField myNameField;
   private JComboBox myTypeBox;

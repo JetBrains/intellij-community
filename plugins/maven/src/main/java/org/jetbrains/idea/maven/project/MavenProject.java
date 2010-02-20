@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
+import org.jetbrains.idea.maven.importing.MavenExtraArtifactType;
 import org.jetbrains.idea.maven.importing.MavenImporter;
 import org.jetbrains.idea.maven.utils.*;
 
@@ -448,6 +449,15 @@ public class MavenProject {
                                                             getActiveProfilesIds(),
                                                             locator);
     MavenProjectChanges changes = set(result, false, result.readingProblems.isEmpty(), false);
+
+    List<MavenImporter> importers = getSuitableImporters();
+    for (MavenPlugin eachPlugin : getPlugins()) {
+      for (MavenImporter eachImporter : importers) {
+        if (eachImporter.requiresResolvedPlugin(eachPlugin)) {
+          embedder.resolvePlugin(eachPlugin, result.nativeMavenProject, true);
+        }
+      }
+    }
     return Pair.create(changes, result.nativeMavenProject);
   }
 
@@ -759,7 +769,7 @@ public class MavenProject {
   @Nullable
   public MavenPlugin findPlugin(String groupId, String artifactId) {
     for (MavenPlugin each : getPlugins()) {
-      if (groupId.equals(each.getGroupId()) && artifactId.equals(each.getArtifactId())) return each;
+      if (each.getMavenId().equals(groupId, artifactId)) return each;
     }
     return null;
   }
@@ -814,6 +824,14 @@ public class MavenProject {
 
   public List<MavenImporter> getSuitableImporters() {
     return MavenImporter.getSuitableImporters(this);
+  }
+
+  public Pair<String, String> getClassifierAndExtension(MavenArtifact artifact, MavenExtraArtifactType type) {
+    for (MavenImporter each : getSuitableImporters()) {
+      Pair<String, String> result = each.getExtraArtifactClassifierAndExtension(artifact, type);
+      if (result != null) return result;
+    }
+    return Pair.create(type.getDefaultClassifier(), type.getDefaultExtension());
   }
 
   @Override

@@ -65,7 +65,7 @@ public class SharedPsiElementImplUtil {
   private static void addReferences(int offset, PsiElement element, final Collection<PsiReference> outReferences) {
     for (final PsiReference reference : element.getReferences()) {
       if (reference == null) {
-        LOG.error(element.toString());
+        LOG.error(element);
       }
       final TextRange range = reference.getRangeInElement();
       if (range.getStartOffset() <= offset && offset <= range.getEndOffset()) {

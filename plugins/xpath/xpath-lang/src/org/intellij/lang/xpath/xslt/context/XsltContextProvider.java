@@ -27,6 +27,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
@@ -264,7 +265,7 @@ public class XsltContextProvider extends ContextProvider {
                 }
 
                 //noinspection unchecked
-                return new Result<ElementNames>(names, names.dependencies.toArray(new Object[names.dependencies.size()]));
+                return new Result<ElementNames>(names, ArrayUtil.toObjectArray(names.dependencies));
             }
         }, false);
     }

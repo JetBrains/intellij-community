@@ -46,7 +46,7 @@ public class AddSuppressInspectionForClassFix extends AddSuppressInspectionFix {
     }
     while (container != null ) {
       final PsiClass parentClass = PsiTreeUtil.getParentOfType(container, PsiClass.class);
-      if ((parentClass == null || container.getParent() instanceof PsiDeclarationStatement) && container instanceof PsiClass){
+      if ((parentClass == null || container.getParent() instanceof PsiDeclarationStatement || container.getParent() instanceof PsiClass) && container instanceof PsiClass){
         return container;
       }
       container = parentClass;

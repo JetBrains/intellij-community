@@ -64,7 +64,7 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
     else if (element instanceof AntBuildTarget) {
       return new AntTargetNodeDescriptor(myProject, parentDescriptor, (AntBuildTargetBase)element);
     }
-    LOG.assertTrue(false, "Unknown element for this tree structure " + element);
+    LOG.error("Unknown element for this tree structure " + element);
     return null;
   }
 

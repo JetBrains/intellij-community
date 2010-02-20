@@ -42,7 +42,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
-import static org.jetbrains.plugins.groovy.intentions.style.parameterToEntry.ConvertParameterToMapEntryIntention.FIRST_PARAMETER_KIND.*;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -63,6 +62,8 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyValidationUtil;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import static org.jetbrains.plugins.groovy.intentions.style.parameterToEntry.ConvertParameterToMapEntryIntention.FIRST_PARAMETER_KIND.*;
 
 /**
  * @author ilyas
@@ -424,7 +425,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
     CodeStyleManager.getInstance(owner.getProject()).reformat(owner);
   }
 
-  private static boolean reportConflicts(final MultiMap<PsiElement,String> conflicts, final Project project) {
+  private static boolean reportConflicts(final MultiMap<PsiElement, String> conflicts, final Project project) {
     if (conflicts.size() == 0) return true;
     ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
     conflictsDialog.show();

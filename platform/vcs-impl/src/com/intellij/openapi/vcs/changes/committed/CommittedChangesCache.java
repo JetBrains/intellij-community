@@ -540,7 +540,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     return changes;
   }
 
-  private List<CommittedChangeList> loadIncomingChanges() {
+  private List<CommittedChangeList> loadIncomingChanges(boolean inBackground) {
     final List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
     final Collection<ChangesCacheFile> caches = myCachesHolder.getAllCaches();
 
@@ -549,6 +549,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
 
     for(ChangesCacheFile cache: caches) {
       try {
+        if (inBackground && (! cache.getVcs().isVcsBackgroundOperationsAllowed(cache.getRootPath().getVirtualFile()))) continue;
         if (!cache.isEmpty()) {
           debug("Loading incoming changes for " + cache.getLocation());
           final List<CommittedChangeList> incomingChanges = cache.loadIncomingChanges();
@@ -626,11 +627,11 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     }
   }
 
-  public void loadIncomingChangesAsync(@Nullable final Consumer<List<CommittedChangeList>> consumer) {
+  public void loadIncomingChangesAsync(@Nullable final Consumer<List<CommittedChangeList>> consumer, final boolean inBackground) {
     debug("Loading incoming changes");
     final Runnable task = new Runnable() {
       public void run() {
-        final List<CommittedChangeList> list = loadIncomingChanges();
+        final List<CommittedChangeList> list = loadIncomingChanges(inBackground);
         if (consumer != null) {
           consumer.consume(new ArrayList<CommittedChangeList>(list));
         }
@@ -774,7 +775,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     myTaskQueue.run(task);    
   }
 
-  public void refreshAllCachesAsync(final boolean initIfEmpty) {
+  public void refreshAllCachesAsync(final boolean initIfEmpty, final boolean inBackground) {
     final Runnable task = new Runnable() {
       public void run() {
         final List<ChangesCacheFile> files = myCachesHolder.getAllCaches();
@@ -804,7 +805,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
           }
         };
         for(ChangesCacheFile file: files) {
-          if (file.getVcs().isVcsBackgroundOperationsAllowed(file.getRootPath().getVirtualFile())) {
+          if ((! inBackground) || file.getVcs().isVcsBackgroundOperationsAllowed(file.getRootPath().getVirtualFile())) {
             refreshCacheAsync(file, initIfEmpty, notifyConsumer, false);
           }
         }
@@ -945,7 +946,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     public void run() {
       final CommittedChangesCache cache = myCache;
       if (cache == null) return;
-      cache.refreshAllCachesAsync(false);
+      cache.refreshAllCachesAsync(false, true);
       final List<ChangesCacheFile> list = cache.getCachesHolder().getAllCaches();
       for(ChangesCacheFile file: list) {
         if (file.getVcs().isVcsBackgroundOperationsAllowed(file.getRootPath().getVirtualFile())) {

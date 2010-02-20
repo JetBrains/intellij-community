@@ -153,6 +153,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
         else {
           new ReformatCodeProcessor(project, dir, dialog.isIncludeSubdirectories()).run();
         }
+        return;
       }
     }
 

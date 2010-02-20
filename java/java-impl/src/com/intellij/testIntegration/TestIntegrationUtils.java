@@ -141,7 +141,7 @@ public class TestIntegrationUtils {
     if (!automatic) {
       adapter = new TemplateEditingAdapter() {
         @Override
-        public void templateFinished(Template template) {
+        public void templateFinished(Template template, boolean brokenOff) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
               PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());

@@ -184,8 +184,8 @@ public class NameSuggester {
           final int propertyWordFirst = matches.get(first);
 
           if (first >= myOldClassName.length || last >= myOldClassName.length) {
-            LOG.assertTrue(false, "old class name = " + myOldClassNameAsGiven + ", new class name = " + myNewClassNameAsGiven +
-                                  ", propertyWords = " + Arrays.asList(propertyWords).toString());
+            LOG.error("old class name = " + myOldClassNameAsGiven + ", new class name = " + myNewClassNameAsGiven + ", propertyWords = " +
+                      Arrays.asList(propertyWords).toString());
           }
 
           final String replacement = suggestReplacement(propertyWords[propertyWordFirst], newString);
@@ -199,7 +199,11 @@ public class NameSuggester {
           propertyWordToInsertBefore = matches.get(first);
         }
         else {
-          propertyWordToInsertBefore = propertyWords.length;
+          if (matches.contains(last)) {
+            propertyWordToInsertBefore = matches.get(last) + 1;
+          } else {
+            propertyWordToInsertBefore = propertyWords.length;
+          }
         }
         replacements.put(Pair.create(propertyWordToInsertBefore, propertyWordToInsertBefore - 1), newString);
       }

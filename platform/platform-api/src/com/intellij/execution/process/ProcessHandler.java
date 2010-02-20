@@ -58,7 +58,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
       myEventMulticaster.startNotified(new ProcessEvent(this));
     }
     else {
-      LOG.assertTrue(false, "startNotify called already");
+      LOG.error("startNotify called already");
     }
   }
 

@@ -57,6 +57,8 @@ public abstract class AbstractBreakpointPanel<B> {
 
   public abstract void selectBreakpoint(B breakpoint);
 
+  public abstract boolean hasBreakpoints();
+
   public void addChangesListener(ChangesListener listener) {
     myEventDispatcher.addListener(listener);
   }

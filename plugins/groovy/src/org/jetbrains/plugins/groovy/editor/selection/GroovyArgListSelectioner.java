@@ -16,11 +16,12 @@
 
 package org.jetbrains.plugins.groovy.editor.selection;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.editor.Editor;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodParams;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
 import java.util.List;
 
@@ -29,7 +30,7 @@ import java.util.List;
  */
 public class GroovyArgListSelectioner extends GroovyBasicSelectioner {
   public boolean canSelect(PsiElement e) {
-    return e instanceof GrArgumentList;
+    return e instanceof GrArgumentList || e.getParent() instanceof GrReferenceExpression && e.getParent().getParent() instanceof GrCall;
   }
 
   public List<TextRange> select(PsiElement element, CharSequence editorText, int cursorOffset, Editor editor) {
@@ -55,6 +56,14 @@ public class GroovyArgListSelectioner extends GroovyBasicSelectioner {
             result.add(range);
           }
         }
+      }
+    }
+    final PsiElement parent = element.getParent();
+    if (parent instanceof GrReferenceExpression) {
+      final GrArgumentList argumentList = ((GrCall)parent.getParent()).getArgumentList();
+      final PsiElement refName = ((GrReferenceExpression)parent).getReferenceNameElement();
+      if (argumentList != null && refName == element) {
+        result.add(new TextRange(refName.getTextRange().getStartOffset(), argumentList.getTextRange().getEndOffset()));
       }
     }
     return result;

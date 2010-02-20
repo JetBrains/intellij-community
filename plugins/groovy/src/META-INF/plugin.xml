@@ -100,7 +100,7 @@
     <lang.foldingBuilder language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.folding.GroovyFoldingBuilder"/>
     <lang.formatter language="Groovy" implementationClass="org.jetbrains.plugins.groovy.formatter.GroovyFormattingModelBuilder"/>
 
-    <enterHandlerDelegate implementation="org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEnterHandler"/>
+    <enterHandlerDelegate implementation="org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEnterHandler" order="after EnterBetweenBracesHandler"/>
     <typedHandler implementation="org.jetbrains.plugins.groovy.lang.editor.actions.GStringTypedActionHandler"/>
     <backspaceHandlerDelegate implementation="org.jetbrains.plugins.groovy.lang.editor.actions.GStringBackspaceHandlerDelegate"/>
 
@@ -418,17 +418,18 @@
   </extensions>
 
   <actions>
-    <action id="Groovy.NewScript" class="org.jetbrains.plugins.groovy.actions.NewScriptAction"
-            text="Groovy Script" description="Create new Groovy script">
-      <add-to-group group-id="NewGroup" anchor="last"/>
-    </action>
     <action id="Groovy.NewClass" class="org.jetbrains.plugins.groovy.actions.NewGroovyClassAction"
             text="Groovy Class" description="Create new Groovy class">
-      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="Groovy.NewScript"/>
+      <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewGroup1"/>
     </action>
+    <action id="Groovy.NewScript" class="org.jetbrains.plugins.groovy.actions.NewScriptAction"
+            text="Groovy Script" description="Create new Groovy script">
+      <add-to-group group-id="NewGroup" anchor="after" relative-to-action="Groovy.NewClass"/>
+    </action>
+
     <action id="Gant.NewScript" class="org.jetbrains.plugins.groovy.gant.NewGantScriptAction"
             text="Gant Script" description="Create new Gant script">
-      <add-to-group group-id="NewGroup" anchor="after" relative-to-action="Groovy.NewClass"/>
+      <add-to-group group-id="NewGroup" anchor="last"/>
     </action>
 
 
@@ -481,6 +482,9 @@
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.groovy.config.GroovyLibraryListener</implementation-class>
     </component>
     <component>
       <interface-class>org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager</interface-class>

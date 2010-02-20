@@ -100,7 +100,7 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
       if (result.isEmpty()) {
         result.add(getEmptyScreen());
       }
-      return result.toArray(new Object[result.size()]);
+      return ArrayUtil.toObjectArray(result);
     }
     catch (Exception e) {
     }

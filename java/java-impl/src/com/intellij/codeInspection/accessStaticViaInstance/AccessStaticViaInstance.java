@@ -52,15 +52,15 @@ public class AccessStaticViaInstance extends BaseJavaLocalInspectionTool {
   }
 
   @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
-        checkAccessStaticMemberViaInstanceReference(expression, holder);
+        checkAccessStaticMemberViaInstanceReference(expression, holder, isOnTheFly);
       }
     };
   }
 
-  private static void checkAccessStaticMemberViaInstanceReference(PsiReferenceExpression expr, ProblemsHolder holder) {
+  private static void checkAccessStaticMemberViaInstanceReference(PsiReferenceExpression expr, ProblemsHolder holder, boolean onTheFly) {
     JavaResolveResult result = expr.advancedResolve(false);
     PsiElement resolved = result.getElement();
 
@@ -68,14 +68,17 @@ public class AccessStaticViaInstance extends BaseJavaLocalInspectionTool {
     PsiExpression qualifierExpression = expr.getQualifierExpression();
     if (qualifierExpression == null) return;
 
-    if (qualifierExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifierExpression).resolve() instanceof PsiClass) {
-      return;
+    if (qualifierExpression instanceof PsiReferenceExpression) {
+      final PsiElement qualifierResolved = ((PsiReferenceExpression)qualifierExpression).resolve();
+      if (qualifierResolved instanceof PsiClass || qualifierResolved instanceof PsiPackage) {
+        return;
+      }
     }
     if (!((PsiMember)resolved).hasModifierProperty(PsiModifier.STATIC)) return;
 
     String description = JavaErrorMessages.message("static.member.accessed.via.instance.reference",
                                                    HighlightUtil.formatType(qualifierExpression.getType()),
                                                    HighlightMessageUtil.getSymbolName(resolved, result.getSubstitutor()));
-    holder.registerProblem(expr, description, new AccessStaticViaInstanceFix(expr, result));
+    holder.registerProblem(expr, description, new AccessStaticViaInstanceFix(expr, result, onTheFly));
   }
 }

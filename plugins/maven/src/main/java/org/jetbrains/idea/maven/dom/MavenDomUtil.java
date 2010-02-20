@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.dom;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -28,19 +29,17 @@ import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
+import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.*;
-import org.jetbrains.idea.maven.project.MavenId;
-import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.project.MavenResource;
+import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenConstants;
 import org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem;
 
@@ -58,9 +57,9 @@ public class MavenDomUtil {
     if (!(file instanceof XmlFile)) return false;
 
     String name = file.getName();
-    return name.equals(MavenConstants.POM_XML)
-           || name.endsWith("." + MavenConstants.POM_EXTENSION)
-           || name.equals(MavenConstants.SUPER_POM_XML);
+    return name.equals(MavenConstants.POM_XML) ||
+           name.endsWith("." + MavenConstants.POM_EXTENSION) ||
+           name.equals(MavenConstants.SUPER_POM_XML);
   }
 
   public static boolean isProfilesFile(PsiFile file) {
@@ -88,8 +87,7 @@ public class MavenDomUtil {
   }
 
   public static String calcRelativePath(VirtualFile parent, VirtualFile child) {
-    String result = FileUtil.getRelativePath(new File(parent.getPath()),
-                                             new File(child.getPath()));
+    String result = FileUtil.getRelativePath(new File(parent.getPath()), new File(child.getPath()));
     return FileUtil.toSystemIndependentName(result);
   }
 
@@ -309,5 +307,60 @@ public class MavenDomUtil {
     }
 
     return new MavenId(groupId, artifactId, version);
+  }
+
+
+  @NotNull
+  public static MavenDomDependency createDomDependency(MavenDomProjectModel model,
+                                                       MavenArtifact mavenArtifact,
+                                                       Editor editor,
+                                                       boolean overriden) {
+    MavenDomDependency domDependency = createMavenDomDependency(model, editor);
+
+    domDependency.getGroupId().setStringValue(mavenArtifact.getGroupId());
+    domDependency.getArtifactId().setStringValue(mavenArtifact.getArtifactId());
+    if (!overriden) {
+      domDependency.getVersion().setStringValue(mavenArtifact.getVersion());
+    }
+
+    return domDependency;
+  }
+
+
+  @NotNull
+  private static MavenDomDependency createMavenDomDependency(@NotNull MavenDomProjectModel model, @Nullable Editor editor) {
+    MavenDomDependencies dependencies = model.getDependencies();
+
+    int index = getCollectionIndex(dependencies, editor);
+    if (index >= 0) {
+      DomCollectionChildDescription childDescription = dependencies.getGenericInfo().getCollectionChildDescription("dependency");
+      if (childDescription != null) {
+        DomElement element = childDescription.addValue(dependencies, index);
+        if (element instanceof MavenDomDependency) {
+          return (MavenDomDependency)element;
+        }
+      }
+
+    }
+    return dependencies.addDependency();
+  }
+
+
+  public static int getCollectionIndex(@NotNull final MavenDomDependencies dependencies, @Nullable final Editor editor) {
+    if (editor != null) {
+      int offset = editor.getCaretModel().getOffset();
+
+      List<MavenDomDependency> dependencyList = dependencies.getDependencies();
+
+      for (int i = 0; i < dependencyList.size(); i++) {
+        MavenDomDependency dependency = dependencyList.get(i);
+        XmlElement xmlElement = dependency.getXmlElement();
+
+        if (xmlElement != null && xmlElement.getTextRange().getStartOffset() >= offset) {
+          return i;
+        }
+      }
+    }
+    return -1;
   }
 }

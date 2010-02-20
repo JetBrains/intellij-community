@@ -212,7 +212,7 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
   public void testUnderscoredField() throws Exception {
     PsiReference ref = configureByFile("underscoredField/UnderscoredField.groovy");
     final GrField field = assertInstanceOf(ref.resolve(), GrField.class);
-    assertTrue(ref.isReferenceTo(field.getGetters()[0]));
+    assertFalse(ref.isReferenceTo(field.getGetters()[0]));
     assertTrue(ref.isReferenceTo(field));
   }
 
@@ -260,7 +260,7 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
 
   public void testIDEADEV40403() {
     myFixture.configureByFile("IDEADEV40403/A.groovy");
-    def reference = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset);
+    def reference = findReference()
     def resolved = reference.resolve()
     assertInstanceOf(resolved, PsiMethod.class);
     def clazz = resolved.containingClass
@@ -269,9 +269,25 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
 
   public void testBooleanGetterPropertyAccess() {
     myFixture.configureByText("a.groovy", "print([].em<caret>pty)");
-    def ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
+    def ref = findReference()
     def resolved = ref.resolve()
     assertInstanceOf resolved, PsiMethod
+  }
+
+  def findReference() { myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset) }
+
+  public void testTriplePropertyUsages() throws Exception {
+    myFixture.configureByText "a.groovy", """
+class Foo {
+  def bar
+  def zoo = <caret>bar
+}
+"""
+    def ref = findReference()
+    GrField target = assertInstanceOf(ref.resolve(), GrField)
+    assertTrue ref.isReferenceTo(target)
+    assertFalse ref.isReferenceTo(target.getters[0])
+    assertFalse ref.isReferenceTo(target.setter)
   }
 
   private void doTest(String fileName) throws Exception {

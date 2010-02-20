@@ -77,7 +77,7 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
                 final PsiElement[] modes = ResolveUtil.collect(getMatcher().variantMatcher());
                 l.addAll(Arrays.asList(modes));
             }
-            return l.toArray(new Object[l.size()]);
+          return ArrayUtil.toObjectArray(l);
         }
         return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
@@ -165,7 +165,7 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
                 lookups.add(new NamespaceLookup(prefix));
             }
 
-            return lookups.toArray(new Object[lookups.size()]);
+          return ArrayUtil.toObjectArray(lookups);
         }
 
         public void registerQuickfix(HighlightInfo highlightInfo, PrefixReference psiReference) {

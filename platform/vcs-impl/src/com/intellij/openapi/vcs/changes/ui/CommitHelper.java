@@ -379,7 +379,8 @@ public class CommitHelper {
                   }
                 }
                 final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
-                cache.refreshAllCachesAsync(false);
+                // in background since commit must have authorized
+                cache.refreshAllCachesAsync(false, true);
                 cache.refreshIncomingChangesAsync();
               }
             }, InvokeAfterUpdateMode.SILENT, null, new Consumer<VcsDirtyScopeManager>() {

@@ -26,6 +26,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
@@ -238,7 +239,7 @@ public class CopyPasteReferenceProcessor implements CopyPastePostProcessor {
     }
     if (array.isEmpty()) return;
 
-    Object[] selectedObjects = array.toArray(new Object[array.size()]);
+    Object[] selectedObjects = ArrayUtil.toObjectArray(array);
     Arrays.sort(
       selectedObjects,
       new Comparator<Object>() {

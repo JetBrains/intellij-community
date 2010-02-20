@@ -31,11 +31,14 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.FocusCommand;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import org.jdom.JDOMException;
@@ -142,7 +145,7 @@ public class ProjectUtil {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : openProjects) {
       if (isSameProject(path, project)) {
-        focusProjectWindow(project);
+        focusProjectWindow(project, false);
         return project;
       }
     }
@@ -203,10 +206,24 @@ public class ProjectUtil {
     return FileUtil.pathsEqual(toOpen, existing);
   }
 
-  private static void focusProjectWindow(Project p) {
-    JFrame f = WindowManager.getInstance().getFrame(p);
-    f.toFront();
-    f.requestFocus();
+  public static void focusProjectWindow(final Project p, boolean executeIfAppInactive) {
+    FocusCommand cmd = new FocusCommand() {
+      @Override
+      public ActionCallback run() {
+        JFrame f = WindowManager.getInstance().getFrame(p);
+        if (f != null) {
+          f.toFront();
+          //f.requestFocus();
+        }
+        return new ActionCallback.Done();
+      }
+    };
+
+    if (executeIfAppInactive) {
+      cmd.run();
+    } else {
+      IdeFocusManager.getInstance(p).requestFocus(cmd, false);
+    }
   }
 
   public static boolean isProjectOrWorkspaceFile(final VirtualFile file) {

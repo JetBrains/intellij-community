@@ -34,14 +34,15 @@ public class ArrayUtil {
   public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
   public static final int [] EMPTY_INT_ARRAY = new int[0];
   public static final boolean[] EMPTY_BOOLEAN_ARRAY = new boolean[0];
-  public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
-  public static final String[] EMPTY_STRING_ARRAY = new String[0];
-  public static final Class[] EMPTY_CLASS_ARRAY = new Class[0];
+  @SuppressWarnings({"SSBasedInspection"}) public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
+  @SuppressWarnings({"SSBasedInspection"}) public static final String[] EMPTY_STRING_ARRAY = new String[0];
+  @SuppressWarnings({"SSBasedInspection"}) public static final Class[] EMPTY_CLASS_ARRAY = new Class[0];
   public static final long[] EMPTY_LONG_ARRAY = new long[0];
   public static final Collection[] EMPTY_COLLECTION_ARRAY = new Collection[0];
   public static final CharSequence EMPTY_CHAR_SEQUENCE = new CharArrayCharSequence(EMPTY_CHAR_ARRAY);
 
-  public static byte[] realloc (final byte [] array, final int newSize) {
+  @NotNull
+  public static byte[] realloc (@NotNull byte [] array, final int newSize) {
     if (newSize == 0) {
       return EMPTY_BYTE_ARRAY;
     }
@@ -56,7 +57,8 @@ public class ArrayUtil {
     return result;
   }
 
-  public static int[] realloc (final int [] array, final int newSize) {
+  @NotNull
+  public static int[] realloc (@NotNull int [] array, final int newSize) {
     if (newSize == 0) {
       return EMPTY_INT_ARRAY;
     }
@@ -71,13 +73,15 @@ public class ArrayUtil {
     return result;
   }
 
-  public static int[] append(int[] array, int value) {
+  @NotNull
+  public static int[] append(@NotNull int[] array, int value) {
     array = realloc(array, array.length + 1);
     array[array.length - 1] = value;
     return array;
   }
 
-  public static char[] realloc (final char[] array, final int newSize) {
+  @NotNull
+  public static char[] realloc (@NotNull char[] array, final int newSize) {
     if (newSize == 0) {
       return EMPTY_CHAR_ARRAY;
     }
@@ -117,7 +121,8 @@ public class ArrayUtil {
     return collection.toArray(new String[collection.size()]);
   }
 
-  public static <T> T[] mergeArrays(T[] a1, T[] a2, Class<T> aClass) {
+  @NotNull
+  public static <T> T[] mergeArrays(@NotNull T[] a1, @NotNull T[] a2, @NotNull Class<T> aClass) {
     if (a1.length == 0) {
       return a2;
     }
@@ -156,10 +161,12 @@ public class ArrayUtil {
    * @param src array to which the <code>element</code> should be appended.
    * @param element object to be appended to the end of <code>src</code> array.
    */
+  @NotNull
   public static <T> T[] append(@NotNull final T[] src,final T element){
     return append(src, element, (Class<T>)src.getClass().getComponentType());
   }
 
+  @NotNull
   public static <T> T[] append(@NotNull T[] src, final T element, @NotNull Class<T> componentType) {
     int length=src.length;
     T[] result=(T[])Array.newInstance(componentType, length+ 1);

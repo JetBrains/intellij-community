@@ -37,6 +37,7 @@ import com.intellij.openapi.wm.WindowManagerListener;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.examples.WindowUtils;
@@ -204,6 +205,22 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
 
   public final Rectangle getScreenBounds() {
     return myScreenBounds;
+  }
+
+  @Override
+  public Rectangle getScreenBounds(@NotNull Project project) {
+    final GraphicsEnvironment environment = GraphicsEnvironment.getLocalGraphicsEnvironment();
+    final Point onScreen = getFrame(project).getLocationOnScreen();
+    final GraphicsDevice[] devices = environment.getScreenDevices();
+    for (final GraphicsDevice device : devices) {
+      final Rectangle bounds = device.getDefaultConfiguration().getBounds();
+      if (bounds.contains(onScreen)) {
+        return bounds;
+      }
+    }
+
+    return null;
+
   }
 
   public final boolean isInsideScreenBounds(final int x, final int y, final int width) {
@@ -430,8 +447,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
       frame.setProject(project);
     }
     else {
-      frame = new IdeFrameImpl((ApplicationInfoEx)ApplicationInfo.getInstance(), ActionManager.getInstance(), UISettings.getInstance(), DataManager.getInstance(),
-                               KeymapManager.getInstance(), ApplicationManager.getApplication(), new String[0]);
+      frame = new IdeFrameImpl((ApplicationInfoEx)ApplicationInfo.getInstance(), ActionManager.getInstance(), UISettings.getInstance(),
+                               DataManager.getInstance(), KeymapManager.getInstance(), ApplicationManager.getApplication(), ArrayUtil.EMPTY_STRING_ARRAY);
       if (myFrameBounds != null) {
         frame.setBounds(myFrameBounds);
       }

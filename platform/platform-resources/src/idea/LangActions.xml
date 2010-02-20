@@ -578,10 +578,6 @@
       <action id="UsageView.ShowRecentFindUsages" class="com.intellij.find.impl.ShowRecentFindUsagesAction" icon="/actions/back.png"/>
     </group>
 
-    <action id="NewElement" class="com.intellij.ide.actions.NewElementAction">
-      <add-to-group group-id="EditCreateDeleteGroup" anchor="first"/>
-    </action>
-
     <action id="NewElementSamePlace" class="com.intellij.ide.actions.NewElementSamePlaceAction"/>
 
     <action id="ChangeCodeStyleScheme" class="com.intellij.ide.actions.QuickChangeCodeStyleSchemeAction">

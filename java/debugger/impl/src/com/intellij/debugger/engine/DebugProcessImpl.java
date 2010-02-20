@@ -245,7 +245,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
   @SuppressWarnings({"HardCodedStringLiteral"})
   protected void commitVM(VirtualMachine vm) {
     if (!isInInitialState()) {
-      LOG.assertTrue(false, "State is invalid " + myState.get());
+      LOG.error("State is invalid " + myState.get());
     }
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myPositionManager = createPositionManager();
@@ -918,7 +918,13 @@ public abstract class DebugProcessImpl implements DebugProcess {
             return invokeMethodAndFork(suspendContext);
             }
           catch (ClassNotLoadedException e) {
-            ReferenceType loadedClass = evaluationContext.isAutoLoadClasses()? loadClass(evaluationContext, e.className(), evaluationContext.getClassLoader()) : null;
+            ReferenceType loadedClass = null;
+            try {
+              loadedClass = evaluationContext.isAutoLoadClasses()? loadClass(evaluationContext, e.className(), evaluationContext.getClassLoader()) : null;
+            }
+            catch (EvaluateException ignored) {
+              loadedClass = null;
+            }
             if (loadedClass == null) {
               throw EvaluateExceptionUtil.createEvaluateException(e);
             }
