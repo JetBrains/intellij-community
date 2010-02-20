@@ -45,10 +45,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.TreeSet;
 import java.util.regex.Pattern;
 
 import static com.jetbrains.python.psi.PyUtil.sure;
@@ -582,33 +584,9 @@ public class PythonSdkType extends SdkType {
   private static List<String> getSysPath(String sdk_path, String bin_path) {
     Application application = ApplicationManager.getApplication();
     if (application != null && !application.isUnitTestMode()) {
-      @NonNls String script = // a script printing sys.path
-        "import sys\n" +
-        "import os.path\n" +
-        "for x in sys.path:\n" +
-        "  if x != os.path.dirname(sys.argv [0]): sys.stdout.write(x+chr(10))"
-        ;
-      try {
-        final File scriptFile = File.createTempFile("script", ".py");
-        try {
-          PrintStream out = new PrintStream(scriptFile);
-          try {
-            out.print(script);
-          }
-          finally {
-            out.close();
-          }
-          String[] add_environment = getVirtualEnvAdditionalEnv(bin_path);
-          return SdkUtil.getProcessOutput(sdk_path, new String[]{bin_path, scriptFile.getPath()}, add_environment, RUN_TIMEOUT).getStdoutLines();
-        }
-        finally {
-          FileUtil.delete(scriptFile);
-        }
-      }
-      catch (IOException e) {
-        LOG.info(e);
-        return Collections.emptyList();
-      }
+      String scriptFile = PythonHelpersLocator.getHelperPath("syspath.py");
+      String[] add_environment = getVirtualEnvAdditionalEnv(bin_path);
+      return SdkUtil.getProcessOutput(sdk_path, new String[]{bin_path, scriptFile}, add_environment, RUN_TIMEOUT).getStdoutLines();
     }
     else { // mock sdk
       List<String> ret = new ArrayList<String>(1);
