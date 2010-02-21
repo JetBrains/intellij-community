@@ -21,9 +21,11 @@ import com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration;
 import com.intellij.ide.errorTreeView.impl.ErrorViewTextExporter;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.AutoScrollToSourceHandler;
@@ -42,11 +44,12 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
-public class NewErrorTreeViewPanel extends JPanel implements DataProvider, OccurenceNavigator, MutableErrorTreeView {
+public class NewErrorTreeViewPanel extends JPanel implements DataProvider, OccurenceNavigator, MutableErrorTreeView, CopyProvider {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.ide.errorTreeView.NewErrorTreeViewPanel");
   private String myProgressText = "";
   private final boolean myCreateExitAction;
@@ -158,10 +161,29 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     Disposer.dispose(myBuilder);
   }
 
+  public void performCopy(DataContext dataContext) {
+    final ErrorTreeNodeDescriptor descriptor = getSelectedNodeDescriptor();
+    if (descriptor != null) {
+      final String[] lines = descriptor.getElement().getText();
+      CopyPasteManager.getInstance().setContents(new StringSelection(StringUtil.join(lines, "\n")));
+    }
+  }
+
+  public boolean isCopyEnabled(DataContext dataContext) {
+    return getSelectedNodeDescriptor() != null;
+  }
+
+  public boolean isCopyVisible(DataContext dataContext) {
+    return true;
+  }
+
   public Object getData(String dataId) {
+    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
+      return this;
+    }
     if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
       final NavigatableMessageElement selectedMessageElement = getSelectedMessageElement();
-      return selectedMessageElement != null? selectedMessageElement.getNavigatable() : null;
+      return selectedMessageElement != null ? selectedMessageElement.getNavigatable() : null;
     }
     else if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return myHelpId;
@@ -174,7 +196,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     }
     else if (CURRENT_EXCEPTION_DATA_KEY.is(dataId)) {
       NavigatableMessageElement selectedMessageElement = getSelectedMessageElement();
-      return selectedMessageElement != null? selectedMessageElement.getData() : null;
+      return selectedMessageElement != null ? selectedMessageElement.getData() : null;
     }
     return null;
   }
@@ -289,6 +311,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     if (getData(PlatformDataKeys.NAVIGATABLE.getName()) != null) {
       group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
     }
+    group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY));
     addExtraPopupMenuActions(group);
 
     ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.COMPILER_MESSAGES_POPUP, group);
