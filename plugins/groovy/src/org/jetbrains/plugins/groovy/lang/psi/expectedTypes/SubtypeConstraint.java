@@ -15,9 +15,13 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.expectedTypes;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+
 import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createType;
 
 /**
@@ -31,8 +35,8 @@ public  class SubtypeConstraint extends TypeConstraint {
     myDefaultType = defaultType;
   }
 
-  public boolean satisfied(PsiType type){
-    return myType.isAssignableFrom(type);
+  public boolean satisfied(PsiType type, PsiManager manager, GlobalSearchScope scope){
+    return TypesUtil.isAssignableByMethodCallConversion(getType(), type, manager, scope);
   }
 
   public PsiType getDefaultType() {

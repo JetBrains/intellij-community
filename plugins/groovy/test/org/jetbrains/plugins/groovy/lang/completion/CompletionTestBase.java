@@ -5,9 +5,13 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.Condition;
+import com.intellij.psi.PsiMember;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.plugins.groovy.CompositeCompletionData;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.Collections;
@@ -43,6 +47,14 @@ public abstract class CompletionTestBase extends JavaCodeInsightFixtureTestCase 
       final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myFixture.getEditor());
       if (lookup != null) {
         List<LookupElement> items = lookup.getItems();
+        if (!addReferenceVariants()) {
+          items = ContainerUtil.findAll(items, new Condition<LookupElement>() {
+            public boolean value(LookupElement lookupElement) {
+              final Object o = lookupElement.getObject();
+              return !(o instanceof PsiMember) && !(o instanceof GrVariable);
+            }
+          });
+        }
         Collections.sort(items, new Comparator<LookupElement>() {
           public int compare(LookupElement o1, LookupElement o2) {
             return o1.getLookupString().compareTo(o2.getLookupString());
