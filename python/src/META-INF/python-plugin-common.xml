@@ -137,6 +137,8 @@
 
     <codeInsight.lineMarkerProvider language="DjangoTemplate" implementationClass="com.jetbrains.django.annotator.ViewLineMarkerProvider"/>
 
+    <languageInjector implementation="com.jetbrains.django.codeInsight.DjangoRegexpInjector"/>
+
     <liveTemplateContext implementation="com.jetbrains.django.lang.template.DjangoTemplateContextType"/>
     <liveTemplateMacro implementation="com.jetbrains.django.lang.template.DjangoVariableMacro"/>
   </extensions>

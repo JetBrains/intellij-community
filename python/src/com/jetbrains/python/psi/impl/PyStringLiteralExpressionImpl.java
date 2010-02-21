@@ -67,7 +67,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
       for (ASTNode node : getStringNodes()) {
         TextRange range = getNodeTextRange(node.getText());
         int nodeOffset = node.getStartOffset() - elStart;
-        ranges.add(TextRange.from(nodeOffset + range.getStartOffset(), nodeOffset + range.getEndOffset()));
+        ranges.add(TextRange.from(nodeOffset + range.getStartOffset(), range.getLength()));
       }
       valueTextRanges = Collections.unmodifiableList(ranges);
     }
