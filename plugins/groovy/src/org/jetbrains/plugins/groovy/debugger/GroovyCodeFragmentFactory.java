@@ -183,6 +183,13 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
           }
           parameters.put(name, value);
         }
+
+        if (resolved instanceof PsiClass) {
+          String qName = ((PsiClass)resolved).getQualifiedName();
+          if (qName != null && qName.contains(".") && !referenceExpression.isQualified()) {
+            replaceWithReference(referenceExpression, qName);
+          }
+        }
       }
 
       @Override
