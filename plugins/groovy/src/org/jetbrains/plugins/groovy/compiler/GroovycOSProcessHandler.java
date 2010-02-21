@@ -65,15 +65,15 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
       LOG.debug("Received from groovyc: " + text);
     }
 
-    text = text.trim();
+    final String trimmed = text.trim();
 
 
-    if (text.startsWith(GroovycRunner.PRESENTABLE_MESSAGE)) {
-      myContext.getProgressIndicator().setText(text.substring(GroovycRunner.PRESENTABLE_MESSAGE.length()));
+    if (trimmed.startsWith(GroovycRunner.PRESENTABLE_MESSAGE)) {
+      myContext.getProgressIndicator().setText(trimmed.substring(GroovycRunner.PRESENTABLE_MESSAGE.length()));
       return;
     }
 
-    if (GroovycRunner.CLEAR_PRESENTABLE.equals(text)) {
+    if (GroovycRunner.CLEAR_PRESENTABLE.equals(trimmed)) {
       myContext.getProgressIndicator().setText(GROOVY_COMPILER_IN_OPERATION);
       return;
     }
@@ -202,7 +202,7 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
         outputBuffer.indexOf(START_MARKER),
         outputBuffer.indexOf(END_MARKER) + END_MARKER.length());
 
-    return text;
+    return text.trim();
   }
 
   @Nullable
