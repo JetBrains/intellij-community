@@ -205,6 +205,7 @@ HEX_CHAR=[0-9a-fA-F]
   "(?<="      { return RegExpTT.POS_LOOKBEHIND;  }
   "(?<!"      { return RegExpTT.NEG_LOOKBEHIND;  }
   "(?#" [^)]+ ")" { return RegExpTT.COMMENT;    }
+  "(?P<" [:letter:]* ">" { return RegExpTT.PYTHON_NAMED_GROUP; }
 
   "(?"        { yybegin(OPTIONS); return RegExpTT.SET_OPTIONS; }
 }
