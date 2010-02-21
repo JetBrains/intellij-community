@@ -181,7 +181,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
           addDeclaration(data.first, declaration, occurrences, replaceAll, initInConstructor);
         }
 
-        PyExpressionStatement newExpression = createExpression(project, name, declaration);
+        PyExpression newExpression = createExpression(project, name, declaration).getExpression();
 
         if (replaceAll) {
           for (PsiElement occurrence : occurrences) {
