@@ -16,13 +16,15 @@
 
 package com.intellij.ide.wizard;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
-public abstract class AbstractWizardStepEx implements Step {
+public abstract class AbstractWizardStepEx implements Step, Disposable {
 
   protected enum CommitType {
     Prev, Next, Finish
@@ -46,8 +48,9 @@ public abstract class AbstractWizardStepEx implements Step {
   public final void _commitPrev() throws CommitStepException {
     commit(CommitType.Prev);
   }
+
   public final void _commit(boolean finishChosen) throws CommitStepException {
-    commit(finishChosen ? CommitType.Finish :  CommitType.Next);
+    commit(finishChosen ? CommitType.Finish : CommitType.Next);
   }
 
   public void addStepListener(Listener listener) {
@@ -86,4 +89,11 @@ public abstract class AbstractWizardStepEx implements Step {
   public String getTitle() {
     return myTitle;
   }
+
+  public void dispose() {
+  }
+
+  @Nullable
+  public abstract JComponent getPreferredFocusedComponent();
+  
 }
