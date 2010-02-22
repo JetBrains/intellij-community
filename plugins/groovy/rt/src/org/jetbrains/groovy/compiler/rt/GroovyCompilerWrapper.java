@@ -28,6 +28,8 @@ import org.codehaus.groovy.tools.GroovyClass;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.*;
 
 
@@ -154,7 +156,10 @@ public class GroovyCompilerWrapper {
     } else if (forStubs) {
       addMessageWithoutLocation(collector, "Groovyc stub generation failed: " + exception.getMessage(), false);
     } else {
-      addMessageWithoutLocation(collector, exception.getMessage(), true);
+      final StringWriter writer = new StringWriter();
+      //noinspection IOResourceOpenedButNotSafelyClosed
+      exception.printStackTrace(new PrintWriter(writer));
+      addMessageWithoutLocation(collector, writer.toString(), true);
     }
   }
 

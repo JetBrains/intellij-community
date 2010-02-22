@@ -18,8 +18,11 @@ package com.intellij.ide.wizard;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -112,7 +115,12 @@ public class AbstractWizardEx extends AbstractWizard<AbstractWizardStepEx> {
   protected void updateStep() {
     super.updateStep();
     updateButtons();
-    setTitle(myTitle + ": " + getCurrentStepObject().getTitle());
+    final AbstractWizardStepEx step = getCurrentStepObject();
+    setTitle(myTitle + ": " + step.getTitle());
+    final JComponent toFocus = step.getPreferredFocusedComponent();
+    if (toFocus != null) {
+      IdeFocusManager.findInstanceByComponent(getWindow()).requestFocus(toFocus, true);
+    }
   }
 
   private void updateButtons() {
@@ -128,5 +136,13 @@ public class AbstractWizardEx extends AbstractWizard<AbstractWizardStepEx> {
       }
     }
     return true;
+  }
+
+  @Override
+  protected void dispose() {
+    super.dispose();
+    for (AbstractWizardStepEx step : mySteps) {
+      Disposer.dispose(step);
+    }
   }
 }

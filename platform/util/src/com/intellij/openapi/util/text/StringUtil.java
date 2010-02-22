@@ -581,20 +581,29 @@ public class StringUtil {
     return suggestion + "s";
   }
 
-  @NotNull public static String capitalizeWords(@NotNull String text, boolean allWords) {
-    StringTokenizer tokenizer = new StringTokenizer(text);
-    String out = "";
-    String delim = "";
+  @NotNull public static String capitalizeWords(@NotNull String text,
+                                                boolean allWords) {
+    return capitalizeWords(text, " \t\n\r\f", allWords, false);
+  }
+
+  @NotNull public static String capitalizeWords(@NotNull String text,
+                                                @NotNull String tokenizerDelim,
+                                                boolean allWords,
+                                                boolean leaveOriginalDelims) {
+    final StringTokenizer tokenizer = new StringTokenizer(text, tokenizerDelim, leaveOriginalDelims);
+    final StringBuilder out = new StringBuilder();
     boolean toCapitalize = true;
     while (tokenizer.hasMoreTokens()) {
-      String word = tokenizer.nextToken();
-      out += delim + (toCapitalize ? capitalize(word) : word);
-      delim = " ";
+      final String word = tokenizer.nextToken();
+      if (!leaveOriginalDelims && out.length() > 0) {
+        out.append(' ');
+      }
+      out.append(toCapitalize ? capitalize(word) : word);
       if (!allWords) {
         toCapitalize = false;
       }
     }
-    return out;
+    return out.toString();
   }
 
   public static String decapitalize(String s) {

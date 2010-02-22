@@ -22,4 +22,5 @@ public interface RegExpLanguageHost {
   boolean characterNeedsEscaping(char c);
   boolean supportsPerl5EmbeddedComments();
   boolean supportsPossessiveQuantifiers();
+  boolean supportsPythonNamedGroups();
 }

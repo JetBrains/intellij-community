@@ -41,4 +41,8 @@ public class RegExpGroupImpl extends RegExpElementImpl implements RegExpGroup {
         final ASTNode node = getNode().findChildByType(RegExpElementTypes.PATTERN);
         return node != null ? (RegExpPattern)node.getPsi() : null;
     }
+
+    public boolean isPythonNamedGroup() {
+        return getNode().findChildByType(RegExpTT.PYTHON_NAMED_GROUP) != null;
+    }
 }
