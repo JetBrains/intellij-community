@@ -53,7 +53,7 @@ public class TreeBuilderUtil {
       final Object userObject = childNode.getUserObject();
       if (tree.isPathSelected(path)) {
         if (!(userObject instanceof NodeDescriptor)) {
-          LOG.assertTrue(false, "Node: " + childNode + "; userObject: " + userObject + " of class " + userObject.getClass());
+          LOG.error("Node: " + childNode + "; userObject: " + userObject + " of class " + userObject.getClass());
         }
         selectionPaths.add(storeElementsOnly ? ((NodeDescriptor)userObject).getElement() : path);
       }

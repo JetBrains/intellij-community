@@ -1,5 +1,5 @@
 class B extends A {
-  public B() {
+  def B() {
     super(27)
 
   }

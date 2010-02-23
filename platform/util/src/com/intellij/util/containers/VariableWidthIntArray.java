@@ -82,13 +82,13 @@ public final class VariableWidthIntArray implements Cloneable {
       case SHORT: return shortArray[index];
       case BYTE: return byteArray[index];
     }
-    LOG.assertTrue( false, "No array allocated" );
+    LOG.error("No array allocated");
     return 0;
   }
 
   public void put( int index, int value ) {
     if( value < minValue || value > maxValue ) {
-      LOG.assertTrue( false, "Value out of domain" );
+      LOG.error("Value out of domain");
     }
 
     switch( arrayType ) {
@@ -97,7 +97,7 @@ public final class VariableWidthIntArray implements Cloneable {
       case BYTE: byteArray[index] = (byte)value; return;
     }
 
-    LOG.assertTrue( false, "No array allocated" );
+    LOG.error("No array allocated");
   }
 
   public Object clone() throws CloneNotSupportedException {
@@ -118,7 +118,8 @@ public final class VariableWidthIntArray implements Cloneable {
       case INT: System.arraycopy( intArray, from, intArray, to, count ); break;
       case SHORT: System.arraycopy( shortArray, from, shortArray, to, count ); break;
       case BYTE: System.arraycopy( byteArray, from, byteArray, to, count ); break;
-      default: LOG.assertTrue( false, "Invalid array type" );
+      default:
+        LOG.error("Invalid array type");
     }
   }
 

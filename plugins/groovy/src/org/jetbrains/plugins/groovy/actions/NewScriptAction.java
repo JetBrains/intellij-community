@@ -38,7 +38,7 @@ public class NewScriptAction extends CreateTemplateInPackageAction<GroovyFile> i
   private static final String GROOVY_DSL_SCRIPT_TMPL = "GroovyDslScript.gdsl";
 
   public NewScriptAction() {
-    super(GroovyBundle.message("newscript.menu.action.text"), GroovyBundle.message("newscript.menu.action.description"), GroovyIcons.GROOVY_ICON_16x16);
+    super(GroovyBundle.message("newscript.menu.action.text"), GroovyBundle.message("newscript.menu.action.description"), GroovyIcons.GROOVY_ICON_16x16, false);
   }
 
   @NotNull

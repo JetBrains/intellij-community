@@ -28,6 +28,7 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagChild;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
@@ -199,7 +200,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
   public Object[] getVariants() {
     List<Object> result = new ArrayList<Object>();
     collectVariants(result);
-    return result.toArray(new Object[result.size()]);
+    return ArrayUtil.toObjectArray(result);
   }
 
   protected void collectVariants(List<Object> result) {

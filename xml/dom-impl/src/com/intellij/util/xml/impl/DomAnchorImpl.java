@@ -38,7 +38,7 @@ public abstract class DomAnchorImpl<T extends DomElement> {
   public static <T extends DomElement> DomAnchorImpl<T> createAnchor(@NotNull T t) {
     final DomElement parent = t.getParent();
     if (parent == null) {
-      LOG.assertTrue(false, "Parent null: " + t);
+      LOG.error("Parent null: " + t);
     }
 
     if (parent instanceof DomFileElementImpl) {
@@ -73,7 +73,7 @@ public abstract class DomAnchorImpl<T extends DomElement> {
         }
       }
       diag.append("Child name: ").append(t.getXmlElementName()).append(";").append(t.getXmlElementNamespaceKey());
-      LOG.assertTrue(false, diag);
+      LOG.error(diag);
     }
     return new IndexedAnchor<T>(parentAnchor, description, index);
   }

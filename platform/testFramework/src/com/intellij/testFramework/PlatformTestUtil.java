@@ -29,6 +29,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.Assert;
@@ -230,7 +231,7 @@ public class PlatformTestUtil {
     if (comparator != null) {
       ArrayList<?> list = new ArrayList<Object>(Arrays.asList(children));
       Collections.sort(list, comparator);
-      children = list.toArray(new Object[list.size()]);
+      children = ArrayUtil.toObjectArray(list);
     }
     for (Object child : children) {
       currentLine = doPrint(buffer, currentLevel + 1, child, structure, comparator, maxRowCount, currentLine, paddingChar);

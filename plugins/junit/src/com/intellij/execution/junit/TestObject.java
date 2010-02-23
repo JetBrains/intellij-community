@@ -247,13 +247,16 @@ public abstract class TestObject implements JavaCommandLine {
       @Override
       public void notifyStart(TestProxy root) {
         super.notifyStart(root);
-        handler.getOut().setDispatchListener(getModel().getNotifier());
-        Disposer.register(getModel(), new Disposable() {
-          public void dispose() {
-            handler.getOut().setDispatchListener(DispatchListener.DEAF);
-          }
-        });
-        consoleView.attachToModel(getModel());
+        final JUnitRunningModel model = getModel();
+        if (model != null) {
+          handler.getOut().setDispatchListener(model.getNotifier());
+          Disposer.register(model, new Disposable() {
+            public void dispose() {
+              handler.getOut().setDispatchListener(DispatchListener.DEAF);
+            }
+          });
+          consoleView.attachToModel(model);
+        }
       }
     };
 

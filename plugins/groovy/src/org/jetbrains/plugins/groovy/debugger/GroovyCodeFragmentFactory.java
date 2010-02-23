@@ -56,39 +56,21 @@ import java.util.Random;
  */
 public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
   private static final String EVAL_NAME = "_JETGROOVY_EVAL_";
-
-  private static String createProperty(String text, String imports) {
-    String classText = "\"" +
-                       imports +
-                       "class DUMMY { " +
-                       "public groovy.lang.Closure " +
-                       EVAL_NAME + " = {" + text + "}}\"";
-
-    return "final java.lang.ClassLoader parentLoader = clazz.getClassLoader();\n" +
-           "   final groovy.lang.GroovyClassLoader loader = new groovy.lang.GroovyClassLoader(parentLoader);\n" +
-           "   final java.lang.Class c = loader.parseClass(" +
-           classText +
-           ", \"DUMMY.groovy\");\n" +
-           "   int i;\n" +
-           "   java.lang.reflect.Field[] fields = c.getFields();\n" +
-           "   for (int j = 0; j < fields.length; j++) if (fields[j].getName().equals(\"_JETGROOVY_EVAL_\")) {i = j; break;}\n" +
-           "   final java.lang.reflect.Field field = fields[i];\n" +
-           "   final java.lang.Object closure = field.get(c.newInstance());\n";
-  }
+  private static final String IMPORTS = "___$$IMPORTS$$___";
+  private static final String TEXT = "___$$TEXT$$___";
 
   private static String unwrapVals(List<String> vals) {
-    return "java.lang.Object[] vals = new java.lang.Object[]{" + StringUtil.join(vals, ",") + "};\n" +
-           "java.lang.Object[] resVals = new java.lang.Object[" + vals.size() + "];\n" +
-           "for (int iii =0; iii<vals.length; iii++){java.lang.Object o = vals[iii];\n" +
-           "if (o instanceof groovy.lang.Reference) {o = ((groovy.lang.Reference)o).get();}\n" +
-           "resVals[iii] = o;" +
+    return "java.lang.Object[] |vals = new java.lang.Object[]{" + StringUtil.join(vals, ",") + "};\n" +
+           "java.lang.Object[] |resVals = new java.lang.Object[" + vals.size() + "];\n" +
+           "for (int |iii =0; |iii<|vals.length; |iii++){java.lang.Object |o = |vals[|iii];\n" +
+           "if (|o instanceof groovy.lang.Reference) {|o = ((groovy.lang.Reference)|o).get();}\n" +
+           "|resVals[|iii] = |o;" +
            "}\n";
   }
 
   public JavaCodeFragment createCodeFragment(TextWithImports textWithImports, PsiElement context, Project project) {
     String text = textWithImports.getText();
     String imports = textWithImports.getImports();
-
 
     final Pair<Map<String, String>, GroovyFile> pair = externalParameters(text, context);
     GroovyFile toEval = pair.second;
@@ -103,74 +85,64 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
 
 
     text = toEval.getText();
+    final String groovyText = StringUtil.join(names, ", ") + "->" + stripImports(text, toEval);
 
     PsiClass contextClass = PsiUtil.getContextClass(context);
     boolean isStatic = isStaticContext(context);
     StringBuffer javaText = new StringBuffer();
 
-    javaText.append("groovy.lang.MetaClass mc;\n");
-    javaText.append("java.lang.Class clazz;\n");
+    javaText.append("groovy.lang.MetaClass |mc;\n");
+    javaText.append("java.lang.Class |clazz;\n");
     if (!isStatic) {
-      javaText.append("clazz = ((java.lang.Object)this).getClass();\n");
-      javaText.append("mc = ((groovy.lang.GroovyObject)this).getMetaClass();\n");
+      javaText.append("|clazz = ((java.lang.Object)this).getClass();\n");
+      javaText.append("|mc = ((groovy.lang.GroovyObject)this).getMetaClass();\n");
     } else {
-      javaText.append("clazz = java.lang.Class.forName(\"").append(contextClass.getQualifiedName()).append("\");\n");
-      javaText.append("mc = groovy.lang.GroovySystem.getMetaClassRegistry().getMetaClass(clazz);\n");
+      assert contextClass != null;
+      javaText.append("|clazz = java.lang.Class.forName(\"").append(contextClass.getQualifiedName()).append("\");\n");
+      javaText.append("|mc = groovy.lang.GroovySystem.getMetaClassRegistry().getMetaClass(|clazz);\n");
     }
 
-    javaText.append(createProperty(StringUtil.join(names, ", ") + "->" + stripImports(text, toEval), imports));
+    javaText.append("final java.lang.ClassLoader |parentLoader = |clazz.getClassLoader();\n" +
+                    "   final groovy.lang.GroovyClassLoader |loader = new groovy.lang.GroovyClassLoader(|parentLoader);\n" +
+                    "   final java.lang.Class |c = |loader.parseClass(");
+    javaText.append("\"" + IMPORTS + "class DUMMY { " +
+                       "public groovy.lang.Closure " +
+                       EVAL_NAME + " = {" + TEXT + "}}\"");
+    javaText.append(", \"DUMMY.groovy\");\n" +
+                    "   int |i;\n" +
+                    "   java.lang.reflect.Field[] |fields = |c.getFields();\n" +
+                    "   for (int |j = 0; |j < |fields.length; |j++) if (|fields[|j].getName().equals(\"_JETGROOVY_EVAL_\")) {|i = |j; break;}\n" +
+                    "   final java.lang.reflect.Field |field = |fields[|i];\n" +
+                    "   final java.lang.Object |closure = |field.get(|c.newInstance());\n");
 
-    javaText.append("groovy.lang.ExpandoMetaClass emc = new groovy.lang.ExpandoMetaClass(clazz);\n");
+    javaText.append("groovy.lang.ExpandoMetaClass |emc = new groovy.lang.ExpandoMetaClass(|clazz);\n");
     if (!isStatic) {
-      javaText.append("emc.setProperty(\"").append(EVAL_NAME).append("\", closure);\n");
-      javaText.append("((groovy.lang.GroovyObject)this).setMetaClass(emc);\n");
+      javaText.append("|emc.setProperty(\"").append(EVAL_NAME).append("\", |closure);\n");
+      javaText.append("((groovy.lang.GroovyObject)this).setMetaClass(|emc);\n");
     } else {
-      javaText.append("((groovy.lang.GroovyObject)emc.getProperty(\"static\")).setProperty(\"").append(EVAL_NAME).append("\", closure);\n");
-      javaText.append("groovy.lang.GroovySystem.getMetaClassRegistry().setMetaClass(clazz, emc);\n");
+      javaText.append("((groovy.lang.GroovyObject)|emc.getProperty(\"static\")).setProperty(\"").append(EVAL_NAME).append("\", |closure);\n");
+      javaText.append("groovy.lang.GroovySystem.getMetaClassRegistry().setMetaClass(|clazz, |emc);\n");
     }
-    javaText.append("emc.initialize();\n");
+    javaText.append("|emc.initialize();\n");
     javaText.append(unwrapVals(values));
     if (!isStatic) {
-      javaText.append("java.lang.Object res = ((groovy.lang.MetaClassImpl)emc).invokeMethod(this, \"").append(EVAL_NAME).append("\", ").
-        append("resVals").append(");\n");
-      javaText.append("((groovy.lang.GroovyObject)this).setMetaClass(mc);"); //try/finally is not supported
+      javaText.append("java.lang.Object |res = ((groovy.lang.MetaClassImpl)|emc).invokeMethod(this, \"").append(EVAL_NAME).append("\", |resVals);\n");
+      javaText.append("((groovy.lang.GroovyObject)this).setMetaClass(|mc);"); //try/finally is not supported
     } else {
-      javaText.append("java.lang.Object res = ((groovy.lang.MetaClassImpl)emc).invokeStaticMethod(clazz, \"").append(EVAL_NAME)
-        .append("\", ").
-        append("resVals").append(");\n");
-      javaText.append("groovy.lang.GroovySystem.getMetaClassRegistry().setMetaClass(clazz, mc);\n");
+      javaText.append("java.lang.Object |res = ((groovy.lang.MetaClassImpl)|emc).invokeStaticMethod(|clazz, \"").append(EVAL_NAME).append("\", |resVals);\n");
+      javaText.append("groovy.lang.GroovySystem.getMetaClassRegistry().setMetaClass(|clazz, |mc);\n");
     }
-    javaText.append("res");
+    javaText.append("|res");
 
     final PsiElementFactory factory = JavaPsiFacade.getInstance(toEval.getProject()).getElementFactory();
-    JavaCodeFragment result = factory.createCodeBlockCodeFragment(javaText.toString(), null, true);
-    hideInternalJavaVariables(factory, result);
+
+    final String hiddenJavaVars = StringUtil.replace(javaText.toString(), "|", "_$$_$$$_$$$$$$$$$_" + new Random().nextInt(42));
+    final String finalText = StringUtil.replace(StringUtil.replace(hiddenJavaVars, TEXT, groovyText), IMPORTS, imports);
+    JavaCodeFragment result = factory.createCodeBlockCodeFragment(finalText, null, true);
     if (contextClass != null) {
       result.setThisType(factory.createType(contextClass));
     }
     return result;
-  }
-
-  private static void hideInternalJavaVariables(final PsiElementFactory factory, JavaCodeFragment result) {
-    final String varPrefix = "_$$_$$$_$$$$$$$$$_" + new Random().nextInt(42);
-    result.accept(new PsiRecursiveElementWalkingVisitor() {
-      @Override
-      public void visitElement(PsiElement element) {
-        if (element instanceof PsiReferenceExpression && ((PsiReferenceExpression)element).resolve() instanceof PsiLocalVariable) {
-          element.replace(factory.createExpressionFromText(varPrefix + element.getText(), element));
-        }
-        super.visitElement(element);
-      }
-    });
-    result.accept(new PsiRecursiveElementWalkingVisitor() {
-      @Override
-      public void visitElement(PsiElement element) {
-        if (element instanceof PsiLocalVariable) {
-          ((PsiLocalVariable)element).setName(varPrefix + ((PsiLocalVariable)element).getName());
-        }
-        super.visitElement(element);
-      }
-    });
   }
 
   public static Pair<Map<String, String>, GroovyFile> externalParameters(String text, @NotNull final PsiElement context) {
@@ -210,6 +182,13 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
             value = name;
           }
           parameters.put(name, value);
+        }
+
+        if (resolved instanceof PsiClass) {
+          String qName = ((PsiClass)resolved).getQualifiedName();
+          if (qName != null && qName.contains(".") && !referenceExpression.isQualified()) {
+            replaceWithReference(referenceExpression, qName);
+          }
         }
       }
 

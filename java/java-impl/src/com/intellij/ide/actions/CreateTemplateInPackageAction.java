@@ -34,8 +34,11 @@ import javax.swing.*;
  * @author peter
  */
 public abstract class CreateTemplateInPackageAction<T extends PsiElement> extends AnAction {
-  protected CreateTemplateInPackageAction(String text, String description, Icon icon) {
+  private final boolean myinSourceOnly;
+
+  protected CreateTemplateInPackageAction(String text, String description, Icon icon, boolean inSourceOnly) {
     super(text, description, icon);
+    myinSourceOnly = inSourceOnly;
   }
 
   public final void actionPerformed(final AnActionEvent e) {
@@ -91,6 +94,10 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
     final IdeView view = LangDataKeys.IDE_VIEW.getData(dataContext);
     if (project == null || view == null || view.getDirectories().length == 0) {
       return false;
+    }
+
+    if (!myinSourceOnly) {
+      return true;
     }
 
     ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();

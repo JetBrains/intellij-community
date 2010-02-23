@@ -238,7 +238,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
       final PsiElementFactory factory = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory();
       final PsiTypeElement typeElement = myMethod.getReturnTypeElement();
       if (typeElement == null) {
-        LOG.assertTrue(false, myMethod.getClass().getName());
+        LOG.error(myMethod.getClass().getName());
         return panel;
       }
       myReturnTypeCodeFragment = factory.createTypeCodeFragment(typeElement.getText(), myMethod.getParameterList(), true, true);

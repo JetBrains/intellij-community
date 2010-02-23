@@ -266,7 +266,7 @@ public class DebuggerTreeNodeExpression {
       return ((ValueDescriptorImpl)node.getDescriptor()).getTreeEvaluation(node, context);
     }
     else {
-      LOG.assertTrue(false, node.getDescriptor() != null ? node.getDescriptor().getClass().getName() : "null");
+      LOG.error(node.getDescriptor() != null ? node.getDescriptor().getClass().getName() : "null");
       return null;
     }
   }

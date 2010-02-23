@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -88,7 +89,7 @@ public class GrLabelReference implements PsiReference {
       }
       context = context.getContext();
     }
-    return result.toArray(new Object[result.size()]);
+    return ArrayUtil.toObjectArray(result);
   }
 
   public boolean isSoft() {

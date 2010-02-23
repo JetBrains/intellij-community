@@ -25,6 +25,7 @@ for
 import
 int
 interface
+k
 long
 native
 new

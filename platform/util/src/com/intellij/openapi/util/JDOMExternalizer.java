@@ -16,6 +16,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -73,7 +74,7 @@ public class JDOMExternalizer {
     else {
       mapRoot = root;
     }
-    final String[] names = map.keySet().toArray(new String[0]);
+    final String[] names = ArrayUtil.toStringArray(map.keySet());
     Arrays.sort(names);
     for (String name : names) {
       @NonNls final Element element = new Element(entryName);

@@ -215,12 +215,12 @@ public class PositionManagerImpl implements PositionManager {
         if(PsiUtil.isLocalOrAnonymousClass(psiClass)) {
           final PsiClass parentNonLocal = JVMNameUtil.getTopLevelParentClass(psiClass);
           if(parentNonLocal == null) {
-            LOG.assertTrue(false, "Local or anonymous class has no non-local parent");
+            LOG.error("Local or anonymous class has no non-local parent");
             return Collections.emptyList();
           }
           final String parentClassName = JVMNameUtil.getNonAnonymousClassName(parentNonLocal);
           if(parentClassName == null) {
-            LOG.assertTrue(false, "The name of a parent of a local (anonymous) class is null");
+            LOG.error("The name of a parent of a local (anonymous) class is null");
             return Collections.emptyList();
           }
           final List<ReferenceType> outers = myDebugProcess.getVirtualMachineProxy().classesByName(parentClassName);

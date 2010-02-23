@@ -99,7 +99,7 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
     if (myFileNames.size() == 2) {
       shortNames.add(CREATE_MISSING_OPTION);
     }
-    final JList list = new JList(shortNames.toArray(new String[shortNames.size()]));
+    final JList list = new JList(ArrayUtil.toStringArray(shortNames));
     list.setCellRenderer(new ColoredListCellRenderer() {
       @Override
       protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {

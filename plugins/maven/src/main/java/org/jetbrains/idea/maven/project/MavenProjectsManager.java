@@ -984,7 +984,16 @@ public class MavenProjectsManager extends SimpleProjectComponent
     return result;
   }
 
+  public MavenDomDependency addOverridenDependency(final MavenProject mavenProject, final MavenId id) {
+     return addDependency(mavenProject, id, true);
+  }
+
+
   public MavenDomDependency addDependency(final MavenProject mavenProject, final MavenId id) {
+    return addDependency(mavenProject, id, false);
+  }
+
+  public MavenDomDependency addDependency(final MavenProject mavenProject, final MavenId id, final boolean overriden) {
     final MavenArtifact[] artifact = new MavenArtifact[1];
 
     try {
@@ -1005,7 +1014,7 @@ public class MavenProjectsManager extends SimpleProjectComponent
       protected void run(Result<MavenDomDependency> result) throws Throwable {
         MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(myProject, mavenProject.getFile());
 
-        MavenDomDependency domDependency = MavenDomUtil.createDomDependency(model, artifact[0], getEditor());
+        MavenDomDependency domDependency = MavenDomUtil.createDomDependency(model, artifact[0], getEditor(), overriden);
 
         mavenProject.addDependency(artifact[0]);
         result.setResult(domDependency);

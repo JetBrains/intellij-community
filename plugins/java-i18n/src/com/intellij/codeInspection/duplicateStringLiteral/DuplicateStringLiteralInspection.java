@@ -21,6 +21,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -111,27 +112,31 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
 
     Set<PsiFile> resultFiles = null;
     for (String word : words) {
-      if (word.length() >= MIN_STRING_LENGTH) {
-        final Set<PsiFile> files = new THashSet<PsiFile>();
-        searchHelper.processAllFilesWithWordInLiterals(word, scope, new CommonProcessors.CollectProcessor<PsiFile>(files));
-        if (resultFiles == null) {
-          resultFiles = files;
-        }
-        else {
-          resultFiles.retainAll(files);
-        }
-        if (resultFiles.isEmpty()) return;
+      if (word.length() < MIN_STRING_LENGTH) {
+        continue;
       }
+      ProgressManager.checkCanceled();
+      final Set<PsiFile> files = new THashSet<PsiFile>();
+      searchHelper.processAllFilesWithWordInLiterals(word, scope, new CommonProcessors.CollectProcessor<PsiFile>(files));
+      if (resultFiles == null) {
+        resultFiles = files;
+      }
+      else {
+        resultFiles.retainAll(files);
+      }
+      if (resultFiles.isEmpty()) return;
     }
     if (resultFiles == null || resultFiles.isEmpty()) return;
     final List<PsiExpression> foundExpr = new ArrayList<PsiExpression>();
     for (PsiFile file : resultFiles) {
+      ProgressManager.checkCanceled();
       CharSequence text = file.getViewProvider().getContents();
       StringSearcher searcher = new StringSearcher(stringToFind, true, true);
       for (int offset = LowLevelSearchUtil.searchWord(text, 0, text.length(), searcher);
            offset >= 0;
            offset = LowLevelSearchUtil.searchWord(text, offset + searcher.getPattern().length(), text.length(), searcher)
         ) {
+        ProgressManager.checkCanceled();
         PsiElement element = file.findElementAt(offset);
         if (element == null || !(element.getParent() instanceof PsiLiteralExpression)) continue;
         PsiLiteralExpression expression = (PsiLiteralExpression)element.getParent();
@@ -143,6 +148,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     if (foundExpr.isEmpty()) return;
     Set<PsiClass> classes = new THashSet<PsiClass>();
     for (PsiElement aClass : foundExpr) {
+      ProgressManager.checkCanceled();
       do {
         aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class);
       }
@@ -168,7 +174,6 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
                  (thisFile ? " " + InspectionsBundle.message("inspection.duplicates.message.in.this.file") : "");
         }
       }, ", " + BR);
-
     }
     else {
       classList = StringUtil.join(tenClassesMost, new Function<PsiClass, String>() {

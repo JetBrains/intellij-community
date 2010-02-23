@@ -165,7 +165,7 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
           result.add(suggestProperlyCasedName(prefix, NameUtil.splitNameIntoWords(name)));
         }
         result.add(suggestProperlyCasedName(prefix, NameUtil.splitNameIntoWords(name.toLowerCase())));
-        return result.toArray(new String[result.size()]);
+        return ArrayUtil.toStringArray(result);
       }
 
     }

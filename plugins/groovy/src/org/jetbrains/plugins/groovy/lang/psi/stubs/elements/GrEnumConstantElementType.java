@@ -21,6 +21,7 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.StringRef;
@@ -59,7 +60,7 @@ public class GrEnumConstantElementType extends GrStubElementType<GrFieldStub, Gr
      final GrModifierList list = psi.getModifierList();
     String[] annNames;
     if (list == null) {
-      annNames = new String[0];
+      annNames = ArrayUtil.EMPTY_STRING_ARRAY;
     }
     else {
       annNames = ContainerUtil.map(list.getAnnotations(), new Function<GrAnnotation, String>() {
@@ -68,7 +69,7 @@ public class GrEnumConstantElementType extends GrStubElementType<GrFieldStub, Gr
           if (element == null) return null;
           return element.getReferenceName();
         }
-      }, new String[0]);
+      }, ArrayUtil.EMPTY_STRING_ARRAY);
     }
     return new GrFieldStubImpl(parentStub, StringRef.fromString(psi.getName()), annNames, new Set[0], GroovyElementTypes.ENUM_CONSTANT, GrFieldStubImpl.buildFlags(psi));
   }

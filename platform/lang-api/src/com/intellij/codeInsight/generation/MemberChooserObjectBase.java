@@ -38,7 +38,7 @@ public class MemberChooserObjectBase implements MemberChooserObject {
   }
 
   public void renderTreeNode(SimpleColoredComponent component, JTree tree) {
-    component.append(myText, getTextAttributes(tree));
+    component.append(getText(), getTextAttributes(tree));
     component.setIcon(myIcon);
   }
 

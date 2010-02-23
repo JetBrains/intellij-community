@@ -125,7 +125,7 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
     final FileEditor[] editors = editorsWithProviders.getFirst();
     final FileEditorProvider[] oldProviders = editorsWithProviders.getSecond();
     if (editors.length <= 0) {
-      LOG.assertTrue(false, "No editors for file " + file.getPresentableUrl());
+      LOG.error("No editors for file " + file.getPresentableUrl());
     }
     final FileEditor selectedEditor = editorManager.getSelectedEditor(file);
     LOG.assertTrue(selectedEditor != null);

@@ -34,7 +34,6 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
@@ -132,11 +131,13 @@ public class NewProjectUtil {
           // ensure the dialog is shown after all startup activities are done
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
+              if (newProject.isDisposed()) return;
               if (need2OpenProjectStructure) {
                 ModulesConfigurator.showDialog(newProject, null, null, true);
               }
               ApplicationManager.getApplication().invokeLater(new Runnable() {
                 public void run() {
+                  if (newProject.isDisposed()) return;
                   final ToolWindow toolWindow = ToolWindowManager.getInstance(newProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
                   if (toolWindow != null) {
                     toolWindow.activate(null);

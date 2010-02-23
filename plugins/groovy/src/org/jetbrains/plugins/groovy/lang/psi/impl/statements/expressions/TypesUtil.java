@@ -93,6 +93,28 @@ public class TypesUtil {
 
   @Nullable
   public static PsiType getOverloadedOperatorType(PsiType thisType, String operatorName, GroovyPsiElement place, PsiType[] argumentTypes) {
+    final GroovyResolveResult[] candidates = getOverloadedOperatorCandidates(thisType, operatorName, place, argumentTypes);
+    if (candidates.length == 1) {
+      final PsiElement element = candidates[0].getElement();
+      if (element instanceof PsiMethod) {
+        return candidates[0].getSubstitutor().substitute(((PsiMethod)element).getReturnType());
+      }
+    }
+    return null;
+  }
+
+  @NotNull
+  public static GroovyResolveResult[] getOverloadedOperatorCandidates(PsiType thisType,
+                                                                      IElementType tokenType,
+                                                                      GroovyPsiElement place,
+                                                                      PsiType[] argumentTypes) {
+    return getOverloadedOperatorCandidates(thisType, ourOperationsToOperatorNames.get(tokenType), place, argumentTypes);
+  }
+  @NotNull
+  public static GroovyResolveResult[] getOverloadedOperatorCandidates(PsiType thisType,
+                                                                      String operatorName,
+                                                                      GroovyPsiElement place,
+                                                                      PsiType[] argumentTypes) {
     if (operatorName != null) {
       MethodResolverProcessor processor =
         new MethodResolverProcessor(operatorName, place, false, thisType, argumentTypes, PsiType.EMPTY_ARRAY);
@@ -101,21 +123,17 @@ public class TypesUtil {
         final PsiClassType.ClassResolveResult resolveResult = classtype.resolveGenerics();
         final PsiClass lClass = resolveResult.getElement();
         if (lClass != null) {
-          lClass.processDeclarations(processor, ResolveState.initial().put(PsiSubstitutor.KEY, resolveResult.getSubstitutor()), null, place);
+          lClass
+            .processDeclarations(processor, ResolveState.initial().put(PsiSubstitutor.KEY, resolveResult.getSubstitutor()), null, place);
         }
       }
 
       ResolveUtil.processNonCodeMethods(thisType, processor, place.getProject(), place, false);
-      final GroovyResolveResult[] candidates = processor.getCandidates();
-      if (candidates.length == 1) {
-        final PsiElement element = candidates[0].getElement();
-        if (element instanceof PsiMethod) {
-          return candidates[0].getSubstitutor().substitute(((PsiMethod)element).getReturnType());
-        }
-      }
+      return processor.getCandidates();
     }
-    return null;
+    return GroovyResolveResult.EMPTY_ARRAY;
   }
+
   private static final Map<IElementType, String> ourPrimitiveTypesToClassNames = new HashMap<IElementType, String>();
   private static final String NULL = "null";
   private static final String JAVA_MATH_BIG_DECIMAL = "java.math.BigDecimal";
@@ -193,22 +211,16 @@ public class TypesUtil {
   }
 
   public static boolean isAssignable(PsiType lType, PsiType rType, PsiManager manager, GlobalSearchScope scope) {
+    if (isAssignableByMethodCallConversion(lType, rType, manager, scope)){
+      return true;
+    }
     //all numeric types are assignable
     if (isNumericType(lType)) {
       return isNumericType(rType) || rType.equals(PsiType.NULL);
     }
-    if (rType instanceof GrTupleType) {
-      final GrTupleType tuple = (GrTupleType)rType;
-      if (tuple.getComponentTypes().length == 0) {
-        if (lType instanceof PsiArrayType ||
-            InheritanceUtil.isInheritor(lType, JAVA_UTIL_LIST) ||
-            InheritanceUtil.isInheritor(lType, JAVA_UTIL_SET)) {
-          return true;
-        }
-      }
+    else if (lType.equalsToText(JAVA_LANG_STRING)) {
+      return true;
     }
-
-    if (lType.equalsToText(JAVA_LANG_STRING)) return true;
 
     rType = boxPrimitiveType(rType, manager, scope);
     lType = boxPrimitiveType(lType, manager, scope);

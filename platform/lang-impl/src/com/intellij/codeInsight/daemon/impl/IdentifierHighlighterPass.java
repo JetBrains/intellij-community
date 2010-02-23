@@ -31,9 +31,11 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
@@ -78,13 +80,26 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
       return;
     }
 
-    final PsiElement myTarget = TargetElementUtilBase.getInstance().findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED, myCaretOffset);
+    int flags = TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED;
+    PsiElement myTarget = TargetElementUtilBase.getInstance().findTargetElement(myEditor, flags, myCaretOffset);
+    
+    if (myTarget == null) {
+      if (!PsiDocumentManager.getInstance(myProject).isUncommited(myEditor.getDocument())) {
+        // when document is committed, try to check injected stuff - it's fast
+        Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myFile, myCaretOffset);
+        if (injectedEditor != null) {
+          myTarget = TargetElementUtilBase.getInstance().findTargetElement(injectedEditor, flags, injectedEditor.getCaretModel().getOffset()); 
+        }
+      }
+    }
+    
     if (myTarget != null) {
       final ReadWriteAccessDetector detector = ReadWriteAccessDetector.findDetector(myTarget);
+      final PsiElement finalMyTarget = myTarget;
       ReferencesSearch.search(myTarget, new LocalSearchScope(myFile)).forEach(new Processor<PsiReference>() {
         public boolean process(final PsiReference psiReference) {
           final TextRange textRange = HighlightUsagesHandler.getRangeToHighlight(psiReference);
-          if (detector == null || detector.getReferenceAccess(myTarget, psiReference) == ReadWriteAccessDetector.Access.Read) {
+          if (detector == null || detector.getReferenceAccess(finalMyTarget, psiReference) == ReadWriteAccessDetector.Access.Read) {
             myReadAccessRanges.add(textRange);
           }
           else {

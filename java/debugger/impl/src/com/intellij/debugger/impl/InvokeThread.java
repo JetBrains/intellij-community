@@ -129,7 +129,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
         }
 
         if(getCurrentRequest() != current) {
-          LOG.assertTrue(false, "Expected " + current + " instead of " + getCurrentRequest());
+          LOG.error("Expected " + current + " instead of " + getCurrentRequest());
         }
 
         processEvent(myEvents.get());

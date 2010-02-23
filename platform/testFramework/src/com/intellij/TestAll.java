@@ -31,6 +31,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.testFramework.*;
+import com.intellij.util.ArrayUtil;
 import junit.framework.*;
 
 import java.io.File;
@@ -296,8 +297,8 @@ public class TestAll implements Test {
     if ((testCaseClass.getModifiers() & Modifier.PUBLIC) == 0) return null;
 
     try {
-      Method suiteMethod = testCaseClass.getMethod("suite", new Class[0]);
-      return (Test)suiteMethod.invoke(null, new Class[0]);
+      Method suiteMethod = testCaseClass.getMethod("suite", ArrayUtil.EMPTY_CLASS_ARRAY);
+      return (Test)suiteMethod.invoke(null, ArrayUtil.EMPTY_CLASS_ARRAY);
     }
     catch (NoSuchMethodException e) {
       if (TestRunnerUtil.isJUnit4TestClass(testCaseClass)) {

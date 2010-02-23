@@ -234,7 +234,7 @@ public class IdeEventQueue extends EventQueue {
     synchronized (myLock) {
       final boolean wasRemoved = myIdleListeners.remove(runnable);
       if (!wasRemoved) {
-        LOG.assertTrue(false, "unknown runnable: " + runnable);
+        LOG.error("unknown runnable: " + runnable);
       }
       final MyFireIdleRequest request = myListener2Request.remove(runnable);
       LOG.assertTrue(request != null);
@@ -260,7 +260,7 @@ public class IdeEventQueue extends EventQueue {
     synchronized (myLock) {
       final boolean wasRemoved = myActivityListeners.remove(runnable);
       if (!wasRemoved) {
-        LOG.assertTrue(false, "unknown runnable: " + runnable);
+        LOG.error("unknown runnable: " + runnable);
       }
     }
   }

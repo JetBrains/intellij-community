@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
@@ -64,7 +65,7 @@ public class MkdirOptionsDialog extends DialogWrapper {
       final ArrayList<String> messages = VcsConfiguration.getInstance(project).getRecentMessages();
       Collections.reverse(messages);
 
-      final String[] model = messages.toArray(new String[messages.size()]);
+      final String[] model = ArrayUtil.toStringArray(messages);
       myMessagesBox.setModel(new DefaultComboBoxModel(model));
       myMessagesBox.setRenderer(new MessageBoxCellRenderer());
     }

@@ -321,7 +321,7 @@ public class FileBasedIndex implements ApplicationComponent {
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
         final MapIndexStorage<K, V> storage = new MapIndexStorage<K, V>(IndexInfrastructure.getStorageFile(name), extension.getKeyDescriptor(), extension.getValueExternalizer(), extension.getCacheSize());
-        final IndexStorage<K, V> memStorage = new MemoryIndexStorage<K, V>(storage);
+        final MemoryIndexStorage<K, V> memStorage = new MemoryIndexStorage<K, V>(storage);
         final UpdatableIndex<K, V, FileContent> index = createIndex(name, extension, memStorage);
         myIndices.put(name, new Pair<UpdatableIndex<?,?, FileContent>, InputFilter>(index, new IndexableFilesFilter(extension.getInputFilter())));
         myUnsavedDataIndexingSemaphores.put(name, new Semaphore());
@@ -382,7 +382,7 @@ public class FileBasedIndex implements ApplicationComponent {
     return new File(PathManager.getIndexRoot(), "work_in_progress");
   }
 
-  private <K, V> UpdatableIndex<K, V, FileContent> createIndex(final ID<K, V> indexId, final FileBasedIndexExtension<K, V> extension, final IndexStorage<K, V> storage) throws IOException {
+  private <K, V> UpdatableIndex<K, V, FileContent> createIndex(final ID<K, V> indexId, final FileBasedIndexExtension<K, V> extension, final MemoryIndexStorage<K, V> storage) throws IOException {
     final MapReduceIndex<K, V, FileContent> index;
     if (extension instanceof CustomImplementationFileBasedIndexExtension) {
       final UpdatableIndex<K, V, FileContent> custom =
@@ -400,7 +400,7 @@ public class FileBasedIndex implements ApplicationComponent {
     index.setInputIdToDataKeysIndex(new Factory<PersistentHashMap<Integer, Collection<K>>>() {
       public PersistentHashMap<Integer, Collection<K>> create() {
         try {
-          return createIdToDataKeysIndex(indexId, keyDescriptor);
+          return createIdToDataKeysIndex(indexId, keyDescriptor, storage);
         }
         catch (IOException e) {
           throw new RuntimeException(e);
@@ -411,9 +411,14 @@ public class FileBasedIndex implements ApplicationComponent {
     return index;
   }
 
-  private static <K> PersistentHashMap<Integer, Collection<K>> createIdToDataKeysIndex(ID<K, ?> indexId, final KeyDescriptor<K> keyDescriptor) throws IOException {
+  private static <K> PersistentHashMap<Integer, Collection<K>> createIdToDataKeysIndex(ID<K, ?> indexId,
+                                                                                       final KeyDescriptor<K> keyDescriptor,
+                                                                                       MemoryIndexStorage<K, ?> storage) throws IOException {
     final File indexStorageFile = IndexInfrastructure.getInputIndexStorageFile(indexId);
-    return new PersistentHashMap<Integer, Collection<K>>(indexStorageFile, new EnumeratorIntegerDescriptor(), new DataExternalizer<Collection<K>>() {
+    final Ref<Boolean> isBufferingMode = new Ref<Boolean>(false);
+    final Map<Integer, Collection<K>> tempMap = new com.intellij.util.containers.HashMap<Integer, Collection<K>>();
+
+    final DataExternalizer<Collection<K>> dataExternalizer = new DataExternalizer<Collection<K>>() {
       public void save(DataOutput out, Collection<K> value) throws IOException {
         DataInputOutputUtil.writeINT(out, value.size());
         for (K key : value) {
@@ -429,7 +434,63 @@ public class FileBasedIndex implements ApplicationComponent {
         }
         return list;
       }
+    };
+    
+    // Important! Update IdToDataKeysIndex depending on the sate of "buffering" flag from the MemoryStorage.
+    // If buffering is on, all changes should be done in memory (similar to the way it is done in memory storage).
+    // Otherwise data in IdToDataKeysIndex will not be in sync with the 'main' data in the index on disk and index updates will be based on the
+    // wrong sets of keys for the given file. This will lead to unpretictable results in main index because it will not be
+    // cleared properly before updating (removed data will still be present on disk). See IDEA-52223 for illustration of possible effects.
+
+    final PersistentHashMap<Integer, Collection<K>> map = new PersistentHashMap<Integer, Collection<K>>(
+      indexStorageFile, new EnumeratorIntegerDescriptor(), dataExternalizer
+    ) {
+
+      @Override
+      public synchronized Collection<K> get(Integer integer) throws IOException {
+        if (isBufferingMode.get()) {
+          final Collection<K> collection = tempMap.get(integer);
+          if (collection != null) {
+            return collection;
+          }
+        }
+        return super.get(integer);
+      }
+
+      @Override
+      public synchronized void put(Integer integer, Collection<K> ks) throws IOException {
+        if (isBufferingMode.get()) {
+          tempMap.put(integer, ks == null? Collections.<K>emptySet() : ks);
+        }
+        else {
+          super.put(integer, ks);
+        }
+      }
+
+      @Override
+      public synchronized void remove(Integer integer) throws IOException {
+        if (isBufferingMode.get()) {
+          tempMap.put(integer, Collections.<K>emptySet());
+        }
+        else {
+          super.remove(integer);
+        }
+      }
+    };
+
+    storage.addBufferingStateListsner(new MemoryIndexStorage.BufferingStateListener() {
+      public void bufferingStateChanged(boolean newState) {
+        synchronized (map) {
+          isBufferingMode.set(newState);
+        }
+      }
+      public void memoryStorageCleared() {
+        synchronized (map) {
+          tempMap.clear();
+        }
+      }
     });
+    return map;
   }
 
   @NonNls

@@ -59,6 +59,7 @@ import com.intellij.usages.impl.NullUsage;
 import com.intellij.usages.impl.UsageNode;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.rules.UsageFilteringRuleProvider;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.Processor;
 import com.intellij.util.messages.MessageBusConnection;
@@ -364,7 +365,7 @@ public class ShowUsagesAction extends AnAction {
       }
 
       protected Object[] getAllElements() {
-        return data.toArray(new Object[data.size()]);
+        return ArrayUtil.toObjectArray(data);
       }
 
       protected String getElementText(Object element) {

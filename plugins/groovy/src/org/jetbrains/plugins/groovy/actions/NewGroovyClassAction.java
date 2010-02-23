@@ -35,7 +35,7 @@ import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 public class NewGroovyClassAction extends CreateTemplateInPackageAction<GrTypeDefinition> implements DumbAware {
   public NewGroovyClassAction() {
-    super(GroovyBundle.message("newclass.menu.action.text"), GroovyBundle.message("newclass.menu.action.description"), GroovyIcons.CLASS);
+    super(GroovyBundle.message("newclass.menu.action.text"), GroovyBundle.message("newclass.menu.action.description"), GroovyIcons.CLASS, true);
   }
 
   @NotNull

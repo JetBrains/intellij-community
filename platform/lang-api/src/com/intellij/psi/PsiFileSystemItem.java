@@ -15,7 +15,6 @@
  */
 package com.intellij.psi;
 
-import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.PsiElementProcessor;
 import org.jetbrains.annotations.NonNls;
@@ -27,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author ven
  */
-public interface PsiFileSystemItem extends PsiCheckedRenameElement, NavigationItem {
+public interface PsiFileSystemItem extends PsiCheckedRenameElement, NavigatablePsiElement {
   boolean isDirectory();
 
   @Nullable

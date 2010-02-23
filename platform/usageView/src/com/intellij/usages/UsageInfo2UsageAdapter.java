@@ -84,8 +84,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
           myLineNumber = getLineNumber(document, startOffset);
 
           if (endOffset > document.getTextLength()) {
-            LOG.assertTrue(false,
-                           "Invalid usage info, psiElement:" + element + " end offset: " + endOffset + " psiFile: " + psiFile.getName());
+            LOG.error("Invalid usage info, psiElement:" + element + " end offset: " + endOffset + " psiFile: " + psiFile.getName());
           }
 
           myRangeMarkers.add(document.createRangeMarker(startOffset, endOffset));

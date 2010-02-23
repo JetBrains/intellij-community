@@ -18,8 +18,6 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
@@ -530,7 +528,7 @@ public class ClasspathPanel extends JPanel {
                 }
               }
             }
-            LOG.assertTrue(false, "Unknown library " + item);
+            LOG.error("Unknown library " + item);
             return null;
           }
 
@@ -549,7 +547,7 @@ public class ClasspathPanel extends JPanel {
                 }
               }
             }
-            LOG.assertTrue(false, "Unknown library " + item);
+            LOG.error("Unknown library " + item);
             return null;
           }
 
@@ -886,7 +884,7 @@ public class ClasspathPanel extends JPanel {
       if (columnIndex == ITEM_COLUMN) {
         return item;
       }
-      LOG.assertTrue(false, "Incorrect column index: " + columnIndex);
+      LOG.error("Incorrect column index: " + columnIndex);
       return null;
     }
 

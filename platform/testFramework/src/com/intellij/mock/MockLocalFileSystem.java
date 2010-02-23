@@ -185,7 +185,7 @@ public class MockLocalFileSystem extends LocalFileSystem {
   }
 
   public String[] list(final VirtualFile file) {
-    return new String[0];
+    return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
   public VirtualFile[] listFiles(final VirtualFile file) {

@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.execution;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -75,7 +76,7 @@ public class EditMavenPropertyDialog extends DialogWrapper {
   }
 
   private void fillAvailableProperties() {
-    String[] keys = myAvailableProperties.keySet().toArray(new String[0]);
+    String[] keys = ArrayUtil.toStringArray(myAvailableProperties.keySet());
     myNameBox.setModel(new DefaultComboBoxModel(keys));
   }
 

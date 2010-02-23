@@ -104,7 +104,7 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
     Collection<AddedFileInfo> roots = new CreateTreeOnFileList(filesToAdd,  project, includeAllRoots).getRoots();
 
     if (roots.size() == 0) {
-      LOG.assertTrue(false, filesToAdd);
+      LOG.error(filesToAdd);
     }
 
     if (showDialog){

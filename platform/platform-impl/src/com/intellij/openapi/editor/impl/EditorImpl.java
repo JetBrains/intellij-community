@@ -2041,7 +2041,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (fontType == Font.ITALIC) return myItalicFontMetrics;
     if (fontType == Font.BOLD + Font.ITALIC) return myBoldItalicFontMetrics;
 
-    LOG.assertTrue(false, "Unknown font type: " + fontType);
+    LOG.error("Unknown font type: " + fontType);
 
     return myPlainFontMetrics;
   }
