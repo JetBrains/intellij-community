@@ -483,9 +483,9 @@
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory</implementation-class>
     </component>
-    <component>
+    <!--<component>
       <implementation-class>org.jetbrains.plugins.groovy.config.GroovyLibraryListener</implementation-class>
-    </component>
+    </component>-->
     <component>
       <interface-class>org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager</interface-class>
       <implementation-class>org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManagerImpl</implementation-class>
