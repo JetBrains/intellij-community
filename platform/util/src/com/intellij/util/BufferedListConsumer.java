@@ -20,14 +20,18 @@ import java.util.Collections;
 import java.util.List;
 
 public class BufferedListConsumer<T> implements Consumer<List<T>> {
+  private final int myInterval;
+  private long myTs;
   private final int mySize;
   private final List<T> myBuffer;
   private final Consumer<List<T>> myConsumer;
 
-  public BufferedListConsumer(int size, Consumer<List<T>> consumer) {
+  public BufferedListConsumer(int size, Consumer<List<T>> consumer, int interval) {
     mySize = size;
     myBuffer = new ArrayList<T>();
     myConsumer = consumer;
+    myInterval = interval;
+    myTs = System.currentTimeMillis();
   }
 
   public void consumeOne(final T t) {
@@ -36,10 +40,12 @@ public class BufferedListConsumer<T> implements Consumer<List<T>> {
 
   public void consume(List<T> list) {
     myBuffer.addAll(list);
-    if (mySize <= myBuffer.size()) {
+    final long ts = System.currentTimeMillis();
+    if ((mySize <= myBuffer.size()) || (myInterval > 0) && ((ts - myInterval) > myTs)) {
       myConsumer.consume(new ArrayList<T>(myBuffer));
       myBuffer.clear();
     }
+    myTs = ts;
   }
 
   public void flush() {
