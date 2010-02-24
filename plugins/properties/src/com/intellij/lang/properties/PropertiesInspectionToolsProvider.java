@@ -23,6 +23,6 @@ import com.intellij.codeInspection.duplicatePropertyInspection.DuplicateProperty
  */
 public class PropertiesInspectionToolsProvider implements InspectionToolProvider {
   public Class[] getInspectionClasses() {
-    return new Class[]{UnusedPropertyInspection.class, DuplicatePropertyInspection.class};
+    return new Class[]{UnusedPropertyInspection.class, DuplicatePropertyInspection.class, TrailingSpacesInPropertyInspection.class};
   }
 }

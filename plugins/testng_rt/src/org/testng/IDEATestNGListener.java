@@ -22,6 +22,4 @@ package org.testng;
 
 public interface IDEATestNGListener extends ITestListener {
   String EP_NAME = "com.theoryinpractice.testng.listener";
-
-  boolean isEnabled(Object configuration);
 }

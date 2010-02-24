@@ -272,10 +272,18 @@ public class TestNGRunnableState extends JavaCommandLineState {
     }
 
     for (Object o : Extensions.getExtensions(IDEATestNGListener.EP_NAME)) {
-      if (!((IDEATestNGListener)o).isEnabled(config)) continue;
-      if (buf.length() > 0) buf.append(";");
-      buf.append(o.getClass().getName());
-      javaParameters.getClassPath().add(PathUtil.getJarPathForClass(o.getClass()));
+      boolean enabled = true;
+      for (RunConfigurationExtension extension : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
+        if (extension.isListenerDisabled(config, o)) {
+          enabled = false;
+          break;
+        }
+      }
+      if (enabled) {
+        if (buf.length() > 0) buf.append(";");
+        buf.append(o.getClass().getName());
+        javaParameters.getClassPath().add(PathUtil.getJarPathForClass(o.getClass()));
+      }
     }
     if (buf.length() > 0) javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.LISTENER_COMMAND_OPT, buf.toString());
 
