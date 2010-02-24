@@ -21,6 +21,7 @@ import com.intellij.application.options.SaveSchemeDialog;
 import com.intellij.application.options.SchemesToImportPopup;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
@@ -49,7 +50,10 @@ public class CodeStyleSchemesPanel{
   private JPanel myPanel;
   private JButton myExportAsGlobalButton;
   private JButton myCopyToProjectButton;
+  private JComboBox myLanguageCombo;
+  private JLabel myLanguageLabel;
   private boolean myIsReset = false;
+  private NewCodeStyleSettingsPanel mySettingsPanel;
 
   public Collection<CodeStyleScheme> getSchemes() {
     ArrayList<CodeStyleScheme> result = new ArrayList<CodeStyleScheme>();
@@ -66,7 +70,6 @@ public class CodeStyleSchemesPanel{
 
   public CodeStyleSchemesPanel(CodeStyleSchemesModel model) {
     myModel = model;
-
 
     myUseGlobalScheme.addItemListener(new ItemListener(){
       public void itemStateChanged(final ItemEvent e) {
@@ -150,7 +153,29 @@ public class CodeStyleSchemesPanel{
       }
     });
 
+    createLanguageCombo();
+  }
 
+  private void createLanguageCombo() {
+    myLanguageCombo.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            onLanguageCombo();
+          }
+        });
+      }
+    });
+    for(LanguageFileType fileType : LanguageCodeStyleSettingsProvider.getLanguageFileTypes()) {
+      myLanguageCombo.addItem(fileType.getLanguage().getDisplayName());
+    }
+    myLanguageLabel.setVisible(false);
+    myLanguageCombo.setVisible(false);
+  }
+
+  public void setLanguageComboVisible(boolean isVisible) {
+    myLanguageLabel.setVisible(isVisible);
+    myLanguageCombo.setVisible(isVisible);
   }
 
   private void onExportProjectScheme() {
@@ -304,5 +329,20 @@ public class CodeStyleSchemesPanel{
 
   public JComponent getPanel() {
     return myPanel;
+  }
+
+  private void onLanguageCombo() {
+    Object selection = myLanguageCombo.getSelectedItem();
+    if (selection instanceof String) {
+      LanguageFileType fileType = LanguageCodeStyleSettingsProvider.getFileType((String)selection);
+      if (fileType != null && mySettingsPanel != null) {
+        mySettingsPanel.setLanguage(fileType.getLanguage());
+      }
+    }
+  }
+
+  public void setCodeStyleSettingsPanel(NewCodeStyleSettingsPanel settingsPanel) {
+    mySettingsPanel = settingsPanel;
+    onLanguageCombo();
   }
 }

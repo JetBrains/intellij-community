@@ -17,6 +17,7 @@
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.application.options.CodeStyleAbstractConfigurable;
+import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -98,5 +99,23 @@ public class NewCodeStyleSettingsPanel extends JPanel {
     }
 
 
+  }
+
+  public boolean isMultilanguage() {
+    if (myTab instanceof CodeStyleAbstractConfigurable) {
+      return ((CodeStyleAbstractConfigurable)myTab).isMultilanguage();
+    }
+    return false;
+  }
+
+  public void setLanguage(Language language) {
+    if (myTab instanceof CodeStyleAbstractConfigurable) {
+      CodeStyleAbstractConfigurable configurable = (CodeStyleAbstractConfigurable)myTab;
+      if (configurable.isMultilanguage()) {
+        if (configurable.getPanel() instanceof MultilanguageCodeStyleAbstractPanel) {
+          ((MultilanguageCodeStyleAbstractPanel)configurable.getPanel()).setLanguage(language);          
+        }
+      }
+    }
   }
 }

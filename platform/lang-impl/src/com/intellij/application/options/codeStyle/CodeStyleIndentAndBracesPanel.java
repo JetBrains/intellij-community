@@ -15,28 +15,16 @@
  */
 package com.intellij.application.options.codeStyle;
 
-import com.intellij.application.options.CodeStyleAbstractPanel;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.OptionGroup;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
-public class CodeStyleIndentAndBracesPanel extends CodeStyleAbstractPanel {
+public class CodeStyleIndentAndBracesPanel extends MultilanguageCodeStyleAbstractPanel {
   private static final String[] BRACE_PLACEMENT_OPTIONS = new String[]{
     ApplicationBundle.message("combobox.brace.placement.end.of.line"),
     ApplicationBundle.message("combobox.brace.placement.next.line.if.wrapped"),
@@ -101,8 +89,6 @@ public class CodeStyleIndentAndBracesPanel extends CodeStyleAbstractPanel {
 
   private final JPanel myPanel = new JPanel(new GridBagLayout());
 
-  private static LanguageFileType myFileType = StdFileTypes.JSP; //TODO: Replace hardcoded value
-
   public CodeStyleIndentAndBracesPanel(CodeStyleSettings settings) {
     super(settings);
 
@@ -138,6 +124,11 @@ public class CodeStyleIndentAndBracesPanel extends CodeStyleAbstractPanel {
                                        new Insets(0, 0, 0, 4), 0, 0));
     installPreviewPanel(previewPanel);
     addPanelToWatch(myPanel);
+  }
+
+  @Override
+  protected int getSettingsType() {
+    return LanguageCodeStyleSettingsProvider.INDENT_AND_BRACE_SETTINGS;
   }
 
   private Component createKeepWhenReformatingPanel() {
@@ -313,66 +304,6 @@ public class CodeStyleIndentAndBracesPanel extends CodeStyleAbstractPanel {
     return p;
   }
 
-  @NonNls
-  protected String getPreviewText() {
-    return
-      "public class Foo {\n" +
-      "  public int[] X = new int[] { 1, 3, 5\n" +
-      "  7, 9, 11};\n" +
-      "  public void foo(boolean a, int x,\n" +
-      "    int y, int z) {\n" +
-      "    label1: do {\n" +
-      "      try {\n" +
-      "        if(x > 0) {\n" +
-      "          int someVariable = a ? \n" +
-      "             x : \n" +
-      "             y;\n" +
-      "          int anotherVariable = a ? x\n" +
-      "             : y;\n" +
-      "        } else if (x < 0) {\n" +
-      "          int someVariable = (y +\n" +
-      "          z\n" +
-      "          );\n" +
-      "          someVariable = x = \n" +
-      "          x +\n" +
-      "          y;\n" +
-      "        } else {\n" +
-      "          label2:\n" +
-      "          for (int i = 0;\n" +
-      "               i < 5;\n" +
-      "               i++) doSomething(i);\n" +
-      "        }\n" +
-      "        switch(a) {\n" +
-      "          case 0: \n" +
-      "           doCase0();\n" +
-      "           break;\n" +
-      "          default: \n" +
-      "           doDefault();\n" +
-      "        }\n" +
-      "      }catch(Exception e) {\n" +
-      "        processException(e.getMessage(),\n" +
-      "          x + y, z, a);\n" +
-      "      }finally {\n" +
-      "        processFinally();\n" +
-      "      }\n" +
-      "    }while(true);\n" +
-      "\n" +
-      "    if (2 < 3) return;\n" +
-      "    if (3 < 4)\n" +
-      "       return;\n" +
-      "    do x++ while (x < 10000);\n" +
-      "    while (x < 50000) x++;\n" +
-      "    for (int i = 0; i < 5; i++) System.out.println(i);\n" +
-      "  }\n" +
-      "  private class InnerClass implements I1,\n" +
-      "  I2 {\n" +
-      "    public void bar() throws E1,\n" +
-      "     E2 {\n" +
-      "    }\n" +
-      "  }\n" +
-      "}";
-  }
-
   public boolean isModified(CodeStyleSettings settings) {
     boolean isModified;
     isModified = isModified(myCbElseOnNewline, settings.ELSE_ON_NEW_LINE);
@@ -457,14 +388,6 @@ public class CodeStyleIndentAndBracesPanel extends CodeStyleAbstractPanel {
 
   }
 
-  protected EditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
-    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-    if (project == null) {
-      project = ProjectManager.getInstance().getDefaultProject();
-    }
-    return myFileType.getEditorHighlighter(project, null, scheme);
-  }
-
   public void apply(CodeStyleSettings settings) {
     settings.ELSE_ON_NEW_LINE = myCbElseOnNewline.isSelected();
     settings.WHILE_ON_NEW_LINE = myCbWhileOnNewline.isSelected();
@@ -502,11 +425,6 @@ public class CodeStyleIndentAndBracesPanel extends CodeStyleAbstractPanel {
     settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = myKeepSimpleBlocksInOneLine.isSelected();
     settings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = myKeepMethodsInOneLine.isSelected();
 
-  }
-
-  @NotNull
-  protected FileType getFileType() {
-    return myFileType;
   }
 
   protected int getRightMargin() {
