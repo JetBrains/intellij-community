@@ -647,11 +647,9 @@ public class AbstractTreeUi {
   }
 
   private boolean isAutoExpand(NodeDescriptor descriptor, boolean validate) {
-    boolean autoExpand = false;
+    if (descriptor == null) return false;
 
-    if (descriptor != null) {
-      autoExpand = getBuilder().isAutoExpandNode(descriptor);
-    }
+    boolean autoExpand = getBuilder().isAutoExpandNode(descriptor);
 
     Object element = getElementFromDescriptor(descriptor);
     if (validate) {
