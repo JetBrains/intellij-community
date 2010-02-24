@@ -21,6 +21,8 @@
 package com.intellij.execution.junit2.ui;
 
 import com.intellij.execution.junit2.TestProxy;
+import com.intellij.execution.junit2.info.ClassBasedInfo;
+import com.intellij.execution.junit2.info.DisplayTestInfoExtractor;
 import com.intellij.execution.junit2.segments.InputObjectRegistry;
 import com.intellij.execution.junit2.segments.ObjectReader;
 import com.intellij.execution.junit2.states.*;
@@ -46,6 +48,7 @@ import java.util.Map;
 public class TestsPacketsReceiver implements PacketProcessor, Disposable {
 
   public static final Map<Integer, StateChanger> STATE_CLASSES = new HashMap<Integer, StateChanger>();
+  private Map<String, TestProxy> myKnownDynamicParents;
 
   static {
     mapClass(PoolOfTestStates.RUNNING_INDEX, new RunningStateSetter());
@@ -121,6 +124,29 @@ public class TestsPacketsReceiver implements PacketProcessor, Disposable {
 
   public void notifyTestStart(ObjectReader reader) {
     myCurrentTest = reader.readObject();
+    final JUnitRunningModel model = getModel();
+    if (model != null && myCurrentTest.getParent() == null) {
+      getDynamicParent(model).addChild(myCurrentTest);
+    }
+  }
+
+  private TestProxy getDynamicParent(JUnitRunningModel model) {
+    if (myKnownDynamicParents == null) {
+      myKnownDynamicParents = new HashMap<String, TestProxy>();
+    }
+    final String parentClass = myCurrentTest.getInfo().getComment();
+    TestProxy dynamicParent = myKnownDynamicParents.get(parentClass);
+    if (dynamicParent == null) {
+      dynamicParent = new TestProxy(new ClassBasedInfo(DisplayTestInfoExtractor.FOR_CLASS){
+        {
+          setClassName(parentClass);
+        }
+        public void readFrom(ObjectReader reader) {}
+      });
+      myKnownDynamicParents.put(parentClass, dynamicParent);
+      model.getRoot().addChild(dynamicParent);
+    }
+    return dynamicParent;
   }
 
   public static void notifyTestResult(ObjectReader reader) {
