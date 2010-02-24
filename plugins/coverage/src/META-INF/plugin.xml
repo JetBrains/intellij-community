@@ -16,12 +16,12 @@
     <!--<coverageRunner implementation="com.intellij.coverage.CoberturaCoverageRunner"/>-->
     <coverageRunner implementation="com.intellij.coverage.IDEACoverageRunner"/>
     <projectViewNodeDecorator implementation="com.intellij.coverage.CoverageProjectViewNodeDecorator"/>
-    <junitListener implementation="com.intellij.junit.IDEAJUnitCoverageListener"/>
+    <junitListener implementation="com.intellij.coverage.listeners.IDEAJUnitCoverageListener"/>
 
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
   </extensions>
   <extensions defaultExtensionNs="com.theoryinpractice.testng">
-    <listener implementation="org.testng.IDEACoverageListener"/>
+    <listener implementation="com.intellij.coverage.listeners.IDEATestNGCoverageListener"/>
   </extensions>
   <project-components>
     <component>

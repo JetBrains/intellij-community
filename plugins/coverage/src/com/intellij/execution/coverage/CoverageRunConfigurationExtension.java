@@ -7,6 +7,7 @@ package com.intellij.execution.coverage;
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageSuite;
 import com.intellij.coverage.IDEACoverageRunner;
+import com.intellij.coverage.listeners.CoverageListener;
 import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.RunJavaConfiguration;
 import com.intellij.execution.configurations.*;
@@ -101,5 +102,14 @@ public class CoverageRunConfigurationExtension extends RunConfigurationExtension
     if (configuration.isCoverageEnabled() && configuration.getCoverageRunner() == null) {
       throw new RuntimeConfigurationException("Coverage runner is not set");
     }
+  }
+
+  @Override
+  public <T extends ModuleBasedConfiguration & RunJavaConfiguration> boolean isListenerDisabled(T configuration, Object listener) {
+    if (listener instanceof CoverageListener) {
+      final CoverageEnabledConfiguration coverageEnabledConfiguration = CoverageEnabledConfiguration.get(configuration);
+      return !(coverageEnabledConfiguration.isCoverageEnabled() && coverageEnabledConfiguration.getCoverageRunner() instanceof IDEACoverageRunner);
+    }
+    return false;
   }
 }
