@@ -34,7 +34,7 @@
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="messages/InspectionsBundle" key="inconsistent.bundle.report.duplicated.properties.values"/>
+          <text resource-bundle="messages/InspectionsBundle" key="inconsistent.bundle.report.duplicate.properties.values"/>
         </properties>
       </component>
     </children>
