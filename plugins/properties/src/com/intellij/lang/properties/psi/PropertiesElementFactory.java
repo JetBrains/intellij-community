@@ -41,7 +41,7 @@ public class PropertiesElementFactory {
 
   @NotNull
   public static Property createProperty(@NotNull Project project, @NonNls @NotNull String name, @NonNls @NotNull String value) {
-    String text = escape(name) + "=" + value;
+    String text = escape(name) + "=" + escapeValue(value);
     final PropertiesFile dummyFile = createPropertiesFile(project, text);
     return dummyFile.getProperties().get(0);
   }
@@ -98,5 +98,19 @@ public class PropertiesElementFactory {
       }
       offset = i + 2;
     }
+  }
+
+  public static String escapeValue(String value) {
+    StringBuilder escapedName = new StringBuilder(value.length());
+    for (int i = 0; i < value.length(); i++) {
+      char c = value.charAt(i);
+      if (c == '\n' && (i == 0 || value.charAt(i - 1) != '\\')
+        || i == value.length()-1 && (c == ' ' || c == '\t')
+        ) {
+        escapedName.append('\\');
+      }
+      escapedName.append(c);
+    }
+    return escapedName.toString();
   }
 }

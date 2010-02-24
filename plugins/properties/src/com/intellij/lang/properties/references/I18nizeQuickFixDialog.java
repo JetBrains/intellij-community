@@ -291,8 +291,8 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
 
   private void populatePropertiesFiles() {
     List<String> paths = suggestPropertiesFiles();
-    final String lastUrl = suggestLastSelectedFileUrl();
-    final String lastPath = lastUrl != null ? FileUtil.toSystemDependentName(VfsUtil.urlToPath(lastUrl)) : null;
+    final String lastUrl = suggestSelectedFileUrl(paths);
+    final String lastPath = lastUrl == null ? null : FileUtil.toSystemDependentName(VfsUtil.urlToPath(lastUrl));
     Collections.sort(paths, new Comparator<String>() {
       public int compare(final String path1, final String path2) {
         if (lastPath != null && lastPath.equals(path1)) return -1;
@@ -310,7 +310,18 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     }
   }
 
-  private String suggestLastSelectedFileUrl() {
+  private String suggestSelectedFileUrl(List<String> paths) {
+    if (myDefaultPropertyValue != null) {
+      for (String path : paths) {
+        VirtualFile file = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path));
+        if (file == null) continue;
+        PsiFile psiFile = myContext.getManager().findFile(file);
+        if (!(psiFile instanceof PropertiesFile)) continue;
+        for (Property property : ((PropertiesFile)psiFile).getProperties()) {
+          if (property.getValue().equals(myDefaultPropertyValue)) return path;
+        }
+      }
+    }
     return LastSelectedPropertiesFileStore.getInstance().suggestLastSelectedPropertiesFileUrl(myContext);
   }
 
@@ -322,7 +333,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
   }
 
   protected List<String> suggestPropertiesFiles() {
-    if (myCustomization.propertiesFiles != null && myCustomization.propertiesFiles.size() > 0 ) {
+    if (myCustomization.propertiesFiles != null && !myCustomization.propertiesFiles.isEmpty()) {
       ArrayList<String> list = new ArrayList<String>();
       for (PropertiesFile propertiesFile : myCustomization.propertiesFiles) {
         final VirtualFile virtualFile = propertiesFile.getVirtualFile();
