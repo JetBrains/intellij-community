@@ -164,6 +164,8 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
   }
 
   private void requeueViewUpdateIfNeeded() {
+    //if (myTreeBuilder.getUi().isPassthroughMode()) return;
+
     if (myUpdateQueue.isEmpty() && !myNodeQueue.isEmpty()) {
       requeueViewUpdate();
     }
