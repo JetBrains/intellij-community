@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.DisposableEditorPanel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
@@ -64,7 +63,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements ProjectComponent, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl");
@@ -244,6 +246,12 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     synchronized (myDisposeLock) {
       if (myIsDisposed) return;
 
+      if (myEditorAdapter != null) {
+        final Editor editor = myEditorAdapter.getEditor();
+        if (! editor.isDisposed()) {
+          EditorFactory.getInstance().releaseEditor(editor);
+        }
+      }
       myMappings.disposeMe();
       try {
         myContentManager = null;
@@ -319,7 +327,10 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
       editorSettings.setFoldingOutlineShown(false);
 
       myEditorAdapter = new EditorAdapter(editor, myProject);
-      content = ContentFactory.SERVICE.getInstance().createContent(new DisposableEditorPanel(editor), displayName, true);
+      final JPanel panel = new JPanel(new BorderLayout());
+      panel.add(editor.getComponent(), BorderLayout.CENTER);
+
+      content = ContentFactory.SERVICE.getInstance().createContent(panel, displayName, true);
       contentManager.addContent(content);
 
       for (Pair<String, TextAttributes> pair : myPendingOutput) {
