@@ -193,4 +193,5 @@ public class PropertiesUtil {
   public static String getPackageQualifiedName(PsiDirectory directory) {
     return ProjectRootManager.getInstance(directory.getProject()).getFileIndex().getPackageNameByDirectory(directory.getVirtualFile());
   }
+
 }

@@ -52,7 +52,8 @@ public class EvaluateExceptionUtil {
 
   private static String reason(Throwable th) {
     if(th instanceof InvalidTypeException) {
-      return DebuggerBundle.message("evaluation.error.type.mismatch");
+      final String originalReason = th.getMessage();
+      return DebuggerBundle.message("evaluation.error.type.mismatch") + (originalReason != null? " " + originalReason : "");
     }
     else if(th instanceof AbsentInformationException) {
       return DebuggerBundle.message("evaluation.error.debug.info.unavailable");

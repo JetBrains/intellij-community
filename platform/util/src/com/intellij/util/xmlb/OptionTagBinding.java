@@ -67,7 +67,7 @@ class OptionTagBinding implements Binding {
 
   public Object deserialize(Object o, Object... nodes) {
     if (nodes.length > 1) {
-      LOG.info("Duplicated options for " + o + " will be ignored");
+      LOG.info("Duplicate options for " + o + " will be ignored");
     }
     assert nodes.length != 0 : "Empty nodes passed to: " + this;
 

@@ -22,10 +22,7 @@
  */
 package com.intellij.execution;
 
-import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.configurations.ModuleBasedConfiguration;
-import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -140,5 +137,9 @@ public abstract class RunConfigurationExtension {
     for (RunConfigurationExtension extension : Extensions.getExtensions(EP_NAME)) {
       extension.checkConfiguration(configuration);
     }
+  }
+
+  public <T extends ModuleBasedConfiguration & RunJavaConfiguration> boolean isListenerDisabled(T configuration, Object listener) {
+    return false;
   }
 }

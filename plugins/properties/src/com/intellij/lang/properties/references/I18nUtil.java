@@ -30,6 +30,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -76,15 +77,18 @@ public class I18nUtil {
   }
 
   public static List<String> defaultGetPropertyFiles(Project project) {
-    Collection<VirtualFile> allPropertiesFiles = PropertiesFilesManager.getInstance(project).getAllPropertiesFiles();
-    List<String> paths = new ArrayList<String>();
+    final List<String> paths = new ArrayList<String>();
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    for (VirtualFile virtualFile : allPropertiesFiles) {
-      if (projectFileIndex.isInContent(virtualFile)) {
-        String path = FileUtil.toSystemDependentName(virtualFile.getPath());
-        paths.add(path);
+
+    PropertiesFilesManager.getInstance(project).processAllPropertiesFiles(new Processor<VirtualFile>() {
+      public boolean process(VirtualFile virtualFile) {
+        if (projectFileIndex.isInContent(virtualFile)) {
+          String path = FileUtil.toSystemDependentName(virtualFile.getPath());
+          paths.add(path);
+        }
+        return true;
       }
-    }
+    });
     return paths;
   }
 }

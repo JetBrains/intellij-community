@@ -278,7 +278,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   public synchronized void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener) {
     processAdapters();
     if (myEPListeners.add(listener)) {
-      for (ExtensionComponentAdapter componentAdapter : myLoadedAdapters) {
+      for (ExtensionComponentAdapter componentAdapter : myLoadedAdapters.toArray(new ExtensionComponentAdapter[myLoadedAdapters.size()])) {
         try {
           //noinspection unchecked
           listener.extensionAdded((T)componentAdapter.getExtension(), componentAdapter.getPluginDescriptor());
@@ -290,7 +290,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   public synchronized void removeExtensionPointListener(@NotNull ExtensionPointListener<T> listener) {
-    for (ExtensionComponentAdapter componentAdapter : myLoadedAdapters) {
+    for (ExtensionComponentAdapter componentAdapter : myLoadedAdapters.toArray(new ExtensionComponentAdapter[myLoadedAdapters.size()])) {
       try {
         //noinspection unchecked
         listener.extensionRemoved((T)componentAdapter.getExtension(), componentAdapter.getPluginDescriptor());

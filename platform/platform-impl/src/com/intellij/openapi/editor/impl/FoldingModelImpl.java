@@ -106,10 +106,10 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
   public int getEndOffset(@NotNull FoldingGroup group) {
     final List<FoldRegion> regions = getGroupedRegions(group);
-    int endOffset = regions.get(0).getEndOffset();
-    for (int i = 1; i < regions.size(); i++) {
-      if (regions.get(i).isValid()) {
-        endOffset = Math.max(endOffset, regions.get(i).getEndOffset());
+    int endOffset = 0;
+    for (FoldRegion region : regions) {
+      if (region.isValid()) {
+        endOffset = Math.max(endOffset, region.getEndOffset());
       }
     }
     return endOffset;
