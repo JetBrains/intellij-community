@@ -116,6 +116,13 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     return baseIcon;
   }
 
+  public static int transformFlags(PsiElement element, int _flags) {
+    int flags = 0;
+    final boolean isLocked = (_flags & ICON_FLAG_READ_STATUS) != 0 && !element.isWritable();
+    if (isLocked) flags |= FLAGS_LOCKED;
+    return flags;
+  }
+
   private static class IconLayer {
     int flagMask;
     Icon icon;
