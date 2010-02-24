@@ -3275,7 +3275,7 @@ public class AbstractTreeUi {
           kidsToExpand.add(eachElement);
         }
         if (firstVisible != null) break;
-        eachElement = getTreeStructure().getParentElement(eachElement);
+        eachElement = eachElement != null ? getTreeStructure().getParentElement(eachElement) : null;
         if (eachElement == null) {
           firstVisible = null;
           break;
