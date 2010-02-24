@@ -294,6 +294,10 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
   }
 
   public String computeTemplateKey(@NotNull CustomTemplateCallback callback) {
+    ZenCodingSettings settings = ZenCodingSettings.getInstance();
+    if (!settings.ENABLED) {
+      return null;
+    }
     PsiFile file = callback.getFile();
     if (file.getLanguage() instanceof XMLLanguage) {
       Editor editor = callback.getEditor();
