@@ -110,7 +110,7 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
     }
   }
 
-  private static String getBaseDir() {
+  public static String getBaseDir() {
     final String lastProjectLocation = GeneralSettings.getInstance().getLastProjectLocation();
     if (lastProjectLocation != null) {
       return lastProjectLocation.replace('/', File.separatorChar);

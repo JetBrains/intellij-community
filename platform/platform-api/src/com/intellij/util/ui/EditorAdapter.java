@@ -81,6 +81,10 @@ public class EditorAdapter {
     LOG.assertTrue(myEditor.isViewer());
   }
 
+  public Editor getEditor() {
+    return myEditor;
+  }
+
   public void appendString(String string, TextAttributes attrs) {
     synchronized (myLines) {
       myLines.add(new Line(string, attrs));

@@ -112,6 +112,7 @@ public class GitLineHandler extends GitHandler {
    * @param lineBuilder a line builder
    */
   private void notifyLines(final Key outputType, final Iterator<String> lines, final StringBuilder lineBuilder) {
+    if (! lines.hasNext()) return;
     if (lineBuilder.length() > 0) {
       lineBuilder.append(lines.next());
       if (lines.hasNext()) {

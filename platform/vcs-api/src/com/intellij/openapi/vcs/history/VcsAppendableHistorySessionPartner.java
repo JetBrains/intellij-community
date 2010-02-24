@@ -15,17 +15,11 @@
  */
 package com.intellij.openapi.vcs.history;
 
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.vcs.VcsException;
 
-import java.util.List;
-
-public interface VcsHistorySession {
-  List<VcsFileRevision> getRevisionList();
-  VcsRevisionNumber getCurrentRevisionNumber();
-  boolean isCurrentRevision(VcsRevisionNumber rev);
-  boolean shouldBeRefreshed();
-  boolean allowAsyncRefresh();
-  boolean isContentAvailable(VcsFileRevision revision);
-  @Nullable
-  HistoryAsTreeProvider getHistoryAsTreeProvider();
+public interface VcsAppendableHistorySessionPartner {
+  void reportCreatedEmptySession(VcsAbstractHistorySession session);
+  void acceptRevision(final VcsFileRevision revision);
+  void reportException(final VcsException exception);
+  void finished();
 }

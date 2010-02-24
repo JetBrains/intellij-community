@@ -417,6 +417,14 @@
     <display-name>&lt;&lt;&lt; HTML</display-name>
     <place><![CDATA[phpLiteralExpression("HTML")]]></place>
   </injection>
+  <injection language="HTML" injector-id="php">
+    <display-name>"&lt;HTML>"</display-name>
+    <place><![CDATA[phpLiteralExpression().withText(string().matches(".*<.*"))]]></place>
+  </injection>
+  <injection language="SQL" injector-id="php">
+    <display-name>"SELECT "</display-name>
+    <place><![CDATA[phpLiteralExpression().withText(string().matches("SELECT .*"))]]></place>
+  </injection>
   <injection language="JavaScript" injector-id="php">
     <display-name>&lt;&lt;&lt; JS</display-name>
     <place><![CDATA[phpLiteralExpression("JS")]]></place>

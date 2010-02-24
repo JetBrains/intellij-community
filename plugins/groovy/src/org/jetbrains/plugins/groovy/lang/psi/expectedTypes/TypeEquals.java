@@ -15,9 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.expectedTypes;
 
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.search.GlobalSearchScope;
+
 import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createType;
 
 /**
@@ -28,7 +31,7 @@ public  class TypeEquals extends TypeConstraint {
     super(type);
   }
 
-  public boolean satisfied(PsiType type){
+  public boolean satisfied(PsiType type, PsiManager manager, GlobalSearchScope scope){
     return type.equals(myType);
   }
 

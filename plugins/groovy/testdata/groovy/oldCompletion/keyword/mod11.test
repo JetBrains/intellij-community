@@ -2,3 +2,4 @@ def foo = {
   p<caret> ppp
 }
 -----
+ppp

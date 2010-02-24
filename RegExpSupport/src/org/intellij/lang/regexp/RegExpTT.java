@@ -97,6 +97,9 @@ public interface RegExpTT {
     IElementType OPTIONS_ON = new RegExpElementType("OPTIONS_ON");
     IElementType OPTIONS_OFF = new RegExpElementType("OPTIONS_OFF");
 
+    // (?P<name>...
+    IElementType PYTHON_NAMED_GROUP = new RegExpElementType("PYTHON_NAMED_GROUP");
+
     TokenSet KEYWORDS = TokenSet.create(DOT, STAR, QUEST, PLUS);
 
     TokenSet CHARACTERS = TokenSet.create(CHARACTER,
@@ -123,7 +126,8 @@ public interface RegExpTT {
             POS_LOOKAHEAD,
             NEG_LOOKAHEAD,
             POS_LOOKBEHIND,
-            NEG_LOOKBEHIND);
+            NEG_LOOKBEHIND,
+            PYTHON_NAMED_GROUP);
 
     TokenSet BOUNDARIES = TokenSet.create(BOUNDARY, CARET, DOLLAR);
 }

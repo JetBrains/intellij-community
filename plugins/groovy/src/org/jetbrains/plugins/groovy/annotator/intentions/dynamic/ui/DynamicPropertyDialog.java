@@ -20,7 +20,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SupertypeConstraint;
 
 /**
@@ -32,7 +32,7 @@ public class DynamicPropertyDialog extends DynamicDialog {
   private final GrArgumentLabel myLabel;
 
   public DynamicPropertyDialog(GrReferenceExpression referenceExpression) {
-    super(referenceExpression, QuickfixUtil.createSettings(referenceExpression), GroovyExpectedTypesUtil.calculateTypeConstraints(referenceExpression));
+    super(referenceExpression, QuickfixUtil.createSettings(referenceExpression), GroovyExpectedTypesProvider.calculateTypeConstraints(referenceExpression));
     myReferenceExpression = referenceExpression;
     myLabel = null;
     setTitle(GroovyBundle.message("add.dynamic.property", referenceExpression.getReferenceName()));

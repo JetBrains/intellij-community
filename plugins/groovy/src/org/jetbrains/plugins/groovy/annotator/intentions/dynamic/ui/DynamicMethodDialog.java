@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.MyPair;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
@@ -46,7 +46,7 @@ public class DynamicMethodDialog extends DynamicDialog {
   private final GrReferenceExpression myReferenceExpression;
 
   public DynamicMethodDialog(GrReferenceExpression referenceExpression) {
-    super(referenceExpression, QuickfixUtil.createSettings(referenceExpression), GroovyExpectedTypesUtil.calculateTypeConstraints((GrExpression)referenceExpression.getParent()));
+    super(referenceExpression, QuickfixUtil.createSettings(referenceExpression), GroovyExpectedTypesProvider.calculateTypeConstraints((GrExpression)referenceExpression.getParent()));
     myReferenceExpression = referenceExpression;
     assert getSettings().isMethod();
 

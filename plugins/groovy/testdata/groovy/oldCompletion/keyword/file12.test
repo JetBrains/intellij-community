@@ -15,12 +15,14 @@ assert
 boolean
 byte
 char
+class
 double
 false
 final
 float
 for
 int
+k
 long
 new
 null

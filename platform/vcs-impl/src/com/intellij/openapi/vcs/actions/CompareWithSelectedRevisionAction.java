@@ -20,7 +20,10 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
@@ -115,7 +118,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
           public void consume(VcsHistorySession session) {
             if (session == null) return;
             final List<VcsFileRevision> revisions = session.getRevisionList();
-            final HistoryAsTreeProvider treeHistoryProvider = vcsHistoryProvider.getTreeHistoryProvider();
+            final HistoryAsTreeProvider treeHistoryProvider = session.getHistoryAsTreeProvider();
             if (treeHistoryProvider != null) {
               showTreePopup(treeHistoryProvider.createTreeOn(revisions), file, project, vcs.getDiffProvider());
             }

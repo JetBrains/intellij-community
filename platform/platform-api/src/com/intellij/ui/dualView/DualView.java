@@ -24,17 +24,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.UIBundle;
-import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.table.BaseTableView;
 import com.intellij.ui.table.SelectionProvider;
 import com.intellij.ui.table.TableView;
+import com.intellij.ui.treeStructure.Tree;
+import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
+import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.config.Storage;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.Table;
-import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
-import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -392,8 +392,24 @@ public class DualView extends JPanel {
     BaseTableView.store(myTreeStorage, myTreeView);
   }
 
-  public void setRoot(TreeNode node) {
+  public void setRoot(final TreeNode node, final Object selection) {
+    ListTableModel model = myFlatView.getListTableModel();
+    final int column = model.getSortedColumnIndex();
+    final int sortingType = model.getSortingType();
+    final Object obj = myFlatView.getSelectedObject() != null ? myFlatView.getSelectedObject() : selection;
+
     myTreeView.getTreeViewModel().setRoot(node);
+
+    if (column != -1) {
+      model.sortByColumn(column, sortingType);
+    }
+    if (obj != null) {
+      final List items = myFlatView.getItems();
+      if (items.contains(obj)) {
+        final int idx = items.indexOf(obj);
+        setSelectionInterval(idx, idx);
+      }
+    }
   }
 
   public void rebuild() {

@@ -18,8 +18,8 @@ package com.intellij.openapi.vcs.history;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
@@ -45,6 +45,7 @@ import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction;
+import com.intellij.openapi.vcs.changes.committed.AbstractCalledLater;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
@@ -67,10 +68,7 @@ import com.intellij.ui.dualView.CellWrapper;
 import com.intellij.ui.dualView.DualTreeElement;
 import com.intellij.ui.dualView.DualView;
 import com.intellij.ui.dualView.DualViewColumnInfo;
-import com.intellij.util.Alarm;
-import com.intellij.util.Consumer;
-import com.intellij.util.Icons;
-import com.intellij.util.TreeItem;
+import com.intellij.util.*;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.SortableColumnModel;
 import com.intellij.util.ui.TableViewModel;
@@ -106,7 +104,7 @@ import java.util.List;
 /**
  * author: lesya
  */
-public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends ChangeBrowserSettings> extends PanelWithActionsAndCloseButton implements FileHistoryPanel {
+public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends ChangeBrowserSettings> extends PanelWithActionsAndCloseButton {
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.ui.FileHistoryDialog");
 
   private final JEditorPane myComments;
@@ -119,13 +117,17 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
   private final VcsHistoryProvider myProvider;
   private final AnnotationProvider myAnnotationProvider;
   private VcsHistorySession myHistorySession;
-  private final CommittedChangesProvider<S, U> myCommittedChangesProvider;
   private final FilePath myFilePath;
+  private final Runnable myRefresher;
   private final DualView myDualView;
 
   private final Alarm myUpdateAlarm;
 
   private final String myRepositoryPath;
+
+  private boolean myInRefresh;
+  private Object myTargetSelection;
+  private final AsynchConsumer<VcsHistorySession> myHistoryPanelRefresh;
 
   private static final String COMMIT_MESSAGE_TITLE = VcsBundle.message("label.selected.revision.commit.message");
   @NonNls private static final String VCS_HISTORY_ACTIONS_GROUP = "VcsHistoryActionsGroup";
@@ -174,6 +176,8 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
       return "author_author";
     }
   };
+  private JLabel myLoadingLabel;
+  private Splitter mySplitter;
 
 
   private static class MessageRenderer extends ColoredTableCellRenderer {
@@ -255,14 +259,14 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
                               FilePath filePath, final String repositoryPath, VcsHistorySession session,
                               VcsHistoryProvider provider,
                               AnnotationProvider annotationProvider,
-                              ContentManager contentManager, final CommittedChangesProvider<S, U> committedChangesProvider) {
+                              ContentManager contentManager, final Runnable refresher) {
     super(contentManager, provider.getHelpId() != null ? provider.getHelpId() : "reference.versionControl.toolwindow.history");
     myProvider = provider;
     myAnnotationProvider = annotationProvider;
-    myCommittedChangesProvider = committedChangesProvider;
     myRepositoryPath = repositoryPath;
     myProject = project;
-    myHistorySession = session;
+    myRefresher = refresher;
+    myHistorySession = session;         
     myFilePath = filePath;
 
     COLUMNS = createColumnList(project, provider, session);
@@ -277,15 +281,15 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
 
     myUpdateAlarm = new Alarm(session.allowAsyncRefresh() ? Alarm.ThreadToUse.SHARED_THREAD : Alarm.ThreadToUse.SWING_THREAD);
 
-    HistoryAsTreeProvider treeHistoryProvider = provider.getTreeHistoryProvider();
+    final HistoryAsTreeProvider treeHistoryProvider = myHistorySession.getHistoryAsTreeProvider();
 
     @NonNls String storageKey = "FileHistory." + provider.getClass().getName();
     if (treeHistoryProvider != null) {
-      myDualView = new DualView(new TreeNodeOnVcsRevision(null, treeHistoryProvider.createTreeOn(myHistorySession.getRevisionList())),
+      myDualView = new DualView(new TreeNodeOnVcsRevision(null, treeHistoryProvider.createTreeOn(new ArrayList<VcsFileRevision>(myHistorySession.getRevisionList()))),
                                 COLUMNS, storageKey, project);
     }
     else {
-      myDualView = new DualView(new TreeNodeOnVcsRevision(null, wrapWithTreeElements(myHistorySession.getRevisionList())), COLUMNS,
+      myDualView = new DualView(new TreeNodeOnVcsRevision(null, wrapWithTreeElements(new ArrayList<VcsFileRevision>(myHistorySession.getRevisionList()))), COLUMNS,
                                 storageKey, project);
       myDualView.switchToTheFlatMode();
     }
@@ -297,33 +301,31 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
 
     myPopupActions = createPopupActions();
 
+    myHistoryPanelRefresh = new AsynchConsumer<VcsHistorySession>() {
+      public void finished() {
+        myInRefresh = false;
+        myTargetSelection = null;
+
+        myLoadingLabel.setVisible(false);
+        mySplitter.revalidate();
+        mySplitter.repaint();
+      }
+      public void consume(VcsHistorySession vcsHistorySession) {
+        FileHistoryPanelImpl.this.refresh(vcsHistorySession);
+      }
+    };
+    
     myUpdateAlarm.addRequest(new Runnable() {
       public void run() {
         if (myProject.isDisposed()) {
           return;
         }
-        final boolean refresh = myHistorySession.refresh();
+        final boolean refresh = (! myInRefresh) && myHistorySession.shouldBeRefreshed();
         myUpdateAlarm.cancelAllRequests();
         myUpdateAlarm.addRequest(this, 10000);
 
         if (refresh) {
-          createSession(new Consumer<VcsHistorySession>() {
-            public void consume(final VcsHistorySession session) {
-              if (session != null) {
-                if (session.allowAsyncRefresh()) {
-                  SwingUtilities.invokeLater(new Runnable() {
-                    public void run() {
-                      refresh(session);
-                    }
-                  });
-                }
-                else {
-                  refresh(session);
-                }
-              }
-            }
-          });
-
+          refreshImpl();
         }
       }
     }, 10000);
@@ -331,20 +333,6 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     init();
 
     chooseView();
-  }
-
-  private void createSession(final Consumer<VcsHistorySession> consumer) {
-    final Runnable runnable = new Runnable() {
-      public void run() {
-        new VcsHistoryProviderBackgroundableProxy(myProject, getHistoryProvider()).createSessionFor(myFilePath, consumer, null, true);
-      }
-    };
-    final Application application = ApplicationManager.getApplication();
-    if (application.isDispatchThread()) {
-      runnable.run();
-    } else {
-      application.invokeLater(runnable);
-    }
   }
 
   private void replaceTransferable() {
@@ -437,18 +425,19 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     return result;
   }
 
-  private void refresh(VcsHistorySession session) {
+  private void refresh(final VcsHistorySession session) {
     myHistorySession = session;
-    HistoryAsTreeProvider treeHistoryProvider = getHistoryProvider().getTreeHistoryProvider();
+    HistoryAsTreeProvider treeHistoryProvider = session.getHistoryAsTreeProvider();
 
     if (treeHistoryProvider != null) {
-      myDualView.setRoot(new TreeNodeOnVcsRevision(null, treeHistoryProvider.createTreeOn(myHistorySession.getRevisionList())));
+      myDualView.setRoot(new TreeNodeOnVcsRevision(null,
+        treeHistoryProvider.createTreeOn(new ArrayList<VcsFileRevision>(myHistorySession.getRevisionList()))), myTargetSelection);
     }
     else {
-      myDualView.setRoot(new TreeNodeOnVcsRevision(null, wrapWithTreeElements(myHistorySession.getRevisionList())));
+      myDualView.setRoot(new TreeNodeOnVcsRevision(null,
+        wrapWithTreeElements(new ArrayList<VcsFileRevision>(myHistorySession.getRevisionList()))), myTargetSelection);
     }
 
-    myDualView.rebuild();
     myDualView.expandAll();
     myDualView.repaint();
   }
@@ -626,11 +615,11 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
 
 
   protected JComponent createCenterPanel() {
-    Splitter splitter = new Splitter(true, getSplitterProportion());
-    splitter.setDividerWidth(4);
+    mySplitter = new Splitter(true, getSplitterProportion());
+    mySplitter.setDividerWidth(4);
     //splitter.getDivider().setBackground(UIUtil.getBgFillColor(splitter.getDivider()).brighter());
 
-    splitter.addPropertyChangeListener(new PropertyChangeListener() {
+    mySplitter.addPropertyChangeListener(new PropertyChangeListener() {
       public void propertyChange(PropertyChangeEvent evt) {
         if (Splitter.PROP_PROPORTION.equals(evt.getPropertyName())) {
           setSplitterProportionTo((Float)evt.getNewValue());
@@ -651,9 +640,16 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     detailsSplitter.setFirstComponent(commentGroup);
     detailsSplitter.setSecondComponent(myAdditionalDetails);
 
-    splitter.setFirstComponent(myDualView);
-    splitter.setSecondComponent(detailsSplitter);
-    return splitter;
+    final JPanel wrapper = new JPanel(new BorderLayout());
+    myLoadingLabel = new JLabel("Loading...");
+    //myLoadingLabel.setVisible(false);
+    myLoadingLabel.setBackground(UIUtil.getToolTipBackground());
+    wrapper.add(myLoadingLabel, BorderLayout.NORTH);
+    wrapper.add(myDualView, BorderLayout.CENTER);
+
+    mySplitter.setFirstComponent(wrapper);
+    mySplitter.setSecondComponent(detailsSplitter);
+    return mySplitter;
   }
 
   private void chooseView() {
@@ -722,7 +718,11 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     });
     result.add(new MyGetVersionAction());
     result.add(new MyAnnotateAction());
-    AnAction[] additionalActions = getHistoryProvider().getAdditionalActions(this);
+    AnAction[] additionalActions = myProvider.getAdditionalActions(new Runnable() {
+      public void run() {
+        refreshImpl();
+      }
+    });
     if (additionalActions != null) {
       for (AnAction additionalAction : additionalActions) {
         result.add(additionalAction);
@@ -737,21 +737,28 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     return result;
   }
 
-  public void refresh() {
-    createSession(new Consumer<VcsHistorySession>() {
-      public void consume(VcsHistorySession session) {
-        if (session == null) return;
-        refresh(session);
+  private void refreshImpl() {
+    new AbstractCalledLater(myProject, ModalityState.NON_MODAL) {
+      public void run() {
+        if (myInRefresh) return;
+        myInRefresh = true;
+        myTargetSelection = myDualView.getFlatView().getSelectedObject();
+
+        myLoadingLabel.setVisible(true);
+        mySplitter.revalidate();
+        mySplitter.repaint();
+
+        myRefresher.run();
       }
-    });
+    }.callMe();
+  }
+
+  public AsynchConsumer<VcsHistorySession> getHistoryPanelRefresh() {
+    return myHistoryPanelRefresh;
   }
 
   private boolean supportsTree() {
-    return getHistoryProvider().getTreeHistoryProvider() != null;
-  }
-
-  private VcsHistoryProvider getHistoryProvider() {
-    return myProvider;
+    return myHistorySession != null && myHistorySession.getHistoryAsTreeProvider() != null;
   }
 
   private class MyShowAsTreeAction extends ToggleAction implements DumbAware {
@@ -1274,6 +1281,22 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
       return myRevision != VcsFileRevision.NULL;
     }
 
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      TreeNodeOnVcsRevision that = (TreeNodeOnVcsRevision)o;
+
+      if (myRevision != null ? !myRevision.getRevisionNumber().equals(that.myRevision.getRevisionNumber()) : that.myRevision != null) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return myRevision != null ? myRevision.getRevisionNumber().hashCode() : 0;
+    }
   }
 
   protected void dispose() {
@@ -1515,8 +1538,14 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     }
 
     public void actionPerformed(AnActionEvent e) {
-      refresh();
+      if (myInRefresh) return;
+      refreshImpl();
+    }
 
+    @Override
+    public void update(AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setEnabled(! myInRefresh);
     }
   }
 }
