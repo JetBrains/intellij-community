@@ -412,6 +412,9 @@ public final class TreeUtil {
 
   public static ActionCallback showRowCentered(final JTree tree, final int row, final boolean centerHorizontally, boolean scroll) {
     final int visible = getVisibleRowCount(tree);
+
+    if (visible <= 0) return new ActionCallback.Done();
+
     final int top = visible > 0 ? row - (visible - 1)/ 2 : row;
     final int bottom = visible > 0 ? top + visible - 1 : row;
     return showAndSelect(tree, top, bottom, row, -1, false, scroll);
@@ -571,9 +574,13 @@ public final class TreeUtil {
 
   private static int getVisibleRowCount(final JTree tree) {
     final Rectangle visible = tree.getVisibleRect();
+
+    if (visible == null) return 0;
+
     int count = 0;
     for (int i=0; i < tree.getRowCount(); i++) {
       final Rectangle bounds = tree.getRowBounds(i);
+      if (bounds == null) continue;
       if (visible.y <= bounds.y && visible.y + visible.height >= bounds.y + bounds.height) {
         count++;
       }
