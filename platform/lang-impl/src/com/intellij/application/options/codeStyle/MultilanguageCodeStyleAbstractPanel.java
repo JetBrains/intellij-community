@@ -16,17 +16,30 @@
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.application.options.CodeStyleAbstractPanel;
+import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -37,6 +50,7 @@ import org.jetbrains.annotations.NotNull;
 public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstractPanel {
 
   private Language myLanguage;
+  private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.codeStyle.MultilanguageCodeStyleAbstractPanel");
 
   protected MultilanguageCodeStyleAbstractPanel(CodeStyleSettings settings) {
     super(settings);
@@ -86,5 +100,32 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
       return ((LanguageFileType)getFileType()).getEditorHighlighter(project, null, scheme);
     }
     return null;
+  }
+
+  @Override
+  protected PsiFile doReformat(final Project project, PsiFile psiFile) {
+    final String text = psiFile.getText();
+    final PsiFile file =
+      PsiFileFactory.getInstance(project).createFileFromText("a", getFileType(), text, LocalTimeCounter.currentTime(), true);
+    final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
+    final Document doc = manager.getDocument(file);
+    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            doc.replaceString(0, doc.getTextLength(), text);
+            manager.commitDocument(doc);
+            try {
+              CodeStyleManager.getInstance(project).reformat(file);
+            }
+            catch (IncorrectOperationException e) {
+              LOG.error(e);
+            }
+          }
+        });
+      }
+    }, "", "");
+    manager.commitDocument(doc);
+    return file;
   }
 }
