@@ -240,9 +240,13 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
   }
 
   protected void checkHighlighting(VirtualFile f) throws IOException {
+    checkHighlighting(f, true, true, true);
+  }
+
+  protected void checkHighlighting(VirtualFile f, boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings) throws IOException {
     configTest(myProjectPom);
     try {
-      myCodeInsightFixture.testHighlighting(true, true, true, f);
+      myCodeInsightFixture.testHighlighting(checkWarnings, checkInfos, checkWeakWarnings, f);
     }
     catch (Throwable throwable) {
       throw new RuntimeException(throwable);
