@@ -87,11 +87,11 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
   }
 
   @Nullable
-  protected static Pair<String, String> invokeAction(@NotNull final Project project,
-                                                     @NotNull PsiFile file,
-                                                     @NotNull PsiElement psiElement,
-                                                     @Nullable final String suggestedKey,
-                                                     @Nullable final List<PropertiesFile> propertiesFiles) {
+  private static Pair<String, String> invokeAction(@NotNull final Project project,
+                                                   @NotNull PsiFile file,
+                                                   @NotNull PsiElement psiElement,
+                                                   @Nullable final String suggestedKey,
+                                                   @Nullable final List<PropertiesFile> propertiesFiles) {
     final I18nizeQuickFixModel model;
     final I18nizeQuickFixDialog.DialogCustomization dialogCustomization = createDefaultCustomization(suggestedKey, propertiesFiles);
 

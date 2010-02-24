@@ -116,7 +116,7 @@ public class XmlDuplicatedIdInspection extends LocalInspectionTool {
 
   @NotNull
   public String getDisplayName() {
-    return XmlBundle.message("xml.inspections.duplicated.id");
+    return XmlBundle.message("xml.inspections.duplicate.id");
   }
 
   @NotNull

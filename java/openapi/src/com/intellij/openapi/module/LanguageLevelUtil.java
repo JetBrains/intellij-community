@@ -16,6 +16,7 @@
 package com.intellij.openapi.module;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -47,5 +48,27 @@ public class LanguageLevelUtil {
     }
 
     return getLanguageLevelForFile(file.getParent());
+  }
+
+  public static LanguageLevel getDefaultLanguageLevel(@NotNull String versionString) {
+    if (isOfVersionOrHigher(versionString, "1.7") || isOfVersionOrHigher(versionString, "7.0")) {
+      return LanguageLevel.JDK_1_7;
+    }
+    if (isOfVersionOrHigher(versionString, "1.6") || isOfVersionOrHigher(versionString, "6.0")) {
+      return LanguageLevel.JDK_1_6;
+    }
+    if (isOfVersionOrHigher(versionString, "1.5") || isOfVersionOrHigher(versionString, "5.0")) {
+      return LanguageLevel.JDK_1_5;
+    }
+
+    if (isOfVersionOrHigher(versionString, "1.4")) {
+      return LanguageLevel.JDK_1_4;
+    }
+
+    return LanguageLevel.JDK_1_3;
+  }
+
+  public static boolean isOfVersionOrHigher(@NotNull String versionString, String checkedVersion) {
+    return JavaSdk.getInstance().compareTo(versionString, checkedVersion) >= 0;
   }
 }

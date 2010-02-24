@@ -30,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 
@@ -59,10 +58,11 @@ public class PropertiesReferenceManager {
                                                   BundleNameEvaluator bundleNameEvaluator) {
     final ArrayList<PropertiesFile> result = new ArrayList<PropertiesFile>();
     processPropertiesFiles(searchScope, new PropertiesFileProcessor() {
-      public void process(String baseName, PropertiesFile propertiesFile) {
+      public boolean process(String baseName, PropertiesFile propertiesFile) {
         if (baseName.equals(bundleName)) {
           result.add(propertiesFile);
         }
+        return true;
       }
     }, bundleNameEvaluator);
     return result;
@@ -99,42 +99,42 @@ public class PropertiesReferenceManager {
   public String[] getPropertyFileBaseNames(@NotNull final GlobalSearchScope searchScope, final BundleNameEvaluator bundleNameEvaluator) {
     final ArrayList<String> result = new ArrayList<String>();
     processPropertiesFiles(searchScope, new PropertiesFileProcessor() {
-      public void process(String baseName, PropertiesFile propertiesFile) {
+      public boolean process(String baseName, PropertiesFile propertiesFile) {
         result.add(baseName);
+        return true;
       }
     }, bundleNameEvaluator);
     return ArrayUtil.toStringArray(result);
   }
 
   interface PropertiesFileProcessor {
-    void process(String baseName, PropertiesFile propertiesFile);
+    boolean process(String baseName, PropertiesFile propertiesFile);
   }
 
-  private void processPropertiesFiles(@NotNull final GlobalSearchScope searchScope,
-                                      final PropertiesFileProcessor processor,
-                                      final BundleNameEvaluator evaluator) {
+  private boolean processPropertiesFiles(@NotNull final GlobalSearchScope searchScope,
+                                      @NotNull final PropertiesFileProcessor processor,
+                                      @NotNull final BundleNameEvaluator evaluator) {
 
     if (PropertyFileIndex.DEBUG) {
       System.out.println("PropertiesReferenceManager.processPropertiesFiles");
       System.out.println("PropertiesFileType.FILE_TYPE = " + PropertiesFileType.FILE_TYPE);
     }
 
-    final Collection<VirtualFile> propertiesFiles = FileBasedIndex.getInstance()
-      .getContainingFiles(PropertyFileIndex.NAME, PropertiesFileType.FILE_TYPE.getName(),
-                          searchScope);
-
-    for(VirtualFile file: propertiesFiles) {
-      if (PropertyFileIndex.DEBUG) {
-        System.out.println("file = " + file.getPath());
-      }
-
-      final PsiFile psiFile = myPsiManager.findFile(file);
-      if (psiFile instanceof PropertiesFile){
-        final String qName = evaluator.evaluateBundleName(psiFile);
-        if (qName != null) {
-          processor.process(qName, (PropertiesFile) psiFile);
+    return FileBasedIndex.getInstance().processValues(PropertyFileIndex.NAME, PropertiesFileType.FILE_TYPE.getName(), null, new FileBasedIndex.ValueProcessor<Void>() {
+      public boolean process(VirtualFile file, Void value) {
+        if (PropertyFileIndex.DEBUG) {
+          System.out.println("file = " + file.getPath());
         }
+
+        final PsiFile psiFile = myPsiManager.findFile(file);
+        if (psiFile instanceof PropertiesFile){
+          final String qName = evaluator.evaluateBundleName(psiFile);
+          if (qName != null) {
+            if (!processor.process(qName, (PropertiesFile) psiFile)) return false;
+          }
+        }
+        return true;
       }
-    }
+    }, searchScope);
   }
 }

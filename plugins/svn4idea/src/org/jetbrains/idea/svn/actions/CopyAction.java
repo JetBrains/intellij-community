@@ -18,18 +18,22 @@
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.SvnStatusUtil;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.CopyDialog;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -81,7 +85,7 @@ public class CopyAction extends BasicAction {
         dstSvnUrl = SVNURL.parseURIEncoded(dstURL);
         parentUrl = dstSvnUrl.removePathTail();
 
-        if (!dirExists(parentUrl, wcClient)) {
+        if (!dirExists(project, parentUrl, wcClient)) {
           int rc = Messages.showYesNoDialog(project, "The repository path '" + parentUrl + "' does not exist. Would you like to create it?",
                                             "Branch or Tag", Messages.getQuestionIcon());
           if (rc == 1) {
@@ -128,7 +132,7 @@ public class CopyAction extends BasicAction {
     final SVNURL baseUrl = url;
     SVNWCClient client = activeVcs.createWCClient();
     List<SVNURL> dirsToCreate = new ArrayList<SVNURL>();
-    while(!dirExists(url, client)) {
+    while(!dirExists(activeVcs.getProject(), url, client)) {
       dirsToCreate.add(0, url);
       url = url.removePathTail();
       if (url.getPath().length() == 0) {
@@ -139,17 +143,40 @@ public class CopyAction extends BasicAction {
     commitClient.doMkDir(dirsToCreate.toArray(new SVNURL[dirsToCreate.size()]), comment);
   }
 
-  private static boolean dirExists(final SVNURL url, final SVNWCClient client) throws SVNException {
-    try {
-      client.doInfo(url, SVNRevision.UNDEFINED, SVNRevision.HEAD);
-    }
-    catch(SVNException e) {
-      if (e.getErrorMessage().getErrorCode().equals(SVNErrorCode.RA_ILLEGAL_URL)) {
-        return false;
+  private static boolean dirExists(Project project, final SVNURL url, final SVNWCClient client) throws SVNException {
+    final Ref<SVNException> excRef = new Ref<SVNException>();
+    final Ref<Boolean> resultRef = new Ref<Boolean>(Boolean.TRUE);
+
+    final Runnable taskImpl = new Runnable() {
+      public void run() {
+        try {
+          client.doInfo(url, SVNRevision.UNDEFINED, SVNRevision.HEAD);
+        }
+        catch (SVNException e) {
+          if (e.getErrorMessage().getErrorCode().equals(SVNErrorCode.RA_ILLEGAL_URL)) {
+            resultRef.set(Boolean.FALSE);
+          }
+          else {
+            excRef.set(e);
+          }
+        }
       }
-      throw e;
+    };
+
+    final Task.Backgroundable task =
+      new Task.Backgroundable(project, "Checking target folder", false, BackgroundFromStartOption.getInstance()) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          taskImpl.run();
+        }
+      };
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      ProgressManager.getInstance().run(task);
+    } else {
+      taskImpl.run();
     }
-    return true;
+    if (! excRef.isNull()) throw excRef.get();
+    return resultRef.get();
   }
 
   protected void batchPerform(Project project, SvnVcs activeVcs, VirtualFile[] files, DataContext context)

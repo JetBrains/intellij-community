@@ -126,6 +126,11 @@ public class FormatterTest extends GroovyFormatterTestCase {
   }
   public void testCaseInSwitchIndented() throws Throwable { doTest(); }
 
+  public void testClosureParametersAligned() throws Throwable {
+    myTempSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    doTest();
+  }
+
   public void doTest() throws Throwable {
     final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
     checkFormatting(data.get(0), data.get(1));

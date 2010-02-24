@@ -16,7 +16,6 @@
 package com.intellij.testFramework;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.io.FileUtil;
@@ -31,7 +30,6 @@ import junit.framework.Assert;
 import junit.framework.AssertionFailedError;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -157,7 +155,7 @@ public class IdeaTestUtil extends PlatformTestUtil {
 
   public static void assertTiming(String message, long expected, long actual) {
     if (COVERAGE_ENABLED_BUILD) return;
-    long expectedOnMyMachine = expected * Timings.MACHINE_TIMING / ETALON_TIMING;
+    long expectedOnMyMachine = Math.max(1, expected * Timings.MACHINE_TIMING / ETALON_TIMING);
     final double acceptableChangeFactor = 1.1;
 
     // Allow 10% more in case of test machine is busy.
@@ -182,14 +180,18 @@ public class IdeaTestUtil extends PlatformTestUtil {
     assertTiming(message, expected, 4, actionToMeasure);
   }
 
+  public static long measure(@NotNull Runnable actionToMeasure) {
+    long start = System.currentTimeMillis();
+    actionToMeasure.run();
+    long finish = System.currentTimeMillis();
+    return finish - start;
+  }
   public static void assertTiming(String message, long expected, int attempts, @NotNull Runnable actionToMeasure) {
     while (true) {
       attempts--;
-      long start = System.currentTimeMillis();
-      actionToMeasure.run();
-      long finish = System.currentTimeMillis();
+      long duration = measure(actionToMeasure);
       try {
-        assertTiming(message, expected, finish - start);
+        assertTiming(message, expected, duration);
         break;
       }
       catch (AssertionFailedError e) {
