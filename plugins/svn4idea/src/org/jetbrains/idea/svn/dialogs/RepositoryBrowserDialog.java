@@ -318,7 +318,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return getRepositoryBrowser();
+    return (JComponent) getRepositoryBrowser().getPreferredFocusedComponent();
   }
 
   public boolean shouldCloseOnCross() {
