@@ -33,6 +33,8 @@ public class DisposableEditorPanel extends JPanel implements Disposable {
   }
 
   public void dispose() {
-    EditorFactory.getInstance().releaseEditor(myEditor);
+    if (! myEditor.isDisposed()) {
+      EditorFactory.getInstance().releaseEditor(myEditor);
+    }
   }
 }

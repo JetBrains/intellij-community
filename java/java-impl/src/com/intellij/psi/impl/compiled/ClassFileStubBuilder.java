@@ -28,11 +28,21 @@ import com.intellij.util.cls.ClsFormatException;
 
 public class ClassFileStubBuilder implements BinaryFileStubBuilder {
   public boolean acceptsFile(final VirtualFile file) {
-    return !isInner(file.getNameWithoutExtension());
+    return !isInner(file.getNameWithoutExtension(), new ParentDirectory(file));
   }
 
-  private static boolean isInner(final String name) {
-    return name.indexOf('$') >= 0;
+  static boolean isInner(final String name, final Directory directory) {
+    return isInner(name, 0, directory);
+  }
+
+  private static boolean isInner(final String name, final int from, final Directory directory) {
+    final int index = name.indexOf('$', from);
+    return index == -1 ? false
+                       : containsPart(directory, name, index) ? true : isInner(name, index + 1, directory);
+  }
+
+  private static boolean containsPart(Directory directory, String name, int endIndex) {
+    return endIndex > 0 && directory.contains(name.substring(0, endIndex));
   }
 
   public StubElement buildStubTree(final VirtualFile file, final byte[] content, final Project project) {
@@ -46,5 +56,25 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
 
   public int getStubVersion() {
     return JavaFileElementType.STUB_VERSION;
+  }
+
+
+  interface Directory {
+    boolean contains(String name);
+  }
+
+  private static class ParentDirectory implements Directory {
+    private final VirtualFile myDirectory;
+    private final String myExtension;
+
+    private ParentDirectory(final VirtualFile file) {
+      myDirectory = file.getParent();
+      myExtension = file.getExtension();
+    }
+
+    public boolean contains(final String name) {
+      final String fullName = myExtension == null ? name : name + "." + myExtension;
+      return myDirectory == null ? false : myDirectory.findChild(fullName) != null;
+    }
   }
 }

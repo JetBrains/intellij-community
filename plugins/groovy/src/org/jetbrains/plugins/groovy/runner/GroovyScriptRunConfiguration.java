@@ -117,8 +117,11 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     }
 
     final PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(scriptFile);
-    if (!(psiFile instanceof GroovyFile) || !((GroovyFile)psiFile).isScript()) {
+    if (!(psiFile instanceof GroovyFile)) {
       return null;
+    }
+    if (!((GroovyFile)psiFile).isScript()) {
+      return new DefaultGroovyScriptRunner();
     }
 
     return GroovyScriptType.getScriptType((GroovyFile)psiFile).getRunner();

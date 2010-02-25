@@ -15,25 +15,26 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.expectedTypes;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -44,10 +45,13 @@ import java.util.List;
 /**
  * @author ven
  */
-public class GroovyExpectedTypesUtil {
+public class GroovyExpectedTypesProvider {
+  private GroovyExpectedTypesProvider() {
+  }
+
   public static TypeConstraint[] calculateTypeConstraints(GrExpression expression) {
     MyCalculator calculator = new MyCalculator(expression);
-    ((GroovyPsiElement) expression.getParent()).accept(calculator);
+    ((GroovyPsiElement)expression.getParent()).accept(calculator);
     return calculator.getResult();
   }
 
@@ -58,117 +62,119 @@ public class GroovyExpectedTypesUtil {
 
     public MyCalculator(GrExpression expression) {
       myExpression = expression;
-    }
-
-    public void visitElement(GroovyPsiElement element) {
-      makeDefault();
+      myResult = new TypeConstraint[]{SubtypeConstraint.create("java.lang.Object", myExpression)};
     }
 
     public void visitReturnStatement(GrReturnStatement returnStatement) {
       GrParametersOwner parent = PsiTreeUtil.getParentOfType(returnStatement, GrMethod.class, GrClosableBlock.class);
       if (parent instanceof GrMethod) {
-        GrTypeElement typeElement = ((GrMethod) parent).getReturnTypeElementGroovy();
+        GrTypeElement typeElement = ((GrMethod)parent).getReturnTypeElementGroovy();
         if (typeElement != null) {
           PsiType type = typeElement.getType();
-          myResult = new TypeConstraint[] {SubtypeConstraint.create(type)};
-          return;
+          myResult = new TypeConstraint[]{SubtypeConstraint.create(type)};
         }
       }
-      makeDefault();
     }
 
     public void visitVariable(GrVariable variable) {
       if (myExpression.equals(variable.getInitializerGroovy())) {
         PsiType type = variable.getDeclaredType();
         if (type != null) {
-          myResult = new TypeConstraint[] {new SubtypeConstraint(type, type)};
-          return;
+          myResult = new TypeConstraint[]{new SubtypeConstraint(type, type)};
         }
       }
-      makeDefault();
     }
 
     public void visitMethodCallExpression(GrMethodCallExpression methodCall) {
       if (myExpression.equals(methodCall.getInvokedExpression())) {
         myResult = new TypeConstraint[]{SubtypeConstraint.create("groovy.lang.Closure", methodCall)};
-      } else {
-        makeDefault();
       }
     }
 
     public void visitIfStatement(GrIfStatement ifStatement) {
       if (myExpression.equals(ifStatement.getCondition())) {
-        myResult = new TypeConstraint[] {new SubtypeConstraint(TypesUtil.getJavaLangObject(ifStatement), PsiType.BOOLEAN)};
-      } else makeDefault();
+        myResult = new TypeConstraint[]{new SubtypeConstraint(TypesUtil.getJavaLangObject(ifStatement), PsiType.BOOLEAN)};
+      }
     }
 
     public void visitWhileStatement(GrWhileStatement whileStatement) {
       if (myExpression.equals(whileStatement.getCondition())) {
-        myResult = new TypeConstraint[] {new SubtypeConstraint(TypesUtil.getJavaLangObject(whileStatement), PsiType.BOOLEAN)};
-      } else makeDefault();
+        myResult = new TypeConstraint[]{new SubtypeConstraint(TypesUtil.getJavaLangObject(whileStatement), PsiType.BOOLEAN)};
+      }
     }
 
     public void visitTraditionalForClause(GrTraditionalForClause forClause) {
       if (myExpression.equals(forClause.getCondition())) {
-        myResult = new TypeConstraint[] {new SubtypeConstraint(TypesUtil.getJavaLangObject(forClause), PsiType.BOOLEAN)};
-      } else makeDefault();
+        myResult = new TypeConstraint[]{new SubtypeConstraint(TypesUtil.getJavaLangObject(forClause), PsiType.BOOLEAN)};
+      }
     }
 
     public void visitArgumentList(GrArgumentList list) {
       PsiElement parent = list.getParent();
       List<TypeConstraint> constraints = new ArrayList<TypeConstraint>();
       if (parent instanceof GrCallExpression) {
-        GroovyResolveResult[] variants = ((GrCallExpression) parent).getMethodVariants();
-        int idx = getIndex(list);
+        GroovyResolveResult[] variants = ((GrCallExpression)parent).getMethodVariants();
+        int idx = list.getExpressionArgumentIndex(myExpression);
         for (GroovyResolveResult variant : variants) {
           PsiElement element = variant.getElement();
+          PsiParameter[] parameters = null;
           if (element instanceof GrParametersOwner) {
-            GrParameter[] parameters = ((GrParametersOwner) element).getParameters();
-            if (parameters.length <= idx) continue;
-            PsiType parameterType = variant.getSubstitutor().substitute(parameters[idx].getType());
-            constraints.add(SubtypeConstraint.create(parameterType));
+            parameters = ((GrParametersOwner)element).getParameters();
           }
+          else if (element instanceof PsiMethod) {
+            parameters = ((PsiMethod)element).getParameterList().getParameters();
+          }
+          if (parameters == null || parameters.length <= idx) continue;
+          PsiType parameterType = variant.getSubstitutor().substitute(parameters[idx].getType());
+          constraints.add(SubtypeConstraint.create(parameterType));
         }
       }
 
-      if (constraints.isEmpty()) makeDefault();
-      else {
+      if (!constraints.isEmpty()) {
         myResult = constraints.toArray(new TypeConstraint[constraints.size()]);
       }
-    }
-
-    private int getIndex(GrArgumentList list) {
-      GrExpression[] arguments = list.getExpressionArguments();
-      for (int i = 0; i < arguments.length; i++) {
-        if (myExpression.equals(arguments[i])) return i;
-      }
-      return -1;
     }
 
     public void visitAssignmentExpression(GrAssignmentExpression expression) {
       GrExpression rValue = expression.getRValue();
       if (myExpression.equals(rValue)) {
         PsiType lType = expression.getLValue().getType();
-        if (lType == null) makeDefault();
-        else {
+        if (lType != null) {
           myResult = new TypeConstraint[]{SubtypeConstraint.create(lType)};
         }
-      } else if (myExpression.equals(expression.getLValue())) {
-        if (rValue == null) makeDefault();
-        else {
+      }
+      else if (myExpression.equals(expression.getLValue())) {
+        if (rValue != null) {
           PsiType rType = rValue.getType();
-          if (rType == null) makeDefault();
-          else {
+          if (rType != null) {
             myResult = new TypeConstraint[]{SupertypeConstraint.create(rType)};
           }
         }
       }
     }
 
-    private void makeDefault() {
-      myResult = new TypeConstraint[]{
-          SubtypeConstraint.create("java.lang.Object", myExpression)
+    @Override
+    public void visitThrowStatement(GrThrowStatement throwStatement) {
+      final PsiClassType trowable = PsiType.getJavaLangTrowable(myExpression.getManager(), throwStatement.getResolveScope());
+      myResult = new TypeConstraint[]{SubtypeConstraint.create(trowable)};
+    }
+
+    @Override
+    public void visitUnaryExpression(final GrUnaryExpression expression) {
+      TypeConstraint constraint = new TypeConstraint(PsiType.INT) {
+        @Override
+        public boolean satisfied(PsiType type, PsiManager manager, GlobalSearchScope scope) {
+          return TypesUtil
+            .getOverloadedOperatorCandidates(TypesUtil.boxPrimitiveType(type, manager, scope), expression.getOperationTokenType(),
+                                             expression, PsiType.EMPTY_ARRAY).length > 0;
+        }
+
+        @Override
+        public PsiType getDefaultType() {
+          return PsiType.INT;
+        }
       };
+      myResult = new TypeConstraint[]{constraint};
     }
 
     public TypeConstraint[] getResult() {

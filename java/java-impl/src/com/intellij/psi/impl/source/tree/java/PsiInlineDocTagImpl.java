@@ -39,14 +39,8 @@ import org.jetbrains.annotations.NotNull;
 public class PsiInlineDocTagImpl extends CompositePsiElement implements PsiInlineDocTag, Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiInlineDocTagImpl");
 
-  private static final TokenSet VALUE_BIT_SET = TokenSet.create(new IElementType[]{
-    JAVA_CODE_REFERENCE,
-    DOC_TAG_VALUE_TOKEN,
-    DOC_METHOD_OR_FIELD_REF,
-    DOC_COMMENT_DATA,
-    DOC_INLINE_TAG,
-    DOC_REFERENCE_HOLDER
-  });
+  private static final TokenSet VALUE_BIT_SET = TokenSet.create(JAVA_CODE_REFERENCE, DOC_TAG_VALUE_TOKEN, DOC_METHOD_OR_FIELD_REF,
+                                                                DOC_COMMENT_DATA, DOC_INLINE_TAG, DOC_REFERENCE_HOLDER, WHITE_SPACE, DOC_COMMENT_BAD_CHARACTER);
 
   public PsiInlineDocTagImpl() {
     super(DOC_INLINE_TAG);

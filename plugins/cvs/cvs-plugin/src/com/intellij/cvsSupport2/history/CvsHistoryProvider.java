@@ -17,9 +17,8 @@ package com.intellij.cvsSupport2.history;
 
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsUtil;
-import com.intellij.cvsSupport2.util.CvsVfsUtil;
-import com.intellij.cvsSupport2.changeBrowser.CvsChangeList;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
+import com.intellij.cvsSupport2.changeBrowser.CvsChangeList;
 import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
@@ -28,9 +27,11 @@ import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvsoperations.cvsLog.LocalPathIndifferentLogOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.ui.TagsPanel;
+import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.TreeItem;
@@ -157,19 +158,19 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
   public VcsHistorySession createSessionFor(final FilePath filePath) {
     final List<VcsFileRevision> fileRevisionList = createRevisions(filePath);
     if (fileRevisionList == null) return null;
-    return new VcsHistorySession(fileRevisionList) {
+    return new VcsAbstractHistorySession(fileRevisionList) {
       @Nullable
       public VcsRevisionNumber calcCurrentRevisionNumber() {
         return getCurrentRevision(filePath);
       }
 
       @Override
-      public synchronized boolean refresh() {
+      public synchronized boolean shouldBeRefreshed() {
         //noinspection SimplifiableIfStatement
         if (!CvsEntriesManager.getInstance().isActive()) {
           return false;
         }
-        return super.refresh();
+        return super.shouldBeRefreshed();
       }
 
       public boolean isContentAvailable(final VcsFileRevision revision) {
@@ -179,7 +180,17 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
         }
         return super.isContentAvailable(revision);
       }
+
+      public HistoryAsTreeProvider getHistoryAsTreeProvider() {
+        return MyHistoryAsTreeProvider.getInstance();
+      }
     };
+  }
+
+  public void reportAppendableHistory(FilePath path, VcsAppendableHistorySessionPartner partner) throws VcsException {
+    // todo some time after ... this could be done
+    final VcsHistorySession session = createSessionFor(path);
+    partner.reportCreatedEmptySession((VcsAbstractHistorySession) session);
   }
 
   private static VcsRevisionNumber getCurrentRevision(FilePath filePath) {
@@ -238,12 +249,8 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
     return result;
   }
 
-  public AnAction[] getAdditionalActions(final FileHistoryPanel panel) {
+  public AnAction[] getAdditionalActions(final Runnable refresher) {
     return AnAction.EMPTY_ARRAY;
-  }
-
-  public HistoryAsTreeProvider getTreeHistoryProvider() {
-    return new MyHistoryAsTreeProvider();
   }
 
   public boolean supportsHistoryForDirectories() {
@@ -251,6 +258,12 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
   }
 
   private static class MyHistoryAsTreeProvider implements HistoryAsTreeProvider {
+    private static MyHistoryAsTreeProvider ourInstance = new MyHistoryAsTreeProvider();
+
+    public static MyHistoryAsTreeProvider getInstance() {
+      return ourInstance;
+    }
+
     public List<TreeItem<VcsFileRevision>> createTreeOn(List<VcsFileRevision> allRevisions) {
       List<VcsFileRevision> sortedRevisions = sortRevisions(allRevisions);
 

@@ -32,8 +32,26 @@ a++""",
               "[a:this.a] -> a"
   }
 
+  public void testQualifyClassNames() throws Exception {
+    myFixture.addFileToProject("com/Foo.groovy", """
+package com
+class Foo { static bar = 2 }""")
+
+    def bar = myFixture.addFileToProject("com/Bar.groovy", """
+package com
+<caret>println 2""")
+
+    myFixture.configureFromExistingVirtualFile bar.virtualFile
+
+    evaluates "Foo.bar", "[:] -> com.Foo.bar"
+  }
+
   private void evaluates(String text, String expression, String expected) throws IOException {
     myFixture.configureByText("_.groovy", text);
+    evaluates(expression, expected)
+  }
+
+  private def evaluates(String expression, String expected) {
     def context = myFixture.file.findElementAt(myFixture.editor.caretModel.offset);
     def pair = GroovyCodeFragmentFactory.externalParameters(expression, context)
 

@@ -99,7 +99,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
   private static final Key<Boolean> HIGHLIGHTER_WAS_NOT_FOUND_KEY = Key.create("com.intellij.find.impl.FindManagerImpl.HighlighterNotFoundKey");
   @NonNls private static final String FIND_USAGES_MANAGER_ELEMENT = "FindUsagesManager";
   public static final boolean ourHasSearchInCommentsAndLiterals = ApplicationManagerEx.getApplicationEx().isInternal(); // TODO: maxim
-  FindDialog myFindDialog;
+  private FindDialog myFindDialog;
 
   public FindManagerImpl(Project project, FindSettings findSettings, UsageViewManager anotherManager, MessageBus bus) {
     myProject = project;
@@ -165,7 +165,6 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
   }
 
   public void showFindDialog(@NotNull final FindModel model, @NotNull final Runnable okHandler) {
-
     if(myFindDialog==null || Disposer.isDisposed(myFindDialog.getDisposable())){
       myFindDialog = new FindDialog(myProject, model, new Runnable(){
         public void run() {

@@ -131,7 +131,7 @@ public class DocumentationComponent extends JPanel implements Disposable {
     myText = "";
     myEditorPane.setEditable(false);
     myEditorPane.setBackground(HintUtil.INFORMATION_COLOR);
-
+    myEditorPane.setEditorKit(UIUtil.getHTMLEditorKit());
     myScrollPane = new JScrollPane(myEditorPane);
     myScrollPane.setBorder(null);
 

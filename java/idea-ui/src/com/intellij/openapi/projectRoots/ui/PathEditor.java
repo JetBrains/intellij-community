@@ -161,7 +161,7 @@ public abstract class PathEditor {
     });
     mySpecifyUrlButton.addActionListener(new ActionListener(){
       public void actionPerformed(ActionEvent e){
-        VirtualFile virtualFile  = Util.showSpecifyJavadocUrlDialog(myPanel);
+        VirtualFile virtualFile  = Util.showSpecifyJavadocUrlDialog(myPanel, getInitialValue());
         if(virtualFile != null){
           addElement(virtualFile);
           setModified(true);
@@ -180,6 +180,10 @@ public abstract class PathEditor {
     myPanel.add(mySpecifyUrlButton, new GridBagConstraints(1, 4, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, anInsets, 0, 0));
     myPanel.add(Box.createRigidArea(new Dimension(mySpecifyUrlButton.getPreferredSize().width, 4)), new GridBagConstraints(1, 5, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, anInsets, 0, 0));
     return myPanel;
+  }
+
+  protected String getInitialValue() {
+    return "";
   }
 
   private void itemsRemoved(java.util.List removedItems) {

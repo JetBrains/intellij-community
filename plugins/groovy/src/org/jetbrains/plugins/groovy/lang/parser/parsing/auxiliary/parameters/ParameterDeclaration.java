@@ -25,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.VariableInitia
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.annotations.Annotation;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -86,7 +87,7 @@ public class ParameterDeclaration implements GroovyElementTypes {
 
       if (kFINAL.equals(builder.getTokenType())) {
         if (modSet.contains(kFINAL)) {
-          ParserUtils.wrapError(builder, GroovyBundle.message("duplicate.modifier"));
+          ParserUtils.wrapError(builder, GroovyBundle.message("duplicate.modifier", GrModifier.FINAL));
         } else {
           builder.advanceLexer();
           modSet.add(kFINAL);
@@ -94,7 +95,7 @@ public class ParameterDeclaration implements GroovyElementTypes {
         ParserUtils.getToken(builder, mNLS);
       } else if (kDEF.equals(builder.getTokenType())) {
         if (modSet.contains(kDEF)) {
-          ParserUtils.wrapError(builder, GroovyBundle.message("duplicate.modifier"));
+          ParserUtils.wrapError(builder, GroovyBundle.message("duplicate.modifier", GrModifier.DEF));
         } else {
           builder.advanceLexer();
           modSet.add(kDEF);

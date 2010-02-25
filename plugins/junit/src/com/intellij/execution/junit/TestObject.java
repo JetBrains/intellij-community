@@ -202,10 +202,18 @@ public abstract class TestObject implements JavaCommandLine {
     final Object[] listeners = Extensions.getExtensions(IDEAJUnitListener.EP_NAME);
     final StringBuffer buf = new StringBuffer();
     for (final Object listener : listeners) {
-      if (!((IDEAJUnitListener)listener).isEnabled(myConfiguration)) continue;
-      final Class classListener = listener.getClass();
-      buf.append(classListener.getName()).append("\n");
-      myJavaParameters.getClassPath().add(PathUtil.getJarPathForClass(classListener));
+      boolean enabled = true;
+      for (RunConfigurationExtension ext : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
+        if (ext.isListenerDisabled(myConfiguration, listener)) {
+          enabled = false;
+          break;
+        }
+      }
+      if (enabled) {
+        final Class classListener = listener.getClass();
+        buf.append(classListener.getName()).append("\n");
+        myJavaParameters.getClassPath().add(PathUtil.getJarPathForClass(classListener));
+      }
     }
     if (buf.length() > 0) {
       try {
@@ -247,13 +255,16 @@ public abstract class TestObject implements JavaCommandLine {
       @Override
       public void notifyStart(TestProxy root) {
         super.notifyStart(root);
-        handler.getOut().setDispatchListener(getModel().getNotifier());
-        Disposer.register(getModel(), new Disposable() {
-          public void dispose() {
-            handler.getOut().setDispatchListener(DispatchListener.DEAF);
-          }
-        });
-        consoleView.attachToModel(getModel());
+        final JUnitRunningModel model = getModel();
+        if (model != null) {
+          handler.getOut().setDispatchListener(model.getNotifier());
+          Disposer.register(model, new Disposable() {
+            public void dispose() {
+              handler.getOut().setDispatchListener(DispatchListener.DEAF);
+            }
+          });
+          consoleView.attachToModel(model);
+        }
       }
     };
 
@@ -273,7 +284,7 @@ public abstract class TestObject implements JavaCommandLine {
             packetsReceiver.checkTerminated();
             final JUnitRunningModel model = packetsReceiver.getModel();
             TestsUIUtil.notifyByBalloon(myProject, model != null ? model.getRoot() : null, consoleProperties,
-                                        Filter.DEFECTIVE_LEAF.and(JavaAwareFilter.METHOD(myProject)));
+                                        Filter.DEFECT);
           }
         });
       }

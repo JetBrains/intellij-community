@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.CollectConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
@@ -73,10 +74,6 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
     myURL = url;
     myRevision = revision;
     myDirectory = isDirectory;
-  }
-
-  public HistoryAsTreeProvider getTreeHistoryProvider() {
-    return null;
   }
 
   public boolean supportsHistoryForDirectories() {
@@ -133,7 +130,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
     return new VcsDependentHistoryComponents(columns, listener, addComp);
   }
 
-  private class MyHistorySession extends VcsHistorySession {
+  private class MyHistorySession extends VcsAbstractHistorySession {
     private final FilePath myCommittedPath;
     private final Map<Long, SvnChangeList> myListsMap;
     private final boolean mySupports15;
@@ -143,11 +140,15 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
       myCommittedPath = committedPath;
       mySupports15 = supports15;
       myListsMap = new HashMap<Long, SvnChangeList>();
-      refresh();
+      shouldBeRefreshed();
     }
 
     public Map<Long, SvnChangeList> getListsMap() {
       return myListsMap;
+    }
+
+    public HistoryAsTreeProvider getHistoryAsTreeProvider() {
+      return null;
     }
 
     @Nullable
@@ -176,17 +177,35 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
   public VcsHistorySession createSessionFor(final FilePath filePath) throws VcsException {
     final FilePath committedPath = ChangesUtil.getCommittedPath(myVcs.getProject(), filePath);
     final Ref<Boolean> supports15Ref = new Ref<Boolean>();
-    final List<VcsFileRevision> revisions = getRevisionsList(committedPath, supports15Ref);
-    if (revisions == null) {
-      return null;
-    }
+    final List<VcsFileRevision> revisions = new ArrayList<VcsFileRevision>();
+    getRevisionsList(committedPath, supports15Ref, new CollectConsumer<VcsFileRevision>(revisions));
     return new MyHistorySession(revisions, committedPath, Boolean.TRUE.equals(supports15Ref.get()));
   }
 
+  public void reportAppendableHistory(FilePath path, final VcsAppendableHistorySessionPartner partner) throws VcsException {
+    final FilePath committedPath = ChangesUtil.getCommittedPath(myVcs.getProject(), path);
+    final Ref<Boolean> supports15Ref = new Ref<Boolean>();
+
+    final MyHistorySession historySession =
+      new MyHistorySession(Collections.<VcsFileRevision>emptyList(), committedPath, Boolean.TRUE.equals(supports15Ref.get()));
+
+    final Ref<Boolean> sessionReported = new Ref<Boolean>();
+
+    getRevisionsList(committedPath, supports15Ref, new Consumer<VcsFileRevision>() {
+      public void consume(VcsFileRevision vcsFileRevision) {
+        if (! Boolean.TRUE.equals(sessionReported.get())) {
+          partner.reportCreatedEmptySession(historySession);
+          sessionReported.set(true);
+        }
+        partner.acceptRevision(vcsFileRevision);
+      }
+    });
+  }
+
   @Nullable
-  private List<VcsFileRevision> getRevisionsList(final FilePath file, final Ref<Boolean> supports15Ref) throws VcsException {
+  private void getRevisionsList(final FilePath file, final Ref<Boolean> supports15Ref,
+                                                 final Consumer<VcsFileRevision> consumer) throws VcsException {
     final SVNException[] exception = new SVNException[1];
-    final ArrayList<VcsFileRevision> result = new ArrayList<VcsFileRevision>();
 
     Runnable command = new Runnable() {
       public void run() {
@@ -196,9 +215,9 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
         }
         try {
           if (myURL == null) {
-            collectLogEntries(indicator, file, exception, result, supports15Ref);
+            collectLogEntries(indicator, file, exception, consumer, supports15Ref);
           } else {
-            collectLogEntriesForRepository(indicator, result, supports15Ref);
+            collectLogEntriesForRepository(indicator, consumer, supports15Ref);
           }
         }
         catch(SVNCancelException ex) {
@@ -215,11 +234,10 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
     if (exception[0] != null) {
       throw new VcsException(exception[0]);
     }
-    return result;
   }
 
   private void collectLogEntries(final ProgressIndicator indicator, FilePath file, SVNException[] exception,
-                                 final ArrayList<VcsFileRevision> result, final Ref<Boolean> supports15Ref) throws SVNException {
+                                 final Consumer<VcsFileRevision> result, final Ref<Boolean> supports15Ref) throws SVNException {
     SVNWCClient wcClient = myVcs.createWCClient();
     SVNInfo info = wcClient.doInfo(new File(file.getIOFile().getAbsolutePath()), SVNRevision.WORKING);
     wcClient.setEventHandler(new ISVNEventHandler() {
@@ -255,7 +273,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
                  new MyLogEntryHandler(url, pegRevision, relativeUrl, result));
   }
 
-  private void collectLogEntriesForRepository(final ProgressIndicator indicator, final ArrayList<VcsFileRevision> result,
+  private void collectLogEntriesForRepository(final ProgressIndicator indicator, final Consumer<VcsFileRevision> result,
                                               final Ref<Boolean> supports15Ref) throws SVNException {
     if (indicator != null) {
       indicator.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", myURL.toString()));
@@ -299,7 +317,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
     }
   }
 
-  public AnAction[] getAdditionalActions(final FileHistoryPanel panel) {
+  public AnAction[] getAdditionalActions(final Runnable refresher) {
     return new AnAction[]{new ShowAllSubmittedFilesAction(), new MergeSourceDetailsAction()};
   }
 
@@ -310,12 +328,13 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
   private class MyLogEntryHandler implements ISVNLogEntryHandler {
     private final ProgressIndicator myIndicator;
     private String myLastPath;
-    protected final ArrayList<VcsFileRevision> myResult;
+    protected final Consumer<VcsFileRevision> myResult;
+    private VcsFileRevision myPrevious;
     private final SVNRevision myPegRevision;
     private final String myUrl;
     private int myMergeLevel;
 
-    public MyLogEntryHandler(final String url, final SVNRevision pegRevision, String lastPath, final ArrayList<VcsFileRevision> result) {
+    public MyLogEntryHandler(final String url, final SVNRevision pegRevision, String lastPath, final Consumer<VcsFileRevision> result) {
       myLastPath = lastPath;
       myIndicator = ProgressManager.getInstance().getProgressIndicator();
       myResult = result;
@@ -361,9 +380,10 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
       }
       final SvnFileRevision revision = createRevision(logEntry, copyPath);
       if (myMergeLevel >= 0) {
-        addToListByLevel((SvnFileRevision) myResult.get(myResult.size() - 1), revision, myMergeLevel);
+        addToListByLevel((SvnFileRevision) myPrevious, revision, myMergeLevel);
       } else {
-        myResult.add(revision);
+        myResult.consume(revision);
+        myPrevious = revision;
       }
       if (logEntry.hasChildren()) {
         ++ myMergeLevel;
@@ -394,7 +414,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
   }
 
   private class RepositoryLogEntryHandler extends MyLogEntryHandler {
-    public RepositoryLogEntryHandler(final String url, final SVNRevision pegRevision, String lastPath, final ArrayList<VcsFileRevision> result) {
+    public RepositoryLogEntryHandler(final String url, final SVNRevision pegRevision, String lastPath, final Consumer<VcsFileRevision> result) {
       super(url, pegRevision, lastPath, result);
     }
 

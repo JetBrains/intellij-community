@@ -75,23 +75,15 @@ public class ControlFlowStatementWithoutBracesInspection
                 final PsiIfStatement ifStatement = (PsiIfStatement)statement;
                 if ("if".equals(elementText)) {
                     statementWithoutBraces = ifStatement.getThenBranch();
-                    // special casing to avoid "else" on new line
-                    final PsiElement[] children = ifStatement.getChildren();
-                    final StringBuilder newStatementText = new StringBuilder();
-                    for (PsiElement child : children) {
-                        if (child instanceof PsiWhiteSpace) {
-                            continue;
-                        }
-                        if (child != statementWithoutBraces) {
-                            newStatementText.append(child.getText());
-                        } else {
-                            newStatementText.append("{\n");
-                            newStatementText.append(child.getText());
-                            newStatementText.append("\n}");
-                        }
+                    if (statementWithoutBraces == null) {
+                        return;
                     }
-                    replaceStatement(ifStatement, newStatementText.toString());
-                    return;
+                    final PsiElement nextSibling =
+                            statementWithoutBraces.getNextSibling();
+                    if (nextSibling instanceof PsiWhiteSpace) {
+                        // to avoid "else" on new line
+                        nextSibling.delete();
+                    }
                 } else {
                     statementWithoutBraces = ifStatement.getElseBranch();
                 }

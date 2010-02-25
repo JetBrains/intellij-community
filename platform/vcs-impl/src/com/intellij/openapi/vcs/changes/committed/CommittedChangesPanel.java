@@ -152,7 +152,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
               }.callMe();
             }
           };
-          final BufferedListConsumer<CommittedChangeList> bufferedListConsumer = new BufferedListConsumer<CommittedChangeList>(30, appender);
+          final BufferedListConsumer<CommittedChangeList> bufferedListConsumer = new BufferedListConsumer<CommittedChangeList>(30, appender,-1);
 
           myProvider.loadCommittedChanges(mySettings, myLocation, myMaxCount, new AsynchConsumer<CommittedChangeList>() {
             public void finished() {

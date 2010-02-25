@@ -24,6 +24,7 @@ import com.intellij.lang.properties.psi.PropertyStub;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -72,16 +73,9 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
   }
 
   public void setValue(@NotNull String value) throws IncorrectOperationException {
-    StringBuilder escapedName = new StringBuilder(value.length());
-    for (int i = 0; i < value.length(); i++) {
-      char c = value.charAt(i);
-      if (c == '\n' && (i == 0 || value.charAt(i - 1) != '\\')) {
-        escapedName.append('\\');
-      }
-      escapedName.append(c);
-    }
+    String escapedName = PropertiesElementFactory.escapeValue(value);
     ASTNode node = getValueNode();
-    PropertyImpl property = (PropertyImpl)PropertiesElementFactory.createProperty(getProject(), "xxx", escapedName.toString());
+    PropertyImpl property = (PropertyImpl)PropertiesElementFactory.createProperty(getProject(), "xxx", escapedName);
     ASTNode valueNode = property.getValueNode();
     if (node == null) {
       if (valueNode != null) {
@@ -228,6 +222,117 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
       }
     }
     return out.toString();
+  }
+  public static TextRange trailingSpaces(String s) {
+    if (s == null) {
+      return null;
+    }
+    int off = 0;
+    int len = s.length();
+    int startSpaces = -1;
+
+    while (off < len) {
+      char aChar = s.charAt(off++);
+      if (aChar == '\\') {
+        if (startSpaces == -1) startSpaces = off-1;
+        aChar = s.charAt(off++);
+        if (aChar == 'u') {
+          // Read the xxxx
+          int value = 0;
+          boolean error = false;
+          for (int i = 0; i < 4; i++) {
+            aChar = s.charAt(off++);
+            switch (aChar) {
+              case '0':
+              case '1':
+              case '2':
+              case '3':
+              case '4':
+              case '5':
+              case '6':
+              case '7':
+              case '8':
+              case '9':
+                value = (value << 4) + aChar - '0';
+                break;
+              case 'a':
+              case 'b':
+              case 'c':
+              case 'd':
+              case 'e':
+              case 'f':
+                value = (value << 4) + 10 + aChar - 'a';
+                break;
+              case 'A':
+              case 'B':
+              case 'C':
+              case 'D':
+              case 'E':
+              case 'F':
+                value = (value << 4) + 10 + aChar - 'A';
+                break;
+              default:
+                int start = off - i - 1;
+                int end = start + 4 < s.length() ? start + 4 : s.length();
+                i=4;
+                error = true;
+                off = end;
+                startSpaces = -1;
+                break;
+            }
+          }
+          if (!error) {
+            if (Character.isWhitespace(value)) {
+              if (startSpaces == -1) {
+                startSpaces = off-1;
+              }
+            }
+            else {
+              startSpaces = -1;
+            }
+          }
+        }
+        else if (aChar == '\n') {
+          // escaped linebreak: skip whitespace in the beginning of next line
+          while (off < len && (s.charAt(off) == ' ' || s.charAt(off) == '\t')) {
+            off++;
+          }
+        }
+        else if (aChar == 't') {
+          if (startSpaces == -1) startSpaces = off;
+        }
+        else if (aChar == 'r') {
+          if (startSpaces == -1) startSpaces = off;
+        }
+        else if (aChar == 'n') {
+          if (startSpaces == -1) startSpaces = off;
+        }
+        else if (aChar == 'f') {
+          if (startSpaces == -1) startSpaces = off;
+        }
+        else {
+          if (Character.isWhitespace(aChar)) {
+            if (startSpaces == -1) {
+              startSpaces = off-1;
+            }
+          }
+          else {
+            startSpaces = -1;
+          }
+        }
+      }
+      else {
+        if (Character.isWhitespace(aChar)) {
+          if (startSpaces == -1) {
+            startSpaces = off-1;
+          }
+        }
+        else {
+          startSpaces = -1;
+        }
+      }
+    }
+    return startSpaces == -1 ? null : new TextRange(startSpaces, len);
   }
 
   @Nullable

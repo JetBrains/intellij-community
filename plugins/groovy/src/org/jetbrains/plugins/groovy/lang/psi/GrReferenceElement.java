@@ -19,6 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiQualifiedReference;
 import com.intellij.psi.PsiType;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -46,4 +47,6 @@ public interface GrReferenceElement extends GroovyPsiElement, PsiPolyVariantRefe
 
   @Nullable
   GrTypeArgumentList getTypeArgumentList();
+
+  void processVariants(Consumer<Object> consumer);
 }

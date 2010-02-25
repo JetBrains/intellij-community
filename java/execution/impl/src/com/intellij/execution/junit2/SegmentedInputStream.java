@@ -19,6 +19,7 @@ import com.intellij.rt.execution.junit.segments.Packet;
 import com.intellij.rt.execution.junit.segments.PacketProcessor;
 import com.intellij.rt.execution.junit.segments.SegmentedStream;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.containers.HashMap;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -108,7 +109,9 @@ public class SegmentedInputStream extends InputStream {
   }
 
   public int available() throws IOException {
-    
+
+    final HashMap<String, String> map = new HashMap<String, String>();
+    map.keySet();
     while (mySourceStream.ready()) {
      
       while(myStartupPassed < SegmentedStream.STARTUP_MESSAGE.length()) {
@@ -131,8 +134,8 @@ public class SegmentedInputStream extends InputStream {
       final Integer packetRead = readControlSequence();
       if (packetRead != null) {
         // push back quoted slash
-        mySourceStream.pushBack(b);
         mySourceStream.pushBack(packetRead);
+        mySourceStream.pushBack(b);
         return 1;
       }
     }

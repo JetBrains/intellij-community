@@ -29,7 +29,7 @@ public interface VcsHistoryProvider extends VcsProviderMarker {
 
   VcsDependentHistoryComponents getUICustomization(final VcsHistorySession session, final JComponent forShortcutRegistration);
 
-  AnAction[] getAdditionalActions(final FileHistoryPanel panel);
+  AnAction[] getAdditionalActions(final Runnable refresher);
 
   /**
    * Returns whether the history provider submits the custom-formatted date
@@ -53,9 +53,7 @@ public interface VcsHistoryProvider extends VcsProviderMarker {
   @CalledInBackground
   VcsHistorySession createSessionFor(FilePath filePath) throws VcsException;
 
-  //return null if your revisions cannot be tree
-  @Nullable
-  HistoryAsTreeProvider getTreeHistoryProvider();
+  void reportAppendableHistory(final FilePath path, final VcsAppendableHistorySessionPartner partner) throws VcsException;
 
   boolean supportsHistoryForDirectories();
 }

@@ -23,17 +23,18 @@ import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
-import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.ResolveKind.*;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
+
+import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.ResolveKind.*;
 
 /**
  * @author ven
@@ -110,6 +111,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
     return true;
   }
 
+  @NotNull
   public GroovyResolveResult[] getCandidates() {
     return myCandidates.toArray(new GroovyResolveResult[myCandidates.size()]);
   }

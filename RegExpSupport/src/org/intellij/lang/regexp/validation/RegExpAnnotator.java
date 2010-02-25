@@ -30,12 +30,13 @@ import org.intellij.lang.regexp.RegExpLanguageHost;
 import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.*;
 import org.intellij.lang.regexp.psi.impl.RegExpPropertyImpl;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class RegExpAnnotator extends RegExpElementVisitor implements Annotator {
     private AnnotationHolder myHolder;
 
-    public void annotate(PsiElement psiElement, AnnotationHolder holder) {
+    public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
         assert myHolder == null : "unsupported concurrent annotator invocation";
         try {
             myHolder = holder;
@@ -157,6 +158,12 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
                 if (atoms.length == 1 && atoms[0] instanceof RegExpGroup) {
                     myHolder.createWarningAnnotation(group, "Redundant group nesting");
                 }
+            }
+        }
+        if (group.isPythonNamedGroup()) {
+            RegExpLanguageHost host = findRegExpHost(group);
+            if (host == null || !host.supportsPythonNamedGroups()) {
+                myHolder.createErrorAnnotation(group, "This named group syntax is not supported");
             }
         }
     }

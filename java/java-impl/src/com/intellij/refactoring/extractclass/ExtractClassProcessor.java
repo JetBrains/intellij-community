@@ -225,20 +225,23 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     if (delegationRequired) {
       buildDelegate();
     }
-    super.performRefactoring(usageInfos);
-    if (myNewVisibility == null) return;
+    final Set<PsiMember> members = new HashSet<PsiMember>();
     for (PsiMethod method : methods) {
       final PsiMethod member = psiClass.findMethodBySignature(method, false);
       if (member != null) {
-        VisibilityUtil.fixVisibility(usageInfos, member, myNewVisibility);
+        members.add(member);
       }
     }
-
     for (PsiField field : fields) {
       final PsiField member = psiClass.findFieldByName(field.getName(), false);
       if (member != null) {
-        VisibilityUtil.fixVisibility(usageInfos, member, myNewVisibility);
+        members.add(member);
       }
+    }
+    super.performRefactoring(usageInfos);
+    if (myNewVisibility == null) return;
+    for (PsiMember member : members) {
+      VisibilityUtil.fixVisibility(usageInfos, member, myNewVisibility);
     }
   }
 

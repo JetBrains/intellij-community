@@ -73,7 +73,7 @@ public class LanguageFolding extends LanguageExtension<FoldingBuilder> {
       return ((FoldingBuilderEx)builder).buildFoldRegions(root, document, quick);
     }
     final ASTNode astNode = root.getNode();
-    if (astNode == null) {
+    if (astNode == null || builder == null) {
       return FoldingDescriptor.EMPTY;
     }
 

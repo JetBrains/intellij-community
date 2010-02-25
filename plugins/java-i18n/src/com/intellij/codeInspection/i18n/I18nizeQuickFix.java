@@ -124,7 +124,7 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
 
     if (!CodeInsightUtilBase.preparePsiElementForWrite(literalExpression)) return;
     for (PropertiesFile file : propertiesFiles) {
-      if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+      if (file.findPropertyByKey(dialog.getKey()) == null && !CodeInsightUtilBase.prepareFileForWrite(file)) return;
     }
 
     CommandProcessor.getInstance().executeCommand(project, new Runnable(){
@@ -149,7 +149,6 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
     VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) {
       PsiFile originalFile = psiFile.getOriginalFile();
-      if (originalFile == null) return null;
       virtualFile = originalFile.getVirtualFile();
       if (virtualFile == null) return null;
     }

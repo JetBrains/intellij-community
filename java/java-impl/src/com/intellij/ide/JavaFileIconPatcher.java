@@ -63,14 +63,14 @@ public class JavaFileIconPatcher implements FileIconPatcher {
         // prefer icon of the class named after file
         final String fileName = file.getNameWithoutExtension();
         for (PsiClass aClass : classes) {
-          if (!(aClass instanceof SyntheticElement) && Comparing.strEqual(aClass.getName(), fileName)) {
+          if (aClass instanceof SyntheticElement) {
+            return baseIcon;
+          }
+          if (Comparing.strEqual(aClass.getName(), fileName)) {
             return aClass.getIcon(flags);
           }
         }
-        final PsiClass lastClass = classes[classes.length - 1];
-        if (!(lastClass instanceof SyntheticElement)) {
-          return lastClass.getIcon(flags);
-        }
+        return classes[classes.length - 1].getIcon(flags);
       }
     }
     return baseIcon;

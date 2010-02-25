@@ -16,9 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -39,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.completion.getters.ClassesGetter;
 import org.jetbrains.plugins.groovy.lang.completion.handlers.AfterNewClassInsertHandler;
 import org.jetbrains.plugins.groovy.lang.completion.handlers.ArrayInsertHandler;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -46,9 +45,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -76,7 +77,49 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
   private static final String[] THIS_SUPER = {"this", "super"};
 
+  private static boolean isReferenceInNewExpression(PsiElement reference) {
+    if (!(reference instanceof GrCodeReferenceElement)) return false;
+
+    PsiElement parent = reference.getParent();
+    while (parent instanceof GrCodeReferenceElement) parent = parent.getParent();
+    return parent instanceof GrNewExpression;
+  }
+
   public GroovyCompletionContributor() {
+    extend(CompletionType.BASIC, psiElement(PsiElement.class), new CompletionProvider<CompletionParameters>() {
+      @Override
+      protected void addCompletions(@NotNull CompletionParameters parameters,
+                                    ProcessingContext context,
+                                    @NotNull final CompletionResultSet result) {
+        final PsiElement position = parameters.getPosition();
+        final PsiElement reference = position.getParent();
+        if (reference == null) return;
+        if (isReferenceInNewExpression(reference)) {
+          //reference in new Expression
+          ((GrCodeReferenceElement)reference).processVariants(new Consumer<Object>() {
+            public void consume(Object element) {
+              if (element instanceof PsiClass) {
+                final PsiClass clazz = (PsiClass)element;
+                final MutableLookupElement<PsiClass> lookupElement = LookupElementFactory.getInstance().createLookupElement(clazz);
+                result.addElement(GroovyCompletionUtil.setTailTypeForConstructor(clazz, lookupElement));
+              }
+              else {
+                result.addElement(LookupItemUtil.objectToLookupItem(element));
+              }
+            }
+          });
+
+        }
+        else if (reference instanceof GrReferenceElement) {
+          ((GrReferenceElement)reference).processVariants(new Consumer<Object>() {
+            public void consume(Object element) {
+              result.addElement(LookupItemUtil.objectToLookupItem(element));
+            }
+          });
+        }
+      }
+    });
+
     extend(CompletionType.SMART, AFTER_NEW, new CompletionProvider<CompletionParameters>(false) {
       public void addCompletions(@NotNull final CompletionParameters parameters,
                                  final ProcessingContext matchingContext,

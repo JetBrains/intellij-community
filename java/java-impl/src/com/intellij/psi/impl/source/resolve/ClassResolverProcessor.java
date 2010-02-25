@@ -133,6 +133,14 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
       return Domination.DOMINATES;
     }
 
+    // everything wins over class from default package
+    boolean isDefault = StringUtil.getPackageName(fqName).length() == 0;
+    boolean otherDefault = otherQName != null && StringUtil.getPackageName(otherQName).length() == 0;
+    if (isDefault && !otherDefault) return Domination.DOMINATED_BY;
+    if (!isDefault && otherDefault) {
+      return Domination.DOMINATES;
+    }
+
     // single import wins over on-demand
     boolean myOnDemand = isOnDemand(myCurrentFileContext, aClass);
     boolean otherOnDemand = isOnDemand(info.getCurrentFileResolveScope(), otherClass);
@@ -141,13 +149,6 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
       return Domination.DOMINATES;
     }
 
-    // everything wins over class from default package
-    boolean isDefault = StringUtil.getPackageName(fqName).length() == 0;
-    boolean otherDefault = otherQName != null && StringUtil.getPackageName(otherQName).length() == 0;
-    if (isDefault && !otherDefault) return Domination.DOMINATED_BY;
-    if (!isDefault && otherDefault) {
-      return Domination.DOMINATES;
-    }
     return Domination.EQUAL;
   }
 

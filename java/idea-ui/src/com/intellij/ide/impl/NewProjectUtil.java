@@ -25,16 +25,15 @@ import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
@@ -132,11 +131,13 @@ public class NewProjectUtil {
           // ensure the dialog is shown after all startup activities are done
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
+              if (newProject.isDisposed()) return;
               if (need2OpenProjectStructure) {
                 ModulesConfigurator.showDialog(newProject, null, null, true);
               }
               ApplicationManager.getApplication().invokeLater(new Runnable() {
                 public void run() {
+                  if (newProject.isDisposed()) return;
                   final ToolWindow toolWindow = ToolWindowManager.getInstance(newProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
                   if (toolWindow != null) {
                     toolWindow.activate(null);
@@ -167,7 +168,7 @@ public class NewProjectUtil {
 
     ProjectRootManagerEx rootManager = ProjectRootManagerEx.getInstanceEx(project);
     rootManager.setProjectJdk(jdk);
-    LanguageLevel level = getDefaultLanguageLevel(versionString);
+    LanguageLevel level = LanguageLevelUtil.getDefaultLanguageLevel(versionString);
     LanguageLevelProjectExtension ext = LanguageLevelProjectExtension.getInstance(project);
     if (level.compareTo(ext.getLanguageLevel()) < 0) {
       ext.setLanguageLevel(level);
@@ -186,25 +187,4 @@ public class NewProjectUtil {
     }
   }
 
-  private static LanguageLevel getDefaultLanguageLevel(@NotNull String versionString) {
-    if (isOfVersionOrHigher(versionString, "1.7") || isOfVersionOrHigher(versionString, "7.0")) {
-      return LanguageLevel.JDK_1_7;
-    }
-    if (isOfVersionOrHigher(versionString, "1.6") || isOfVersionOrHigher(versionString, "6.0")) {
-      return LanguageLevel.JDK_1_6;
-    }
-    if (isOfVersionOrHigher(versionString, "1.5") || isOfVersionOrHigher(versionString, "5.0")) {
-      return LanguageLevel.JDK_1_5;
-    }
-
-    if (isOfVersionOrHigher(versionString, "1.4")) {
-      return LanguageLevel.JDK_1_4;
-    }
-
-    return LanguageLevel.JDK_1_3;
-  }
-
-  private static boolean isOfVersionOrHigher(@NotNull String versionString, String checkedVersion) {
-    return JavaSdk.getInstance().compareTo(versionString, checkedVersion) >= 0;
-  }
 }

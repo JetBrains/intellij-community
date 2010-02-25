@@ -35,6 +35,12 @@ public class MoveToTabAction extends BaseViewAction {
     }
 
     Grid grid = context.findGridFor(content[0]);
+    if (grid == null) {
+      setEnabled(e, false);
+      return;
+    }
+
+
     Tab tab = context.getTabFor(grid);
 
     if (ViewContext.TAB_TOOLBAR_PLACE.equals(e.getPlace())) {

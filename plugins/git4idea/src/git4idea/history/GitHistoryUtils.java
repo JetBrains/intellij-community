@@ -17,6 +17,7 @@ package git4idea.history;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -25,10 +26,14 @@ import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.text.StringTokenizer;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.*;
 import git4idea.commands.GitCommand;
+import git4idea.commands.GitLineHandler;
+import git4idea.commands.GitLineHandlerAdapter;
 import git4idea.commands.GitSimpleHandler;
 import org.jetbrains.annotations.Nullable;
 
@@ -115,6 +120,103 @@ public class GitHistoryUtils {
     return new ItemLatestState(new GitRevisionNumber(hash, commitDate), lines[2].charAt(0) != 'D', false);
   }
 
+  public static void history(final Project project, FilePath path, final Consumer<GitFileRevision> consumer,
+                             final Consumer<VcsException> exceptionConsumer) throws VcsException {
+    // adjust path using change manager
+    path = getLastCommitName(project, path);
+    final VirtualFile root = GitUtil.getGitRoot(path);
+    GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
+    h.setNoSSH(true);
+    h.setStdoutSuppressed(true);
+    h.addParameters("-M", "--follow", "--name-only",
+                    "--pretty=format:%H%x00%ct%x00%an%x20%x3C%ae%x3E%x00%cn%x20%x3C%ce%x3E%x00%s%n%n%b%x00", "--encoding=UTF-8");
+    h.endOptions();
+    h.addRelativePaths(path);
+
+    final String prefix = root.getPath() + "/";
+    final MyTokenAccomulator accomulator = new MyTokenAccomulator(6);
+
+    final Consumer<List<String>> resultAdapter = new Consumer<List<String>>() {
+      public void consume(List<String> result) {
+        final GitRevisionNumber revision = new GitRevisionNumber(result.get(0), GitUtil.parseTimestamp(result.get(1)));
+        final String author = GitUtil.adjustAuthorName(result.get(2), result.get(3));
+        final String message = result.get(4).trim();
+
+        String path = "";
+        try {
+          path = GitUtil.unescapePath(result.get(5));
+        }
+        catch (VcsException e) {
+          exceptionConsumer.consume(e);
+        }
+        final FilePath revisionPath = VcsUtil.getFilePathForDeletedFile(prefix + path, false);
+        consumer.consume(new GitFileRevision(project, revisionPath, revision, author, message, null));
+      }
+    };
+
+    final Semaphore semaphore = new Semaphore();
+    h.addLineListener(new GitLineHandlerAdapter() {
+      @Override
+      public void onLineAvailable(String line, Key outputType) {
+        final List<String> result = accomulator.acceptLine(line);
+        if (result != null) {
+          resultAdapter.consume(result);
+        }
+      }
+      @Override
+      public void startFailed(Throwable exception) {
+        exceptionConsumer.consume(new VcsException(exception));
+      }
+
+      @Override
+      public void processTerminated(int exitCode) {
+        super.processTerminated(exitCode);
+        semaphore.up();
+      }
+    });
+    semaphore.down();
+    h.start();
+    semaphore.waitFor();
+  }
+
+  private static class MyTokenAccomulator {
+    private int myCnt;
+    private List<String> mySb;
+    private final int myMax;
+
+    private MyTokenAccomulator(final int max) {
+      myMax = max;
+      mySb = new ArrayList<String>(6);
+      myCnt = 0;
+    }
+
+    @Nullable
+    public List<String> acceptLine(final String s) {
+      StringTokenizer tk = new StringTokenizer(s.trim(), "\u0000", false);
+      List<String> result = null;
+      while (tk.hasMoreElements()) {
+        final String token = tk.nextToken();
+        final List<String> curResult = acceptPieces(token);
+        if (curResult != null) {
+          result = curResult;
+        }
+      }
+      return result;
+    }
+
+    @Nullable
+    private List<String> acceptPieces(final String s) {
+      mySb.add(s);
+      ++ myCnt;
+      if (myMax == myCnt) {
+        myCnt = 0;
+        final List<String> result = mySb;
+        mySb = new ArrayList<String>(6);
+        return result;
+      }
+      return null;
+    }
+  }
 
   /**
    * Get history for the file
