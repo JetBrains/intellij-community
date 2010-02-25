@@ -15,17 +15,14 @@
  */
 package com.intellij.psi.impl.source.tree.java;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.impl.source.tree.*;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 
 public class ImportStatementElement extends ImportStatementBaseElement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.ImportStatementElement");
-
   public ImportStatementElement() {
-    super(IMPORT_STATEMENT);
+    super(JavaElementType.IMPORT_STATEMENT);
   }
-
 
   public ASTNode findChildByRole(int role) {
     final ASTNode result = super.findChildByRole(role);
@@ -34,7 +31,7 @@ public class ImportStatementElement extends ImportStatementBaseElement {
       default:
         return null;
       case ChildRole.IMPORT_REFERENCE:
-        return findChildByType(JAVA_CODE_REFERENCE);
+        return findChildByType(JavaElementType.JAVA_CODE_REFERENCE);
     }
   }
 }
