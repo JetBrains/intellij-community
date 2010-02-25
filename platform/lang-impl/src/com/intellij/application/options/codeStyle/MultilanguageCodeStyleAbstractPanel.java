@@ -16,7 +16,6 @@
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.application.options.CodeStyleAbstractPanel;
-import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -26,13 +25,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -69,7 +66,7 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
     updatePreviewEditor();
   }
 
-  protected abstract int getSettingsType();
+  protected abstract LanguageCodeStyleSettingsProvider.SettingsType getSettingsType();
 
   @Override
   protected String getPreviewText() {

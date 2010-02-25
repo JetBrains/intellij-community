@@ -72,8 +72,8 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
   }
 
   @Override
-  protected int getSettingsType() {
-    return LanguageCodeStyleSettingsProvider.BLANK_LINE_SETTINGS;
+  protected LanguageCodeStyleSettingsProvider.SettingsType getSettingsType() {
+    return LanguageCodeStyleSettingsProvider.SettingsType.BLANK_LINE_SETTINGS;
   }
 
   private JPanel createBlankLinesPanel() {

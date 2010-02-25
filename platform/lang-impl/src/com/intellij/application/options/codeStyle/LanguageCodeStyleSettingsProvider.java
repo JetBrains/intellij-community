@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,10 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Vector;
+import java.util.ArrayList;
 
 /**
  * Base class and extension point for code style settings shared between multiple languages
@@ -29,28 +31,26 @@ import java.util.Vector;
  * @author rvishnyakov
  */
 public abstract class LanguageCodeStyleSettingsProvider {
-
-  public final static int BLANK_LINE_SETTINGS = 1;
-  public final static int INDENT_AND_BRACES_SETTINGS = 2;
-  public final static int SPACING_SETTINGS = 3;
-
+  public enum SettingsType {
+    BLANK_LINE_SETTINGS, INDENT_AND_BRACES_SETTINGS, SPACING_SETTINGS
+  }
+  
   public static final ExtensionPointName<LanguageCodeStyleSettingsProvider> EP_NAME =
     ExtensionPointName.create("com.intellij.langCodeStyleSettingsProvider");
 
   public abstract LanguageFileType getLanguageFileType();
 
-  public abstract String getCodeSample(int settingsType);
+  public abstract String getCodeSample(@NotNull SettingsType settingsType);
 
   public static LanguageFileType[] getLanguageFileTypes() {
-    Vector<LanguageFileType> langFileTypes = new Vector<LanguageFileType>();
+    ArrayList<LanguageFileType> langFileTypes = new ArrayList<LanguageFileType>();
     for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(EP_NAME)) {
       langFileTypes.add(provider.getLanguageFileType());
     }
-    LanguageFileType fileType;
-    return langFileTypes.toArray(new LanguageFileType[0]);
+    return langFileTypes.toArray(new LanguageFileType[langFileTypes.size()]);
   }
 
-  public static String getCodeSample(Language lang, int settingsType) {
+  public static @Nullable String getCodeSample(Language lang, @NotNull SettingsType settingsType) {
     for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(EP_NAME)) {
       if (provider.getLanguageFileType().getLanguage().equals(lang)) {
         return provider.getCodeSample(settingsType);
@@ -59,7 +59,7 @@ public abstract class LanguageCodeStyleSettingsProvider {
     return null;
   }
 
-  public static LanguageFileType getFileType(String langName) {
+  public static @Nullable LanguageFileType getFileType(String langName) {
     for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(EP_NAME)) {
       if (langName.equals(provider.getLanguageFileType().getLanguage().getDisplayName())) {
         return provider.getLanguageFileType();

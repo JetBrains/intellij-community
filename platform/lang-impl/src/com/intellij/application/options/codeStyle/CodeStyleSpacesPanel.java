@@ -28,8 +28,8 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel {
   }
 
   @Override
-  protected int getSettingsType() {
-    return LanguageCodeStyleSettingsProvider.SPACING_SETTINGS;
+  protected LanguageCodeStyleSettingsProvider.SettingsType getSettingsType() {
+    return LanguageCodeStyleSettingsProvider.SettingsType.SPACING_SETTINGS;
   }
 
   private static final String AROUND_OPERATORS = ApplicationBundle.message("group.spaces.around.operators");

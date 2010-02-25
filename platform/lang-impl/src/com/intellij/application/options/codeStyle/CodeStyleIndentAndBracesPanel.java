@@ -127,8 +127,8 @@ public class CodeStyleIndentAndBracesPanel extends MultilanguageCodeStyleAbstrac
   }
 
   @Override
-  protected int getSettingsType() {
-    return LanguageCodeStyleSettingsProvider.INDENT_AND_BRACES_SETTINGS;
+  protected LanguageCodeStyleSettingsProvider.SettingsType getSettingsType() {
+    return LanguageCodeStyleSettingsProvider.SettingsType.INDENT_AND_BRACES_SETTINGS;
   }
 
   private Component createKeepWhenReformatingPanel() {
