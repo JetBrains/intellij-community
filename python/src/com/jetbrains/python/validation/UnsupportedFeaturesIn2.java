@@ -30,14 +30,14 @@ public class UnsupportedFeaturesIn2 extends PyAnnotator {
   @Override
   public void visitPyDictCompExpression(PyDictCompExpression node) {
     if (isPy2(node)) {
-      getHolder().createWarningAnnotation(node, "Dictionary comprehension not supported in Python2").registerFix(new ConvertDictCompIntention());
+      getHolder().createWarningAnnotation(node, "Dictionary comprehension is not supported in Python 2").registerFix(new ConvertDictCompIntention());
     }
   }
 
   @Override
   public void visitPySetLiteralExpression(PySetLiteralExpression node) {
     if (isPy2(node)) {
-      getHolder().createWarningAnnotation(node, "Python2 not supported set literal expressions").registerFix(new ConvertSetLiteralIntention());
+      getHolder().createWarningAnnotation(node, "Python 2 does not support set literal expressions").registerFix(new ConvertSetLiteralIntention());
     }
   }
 
@@ -51,7 +51,7 @@ public class UnsupportedFeaturesIn2 extends PyAnnotator {
           element = element.getNextSibling();
         }
         if (element != null && "as".equals(element.getText())) {
-          getHolder().createWarningAnnotation(node, "Python2 not supported such syntax").registerFix(new ReplaceExceptPartIntention());
+          getHolder().createWarningAnnotation(node, "Python 2 does not support this syntax").registerFix(new ReplaceExceptPartIntention());
         }
       }
     }
@@ -82,7 +82,7 @@ public class UnsupportedFeaturesIn2 extends PyAnnotator {
         if ("super".equals(name)) {
           PyArgumentList argumentList = node.getArgumentList();
           if (argumentList != null && argumentList.getArguments().length == 0) {
-            getHolder().createWarningAnnotation(node, "super() should have arguments in Python2");
+            getHolder().createWarningAnnotation(node, "super() should have arguments in Python 2");
           }
         }
       }
