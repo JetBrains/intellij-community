@@ -1,17 +1,17 @@
 package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
 import com.intellij.util.Time;
 import com.intellij.util.WaitFor;
-import com.intellij.util.ui.UIUtil;
 import junit.framework.TestSuite;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
+import java.lang.reflect.InvocationTargetException;
 
 public class TreeUiTest extends AbstractTreeBuilderTest {
 
@@ -778,6 +778,59 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     }, "getChildren", new NodeElement("jetbrains"));
   }
 
+  public void testBigTreeUpdate() throws Exception {
+    Node msg = myRoot.addChild("Messages");
+
+    buildSiblings(msg, 0, 1, null, null);
+
+    doAndWaitForBuilder(new Runnable() {
+      public void run() {
+        getBuilder().getUi().activate(true);
+      }
+    });
+
+    buildNode("Messages", false);
+
+    assertTree("-/\n" +
+               " -Messages\n" +
+               "  -File 0\n" +
+               "   message 1 for 0\n" +
+               "   message 2 for 0\n" +
+               "  -File 1\n" +
+               "   message 1 for 1\n" +
+               "   message 2 for 1\n");
+
+
+    buildSiblings(msg, 2, 1000, new Runnable() {
+      public void run() {
+        getBuilder().queueUpdate();
+      }
+    }, null);
+
+    waitBuilderToCome();
+  }
+
+  private void buildSiblings(final Node node, final int start, final int end, final Runnable eachRunnable, final Runnable endRunnable) throws InvocationTargetException, InterruptedException {
+    SwingUtilities.invokeAndWait(new Runnable() {
+      public void run() {
+        for (int i = start; i <= end; i++) {
+          Node eachFile = node.addChild("File " + i);
+          myAutoExpand.add(eachFile.getElement());
+          eachFile.addChild("message 1 for " + i);
+          eachFile.addChild("message 2 for " + i);
+
+          if (eachRunnable != null) {
+            eachRunnable.run();
+          }
+        }
+
+        if (endRunnable != null) {
+          endRunnable.run();
+        }
+      }
+    });
+  }
+
   private void runAndInterrupt(final Runnable action, final String interruptAction, final Object interruptElement) throws Exception {
     myElementUpdate.clear();
 
@@ -1447,6 +1500,11 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     public void testSelectWhenUpdatesArePending() throws Exception {
       // doesn't make sense in pass-through mode
     }
+
+    @Override
+    public void testBigTreeUpdate() throws Exception {
+      // doesn't make sense in pass-thorught mode
+    }
   }
 
   public static class YieldingUpdate extends TreeUiTest {
@@ -1475,6 +1533,11 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     public void testNoInfiniteSmartExpand() throws Exception {
       //todo
     }
+
+    @Override
+    public void testBigTreeUpdate() throws Exception {
+      //to slow, tested the same in VeryQuickBgLoadingTest
+    }
   }
 
   public static class QuickBgLoadingSyncUpdate extends TreeUiTest {
@@ -1494,8 +1557,40 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     }
 
     @Override
-    public void testStickyLoadingNodeIssue() throws Exception {
-      super.testStickyLoadingNodeIssue();
+    public void testBigTreeUpdate() throws Exception {
+      //to slow, tested the same in VeryQuickBgLoadingTest
+    }
+
+  }
+
+  public static class VeryQuickBgLoadingSyncUpdate extends TreeUiTest {
+    public VeryQuickBgLoadingSyncUpdate() {
+      super(false, true);
+    }
+
+    @Override
+    protected int getNodeDescriptorUpdateDelay() {
+      return 0;
+    }
+
+    @Override
+    protected int getChildrenLoadingDelay() {
+      return 0;
+    }
+
+    @Override
+    public void testNoInfiniteSmartExpand() throws Exception {
+      // todo;
+    }
+
+    @Override
+    public void testReleaseBuilderDuringUpdate() throws Exception {
+      // todo
+    }
+
+    @Override
+    public void testReleaseBuilderDuringGetChildren() throws Exception {
+      // todo
     }
   }
 
@@ -1505,6 +1600,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     suite.addTestSuite(SyncUpdate.class);
     suite.addTestSuite(YieldingUpdate.class);
     suite.addTestSuite(BgLoadingSyncUpdate.class);
+    suite.addTestSuite(VeryQuickBgLoadingSyncUpdate.class);
     suite.addTestSuite(QuickBgLoadingSyncUpdate.class);
     return suite;
   }
