@@ -29,7 +29,7 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel {
 
   @Override
   protected int getSettingsType() {
-    return LanguageCodeStyleSettingsProvider.SPACE_SETTINGS;
+    return LanguageCodeStyleSettingsProvider.SPACING_SETTINGS;
   }
 
   private static final String AROUND_OPERATORS = ApplicationBundle.message("group.spaces.around.operators");
