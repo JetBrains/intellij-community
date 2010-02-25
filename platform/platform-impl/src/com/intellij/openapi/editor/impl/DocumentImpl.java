@@ -41,6 +41,7 @@ import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -226,6 +227,11 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     synchronized(myRangeMarkers) {
       myRangeMarkers.put(rangeMarker, null);
     }
+  }
+
+  @TestOnly
+  public Collection<RangeMarkerEx> getRangeMarkers() {
+    return myRangeMarkers.keySet();
   }
 
   @NotNull

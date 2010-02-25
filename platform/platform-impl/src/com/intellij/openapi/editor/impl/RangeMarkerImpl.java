@@ -103,7 +103,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   }
 
   public final void documentChanged(DocumentEvent e) {
-    int modCount = this.modCount++;
+    int modCount = ++this.modCount;
     int oldStart = myStart;
     int oldEnd = myEnd;
     int docLength = myDocument.getTextLength();
@@ -118,13 +118,14 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
       isValid = false;
       return;
     }
+    String markerBefore = toString();
     changedUpdateImpl(e);
     if (isValid && (myStart > myEnd || myStart < 0 || myEnd > docLength)) {
-      LOG.error("RangeMarker" + (isExpandToLeft ? "[" : "(") + oldStart + ", " + oldEnd + (isExpandToRight ? "]" : ")") +
-                " update failed. Event = " + e + ". Result[" + myStart + ", " + myEnd + "], " +
+      LOG.error("Update failed. Event = " + e + ". " +
                 "old doc length=" + docLength + "; real doc length = "+myDocument.getTextLength()+
                 "; old mod count="+modCount+"; mod count="+this.modCount+
-                "; "+getClass());
+                "; "+getClass()+"." +
+                " Before update: '"+markerBefore+"'; After update: '"+this+"'");
       isValid = false;
     }
   }

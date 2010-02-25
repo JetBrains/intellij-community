@@ -85,7 +85,7 @@ class DiffRangeMarker extends RangeMarkerImpl {
       notifier.myClientCount++;
     }
 
-    public static void removeClient(Document document) {
+    private static void removeClient(Document document) {
       InvalidRangeDispatcher notifier = document.getUserData(KEY);
       notifier.onClientRemoved(document);
     }

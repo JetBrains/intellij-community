@@ -37,6 +37,7 @@ public class CodeStyleMainPanel extends JPanel {
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
   private final CodeStyleSchemesModel myModel;
   private final CodeStyleSettingsPanelFactory myFactory;
+  private final CodeStyleSchemesPanel mySchemesPanel;
 
   @NonNls
   private static final String WAIT_CARD = "CodeStyleSchemesConfigurable.$$$.Wait.placeholder.$$$";
@@ -46,19 +47,18 @@ public class CodeStyleMainPanel extends JPanel {
     super(new BorderLayout());
     myModel = model;
     myFactory = factory;
-
-    final CodeStyleSchemesPanel schemesPanel = new CodeStyleSchemesPanel(model);
+    mySchemesPanel = new CodeStyleSchemesPanel(model);
 
     model.addListener(new CodeStyleSettingsListener(){
       public void currentSchemeChanged(final Object source) {
-        if (source != schemesPanel) {
-          schemesPanel.onSelectedSchemeChanged();
+        if (source != mySchemesPanel) {
+          mySchemesPanel.onSelectedSchemeChanged();
         }
         onCurrentSchemeChanged();
       }
 
       public void schemeListChanged() {
-        schemesPanel.resetSchemesCombo();
+        mySchemesPanel.resetSchemesCombo();
       }
 
       public void currentSettingsChanged() {
@@ -66,7 +66,7 @@ public class CodeStyleMainPanel extends JPanel {
       }
 
       public void usePerProjectSettingsOptionChanged() {
-        schemesPanel.usePerProjectSettingsOptionChanged();
+        mySchemesPanel.usePerProjectSettingsOptionChanged();
       }
 
       public void schemeChanged(final CodeStyleScheme scheme) {
@@ -76,7 +76,7 @@ public class CodeStyleMainPanel extends JPanel {
 
     addWaitCard();
 
-    add(schemesPanel.getPanel(), BorderLayout.NORTH);
+    add(mySchemesPanel.getPanel(), BorderLayout.NORTH);
 
     DetailsComponent detComp = new DetailsComponent();
     detComp.setPaintBorder(false);
@@ -85,8 +85,8 @@ public class CodeStyleMainPanel extends JPanel {
 
     add(detComp.getComponent(), BorderLayout.CENTER);
 
-    schemesPanel.resetSchemesCombo();
-    schemesPanel.onSelectedSchemeChanged();
+    mySchemesPanel.resetSchemesCombo();
+    mySchemesPanel.onSelectedSchemeChanged();
     onCurrentSchemeChanged();
 
   }
@@ -174,6 +174,8 @@ public class CodeStyleMainPanel extends JPanel {
       panel.setModel(myModel);
       mySettingsPanels.put(name, panel);
       mySettingsPanel.add(scheme.getName(), panel);
+      mySchemesPanel.setLanguageComboVisible(panel.isMultilanguage());
+      mySchemesPanel.setCodeStyleSettingsPanel(panel);
     }
 
     return mySettingsPanels.get(name);

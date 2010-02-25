@@ -17,20 +17,21 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiKeyword;
-import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
 
 /**
  *  @author dsl
  */
-public class PsiThrowsListImpl extends ReferenceListElement implements Constants {
+public class PsiThrowsListImpl extends ReferenceListElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiThrowsListImpl");
 
   public PsiThrowsListImpl() {
-    super(THROWS_LIST);
+    super(JavaElementType.THROWS_LIST);
   }
 
   protected String getKeywordText() {
@@ -38,7 +39,7 @@ public class PsiThrowsListImpl extends ReferenceListElement implements Constants
   }
 
   protected IElementType getKeywordType() {
-    return THROWS_KEYWORD;
+    return JavaTokenType.THROWS_KEYWORD;
   }
 
   public ASTNode findChildByRole(int role) {
@@ -48,20 +49,20 @@ public class PsiThrowsListImpl extends ReferenceListElement implements Constants
         return null;
 
       case ChildRole.THROWS_KEYWORD:
-        return findChildByType(THROWS_KEYWORD);
+        return findChildByType(JavaTokenType.THROWS_KEYWORD);
     }
   }
 
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
-    if (i == THROWS_KEYWORD) {
+    if (i == JavaTokenType.THROWS_KEYWORD) {
       return ChildRole.THROWS_KEYWORD;
     }
-    else if (i == COMMA) {
+    else if (i == JavaTokenType.COMMA) {
       return ChildRole.COMMA;
     }
-    else if (i == JAVA_CODE_REFERENCE) {
+    else if (i == JavaElementType.JAVA_CODE_REFERENCE) {
       return ChildRole.REFERENCE_IN_LIST;
     }
     else {

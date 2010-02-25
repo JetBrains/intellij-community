@@ -124,10 +124,12 @@ public class TestsPacketsReceiver implements PacketProcessor, Disposable {
 
   public void notifyTestStart(ObjectReader reader) {
     myCurrentTest = reader.readObject();
+    /*
     final JUnitRunningModel model = getModel();
     if (model != null && myCurrentTest.getParent() == null) {
       getDynamicParent(model).addChild(myCurrentTest);
     }
+    */
   }
 
   private TestProxy getDynamicParent(JUnitRunningModel model) {

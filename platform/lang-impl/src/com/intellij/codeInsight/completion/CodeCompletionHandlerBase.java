@@ -415,16 +415,19 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
           map.addOffset(key, injectedEditor.logicalPositionToOffset(injectedEditor.hostToInjected(oldEditor.offsetToLogicalPosition(oldMap.getOffset(key)))));
         }
         CompletionContext newContext = new CompletionContext(context.project, injectedEditor, injectedFile, map);
-        PsiElement element = findElementAt(injectedFile, newContext.getStartOffset());
-        if (element == null) {
-          final String allDoc = hostFile.getViewProvider().getDocument().getText();
-          String docText = allDoc.substring(Math.max(0, context.getStartOffset() - 10), Math.min(allDoc.length(), context.getStartOffset() + 10));
+        int injectedOffset = newContext.getStartOffset();
+        PsiElement element = findElementAt(injectedFile, injectedOffset);
 
-          LOG.error("offset " + newContext.getStartOffset() + " at:\n" + "text=\"" + injectedFile.getText() + "\"\n" + "instance=" +
-                    injectedFile + "\n" + "patcher=" + patcher + "\n" + "docText=" + docText);
+        int toHost = injectedLanguageManager == null ? hostStartOffset : injectedLanguageManager.injectedToHost(injectedFile, injectedOffset);
+        // maybe injected fragment is ended before hostStartOffset
+        if (element != null && toHost == hostStartOffset) {
+          EditorFactory.getInstance().releaseEditor(editor);
+          return Pair.create(newContext, element);
         }
-        EditorFactory.getInstance().releaseEditor(editor);
-        return Pair.create(newContext, element);
+        else {
+          PsiElement elementAfterCommit = findElementAt(hostFile, hostStartOffset);
+          fileCopy = elementAfterCommit == null ? oldFileCopy : elementAfterCommit.getContainingFile();
+        }
       }
       EditorFactory.getInstance().releaseEditor(editor);
     }

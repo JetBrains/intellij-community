@@ -1,25 +1,37 @@
 package com.intellij.lang.properties;
 
-import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.duplicatePropertyInspection.DuplicatePropertyInspection;
-import com.intellij.lang.properties.TrailingSpacesInPropertyInspection;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 
-public class TrailingSpacesInPropertyInspectionTest extends LightDaemonAnalyzerTestCase {
+public class TrailingSpacesInPropertyInspectionTest extends UsefulTestCase {
+  private CodeInsightTestFixture myFixture;
 
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[] {new TrailingSpacesInPropertyInspection()};
+  protected void setUp() throws Exception {
+    super.setUp();
+    final TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder();
+
+    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
+    myFixture.setTestDataPath(PluginPathManager.getPluginHomePath("properties") + "/testData");
+    myFixture.setUp();
   }
 
   @Override
-  protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("properties") + "/testData";
+  protected void tearDown() throws Exception {
+    myFixture.tearDown();
+    myFixture = null;
+    super.tearDown();
   }
 
   public void testSimple() throws Exception{
-    doTest("/propertiesFile/highlighting/trailingSpaces.properties",true,false);
+    myFixture.enableInspections(new TrailingSpacesInPropertyInspection());
+    VirtualFile file = myFixture.copyFileToProject("/propertiesFile/highlighting/trailingSpaces.properties");
+    myFixture.configureFromExistingVirtualFile(file);
+    myFixture.checkHighlighting(true, false, true);
   }
 }

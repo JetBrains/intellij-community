@@ -130,14 +130,14 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
   }
 
   @NotNull
-  public TextRange injectedToHost(@NotNull PsiElement element, @NotNull TextRange textRange) {
-    ProperTextRange.assertProperRange(textRange);
-    PsiFile file = element.getContainingFile();
-    if (file == null) return textRange;
-    Document document = PsiDocumentManager.getInstance(element.getProject()).getCachedDocument(file);
-    if (!(document instanceof DocumentWindowImpl)) return textRange;
+  public TextRange injectedToHost(@NotNull PsiElement injectedContext, @NotNull TextRange injectedTextRange) {
+    ProperTextRange.assertProperRange(injectedTextRange);
+    PsiFile file = injectedContext.getContainingFile();
+    if (file == null) return injectedTextRange;
+    Document document = PsiDocumentManager.getInstance(injectedContext.getProject()).getCachedDocument(file);
+    if (!(document instanceof DocumentWindowImpl)) return injectedTextRange;
     DocumentWindowImpl documentWindow = (DocumentWindowImpl)document;
-    return documentWindow.injectedToHost(textRange);
+    return documentWindow.injectedToHost(injectedTextRange);
   }
   public int injectedToHost(@NotNull PsiElement element, int offset) {
     PsiFile file = element.getContainingFile();
