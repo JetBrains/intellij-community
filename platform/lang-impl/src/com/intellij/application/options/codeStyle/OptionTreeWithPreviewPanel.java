@@ -51,13 +51,12 @@ import java.util.Arrays;
 /**
  * @author max
  */
-public abstract class OptionTreeWithPreviewPanel extends CodeStyleAbstractPanel {
+public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleAbstractPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.CodeStyleSpacesPanel");
   private final JTree myOptionsTree;
   private final HashMap myKeyToFieldMap = new HashMap();
   private final ArrayList myKeys = new ArrayList();
   private final JPanel myPanel = new JPanel(new GridBagLayout());
-  private static LanguageFileType myFileType = StdFileTypes.JSP;
 
   public OptionTreeWithPreviewPanel(CodeStyleSettings settings) {
     super(settings);
@@ -182,22 +181,11 @@ public abstract class OptionTreeWithPreviewPanel extends CodeStyleAbstractPanel 
     }
   }
 
-  protected EditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
-    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-    if (project == null) {
-      project = ProjectManager.getInstance().getDefaultProject();
-    }
-    return myFileType.getEditorHighlighter(project, null, scheme);
-  }
-
   protected abstract void initTables();
 
   protected int getRightMargin() {
     return -1;
   }
-
-  @NonNls
-  protected abstract String getPreviewText();
 
   protected void resetImpl(final CodeStyleSettings settings) {
     TreeModel treeModel = myOptionsTree.getModel();
@@ -548,11 +536,6 @@ public abstract class OptionTreeWithPreviewPanel extends CodeStyleAbstractPanel 
     public MyToggleTreeNode[] getGroup() {
       return ((IntSelectionOptionKey)myKey).getNodes();
     }
-  }
-
-  @NotNull
-  protected FileType getFileType() {
-    return myFileType;
   }
 
   public JComponent getInternalPanel() {

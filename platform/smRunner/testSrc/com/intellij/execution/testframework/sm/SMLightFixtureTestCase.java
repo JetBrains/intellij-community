@@ -68,15 +68,15 @@ public abstract class SMLightFixtureTestCase extends UsefulTestCase {
     setupFixtureWhenInitialized();
   }
 
-  protected void setupFixtureWhenInitialized() throws IOException {
-  }
-
   @Override
   protected void tearDown() throws Exception {
     myFixture.tearDown();
     myFixture = null;
 
     super.tearDown();
+  }
+
+  protected void setupFixtureWhenInitialized() throws IOException {
   }
 
   @Nullable

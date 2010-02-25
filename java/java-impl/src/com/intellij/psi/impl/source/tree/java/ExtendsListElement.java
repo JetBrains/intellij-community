@@ -16,7 +16,9 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.impl.source.tree.ChildRole;
@@ -29,7 +31,7 @@ public class ExtendsListElement extends ReferenceListElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.ExtendsListElement");
 
   public ExtendsListElement() {
-    super(EXTENDS_LIST);
+    super(JavaElementType.EXTENDS_LIST);
   }
 
   protected String getKeywordText() {
@@ -37,7 +39,7 @@ public class ExtendsListElement extends ReferenceListElement {
   }
 
   protected IElementType getKeywordType() {
-    return EXTENDS_KEYWORD;
+    return JavaTokenType.EXTENDS_KEYWORD;
   }
 
   public ASTNode findChildByRole(int role) {
@@ -47,20 +49,20 @@ public class ExtendsListElement extends ReferenceListElement {
         return null;
 
       case ChildRole.EXTENDS_KEYWORD:
-        return findChildByType(EXTENDS_KEYWORD);
+        return findChildByType(JavaTokenType.EXTENDS_KEYWORD);
     }
   }
 
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
-    if (i == EXTENDS_KEYWORD) {
+    if (i == JavaTokenType.EXTENDS_KEYWORD) {
       return ChildRole.EXTENDS_KEYWORD;
     }
-    else if (i == COMMA) {
+    else if (i == JavaTokenType.COMMA) {
       return ChildRole.COMMA;
     }
-    else if (i == JAVA_CODE_REFERENCE) {
+    else if (i == JavaElementType.JAVA_CODE_REFERENCE) {
       return ChildRole.REFERENCE_IN_LIST;
     }
     else {

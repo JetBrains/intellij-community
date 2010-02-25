@@ -64,7 +64,7 @@ public class PeriodicalTasksCloser implements ProjectManagerListener {
       myInterrupters.add(new Pair<String, Runnable>(name, runnable));
       return true;
     }
-  }       
+  }
 
   public void projectOpened(Project project) {
     synchronized (ourLock) {

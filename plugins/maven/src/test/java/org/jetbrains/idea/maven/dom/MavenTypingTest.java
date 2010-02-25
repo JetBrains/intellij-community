@@ -242,7 +242,7 @@ public class MavenTypingTest extends MavenDomTestCase {
 
   private void assertTypeResultInRegularFile(VirtualFile f, char c, String expected) throws IOException {
     type(f, c);
-    myCodeInsightFixture.checkResult(expected);
+    myFixture.checkResult(expected);
   }
 
   private void assertBackspaceResult(String xml) throws IOException {

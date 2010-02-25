@@ -101,7 +101,7 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
       LOG.info(e);
     }
     if (RECENT_FILE_MASKS.isEmpty()) {
-      RECENT_FILE_MASKS.add("*.properites");
+      RECENT_FILE_MASKS.add("*.properties");
       RECENT_FILE_MASKS.add("*.html");
       RECENT_FILE_MASKS.add("*.jsp");
       RECENT_FILE_MASKS.add("*.xml");

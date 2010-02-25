@@ -81,4 +81,13 @@ public class PersistentRangeMarker extends RangeMarkerImpl {
       invalidate();
     }
   }
+
+  @Override
+  public String toString() {
+    return "PersistentRangeMarker" +
+           (isGreedyToLeft() ? "[" : "(") +
+           (isValid() ? "valid" : "invalid") + "," + getStartOffset() + "," + getEndOffset() +
+           " " + myStartLine + ":" + myStartColumn + "-" + myEndLine + ":" + myEndColumn +
+           (isGreedyToRight() ? "]" : ")");
+  }
 }

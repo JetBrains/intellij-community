@@ -37,6 +37,11 @@ public class RegExpGroupImpl extends RegExpElementImpl implements RegExpGroup {
         return node != null && node.getElementType() == RegExpTT.GROUP_BEGIN;
     }
 
+    public boolean isSimple() {
+        final ASTNode node = getNode().getFirstChildNode();
+        return node != null && (node.getElementType() == RegExpTT.GROUP_BEGIN || node.getElementType() == RegExpTT.NON_CAPT_GROUP);
+    }
+
     public RegExpPattern getPattern() {
         final ASTNode node = getNode().findChildByType(RegExpElementTypes.PATTERN);
         return node != null ? (RegExpPattern)node.getPsi() : null;

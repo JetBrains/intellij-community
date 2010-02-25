@@ -17,12 +17,6 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.lifecycle.AtomicSectionsAware;
-import com.intellij.lifecycle.ControlledAlarmFactory;
-import com.intellij.lifecycle.SlowlyClosingAlarm;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
@@ -249,7 +243,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     final VcsInvalidated invalidated = dirtyScopeManager.retrieveScopes();
     if (invalidated == null || invalidated.isEmpty()) {
       // a hack here; but otherwise everything here should be refactored ;)
-      if (invalidated.isEmpty() && invalidated.isEverythingDirty()) {
+      if (invalidated != null && invalidated.isEmpty() && invalidated.isEverythingDirty()) {
         VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
       }
       return;
@@ -976,27 +970,41 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   private static class MyChangesDeltaForwarder implements PlusMinus<Pair<String, AbstractVcs>> {
-    private SlowlyClosingAlarm myAlarm;
+    //private SlowlyClosingAlarm myAlarm;
     private RemoteRevisionsCache myRevisionsCache;
     private final ProjectLevelVcsManager myVcsManager;
+    private ExecutorWrapper myExecutorWrapper;
+    private final ExecutorService myService;
+
 
     public MyChangesDeltaForwarder(final Project project, final ExecutorService service) {
-      myAlarm = ControlledAlarmFactory.createOnSharedThread(project, "changes delta consumer forwarder", service);
+      myService = service;
+      //myAlarm = ControlledAlarmFactory.createOnSharedThread(project, UpdateRequestsQueue.LOCAL_CHANGES_UPDATE, service);
+      myExecutorWrapper = new ExecutorWrapper(project, UpdateRequestsQueue.LOCAL_CHANGES_UPDATE);
       myRevisionsCache = RemoteRevisionsCache.getInstance(project);
       myVcsManager = ProjectLevelVcsManager.getInstance(project);
     }
 
     public void plus(final Pair<String, AbstractVcs> stringAbstractVcsPair) {
-      myAlarm.addRequest(new Runnable() {
+      myService.submit(new Runnable() {
         public void run() {
-          myRevisionsCache.plus(getCorrectedPair(stringAbstractVcsPair));
+          myExecutorWrapper.submit(new Consumer<AtomicSectionsAware>() {
+            public void consume(AtomicSectionsAware atomicSectionsAware) {
+              myRevisionsCache.plus(getCorrectedPair(stringAbstractVcsPair));
+            }
+          });
         }
       });
     }
 
     public void minus(final Pair<String, AbstractVcs> stringAbstractVcsPair) {
-      myAlarm.addRequest(new Runnable() {
+      myService.submit(new Runnable() {
         public void run() {
+          myExecutorWrapper.submit(new Consumer<AtomicSectionsAware>() {
+            public void consume(AtomicSectionsAware atomicSectionsAware) {
+              myRevisionsCache.minus(getCorrectedPair(stringAbstractVcsPair));
+            }
+          });
           myRevisionsCache.minus(getCorrectedPair(stringAbstractVcsPair));
         }
       });
