@@ -93,6 +93,7 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
-    return "FoldRegion (" + getStartOffset() + ":" + getEndOffset() + ")";
+    return "FoldRegion " + (isExpanded() ? "-" : "+") +
+           "(" + getStartOffset() + ":" + getEndOffset() + ")";
   }
 }

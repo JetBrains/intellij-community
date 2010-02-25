@@ -49,4 +49,12 @@ public class PersistentLineMarker extends RangeMarkerImpl {
       }
     }
   }
+
+  @Override
+  public String toString() {
+    return "PersistentLineMarker" +
+           (isGreedyToLeft() ? "[" : "(") +
+           (isValid() ? "valid" : "invalid") + "," + getStartOffset() + "," + getEndOffset() + " - " + myLine +
+           (isGreedyToRight() ? "]" : ")");
+  }
 }
