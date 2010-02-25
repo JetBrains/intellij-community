@@ -21,12 +21,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.*;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.ColumnInfo;
+import git4idea.GitFileRevision;
 import git4idea.actions.GitShowAllSubmittedFilesAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -60,8 +63,9 @@ public class GitHistoryProvider implements VcsHistoryProvider {
 
   /**
    * {@inheritDoc}
+   * @param refresher
    */
-  public AnAction[] getAdditionalActions(FileHistoryPanel panel) {
+  public AnAction[] getAdditionalActions(Runnable refresher) {
     return new AnAction[]{new GitShowAllSubmittedFilesAction(), new GitCopyHistoryRevisionNumberAction()};
   }
 
@@ -89,7 +93,7 @@ public class GitHistoryProvider implements VcsHistoryProvider {
       return null;
     }
     List<VcsFileRevision> revisions = GitHistoryUtils.history(project, filePath);
-    return new VcsHistorySession(revisions) {
+    return new VcsAbstractHistorySession(revisions) {
       @Nullable
       protected VcsRevisionNumber calcCurrentRevisionNumber() {
         try {
@@ -103,15 +107,43 @@ public class GitHistoryProvider implements VcsHistoryProvider {
           return null;
         }
       }
+
+      public HistoryAsTreeProvider getHistoryAsTreeProvider() {
+        return null;
+      }
     };
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  @Nullable
-  public HistoryAsTreeProvider getTreeHistoryProvider() {
-    return null;
+  public void reportAppendableHistory(final FilePath path, final VcsAppendableHistorySessionPartner partner) throws VcsException {
+    final VcsAbstractHistorySession emptySession = new VcsAbstractHistorySession(Collections.<VcsFileRevision>emptyList()) {
+      @Nullable
+      protected VcsRevisionNumber calcCurrentRevisionNumber() {
+        try {
+          return GitHistoryUtils.getCurrentRevision(project, GitHistoryUtils.getLastCommitName(project, path));
+        }
+        catch (VcsException e) {
+          // likely the file is not under VCS anymore.
+          if (log.isDebugEnabled()) {
+            log.debug("Unable to retrieve the current revision number", e);
+          }
+          return null;
+        }
+      }
+
+      public HistoryAsTreeProvider getHistoryAsTreeProvider() {
+        return null;
+      }
+    };
+    partner.reportCreatedEmptySession(emptySession);
+    GitHistoryUtils.history(project, path, new Consumer<GitFileRevision>() {
+      public void consume(GitFileRevision gitFileRevision) {
+        partner.acceptRevision(gitFileRevision);
+      }
+    }, new Consumer<VcsException>() {
+      public void consume(VcsException e) {
+        partner.reportException(e);
+      }
+    });
   }
 
   /**

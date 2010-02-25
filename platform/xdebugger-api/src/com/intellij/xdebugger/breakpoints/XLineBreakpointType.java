@@ -34,6 +34,15 @@ import java.util.List;
 import java.util.Collections;
 
 /**
+ * Implement this class to support new type of line breakpoints. An implementation should be registered in a plugin.xml:
+ * <p>
+ * &lt;extensions defaultExtensionNs="com.intellij"&gt;<br>
+ * &nbsp;&nbsp;&lt;xdebugger.breakpointType implementation="qualified-class-name"/&gt;<br>
+ * &lt;/extensions&gt;
+ *
+ * In order to support actual setting breakpoints in a debugging process create a {@link XBreakpointHandler} implementation and return it  
+ * from {@link com.intellij.xdebugger.XDebugProcess#getBreakpointHandlers()} method
+ *
  * @author nik
  */
 public abstract class XLineBreakpointType<P extends XBreakpointProperties> extends XBreakpointType<XLineBreakpoint<P>,P> {
@@ -42,16 +51,23 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   }
 
   /**
-   * @deprecated implement {@link XLineBreakpointType#canPutAt(com.intellij.openapi.vfs.VirtualFile, int, com.intellij.openapi.project.Project)} instead
+   * @deprecated implement {@link #canPutAt(com.intellij.openapi.vfs.VirtualFile, int, com.intellij.openapi.project.Project)} instead
    */
   public boolean canPutAt(@NotNull VirtualFile file, int line) {
     return false;
   }
 
+  /**
+   * Return <code>true<code> if breakpoint can be put on <code>line</code> in <code>file</code>
+   */
   public boolean canPutAt(@NotNull VirtualFile file, int line, @NotNull Project project) {
     return canPutAt(file, line);
   }
 
+  /**
+   * return non-null value if a breakpoint should have specific properties besides containing file and line. These properties will be stored in
+   * {@link XBreakpoint} instance and can be obtained by using {@link XBreakpoint#getProperties()} method
+   */
   public abstract P createBreakpointProperties(@NotNull VirtualFile file, int line);
 
   public String getDisplayText(final XLineBreakpoint<P> breakpoint) {

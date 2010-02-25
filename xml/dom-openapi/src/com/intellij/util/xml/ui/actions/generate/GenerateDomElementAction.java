@@ -26,6 +26,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * User: Sergey.Vasiliev
@@ -34,11 +37,17 @@ public class GenerateDomElementAction extends CodeInsightAction {
 
   protected final GenerateDomElementProvider myProvider;
 
-  public GenerateDomElementAction(final GenerateDomElementProvider generateProvider) {
+  public GenerateDomElementAction(@NotNull final GenerateDomElementProvider generateProvider, @Nullable Icon icon) {
     getTemplatePresentation().setDescription(generateProvider.getDescription());
     getTemplatePresentation().setText(generateProvider.getDescription());
+    getTemplatePresentation().setIcon(icon);
 
     myProvider = generateProvider;
+    
+  }
+
+  public GenerateDomElementAction(final GenerateDomElementProvider generateProvider) {
+      this(generateProvider, null);
   }
 
   protected CodeInsightActionHandler getHandler() {

@@ -23,6 +23,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Represents a breakpoint. This interface isn't supposed to be implemented by a plugin. In order to support breakpoint provide 
+ * {@link XBreakpointType} or {@link XLineBreakpointType} implementation
+ *
+ * @see XLineBreakpoint
+ * @see XBreakpointManager
  * @author nik
  */
 public interface XBreakpoint<P extends XBreakpointProperties> extends UserDataHolder {

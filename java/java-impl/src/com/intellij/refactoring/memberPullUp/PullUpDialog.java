@@ -170,8 +170,8 @@ public class PullUpDialog extends RefactoringDialog {
   private void updateMemberInfo() {
     final PsiClass targetClass = (PsiClass) myClassCombo.getSelectedItem();
     myMemberInfos = myMemberInfoStorage.getMemberInfosList(targetClass);
-    /*Set duplicated = myMemberInfoStorage.getDuplicatedMemberInfos(targetClass);
-    for (Iterator iterator = duplicated.getSectionsIterator(); getSectionsIterator.hasNext();) {
+    /*Set duplicate = myMemberInfoStorage.getDuplicatedMemberInfos(targetClass);
+    for (Iterator iterator = duplicate.getSectionsIterator(); getSectionsIterator.hasNext();) {
       ((MemberInfo) iterator.next()).setChecked(false);
     }*/
   }

@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -183,7 +184,7 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
   protected abstract List<PropertiesFile> getPropertiesFiles();
 
   public Object[] getVariants() {
-    Set<Object> variants = new THashSet<Object>(new TObjectHashingStrategy<Object>() {
+    final Set<Object> variants = new THashSet<Object>(new TObjectHashingStrategy<Object>() {
       public int computeHashCode(final Object object) {
         if (object instanceof Property) {
           final String key = ((Property)object).getKey();
@@ -201,16 +202,19 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
     });
     List<PropertiesFile> propertiesFileList = getPropertiesFiles();
     if (propertiesFileList == null) {
-      PsiManager psiManager = myElement.getManager();
-      ProjectFileIndex fileIndex = ProjectRootManager.getInstance(psiManager.getProject()).getFileIndex();
-      for (VirtualFile file : PropertiesFilesManager.getInstance(myElement.getProject()).getAllPropertiesFiles()) {
-        if (!file.isValid()) continue;
-        if (!fileIndex.isInContent(file)) continue; //multiple opened projects
-        PsiFile psiFile = psiManager.findFile(file);
-        if (!(psiFile instanceof PropertiesFile)) continue;
-        PropertiesFile propertiesFile = (PropertiesFile)psiFile;
-        addVariantsFromFile(propertiesFile, variants);
-      }
+      final PsiManager psiManager = myElement.getManager();
+      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(psiManager.getProject()).getFileIndex();
+      PropertiesFilesManager.getInstance(myElement.getProject()).processAllPropertiesFiles(new Processor<VirtualFile>() {
+        public boolean process(VirtualFile file) {
+          if (!file.isValid()) return true;
+          if (!fileIndex.isInContent(file)) return true; //multiple opened projects
+          PsiFile psiFile = psiManager.findFile(file);
+          if (!(psiFile instanceof PropertiesFile)) return true;
+          PropertiesFile propertiesFile = (PropertiesFile)psiFile;
+          addVariantsFromFile(propertiesFile, variants);
+          return true;
+        }
+      });
     }
     else {
       for (PropertiesFile propFile : propertiesFileList) {

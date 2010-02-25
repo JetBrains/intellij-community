@@ -79,7 +79,7 @@ public abstract class ResourceBundleManager {
   }
 
   @Nullable
-  public String suggestPropertyKey(final @NotNull String value) {
+  public String suggestPropertyKey(@NotNull final String value) {
     return null;
   }
 

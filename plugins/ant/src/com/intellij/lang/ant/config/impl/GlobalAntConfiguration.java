@@ -129,7 +129,7 @@ public class GlobalAntConfiguration implements ApplicationComponent, JDOMExterna
 
   public void addConfiguration(final AntInstallation ant) {
     if (getConfiguredAnts().containsKey(ant.getReference())) {
-      LOG.error("Duplicated name: " + ant.getName());
+      LOG.error("Duplicate name: " + ant.getName());
     }
     ANTS.getModifiableList(getProperties()).add(ant);
   }

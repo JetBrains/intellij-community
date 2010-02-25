@@ -41,8 +41,8 @@ public class GroovyFormattingModelBuilder implements FormattingModelBuilder {
     assert containingFile != null : element.getContainingFile();
     ASTNode astNode = containingFile.getNode();
     assert astNode != null;
-    return FormattingModelProvider.createFormattingModelForPsiFile(containingFile,
-            new GroovyBlock(astNode, null, Indent.getAbsoluteNoneIndent(), null, settings), settings);
+    final GroovyBlock block = new GroovyBlock(astNode, null, Indent.getAbsoluteNoneIndent(), null, settings);
+    return FormattingModelProvider.createFormattingModelForPsiFile(containingFile, block, settings);
   }
 
   @Nullable

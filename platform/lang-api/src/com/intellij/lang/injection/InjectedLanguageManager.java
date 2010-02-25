@@ -48,8 +48,8 @@ public abstract class InjectedLanguageManager implements ProjectComponent {
   public abstract PsiLanguageInjectionHost getInjectionHost(@NotNull PsiElement element);
 
   @NotNull
-  public abstract TextRange injectedToHost(@NotNull PsiElement element, @NotNull TextRange textRange);
-  public abstract int injectedToHost(@NotNull PsiElement element, int offset);
+  public abstract TextRange injectedToHost(@NotNull PsiElement injectedContext, @NotNull TextRange injectedTextRange);
+  public abstract int injectedToHost(@NotNull PsiElement injectedContext, int injectedOffset);
 
   /** @see com.intellij.lang.injection.MultiHostInjector#MULTIHOST_INJECTOR_EP_NAME */
   @Deprecated

@@ -22,6 +22,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -226,6 +227,16 @@ class WrapReturnValueDialog extends RefactoringDialog {
     UIUtil.setEnabled(myExistingClassPanel, useExistingClassButton.isSelected(), true);
     UIUtil.setEnabled(myNewClassPanel, createNewClassButton.isSelected(), true);
     UIUtil.setEnabled(myCreateInnerPanel, myCreateInnerClassButton.isSelected(), true);
+    final IdeFocusManager focusManager = IdeFocusManager.getInstance(myProject);
+    if (useExistingClassButton.isSelected()) {
+      focusManager.requestFocus(existingClassField, true);
+    }
+    else if (myCreateInnerClassButton.isSelected()) {
+      focusManager.requestFocus(myInnerClassNameTextField, true);
+    }
+    else {
+      focusManager.requestFocus(classNameField, true);
+    }
     validateButtons();
   }
 

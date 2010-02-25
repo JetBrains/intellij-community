@@ -24,16 +24,24 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
+import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependencyManagement;
+import org.jetbrains.idea.maven.dom.model.MavenDomParent;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.project.MavenId;
+import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenIcons;
 
 import javax.swing.*;
@@ -53,7 +61,7 @@ public class MavenDomGutterAnnotator implements Annotator {
         if (model != null) {
           String name = model.getName().getStringValue();
           if (!StringUtil.isEmptyOrSpaces(name)) {
-               return name;
+            return name;
           }
         }
       }
@@ -86,6 +94,16 @@ public class MavenDomGutterAnnotator implements Annotator {
       }
     };
 
+  private static final NotNullFunction<MavenDomProjectModel, Collection<? extends PsiElement>> MAVEN_PROJECT_CONVERTER =
+    new NotNullFunction<MavenDomProjectModel, Collection<? extends PsiElement>>() {
+
+      @NotNull
+      public Collection<? extends PsiElement> fun(final MavenDomProjectModel pointer) {
+        return ContainerUtil.createMaybeSingletonList(pointer.getXmlTag());
+      }
+    };
+
+
   private static void annotateDependencyUsages(@NotNull MavenDomDependency dependency, AnnotationHolder holder) {
     final XmlTag tag = dependency.getXmlTag();
     if (tag == null) return;
@@ -102,8 +120,6 @@ public class MavenDomGutterAnnotator implements Annotator {
         install(holder, dependency.getXmlTag());
     }
   }
-
-
 
   private static void annotateManagedDependency(MavenDomDependency dependency, AnnotationHolder holder) {
     final XmlTag tag = dependency.getXmlTag();
@@ -142,12 +158,64 @@ public class MavenDomGutterAnnotator implements Annotator {
       if (element instanceof MavenDomDependency) {
         MavenDomDependency dependency = (MavenDomDependency)element;
         if (isDependencyManagementSection(dependency)) {
-           annotateDependencyUsages(dependency, holder);
-        } else {
+          annotateDependencyUsages(dependency, holder);
+        }
+        else {
           annotateManagedDependency(dependency, holder);
         }
       }
+      else if (element instanceof MavenDomParent) {
+        annotateMavenDomParent((MavenDomParent)element, holder);
+      }
+      else if (element instanceof MavenDomProjectModel) {
+        annotateMavenDomProjectChildren((MavenDomProjectModel)element, holder);
+      }
     }
+  }
+
+  private static void annotateMavenDomParent(@NotNull MavenDomParent mavenDomParent, @NotNull AnnotationHolder holder) {
+    MavenDomProjectModel parent = findParent(mavenDomParent, mavenDomParent.getManager().getProject());
+
+    if (parent != null) {
+      NavigationGutterIconBuilder.create(MavenIcons.PARENT_PROJECT, MAVEN_PROJECT_CONVERTER).
+        setTargets(parent).
+        setTooltipText(MavenDomBundle.message("parent.pom.title")).
+        install(holder, mavenDomParent.getXmlElement());
+    }
+  }
+
+  private static void annotateMavenDomProjectChildren(MavenDomProjectModel model, AnnotationHolder holder) {
+    MavenProject mavenProject = MavenDomUtil.findProject(model);
+    if (mavenProject != null) {
+      final Project project = model.getManager().getProject();
+      Set<MavenProject> inheritors = MavenProjectsManager.getInstance(project).findInheritors(mavenProject);
+
+
+      List<MavenDomProjectModel> children = ContainerUtil.mapNotNull(inheritors, new Function<MavenProject, MavenDomProjectModel>() {
+        public MavenDomProjectModel fun(MavenProject childProject) {
+          return MavenDomUtil.getMavenDomProjectModel(project, childProject.getFile());
+        }
+      });
+      if (children.size() > 0) {
+        NavigationGutterIconBuilder.create(MavenIcons.CHILDREN_PROJECTS, MAVEN_PROJECT_CONVERTER).
+          setTargets(children).
+          setCellRenderer(RENDERER).
+          setPopupTitle(MavenDomBundle.message("navigate.children.poms.title")).
+          setTooltipText(MavenDomBundle.message("children.poms.title")).
+          install(holder, model.getXmlElement());
+      }
+    }
+  }
+
+  @Nullable
+  public static MavenDomProjectModel findParent(@NotNull MavenDomParent mavenDomParent, Project project) {
+    if (!DomUtil.hasXml(mavenDomParent)) return null;
+
+    MavenId id = new MavenId(mavenDomParent.getGroupId().getStringValue(), mavenDomParent.getArtifactId().getStringValue(),
+                             mavenDomParent.getVersion().getStringValue());
+    MavenProject mavenProject = MavenProjectsManager.getInstance(project).findProject(id);
+
+    return mavenProject != null ? MavenDomUtil.getMavenDomProjectModel(project, mavenProject.getFile()) : null;
   }
 
   private static boolean isDependencyManagementSection(@NotNull MavenDomDependency dependency) {

@@ -131,7 +131,7 @@ public class DocumentationComponent extends JPanel implements Disposable {
     myText = "";
     myEditorPane.setEditable(false);
     myEditorPane.setBackground(HintUtil.INFORMATION_COLOR);
-
+    myEditorPane.setEditorKit(UIUtil.getHTMLEditorKit());
     myScrollPane = new JScrollPane(myEditorPane);
     myScrollPane.setBorder(null);
 
@@ -269,7 +269,7 @@ public class DocumentationComponent extends JPanel implements Disposable {
       myForwardStack.clear();
     }
     updateControlState();
-    setData(element, text, !clean);
+    setData(element, text, clearHistory);
     if (clean) {
       myIsEmpty = false;
     }

@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.compiler;
 
+import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
@@ -27,19 +28,26 @@ import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.search.FilenameIndex;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.FactoryMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyFileTypeLoader;
+import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -55,6 +63,7 @@ import java.util.*;
 
 public class GroovyCompiler extends GroovyCompilerBase {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.compiler.GroovyCompiler");
+  private static final String AST_TRANSFORM_FILE_NAME = "org.codehaus.groovy.transform.ASTTransformation";
 
   public GroovyCompiler(Project project) {
     super(project);
@@ -167,6 +176,10 @@ public class GroovyCompiler extends GroovyCompilerBase {
             LOG.error(e);
             //prevent our PSI errors from failing the entire compilation
           }
+          catch (AssertionError e) {
+            LOG.error(e);
+            //prevent our PSI errors from failing the entire compilation
+          }
         }
 
         element.acceptChildren(this);
@@ -231,7 +244,33 @@ public class GroovyCompiler extends GroovyCompilerBase {
       return false;
     }
 
+    final GroovyCompilerConfiguration configuration = GroovyCompilerConfiguration.getInstance(myProject);
+    if (!configuration.transformsOk && needTransformCopying(compileScope)) {
+      final int result = Messages.showYesNoDialog(myProject,
+                                                  "You seem to have global Groovy AST transformations defined in your project,\n" +
+                                                  "but they won't be applied to your code because they are not marked as compiler resources.\n" +
+                                                  "Do you want to add them to compiler resource list?\n" +
+                                                  "(you can do it yourself later in Settings | Compiler | Resource patterns)", "AST Transformations found",
+                                                  GroovyIcons.GROOVY_ICON_32x32);
+      if (result == 0) {
+        CompilerConfiguration.getInstance(myProject).addResourceFilePattern(AST_TRANSFORM_FILE_NAME);
+      } else {
+        configuration.transformsOk = true;
+      }
+    }
+
     return true;
+  }
+
+  private boolean needTransformCopying(CompileScope compileScope) {
+    final CompilerConfiguration configuration = CompilerConfiguration.getInstance(myProject);
+    final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
+    for (VirtualFile file : FilenameIndex.getVirtualFilesByName(myProject, AST_TRANSFORM_FILE_NAME, GlobalSearchScope.projectScope(myProject))) {
+      if (compileScope.belongs(file.getUrl()) && index.isInSource(file) && !configuration.isResourceFile(file)) {
+        return true;
+      }
+    }
+    return false;
   }
 
 }

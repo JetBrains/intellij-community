@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -207,12 +208,13 @@ public class MethodResolverProcessor extends ResolverProcessor {
     return rType;
   }
 
+  @NotNull
   public GroovyResolveResult[] getCandidates() {
     if (!myCandidates.isEmpty()) {
       return filterCandidates();
     }
     if (!myInapplicableCandidates.isEmpty()) {
-      return ResolveUtil.filterSameSignatureCandidates(myInapplicableCandidates);
+      return ResolveUtil.filterSameSignatureCandidates(myInapplicableCandidates, myArgumentTypes != null ? myArgumentTypes.length : -1);
     }
     return GroovyResolveResult.EMPTY_ARRAY;
   }

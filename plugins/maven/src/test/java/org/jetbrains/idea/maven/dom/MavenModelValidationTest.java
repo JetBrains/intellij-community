@@ -164,7 +164,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
                      "    <version>1</version>" +
                      "  </parent>" +
                      "</project>");
-    checkHighlighting();
+    checkHighlighting(myProjectPom, true, false, true);
   }
 
   public void testAddingParentReadingProblemsToParentTag() throws Exception {

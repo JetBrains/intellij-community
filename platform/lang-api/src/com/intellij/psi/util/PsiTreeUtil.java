@@ -421,7 +421,7 @@ public class PsiTreeUtil {
     for (PsiElement root : psiRoots) {
       final PsiElement elementAt = root.findElementAt(offset);
       if (elementAt != null) {
-        final T parent = getParentOfType(elementAt, clazz);
+        final T parent = getParentOfType(elementAt, clazz, strictStart);
         if (parent != null) {
           final TextRange range = parent.getTextRange();
           if (!strictStart || range.getStartOffset() == offset) {

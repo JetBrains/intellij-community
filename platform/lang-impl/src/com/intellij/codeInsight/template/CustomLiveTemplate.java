@@ -26,7 +26,8 @@ import org.jetbrains.annotations.Nullable;
 public interface CustomLiveTemplate {
   ExtensionPointName<CustomLiveTemplate> EP_NAME = ExtensionPointName.create("com.intellij.customLiveTemplate");
 
-  boolean isApplicable(@NotNull String key, @NotNull CustomTemplateCallback callback);
+  @Nullable
+  String computeTemplateKey(@NotNull CustomTemplateCallback callback);
 
-  void execute(@NotNull String key, @NotNull CustomTemplateCallback callback, @Nullable TemplateInvokationListener listener);
+  void execute(String key, @NotNull CustomTemplateCallback callback, @Nullable TemplateInvokationListener listener);
 }

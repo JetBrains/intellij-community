@@ -20,6 +20,7 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -40,15 +41,16 @@ public class CustomTemplateCallback {
   private final Editor myEditor;
   private final PsiFile myFile;
   private int myStartOffset;
-  private int myStartLength;
   private Project myProject;
+  private RangeMarker myGlobalMarker;
 
-  private final Map<Object, MyCheckpoint> myCheckpoints = new HashMap<Object, MyCheckpoint>();
+  //private final Map<Object, MyCheckpoint> myCheckpoints = new HashMap<Object, MyCheckpoint>();
+  private final Map<Object, RangeMarker> myCheckpoints = new HashMap<Object, RangeMarker>();
 
-  private static class MyCheckpoint {
-    int myFixedLength = -1;
-    int myFixedOffset;
-  }
+  /*private static class MyCheckpoint {
+    int myFixedLength = null;
+    RangeMarker myFixedOffset;
+  }*/
 
   public CustomTemplateCallback(Editor editor, PsiFile file) {
     myEditor = editor;
@@ -59,7 +61,9 @@ public class CustomTemplateCallback {
 
   public void fixInitialEditorState() {
     myStartOffset = myEditor.getCaretModel().getOffset();
-    myStartLength = myEditor.getDocument().getCharsSequence().length();
+    myGlobalMarker = myEditor.getDocument().createRangeMarker(myStartOffset, myStartOffset);
+    myGlobalMarker.setGreedyToLeft(true);
+    myGlobalMarker.setGreedyToRight(true);
   }
 
   public boolean isLiveTemplateApplicable(@NotNull String key) {
@@ -128,11 +132,11 @@ public class CustomTemplateCallback {
     myTemplateManager.startTemplate(myEditor, template, false, predefinedVarValues, new TemplateEditingAdapter() {
       @Override
       public void templateFinished(Template template, boolean brokenOff) {
-        final int lengthAfter = myEditor.getDocument().getCharsSequence().length();
         final CodeStyleManager style = CodeStyleManager.getInstance(myProject);
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            style.reformatText(myFile, myStartOffset, myStartOffset + lengthAfter - myStartLength);
+            //style.reformatText(myFile, myStartOffset, myStartOffset + lengthAfter - myStartLength);
+            style.reformatText(myFile, myGlobalMarker.getStartOffset(), myGlobalMarker.getEndOffset());
           }
         });
         if (brokenOff) return;
@@ -150,10 +154,11 @@ public class CustomTemplateCallback {
   }
 
   public void fixStartOfTemplate(@NotNull Object key) {
-    MyCheckpoint checkpoint = new MyCheckpoint();
-    checkpoint.myFixedOffset = myEditor.getCaretModel().getOffset();
-    checkpoint.myFixedLength = myEditor.getDocument().getTextLength();
-    myCheckpoints.put(key, checkpoint);
+    int offset = myEditor.getCaretModel().getOffset();
+    RangeMarker marker = myEditor.getDocument().createRangeMarker(offset, offset);
+    marker.setGreedyToLeft(true);
+    marker.setGreedyToRight(true);
+    myCheckpoints.put(key, marker);
   }
 
   public void gotoEndOfTemplate(@NotNull Object key) {
@@ -161,20 +166,19 @@ public class CustomTemplateCallback {
   }
 
   public int getEndOfTemplate(@NotNull Object key) {
-    MyCheckpoint checkpoint = myCheckpoints.get(key);
-    if (checkpoint == null) {
+    RangeMarker marker = myCheckpoints.get(key);
+    if (marker == null) {
       throw new IllegalArgumentException();
     }
-    int length = myEditor.getDocument().getTextLength();
-    return checkpoint.myFixedOffset + length - checkpoint.myFixedLength;
+    return marker.getEndOffset();
   }
 
   public int getStartOfTemplate(@NotNull Object key) {
-    MyCheckpoint checkpoint = myCheckpoints.get(key);
-    if (checkpoint == null) {
+    RangeMarker marker = myCheckpoints.get(key);
+    if (marker == null) {
       throw new IllegalArgumentException();
     }
-    return checkpoint.myFixedOffset;
+    return marker.getStartOffset();
   }
 
   private static List<TemplateImpl> getMatchingTemplates(@NotNull String templateKey) {

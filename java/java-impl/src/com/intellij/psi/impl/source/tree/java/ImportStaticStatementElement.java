@@ -15,16 +15,15 @@
  */
 package com.intellij.psi.impl.source.tree.java;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.tree.ChildRoleBase;
 
 public class ImportStaticStatementElement extends ImportStatementBaseElement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.ImportStatementElement");
 
   public ImportStaticStatementElement() {
-    super(IMPORT_STATIC_STATEMENT);
+    super(JavaElementType.IMPORT_STATIC_STATEMENT);
   }
 
   public ASTNode findChildByRole(int role) {
@@ -35,12 +34,12 @@ public class ImportStaticStatementElement extends ImportStatementBaseElement {
         return null;
 
       case ChildRole.IMPORT_REFERENCE:
-        final ASTNode importStaticReference = findChildByType(IMPORT_STATIC_REFERENCE);
+        final ASTNode importStaticReference = findChildByType(JavaElementType.IMPORT_STATIC_REFERENCE);
         if (importStaticReference != null) {
           return importStaticReference;
         }
         else {
-          return findChildByType(JAVA_CODE_REFERENCE);
+          return findChildByType(JavaElementType.JAVA_CODE_REFERENCE);
         }
     }
   }
@@ -48,7 +47,7 @@ public class ImportStaticStatementElement extends ImportStatementBaseElement {
   public int getChildRole(ASTNode child) {
     final int role = super.getChildRole(child);
     if (role != ChildRoleBase.NONE) return role;
-    if (child.getElementType() == IMPORT_STATIC_REFERENCE) {
+    if (child.getElementType() == JavaElementType.IMPORT_STATIC_REFERENCE) {
       return ChildRole.IMPORT_REFERENCE;
     }
     else {

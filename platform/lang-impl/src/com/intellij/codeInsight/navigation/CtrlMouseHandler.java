@@ -347,8 +347,9 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
           return new InfoSingle (ref, resolvedElement);
         }
       }
-      targetElement = GotoDeclarationAction.findTargetElement(myProject, editor, offset);
-    } else if ( browseMode == BrowseMode.Implementation ) {
+      targetElement = GotoDeclarationAction.findTargetElementNoVS(myProject, editor, offset);
+    } 
+    else if ( browseMode == BrowseMode.Implementation ) {
       final PsiElement element = TargetElementUtilBase.getInstance().findTargetElement(editor, ImplementationSearcher.getFlags(), offset);
       PsiElement[] targetElements = new ImplementationSearcher() {
         @NotNull

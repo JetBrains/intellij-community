@@ -24,4 +24,6 @@ public interface RegExpGroup extends RegExpAtom {
 
     @Nullable
     RegExpPattern getPattern();
+
+    boolean isPythonNamedGroup();
 }

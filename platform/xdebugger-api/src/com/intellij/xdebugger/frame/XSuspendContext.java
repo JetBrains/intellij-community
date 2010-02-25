@@ -18,10 +18,16 @@ package com.intellij.xdebugger.frame;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Represents a suspended state of a debug process
+ *
  * @author nik
  */
 public abstract class XSuspendContext {
 
+  /**
+   * Returned execution stack will be selected by default in 'Frames' panel of 'Debug' tool window. Also it will be used to obtain current
+   * stack frame to perform 'Evaluate' action, for example
+   */
   @Nullable
   public XExecutionStack getActiveExecutionStack() {
     return null;

@@ -150,9 +150,8 @@ public interface JavaElementType {
       if(lexer.getTokenType() != JavaTokenType.LBRACE) return FATAL_ERROR;
       lexer.advance();
       int balance = 1;
-      IElementType type;
       while(true){
-        type = lexer.getTokenType();
+        IElementType type = lexer.getTokenType();
         if (type == null) break;
         if(balance == 0) return FATAL_ERROR;
         if (type == JavaTokenType.LBRACE) {

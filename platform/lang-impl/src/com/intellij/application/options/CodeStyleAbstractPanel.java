@@ -192,12 +192,12 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
 
           CodeStyleSettingsManager.getInstance(project).setTemporarySettings(clone);
-          CodeStyleManager.getInstance(project).reformat(psiFile);
+          PsiFile formatted = doReformat(project, psiFile);
           CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
 
           myEditor.getSettings().setTabSize(clone.getTabSize(getFileType()));
           Document document = myEditor.getDocument();
-          document.replaceString(0, document.getTextLength(), psiFile.getText());
+          document.replaceString(0, document.getTextLength(), formatted.getText());
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
@@ -207,6 +207,11 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   }
 
   protected abstract void prepareForReformat(PsiFile psiFile);
+
+  protected PsiFile doReformat(Project project, PsiFile psiFile) {
+    CodeStyleManager.getInstance(project).reformat(psiFile);
+    return psiFile;
+  }
 
   @NotNull
   protected abstract FileType getFileType();
@@ -312,5 +317,14 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
         }
       }
     }, 300);
+  }
+
+  /**
+   * Checks if the panel supports multiple languages (a particular language is selected on
+   * the main code style schemes panel).
+   * @return  False by default.
+   */
+  protected boolean isMultilanguage() {
+    return false;
   }
 }

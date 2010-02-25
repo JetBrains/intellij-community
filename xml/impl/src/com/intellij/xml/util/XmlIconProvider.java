@@ -20,6 +20,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -37,13 +38,18 @@ public class XmlIconProvider extends IconProvider implements DumbAware {
   @NonNls private static final String WSDL_FILE_EXTENSION = "wsdl";
 
   @Nullable
-  public Icon getIcon(@NotNull final PsiElement element, final int flags) {
+  public Icon getIcon(@NotNull final PsiElement element, final int _flags) {
     if (element instanceof XmlFile) {
       final VirtualFile vf = ((XmlFile)element).getVirtualFile();
       if (vf != null) {
         final String extension = vf.getExtension();
-        if (XSD_FILE_EXTENSION.equals(extension)) return ourXsdIcon;
-        if (WSDL_FILE_EXTENSION.equals(extension)) return ourWsdlIcon;
+        
+        if (XSD_FILE_EXTENSION.equals(extension)) {
+          return ElementBase.createLayeredIcon(ourXsdIcon, ElementBase.transformFlags(element, _flags));
+        }
+        if (WSDL_FILE_EXTENSION.equals(extension)) {
+          return ElementBase.createLayeredIcon(ourWsdlIcon, ElementBase.transformFlags(element, _flags));
+        }
       }
     }
     return null;

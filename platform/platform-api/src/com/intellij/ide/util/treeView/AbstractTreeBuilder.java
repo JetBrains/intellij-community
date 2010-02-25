@@ -406,6 +406,7 @@ public class AbstractTreeBuilder implements Disposable {
 
   @NotNull
   public final Set<Object> getSelectedElements() {
+    if (isDisposed()) return Collections.emptySet();
     return getUi().getSelectedElements();
   }
 

@@ -1,6 +1,6 @@
 <idea-plugin version="2">
   <name>SpellChecker</name>
-  <description>Spell checker plugin</description>
+  <description>Spellchecker plugin</description>
   <version>1.0</version>
   <vendor>JetBrains</vendor>
   <id>com.intellij.spellchecker</id>

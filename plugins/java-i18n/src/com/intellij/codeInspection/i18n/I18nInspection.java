@@ -48,6 +48,7 @@ import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
 import com.intellij.ui.AddDeleteListPanel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -86,6 +87,15 @@ public class I18nInspection extends BaseLocalInspectionTool {
 
   public I18nInspection() {
     cacheNonNlsCommentPattern();
+  }
+
+  @Override
+  public SuppressIntentionAction[] getSuppressActions(PsiElement element) {
+    SuppressIntentionAction[] actions = {};
+    if (myCachedNonNlsPattern != null) {
+      actions = new SuppressIntentionAction[]{new SuppressByCommentOutAction(nonNlsCommentPattern)};
+    }
+    return ArrayUtil.mergeArrays(actions, super.getSuppressActions(element), SuppressIntentionAction.class);
   }
 
   public void readSettings(Element node) throws InvalidDataException {
@@ -382,7 +392,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
   private class StringI18nVisitor extends JavaRecursiveElementVisitor {
     private final List<ProblemDescriptor> myProblems = new ArrayList<ProblemDescriptor>();
     private final InspectionManager myManager;
-    private boolean myOnTheFly;
+    private final boolean myOnTheFly;
 
     public StringI18nVisitor(final InspectionManager manager, boolean onTheFly) {
       myManager = manager;
@@ -445,8 +455,8 @@ public class I18nInspection extends BaseLocalInspectionTool {
     private boolean isNotConstantFieldInitializer(final PsiExpression expression) {
       PsiField parentField = expression.getParent() instanceof PsiField ? (PsiField) expression.getParent() : null;
       return parentField != null && expression == parentField.getInitializer() &&
-             parentField.getModifierList().hasModifierProperty(PsiModifier.FINAL) &&
-             parentField.getModifierList().hasModifierProperty(PsiModifier.STATIC);
+             parentField.hasModifierProperty(PsiModifier.FINAL) &&
+             parentField.hasModifierProperty(PsiModifier.STATIC);
     }
 
 
@@ -541,12 +551,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
   }
 
   public void cacheNonNlsCommentPattern() {
-    if (nonNlsCommentPattern.trim().length() == 0) {
-      myCachedNonNlsPattern = null;
-    }
-    else {
-      myCachedNonNlsPattern = Pattern.compile(nonNlsCommentPattern);
-    }
+    myCachedNonNlsPattern = nonNlsCommentPattern.trim().length() == 0 ? null : Pattern.compile(nonNlsCommentPattern);
   }
 
   private static boolean isClassRef(final PsiLiteralExpression expression, String value) {
@@ -567,8 +572,6 @@ public class I18nInspection extends BaseLocalInspectionTool {
       return true;
     }
 
-    /*HashSet<PsiClass> classes = new HashSet<PsiClass>();
-    return isClassNonNls(clazz, classes);*/
     return false;
   }
 
@@ -609,8 +612,8 @@ public class I18nInspection extends BaseLocalInspectionTool {
         return true;
       }
       if (ignoreAssignedToConstants &&
-          var.getModifierList().hasModifierProperty(PsiModifier.STATIC) &&
-          var.getModifierList().hasModifierProperty(PsiModifier.FINAL)) {
+          var.hasModifierProperty(PsiModifier.STATIC) &&
+          var.hasModifierProperty(PsiModifier.FINAL)) {
         return true;
       }
       nonNlsTargets.add(var);
@@ -767,7 +770,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
     }
     final PsiMethodCallExpression call = (PsiMethodCallExpression)grandparent;
     final PsiReferenceExpression methodExpression = call.getMethodExpression();
-    final @NonNls String methodName = methodExpression.getReferenceName();
+    @NonNls final String methodName = methodExpression.getReferenceName();
     if (methodName == null) {
       return false;
     }
@@ -846,7 +849,6 @@ public class I18nInspection extends BaseLocalInspectionTool {
   private static boolean isArgOfAssertStatement(PsiExpression expression) {
     return PsiTreeUtil.getParentOfType(expression, PsiAssertStatement.class, PsiClass.class) instanceof PsiAssertStatement;
   }
-
 
 
 }
