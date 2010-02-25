@@ -155,7 +155,12 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
             } else if (branches.length == 1) {
                 final RegExpAtom[] atoms = branches[0].getAtoms();
                 if (atoms.length == 1 && atoms[0] instanceof RegExpGroup) {
-                    myHolder.createWarningAnnotation(group, "Redundant group nesting");
+                  if (group.isSimple()) {
+                    final RegExpGroup innerGroup = (RegExpGroup)atoms[0];
+                    if (group.isCapturing() == innerGroup.isCapturing()) {
+                      myHolder.createWarningAnnotation(group, "Redundant group nesting");                      
+                    }
+                  }
                 }
             }
         }

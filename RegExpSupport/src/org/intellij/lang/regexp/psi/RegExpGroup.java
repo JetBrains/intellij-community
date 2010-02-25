@@ -19,6 +19,8 @@ import org.jetbrains.annotations.Nullable;
 
 public interface RegExpGroup extends RegExpAtom {
     boolean isCapturing();
+  
+    boolean isSimple();
 
     @Nullable
     RegExpPattern getPattern();
