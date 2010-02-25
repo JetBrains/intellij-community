@@ -693,12 +693,14 @@
     <iconProvider implementation="com.intellij.psi.impl.JavaDirectoryIconProvider" id="javaDirectory"/>
 
     <codeStyleSettingsProvider implementation="com.intellij.application.options.GenerationSettingsProvider"/>
-    <codeStyleSettingsProvider implementation="com.intellij.application.options.IndentAndBracesSettingsProvider"/>
+    <codeStyleSettingsProvider implementation="com.intellij.application.options.codeStyle.IndentAndBracesSettingsProvider"/>
     <codeStyleSettingsProvider implementation="com.intellij.application.options.WrappingSettingsProvider"/>
-    <codeStyleSettingsProvider implementation="com.intellij.application.options.BlankLinesSettingsProvider"/>
-    <codeStyleSettingsProvider implementation="com.intellij.application.options.SpacesSettingsProvider"/>
+    <codeStyleSettingsProvider implementation="com.intellij.application.options.codeStyle.BlankLinesSettingsProvider"/>
+    <codeStyleSettingsProvider implementation="com.intellij.application.options.codeStyle.SpacesSettingsProvider"/>
     <codeStyleSettingsProvider implementation="com.intellij.application.options.ImportsSettingsProvider"/>
     <codeStyleSettingsProvider implementation="com.intellij.application.options.JavadocSettingsProvider"/>
+
+    <langCodeStyleSettingsProvider implementation="com.intellij.ide.JavaLanguageCodeStyleSettingsProvider"/>
 
     <!-- new project wizard -->
     <wizardMode implementation="com.intellij.ide.util.newProjectWizard.modes.CreateFromScratchMode"/>
