@@ -107,6 +107,10 @@ public class PythonHighlightingTest extends PyLightFixtureTestCase {
     doTest();
   }
 
+  public void testUnsupportedFeaturesInPython2() throws Exception {
+    doTest(LanguageLevel.PYTHON26, true, false);
+  }
+
   public void testYieldInNestedFunction() throws Exception {
     // highlight func declaration first, lest we get an "Extra fragment highlighted" error.
     EditorColorsManager manager = EditorColorsManager.getInstance();

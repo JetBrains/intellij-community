@@ -35,6 +35,7 @@ public class PythonLanguage extends Language {
     _annotators.add(ImportAnnotator.class);
     _annotators.add(StringConstantAnnotator.class);
     _annotators.add(PyBuiltinAnnotator.class);
+    _annotators.add(UnsupportedFeaturesIn2.class);
   }
 
 
