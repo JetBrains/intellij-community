@@ -189,9 +189,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
   protected AnAction[] createActions() {
-    return new AnAction[]{
-      new MyOpenInEditorAction()
-    };
+    return AnAction.EMPTY_ARRAY;
   }
 
   private static void setupEditorDefault(EditorEx editor) {
@@ -505,7 +503,6 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
           offset = 0;
         }
         editorManager.closeFile(file);
-        assert newVFile != null;
         editorManager.openTextEditor(new OpenFileDescriptor(getProject(), newVFile, offset), focusEditor);
       }
     }
@@ -518,24 +515,4 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       }
     });
   }
-
-  private class MyOpenInEditorAction extends DumbAwareAction {
-
-    protected MyOpenInEditorAction() {
-      super("Open In Editor", null, null);
-      setShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F4, InputEvent.CTRL_MASK | InputEvent.ALT_MASK)));
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      openInEditor();
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      super.update(e);
-    }
-  }
-
-
 }
