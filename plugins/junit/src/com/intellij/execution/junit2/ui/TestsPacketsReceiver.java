@@ -126,7 +126,7 @@ public class TestsPacketsReceiver implements PacketProcessor, Disposable {
     myCurrentTest = reader.readObject();
     /*
     final JUnitRunningModel model = getModel();
-    if (model != null && myCurrentTest.getParent() == null) {
+    if (model != null && myCurrentTest.getParent() == null && model.getRoot() != myCurrentTest) {
       getDynamicParent(model).addChild(myCurrentTest);
     }
     */
