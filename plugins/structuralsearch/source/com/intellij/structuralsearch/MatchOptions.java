@@ -28,9 +28,10 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
   private boolean resultIsContextMatch = false;
   private FileType myFileType = StdFileTypes.JAVA;
   private int maxMatches = DEFAULT_MAX_MATCHES_COUNT;
-  public final static int DEFAULT_MAX_MATCHES_COUNT = 1000;
+  public static final int DEFAULT_MAX_MATCHES_COUNT = 1000;
 
-  private SearchScope scope, downUpMatchScope;
+  private SearchScope scope;
+  private SearchScope downUpMatchScope;
   private String searchCriteria = "";
   private Map<String,MatchVariableConstraint> variableConstraints;
 
@@ -199,28 +200,28 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
     if (attr!=null) {
       try {
         recursiveSearch = attr.getBooleanValue();
-      } catch(DataConversionException ex) {}
+      } catch(DataConversionException ignored) {}
     }
 
     attr = element.getAttribute(DISTINCT_ATTRIBUTE_NAME);
     if (attr!=null) {
       try {
         distinct = attr.getBooleanValue();
-      } catch(DataConversionException ex) {}
+      } catch(DataConversionException ignored) {}
     }
 
     attr = element.getAttribute(CASESENSITIVE_ATTRIBUTE_NAME);
     if (attr!=null) {
       try {
         caseSensitiveMatch = attr.getBooleanValue();
-      } catch(DataConversionException ex) {}
+      } catch(DataConversionException ignored) {}
     }
 
     attr = element.getAttribute(MAXMATCHES_ATTRIBUTE_NAME);
     if (attr!=null) {
       try {
         maxMatches = attr.getIntValue();
-      } catch(DataConversionException ex) {}
+      } catch(DataConversionException ignored) {}
     }
 
     attr = element.getAttribute(FILE_TYPE_ATTR_NAME);
@@ -236,7 +237,7 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
     // @TODO deserialize scope
 
     List elements = element.getChildren(CONSTRAINT_TAG_NAME);
-    if (elements!=null && elements.size()>0) {
+    if (elements!=null && !elements.isEmpty()) {
       for (final Object element1 : elements) {
         final MatchVariableConstraint constraint = new MatchVariableConstraint();
         constraint.readExternal((Element)element1);

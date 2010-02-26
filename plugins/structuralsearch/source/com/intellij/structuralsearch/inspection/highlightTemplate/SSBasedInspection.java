@@ -23,7 +23,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
@@ -38,6 +37,7 @@ import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.ConfigurationManager;
 import com.intellij.structuralsearch.plugin.ui.SearchContext;
+import com.intellij.util.PairProcessor;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +46,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
     
@@ -83,29 +82,27 @@ public class SSBasedInspection extends BaseJavaLocalInspectionTool {
   }
 
   @Nullable
-  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    Project project = file.getProject();
+  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull final InspectionManager manager, final boolean isOnTheFly) {
+    final Project project = file.getProject();
     if (compiledConfigurations == null) return null;
-    Collection<Pair<MatchResult,Configuration>> matches;
+    final List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
     try {
-      matches = new Matcher(project).findMatchesInFile(compiledConfigurations, file);
+      new Matcher(project).processMatchesInFile(compiledConfigurations, file, new PairProcessor<MatchResult, Configuration>() {
+        public boolean process(MatchResult matchResult, Configuration configuration) {
+          PsiElement element = matchResult.getMatch();
+          String name = configuration.getName();
+          LocalQuickFix fix = createQuickFix(project, matchResult, configuration);
+          ProblemDescriptor problemDescriptor = manager.createProblemDescriptor(element, name, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                                                                isOnTheFly);
+          problems.add(problemDescriptor);
+          return true;
+        }
+      });
+      return problems.toArray(new ProblemDescriptor[problems.size()]);
     }
     catch (StackOverflowError e) {
       return null;
     }
-
-    List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
-    for (Pair<MatchResult,Configuration> pair : matches) {
-      MatchResult matchResult = pair.first;
-      Configuration configuration = pair.second;
-      PsiElement element = matchResult.getMatch();
-      String name = configuration.getName();
-      LocalQuickFix fix = createQuickFix(project, matchResult, configuration);
-      ProblemDescriptor problemDescriptor = manager.createProblemDescriptor(element, name, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                                                            isOnTheFly);
-      problems.add(problemDescriptor);
-    }
-    return problems.toArray(new ProblemDescriptor[problems.size()]);
   }
 
   private static LocalQuickFix createQuickFix(final Project project, final MatchResult matchResult, final Configuration configuration) {

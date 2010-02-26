@@ -48,16 +48,16 @@ public class SearchCommand {
           findStarted();
         }
 
-            public void processFile(PsiFile element) {
-              final VirtualFile virtualFile = element.getVirtualFile();
-              if (virtualFile!=null)
-                progress.setText( SSRBundle.message("looking.in.progress.message",virtualFile.getPresentableName()) );
-            }
+        public void processFile(PsiFile element) {
+          final VirtualFile virtualFile = element.getVirtualFile();
+          if (virtualFile!=null)
+            progress.setText( SSRBundle.message("looking.in.progress.message",virtualFile.getPresentableName()) );
+        }
 
-            public void matchingFinished() {
-              findEnded();
-              progress.setText( SSRBundle.message("found.progress.message", count ) );
-            }
+        public void matchingFinished() {
+          findEnded();
+          progress.setText( SSRBundle.message("found.progress.message", count ) );
+        }
 
         public ProgressIndicator getProgressIndicator() {
           return progress;

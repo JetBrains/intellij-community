@@ -35,7 +35,7 @@ public class MatchingVisitor {
   protected boolean result;
 
   // context of matching
-  protected MatchContext matchContext;
+  private MatchContext matchContext;
 
   private final PsiElementVisitor myXmlVisitor = new MyXmlVisitor();
   private final PsiElementVisitor myJavaVisitor = new MyJavaVisitor();

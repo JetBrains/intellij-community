@@ -16,7 +16,6 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.FileIndexImplUtil;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,6 +36,7 @@ import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PairProcessor;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
@@ -66,7 +66,7 @@ public class MatcherImpl {
     this.project = project;
     matchContext = new MatchContext();
     matchContext.setMatcher(visitor);
-    
+
     if (matchOptions != null) {
       matchContext.setOptions(matchOptions);
       cacheCompiledPattern(matchOptions, PatternCompiler.compilePattern(project,matchOptions));
@@ -153,13 +153,12 @@ public class MatcherImpl {
     }
   }
 
-  public Collection<Pair<MatchResult, Configuration>> findMatchesInFile(CompiledOptions compiledOptions, PsiFile psiFile) {
+  public boolean processMatchesInFile(CompiledOptions compiledOptions, PsiFile psiFile, final PairProcessor<MatchResult, Configuration> processor) {
     LocalSearchScope scope = new LocalSearchScope(psiFile);
-    List<Pair<MatchResult, Configuration>> result = new ArrayList<Pair<MatchResult, Configuration>>();
 
     for (int i = 0; i < compiledOptions.matchContexts.size(); i++) {
       MatchContext context = compiledOptions.matchContexts.get(i);
-      Configuration configuration = compiledOptions.myConfigurations.get(i);
+      final Configuration configuration = compiledOptions.myConfigurations.get(i);
 
       matchContext.clear();
       matchContext.setMatcher(visitor);
@@ -169,10 +168,26 @@ public class MatcherImpl {
       matchContext.setPattern(context.getPattern());
       visitor.setMatchContext(matchContext);
 
-      CollectingMatchResultSink sink = new CollectingMatchResultSink();
       matchContext.setSink(
         new MatchConstraintsSink(
-          sink,
+          new MatchResultSink() {
+            public void newMatch(MatchResult result) {
+              processor.process(result, configuration);
+            }
+
+            public void processFile(PsiFile element) {
+            }
+
+            public void setMatchingProcess(MatchingProcess matchingProcess) {
+            }
+
+            public void matchingFinished() {
+            }
+
+            public ProgressIndicator getProgressIndicator() {
+              return null;
+            }
+          },
           options.getMaxMatchesCount(),
           options.isDistinct(),
           options.isCaseSensitiveMatch()
@@ -180,13 +195,8 @@ public class MatcherImpl {
       );
       options.setScope(scope);
       match(psiFile);
-
-      List<MatchResult> matches = sink.getMatches();
-      for (MatchResult matchResult : matches) {
-        result.add(Pair.create(matchResult, configuration));
-      }
     }
-    return result;
+    return true;
   }
 
   public CompiledOptions precompileOptions(List<Configuration> configurations) {
@@ -202,8 +212,9 @@ public class MatcherImpl {
         CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, matchOptions);
         matchContext.setPattern(compiledPattern);
         contexts.add(matchContext);
-      } catch (UnsupportedPatternException ex) {}
-      catch (MalformedPatternException ex) {}
+      }
+      catch (UnsupportedPatternException ignored) {}
+      catch (MalformedPatternException ignored) {}
     }
     return new CompiledOptions(contexts, configurations);
   }
@@ -253,15 +264,15 @@ public class MatcherImpl {
           if (!fileOrDir.isDirectory()) {
             final PsiFile file = PsiManager.getInstance(project).findFile(fileOrDir);
 
-            if ((options.getFileType() == StdFileTypes.JAVA && file instanceof PsiJavaFile) ||
-                (options.getFileType() != StdFileTypes.JAVA && file instanceof XmlFile)
+            if (options.getFileType() == StdFileTypes.JAVA && file instanceof PsiJavaFile ||
+                options.getFileType() != StdFileTypes.JAVA && file instanceof XmlFile
                ) {
               final FileViewProvider viewProvider = file.getViewProvider();
 
               for(Language lang: viewProvider.getLanguages()) {
                 if (lang != ourPatternLanguage && lang != ourPatternLanguage2) continue;
                 ++totalFilesToScan;
-                scheduler.addOneTask( new MatchOneFile(viewProvider.getPsi(lang)) );
+                scheduler.addOneTask( new MatchOneFile(viewProvider.getPsi(lang)));
               }
             }
           }
@@ -293,7 +304,7 @@ public class MatcherImpl {
       HashSet<VirtualFile> visited = new HashSet<VirtualFile>(rootFiles.length);
       final VirtualFileFilter filter = new VirtualFileFilter() {
         public boolean accept(VirtualFile file) {
-          return (file.isDirectory() && !FileTypeManager.getInstance().isFileIgnored(file.getName())) ||
+          return file.isDirectory() && !FileTypeManager.getInstance().isFileIgnored(file.getName()) ||
                  scope.contains(file);
         }
       };
@@ -392,20 +403,20 @@ public class MatcherImpl {
   }
 
   /**
-     * Finds the matches of given pattern starting from given tree element.
-     * @param sink match result destination
-     * @throws MalformedPatternException
-     * @throws UnsupportedPatternException
-     */
-    protected void testFindMatches(MatchResultSink sink, MatchOptions options)
-      throws MalformedPatternException, UnsupportedPatternException {
-      isTesting = true;
-      try {
-        findMatches(sink,options);
-      } finally {
-        isTesting = false;
-      }
+   * Finds the matches of given pattern starting from given tree element.
+   * @param sink match result destination
+   * @throws MalformedPatternException
+   * @throws UnsupportedPatternException
+   */
+  protected void testFindMatches(MatchResultSink sink, MatchOptions options)
+    throws MalformedPatternException, UnsupportedPatternException {
+    isTesting = true;
+    try {
+      findMatches(sink,options);
+    } finally {
+      isTesting = false;
     }
+  }
 
   /**
    * Finds the matches of given pattern starting from given tree element.
@@ -445,11 +456,6 @@ public class MatcherImpl {
     private Runnable taskQueueEndAction;
 
     private boolean suspended;
-    private final LinkedList<Runnable> tempList = new LinkedList<Runnable>();
-
-    public LinkedList<Runnable> getTempList() {
-      return tempList;
-    }
 
     public void stop() {
       ended = true;
@@ -516,9 +522,6 @@ public class MatcherImpl {
       }
     }
 
-    public void addEndTasks(LinkedList<Runnable> tempList) {
-      tasks.addAll(tempList);
-    }
   }
 
   private class MatchOneFile implements Runnable {
@@ -596,7 +599,8 @@ public class MatcherImpl {
     }
   }
 
-  protected @Nullable MatchResult isMatchedByDownUp(PsiElement element, final MatchOptions options) {
+  @Nullable
+  protected MatchResult isMatchedByDownUp(PsiElement element, final MatchOptions options) {
     final CollectingMatchResultSink sink = new CollectingMatchResultSink();
     CompiledPattern compiledPattern = prepareMatching(sink, options);
 
@@ -632,7 +636,7 @@ public class MatcherImpl {
       MatchingHandler handler = null;
 
       while (element.getClass() == targetNode.getClass() ||
-             (compiledPattern.isTypedVar(targetNode) && compiledPattern.getHandler(targetNode).canMatch(targetNode, element))
+             compiledPattern.isTypedVar(targetNode) && compiledPattern.getHandler(targetNode).canMatch(targetNode, element)
             ) {
         handler = compiledPattern.getHandler(targetNode);
         handler.setPinnedElement(element);

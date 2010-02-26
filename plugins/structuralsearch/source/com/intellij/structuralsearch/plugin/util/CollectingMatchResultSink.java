@@ -33,7 +33,8 @@ public class CollectingMatchResultSink implements MatchResultSink {
   public void setMatchingProcess(MatchingProcess process) {
   }
 
-  public @NotNull List<MatchResult> getMatches() {
+  @NotNull
+  public List<MatchResult> getMatches() {
     return matches;
   }
 }
