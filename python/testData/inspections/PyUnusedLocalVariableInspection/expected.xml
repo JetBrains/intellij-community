@@ -2,37 +2,37 @@
 <problems>
   <problem>
     <file>test.py</file>
-    <line>1</line>
-  <description>"Local variable 'aaa' value is not used"</description>
-  </problem>
-  <problem>
-    <file>test.py</file>
     <line>2</line>
   <description>"Local variable 'aaa' value is not used"</description>
   </problem>
   <problem>
     <file>test.py</file>
-    <line>5</line>
+    <line>3</line>
+  <description>"Local variable 'aaa' value is not used"</description>
+  </problem>
+  <problem>
+    <file>test.py</file>
+    <line>6</line>
   <description>"Local variable 'bbb' value is not used"</description>
   </problem>
   <problem>
     <file>test.py</file>
-    <line>7</line>
+    <line>8</line>
   <description>"Parameter 'self' value is not used"</description>
   </problem>
   <problem>
     <file>test.py</file>
-    <line>10</line>
+    <line>11</line>
   <description>"Parameter 'a' value is not used"</description>
   </problem>
   <problem>
     <file>test.py</file>
-    <line>14</line>
+    <line>16</line>
   <description>"Local variable 'k' value is not used"</description>
   </problem>
   <problem>
     <file>test.py</file>
-    <line>17</line>
+    <line>19</line>
   <description>"Local variable 'i' value is not used"</description>
   </problem>
 </problems>

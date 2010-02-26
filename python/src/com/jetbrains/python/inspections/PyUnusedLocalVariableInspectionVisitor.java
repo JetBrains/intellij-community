@@ -42,18 +42,8 @@ class PyUnusedLocalVariableInspectionVisitor extends PyInspectionVisitor {
         super.visitElement(element);
       }
 
-      @Override
-      public void visitPyFile(final PyFile node) {
-        processScope(node);
-        super.visitPyFile(node);
-      }
-
-      @Override
-      public void visitPyClass(final PyClass node) {
-        processScope(node);
-        super.visitPyClass(node);
-      }
-
+      // We check only functions content due to language semantics here
+      // However nested scopes are OK.
       @Override
       public void visitPyFunction(final PyFunction node) {
         processScope(node);
