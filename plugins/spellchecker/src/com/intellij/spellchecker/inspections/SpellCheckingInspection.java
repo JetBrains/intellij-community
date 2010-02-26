@@ -106,7 +106,10 @@ public class SpellCheckingInspection extends LocalInspectionTool {
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new PsiElementVisitor() {
-
+      private final NamesValidator[] NAMES_VALIDATORS = getNamesValidators();
+      {
+        ensureFactoriesAreLoaded();
+      }
       @Override
       public void visitElement(final PsiElement element) {
 
@@ -136,8 +139,6 @@ public class SpellCheckingInspection extends LocalInspectionTool {
           }
         }
 
-        ensureFactoriesAreLoaded();
-
         final SpellcheckingStrategy factoryByLanguage = getFactoryByLanguage(language);
         final Tokenizer tokenizer = factoryByLanguage.getTokenizer(element);
         @SuppressWarnings({"unchecked"})
@@ -146,7 +147,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
           return;
         }
         for (Token token : tokens) {
-          inspect(token, holder, isOnTheFly, getNamesValidators());
+          inspect(token, holder, isOnTheFly, NAMES_VALIDATORS);
         }
       }
     };
