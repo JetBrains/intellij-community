@@ -129,6 +129,22 @@ public class ToolkitBugsProcessor {
     }
   }
 
+  static class Sun_6322854 extends Handler {
+    Sun_6322854() {
+      super("NPE - Failed to retrieve atom name");
+    }
+
+    @Override
+    boolean process(Throwable e, StackTraceElement[] stack) {
+      if (e instanceof NullPointerException && stack.length > 2) {
+        return (e.getMessage() != null && e.getMessage().startsWith("Failed to retrieve atom name"))
+          && stack[1].getClassName().equals("sun.awt.X11.XAtom");
+
+      }
+      return false;
+    }
+  }
+
   static class Apple_ExceptionOnChangingMonitors extends Handler {
 
     @Override
