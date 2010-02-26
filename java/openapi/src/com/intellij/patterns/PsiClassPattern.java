@@ -16,6 +16,9 @@
 package com.intellij.patterns;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -59,6 +62,28 @@ public class PsiClassPattern extends PsiMemberPattern<PsiClass, PsiClassPattern>
     return with(new PatternCondition<PsiClass>("isInterface") {
       public boolean accepts(@NotNull final PsiClass psiClass, final ProcessingContext context) {
         return psiClass.isInterface();
+      }
+    });}
+
+  public PsiClassPattern withMember(final ElementPattern<? extends PsiMember> memberPattern) {
+    return with(new PatternCondition<PsiClass>("withMember") {
+      public boolean accepts(@NotNull final PsiClass psiClass, final ProcessingContext context) {
+        for (PsiMethod method : psiClass.getMethods()) {
+          if (memberPattern.accepts(method, context)) {
+            return true;
+          }
+        }
+        for (PsiField field : psiClass.getFields()) {
+          if (memberPattern.accepts(field, context)) {
+            return true;
+          }
+        }
+        for (PsiClass inner : psiClass.getInnerClasses()) {
+          if (memberPattern.accepts(inner, context)) {
+            return true;
+          }
+        }
+        return false;
       }
     });}
 
