@@ -168,6 +168,10 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
     public void showContentPopup(InputEvent inputEvent) {
     }
+
+    public ActionCallback getActivation() {
+      return new ActionCallback.Done();
+    }
   };
 
   @NonNls private static final ContentManager MOCK_CONTENT_MANAGER = new ContentManager() {
