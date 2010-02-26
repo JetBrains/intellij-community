@@ -51,7 +51,7 @@ public abstract class TailTypeDecorator<T extends LookupElement> extends LookupE
       lookupItem.setTailType(TailType.NONE);
     }
     delegate.handleInsert(context);
-    if (tailType != null) {
+    if (tailType != null && tailType.isApplicable(context)) {
       PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting();
       tailType.processTail(context.getEditor(), context.getTailOffset());
     }
