@@ -120,6 +120,7 @@ public class AnalyzeStacktraceUtil {
     EditorSettings settings = editor.getSettings();
     settings.setFoldingOutlineShown(false);
     settings.setLineMarkerAreaShown(false);
+    settings.setIndentGuidesShown(false);
     settings.setLineNumbersShown(false);
     settings.setRightMarginShown(false);
 

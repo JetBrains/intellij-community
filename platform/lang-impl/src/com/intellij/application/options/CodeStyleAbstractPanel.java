@@ -139,6 +139,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   private void fillEditorSettings(final EditorSettings editorSettings) {
     editorSettings.setWhitespacesShown(true);
     editorSettings.setLineMarkerAreaShown(false);
+    editorSettings.setIndentGuidesShown(false);
     editorSettings.setLineNumbersShown(false);
     editorSettings.setFoldingOutlineShown(false);
     editorSettings.setAdditionalColumnsCount(0);

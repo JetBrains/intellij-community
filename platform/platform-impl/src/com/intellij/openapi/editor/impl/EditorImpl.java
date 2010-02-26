@@ -56,12 +56,15 @@ import com.intellij.openapi.ui.TestableUi;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.JScrollPane2;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.EmptyClipboardOwner;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -1167,6 +1170,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     paintBackgrounds(g, clip);
     paintRectangularSelection(g);
     paintRightMargin(g, clip);
+    paintIndentGuides(g, clip);
     final MarkupModel docMarkup = myDocument.getMarkupModel(myProject);
     paintLineMarkersSeparators(g, clip, docMarkup);
     paintLineMarkersSeparators(g, clip, myMarkupModel);
@@ -1179,6 +1183,27 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     paintCaretCursor(g);
 
     paintComposedTextDecoration((Graphics2D)g);
+  }
+
+  private void paintIndentGuides(Graphics g, Rectangle clip) {
+    if (mySettings.isIndentGuidesShown()) {
+      int y = clip.y;
+      int line = xyToLogicalPosition(new Point(0, y)).line;
+
+      int gapWidth = EditorUtil.getSpaceWidth(Font.PLAIN, this) * getIndentSize();
+
+      do {
+        final int indents = getIndents(line);
+        for (int n = 1; n < indents; n++) {
+          int x = n * gapWidth + 1;
+          UIUtil.drawDottedLine((Graphics2D)g, x, y, x, y + getLineHeight(), getBackroundColor(), myScheme.getColor(EditorColors.WHITESPACES_COLOR));
+        }
+
+        line++;
+        y = logicalLineToY(line);
+      }
+      while (y < clip.y + clip.height);
+    }
   }
 
   public void setHeaderComponent(JComponent header) {
@@ -2127,6 +2152,45 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int line = getDocument().getLineCount();
     line -= myFoldingModel.getFoldedLinesCountBefore(getDocument().getTextLength() + 1);
     return line;
+  }
+
+  private int getIndentSize() {
+    if (myProject == null || myProject.isDisposed() || myVirtualFile == null) return EditorUtil.getTabSize(this);
+    final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings();
+    return settings.getIndentSize(myVirtualFile.getFileType());
+  }
+
+  private int getIndents(int line, boolean goUp, boolean goDown) {
+    if (line <= 0 || line >= myDocument.getLineCount()) return 0;
+    int lineStart = myDocument.getLineStartOffset(line);
+    int lineEnd = myDocument.getLineEndOffset(line);
+
+    CharSequence chars = myDocument.getCharsNoThreadCheck();
+    int nonWhitespaceOffset = CharArrayUtil.shiftForward(chars, lineStart, " \t");
+    if (nonWhitespaceOffset < lineEnd) {
+      return calcColumnNumber(nonWhitespaceOffset, line) / getIndentSize();
+    }
+    else {
+      int upIndent = goUp ? getIndents(line - 1, true, false) : 0;
+      int downIndent = goDown ? getIndents(line + 1, false, true) : 0;
+      return Math.max(upIndent, downIndent);
+    }
+  }
+
+  private int getIndents(int line) {
+    int answer = getIndents(line, true, true);
+
+    int prev;
+    do {
+      prev = getIndents(--line, true, false);
+    }
+    while (line > 0 && prev == answer); 
+
+    if (answer - 2 > prev) {
+      return prev + 1;
+    }
+
+    return answer;
   }
 
   @NotNull
