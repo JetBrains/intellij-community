@@ -323,6 +323,7 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
       final Editor editor = editorFactory.createViewer(editorFactory.createDocument(""));
       EditorSettings editorSettings = editor.getSettings();
       editorSettings.setLineMarkerAreaShown(false);
+      editorSettings.setIndentGuidesShown(false);
       editorSettings.setLineNumbersShown(false);
       editorSettings.setFoldingOutlineShown(false);
 

@@ -616,6 +616,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
     final EditorSettings editorSettings = editor.getSettings();
     editorSettings.setLineMarkerAreaShown(false);
+    editorSettings.setIndentGuidesShown(false);
     editorSettings.setLineNumbersShown(false);
     editorSettings.setFoldingOutlineShown(false);
     editorSettings.setAdditionalPageAtBottom(false);

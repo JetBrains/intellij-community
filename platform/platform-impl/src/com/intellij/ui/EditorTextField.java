@@ -344,6 +344,7 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
     settings.setFoldingOutlineShown(false);
     settings.setLineNumbersShown(false);
     settings.setLineMarkerAreaShown(false);
+    settings.setIndentGuidesShown(false);
     settings.setVirtualSpace(false);
     editor.setHorizontalScrollbarVisible(false);
     editor.setVerticalScrollbarVisible(false);
