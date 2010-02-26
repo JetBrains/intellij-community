@@ -8,7 +8,6 @@ import com.intellij.CommonBundle;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -67,8 +66,6 @@ public class IDEACoverageRunner extends CoverageRunner {
       }
     }
     javaParameters.getVMParametersList().add(argument.toString());
-    javaParameters.getVMParametersList().add("-Xbootclasspath/p:" +  PathManager.getLibPath() + File.separator + "coverage-agent.jar");
-    javaParameters.getClassPath().add(PathManager.getLibPath() + File.separator + "coverage-agent.jar");
   }
 
   @Override
