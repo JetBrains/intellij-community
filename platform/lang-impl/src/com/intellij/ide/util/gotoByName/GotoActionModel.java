@@ -242,6 +242,14 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
     return false;
   }
 
+  protected Project getProject() {
+    return myProject;
+  }
+
+  protected Component getContextComponent() {
+    return myContextComponent;
+  }
+
   @NotNull
   private Pattern getPattern(String pattern) {
     if (!Comparing.strEqual(pattern, myPattern)) {
