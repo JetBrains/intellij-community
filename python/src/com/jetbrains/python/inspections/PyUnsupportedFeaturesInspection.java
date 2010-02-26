@@ -110,7 +110,7 @@ public class PyUnsupportedFeaturesInspection extends LocalInspectionTool {
       for (ComprhForComponent forComponent: forComponents) {
         PyExpression iteratedList = forComponent.getIteratedList();
         if (iteratedList instanceof PyTupleExpression) {
-          registerProblem(iteratedList, "List comprehensions do not support such syntax in Python 3", new ReplaceListComprehensionsQuickFix());
+          registerProblem(iteratedList, "List comprehensions do not support this syntax in Python 3", new ReplaceListComprehensionsQuickFix());
         }
       }
     }

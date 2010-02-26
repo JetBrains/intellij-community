@@ -66,7 +66,7 @@ public class UnsupportedFeaturesIn2 extends PyAnnotator {
         if (importReference != null) {
           String name = importReference.getName();
           if ("builtins".equals(name)) {
-            getHolder().createWarningAnnotation(node, "There is no module builtins in Python2").registerFix(new ReplaceBuiltinsIntention());
+            getHolder().createWarningAnnotation(node, "There is no module builtins in Python 2").registerFix(new ReplaceBuiltinsIntention());
           }
         }
       }
