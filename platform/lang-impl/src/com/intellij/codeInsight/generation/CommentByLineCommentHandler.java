@@ -20,6 +20,7 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CommentUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCommenters;
@@ -32,7 +33,9 @@ import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -61,9 +64,19 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     myProject = project;
     myFile = file.getViewProvider().getPsi(file.getViewProvider().getBaseLanguage());
-    myDocument = editor.getDocument();
     myEditor = editor;
 
+    PsiElement context = myFile.getContext();
+    
+    if (context != null && (context.textContains('\'') || context.textContains('\"'))) {
+      String s = context.getText();
+      if (StringUtil.startsWith(s, "\"") || StringUtil.startsWith(s, "\'")) {
+        myFile = context.getContainingFile();
+        myEditor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
+      }
+    }
+    
+    myDocument = myEditor.getDocument();
     if (!FileDocumentManager.getInstance().requestWriting(myDocument, project)) {
       return;
     }
@@ -74,7 +87,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
 
     myCodeStyleManager = CodeStyleManager.getInstance(myProject);
 
-    final SelectionModel selectionModel = editor.getSelectionModel();
+    final SelectionModel selectionModel = myEditor.getSelectionModel();
 
     boolean hasSelection = selectionModel.hasSelection();
     myStartOffset = selectionModel.getSelectionStart();
@@ -84,7 +97,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
 
     while (true) {
       int lastLineEnd = myDocument.getLineEndOffset(myDocument.getLineNumber(myEndOffset));
-      FoldRegion collapsedAt = editor.getFoldingModel().getCollapsedRegionAtOffset(lastLineEnd);
+      FoldRegion collapsedAt = myEditor.getFoldingModel().getCollapsedRegionAtOffset(lastLineEnd);
       if (collapsedAt != null) {
         final int endOffset = collapsedAt.getEndOffset();
         if (endOffset <= myEndOffset) {
@@ -115,13 +128,13 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
         lineStart += prefix.length();
         lineStart = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), lineStart, " \t");
         if (lineStart > myDocument.getTextLength()) lineStart = myDocument.getTextLength();
-        editor.getCaretModel().moveToOffset(lineStart);
-        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+        myEditor.getCaretModel().moveToOffset(lineStart);
+        myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       }
     }
     else {
       if (!hasSelection) {
-        editor.getCaretModel().moveCaretRelatively(0, 1, false, false, true);
+        myEditor.getCaretModel().moveCaretRelatively(0, 1, false, false, true);
       }
       else {
         if (wholeLinesSelected) {
@@ -161,6 +174,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     boolean singleline = myStartLine == myEndLine;
     int offset = myDocument.getLineStartOffset(myStartLine);
     offset = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), offset, " \t");
+    
     final Language languageSuitableForCompleteFragment = PsiUtilBase.reallyEvaluateLanguageInRange(offset, CharArrayUtil.shiftBackward(
       myDocument.getCharsSequence(), myDocument.getLineEndOffset(myEndLine), " \t\n"), myFile);
 
