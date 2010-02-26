@@ -9,10 +9,7 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
-import com.jetbrains.python.inspections.PyMethodParametersInspection;
-import com.jetbrains.python.inspections.PyTrailingSemicolonInspection;
-import com.jetbrains.python.inspections.PyUnresolvedReferencesInspection;
-import com.jetbrains.python.inspections.PyUnsupportedFeaturesInspection;
+import com.jetbrains.python.inspections.*;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -138,6 +135,10 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
   public void testReplaceListComprehensions() throws Exception {
     doInspectionTestWithPy3k("ReplaceListComprehensions.py", PyUnsupportedFeaturesInspection.class,
                              PyBundle.message("QFIX.replace.list.comprehensions"), true, true);
+  }
+
+  public void testDictCreation() throws Exception {
+    doInspectionTest("DictCreation.py", PyDictCreationInspection.class, PyBundle.message("QFIX.dict.creation"), true, true);
   }
 
   protected void doInspectionTestWithPy3k(@NonNls String testFileName,

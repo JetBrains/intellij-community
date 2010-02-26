@@ -22,7 +22,8 @@ public class PythonInspectionToolProvider implements InspectionToolProvider {
       PyReturnFromInitInspection.class,
       PyUnusedLocalVariableInspection.class,
       PyUnsupportedFeaturesInspection.class,
-      PyDeprecatedModulesInspection.class
+      PyDeprecatedModulesInspection.class,
+      PyDictCreationInspection.class
     };
   }
 }

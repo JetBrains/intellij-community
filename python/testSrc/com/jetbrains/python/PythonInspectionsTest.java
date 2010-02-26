@@ -86,6 +86,11 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
     doTestWithPy3k(getTestName(false), inspection);
   }
 
+  public void testPyDictCreationInspection() throws Throwable {
+    LocalInspectionTool inspection = new PyDictCreationInspection();
+    doTest(getTestName(false), inspection);
+  }
+
   public void testPyDeprecatedModulesInspection() throws Throwable {
     PythonLanguageLevelPusher.FORCE_LANGUAGE_LEVEL = LanguageLevel.PYTHON25;
     PythonLanguageLevelPusher.pushLanguageLevel(myFixture.getProject());
