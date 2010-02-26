@@ -58,12 +58,7 @@ public abstract class PsiRecursiveElementWalkingVisitor extends PsiElementVisito
       if (allFiles.size() > 1) {
         if (file == viewProvider.getPsi(viewProvider.getBaseLanguage())) {
           for (PsiFile lFile : allFiles) {
-            if (lFile == file) {
-              lFile.acceptChildren(this);
-            }
-            else {
-              lFile.accept(this);
-            }
+            lFile.acceptChildren(this);
           }
           return;
         }
