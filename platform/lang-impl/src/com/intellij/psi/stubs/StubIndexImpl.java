@@ -252,12 +252,12 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       }
     }
     catch (StorageException e) {
-      forceRebuild(e, project);
+      forceRebuild(e);
     }
     catch (RuntimeException e) {
       final Throwable cause = e.getCause();
       if (cause instanceof IOException || cause instanceof StorageException) {
-        forceRebuild(e, project);
+        forceRebuild(e);
       }
       else {
         throw e;
@@ -275,14 +275,14 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     return stub.getStubType();
   }
 
-  private static void forceRebuild(Throwable e, Project project) {
+  private static void forceRebuild(Throwable e) {
     LOG.info(e);
     requestRebuild();
     FileBasedIndex.getInstance().scheduleRebuild(StubUpdatingIndex.INDEX_ID, e);
   }
 
   private static void requestRebuild() {
-    FileBasedIndex.getInstance().requestRebuild(StubUpdatingIndex.INDEX_ID);
+    FileBasedIndex.requestRebuild(StubUpdatingIndex.INDEX_ID);
   }
 
   public <K> Collection<K> getAllKeys(final StubIndexKey<K, ?> indexKey, @NotNull Project project) {
@@ -293,12 +293,12 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       return index.getAllKeys();
     }
     catch (StorageException e) {
-      forceRebuild(e, project);
+      forceRebuild(e);
     }
     catch (RuntimeException e) {
       final Throwable cause = e.getCause();
       if (cause instanceof IOException || cause instanceof StorageException) {
-        forceRebuild(e, project);
+        forceRebuild(e);
       }
       throw e;
     }
