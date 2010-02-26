@@ -49,6 +49,37 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     assertTree("+/\n");
   }
 
+  public void _testExpandAll() throws Exception {
+    buildStructure(myRoot);
+    assertTree("+/\n");
+    final Ref<Boolean> flag = new Ref<Boolean>(Boolean.FALSE);
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        getBuilder().expandAll();
+        flag.set(Boolean.TRUE);
+      }
+    });
+
+    waitBuilderToCome(new Condition() {
+      public boolean value(Object o) {
+        return flag.get();
+      }
+    });
+    
+    assertTree("-/\n"
+               + " -com\n"
+               + "  -intellij\n"
+               + "   openapi\n"
+               + " -jetbrains\n"
+               + "  -fabrique\n"
+               + "   ide\n"
+               + " -org\n"
+               + "  -eclipse\n"
+               + "   rcp\n"
+               + " -xunit\n"
+               + "  runner\n");
+  }
+
   public void testInvisibleRoot() throws Exception {
     myTree.setRootVisible(false);
     buildStructure(myRoot);
