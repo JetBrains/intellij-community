@@ -23,18 +23,15 @@ import java.util.List;
  */
 public class ConvertDictCompIntention implements IntentionAction {
   @NotNull
-  @Override
   public String getText() {
     return PyBundle.message("INTN.convert.dict.comp.to");
   }
 
   @NotNull
-  @Override
   public String getFamilyName() {
     return PyBundle.message("INTN.Family.convert.dict.comp.expression");
   }
 
-  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile != null && !LanguageLevel.forFile(virtualFile).isPy3K()) {
@@ -49,7 +46,6 @@ public class ConvertDictCompIntention implements IntentionAction {
   }
 
   // TODO: {k, v for k in range(4) for v in range(4)}
-  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile != null && !LanguageLevel.forFile(virtualFile).isPy3K()) {
@@ -74,7 +70,6 @@ public class ConvertDictCompIntention implements IntentionAction {
     }
   }
 
-  @Override
   public boolean startInWriteAction() {
     return true;
   }
