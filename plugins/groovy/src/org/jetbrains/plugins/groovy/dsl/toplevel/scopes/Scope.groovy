@@ -36,13 +36,10 @@ class ClosureScope extends Scope {
 }
 
 class ScriptScope extends Scope {
-  final private myNamePattern
+  final String namePattern
 
   ScriptScope(Map args) {
-    myNamePattern = args && args.name ? args.name : /.*/
+    namePattern = args && args.name ? args.name : /.*/
   }
 
-  def getName() {
-    myNamePattern
-  }
 }

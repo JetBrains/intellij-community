@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.groovy.dsl.toplevel
 
-import org.jetbrains.plugins.groovy.dsl.ClassDescriptor
+import com.intellij.patterns.ElementPattern
+import com.intellij.patterns.PsiJavaPatterns
 import org.jetbrains.plugins.groovy.dsl.GroovyDslExecutor
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ClassScope
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ClosureScope
@@ -20,19 +21,23 @@ class GdslMetaClassProperties {
   /**
    * Context definition
    */
-  Closure context = {Map args ->
-    def ctx = new Context(args)
-    return ctx
-  }
+  Closure context = {Map args -> return new Context(args) }
 
   /**
    * Contributor definition
    */
   Closure contributor = {cts, Closure toDo ->
-    def contrib = new Contributor(cts, toDo)
-    myExecutor.addClassEnhancer {
-      ClassDescriptor descriptor, consumer ->
-      myExecutor.runContributor(contrib, descriptor, consumer)
+    if (cts instanceof Map) {
+      cts = new Context(cts)
+    }
+    if (!(cts instanceof List)) {
+      assert cts instanceof Context: "The contributor() argument must be a context"
+      cts = [cts]
+    }
+    def contexts = cts.findAll { it != null } as List
+    if (contexts) {
+      def filters = contexts.collect { return it.filter }
+      myExecutor.addClassEnhancer(filters, toDo)
     }
   }
 
@@ -42,6 +47,10 @@ class GdslMetaClassProperties {
   Closure ClosureScope = {Map args -> return new ClosureScope(args)}
   Closure ScriptScope = {Map args -> return new ScriptScope(args)}
   Closure ClassScope = {Map args -> return new ClassScope(args)}
+
+  Closure hasAnnotation = { String annoQName -> PsiJavaPatterns.psiModifierListOwner().withAnnotation(annoQName) }
+  Closure hasField = { ElementPattern fieldCondition -> PsiJavaPatterns.psiClass().withMember(PsiJavaPatterns.psiField().and(fieldCondition)) }
+  Closure hasMethod = { ElementPattern methodCondition -> PsiJavaPatterns.psiClass().withMember(PsiJavaPatterns.psiMethod().and(methodCondition)) }
 
 
 }

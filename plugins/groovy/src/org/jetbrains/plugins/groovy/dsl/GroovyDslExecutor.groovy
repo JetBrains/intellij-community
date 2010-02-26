@@ -1,6 +1,11 @@
 package org.jetbrains.plugins.groovy.dsl
 
-import org.jetbrains.plugins.groovy.dsl.toplevel.Contributor
+import com.intellij.openapi.util.Pair
+import com.intellij.psi.PsiElement
+import com.intellij.util.ProcessingContext
+import org.jetbrains.plugins.groovy.dsl.psi.PsiEnhancerCategory
+import org.jetbrains.plugins.groovy.dsl.toplevel.CompositeContextFilter
+import org.jetbrains.plugins.groovy.dsl.toplevel.ContextFilter
 import org.jetbrains.plugins.groovy.dsl.toplevel.GdslMetaClassProperties
 
 /**
@@ -8,7 +13,8 @@ import org.jetbrains.plugins.groovy.dsl.toplevel.GdslMetaClassProperties
  */
 
 public class GroovyDslExecutor {
-  private final List<Closure> myClassEnhancers = []
+  static final def cats = PsiEnhancerCategory.EP_NAME.extensions.collect { it.class }
+  final List<Pair<ContextFilter, Closure>> enhancers = []
   private final String myFileName;
 
   public GroovyDslExecutor(String text, String fileName) {
@@ -33,23 +39,21 @@ public class GroovyDslExecutor {
     script.run()
   }
 
-  public def runEnhancer(code, delegate) {
-    def copy = code.clone()
-    copy.delegate = delegate
-    copy()
+  def addClassEnhancer(List<ContextFilter> cts, Closure toDo) {
+    enhancers << Pair.create(CompositeContextFilter.compose(cts, false), toDo)
   }
 
-  def addClassEnhancer(Closure cl) {
-    myClassEnhancers << cl
-  }
+  def processVariants(ClassDescriptor descriptor, consumer, PsiElement place, String fqn, ProcessingContext ctx) {
+    for (pair in enhancers) {
+      if (pair.first.isApplicable(place, fqn, ctx)) {
+        Closure f = pair.second.clone()
+        f.delegate = consumer
+        f.resolveStrategy = Closure.DELEGATE_FIRST
 
-  public def runContributor(Contributor cb, ClassDescriptor cd, delegate) {
-    cb.getApplyFunction(delegate, cd.getPlace(), cd.getQualifiedName())()
-  }
-
-  def processVariants(ClassDescriptor descriptor, consumer) {
-    for (e in myClassEnhancers) {
-      e(descriptor, consumer)
+        use(cats) {
+          f.call()
+        }
+      }
     }
   }
 

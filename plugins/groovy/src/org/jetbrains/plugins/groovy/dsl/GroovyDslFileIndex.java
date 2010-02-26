@@ -32,33 +32,40 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.UserDataCache;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.*;
 import com.intellij.unscramble.UnscrambleDialog;
-import com.intellij.util.containers.*;
+import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ConcurrentMultiMap;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
+import groovy.lang.Closure;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder;
+import org.jetbrains.plugins.groovy.dsl.toplevel.ClassContextFilter;
+import org.jetbrains.plugins.groovy.dsl.toplevel.ContextFilter;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
 import javax.swing.event.HyperlinkEvent;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
-import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -164,6 +171,12 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
   //an absolutely guru code (c)
   public static boolean processExecutors(@NotNull Project project, ClassDescriptor descriptor, PsiScopeProcessor processor) {
+    final PsiElement place = descriptor.getPlace();
+    if (!(place instanceof GrReferenceExpression) || PsiTreeUtil.getParentOfType(place, PsiAnnotation.class) != null) {
+      // Basic filter, all DSL contexts are applicable for reference expressions only
+      return true;
+    }
+
     final LinkedBlockingQueue<Pair<GroovyFile, GroovyDslExecutor>> queue = new LinkedBlockingQueue<Pair<GroovyFile, GroovyDslExecutor>>();
 
     int count = queueExecutors(project, queue);
@@ -190,28 +203,44 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     return true;
   }
 
+  private static final UserDataCache<CachedValue<List<GroovyFile>>, Project, Object> DSL_FILES_CACHE = new UserDataCache<CachedValue<List<GroovyFile>>, Project, Object>("DSL_FILES_CACHE") {
+    @Override
+    protected CachedValue<List<GroovyFile>> compute(final Project project, Object p) {
+      return CachedValuesManager.getManager(project).createCachedValue(new CachedValueProvider<List<GroovyFile>>() {
+        public Result<List<GroovyFile>> compute() {
+          final AdditionalIndexableFileSet standardSet = new AdditionalIndexableFileSet(StandardDslIndexedRootsProvider.getInstance());
+          final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+
+          final AdditionalIndexedRootsScope scope = new AdditionalIndexedRootsScope(GlobalSearchScope.allScope(project), standardSet);
+          List<GroovyFile> result = new ArrayList<GroovyFile>();
+          for (VirtualFile vfile : FileBasedIndex.getInstance().getContainingFiles(NAME, OUR_KEY, scope)) {
+            if (!vfile.isValid()) {
+              continue;
+            }
+            if (!standardSet.isInSet(vfile) && !fileIndex.isInLibraryClasses(vfile) && !fileIndex.isInLibrarySource(vfile)) {
+              if (!fileIndex.isInSourceContent(vfile) || !isActivated(vfile)) {
+                continue;
+              }
+            }
+            PsiFile psiFile = PsiManager.getInstance(project).findFile(vfile);
+            if (!(psiFile instanceof GroovyFile)) {
+              continue;
+            }
+            GroovyFile file = (GroovyFile)psiFile;
+            result.add(file);
+          }
+          return Result.create(result, PsiModificationTracker.MODIFICATION_COUNT, ProjectRootManager.getInstance(project));
+        }
+      }, false);
+    }
+  };
+
   private static int queueExecutors(Project project, LinkedBlockingQueue<Pair<GroovyFile, GroovyDslExecutor>> queue) {
     int count = 0;
-    final AdditionalIndexableFileSet standardSet = new AdditionalIndexableFileSet(StandardDslIndexedRootsProvider.getInstance());
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-
-    final AdditionalIndexedRootsScope scope = new AdditionalIndexedRootsScope(GlobalSearchScope.allScope(project), standardSet);
-    for (VirtualFile vfile : FileBasedIndex.getInstance().getContainingFiles(NAME, OUR_KEY, scope)) {
-      if (!vfile.isValid()) {
-        continue;
-      }
-      if (!standardSet.isInSet(vfile) && !fileIndex.isInLibraryClasses(vfile) && !fileIndex.isInLibrarySource(vfile)) {
-        if (!fileIndex.isInSourceContent(vfile) || !isActivated(vfile)) {
-          continue;
-        }
-      }
-      PsiFile psiFile = PsiManager.getInstance(project).findFile(vfile);
-      if (!(psiFile instanceof GroovyFile)) {
-        continue;
-      }
-      GroovyFile file = (GroovyFile)psiFile;
-
+    for (GroovyFile file : DSL_FILES_CACHE.get(project, null).getValue()) {
       final long stamp = file.getModificationStamp();
+      final VirtualFile vfile = file.getVirtualFile();
+      assert vfile != null;
       final GroovyDslExecutor cached = getCachedExecutor(vfile, stamp);
       count++;
       if (cached == null) {
@@ -237,9 +266,19 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
             new ConcurrentFactoryMap<ClassDescriptor, CustomMembersHolder>() {
               @Override
               protected CustomMembersHolder create(ClassDescriptor key) {
-                final CustomMembersGenerator generator = new CustomMembersGenerator(project, key.getPlace(), key.getQualifiedName());
+                final PsiElement place = key.getPlace();
+                final String fqn = key.getQualifiedName();
+
+                final ProcessingContext ctx = new ProcessingContext();
+                ctx.put(ClassContextFilter.getClassKey(fqn), ((GroovyClassDescriptor)key).getPsiClass());
+
+                if (!isApplicable(place, fqn, ctx)) {
+                  return null;
+                }
+
+                final CustomMembersGenerator generator = new CustomMembersGenerator(project, place, fqn);
                 try {
-                  executor.processVariants(key, generator);
+                  executor.processVariants(key, generator, place, fqn, ctx);
                 }
                 catch (ProcessCanceledException e) {
                   throw e;
@@ -253,6 +292,16 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
                 }
                 return generator.getMembersHolder();
               }
+
+              private boolean isApplicable(PsiElement place, String fqn, final ProcessingContext ctx) {
+                for (Pair<ContextFilter, Closure> pair : executor.getEnhancers()) {
+                  if (pair.first.isApplicable(place, fqn, ctx)) {
+                    return true;
+                  }
+                }
+                return false;
+              }
+
             };
           return Result.create(result, PsiModificationTracker.MODIFICATION_COUNT, dslFile);
         }
