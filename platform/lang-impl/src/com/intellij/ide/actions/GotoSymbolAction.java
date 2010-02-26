@@ -23,6 +23,7 @@ import com.intellij.ide.util.gotoByName.GotoSymbolModel2;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.ChooseByNameRegistry;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
@@ -49,7 +50,7 @@ public class GotoSymbolAction extends GotoActionBase {
     }, ModalityState.current(), true);
   }
 
-  protected boolean hasContributors() {
+  protected boolean hasContributors(DataContext dataContext) {
     return ChooseByNameRegistry.getInstance().getSymbolModelContributors().length > 0;
   }
 }
