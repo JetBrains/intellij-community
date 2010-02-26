@@ -26,6 +26,7 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.lang.Language;
@@ -40,9 +41,13 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.libraries.LibraryUtil;
+import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -753,7 +758,16 @@ public class DocumentationManager {
     component.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
     final PsiElement psiElement = component.getElement();
     final PsiManager manager = PsiManager.getInstance(getProject(psiElement));
-    if (url.startsWith(PSI_ELEMENT_PROTOCOL)) {
+    if (url.startsWith("open")) {
+      final PsiFile containingFile = psiElement.getContainingFile();
+      if (containingFile != null) {
+        final VirtualFile virtualFile = containingFile.getVirtualFile();
+        final LibraryOrderEntry libraryEntry = LibraryUtil.findLibraryEntry(virtualFile, myProject);
+        if (libraryEntry != null) {
+          ProjectSettingsService.getInstance(myProject).openProjectLibrarySettings(new NamedLibraryElement(libraryEntry.getOwnerModule(), libraryEntry));
+        }
+      }
+    } else if (url.startsWith(PSI_ELEMENT_PROTOCOL)) {
       final String refText = url.substring(PSI_ELEMENT_PROTOCOL.length());
       DocumentationProvider provider = getProviderFromElement(psiElement);
       final PsiElement targetElement = provider.getDocumentationElementForLink(manager, refText, psiElement);

@@ -139,6 +139,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   private void fillEditorSettings(final EditorSettings editorSettings) {
     editorSettings.setWhitespacesShown(true);
     editorSettings.setLineMarkerAreaShown(false);
+    editorSettings.setIndentGuidesShown(false);
     editorSettings.setLineNumbersShown(false);
     editorSettings.setFoldingOutlineShown(false);
     editorSettings.setAdditionalColumnsCount(0);
@@ -179,9 +180,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
       public void run() {
         try {
           //important not mark as generated not to get the classes before setting language level
-          PsiFile psiFile = PsiFileFactory.getInstance(project)
-            .createFileFromText("a." + getFileTypeExtension(getFileType()), getFileType(), myTextToReformat, LocalTimeCounter.currentTime(),
-                                false, false);
+          PsiFile psiFile = createFileFromText(project, myTextToReformat);
 
           prepareForReformat(psiFile);
           apply(mySettings);
@@ -208,7 +207,13 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
   protected abstract void prepareForReformat(PsiFile psiFile);
 
-  protected PsiFile doReformat(Project project, PsiFile psiFile) {
+  protected PsiFile createFileFromText(Project project, String text) {
+    PsiFile psiFile = PsiFileFactory.getInstance(project)
+      .createFileFromText("a." + getFileTypeExtension(getFileType()), getFileType(), text, LocalTimeCounter.currentTime(), false, false);
+    return psiFile;
+  }
+
+  protected PsiFile doReformat(final Project project, final PsiFile psiFile) {
     CodeStyleManager.getInstance(project).reformat(psiFile);
     return psiFile;
   }

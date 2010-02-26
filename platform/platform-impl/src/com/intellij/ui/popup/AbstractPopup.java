@@ -328,11 +328,9 @@ public class AbstractPopup implements JBPopup {
 
     Component focusedComponent = getWndManager().getFocusedComponent(project);
     if (focusedComponent != null) {
-      if (focusedComponent instanceof Window) {
-        window = (Window)focusedComponent;
-      }
-      else {
-        window = SwingUtilities.getWindowAncestor(focusedComponent);
+      Component parent = UIUtil.findUltimateParent(focusedComponent);
+      if (parent instanceof Window) {
+        window = (Window)parent;
       }
     }
     if (window == null) {

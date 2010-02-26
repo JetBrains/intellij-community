@@ -99,13 +99,18 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
     return null;
   }
 
-  @Override
-  protected PsiFile doReformat(final Project project, PsiFile psiFile) {
-    final String text = psiFile.getText();
-    final PsiFile file =
+
+  protected PsiFile createFileFromText(Project project, String text) {
+    final PsiFile psiFile =
       PsiFileFactory.getInstance(project).createFileFromText("a", getFileType(), text, LocalTimeCounter.currentTime(), true);
+    return psiFile;
+  }
+
+  @Override
+  protected PsiFile doReformat(final Project project, final PsiFile psiFile) {
+    final String text = psiFile.getText();
     final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
-    final Document doc = manager.getDocument(file);
+    final Document doc = manager.getDocument(psiFile);
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -113,7 +118,7 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
             doc.replaceString(0, doc.getTextLength(), text);
             manager.commitDocument(doc);
             try {
-              CodeStyleManager.getInstance(project).reformat(file);
+              CodeStyleManager.getInstance(project).reformat(psiFile);
             }
             catch (IncorrectOperationException e) {
               LOG.error(e);
@@ -123,6 +128,6 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
       }
     }, "", "");
     manager.commitDocument(doc);
-    return file;
+    return psiFile;
   }
 }

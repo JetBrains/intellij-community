@@ -22,6 +22,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -366,6 +367,34 @@ public class AbstractTreeBuilder implements Disposable {
 
   public void setPassthroughMode(boolean passthrough) {
     myUi.setPassthroughMode(passthrough);
+  }
+
+  public void expandAll() {
+    final JTree tree = getTree();
+    if (tree.getRowCount() > 0) {
+      final AbstractTreeUi treeUi = getUi();
+      final int expandRecursionDepth = Math.max(2, Registry.intValue("ide.tree.expandRecursionDepth"));
+      new Runnable() {
+        private int myCurrentRow = 0;
+        private int myInvocationCount = 0;
+        public void run() {
+          if (++myInvocationCount > expandRecursionDepth) {
+            myInvocationCount = 0;
+            // need this to prevent stack overflow if the tree is rather big and is "synchronous"
+            SwingUtilities.invokeLater(this);
+          }
+          else {
+            final int row = myCurrentRow++;
+            if (row < tree.getRowCount()) {
+              final TreePath path = tree.getPathForRow(row);
+              final Object last = path.getLastPathComponent();
+              final Object elem = treeUi.getElementFor(last);
+              expand(elem, this);
+            }
+          }
+        }
+      }.run();
+    }
   }
 
   public static class AbstractTreeNodeWrapper extends AbstractTreeNode<Object> {

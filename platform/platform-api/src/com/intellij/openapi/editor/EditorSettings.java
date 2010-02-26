@@ -94,4 +94,8 @@ public interface EditorSettings {
 
   boolean isRefrainFromScrolling();
   void setRefrainFromScrolling(boolean b);
+
+  boolean isIndentGuidesShown();
+
+  void setIndentGuidesShown(boolean val);
 }

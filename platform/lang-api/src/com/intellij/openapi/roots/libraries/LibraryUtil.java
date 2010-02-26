@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 public class LibraryUtil {
@@ -137,5 +138,16 @@ public class LibraryUtil {
         return null;
       }
     }, null);
+  }
+
+   @Nullable
+  public static LibraryOrderEntry findLibraryEntry(VirtualFile file, final Project project) {
+    List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(file);
+    for (OrderEntry entry : entries) {
+      if (entry instanceof LibraryOrderEntry) {
+        return (LibraryOrderEntry)entry;
+      }
+    }
+    return null;
   }
 }
