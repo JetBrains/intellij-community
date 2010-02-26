@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.properties;
 
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -85,6 +86,9 @@ public class LastSelectedPropertiesFileStore implements PersistentStateComponent
 
   public void saveLastSelectedPropertiesFile(PsiFile context, PropertiesFile file) {
     VirtualFile virtualFile = context.getVirtualFile();
+    if (virtualFile instanceof VirtualFileWindow) {
+      virtualFile = ((VirtualFileWindow)virtualFile).getDelegate();
+    }
     assert virtualFile != null;
     String contextUrl = virtualFile.getUrl();
     String url = file.getVirtualFile().getUrl();
