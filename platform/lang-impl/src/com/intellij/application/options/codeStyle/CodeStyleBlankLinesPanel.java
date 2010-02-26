@@ -134,14 +134,6 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
     return panel;
   }
 
-  protected EditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
-    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-    if (project == null) {
-      project = ProjectManager.getInstance().getDefaultProject();
-    }
-    return myFileType.getEditorHighlighter(project, null, scheme);
-  }  
-
   protected void resetImpl(final CodeStyleSettings settings) {
     myKeepBlankLinesInDeclarations.setText(String.valueOf(settings.KEEP_BLANK_LINES_IN_DECLARATIONS));
     myKeepBlankLinesInCode.setText(String.valueOf(settings.KEEP_BLANK_LINES_IN_CODE));

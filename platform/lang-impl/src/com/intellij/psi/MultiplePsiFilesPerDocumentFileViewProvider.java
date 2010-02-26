@@ -54,8 +54,12 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
 
   @NotNull
   public List<PsiFile> getAllFiles() {
-    final ArrayList<PsiFile> roots = new ArrayList<PsiFile>(myRoots.values());
-    final PsiFile base = myRoots.get(getBaseLanguage());
+    final List<PsiFile> roots = new ArrayList<PsiFile>();
+    for (Language language : getLanguages()) {
+      PsiFile psi = getPsi(language);
+      if (psi != null) roots.add(psi);
+    }
+    final PsiFile base = getPsi(getBaseLanguage());
     if (!roots.isEmpty() && roots.get(0) != base) {
       roots.remove(base);
       roots.add(0, base);
