@@ -239,6 +239,8 @@ public class AbstractTreeUi {
         ourUi2Countdown.remove(eachUi);
         Runnable runnable = new Runnable() {
           public void run() {
+            if (isReleased()) return;
+
             myCleanupTask = null;
             getBuilder().cleanUp();
           }
