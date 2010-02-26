@@ -33,8 +33,8 @@ import java.util.*;
 /**
  * @author Eugene.Kudelevsky
  */
-public class XmlCustomLiveTemplate implements CustomLiveTemplate {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.XmlCustomLiveTemplate");
+public class XmlZenCodingTemplate implements CustomLiveTemplate {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.XmlZenCodingTemplate");
 
   private static final String ATTRS = "ATTRS";
 
