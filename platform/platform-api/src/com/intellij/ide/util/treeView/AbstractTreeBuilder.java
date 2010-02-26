@@ -368,6 +368,33 @@ public class AbstractTreeBuilder implements Disposable {
     myUi.setPassthroughMode(passthrough);
   }
 
+  public void expandAll() {
+    final JTree tree = getTree();
+    if (tree.getRowCount() > 0) {
+      final AbstractTreeUi treeUi = getUi();
+      new Runnable() {
+        private int myCurrentRow = 0;
+        private int myInvocationCount = 0;
+        public void run() {
+          if (++myInvocationCount > 50) {
+            myInvocationCount = 0;
+            // need this to prevent stack overflow if the tree is rather big and is "synchronous"
+            SwingUtilities.invokeLater(this);
+          }
+          else {
+            final int row = myCurrentRow++;
+            if (row < tree.getRowCount()) {
+              final TreePath path = tree.getPathForRow(row);
+              final Object last = path.getLastPathComponent();
+              final Object elem = treeUi.getElementFor(last);
+              expand(elem, this);
+            }
+          }
+        }
+      }.run();
+    }
+  }
+
   public static class AbstractTreeNodeWrapper extends AbstractTreeNode<Object> {
     public AbstractTreeNodeWrapper() {
       super(null, null);

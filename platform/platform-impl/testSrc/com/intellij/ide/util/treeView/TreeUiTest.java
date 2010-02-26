@@ -1,9 +1,9 @@
 package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.Time;
 import com.intellij.util.WaitFor;
 import junit.framework.TestSuite;
@@ -47,6 +47,37 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
     updateFromRoot();
     assertTree("+/\n");
+  }
+
+  public void _testExpandAll() throws Exception {
+    buildStructure(myRoot);
+    assertTree("+/\n");
+    final Ref<Boolean> flag = new Ref<Boolean>(Boolean.FALSE);
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        getBuilder().expandAll();
+        flag.set(Boolean.TRUE);
+      }
+    });
+
+    waitBuilderToCome(new Condition() {
+      public boolean value(Object o) {
+        return flag.get();
+      }
+    });
+    
+    assertTree("-/\n"
+               + " -com\n"
+               + "  -intellij\n"
+               + "   openapi\n"
+               + " -jetbrains\n"
+               + "  -fabrique\n"
+               + "   ide\n"
+               + " -org\n"
+               + "  -eclipse\n"
+               + "   rcp\n"
+               + " -xunit\n"
+               + "  runner\n");
   }
 
   public void testInvisibleRoot() throws Exception {
