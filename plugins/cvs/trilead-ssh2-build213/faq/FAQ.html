@@ -1,0 +1,389 @@
+<html>
+<title>Trilead SSH-2 for Java FAQ</title>
+<body>
+
+<a name="oben"></a>
+<h1>Trilead SSH-2 for Java FAQ</h1>
+
+<p>
+This FAQ includes information regarding topics that were discussed in e-mails between developers and users
+of the Trilead SSH-2 for Java library.
+</p>
+<p>
+Trilead homepage: <a href="http://www.trilead.ethz.ch">http://www.trilead.ethz.ch</a><br>
+Last update of FAQ: oct-15-2007.
+</p>
+<p>
+Please report bugs, typos and any kind of suggestions to support@trilead.com.
+Also, please visit our <a href="http://www.trilead.com/support">support forum</a>.
+</p>
+
+<hr>
+
+<h2>Sections:</h2>
+
+<p>
+<ul>
+<li><a href="#env">When I start program XYZ with putty (or openssh, ..., whatever) then everything works.
+However, if I use "Session.execCommand", then XYZ behaves differently or does not work at all!</a></li>
+
+<li><a href="#blocking">My program sometimes hangs when I only read output from stdout!
+Or: can you explain me the story about the shared stdout/stderr window in the SSH-2 protocol?
+Or: what is this "StreamGobbler" thing all about?</a></li>
+
+<li><a href="#buffered">Why are the session's Input- and OutputStreams not buffered?</a></li>
+
+<li><a href="#sessioncommands">Why can't I execute several commands in one single session?</a></li>
+
+<li><a href="#sessionlimit">I cannot open more than 10 concurrent sessions (or SCP clients).</a></li>
+
+<li><a href="#passwordauth">Password authentication fails, I get "Authentication method password not
+supported by the server at this stage".</a></li>
+
+<li><a href="#puttygen">Why does public key authentication fail with my putty key?</a></li>
+
+<li><a href="#catmethod">I am sending data to a remote file using the "cat" method, but not all data is being written.</a></li>
+
+<li><a href="#pumptoremote">I want to pump data into a remote file, but the amount of data to be sent
+is not known at the time the transfer starts.</a></li>
+
+<li><a href="#swingshell">Do you have an example for the usage of feature XYZ?</a></li>
+</ul>
+</p>
+
+<hr><a name="env"></a><h2>When I start program XYZ with putty (or openssh, ..., whatever) then everything
+works. However, if I use "Session.execCommand", then XYZ behaves differently or does not work at all!</h2>
+
+<h3>Short answer:</h3>
+
+<p>
+The most often source of problems when executing a command with <tt>Session.execCommand()</tt>
+are missing/wrong set environment variables on the remote machine. Make sure that the minimum needed
+environment for XYZ is the same, independentely on how the shell is being invoked.
+</p>
+
+<p>
+Example quickfix for bash users:
+</p>
+
+<p>
+<ol>
+<li>Define all your settings in the file <tt><b>~/.bashrc</b></tt></li>
+<li>Make sure that the file <tt><b>~/.bash_profile</b></tt> only contains the line <tt><b>source
+~/.bashrc</b></tt>.</li>
+<li>Before executing <tt>Session.execCommand()</tt>, do NOT aquire any type of pseudo terminal in the
+session. Be prepared to consume stdout and stderr data.</li>
+</ol>
+</p>
+
+<p>
+<b>Note:</b> If you really want to mimic the behavior of putty, then don't use Session.execCommand(), 
+instead aquire a pty (pseudo terminal) and then start a shell (use <tt>Session.requestPTY()</tt> and
+<tt>Session.startShell()</tt>). You then have to communicate with the shell process at the other end
+through stdin and stdout. However, you also have to implement terminal logic (e.g., escape sequence
+handling (unless you use a "dumb" pty), "expect-send" logic (output parsing, shell prompt detection), etc.).
+</p>
+
+<h3>Long answer:</h3>
+
+<p>
+If you login by using putty, then putty will normally request a "xterm" pty and your assigned shell
+(e.g., bash) will be started (a so called "interactive login shell"). In contrast, if you use
+<tt>Session.execCommand()</tt> to start a command then (unless you ask for it) no pty will be aquired
+and the command will be given to the shell as an argument (with the shell's "-c" option).
+</p>
+
+<p>
+The way a shell is being invoked has an effect on the set of initialization files which will be read be the shell.
+</p>
+
+<p>
+To demonstrate the difference, try the following (from the command line, e.g., with an OpenSSH client):
+</p>
+
+<p>
+<ol>
+<li>Login interactively and print the environment with the "env" command:<br>&nbsp;<br>
+<tt><b>[user@host ~] ssh 127.0.0.1<br>
+[user@host ~] env</b></tt><br>&nbsp;<br>
+</li>
+<li>Let the ssh server execute the "env" command (equivalent to using <tt>Session.executeCommand()</tt>):<br>&nbsp;<br>
+<tt><b>[user@host ~] ssh 127.0.0.1 "env"</b></tt>
+</li>
+</ol>
+</p>
+
+<p>
+If you compare the two outputs, then you will (unless you have adjusted your shell's settings)
+observe different environments.
+</p>
+
+<p>
+<b>If you are interested in the details, then please read the <tt>INVOCATION</tt> section in man page
+for the bash shell. You may notice that the definitions of "interactive" and "non-interactive" 
+(and combinations with "login") are little bit tricky.</b>
+</p>
+
+[<a href="#oben">TOP</a>]
+
+<hr><a name="blocking"></a><h2>My program sometimes hangs when I only read output from stdout!
+Or: can you explain me the story about the shared stdout/stderr window in the SSH-2 protocol?
+Or: what is this "StreamGobbler" thing all about?</h2>
+
+<p>
+In the SSH-2 low level protocol, each channel (e.g., session) has a receive window. When the remote
+SSH daemon has filled up our receive window, it must wait until we have consumed the input and are ready to accept new data.
+</p>
+
+<p>
+Unfortunately, the SSH-2 protocol defines a shared window for stderr and stdout. As a consequence,
+if, for example, the remote process produces a lot of stderr data and you never consume it, then after
+some time the local receive window will be full and the sender is blocked. If you then try to read()
+from stdout, your call will be blocked: there is no stdout data (locally) available and the SSH daemon
+cannot send you any, since the receive window is full (you would have to read some stderr data first
+to "free" up space in the receive window).
+</p>
+
+<p>
+Fortunately, Trilead SSH-2 uses a 30KB window - the above described scenario should be very rare.
+</p>
+
+<p>
+Many other SSH-2 client implementations just blindly consume any remotely produced data into a buffer
+which gets automatically extended - however, this can lead to another problem: in the extreme case
+the remote side can overflow you with data (e.g., leading to out of memory errors).
+</p>
+
+<p>
+What can you do about this?
+</p>
+
+<p>
+<ol>
+<li><b>Bad: Do nothing</b> - just work with stderr and stdout Inputstreams and hope that the 30KB
+window is enough for your application.</li>
+
+<li><b>Better, recommended for most users:</b> use two worker threads that consume remote stdout
+and stderr in parallel. Since you probably are not in the mood to program such a thing, you can use
+the StreamGobbler class supplied with Trilead SSH-2. The Streamgobbler is a special InputStream that
+uses an internal worker thread to read and buffer internally all data produced by another InputStream.
+It is very simple to use:<br> <tt><b><pre>InputStream stdout = new StreamGobbler(mysession.getStdout());
+
+InputStream stderr = new StreamGobbler(mysession.getStderr());</pre></b></tt>
+You then can access stdout and stderr in any order, in the background the StreamGobblers will
+automatically consume all data from the remote side and store in an internal buffer.</li>
+
+<li><b>Advanced:</b> you are paranoid and don't like programs that automatically extend buffers
+without asking you. You then have to implement a state machine. The condition wait facility offered by
+<tt>Session.waitForCondition()</tt> is exactly what you need: you can use it to wait until either stdout
+or stderr data has arrived and can be consumed with the two InputStreams. You can either use the return value
+of <tt>Session.waitForCondition()</tt> or check with <tt>InputStream.available()</tt>
+(for stdout and stderr) which InputStream has data available (i.e., a <tt>read()</tt> call will not block).
+Be careful when wrapping the InputStreams, also do not concurrently call read() on the InputStreams while calling
+<tt>Session.waitForCondition()</tt> (unless you know what you are doing).<br>Please have a look a the
+<tt>SingleThreadStdoutStderr.java</tt> example.</li>
+
+<li><b>The lazy way:</b> you don't mind if stdout and stderr data is being mixed into the same
+stream. Just allocate a "dumb" pty and the server will hopefully not send you any data on the stderr
+stream anymore. <b>Note:</b> by allocating a pty, the shell used to execute the command will probably 
+behave differently in terms of initialization (see also <a href="#env">this question</a>).</li>
+</ol>
+</p>
+
+
+[<a href="#oben">TOP</a>]
+
+<hr><a name="buffered"></a><h2>Why are the session's Input- and OutputStreams not buffered?</h2>
+
+<p>
+If you need it, then this library offers quite a raw type of access to the SSH-2 protocol stack.
+Of course, many people don't need that kind of low level access. If you need buffered streams,
+then you should the do the same thing as you would probably do with the streams of a TCP socket:
+wrap them with instances of BufferedInputStream and BufferedOutputStream. In case you use
+StreamGobblers for the InputStreams, then you don't need any additional wrappers, since the
+StreamGobblers implement buffering already.
+</p>
+<p>
+This code snippet will probably work well for most people:
+</p>
+<p>
+<tt>
+<pre>
+InputStream stdout = new StreamGobbler(mysession.getStdout());
+InputStream stderr = new StreamGobbler(mysession.getStderr());
+OutputStream stdin = new BufferedOutputStream(mysession.getStdin(), 8192);
+</pre>
+</tt>
+</p>
+
+[<a href="#oben">TOP</a>]
+
+<hr><a name="sessioncommands"></a><h2>Why can't I execute several commands in one single session?</h2>
+<p>
+If you use <tt>Session.execCommand()</tt>, then you indeed can only execute only one command per session.
+This is not a restriction of the library, but rather an enforcement by the underlying SSH-2 protocol
+(a <tt>Session</tt> object models the underlying SSH-2 session).
+</p>
+<p>
+There are several solutions:
+</p>
+<p>
+<ul>
+<li><b>Simple: Execute several commands in one batch</b>, e.g., something like <tt>Session.execCommand("echo
+Hello && echo again")</tt>.</li>
+<li><b>Simple: The intended way: simply open a new session for each command</b> - once you have opened a
+connection, you can ask for as many sessions as you want, they are only a "virtual" construct.</li>
+<li><b>Advanced: Don't use <tt>Session.execCommand()</tt>, but rather aquire a shell with
+<tt>Session.startShell()</tt></b>. See also <a href="#env">this question</a>.</li>
+</ul>
+</p>
+
+
+[<a href="#oben">TOP</a>]
+
+<hr><a name="sessionlimit"></a><h2>I cannot open more than 10 concurrent sessions (or SCP clients).</h2>
+<p>
+You are probably using OpenSSH. By looking at their source code you will find out that there
+is a hard-coded constant called MAX_SESSIONS in the session.c file which is set to "10" by default.
+This is a per connection limit. Unfortunately, it is not a run-time tunable parameter.
+However, this limit has no effect on the number of concurrent port forwardings. Please note: this information
+is based on the OpenSSH 4.3 release.
+</p>
+<p>
+Possible solutions:
+<ul>
+<li>(a) Recompile your SSH daemon</li>
+<li>(b) Try to live with this limit and keep the number of concurrent sessions <= 10.</li>
+<li>(c) Distribute your sessions over multiple concurrent SSH connections.</li>
+</ul>
+</p>
+<p>
+Just for completeness: starting from release 210, the thrown exception may look as follows:<br>
+<tt>
+<pre>
+java.io.IOException: Could not open channel (The server refused to open the channel (SSH_OPEN_ADMINISTRATIVELY_PROHIBITED, 'open failed'))
+</pre>
+</tt>
+</p>
+
+[<a href="#oben">TOP</a>]
+
+<hr><a name="passwordauth"></a><h2>Password authentication fails, I get "Authentication method password
+not supported by the server at this stage".</h2>
+
+<p>
+Many default SSH server installations are configured to refuse the authentication type "password".
+Often, they only accept "publickey" and "keyboard-interactive". You have different options:
+</p>
+
+<p>
+<ul>
+<li><b>Enable password authentication.</b> E.g., in case of OpenSSH on Fedora, edit
+<code>/etc/sshd/sshd_config</code> and change the value of "PasswordAuthentication" to "yes",
+then send a HUP signal to the daemon so that it re-reads its configuration.</li>
+<li><b>Switch to public-key authentication.</b> Probably the best choice.</li>
+<li><b>Try to use keyboard-interactive authentication.</b> If you have a GUI that interacts with a user,
+then this is doable (check out the SwingShell.java example).</li>
+</ul>
+</p>
+
+<p>
+In general it is a good idea to call either <code>Connection.getRemainingAuthMethods()</code>
+or <code>Connection.isAuthMethodAvailable()</code> before using a certain authentication method.
+</p>
+
+<p>
+Please note that most servers let you in after one successful authentication step. However, in rare cases
+you may encounter servers that need several steps. I.e., if one of the <code>Connection.authenticateWithXXX()</code>
+methods returns <code>false</code> and <code>Connection.isAuthenticationPartialSuccess()</code> returns
+<code>true</code>, then further authentication is needed. For each step, to find out which authentication methods
+may proceed, you can use either the <code>Connection.getRemainingAuthMethods()</code> 
+or the <code>Connection.isAuthMethodAvailable()</code> method. Again, please have a look into the
+SwingShell.java example.
+</p>
+
+[<a href="#oben">TOP</a>]
+
+<hr><a name="puttygen"></a><h2>Why does public key authentication fail with my putty key?</h2>
+<p>
+When using putty private keys (e.g., .ppk files) with public key authentication, you get a
+"Publickey authentication failed" exception. The reason is that the library currently is not able to
+directly handle private keys in the proprietary format used by putty. However, you can use the
+"puttygen" tool (from the putty website) to convert your key to the desired format: load your key,
+then go to the conversions menu and select "Save OpenSSH key" (which saves the key in openssl PEM format,
+e.g., call it "private.pem").
+</p>
+
+[<a href="#oben">TOP</a>]
+
+<hr><a name="catmethod"></a><h2>I am sending data to a remote file using the "cat" method, but not all data is being written.</h2>
+<p>
+Please read carefully the answer to the following <a href="#pumptoremote">question</a>.
+</p>
+
+[<a href="#oben">TOP</a>]
+
+
+<hr><a name="pumptoremote"></a><h2>I want to pump data into a remote file, but the amount of data to be sent
+is not known at the time the transfer starts.</h2>
+<p>
+The SCP protocol communicates the amount of data to be sent at the start of the transfer,
+so SCP remains out of consideration. Possible other solutions:
+<ul>
+<li>Use the SFTP client. Recommended.</li>
+<li>Execute "cat > filename.txt" on the remote side and pump the data into stdin. This method is NOT recommended (and won't work on Windows...).</li>
+</ul>
+</p>
+<p>
+Be careful if you use the "cat" approach, as it may happen that not all your data will be
+written. If you close the stdin stream and immediatelly close the session (or the whole connection) then
+some SSH servers do not send the pending data to the process being executed ("cat" in this case).
+You have to wait until "cat" has received the EOF and terminates before closing the session. However,
+waiting for the termination may not always work, since SSH servers sometimes "forget" to send the exit code
+of the remote process. The following code MAY work:
+</p>
+<p>
+<tt>
+<pre>
+Session sess = conn.openSession();
+sess.execCommand("cat > test.txt");
+OutputStream stdin = sess.getStdin();
+
+... out.write(...) ... out.write(...) ...
+
+/* The following flush() is only needed if you wrap the  */
+/* stdin stream (e.g., with a BufferedOutputStream).     */
+out.flush();
+
+/* Now let's send EOF */
+out.close();
+
+/* Let's wait until cat has finished                     */
+sess.waitForCondition(ChannelCondition.EXIT_STATUS, 2000);
+/* Better: put the above statement into a while loop!    */
+/* In ANY CASE: read the Javadocs for waitForCondition() */
+
+/* Show exit status, if available (otherwise "null")     */
+System.out.println("ExitCode: " + sess.getExitStatus());
+/* Now its hopefully safe to close the session           */
+sess.close();
+</pre>
+</tt>
+</p>
+<p>
+(Just a thought for another solution: execute <code>cat > test.txt && echo "FINISHED"</code>
+and wait until you get "FINISHED" on stdout... - try it on your own risk =)
+</p>
+
+[<a href="#oben">TOP</a>]
+
+<hr><a name="swingshell"></a><h2>Do you have an example for the usage of feature XYZ?</h2>
+<p>
+Please have at look at the examples section in the distribution, especially at the SwingShell.java example.
+</p>
+
+[<a href="#oben">TOP</a>]
+
+</body>
+</html>
+

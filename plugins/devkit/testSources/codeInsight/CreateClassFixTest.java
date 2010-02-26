@@ -57,6 +57,12 @@ public class CreateClassFixTest {
     myFixture.setUp();
   }
 
+  @AfterMethod
+  public void tearDown() throws Exception {
+    myFixture.tearDown();
+    myFixture = null;
+  }
+
   private static String getSourceRoot() {
     return "codeInsight";
   }
@@ -65,6 +71,7 @@ public class CreateClassFixTest {
   public Object[][] data() {
     return new Object[][]{{"Action", true}, {"Impl", true}, {"Intf", true}, {"Intf", false}};
   }
+
 
   @Test(dataProvider = "data", enabled = false)
   public void test(String testName, boolean createClass) throws Throwable {
@@ -81,12 +88,5 @@ public class CreateClassFixTest {
     myFixture.launchAction(resultAction);
     final Project project = myFixture.getProject();
     Assert.assertNotNull(JavaPsiFacade.getInstance(project).findClass(testName, GlobalSearchScope.allScope(project)));
-  }
-
-
-  @AfterMethod
-  public void tearDown() throws Exception {
-    myFixture.tearDown();
-    myFixture = null;
   }
 }

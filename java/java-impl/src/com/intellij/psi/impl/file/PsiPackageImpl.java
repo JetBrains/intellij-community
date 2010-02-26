@@ -36,6 +36,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
@@ -576,17 +577,22 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     return false;
   }
 
-  public void navigate(boolean requestFocus) {
-    final ProjectView projectView = ProjectView.getInstance(getProject());
-    projectView.changeView(PackageViewPane.ID);
-    final PsiDirectory[] directories = getDirectories();
-    final VirtualFile firstDir = directories[0].getVirtualFile();
-    final boolean isLibraryRoot = ProjectRootsUtil.isLibraryRoot(firstDir, getProject());
+  public void navigate(final boolean requestFocus) {
+    ToolWindow window = ToolWindowManager.getInstance(getProject()).getToolWindow(ToolWindowId.PROJECT_VIEW);
+    window.activate(null);
+    window.getActivation().doWhenDone(new Runnable() {
+      public void run() {
+        final ProjectView projectView = ProjectView.getInstance(getProject());
+        projectView.changeView(PackageViewPane.ID);
+        final PsiDirectory[] directories = getDirectories();
+        final VirtualFile firstDir = directories[0].getVirtualFile();
+        final boolean isLibraryRoot = ProjectRootsUtil.isLibraryRoot(firstDir, getProject());
 
-    final Module module = ProjectRootManager.getInstance(getProject()).getFileIndex().getModuleForFile(firstDir);
-    final PackageElement packageElement = new PackageElement(module, this, isLibraryRoot);
-    projectView.getProjectViewPaneById(PackageViewPane.ID).select(packageElement, firstDir, requestFocus);
-    ToolWindowManager.getInstance(getProject()).getToolWindow(ToolWindowId.PROJECT_VIEW).activate(null);
+        final Module module = ProjectRootManager.getInstance(getProject()).getFileIndex().getModuleForFile(firstDir);
+        final PackageElement packageElement = new PackageElement(module, PsiPackageImpl.this, isLibraryRoot);
+        projectView.getProjectViewPaneById(PackageViewPane.ID).select(packageElement, firstDir, requestFocus);
+      }
+    });
   }
 
   public boolean isPhysical() {

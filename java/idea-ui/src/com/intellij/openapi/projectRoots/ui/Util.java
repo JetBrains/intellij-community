@@ -32,9 +32,13 @@ import java.net.URL;
  */
 public class Util{
 
-  public static VirtualFile showSpecifyJavadocUrlDialog(JComponent parent){
+  public static VirtualFile showSpecifyJavadocUrlDialog(JComponent parent) {
+    return showSpecifyJavadocUrlDialog(parent, "");
+  }
+
+  public static VirtualFile showSpecifyJavadocUrlDialog(JComponent parent, String initialValue){
     final String url = Messages.showInputDialog(parent, ProjectBundle.message("sdk.configure.javadoc.url.prompt"),
-                                                ProjectBundle.message("sdk.configure.javadoc.url.title"), Messages.getQuestionIcon(), "", new InputValidator() {
+                                                ProjectBundle.message("sdk.configure.javadoc.url.title"), Messages.getQuestionIcon(), initialValue, new InputValidator() {
       public boolean checkInput(String inputString) {
         return true;
       }

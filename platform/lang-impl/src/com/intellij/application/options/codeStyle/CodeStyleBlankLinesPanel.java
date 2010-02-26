@@ -15,13 +15,11 @@
  */
 package com.intellij.application.options.codeStyle;
 
-import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -30,12 +28,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.OptionGroup;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
-public class CodeStyleBlankLinesPanel extends CodeStyleAbstractPanel {
+public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPanel {
   private JTextField myKeepBlankLinesInDeclarations;
   private JTextField myKeepBlankLinesInCode;
   private JTextField myBlankLinesBeforePackage;
@@ -72,6 +69,11 @@ public class CodeStyleBlankLinesPanel extends CodeStyleAbstractPanel {
     installPreviewPanel(previewPanel);
     addPanelToWatch(myPanel);
 
+  }
+
+  @Override
+  protected LanguageCodeStyleSettingsProvider.SettingsType getSettingsType() {
+    return LanguageCodeStyleSettingsProvider.SettingsType.BLANK_LINE_SETTINGS;
   }
 
   private JPanel createBlankLinesPanel() {
@@ -130,32 +132,6 @@ public class CodeStyleBlankLinesPanel extends CodeStyleAbstractPanel {
     panel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.preview")));
     panel.setPreferredSize(new Dimension(200, 0));
     return panel;
-  }
-
-  protected EditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
-    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-    if (project == null) {
-      project = ProjectManager.getInstance().getDefaultProject();
-    }
-    return myFileType.getEditorHighlighter(project, null, scheme);
-  }
-
-  protected String getPreviewText() {
-    return "/*\n" +
-           " * This is a sample file.\n" +
-           " */\n" +
-           "package com.intellij.samples;\n" +
-           "import com.intellij.idea.Main;\n" +
-           "import javax.swing.*;\n" +
-           "import java.util.Vector;\n" +
-           "public class Foo {\n" +
-           "  private int field1;\n" +
-           "  private int field2;\n" +
-           "  public void foo1() {\n\n" +
-           "  }\n" +
-           "  public void foo2() {\n" +
-           "  }\n\n" +
-           "}";
   }
 
   protected void resetImpl(final CodeStyleSettings settings) {
@@ -237,11 +213,6 @@ public class CodeStyleBlankLinesPanel extends CodeStyleAbstractPanel {
 
   protected int getRightMargin() {
     return 37;
-  }
-
-  @NotNull
-  protected FileType getFileType() {
-    return StdFileTypes.JAVA;
   }
 
   public JComponent getPanel() {

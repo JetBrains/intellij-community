@@ -304,7 +304,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
     IntentionAction i = getIntentionAtCaret(CREATE_MODULE_INTENTION);
     assertNotNull(i);
 
-    myCodeInsightFixture.launchAction(i);
+    myFixture.launchAction(i);
 
     assertCreateModuleFixResult(
       "subDir/newModule/pom.xml",
@@ -345,7 +345,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
     IntentionAction i = getIntentionAtCaret(CREATE_MODULE_INTENTION);
     assertNotNull(i);
 
-    myCodeInsightFixture.launchAction(i);
+    myFixture.launchAction(i);
 
     assertCreateModuleFixResult(
       "newModule/pom.xml",
@@ -385,7 +385,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
     IntentionAction i = getIntentionAtCaret(CREATE_MODULE_INTENTION);
     assertNotNull(i);
 
-    myCodeInsightFixture.launchAction(i);
+    myFixture.launchAction(i);
 
     VirtualFile pom = myProjectRoot.findFileByRelativePath("subDir/newModule/pom.xml");
     assertNotNull(pom);
@@ -407,7 +407,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
 
     IntentionAction i = getIntentionAtCaret(CREATE_MODULE_INTENTION);
     assertNotNull(i);
-    myCodeInsightFixture.launchAction(i);
+    myFixture.launchAction(i);
 
     assertCreateModuleFixResult(
       "newModule/pom.xml",
@@ -443,7 +443,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
 
     IntentionAction i = getIntentionAtCaret(CREATE_MODULE_WITH_PARENT_INTENTION);
     assertNotNull(i);
-    myCodeInsightFixture.launchAction(i);
+    myFixture.launchAction(i);
 
     assertCreateModuleFixResult(
       "newModule/pom.xml",

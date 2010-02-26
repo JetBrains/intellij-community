@@ -63,7 +63,7 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class MavenDomTestCase extends MavenImportingTestCase {
-  protected CodeInsightTestFixture myCodeInsightFixture;
+  protected CodeInsightTestFixture myFixture;
   private final Map<VirtualFile, Long> myConfigTimestamps = new THashMap<VirtualFile, Long>();
   private boolean myOriginalAutoCompletion;
 
@@ -71,10 +71,10 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
   protected void setUpFixtures() throws Exception {
     myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder().getFixture();
 
-    myCodeInsightFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(myTestFixture);
-    myCodeInsightFixture.setUp();
+    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(myTestFixture);
+    myFixture.setUp();
 
-    myCodeInsightFixture.enableInspections(MavenModelInspection.class);
+    myFixture.enableInspections(MavenModelInspection.class);
 
     myOriginalAutoCompletion = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION;
     CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = false;
@@ -83,7 +83,8 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
   @Override
   protected void tearDownFixtures() throws Exception {
     CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = myOriginalAutoCompletion;
-    myCodeInsightFixture.tearDown();
+    myFixture.tearDown();
+    myFixture = null;
     myConfigTimestamps.clear();
   }
 
@@ -93,13 +94,13 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
 
   protected void configTest(VirtualFile f) throws IOException {
     if (Comparing.equal(myConfigTimestamps.get(f), f.getModificationStamp())) return;
-    myCodeInsightFixture.configureFromExistingVirtualFile(f);
+    myFixture.configureFromExistingVirtualFile(f);
     myConfigTimestamps.put(f, f.getModificationStamp());
   }
 
   protected void type(VirtualFile f, char c) throws IOException {
     configTest(f);
-    myCodeInsightFixture.type(c);
+    myFixture.type(c);
   }
 
   protected PsiReference getReferenceAtCaret(VirtualFile f) throws IOException {
@@ -118,7 +119,7 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
 
   protected Editor getEditor(VirtualFile f) throws IOException {
     configTest(f);
-    return myCodeInsightFixture.getEditor();
+    return myFixture.getEditor();
   }
 
   protected int getEditorOffset() throws IOException {
@@ -135,7 +136,7 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
 
   private PsiFile getTestPsiFile(VirtualFile f) throws IOException {
     configTest(f);
-    return myCodeInsightFixture.getFile();
+    return myFixture.getFile();
   }
 
   protected XmlTag findTag(String path) {
@@ -211,7 +212,7 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
 
   protected List<String> getCompletionVariants(VirtualFile f) throws IOException {
     configTest(f);
-    LookupElement[] variants = myCodeInsightFixture.completeBasic();
+    LookupElement[] variants = myFixture.completeBasic();
 
     List<String> result = new ArrayList<String>();
     for (LookupElement each : variants) {
@@ -246,7 +247,7 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
   protected void checkHighlighting(VirtualFile f, boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings) throws IOException {
     configTest(myProjectPom);
     try {
-      myCodeInsightFixture.testHighlighting(checkWarnings, checkInfos, checkWeakWarnings, f);
+      myFixture.testHighlighting(checkWarnings, checkInfos, checkWeakWarnings, f);
     }
     catch (Throwable throwable) {
       throw new RuntimeException(throwable);
@@ -256,7 +257,7 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
   protected IntentionAction getIntentionAtCaret(String intentionName) throws IOException {
     configTest(myProjectPom);
     try {
-      List<IntentionAction> intentions = myCodeInsightFixture.getAvailableIntentions();
+      List<IntentionAction> intentions = myFixture.getAvailableIntentions();
 
       return CodeInsightTestUtil.findIntentionByText(intentions, intentionName);
     }

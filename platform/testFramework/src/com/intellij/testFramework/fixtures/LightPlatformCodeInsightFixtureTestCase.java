@@ -53,6 +53,13 @@ public abstract class LightPlatformCodeInsightFixtureTestCase extends UsefulTest
     myModule = myFixture.getModule();
   }
 
+  protected void tearDown() throws Exception {
+    myFixture.tearDown();
+    myFixture = null;
+    myModule = null;
+    super.tearDown();
+  }
+
   /**
    * Return relative path to the test data.
    *
@@ -63,10 +70,10 @@ public abstract class LightPlatformCodeInsightFixtureTestCase extends UsefulTest
     return "";
   }
 
+
   protected LightProjectDescriptor getProjectDescriptor() {
     return null;
   }
-
 
   /**
    * Return absolute path to the test data. Not intended to be overrided.
@@ -76,13 +83,6 @@ public abstract class LightPlatformCodeInsightFixtureTestCase extends UsefulTest
   @NonNls
   protected final String getTestDataPath() {
     return PathManager.getHomePath().replace(File.separatorChar, '/') + getBasePath();
-  }
-
-  protected void tearDown() throws Exception {
-    myFixture.tearDown();
-    myFixture = null;
-    myModule = null;
-    super.tearDown();
   }
 
   protected void runTest() throws Throwable {

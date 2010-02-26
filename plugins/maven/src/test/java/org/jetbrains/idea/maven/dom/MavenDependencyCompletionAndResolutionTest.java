@@ -586,7 +586,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
     try {
       // prevent file path from wrapping.
       CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings().XML_TEXT_WRAP = CodeStyleSettings.DO_NOT_WRAP;
-      myCodeInsightFixture.launchAction(action);
+      myFixture.launchAction(action);
     }
     finally {
       CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings().XML_TEXT_WRAP = prevValue;

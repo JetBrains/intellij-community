@@ -16,8 +16,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.ide.startup.impl.StartupManagerImpl;
-import com.intellij.lifecycle.ControlledAlarmFactory;
-import com.intellij.lifecycle.ScheduledSlowlyClosingAlarm;
+import com.intellij.lifecycle.AtomicSectionsAware;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,11 +25,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * ChangeListManager updates scheduler.
@@ -41,6 +42,7 @@ import java.util.concurrent.ScheduledExecutorService;
 public class UpdateRequestsQueue {
   private final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.UpdateRequestsQueue");
   private final Project myProject;
+  private final ScheduledExecutorService myExecutor;
   private final LocalChangesUpdater myDelegate;
   private final Object myLock;
   private volatile boolean myStarted;
@@ -50,14 +52,19 @@ public class UpdateRequestsQueue {
   private final List<Runnable> myWaitingUpdateCompletionQueue;
   private final ProjectLevelVcsManager myPlVcsManager;
   private boolean myUpdateUnversionedRequested;
-  private final ScheduledSlowlyClosingAlarm mySharedExecutor;
+  //private final ScheduledSlowlyClosingAlarm mySharedExecutor;
   private final StartupManager myStartupManager;
+  private final ExecutorWrapper myExecutorWrapper;
+  @NonNls public static final String LOCAL_CHANGES_UPDATE = "Local changes update";
 
   public UpdateRequestsQueue(final Project project, final ScheduledExecutorService executor, final LocalChangesUpdater delegate) {
-    mySharedExecutor = ControlledAlarmFactory.createScheduledOnSharedThread(project, "Local changes update", executor);
+    myProject = project;
+    myExecutor = executor;
+
+    //mySharedExecutor = ControlledAlarmFactory.createScheduledOnSharedThread(project, LOCAL_CHANGES_UPDATE, executor);
+    myExecutorWrapper = new ExecutorWrapper(myProject, LOCAL_CHANGES_UPDATE);
 
     myDelegate = delegate;
-    myProject = project;
     myPlVcsManager = ProjectLevelVcsManager.getInstance(myProject);
     myStartupManager = StartupManager.getInstance(myProject);
     myLock = new Object();
@@ -85,7 +92,7 @@ public class UpdateRequestsQueue {
         if (! myRequestSubmitted) {
           final MyRunnable runnable = new MyRunnable();
           myRequestSubmitted = true;
-          mySharedExecutor.addRequest(runnable, 300);
+          myExecutor.schedule(runnable, 300, TimeUnit.MILLISECONDS);
           LOG.debug("Scheduled for project: " + myProject.getName() + ", runnable: " + runnable.hashCode());
           myUpdateUnversionedRequested |= updateUnversionedFiles;
         } else if (updateUnversionedFiles && (! myUpdateUnversionedRequested)) {
@@ -152,7 +159,7 @@ public class UpdateRequestsQueue {
 
   private class MyRunnable implements Runnable {
     public void run() {
-      boolean updateUnversioned;
+      final boolean updateUnversioned;
       final List<Runnable> copy = new ArrayList<Runnable>(myWaitingUpdateCompletionQueue.size());
 
       try {
@@ -181,7 +188,11 @@ public class UpdateRequestsQueue {
         }
 
         LOG.debug("MyRunnable: INVOKE, project: " + myProject.getName() + ", runnable: " + hashCode());
-        myDelegate.execute(updateUnversioned, mySharedExecutor);
+        myExecutorWrapper.submit(new Consumer<AtomicSectionsAware>() {
+          public void consume(AtomicSectionsAware atomicSectionsAware) {
+            myDelegate.execute(updateUnversioned, atomicSectionsAware);
+          }
+        });
         LOG.debug("MyRunnable: invokeD, project: " + myProject.getName() + ", runnable: " + hashCode());
       } finally {
         synchronized (myLock) {

@@ -133,7 +133,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
     myTabbedPane = new TabbedPaneWrapper(myDisposable);
     for (OrderRootType type : OrderRootType.getAllTypes()) {
       if (mySdk == null || mySdk.getSdkType().isRootTypeApplicable(type)) {
-        final PathEditor pathEditor = OrderRootTypeUIFactory.FACTORY.getByKey(type).createPathEditor();
+        final PathEditor pathEditor = OrderRootTypeUIFactory.FACTORY.getByKey(type).createPathEditor(mySdk);
         myTabbedPane.addTab(pathEditor.getDisplayName(), pathEditor.createComponent());
         myPathEditors.put(type, pathEditor);
       }
@@ -292,36 +292,6 @@ public class SdkEditor implements Configurable, Place.Navigator {
     final String homepath = sdkType.suggestHomePath();
     if (homepath == null) return null;
     return LocalFileSystem.getInstance().findFileByPath(homepath);
-  }
-
-  private static class MyPathsEditor extends PathEditor {
-    private final String myDisplayName;
-    private final OrderRootType myRootType;
-    private final FileChooserDescriptor myDescriptor;
-    private final boolean myCanAddUrl;
-
-    public MyPathsEditor(String displayName, OrderRootType rootType, FileChooserDescriptor descriptor, boolean canAddUrl) {
-      myDisplayName = displayName;
-      myRootType = rootType;
-      myDescriptor = descriptor;
-      myCanAddUrl = canAddUrl;
-    }
-
-    protected OrderRootType getRootType() {
-      return myRootType;
-    }
-
-    protected FileChooserDescriptor createFileChooserDescriptor() {
-      return myDescriptor;
-    }
-
-    public String getDisplayName() {
-      return myDisplayName;
-    }
-
-    protected boolean isShowUrlButton() {
-      return myCanAddUrl;
-    }
   }
 
   private void doSelectHomePath(){

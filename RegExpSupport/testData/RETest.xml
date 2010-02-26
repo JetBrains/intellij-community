@@ -990,4 +990,11 @@
       <expected>OK</expected>
     </test>
   </bug>
+  
+  <bug id="IDEA-52291">
+    <test>
+      <pattern>(^|\.)\*(?=(\.|$))</pattern>
+      <expected>OK</expected>
+    </test>
+  </bug>
 </tests>

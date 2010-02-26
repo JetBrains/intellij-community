@@ -356,7 +356,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
     IntentionAction i = getIntentionAtCaret("Fix relative path");
     assertNotNull(i);
 
-    myCodeInsightFixture.launchAction(i);
+    myFixture.launchAction(i);
     PsiElement el = getElementAtCaret(myProjectPom);
 
     assertEquals("bar/pom.xml", ElementManipulators.getValueText(el));

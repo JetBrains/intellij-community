@@ -138,7 +138,7 @@ expected:
     compareWithExpected(expectedDocument, doc, checkRange);
   }
 
-  public static void runTool(InspectionTool tool, AnalysisScope scope, GlobalInspectionContextImpl globalContext, InspectionManagerEx inspectionManager) {
+  public static void runTool(final InspectionTool tool, AnalysisScope scope, GlobalInspectionContextImpl globalContext, final InspectionManagerEx inspectionManager) {
     final String shortName = tool.getShortName();
     final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null){

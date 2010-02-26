@@ -387,8 +387,8 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       final NewVirtualFileSystem delegate = getDelegate(file);
       final byte[] content = delegate.contentsToByteArray(file);
 
-      synchronized (INPUT_LOCK) {
-        if (content.length <= FILE_LENGTH_TO_CACHE_THRESHOLD) {
+      if (content.length <= FILE_LENGTH_TO_CACHE_THRESHOLD) {
+        synchronized (INPUT_LOCK) {
           DataOutputStream sink = FILE_CONTENT.writeAttribute(file);
           try {
             FileUtil.copy(new ByteArrayInputStream(content), sink);

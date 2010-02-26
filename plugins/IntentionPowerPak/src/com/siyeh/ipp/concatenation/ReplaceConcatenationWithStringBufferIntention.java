@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,24 +27,30 @@ import org.jetbrains.annotations.NotNull;
 
 public class ReplaceConcatenationWithStringBufferIntention extends Intention {
 
+    @Override
     @NotNull
     public PsiElementPredicate getElementPredicate() {
         return new SimpleStringConcatenationPredicate();
     }
 
+    @Override
     public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
         PsiBinaryExpression expression =
                 (PsiBinaryExpression)element;
         PsiElement parent = expression.getParent();
+        if (parent == null) {
+            return;
+        }
         while (ConcatenationUtils.isConcatenation(parent)) {
             expression = (PsiBinaryExpression)parent;
-            assert expression != null;
             parent = expression.getParent();
+            if (parent == null) {
+                return;
+            }
         }
         @NonNls final StringBuilder newExpression = new StringBuilder();
         if (isPartOfStringBufferAppend(expression)) {
-            assert parent != null;
             final PsiMethodCallExpression methodCallExpression =
                     (PsiMethodCallExpression)parent.getParent();
             assert methodCallExpression != null;
@@ -100,10 +106,11 @@ public class ReplaceConcatenationWithStringBufferIntention extends Intention {
     private static void turnExpressionIntoChainedAppends(
             PsiExpression expression, @NonNls StringBuilder result) {
         if (ConcatenationUtils.isConcatenation(expression)) {
-            final PsiBinaryExpression concat = (PsiBinaryExpression)expression;
-            final PsiExpression lhs = concat.getLOperand();
+            final PsiBinaryExpression concatenation =
+                    (PsiBinaryExpression)expression;
+            final PsiExpression lhs = concatenation.getLOperand();
             turnExpressionIntoChainedAppends(lhs, result);
-            final PsiExpression rhs = concat.getROperand();
+            final PsiExpression rhs = concatenation.getROperand();
             turnExpressionIntoChainedAppends(rhs, result);
         } else {
             final PsiExpression strippedExpression =
