@@ -30,7 +30,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -1286,27 +1285,13 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     PsiType[] argumentTypes = PsiUtil.getArgumentTypes(place, false, true);
     if (argumentTypes == null) return;
 
-    final PsiType[] paramTypes = PsiUtil.skipOptionalClosureParameters(argumentTypes.length, (GrClosureType)type);
-    if (!areTypesCompatibleForCallingClosure(argumentTypes, paramTypes, place.getManager(), place.getResolveScope())) {
+    if (!PsiUtil.isApplicable(argumentTypes, (GrClosureType)type, element.getManager())) {
       final String typesString = buildArgTypesList(argumentTypes);
       String message = GroovyBundle.message("cannot.apply.method.or.closure", variable.getName(), typesString);
       PsiElement elementToHighlight = PsiUtil.getArgumentsElement(place);
       if (elementToHighlight == null) elementToHighlight = place;
       holder.createWarningAnnotation(elementToHighlight, message);
     }
-  }
-
-  private static boolean areTypesCompatibleForCallingClosure(PsiType[] argumentTypes,
-                                                      PsiType[] paramTypes,
-                                                      PsiManager manager,
-                                                      GlobalSearchScope resolveScope) {
-    if (argumentTypes.length != paramTypes.length) return false;
-    for (int i = 0; i < argumentTypes.length; i++) {
-      final PsiType paramType = TypesUtil.boxPrimitiveType(paramTypes[i], manager, resolveScope);
-      final PsiType argType = argumentTypes[i];
-      if (!TypesUtil.isAssignableByMethodCallConversion(paramType, argType, manager, resolveScope)) return false;
-    }
-    return true;
   }
 
   private static void registerAddImportFixes(GrReferenceElement refElement, Annotation annotation) {

@@ -206,9 +206,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     PsiElement resolved = resolveResult.getElement();
     if (dotType == GroovyTokenTypes.mMEMBER_POINTER) {
       if (resolved instanceof PsiMethod) {
-        PsiMethod method = (PsiMethod) resolved;
-        PsiType returnType = resolveResult.getSubstitutor().substitute(method.getReturnType());
-        return GrClosureType.create(getResolveScope(), returnType, method.getParameterList().getParameters(), getManager());
+        return GrClosureType.create((PsiMethod) resolved, resolveResult.getSubstitutor());
       }
       return JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName(GrClosableBlock.GROOVY_LANG_CLOSURE, getResolveScope());
     }
