@@ -52,6 +52,7 @@ import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import groovy.lang.Closure;
+import org.codehaus.groovy.runtime.InvokerInvocationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -271,26 +272,30 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
                 final ProcessingContext ctx = new ProcessingContext();
                 ctx.put(ClassContextFilter.getClassKey(fqn), ((GroovyClassDescriptor)key).getPsiClass());
-
-                if (!isApplicable(place, fqn, ctx)) {
-                  return null;
-                }
-
-                final CustomMembersGenerator generator = new CustomMembersGenerator(project, place, fqn);
                 try {
+                  if (!isApplicable(place, fqn, ctx)) {
+                    return null;
+                  }
+
+                  final CustomMembersGenerator generator = new CustomMembersGenerator(project, place, fqn);
+
                   executor.processVariants(key, generator, place, fqn, ctx);
+                  return generator.getMembersHolder();
+                }
+                catch (InvokerInvocationException e) {
+                  Throwable cause = e.getCause();
+                  if (cause instanceof ProcessCanceledException) {
+                    throw (ProcessCanceledException)cause;
+                  }
+                  handleDslError(e, project, dslFile);
                 }
                 catch (ProcessCanceledException e) {
                   throw e;
                 }
                 catch (Throwable e) { // To handle exceptions in definition script
-                  if (project.isDisposed() || ApplicationManager.getApplication().isUnitTestMode()) {
-                    LOG.error(e);
-                    return null;
-                  }
-                  invokeDslErrorPopup(e, project, dslFile.getVirtualFile());
+                  handleDslError(e, project, dslFile);
                 }
-                return generator.getMembersHolder();
+                return null;
               }
 
               private boolean isApplicable(PsiElement place, String fqn, final ProcessingContext ctx) {
@@ -309,6 +314,15 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     assert map != null;
     final CustomMembersHolder holder = map.get(descriptor);
     return holder == null || holder.processMembers(processor);
+  }
+
+  private static boolean handleDslError(Throwable e, Project project, GroovyFile dslFile) {
+    if (project.isDisposed() || ApplicationManager.getApplication().isUnitTestMode()) {
+      LOG.error(e);
+      return true;
+    }
+    invokeDslErrorPopup(e, project, dslFile.getVirtualFile());
+    return false;
   }
 
   private static class MyDataIndexer implements DataIndexer<String, Void, FileContent> {
