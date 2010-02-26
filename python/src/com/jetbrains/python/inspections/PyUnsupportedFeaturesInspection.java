@@ -134,22 +134,23 @@ public class PyUnsupportedFeaturesInspection extends LocalInspectionTool {
     @Override
     public void visitPyRaiseStatement(PyRaiseStatement node) {
       PyExpression[] expressions = node.getExpressions();
-      assert (expressions != null);
-      if (expressions.length < 2) {
-        return;
-      }
-
-      if (isPy3K(node)) {
-        if (expressions.length == 3) {
-          registerProblem(node, "Python 3 does not support this syntax", new ReplaceRaiseStatementQuickFix());
+      if (expressions != null) {
+        if (expressions.length < 2) {
           return;
         }
-        PsiElement element = expressions[0].getNextSibling();
-        while (element instanceof PsiWhiteSpace) {
-          element = element.getNextSibling();
-        }
-        if (element != null && ",".equals(element.getText())) {
-          registerProblem(node, "Python 3 does not support this syntax", new ReplaceRaiseStatementQuickFix());
+
+        if (isPy3K(node)) {
+          if (expressions.length == 3) {
+            registerProblem(node, "Python 3 does not support this syntax", new ReplaceRaiseStatementQuickFix());
+            return;
+          }
+          PsiElement element = expressions[0].getNextSibling();
+          while (element instanceof PsiWhiteSpace) {
+            element = element.getNextSibling();
+          }
+          if (element != null && ",".equals(element.getText())) {
+            registerProblem(node, "Python 3 does not support this syntax", new ReplaceRaiseStatementQuickFix());
+          }
         }
       }
     }
