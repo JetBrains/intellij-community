@@ -57,6 +57,7 @@ public class IdeaProjectLoader {
     def projectBasePath = iprFile.getParentFile().getAbsolutePath()
 
     def root = new XmlParser(false, false).parse(iprFile)
+    loadProjectJdk(root, project)
     loadModules(getComponent(root, "ProjectModuleManager"), project, projectBasePath)
     loadProjectLibraries(getComponent(root, "libraryTable"), project, projectBasePath)
     loadArtifacts(getComponent(root, "ArtifactManager"), project, projectBasePath)
@@ -66,10 +67,13 @@ public class IdeaProjectLoader {
     def modulesXml = new File(dir, "modules.xml")
     if (!modulesXml.exists()) project.error("Cannot find modules.xml in $dir")
 
-    Node modulesXmlRoot = new XmlParser(false, false).parse(modulesXml)
+    def miscXml = new File(dir, "misc.xml")
+    if (!miscXml.exists()) project.error("Cannot find misc.xml in $dir")
+    loadProjectJdk(new XmlParser(false, false).parse(miscXml), project)
 
+    Node modulesXmlRoot = new XmlParser(false, false).parse(modulesXml)
     def projectBasePath = dir.parentFile.absolutePath
-    loadModules(modulesXmlRoot.component[0], project, projectBasePath)
+    loadModules(modulesXmlRoot.component.first(), project, projectBasePath)
 
     def librariesFolder = new File(dir, "libraries")
     if (librariesFolder.isDirectory()) {
@@ -88,6 +92,16 @@ public class IdeaProjectLoader {
     }
   }
 
+  def loadProjectJdk(Node root, Project project) {
+    def componentTag = getComponent(root, "ProjectRootManager")
+    def sdkName = componentTag."@project-jdk-name"
+    def sdk = project.sdks[sdkName]
+    if (sdk == null) {
+      project.info("Project SDK '$sdkName' is not defined. Embedded javac will be used")
+    }
+    project.projectSdk = sdk
+  }
+
   private NodeList loadProjectLibraries(Node librariesComponent, Project project, String projectBasePath) {
     return librariesComponent?.library.each {Node libTag ->
       project.createLibrary(libTag."@name", libraryInitializer(libTag, projectBasePath, null))
@@ -98,7 +112,7 @@ public class IdeaProjectLoader {
     ArtifactLoader artifactLoader = new ArtifactLoader(project, projectBasePath)
     artifactsComponent.artifact.each {Node artifactTag ->
       def artifactName = artifactTag."@name"
-      def root = artifactLoader.loadLayoutElement(artifactTag.root[0], artifactName)
+      def root = artifactLoader.loadLayoutElement(artifactTag.root.first(), artifactName)
       def artifact = new Artifact(name: artifactName, rootElement: root)
       project.artifacts[artifact.name] = artifact;
     }
@@ -106,7 +120,7 @@ public class IdeaProjectLoader {
 
   private def loadModules(Node modulesComponent, Project project, String projectBasePath) {
     modulesComponent?.modules.module.each {Node moduleTag ->
-      loadModule(project, projectBasePath, expandMacro(moduleTag."@filepath", projectBasePath, null))
+      loadModule(project, projectBasePath, expandMacro(moduleTag.@filepath, projectBasePath, null))
     }
   }
 
@@ -134,15 +148,42 @@ public class IdeaProjectLoader {
 
   private Closure libraryInitializer(Node libraryTag, String projectBasePath, String moduleBasePath) {
     return {
+      Map<String, Boolean> jarDirs = [:]
+      libraryTag.jarDirectory.each {Node dirNode ->
+        jarDirs[dirNode.@url] = Boolean.parseBoolean(dirNode.@recursive)
+      }
+
       libraryTag.CLASSES.root.each {Node rootTag ->
-        classpath expandMacro(
-                pathFromUrl(rootTag."@url"),
-                projectBasePath,
-                moduleBasePath)
+        def url = rootTag.@url
+        def path = expandMacro(pathFromUrl(url), projectBasePath, moduleBasePath)
+        if (url in jarDirs.keySet()) {
+          def paths = []
+          collectChildJars(path, jarDirs[url], paths)
+          paths.each {
+            classpath it
+          }
+        }
+        else {
+          classpath path
+        }
       }
 
       libraryTag.SOURCES.root.each {Node rootTag ->
-        src expandMacro(rootTag."@url", projectBasePath, moduleBasePath)
+        src expandMacro(rootTag.@url, projectBasePath, moduleBasePath)
+      }
+    }
+  }
+
+  private def collectChildJars(String path, boolean recursively, List<String> paths) {
+    def dir = new File(path)
+    dir.listFiles()?.each {File child ->
+      if (child.isDirectory()) {
+        if (recursively) {
+          collectChildJars(path, recursively, paths)
+        }
+      }
+      else if (child.name.endsWith(".jar")) {
+        paths << child.absolutePath
       }
     }
   }
@@ -161,8 +202,8 @@ public class IdeaProjectLoader {
       def componentTag = getComponent(root, "NewModuleRootManager")
       if (componentTag != null) {
         componentTag.orderEntry.each {Node entryTag ->
-          String type = entryTag."@type"
-          String scope = entryTag."@scope"
+          String type = entryTag.@type
+          String scope = entryTag.@scope
           switch (type) {
             case "module":
               def moduleName = entryTag.attribute("module-name")
@@ -181,7 +222,10 @@ public class IdeaProjectLoader {
               break
 
             case "module-library":
-              def moduleLibrary = loadLibrary(project, "moduleLibrary#${libraryCount++}", entryTag.library.first(), projectBasePath, moduleBasePath)
+              def libraryTag = entryTag.library.first()
+              def libraryName = libraryTag."@name"
+              def moduleLibrary = loadLibrary(project, libraryName != null ? libraryName : "moduleLibrary#${libraryCount++}",
+                                              libraryTag, projectBasePath, moduleBasePath)
               if (scope == "PROVIDED") {
                 providedClasspath moduleLibrary
               }
@@ -191,6 +235,10 @@ public class IdeaProjectLoader {
               else {
                 classpath moduleLibrary
               }
+
+              if (libraryName != null) {
+                project.modules[currentModuleName].libraries[libraryName] = moduleLibrary 
+              }
               break;
 
             case "library":
@@ -199,7 +247,7 @@ public class IdeaProjectLoader {
                 case "project":
                   def library = project.libraries[name]
                   if (library == null) {
-                    project.warning("Cannot resolve library $name in $currentModuleName")
+                    project.warning("Cannot resolve library $name in module $currentModuleName")
                   }
                   else {
                     if (scope == "PROVIDED") {
@@ -218,11 +266,32 @@ public class IdeaProjectLoader {
                   project.warning("Application level libraries are not supported: ${name}")
                   break
               }
+              break
+
+            case "jdk":
+              def name = entryTag.@jdkName
+              def sdk = project.sdks[name]
+              if (sdk == null) {
+                project.warning("Cannot resolve SDK '$name' in module '$currentModuleName'. Embedded javac will be used")
+              }
+              else {
+                project.modules[currentModuleName].sdk = sdk
+                providedClasspath sdk
+              }
+              break
+
+            case "inheritedJdk":
+              def sdk = project.projectSdk
+              if (sdk != null) {
+                project.modules[currentModuleName].sdk = sdk
+                providedClasspath sdk
+              }
+              break
           }
         }
         componentTag.content.sourceFolder.each {Node folderTag ->
-          String path = expandMacro(pathFromUrl(folderTag."@url"), projectBasePath, moduleBasePath)
-          String prefix = folderTag."@packagePrefix"
+          String path = expandMacro(pathFromUrl(folderTag.@url), projectBasePath, moduleBasePath)
+          String prefix = folderTag.@packagePrefix
 
           if (folderTag.attribute("isTestSource") == "true") {
             testSrc path
@@ -236,7 +305,7 @@ public class IdeaProjectLoader {
           }
         }
         componentTag.content.excludeFolder.each {Node exTag ->
-          String path = expandMacro(pathFromUrl(exTag."@url"), projectBasePath, moduleBasePath)
+          String path = expandMacro(pathFromUrl(exTag.@url), projectBasePath, moduleBasePath)
           exclude path
         }
         def languageLevel = componentTag."@LANGUAGE_LEVEL"

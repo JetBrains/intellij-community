@@ -41,19 +41,31 @@ class JavaeeFacetResourcesElement extends ComplexLayoutElement {
 }
 
 class LibraryFilesElement extends ComplexLayoutElement {
+  String moduleName
   String libraryName
   String libraryLevel
 
   List<LayoutElement> getSubstitution(Project project) {
     Library library
-    if (libraryLevel == "project") {
-      library = project.libraries[libraryName]
+    switch (libraryLevel) {
+      case "project":
+        library = project.libraries[libraryName]
+        break
+      case "module":
+        library = project.modules[moduleName].libraries[libraryName]
+        break
+      case "application":
+        project.warning("Global libraries aren't supported: $libraryName will be missing")
+        return []
     }
-    else {
-      project.error("Global libraries aren't supported")
+    return library.getClasspathRoots(false).collect {String path ->
+      if (new File(path).isDirectory()) {
+        return new DirectoryCopyElement(dirPath: path)
+      }
+      else {
+        return new FileCopyElement(filePath: path)
+      }
     }
-    library.getClasspath()
-    return []
   }
 }
 

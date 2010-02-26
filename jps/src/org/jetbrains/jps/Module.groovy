@@ -8,6 +8,7 @@ import org.jetbrains.jps.idea.Facet
 class Module extends LazyInitializeableObject implements ClasspathItem {
   Project project;
   String name;
+  Sdk sdk;
 
   List<ClasspathItem> classpath = []
   List<ClasspathItem> testclasspath = []
@@ -19,6 +20,7 @@ class Module extends LazyInitializeableObject implements ClasspathItem {
   Map<String, Facet> facets = [:]
   Map<String, Object> props = [:]
   Map<String, String> sourceRootPrefixes = [:]
+  Map<String, Library> libraries = [:]
 
   def Module(project, name, initializer) {
     this.project = project;

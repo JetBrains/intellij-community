@@ -15,6 +15,8 @@ class FileCopyElement extends LayoutElement {
   String outputFileName
 
   def build(Project project) {
+    if (!new File(filePath).isFile()) return
+
     if (outputFileName == null) {
       project.binding.ant.fileset(file: filePath)
     }
@@ -28,7 +30,9 @@ class DirectoryCopyElement extends LayoutElement {
   String dirPath
 
   def build(Project project) {
-    project.binding.ant.fileset(dir:dirPath)
+    if (new File(dirPath).isDirectory()) {
+      project.binding.ant.fileset(dir:dirPath)
+    }
   }
 }
 

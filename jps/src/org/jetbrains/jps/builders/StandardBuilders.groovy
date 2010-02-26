@@ -4,6 +4,7 @@ import org.jetbrains.jps.ModuleBuildState
 import org.jetbrains.jps.ModuleBuilder
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.Project
+import org.jetbrains.jps.JavaSdk
 
 /**
  * @author max
@@ -29,8 +30,12 @@ class JavacBuilder implements ModuleBuilder {
     params.debug = "on"
 
     def customJavac = module["javac"]
+    def jdk = module.getSdk()
     if (customJavac != null) {
       params.executable = customJavac
+    }
+    else if (jdk instanceof JavaSdk) {
+      params.executable = jdk.getJavacExecutable()
     }
 
     def customArgs = module["javac_args"]

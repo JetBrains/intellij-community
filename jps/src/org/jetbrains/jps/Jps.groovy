@@ -18,6 +18,11 @@ final class Jps {
       return project.createLibrary(name, initializer)
     })
 
+    binding.setVariable("jdk", {String name, String path ->
+      //todo[nik] support initializer parameter
+      return project.createJavaSdk(name, path, {})
+    })
+
     binding.setVariable("moduleTests", {String name ->
       def module = project.modules[name]
       if (module == null) project.error("cannot find module ${name}")

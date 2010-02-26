@@ -28,6 +28,10 @@ class Project {
   final ArtifactBuilder artifactBuilder
   final Map<String, Object> props = [:]
 
+  final Map<String, Library> globalLibraries = [:]
+  final Map<String, Sdk> sdks = [:]
+
+  Sdk projectSdk;
   final Map<String, Module> modules = [:]
   final Map<String, Library> libraries = [:]
   final Map<String, Artifact> artifacts = [:]
@@ -40,7 +44,7 @@ class Project {
 
   def Project(GantBinding binding) {
     builder = new ProjectBuilder(binding, this)
-    this.binding = binding;
+    this.binding = binding
     artifactBuilder = new ArtifactBuilder(this)
     sourceGeneratingBuilders << new GroovyStubGenerator(this)
     translatingBuilders << new JavacBuilder()
@@ -99,6 +103,14 @@ class Project {
     }
 
     lib
+  }
+
+  def JavaSdk createJavaSdk(String name, String path, Closure initializer) {
+    if (sdks[name] != null) error("SDK '$name' already defined")
+
+    def sdk = new JavaSdk(this, name, path, initializer)
+    sdks[name] = sdk
+    return sdk
   }
 
   def String toString() {
