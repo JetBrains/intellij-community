@@ -129,7 +129,7 @@ public class GitHistoryUtils {
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);
     h.addParameters("-M", "--follow", "--name-only",
-                    "--pretty=format:%H%x00%ct%x00%an%x20%x3C%ae%x3E%x00%cn%x20%x3C%ce%x3E%x00%s%n%n%b%x00", "--encoding=UTF-8");
+                    "--pretty=tformat:%x00%x01%x00%H%x00%ct%x00%an%x20%x3C%ae%x3E%x00%cn%x20%x3C%ce%x3E%x00%x02%x00%s%x00%b", "--encoding=UTF-8");
     h.endOptions();
     h.addRelativePaths(path);
 
@@ -171,6 +171,10 @@ public class GitHistoryUtils {
       @Override
       public void processTerminated(int exitCode) {
         super.processTerminated(exitCode);
+        final List<String> result = accomulator.processLast();
+        if (result != null) {
+          resultAdapter.consume(result);
+        }
         semaphore.up();
       }
     });
@@ -180,41 +184,63 @@ public class GitHistoryUtils {
   }
 
   private static class MyTokenAccomulator {
-    private int myCnt;
-    private List<String> mySb;
+    // %x00%x02%x00%s%x00%x02%x01%b%x00%x01%x00
+    private final static String ourCommentStartMark = "\u0000\u0002\u0000";
+    private final static String ourCommentEndMark = "\u0000\u0002\u0001";
+    private final static String ourLineEndMark = "\u0000\u0001\u0000";
+
+    private final StringBuilder myBuffer;
     private final int myMax;
+
+    private boolean myNotStarted;
 
     private MyTokenAccomulator(final int max) {
       myMax = max;
-      mySb = new ArrayList<String>(6);
-      myCnt = 0;
+      myBuffer = new StringBuilder();
+      myNotStarted = true;
     }
 
     @Nullable
-    public List<String> acceptLine(final String s) {
-      StringTokenizer tk = new StringTokenizer(s.trim(), "\u0000", false);
-      List<String> result = null;
+    public List<String> acceptLine(String s) {
+      final boolean lineEnd = s.startsWith(ourLineEndMark);
+      if (lineEnd && (! myNotStarted)) {
+        final String line = myBuffer.toString();
+        myBuffer.setLength(0);
+        myBuffer.append(s.substring(3));
+
+        return processResult(line);
+      } else {
+        myBuffer.append(lineEnd ? s.substring(3) : s);
+        myBuffer.append('\u0002');
+      }
+      myNotStarted = false;
+        
+      return null;
+    }
+
+    public List<String> processLast() {
+      return processResult(myBuffer.toString());
+    }
+
+    private List<String> processResult(final String line) {
+      final int commentStartIdx = line.indexOf(ourCommentStartMark);
+
+      final String start = line.substring(0, commentStartIdx);
+      java.util.StringTokenizer tk = new java.util.StringTokenizer(start, "\u0000", false);
+      final List<String> result = new ArrayList<String>();
       while (tk.hasMoreElements()) {
         final String token = tk.nextToken();
-        final List<String> curResult = acceptPieces(token);
-        if (curResult != null) {
-          result = curResult;
-        }
+        result.add(token);
       }
-      return result;
-    }
 
-    @Nullable
-    private List<String> acceptPieces(final String s) {
-      mySb.add(s);
-      ++ myCnt;
-      if (myMax == myCnt) {
-        myCnt = 0;
-        final List<String> result = mySb;
-        mySb = new ArrayList<String>(6);
-        return result;
-      }
-      return null;
+      final String part = line.substring(commentStartIdx + 3).replace('\u0002', '\n').replace('\u0000', '\n').trim();
+      // take last line
+      final int commentEndIdx = part.lastIndexOf('\n');
+      //plus comment
+      result.add(part.substring(0, commentEndIdx));
+      //plus path
+      result.add(part.substring(commentEndIdx).trim());
+      return result;
     }
   }
 
