@@ -23,7 +23,8 @@ public class PythonInspectionToolProvider implements InspectionToolProvider {
       PyUnusedLocalVariableInspection.class,
       PyUnsupportedFeaturesInspection.class,
       PyDeprecatedModulesInspection.class,
-      PyDictCreationInspection.class
+      PyDictCreationInspection.class,
+      PyExceptClausesOrderInspection.class
     };
   }
 }

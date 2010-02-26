@@ -102,4 +102,9 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
       PythonLanguageLevelPusher.FORCE_LANGUAGE_LEVEL = null;
     }
   }
+
+  //public void testPyExceptClausesOrderInspection() throws Throwable {
+  //  LocalInspectionTool inspection = new PyExceptClausesOrderInspection();
+  //  doTest(getTestName(false), inspection);
+  //}
 }
