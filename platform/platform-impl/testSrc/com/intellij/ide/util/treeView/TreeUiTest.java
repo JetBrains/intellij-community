@@ -1,9 +1,9 @@
 package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.Time;
 import com.intellij.util.WaitFor;
 import junit.framework.TestSuite;
