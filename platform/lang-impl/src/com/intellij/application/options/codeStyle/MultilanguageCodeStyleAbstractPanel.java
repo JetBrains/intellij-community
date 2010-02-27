@@ -18,6 +18,7 @@ package com.intellij.application.options.codeStyle;
 import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -30,6 +31,8 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -38,6 +41,9 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
+
+import java.io.File;
+import java.io.IOException;
 
 /**
  * Base class for code style settings panels supporting multiple programming languages.
@@ -48,9 +54,13 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
 
   private Language myLanguage;
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.codeStyle.MultilanguageCodeStyleAbstractPanel");
+  private static Project mySettingsProject;
+  private static int myInstanceCount;
 
   protected MultilanguageCodeStyleAbstractPanel(CodeStyleSettings settings) {
     super(settings);
+    createSettingsProject();
+    myInstanceCount++;
   }
 
   /**
@@ -130,4 +140,41 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
     manager.commitDocument(doc);
     return psiFile;
   }
+
+  @Override
+  protected final synchronized Project getCurrentProject() {
+    return mySettingsProject;
+  }
+
+  @Override
+  public void dispose() {
+    myInstanceCount--;
+    if (myInstanceCount == 0) {
+      disposeSettingsProject();
+    }
+    super.dispose();
+  }
+
+  /**
+   * A physical settings project is created to ensure that all formatters in preview panels work correctly.
+   */
+  private synchronized static void createSettingsProject() {
+    if (mySettingsProject != null) return;
+    try {
+      File tempFile = File.createTempFile("idea-", "-settings.tmp");
+      tempFile.deleteOnExit();
+      mySettingsProject = ProjectManagerEx.getInstanceEx().newProject("settings.tmp", tempFile.getPath(), true, false);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+  }
+
+  private synchronized static void disposeSettingsProject() {
+    if (mySettingsProject == null) return;
+    Disposer.dispose(mySettingsProject);
+    mySettingsProject = null;
+  }
+
+
 }

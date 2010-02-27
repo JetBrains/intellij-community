@@ -160,11 +160,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
       myTextToReformat = myEditor.getDocument().getText();
     }
 
-    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-    if (project == null) {
-      project = ProjectManager.getInstance().getDefaultProject();
-    }
-    final Project finalProject = project;
+    final Project finalProject = getCurrentProject();
     CommandProcessor.getInstance().executeCommand(finalProject, new Runnable() {
       public void run() {
         replaceText(finalProject);
@@ -217,6 +213,14 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     return psiFile;
   }
 
+  protected Project getCurrentProject() {
+    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+    if (project == null) {
+      project = ProjectManager.getInstance().getDefaultProject();
+    }
+    return project;
+  }
+
   @NotNull
   protected abstract FileType getFileType();
 
@@ -248,7 +252,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
   public abstract JComponent getPanel();
 
-  public final void dispose() {
+  public void dispose() {
     myUpdateAlarm.cancelAllRequests();
     EditorFactory.getInstance().releaseEditor(myEditor);
   }
