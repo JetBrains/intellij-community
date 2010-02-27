@@ -51,11 +51,7 @@ public class PsiClassPattern extends PsiMemberPattern<PsiClass, PsiClassPattern>
 
 
   public PsiClassPattern inheritorOf(final boolean strict, final String className) {
-    return inheritorOf(strict, PsiJavaPatterns.psiClass().withName(className));
-  }
-
-  public PsiClassPattern inheritorOf(final boolean strict, final PsiClass psiClass) {
-    return inheritorOf(strict, PsiJavaPatterns.psiClass().equalTo(psiClass));
+    return inheritorOf(strict, PsiJavaPatterns.psiClass().withQualifiedName(className));
   }
 
   public PsiClassPattern isInterface() {
