@@ -19,14 +19,11 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.NameHint;
-import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
@@ -63,12 +60,11 @@ public class PropertyResolverProcessor extends ResolverProcessor {
     else if (myName == null || myName.equals(((PsiNamedElement)element).getName())) {
       if (element instanceof GrField && ((GrField)element).isProperty()) {
         if (myProperty == null) {
-          boolean isAccessible = isAccessible((PsiNamedElement)element);
-          boolean isStaticsOK = isStaticsOK((PsiNamedElement)element);
-
           PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
           substitutor = substitutor == null ? PsiSubstitutor.EMPTY : substitutor;
-          myProperty = new GroovyResolveResultImpl(element, myCurrentFileResolveContext, substitutor, isAccessible, isStaticsOK);
+          myProperty =
+            new GroovyResolveResultImpl(element, myCurrentFileResolveContext, substitutor, isAccessible((PsiNamedElement)element),
+                                        isStaticsOK((PsiNamedElement)element));
         }
         return true;
       }
@@ -81,21 +77,6 @@ public class PropertyResolverProcessor extends ResolverProcessor {
     }
 
     return true;
-  }
-
-  private boolean isFieldReferenceInSameClass(final PsiMethod method, final String fieldName) {
-    if (!(myPlace instanceof GrReferenceExpression)) {
-      return false;
-    }
-
-    final PsiClass containingClass = method.getContainingClass();
-    if (containingClass == null || !PsiTreeUtil.isAncestor(containingClass, myPlace, true)) return false;
-    final GrExpression qualifier = ((GrReferenceExpression)myPlace).getQualifierExpression();
-    if (qualifier != null && !(qualifier instanceof GrThisReferenceExpression)) {
-      return false;
-    }
-
-    return containingClass.findFieldByName(fieldName, false) != null;
   }
 
   @NotNull

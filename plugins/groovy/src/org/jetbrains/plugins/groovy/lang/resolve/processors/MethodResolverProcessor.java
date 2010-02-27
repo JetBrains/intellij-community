@@ -17,26 +17,29 @@
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
+import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -72,6 +75,24 @@ public class MethodResolverProcessor extends ResolverProcessor {
     PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
     if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) element;
+
+      if (myName != null && !(element instanceof GrAccessorMethod)) {
+        if (GroovyPropertyUtils.isSimplePropertyGetter(method, myName)) {
+          if (!(method instanceof GrMethod) || !isFieldReferenceInSameClass(method, myName)) {
+            final PsiType type = method.getReturnType();
+            if (type instanceof GrClosureType) {
+              if (PsiUtil.isApplicable(myArgumentTypes, (GrClosureType)type, element.getManager())) {
+                myCandidates.add(new GroovyResolveResultImpl(method, myCurrentFileResolveContext, substitutor, isAccessible(method), isStaticsOK(method)));
+              } else {
+                myInapplicableCandidates.add(new GroovyResolveResultImpl(method, myCurrentFileResolveContext, substitutor, isAccessible(method), isStaticsOK(method)));
+              }
+              return true;
+            }
+          }
+        }
+      }
+      if (myName != null && !myName.equals(method.getName())) return true;
+
       if (method.isConstructor() != myIsConstructor) return true;
       if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
       substitutor = obtainSubstitutor(substitutor, method);
@@ -86,6 +107,8 @@ public class MethodResolverProcessor extends ResolverProcessor {
       return true;
     }
     else if (element instanceof PsiVariable) {
+      if (myName != null && !myName.equals(((PsiVariable)element).getName())) return true;
+
       if (isApplicableClosure((PsiVariable)element)) {
         myCandidates.add(new GroovyResolveResultImpl(element, myCurrentFileResolveContext, substitutor, isAccessible((PsiVariable)element),
                                                      isStaticsOK((PsiVariable)element)));
@@ -237,19 +260,24 @@ public class MethodResolverProcessor extends ResolverProcessor {
     PsiManager manager = myPlace.getManager();
     GlobalSearchScope scope = myPlace.getResolveScope();
 
-    boolean methodsPresent = array[0].getElement() instanceof PsiMethod;
+    boolean methodsPresent = array[0].getElement() instanceof PsiMethod && !isGetter(((PsiMethod)array[0].getElement()));
     boolean propertiesPresent = !methodsPresent;
     Outer:
     for (int i = 1; i < array.length; i++) {
       PsiElement currentElement = array[i].getElement();
       if (currentElement instanceof PsiMethod) {
-        methodsPresent = true;
         PsiMethod currentMethod = (PsiMethod) currentElement;
+        if (isGetter(currentMethod)) {
+          propertiesPresent = true;
+          continue;
+        }
+        methodsPresent = true;
         for (Iterator<GroovyResolveResult> iterator = result.iterator(); iterator.hasNext();) {
           final GroovyResolveResult otherResolveResult = iterator.next();
           PsiElement element = otherResolveResult.getElement();
           if (element instanceof PsiMethod) {
             PsiMethod method = (PsiMethod) element;
+            if (isGetter(method)) continue;
             if (dominated(currentMethod, array[i].getSubstitutor(), method, otherResolveResult.getSubstitutor(), manager, scope)) {
               continue Outer;
             } else
@@ -268,11 +296,15 @@ public class MethodResolverProcessor extends ResolverProcessor {
     if (methodsPresent && propertiesPresent) {
       for (Iterator<GroovyResolveResult> iterator = result.iterator(); iterator.hasNext();) {
         GroovyResolveResult resolveResult = iterator.next();
-        if (!(resolveResult.getElement() instanceof PsiMethod)) iterator.remove();
+        if (!(resolveResult.getElement() instanceof PsiMethod) || isGetter((PsiMethod)resolveResult.getElement())) iterator.remove();
       }
     }
 
     return result.toArray(new GroovyResolveResult[result.size()]);
+  }
+
+  private boolean isGetter(PsiMethod method) {
+    return myName != null && GroovyPropertyUtils.isSimplePropertyGetter(method, myName);
   }
 
   private boolean dominated(PsiMethod method1, PsiSubstitutor substitutor1, PsiMethod method2, PsiSubstitutor substitutor2, PsiManager manager, GlobalSearchScope scope) {  //method1 has more general parameter types thn method2
@@ -332,4 +364,14 @@ public class MethodResolverProcessor extends ResolverProcessor {
       myStopExecuting = true;
     }
   }
+
+  public <T> T getHint(Key<T> hintKey) {
+    if (NameHint.KEY == hintKey) {
+      //we cannot provide name hint here
+      return null;
+    }
+
+    return super.getHint(hintKey);
+  }
+
 }

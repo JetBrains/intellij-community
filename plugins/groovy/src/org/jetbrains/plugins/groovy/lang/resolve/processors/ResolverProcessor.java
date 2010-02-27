@@ -21,10 +21,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -180,4 +183,18 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
     return myName;
   }
 
+  protected boolean isFieldReferenceInSameClass(final PsiMethod method, final String fieldName) {
+    if (!(myPlace instanceof GrReferenceExpression)) {
+      return false;
+    }
+
+    final PsiClass containingClass = method.getContainingClass();
+    if (containingClass == null || !PsiTreeUtil.isAncestor(containingClass, myPlace, true)) return false;
+    final GrExpression qualifier = ((GrReferenceExpression)myPlace).getQualifierExpression();
+    if (qualifier != null && !(qualifier instanceof GrThisReferenceExpression)) {
+      return false;
+    }
+
+    return containingClass.findFieldByName(fieldName, false) != null;
+  }
 }
