@@ -66,7 +66,8 @@ public class VcsBackgroundOperationsConfigurationPanel implements Configurable {
         }
       });
       myCacheSettingsPanel.initPanel(project);
-      myChangedOnServerInterval.setModel(new SpinnerNumberModel(5, 5, 48 * 10 * 60, 5));
+      final VcsConfiguration settings = VcsConfiguration.getInstance(myProject);
+      myChangedOnServerInterval.setModel(new SpinnerNumberModel(settings.CHANGED_ON_SERVER_INTERVAL, 5, 48 * 10 * 60, 5));
     }
     myBackgroundProcesses.setVisible(! myProject.isDefault());
   }
