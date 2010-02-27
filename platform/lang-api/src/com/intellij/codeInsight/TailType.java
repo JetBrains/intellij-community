@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessors;
 import com.intellij.lang.Language;
@@ -27,6 +28,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -174,4 +176,8 @@ public abstract class TailType {
       return "SMART_COMPLETION";
     }
   };
+
+  public boolean isApplicable(@NotNull final InsertionContext context) {
+    return true;
+  }
 }

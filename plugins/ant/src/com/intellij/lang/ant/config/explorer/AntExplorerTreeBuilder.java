@@ -111,7 +111,7 @@ final class AntExplorerTreeBuilder extends AbstractTreeBuilder {
     }
   }
 
-  void expandAll() {
+  public void expandAll() {
     ArrayList pathsToExpand = new ArrayList();
     ArrayList selectionPaths = new ArrayList();
     TreeBuilderUtil.storePaths(this, getRootNode(), pathsToExpand, selectionPaths, true);

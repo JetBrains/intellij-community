@@ -1,0 +1,347 @@
+
+Release Notes:
+==============
+
+build213, 2008-04-01:
+
+- Added a workaround for servers that violate RFC4253 when sending the
+  SSH_MSG_SERVICE_ACCEPT and the SSH_MSG_KEXDH_REPLY messages.
+  Thanks to Gordon Brockway.
+
+- Fixed encodings for alien platforms (e.g., EBCDIC based). Use "ISO-8859-1" in
+  most places where we used the default platform encoding so far.
+
+- API change: atime and mtime attributes in SFTPv3FileAttributes are now
+  of type Long (not Integer). Makes it easier to properly handle values > 2^31.
+
+- Fixed the blowfish-ctr cipher, it could not be instantiated (a typo that
+  got in during the move to the trilead namespace). Thanks to Roelof Kemp.
+
+- Still in the queue: SSH server support.
+
+build212, 2008-03-03:
+
+- Added possibility to enable debugging output without recompiling the library.
+  See the Connection.enableDebugging(...) method and the DebugLogger interface.
+
+- Added Connection.ping() and Session.ping() methods to perform end-to-end
+  connection/session testing. Initial code supplied by Alexander Kitaev. Thanks!
+
+- Some buggy SFTP servers send too big packets when we instruct them to read
+  directory entries. Therefore, increased the packet size limit for answers
+  to the SSH_FXP_READDIR request. Thanks to Ross Perry.
+  
+- Coming soon: SSH server support. 
+
+build211, 2007-10-28:
+
+- The library is now called "Trilead SSH-2 for Java".
+  It is still maintained by Christian Plattner (co-founder of Trilead).
+
+- The package has been moved to "com.trilead.ssh2". Therefore, please make sure
+  that you use "import com.trilead.ssh2.*" in your Java source files.
+  Otherwise, the library is completely backwards compatible.
+  
+- If you have questions, then please consult our new forum at http://www.trilead.com/support.
+
+- Added Connection.sendIgnorePacket(...) methods which allow to send SSH_MSG_IGNORE packets.
+  Thanks to Andrei Tchijov.
+
+- Added support for the "none" authentication method.
+
+- Revised the SHA-1 code. Highly optimized. Speed should be more than doubled.
+
+- Changed references to the correct RFCs (instead of the drafts) in the javadocs (where possible).
+
+- Fixed the write() method in the SFTP code. Unsatisfiable preconditions stopped the method
+  from writing any bytes. As stated in the documentation, the SFTP code is still experimental.
+  Thanks to Andreas Pueschel.
+
+- The "softwareversion" token for the SSH protocol version exchange has been changed
+  to "TrileadSSH2Java_XXX", where XXX is the build number.
+
+- Added a new createLocalPortForwarder(InetSocketAddress addr, ...) method which allows to
+  specify the local address and port to bind to. Thanks to Andrei Tchijov.
+
+- Slightly updated the FAQ.
+
+build210, 2006-10-06:
+
+- Added HTTP proxy support. See Connection.setProxyData() and the HTTPProxyData class.
+  Thanks to Jean-Pierre Schmit for providing example code.
+  
+- Added basic support for SFTP (v3).
+  
+- Beta users: removed support for automatic split of huge read transfers in SFTP,
+  as it was not possible to return EOF in a clean way. The write method still splits huge
+  transfers (in blocks of 32768 bytes). Thanks to Zhong Li.
+  
+- SCP enhancement. It is now possible to specify an empty target directory name when sending
+  files. This is analogous to using "scp file user@host:" (thanks to Bernd Eggink).
+
+- SCP enhancement. It is now possible to receive a remote file and pipe it directly into
+  an OutputStream. Thanks to Bernd Eggink.
+
+- SCP enhancement. It is now possible to specify a different remote filename when sending
+  a file. Thanks to Thomas Tatzel.
+
+- Added more verbose error messages in case a channel open operation fails (e.g., resource
+  shortage on the server). Related to this, added a comment to the FAQ regarding the limitation
+  on the number of concurrent sessions per connection in OpenSSH. Thanks to Ron Warshawsky.
+
+- Added a feature (ConnectionMonitor) to get notified when a connection breaks.
+  Thanks to Daniel Ritz (Alcatel).
+
+- It is now possible to override the used SecureRandom instance (Connection.setSecureRandom()).
+
+- Added getters for the server's hostname and port to the Connection class.
+
+- Added examples for HTTP proxy usage as well as local/remote port forwarding.
+
+- Added support for SSH_MSG_KEX_DH_GEX_REQUEST_OLD in the DHGexParameters class (there
+  is a new, additional constructor). Please check the Javadoc for DHGexParameters.
+
+- Clarified in the javadoc the issue of re-using Connection objects. Changed the exception
+  message in case connect() is invoked on an already connected connection.
+
+- Added an entry to the FAQ regarding pumping data into remote files.
+  Thanks to Daniel Schwager.
+
+- Changed JDialog.show() to JDialog.setVisible(true) in the SwingShell example.
+  The show() method is deprecated in Java 5.0. Thanks to Carlo Dapor.
+
+- Fixed the behavior of the local port forwarder code. Trying to listen on an already bound port
+  will not fail silently anymore. Also, the accept thread will continue accepting connections
+  even if there was a problem with the establishment of the underlying ssh-forwarding of a
+  previous incoming connection (e.g., one tried to establish a forwarding to a remote port that
+  is not in state open (yet)). Thanks to Claudio Nieder (Inodes, Switzerland) and
+  Daniel Ritz (Alcatel) for pointing this out.
+  Note: the interface for managing port forwardings needs to be further improved.
+
+- Tried to implement a workaround for the Sun JVM bug 5092063. Changed InetAddress.getByAddress(byte[])
+  in the "TransportManager.parseIPv4Address" method (which already is a workaround for JDK's that
+  use the resolver for dotted IP addresses, independently from the 5092063 bug) to
+  InetAddress.getByAddress(String, byte[]). Thanks to Alain Philipin.
+
+- Fixed a bug in KnownHosts.addHostkeyToFile. Hostnames were converted to lowercase which is
+  not good in case of hashed hostnames (it leads to a different BASE64 encoding and therefore
+  hashes won't match). Thanks to [unknown].
+
+- Fixed a typo in the SCP client (tag for modification times is 'T' and not 'P').
+  Thanks to Andreas Sahlbach.
+
+- Stupid performance enhancement in the Logger, it did unnecessary calls to System.currentTimeMillis().
+
+- The LICENCE.txt file is now also included in the pre-compiled jar. Of course, redistributions in
+  binary form must *still* include the contents of LICENCE.txt in the documentation and/or other
+  materials provided with the distribution.
+  
+- Small cleanups in the TransportManager code.
+
+build209, 2006-02-14:
+
+- A major release, many new features. Thanks to all who supported me with feedback!
+
+- Added remote port forwarding support.
+  Please consult the docs for Connection.requestRemotePortForwarding().
+
+- Added X11 forwarding support. Please consult Session.requestX11Forwarding().
+  X11 support is based on joint work with Simon Hartl (simon.hartl (at) gmx.net). Thanks, Simon!
+
+- The SCPClient constructor is now public. The factory method is still there (in the Connection
+  class), however, it will probably be marked as deprecated and eventually be removed in the future.
+
+- Added startSubSystem() method to the Session class. Now it is possible to implement subsystems,
+  e.g., sftp, outside of the library.
+
+- For advanced users: there is now a much better condition wait interface in the Session class.
+  It is now also possible to wait for the arrival of "exit-status" and "exit-signal".
+  The Session.waitUntilDataAvailable() method still works, but is marked as deprecated.
+
+  Users that used the beta version, please be aware of the following change: calling the close()
+  method on a Session object will immediatelly raise the ChannelCondition.CLOSED/EOF conditions
+  on the underlying channel - even though the remote side may not have yet responded with a
+  SSH_MSG_CHANNEL_CLOSE message (however, in the background the library still expects the server
+  to send the SSH_MSG_CHANNEL_CLOSE message). See below for an explanation.
+
+- The behavior of Session.close() has changed. If you *kill* a Session (i.e., call Session.close()
+  before EOF (or CLOSE) has been sent by the remote side), then immediatelly EOF will (locally)
+  be raised for both stdout and stderr. Further incoming data (for that particular Session) will
+  be ignored. However, remote data that arrived before we sent our SSH_MSG_CHANNEL_CLOSE message
+  is still available (you can think of having appended the EOF marker to the end of the local
+  incoming stdout and stderr queues).
+  
+  The reason to do this is simply because some SSH servers do sometimes not reply to our
+  SSH_MSG_CHANNEL_CLOSE message (event though they should). As a consequence, a local reader may
+  wait forever for the remote SSH_MSG_CHANNEL_EOF or SSH_MSG_CHANNEL_CLOSE messages to arrive.
+  If you are interested, then you can try to reproduce the problem: Execute something like
+  "tail -f /dev/null" (which should do nothing forever) and then concurrently close the Session
+  (enable debug mode to see the SSH packets on the wire) to check how standard compliant your server
+  implementation is). Thanks to Cristiano Sadun.
+
+- The Session code does not anymore make use of the synchronized attribute for any of its methods.
+  This has the advantage that a call to Session.close() will never by blocked by concurrent
+  calls to the Session object. However, note that in the worst case the call may still block until
+  we can send our SSH_MSG_CHANNEL_CLOSE over the TCP connection.
+
+- The SCP client can now also be used to directly inject the contents of a given byte array
+  into a remote file (thanks to Dieter Baier for suggesting this).
+
+- Added support for specifying timeouts for connection establishment.
+  Thanks to Rob Hasselbaum and Ben XYZ.
+
+- Performance improvement: we use only a single SecureRandom object per connection
+  (until now there were multiple instances).
+
+- Fixed the Swingshell example program, it did not read in the known_hosts file on startup.
+  (thanks to Ashwani Kumar).
+
+- There was a typo in the CBCMode class (srcoff was ignored), however since we always pass
+  a zero offset the bug did not show up (thanks to Alex Pakhomov).
+
+- While implementing X11 support, found a strange X11 bug in OpenSSH (reported, openssh bug 1076).
+  12.10.2005: has been fixed for OpenSSH 4.3 by the OpenSSH crowd.
+
+- Changed the SingleThreadStdoutStderr example so that it uses the new condition wait interface.
+
+- Efficiently handle IPv4 addresses (when creating the underlying socket), there was a report
+  that some JDK's try to lookup dotted addresses with the resolver.
+  (thanks to Alexander Kitaev).
+
+- Added setTCPNoDelay() method to the Connection class.
+
+- Improved handling of unsupported global/channel requests received from the server.
+
+- The KEX code is now more robust. Also, the ServerHostKeyVerifier callback (if specified) will be called
+  before doing any DH calculation.
+
+- Major cleanup (i.e., rewrite) of the SSH channel code.
+
+- Cleanup up Session class, removed unnecessary IOExceptions.
+
+- Implemented 2^32-1 conformance for channel windows.
+
+- I got several times questions by e-mail from people that have problems with "putty" keys.
+  Added an entry to the FAQ.
+
+- Added an entry to the FAQ regarding how to handle servers with disabled password authentication
+  (thanks to Nicolas Raoul).
+
+- Upcoming: SFTP support (in the meantime almost a running gag).
+
+- Changed the name from "Ganymed SSH2" to "Ganymed SSH-2". Will this improve the G**gle ranking? =)
+
+- Latest javadoc is now also online.
+
+
+build208, 2005-08-24:
+
+- Added support for RSA private keys (PEM format), also revised code for RSA signature verification.
+
+- Extended support for encrypted PEM files.
+  Supported encryptions: DES-CBC, DES-EDE3-CBC, AES-128-CBC, AES-192-CBC and AES-256-CBC.
+  
+- Added rather complete support for known_hosts files (in KnownHosts.java).
+  The parser is able to understand the same pseudo-regex (*,?,!) syntax as OpenSSH clients.
+  The class includes support for hostkey comparison as well as functionality to add accepted keys
+  to a known_hosts file. One can also create OpenSSH compatible fingerprints (Hex and Bubblebabble).
+  Hashed hostname entries are understood and can also be generated.
+  
+- Restructured the examples section, added more examples. The examples should cover most issues.
+  There is also a _very_ basic terminal emulator, see SwingShell.java.
+
+- It is now possible to override the default server hostkey algorithm order (for the key exchange)
+  with the Connection.setServerHostKeyAlgorithms method. This makes sense in combination with
+  known_hosts support (e.g., if you already know the server's public ssh-dss key, then
+  you probably prefer the "ssh-dss" over the "ssh-rsa" algorithm).
+  The used server hostkey algorithm is now also reflected in ConnectionInfo.
+
+- The default server hostkey algorithm order is now "ssh-rsa", "ssh-dss".
+
+- Important: revised Input- and OutputStream code, everything is now unbuffered
+  (less memory consumption, more direct interface, see also StreamGobbler class and the FAQ).
+
+- Added StreamGobbler helper class.
+
+- Method verifyServerHostKey() in the ServerHostKeyVerifier may now throw exceptions
+  (an alternative to returning "false").
+
+- All background threads (the per-connection receive thread as well as all threads
+  used in forwarders and StreamGobblers) now use setDaemon(true) on startup.
+
+- Added "diffie-hellman-group14-sha1" support to the key exchange code.
+
+- Added chained IOExceptions where applicable (IOException initialization with initCause()).
+
+- Cleaned up packet building code, removed unnecessary server-side methods.
+
+- Cleaned up javadoc of SCPClient: replaced umask with mode.
+
+- Fixed a bug in the server identification string parser. This actually prevented a successful
+  key exchange with some ssh servers (the server's signature was rejected).
+  Thanks to Alex Molochnikov for the initial bug report and for helping in tracking down the issue.
+
+- Fixed a buffer re-allocation bug in the beta version of the StreamGobbler class
+  (thanks to Marc Lijour).
+
+- Fixed flawed UINT64 support (thanks to Bob Simons).
+
+- Fixed a bug in the build script of the beta builds (sftp beta directory was not completely removed)
+  (thanks to Richard Hash).
+
+- Use zero based padding for unencrypted traffic.
+
+- Changed again the client identification string (the one presented to the server).
+
+- Created a FAQ, available on the website and in the distribution.
+  
+- Revised javadoc comments. Also, the generated documentation is now located in the subdirectory
+  "javadoc" instead of "doc" (in the distribution).
+
+- Added README.txt to the distribution.
+
+
+build207, 2005-07-21:
+
+- Added "Keyboard Interactive" authentication method:
+  authenticateWithKeyboardInteractive() in Connection.java,
+  also have a look at InteractiveCallback.java.
+
+- Extended authentication interface in Connection.java (backwards compatible).
+  New functionality: getRemainingAuthMethods(), isAuthMethodAvailable(),
+  isAuthenticationComplete() and isAuthenticationPartialSuccess().
+
+- Using an authentication method not supported by the server leads now to an exception
+  (instead of returning "false"). Use isAuthMethodAvailable() if you want to check
+  for the availability of an authentication method.
+
+- Fixed a bug in SCPClient which sometimes lead to failed downloads.
+
+- Improved channel window handling.
+
+- Removed bogus (CVS) version string from Connection.java
+
+- Changed client identification string to "Ganymed_buildXXX".
+
+- Changed the jar file naming scheme (ganymed-ssh2-buildXXX.jar).
+
+- Started adding logging support for debugging purposes (currently only for development).
+
+- Cleanup of javadoc and comments at several places.
+
+- Reversed order of entries in HISTORY.TXT
+
+
+build206, 2005-07-04:
+
+- Fixed small resource issue with SCP (thanks to Michaël Giraud).
+
+- Added LocalStreamForwarder.
+
+- Added HISTORY.TXT
+
+
+build205, 2005-06-27:
+
+- Initial release.
+

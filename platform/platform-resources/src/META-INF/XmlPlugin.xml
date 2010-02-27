@@ -92,6 +92,10 @@
 
     <applicationService serviceInterface="com.intellij.application.options.editor.XmlFoldingSettings"
                         serviceImplementation="com.intellij.application.options.editor.XmlFoldingSettings"/>
+
+    <applicationService serviceInterface="com.intellij.codeInsight.template.ZenCodingSettings"
+                          serviceImplementation="com.intellij.codeInsight.template.ZenCodingSettings"/>
+
     <exportable serviceInterface="com.intellij.application.options.editor.XmlFoldingSettings"/>
 
     <applicationService serviceInterface="com.intellij.application.options.XmlSettings"
@@ -285,7 +289,8 @@
                                         implementationClass="com.intellij.codeInsight.hint.XmlImplementationTextSelectioner"/>
     <basicWordSelectionFilter implementation="com.intellij.codeInsight.editorActions.XmlBasicWordSelectionFilter"/>
     <defaultLiveTemplatesProvider implementation="com.intellij.codeInsight.template.XmlDefaultLiveTemplatesProvider"/>
-    <customLiveTemplate implementation="com.intellij.codeInsight.template.XmlCustomLiveTemplate"/>
+    <customLiveTemplate implementation="com.intellij.codeInsight.template.XmlZenCodingTemplate"/>
+    <applicationConfigurable implementation="com.intellij.codeInsight.template.ZenCodingSettingsConfigurable"/>
     <productivityFeaturesProvider implementation="com.intellij.featureStatistics.XmlProductivityFeatureProvider"/>
 
     <idIndexer filetype="XML" implementationClass="com.intellij.psi.impl.cache.impl.idCache.XmlIdIndexer"/>

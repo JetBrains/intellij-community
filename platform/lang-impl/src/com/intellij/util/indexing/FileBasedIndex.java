@@ -106,7 +106,7 @@ public class FileBasedIndex implements ApplicationComponent {
   public static final int OK = 1;
   public static final int REQUIRES_REBUILD = 2;
   public static final int REBUILD_IN_PROGRESS = 3;
-  private final Map<ID<?, ?>, AtomicInteger> myRebuildStatus = new HashMap<ID<?,?>, AtomicInteger>();
+  private static final Map<ID<?, ?>, AtomicInteger> ourRebuildStatus = new HashMap<ID<?,?>, AtomicInteger>();
 
   private final VirtualFileManagerEx myVfManager;
   private final FileDocumentManager myFileDocumentManager;
@@ -224,9 +224,7 @@ public class FileBasedIndex implements ApplicationComponent {
     });
 
     myChangedFilesCollector = new ChangedFilesCollector();
-  }
 
-  public void initComponent() {
     final File workInProgressFile = getMarkerFile();
     if (workInProgressFile.exists()) {
       // previous IDEA session was closed incorrectly, so drop all indices
@@ -236,7 +234,7 @@ public class FileBasedIndex implements ApplicationComponent {
     try {
       final FileBasedIndexExtension[] extensions = Extensions.getExtensions(FileBasedIndexExtension.EXTENSION_POINT_NAME);
       for (FileBasedIndexExtension<?, ?> extension : extensions) {
-        myRebuildStatus.put(extension.getName(), new AtomicInteger(OK));
+        ourRebuildStatus.put(extension.getName(), new AtomicInteger(OK));
       }
 
       final File corruptionMarker = new File(PathManager.getIndexRoot(), CORRUPTION_MARKER_NAME);
@@ -249,7 +247,7 @@ public class FileBasedIndex implements ApplicationComponent {
 
       // check if rebuild was requested for any index during registration
       for (ID<?, ?> indexId : myIndices.keySet()) {
-        if (myRebuildStatus.get(indexId).compareAndSet(REQUIRES_REBUILD, OK)) {
+        if (ourRebuildStatus.get(indexId).compareAndSet(REQUIRES_REBUILD, OK)) {
           try {
             clearIndex(indexId);
           }
@@ -264,9 +262,6 @@ public class FileBasedIndex implements ApplicationComponent {
 
       registerIndexableSet(new AdditionalIndexableFileSet());
     }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
     finally {
       ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
         public void run() {
@@ -276,6 +271,9 @@ public class FileBasedIndex implements ApplicationComponent {
       FileUtil.createIfDoesntExist(workInProgressFile);
       saveRegisteredIndices(myIndices.keySet());
     }
+  }
+
+  public void initComponent() {
   }
 
   private static String calcConfigPath(final String path) {
@@ -897,7 +895,7 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   private void checkRebuild(final ID<?, ?> indexId, final boolean cleanupOnly) {
-    if (myRebuildStatus.get(indexId).compareAndSet(REQUIRES_REBUILD, REBUILD_IN_PROGRESS)) {
+    if (ourRebuildStatus.get(indexId).compareAndSet(REQUIRES_REBUILD, REBUILD_IN_PROGRESS)) {
       cleanupProcessedFlag();
 
       final Runnable rebuildRunnable = new Runnable() {
@@ -913,7 +911,7 @@ public class FileBasedIndex implements ApplicationComponent {
             LOG.info(e);
           }
           finally {
-            myRebuildStatus.get(indexId).compareAndSet(REBUILD_IN_PROGRESS, OK);
+            ourRebuildStatus.get(indexId).compareAndSet(REBUILD_IN_PROGRESS, OK);
           }
         }
       };
@@ -936,7 +934,7 @@ public class FileBasedIndex implements ApplicationComponent {
       }
     }
 
-    if (myRebuildStatus.get(indexId).get() == REBUILD_IN_PROGRESS) {
+    if (ourRebuildStatus.get(indexId).get() == REBUILD_IN_PROGRESS) {
       throw new ProcessCanceledException();
     }
   }
@@ -1171,14 +1169,14 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
     }
   }
 
-  public void requestRebuild(ID<?, ?> indexId) {
+  public static void requestRebuild(ID<?, ?> indexId) {
     requestRebuild(indexId, new Throwable());
   }
 
-  public void requestRebuild(ID<?, ?> indexId, Throwable throwable) {
+  public static void requestRebuild(ID<?, ?> indexId, Throwable throwable) {
     cleanupProcessedFlag();
     LOG.info("Rebuild requested for index " + indexId, throwable);
-    myRebuildStatus.get(indexId).set(REQUIRES_REBUILD);
+    ourRebuildStatus.get(indexId).set(REQUIRES_REBUILD);
   }
 
   private <K, V> UpdatableIndex<K, V, FileContent> getIndex(ID<K, V> indexId) {
@@ -1258,7 +1256,7 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
 
   private void updateSingleIndex(final ID<?, ?> indexId, final VirtualFile file, final FileContent currentFC)
     throws StorageException {
-    if (myRebuildStatus.get(indexId).get() == REQUIRES_REBUILD) {
+    if (ourRebuildStatus.get(indexId).get() == REQUIRES_REBUILD) {
       return; // the index is scheduled for rebuild, no need to update
     }
 

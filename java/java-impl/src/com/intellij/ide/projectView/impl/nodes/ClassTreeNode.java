@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -155,14 +156,16 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass>{
   }
 
   public boolean canRepresent(final Object element) {
-    if (super.canRepresent(element)) return true;
-    if (getValue().getParent() instanceof PsiFile) {
-      if (element instanceof VirtualFile) {
-        PsiFile parentFile = (PsiFile) getValue().getParent();
-        if (parentFile.getVirtualFile() == element) return true;
-      }
-      return getValue().getParent() == element;
-    }
-    return false;
+    return super.canRepresent(element) || canRepresent(getValue(), element);
+  }
+
+  private static boolean canRepresent(final PsiClass psiClass, final Object element) {
+    final PsiFile parentFile = parentFileOf(psiClass);
+    return parentFile != null && (parentFile == element || parentFile.getVirtualFile() == element);
+  }
+
+  @Nullable
+  private static PsiFile parentFileOf(final PsiClass psiClass) {
+    return psiClass.getContainingClass() == null ? psiClass.getContainingFile() : null; 
   }
 }

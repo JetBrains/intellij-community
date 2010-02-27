@@ -2,7 +2,7 @@ class Test {
 
     /**
      * @param <error>i</error> here description goes
-     * @return<EOLWarning/>
+     * <warning>@return</warning>
      */
     int d(){return 1;}
 }

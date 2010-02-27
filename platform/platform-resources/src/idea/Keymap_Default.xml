@@ -956,5 +956,29 @@
   <action id="Vcs.QuickListPopupAction">
     <keyboard-shortcut first-keystroke="alt BACK_QUOTE"/>
   </action>
+
+  <action id="Jdbc.OpenConsole"><keyboard-shortcut first-keystroke="control shift F10"/></action>
+  <action id="Hibernate.OpenConsole"><keyboard-shortcut first-keystroke="control shift F10"/></action>
+
+  <action id="Console.TableResult.PreviousPage"><keyboard-shortcut first-keystroke="control alt UP"/></action>
+  <action id="Console.TableResult.NextPage"><keyboard-shortcut first-keystroke="control alt DOWN"/></action>
+  <action id="Console.TableResult.Reload"><keyboard-shortcut first-keystroke="control R"/></action>
+  <action id="Console.TableResult.CopyQuery"><keyboard-shortcut first-keystroke="control alt shift C"/></action>
+
+  <action id="Console.History.Next"><keyboard-shortcut first-keystroke="control UP"/></action>
+  <action id="Console.History.Previous"><keyboard-shortcut first-keystroke="control DOWN"/></action>
+
+  <action id="Console.Jdbc.Execute"><keyboard-shortcut first-keystroke="control ENTER"/></action>
+  <action id="Console.Jdbc.ExecuteCurrent"><keyboard-shortcut first-keystroke="control shift ENTER"/></action>
+  <action id="Console.Jdbc.OpenInEditor"><keyboard-shortcut first-keystroke="control alt F4"/></action>
+  <action id="Console.Jdbc.Properties"><keyboard-shortcut first-keystroke="alt ENTER"/></action>
+  <action id="Console.Jdbc.Close"><keyboard-shortcut first-keystroke="control shift F4"/></action>
+
+  <action id="Console.Hibernate.Execute"><keyboard-shortcut first-keystroke="control ENTER"/></action>
+  <action id="Console.Hibernate.GenerateSql"><keyboard-shortcut first-keystroke="control shift ENTER"/></action>
+  <action id="Console.Hibernate.GenerateDDL"><keyboard-shortcut first-keystroke="control alt shift ENTER"/></action>
+  <action id="Console.Hibernate.Properties"><keyboard-shortcut first-keystroke="alt ENTER"/></action>
+  <action id="Console.Hibernate.Close"><keyboard-shortcut first-keystroke="control alt shift F4"/></action>
+  <action id="Console.Hibernate.Terminate"><keyboard-shortcut first-keystroke="control alt shift DELETE"/></action>
 </keymap>
 </component>

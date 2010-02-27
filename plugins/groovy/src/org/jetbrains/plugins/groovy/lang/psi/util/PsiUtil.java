@@ -29,7 +29,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.TIntStack;
@@ -66,7 +65,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
@@ -124,43 +125,16 @@ public class PsiUtil {
                                      boolean isInUseCategory) {
     if (argumentTypes == null) return true;
 
-    PsiParameter[] parameters = method.getParameterList().getParameters();
-    if (isInUseCategory && method.hasModifierProperty(PsiModifier.STATIC) && parameters.length > 0) {
-      //do not check first parameter, it is 'this' inside categorized block
-      parameters = ArrayUtil.remove(parameters, 0);
+    GrClosureSignature signature = GrClosureSignatureUtil.createSignature(method, substitutor);
+    if (isInUseCategory && method.hasModifierProperty(PsiModifier.STATIC) && method.getParameterList().getParametersCount() > 0) {
+      signature.curry(1);
     }
+    return GrClosureSignatureUtil.isSignatureApplicable(signature, argumentTypes, method.getManager(), method.getResolveScope());
+  }
 
-    if (parameters.length == 0) return argumentTypes.length == 0;
-
-    final PsiParameter lastParameter = parameters[parameters.length - 1];
-    boolean hasVarArgs = lastParameter.isVarArgs() || lastParameter.getType() instanceof PsiArrayType;
-    if (!hasVarArgs && argumentTypes.length > parameters.length) return false;
-
-    int allOptionalParameterCount = 0;
-    for (PsiParameter parameter : parameters) {
-      if (isOptionalParameter(parameter)) {
-        allOptionalParameterCount++;
-      }
-    }
-
-    int optionalParameterCount;
-    if (hasVarArgs) {
-      optionalParameterCount = allOptionalParameterCount - (parameters.length - 1) + argumentTypes.length;
-      if (optionalParameterCount < 0) return false;
-      for (int i = optionalParameterCount; i >= 0; i--) {
-        if (checkMethodApplicability(parameters, argumentTypes, i, hasVarArgs, substitutor, method.getResolveScope(), method.getManager())) {
-          return true;
-        }
-      }
-      return false;
-    }
-    else {
-      optionalParameterCount = allOptionalParameterCount - parameters.length + argumentTypes.length;
-      if (optionalParameterCount < 0) return false;
-      return checkMethodApplicability(parameters, argumentTypes, optionalParameterCount, hasVarArgs, substitutor, method.getResolveScope(),
-                                      method.getManager());
-
-    }
+  public static boolean isApplicable(@Nullable PsiType[] argumentTypes, GrClosureType type, PsiManager manager) {
+    GrClosureSignature signature = type.getSignature();
+    return GrClosureSignatureUtil.isSignatureApplicable(signature, argumentTypes, manager, type.getResolveScope());
   }
 
   private static boolean checkMethodApplicability(PsiParameter[] parameters,
@@ -302,7 +276,7 @@ public class PsiUtil {
       for (GrExpression arg : args) {
         PsiType argType = getArgumentType(arg);
         if (argType == null) {
-          result.add(nullAsBottom ? PsiType.NULL : TypesUtil.getJavaLangObject((GroovyPsiElement)parent));
+          result.add(nullAsBottom ? PsiType.NULL : TypesUtil.getJavaLangObject(parent));
         }
         else {
           result.add(argType);
@@ -618,23 +592,6 @@ public class PsiUtil {
     }
     if (expr instanceof GrTupleExpression) return true;
     return expr instanceof GrReferenceExpression || expr instanceof GrIndexProperty || expr instanceof GrPropertySelection;
-  }
-
-  public static PsiType[] skipOptionalClosureParameters(int argsNum, GrClosureType closureType) {
-    PsiType[] parameterTypes = closureType.getClosureParameterTypes();
-    int diff = parameterTypes.length - argsNum;
-    List<PsiType> result = new ArrayList<PsiType>(argsNum);
-    for (int i = 0; i < parameterTypes.length; i++) {
-      PsiType type = parameterTypes[i];
-      if (diff > 0 && closureType.isOptionalParameter(i)) {
-        diff--;
-        continue;
-      }
-
-      result.add(type);
-    }
-
-    return result.toArray(new PsiType[result.size()]);
   }
 
   public static boolean isRawMethodCall(GrMethodCallExpression call) {

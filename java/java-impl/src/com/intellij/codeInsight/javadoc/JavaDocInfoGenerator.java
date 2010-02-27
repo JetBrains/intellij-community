@@ -46,6 +46,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -204,7 +205,7 @@ public class JavaDocInfoGenerator {
   }
 
   @Nullable
-  public String generateDocInfo() {
+  public String generateDocInfo(List<String> docURLs) {
     StringBuilder buffer = new StringBuilder();
     if (myElement instanceof PsiClass) {
       generateClassJavaDoc(buffer, (PsiClass)myElement);
@@ -222,8 +223,16 @@ public class JavaDocInfoGenerator {
     }
     else if (myElement instanceof PsiPackage) {
       generatePackageJavaDoc(buffer, (PsiPackage) myElement);
+    } else {
+      return null;
     }
-
+    if (docURLs != null) {
+      StringBuffer errorsSection = new StringBuffer("<p id=\"error\">Following external urls were checked:<br>&nbsp;&nbsp;&nbsp;<i>");
+      errorsSection.append(StringUtil.join(docURLs, "</i><br>&nbsp;&nbsp;&nbsp;<i>"));
+      errorsSection.append("</i><br>The documentation for this element is not found. Please add all the needed paths to API docs in ");
+      errorsSection.append("<a href=\"open://Project Settings\">Project Settings.</a></p>");
+      buffer.insert(buffer.indexOf("<body>"), errorsSection.toString());
+    }
     return fixupDoc(buffer);
   }
 
@@ -769,7 +778,14 @@ public class JavaDocInfoGenerator {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static void generatePrologue(StringBuilder buffer) {
-    buffer.append("<html><body>");
+    buffer.append("<html><head>" +
+                  "    <style type=\"text/css\">" +
+                  "        #error {" +
+                  "            background-color: #eeeeee;" +
+                  "            margin-bottom: 10px;" +
+                  "        }" +
+                  "    </style>" +
+                  "</head><body>");
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

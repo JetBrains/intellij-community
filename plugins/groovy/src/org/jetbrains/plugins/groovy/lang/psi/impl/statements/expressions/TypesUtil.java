@@ -21,6 +21,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.ComparatorUtil;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
@@ -32,8 +33,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
@@ -349,20 +353,17 @@ public class TypesUtil {
     else if (type1 instanceof GrClosureType && type2 instanceof GrClosureType) {
       GrClosureType clType1 = (GrClosureType)type1;
       GrClosureType clType2 = (GrClosureType)type2;
-      PsiType[] parameterTypes1 = clType1.getClosureParameterTypes();
-      PsiType[] parameterTypes2 = clType2.getClosureParameterTypes();
-      if (parameterTypes1.length == parameterTypes2.length) {
-        PsiType[] paramTypes = new PsiType[parameterTypes1.length];
-        boolean[] opts = new boolean[parameterTypes1.length];
-        for (int i = 0; i < paramTypes.length; i++) {
-          paramTypes[i] = GenericsUtil.getGreatestLowerBound(parameterTypes1[i], parameterTypes2[i]);
-          opts[i] = clType1.isOptionalParameter(i) && clType2.isOptionalParameter(i);
-        }
-        final PsiType ret1 = clType1.getClosureReturnType();
-        final PsiType ret2 = clType2.getClosureReturnType();
-        PsiType returnType = ret1 == null ? ret2 : ret2 == null ? ret1 : getLeastUpperBound(ret1, ret2, manager);
+      GrClosureSignature signature1=clType1.getSignature();
+      GrClosureSignature signature2=clType2.getSignature();
+
+      GrClosureParameter[] parameters1 = signature1.getParameters();
+      GrClosureParameter[] parameters2 = signature2.getParameters();
+
+      if (parameters1.length == parameters2.length) {
+        final GrClosureSignature signature = GrClosureSignatureImpl.getLeastUpperBound(signature1, signature2, manager);
         GlobalSearchScope scope = clType1.getResolveScope().intersectWith(clType2.getResolveScope());
-        return GrClosureType.create(returnType, paramTypes, opts, manager, scope, LanguageLevel.JDK_1_5);
+        final LanguageLevel languageLevel = ComparatorUtil.max(clType1.getLanguageLevel(), clType2.getLanguageLevel());
+        return GrClosureType.create(signature, manager, scope, languageLevel);
       }
     }
     else if (GrStringUtil.GROOVY_LANG_GSTRING.equals(type1.getCanonicalText()) &&

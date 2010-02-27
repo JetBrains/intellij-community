@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,16 +34,23 @@ public class ConcatenationUtils{
         if(!tokenType.equals(JavaTokenType.PLUS)){
             return false;
         }
-        final PsiExpression lhs = expression.getLOperand();
-        final PsiType lhsType = lhs.getType();
-        if(lhsType == null){
-            return false;
-        }
         final PsiExpression rhs = expression.getROperand();
         if(rhs == null){
             return false;
         }
-        final String typeName = lhsType.getCanonicalText();
-        return "java.lang.String".equals(typeName);
+        final PsiType type = expression.getType();
+        if(type == null){
+            final PsiExpression lhs = expression.getLOperand();
+            return hasStringType(lhs) || hasStringType(rhs);
+        }
+        return type.equalsToText("java.lang.String");
+    }
+
+    private static boolean hasStringType(PsiExpression expression) {
+        if (expression == null) {
+            return false;
+        }
+        final PsiType type = expression.getType();
+        return type != null && type.equalsToText("java.lang.String");
     }
 }

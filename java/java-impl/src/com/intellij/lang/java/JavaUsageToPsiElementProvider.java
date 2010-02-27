@@ -27,8 +27,8 @@ import com.intellij.usages.UsageToPsiElementProvider;
  * @author Konstantin Bulenkov
  */
 public class JavaUsageToPsiElementProvider extends UsageToPsiElementProvider {
-  private final static Language JAVA = Language.findLanguageByID("JAVA");
-  private final static int MAX_HOPES = 17;
+  private static final Language JAVA = Language.findLanguageByID("JAVA");
+  private static final int MAX_HOPES = 17;
 
   @Override
   public PsiElement getAppropriateParentFrom(PsiElement element) {

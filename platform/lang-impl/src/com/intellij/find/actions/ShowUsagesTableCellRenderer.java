@@ -49,24 +49,30 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
   }
 
   public Component getTableCellRendererComponent(JTable list, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-    if (!(value instanceof UsageNode)) {
-      return new JLabel("<html><body><b>" + value + "</b></body></html>", SwingConstants.CENTER);
-    }
-    UsageNode usageNode = (UsageNode)value;
+    UsageNode usageNode = value instanceof UsageNode ? (UsageNode)value : null;
 
-    GroupNode parent = (GroupNode)usageNode.getParent();
-    SimpleColoredComponent textChunks = new SimpleColoredComponent();
-    textChunks.setIpad(new Insets(0,0,0,0));
-    textChunks.setBorder(null);
-    Usage usage = usageNode.getUsage();
-
-    Color fileBgColor = getBackgroundColor(isSelected, usage);
+    Usage usage = usageNode == null ? null : usageNode.getUsage();
 
     JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0,0));
+    Color fileBgColor = getBackgroundColor(isSelected, usage);
     panel.setBackground(isSelected ? UIUtil.getListSelectionBackground() : fileBgColor == null ? list.getBackground() : fileBgColor);
     panel.setForeground(isSelected ? UIUtil.getListSelectionForeground() : list.getForeground());
 
+    if (usage == null) {
+      panel.setLayout(new BorderLayout());
+      if (column == 0) {
+        panel.add(new JLabel("<html><body><b>" + value + "</b></body></html>", SwingConstants.CENTER));
+      }
+      return panel;
+    }
+
+
+    SimpleColoredComponent textChunks = new SimpleColoredComponent();
+    textChunks.setIpad(new Insets(0,0,0,0));
+    textChunks.setBorder(null);
+
     if (column == 0) {
+      GroupNode parent = (GroupNode)usageNode.getParent();
       appendGroupText(parent, panel, fileBgColor);
       if (usage == NullUsage.INSTANCE) {
           textChunks.append("...<");

@@ -113,9 +113,14 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
     if (!(element instanceof PsiClass)) {
       return false;
     }
-    final PsiElement parent = element.getParent();
+    final PsiFile parentFile = parentFileOf((PsiClass)element);
                                         // do not select JspClass
-    return parent instanceof PsiFile && parent.getLanguage() == baseRootFile.getLanguage();
+    return parentFile != null && parentFile.getLanguage() == baseRootFile.getLanguage();
+  }
+
+  @Nullable
+  private static PsiFile parentFileOf(final PsiClass psiClass) {
+    return psiClass.getContainingClass() == null ? psiClass.getContainingFile() : null;
   }
 
   private static class PsiClassOwnerTreeNode extends PsiFileNode {

@@ -139,6 +139,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   private void fillEditorSettings(final EditorSettings editorSettings) {
     editorSettings.setWhitespacesShown(true);
     editorSettings.setLineMarkerAreaShown(false);
+    editorSettings.setIndentGuidesShown(false);
     editorSettings.setLineNumbersShown(false);
     editorSettings.setFoldingOutlineShown(false);
     editorSettings.setAdditionalColumnsCount(0);
@@ -179,9 +180,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
       public void run() {
         try {
           //important not mark as generated not to get the classes before setting language level
-          PsiFile psiFile = PsiFileFactory.getInstance(project)
-            .createFileFromText("a." + getFileTypeExtension(getFileType()), getFileType(), myTextToReformat, LocalTimeCounter.currentTime(),
-                                false, false);
+          PsiFile psiFile = createFileFromText(project, myTextToReformat);
 
           prepareForReformat(psiFile);
           apply(mySettings);
@@ -192,12 +191,12 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
 
           CodeStyleSettingsManager.getInstance(project).setTemporarySettings(clone);
-          CodeStyleManager.getInstance(project).reformat(psiFile);
+          PsiFile formatted = doReformat(project, psiFile);
           CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
 
           myEditor.getSettings().setTabSize(clone.getTabSize(getFileType()));
           Document document = myEditor.getDocument();
-          document.replaceString(0, document.getTextLength(), psiFile.getText());
+          document.replaceString(0, document.getTextLength(), formatted.getText());
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
@@ -207,6 +206,17 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   }
 
   protected abstract void prepareForReformat(PsiFile psiFile);
+
+  protected PsiFile createFileFromText(Project project, String text) {
+    PsiFile psiFile = PsiFileFactory.getInstance(project)
+      .createFileFromText("a." + getFileTypeExtension(getFileType()), getFileType(), text, LocalTimeCounter.currentTime(), false, false);
+    return psiFile;
+  }
+
+  protected PsiFile doReformat(final Project project, final PsiFile psiFile) {
+    CodeStyleManager.getInstance(project).reformat(psiFile);
+    return psiFile;
+  }
 
   @NotNull
   protected abstract FileType getFileType();
@@ -312,5 +322,14 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
         }
       }
     }, 300);
+  }
+
+  /**
+   * Checks if the panel supports multiple languages (a particular language is selected on
+   * the main code style schemes panel).
+   * @return  False by default.
+   */
+  protected boolean isMultilanguage() {
+    return false;
   }
 }

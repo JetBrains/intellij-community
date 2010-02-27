@@ -22,6 +22,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -366,6 +367,10 @@ public class AbstractTreeBuilder implements Disposable {
 
   public void setPassthroughMode(boolean passthrough) {
     myUi.setPassthroughMode(passthrough);
+  }
+
+  public void expandAll(@Nullable Runnable onDone) {
+    getUi().expandAll(onDone);
   }
 
   public static class AbstractTreeNodeWrapper extends AbstractTreeNode<Object> {

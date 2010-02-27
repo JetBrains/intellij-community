@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm;
 
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NotNull;
@@ -163,6 +164,8 @@ public interface ToolWindow {
   boolean isDisposed();
 
   void showContentPopup(InputEvent inputEvent);
+
+  ActionCallback getActivation();
 
   class Border extends EmptyBorder {
     public Border() {
