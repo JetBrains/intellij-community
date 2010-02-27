@@ -97,7 +97,9 @@ public class IdeaCoverageInstrumenterTest extends TestCase {
     final Object[] objects = classInfo.getLines();
     final ArrayList<LineData> lines = new ArrayList<LineData>();
     for (Object object : objects) {
-      lines.add((LineData)object);
+      if (object != null) {
+        lines.add((LineData)object);
+      }
     }
     Collections.sort(lines, new Comparator<LineData>() {
       public int compare(final LineData l1, final LineData l2) {

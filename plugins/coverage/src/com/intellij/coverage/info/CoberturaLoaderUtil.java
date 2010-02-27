@@ -34,8 +34,7 @@ public class CoberturaLoaderUtil {
         final int numberOfLines = dataFile.read();
         for (int l = 0; l < numberOfLines; l++) {
           final int lineNumber = dataFile.read();
-          final LineData lineData = classData
-            .getOrCreateLine(lineNumber, dataFile.readUTF() + dataFile.readUTF());
+          final LineData lineData = null; //todo classData.getOrCreateLine(lineNumber, dataFile.readUTF() + dataFile.readUTF());
           long hits = dataFile.readLong();
           final int jumpsNumber = dataFile.read();
           int trueHits = 0;

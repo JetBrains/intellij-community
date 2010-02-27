@@ -20,6 +20,7 @@
           <root url="jar://$MODULE_DIR$/lib/coverage-agent.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/coverage-report.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/coverage-report-idea.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/instrumenter.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>

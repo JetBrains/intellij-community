@@ -45,7 +45,7 @@ import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
-import com.intellij.rt.coverage.util.SourceLineCounter;
+import com.intellij.rt.coverage.instrumentation.SourceLineCounter;
 import com.intellij.ui.LightColors;
 import com.intellij.util.Function;
 import com.intellij.util.containers.HashSet;
@@ -279,16 +279,18 @@ public class SrcFileAnnotator implements Disposable {
       if (classData != null) {
         final Object[] lines = classData.getLines();
         for (Object lineData : lines) {
-          final int line = ((LineData)lineData).getLineNumber() - 1;
-          if (oldToNewLineMapping.contains(line)) {
-            final int lineNumberInCurrent = oldToNewLineMapping.get(line);
-            LOG.assertTrue(lineNumberInCurrent < myDocument.getLineCount());
-            executableLines.put(line, (LineData)lineData);
-            classLines.put(line, classData);
-            final RangeHighlighter highlighter =
-                createRangeHighlighter(suite.getLastCoverageTimeStamp(), markupModel, coverageByTestApplicable, executableLines,
-                                       classData, line, lineNumberInCurrent);
-            highlighters.add(highlighter);
+          if (lineData instanceof LineData) {
+            final int line = ((LineData)lineData).getLineNumber() - 1;
+            if (oldToNewLineMapping.contains(line)) {
+              final int lineNumberInCurrent = oldToNewLineMapping.get(line);
+              LOG.assertTrue(lineNumberInCurrent < myDocument.getLineCount());
+              executableLines.put(line, (LineData)lineData);
+              classLines.put(line, classData);
+              final RangeHighlighter highlighter =
+                  createRangeHighlighter(suite.getLastCoverageTimeStamp(), markupModel, coverageByTestApplicable, executableLines,
+                                         classData, line, lineNumberInCurrent);
+              highlighters.add(highlighter);
+            }
           }
         }
       }

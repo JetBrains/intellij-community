@@ -18,7 +18,7 @@ import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
-import com.intellij.rt.coverage.util.SourceLineCounter;
+import com.intellij.rt.coverage.instrumentation.SourceLineCounter;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.ClassReader;
@@ -233,12 +233,16 @@ public class PackageAnnotator {
     if (classData != null) {
       final Object[] lines = classData.getLines();
       for (Object l : lines) {
-        final LineData lineData = (LineData)l;
-        if (lineData.getStatus() == LineCoverage.FULL) {
-          toplevelClassCoverageInfo.fullyCoveredLineCount++;
-        }
-        else if (lineData.getStatus() == LineCoverage.PARTIAL) {
-          toplevelClassCoverageInfo.partiallyCoveredLineCount++;
+        if (l instanceof LineData) {
+          final LineData lineData = (LineData)l;
+          if (lineData.getStatus() == LineCoverage.FULL) {
+            toplevelClassCoverageInfo.fullyCoveredLineCount++;
+          }
+          else if (lineData.getStatus() == LineCoverage.PARTIAL) {
+            toplevelClassCoverageInfo.partiallyCoveredLineCount++;
+          }
+          toplevelClassCoverageInfo.totalLineCount++;
+          packageCoverageInfo.totalLineCount++;
         }
       }
       boolean touchedClass = false;
@@ -252,9 +256,7 @@ public class PackageAnnotator {
       if (touchedClass) {
         packageCoverageInfo.coveredClassCount++;
       }
-      toplevelClassCoverageInfo.totalLineCount += classData.getLines().length;
       toplevelClassCoverageInfo.totalMethodCount += classData.getMethodSigs().size();
-      packageCoverageInfo.totalLineCount += classData.getLines().length;
       packageCoverageInfo.totalClassCount++;
     } else {
       collectNonCoveredClassInfo(classFile, classData, toplevelClassCoverageInfo, packageCoverageInfo);

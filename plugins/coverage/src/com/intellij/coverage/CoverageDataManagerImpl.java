@@ -26,6 +26,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineCoverage;
+import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.ultimate.PluginVerifier;
 import com.intellij.ultimate.UltimateVerifier;
@@ -496,9 +497,15 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
       if (loadedClassData == null) {
         loadedClassData = projectData.getOrCreateClassData(className);
       }
-      for (Integer line : executionTrace.get(className)) {
-        loadedClassData.getOrCreateLine(line.intValue(), null).setStatus(LineCoverage.FULL);
+      final Set<Integer> lineNumbers = executionTrace.get(className);
+      final LineData[] lines = new LineData[lineNumbers.size()];
+      int idx = 0;
+      for (Integer line : lineNumbers) {
+        final LineData lineData = new LineData(line.intValue(), null);
+        lineData.setStatus(LineCoverage.FULL);
+        lines[idx++] = lineData;
       }
+      loadedClassData.setLines(lines);
     }
     ((CoverageSuiteImpl)suite).setCoverageData(projectData);
     renewCoverageData(suite);
