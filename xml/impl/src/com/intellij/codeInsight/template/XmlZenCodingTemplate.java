@@ -20,8 +20,6 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -35,8 +33,8 @@ import java.util.*;
 /**
  * @author Eugene.Kudelevsky
  */
-public class XmlCustomLiveTemplate implements CustomLiveTemplate {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.XmlCustomLiveTemplate");
+public class XmlZenCodingTemplate implements CustomLiveTemplate {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.XmlZenCodingTemplate");
 
   private static final String ATTRS = "ATTRS";
 
@@ -296,6 +294,10 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
   }
 
   public String computeTemplateKey(@NotNull CustomTemplateCallback callback) {
+    ZenCodingSettings settings = ZenCodingSettings.getInstance();
+    if (!settings.ENABLED) {
+      return null;
+    }
     PsiFile file = callback.getFile();
     if (file.getLanguage() instanceof XMLLanguage) {
       Editor editor = callback.getEditor();
@@ -466,7 +468,6 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
     private final CustomTemplateCallback myCallback;
     private final TemplateInvokationListener myListener;
     private MyState myState;
-    private RangeMarker myEndOffsetMarker = null;
 
     private MyInterpreter(List<MyToken> tokens,
                           CustomTemplateCallback callback,
@@ -478,19 +479,8 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
       myState = initialState;
     }
 
-    private void fixEndOffset() {
-      if (myEndOffsetMarker == null) {
-        int offset = myCallback.getOffset();
-        myEndOffsetMarker = myCallback.getEditor().getDocument().createRangeMarker(offset, offset);
-      }
-    }
-
     private void finish(boolean inSeparateEvent) {
-      Editor editor = myCallback.getEditor();
-      if (myEndOffsetMarker != null) {
-        editor.getCaretModel().moveToOffset(myEndOffsetMarker.getStartOffset());
-      }
-      editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+      myCallback.gotoEndOffset();
       if (myListener != null) {
         myListener.finished(inSeparateEvent);
       }
@@ -538,7 +528,7 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
                     public void finished(boolean inSeparateEvent) {
                       myState = MyState.WORD;
                       if (myCallback.getOffset() != myCallback.getEndOfTemplate(key)) {
-                        fixEndOffset();
+                        myCallback.fixEndOffset();
                       }
                       if (sign == '+') {
                         myCallback.gotoEndOfTemplate(key);
@@ -647,7 +637,7 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
           public void finished(boolean inSeparateEvent) {
             myState = MyState.WORD;
             if (myCallback.getOffset() != myCallback.getEndOfTemplate(key)) {
-              fixEndOffset();
+              myCallback.fixEndOffset();
             }
             myCallback.gotoEndOfTemplate(key);
             if (inSeparateEvent) {
@@ -682,7 +672,7 @@ public class XmlCustomLiveTemplate implements CustomLiveTemplate {
             MyInterpreter interpreter = new MyInterpreter(myTokens, myCallback, MyState.WORD, new TemplateInvokationListener() {
               public void finished(boolean inSeparateEvent) {
                 if (myCallback.getOffset() != myCallback.getEndOfTemplate(key)) {
-                  fixEndOffset();
+                  myCallback.fixEndOffset();
                 }
                 myCallback.gotoEndOfTemplate(key);
                 if (inSeparateEvent) {

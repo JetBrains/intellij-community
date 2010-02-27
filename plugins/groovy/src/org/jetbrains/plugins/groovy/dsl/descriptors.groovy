@@ -15,7 +15,3 @@ interface ClassDescriptor {
   PsiElement getPlace();  
 
 }
-
-interface ScriptDescriptor extends ClassDescriptor {
-  String getExtension()
-}

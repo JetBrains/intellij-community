@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2009 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.testFramework;
+package org.jetbrains.plugins.groovy.lang.psi.api.types;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Specifies the path to testdata for the current test case class.
- * May use the variable $CONTENT_ROOT to specify the module content root or
- * $PROJECT_ROOT to use the project base directory.
- *
- * @author yole
+ * @author Maxim.Medvedev
  */
-@Retention(RetentionPolicy.SOURCE)
-@Target({ElementType.TYPE})
-public @interface TestDataPath {
-  String value();
+public interface GrClosureSignature {
+  @NotNull
+  GrClosureParameter[] getParameters();
+
+  boolean isVarargs();
+
+  @Nullable
+  PsiType getReturnType();
+
+  @Nullable
+  GrClosureSignature curry(int count);
+
+  boolean isValid();
 }

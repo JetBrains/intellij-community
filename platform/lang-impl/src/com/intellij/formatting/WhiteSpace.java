@@ -469,5 +469,10 @@ class WhiteSpace {
   public TextRange getTextRange() {
     return new TextRange(myStart, myEnd);
   }
+
+  @Override
+  public String toString() {
+    return "WhiteSpace(" + myStart + "-" + myEnd + " spaces=" + mySpaces + " LFs=" + getLineFeeds() + ")";
+  }
 }
 

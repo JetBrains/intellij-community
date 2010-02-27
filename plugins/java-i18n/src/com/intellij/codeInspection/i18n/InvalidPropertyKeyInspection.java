@@ -123,7 +123,7 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
   private static class UnresolvedPropertyVisitor extends JavaRecursiveElementWalkingVisitor {
     private final InspectionManager myManager;
     private final List<ProblemDescriptor> myProblems = new ArrayList<ProblemDescriptor>();
-    private boolean onTheFly;
+    private final boolean onTheFly;
 
 
     public UnresolvedPropertyVisitor(final InspectionManager manager, boolean onTheFly) {
@@ -206,7 +206,7 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
       }
     }
 
-    private boolean hasArrayTypeAt(int i, PsiMethodCallExpression methodCall) {
+    private static boolean hasArrayTypeAt(int i, PsiMethodCallExpression methodCall) {
       return methodCall != null
              && methodCall.getArgumentList().getExpressionTypes().length > i
              && methodCall.getArgumentList().getExpressionTypes()[i] instanceof PsiArrayType;

@@ -29,6 +29,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
+import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -42,6 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
@@ -126,8 +128,10 @@ public class ResolveUtil {
     String qName = rawCanonicalText(type);
 
     if (qName != null) {
-      if (visited.contains(qName)) return true;
-      visited.add(qName);
+      if (!visited.add(qName)) {
+        return true;
+      }
+
       for (PsiMethod defaultMethod : GroovyPsiManager.getInstance(project).getDefaultMethods(qName)) {
         if (!processElement(processor, defaultMethod)) return false;
       }
@@ -144,15 +148,28 @@ public class ResolveUtil {
         if (!membersProcessor.processNonCodeMembers(type, processor, place, forCompletion)) return false;
       }
 
-      if (type instanceof PsiArrayType && visited.size() == 1) {
-        //implicit super types
-        PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
-        PsiClassType t = factory.createTypeByFQClassName("java.lang.Object", GlobalSearchScope.allScope(project));
-        if (!processNonCodeMethods(t, processor, project, visited, place, forCompletion)) return false;
-        t = factory.createTypeByFQClassName("java.lang.Comparable", GlobalSearchScope.allScope(project));
-        if (!processNonCodeMethods(t, processor, project, visited, place, forCompletion)) return false;
-        t = factory.createTypeByFQClassName("java.io.Serializable", GlobalSearchScope.allScope(project));
-        if (!processNonCodeMethods(t, processor, project, visited, place, forCompletion)) return false;
+      if (visited.size() == 1) {
+        if (type instanceof PsiArrayType) {
+          //implicit super types
+          PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+          PsiClassType t = factory.createTypeByFQClassName("java.lang.Object", GlobalSearchScope.allScope(project));
+          if (!processNonCodeMethods(t, processor, project, visited, place, forCompletion)) return false;
+          t = factory.createTypeByFQClassName("java.lang.Comparable", GlobalSearchScope.allScope(project));
+          if (!processNonCodeMethods(t, processor, project, visited, place, forCompletion)) return false;
+          t = factory.createTypeByFQClassName("java.io.Serializable", GlobalSearchScope.allScope(project));
+          if (!processNonCodeMethods(t, processor, project, visited, place, forCompletion)) return false;
+        } else if (type instanceof PsiClassType) {
+          PsiClass psiClass = ((PsiClassType)type).resolve();
+          if (psiClass instanceof GroovyScriptClass) {
+            psiClass = psiClass.getSuperClass();
+          }
+          if (psiClass != null) {
+            if (!GroovyDslFileIndex.processExecutors(psiClass, place, processor)) {
+              return false;
+            }
+          }
+        }
+
       }
       for (PsiType superType : type.getSuperTypes()) {
         if (!processNonCodeMethods(TypeConversionUtil.erasure(superType), processor, project, visited, place, forCompletion)) {
@@ -283,7 +300,7 @@ public class ResolveUtil {
     return resolveLabelTargets(labelName, element, isBreak).first;
   }
 
-  public static boolean processCategoryMembers(PsiElement place, ResolverProcessor processor, PsiClassType thisType) {
+  public static boolean processCategoryMembers(PsiElement place, ResolverProcessor processor) {
     PsiElement prev = null;
     while (place != null) {
       if (place instanceof GrMember) break;

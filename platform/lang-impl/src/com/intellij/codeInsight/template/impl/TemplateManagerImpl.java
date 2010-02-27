@@ -232,7 +232,11 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
           int offset = callback.getEditor().getCaretModel().getOffset();
           callback.getEditor().getDocument().deleteString(offset - key.length(), offset);
           callback.fixInitialEditorState();
-          customLiveTemplate.execute(key, callback, null);
+          customLiveTemplate.execute(key, callback, new TemplateInvokationListener() {
+            public void finished(boolean inSeparateEvent) {
+              callback.finish();
+            }
+          });
           return true;
         }
       }
