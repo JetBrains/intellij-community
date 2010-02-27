@@ -133,7 +133,7 @@ public class XmlFoldingBuilder implements FoldingBuilder, DumbAware {
       if (tagNameElement == null) return null;
 
       int nameEnd = tagNameElement.getTextRange().getEndOffset();
-      int end = tagNode.getLastChildNode().getTextRange().getStartOffset();
+      int end = tagNode.getLastChildNode().getTextRange().getEndOffset() - 1;  // last child node can be another tag in unbalanced tree
       ASTNode[] attributes = tagNode.getChildren(XML_ATTRIBUTE_SET);
 
       if (attributes.length > 0) {

@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.Patches;
 import com.intellij.codeInsight.hint.DocumentFragmentTooltipRenderer;
+import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.concurrency.JobScheduler;
@@ -60,6 +61,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.JScrollPane2;
+import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.ContainerUtil;
@@ -284,12 +286,31 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDocument.addDocumentListener(myEditorDocumentAdapter);
 
     myCaretModel.addCaretListener(new CaretListener() {
+      LightweightHint myCurrentHint = null;
+
       public void caretPositionChanged(CaretEvent e) {
+
         final IndentGuideDescriptor newGuide = getCaretIndentGuide();
         if (!Comparing.equal(newGuide, myCaretIndentGuide)) {
           repaintGuide(newGuide);
           repaintGuide(myCaretIndentGuide);
           myCaretIndentGuide = newGuide;
+
+          if (myCurrentHint != null) {
+            myCurrentHint.hide();
+            myCurrentHint = null;
+          }
+
+          if (newGuide != null) {
+            final Rectangle visibleArea = getScrollingModel().getVisibleArea();
+            final int line = newGuide.startLine - 1;
+            if (logicalLineToY(line) < visibleArea.y) {
+              TextRange textRange = new TextRange(myDocument.getLineStartOffset(line),
+                                                  myDocument.getLineEndOffset(line));
+              
+              myCurrentHint = EditorFragmentComponent.showEditorFragmentHint(EditorImpl.this, textRange, false, false);
+            }
+          }
         }
       }
     });

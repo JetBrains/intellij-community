@@ -24,21 +24,21 @@ import org.jetbrains.annotations.Nullable;
  * @author lesya
  */
 public class AbstractPostFormatProcessor {
-  protected final CodeStyleSettings mySettings;
+  public final CodeStyleSettings mySettings;
   private TextRange myResultTextRange;
 
   public AbstractPostFormatProcessor(final CodeStyleSettings settings) {
     mySettings = settings;
   }
 
-  protected void updateResultRange(final int oldTextLength, final int newTextLength) {
+  public void updateResultRange(final int oldTextLength, final int newTextLength) {
     if (myResultTextRange == null) return;
 
     myResultTextRange = new TextRange(myResultTextRange.getStartOffset(),
                                       myResultTextRange.getEndOffset()  - oldTextLength + newTextLength);
   }
 
-  protected boolean checkElementContainsRange(final PsiElement element) {
+  public boolean checkElementContainsRange(final PsiElement element) {
     if (myResultTextRange == null) return true;
 
     final TextRange elementRange = element.getTextRange();
@@ -47,7 +47,7 @@ public class AbstractPostFormatProcessor {
 
   }
 
-  protected boolean checkRangeContainsElement(final PsiElement element) {
+  public boolean checkRangeContainsElement(final PsiElement element) {
     if (myResultTextRange == null) return true;
 
     final TextRange elementRange = element.getTextRange();
@@ -56,7 +56,7 @@ public class AbstractPostFormatProcessor {
            && elementRange.getEndOffset() <= myResultTextRange.getEndOffset();
   }
 
-  protected static boolean isMultiline(@Nullable PsiElement statement) {
+  public static boolean isMultiline(@Nullable PsiElement statement) {
     if (statement == null) {
       return false;
     } else {

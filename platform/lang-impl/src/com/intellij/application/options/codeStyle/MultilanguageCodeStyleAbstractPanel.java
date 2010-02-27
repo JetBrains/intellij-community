@@ -18,7 +18,6 @@ package com.intellij.application.options.codeStyle;
 import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -43,7 +42,6 @@ import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.IOException;
 
 /**
  * Base class for code style settings panels supporting multiple programming languages.
@@ -90,10 +88,11 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
     if (myLanguage != null) {
       return myLanguage.getAssociatedFileType();
     }
-    LanguageFileType availTypes[] = LanguageCodeStyleSettingsProvider.getLanguageFileTypes();
-    if (availTypes.length > 0) {
-      myLanguage = availTypes[0].getLanguage();
-      return availTypes[0];
+    Language langs[] = LanguageCodeStyleSettingsProvider.getLanguagesWithCodeStyleSettings();
+    if (langs.length > 0) {
+      myLanguage = langs[0];
+      FileType type = langs[0].getAssociatedFileType();
+      if (type != null) return type;
     }
     return StdFileTypes.JAVA;
   }
