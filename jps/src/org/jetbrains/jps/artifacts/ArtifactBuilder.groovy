@@ -19,7 +19,7 @@ class ArtifactBuilder {
   def getSortedArtifacts() {
     if (sortedArtifacts == null) {
       def depsIterator = {Artifact artifact, Closure processor ->
-
+        processIncludedArtifacts(artifact, processor)
       }
       def dagBuilder = new DagBuilder<Artifact>({new DagNode<Artifact>()}, depsIterator)
       def nodes = dagBuilder.build(project, project.artifacts.values())
@@ -33,17 +33,53 @@ class ArtifactBuilder {
     return sortedArtifacts
   }
 
-  def buildArtifacts() {
-    getSortedArtifacts().each {
-      buildArtifact it
+  private def processIncludedArtifacts(Artifact artifact, Closure processor) {
+    artifact.rootElement.process(project) {LayoutElement element ->
+      if (element instanceof ArtifactLayoutElement) {
+        def included = ((ArtifactLayoutElement) element).findArtifact(project)
+        if (included != null) {
+          processor(included)
+        }
+        return false
+      }
+      return true
     }
   }
 
-  private def buildArtifact(Artifact artifact) {
-    project.stage("Building '${artifact.name}' artifact")
+  def buildArtifacts() {
+    getSortedArtifacts().each {
+      doBuildArtifact it
+    }
+  }
+
+  def buildArtifact(Artifact artifact) {
+    buildArtifactWithDependencies(artifact, [] as Set)
+  }
+
+  private def buildArtifactWithDependencies(Artifact artifact, Set<Artifact> parents) {
+    if (artifact in parents) {
+      project.error("Circular inclusion of artifacts: $parents")
+    }
+    Set<Artifact> included = new LinkedHashSet<Artifact>()
+    processIncludedArtifacts(artifact) {
+      included << it
+    }
+
+    Set<Artifact> newParents = new HashSet<Artifact>(parents)
+    newParents << artifact
+    included.each {
+      buildArtifactWithDependencies(it, newParents)
+    }
+    doBuildArtifact(artifact)
+  }
+
+  private def doBuildArtifact(Artifact artifact) {
     def output = artifactOutputs[artifact]
     if (output != null) return output
-    artifactOutputs[artifact] = output = new File(getBaseArtifactsOutput(), suggestFileName(artifact.name)).absolutePath
+
+    project.stage("Building '${artifact.name}' artifact")
+    def outputDir = new File(getBaseArtifactsOutput(), suggestFileName(artifact.name))
+    artifactOutputs[artifact] = output = outputDir.absolutePath
     project.binding.layout.call([output, {
       artifact.rootElement.build(project)
     }])
@@ -55,7 +91,7 @@ class ArtifactBuilder {
   }
 
   private String getBaseArtifactsOutput() {
-    return new File(project.targetFolder, "artifacts").absolutePath
+    return new File(project.targetFolder, "artifacts")
   }
 }
 

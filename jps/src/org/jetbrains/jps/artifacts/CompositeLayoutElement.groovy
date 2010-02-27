@@ -21,6 +21,12 @@ abstract class CompositeLayoutElement extends LayoutElement {
     children << child
     return child
   }
+
+  boolean process(Project project, Closure processor) {
+    if (processor(this)) {
+      children*.process(project, processor)
+    }
+  }
 }
 
 class RootElement extends CompositeLayoutElement {

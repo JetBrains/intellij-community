@@ -13,6 +13,12 @@ abstract class ComplexLayoutElement extends LayoutElement {
   def build(Project project) {
     getSubstitution(project)*.build(project)
   }
+
+  boolean process(Project project, Closure processor) {
+    if (processor(this)) {
+      getSubstitution(project)*.process(project, processor)
+    }
+  }
 }
 
 class JavaeeFacetResourcesElement extends ComplexLayoutElement {
@@ -89,7 +95,7 @@ class ArtifactLayoutElement extends ComplexLayoutElement {
   }
 
   def build(Project project) {
-    def artifact = project.artifacts[artifactName]
+    def artifact = findArtifact(project)
     if (artifact == null) {
       project.error("unknown artifact: $artifactName")
     }
@@ -98,7 +104,12 @@ class ArtifactLayoutElement extends ComplexLayoutElement {
       project.binding.ant.fileset(dir: output)
     }
     else {
-      super.build(project)
+      project.error("Required artifact $artifactName is not build")
+//      super.build(project)
     }
+  }
+
+  Artifact findArtifact(Project project) {
+    return project.artifacts[artifactName]
   }
 }

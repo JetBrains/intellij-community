@@ -8,6 +8,10 @@ import org.jetbrains.jps.Library
  */
 abstract class LayoutElement {
   def build(Project project) {}
+
+  boolean process(Project project, Closure processor) {
+    return processor(this)
+  }
 }
 
 class FileCopyElement extends LayoutElement {

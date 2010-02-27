@@ -6,4 +6,8 @@ package org.jetbrains.jps.artifacts
 class Artifact {
   String name;
   LayoutElement rootElement;
+
+  def String toString() {
+    return "artifact '$name'";
+  }
 }

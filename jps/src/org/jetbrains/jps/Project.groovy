@@ -158,6 +158,14 @@ class Project {
     artifactBuilder.buildArtifacts()
   }
 
+  def buildArtifact(String artifactName) {
+    def artifact = artifacts[artifactName]
+    if (artifact == null) {
+      error("Artifact '$artifactName' not found")
+    }
+    artifactBuilder.buildArtifact(artifact)
+  }
+
   def clean() {
     if (!dryRun) {
       stage("Cleaning $targetFolder")
