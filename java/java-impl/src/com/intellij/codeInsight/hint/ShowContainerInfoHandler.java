@@ -102,7 +102,7 @@ public class ShowContainerInfoHandler implements CodeInsightActionHandler {
     final PsiElement _container = container;
     ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          LightweightHint hint = EditorFragmentComponent.showEditorFragmentHint(editor, range, true);
+          LightweightHint hint = EditorFragmentComponent.showEditorFragmentHint(editor, range, true, true);
           if (hint != null) {
             hint.putUserData(CONTAINER_KEY, _container);
             editor.putUserData(MY_LAST_HINT_KEY, new WeakReference<LightweightHint>(hint));
