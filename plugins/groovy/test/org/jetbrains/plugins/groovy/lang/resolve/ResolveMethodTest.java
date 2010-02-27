@@ -546,4 +546,10 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     final PsiElement resolved = ref.resolve();
     assertInstanceOf(resolved, PsiMethod.class);
   }
+
+  public void testMethodVsField() throws Exception {
+    final PsiReference ref = configureByFile("methodVsField/A.groovy");
+    final PsiElement element = ref.resolve();
+    assertInstanceOf(element, PsiMethod.class);
+  }
 }

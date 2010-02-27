@@ -18,12 +18,18 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightVariableBase;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
 /**
  * @author ven
  */
-public class LightParameter extends LightVariableBase implements PsiParameter {
+public class LightParameter extends LightVariableBase implements GrParameter {
   public static final LightParameter[] EMPTY_ARRAY = new LightParameter[0];
   private final String myName;
 
@@ -34,7 +40,7 @@ public class LightParameter extends LightVariableBase implements PsiParameter {
 
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
-      ((JavaElementVisitor) visitor).visitParameter(this);
+      ((JavaElementVisitor)visitor).visitParameter(this);
     }
   }
 
@@ -54,5 +60,44 @@ public class LightParameter extends LightVariableBase implements PsiParameter {
   @NotNull
   public String getName() {
     return StringUtil.notNullize(myName);
+  }
+
+  public GrTypeElement getTypeElementGroovy() {
+    return null;
+  }
+
+  public GrExpression getDefaultInitializer() {
+    return null;
+  }
+
+  public boolean isOptional() {
+    return false;
+  }
+
+  public GrExpression getInitializerGroovy() {
+    return null;
+  }
+
+  public void setType(@Nullable PsiType type) throws IncorrectOperationException {
+  }
+
+  @NotNull
+  public PsiElement getNameIdentifierGroovy() {
+    return myNameIdentifier;
+  }
+
+  public PsiType getTypeGroovy() {
+    return getType();
+  }
+
+  public PsiType getDeclaredType() {
+    return getType();
+  }
+
+  public void accept(GroovyElementVisitor visitor) {
+  }
+
+  public void acceptChildren(GroovyElementVisitor visitor) {
+
   }
 }
