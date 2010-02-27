@@ -46,6 +46,7 @@ public class TemplateEditorUtil {
     EditorSettings editorSettings = editor.getSettings();
     editorSettings.setVirtualSpace(false);
     editorSettings.setLineMarkerAreaShown(false);
+    editorSettings.setIndentGuidesShown(false);
     editorSettings.setLineNumbersShown(false);
     editorSettings.setFoldingOutlineShown(false);
 

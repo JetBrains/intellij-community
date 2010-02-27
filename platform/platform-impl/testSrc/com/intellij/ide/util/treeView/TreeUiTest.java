@@ -49,23 +49,21 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     assertTree("+/\n");
   }
 
-  public void _testExpandAll() throws Exception {
+  public void testExpandAll() throws Exception {
     buildStructure(myRoot);
     assertTree("+/\n");
-    final Ref<Boolean> flag = new Ref<Boolean>(Boolean.FALSE);
-    SwingUtilities.invokeLater(new Runnable() {
+
+    final Ref<Boolean> done = new Ref<Boolean>();
+    doAndWaitForBuilder(new Runnable() {
       public void run() {
-        getBuilder().expandAll();
-        flag.set(Boolean.TRUE);
+        getBuilder().expandAll(new Runnable() {
+          public void run() {
+            done.set(true);
+          }
+        });
       }
     });
 
-    waitBuilderToCome(new Condition() {
-      public boolean value(Object o) {
-        return flag.get();
-      }
-    });
-    
     assertTree("-/\n"
                + " -com\n"
                + "  -intellij\n"

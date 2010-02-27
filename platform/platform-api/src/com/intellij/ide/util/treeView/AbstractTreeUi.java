@@ -3155,6 +3155,41 @@ public class AbstractTreeUi {
     }
   }
 
+  public void expandAll(@Nullable final Runnable onDone) {
+    final JTree tree = getTree();
+    if (tree.getRowCount() > 0) {
+      final int expandRecursionDepth = Math.max(2, Registry.intValue("ide.tree.expandRecursionDepth"));
+      new Runnable() {
+        private int myCurrentRow = 0;
+        private int myInvocationCount = 0;
+        public void run() {
+          if (++myInvocationCount > expandRecursionDepth) {
+            myInvocationCount = 0;
+            if (isPassthroughMode()) {
+              run();              
+            } else {
+              // need this to prevent stack overflow if the tree is rather big and is "synchronous"
+              SwingUtilities.invokeLater(this);
+            }
+          }
+          else {
+            final int row = myCurrentRow++;
+            if (row < tree.getRowCount()) {
+              final TreePath path = tree.getPathForRow(row);
+              final Object last = path.getLastPathComponent();
+              final Object elem = getElementFor(last);
+              expand(elem, this);
+            } else {
+              runDone(onDone);
+            }
+          }
+        }
+      }.run();
+    } else {
+      runDone(onDone);
+    }
+  }
+
   public void expand(final Object element, @Nullable final Runnable onDone) {
     expand(new Object[]{element}, onDone);
   }

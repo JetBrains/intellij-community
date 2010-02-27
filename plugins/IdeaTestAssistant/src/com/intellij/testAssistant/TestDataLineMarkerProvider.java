@@ -4,6 +4,7 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -48,15 +49,23 @@ public class TestDataLineMarkerProvider implements LineMarkerProvider {
     if (annotation != null) {
       final PsiAnnotationMemberValue value = annotation.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
       if (value instanceof PsiExpression) {
-        final PsiConstantEvaluationHelper evaluationHelper = JavaPsiFacade.getInstance(value.getProject()).getConstantEvaluationHelper();
+        final Project project = value.getProject();
+        final PsiConstantEvaluationHelper evaluationHelper = JavaPsiFacade.getInstance(project).getConstantEvaluationHelper();
         final Object constantValue = evaluationHelper.computeConstantExpression(value, false);
         if (constantValue instanceof String) {
           String path = (String) constantValue;
           if (path.indexOf("$CONTENT_ROOT") >= 0) {
-            final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(psiClass.getProject()).getFileIndex();
+            final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
             final VirtualFile contentRoot = fileIndex.getContentRootForFile(psiClass.getContainingFile().getVirtualFile());
             if (contentRoot == null) return null;
             path = path.replace("$CONTENT_ROOT", contentRoot.getPath());
+          }
+          if (path.indexOf("$PROJECT_ROOT") >= 0) {
+            final VirtualFile baseDir = project.getBaseDir();
+            if (baseDir == null) {
+              return null;
+            }
+            path = path.replace("$PROJECT_ROOT", baseDir.getPath());
           }
           return path;
         }

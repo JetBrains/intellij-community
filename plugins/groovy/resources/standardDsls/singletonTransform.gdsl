@@ -1,4 +1,4 @@
-contributor(context()) {
+contributor(ctype:hasAnnotation("groovy.lang.Singleton")) {
   if (classType?.hasAnnotation("groovy.lang.Singleton")) {
     property name: "instance",
              type: classType?.getQualifiedName() ?: "java.lang.Object",

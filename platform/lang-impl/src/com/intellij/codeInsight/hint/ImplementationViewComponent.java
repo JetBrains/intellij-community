@@ -149,6 +149,7 @@ public class ImplementationViewComponent extends JPanel {
     myEditor.getSettings().setAdditionalLinesCount(1);
     myEditor.getSettings().setAdditionalColumnsCount(1);
     myEditor.getSettings().setLineMarkerAreaShown(false);
+    myEditor.getSettings().setIndentGuidesShown(false);
     myEditor.getSettings().setLineNumbersShown(false);
     myEditor.getSettings().setFoldingOutlineShown(false);
 

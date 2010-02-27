@@ -104,6 +104,7 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel {
     EditorSettings editorSettings = editor.getSettings();
     editorSettings.setWhitespacesShown(true);
     editorSettings.setLineMarkerAreaShown(false);
+    editorSettings.setIndentGuidesShown(false);
     editorSettings.setLineNumbersShown(false);
     editorSettings.setFoldingOutlineShown(false);
     editorSettings.setAdditionalColumnsCount(0);

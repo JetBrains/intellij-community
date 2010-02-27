@@ -38,8 +38,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyIcons;
-import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex;
-import org.jetbrains.plugins.groovy.dsl.GroovyScriptDescriptor;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -128,8 +126,6 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
     if (lastParent != null && !(lastParent instanceof GrTypeDefinition) && scriptClass != null) {
       if (!ResolveUtil.processElement(processor, getSyntheticArgsParameter())) return false;
-      // This case is processed by NonCodeMemberProcessor implementations
-      //if (!processScriptEnhancements(place, processor)) return false;
     }
 
     if (!processChildrenScopes(this, processor, state, lastParent, place)) return false;
@@ -268,15 +264,6 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       return nameHint.getName(state);
     }
     return null;
-  }
-
-  private boolean processScriptEnhancements(final PsiElement place, final PsiScopeProcessor processor) {
-    final GroovyScriptClass scriptClass = getScriptClass();
-    if (scriptClass == null) {
-      return true;
-    }
-
-    return GroovyDslFileIndex.processExecutors(getProject(), new GroovyScriptDescriptor(this, scriptClass, place), processor);
   }
 
 

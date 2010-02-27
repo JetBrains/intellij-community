@@ -42,6 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -228,7 +229,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
         if (expr.getTextRange().contains(offset)) return idx;
         idx++;
       }
-    } 
+    }
 
     return -1;
   }
@@ -310,17 +311,30 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
 
     } else if (element instanceof PsiClass) {
       buffer.append("no parameters");
-    } else if (element instanceof GrVariable) {
-      final PsiType type = ((GrVariable) element).getTypeGroovy();
+    }
+    else if (element instanceof GrVariable) {
+      final PsiType type = ((GrVariable)element).getTypeGroovy();
       if (type instanceof GrClosureType) {
-        PsiType[] parameterTypes = ((GrClosureType) type).getClosureParameterTypes();
-        if (parameterTypes.length > 0) {
-          for (int i = 0; i < parameterTypes.length; i++) {
+        GrClosureParameter[] parameters = ((GrClosureType)type).getSignature().getParameters();
+        if (parameters.length > 0) {
+          for (int i = 0; i < parameters.length; i++) {
             if (i > 0) buffer.append(", ");
-            PsiType parameterType = ((GrClosureType) type).getClosureParameterTypes()[i];
-            buffer.append(parameterType.getPresentableText());
+            final String name = parameters[i].getName();
+            final PsiType psiType = parameters[i].getType();
+            if (name == null) {
+              buffer.append(psiType == null ? "null" : psiType.getPresentableText());
+            }
+            else {
+              String typeText = psiType == null ? "def" : psiType.getPresentableText();
+              buffer.append(typeText).append(' ').append(name);
+              final GrExpression initializer = parameters[i].getDefaultInitializer();
+              if (initializer != null) {
+                buffer.append(" = ").append(initializer.getText());
+              }
+            }
           }
-        } else {
+        }
+        else {
           buffer.append("no parameters");
         }
       }

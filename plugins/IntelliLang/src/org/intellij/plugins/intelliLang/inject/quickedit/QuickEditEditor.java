@@ -60,6 +60,7 @@ public class QuickEditEditor {
     EditorSettings settings = myEditor.getSettings();
     settings.setFoldingOutlineShown(false);
     settings.setLineMarkerAreaShown(false);
+    settings.setIndentGuidesShown(false);
     settings.setLineNumbersShown(false);
     settings.setVirtualSpace(false);
     settings.setAdditionalLinesCount(2);
