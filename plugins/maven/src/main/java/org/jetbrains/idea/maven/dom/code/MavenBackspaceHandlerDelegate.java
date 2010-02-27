@@ -31,7 +31,7 @@ public class MavenBackspaceHandlerDelegate extends BackspaceHandlerDelegate {
 
     int offset = editor.getCaretModel().getOffset();
     CharSequence text = editor.getDocument().getCharsSequence();
-    if (offset <= text.length() && text.charAt(offset) == '}') {
+    if (offset < text.length() && text.charAt(offset) == '}') {
       editor.getDocument().deleteString(offset, offset + 1);
       return true;
     }
