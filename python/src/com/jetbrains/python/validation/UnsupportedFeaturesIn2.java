@@ -88,4 +88,11 @@ public class UnsupportedFeaturesIn2 extends PyAnnotator {
       }
     }
   }
+
+  @Override
+  public void visitPyStarExpression(PyStarExpression node) {
+    if (isPy2(node)) {
+      getHolder().createWarningAnnotation(node, "Python 2 does not support star expressions");
+    }
+  }
 }
