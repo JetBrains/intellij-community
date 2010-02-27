@@ -156,6 +156,32 @@ public class ArrayUtil {
   }
 
   /**
+   * Allocates new array of size <code>array.length + collection.size()</code> and copies elements of <code>array</code> and
+   * <code>collection</code> to it.
+   * @param array source array
+   * @param collection source collection
+   * @param factory array factory used to create destination array of type <code>T</code>
+   * @return destination array
+   */
+  @NotNull
+  public static <T> T[] mergeArrayAndCollection(@NotNull T[] array, @NotNull Collection<T> collection,
+                                                @NotNull final ArrayFactory<T> factory) {
+    if (collection.size() == 0) {
+      return array;
+    }
+
+    final T[] array2 = collection.toArray(factory.create(collection.size()));
+    if (array.length == 0) {
+      return array2;
+    }
+
+    final T[] result = factory.create(array.length + collection.size());
+    System.arraycopy(array, 0, result, 0, array.length);
+    System.arraycopy(array2, 0, result, array.length, array2.length);
+    return result;
+  }
+
+  /**
    * Appends <code>element</code> to the <code>src</code> array. As you can
    * imagine the appended element will be the last one in the returned result.
    * @param src array to which the <code>element</code> should be appended.

@@ -172,6 +172,13 @@ public class PsiTreeUtil {
     }
     return null;
   }
+
+  @NotNull public static <T extends PsiElement> T getRequiredChildOfType(@NotNull PsiElement element, @NotNull Class<T> aClass) {
+    final T child = getChildOfType(element, aClass);
+    assert child != null: "Missing required child of type " + aClass.getName();
+    return child;
+  }
+
   @Nullable public static <T extends PsiElement> T[] getChildrenOfType(@NotNull PsiElement element, @NotNull Class<T> aClass) {
     List<T> result = null;
     for(PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()){

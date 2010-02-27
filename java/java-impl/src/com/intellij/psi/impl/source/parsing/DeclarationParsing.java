@@ -470,6 +470,20 @@ public class DeclarationParsing extends Parsing {
   }
 
   @NotNull
+  public CompositeElement parseAnnotationParamsFromText(PsiManager manager, CharSequence text, final LanguageLevel languageLevel) {
+    Lexer originalLexer = new JavaLexer(languageLevel);
+    FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
+    lexer.start(text);
+    CompositeElement first = parseAnnotationParameterList(lexer);
+
+    final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, myContext.getCharTable()).getTreeElement();
+    dummyRoot.rawAddChildren(first);
+
+    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, text.length(), -1, WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
+    return first;
+  }
+
+  @NotNull
   CompositeElement parseAnnotation(Lexer lexer) {
     CompositeElement annotation = ASTFactory.composite(JavaElementType.ANNOTATION);
     if (lexer.getTokenType() == null) return annotation;
