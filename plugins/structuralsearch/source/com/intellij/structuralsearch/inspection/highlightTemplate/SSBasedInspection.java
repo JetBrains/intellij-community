@@ -23,6 +23,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
@@ -30,6 +31,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.Matcher;
 import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.MatcherImpl;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.Replacer;
@@ -82,26 +84,41 @@ public class SSBasedInspection extends BaseJavaLocalInspectionTool {
   }
 
   @Nullable
-  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull final InspectionManager manager, final boolean isOnTheFly) {
+  public ProblemDescriptor[] checkFile(@NotNull final PsiFile file, @NotNull final InspectionManager manager, final boolean isOnTheFly) {
     final Project project = file.getProject();
     if (compiledConfigurations == null) return null;
     final List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
+    final List<Pair<MatchContext,Configuration>> contexts = compiledConfigurations.getMatchContexts();
+    //JobUtil.invokeConcurrentlyForAll(contexts, new Processor<Pair<MatchContext, Configuration>>() {
+    //  public boolean process(Pair<MatchContext, Configuration> pair) {
+    for (Pair<MatchContext, Configuration> pair : contexts) {
+        Configuration configuration = pair.second;
+        MatchContext context = pair.first;
+
     try {
-      new Matcher(project).processMatchesInFile(compiledConfigurations, file, new PairProcessor<MatchResult, Configuration>() {
-        public boolean process(MatchResult matchResult, Configuration configuration) {
-          PsiElement element = matchResult.getMatch();
-          String name = configuration.getName();
-          LocalQuickFix fix = createQuickFix(project, matchResult, configuration);
-          ProblemDescriptor problemDescriptor = manager.createProblemDescriptor(element, name, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                                                                isOnTheFly);
-          problems.add(problemDescriptor);
-          return true;
+          new Matcher(project).processMatchesInFile(context, configuration, file, new PairProcessor<MatchResult, Configuration>() {
+            public boolean process(MatchResult matchResult, Configuration configuration) {
+              PsiElement element = matchResult.getMatch();
+              String name = configuration.getName();
+              LocalQuickFix fix = createQuickFix(project, matchResult, configuration);
+              ProblemDescriptor problemDescriptor = manager.createProblemDescriptor(element, name, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                                                                    isOnTheFly);
+              synchronized (problems) {
+                problems.add(problemDescriptor);
+              }
+              return true;
+            }
+          });
         }
-      });
-      return problems.toArray(new ProblemDescriptor[problems.size()]);
+        // hack for huge file case
+        catch (StackOverflowError ignored) {
+        }
+    //    return true;
+    //  }
+    //}, "match");
     }
-    catch (StackOverflowError e) {
-      return null;
+    synchronized (problems) {
+      return problems.toArray(new ProblemDescriptor[problems.size()]);
     }
   }
 

@@ -16,6 +16,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.FileIndexImplUtil;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -140,25 +141,19 @@ public class MatcherImpl {
   }
 
   public static class CompiledOptions {
-    private final List<MatchContext> matchContexts;
-    private final List<Configuration> myConfigurations;
+    public final List<Pair<MatchContext, Configuration>> matchContexts;
 
-    public CompiledOptions(final List<MatchContext> matchContexts, final List<Configuration> configurations) {
+    public CompiledOptions(final List<Pair<MatchContext, Configuration>> matchContexts) {
       this.matchContexts = matchContexts;
-      myConfigurations = configurations;
     }
 
-    public List<Configuration> getConfigurations() {
-      return myConfigurations;
+    public List<Pair<MatchContext, Configuration>> getMatchContexts() {
+      return matchContexts;
     }
   }
 
-  public boolean processMatchesInFile(CompiledOptions compiledOptions, PsiFile psiFile, final PairProcessor<MatchResult, Configuration> processor) {
+  public boolean processMatchesInFile(MatchContext context, final Configuration configuration, PsiFile psiFile, final PairProcessor<MatchResult, Configuration> processor) {
     LocalSearchScope scope = new LocalSearchScope(psiFile);
-
-    for (int i = 0; i < compiledOptions.matchContexts.size(); i++) {
-      MatchContext context = compiledOptions.matchContexts.get(i);
-      final Configuration configuration = compiledOptions.myConfigurations.get(i);
 
       matchContext.clear();
       matchContext.setMatcher(visitor);
@@ -195,12 +190,12 @@ public class MatcherImpl {
       );
       options.setScope(scope);
       match(psiFile);
-    }
+
     return true;
   }
 
   public CompiledOptions precompileOptions(List<Configuration> configurations) {
-    List<MatchContext> contexts = new ArrayList<MatchContext>();
+    List<Pair<MatchContext, Configuration>> contexts = new ArrayList<Pair<MatchContext, Configuration>>();
 
     for (Configuration configuration : configurations) {
       MatchContext matchContext = new MatchContext();
@@ -211,12 +206,12 @@ public class MatcherImpl {
       try {
         CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, matchOptions);
         matchContext.setPattern(compiledPattern);
-        contexts.add(matchContext);
+        contexts.add(Pair.create(matchContext, configuration));
       }
       catch (UnsupportedPatternException ignored) {}
       catch (MalformedPatternException ignored) {}
     }
-    return new CompiledOptions(contexts, configurations);
+    return new CompiledOptions(contexts);
   }
 
   /**
