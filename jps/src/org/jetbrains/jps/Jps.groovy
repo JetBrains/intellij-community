@@ -18,6 +18,10 @@ final class Jps {
       return project.createLibrary(name, initializer)
     })
 
+    binding.setVariable("globalLibrary", {String name, Closure initializer ->
+      return project.createGlobalLibrary(name, initializer)
+    })
+
     binding.setVariable("jdk", {String name, String path ->
       //todo[nik] support initializer parameter
       return project.createJavaSdk(name, path, {})

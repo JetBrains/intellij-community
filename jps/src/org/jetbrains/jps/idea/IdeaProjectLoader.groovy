@@ -243,28 +243,29 @@ public class IdeaProjectLoader {
 
             case "library":
               def name = entryTag.attribute("name")
-              switch (entryTag.attribute("level")) {
-                case "project":
-                  def library = project.libraries[name]
-                  if (library == null) {
-                    project.warning("Cannot resolve library $name in module $currentModuleName")
-                  }
-                  else {
-                    if (scope == "PROVIDED") {
-                      providedClasspath library
-                    }
-                    else if (scope == "TEST") {
-                      testclasspath library
-                    }
-                    else {
-                      classpath library
-                    }
-                  }
-                  break
+              def library = null
+              if (entryTag.@level == "project") {
+                library = project.libraries[name]
+                if (library == null) {
+                  project.warning("Cannot resolve project library '$name' in module '$currentModuleName'")
+                }
+              } else {
+                library = project.globalLibraries[name]
+                if (library == null) {
+                  project.warning("Cannot resolve global library '$name' in module '$currentModuleName'")
+                }
+              }
 
-                case "application":
-                  project.warning("Application level libraries are not supported: ${name}")
-                  break
+              if (library != null) {
+                if (scope == "PROVIDED") {
+                  providedClasspath library
+                }
+                else if (scope == "TEST") {
+                  testclasspath library
+                }
+                else {
+                  classpath library
+                }
               }
               break
 

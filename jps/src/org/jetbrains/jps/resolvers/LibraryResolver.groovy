@@ -8,10 +8,17 @@ import org.jetbrains.jps.Project
  */
 
 class LibraryResolver implements Resolver {
+  private static def GLOBAL_LIB_PREFIX = "globalLib:"
+  private static def PROJECT_LIB_PREFIX = "lib:"
   Project project;
 
   def ClasspathItem resolve(String classpathItem) {
-    if (classpathItem.startsWith("lib:")) classpathItem = classpathItem.substring("lib:".length())
+    if (classpathItem.startsWith(GLOBAL_LIB_PREFIX)) {
+      return project.globalLibraries[classpathItem.substring(GLOBAL_LIB_PREFIX.length())]
+    }
+    if (classpathItem.startsWith(PROJECT_LIB_PREFIX)) {
+      classpathItem = classpathItem.substring(PROJECT_LIB_PREFIX.length())
+    }
 
     return project.libraries[classpathItem]
   }

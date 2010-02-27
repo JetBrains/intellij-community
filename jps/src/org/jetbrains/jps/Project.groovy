@@ -88,6 +88,14 @@ class Project {
   }
 
   def Library createLibrary(String name, Closure initializer) {
+    createLibrary(name, initializer, libraries, "project.library")
+  }
+
+  def Library createGlobalLibrary(String name, Closure initializer) {
+    createLibrary(name, initializer, globalLibraries, "project.globalLibrary")
+  }
+
+  private def Library createLibrary(String name, Closure initializer, Map<String, Library> libraries, String accessor) {
     Library lib = libraries[name]
     if (lib != null) error("Library ${name} already defined")
 
@@ -96,7 +104,7 @@ class Project {
 
     try {
       binding.getVariable(name)
-      warning("Variable '$name' is already defined in context. Equally named library will not be accessible. Use project.libraries['$name'] instead")
+      warning("Variable '$name' is already defined in context. Equally named library will not be accessible. Use $accessor['$name'] instead")
     }
     catch (MissingPropertyException mpe) {
       binding.setVariable(name, lib)

@@ -52,12 +52,16 @@ class LibraryFilesElement extends ComplexLayoutElement {
         library = project.libraries[libraryName]
         break
       case "module":
-        library = project.modules[moduleName].libraries[libraryName]
+        library = project.modules[moduleName]?.libraries[libraryName]
         break
       case "application":
-        project.warning("Global libraries aren't supported: $libraryName will be missing")
-        return []
+        library = project.globalLibraries[libraryName]
+        break
     }
+    if (library == null) {
+      return []
+    }
+
     return library.getClasspathRoots(false).collect {String path ->
       if (new File(path).isDirectory()) {
         return new DirectoryCopyElement(dirPath: path)
