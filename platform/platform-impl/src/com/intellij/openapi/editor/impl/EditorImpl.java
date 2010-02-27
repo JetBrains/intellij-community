@@ -224,6 +224,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private char[] myPrefixText;
   private TextAttributes myPrefixAttributes;
+  private IndentGuideDescriptor myCaretIndentGuide = null;
 
   static {
     ourCaretBlinkingCommand = new RepaintCursorCommand();
@@ -282,6 +283,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDocument.addDocumentListener(mySelectionModel);
     myDocument.addDocumentListener(myEditorDocumentAdapter);
 
+    myCaretModel.addCaretListener(new CaretListener() {
+      public void caretPositionChanged(CaretEvent e) {
+        final IndentGuideDescriptor newGuide = getCaretIndentGuide();
+        if (!Comparing.equal(newGuide, myCaretIndentGuide)) {
+          repaintGuide(newGuide);
+          repaintGuide(myCaretIndentGuide);
+          myCaretIndentGuide = newGuide;
+        }
+      }
+    });
+
     myCaretCursor = new CaretCursor();
 
     myFoldingModel.flushCaretShift();
@@ -339,6 +351,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           }
         }
       });
+    }
+  }
+
+  private void repaintGuide(IndentGuideDescriptor guide) {
+    if (guide != null) {
+      repaintLines(guide.startLine, guide.endLine);
     }
   }
 
@@ -1190,7 +1208,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       int y = clip.y;
       int line = xyToLogicalPosition(new Point(0, y)).line;
 
-      int gapWidth = EditorUtil.getSpaceWidth(Font.PLAIN, this) * getIndentSize();
+      final int indentSize = getIndentSize();
+      int gapWidth = EditorUtil.getSpaceWidth(Font.PLAIN, this) * indentSize;
 
       do {
         final int indents = getIndents(line);
@@ -1203,7 +1222,44 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         y = logicalLineToY(line);
       }
       while (y < clip.y + clip.height);
+
+      if (myCaretIndentGuide != null) {
+        int x = myCaretIndentGuide.indentLevel * gapWidth + 1;
+        int y1 = logicalLineToY(myCaretIndentGuide.startLine);
+        int y2 = logicalLineToY(myCaretIndentGuide.endLine);
+        UIUtil.drawDottedLine((Graphics2D)g, x, y1, x, y2, getBackroundColor(), getForegroundColor());
+      }
     }
+  }
+
+  @Nullable
+  public IndentGuideDescriptor getCaretIndentGuide() {
+    final int indentSize = getIndentSize();
+
+    final LogicalPosition caretPosition = myCaretModel.getLogicalPosition();
+    int startLine = caretPosition.line;
+    int endLine = startLine;
+    int indents = caretPosition.column / indentSize;
+
+    if (indents > 0 && caretPosition.column % indentSize == 0) {
+      while (startLine > 0) {
+        if (getIndents(startLine - 1) <= indents) break;
+        startLine--;
+      }
+
+      if (getIndents(endLine + 1) > indents) endLine++;
+
+      while (endLine < myDocument.getLineCount() - 1) {
+        if (getIndents(endLine) <= indents) break;
+        endLine++;
+      }
+
+      if (indents > 0 && startLine < endLine) {
+        return new IndentGuideDescriptor(indents, startLine, endLine);
+      }
+    }
+
+    return null;
   }
 
   public void setHeaderComponent(JComponent header) {
