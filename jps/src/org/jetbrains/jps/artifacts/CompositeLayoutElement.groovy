@@ -59,8 +59,15 @@ class ArchiveElement extends CompositeLayoutElement {
   }
 
   def build(Project project) {
-    project.binding.jar.call([name, {
-      buildChildren(project)
-    }].toArray())
+    if (name.endsWith(".jar")) {
+      project.binding.ant.jar(name: name, filesetmanifest: "mergewithoutmain", duplicate: "preserve", {
+        buildChildren(project)
+      })
+    }
+    else {
+      project.binding.ant.zip(name: name, duplicate: "preserve", {
+        buildChildren(project)
+      })
+    }
   }
 }

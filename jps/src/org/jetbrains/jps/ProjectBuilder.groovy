@@ -80,7 +80,7 @@ class ProjectBuilder {
     if (currentOutput != null) return currentOutput
 
     project.stage("Making module ${chunk.name}")
-    def dst = folderForChunkOutput(chunk, classesDir(binding.project), false)
+    def dst = folderForChunkOutput(chunk, classesDir(project), false)
     outputs[chunk] = dst
     compile(chunk, dst, false)
 

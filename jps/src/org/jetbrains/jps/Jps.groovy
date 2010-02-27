@@ -22,9 +22,12 @@ final class Jps {
       return project.createGlobalLibrary(name, initializer)
     })
 
-    binding.setVariable("jdk", {String name, String path ->
-      //todo[nik] support initializer parameter
-      return project.createJavaSdk(name, path, {})
+    binding.setVariable("jdk", {Object[] args ->
+      if (!(args.length in [2,3])) {
+        project.error("expected 2 to 3 parameters for jdk() but ${args.length} found")
+      }
+      Closure initializer = args.length > 2 ? args[2] : {}
+      return project.createJavaSdk((String)args[0], (String)args[1], initializer)
     })
 
     binding.setVariable("moduleTests", {String name ->
