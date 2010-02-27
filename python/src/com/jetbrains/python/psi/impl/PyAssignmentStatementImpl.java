@@ -31,7 +31,8 @@ import com.jetbrains.python.toolbox.RepeatIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -90,6 +91,16 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
       }
     }
     return ret;
+  }
+
+  @Nullable
+  public PyExpression getLeftHandSideExpression() {
+    PsiElement child = getFirstChild();
+    while (child != null && !(child instanceof PyExpression)) {
+      if (child instanceof PsiErrorElement) return null; // incomplete assignment operator can't be analyzed properly, bail out.
+      child = child.getPrevSibling();
+    }
+    return (PyExpression)child;
   }
 
   private static void mapToValues(PyExpression lhs, PyExpression rhs, List<Pair<PyExpression, PyExpression>> map) {

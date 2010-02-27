@@ -103,6 +103,16 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
     }
   }
 
+  public void testPyTupleAssignmentBalanceInspection() throws Throwable {
+    LocalInspectionTool inspection = new PyTupleAssignmentBalanceInspection();
+    doTest(getTestName(false), inspection);
+  }
+
+  public void testPyTupleAssignmentBalanceInspection2() throws Throwable {
+    LocalInspectionTool inspection = new PyTupleAssignmentBalanceInspection();
+    doTestWithPy3k(getTestName(false), inspection);
+  }
+
   //public void testPyExceptClausesOrderInspection() throws Throwable {
   //  LocalInspectionTool inspection = new PyExceptClausesOrderInspection();
   //  doTest(getTestName(false), inspection);

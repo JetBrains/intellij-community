@@ -24,7 +24,8 @@ public class PythonInspectionToolProvider implements InspectionToolProvider {
       PyUnsupportedFeaturesInspection.class,
       PyDeprecatedModulesInspection.class,
       PyDictCreationInspection.class,
-      PyExceptClausesOrderInspection.class
+      PyExceptClausesOrderInspection.class,
+      PyTupleAssignmentBalanceInspection.class
     };
   }
 }

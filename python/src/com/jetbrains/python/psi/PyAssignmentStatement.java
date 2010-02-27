@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Describes an assignment statement.
@@ -66,5 +65,8 @@ public interface PyAssignmentStatement extends PyStatement, NameDefiner {
    */
   @NotNull
   List<Pair<PyExpression, PyExpression>> getTargetsToValuesMapping();
+
+  @Nullable
+  PyExpression getLeftHandSideExpression();
 
 }
