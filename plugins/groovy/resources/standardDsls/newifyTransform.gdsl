@@ -26,7 +26,6 @@ contributor(context()) {
       // For Ruby-like style
       if (!auto || auto.eval()) {
         for (cons in classType?.getConstructors()) {
-          println "adding"
           method name: 'new', isStatic: true, params: cons.paramStringVector, type: classType?.qualName ?: "java.lang.Object"
         }
       }
