@@ -16,10 +16,13 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.impl.GenericNotifierImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
@@ -32,8 +35,13 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
+import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
+
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 
 public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthenticationNotifier.AuthenticationRequest, SVNURL> {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnAuthenticationNotifier");
@@ -72,15 +80,16 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
       }
     });*/
 
-    /*final List<SVNURL> outdatedRequests = new LinkedList<SVNURL>();
+    final List<SVNURL> outdatedRequests = new LinkedList<SVNURL>();
     final Collection<SVNURL> keys = getAllCurrentKeys();
     for (SVNURL key : keys) {
       final SVNURL commonURLAncestor = SVNURLUtil.getCommonURLAncestor(key, obj.getUrl());
-      if ((! StringUtil.isEmptyOrSpaces(commonURLAncestor.getHost())) && (! StringUtil.isEmptyOrSpaces(commonURLAncestor.getPath()))) {
-        final AuthenticationRequest currObj = getObj(key);
-        if ((currObj != null) && passiveValidation(myVcs.getProject(), key, true, currObj.getRealm(), currObj.getKind())) {
+      if ((commonURLAncestor != null) && (! StringUtil.isEmptyOrSpaces(commonURLAncestor.getHost())) &&
+          (! StringUtil.isEmptyOrSpaces(commonURLAncestor.getPath()))) {
+        //final AuthenticationRequest currObj = getObj(key);
+        //if ((currObj != null) && passiveValidation(myVcs.getProject(), key, true, currObj.getRealm(), currObj.getKind())) {
           outdatedRequests.add(key);
-        }
+        //}
       }
     }
     log("on state changed ");
@@ -90,7 +99,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
           removeLazyNotificationByKey(key);
         }
       }
-    }, ModalityState.NON_MODAL);    */
+    }, ModalityState.NON_MODAL);
   }
 
   @Override
