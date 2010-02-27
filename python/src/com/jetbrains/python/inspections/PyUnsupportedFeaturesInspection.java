@@ -73,10 +73,9 @@ public class PyUnsupportedFeaturesInspection extends LocalInspectionTool {
 
     @Override
     public void visitPyBinaryExpression(PyBinaryExpression node) {
-      if (isPy3K(node)) {
-        if (node.isOperator("<>")) {
-          registerProblem(node, "<> is not supported in Python 3, use != instead", new ReplaceNotEqOperatorQuickFix());
-        }
+      if (node.isOperator("<>")) {
+        String message = isPy3K(node) ? "<> is not supported in Python 3, use != instead" : "<> is deprecated, use != instead";
+        registerProblem(node, message, new ReplaceNotEqOperatorQuickFix());
       }
     }
 
