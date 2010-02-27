@@ -78,9 +78,10 @@ import java.util.List;
  */
 public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeDefinitionStub> implements GrTypeDefinition {
 
-  private PsiMethod[] myMethods;
-  private GrMethod[] myGroovyMethods;
-  private GrMethod[] myConstructors;
+  private volatile PsiClass[] myInnerClasses;
+  private volatile List<PsiMethod> myMethods;
+  private volatile GrMethod[] myGroovyMethods;
+  private volatile GrMethod[] myConstructors;
 
   public GrTypeDefinitionImpl(@NotNull ASTNode node) {
     super(node);
@@ -327,15 +328,18 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
   @NotNull
   public PsiMethod[] getMethods() {
     if (myMethods == null) {
-      List<PsiMethod> result = new ArrayList<PsiMethod>();
+      List<PsiMethod> methods = new ArrayList<PsiMethod>();
       GrTypeDefinitionBody body = getBody();
       if (body != null) {
-        result.addAll(body.getMethods());
+        methods.addAll(body.getMethods());
       }
-      GrClassImplUtil.addGroovyObjectMethods(this, result);
-      myMethods = result.toArray(new PsiMethod[result.size()]);
+
+      myMethods = methods;
     }
-    return myMethods;
+
+    List<PsiMethod> result = new ArrayList<PsiMethod>(myMethods);
+    GrClassImplUtil.addGroovyObjectMethods(this, result);
+    return result.toArray(new PsiMethod[result.size()]);
   }
 
   @NotNull
@@ -354,6 +358,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
 
   public void subtreeChanged() {
     myMethods = null;
+    myInnerClasses = null;
     myConstructors = null;
     myGroovyMethods = null;
     super.subtreeChanged();
@@ -377,12 +382,12 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
 
   @NotNull
   public PsiClass[] getInnerClasses() {
-    final GrTypeDefinitionBody body = getBody();
-    if (body != null) {
-      return body.getInnerClasses();
+    if (myInnerClasses == null) {
+      final GrTypeDefinitionBody body = getBody();
+      myInnerClasses = body != null ? body.getInnerClasses() : PsiClass.EMPTY_ARRAY;
     }
 
-    return PsiClass.EMPTY_ARRAY;
+    return myInnerClasses;
   }
 
   @NotNull
