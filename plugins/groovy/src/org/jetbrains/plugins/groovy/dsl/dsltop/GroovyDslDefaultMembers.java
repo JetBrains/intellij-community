@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 /**
  * @author ilyas
  */
+@SuppressWarnings({"MethodMayBeStatic", "UnusedDeclaration"})
 public class GroovyDslDefaultMembers implements GdslMembersProvider {
 
   /**

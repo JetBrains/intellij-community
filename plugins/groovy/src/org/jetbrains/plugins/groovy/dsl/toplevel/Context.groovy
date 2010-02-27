@@ -123,8 +123,8 @@ class Context {
     }
   }
 
-  private ContextFilter getClassTypeFilter(ctype) {
-    new ClassContextFilter(PsiJavaPatterns.psiClass().withQualifiedName(ctype))
+  private ContextFilter getClassTypeFilter(String ctype) {
+    new ClassContextFilter(PsiJavaPatterns.psiClass().inheritorOf(false, ctype))
   }
 
   private def addFilter(Closure cl) {

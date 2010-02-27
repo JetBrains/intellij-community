@@ -35,10 +35,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataCache;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
@@ -74,7 +71,7 @@ import java.util.concurrent.TimeUnit;
  * @author peter
  */
 public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
-  public static final Key<CachedValue<ConcurrentFactoryMap<ClassDescriptor, CustomMembersHolder>>> CACHED_ENHANCEMENTS =
+  public static final Key<CachedValue<ConcurrentFactoryMap<GroovyClassDescriptor, CustomMembersHolder>>> CACHED_ENHANCEMENTS =
     Key.create("CACHED_ENHANCEMENTS");
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex");
   private static final FileAttribute ENABLED = new FileAttribute("ENABLED", 0);
@@ -171,8 +168,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   }
 
   //an absolutely guru code (c)
-  public static boolean processExecutors(@NotNull Project project, ClassDescriptor descriptor, PsiScopeProcessor processor) {
-    final PsiElement place = descriptor.getPlace();
+  public static boolean processExecutors(PsiClass psiClass, PsiElement place, PsiScopeProcessor processor) {
     if (!(place instanceof GrReferenceExpression) || PsiTreeUtil.getParentOfType(place, PsiAnnotation.class) != null) {
       // Basic filter, all DSL contexts are applicable for reference expressions only
       return true;
@@ -180,8 +176,9 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
     final LinkedBlockingQueue<Pair<GroovyFile, GroovyDslExecutor>> queue = new LinkedBlockingQueue<Pair<GroovyFile, GroovyDslExecutor>>();
 
-    int count = queueExecutors(project, queue);
+    int count = queueExecutors(psiClass.getProject(), queue);
 
+    final GroovyClassDescriptor descriptor = new GroovyClassDescriptor(psiClass, place);
     try {
       while (count > 0) {
         ProgressManager.checkCanceled();
@@ -257,21 +254,21 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
 
   private static boolean processExecutor(final GroovyDslExecutor executor,
-                                         final ClassDescriptor descriptor,
+                                         final GroovyClassDescriptor descriptor,
                                          PsiScopeProcessor processor,
                                          final GroovyFile dslFile) {
     final Project project = dslFile.getProject();
-    final ConcurrentFactoryMap<ClassDescriptor, CustomMembersHolder> map = CachedValuesManager.getManager(dslFile.getProject()).getCachedValue(dslFile, CACHED_ENHANCEMENTS, new CachedValueProvider<ConcurrentFactoryMap<ClassDescriptor, CustomMembersHolder>>() {
-        public Result<ConcurrentFactoryMap<ClassDescriptor, CustomMembersHolder>> compute() {
-          final ConcurrentFactoryMap<ClassDescriptor, CustomMembersHolder> result =
-            new ConcurrentFactoryMap<ClassDescriptor, CustomMembersHolder>() {
+    final ConcurrentFactoryMap<GroovyClassDescriptor, CustomMembersHolder> map = CachedValuesManager.getManager(dslFile.getProject()).getCachedValue(dslFile, CACHED_ENHANCEMENTS, new CachedValueProvider<ConcurrentFactoryMap<GroovyClassDescriptor, CustomMembersHolder>>() {
+        public Result<ConcurrentFactoryMap<GroovyClassDescriptor, CustomMembersHolder>> compute() {
+          final ConcurrentFactoryMap<GroovyClassDescriptor, CustomMembersHolder> result =
+            new ConcurrentFactoryMap<GroovyClassDescriptor, CustomMembersHolder>() {
               @Override
-              protected CustomMembersHolder create(ClassDescriptor key) {
+              protected CustomMembersHolder create(GroovyClassDescriptor key) {
                 final PsiElement place = key.getPlace();
                 final String fqn = key.getQualifiedName();
 
                 final ProcessingContext ctx = new ProcessingContext();
-                ctx.put(ClassContextFilter.getClassKey(fqn), ((GroovyClassDescriptor)key).getPsiClass());
+                ctx.put(ClassContextFilter.getClassKey(fqn), key.getPsiClass());
                 try {
                   if (!isApplicable(place, fqn, ctx)) {
                     return null;

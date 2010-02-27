@@ -503,7 +503,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
                   ResolveState.initial().put(PsiSubstitutor.KEY, qualifierResult.getSubstitutor()), null, refExpr))
             return;
         }
-        if (!ResolveUtil.processCategoryMembers(refExpr, processor, (PsiClassType) qualifierType)) return;
+        if (!ResolveUtil.processCategoryMembers(refExpr, processor)) return;
       } else if (qualifierType instanceof PsiArrayType) {
         final GrTypeDefinition arrayClass = GroovyPsiManager.getInstance(project).getArrayClass();
         if (!arrayClass.processDeclarations(processor, ResolveState.initial(), null, refExpr)) return;
