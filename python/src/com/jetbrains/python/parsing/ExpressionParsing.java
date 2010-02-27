@@ -19,51 +19,51 @@ public class ExpressionParsing extends Parsing {
     super(context);
   }
 
-  public boolean parsePrimaryExpression(PsiBuilder builder, boolean isTargetExpression) {
-    final IElementType firstToken = builder.getTokenType();
+  public boolean parsePrimaryExpression(boolean isTargetExpression) {
+    final IElementType firstToken = myBuilder.getTokenType();
     if (firstToken == PyTokenTypes.IDENTIFIER) {
       if (isTargetExpression) {
-        buildTokenElement(PyElementTypes.TARGET_EXPRESSION, builder);
+        buildTokenElement(PyElementTypes.TARGET_EXPRESSION, myBuilder);
       }
       else {
-        buildTokenElement(PyElementTypes.REFERENCE_EXPRESSION, builder);
+        buildTokenElement(PyElementTypes.REFERENCE_EXPRESSION, myBuilder);
       }
       return true;
     }
     else if (firstToken == PyTokenTypes.INTEGER_LITERAL) {
-      buildTokenElement(PyElementTypes.INTEGER_LITERAL_EXPRESSION, builder);
+      buildTokenElement(PyElementTypes.INTEGER_LITERAL_EXPRESSION, myBuilder);
       return true;
     }
     else if (firstToken == PyTokenTypes.FLOAT_LITERAL) {
-      buildTokenElement(PyElementTypes.FLOAT_LITERAL_EXPRESSION, builder);
+      buildTokenElement(PyElementTypes.FLOAT_LITERAL_EXPRESSION, myBuilder);
       return true;
     }
     else if (firstToken == PyTokenTypes.IMAGINARY_LITERAL) {
-      buildTokenElement(PyElementTypes.IMAGINARY_LITERAL_EXPRESSION, builder);
+      buildTokenElement(PyElementTypes.IMAGINARY_LITERAL_EXPRESSION, myBuilder);
       return true;
     }
     else if (firstToken == PyTokenTypes.NONE_KEYWORD) {
-      buildTokenElement(PyElementTypes.NONE_LITERAL_EXPRESSION, builder);
+      buildTokenElement(PyElementTypes.NONE_LITERAL_EXPRESSION, myBuilder);
       return true;
     }
     else if (firstToken == PyTokenTypes.TRUE_KEYWORD || firstToken == PyTokenTypes.FALSE_KEYWORD) {
-      buildTokenElement(PyElementTypes.BOOL_LITERAL_EXPRESSION, builder);
+      buildTokenElement(PyElementTypes.BOOL_LITERAL_EXPRESSION, myBuilder);
       return true;
     }
     else if (firstToken == PyTokenTypes.STRING_LITERAL) {
-      final PsiBuilder.Marker marker = builder.mark();
-      while (builder.getTokenType() == PyTokenTypes.STRING_LITERAL) {
-        builder.advanceLexer();
+      final PsiBuilder.Marker marker = myBuilder.mark();
+      while (myBuilder.getTokenType() == PyTokenTypes.STRING_LITERAL) {
+        myBuilder.advanceLexer();
       }
       marker.done(PyElementTypes.STRING_LITERAL_EXPRESSION);
       return true;
     }
     else if (firstToken == PyTokenTypes.LPAR) {
-      parseParenthesizedExpression(builder, isTargetExpression);
+      parseParenthesizedExpression(isTargetExpression);
       return true;
     }
     else if (firstToken == PyTokenTypes.LBRACKET) {
-      parseListLiteralExpression(builder, isTargetExpression);
+      parseListLiteralExpression(myBuilder, isTargetExpression);
       return true;
     }
     else if (firstToken == PyTokenTypes.LBRACE) {
@@ -71,12 +71,12 @@ public class ExpressionParsing extends Parsing {
       return true;
     }
     else if (firstToken == PyTokenTypes.TICK) {
-      parseReprExpression(builder);
+      parseReprExpression(myBuilder);
       return true;
     }
     else if (firstToken == PyTokenTypes.DOT) {
-      final PsiBuilder.Marker maybeEllipsis = builder.mark();
-      builder.advanceLexer();
+      final PsiBuilder.Marker maybeEllipsis = myBuilder.mark();
+      myBuilder.advanceLexer();
       if (matchToken(PyTokenTypes.DOT) && matchToken(PyTokenTypes.DOT)) {
         maybeEllipsis.done(PyElementTypes.NONE_LITERAL_EXPRESSION);
         return true;
@@ -238,17 +238,17 @@ public class ExpressionParsing extends Parsing {
     startMarker.done(PyElementTypes.SET_LITERAL_EXPRESSION);
   }
 
-  private void parseParenthesizedExpression(PsiBuilder builder, boolean isTargetExpression) {
-    LOG.assertTrue(builder.getTokenType() == PyTokenTypes.LPAR);
-    final PsiBuilder.Marker expr = builder.mark();
-    builder.advanceLexer();
-    if (builder.getTokenType() == PyTokenTypes.RPAR) {
-      builder.advanceLexer();
+  private void parseParenthesizedExpression(boolean isTargetExpression) {
+    LOG.assertTrue(myBuilder.getTokenType() == PyTokenTypes.LPAR);
+    final PsiBuilder.Marker expr = myBuilder.mark();
+    myBuilder.advanceLexer();
+    if (myBuilder.getTokenType() == PyTokenTypes.RPAR) {
+      myBuilder.advanceLexer();
       expr.done(PyElementTypes.TUPLE_EXPRESSION);
     }
     else {
-      parseYieldOrTupleExpression(builder, isTargetExpression);
-      if (builder.getTokenType() == PyTokenTypes.FOR_KEYWORD) {
+      parseYieldOrTupleExpression(isTargetExpression);
+      if (myBuilder.getTokenType() == PyTokenTypes.FOR_KEYWORD) {
         parseComprehension(expr, PyTokenTypes.RPAR, PyElementTypes.GENERATOR_EXPRESSION);
       }
       else {
@@ -267,20 +267,20 @@ public class ExpressionParsing extends Parsing {
     expr.done(PyElementTypes.REPR_EXPRESSION);
   }
 
-  public boolean parseMemberExpression(PsiBuilder builder, boolean isTargetExpression) {
+  public boolean parseMemberExpression(boolean isTargetExpression) {
     // in sequence a.b.... .c all members but last are always references, and the last may be target.
     boolean recast_first_identifier = false;
     boolean recast_qualifier = false;
     do {
       boolean first_identifier_is_target = isTargetExpression && ! recast_first_identifier;
-      PsiBuilder.Marker expr = builder.mark();
-      if (!parsePrimaryExpression(builder, first_identifier_is_target)) {
+      PsiBuilder.Marker expr = myBuilder.mark();
+      if (!parsePrimaryExpression(first_identifier_is_target)) {
         expr.drop();
         return false;
       }
 
       while (true) {
-        final IElementType tokenType = builder.getTokenType();
+        final IElementType tokenType = myBuilder.getTokenType();
         if (tokenType == PyTokenTypes.DOT) {
           if (first_identifier_is_target) {
             recast_first_identifier = true;
@@ -288,9 +288,9 @@ public class ExpressionParsing extends Parsing {
             break;
           }
           else recast_first_identifier = false; 
-          builder.advanceLexer();
+          myBuilder.advanceLexer();
           checkMatches(PyTokenTypes.IDENTIFIER, message("PARSE.expected.name"));
-          if (isTargetExpression && ! recast_qualifier && builder.getTokenType() != PyTokenTypes.DOT) {
+          if (isTargetExpression && ! recast_qualifier && myBuilder.getTokenType() != PyTokenTypes.DOT) {
             expr.done(PyElementTypes.TARGET_EXPRESSION);
           }
           else {
@@ -304,16 +304,16 @@ public class ExpressionParsing extends Parsing {
           expr = expr.precede();
         }
         else if (tokenType == PyTokenTypes.LBRACKET) {
-          builder.advanceLexer();
-          PsiBuilder.Marker sliceItemStart = builder.mark();
+          myBuilder.advanceLexer();
+          PsiBuilder.Marker sliceItemStart = myBuilder.mark();
           if (atToken(PyTokenTypes.COLON)) {
-            PsiBuilder.Marker sliceMarker = builder.mark();
+            PsiBuilder.Marker sliceMarker = myBuilder.mark();
             sliceMarker.done(PyElementTypes.EMPTY_EXPRESSION);
             parseSliceEnd(expr, sliceItemStart);
           }
           else {
             parseExpressionOptional();
-            if (builder.getTokenType() == PyTokenTypes.COLON) {
+            if (myBuilder.getTokenType() == PyTokenTypes.COLON) {
               parseSliceEnd(expr, sliceItemStart);
             }
             else {
@@ -481,10 +481,10 @@ public class ExpressionParsing extends Parsing {
     }
   }
 
-  public boolean parseYieldOrTupleExpression(final PsiBuilder builder, final boolean isTargetExpression) {
-    if (builder.getTokenType() == PyTokenTypes.YIELD_KEYWORD) {
-      PsiBuilder.Marker yieldExpr = builder.mark();
-      builder.advanceLexer();
+  public boolean parseYieldOrTupleExpression(final boolean isTargetExpression) {
+    if (myBuilder.getTokenType() == PyTokenTypes.YIELD_KEYWORD) {
+      PsiBuilder.Marker yieldExpr = myBuilder.mark();
+      myBuilder.advanceLexer();
       parseTupleExpression(false, isTargetExpression, false);
       yieldExpr.done(PyElementTypes.YIELD_EXPRESSION);
       return true;
@@ -528,7 +528,7 @@ public class ExpressionParsing extends Parsing {
     if (myBuilder.getTokenType() == PyTokenTypes.LAMBDA_KEYWORD) {
       return parseLambdaExpression(false);
     }
-    return parseORTestExpression(myBuilder, false, false);
+    return parseORTestExpression(false, false);
   }
 
   private boolean parseTestExpression(boolean stopOnIn, boolean isTargetExpression) {
@@ -536,13 +536,13 @@ public class ExpressionParsing extends Parsing {
       return parseLambdaExpression(false);
     }
     PsiBuilder.Marker condExpr = myBuilder.mark();
-    if (!parseORTestExpression(myBuilder, stopOnIn, isTargetExpression)) {
+    if (!parseORTestExpression( stopOnIn, isTargetExpression)) {
       condExpr.drop();
       return false;
     }
     if (myBuilder.getTokenType() == PyTokenTypes.IF_KEYWORD) {
       myBuilder.advanceLexer();
-      if (!parseORTestExpression(myBuilder, stopOnIn, isTargetExpression)) {
+      if (!parseORTestExpression(stopOnIn, isTargetExpression)) {
         myBuilder.error(message("PARSE.expected.expression"));
       }
       else {
@@ -568,7 +568,7 @@ public class ExpressionParsing extends Parsing {
     if (myBuilder.getTokenType() == PyTokenTypes.LAMBDA_KEYWORD) {
       return parseLambdaExpression(true);
     }
-    return parseORTestExpression(myBuilder, false, false);
+    return parseORTestExpression(false, false);
   }
 
   private boolean parseLambdaExpression(final boolean oldTest) {
@@ -583,16 +583,16 @@ public class ExpressionParsing extends Parsing {
     return true;
   }
 
-  private boolean parseORTestExpression(final PsiBuilder builder, boolean stopOnIn, boolean isTargetExpression) {
-    PsiBuilder.Marker expr = builder.mark();
-    if (!parseANDTestExpression(builder, stopOnIn, isTargetExpression)) {
+  private boolean parseORTestExpression(boolean stopOnIn, boolean isTargetExpression) {
+    PsiBuilder.Marker expr = myBuilder.mark();
+    if (!parseANDTestExpression(stopOnIn, isTargetExpression)) {
       expr.drop();
       return false;
     }
-    while (builder.getTokenType() == PyTokenTypes.OR_KEYWORD) {
-      builder.advanceLexer();
-      if (!parseANDTestExpression(builder, stopOnIn, isTargetExpression)) {
-        builder.error(message("PARSE.expected.expression"));
+    while (myBuilder.getTokenType() == PyTokenTypes.OR_KEYWORD) {
+      myBuilder.advanceLexer();
+      if (!parseANDTestExpression(stopOnIn, isTargetExpression)) {
+        myBuilder.error(message("PARSE.expected.expression"));
       }
       expr.done(PyElementTypes.BINARY_EXPRESSION);
       expr = expr.precede();
@@ -602,16 +602,16 @@ public class ExpressionParsing extends Parsing {
     return true;
   }
 
-  private boolean parseANDTestExpression(final PsiBuilder builder, boolean stopOnIn, boolean isTargetExpression) {
-    PsiBuilder.Marker expr = builder.mark();
-    if (!parseNOTTestExpression(builder, stopOnIn, isTargetExpression)) {
+  private boolean parseANDTestExpression(boolean stopOnIn, boolean isTargetExpression) {
+    PsiBuilder.Marker expr = myBuilder.mark();
+    if (!parseNOTTestExpression(stopOnIn, isTargetExpression)) {
       expr.drop();
       return false;
     }
-    while (builder.getTokenType() == PyTokenTypes.AND_KEYWORD) {
-      builder.advanceLexer();
-      if (!parseNOTTestExpression(builder, stopOnIn, isTargetExpression)) {
-        builder.error(message("PARSE.expected.expression"));
+    while (myBuilder.getTokenType() == PyTokenTypes.AND_KEYWORD) {
+      myBuilder.advanceLexer();
+      if (!parseNOTTestExpression(stopOnIn, isTargetExpression)) {
+        myBuilder.error(message("PARSE.expected.expression"));
       }
       expr.done(PyElementTypes.BINARY_EXPRESSION);
       expr = expr.precede();
@@ -621,54 +621,54 @@ public class ExpressionParsing extends Parsing {
     return true;
   }
 
-  private boolean parseNOTTestExpression(final PsiBuilder builder, boolean stopOnIn, boolean isTargetExpression) {
-    if (builder.getTokenType() == PyTokenTypes.NOT_KEYWORD) {
-      final PsiBuilder.Marker expr = builder.mark();
-      builder.advanceLexer();
-      if (!parseNOTTestExpression(builder, stopOnIn, isTargetExpression)) {
-        builder.error(message("PARSE.expected.expression"));
+  private boolean parseNOTTestExpression(boolean stopOnIn, boolean isTargetExpression) {
+    if (myBuilder.getTokenType() == PyTokenTypes.NOT_KEYWORD) {
+      final PsiBuilder.Marker expr = myBuilder.mark();
+      myBuilder.advanceLexer();
+      if (!parseNOTTestExpression(stopOnIn, isTargetExpression)) {
+        myBuilder.error(message("PARSE.expected.expression"));
       }
       expr.done(PyElementTypes.PREFIX_EXPRESSION);
       return true;
     }
     else {
-      return parseComparisonExpression(builder, stopOnIn, isTargetExpression);
+      return parseComparisonExpression(stopOnIn, isTargetExpression);
     }
   }
 
-  private boolean parseComparisonExpression(final PsiBuilder builder, boolean stopOnIn, boolean isTargetExpression) {
-    PsiBuilder.Marker expr = builder.mark();
-    if (!parseBitwiseORExpression(builder, isTargetExpression)) {
+  private boolean parseComparisonExpression(boolean stopOnIn, boolean isTargetExpression) {
+    PsiBuilder.Marker expr = myBuilder.mark();
+    if (!parseStarExpression(isTargetExpression)) {
       expr.drop();
       return false;
     }
-    if (stopOnIn && builder.getTokenType() == PyTokenTypes.IN_KEYWORD) {
+    if (stopOnIn && atToken(PyTokenTypes.IN_KEYWORD)) {
       expr.drop();
       return true;
     }
-    while (PyTokenTypes.COMPARISON_OPERATIONS.contains(builder.getTokenType())) {
-      if (builder.getTokenType() == PyTokenTypes.NOT_KEYWORD) {
-        PsiBuilder.Marker notMarker = builder.mark();
-        builder.advanceLexer();
-        if (builder.getTokenType() != PyTokenTypes.IN_KEYWORD) {
+    while (PyTokenTypes.COMPARISON_OPERATIONS.contains(myBuilder.getTokenType())) {
+      if (atToken(PyTokenTypes.NOT_KEYWORD)) {
+        PsiBuilder.Marker notMarker = myBuilder.mark();
+        myBuilder.advanceLexer();
+        if (!atToken(PyTokenTypes.IN_KEYWORD)) {
           notMarker.rollbackTo();
           break;
         }
         notMarker.drop();
-        builder.advanceLexer();
+        myBuilder.advanceLexer();
       }
-      else if (builder.getTokenType() == PyTokenTypes.IS_KEYWORD) {
-        builder.advanceLexer();
-        if (builder.getTokenType() == PyTokenTypes.NOT_KEYWORD) {
-          builder.advanceLexer();
+      else if (atToken(PyTokenTypes.IS_KEYWORD)) {
+        myBuilder.advanceLexer();
+        if (myBuilder.getTokenType() == PyTokenTypes.NOT_KEYWORD) {
+          myBuilder.advanceLexer();
         }
       }
       else {
-        builder.advanceLexer();
+        myBuilder.advanceLexer();
       }
 
-      if (!parseBitwiseORExpression(builder, isTargetExpression)) {
-        builder.error(message("PARSE.expected.expression"));
+      if (!parseBitwiseORExpression(isTargetExpression)) {
+        myBuilder.error(message("PARSE.expected.expression"));
       }
       expr.done(PyElementTypes.BINARY_EXPRESSION);
       expr = expr.precede();
@@ -678,16 +678,30 @@ public class ExpressionParsing extends Parsing {
     return true;
   }
 
-  private boolean parseBitwiseORExpression(final PsiBuilder builder, boolean isTargetExpression) {
-    PsiBuilder.Marker expr = builder.mark();
-    if (!parseBitwiseXORExpression(builder, isTargetExpression)) {
+  private boolean parseStarExpression(boolean isTargetExpression) {
+    if (atToken(PyTokenTypes.MULT)) {
+      PsiBuilder.Marker starExpr = myBuilder.mark();
+      nextToken();
+      if (!parseBitwiseORExpression(isTargetExpression)) {
+        starExpr.drop();
+        return false;
+      }
+      starExpr.done(PyElementTypes.STAR_EXPRESSION);
+      return true;
+    }
+    return parseBitwiseORExpression(isTargetExpression);
+  }
+
+  private boolean parseBitwiseORExpression(boolean isTargetExpression) {
+    PsiBuilder.Marker expr = myBuilder.mark();
+    if (!parseBitwiseXORExpression(isTargetExpression)) {
       expr.drop();
       return false;
     }
-    while (builder.getTokenType() == PyTokenTypes.OR) {
-      builder.advanceLexer();
-      if (!parseBitwiseXORExpression(builder, isTargetExpression)) {
-        builder.error(message("PARSE.expected.expression"));
+    while (atToken(PyTokenTypes.OR)) {
+      myBuilder.advanceLexer();
+      if (!parseBitwiseXORExpression(isTargetExpression)) {
+        myBuilder.error(message("PARSE.expected.expression"));
       }
       expr.done(PyElementTypes.BINARY_EXPRESSION);
       expr = expr.precede();
@@ -697,16 +711,16 @@ public class ExpressionParsing extends Parsing {
     return true;
   }
 
-  private boolean parseBitwiseXORExpression(final PsiBuilder builder, boolean isTargetExpression) {
-    PsiBuilder.Marker expr = builder.mark();
-    if (!parseBitwiseANDExpression(builder, isTargetExpression)) {
+  private boolean parseBitwiseXORExpression(boolean isTargetExpression) {
+    PsiBuilder.Marker expr = myBuilder.mark();
+    if (!parseBitwiseANDExpression(isTargetExpression)) {
       expr.drop();
       return false;
     }
-    while (builder.getTokenType() == PyTokenTypes.XOR) {
-      builder.advanceLexer();
-      if (!parseBitwiseANDExpression(builder, isTargetExpression)) {
-        builder.error(message("PARSE.expected.expression"));
+    while (atToken(PyTokenTypes.XOR)) {
+      myBuilder.advanceLexer();
+      if (!parseBitwiseANDExpression(isTargetExpression)) {
+        myBuilder.error(message("PARSE.expected.expression"));
       }
       expr.done(PyElementTypes.BINARY_EXPRESSION);
       expr = expr.precede();
@@ -716,16 +730,16 @@ public class ExpressionParsing extends Parsing {
     return true;
   }
 
-  private boolean parseBitwiseANDExpression(final PsiBuilder builder, boolean isTargetExpression) {
-    PsiBuilder.Marker expr = builder.mark();
-    if (!parseShiftExpression(builder, isTargetExpression)) {
+  private boolean parseBitwiseANDExpression(boolean isTargetExpression) {
+    PsiBuilder.Marker expr = myBuilder.mark();
+    if (!parseShiftExpression(isTargetExpression)) {
       expr.drop();
       return false;
     }
-    while (builder.getTokenType() == PyTokenTypes.AND) {
-      builder.advanceLexer();
-      if (!parseShiftExpression(builder, isTargetExpression)) {
-        builder.error(message("PARSE.expected.expression"));
+    while (atToken(PyTokenTypes.AND)) {
+      myBuilder.advanceLexer();
+      if (!parseShiftExpression(isTargetExpression)) {
+        myBuilder.error(message("PARSE.expected.expression"));
       }
       expr.done(PyElementTypes.BINARY_EXPRESSION);
       expr = expr.precede();
@@ -735,16 +749,16 @@ public class ExpressionParsing extends Parsing {
     return true;
   }
 
-  private boolean parseShiftExpression(final PsiBuilder builder, boolean isTargetExpression) {
-    PsiBuilder.Marker expr = builder.mark();
-    if (!parseAdditiveExpression(builder, isTargetExpression)) {
+  private boolean parseShiftExpression(boolean isTargetExpression) {
+    PsiBuilder.Marker expr = myBuilder.mark();
+    if (!parseAdditiveExpression(myBuilder, isTargetExpression)) {
       expr.drop();
       return false;
     }
-    while (PyTokenTypes.SHIFT_OPERATIONS.contains(builder.getTokenType())) {
-      builder.advanceLexer();
-      if (!parseAdditiveExpression(builder, isTargetExpression)) {
-        builder.error(message("PARSE.expected.expression"));
+    while (PyTokenTypes.SHIFT_OPERATIONS.contains(myBuilder.getTokenType())) {
+      myBuilder.advanceLexer();
+      if (!parseAdditiveExpression(myBuilder, isTargetExpression)) {
+        myBuilder.error(message("PARSE.expected.expression"));
       }
       expr.done(PyElementTypes.BINARY_EXPRESSION);
       expr = expr.precede();
@@ -754,16 +768,16 @@ public class ExpressionParsing extends Parsing {
     return true;
   }
 
-  private boolean parseAdditiveExpression(final PsiBuilder builder, boolean isTargetExpression) {
-    PsiBuilder.Marker expr = builder.mark();
-    if (!parseMultiplicativeExpression(builder, isTargetExpression)) {
+  private boolean parseAdditiveExpression(final PsiBuilder myBuilder, boolean isTargetExpression) {
+    PsiBuilder.Marker expr = myBuilder.mark();
+    if (!parseMultiplicativeExpression(isTargetExpression)) {
       expr.drop();
       return false;
     }
-    while (PyTokenTypes.ADDITIVE_OPERATIONS.contains(builder.getTokenType())) {
-      builder.advanceLexer();
-      if (!parseMultiplicativeExpression(builder, isTargetExpression)) {
-        builder.error(message("PARSE.expected.expression"));
+    while (PyTokenTypes.ADDITIVE_OPERATIONS.contains(myBuilder.getTokenType())) {
+      myBuilder.advanceLexer();
+      if (!parseMultiplicativeExpression(isTargetExpression)) {
+        myBuilder.error(message("PARSE.expected.expression"));
       }
       expr.done(PyElementTypes.BINARY_EXPRESSION);
       expr = expr.precede();
@@ -773,17 +787,17 @@ public class ExpressionParsing extends Parsing {
     return true;
   }
 
-  private boolean parseMultiplicativeExpression(final PsiBuilder builder, boolean isTargetExpression) {
-    PsiBuilder.Marker expr = builder.mark();
-    if (!parseUnaryExpression(builder, isTargetExpression)) {
+  private boolean parseMultiplicativeExpression(boolean isTargetExpression) {
+    PsiBuilder.Marker expr = myBuilder.mark();
+    if (!parseUnaryExpression(isTargetExpression)) {
       expr.drop();
       return false;
     }
 
-    while (PyTokenTypes.MULTIPLICATIVE_OPERATIONS.contains(builder.getTokenType())) {
-      builder.advanceLexer();
-      if (!parseUnaryExpression(builder, isTargetExpression)) {
-        builder.error(message("PARSE.expected.expression"));
+    while (PyTokenTypes.MULTIPLICATIVE_OPERATIONS.contains(myBuilder.getTokenType())) {
+      myBuilder.advanceLexer();
+      if (!parseUnaryExpression(isTargetExpression)) {
+        myBuilder.error(message("PARSE.expected.expression"));
       }
       expr.done(PyElementTypes.BINARY_EXPRESSION);
       expr = expr.precede();
@@ -793,33 +807,33 @@ public class ExpressionParsing extends Parsing {
     return true;
   }
 
-  private boolean parseUnaryExpression(final PsiBuilder builder, boolean isTargetExpression) {
-    final IElementType tokenType = builder.getTokenType();
+  private boolean parseUnaryExpression(boolean isTargetExpression) {
+    final IElementType tokenType = myBuilder.getTokenType();
     if (PyTokenTypes.UNARY_OPERATIONS.contains(tokenType)) {
-      final PsiBuilder.Marker expr = builder.mark();
-      builder.advanceLexer();
-      if (!parseUnaryExpression(builder, isTargetExpression)) {
-        builder.error(message("PARSE.expected.expression"));
+      final PsiBuilder.Marker expr = myBuilder.mark();
+      myBuilder.advanceLexer();
+      if (!parseUnaryExpression(isTargetExpression)) {
+        myBuilder.error(message("PARSE.expected.expression"));
       }
       expr.done(PyElementTypes.PREFIX_EXPRESSION);
       return true;
     }
     else {
-      return parsePowerExpression(builder, isTargetExpression);
+      return parsePowerExpression(isTargetExpression);
     }
   }
 
-  private boolean parsePowerExpression(final PsiBuilder builder, boolean isTargetExpression) {
-    PsiBuilder.Marker expr = builder.mark();
-    if (!parseMemberExpression(builder, isTargetExpression)) {
+  private boolean parsePowerExpression(boolean isTargetExpression) {
+    PsiBuilder.Marker expr = myBuilder.mark();
+    if (!parseMemberExpression(isTargetExpression)) {
       expr.drop();
       return false;
     }
 
-    if (builder.getTokenType() == PyTokenTypes.EXP) {
-      builder.advanceLexer();
-      if (!parseUnaryExpression(builder, isTargetExpression)) {
-        builder.error(message("PARSE.expected.expression"));
+    if (myBuilder.getTokenType() == PyTokenTypes.EXP) {
+      myBuilder.advanceLexer();
+      if (!parseUnaryExpression(isTargetExpression)) {
+        myBuilder.error(message("PARSE.expected.expression"));
       }
       expr.done(PyElementTypes.BINARY_EXPRESSION);
     }

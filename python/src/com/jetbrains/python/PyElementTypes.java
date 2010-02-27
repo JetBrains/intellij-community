@@ -100,6 +100,7 @@ public interface PyElementTypes {
   PyElementType GENERATOR_EXPRESSION = new PyElementType("GENERATOR_EXPRESSION", PyGeneratorExpressionImpl.class);
   PyElementType CONDITIONAL_EXPRESSION = new PyElementType("CONDITIONAL_EXPRESSION", PyConditionalExpressionImpl.class);
   PyElementType YIELD_EXPRESSION = new PyElementType("YIELD_EXPRESSION", PyYieldExpressionImpl.class);
+  PyElementType STAR_EXPRESSION = new PyElementType("STAR_EXPRESSION", PyStarExpressionImpl.class);
 
   PyElementType SET_LITERAL_EXPRESSION = new PyElementType("SET_LITERAL_EXPRESSION", PySetLiteralExpressionImpl.class);
   PyElementType SET_COMP_EXPRESSION = new PyElementType("SET_COMP_EXPRESSION", PySetCompExpressionImpl.class);
@@ -113,7 +114,7 @@ public interface PyElementTypes {
                                          LAMBDA_EXPRESSION, LIST_COMP_EXPRESSION, DICT_LITERAL_EXPRESSION, KEY_VALUE_EXPRESSION,
                                          REPR_EXPRESSION, GENERATOR_EXPRESSION, CONDITIONAL_EXPRESSION, YIELD_EXPRESSION,
                                          TARGET_EXPRESSION, NONE_LITERAL_EXPRESSION, BOOL_LITERAL_EXPRESSION,
-                                         SET_LITERAL_EXPRESSION, SET_COMP_EXPRESSION, DICT_COMP_EXPRESSION);
+                                         SET_LITERAL_EXPRESSION, SET_COMP_EXPRESSION, DICT_COMP_EXPRESSION, STAR_EXPRESSION);
 
   TokenSet LIST_LIKE_EXPRESSIONS = TokenSet.create(LIST_LITERAL_EXPRESSION, LIST_COMP_EXPRESSION, TUPLE_EXPRESSION);
 

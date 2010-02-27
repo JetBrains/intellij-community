@@ -198,6 +198,10 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();    
   }
 
+  public void testStarExpression() throws Exception {   // PEP-3132
+    doTest(LanguageLevel.PYTHON30);
+  }
+
   public void doTest() throws Exception {
     doTest(LanguageLevel.PYTHON25);
   }
