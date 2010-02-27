@@ -314,7 +314,27 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   public static void inlineConstructorCall(PsiCall constructorCall) {
     final PsiMethod oldConstructor = constructorCall.resolveMethod();
     LOG.assertTrue(oldConstructor != null);
-    final PsiExpression[] instanceCreationArguments = constructorCall.getArgumentList().getExpressions();
+    PsiExpression[] instanceCreationArguments = constructorCall.getArgumentList().getExpressions();
+    if (oldConstructor.isVarArgs()) { //wrap with explicit array
+      final PsiParameter[] parameters = oldConstructor.getParameterList().getParameters();
+      final PsiType varargType = parameters[parameters.length - 1].getType();
+      if (varargType instanceof PsiEllipsisType) {
+        final PsiType arrayType =
+          constructorCall.resolveMethodGenerics().getSubstitutor().substitute(((PsiEllipsisType)varargType).getComponentType());
+        final PsiExpression[] exprs = new PsiExpression[parameters.length];
+        System.arraycopy(instanceCreationArguments, 0, exprs, 0, parameters.length - 1);
+        StringBuffer varargs = new StringBuffer();
+        for (int i = parameters.length - 1; i < instanceCreationArguments.length; i++) {
+          if (varargs.length() > 0) varargs.append(", ");
+          varargs.append(instanceCreationArguments[i].getText());
+        }
+
+        exprs[parameters.length - 1] = JavaPsiFacade.getElementFactory(constructorCall.getProject())
+          .createExpressionFromText("new " + arrayType.getCanonicalText() + "[]{" + varargs.toString() + "}", constructorCall);
+
+        instanceCreationArguments = exprs;
+      }
+    }
 
     PsiStatement[] statements = oldConstructor.getBody().getStatements();
     LOG.assertTrue(statements.length == 1 && statements[0] instanceof PsiExpressionStatement);
