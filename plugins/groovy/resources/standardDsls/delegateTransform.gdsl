@@ -1,7 +1,5 @@
-contributor(context()) {
-  classType?.fields?.each {
-    if (it.hasAnnotation("groovy.lang.Delegate")) {
-      delegatesTo(it.classType)
-    }
+contributor(ctype:hasField(hasAnnotation("groovy.lang.Delegate"))) {
+  for (f in classType?.fields) {
+    delegatesTo(f.classType)
   }
 }

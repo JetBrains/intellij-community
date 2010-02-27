@@ -1,13 +1,11 @@
-def ctx = context()
-
-contributor(ctx) {
+contributor(ctype:hasAnnotation("groovy.lang.Category")) {
   def annotations = classType?.getAnnotations("groovy.lang.Category")
   for (a in annotations) {
     delegatesTo a.findAttributeValue("value")?.bind()
   }
 }
 
-contributor(ctx) {
+contributor(ctype:hasAnnotation("groovy.lang.Mixin")) {
   def annotations = classType?.getAnnotations("groovy.lang.Mixin")
   for (a in annotations) {
     refs = a.findAttributeValue("value")

@@ -19,6 +19,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
@@ -81,25 +82,33 @@ public class InjectLanguageAction implements IntentionAction {
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    final PsiLanguageInjectionHost host = findInjectionHost(editor, file);
-    assert host != null;
     doChooseLanguageToInject(new Processor<String>() {
       public boolean process(final String languageId) {
         if (project.isDisposed()) return false;
-        if (defaultFunctionalityWorked(host, languageId)) return false;
-        final Language language = InjectedLanguage.findLanguageById(languageId);
-        try {
-          for (LanguageInjectionSupport support : Extensions.getExtensions(LanguageInjectionSupport.EP_NAME)) {
-            if (support.addInjectionInPlace(language, host)) return false;
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            invokeImpl(project, editor, file, languageId);
           }
-          TemporaryPlacesRegistry.getInstance(project).addHostWithUndo(host, InjectedLanguage.create(languageId));
-        }
-        finally {
-          FileContentUtil.reparseFiles(project, Collections.<VirtualFile>emptyList(), true);
-        }
+        });
         return false;
       }
     });
+  }
+
+  private static void invokeImpl(Project project, Editor editor, PsiFile file, String languageId) {
+    final PsiLanguageInjectionHost host = findInjectionHost(editor, file);
+    if (host == null) return;
+    if (defaultFunctionalityWorked(host, languageId)) return;
+    final Language language = InjectedLanguage.findLanguageById(languageId);
+    try {
+      for (LanguageInjectionSupport support : Extensions.getExtensions(LanguageInjectionSupport.EP_NAME)) {
+        if (support.addInjectionInPlace(language, host)) return;
+      }
+      TemporaryPlacesRegistry.getInstance(project).addHostWithUndo(host, InjectedLanguage.create(languageId));
+    }
+    finally {
+      FileContentUtil.reparseFiles(project, Collections.<VirtualFile>emptyList(), true);
+    }
   }
 
   private static boolean defaultFunctionalityWorked(final PsiLanguageInjectionHost host, final String languageId) {

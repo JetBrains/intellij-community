@@ -407,7 +407,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   public boolean refreshIncomingWithCommitted() {
-    return false;
+    return true;
   }
 
   public void deactivate() {

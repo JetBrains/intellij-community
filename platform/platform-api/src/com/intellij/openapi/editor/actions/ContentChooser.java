@@ -152,6 +152,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
       myViewer.getSettings().setFoldingOutlineShown(false);
       myViewer.getSettings().setLineNumbersShown(false);
       myViewer.getSettings().setLineMarkerAreaShown(false);
+      myViewer.getSettings().setIndentGuidesShown(false);
       mySplitter.setSecondComponent(myViewer.getComponent());
     } else {
       final JTextArea textArea = new JTextArea(fullString);

@@ -58,6 +58,10 @@ class GroovyClassDescriptor implements ClassDescriptor {
     return myPlace;
   }
 
+  public PsiClass getPsiClass() {
+    return myPsiClass;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;

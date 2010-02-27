@@ -41,10 +41,6 @@ public class DependantSpacingImpl extends SpacingImpl {
     }
   }
 
-  int getMaxLineFeeds() {
-    return 1;
-  }
-
   public void refresh(FormatProcessor formatter) {
     final boolean value = wasLFUsed() || formatter.containsLineFeeds(myDependance);
     if (value) myFlags |= DEPENDENCE_CONTAINS_LF_MASK;
@@ -62,5 +58,10 @@ public class DependantSpacingImpl extends SpacingImpl {
 
   public final boolean wasLFUsed() {
     return (myFlags & LF_WAS_USED_MASK) != 0;
+  }
+
+  @Override
+  public String toString() {
+    return "<DependantSpacing: minSpaces=" + getMinSpaces() + " maxSpaces=" + getMaxSpaces() + " minLineFeeds=" + getMinLineFeeds() + " dep=" + myDependance + ">";
   }
 }

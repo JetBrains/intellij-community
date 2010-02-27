@@ -18,6 +18,7 @@ package com.intellij.formatting;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
@@ -131,6 +132,7 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
     mySpaceProperty = currentSpaceProperty;
   }
 
+  @Nullable
   public IndentInfo calcIndentFromParent() {
     AbstractBlockWrapper firstIndentedParent = findFirstIndentedParent();
     final WhiteSpace mySpace = getWhiteSpace();
@@ -160,4 +162,8 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
     return new TextRange(myStart, myEnd);
   }
 
+  @Override
+  public String toString() {
+    return "LeafBlockWrapper(" + myStart + "-" + myEnd + ")";
+  }
 }

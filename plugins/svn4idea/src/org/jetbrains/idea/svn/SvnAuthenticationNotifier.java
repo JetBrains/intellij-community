@@ -131,7 +131,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
 
     // check there's no cancellation yet
     final boolean haveCancellation = getStateFor(wcCopy.getUrl());
-    if (! haveCancellation) return ThreeState.NO;
+    if (haveCancellation) return ThreeState.NO;
 
     // check have credentials
     return passiveValidation(myVcs.getProject(), wcCopy.getUrl()) ? ThreeState.YES : ThreeState.NO;
