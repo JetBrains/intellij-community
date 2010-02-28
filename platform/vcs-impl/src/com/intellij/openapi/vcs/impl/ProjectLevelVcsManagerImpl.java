@@ -28,6 +28,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
@@ -117,6 +119,13 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     myInitialization = new VcsInitialization(myProject);
     myMappings = new NewMappings(myProject, myEventDispatcher, this);
     myMappingsToRoots = new MappingsToRoots(myMappings, myProject);
+
+    ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
+      @Override
+      public void projectClosing(Project project) {
+        onProjectClosing();
+      }
+    });
   }
 
   public void initComponent() {
@@ -241,17 +250,20 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     });
   }
 
+  private void onProjectClosing() {
+    if (myEditorAdapter != null) {
+      final Editor editor = myEditorAdapter.getEditor();
+      if (! editor.isDisposed()) {
+        EditorFactory.getInstance().releaseEditor(editor);
+      }
+    }
+  }
+
   private void dispose() {
     // todo dispose lock is bad here..
     synchronized (myDisposeLock) {
       if (myIsDisposed) return;
 
-      if (myEditorAdapter != null) {
-        final Editor editor = myEditorAdapter.getEditor();
-        if (! editor.isDisposed()) {
-          EditorFactory.getInstance().releaseEditor(editor);
-        }
-      }
       myMappings.disposeMe();
       try {
         myContentManager = null;
