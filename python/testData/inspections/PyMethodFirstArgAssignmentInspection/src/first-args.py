@@ -30,6 +30,6 @@ class A:
     cls = 1
 
 # no builtins detection -> can't test static methods :( where's mock Python SDK?
-#  @staticmethod
-#  def stat(first):
-#    first = 1 # ok
+  @staticmethod
+  def stat(first):
+    first = 1 # ok

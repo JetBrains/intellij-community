@@ -561,7 +561,9 @@ public class PythonSdkType extends SdkType {
       }
       if (not_in_unit_test_mode) {
         generateBuiltinStubs(bin_path, stubs_path);
-        sdkModificator.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByPath(stubs_path), BUILTIN_ROOT_TYPE);
+        final VirtualFile builtins_root = LocalFileSystem.getInstance().refreshAndFindFileByPath(stubs_path);
+        assert builtins_root != null;
+        sdkModificator.addRoot(builtins_root, BUILTIN_ROOT_TYPE);
       }
     }
     // Add python-django installed as package in Linux

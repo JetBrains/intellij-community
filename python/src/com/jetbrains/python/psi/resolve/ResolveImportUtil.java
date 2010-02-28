@@ -415,9 +415,7 @@ public class ResolveImportUtil {
       if (elt_psifile != null) {  // formality
         final VirtualFile elt_vfile = elt_psifile.getVirtualFile();
         if (elt_vfile != null) { // reality
-          for (OrderEntry entry: ProjectRootManager.getInstance(elt.getProject()).getFileIndex().getOrderEntriesForFile(elt_vfile
-            )
-          ) {
+          for (OrderEntry entry: ProjectRootManager.getInstance(elt.getProject()).getFileIndex().getOrderEntriesForFile(elt_vfile)) {
             PsiElement root_elt = resolveWithinRoots(entry.getFiles(OrderRootType.SOURCES), refName, elt.getProject());
             if (root_elt != null) return root_elt;
           }

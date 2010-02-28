@@ -6,6 +6,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NonNls;
 
@@ -16,7 +17,7 @@ import java.util.List;
  * @author yole
  */
 public class PythonMockSdk {
-  @NonNls private static final String MOCK_SDK_NAME = "Mock Jython SDK";
+  @NonNls private static final String MOCK_SDK_NAME = "Mock Python SDK";
 
   public static Sdk findOrCreate() {
     final List<Sdk> sdkList = ProjectJdkTable.getInstance().getSdksOfType(PythonSdkType.getInstance());
@@ -35,12 +36,14 @@ public class PythonMockSdk {
     final Sdk sdk = new ProjectJdkImpl(MOCK_SDK_NAME, sdkType) {
       @Override
       public String getVersionString() {
-        return "Jython 2.5 Mock SDK"; // TODO: implement language level here
+        return "Python 2.5 Mock SDK"; // TODO: implement language level here
       }
     };
     final SdkModificator sdkModificator = sdk.getSdkModificator();
     sdkModificator.setHomePath(sdkHome);
-    PythonSdkType.setupSdkPaths(sdkModificator, null);
+    String mock_stubs_path = PythonHelpersLocator.getHelperPath("mocksdk/" + PythonSdkType.SKELETON_DIR_NAME);
+    sdkModificator.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByPath(mock_stubs_path), PythonSdkType.BUILTIN_ROOT_TYPE);
+    //PythonSdkType.setupSdkPaths(sdkModificator, null);
     sdkModificator.commitChanges();
     return sdk;
   }
