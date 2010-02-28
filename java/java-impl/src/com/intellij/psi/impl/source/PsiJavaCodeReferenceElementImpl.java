@@ -545,7 +545,8 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
     final boolean preserveQualification = CodeStyleSettingsManager.getSettings(getProject()).USE_FQ_CLASS_NAMES && isFullyQualified();
     final PsiManager manager = aClass.getManager();
-    String text = qName + getParameterList().getText();
+    final PsiReferenceParameterList parameterList = getParameterList();
+    String text = (parameterList != null ? qName + parameterList.getText() : qName);
     ASTNode ref = Parsing.parseJavaCodeReferenceText(manager, text, SharedImplUtil.findCharTableByTree(this));
     LOG.assertTrue(ref != null, "Failed to parse reference from text '" + text + "'");
     getTreeParent().replaceChildInternal(this, (TreeElement)ref);

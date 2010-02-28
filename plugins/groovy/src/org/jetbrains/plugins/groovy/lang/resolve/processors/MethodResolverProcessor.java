@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -83,15 +84,18 @@ public class MethodResolverProcessor extends ResolverProcessor {
       }
 
       return true;
-    } else if (element instanceof PsiVariable) {
-      if (element instanceof GrField && ((GrField) element).isProperty() ||
-          isClosure((PsiVariable) element)) {
-        return super.execute(element, state);
-      } else {
-        myInapplicableCandidates.add(new GroovyResolveResultImpl(element, myCurrentFileResolveContext, substitutor, isAccessible((PsiVariable)element), isStaticsOK((PsiVariable)element)));
+    }
+    else if (element instanceof PsiVariable) {
+      if (isApplicableClosure((PsiVariable)element)) {
+        myCandidates.add(new GroovyResolveResultImpl(element, myCurrentFileResolveContext, substitutor, isAccessible((PsiVariable)element),
+                                                     isStaticsOK((PsiVariable)element)));
+      }
+      else {
+        myInapplicableCandidates.add(
+          new GroovyResolveResultImpl(element, myCurrentFileResolveContext, substitutor, isAccessible((PsiVariable)element),
+                                      isStaticsOK((PsiVariable)element)));
       }
     }
-
 
     return true;
   }
@@ -126,10 +130,14 @@ public class MethodResolverProcessor extends ResolverProcessor {
     return substitutor;
   }
 
-  private static boolean isClosure(PsiVariable variable) {
+  private boolean isApplicableClosure(PsiVariable variable) {
     if (variable instanceof GrVariable) {
-      final PsiType type = ((GrVariable) variable).getTypeGroovy();
-      return type != null && type.equalsToText(GrClosableBlock.GROOVY_LANG_CLOSURE);
+      final PsiType type = ((GrVariable)variable).getTypeGroovy();
+      if (type == null) return false;
+      if (type instanceof GrClosureType) {
+        return PsiUtil.isApplicable(myArgumentTypes, (GrClosureType)type, variable.getManager());
+      }
+      if (type.equalsToText(GrClosableBlock.GROOVY_LANG_CLOSURE)) return true;
     }
     return variable.getType().equalsToText(GrClosableBlock.GROOVY_LANG_CLOSURE);
   }
@@ -315,10 +323,6 @@ public class MethodResolverProcessor extends ResolverProcessor {
   @Nullable
   public PsiType[] getArgumentTypes() {
     return myArgumentTypes;
-  }
-
-  public void setArgumentTypes(@Nullable PsiType[] argumentTypes) {
-    myArgumentTypes = argumentTypes;
   }
 
   @Override

@@ -207,16 +207,18 @@ public class RequestHint {
 
       if (myDepth == StepRequest.STEP_INTO) {
         final DebuggerSettings settings = DebuggerSettings.getInstance();
-        if (settings.SKIP_SYNTHETIC_METHODS) {
-          final StackFrameProxyImpl frameProxy = context.getFrameProxy();
-          Location location = frameProxy.location();
-          Method method = location.method();
+        final StackFrameProxyImpl frameProxy = context.getFrameProxy();
+
+        if (settings.SKIP_SYNTHETIC_METHODS && frameProxy != null) {
+          final Location location = frameProxy.location();
+          final Method method = location.method();
           if (method != null) {
             if (myVirtualMachineProxy.canGetSyntheticAttribute()? method.isSynthetic() : method.name().indexOf('$') >= 0) {
               return myDepth;
             }
           }
         }
+
         if (!myIgnoreFilters) {
           if(settings.SKIP_GETTERS) {
             boolean isGetter = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>(){
@@ -231,18 +233,20 @@ public class RequestHint {
             }
           }
 
-          if (settings.SKIP_CONSTRUCTORS) {
-            Location location = context.getFrameProxy().location();
-            Method method = location.method();
-            if (method != null && method.isConstructor()) {
-              return StepRequest.STEP_OUT;
+          if (frameProxy != null) {
+            if (settings.SKIP_CONSTRUCTORS) {
+              final Location location = frameProxy.location();
+              final Method method = location.method();
+              if (method != null && method.isConstructor()) {
+                return StepRequest.STEP_OUT;
+              }
             }
-          }
 
-          if (settings.SKIP_CLASSLOADERS) {
-            Location location = context.getFrameProxy().location();
-            if (DebuggerUtilsEx.isAssignableFrom("java.lang.ClassLoader", location.declaringType())) {
-              return StepRequest.STEP_OUT;
+            if (settings.SKIP_CLASSLOADERS) {
+              final Location location = frameProxy.location();
+              if (DebuggerUtilsEx.isAssignableFrom("java.lang.ClassLoader", location.declaringType())) {
+                return StepRequest.STEP_OUT;
+              }
             }
           }
         }

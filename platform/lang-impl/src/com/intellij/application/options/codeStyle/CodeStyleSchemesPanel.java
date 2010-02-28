@@ -19,9 +19,9 @@ package com.intellij.application.options.codeStyle;
 import com.intellij.application.options.ExportSchemeAction;
 import com.intellij.application.options.SaveSchemeDialog;
 import com.intellij.application.options.SchemesToImportPopup;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
@@ -166,8 +166,8 @@ public class CodeStyleSchemesPanel{
         });
       }
     });
-    for(LanguageFileType fileType : LanguageCodeStyleSettingsProvider.getLanguageFileTypes()) {
-      myLanguageCombo.addItem(fileType.getLanguage().getDisplayName());
+    for(Language language : LanguageCodeStyleSettingsProvider.getLanguagesWithCodeStyleSettings()) {
+      myLanguageCombo.addItem(language.getDisplayName());
     }
     myLanguageLabel.setVisible(false);
     myLanguageCombo.setVisible(false);
@@ -334,9 +334,9 @@ public class CodeStyleSchemesPanel{
   private void onLanguageCombo() {
     Object selection = myLanguageCombo.getSelectedItem();
     if (selection instanceof String) {
-      LanguageFileType fileType = LanguageCodeStyleSettingsProvider.getFileType((String)selection);
-      if (fileType != null && mySettingsPanel != null) {
-        mySettingsPanel.setLanguage(fileType.getLanguage());
+      Language language = LanguageCodeStyleSettingsProvider.getLanguage((String)selection);
+      if (language != null && mySettingsPanel != null) {
+        mySettingsPanel.setLanguage(language);
       }
     }
   }

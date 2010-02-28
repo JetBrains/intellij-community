@@ -54,7 +54,6 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
     return (PsiJavaCodeReferenceElement)getMirrorTreeElement().findChildByRoleAsPsiElement(ChildRole.CLASS_REFERENCE);
   }
 
-
   private CompositeElement getMirrorTreeElement() {
     final PsiAnnotationStub stub = getStub();
     if (stub != null) {

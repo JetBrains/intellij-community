@@ -194,6 +194,7 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
 
   public void testMethodCallWithDefaultParameters() throws Exception {doTest();}
   public void testClosureWithDefaultParameters() throws Exception {doTest();}
+  public void testClosureCallMethodWithInapplicableArguments() throws Exception {doTest();}
 
   public void testOverlyLongMethodInspection() throws Exception {
     doTest(new GroovyOverlyLongMethodInspection());

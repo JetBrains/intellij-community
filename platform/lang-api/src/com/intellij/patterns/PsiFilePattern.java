@@ -68,7 +68,7 @@ public class PsiFilePattern<T extends PsiFile, Self extends PsiFilePattern<T, Se
       super(aClass);
     }
 
-    protected Capture(@NotNull final InitialPatternCondition<T> condition) {
+    public Capture(@NotNull final InitialPatternCondition<T> condition) {
       super(condition);
     }
 
