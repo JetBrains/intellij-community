@@ -185,8 +185,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     for (String name : names) {
       findChild(name, false, false);
     }
-
-    return ensureAsMap().values();
+    
+    // important: should return a copy here for safe iterations
+    return new ArrayList<VirtualFile>(ensureAsMap().values());
   }
 
   @NotNull

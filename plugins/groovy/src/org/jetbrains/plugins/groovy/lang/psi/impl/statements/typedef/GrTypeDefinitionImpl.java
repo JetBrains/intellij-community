@@ -327,33 +327,30 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
 
   @NotNull
   public PsiMethod[] getMethods() {
-    if (myMethods == null) {
-      List<PsiMethod> methods = new ArrayList<PsiMethod>();
+    List<PsiMethod> cached = myMethods;
+    if (cached == null) {
+      cached = new ArrayList<PsiMethod>();
       GrTypeDefinitionBody body = getBody();
       if (body != null) {
-        methods.addAll(body.getMethods());
+        cached.addAll(body.getMethods());
       }
 
-      myMethods = methods;
+      myMethods = cached;
     }
 
-    List<PsiMethod> result = new ArrayList<PsiMethod>(myMethods);
+    List<PsiMethod> result = new ArrayList<PsiMethod>(cached);
     GrClassImplUtil.addGroovyObjectMethods(this, result);
     return result.toArray(new PsiMethod[result.size()]);
   }
 
   @NotNull
   public GrMethod[] getGroovyMethods() {
-    if (myGroovyMethods == null) {
+    GrMethod[] cached = myGroovyMethods;
+    if (cached == null) {
       GrTypeDefinitionBody body = getBody();
-      if (body != null) {
-        myGroovyMethods = body.getGroovyMethods();
-      }
-      else {
-        myGroovyMethods = GrMethod.EMPTY_ARRAY;
-      }
+      myGroovyMethods = cached = body != null ? body.getGroovyMethods() : GrMethod.EMPTY_ARRAY;
     }
-    return myGroovyMethods;
+    return cached;
   }
 
   public void subtreeChanged() {
@@ -366,7 +363,8 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
 
   @NotNull
   public PsiMethod[] getConstructors() {
-    if (myConstructors == null) {
+    GrMethod[] cached = myConstructors;
+    if (cached == null) {
       List<GrMethod> result = new ArrayList<GrMethod>();
       for (final PsiMethod method : getMethods()) {
         if (method.isConstructor()) {
@@ -374,20 +372,20 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
         }
       }
 
-      myConstructors = result.toArray(new GrMethod[result.size()]);
-      return myConstructors;
+      myConstructors = cached = result.toArray(new GrMethod[result.size()]);
     }
-    return myConstructors;
+    return cached;
   }
 
   @NotNull
   public PsiClass[] getInnerClasses() {
-    if (myInnerClasses == null) {
+    PsiClass[] inners = myInnerClasses;
+    if (inners == null) {
       final GrTypeDefinitionBody body = getBody();
-      myInnerClasses = body != null ? body.getInnerClasses() : PsiClass.EMPTY_ARRAY;
+      myInnerClasses = inners = body != null ? body.getInnerClasses() : PsiClass.EMPTY_ARRAY;
     }
 
-    return myInnerClasses;
+    return inners;
   }
 
   @NotNull

@@ -226,4 +226,8 @@ public class TextComponentEditor extends UserDataHolderBase implements Editor {
   public JComponent getHeaderComponent() {
     return null;
   }
+
+  public IndentGuideDescriptor getCaretIndentGuide() {
+    return null;
+  }
 }

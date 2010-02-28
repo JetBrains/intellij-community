@@ -1,13 +1,18 @@
 contributor(context()) {
   // For methods
   def memb = enclosingMember()
-  // For classes
-  def clazz = enclosingClass()
   if (memb) {
+    // For classes
     def newifyName = "groovy.lang.Newify"
-    for (a in memb?.getAnnotations(newifyName) + clazz?.getAnnotations(newifyName)) {
-      def refs = a?.findAttributeValue("value")
-      def auto  = a?.findAttributeValue("auto")
+    def annotated = memb.getAnnotations(newifyName)
+
+    def clazz = enclosingClass()
+    if (clazz) {
+      annotated += clazz.getAnnotations(newifyName)
+    }
+    for (a in annotated) {
+      def refs = a.findAttributeValue("value")
+      def auto  = a.findAttributeValue("auto")
       //For Python-like style
       if (refs && !place.qualifier) {
         for (c in refs.asList()) {

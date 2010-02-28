@@ -126,8 +126,8 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
   public PsiReference getReference() {
     return new PsiReference() {
       private PsiClass getReferencedClass () {
-        LOG.assertTrue(getTreeParent().getElementType() == ANNOTATION_PARAMETER_LIST && getTreeParent().getTreeParent().getElementType() == ANNOTATION);
-        PsiAnnotationImpl annotation = (PsiAnnotationImpl)getTreeParent().getTreeParent().getPsi();
+        LOG.assertTrue(getParent() instanceof PsiAnnotationParameterList && getParent().getParent() instanceof PsiAnnotation);
+        PsiAnnotation annotation = (PsiAnnotation)getParent().getParent();
         PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
         return nameRef == null ? null : (PsiClass)nameRef.resolve();
       }

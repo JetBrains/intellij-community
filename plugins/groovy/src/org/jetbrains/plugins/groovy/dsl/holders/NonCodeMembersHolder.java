@@ -16,11 +16,17 @@
 package org.jetbrains.plugins.groovy.dsl.holders;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -30,8 +36,23 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
  */
 public class NonCodeMembersHolder implements CustomMembersHolder {
   private final GrTypeDefinition myPsiClass;
+  private static final Key<CachedValue<ConcurrentFactoryMap<String, NonCodeMembersHolder>>> CACHED_HOLDERS = Key.create("CACHED_HOLDERS");
 
-  public NonCodeMembersHolder(@NotNull String classText, Project project) {
+  public static NonCodeMembersHolder fromText(@NotNull String classText, final Project project) {
+    return CachedValuesManager.getManager(project).getCachedValue(project, CACHED_HOLDERS, new CachedValueProvider<ConcurrentFactoryMap<String, NonCodeMembersHolder>>() {
+      public Result<ConcurrentFactoryMap<String, NonCodeMembersHolder>> compute() {
+        final ConcurrentFactoryMap<String, NonCodeMembersHolder> map = new ConcurrentFactoryMap<String, NonCodeMembersHolder>() {
+          @Override
+          protected NonCodeMembersHolder create(String key) {
+            return new NonCodeMembersHolder(key, project);
+          }
+        };
+        return Result.create(map, PsiModificationTracker.MODIFICATION_COUNT);
+      }
+    }, false).get(classText);
+  }
+
+  private NonCodeMembersHolder(@NotNull String classText, Project project) {
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
     myPsiClass = factory.createGroovyFile("class GroovyEnhanced {\n" + classText + "}", false, null).getTypeDefinitions()[0];
   }
