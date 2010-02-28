@@ -60,6 +60,10 @@ public class PyTupleAssignmentBalanceInspection extends LocalInspectionTool {
         if (virtualFile != null && LanguageLevel.forFile(virtualFile).isPy3K()) {
           for (PyExpression target: elements) {
             if (target instanceof PyStarExpression) {
+              if (containsStarExpression) {
+                registerProblem(target, "Only one starred expression allowed in assignment");
+                return;
+              }
               containsStarExpression = true;
               ++valuesLength;
             }
