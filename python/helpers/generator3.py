@@ -1021,7 +1021,7 @@ if __name__ == "__main__":
     print(helptext)
     sys.exit(0)
   if '-b' not in opts and not fnames:
-    print("Neither -b nor any module name given")  
+    sys.stderr.write("Neither -b nor any module name given\n")  
     sys.exit(1)
   quiet = '-q' in opts
   update_mode = "-u" in opts
