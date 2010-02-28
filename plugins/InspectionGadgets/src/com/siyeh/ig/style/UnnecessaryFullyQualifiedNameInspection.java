@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.HighlightUtils;
 import com.siyeh.ig.psiutils.ImportUtils;
+import com.siyeh.ig.psiutils.StringUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -279,7 +280,8 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
             if (fqName == null) {
                 return;
             }
-            final String text = stripAngleBrackets(reference.getText());
+            final String referenceText = reference.getText();
+            final String text = StringUtils.stripAngleBrackets(referenceText);
             if(!text.equals(fqName)){
                 return;
             }
@@ -292,14 +294,6 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
                     ClassUtil.extractPackageName(text);
             final boolean inSameFile = elementPackageName.equals(packageName);
             registerError(reference, Boolean.valueOf(inSameFile));
-        }
-
-        private String stripAngleBrackets(String string) {
-            final int index = string.indexOf('<');
-            if (index == -1) {
-                return string;
-            }
-            return string.substring(0, index);
         }
     }
 }
