@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +28,12 @@ public interface PsiJavaCodeReferenceElement extends PsiJavaReference, PsiQualif
    * The empty array of PSI Java code references which can be reused to avoid unnecessary allocations.
    */
   PsiJavaCodeReferenceElement[] EMPTY_ARRAY = new PsiJavaCodeReferenceElement[0];
+
+  ArrayFactory<PsiJavaCodeReferenceElement> ARRAY_FACTORY = new ArrayFactory<PsiJavaCodeReferenceElement>() {
+    public PsiJavaCodeReferenceElement[] create(int count) {
+      return count == 0 ? EMPTY_ARRAY : new PsiJavaCodeReferenceElement[count];
+    }
+  };
 
   /**
    * Returns the element representing the name of the referenced element.

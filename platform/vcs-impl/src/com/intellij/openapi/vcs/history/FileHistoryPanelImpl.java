@@ -125,7 +125,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
 
   private final String myRepositoryPath;
 
-  private boolean myInRefresh;
+  private volatile boolean myInRefresh;
   private Object myTargetSelection;
   private final AsynchConsumer<VcsHistorySession> myHistoryPanelRefresh;
 
@@ -279,7 +279,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
 
     replaceTransferable();
 
-    myUpdateAlarm = new Alarm(session.allowAsyncRefresh() ? Alarm.ThreadToUse.SHARED_THREAD : Alarm.ThreadToUse.SWING_THREAD);
+    myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
     final HistoryAsTreeProvider treeHistoryProvider = myHistorySession.getHistoryAsTreeProvider();
 
@@ -314,7 +314,8 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
         FileHistoryPanelImpl.this.refresh(vcsHistorySession);
       }
     };
-    
+
+    // todo react to event?
     myUpdateAlarm.addRequest(new Runnable() {
       public void run() {
         if (myProject.isDisposed()) {
@@ -322,13 +323,13 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
         }
         final boolean refresh = (! myInRefresh) && myHistorySession.shouldBeRefreshed();
         myUpdateAlarm.cancelAllRequests();
-        myUpdateAlarm.addRequest(this, 10000);
+        myUpdateAlarm.addRequest(this, 20000);
 
         if (refresh) {
           refreshImpl();
         }
       }
-    }, 10000);
+    }, 20000);
 
     init();
 

@@ -407,7 +407,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       return GroovyResolveResult.EMPTY_ARRAY;
     }
 
-    private void resolveImpl(GrReferenceExpressionImpl refExpr, ResolverProcessor processor) {
+    private static void resolveImpl(GrReferenceExpressionImpl refExpr, ResolverProcessor processor) {
       GrExpression qualifier = refExpr.getQualifierExpression();
       if (qualifier == null) {
         ResolveUtil.treeWalkUp(refExpr, processor, true);

@@ -116,7 +116,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
               myCurrentHint = null;
             }
             TextRange textRange = new TextRange(textOffset, fold.getStartOffset());
-            hint = EditorFragmentComponent.showEditorFragmentHint(editor, textRange, true);
+            hint = EditorFragmentComponent.showEditorFragmentHint(editor, textRange, true, true);
             myCurrentFold = fold;
             myCurrentHint = hint;
           }
