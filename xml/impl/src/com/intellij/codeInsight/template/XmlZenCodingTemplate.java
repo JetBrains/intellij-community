@@ -302,31 +302,33 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
     if (file.getLanguage() instanceof XMLLanguage) {
       Editor editor = callback.getEditor();
       PsiElement element = file.findElementAt(editor.getCaretModel().getOffset() - 1);
-      int line = editor.getCaretModel().getLogicalPosition().line;
-      int lineStart = editor.getDocument().getLineStartOffset(line);
-      int parentStart;
-      do {
-        parentStart = element != null ? element.getTextRange().getStartOffset() : 0;
-        int startOffset = parentStart > lineStart ? parentStart : lineStart;
-        String key = computeKey(editor, startOffset);
-        List<MyToken> tokens = parse(key, callback);
-        if (tokens != null && check(tokens)) {
-          if (tokens.size() == 2) {
-            MyToken token = tokens.get(0);
-            if (token instanceof MyTemplateToken) {
-              if (key.equals(((MyTemplateToken)token).myKey) && callback.isLiveTemplateApplicable(key)) {
-                // do not activate only live template
-                return null;
+      if (element == null || element.getLanguage() instanceof XMLLanguage) {
+        int line = editor.getCaretModel().getLogicalPosition().line;
+        int lineStart = editor.getDocument().getLineStartOffset(line);
+        int parentStart;
+        do {
+          parentStart = element != null ? element.getTextRange().getStartOffset() : 0;
+          int startOffset = parentStart > lineStart ? parentStart : lineStart;
+          String key = computeKey(editor, startOffset);
+          List<MyToken> tokens = parse(key, callback);
+          if (tokens != null && check(tokens)) {
+            if (tokens.size() == 2) {
+              MyToken token = tokens.get(0);
+              if (token instanceof MyTemplateToken) {
+                if (key.equals(((MyTemplateToken)token).myKey) && callback.isLiveTemplateApplicable(key)) {
+                  // do not activate only live template
+                  return null;
+                }
               }
             }
+            return key;
           }
-          return key;
+          if (element != null) {
+            element = element.getParent();
+          }
         }
-        if (element != null) {
-          element = element.getParent();
-        }
+        while (element != null && parentStart > lineStart);
       }
-      while (element != null && parentStart > lineStart);
     }
     return null;
   }
