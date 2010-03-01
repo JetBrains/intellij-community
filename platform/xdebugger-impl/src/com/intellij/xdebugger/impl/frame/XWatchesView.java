@@ -76,13 +76,12 @@ public class XWatchesView extends XDebugViewBase implements DnDNativeTarget {
   }
 
   public void addWatchExpression(@NotNull String expression, int index) {
+    XDebuggerEvaluator evaluator = null;
     XStackFrame stackFrame = mySession.getCurrentStackFrame();
     if (stackFrame != null) {
-      XDebuggerEvaluator evaluator = stackFrame.getEvaluator();
-      if (evaluator != null) {
-        myRootNode.addWatchExpression(evaluator, expression, index);
-      }
+      evaluator = stackFrame.getEvaluator();
     }
+    myRootNode.addWatchExpression(evaluator, expression, index);
   }
 
   protected void rebuildView(final SessionEvent event) {

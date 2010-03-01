@@ -20,7 +20,7 @@
  */
 package com.intellij.debugger.ui.impl;
 
-import com.intellij.debugger.actions.AddToWatchAction;
+import com.intellij.debugger.actions.AddToWatchActionHandler;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
@@ -137,11 +137,11 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
   }
 
   private void addWatchesFrom(final DebuggerTreeNodeImpl[] nodes) {
-    AddToWatchAction.addFromNodes(getContext(), this, nodes);
+    AddToWatchActionHandler.addFromNodes(getContext(), this, nodes);
   }
 
   private void addWatchesFrom(String text) {
-    AddToWatchAction.doAddWatch(this, new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, text), null);
+    AddToWatchActionHandler.doAddWatch(this, new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, text), null);
   }
 
   protected ActionPopupMenu createPopupMenu() {

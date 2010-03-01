@@ -50,12 +50,14 @@ public class XDebuggerSupport extends DebuggerSupport {
   private final XDebuggerEvaluateActionHandler myEvaluateHandler;
   private final XQuickEvaluateHandler myQuickEvaluateHandler;
   private final XDebuggerSettingsPanelProviderImpl mySettingsPanelProvider;
+  private final XAddToWatchesFromEditorActionHandler myAddToWatchesActionHandler;
   private final DebuggerToggleActionHandler myMuteBreakpointsHandler;
   private final DebuggerActionHandler mySmartStepIntoHandler;
 
   public XDebuggerSupport() {
     myBreakpointPanelProvider = new XBreakpointPanelProvider();
     myToggleLineBreakpointActionHandler = new XToggleLineBreakpointActionHandler();
+    myAddToWatchesActionHandler = new XAddToWatchesFromEditorActionHandler();
     myStepOverHandler = new XDebuggerSuspendedActionHandler() {
       protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
         session.stepOver(false);
@@ -178,6 +180,12 @@ public class XDebuggerSupport extends DebuggerSupport {
   @NotNull
   public QuickEvaluateHandler getQuickEvaluateHandler() {
     return myQuickEvaluateHandler;
+  }
+
+  @NotNull
+  @Override
+  public DebuggerActionHandler getAddToWatchesActionHandler() {
+    return myAddToWatchesActionHandler;
   }
 
   @NotNull
