@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,11 +41,6 @@ public class FileContentQueue {
 
   private final ArrayBlockingQueue<FileContent> myQueue = new ArrayBlockingQueue<FileContent>(256);
   private FileContent myPushbackBuffer;
-  /**
-   * always  in range [0, PersistentFS.FILE_LENGTH_TO_CACHE_THRESHOLD]
-   */
-  public static final int MAX_INTELLISENSE_FILESIZE = maxIntellisenseFileSize();
-  @NonNls public static final String MAX_INTELLISENSE_SIZE_PROPERTY = "idea.max.intellisense.filesize";
 
   public void queue(final Collection<VirtualFile> files, @Nullable final ProgressIndicator indicator) {
     final Runnable contentLoadingRunnable = new Runnable() {
@@ -88,7 +82,7 @@ public class FileContentQueue {
       final long contentLength = content.getLength();
       boolean counterUpdated = false;
       try {
-        if (contentLength < MAX_INTELLISENSE_FILESIZE) {
+        if (contentLength < PersistentFS.MAX_INTELLISENSE_FILESIZE) {
           synchronized (this) {
             while (myTotalSize > SIZE_THRESHOLD) {
               if (indicator != null) {
@@ -163,7 +157,7 @@ public class FileContentQueue {
     if (file == null) {
       return null;
     }
-    if (result.getLength() < MAX_INTELLISENSE_FILESIZE) {
+    if (result.getLength() < PersistentFS.MAX_INTELLISENSE_FILESIZE) {
       synchronized (this) {
         try {
           myTotalSize -= result.getLength();
@@ -180,16 +174,5 @@ public class FileContentQueue {
   public synchronized void pushback(@NotNull FileContent content) {
     LOG.assertTrue(myPushbackBuffer == null, "Pushback buffer is already full");
     myPushbackBuffer = content;
-  }
-
-  public static int maxIntellisenseFileSize() {
-    final int maxLimitBytes = (int)PersistentFS.FILE_LENGTH_TO_CACHE_THRESHOLD;
-    final String userLimitKb = System.getProperty(MAX_INTELLISENSE_SIZE_PROPERTY);
-    try {
-      return userLimitKb != null ? Math.min(Integer.parseInt(userLimitKb) * 1024, maxLimitBytes) : maxLimitBytes;
-    }
-    catch (NumberFormatException ignored) {
-      return maxLimitBytes;
-    }
   }
 }
