@@ -120,7 +120,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     myMappings = new NewMappings(myProject, myEventDispatcher, this);
     myMappingsToRoots = new MappingsToRoots(myMappings, myProject);
 
-    ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
+    ProjectManager.getInstance().addProjectManagerListener(myProject, new ProjectManagerAdapter() {
       @Override
       public void projectClosing(Project project) {
         onProjectClosing();
