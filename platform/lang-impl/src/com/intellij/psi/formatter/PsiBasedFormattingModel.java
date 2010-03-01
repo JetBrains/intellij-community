@@ -20,6 +20,7 @@ import com.intellij.formatting.Block;
 import com.intellij.formatting.FormattingDocumentModel;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
@@ -109,8 +110,10 @@ public class PsiBasedFormattingModel implements FormattingModel {
   @Nullable
   protected ASTNode findElementAt(final int offset) {
     PsiFile containingFile = myASTNode.getPsi().getContainingFile();
-    assert !PsiDocumentManager.getInstance(containingFile.getProject()).isUncommited(myDocumentModel.getDocument());
-    PsiElement psiElement = InjectedLanguageUtil.findInjectedElementNoCommitWithOffset(containingFile, offset);
+    Project project = containingFile.getProject();
+    assert !PsiDocumentManager.getInstance(project).isUncommited(myDocumentModel.getDocument());
+    // TODO:default project can not be used for injections, because latter might wants (unavailable) indices
+    PsiElement psiElement = project.isDefault() ? null :InjectedLanguageUtil.findInjectedElementNoCommitWithOffset(containingFile, offset);
     if (psiElement == null) psiElement = containingFile.findElementAt(offset);
     if (psiElement == null) return null;
     return psiElement.getNode();
