@@ -16,12 +16,12 @@
 
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.ResolveState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 
 import java.util.EnumSet;
 
@@ -32,20 +32,11 @@ public class PropertyResolverProcessor extends ResolverProcessor {
   private GroovyResolveResult myProperty = null;
 
   public PropertyResolverProcessor(String name, PsiElement place) {
-    super(name, EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY), place, PsiType.EMPTY_ARRAY);
+    super(name, EnumSet.of(ResolveKind.PROPERTY), place, PsiType.EMPTY_ARRAY);
   }
 
   public boolean execute(PsiElement element, ResolveState state) {
-    if (element instanceof GrField && ((GrField)element).isProperty()) {
-      if (myProperty == null) {
-        PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
-        substitutor = substitutor == null ? PsiSubstitutor.EMPTY : substitutor;
-        myProperty = new GroovyResolveResultImpl(element, myCurrentFileResolveContext, substitutor, isAccessible((PsiNamedElement)element),
-                                                 isStaticsOK((PsiNamedElement)element));
-      }
-      return true;
-    }
-    else if (element instanceof GrReferenceExpression && ((GrReferenceExpression)element).getQualifier() != null) {
+    if (element instanceof GrReferenceExpression && ((GrReferenceExpression)element).getQualifier() != null) {
       return true;
     }
     return super.execute(element, state);
@@ -62,5 +53,10 @@ public class PropertyResolverProcessor extends ResolverProcessor {
     }
 
     return super.getCandidates();
+  }
+
+  @Override
+  public boolean hasCandidates() {
+    return myProperty != null || super.hasCandidates();
   }
 }

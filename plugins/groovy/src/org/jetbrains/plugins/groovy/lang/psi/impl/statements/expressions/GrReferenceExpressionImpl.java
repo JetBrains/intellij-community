@@ -410,48 +410,47 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         resolveImpl(refExpr, methodResolver);
         if (methodResolver.hasApplicableCandidates()) return methodResolver.getCandidates();
 
-        ClosurePropertyResolverProcessor closureResolver = new ClosurePropertyResolverProcessor(name, refExpr, argTypes, true);
-        resolveImpl(refExpr, closureResolver);
-        if (closureResolver.hasApplicableCandidates()) return closureResolver.getCandidates();
+        PropertyResolverProcessor propertyResolver = new PropertyResolverProcessor(name, refExpr);
+        resolveImpl(refExpr, propertyResolver);
+        if (propertyResolver.hasCandidates()) return propertyResolver.getCandidates();
 
         final String[] names = GroovyPropertyUtils.suggestGettersName(name);
         List<GroovyResolveResult> list = new ArrayList<GroovyResolveResult>();
         for (String getterName : names) {
-          closureResolver = new ClosurePropertyResolverProcessor(getterName, refExpr, argTypes, false);
-          resolveImpl(refExpr, closureResolver);
-          if (closureResolver.hasApplicableCandidates()) list.addAll(Arrays.asList(closureResolver.getCandidates()));
+          AccessorResolverProcessor getterResolver = new AccessorResolverProcessor(getterName, refExpr, true);
+          resolveImpl(refExpr, getterResolver);
+          list.addAll(Arrays.asList(getterResolver.getCandidates()));
         }
         if (list.size() > 0) return list.toArray(new GroovyResolveResult[list.size()]);
-        if (methodResolver.hasCandidates()) return methodResolver.getCandidates();
-        return closureResolver.getCandidates();
+        return methodResolver.getCandidates();
       }
       else if (kind == Kind.TYPE_OR_PROPERTY) {
         ResolverProcessor processor = new PropertyResolverProcessor(name, refExpr);
         resolveImpl(refExpr, processor);
-        GroovyResolveResult[] candidates = processor.getCandidates();
-        if (candidates.length > 0) return candidates;
+        final GroovyResolveResult[] fieldCandidates = processor.getCandidates();
+
+        //if reference expression is in class we need to return field instead of accessor method
+        for (GroovyResolveResult candidate : fieldCandidates) {
+          final PsiElement element = candidate.getElement();
+          if (element instanceof PsiField) {
+            final PsiClass containingClass = ((PsiField)element).getContainingClass();
+            if (containingClass != null && PsiTreeUtil.isAncestor(containingClass, refExpr, true)) return fieldCandidates;
+          } else {
+            return fieldCandidates;
+          }
+        }
 
         final boolean isLValue = PsiUtil.isLValue(refExpr);
         String[] names;
-        PsiType[] argTypes;
-        if (isLValue) {
-          names = GroovyPropertyUtils.suggestSettersName(name);
-          argTypes = new PsiType[]{PsiType.NULL};
-        }
-        else {
-          names = GroovyPropertyUtils.suggestGettersName(name);
-          argTypes = PsiType.EMPTY_ARRAY;
-        }
+        names = isLValue ? GroovyPropertyUtils.suggestSettersName(name) : GroovyPropertyUtils.suggestGettersName(name);
         List<GroovyResolveResult> list = new ArrayList<GroovyResolveResult>();
         for (String getterName : names) {
-          PsiType thisType = getThisType(refExpr);
-          MethodResolverProcessor accessorResolver = new MethodResolverProcessor(getterName, refExpr, false, thisType, argTypes, PsiType.EMPTY_ARRAY);
+          AccessorResolverProcessor accessorResolver = new AccessorResolverProcessor(getterName, refExpr, !isLValue);
           resolveImpl(refExpr, accessorResolver);
-          if (accessorResolver.hasApplicableCandidates()) {
-            list.addAll(Arrays.asList(accessorResolver.getCandidates()));
-          }
+          list.addAll(Arrays.asList(accessorResolver.getCandidates()));
         }
         if (list.size() > 0) return list.toArray(new GroovyResolveResult[list.size()]);
+        if (fieldCandidates.length > 0) return fieldCandidates;
 
         EnumSet<ClassHint.ResolveKind> kinds = refExpr.getParent() instanceof GrReferenceExpression
                                                ? EnumSet.of(ClassHint.ResolveKind.CLASS, ClassHint.ResolveKind.PACKAGE)
