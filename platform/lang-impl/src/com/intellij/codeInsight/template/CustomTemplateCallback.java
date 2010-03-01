@@ -151,8 +151,7 @@ public class CustomTemplateCallback {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
             if (brokenOff) {
-              CodeStyleManager style = CodeStyleManager.getInstance(myProject);
-              style.reformatText(myFile, myGlobalMarker.getStartOffset(), myGlobalMarker.getEndOffset());
+              reformat();
             }
           }
         });
@@ -162,12 +161,22 @@ public class CustomTemplateCallback {
           listener.finished(true);
         }
       }
+
+      @Override
+      public void waitingForInput(Template template) {
+        reformat();
+      }
     });
     templateEnded[0] = true;
     if (templateFinished[0] && listener != null) {
       listener.finished(false);
     }
     return templateFinished[0];
+  }
+
+  private void reformat() {
+    CodeStyleManager style = CodeStyleManager.getInstance(myProject);
+    style.reformatText(myFile, myGlobalMarker.getStartOffset(), myGlobalMarker.getEndOffset());
   }
 
   public void fixStartOfTemplate(@NotNull Object key) {
