@@ -19,8 +19,11 @@
 
 package org.jetbrains.idea.maven.dom.model;
 
+import com.intellij.openapi.paths.PathReference;
+import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.Required;
+import com.intellij.util.xml.converters.PathReferenceConverter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomElement;
 
@@ -81,7 +84,8 @@ public interface MavenDomBuildBase extends MavenDomElement {
    */
   @NotNull
   @Required(value = false, nonEmpty = true)
-  GenericDomValue<String> getDirectory();
+  @Convert(value = PathReferenceConverter.class, soft = true)
+  GenericDomValue<PathReference> getDirectory();
 
   /**
    * Returns the value of the finalName child.

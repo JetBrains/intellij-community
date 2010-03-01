@@ -70,6 +70,9 @@
     <projectService serviceInterface="org.jetbrains.idea.maven.dom.MavenDomElementDescriptorHolder"
                     serviceImplementation="org.jetbrains.idea.maven.dom.MavenDomElementDescriptorHolder"/>
 
+    <applicationService serviceInterface="org.jetbrains.idea.maven.dom.converters.MavenDomConvertersRegistry"
+                    serviceImplementation="org.jetbrains.idea.maven.dom.converters.MavenDomConvertersRegistry"/>
+
     <applicationService serviceInterface="org.jetbrains.idea.maven.dom.converters.repositories.MavenRepositoriesProvider"
                     serviceImplementation="org.jetbrains.idea.maven.dom.converters.repositories.MavenRepositoriesProvider"/>
 

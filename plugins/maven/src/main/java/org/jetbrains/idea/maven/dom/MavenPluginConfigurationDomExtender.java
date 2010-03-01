@@ -20,12 +20,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.Required;
 import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.reflect.DomExtender;
 import com.intellij.util.xml.reflect.DomExtension;
 import com.intellij.util.xml.reflect.DomExtensionsRegistrar;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.dom.converters.MavenDomConvertersRegistry;
+import org.jetbrains.idea.maven.dom.converters.MavenPluginCustomParameterValueConverter;
 import org.jetbrains.idea.maven.dom.model.MavenDomConfiguration;
 import org.jetbrains.idea.maven.dom.model.MavenDomConfigurationParameter;
 import org.jetbrains.idea.maven.dom.model.MavenDomPluginExecution;
@@ -33,6 +36,7 @@ import org.jetbrains.idea.maven.dom.plugin.MavenDomMojo;
 import org.jetbrains.idea.maven.dom.plugin.MavenDomParameter;
 import org.jetbrains.idea.maven.dom.plugin.MavenDomPluginModel;
 
+import java.lang.annotation.Annotation;
 import java.util.*;
 
 public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomConfiguration> {
@@ -51,7 +55,7 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomCon
     }
   }
 
-  private Collection<MavenDomParameter> collectParameters(MavenDomPluginModel pluginModel, MavenDomConfiguration config) {
+  private static Collection<MavenDomParameter> collectParameters(MavenDomPluginModel pluginModel, MavenDomConfiguration config) {
     List<String> selectedGoals = null;
 
     MavenDomPluginExecution executionElement = config.getParentOfType(MavenDomPluginExecution.class, false);
@@ -84,7 +88,7 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomCon
     return namesWithParameters.values();
   }
 
-  private void registerPluginParameter(DomExtensionsRegistrar r, final MavenDomParameter parameter) {
+  private static void registerPluginParameter(DomExtensionsRegistrar r, final MavenDomParameter parameter) {
     String paramName = parameter.getName().getStringValue();
     String alias = parameter.getAlias().getStringValue();
 
@@ -92,7 +96,7 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomCon
     if (alias != null) registerPluginParameter(r, parameter, alias);
   }
 
-  private void registerPluginParameter(DomExtensionsRegistrar r, final MavenDomParameter parameter, final String parameterName) {
+  private static void registerPluginParameter(DomExtensionsRegistrar r, final MavenDomParameter parameter, final String parameterName) {
     DomExtension e;
     if (isCollection(parameter)) {
       e = r.registerFixedNumberChildExtension(new XmlName(parameterName), MavenDomConfigurationParameter.class);
@@ -107,13 +111,31 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomCon
     }
     else {
       e = r.registerFixedNumberChildExtension(new XmlName(parameterName), MavenDomConfigurationParameter.class);
+
+      addValueConverter(e, parameter);
+      addRequiredAnnotation(e, parameter);
     }
+
     e.putUserData(DomExtension.KEY_DECLARATION, parameter);
 
     parameter.getXmlElement().putUserData(PLUGIN_PARAMETER_KEY, parameter);
   }
 
-  public List<String> collectPossibleNameForCollectionParameter(String parameterName) {
+  private static void addValueConverter(DomExtension e, MavenDomParameter parameter) {
+    String type = parameter.getType().getStringValue();
+    if (!StringUtil.isEmptyOrSpaces(type) ) {
+        e.setConverter(new MavenPluginCustomParameterValueConverter(type), MavenDomConvertersRegistry.getInstance().isSoft(type));
+    }
+  }
+
+  private static void addRequiredAnnotation(DomExtension e, MavenDomParameter parameter) {
+    final String required = parameter.getRequired().getStringValue();
+    if (!StringUtil.isEmptyOrSpaces(required) ) {
+        e.addCustomAnnotation(new MyRequired(required));
+    }
+  }
+
+  public static List<String> collectPossibleNameForCollectionParameter(String parameterName) {
     String singularName = StringUtil.unpluralize(parameterName);
     if (singularName == null) singularName = parameterName;
 
@@ -125,7 +147,7 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomCon
     return result;
   }
 
-  private boolean isCollection(MavenDomParameter parameter) {
+  private static boolean isCollection(MavenDomParameter parameter) {
     String type = parameter.getType().getStringValue();
     if (type.endsWith("[]")) return true;
 
@@ -133,5 +155,29 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomCon
                                                    "java.util.Set",
                                                    "java.util.Collection");
     return collectionClasses.contains(type);
+  }
+
+  private static class MyRequired implements Required {
+    private final String myRequired;
+
+    public MyRequired(String required) {
+      myRequired = required;
+    }
+
+    public boolean value() {
+      return Boolean.valueOf(myRequired);
+    }
+
+    public boolean nonEmpty() {
+      return false;
+    }
+
+    public boolean identifier() {
+      return false;
+    }
+
+    public Class<? extends Annotation> annotationType() {
+      return Required.class;
+    }
   }
 }
