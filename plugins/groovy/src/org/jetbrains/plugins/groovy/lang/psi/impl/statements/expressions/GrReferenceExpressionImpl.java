@@ -67,7 +67,10 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.List;
 
 /**
  * @author ilyas
@@ -388,17 +391,70 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   private static class OurResolver implements ResolveCache.PolyVariantResolver<GrReferenceExpressionImpl> {
     public GroovyResolveResult[] resolve(GrReferenceExpressionImpl refExpr, boolean incompleteCode) {
       String name = refExpr.getReferenceName();
-      if (name == null) return null;
-      ResolverProcessor processor = getMethodOrPropertyResolveProcessor(refExpr, name, incompleteCode);
+      if (name == null) return GroovyResolveResult.EMPTY_ARRAY;
 
-      resolveImpl(refExpr, processor);
+      Kind kind = refExpr.getKind();
+      if (incompleteCode) {
+        ResolverProcessor processor = CompletionProcessor.createRefSameNameProcessor(refExpr, name);
+        resolveImpl(refExpr, processor);
+        GroovyResolveResult[] propertyCandidates = processor.getCandidates();
+        if (propertyCandidates.length > 0) return propertyCandidates;
+      }
 
-      GroovyResolveResult[] propertyCandidates = processor.getCandidates();
-      if (propertyCandidates.length > 0) return propertyCandidates;
-      if (refExpr.getKind() == Kind.TYPE_OR_PROPERTY) {
-        EnumSet<ClassHint.ResolveKind> kinds = refExpr.getParent() instanceof GrReferenceExpression ?
-                EnumSet.of(ClassHint.ResolveKind.CLASS, ClassHint.ResolveKind.PACKAGE) :
-                EnumSet.of(ClassHint.ResolveKind.CLASS);
+      if (kind == Kind.METHOD_OR_PROPERTY) {
+        final PsiType[] argTypes = PsiUtil.getArgumentTypes(refExpr, false, false);
+        PsiType thisType = getThisType(refExpr);
+
+        MethodResolverProcessor methodResolver =
+          new MethodResolverProcessor(name, refExpr, false, thisType, argTypes, refExpr.getTypeArguments());
+        resolveImpl(refExpr, methodResolver);
+        if (methodResolver.hasApplicableCandidates()) return methodResolver.getCandidates();
+
+        PropertyResolverProcessor propertyResolver = new PropertyResolverProcessor(name, refExpr);
+        resolveImpl(refExpr, propertyResolver);
+        if (propertyResolver.hasCandidates()) return propertyResolver.getCandidates();
+
+        final String[] names = GroovyPropertyUtils.suggestGettersName(name);
+        List<GroovyResolveResult> list = new ArrayList<GroovyResolveResult>();
+        for (String getterName : names) {
+          AccessorResolverProcessor getterResolver = new AccessorResolverProcessor(getterName, refExpr, true);
+          resolveImpl(refExpr, getterResolver);
+          list.addAll(Arrays.asList(getterResolver.getCandidates()));
+        }
+        if (list.size() > 0) return list.toArray(new GroovyResolveResult[list.size()]);
+        return methodResolver.getCandidates();
+      }
+      else if (kind == Kind.TYPE_OR_PROPERTY) {
+        ResolverProcessor processor = new PropertyResolverProcessor(name, refExpr);
+        resolveImpl(refExpr, processor);
+        final GroovyResolveResult[] fieldCandidates = processor.getCandidates();
+
+        //if reference expression is in class we need to return field instead of accessor method
+        for (GroovyResolveResult candidate : fieldCandidates) {
+          final PsiElement element = candidate.getElement();
+          if (element instanceof PsiField) {
+            final PsiClass containingClass = ((PsiField)element).getContainingClass();
+            if (containingClass != null && PsiTreeUtil.isAncestor(containingClass, refExpr, true)) return fieldCandidates;
+          } else {
+            return fieldCandidates;
+          }
+        }
+
+        final boolean isLValue = PsiUtil.isLValue(refExpr);
+        String[] names;
+        names = isLValue ? GroovyPropertyUtils.suggestSettersName(name) : GroovyPropertyUtils.suggestGettersName(name);
+        List<GroovyResolveResult> list = new ArrayList<GroovyResolveResult>();
+        for (String getterName : names) {
+          AccessorResolverProcessor accessorResolver = new AccessorResolverProcessor(getterName, refExpr, !isLValue);
+          resolveImpl(refExpr, accessorResolver);
+          list.addAll(Arrays.asList(accessorResolver.getCandidates()));
+        }
+        if (list.size() > 0) return list.toArray(new GroovyResolveResult[list.size()]);
+        if (fieldCandidates.length > 0) return fieldCandidates;
+
+        EnumSet<ClassHint.ResolveKind> kinds = refExpr.getParent() instanceof GrReferenceExpression
+                                               ? EnumSet.of(ClassHint.ResolveKind.CLASS, ClassHint.ResolveKind.PACKAGE)
+                                               : EnumSet.of(ClassHint.ResolveKind.CLASS);
         ResolverProcessor classProcessor = new ClassResolverProcessor(refExpr.getReferenceName(), refExpr, kinds);
         resolveImpl(refExpr, classProcessor);
         return classProcessor.getCandidates();
@@ -516,22 +572,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
       ResolveUtil.processNonCodeMethods(qualifierType, processor, project, refExpr, false);
     }
-  }
-
-  private static ResolverProcessor getMethodOrPropertyResolveProcessor(GrReferenceExpression refExpr, String name, boolean incomplete) {
-    if (incomplete) return CompletionProcessor.createRefSameNameProcessor(refExpr, name);
-
-    Kind kind = ((GrReferenceExpressionImpl) refExpr).getKind();
-    ResolverProcessor processor;
-    if (kind == Kind.METHOD_OR_PROPERTY) {
-      final PsiType[] argTypes = PsiUtil.getArgumentTypes(refExpr, false, false);
-      PsiType thisType = getThisType(refExpr);
-      processor = new MethodResolverProcessor(name, refExpr, false, thisType, argTypes, refExpr.getTypeArguments());
-    } else {
-      processor = new PropertyResolverProcessor(name, refExpr);
-    }
-
-    return processor;
   }
 
   private static PsiType getThisType(GrReferenceExpression refExpr) {

@@ -15,7 +15,7 @@
  */
 
 /*
- * Class AddToWatchAction
+ * Class AddToWatchActionHandler
  * @author Jeka
  */
 package com.intellij.debugger.actions;
@@ -34,27 +34,28 @@ import com.intellij.debugger.ui.impl.WatchDebuggerTree;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.ide.DataManager;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
+import com.intellij.xdebugger.impl.actions.XDebuggerActions;
+import org.jetbrains.annotations.NotNull;
 
-public class AddToWatchAction extends DebuggerAction {
-
-  public void update(AnActionEvent e) {
+public class AddToWatchActionHandler extends DebuggerActionHandler {
+  @Override
+  public boolean isEnabled(@NotNull Project project, AnActionEvent event) {
     DataContext context = DataManager.getInstance().getDataContext();
     if (context == null) {
-      e.getPresentation().setEnabled(false);
-      return;
+      return false;
     }
 
-    DebuggerTreeNodeImpl[] selectedNodes = getSelectedNodes(context);
+    DebuggerTreeNodeImpl[] selectedNodes = DebuggerAction.getSelectedNodes(context);
     boolean enabled = false;
     if (selectedNodes != null && selectedNodes.length > 0) {
-      if (getPanel(context) instanceof VariablesPanel) {
+      if (DebuggerAction.getPanel(context) instanceof VariablesPanel) {
         enabled = true;
         for (DebuggerTreeNodeImpl node : selectedNodes) {
           NodeDescriptorImpl descriptor = node.getDescriptor();
@@ -66,20 +67,18 @@ public class AddToWatchAction extends DebuggerAction {
       }
     }
     else {
-      final Editor editor = e.getData(PlatformDataKeys.EDITOR);
+      final Editor editor = event.getData(PlatformDataKeys.EDITOR);
       enabled = DebuggerUtilsEx.getEditorText(editor) != null;
     }
-    e.getPresentation().setEnabled(enabled);
-    if (ActionPlaces.isPopupPlace(e.getPlace())) {
-      e.getPresentation().setVisible(enabled);
-    }
+    return enabled;
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void perform(@NotNull Project project, AnActionEvent event) {
     DataContext context = DataManager.getInstance().getDataContext();
     if (context == null) return;
 
-    final DebuggerContextImpl debuggerContext = getDebuggerContext(context);
+    final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(context);
 
     if(debuggerContext == null) return;
 
@@ -93,13 +92,13 @@ public class AddToWatchAction extends DebuggerAction {
       return;
     }
 
-    final DebuggerTreeNodeImpl[] selectedNodes = getSelectedNodes(context);
+    final DebuggerTreeNodeImpl[] selectedNodes = DebuggerAction.getSelectedNodes(context);
 
     if(selectedNodes != null && selectedNodes.length > 0) {
       addFromNodes(debuggerContext, watchPanel, selectedNodes);
     }
     else {
-      final Editor editor = e.getData(PlatformDataKeys.EDITOR);
+      final Editor editor = event.getData(PlatformDataKeys.EDITOR);
       if (editor != null) {
         final TextWithImports editorText = DebuggerUtilsEx.getEditorText(editor);
         if (editorText != null) {
@@ -152,7 +151,7 @@ public class AddToWatchAction extends DebuggerAction {
         catch (final EvaluateException e) {
           DebuggerInvocationUtil.swingInvokeLater(project, new Runnable() {
             public void run() {
-              Messages.showErrorDialog(project, e.getMessage(), ActionsBundle.actionText(DebuggerActions.ADD_TO_WATCH));
+              Messages.showErrorDialog(project, e.getMessage(), ActionsBundle.actionText(XDebuggerActions.ADD_TO_WATCH));
             }
           });
         }
