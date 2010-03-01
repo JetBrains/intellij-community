@@ -22,6 +22,7 @@
     <facetType implementation="com.jetbrains.python.facet.PythonFacetType"/>
     <frameworkSupport implementation="com.jetbrains.python.facet.PythonFrameworkSupportProvider"/>
     <frameworkSupport implementation="com.jetbrains.django.facet.DjangoFacetSupportProvider"/>
+    <frameworkSupport implementation="com.jetbrains.appengine.facet.AppEngineFacetSupportProvider"/>
     <moduleConfigurationEditorProvider implementation="com.jetbrains.python.module.PythonModuleConfigurationEditorProvider"/>
   </extensions>
 
