@@ -13,6 +13,7 @@ public enum LanguageLevel {
   PYTHON24(false, true, false),
   PYTHON25(false, true, false),
   PYTHON26(true, true, false),
+  PYTHON27(true, true, false),
   PYTHON30(true, false, true),
   PYTHON31(true, false, true);
 
@@ -43,6 +44,9 @@ public enum LanguageLevel {
   }
 
   public static LanguageLevel fromPythonVersion(String pythonVersion) {
+    if (pythonVersion.startsWith("2.7")) {
+      return PYTHON26;
+    }
     if (pythonVersion.startsWith("2.6")) {
       return PYTHON26;
     }
