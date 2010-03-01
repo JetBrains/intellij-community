@@ -9,6 +9,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class YAMLFileTypeLoader extends FileTypeFactory {
   public void createFileTypes(final @NotNull FileTypeConsumer consumer) {
-    consumer.consume(YAMLFileType.YML, YAMLFileType.DEFAULT_EXTENSION);
+    consumer.consume(YAMLFileType.YML, YAMLFileType.DEFAULT_EXTENSION + ";yaml");
   }
 }
