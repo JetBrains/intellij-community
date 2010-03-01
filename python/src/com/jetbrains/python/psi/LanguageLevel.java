@@ -45,7 +45,7 @@ public enum LanguageLevel {
 
   public static LanguageLevel fromPythonVersion(String pythonVersion) {
     if (pythonVersion.startsWith("2.7")) {
-      return PYTHON26;
+      return PYTHON27;
     }
     if (pythonVersion.startsWith("2.6")) {
       return PYTHON26;
