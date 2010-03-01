@@ -27,7 +27,7 @@ public abstract class EditorAction extends AnAction implements DumbAware {
   private EditorActionHandler myHandler;
   private boolean myHandlersLoaded;
 
-  public final EditorActionHandler getHandler() {
+  public EditorActionHandler getHandler() {
     ensureHandlersLoaded();
     return myHandler;
   }

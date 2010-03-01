@@ -126,7 +126,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
   private final String myRepositoryPath;
 
   private volatile boolean myInRefresh;
-  private Object myTargetSelection;
+  private List<Object> myTargetSelection;
   private final AsynchConsumer<VcsHistorySession> myHistoryPanelRefresh;
 
   private static final String COMMIT_MESSAGE_TITLE = VcsBundle.message("label.selected.revision.commit.message");
@@ -743,7 +743,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
       public void run() {
         if (myInRefresh) return;
         myInRefresh = true;
-        myTargetSelection = myDualView.getFlatView().getSelectedObject();
+        myTargetSelection = myDualView.getFlatView().getSelectedObjects();
 
         myLoadingLabel.setVisible(true);
         mySplitter.revalidate();

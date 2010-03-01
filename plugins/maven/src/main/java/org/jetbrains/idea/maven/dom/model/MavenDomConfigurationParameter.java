@@ -16,11 +16,12 @@
 package org.jetbrains.idea.maven.dom.model;
 
 import com.intellij.util.xml.CustomChildren;
+import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.idea.maven.dom.MavenDomElement;
 
 import java.util.List;
 
-public interface MavenDomConfigurationParameter extends MavenDomElement {
+public interface MavenDomConfigurationParameter extends MavenDomElement, GenericDomValue<Object> {
   @CustomChildren
   List<MavenDomConfigurationParameter> getChildren();
 }
