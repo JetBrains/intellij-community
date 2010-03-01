@@ -298,12 +298,6 @@ public class CodeStyleIndentAndBracesPanel extends MultilanguageCodeStyleAbstrac
     return BRACE_PLACEMENT_VALUES[0];
   }
 
-  private static JPanel createPreviewPanel() {
-    JPanel p = new JPanel(new BorderLayout());
-    p.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.preview")));
-    return p;
-  }
-
   public boolean isModified(CodeStyleSettings settings) {
     boolean isModified;
     isModified = isModified(myCbElseOnNewline, settings.ELSE_ON_NEW_LINE);
