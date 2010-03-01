@@ -26,6 +26,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.FileContentQueue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,7 +35,6 @@ import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.file.PsiBinaryFileImpl;
-import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
@@ -251,7 +251,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   public static boolean isTooLarge(final VirtualFile vFile) {
-    return fileSizeIsGreaterThan(vFile, FileManagerImpl.MAX_INTELLISENSE_FILESIZE);
+    return fileSizeIsGreaterThan(vFile, FileContentQueue.MAX_INTELLISENSE_FILESIZE);
   }
 
   private static boolean fileSizeIsGreaterThan(final VirtualFile vFile, final long maxInBytes) {

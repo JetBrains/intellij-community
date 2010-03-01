@@ -67,11 +67,6 @@ import java.util.concurrent.ConcurrentMap;
 public class FileManagerImpl implements FileManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.impl.FileManagerImpl");
 
-  /**
-   * always  in range [0, PersistentFS.FILE_LENGTH_TO_CACHE_THRESHOLD]
-   */
-  public static final int MAX_INTELLISENSE_FILESIZE = maxIntellisenseFileSize();
-
   private final PsiManagerImpl myManager;
 
   private final FileTypeManager myFileTypeManager;
@@ -87,8 +82,6 @@ public class FileManagerImpl implements FileManager {
 
   private final FileDocumentManager myFileDocumentManager;
   private final MessageBusConnection myConnection;
-
-  @NonNls private static final String MAX_INTELLISENSE_SIZE_PROPERTY = "idea.max.intellisense.filesize";
 
   public FileManagerImpl(PsiManagerImpl manager,
                          FileTypeManager fileTypeManager, FileDocumentManager fileDocumentManager,
@@ -137,17 +130,6 @@ public class FileManagerImpl implements FileManager {
       myConnection.disconnect();
     }
     myDisposed = true;
-  }
-
-  private static int maxIntellisenseFileSize() {
-    final int maxLimitBytes = (int)PersistentFS.FILE_LENGTH_TO_CACHE_THRESHOLD;
-    final String userLimitKb = System.getProperty(MAX_INTELLISENSE_SIZE_PROPERTY);
-    try {
-      return userLimitKb != null ? Math.min(Integer.parseInt(userLimitKb) * 1024, maxLimitBytes) : maxLimitBytes;
-    }
-    catch (NumberFormatException ignored) {
-      return maxLimitBytes;
-    }
   }
 
   public void cleanupForNextTest() {
