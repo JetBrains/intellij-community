@@ -23,6 +23,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.StringUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -88,6 +89,11 @@ public class InstantiatingObjectToGetClassObjectInspection
                 text.append("[]");
                 final PsiArrayType arrayType = (PsiArrayType)type;
                 getTypeText(arrayType.getComponentType(), text);
+            } else if (type instanceof PsiClassType) {
+                final String canonicalText = type.getCanonicalText();
+                final String typeText =
+                        StringUtils.stripAngleBrackets(canonicalText);
+                text.insert(0, typeText);
             } else {
                 text.insert(0, type.getCanonicalText());
             }
@@ -121,6 +127,10 @@ public class InstantiatingObjectToGetClassObjectInspection
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
             if (!(qualifier instanceof PsiNewExpression)) {
+                return;
+            }
+            final PsiNewExpression newExpression = (PsiNewExpression)qualifier;
+            if (newExpression.getAnonymousClass() != null) {
                 return;
             }
             registerError(expression);

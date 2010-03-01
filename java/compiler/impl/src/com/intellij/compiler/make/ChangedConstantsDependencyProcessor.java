@@ -25,6 +25,7 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -59,6 +60,9 @@ class ChangedConstantsDependencyProcessor {
 
   public void run() throws CacheCorruptedException {
     final CacheCorruptedException[] _ex = new CacheCorruptedException[] {null};
+
+    DumbService.getInstance(myProject).waitForSmartMode(); // ensure running in smart mode
+
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         try {

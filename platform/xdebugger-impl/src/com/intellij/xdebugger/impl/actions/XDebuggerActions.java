@@ -45,6 +45,8 @@ public interface XDebuggerActions {
   @NonNls String WATCHES_TREE_POPUP_GROUP = "XDebugger.Watches.Tree.Popup";
   @NonNls String WATCHES_TREE_TOOLBAR_GROUP = "XDebugger.Watches.Tree.Toolbar";
 
+  @NonNls String ADD_TO_WATCH = "Debugger.AddToWatch";
+
   @NonNls String XNEW_WATCH = "XDebugger.NewWatch";
   @NonNls String XREMOVE_WATCH = "XDebugger.RemoveWatch";
   @NonNls String XEDIT_WATCH = "XDebugger.EditWatch";

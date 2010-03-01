@@ -20,6 +20,7 @@ import com.intellij.codeInsight.hint.DocumentFragmentTooltipRenderer;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
+import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.*;
 import com.intellij.ide.dnd.DnDManager;
@@ -57,8 +58,6 @@ import com.intellij.openapi.ui.TestableUi;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.JScrollPane2;
 import com.intellij.ui.LightweightHint;
@@ -227,6 +226,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private char[] myPrefixText;
   private TextAttributes myPrefixAttributes;
   private IndentGuideDescriptor myCaretIndentGuide = null;
+  private int myIndentSize = -1;
 
   static {
     ourCaretBlinkingCommand = new RepaintCursorCommand();
@@ -443,6 +443,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myCharHeight = -1;
     myLineHeight = -1;
     myDescent = -1;
+    myIndentSize = -1;
     myPlainFontMetrics = null;
 
     myCaretModel.reinitSettings();
@@ -1209,7 +1210,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     paintBackgrounds(g, clip);
     paintRectangularSelection(g);
     paintRightMargin(g, clip);
-    paintIndentGuides(g, clip);
+    paintIndentGuides((Graphics2D)g, clip);
     final MarkupModel docMarkup = myDocument.getMarkupModel(myProject);
     paintLineMarkersSeparators(g, clip, docMarkup);
     paintLineMarkersSeparators(g, clip, myMarkupModel);
@@ -1224,32 +1225,70 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     paintComposedTextDecoration((Graphics2D)g);
   }
 
-  private void paintIndentGuides(Graphics g, Rectangle clip) {
+  private void paintIndentGuides(Graphics2D g, Rectangle clip) {
     if (mySettings.isIndentGuidesShown()) {
+      int x = 0;
       int y = clip.y;
       int line = xyToLogicalPosition(new Point(0, y)).line;
 
       final int indentSize = getIndentSize();
       int gapWidth = EditorUtil.getSpaceWidth(Font.PLAIN, this) * indentSize;
+      final CharSequence chars = myDocument.getCharsNoThreadCheck();
 
+      int prevIndent = -1;
       do {
         final int indents = getIndents(line);
+
+        /*
+        if (prevIndent > indents && isWhitespaceAt(chars, x, y)) {
+          g.setColor(myScheme.getColor(EditorColors.WHITESPACES_COLOR));
+          g.drawLine(x, y + getLineHeight() - 2, x + 7, y + getLineHeight() - 2);
+        }
+        */
+
+        y = logicalLineToY(line);
+        if (y > clip.y + clip.height) break;
+
         for (int n = 1; n < indents; n++) {
-          int x = n * gapWidth + 1;
-          UIUtil.drawDottedLine((Graphics2D)g, x, y, x, y + getLineHeight(), getBackroundColor(), myScheme.getColor(EditorColors.WHITESPACES_COLOR));
+          x = n * gapWidth + 1;
+          drawSegment(g, x, y, chars, false);
         }
 
         line++;
-        y = logicalLineToY(line);
+        prevIndent = indents;
       }
-      while (y < clip.y + clip.height);
+      while (true);
 
       if (myCaretIndentGuide != null) {
-        int x = myCaretIndentGuide.indentLevel * gapWidth + 1;
-        int y1 = logicalLineToY(myCaretIndentGuide.startLine);
-        int y2 = logicalLineToY(myCaretIndentGuide.endLine);
-        UIUtil.drawDottedLine((Graphics2D)g, x, y1, x, y2, getBackroundColor(), getForegroundColor());
+        x = myCaretIndentGuide.indentLevel * gapWidth + 1;
+        for (int i = myCaretIndentGuide.startLine; i <= myCaretIndentGuide.endLine; i++) {
+          drawSegment(g, x, logicalLineToY(i), chars, true);
+        }
+
+        /*
+        y = logicalLineToY(myCaretIndentGuide.endLine);
+        if (isWhitespaceAt(chars, x, y)) {
+          g.setColor(getForegroundColor());
+          g.drawLine(x, y + getLineHeight() - 2, x + 7, y + getLineHeight() - 2);
+        }
+        */
       }
+    }
+  }
+
+  private boolean isWhitespaceAt(CharSequence chars, int x, int y) {
+    LogicalPosition log = xyToLogicalPosition(new Point(x, y));
+    int offset = logicalPositionToOffset(log);
+
+    char c = chars.charAt(offset);
+    return c == ' ' || c == '\t' || c == '\n';
+  }
+
+  private void drawSegment(Graphics2D g, int x, int y, CharSequence chars, boolean selected) {
+    if (isWhitespaceAt(chars, x, y)) {
+      UIUtil.drawDottedLine(g, x, y, x, y + getLineHeight(),
+                            getBackroundColor(),
+                            selected ? getForegroundColor() : myScheme.getColor(EditorColors.WHITESPACES_COLOR));
     }
   }
 
@@ -1260,7 +1299,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     final LogicalPosition caretPosition = myCaretModel.getLogicalPosition();
     int startLine = caretPosition.line;
     int endLine = startLine;
-    int indents = caretPosition.column / indentSize;
+    int indents = Math.min(caretPosition.column / indentSize, getIndents(startLine));
 
     if (indents > 0 && caretPosition.column % indentSize == 0) {
       while (startLine > 0) {
@@ -1268,15 +1307,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         startLine--;
       }
 
-      if (getIndents(endLine + 1) > indents) endLine++;
-
       while (endLine < myDocument.getLineCount() - 1) {
-        if (getIndents(endLine) <= indents) break;
+        if (getIndents(endLine + 1) <= indents) break;
         endLine++;
       }
 
       if (indents > 0 && startLine < endLine) {
-        return new IndentGuideDescriptor(indents, startLine, endLine);
+        return new IndentGuideDescriptor(indents, startLine, endLine, indentSize);
       }
     }
 
@@ -2232,9 +2269,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private int getIndentSize() {
-    if (myProject == null || myProject.isDisposed() || myVirtualFile == null) return EditorUtil.getTabSize(this);
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings();
-    return settings.getIndentSize(myVirtualFile.getFileType());
+    if (myIndentSize == -1) {
+      if (myProject == null || myProject.isDisposed() || myVirtualFile == null) return EditorUtil.getTabSize(this);
+      myIndentSize = CodeStyleFacade.getInstance(myProject).getIndentSize(myVirtualFile.getFileType());
+    }
+    return myIndentSize;
   }
 
   private int getIndents(int line, boolean goUp, boolean goDown) {
@@ -2248,14 +2287,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return calcColumnNumber(nonWhitespaceOffset, line) / getIndentSize();
     }
     else {
-      int upIndent = goUp ? getIndents(line - 1, true, false) : 0;
-      int downIndent = goDown ? getIndents(line + 1, false, true) : 0;
-      return Math.max(upIndent, downIndent);
+      int upIndent = goUp ? getIndents(line - 1, true, false) : 100;
+      int downIndent = goDown ? getIndents(line + 1, false, true) : 100;
+      return Math.min(upIndent, downIndent);
     }
   }
 
   private int getIndents(int line) {
     int answer = getIndents(line, true, true);
+    if (answer == 0) return 0;
 
     int prev;
     do {

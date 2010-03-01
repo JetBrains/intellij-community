@@ -235,6 +235,10 @@ public class EditorOptionsPanel {
       uiSettings.fireUISettingsChanged();
     }
     myErrorHighlightingPanel.apply();
+    restartDaemons();
+  }
+
+  public static void restartDaemons() {
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
       DaemonCodeAnalyzer.getInstance(project).settingsChanged();

@@ -81,7 +81,16 @@ public abstract class Filter {
     }
   };
 
-  public static final Filter DEFECTIVE_LEAF = DEFECT.and(LEAF);
+  public static final Filter DEFECTIVE_LEAF = DEFECT.and(new Filter() {
+    @Override
+    public boolean shouldAccept(AbstractTestProxy test) {
+      if (test.isLeaf()) return true;
+      for (AbstractTestProxy testProxy : test.getChildren()) {
+        if (testProxy.isDefect()) return false;
+      }
+      return true;
+    }
+  });
 
   private static class AndFilter extends Filter {
     private final Filter myFilter1;

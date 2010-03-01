@@ -336,4 +336,8 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   protected boolean isMultilanguage() {
     return false;
   }
+
+  protected Editor getEditor() {
+    return myEditor;
+  }
 }

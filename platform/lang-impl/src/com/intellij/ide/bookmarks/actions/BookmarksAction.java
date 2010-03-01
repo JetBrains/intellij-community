@@ -582,7 +582,7 @@ public class BookmarksAction extends AnAction implements DumbAware {
     private final JList myList;
 
     private DeleteBookmarkAction(Project project, JList list) {
-      super("Delete", "Delete current bookmark", IconLoader.getIcon("/actions/delete.png"));
+      super("Delete", "Delete current bookmark", IconLoader.getIcon("/general/remove.png"));
       myProject = project;
       myList = list;
       registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("DELETE")), list);

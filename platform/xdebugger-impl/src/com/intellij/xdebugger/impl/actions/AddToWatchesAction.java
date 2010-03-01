@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.dom.model;
+package com.intellij.xdebugger.impl.actions;
 
-import com.intellij.util.xml.CustomChildren;
-import com.intellij.util.xml.GenericDomValue;
-import org.jetbrains.idea.maven.dom.MavenDomElement;
+import com.intellij.xdebugger.impl.DebuggerSupport;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+/**
+ * @author nik
+ */
+public class AddToWatchesAction extends XDebuggerActionBase {
+  public AddToWatchesAction() {
+    super(true);
+  }
 
-public interface MavenDomConfigurationParameter extends MavenDomElement, GenericDomValue<Object> {
-  @CustomChildren
-  List<MavenDomConfigurationParameter> getChildren();
+  @NotNull
+  @Override
+  protected DebuggerActionHandler getHandler(@NotNull DebuggerSupport debuggerSupport) {
+    return debuggerSupport.getAddToWatchesActionHandler();
+  }
 }

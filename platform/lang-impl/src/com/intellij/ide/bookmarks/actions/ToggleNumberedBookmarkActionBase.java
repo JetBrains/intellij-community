@@ -52,13 +52,14 @@ public abstract class ToggleNumberedBookmarkActionBase extends AnAction implemen
 
     final Bookmark oldBookmark = info.getBookmarkAtPlace();
 
+    final BookmarkManager manager = BookmarkManager.getInstance(project);
     if (oldBookmark != null) {
-      BookmarkManager.getInstance(project).removeBookmark(oldBookmark);
+      manager.removeBookmark(oldBookmark);
     }
 
     if (oldBookmark == null || oldBookmark.getMnemonic() != '0' + myNumber) {
-      final Bookmark bookmark = BookmarkManager.getInstance(project).addTextBookmark(info.getFile(), info.getLine(), "");
-      bookmark.setMnemonic((char)('0' + myNumber));
+      final Bookmark bookmark = manager.addTextBookmark(info.getFile(), info.getLine(), "");
+      manager.setMnemonic(bookmark, (char)('0' + myNumber));
     }
   }
 }
