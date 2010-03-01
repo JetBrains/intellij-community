@@ -18,12 +18,16 @@ package com.intellij.psi.impl.source;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.java.stubs.PsiClassReferenceListStub;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public final class PsiReferenceListImpl extends JavaStubPsiElement<PsiClassReferenceListStub> implements PsiReferenceList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiReferenceListImpl");
@@ -39,7 +43,10 @@ public final class PsiReferenceListImpl extends JavaStubPsiElement<PsiClassRefer
 
   @NotNull
   public PsiJavaCodeReferenceElement[] getReferenceElements() {
-    return calcTreeElement().getChildrenAsPsiElements(REFERENCE_BIT_SET, Constants.PSI_REFERENCE_ELEMENT_ARRAY_CONSTRUCTOR);
+    final PsiJavaCodeReferenceElement[] owns =
+      calcTreeElement().getChildrenAsPsiElements(REFERENCE_BIT_SET, Constants.PSI_REFERENCE_ELEMENT_ARRAY_CONSTRUCTOR);
+    final List<PsiJavaCodeReferenceElement> augments = PsiAugmentProvider.collectAugments(this, PsiJavaCodeReferenceElement.class);
+    return ArrayUtil.mergeArrayAndCollection(owns, augments, PsiJavaCodeReferenceElement.ARRAY_FACTORY);
   }
 
   @NotNull

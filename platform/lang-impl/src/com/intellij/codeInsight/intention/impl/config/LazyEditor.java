@@ -204,4 +204,8 @@ class LazyEditor extends UserDataHolderBase implements Editor {
   public JComponent getHeaderComponent() {
     return getEditor().getHeaderComponent();
   }
+
+  public IndentGuideDescriptor getCaretIndentGuide() {
+    return getEditor().getCaretIndentGuide();
+  }
 }

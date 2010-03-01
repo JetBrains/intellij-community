@@ -30,14 +30,23 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import java.awt.*;
+import java.io.File;
 
 /**
  * Base class for code style settings panels supporting multiple programming languages.
@@ -48,9 +57,14 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
 
   private Language myLanguage;
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.codeStyle.MultilanguageCodeStyleAbstractPanel");
+  private static Project mySettingsProject;
+  private static int myInstanceCount;
+  private int myLangSelectionIndex;
 
   protected MultilanguageCodeStyleAbstractPanel(CodeStyleSettings settings) {
     super(settings);
+    createSettingsProject();
+    myInstanceCount++;
   }
 
   /**
@@ -80,10 +94,11 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
     if (myLanguage != null) {
       return myLanguage.getAssociatedFileType();
     }
-    LanguageFileType availTypes[] = LanguageCodeStyleSettingsProvider.getLanguageFileTypes();
-    if (availTypes.length > 0) {
-      myLanguage = availTypes[0].getLanguage();
-      return availTypes[0];
+    Language langs[] = LanguageCodeStyleSettingsProvider.getLanguagesWithCodeStyleSettings();
+    if (langs.length > 0) {
+      myLanguage = langs[0];
+      FileType type = langs[0].getAssociatedFileType();
+      if (type != null) return type;
     }
     return StdFileTypes.JAVA;
   }
@@ -130,4 +145,87 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
     manager.commitDocument(doc);
     return psiFile;
   }
+
+  @Override
+  protected final synchronized Project getCurrentProject() {
+    return mySettingsProject;
+  }
+
+  @Override
+  public void dispose() {
+    myInstanceCount--;
+    if (myInstanceCount == 0) {
+      disposeSettingsProject();
+    }
+    super.dispose();
+  }
+
+  /**
+   * A physical settings project is created to ensure that all formatters in preview panels work correctly.
+   */
+  private synchronized static void createSettingsProject() {
+    if (mySettingsProject != null) return;
+    try {
+      File tempFile = File.createTempFile("idea-", "-settings.tmp");
+      tempFile.deleteOnExit();
+      mySettingsProject = ProjectManagerEx.getInstanceEx().newProject("settings.tmp", tempFile.getPath(), true, false);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+  }
+
+  private synchronized static void disposeSettingsProject() {
+    if (mySettingsProject == null) return;
+    Disposer.dispose(mySettingsProject);
+    mySettingsProject = null;
+  }
+
+  protected static JPanel createPreviewPanel() {
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.setBorder(IdeBorderFactory.createTitledBorder("Preview"));
+    panel.setPreferredSize(new Dimension(200, 0));
+    return panel;
+  }
+
+
+  @Override
+  protected void installPreviewPanel(final JPanel previewPanel) {
+    JTabbedPane tabbedPane = new JTabbedPane();
+    tabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
+    Language[] langs = LanguageCodeStyleSettingsProvider.getLanguagesWithCodeStyleSettings();
+    if (langs.length == 0) return;
+    for (Language lang : langs) {
+      tabbedPane.addTab(lang.getDisplayName(), createDummy());
+    }
+    tabbedPane.setComponentAt(0, getEditor().getComponent());
+    myLangSelectionIndex = 0;
+    setLanguage(langs[0]);
+    tabbedPane.addChangeListener(new ChangeListener() {
+      public void stateChanged(ChangeEvent e) {
+        onTabSelection((JTabbedPane)e.getSource());        
+      }
+    });
+    previewPanel.add(tabbedPane, BorderLayout.CENTER);
+  }
+
+
+  private void onTabSelection(JTabbedPane tabs) {
+    int i = tabs.getSelectedIndex();
+    tabs.setComponentAt(myLangSelectionIndex, createDummy());
+    tabs.setComponentAt(i, getEditor().getComponent());
+    myLangSelectionIndex = i;
+    String selectionTitle = tabs.getTitleAt(i);
+    Language lang = LanguageCodeStyleSettingsProvider.getLanguage(selectionTitle);
+    if (lang != null) {
+      setLanguage(lang);
+    }
+  }
+
+
+  private JComponent createDummy() {
+    return new JLabel("");
+  }
+
+
 }

@@ -54,7 +54,11 @@ class Context {
         def scope = (ScriptScope) args.scope
 
         //first, it should be inside groovy script
-        addFilter new PlaceContextFilter(PlatformPatterns.psiElement().inFile(GroovyPatterns.groovyScript()))
+        def scriptPattern = GroovyPatterns.groovyScript()
+        if (scope.extension) {
+          scriptPattern = scriptPattern.withVirtualFile(PlatformPatterns.virtualFile().withExtension(scope.extension))
+        }
+        addFilter new PlaceContextFilter(PlatformPatterns.psiElement().inFile(scriptPattern))
 
         // Name matcher
         def namePattern = scope.namePattern

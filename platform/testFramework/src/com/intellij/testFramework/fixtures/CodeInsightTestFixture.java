@@ -33,6 +33,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.TestDataFile;
+import com.intellij.testFramework.TestDataPath;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -156,7 +157,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @see #getReferenceAtCaretPositionWithAssertion(String...)
    */
   @Nullable
-  PsiReference getReferenceAtCaretPosition(@NonNls String... filePaths) throws Exception;
+  PsiReference getReferenceAtCaretPosition(@TestDataFile @NonNls String... filePaths) throws Exception;
 
   /**
    * Finds the reference in position marked by {@link #CARET_MARKER}.

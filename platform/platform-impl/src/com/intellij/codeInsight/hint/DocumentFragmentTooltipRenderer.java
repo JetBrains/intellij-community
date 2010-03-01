@@ -72,7 +72,7 @@ public class DocumentFragmentTooltipRenderer implements TooltipRenderer {
     FoldingModelEx foldingModel = (FoldingModelEx)editor.getFoldingModel();
     foldingModel.setFoldingEnabled(false);
     TextRange textRange = new TextRange(startOffset, endOffset);
-    hint = EditorFragmentComponent.showEditorFragmentHintAt(editor, textRange, p.x, p.y, false, false);
+    hint = EditorFragmentComponent.showEditorFragmentHintAt(editor, textRange, p.x, p.y, false, false, true);
     foldingModel.setFoldingEnabled(true);
     return hint;
   }

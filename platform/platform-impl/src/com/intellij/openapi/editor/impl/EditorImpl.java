@@ -17,8 +17,10 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.Patches;
 import com.intellij.codeInsight.hint.DocumentFragmentTooltipRenderer;
+import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
+import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.*;
 import com.intellij.ide.dnd.DnDManager;
@@ -56,10 +58,9 @@ import com.intellij.openapi.ui.TestableUi;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.JScrollPane2;
+import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.ContainerUtil;
@@ -224,6 +225,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private char[] myPrefixText;
   private TextAttributes myPrefixAttributes;
+  private IndentGuideDescriptor myCaretIndentGuide = null;
 
   static {
     ourCaretBlinkingCommand = new RepaintCursorCommand();
@@ -282,6 +284,36 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDocument.addDocumentListener(mySelectionModel);
     myDocument.addDocumentListener(myEditorDocumentAdapter);
 
+    myCaretModel.addCaretListener(new CaretListener() {
+      LightweightHint myCurrentHint = null;
+
+      public void caretPositionChanged(CaretEvent e) {
+
+        final IndentGuideDescriptor newGuide = getCaretIndentGuide();
+        if (!Comparing.equal(newGuide, myCaretIndentGuide)) {
+          repaintGuide(newGuide);
+          repaintGuide(myCaretIndentGuide);
+          myCaretIndentGuide = newGuide;
+
+          if (myCurrentHint != null) {
+            myCurrentHint.hide();
+            myCurrentHint = null;
+          }
+
+          if (newGuide != null) {
+            final Rectangle visibleArea = getScrollingModel().getVisibleArea();
+            final int line = newGuide.startLine - 1;
+            if (logicalLineToY(line) < visibleArea.y) {
+              TextRange textRange = new TextRange(myDocument.getLineStartOffset(line),
+                                                  myDocument.getLineEndOffset(line));
+              
+              myCurrentHint = EditorFragmentComponent.showEditorFragmentHint(EditorImpl.this, textRange, false, false);
+            }
+          }
+        }
+      }
+    });
+
     myCaretCursor = new CaretCursor();
 
     myFoldingModel.flushCaretShift();
@@ -339,6 +371,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           }
         }
       });
+    }
+  }
+
+  private void repaintGuide(IndentGuideDescriptor guide) {
+    if (guide != null) {
+      repaintLines(guide.startLine, guide.endLine);
     }
   }
 
@@ -1190,7 +1228,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       int y = clip.y;
       int line = xyToLogicalPosition(new Point(0, y)).line;
 
-      int gapWidth = EditorUtil.getSpaceWidth(Font.PLAIN, this) * getIndentSize();
+      final int indentSize = getIndentSize();
+      int gapWidth = EditorUtil.getSpaceWidth(Font.PLAIN, this) * indentSize;
 
       do {
         final int indents = getIndents(line);
@@ -1203,7 +1242,44 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         y = logicalLineToY(line);
       }
       while (y < clip.y + clip.height);
+
+      if (myCaretIndentGuide != null) {
+        int x = myCaretIndentGuide.indentLevel * gapWidth + 1;
+        int y1 = logicalLineToY(myCaretIndentGuide.startLine);
+        int y2 = logicalLineToY(myCaretIndentGuide.endLine);
+        UIUtil.drawDottedLine((Graphics2D)g, x, y1, x, y2, getBackroundColor(), getForegroundColor());
+      }
     }
+  }
+
+  @Nullable
+  public IndentGuideDescriptor getCaretIndentGuide() {
+    final int indentSize = getIndentSize();
+
+    final LogicalPosition caretPosition = myCaretModel.getLogicalPosition();
+    int startLine = caretPosition.line;
+    int endLine = startLine;
+    int indents = caretPosition.column / indentSize;
+
+    if (indents > 0 && caretPosition.column % indentSize == 0) {
+      while (startLine > 0) {
+        if (getIndents(startLine - 1) <= indents) break;
+        startLine--;
+      }
+
+      if (getIndents(endLine + 1) > indents) endLine++;
+
+      while (endLine < myDocument.getLineCount() - 1) {
+        if (getIndents(endLine) <= indents) break;
+        endLine++;
+      }
+
+      if (indents > 0 && startLine < endLine) {
+        return new IndentGuideDescriptor(indents, startLine, endLine);
+      }
+    }
+
+    return null;
   }
 
   public void setHeaderComponent(JComponent header) {
@@ -2156,8 +2232,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private int getIndentSize() {
     if (myProject == null || myProject.isDisposed() || myVirtualFile == null) return EditorUtil.getTabSize(this);
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings();
-    return settings.getIndentSize(myVirtualFile.getFileType());
+    return CodeStyleFacade.getInstance(myProject).getIndentSize(myVirtualFile.getFileType());
   }
 
   private int getIndents(int line, boolean goUp, boolean goDown) {

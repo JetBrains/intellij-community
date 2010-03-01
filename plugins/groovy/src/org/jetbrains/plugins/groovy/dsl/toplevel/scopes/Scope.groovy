@@ -37,10 +37,15 @@ class ClosureScope extends Scope {
 
 class ScriptScope extends Scope {
   final String namePattern
+  final String extension
 
   ScriptScope(Map args) {
-    if (args && args.name) {
-      namePattern = args.name
+    if (args) {
+      if (args.name) {
+        namePattern = args.name
+      } else if (args.extension) {
+        extension = args.extension
+      }
     }
   }
 

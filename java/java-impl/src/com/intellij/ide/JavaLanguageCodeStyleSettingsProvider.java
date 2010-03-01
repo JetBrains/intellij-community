@@ -16,8 +16,8 @@
 package com.intellij.ide;
 
 import com.intellij.application.options.codeStyle.LanguageCodeStyleSettingsProvider;
-import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,8 +25,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
   @Override
-  public LanguageFileType getLanguageFileType() {
-    return StdFileTypes.JAVA;
+  public Language getLanguage() {
+    return StdLanguages.JAVA;
   }
 
   @Override

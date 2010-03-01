@@ -28,10 +28,7 @@ import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 public class TableView<Item> extends BaseTableView implements ItemsProvider, SelectionProvider {
   public TableView() {
@@ -125,6 +122,18 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
     final int row = getSelectedRow();
     final List<Item> list = getItems();
     return row >= 0 && row < list.size() ? list.get(row) : null;    
+  }
+
+  @Nullable
+  public List<Item> getSelectedObjects() {
+    final int[] selectedRows = getSelectedRows();
+    if (selectedRows == null || (selectedRows.length == 0)) return Collections.emptyList();
+    final List<Item> items = getItems();
+    final List<Item> result = new ArrayList<Item>();
+    for (int selectedRow : selectedRows) {
+      result.add(items.get(selectedRow));
+    }
+    return result;
   }
 
   public void addSelection(Object item) {

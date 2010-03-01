@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
+import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.cache.ModifierFlags;
@@ -29,6 +30,7 @@ import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -210,6 +212,11 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
                ((PsiClass)SourceTreeToPsiMap.treeElementToPsi(parentTreeElement.getTreeParent())).isInterface()) {
         if (type == JavaTokenType.PUBLIC_KEYWORD) return;
       }
+      else if (parentTreeElement.getElementType() == JavaElementType.ANNOTATION_METHOD &&
+               parentTreeElement.getTreeParent().getElementType() == JavaElementType.CLASS &&
+               ((PsiClass)SourceTreeToPsiMap.treeElementToPsi(parentTreeElement.getTreeParent())).isAnnotationType()) {
+        if (type == JavaTokenType.PUBLIC_KEYWORD || type == JavaTokenType.ABSTRACT_KEYWORD) return;
+      }
 
       if (type == JavaTokenType.PUBLIC_KEYWORD
           || type == JavaTokenType.PRIVATE_KEYWORD
@@ -254,7 +261,9 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
 
   @NotNull
   public PsiAnnotation[] getAnnotations() {
-    return getStubOrPsiChildren(JavaStubElementTypes.ANNOTATION, PsiAnnotation.ARRAY_FACTORY);
+    final PsiAnnotation[] owns = getStubOrPsiChildren(JavaStubElementTypes.ANNOTATION, PsiAnnotation.ARRAY_FACTORY);
+    final List<PsiAnnotation> augments = PsiAugmentProvider.collectAugments(this, PsiAnnotation.class);
+    return ArrayUtil.mergeArrayAndCollection(owns, augments, PsiAnnotation.ARRAY_FACTORY);
   }
 
   @NotNull
