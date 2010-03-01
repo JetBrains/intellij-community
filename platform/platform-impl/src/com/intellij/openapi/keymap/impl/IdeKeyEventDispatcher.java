@@ -566,9 +566,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     // search in main keymap
 
-    String[] actionIds;
     Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
-    actionIds = keymap.getActionIds(sc);
+    String[] actionIds = keymap.getActionIds(sc);
 
     ActionManager actionManager = ActionManager.getInstance();
     for (String actionId : actionIds) {

@@ -870,11 +870,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private boolean checkReadonlyUsages() {
     final Set<VirtualFile> readOnlyUsages = getReadOnlyUsagesFiles();
 
-    if (!readOnlyUsages.isEmpty()) {
-      return
-        !ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(VfsUtil.toVirtualFileArray(readOnlyUsages)).hasReadonlyFiles();
-    }
-    return true;
+    return readOnlyUsages.isEmpty() ||
+           !ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(VfsUtil.toVirtualFileArray(readOnlyUsages)).hasReadonlyFiles();
   }
 
   private Set<Usage> getReadOnlyUsages() {

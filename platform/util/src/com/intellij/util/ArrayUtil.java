@@ -112,12 +112,14 @@ public class ArrayUtil {
   @NotNull
   public static Object[] toObjectArray(@NotNull Collection<?> collection) {
     if (collection.isEmpty()) return EMPTY_OBJECT_ARRAY;
+    //noinspection SSBasedInspection
     return collection.toArray(new Object[collection.size()]);
   }
 
   @NotNull
   public static String[] toStringArray(@NotNull Collection<String> collection) {
     if (collection.isEmpty()) return EMPTY_STRING_ARRAY;
+    //noinspection SSBasedInspection
     return collection.toArray(new String[collection.size()]);
   }
 
