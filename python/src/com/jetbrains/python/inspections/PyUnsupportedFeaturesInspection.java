@@ -62,24 +62,26 @@ public class PyUnsupportedFeaturesInspection extends LocalInspectionTool {
       REMOVED_METHODS.add("reload");
     }
 
+    private static boolean isPy3K(PyElement node) {
+      VirtualFile virtualFile = node.getContainingFile().getVirtualFile();
+      return virtualFile != null && LanguageLevel.forFile(virtualFile).isPy3K();
+    }
+
     public Visitor(final ProblemsHolder holder) {
       super(holder);
     }
 
     @Override
     public void visitPyBinaryExpression(PyBinaryExpression node) {
-      VirtualFile virtualFile = node.getContainingFile().getVirtualFile();
-      if (virtualFile != null && LanguageLevel.forFile(virtualFile).isPy3K()) {
-        if (node.isOperator("<>")) {
-          registerProblem(node, "<> is not supported in Python 3, use != instead", new ReplaceNotEqOperatorQuickFix());
-        }
+      if (node.isOperator("<>")) {
+        String message = isPy3K(node) ? "<> is not supported in Python 3, use != instead" : "<> is deprecated, use != instead";
+        registerProblem(node, message, new ReplaceNotEqOperatorQuickFix());
       }
     }
 
     @Override
     public void visitPyNumericLiteralExpression(PyNumericLiteralExpression node) {
-      VirtualFile virtualFile = node.getContainingFile().getVirtualFile();
-      if (virtualFile != null && LanguageLevel.forFile(virtualFile).isPy3K()) {
+      if (isPy3K(node)) {
         String text = node.getText();
         if (text.endsWith("l") || text.endsWith("L")) {
           registerProblem(node, "Integer literals do not support a trailing \'l\' or \'L\' in Python 3", new RemoveTrailingLQuickFix());
@@ -92,14 +94,14 @@ public class PyUnsupportedFeaturesInspection extends LocalInspectionTool {
 
     @Override
     public void visitPyStringLiteralExpression(PyStringLiteralExpression node) {
-      VirtualFile virtualFile = node.getContainingFile().getVirtualFile();
-      if (virtualFile != null && LanguageLevel.forFile(virtualFile).isPy3K()) {
+      if (isPy3K(node)) {
         String text = node.getText();
         if (text.startsWith("u") || text.startsWith("U")) {
           registerProblem(node, "String literals do not support a leading \'u\' or \'U\' in Python 3", new ReamoveLeadingUQuickFix());
         }
       }
     }
+
 
     @Override
     public void visitPyListCompExpression(PyListCompExpression node) {
@@ -116,16 +118,13 @@ public class PyUnsupportedFeaturesInspection extends LocalInspectionTool {
     public void visitPyExceptBlock(PyExceptPart node) {
       PyExpression exceptClass = node.getExceptClass();
       if (exceptClass != null && node.getTarget() != null) {
-        VirtualFile virtualFile = node.getContainingFile().getVirtualFile();
-        if (virtualFile != null) {
-          if (LanguageLevel.forFile(virtualFile).isPy3K()) {
-            PsiElement element = exceptClass.getNextSibling();
-            while (element instanceof PsiWhiteSpace) {
-              element = element.getNextSibling();
-            }
-            if (element != null && ",".equals(element.getText())) {
-              registerProblem(node, "Python 3 does not support this syntax", new ReplaceExceptPartQuickFix(true));
-            }
+        if (isPy3K(node)) {
+          PsiElement element = exceptClass.getNextSibling();
+          while (element instanceof PsiWhiteSpace) {
+            element = element.getNextSibling();
+          }
+          if (element != null && ",".equals(element.getText())) {
+            registerProblem(node, "Python 3 does not support this syntax", new ReplaceExceptPartQuickFix(true));
           }
         }
       }
@@ -134,14 +133,12 @@ public class PyUnsupportedFeaturesInspection extends LocalInspectionTool {
     @Override
     public void visitPyRaiseStatement(PyRaiseStatement node) {
       PyExpression[] expressions = node.getExpressions();
-      assert(expressions != null);
-      if (expressions.length < 2) {
-        return;
-      }
+      if (expressions != null) {
+        if (expressions.length < 2) {
+          return;
+        }
 
-      VirtualFile virtualFile = node.getContainingFile().getVirtualFile();
-      if (virtualFile != null) {
-        if (LanguageLevel.forFile(virtualFile).isPy3K()) {
+        if (isPy3K(node)) {
           if (expressions.length == 3) {
             registerProblem(node, "Python 3 does not support this syntax", new ReplaceRaiseStatementQuickFix());
             return;
@@ -153,14 +150,27 @@ public class PyUnsupportedFeaturesInspection extends LocalInspectionTool {
           if (element != null && ",".equals(element.getText())) {
             registerProblem(node, "Python 3 does not support this syntax", new ReplaceRaiseStatementQuickFix());
           }
-        } else {
-          if (expressions.length == 2) {
-            PsiElement element = expressions[0].getNextSibling();
-            while (element instanceof PsiWhiteSpace) {
-              element = element.getNextSibling();
-            }
-            if (element != null && "from".equals(element.getText())) {
-              registerProblem(node, "Python 2 does not support raise ... from syntax");
+        }
+      }
+    }
+
+    @Override
+    public void visitPyReprExpression(PyReprExpression node) {
+      if (isPy3K(node)) {
+        registerProblem(node, "Backquote is not supported in Python 3, use repr() instead", new ReplaceBackquoteExpressionQuickFix());
+      }
+    }
+
+    @Override
+    public void visitPyImportStatement(PyImportStatement node) {
+      if (isPy3K(node)) {
+        PyImportElement[] importElements = node.getImportElements();
+        for (PyImportElement importElement : importElements) {
+          PyReferenceExpression importReference = importElement.getImportReference();
+          if (importReference != null) {
+            String name = importReference.getName();
+            if ("__builtin__".equals(name)) {
+              registerProblem(node, "Module __builtin__ renamed to builtins");
             }
           }
         }
@@ -168,32 +178,14 @@ public class PyUnsupportedFeaturesInspection extends LocalInspectionTool {
     }
 
     @Override
-    public void visitPyReprExpression(PyReprExpression node) {
-      VirtualFile virtualFile = node.getContainingFile().getVirtualFile();
-      if (virtualFile != null && LanguageLevel.forFile(virtualFile).isPy3K()) {
-        registerProblem(node, "Backquote is not supported in Python 3, use repr() instead", new ReplaceBackquoteExpressionQuickFix());
-      }
-    }
-
-    @Override
     public void visitPyCallExpression(PyCallExpression node) {
-      VirtualFile virtualFile = node.getContainingFile().getVirtualFile();
-      if (virtualFile != null) {
+      if (isPy3K(node)) {
         String name = node.getCallee().getName();
-        if (LanguageLevel.forFile(virtualFile).isPy3K()) {
-          if ("raw_input".equals(name)) {
-            registerProblem(node.getCallee(), PyBundle.message("INSP.method.$0.removed.use.$1", name, "input"),
-                            new ReplaceMethodQuickFix("input"));
-          } else if (REMOVED_METHODS.contains(name)) {
-            registerProblem(node.getCallee(), PyBundle.message("INSP.method.$0.removed", name));
-          }
-        } else {
-          if ("super".equals(name)) {
-            PyArgumentList argumentList = node.getArgumentList();
-            if (argumentList != null && argumentList.getArguments().length == 0) {
-              registerProblem(node, "super() should have arguments in current language version");
-            }
-          }
+        if ("raw_input".equals(name)) {
+          registerProblem(node.getCallee(), PyBundle.message("INSP.method.$0.removed.use.$1", name, "input"),
+                          new ReplaceMethodQuickFix("input"));
+        } else if (REMOVED_METHODS.contains(name)) {
+          registerProblem(node.getCallee(), PyBundle.message("INSP.method.$0.removed", name));
         }
       }
     }

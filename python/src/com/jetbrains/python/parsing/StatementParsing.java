@@ -154,7 +154,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     }
     PsiBuilder.Marker exprStatement = builder.mark();
     if (builder.getTokenType() == PyTokenTypes.YIELD_KEYWORD) {
-      getExpressionParser().parseYieldOrTupleExpression(builder, false);
+      getExpressionParser().parseYieldOrTupleExpression(false);
       checkEndOfStatement(inSuite);
       exprStatement.done(PyElementTypes.EXPRESSION_STATEMENT);
       return;
@@ -164,7 +164,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       if (PyTokenTypes.AUG_ASSIGN_OPERATIONS.contains(builder.getTokenType())) {
         statementType = PyElementTypes.AUG_ASSIGNMENT_STATEMENT;
         builder.advanceLexer();
-        if (!getExpressionParser().parseYieldOrTupleExpression(builder, false)) {
+        if (!getExpressionParser().parseYieldOrTupleExpression(false)) {
           builder.error("expression expected");          
         }
       }
@@ -178,7 +178,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
 
         while (true) {
           PsiBuilder.Marker maybeExprMarker = builder.mark();
-          if (!getExpressionParser().parseYieldOrTupleExpression(builder, false)) {
+          if (!getExpressionParser().parseYieldOrTupleExpression(false)) {
             maybeExprMarker.drop();
             builder.error("expression expected");
             break;

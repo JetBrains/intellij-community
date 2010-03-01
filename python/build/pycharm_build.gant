@@ -220,6 +220,7 @@ def build_searchable_options() {
       project["python-ide"].runtimeClasspath().each {
         pathelement(location: it)
       }
+      pathelement(location: project.builder.moduleOutput(project["testFramework"]))  // contains headless implementation classes
     }
   }
 }

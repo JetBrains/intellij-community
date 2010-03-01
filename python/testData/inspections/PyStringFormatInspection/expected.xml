@@ -107,7 +107,7 @@
   </problem>
   <problem>
     <file>string-format.py</file>
-    <line>48</line>
-    <description>Too few arguments for format string</description>
+    <line>54</line>
+    <description>Unexpected type</description>
   </problem>
 </problems>

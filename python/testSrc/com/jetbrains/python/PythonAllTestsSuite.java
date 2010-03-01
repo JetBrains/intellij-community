@@ -35,6 +35,7 @@ public class PythonAllTestsSuite {
     PythonInspectionsTest.class,
     PythonDemorganLawIntentionTest.class,
     PyQuickFixTest.class,
+    PyIntentionTest.class,
     PySelectWordTest.class,
     PyEditingTest.class,
     PySurroundWithTest.class,

@@ -19,7 +19,7 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   private void doTest(String testName, LocalInspectionTool localInspectionTool) throws Throwable {
     myFixture.testInspection("inspections/" + testName, new LocalInspectionToolWrapper(localInspectionTool));
   }
-  
+
   private void doTestWithPy3k(String testName, LocalInspectionTool localInspectionTool) throws Throwable {
     PythonLanguageLevelPusher.FORCE_LANGUAGE_LEVEL = LanguageLevel.PYTHON30;
     PythonLanguageLevelPusher.pushLanguageLevel(myFixture.getProject());
@@ -85,4 +85,36 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
     LocalInspectionTool inspection = new PyUnsupportedFeaturesInspection();
     doTestWithPy3k(getTestName(false), inspection);
   }
+
+  public void testPyDictCreationInspection() throws Throwable {
+    LocalInspectionTool inspection = new PyDictCreationInspection();
+    doTest(getTestName(false), inspection);
+  }
+
+  public void testPyDeprecatedModulesInspection() throws Throwable {
+    PythonLanguageLevelPusher.FORCE_LANGUAGE_LEVEL = LanguageLevel.PYTHON25;
+    PythonLanguageLevelPusher.pushLanguageLevel(myFixture.getProject());
+    try {
+      LocalInspectionTool inspection = new PyDeprecatedModulesInspection();
+      doTest(getTestName(false), inspection);
+    }
+    finally {
+      PythonLanguageLevelPusher.FORCE_LANGUAGE_LEVEL = null;
+    }
+  }
+
+  public void testPyTupleAssignmentBalanceInspection() throws Throwable {
+    LocalInspectionTool inspection = new PyTupleAssignmentBalanceInspection();
+    doTest(getTestName(false), inspection);
+  }
+
+  public void testPyTupleAssignmentBalanceInspection2() throws Throwable {
+    LocalInspectionTool inspection = new PyTupleAssignmentBalanceInspection();
+    doTestWithPy3k(getTestName(false), inspection);
+  }
+
+  //public void testPyExceptClausesOrderInspection() throws Throwable {
+  //  LocalInspectionTool inspection = new PyExceptClausesOrderInspection();
+  //  doTest(getTestName(false), inspection);
+  //}
 }
