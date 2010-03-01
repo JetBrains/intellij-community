@@ -15,18 +15,18 @@
  */
 package com.intellij.debugger.ui.impl.watch;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.sun.jdi.PrimitiveValue;
 import com.sun.jdi.Value;
 
@@ -34,6 +34,7 @@ public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
   private final int myIndex;
   private final Value myValue;
   private String myName;
+  private boolean myParameterNameCalcutated;
 
   public ArgumentValueDescriptorImpl(Project project, int index, Value value) {
     super(project);
@@ -58,6 +59,7 @@ public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
             if (myIndex < params.getParametersCount()) {
               final PsiParameter param = params.getParameters()[myIndex];
               myName = param.getName();
+              myParameterNameCalcutated = true;
             }
           }
         }
@@ -75,6 +77,15 @@ public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
   }
 
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
-    return null;
+    if (!myParameterNameCalcutated) {
+      return null;
+    }
+    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(context.getProject()).getElementFactory();
+    try {
+      return elementFactory.createExpressionFromText(getName(), PositionUtil.getContextElement(context));
+    }
+    catch (IncorrectOperationException e) {
+      throw new EvaluateException(DebuggerBundle.message("error.invalid.local.variable.name", getName()), e);
+    }
   }
 }

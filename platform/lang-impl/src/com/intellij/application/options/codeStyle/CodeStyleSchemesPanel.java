@@ -50,8 +50,6 @@ public class CodeStyleSchemesPanel{
   private JPanel myPanel;
   private JButton myExportAsGlobalButton;
   private JButton myCopyToProjectButton;
-  private JComboBox myLanguageCombo;
-  private JLabel myLanguageLabel;
   private boolean myIsReset = false;
   private NewCodeStyleSettingsPanel mySettingsPanel;
 
@@ -152,30 +150,6 @@ public class CodeStyleSchemesPanel{
         onExportProjectScheme();
       }
     });
-
-    createLanguageCombo();
-  }
-
-  private void createLanguageCombo() {
-    myLanguageCombo.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            onLanguageCombo();
-          }
-        });
-      }
-    });
-    for(Language language : LanguageCodeStyleSettingsProvider.getLanguagesWithCodeStyleSettings()) {
-      myLanguageCombo.addItem(language.getDisplayName());
-    }
-    myLanguageLabel.setVisible(false);
-    myLanguageCombo.setVisible(false);
-  }
-
-  public void setLanguageComboVisible(boolean isVisible) {
-    myLanguageLabel.setVisible(isVisible);
-    myLanguageCombo.setVisible(isVisible);
   }
 
   private void onExportProjectScheme() {
@@ -331,18 +305,7 @@ public class CodeStyleSchemesPanel{
     return myPanel;
   }
 
-  private void onLanguageCombo() {
-    Object selection = myLanguageCombo.getSelectedItem();
-    if (selection instanceof String) {
-      Language language = LanguageCodeStyleSettingsProvider.getLanguage((String)selection);
-      if (language != null && mySettingsPanel != null) {
-        mySettingsPanel.setLanguage(language);
-      }
-    }
-  }
-
   public void setCodeStyleSettingsPanel(NewCodeStyleSettingsPanel settingsPanel) {
     mySettingsPanel = settingsPanel;
-    onLanguageCombo();
   }
 }

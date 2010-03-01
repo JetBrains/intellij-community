@@ -20,6 +20,7 @@ import com.intellij.codeInsight.hint.DocumentFragmentTooltipRenderer;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
+import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.*;
 import com.intellij.ide.dnd.DnDManager;
@@ -57,8 +58,6 @@ import com.intellij.openapi.ui.TestableUi;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.JScrollPane2;
 import com.intellij.ui.LightweightHint;
@@ -2233,8 +2232,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private int getIndentSize() {
     if (myProject == null || myProject.isDisposed() || myVirtualFile == null) return EditorUtil.getTabSize(this);
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings();
-    return settings.getIndentSize(myVirtualFile.getFileType());
+    return CodeStyleFacade.getInstance(myProject).getIndentSize(myVirtualFile.getFileType());
   }
 
   private int getIndents(int line, boolean goUp, boolean goDown) {
