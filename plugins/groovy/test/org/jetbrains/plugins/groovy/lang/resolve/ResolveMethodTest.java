@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
@@ -545,5 +546,17 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     PsiReference ref = configureByFile("notInitializedVariable/A.groovy");
     final PsiElement resolved = ref.resolve();
     assertInstanceOf(resolved, PsiMethod.class);
+  }
+
+  public void testMethodVsField() throws Exception {
+    final PsiReference ref = configureByFile("methodVsField/A.groovy");
+    final PsiElement element = ref.resolve();
+    assertInstanceOf(element, PsiMethod.class);
+  }
+
+  public void testLocalVariableVsGetter() throws Exception {
+    final PsiReference ref = configureByFile("localVariableVsGetter/A.groovy");
+    final PsiElement element = ref.resolve();
+    assertInstanceOf(element, GrVariable.class);
   }
 }

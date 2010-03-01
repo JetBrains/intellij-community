@@ -113,7 +113,11 @@ public class GroovyCompletionContributor extends CompletionContributor {
         else if (reference instanceof GrReferenceElement) {
           ((GrReferenceElement)reference).processVariants(new Consumer<Object>() {
             public void consume(Object element) {
-              result.addElement(LookupItemUtil.objectToLookupItem(element));
+              LookupElement lookupElement = LookupItemUtil.objectToLookupItem(element);
+              if (lookupElement instanceof LookupItem) {
+                lookupElement = ((LookupItem)lookupElement).setInsertHandler(new GroovyInsertHandlerAdapter());
+              }
+              result.addElement(lookupElement);
             }
           });
         }

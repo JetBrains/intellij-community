@@ -1148,29 +1148,47 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   private static void checkMethodApplicability(GroovyResolveResult methodResolveResult, PsiElement place, AnnotationHolder holder) {
     final PsiElement element = methodResolveResult.getElement();
     if (!(element instanceof PsiMethod)) return;
+
     final PsiMethod method = (PsiMethod)element;
     PsiType[] argumentTypes = PsiUtil.getArgumentTypes(place, method.isConstructor(), true);
-    if (argumentTypes != null &&
-        !PsiUtil.isApplicable(argumentTypes, method, methodResolveResult.getSubstitutor(),
-                              methodResolveResult.getCurrentFileResolveContext() instanceof GrMethodCallExpression)) {
-      PsiElement elementToHighlight = PsiUtil.getArgumentsElement(place);
-      if (elementToHighlight == null) {
-        elementToHighlight = place;
+    if ("call".equals(method.getName()) && place instanceof GrReferenceExpression) {
+      final GrExpression qualifierExpression = ((GrReferenceExpression)place).getQualifierExpression();
+      if (qualifierExpression != null) {
+        final PsiType type = qualifierExpression.getType();
+        if (type instanceof GrClosureType) {
+          if (!PsiUtil.isApplicable(argumentTypes, (GrClosureType)type, element.getManager())) {
+            highlightInapplicableMethodUsage(methodResolveResult, place, holder, method, argumentTypes);
+            return;
+          }
+        }
       }
-
-      final String typesString = buildArgTypesList(argumentTypes);
-      String message;
-      final PsiClass containingClass = method.getContainingClass();
-      if (containingClass != null) {
-        final PsiClassType containingType = JavaPsiFacade.getInstance(method.getProject()).getElementFactory()
-          .createType(containingClass, methodResolveResult.getSubstitutor());
-        message = GroovyBundle.message("cannot.apply.method1", method.getName(), containingType.getInternalCanonicalText(), typesString);
-      }
-      else {
-        message = GroovyBundle.message("cannot.apply.method.or.closure", method.getName(), typesString);
-      }
-      holder.createWarningAnnotation(elementToHighlight, message);
     }
+    if (argumentTypes != null &&
+             !PsiUtil.isApplicable(argumentTypes, method, methodResolveResult.getSubstitutor(),
+                                   methodResolveResult.getCurrentFileResolveContext() instanceof GrMethodCallExpression)) {
+      highlightInapplicableMethodUsage(methodResolveResult, place, holder, method, argumentTypes);
+    }
+  }
+
+  private static void highlightInapplicableMethodUsage(GroovyResolveResult methodResolveResult, PsiElement place, AnnotationHolder holder,
+                                                        PsiMethod method, PsiType[] argumentTypes) {
+    PsiElement elementToHighlight = PsiUtil.getArgumentsElement(place);
+    if (elementToHighlight == null) {
+      elementToHighlight = place;
+    }
+
+    final String typesString = buildArgTypesList(argumentTypes);
+    String message;
+    final PsiClass containingClass = method.getContainingClass();
+    if (containingClass != null) {
+      final PsiClassType containingType = JavaPsiFacade.getInstance(method.getProject()).getElementFactory()
+        .createType(containingClass, methodResolveResult.getSubstitutor());
+      message = GroovyBundle.message("cannot.apply.method1", method.getName(), containingType.getInternalCanonicalText(), typesString);
+    }
+    else {
+      message = GroovyBundle.message("cannot.apply.method.or.closure", method.getName(), typesString);
+    }
+    holder.createWarningAnnotation(elementToHighlight, message);
   }
 
   public static boolean isDeclarationAssignment(GrReferenceExpression refExpr) {

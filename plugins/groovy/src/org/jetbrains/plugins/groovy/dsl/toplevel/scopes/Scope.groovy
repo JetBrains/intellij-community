@@ -6,7 +6,7 @@ package org.jetbrains.plugins.groovy.dsl.toplevel.scopes
 abstract class Scope {}
 
 class ClassScope extends Scope {
-  private final myNamePattern
+  private final String myNamePattern
 
   ClassScope(Map args) {
     myNamePattern = args && args.name ? args.name : /.*/
@@ -37,9 +37,16 @@ class ClosureScope extends Scope {
 
 class ScriptScope extends Scope {
   final String namePattern
+  final String extension
 
   ScriptScope(Map args) {
-    namePattern = args && args.name ? args.name : /.*/
+    if (args) {
+      if (args.name) {
+        namePattern = args.name
+      } else if (args.extension) {
+        extension = args.extension
+      }
+    }
   }
 
 }

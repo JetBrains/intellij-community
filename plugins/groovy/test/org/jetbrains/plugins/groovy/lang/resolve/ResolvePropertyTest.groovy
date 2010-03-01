@@ -290,6 +290,21 @@ class Foo {
     assertFalse ref.isReferenceTo(target.setter)
   }
 
+  public void testAliasedStaticImport() throws Exception {
+    myFixture.addClass """ class Main {
+  static def foo=4
+"""
+
+    myFixture.configureByText "a.groovy", """
+import static Main.foo as bar
+print ba<caret>r
+}
+"""
+    def ref = findReference()
+    def target = assertInstanceOf(ref.resolve(), PsiField)
+    assertEquals target.getName(), "foo"
+  }
+
   private void doTest(String fileName) throws Exception {
     PsiReference ref = configureByFile(fileName);
     PsiElement resolved = ref.resolve();

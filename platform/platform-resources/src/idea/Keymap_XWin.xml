@@ -15,8 +15,5 @@
     <action id="SwitchCoverage">
       <keyboard-shortcut first-keystroke="control alt 6" />
     </action>
-    <action id="ToggleFullScreenMode">
-      <keyboard-shortcut first-keystroke="control alt MINUS" />
-    </action>
   </keymap>
 </component>

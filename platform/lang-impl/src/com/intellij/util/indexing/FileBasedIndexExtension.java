@@ -62,7 +62,7 @@ public abstract class FileBasedIndexExtension<K, V> {
    *
    * Use carefully, because indexing large files may influence index update speed dramatically.
    *
-   * @see com.intellij.psi.impl.file.impl.FileManagerImpl#MAX_INTELLISENSE_FILESIZE
+   * @see com.intellij.openapi.vfs.newvfs.persistent.PersistentFS#MAX_INTELLISENSE_FILESIZE
    */
   @NotNull
   public Collection<FileType> getFileTypesWithSizeLimitNotApplicable() {

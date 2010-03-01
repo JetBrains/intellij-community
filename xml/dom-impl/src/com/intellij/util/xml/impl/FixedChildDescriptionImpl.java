@@ -53,11 +53,11 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
 
     final Type elemType = getType();
     if (elemType instanceof AnnotatedElement) {
-      return ((AnnotatedElement)elemType).getAnnotation(annotationClass);
+      T annotation = ((AnnotatedElement)elemType).getAnnotation(annotationClass);
+      if (annotation != null) return annotation;
     }
-    else {
-      return super.getAnnotation(annotationClass);
-    }
+
+    return super.getAnnotation(annotationClass);
   }
 
   public int getCount() {
@@ -73,10 +73,11 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
       for (int i = 0; i < myCount; i++) {
         result.add(handler.getFixedChild(Pair.create(this, i)).getProxy());
       }
-    } else {
+    }
+    else {
       for (Collection<JavaMethod> methods : myGetterMethods) {
         if (methods != null && !methods.isEmpty()) {
-          result.add((DomElement) methods.iterator().next().invoke(element, ArrayUtil.EMPTY_OBJECT_ARRAY));
+          result.add((DomElement)methods.iterator().next().invoke(element, ArrayUtil.EMPTY_OBJECT_ARRAY));
         }
       }
     }

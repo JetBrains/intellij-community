@@ -144,6 +144,10 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     doTest(false, false);
   }
 
+  public void testChainedVarargConstructors() throws Exception {
+    doTest(false, false);
+  }
+
   public void testInlineThisOnly() throws Exception {
     doTest(true, false);
   }

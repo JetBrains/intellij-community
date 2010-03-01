@@ -20,6 +20,7 @@ import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
@@ -154,11 +155,16 @@ public abstract class XDebugProcess {
   }
 
   /**
+   * Override this method to provide additional tabs for 'Debug' tool window
+   */
+  public void registerAdditionalContent(@NotNull RunnerLayoutUi ui) {
+  }
+
+  /**
    * @return message to show in Variables View when debugger isn't paused
    */
   public String getCurrentStateMessage() {
-    return mySession.isStopped() ? XDebuggerBundle.message("debugger.state.message.disconnected")
-           : XDebuggerBundle.message("debugger.state.message.connected");
+    return mySession.isStopped() ? XDebuggerBundle.message("debugger.state.message.disconnected") : XDebuggerBundle.message("debugger.state.message.connected");
   }
 
 }

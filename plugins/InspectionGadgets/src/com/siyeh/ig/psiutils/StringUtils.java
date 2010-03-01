@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,16 +105,16 @@ public class StringUtils{
         } else if(name.charAt(nameLength - 1) == 'S'){
             singularName = name.substring(0, nameLength - 1);
         } else{
-            singularName = preprendIndefiniteArticle(name);
+            singularName = prependIndefiniteArticle(name);
         }
         if(keywordTable.contains(singularName)){
-            return preprendIndefiniteArticle(singularName);
+            return prependIndefiniteArticle(singularName);
         } else{
             return singularName;
         }
     }
 
-    @NotNull private static String preprendIndefiniteArticle(
+    @NotNull private static String prependIndefiniteArticle(
             String singularName){
         switch(singularName.charAt(0)){
             case 'a':
@@ -126,5 +126,13 @@ public class StringUtils{
             default:
               return 'a' + StringUtil.capitalize(singularName);
         }
+    }
+
+    public static String stripAngleBrackets(String string) {
+        final int index = string.indexOf('<');
+        if (index == -1) {
+            return string;
+        }
+        return string.substring(0, index);
     }
 }

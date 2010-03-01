@@ -1,24 +1,21 @@
 package org.jetbrains.plugins.groovy.dsl.toplevel
 
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.patterns.PlatformPatterns
 import com.intellij.patterns.PsiElementPattern
 import com.intellij.patterns.PsiJavaPatterns
-
 import com.intellij.psi.PsiElement
-
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.util.containers.ConcurrentHashSet
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ClassScope
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ClosureScope
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ScriptScope
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
+import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns
 
 /**
  * @author ilyas
@@ -30,14 +27,6 @@ class Context {
   public Context(Map args) {
     // Named parameter processing
     if (!args) return
-
-    // ctype : <ctype>
-    // Qualifier type to be augmented
-    if (args.ctype instanceof String) {
-      addFilter getClassTypeFilter(args.ctype)
-    } else if (args.ctype instanceof PsiElementPattern) {
-      addFilter new ClassContextFilter(args.ctype)
-    }
 
     // filetypes : [<file_ext>*]
     if (args.filetypes && args.filetypes instanceof List) {
@@ -55,6 +44,7 @@ class Context {
       }
     }
 
+    // filter by scope first, then by ctype
     // scope: <scope>
     switch (args.scope) {
       case null: break
@@ -62,15 +52,20 @@ class Context {
     // handling script scope
       case org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ScriptScope:
         def scope = (ScriptScope) args.scope
-        addFilter {PsiElement elem, fqn, ctx ->
-          def parent = PsiTreeUtil.getParentOfType(elem, GrTypeDefinition.class, GroovyFile.class)
-          if (parent instanceof GroovyFile && ((GroovyFile) parent).isScript()) {
-            return ((GroovyFile) parent).getName().matches(scope.namePattern)
-          }
-          return false
+
+        //first, it should be inside groovy script
+        def scriptPattern = GroovyPatterns.groovyScript()
+        if (scope.extension) {
+          scriptPattern = scriptPattern.withVirtualFile(PlatformPatterns.virtualFile().withExtension(scope.extension))
         }
+        addFilter new PlaceContextFilter(PlatformPatterns.psiElement().inFile(scriptPattern))
+
         // Name matcher
-        addFilter {PsiElement elem, fqn, ctx -> elem.containingFile.name.matches(scope.namePattern)}
+        def namePattern = scope.namePattern
+        if (namePattern) {
+          addFilter {PsiElement elem, fqn, ctx -> elem.containingFile.name.matches(namePattern)}
+        }
+
         // Process unqualified references only
         if (!args.ctype) {
           addFilter getClassTypeFilter(GroovyFileBase.SCRIPT_BASE_CLASS_NAME)
@@ -79,58 +74,64 @@ class Context {
         break
     // handling class scope
       case org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ClassScope:
-        addFilter {GrReferenceExpression elem, fqn, ctx ->
-          final def classScope = (ClassScope) args.scope
-          if (!classScope.getName()) return false;
-          final GrTypeDefinition clazz = PsiTreeUtil.getParentOfType(elem, GrTypeDefinition)
-          if (clazz) {
-            final def qualName = clazz.getQualifiedName()
-            return clazz.getName().matches(classScope.getName()) ||
-                   qualName && qualName.matches(classScope.getName())
+        final def classScope = (ClassScope) args.scope
+        def namePattern = classScope.getName()
+        if (namePattern) {
+          addFilter {GrReferenceExpression elem, fqn, ctx ->
+            final GrTypeDefinition clazz = PsiTreeUtil.getParentOfType(elem, GrTypeDefinition)
+            if (clazz) {
+              final def qualName = clazz.getQualifiedName()
+              return clazz.getName().matches(namePattern) || qualName && qualName.matches(namePattern)
+            }
+            return false
           }
-          return false
-        }
-        if (!args.ctype) {
-          addFilter getClassTypeFilter("java.lang.Object")
         }
         break
 
     // handling closure scope
       case org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ClosureScope:
+        addFilter new PlaceContextFilter(PsiJavaPatterns.psiElement().inside(GrClosableBlock))
+
+        if (((ClosureScope) args.scope).isArg()) {
+          // Filter for call parameter
+          addFilter {GrReferenceExpression elem, fqn, ctx ->
+            def closParent = PsiTreeUtil.getParentOfType(elem, GrClosableBlock.class)
+            assert closParent != null
+
+            def parent = closParent.getParent()
+            if (parent instanceof GrArgumentList) {
+              parent = parent.parent
+            }
+            return parent instanceof GrMethodCallExpression
+          }
+        }
+
         // Enhance only unqualified expressions
         if (!args.ctype) {
           addFilter getClassTypeFilter("groovy.lang.Closure")
-        }
-
-        // Enhance closure contexts only
-        addFilter {GrReferenceExpression elem, fqn, ctx ->
-          def closParent = PsiTreeUtil.getParentOfType(elem, GrClosableBlock.class)
-          if (closParent == null) return false
-          def scope = (ClosureScope) args.scope
-          if (scope.isArg()) {
-            def parent = closParent.getParent()
-            if (parent instanceof GrArgumentList) {
-              return parent.getParent() instanceof GrMethodCallExpression
-            } else {
-              return parent instanceof GrMethodCallExpression
-            }
-          }
-          return true
         }
         break
 
       default: break
     }
+
+    // ctype : <ctype>
+    // Qualifier type to be augmented
+    if (args.ctype instanceof String) {
+      addFilter getClassTypeFilter(args.ctype)
+    } else if (args.ctype instanceof PsiElementPattern) {
+      addFilter new ClassContextFilter(args.ctype)
+    }
   }
 
-  private ContextFilter getClassTypeFilter(ctype) {
-    new ClassContextFilter(PsiJavaPatterns.psiClass().withQualifiedName(ctype))
+  private ContextFilter getClassTypeFilter(String ctype) {
+    new ClassContextFilter(PsiJavaPatterns.psiClass().inheritorOf(false, ctype))
   }
 
   private def addFilter(Closure cl) {
     addFilter (cl as ContextFilter)
   }
-  private def addFilter(ContextFilter cl) {
+  private void addFilter(ContextFilter cl) {
     myFilters << cl
   }
 

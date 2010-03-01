@@ -117,6 +117,8 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
       uiSettings.fireUISettingsChanged();
     }
 
+    EditorOptionsPanel.restartDaemons();
+
     super.apply();
   }
 

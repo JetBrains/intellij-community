@@ -19,8 +19,10 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataCache;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -32,14 +34,15 @@ import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyIcons;
-import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex;
-import org.jetbrains.plugins.groovy.dsl.GroovyScriptDescriptor;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -71,6 +74,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl");
   private static final Object lock = new Object();
 
+  private volatile Boolean myScript;
   private GroovyScriptClass myScriptClass;
   private static final String SYNTHETIC_PARAMETER_NAME = "args";
   private GrParameter mySyntheticArgsParameter = null;
@@ -128,8 +132,6 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
     if (lastParent != null && !(lastParent instanceof GrTypeDefinition) && scriptClass != null) {
       if (!ResolveUtil.processElement(processor, getSyntheticArgsParameter())) return false;
-      // This case is processed by NonCodeMemberProcessor implementations
-      //if (!processScriptEnhancements(place, processor)) return false;
     }
 
     if (!processChildrenScopes(this, processor, state, lastParent, place)) return false;
@@ -270,15 +272,6 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     return null;
   }
 
-  private boolean processScriptEnhancements(final PsiElement place, final PsiScopeProcessor processor) {
-    final GroovyScriptClass scriptClass = getScriptClass();
-    if (scriptClass == null) {
-      return true;
-    }
-
-    return GroovyDslFileIndex.processExecutors(getProject(), new GroovyScriptDescriptor(this, scriptClass, place), processor);
-  }
-
 
   private static boolean processChildrenScopes(PsiElement element,
                                                PsiScopeProcessor processor,
@@ -381,12 +374,26 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     if (stub instanceof GrFileStub) {
       return ((GrFileStub)stub).isScript();
     }
-    GrTopStatement[] top = findChildrenByClass(GrTopStatement.class);
-    for (GrTopStatement st : top) {
-      if (!(st instanceof GrTypeDefinition || st instanceof GrImportStatement || st instanceof GrPackageDefinition)) return true;
+
+    Boolean isScript = myScript;
+    if (isScript == null) {
+      isScript = Boolean.FALSE;
+      for (GrTopStatement st : findChildrenByClass(GrTopStatement.class)) {
+        if (!(st instanceof GrTypeDefinition || st instanceof GrImportStatement || st instanceof GrPackageDefinition)) {
+          isScript = Boolean.TRUE;
+          break;
+        }
+      }
+      myScript = isScript;
     }
 
-    return false;
+    return isScript;
+  }
+
+  @Override
+  public void subtreeChanged() {
+    myScript = null;
+    super.subtreeChanged();
   }
 
   public GroovyScriptClass getScriptClass() {
@@ -503,15 +510,26 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     return this;
   }
 
+  private static final UserDataCache<CachedValue<GlobalSearchScope>, GroovyFile, GlobalSearchScope> RESOLVE_SCOPE_CACHE = new UserDataCache<CachedValue<GlobalSearchScope>, GroovyFile, GlobalSearchScope>("RESOLVE_SCOPE_CACHE") {
+    @Override
+    protected CachedValue<GlobalSearchScope> compute(final GroovyFile file, final GlobalSearchScope baseScope) {
+      return CachedValuesManager.getManager(file.getProject()).createCachedValue(new CachedValueProvider<GlobalSearchScope>() {
+        public Result<GlobalSearchScope> compute() {
+          GlobalSearchScope scope = GroovyScriptType.getScriptType(file).patchResolveScope(file, baseScope);
+          return Result.create(scope, file, ProjectRootManager.getInstance(file.getProject()));
+        }
+      }, false);
+    }
+  };
   public GlobalSearchScope getFileResolveScope() {
-    final VirtualFile vFile = getOriginalFile().getVirtualFile();
+    final VirtualFile vFile = getOriginalFile().getVirtualFile();                                        
     if (vFile == null) {
       return GlobalSearchScope.allScope(getProject());
     }
 
     final GlobalSearchScope baseScope = ((FileManagerImpl)((PsiManagerEx)getManager()).getFileManager()).getDefaultResolveScope(vFile);
     if (isScript()) {
-      return GroovyScriptType.getScriptType(this).patchResolveScope(this, baseScope);
+      return RESOLVE_SCOPE_CACHE.get(this, baseScope).getValue();
     }
     return baseScope;
   }

@@ -15,10 +15,15 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.ide.DataManager;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.idea.Bombed;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -272,5 +277,16 @@ public class PlatformTestUtil {
 
   public static void assertTreeStructureEquals(final AbstractTreeStructure treeStructure, final String expected) {
     Assert.assertEquals(expected, print(treeStructure, treeStructure.getRootElement(), 0, null, -1, ' ').toString());
+  }
+
+  public static void invokeNamedAction(final String actionId) {
+    final AnAction action = ActionManager.getInstance().getAction(actionId);
+    Assert.assertNotNull(action);
+    final Presentation presentation = new Presentation();
+    final AnActionEvent event =
+        new AnActionEvent(null, DataManager.getInstance().getDataContext(), "", presentation, ActionManager.getInstance(), 0);
+    action.update(event);
+    Assert.assertTrue(presentation.isEnabled());
+    action.actionPerformed(event);
   }
 }

@@ -18,7 +18,7 @@ public class ClassContextFilter implements ContextFilter {
   }
 
   public boolean isApplicable(PsiElement place, String fqName, ProcessingContext ctx) {
-    return myPattern.accepts(findPsiClass(place, fqName, ctx));
+    return myPattern.accepts(findPsiClass(place, fqName, ctx), ctx);
   }
 
   @Nullable

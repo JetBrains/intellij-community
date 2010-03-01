@@ -174,7 +174,6 @@ public class CodeStyleMainPanel extends JPanel {
       panel.setModel(myModel);
       mySettingsPanels.put(name, panel);
       mySettingsPanel.add(scheme.getName(), panel);
-      mySchemesPanel.setLanguageComboVisible(panel.isMultilanguage());
       mySchemesPanel.setCodeStyleSettingsPanel(panel);
     }
 

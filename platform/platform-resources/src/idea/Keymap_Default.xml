@@ -33,9 +33,6 @@
   <action id="CollapseTreeNode">
     <keyboard-shortcut first-keystroke="SUBTRACT"/>
   </action>
-  <action id="ToggleFullScreenMode">
-    <keyboard-shortcut first-keystroke="control alt F11"/>
-  </action>
   <action id="SwitchCoverage">
     <keyboard-shortcut first-keystroke="control alt F6"/>
   </action>

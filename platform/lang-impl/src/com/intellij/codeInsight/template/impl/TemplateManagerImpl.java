@@ -227,11 +227,11 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     if (shortcutChar == templateSettings.getDefaultShortcutChar()) {
       for (final CustomLiveTemplate customLiveTemplate : CustomLiveTemplate.EP_NAME.getExtensions()) {
         final CustomTemplateCallback callback = new CustomTemplateCallback(editor, file);
+        callback.fixInitialEditorState();
         String key = customLiveTemplate.computeTemplateKey(callback);
         if (key != null) {
           int offset = callback.getEditor().getCaretModel().getOffset();
           callback.getEditor().getDocument().deleteString(offset - key.length(), offset);
-          callback.fixInitialEditorState();
           customLiveTemplate.execute(key, callback, new TemplateInvokationListener() {
             public void finished(boolean inSeparateEvent) {
               callback.finish();
@@ -417,7 +417,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     return templateState != null ? templateState.getTemplate() : null;
   }
 
-  static boolean isApplicable(PsiFile file, int offset, TemplateImpl template) {
+  public static boolean isApplicable(PsiFile file, int offset, TemplateImpl template) {
     TemplateManager instance = getInstance(file.getProject());
     TemplateContext context = template.getTemplateContext();
     if (context.isEnabled(instance.getContextType(file, offset))) {

@@ -69,12 +69,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
                 new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH,
                                        new Insets(7, 7, 3, 4), 0, 0));
 
-    JPanel previewPanel = new JPanel(new BorderLayout()) {
-      public Dimension getPreferredSize() {
-        return new Dimension(200, 0);
-      }
-    };
-    previewPanel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.preview")));
+    JPanel previewPanel = createPreviewPanel();
 
     myPanel.add(previewPanel,
                 new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH,
