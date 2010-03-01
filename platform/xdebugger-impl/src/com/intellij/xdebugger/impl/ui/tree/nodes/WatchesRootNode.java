@@ -111,15 +111,17 @@ public class WatchesRootNode extends XDebuggerTreeNode {
     }
   }
 
-  public void addWatchExpression(final @NotNull XDebuggerEvaluator evaluator, final @NotNull String expression, int index) {
-    WatchNode message = WatchMessageNode.createEvaluatingNode(myTree, this, expression);
+  public void addWatchExpression(final @Nullable XDebuggerEvaluator evaluator, final @NotNull String expression, int index) {
+    WatchNode message = evaluator != null ? WatchMessageNode.createEvaluatingNode(myTree, this, expression) : WatchMessageNode.createMessageNode(myTree, this, expression);
     if (index == -1) {
       myChildren.add(message);
     }
     else {
       myChildren.add(index, message);
     }
-    evaluator.evaluate(expression, new MyEvaluationCallback(message), null);
+    if (evaluator != null) {
+      evaluator.evaluate(expression, new MyEvaluationCallback(message), null);
+    }
     fireNodeChildrenChanged();
   }
 
