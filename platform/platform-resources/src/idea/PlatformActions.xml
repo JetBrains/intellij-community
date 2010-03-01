@@ -166,7 +166,6 @@
         <reference ref="EditorToggleShowWhitespaces"/>
         <reference ref="EditorToggleShowLineNumbers"/>
         <separator/>
-        <action id="ToggleFullScreenMode" class="com.intellij.ide.actions.ToggleFullScreenModeAction"/>
         <action id="QuickChangeScheme" class="com.intellij.ide.actions.QuickChangeSchemesAction"/>
         <separator/>
         <action id="EditSource" class="com.intellij.ide.actions.EditSourceAction"/>

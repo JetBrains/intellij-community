@@ -166,7 +166,7 @@
 
     <!-- TODO: correct action location -->
     <action id="QuickImplementations" class="com.intellij.codeInsight.hint.actions.ShowImplementationsAction">
-      <add-to-group group-id="ViewMenu" relative-to-action="ToggleFullScreenMode" anchor="after"/>
+      <add-to-group group-id="ViewMenu" relative-to-action="QuickChangeScheme" anchor="before"/>
     </action>
 
     <action id="RecentChanges" class="com.intellij.history.integration.ui.actions.RecentChangesAction">
