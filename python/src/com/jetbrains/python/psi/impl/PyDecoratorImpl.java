@@ -65,7 +65,7 @@ public class PyDecoratorImpl extends PyPresentableElementImpl<PyDecoratorStub> i
       if (node != null) {
         PyReferenceExpression ref = (PyReferenceExpression)node.getPsi();
         PsiElement target = ref.resolve();
-        return PyBuiltinCache.hasInBuiltins(target);
+        return PyBuiltinCache.getInstance(this).hasInBuiltins(target);
       }
       return false;
     }

@@ -37,7 +37,7 @@ public class PyDecoratorCallElementType extends PyStubElementType<PyDecoratorStu
     boolean is_builtin = false;
     PyExpression target = psi.getCallee(); 
     if (target != null) {
-       is_builtin = PyBuiltinCache.hasInBuiltins(target);
+       is_builtin = PyBuiltinCache.getInstance(psi).hasInBuiltins(target);
     }
     return new PyDecoratorStubImpl(psi.getName(), is_builtin, parentStub);
   }

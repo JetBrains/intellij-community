@@ -33,8 +33,14 @@ public class PyBuiltinCache {
   public static final @NonNls String BUILTIN_FILE = "__builtin__.py";
   @NonNls public static final String BUILTIN_FILE_3K = "builtins.py";
 
+
+  /**
+   * Returns an instance of builtin cache. Instances differ per module and are cached.
+   * @param reference something to define the module from.
+   * @return an instance of cache. If reference was null, the instance is a fail-fast dud one.
+   */
   @NotNull
-  public static PyBuiltinCache getInstance(PsiElement reference) {
+  public static PyBuiltinCache getInstance(@Nullable PsiElement reference) {
     if (reference != null) {
       final Module module = ModuleUtil.findModuleForPsiElement(reference);
       final Project project = reference.getProject();
@@ -201,17 +207,13 @@ public class PyBuiltinCache {
    * @param target an element to check.
    * @return true iff target is inside the __builtins__.py 
    */
-  public static boolean hasInBuiltins(@Nullable PsiElement target) {
+  public boolean hasInBuiltins(@Nullable PsiElement target) {
     if (target == null) return false;
     if (! target.isValid()) return false;
     final PsiFile the_file = target.getContainingFile();
     if (!(the_file instanceof PyFile)) {
       return false;
     }
-    final LanguageLevel languageLevel = ((PyFile)the_file).getLanguageLevel();
-    if (languageLevel.isPy3K()) {
-      return BUILTIN_FILE_3K.equals(the_file.getName());
-    }
-    return BUILTIN_FILE.equals(the_file.getName()); // TODO: make it check against the actual file; unmake it static
+    return myBuiltinsFile == the_file; // files are singletons, no need to compare URIs
   }
 }
