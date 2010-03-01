@@ -106,4 +106,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   protected void buildCommandLineParameters(GeneralCommandLine commandLine) {
   }
+
+  public int getInterpreterOptionsCount() {
+    return 0;    
+  }
 }

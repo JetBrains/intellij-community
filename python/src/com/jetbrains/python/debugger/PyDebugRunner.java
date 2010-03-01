@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.util.Map;
 
 /**
  * @author yole
@@ -55,7 +54,7 @@ public class PyDebugRunner extends GenericProgramRunner {
       throw new ExecutionException("Failed to find free socket port", e);
     }
 
-    PythonCommandLineState pyState = (PythonCommandLineState) state;
+    final PythonCommandLineState pyState = (PythonCommandLineState) state;
     final CommandLinePatcher debug_server_patcher = new CommandLinePatcher() {
       public void patchCommandLine(GeneralCommandLine commandLine) {
         final String[] args = new String[]{
@@ -66,7 +65,7 @@ public class PyDebugRunner extends GenericProgramRunner {
         };
         // script name is the last parameter; all other params are for python interpreter; insert just before name
         final ParametersList parameters_list = commandLine.getParametersList();
-        int parameter_offset = parameters_list.getList().size() - 1;
+        int parameter_offset = pyState.getInterpreterOptionsCount();
         for (int i = 0; i < args.length; i++) {
           parameters_list.addAt(i + parameter_offset, args[i]);
         }

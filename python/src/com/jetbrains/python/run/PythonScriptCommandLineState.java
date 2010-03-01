@@ -1,6 +1,7 @@
 package com.jetbrains.python.run;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,5 +32,11 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
     if (!StringUtil.isEmptyOrSpaces(myConfig.getWorkingDirectory())) {
       commandLine.setWorkDirectory(myConfig.getWorkingDirectory());
     }
+  }
+
+  @Override
+  public int getInterpreterOptionsCount() {
+    String options = myConfig.getInterpreterOptions();
+    return ParametersList.parse(options).length;
   }
 }
