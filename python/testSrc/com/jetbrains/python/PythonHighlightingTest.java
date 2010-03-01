@@ -17,6 +17,24 @@ import java.awt.*;
  * @author yole
  */
 public class PythonHighlightingTest extends PyLightFixtureTestCase {
+  private static final String TEST_PATH = "/highlighting/";
+
+  public void testBuiltins() throws Exception {
+    EditorColorsManager manager = EditorColorsManager.getInstance();
+    EditorColorsScheme scheme = (EditorColorsScheme)manager.getGlobalScheme().clone();
+    manager.addColorsScheme(scheme);
+    EditorColorsManager.getInstance().setGlobalScheme(scheme);
+
+    TextAttributesKey xKey;
+    TextAttributes xAttributes;
+    
+    xKey = TextAttributesKey.find("PY.BUILTIN_NAME");
+    xAttributes = new TextAttributes(Color.green, Color.black, Color.white, EffectType.BOXED, Font.BOLD);
+    scheme.setAttributes(xKey, xAttributes);
+
+    doTest();
+  }
+
   public void testDeclarations() throws Exception {
     EditorColorsManager manager = EditorColorsManager.getInstance();
     EditorColorsScheme scheme = (EditorColorsScheme)manager.getGlobalScheme().clone();
@@ -133,11 +151,12 @@ public class PythonHighlightingTest extends PyLightFixtureTestCase {
   }
 
   private void doTest() throws Exception {
-    myFixture.testHighlighting(true, true, false, "/highlighting/" + getTestName(true) + PyNames.DOT_PY);
+    final String TEST_PATH = "/highlighting/";
+    myFixture.testHighlighting(true, true, false, TEST_PATH + getTestName(true) + PyNames.DOT_PY);
   }
 
   private void doTest(boolean checkWarnings, boolean checkInfos) throws Exception {
-    myFixture.testHighlighting(checkWarnings, checkInfos, false, "/highlighting/" + getTestName(true) + PyNames.DOT_PY);
+    myFixture.testHighlighting(checkWarnings, checkInfos, false, TEST_PATH + getTestName(true) + PyNames.DOT_PY);
   }
 
 }
