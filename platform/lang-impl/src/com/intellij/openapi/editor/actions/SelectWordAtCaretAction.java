@@ -28,6 +28,8 @@ import com.intellij.codeInsight.editorActions.SelectWordUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.IndentGuideDescriptor;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.project.DumbAware;
@@ -37,11 +39,16 @@ import java.util.List;
 
 public class SelectWordAtCaretAction extends TextComponentEditorAction implements DumbAware {
   public SelectWordAtCaretAction() {
-    super(new Handler());
+    super(new DefaultHandler());
     setInjectedContext(true);
   }
 
-  private static class Handler extends EditorActionHandler {
+  @Override
+  public EditorActionHandler getHandler() {
+    return new Handler(super.getHandler());
+  }
+
+  private static class DefaultHandler extends EditorActionHandler {
     public void execute(Editor editor, DataContext dataContext) {
       int lineNumber = editor.getCaretModel().getLogicalPosition().line;
       int caretOffset = editor.getCaretModel().getOffset();
@@ -72,6 +79,34 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
       }
 
       editor.getSelectionModel().setSelection(startWordOffset, endWordOffset);
+    }
+  }
+
+  private static class Handler extends EditorActionHandler {
+    private final EditorActionHandler myDefaultHandler;
+
+    private Handler(EditorActionHandler defaultHandler) {
+      myDefaultHandler = defaultHandler;
+    }
+
+    @Override
+    public void execute(Editor editor, DataContext dataContext) {
+      final IndentGuideDescriptor guide = editor.getCaretIndentGuide();
+      final SelectionModel selectionModel = editor.getSelectionModel();
+      if (guide != null && !selectionModel.hasSelection() && !selectionModel.hasBlockSelection()) {
+        selectWithGuide(editor, guide);
+      }
+      else {
+        myDefaultHandler.execute(editor, dataContext);
+      }
+    }
+
+    private static void selectWithGuide(Editor editor, IndentGuideDescriptor guide) {
+      final Document doc = editor.getDocument();
+      int startOffset = doc.getLineStartOffset(guide.startLine - 1);
+      int endOffset = Math.min(doc.getLineEndOffset(guide.endLine) + 1, doc.getTextLength());
+
+      editor.getSelectionModel().setSelection(startOffset, endOffset);
     }
   }
 }
