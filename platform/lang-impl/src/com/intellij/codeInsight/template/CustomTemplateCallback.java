@@ -200,7 +200,9 @@ public class CustomTemplateCallback {
   public void finish() {
     myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     final CodeStyleManager style = CodeStyleManager.getInstance(myProject);
-    style.reformatText(myFile, myGlobalMarker.getStartOffset(), myGlobalMarker.getEndOffset());
+    if (myGlobalMarker != null) {
+      style.reformatText(myFile, myGlobalMarker.getStartOffset(), myGlobalMarker.getEndOffset());
+    }
     gotoEndOffset();
   }
 
