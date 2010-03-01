@@ -310,10 +310,17 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
         int startOffset = parentStart > lineStart ? parentStart : lineStart;
         String key = computeKey(editor, startOffset);
         List<MyToken> tokens = parse(key, callback);
-        if (tokens != null) {
-          if (check(tokens)) {
-            return key;
+        if (tokens != null && check(tokens)) {
+          if (tokens.size() == 2) {
+            MyToken token = tokens.get(0);
+            if (token instanceof MyTemplateToken) {
+              if (key.equals(((MyTemplateToken)token).myKey) && callback.isLiveTemplateApplicable(key)) {
+                // do not activate only live template
+                return null;
+              }
+            }
           }
+          return key;
         }
         if (element != null) {
           element = element.getParent();
