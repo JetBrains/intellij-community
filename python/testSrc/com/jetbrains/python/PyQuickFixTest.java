@@ -100,7 +100,7 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
   }
 
   public void testReplaceBackquoteExpression() throws Exception {
-    doInspectionTestWithPy3k("ReplaceBackquoteExpression.py", PyUnsupportedFeaturesInspection.class,
+    doInspectionTestWithPy3k("ReplaceBackQuoteExpression.py", PyUnsupportedFeaturesInspection.class,
                              PyBundle.message("QFIX.replace.backquote.expression"), true, true);
   }
 
