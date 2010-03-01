@@ -28,6 +28,12 @@ public class EmptyAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
   }
 
+  @Override
+  public void update(AnActionEvent e) {
+    e.getPresentation().setEnabled(false);
+    e.getPresentation().setVisible(false);
+  }
+
   public static void setupAction(@NotNull AnAction action, @NotNull String id, @Nullable JComponent component) {
     final AnAction emptyAction = ActionManager.getInstance().getAction(id);
     if (action.getTemplatePresentation().getIcon() == null) {
