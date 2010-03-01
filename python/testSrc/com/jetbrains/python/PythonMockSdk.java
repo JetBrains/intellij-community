@@ -30,18 +30,22 @@ public class PythonMockSdk {
   }
 
   public static Sdk create() {
-    String sdkHome = new File(PathManager.getHomePath(), "python/lib/mock_interpreter").getPath();
+    final String version = "2.5"; // TODO: implement language level here
+    final String mock_path = PythonTestUtil.getTestDataPath() + "/MockSdk" + version + "/";
+
+    String sdkHome = new File(mock_path, "bin/python"+version).getPath();
     SdkType sdkType = PythonSdkType.getInstance();
+
 
     final Sdk sdk = new ProjectJdkImpl(MOCK_SDK_NAME, sdkType) {
       @Override
       public String getVersionString() {
-        return "Python 2.5 Mock SDK"; // TODO: implement language level here
+        return "Python " + version + " Mock SDK";
       }
     };
     final SdkModificator sdkModificator = sdk.getSdkModificator();
     sdkModificator.setHomePath(sdkHome);
-    String mock_stubs_path = PythonHelpersLocator.getHelperPath("mocksdk/" + PythonSdkType.SKELETON_DIR_NAME);
+    String mock_stubs_path = mock_path + PythonSdkType.SKELETON_DIR_NAME;
     sdkModificator.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByPath(mock_stubs_path), PythonSdkType.BUILTIN_ROOT_TYPE);
     //PythonSdkType.setupSdkPaths(sdkModificator, null);
     sdkModificator.commitChanges();
