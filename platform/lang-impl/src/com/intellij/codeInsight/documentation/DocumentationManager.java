@@ -33,6 +33,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDocumentation;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -530,38 +531,77 @@ public class DocumentationManager {
 
       @Nullable
       public String getDocumentation() throws Exception {
-        final DocumentationProvider provider = getProviderFromElement(element, originalElement);
-        if (myParameterInfoController != null) {
-          final Object[] objects = myParameterInfoController.getSelectedElements();
-
-          if (objects.length > 0) {
-            @NonNls StringBuffer sb = null;
-
-            for(Object o:objects) {
-              PsiElement parameter = null;
-              if (o instanceof PsiElement) {
-                parameter = (PsiElement)o;
-              }
-
-              if (parameter != null) {
-                final SmartPsiElementPointer originalElement = parameter.getUserData(ORIGINAL_ELEMENT_KEY);
-                final String str2 = provider.generateDoc(parameter, originalElement != null ? originalElement.getElement() : null);
-                if (str2 == null) continue;
-                if (sb == null) sb = new StringBuffer();
-                sb.append(str2);
-                sb.append("<br>");
-              } else {
-                sb = null;
-                break;
+        final DocumentationProvider provider = ApplicationManager.getApplication().runReadAction(
+            new Computable<DocumentationProvider>() {
+              public DocumentationProvider compute() {
+                return getProviderFromElement(element, originalElement);
               }
             }
-
-            if (sb != null) return sb.toString();
+        );
+        if (myParameterInfoController != null) {
+          final String doc = ApplicationManager.getApplication().runReadAction(
+              new Computable<String>() {
+                public String compute() {
+                  return generateParameterInfoDocumentation(provider);
+                }
+              }
+          );
+          if (doc != null) return doc;
+        }
+        if (provider instanceof ExternalDocumentationProvider) {
+          final List<String> urls = ApplicationManager.getApplication().runReadAction(
+              new Computable<List<String>>() {
+                public List<String> compute() {
+                  final SmartPsiElementPointer originalElement = element.getUserData(ORIGINAL_ELEMENT_KEY);
+                  return provider.getUrlFor(element, originalElement != null ? originalElement.getElement() : null);
+                }
+              }
+          );
+          if (urls != null) {
+            final String doc = ((ExternalDocumentationProvider)provider).fetchExternalDocumentation(myProject, element, urls);
+            if (doc != null) return doc;
           }
         }
+        return ApplicationManager.getApplication().runReadAction(
+            new Computable<String>() {
+              @Nullable
+              public String compute() {
+                final SmartPsiElementPointer originalElement = element.getUserData(ORIGINAL_ELEMENT_KEY);
+                return provider.generateDoc(element, originalElement != null ? originalElement.getElement() : null);
+              }
+            }
+        );
+      }
 
-        final SmartPsiElementPointer originalElement = element.getUserData(ORIGINAL_ELEMENT_KEY);
-        return provider.generateDoc(element, originalElement != null ? originalElement.getElement() : null);
+      private String generateParameterInfoDocumentation(DocumentationProvider provider) {
+        final Object[] objects = myParameterInfoController.getSelectedElements();
+
+        if (objects.length > 0) {
+          @NonNls StringBuffer sb = null;
+
+          for (Object o : objects) {
+            PsiElement parameter = null;
+            if (o instanceof PsiElement) {
+              parameter = (PsiElement)o;
+            }
+
+            if (parameter != null) {
+              final SmartPsiElementPointer originalElement = parameter.getUserData(ORIGINAL_ELEMENT_KEY);
+              final String str2 = provider.generateDoc(parameter, originalElement != null ? originalElement.getElement() : null);
+              if (str2 == null) continue;
+              if (sb == null) sb = new StringBuffer();
+              sb.append(str2);
+              sb.append("<br>");
+            }
+            else {
+              sb = null;
+              break;
+            }
+          }
+
+          if (sb != null) return sb.toString();
+        }
+        return null;
       }
 
       @Nullable
@@ -615,18 +655,14 @@ public class DocumentationManager {
     myUpdateDocAlarm.addRequest(new Runnable() {
       public void run() {
         final Throwable[] ex = new Throwable[1];
-        final String text = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-          @Nullable
-          public String compute() {
-            try {
-              return provider.getDocumentation();
-            }
-            catch (Throwable e) {
-              ex[0] = e;
-            }
-            return null;
-          }
-        });
+        String text = null;
+        try {
+          text = provider.getDocumentation();
+        }
+        catch (Throwable e) {
+          ex[0] = e;
+        }
+
         if (ex[0] != null) {
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(new Runnable() {
@@ -650,6 +686,7 @@ public class DocumentationManager {
         if (element == null) {
           return;
         }
+        final String documentationText = text;
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
@@ -664,14 +701,14 @@ public class DocumentationManager {
               return;
             }
 
-            if (text == null) {
+            if (documentationText == null) {
               component.setText(CodeInsightBundle.message("no.documentation.found"), element, true);
             }
-            else if (text.length() == 0) {
+            else if (documentationText.length() == 0) {
               component.setText(component.getText(), element, true, clearHistory);
             }
             else {
-              component.setData(element, text, clearHistory);
+              component.setData(element, documentationText, clearHistory);
             }
 
             final AbstractPopup jbPopup = (AbstractPopup)getDocInfoHint();
@@ -782,8 +819,14 @@ public class DocumentationManager {
         (new DocumentationCollector() {
           public String getDocumentation() throws Exception {
             if (docUrl.startsWith(DOC_ELEMENT_PROTOCOL)) {
-              final DocumentationProvider provider = getProviderFromElement(psiElement);
-              final List<String> urls = provider.getUrlFor(psiElement, getOriginalElement(psiElement));
+              final List<String> urls = ApplicationManager.getApplication().runReadAction(
+                  new Computable<List<String>>() {
+                    public List<String> compute() {
+                      final DocumentationProvider provider = getProviderFromElement(psiElement);
+                      return provider.getUrlFor(psiElement, getOriginalElement(psiElement));
+                    }
+                  }
+              );
               BrowserUtil.launchBrowser(urls != null && !urls.isEmpty() ? urls.get(0) : docUrl);
             } else {
               BrowserUtil.launchBrowser(docUrl);
