@@ -185,6 +185,9 @@
     <!-- Django -->
     <pyClassMembersProvider implementation="com.jetbrains.django.codeInsight.DjangoClassMembersProvider"/>
     <unresolvedReferenceQuickFixProvider implementation="com.jetbrains.django.ref.DjangoViewReferenceQuickFixProvider"/>
+
+    <!-- App Engine -->
+    <typeProvider implementation="com.jetbrains.appengine.model.AppEngineTypeProvider"/>
   </extensions>
 
   <project-components>
