@@ -483,5 +483,12 @@ public abstract class AbstractVcs extends StartedActivated {
   public CommittedChangeList getRevisionChanges(final VcsFileRevision revision, final VirtualFile file) throws VcsException {
     throw new RevisionChangesNotSupportedException();
   }
+
+  /**
+   * will be useful for Clear Case
+   */
+  @CalledInAwt
+  public void generalPreConfigurationStep() {
+  }
 }
 

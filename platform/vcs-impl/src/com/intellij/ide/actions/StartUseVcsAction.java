@@ -15,7 +15,9 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -51,6 +53,7 @@ public class StartUseVcsAction extends AnAction implements DumbAware {
       final String vcsName = dialog.getVcs();
       if (vcsName.length() > 0) {
         final ProjectLevelVcsManager manager = data.getManager();
+        manager.findVcsByName(vcsName).generalPreConfigurationStep();
         manager.setDirectoryMappings(Arrays.asList(new VcsDirectoryMapping("", vcsName)));
       }
     }
