@@ -103,7 +103,11 @@ public class SettingsImpl implements EditorSettings {
   }
 
   public void setIndentGuidesShown(boolean val) {
-    myIndentGuidesShown = Boolean.valueOf(val);
+    final Boolean newValue = val ? Boolean.TRUE : Boolean.FALSE;
+    if (newValue.equals(myIndentGuidesShown)) return;
+
+    myIndentGuidesShown = newValue;
+    fireEditorRefresh();
   }
 
   public boolean isLineNumbersShown() {
