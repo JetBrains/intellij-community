@@ -30,9 +30,7 @@ import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Eugene.Kudelevsky
@@ -82,14 +80,23 @@ public class CustomTemplateCallback {
   @Nullable
   public TemplateImpl findApplicableTemplate(@NotNull String key) {
     List<TemplateImpl> templates = getMatchingTemplates(key);
-    templates = TemplateManagerImpl.filterApplicableCandidates(myFile, myStartOffset, templates);
+    templates = filterApplicableCandidates(templates);
     return templates.size() > 0 ? templates.get(0) : null;
   }
 
+  private List<TemplateImpl> filterApplicableCandidates(Collection<TemplateImpl> candidates) {
+    List<TemplateImpl> result = new ArrayList<TemplateImpl>();
+    for (TemplateImpl candidate : candidates) {
+      if (TemplateManagerImpl.isApplicable(myFile, myStartOffset, candidate)) {
+        result.add(candidate);
+      }
+    }
+    return result;
+  }
 
   public boolean templateContainsVars(@NotNull String key, String... varNames) {
     List<TemplateImpl> templates = getMatchingTemplates(key);
-    templates = TemplateManagerImpl.filterApplicableCandidates(myFile, myStartOffset, templates);
+    templates = filterApplicableCandidates(templates);
     if (templates.size() == 0) {
       return false;
     }
@@ -114,9 +121,9 @@ public class CustomTemplateCallback {
   public boolean startTemplate(@NotNull String key,
                                Map<String, String> predefinedVarValues,
                                @Nullable TemplateInvokationListener listener) {
-    int caretOffset = myEditor.getCaretModel().getOffset();
+    //int caretOffset = myEditor.getCaretModel().getOffset();
     List<TemplateImpl> templates = getMatchingTemplates(key);
-    templates = TemplateManagerImpl.filterApplicableCandidates(myFile, caretOffset, templates);
+    templates = filterApplicableCandidates(templates);
     if (templates.size() > 0) {
       TemplateImpl template = templates.get(0);
       return startTemplate(template, predefinedVarValues, listener);
@@ -144,8 +151,7 @@ public class CustomTemplateCallback {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
             if (brokenOff) {
-              CodeStyleManager style = CodeStyleManager.getInstance(myProject);
-              style.reformatText(myFile, myGlobalMarker.getStartOffset(), myGlobalMarker.getEndOffset());
+              reformat();
             }
           }
         });
@@ -155,12 +161,22 @@ public class CustomTemplateCallback {
           listener.finished(true);
         }
       }
+
+      @Override
+      public void waitingForInput(Template template) {
+        reformat();
+      }
     });
     templateEnded[0] = true;
     if (templateFinished[0] && listener != null) {
       listener.finished(false);
     }
     return templateFinished[0];
+  }
+
+  private void reformat() {
+    CodeStyleManager style = CodeStyleManager.getInstance(myProject);
+    style.reformatText(myFile, myGlobalMarker.getStartOffset(), myGlobalMarker.getEndOffset());
   }
 
   public void fixStartOfTemplate(@NotNull Object key) {
@@ -200,7 +216,9 @@ public class CustomTemplateCallback {
   public void finish() {
     myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     final CodeStyleManager style = CodeStyleManager.getInstance(myProject);
-    style.reformatText(myFile, myGlobalMarker.getStartOffset(), myGlobalMarker.getEndOffset());
+    if (myGlobalMarker != null) {
+      style.reformatText(myFile, myGlobalMarker.getStartOffset(), myGlobalMarker.getEndOffset());
+    }
     gotoEndOffset();
   }
 

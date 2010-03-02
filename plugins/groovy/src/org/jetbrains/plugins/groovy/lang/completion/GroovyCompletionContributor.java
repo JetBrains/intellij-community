@@ -49,6 +49,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExp
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
 import java.util.ArrayList;
@@ -111,9 +112,11 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
         }
         else if (reference instanceof GrReferenceElement) {
+          final boolean addGDKMethods = parameters.getInvocationCount() > 1;
           ((GrReferenceElement)reference).processVariants(new Consumer<Object>() {
             public void consume(Object element) {
               LookupElement lookupElement = LookupItemUtil.objectToLookupItem(element);
+              if (lookupElement.getObject() instanceof GrGdkMethod && !addGDKMethods) return;
               if (lookupElement instanceof LookupItem) {
                 lookupElement = ((LookupItem)lookupElement).setInsertHandler(new GroovyInsertHandlerAdapter());
               }

@@ -38,9 +38,10 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
         return INDENT_AND_BRACES_SAMPLE;
       case SPACING_SETTINGS:
         return SPACING_SAMPLE;
-      default:
-        return GENERAL_CODE_SAMPLE;
+      case WRAPPING_SETTINGS:
+        return WRAPPING_CODE_SAMPLE;
     }
+    return GENERAL_CODE_SAMPLE;
   }
 
   private static final String GENERAL_CODE_SAMPLE = "public class Foo {\n" +
@@ -203,4 +204,40 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                                "    while (true);\n" +
                                                "  }\n" +
                                                "}";
+
+  private static final String WRAPPING_CODE_SAMPLE = "/*\n" +
+                                                     " * This is a sample file.\n" +
+                                                     " */\n" +
+                                                     "\n" +
+                                                     "public class ThisIsASampleClass extends C1 implements I1, I2, I3, I4, I5 {\n" +
+                                                     "  private int f1;\n" +
+                                                     "  private int f2;\n" +
+                                                     "  public void foo1(int i1, int i2, int i3, int i4, int i5, int i6, int i7) {}\n" +
+                                                     "  public static void longerMethod() throws Exception1, Exception2, Exception3 {\n" +
+                                                     "    int[] a = new int[] {1, 2, 0x0052, 0x0053, 0x0054};\n" +
+                                                     "    foo1(0x0051, 0x0052, 0x0053, 0x0054, 0x0055, 0x0056, 0x0057);\n" +
+                                                     "    int x = (3 + 4 + 5 + 6) * (7 + 8 + 9 + 10) * (11 + 12 + 13 + 14 + 0xFFFFFFFF);\n" +
+                                                     "    String s1, s2, s3;\n" +
+                                                     "    s1 = s2 = s3 = \"012345678901456\";\n" +
+                                                     "    assert i + j + k + l + n+ m <= 2 : \"assert description\";" +
+                                                     "    int y = 2 > 3 ? 7 + 8 + 9 : 11 + 12 + 13;\n" +
+                                                     "    label: " +
+                                                     "    for (int i = 0; i < 0xFFFFFF; i += 2) {\n" +
+                                                     "       super.getFoo().foo().getBar().bar();\n" +
+                                                     "    }\n" +
+                                                     "  }\n" +
+                                                     "}\n" +
+                                                     "\n" +
+                                                     "enum Breed {\n" +
+                                                     "    Dalmatian(), Labrador(), Dachshund()\n" +
+                                                     "}\n" +
+                                                     "\n" +
+                                                     "@Annotation1 @Annotation2 @Annotation3(param1=\"value1\", param2=\"value2\") @Annotation4 class Foo {\n" +
+                                                     "    @Annotation1 @Annotation3(param1=\"value1\", param2=\"value2\") public static void foo(){\n" +
+                                                     "    }\n" +
+                                                     "    @Annotation1 @Annotation3(param1=\"value1\", param2=\"value2\") public static int myFoo;\n" +
+                                                     "    public void method(@Annotation1 @Annotation3(param1=\"value1\", param2=\"value2\") final int param){\n" +
+                                                     "        @Annotation1 @Annotation3(param1=\"value1\", param2=\"value2\") final int localVariable;" +
+                                                     "    }\n" +
+                                                     "}";
 }

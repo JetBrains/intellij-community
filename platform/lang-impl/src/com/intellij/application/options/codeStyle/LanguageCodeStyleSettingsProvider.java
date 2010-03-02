@@ -31,7 +31,7 @@ import java.util.ArrayList;
  */
 public abstract class LanguageCodeStyleSettingsProvider {
   public enum SettingsType {
-    BLANK_LINE_SETTINGS, INDENT_AND_BRACES_SETTINGS, SPACING_SETTINGS
+    BLANK_LINE_SETTINGS, INDENT_AND_BRACES_SETTINGS, SPACING_SETTINGS, WRAPPING_SETTINGS
   }
   
   public static final ExtensionPointName<LanguageCodeStyleSettingsProvider> EP_NAME =

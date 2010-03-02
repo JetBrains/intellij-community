@@ -78,7 +78,7 @@ public class GroovyCompletionTest extends LightCodeInsightFixtureTestCase {
     doBasicTest();
   }
 
-  private void doBasicTest() throws Throwable {
+  private void doBasicTest() throws Exception {
     myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy");
   }
 
@@ -292,5 +292,9 @@ public class GroovyCompletionTest extends LightCodeInsightFixtureTestCase {
 
   public void testIncSmartCompletion() throws Exception {
     doSmartCompletion("a", "b");
+  }
+
+  public void testFirstCompletionDontShowGDKMethods() throws Exception {
+    doBasicTest();
   }
 }

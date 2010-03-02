@@ -32,8 +32,10 @@ import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
@@ -43,6 +45,8 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,7 +67,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   private ModuleStructureComponent myModuleStructureComponent;
 
   private final JPanel myPanel;
-  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final MergingUpdateQueue myUpdateQueue;
   private final String myKey = new String("DATA_SELECTOR");
 
   // -------------------------------------------------------------------------
@@ -74,6 +78,9 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     myProject = project;
     myPanel = new ContentPanel();
     myPanel.setBackground(UIUtil.getTreeTextBackground());
+
+    myUpdateQueue = new MergingUpdateQueue("StructureView", Registry.intValue("structureView.coalesceTime"), false, myPanel, this, myPanel, true);
+    myUpdateQueue.setRestartTimerOnAdd(true);
 
     ActionManager.getInstance().addTimerListener(500, new TimerListener() {
       public ModalityState getModalityState() {
@@ -98,7 +105,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     if (myProject.isDisposed()) return;
 
     final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    if (SwingUtilities.isDescendingFrom(myPanel, owner)) return;
+    if (SwingUtilities.isDescendingFrom(myPanel, owner) || JBPopupFactory.getInstance().isPopupActive()) return;
 
     final DataContext dataContext = DataManager.getInstance().getDataContext(owner);
     if (dataContext.getData(myKey) == this) return;
@@ -147,13 +154,12 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   }
 
   private void scheduleRebuild() {
-    myUpdateAlarm.cancelAllRequests();
-    myUpdateAlarm.addRequest(new Runnable() {
+    myUpdateQueue.queue(new Update("rebuild") {
       public void run() {
         if (myProject.isDisposed()) return;
         rebuild();
       }
-    }, 300, ModalityState.stateForComponent(myPanel));
+    });
   }
 
   public void rebuild() {

@@ -393,11 +393,27 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NotNull
   public List<IntentionAction> getAvailableIntentions(final String... filePaths) throws Exception {
 
-    final Project project = myProjectFixture.getProject();
-    return new WriteCommandAction<List<IntentionAction>>(project) {
+    return new WriteCommandAction<List<IntentionAction>>(myProjectFixture.getProject()) {
       protected void run(final Result<List<IntentionAction>> result) throws Exception {
         configureByFilesInner(filePaths);
         result.setResult(getAvailableIntentions());
+      }
+    }.execute().getResultObject();
+  }
+
+  @NotNull
+  public List<IntentionAction> getAllQuickFixes(@NonNls final String... filePaths) {
+    return new WriteCommandAction<List<IntentionAction>>(myProjectFixture.getProject()) {
+      protected void run(final Result<List<IntentionAction>> result) throws Exception {
+        configureByFilesInner(filePaths);
+        List<HighlightInfo> infos = doHighlighting();
+        ArrayList<IntentionAction> actions = new ArrayList<IntentionAction>();
+        for (HighlightInfo info : infos) {
+          for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
+            actions.add(pair.getFirst().getAction());
+          }
+        }
+        result.setResult(actions);
       }
     }.execute().getResultObject();
   }

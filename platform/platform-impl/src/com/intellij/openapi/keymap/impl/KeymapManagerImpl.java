@@ -58,14 +58,10 @@ public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStat
   private String myActiveKeymapName;
   private final Map<String, String> myBoundShortcuts = new HashMap<String, String>();
 
-  @NonNls
-  private static final String KEYMAP = "keymap";
-  @NonNls
-  private static final String KEYMAPS = "keymaps";
-  @NonNls
-  private static final String ACTIVE_KEYMAP = "active_keymap";
-  @NonNls
-  private static final String NAME_ATTRIBUTE = "name";
+  @NonNls private static final String KEYMAP = "keymap";
+  @NonNls private static final String KEYMAPS = "keymaps";
+  @NonNls private static final String ACTIVE_KEYMAP = "active_keymap";
+  @NonNls private static final String NAME_ATTRIBUTE = "name";
   private final SchemesManager<Keymap, KeymapImpl> mySchemesManager;
 
   public static boolean ourKeymapManagerInitialized = false;

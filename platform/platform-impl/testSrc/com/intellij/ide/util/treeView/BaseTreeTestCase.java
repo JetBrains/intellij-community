@@ -408,15 +408,14 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
   private void checkThread() {
     String message = "Wrong thread used for query structure, thread=" + Thread.currentThread();
 
-    if (myPassthroughMode) {
-      Assert.assertSame(message, myTestThread, Thread.currentThread());
-    } else {
+    if (!myPassthroughMode) {
       if (isBgStructureBuilding()) {
         Assert.assertFalse(message, EventQueue.isDispatchThread());
       } else {
         Assert.assertTrue(message, EventQueue.isDispatchThread());
       }
-    } 
+
+    }
   }
 
   protected final void invokeLaterIfNeeded(Runnable runnable) {

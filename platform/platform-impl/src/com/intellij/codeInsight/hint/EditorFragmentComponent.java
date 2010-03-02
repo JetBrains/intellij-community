@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ScreenUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -125,6 +126,7 @@ public class EditorFragmentComponent extends JPanel {
    * @param x <code>x</code> coordinate in layered pane coordinate system.
    * @param y <code>y</code> coordinate in layered pane coordinate system.
    */
+  @Nullable
   public static LightweightHint showEditorFragmentHintAt(Editor editor,
                                                          TextRange range,
                                                          int x,
@@ -168,12 +170,15 @@ public class EditorFragmentComponent extends JPanel {
     return fragmentComponent;
   }
 
+  @Nullable
   public static LightweightHint showEditorFragmentHint(Editor editor, TextRange range, boolean showFolding, boolean hideByAnyKey){
     int x = -2;
     int y = 0;
 
     JComponent editorComponent = editor.getComponent();
-    JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
+    final JRootPane rootPane = editorComponent.getRootPane();
+    if (rootPane == null) return null;
+    JLayeredPane layeredPane = rootPane.getLayeredPane();
     Point point = SwingUtilities.convertPoint(editorComponent, x, y, layeredPane);
 
     return showEditorFragmentHintAt(editor, range, point.x, point.y, true, showFolding, hideByAnyKey);

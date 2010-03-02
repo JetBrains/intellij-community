@@ -36,7 +36,6 @@ public interface DebuggerActions extends XDebuggerActions {
   @Deprecated @NonNls String DEBUGGER_TREE_PANEL = DebuggerTreePanel.DATA_KEY.getName();
   @NonNls String REMOVE_WATCH = "Debugger.RemoveWatch";
   @NonNls String NEW_WATCH = "Debugger.NewWatch";
-  @NonNls String ADD_TO_WATCH = "Debugger.AddToWatch";
   @NonNls String EDIT_WATCH = "Debugger.EditWatch";
   @NonNls String MARK_OBJECT = "Debugger.MarkObject";
   @NonNls String SET_VALUE = "Debugger.SetValue";

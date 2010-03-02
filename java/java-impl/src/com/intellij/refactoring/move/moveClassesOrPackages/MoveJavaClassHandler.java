@@ -19,8 +19,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Maxim.Medvedev
@@ -28,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 public class MoveJavaClassHandler implements MoveClassHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveClassesOrPackages.MoveJavaClassHandler");
 
-  public PsiClass doMoveClass(@NotNull PsiClass aClass, @NotNull PsiDirectory moveDestination) throws IncorrectOperationException {
+  public PsiClass doMoveClass(@NotNull final PsiClass aClass, @NotNull PsiDirectory moveDestination) throws IncorrectOperationException {
     PsiFile file = aClass.getContainingFile();
     final PsiPackage newPackage = JavaDirectoryService.getInstance().getPackage(moveDestination);
 
@@ -51,18 +55,26 @@ public class MoveJavaClassHandler implements MoveClassHandler {
              moveDestination.findFile(file.getName()) != null) {
       // moving second of two classes which were in the same file to a different directory (IDEADEV-3089)
       correctSelfReferences(aClass, newPackage);
-      PsiFile newFile = moveDestination.findFile(file.getName());
+      final PsiFile newFile = moveDestination.findFile(file.getName());
+      LOG.assertTrue(newFile != null);
       newClass = (PsiClass)newFile.add(aClass);
+      correctOldClassReferences(newClass, aClass);
       aClass.delete();
     }
     return newClass;
   }
 
   private static void correctOldClassReferences(final PsiClass newClass, final PsiClass oldClass) {
-    newClass.accept(new JavaRecursiveElementVisitor() {
+    final Set<PsiImportStatementBase> importsToDelete = new HashSet<PsiImportStatementBase>();
+    newClass.getContainingFile().accept(new JavaRecursiveElementVisitor() {
       @Override
       public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
         if (reference.isReferenceTo(oldClass)) {
+          final PsiImportStatementBase importStatement = PsiTreeUtil.getParentOfType(reference, PsiImportStatementBase.class);
+          if (importStatement != null) {
+            importsToDelete.add(importStatement);
+            return;
+          }
           try {
             reference.bindToElement(newClass);
           }
@@ -73,6 +85,9 @@ public class MoveJavaClassHandler implements MoveClassHandler {
         super.visitReferenceElement(reference);
       }
     });
+    for (PsiImportStatementBase importStatement : importsToDelete) {
+      importStatement.delete();
+    }
   }
 
   private static void correctSelfReferences(final PsiClass aClass, final PsiPackage newContainingPackage) {

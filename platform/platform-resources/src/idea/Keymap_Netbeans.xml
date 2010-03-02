@@ -355,10 +355,6 @@
     <action id="ToggleFloatingMode">
       <keyboard-shortcut first-keystroke="shift alt D" />
     </action>
-    <action id="ToggleFullScreenMode">
-      <keyboard-shortcut first-keystroke="control alt F11" />
-      <keyboard-shortcut first-keystroke="shift alt ENTER" />
-    </action>
     <action id="TypeHierarchy">
       <keyboard-shortcut first-keystroke="shift alt F12" />
     </action>

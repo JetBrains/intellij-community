@@ -166,7 +166,7 @@
 
     <!-- TODO: correct action location -->
     <action id="QuickImplementations" class="com.intellij.codeInsight.hint.actions.ShowImplementationsAction">
-      <add-to-group group-id="ViewMenu" relative-to-action="ToggleFullScreenMode" anchor="after"/>
+      <add-to-group group-id="ViewMenu" relative-to-action="QuickChangeScheme" anchor="before"/>
     </action>
 
     <action id="RecentChanges" class="com.intellij.history.integration.ui.actions.RecentChangesAction">
@@ -613,6 +613,20 @@
 
       <add-to-group group-id="RunMenu" anchor="last"/>
     </group>
+
+    <action id="Debugger.AddToWatch" class="com.intellij.xdebugger.impl.actions.AddToWatchesAction" icon="/debugger/addToWatch.png"/>
+
+    <group id="EditorPopupMenuDebug">
+      <separator/>
+      <reference ref="EvaluateExpression"/>
+      <reference ref="RunToCursor"/>
+      <reference ref="ForceRunToCursor"/>
+      <reference ref="Debugger.AddToWatch"/>
+      <separator/>
+
+      <add-to-group group-id="EditorLangPopupMenu" relative-to-action="EditorPopupMenu.Run" anchor="before"/>
+    </group>
+
 
     <group id="XDebugger.Actions">
       <action id="XDebugger.SetValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XSetValueAction"/>

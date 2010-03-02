@@ -43,6 +43,8 @@ import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
@@ -55,14 +57,19 @@ import java.io.File;
  */
 public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstractPanel {
 
-  private Language myLanguage;
+  private static Language myLanguage;
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.codeStyle.MultilanguageCodeStyleAbstractPanel");
   private static Project mySettingsProject;
   private static int myInstanceCount;
   private int myLangSelectionIndex;
+  private JTabbedPane tabbedPane;
 
   protected MultilanguageCodeStyleAbstractPanel(CodeStyleSettings settings) {
     super(settings);
+    initProject();
+  }
+
+  private synchronized static void initProject() {
     createSettingsProject();
     myInstanceCount++;
   }
@@ -191,7 +198,7 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
 
   @Override
   protected void installPreviewPanel(final JPanel previewPanel) {
-    JTabbedPane tabbedPane = new JTabbedPane();
+    tabbedPane = new JTabbedPane();
     tabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
     Language[] langs = LanguageCodeStyleSettingsProvider.getLanguagesWithCodeStyleSettings();
     if (langs.length == 0) return;
@@ -200,13 +207,40 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
     }
     tabbedPane.setComponentAt(0, getEditor().getComponent());
     myLangSelectionIndex = 0;
-    setLanguage(langs[0]);
+    if (myLanguage == null) {
+      setLanguage(langs[0]);
+    }
+    else {
+      updatePreviewEditor();
+    }
     tabbedPane.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
         onTabSelection((JTabbedPane)e.getSource());        
       }
     });
     previewPanel.add(tabbedPane, BorderLayout.CENTER);
+    previewPanel.addAncestorListener(new AncestorListener(){
+      public void ancestorAdded(AncestorEvent event) {
+        selectCurrentLanguageTab();
+      }
+
+      public void ancestorRemoved(AncestorEvent event) {
+        // Do nothing
+      }
+
+      public void ancestorMoved(AncestorEvent event) {
+        // Do nothing
+      }
+    });
+  }
+
+  private void selectCurrentLanguageTab() {
+    for(int i = 0; i < tabbedPane.getTabCount(); i ++) {
+      if (myLanguage.getDisplayName().equals(tabbedPane.getTitleAt(i))) {
+        tabbedPane.setSelectedIndex(i);
+        return;
+      }
+    }
   }
 
 

@@ -167,7 +167,7 @@ public class DebuggerSessionTab extends DebuggerLogConsoleManagerBase implements
     watches.setAlertIcon(breakpointAlert);
     final DefaultActionGroup watchesGroup = new DefaultActionGroup();
     addAction(watchesGroup, DebuggerActions.NEW_WATCH);
-    addAction(watchesGroup, DebuggerActions.ADD_TO_WATCH);
+    addAction(watchesGroup, XDebuggerActions.ADD_TO_WATCH);
     addAction(watchesGroup, DebuggerActions.REMOVE_WATCH);
     watches.setActions(watchesGroup, ActionPlaces.DEBUGGER_TOOLBAR, myWatchPanel.getTree());
     myUi.addContent(watches, 0, PlaceInGrid.right, false);

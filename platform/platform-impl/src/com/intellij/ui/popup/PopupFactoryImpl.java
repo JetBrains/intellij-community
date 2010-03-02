@@ -17,6 +17,7 @@ package com.intellij.ui.popup;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
@@ -530,6 +531,11 @@ public class PopupFactoryImpl extends JBPopupFactory {
   @Nullable
   public List<JBPopup> getChildPopups(@NotNull final Component component) {
     return FocusTrackback.getChildPopups(component);
+  }
+
+  @Override
+  public boolean isPopupActive() {
+  return IdeEventQueue.getInstance().isPopupActive();
   }
 
   private static class ActionStepBuilder {

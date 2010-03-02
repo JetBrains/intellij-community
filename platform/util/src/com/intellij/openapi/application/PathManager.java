@@ -229,10 +229,7 @@ public class PathManager {
       path = SystemProperties.getUserHome() + path.substring(1);
     }
 
-    File file = new File(path);
-    if (!file.exists()) return path;
-    file = file.getAbsoluteFile();
-    return file.getAbsolutePath();
+    return new File(path).getAbsolutePath();
   }
 
   @NonNls

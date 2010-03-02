@@ -114,13 +114,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       }
 
       public boolean isToBuildChildrenInBackground(final Object element) {
-        if (element instanceof TreeElementWrapper) {
-          final Object o = ((TreeElementWrapper)element).getElement();
-          final TreeElement root = myModel.getRoot();
-          if (o == root)
-          return true;
-        }
-        return false;
+        return getRootElement() == element;
       }
 
       protected TreeElementWrapper createTree() {
@@ -140,7 +134,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
         return isValid(child);
       }
     };
-    myAbstractTreeBuilder.updateFromRoot();
     Disposer.register(this, myAbstractTreeBuilder);
     Disposer.register(myAbstractTreeBuilder, new Disposable() {
       public void dispose() {
@@ -783,6 +776,16 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
         childrenStamp = currentStamp;
       }
       return super.getChildren();
+    }
+
+    @Override
+    public boolean isAlwaysShowPlus() {
+      return getValue().getChildren().length > 0;
+    }
+
+    @Override
+    public boolean isAlwaysLeaf() {
+      return getValue().getChildren().length == 0;
     }
 
     protected TreeElementWrapper createChildNode(final TreeElement child) {

@@ -375,7 +375,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     return stub;
   }
 
-  private ResourceBundle getActionsResourceBundle(ClassLoader loader, IdeaPluginDescriptor plugin) {
+  private static ResourceBundle getActionsResourceBundle(ClassLoader loader, IdeaPluginDescriptor plugin) {
     @NonNls final String resBundleName = plugin != null && !plugin.getPluginId().getIdString().equals("com.intellij") ? plugin.getResourceBundleBaseName() : ACTIONS_BUNDLE;
     ResourceBundle bundle = null;
     if (resBundleName != null) {
@@ -625,7 +625,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     group.addAction(action, new Constraints(anchor, relativeToActionId), this).setAsSecondary(secondary);
   }
 
-  public boolean checkRelativeToAction(final String relativeToActionId,
+  public static boolean checkRelativeToAction(final String relativeToActionId,
                                        @NotNull final Anchor anchor,
                                        @NotNull final String actionName,
                                        @Nullable final PluginId pluginId) {
@@ -637,7 +637,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   }
 
   @Nullable
-  public Anchor parseAnchor(final String anchorStr,
+  public static Anchor parseAnchor(final String anchorStr,
                             @Nullable final String actionName,
                             @Nullable final PluginId pluginId) {
     if (anchorStr == null) {
@@ -946,13 +946,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
 
   public void removeActionPopup(final ActionPopupMenuImpl menu) {
     final boolean removed = myPopups.remove(menu);
-    if (removed && myPopups.size() == 0) {
+    if (removed && myPopups.isEmpty()) {
       flushActionPerformed();
     }
   }
 
   public void queueActionPerformedEvent(final AnAction action, DataContext context, AnActionEvent event) {
-    if (myPopups.size() > 0) {
+    if (!myPopups.isEmpty()) {
       myQueuedNotifications.put(action, context);
     } else {
       fireAfterActionPerformed(action, context, event);
@@ -961,7 +961,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
 
 
   public boolean isActionPopupStackEmpty() {
-    return myPopups.size() == 0;
+    return myPopups.isEmpty();
   }
 
   private void flushActionPerformed() {
@@ -1268,7 +1268,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     });
   }
 
-  private DataContext getContextBy(Component contextComponent) {
+  private static DataContext getContextBy(Component contextComponent) {
     final DataManager dataManager = DataManager.getInstance();
     return contextComponent != null ? dataManager.getDataContext(contextComponent) : dataManager.getDataContext();
   }
