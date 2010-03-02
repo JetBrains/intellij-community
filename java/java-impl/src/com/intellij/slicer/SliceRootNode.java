@@ -46,7 +46,7 @@ public class SliceRootNode extends SliceNode {
   SliceRootNode copy() {
     SliceUsage newUsage = getValue().copy();
     SliceRootNode newNode = new SliceRootNode(getProject(), new DuplicateMap(), newUsage);
-    newNode.initialized = initialized;
+    newNode.dupNodeCalculated = dupNodeCalculated;
     newNode.duplicate = duplicate;
     return newNode;
   }

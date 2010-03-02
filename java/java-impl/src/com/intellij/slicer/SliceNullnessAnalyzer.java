@@ -178,7 +178,7 @@ public class SliceNullnessAnalyzer {
     WalkingState<SliceNode> walkingState = new WalkingState<SliceNode>(guide) {
       @Override
       public void visit(@NotNull SliceNode element) {
-        element.update(null);
+        element.calculateDupNode();
         node(element, map).clear();
         SliceNode duplicate = element.getDuplicate();
         if (duplicate != null) {
