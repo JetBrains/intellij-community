@@ -33,7 +33,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.TestDataFile;
-import com.intellij.testFramework.TestDataPath;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -173,14 +172,18 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   PsiReference getReferenceAtCaretPositionWithAssertion(@NonNls String... filePaths) throws Exception;
 
   /**
-   * Collects available intentions in the whole file or at caret position if {@link #CARET_MARKER} presents.
+   * Collects available intentions at caret position.
    *
    * @param filePaths the first file is tested only; the others are just copied along with the first.
    * @return available intentions.
    * @throws Exception any exception.
+   * @see #CARET_MARKER
    */
   @NotNull
   List<IntentionAction> getAvailableIntentions(@NonNls String... filePaths) throws Exception;
+
+  @NotNull
+  List<IntentionAction> getAllQuickFixes(@NonNls String... filePaths) throws Exception;
 
   @NotNull
   List<IntentionAction> getAvailableIntentions() throws Exception;
