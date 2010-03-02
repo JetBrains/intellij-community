@@ -25,7 +25,7 @@ import java.awt.event.InputEvent;
 /**
  * @author max
  */
-class MacOSDefaultKeymap extends DefaultKeymapImpl {
+public class MacOSDefaultKeymap extends DefaultKeymapImpl {
   protected String[] getParentActionIds(KeyStroke firstKeyStroke) {
     return super.getParentActionIds(convertKeyStroke(firstKeyStroke));
   }
@@ -43,7 +43,7 @@ class MacOSDefaultKeymap extends DefaultKeymapImpl {
     return macShortcuts;
   }
 
-  private Shortcut convertShortcutFromParent(Shortcut parentShortcut) {
+  public static Shortcut convertShortcutFromParent(Shortcut parentShortcut) {
     if (parentShortcut instanceof MouseShortcut) {
       return convertMouseShortcut((MouseShortcut)parentShortcut);
     }
@@ -53,40 +53,40 @@ class MacOSDefaultKeymap extends DefaultKeymapImpl {
                                 convertKeyStroke(key.getSecondKeyStroke()));
   }
 
-  private KeyStroke convertKeyStroke(KeyStroke parentKeyStroke) {
+  private static KeyStroke convertKeyStroke(KeyStroke parentKeyStroke) {
     if (parentKeyStroke == null) return null;
     return KeyStroke.getKeyStroke(parentKeyStroke.getKeyCode(),
                                   mapModifiers(parentKeyStroke.getModifiers()),
                                   parentKeyStroke.isOnKeyRelease());
   }
 
-  private MouseShortcut convertMouseShortcut(MouseShortcut macShortcut) {
+  private static MouseShortcut convertMouseShortcut(MouseShortcut macShortcut) {
     return new MouseShortcut(macShortcut.getButton(),
                              mapModifiers(macShortcut.getModifiers()),
                              macShortcut.getClickCount());
   }
 
-  private int mapModifiers(int modifiers) {
+  private static int mapModifiers(int modifiers) {
     boolean meta = false;
-    boolean metaDown = false;
-    boolean control = false;
-    boolean controlDown = false;
 
     if ((modifiers & InputEvent.META_MASK) != 0) {
       modifiers &= ~InputEvent.META_MASK;
       meta = true;
     }
 
+    boolean metaDown = false;
     if ((modifiers & InputEvent.META_DOWN_MASK) != 0) {
       modifiers &= ~InputEvent.META_DOWN_MASK;
       metaDown = true;
     }
 
+    boolean control = false;
     if ((modifiers & InputEvent.CTRL_MASK) != 0) {
       modifiers &= ~InputEvent.CTRL_MASK;
       control = true;
     }
 
+    boolean controlDown = false;
     if ((modifiers & InputEvent.CTRL_DOWN_MASK) != 0) {
       modifiers &= ~InputEvent.CTRL_DOWN_MASK;
       controlDown = true;

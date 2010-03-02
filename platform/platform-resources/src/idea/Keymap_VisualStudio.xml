@@ -135,17 +135,11 @@
       <keyboard-shortcut first-keystroke="control CLOSE_BRACKET"/>
       <keyboard-shortcut first-keystroke="control ASTERISK"/>
     </action>
-    <action id="RefreshEditor">
-      <keyboard-shortcut first-keystroke="alt R"/>
-    </action>
     <action id="OverrideMethods">
       <keyboard-shortcut first-keystroke="shift control O"/>
     </action>
     <action id="Debug">
       <keyboard-shortcut first-keystroke="alt F5"/>
-    </action>
-    <action id="DebugAgain">
-      <keyboard-shortcut first-keystroke="alt shift F5"/>
     </action>
     <action id="ToggleLineBreakpoint">
       <keyboard-shortcut first-keystroke="F9"/>
@@ -194,7 +188,7 @@
     <action id="OpenFile">
       <keyboard-shortcut first-keystroke="control O"/>
     </action>
-    <action id="ProjectProperties">
+    <action id="ShowSettings">
       <keyboard-shortcut first-keystroke="alt F7"/>
     </action>
     <action id="Refresh">

@@ -3,24 +3,6 @@
     <action id="FileChooser.TogglePathShowing">
       <keyboard-shortcut first-keystroke="meta P"/>
     </action>
-    <action id="Debugger.PreviousContent">
-      <keyboard-shortcut first-keystroke="control alt shift LEFT" />
-    </action>
-    <action id="Debugger.NextContent">
-      <keyboard-shortcut first-keystroke="control alt shift RIGHT" />
-    </action>
-    <action id="Debugger.MaximizeContent">
-      <keyboard-shortcut first-keystroke="control alt shift UP" />
-    </action>
-    <action id="Debugger.RestoreContent">
-      <keyboard-shortcut first-keystroke="control alt shift DOWN" />
-    </action>
-    <action id="Debugger.HideContent">
-      <keyboard-shortcut first-keystroke="control alt shift BACK_SPACE" />
-    </action>
-    <action id="Debugger.DetachContent">
-      <keyboard-shortcut first-keystroke="control alt shift ENTER" />
-    </action>
 
 
     <action id="NextSplitter">
@@ -247,7 +229,6 @@
       <keyboard-shortcut first-keystroke="END"/>
       <keyboard-shortcut first-keystroke="meta RIGHT"/>
     </action>
-    <action id="CreateConfiguration"/>
     <action id="CloseWindow"/>
     <action id="Exit">
       <keyboard-shortcut first-keystroke="meta Q"/>

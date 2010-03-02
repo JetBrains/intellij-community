@@ -127,14 +127,6 @@
     <keyboard-shortcut first-keystroke="control B"/>
     <mouse-shortcut keystroke="ctrl button1"/>
   </action>
-  <action id="GotoDefinition">
-    <keyboard-shortcut first-keystroke="control alt D"/>
-    <mouse-shortcut keystroke="ctrl button2"/>
-  </action>
-  <action id="GotoUsage">
-    <keyboard-shortcut first-keystroke="control alt U"/>
-    <mouse-shortcut keystroke="ctrl button2"/>
-  </action>
   <action id="QuickImplementations">
     <keyboard-shortcut first-keystroke="control shift I"/>
   </action>
@@ -462,9 +454,6 @@
     <keyboard-shortcut first-keystroke="control alt B"/>
     <mouse-shortcut keystroke="ctrl alt button1"/>
   </action>
-  <action id="SmartGotoImplementation">
-    <keyboard-shortcut first-keystroke="control shift alt B"/>
-  </action>
   <action id="EditorPageDown">
     <keyboard-shortcut first-keystroke="PAGE_DOWN"/>
   </action>
@@ -590,9 +579,6 @@
   </action>
   <action id="CodeCompletion">
     <keyboard-shortcut first-keystroke="control SPACE"/>
-  </action>
-  <action id="WordCompletion">
-    <keyboard-shortcut first-keystroke="control shift alt SPACE"/>
   </action>
   <action id="HippieCompletion">
     <keyboard-shortcut first-keystroke="alt SLASH"/>
@@ -814,9 +800,6 @@
   <action id="Debug">
     <keyboard-shortcut first-keystroke="shift F9"/>
   </action>
-  <action id="DebugAgain">
-    <keyboard-shortcut first-keystroke="alt shift F9"/>
-  </action>
   <action id="CommanderSyncViews">
     <keyboard-shortcut first-keystroke="alt F6"/>
   </action>
@@ -856,7 +839,6 @@
   <action id="ProjectViewChangeView">
     <keyboard-shortcut first-keystroke="alt F1"/>
   </action>
-  <action id="CreateConfiguration"/>
   <action id="ChooseRunConfiguration">
     <keyboard-shortcut first-keystroke="alt shift F10"/>
   </action>
@@ -906,24 +888,6 @@
   </action>
   <action id="RemoveFromFavorites">
     <keyboard-shortcut first-keystroke="control DELETE"/>
-  </action>
-  <action id="Debugger.PreviousContent">
-    <keyboard-shortcut first-keystroke="control alt LEFT" />
-  </action>
-  <action id="Debugger.NextContent">
-    <keyboard-shortcut first-keystroke="control alt RIGHT" />
-  </action>
-  <action id="Debugger.MaximizeContent">
-    <keyboard-shortcut first-keystroke="control alt UP" />
-  </action>
-  <action id="Debugger.RestoreContent">
-    <keyboard-shortcut first-keystroke="control alt DOWN" />
-  </action>
-  <action id="Debugger.HideContent">
-    <keyboard-shortcut first-keystroke="control alt BACK_SPACE" />
-  </action>
-  <action id="Debugger.DetachContent">
-    <keyboard-shortcut first-keystroke="control alt ENTER" />
   </action>
 
   <action id="FileChooser.GotoHome">
