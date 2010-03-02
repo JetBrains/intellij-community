@@ -48,6 +48,16 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
+  public void visitPySubscriptionExpression(PySubscriptionExpression node) {
+    myBuilder.startNode(node);
+    node.getOperand().accept(this);
+    final PyExpression expression = node.getIndexExpression();
+    if (expression != null) {
+      expression.accept(this);
+    }
+  }
+
+  @Override
   public void visitPyReferenceExpression(final PyReferenceExpression node) {
     final PyExpression qualifier = node.getQualifier();
     if (qualifier != null){
