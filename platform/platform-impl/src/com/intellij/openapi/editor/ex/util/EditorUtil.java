@@ -218,8 +218,7 @@ public class EditorUtil {
   }
 
   public static int getTabSize(Editor editor) {
-    Project project = editor.getProject();
-    return project != null && project.isDisposed() ? 0 : editor.getSettings().getTabSize(project);
+    return editor.getSettings().getTabSize(editor.getProject());
   }
 
   public static int nextTabStop(int x, Editor editor) {
