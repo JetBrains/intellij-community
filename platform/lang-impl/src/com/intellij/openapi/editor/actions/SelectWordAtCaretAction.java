@@ -93,12 +93,22 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
     public void execute(Editor editor, DataContext dataContext) {
       final IndentGuideDescriptor guide = editor.getCaretIndentGuide();
       final SelectionModel selectionModel = editor.getSelectionModel();
-      if (guide != null && !selectionModel.hasSelection() && !selectionModel.hasBlockSelection()) {
+      if (guide != null && !selectionModel.hasSelection() && !selectionModel.hasBlockSelection() && isWhitespaceAtCaret(editor)) {
         selectWithGuide(editor, guide);
       }
       else {
         myDefaultHandler.execute(editor, dataContext);
       }
+    }
+
+    private static boolean isWhitespaceAtCaret(Editor editor) {
+      final Document doc = editor.getDocument();
+
+      final int offset = editor.getCaretModel().getOffset();
+      if (offset >= doc.getTextLength()) return false;
+
+      final char c = doc.getCharsSequence().charAt(offset);
+      return c == ' ' || c == '\t' || c == '\n';
     }
 
     private static void selectWithGuide(Editor editor, IndentGuideDescriptor guide) {
