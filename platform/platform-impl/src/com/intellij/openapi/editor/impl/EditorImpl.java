@@ -1299,6 +1299,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Nullable
   public IndentGuideDescriptor getCaretIndentGuide() {
+    if (!mySettings.isIndentGuidesShown()) return null;
+    
     final int indentSize = getIndentSize();
     if (indentSize == 0) return null;
 
