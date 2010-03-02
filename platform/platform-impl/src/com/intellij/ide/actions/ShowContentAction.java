@@ -32,6 +32,7 @@ import java.awt.*;
 public class ShowContentAction extends AnAction implements DumbAware {
   private ToolWindow myWindow;
 
+  @SuppressWarnings({"UnusedDeclaration"})
   public ShowContentAction() {
   }
 
