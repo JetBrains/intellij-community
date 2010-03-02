@@ -23,8 +23,5 @@ import java.util.List;
  * User: yole
  * Date: 31.05.2005
  */
-public interface PyListCompExpression extends PyExpression, NameDefiner {
-  PyExpression getResultExpression();
-  List<ComprhForComponent> getForComponents();
-  List<ComprhIfComponent> getIfComponents();
+public interface PyListCompExpression extends PyGeneratorExpression {
 }

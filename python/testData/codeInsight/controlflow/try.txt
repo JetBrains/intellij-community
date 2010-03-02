@@ -14,7 +14,7 @@
 13(14) READ ACCESS: int
 14(15) READ ACCESS: s
 15(16) READ ACCESS: strip
-16(17,25,28,33) WRITE ACCESS: i
+16(17,25,28,34) WRITE ACCESS: i
 17(18) element: PyExceptPart
 18(19) READ ACCESS: IOError
 19(20) WRITE ACCESS: errno
@@ -22,13 +22,14 @@
 21(22) element: PyPrintStatement
 22(23) READ ACCESS: format
 23(24) READ ACCESS: errno
-24(33) READ ACCESS: strerror
+24(34) READ ACCESS: strerror
 25(26) element: PyExceptPart
 26(27) READ ACCESS: ValueError
-27(33) element: PyPrintStatement
+27(34) element: PyPrintStatement
 28(29) element: PyExceptPart
 29(30) element: PyPrintStatement
-30(31) READ ACCESS: sys
-31(32) READ ACCESS: exc_info
-32(33) element: PyRaiseStatement
-33() element: null
+30(31) element: PySubscriptionExpression
+31(32) READ ACCESS: sys
+32(33) READ ACCESS: exc_info
+33(34) element: PyRaiseStatement
+34() element: null
