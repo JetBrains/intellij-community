@@ -195,7 +195,7 @@ public class SettingsImpl implements EditorSettings {
     if (myCachedTabSize != null) return myCachedTabSize.intValue();
 
     FileType fileType = getFileType();
-    int tabSize = CodeStyleFacade.getInstance(project).getTabSize(fileType);
+    int tabSize = project == null || project.isDisposed() ? 0 : CodeStyleFacade.getInstance(project).getTabSize(fileType);
     myCachedTabSize = Integer.valueOf(tabSize);
     return tabSize;
   }

@@ -1286,34 +1286,44 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private void drawSegment(Graphics2D g, int x, int y, CharSequence chars, boolean selected) {
     if (isWhitespaceAt(chars, x, y)) {
+      /*
       UIUtil.drawDottedLine(g, x, y, x, y + getLineHeight(),
                             getBackroundColor(),
                             selected ? getForegroundColor() : myScheme.getColor(EditorColors.WHITESPACES_COLOR));
+      */
+
+      g.setColor(selected ? new Color(200, 200, 200) : new Color(230, 230, 230));
+      g.drawLine( x + 1, y, x + 1, y + getLineHeight());
     }
   }
 
   @Nullable
   public IndentGuideDescriptor getCaretIndentGuide() {
     final int indentSize = getIndentSize();
+    if (indentSize == 0) return null;
 
     final LogicalPosition caretPosition = myCaretModel.getLogicalPosition();
     int startLine = caretPosition.line;
     int endLine = startLine;
-    int indents = Math.min(caretPosition.column / indentSize, getIndents(startLine));
+    final int caretIndent = caretPosition.column / indentSize;
+    final int indents = getIndents(startLine);
 
-    if (indents > 0 && caretPosition.column % indentSize == 0) {
+    if (caretIndent * indentSize != caretPosition.column) return null;
+    if (caretIndent > indents|| indents == 0) return null;
+    
+    if (caretIndent > 0 && caretPosition.column % indentSize == 0) {
       while (startLine > 0) {
-        if (getIndents(startLine - 1) <= indents) break;
+        if (getIndents(startLine - 1) <= caretIndent) break;
         startLine--;
       }
 
       while (endLine < myDocument.getLineCount() - 1) {
-        if (getIndents(endLine + 1) <= indents) break;
+        if (getIndents(endLine + 1) <= caretIndent) break;
         endLine++;
       }
 
-      if (indents > 0 && startLine < endLine) {
-        return new IndentGuideDescriptor(indents, startLine, endLine, indentSize);
+      if (startLine < endLine) {
+        return new IndentGuideDescriptor(caretIndent, startLine, endLine, indentSize);
       }
     }
 
@@ -1535,7 +1545,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             }
           }
           else {
-            paintAfterFileEndBackground(iterationState, g, position, clip, lineHeight, defaultBackground);
+            paintAfterFileEndBackground(iterationState,
+                                        g,
+                                        position, clip,
+                                        lineHeight, defaultBackground);
             break;
           }
 
