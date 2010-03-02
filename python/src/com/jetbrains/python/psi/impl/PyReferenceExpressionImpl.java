@@ -632,6 +632,10 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
   @Nullable
   public static PyType getTypeFromTarget(final PsiElement target) {
+    final PyType pyType = getReferenceTypeFromProviders(target);
+    if (pyType != null) {
+      return pyType;
+    }
     if (target instanceof PyTargetExpression && PyNames.NONE.equals(((PyTargetExpression) target).getName())) {
       return PyNoneType.INSTANCE;
     }
@@ -648,7 +652,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       PsiFile file = ((PsiDirectory)target).findFile(PyNames.INIT_DOT_PY);
       if (file != null) return getTypeFromTarget(file);
     }
-    return getReferenceTypeFromProviders(target);
+    return null;
   }
 
   @Nullable
