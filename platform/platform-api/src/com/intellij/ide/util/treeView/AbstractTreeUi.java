@@ -170,6 +170,10 @@ public class AbstractTreeUi {
     myNodeDescriptorComparator = comparator;
     myUpdateIfInactive = updateIfInactive;
 
+    if (myRootNode.getChildCount() == 0) {
+      insertLoadingNode(myRootNode, true);
+    }
+
     myExpansionListener = new MyExpansionListener();
     myTree.addTreeExpansionListener(myExpansionListener);
 

@@ -93,6 +93,10 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor impl
     return false;
   }
 
+  public boolean isAlwaysLeaf() {
+    return false;   
+  }
+
   public boolean isAlwaysExpand() {
     return false;
   }
