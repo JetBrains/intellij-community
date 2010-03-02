@@ -26,6 +26,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.impl.UsageViewImpl;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -42,6 +43,7 @@ public class ShowRecentFindUsagesGroup extends ActionGroup {
     e.getPresentation().setVisible(project != null);
   }
 
+  @NotNull
   public AnAction[] getChildren(@Nullable final AnActionEvent e) {
     if (e == null) return EMPTY_ARRAY;
     Project project = e.getData(PlatformDataKeys.PROJECT);
