@@ -26,6 +26,7 @@ import javax.swing.*;
 public interface DebuggerIcons {
 
   Icon ENABLED_BREAKPOINT_ICON = IconLoader.getIcon("/debugger/db_set_breakpoint.png");
+  Icon MUTED_BREAKPOINT_ICON = IconLoader.getIcon("/debugger/db_muted_breakpoint.png");
   Icon DISABLED_BREAKPOINT_ICON = IconLoader.getIcon("/debugger/db_disabled_breakpoint.png");
   Icon INVALID_BREAKPOINT_ICON = IconLoader.getIcon("/debugger/db_invalid_breakpoint.png");
   Icon VERIFIED_BREAKPOINT_ICON = IconLoader.getIcon("/debugger/db_verified_breakpoint.png");

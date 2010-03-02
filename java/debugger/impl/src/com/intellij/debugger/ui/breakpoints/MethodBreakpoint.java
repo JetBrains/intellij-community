@@ -68,6 +68,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
   private boolean myIsStatic;
 
   public static Icon ICON = IconLoader.getIcon("/debugger/db_method_breakpoint.png");
+  public static Icon MUTED_ICON = IconLoader.getIcon("/debugger/db_muted_method_breakpoint.png");
   public static Icon DISABLED_ICON = IconLoader.getIcon("/debugger/db_disabled_method_breakpoint.png");
   public static Icon DISABLED_DEP_ICON = IconLoader.getIcon("/debugger/db_dep_method_breakpoint.png");
   private static final Icon ourInvalidIcon = IconLoader.getIcon("/debugger/db_invalid_method_breakpoint.png");
@@ -219,6 +220,10 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
   protected Icon getDisabledIcon() {
     final Breakpoint master = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this);
     return master == null? DISABLED_ICON : DISABLED_DEP_ICON;
+  }
+
+  protected Icon getMutedIcon() {
+    return MUTED_ICON;
   }
 
   protected Icon getSetIcon() {
