@@ -13,10 +13,10 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDocStringFinder;
+import com.jetbrains.python.codeInsight.controlflow.PyControlFlowBuilder;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeImpl;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.codeInsight.controlflow.PyControlFlowBuilder;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.VariantsProcessor;
 import com.jetbrains.python.psi.stubs.PyClassStub;
@@ -32,8 +32,9 @@ import java.util.*;
  * @author yole
  */
 public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implements PyClass {
-
   public static final PyClass[] EMPTY_ARRAY = new PyClassImpl[0];
+
+  private PyTargetExpression[] myInstanceAttributes;
 
   public PyClassImpl(ASTNode astNode) {
     super(astNode);
@@ -220,33 +221,65 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   public PyTargetExpression[] getInstanceAttributes() {
-    PyFunctionImpl initMethod = (PyFunctionImpl) findMethodByName(PyNames.INIT, false);
-    if (initMethod == null) return PyTargetExpression.EMPTY_ARRAY;
-    final PyParameter[] params = initMethod.getParameterList().getParameters();
-    if (params.length == 0) return PyTargetExpression.EMPTY_ARRAY;
+    if (myInstanceAttributes == null) {
+      myInstanceAttributes = collectInstanceAttributes();
+    }
+    return myInstanceAttributes;
+  }
 
-    final PyFunctionStub methodStub = initMethod.getStub();
-    if (methodStub != null) {
-      return methodStub.getChildrenByType(PyElementTypes.TARGET_EXPRESSION, PyTargetExpression.EMPTY_ARRAY);
+  private PyTargetExpression[] collectInstanceAttributes() {
+    Map<String, PyTargetExpression> result = new HashMap<String, PyTargetExpression>();
+
+    // __init__ takes priority over all other methods
+    PyFunctionImpl initMethod = (PyFunctionImpl)findMethodByName(PyNames.INIT, false);
+    if (initMethod != null) {
+      collectInstanceAttributes(initMethod, result);
+    }
+    final PyFunction[] methods = getMethods();
+    for (PyFunction method : methods) {
+      if (!PyNames.INIT.equals(method.getName())) {
+        collectInstanceAttributes((PyFunctionImpl)method, result);
+      }
     }
 
-    final List<PyTargetExpression> result = new ArrayList<PyTargetExpression>();
-    // NOTE: maybe treeCrawlUp would be more precise, but currently it works well enough; don't care. 
-    initMethod.getStatementList().accept(new PyRecursiveElementVisitor() {
-      public void visitPyAssignmentStatement(final PyAssignmentStatement node) {
-        super.visitPyAssignmentStatement(node);
-        final PyExpression[] targets = node.getTargets();
-        for(PyExpression target: targets) {
-          if (target instanceof PyTargetExpression) {
-            PyExpression qualifier = ((PyTargetExpression) target).getQualifier();
-            if (qualifier != null && qualifier.getText().equals(params [0].getName())) {
-              result.add((PyTargetExpression)target);
+    final Collection<PyTargetExpression> expressions = result.values();
+    return expressions.toArray(new PyTargetExpression[expressions.size()]);
+  }
+
+  private static void collectInstanceAttributes(PyFunctionImpl method, final Map<String, PyTargetExpression> result) {
+    final PyParameter[] params = method.getParameterList().getParameters();
+    if (params.length == 0) {
+      return;
+    }
+    final String selfName = params [0].getName();
+
+    final PyFunctionStub methodStub = method.getStub();
+    if (methodStub != null) {
+      final PyTargetExpression[] targets = methodStub.getChildrenByType(PyElementTypes.TARGET_EXPRESSION, PyTargetExpression.EMPTY_ARRAY);
+      for (PyTargetExpression target : targets) {
+        if (!result.containsKey(target.getName())) {
+          result.put(target.getName(), target);
+        }
+      }
+    }
+    else {
+      // NOTE: maybe treeCrawlUp would be more precise, but currently it works well enough; don't care.
+      method.getStatementList().accept(new PyRecursiveElementVisitor() {
+        public void visitPyAssignmentStatement(final PyAssignmentStatement node) {
+          super.visitPyAssignmentStatement(node);
+          final PyExpression[] targets = node.getTargets();
+          for (PyExpression target : targets) {
+            if (target instanceof PyTargetExpression) {
+              final PyTargetExpression targetExpr = (PyTargetExpression)target;
+              PyExpression qualifier = targetExpr.getQualifier();
+              if (qualifier != null && qualifier.getText().equals(selfName) && !result.containsKey(targetExpr.getName())) {
+                result.put(targetExpr.getName(), targetExpr);
+              }
             }
           }
         }
-      }
-    });
-    return result.toArray(new PyTargetExpression[result.size()]);
+      });
+    }
   }
 
   public boolean isNewStyleClass() {
@@ -312,6 +345,9 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     }
     if (myScopeRef != null){
       myScopeRef.clear();
+    }
+    if (myInstanceAttributes != null) {
+      myInstanceAttributes = null;
     }
   }
 
