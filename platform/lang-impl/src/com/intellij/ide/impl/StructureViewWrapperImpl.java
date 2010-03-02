@@ -32,6 +32,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
@@ -104,7 +105,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     if (myProject.isDisposed()) return;
 
     final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    if (SwingUtilities.isDescendingFrom(myPanel, owner)) return;
+    if (SwingUtilities.isDescendingFrom(myPanel, owner) || JBPopupFactory.getInstance().isPopupActive()) return;
 
     final DataContext dataContext = DataManager.getInstance().getDataContext(owner);
     if (dataContext.getData(myKey) == this) return;
