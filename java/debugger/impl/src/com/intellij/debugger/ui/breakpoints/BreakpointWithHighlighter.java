@@ -85,6 +85,8 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
 
   protected abstract Icon getDisabledIcon();
 
+  protected abstract Icon getMutedIcon();
+
   protected abstract Icon getInvalidIcon();
 
   protected abstract Icon getSetIcon();
@@ -136,8 +138,11 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   }
 
   private Icon calcIcon(DebugProcessImpl debugProcess) {
-    if (!ENABLED || (debugProcess != null && isMuted(debugProcess))) {
+    if (!ENABLED) {
       return getDisabledIcon();
+    }
+    if (debugProcess != null && isMuted(debugProcess)) {
+      return getMutedIcon();
     }
 
     myInvalidMessage = "";

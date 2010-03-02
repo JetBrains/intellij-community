@@ -63,6 +63,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
   private String myFieldName;
 
   public static Icon ICON = IconLoader.getIcon("/debugger/db_field_breakpoint.png");
+  public static Icon MUTED_ICON = IconLoader.getIcon("/debugger/db_muted_field_breakpoint.png");
   public static Icon DISABLED_ICON = IconLoader.getIcon("/debugger/db_disabled_field_breakpoint.png");
   public static Icon DISABLED_DEP_ICON = IconLoader.getIcon("/debugger/db_dep_field_breakpoint.png");
   private static final Icon ourInvalidIcon = IconLoader.getIcon("/debugger/db_invalid_field_breakpoint.png");
@@ -91,6 +92,10 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
   protected Icon getDisabledIcon() {
     final Breakpoint master = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this);
     return master == null? DISABLED_ICON : DISABLED_DEP_ICON;
+  }
+
+  protected Icon getMutedIcon() {
+    return MUTED_ICON;
   }
 
   protected Icon getSetIcon() {
