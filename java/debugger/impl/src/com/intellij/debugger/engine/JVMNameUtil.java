@@ -326,6 +326,9 @@ public class JVMNameUtil {
 
   @Nullable
   public static String getSourcePositionClassDisplayName(DebugProcessImpl debugProcess, SourcePosition position) {
+    if (position == null) {
+      return null;
+    }
     final PsiFile positionFile = position.getFile();
     if (positionFile instanceof JspFile) {
       return positionFile.getName() + ":" + position.getLine();
@@ -385,6 +388,9 @@ public class JVMNameUtil {
 
   @Nullable
   public static String getSourcePositionPackageDisplayName(DebugProcessImpl debugProcess, SourcePosition position) {
+    if (position == null) {
+      return null;
+    }
     final PsiFile positionFile = position.getFile();
     if (positionFile instanceof JspFile) {
       final PsiDirectory dir = positionFile.getContainingDirectory();
