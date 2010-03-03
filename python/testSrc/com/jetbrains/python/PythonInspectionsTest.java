@@ -113,6 +113,11 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
     doTestWithPy3k(getTestName(false), inspection);
   }
 
+  public void testPyClassicStyleClassInspection() throws Throwable {
+    LocalInspectionTool inspection = new PyClassicStyleClassInspection();
+    doTest(getTestName(false), inspection);
+  }
+
   public void testPyExceptClausesOrderInspection() throws Throwable {
     LocalInspectionTool inspection = new PyExceptClausesOrderInspection();
     doTest(getTestName(false), inspection);
