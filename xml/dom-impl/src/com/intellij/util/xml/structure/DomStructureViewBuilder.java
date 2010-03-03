@@ -20,8 +20,10 @@ import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.AsyncResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
@@ -31,8 +33,6 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.DomService;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.tree.DefaultMutableTreeNode;
 
 public class DomStructureViewBuilder extends TreeBasedStructureViewBuilder {
   private final Function<DomElement, DomService.StructureViewMode> myDescriptor;
@@ -55,7 +55,7 @@ public class DomStructureViewBuilder extends TreeBasedStructureViewBuilder {
   @NotNull
   public StructureView createStructureView(final FileEditor fileEditor, final Project project) {
     return new StructureViewComponent(fileEditor, createStructureViewModel(), project) {
-      public DefaultMutableTreeNode expandPathToElement(final Object element) {
+      public AsyncResult<AbstractTreeNode> expandPathToElement(final Object element) {
         if (element instanceof XmlElement) {
           final XmlElement xmlElement = (XmlElement)element;
           XmlTag tag = PsiTreeUtil.getParentOfType(xmlElement, XmlTag.class, false);
