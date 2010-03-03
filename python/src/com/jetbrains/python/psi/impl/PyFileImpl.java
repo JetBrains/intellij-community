@@ -57,10 +57,17 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   public PyFunction findTopLevelFunction(String name) {
-    final List<PyFunction> functions = getTopLevelFunctions();
-    for (PyFunction function : functions) {
-      if (name.equals(function.getName())) {
-        return function;
+    return findByName(name, getTopLevelFunctions());
+  }
+
+  public PyClass findTopLevelClass(String name) {
+    return findByName(name, getTopLevelClasses());
+  }
+
+  private <T extends PsiNamedElement> T findByName(String name, List<T> namedElements) {
+    for (T namedElement : namedElements) {
+      if (name.equals(namedElement.getName())) {
+        return namedElement;
       }
     }
     return null;

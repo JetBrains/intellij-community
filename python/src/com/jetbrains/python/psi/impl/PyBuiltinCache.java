@@ -13,7 +13,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiNamedElement;
-import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.types.PyClassType;
@@ -133,7 +132,7 @@ public class PyBuiltinCache {
 
   @Nullable
   public PyClass getClass(@NonNls String name) {
-    return getByName(name, PyClass.class);
+    return myBuiltinsFile.findTopLevelClass(name);
   }
 
   /**

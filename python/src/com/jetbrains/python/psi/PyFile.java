@@ -42,5 +42,8 @@ public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner
   @Nullable
   PyFunction findTopLevelFunction(String name);
 
+  @Nullable
+  PyClass findTopLevelClass(String name);
+
   LanguageLevel getLanguageLevel();
 }
