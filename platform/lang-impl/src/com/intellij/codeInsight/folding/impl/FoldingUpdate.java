@@ -29,17 +29,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.TreeMap;
+import java.util.*;
 
 public class FoldingUpdate {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.impl.FoldingUpdate");
 
-  private static final Key<Object> LAST_UPDATE_STAMP_KEY = Key.create("LAST_UPDATE_STAMP_KEY");
+  private static final Key<CachedValue<Runnable>> CODE_FOLDING_KEY = Key.create("code folding");
+
   private static final Comparator<PsiElement> COMPARE_BY_OFFSET = new Comparator<PsiElement>() {
     public int compare(PsiElement element, PsiElement element1) {
       int startOffsetDiff = element.getTextRange().getStartOffset() - element1.getTextRange().getStartOffset();
@@ -51,33 +54,50 @@ public class FoldingUpdate {
   }
 
   @Nullable
-  static Runnable updateFoldRegions(@NotNull final Editor editor, @NotNull PsiFile file, boolean applyDefaultState, final boolean quick) {
+  static Runnable updateFoldRegions(@NotNull final Editor editor, @NotNull final PsiFile file, final boolean applyDefaultState, final boolean quick) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     final Project project = file.getProject();
-    Document document = editor.getDocument();
+    final Document document = editor.getDocument();
     LOG.assertTrue(!PsiDocumentManager.getInstance(project).isUncommited(document));
 
-    final long timeStamp = document.getModificationStamp();
-    Object lastTimeStamp = editor.getUserData(LAST_UPDATE_STAMP_KEY);
-    if (lastTimeStamp instanceof Long && ((Long)lastTimeStamp).longValue() == timeStamp && !applyDefaultState) return null;
 
-    if (file instanceof PsiCompiledElement){
-      file = (PsiFile)((PsiCompiledElement)file).getMirror();
-    }
+    CachedValue<Runnable> value = editor.getUserData(CODE_FOLDING_KEY);
+    if (value != null && value.hasUpToDateValue() && !applyDefaultState) return null;
+    if (quick) return getUpdateResult(file, document, quick, project, editor, applyDefaultState).getValue();
+    
+    return CachedValuesManager.getManager(project).getCachedValue(editor, CODE_FOLDING_KEY, new CachedValueProvider<Runnable>() {
+      public Result<Runnable> compute() {
 
+        return getUpdateResult(file, document, quick, project, editor, applyDefaultState);
+      }
+    }, false);
+
+
+  }
+
+  private static CachedValueProvider.Result<Runnable> getUpdateResult(PsiFile file,
+                                                                      Document document,
+                                                                      boolean quick,
+                                                                      final Project project,
+                                                                      final Editor editor,
+                                                                      final boolean applyDefaultState) {
     final TreeMap<PsiElement, FoldingDescriptor> elementsToFoldMap = new TreeMap<PsiElement, FoldingDescriptor>(COMPARE_BY_OFFSET);
-    getFoldingsFor(file, document, elementsToFoldMap, quick);
+    getFoldingsFor(file instanceof PsiCompiledElement ? (PsiFile)((PsiCompiledElement)file).getMirror() : file, document, elementsToFoldMap, quick);
 
-    final Runnable operation = new UpdateFoldRegionsOperation(project, editor, elementsToFoldMap, applyDefaultState, false);
-    return new Runnable() {
+    Runnable runnable = new Runnable() {
       public void run() {
+        UpdateFoldRegionsOperation operation =
+          new UpdateFoldRegionsOperation(project, editor, elementsToFoldMap, applyDefaultState, false);
         editor.getFoldingModel().runBatchFoldingOperationDoNotCollapseCaret(operation);
-        if (!quick) {
-          editor.putUserData(LAST_UPDATE_STAMP_KEY, timeStamp);
-        }
       }
     };
+    Set<Object> dependencies = new HashSet<Object>();
+    dependencies.add(document);
+    for (FoldingDescriptor descriptor : elementsToFoldMap.values()) {
+      dependencies.addAll(descriptor.getDependencies());
+    }
+    return CachedValueProvider.Result.create(runnable, ArrayUtil.toObjectArray(dependencies));
   }
 
   private static final Key<Object> LAST_UPDATE_INJECTED_STAMP_KEY = Key.create("LAST_UPDATE_INJECTED_STAMP_KEY");
