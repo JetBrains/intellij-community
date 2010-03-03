@@ -139,22 +139,26 @@ public class PullUpHelper extends BaseRefactoringProcessor{
           ChangeContextUtil.clearContextInfo(method);
           RefactoringUtil.abstractizeMethod(myTargetSuperClass, methodCopy);
 
+          if (method.findDeepestSuperMethods().length == 0 || (myTargetSuperClass.isInterface() && !PsiUtil.isLanguageLevel6OrHigher(mySourceClass))) {
+            deleteOverrideAnnotationIfFound(methodCopy);
+          }
+
           myJavaDocPolicy.processCopiedJavaDoc(methodCopy.getDocComment(), method.getDocComment(), isOriginalMethodAbstract);
 
           final PsiMember movedElement = (PsiMember)myTargetSuperClass.add(methodCopy);
           CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(method.getProject());
           if (styleSettings.INSERT_OVERRIDE_ANNOTATION) {
             if (PsiUtil.isLanguageLevel5OrHigher(mySourceClass) && !myTargetSuperClass.isInterface() || PsiUtil.isLanguageLevel6OrHigher(mySourceClass)) {
-              new AddAnnotationFix("java.lang.Override", method).invoke(method.getProject(), null, mySourceClass.getContainingFile());
+              new AddAnnotationFix(Override.class.getName(), method).invoke(method.getProject(), null, mySourceClass.getContainingFile());
             }
           }
-          if (isOriginalMethodAbstract && myTargetSuperClass.isInterface() && !PsiUtil.isLanguageLevel6OrHigher(mySourceClass)) {
-            for (PsiMethod oMethod : OverridingMethodsSearch.search(method)) {
-              final PsiAnnotation annotation = AnnotationUtil.findAnnotation(oMethod, Override.class.getName());
-              if (annotation != null) {
-                annotation.delete();
+          if (!PsiUtil.isLanguageLevel6OrHigher(mySourceClass) && myTargetSuperClass.isInterface()) {
+            if (isOriginalMethodAbstract) {
+              for (PsiMethod oMethod : OverridingMethodsSearch.search(method)) {
+                deleteOverrideAnnotationIfFound(oMethod);
               }
             }
+            deleteOverrideAnnotationIfFound(method);
           }
           myMembersAfterMove.add(movedElement);
           if (isOriginalMethodAbstract) {
@@ -228,6 +232,13 @@ public class PullUpHelper extends BaseRefactoringProcessor{
     for (final PsiMember movedMember : myMembersAfterMove) {
       final JavaRefactoringListenerManager listenerManager = JavaRefactoringListenerManager.getInstance(movedMember.getProject());
       ((JavaRefactoringListenerManagerImpl)listenerManager).fireMemberMoved(mySourceClass, movedMember);
+    }
+  }
+
+  private static void deleteOverrideAnnotationIfFound(PsiMethod oMethod) {
+    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(oMethod, Override.class.getName());
+    if (annotation != null) {
+      annotation.delete();
     }
   }
 

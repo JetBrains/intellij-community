@@ -22,7 +22,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.impl.file.impl.FileManagerImpl;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,7 +82,7 @@ public class FileContentQueue {
       final long contentLength = content.getLength();
       boolean counterUpdated = false;
       try {
-        if (contentLength < FileManagerImpl.MAX_INTELLISENSE_FILESIZE) {
+        if (contentLength < PersistentFS.MAX_INTELLISENSE_FILESIZE) {
           synchronized (this) {
             while (myTotalSize > SIZE_THRESHOLD) {
               if (indicator != null) {
@@ -157,7 +157,7 @@ public class FileContentQueue {
     if (file == null) {
       return null;
     }
-    if (result.getLength() < FileManagerImpl.MAX_INTELLISENSE_FILESIZE) {
+    if (result.getLength() < PersistentFS.MAX_INTELLISENSE_FILESIZE) {
       synchronized (this) {
         try {
           myTotalSize -= result.getLength();

@@ -45,43 +45,24 @@ import java.util.List;
  * @author nik
  */
 public class JavaDebuggerSupport extends DebuggerSupport {
-  private final JavaBreakpointPanelProvider myBreakpointPanelProvider;
-  private final StepOverActionHandler myStepOverActionHandler;
-  private final StepIntoActionHandler myStepIntoActionHandler;
-  private final StepOutActionHandler myStepOutActionHandler;
-  private final ForceStepOverActionHandler myForceStepOverActionHandler;
-  private final ForceStepIntoActionHandler myForceStepIntoActionHandler;
-  private final RunToCursorActionHandler myRunToCursorActionHandler;
-  private final ForceRunToCursorActionHandler myForceRunToCursorActionHandler;
-  private final ResumeActionHandler myResumeActionHandler;
-  private final PauseActionHandler myPauseActionHandler;
-  private final ToggleLineBreakpointActionHandler myToggleLineBreakpointActionHandler;
-  private final ShowExecutionPointActionHandler myShowExecutionPointActionHandler;
-  private final EvaluateActionHandler myEvaluateActionHandler;
-  private final QuickEvaluateActionHandler myQuickEvaluateHandler;
-  private final JavaDebuggerSettingsPanelProvider myDebuggerSettingsPanelProvider;
-  private final MuteBreakpointsActionHandler myMuteBreakpointsHandler;
-  private final DebuggerActionHandler mySmartStepIntoHandler;
-
-  public JavaDebuggerSupport() {
-    myBreakpointPanelProvider = new JavaBreakpointPanelProvider();
-    myStepOverActionHandler = new StepOverActionHandler();
-    myStepIntoActionHandler = new StepIntoActionHandler();
-    myStepOutActionHandler = new StepOutActionHandler();
-    myForceStepOverActionHandler = new ForceStepOverActionHandler();
-    myForceStepIntoActionHandler = new ForceStepIntoActionHandler();
-    myRunToCursorActionHandler = new RunToCursorActionHandler();
-    myForceRunToCursorActionHandler = new ForceRunToCursorActionHandler();
-    myResumeActionHandler = new ResumeActionHandler();
-    myPauseActionHandler = new PauseActionHandler();
-    myToggleLineBreakpointActionHandler = new ToggleLineBreakpointActionHandler();
-    myShowExecutionPointActionHandler = new ShowExecutionPointActionHandler();
-    myEvaluateActionHandler = new EvaluateActionHandler();
-    myQuickEvaluateHandler = new QuickEvaluateActionHandler();
-    myDebuggerSettingsPanelProvider = new JavaDebuggerSettingsPanelProvider();
-    myMuteBreakpointsHandler = new MuteBreakpointsActionHandler();
-    mySmartStepIntoHandler = new SmartStepIntoActionHandler();
-  }
+  private final JavaBreakpointPanelProvider myBreakpointPanelProvider = new JavaBreakpointPanelProvider();
+  private final StepOverActionHandler myStepOverActionHandler = new StepOverActionHandler();
+  private final StepIntoActionHandler myStepIntoActionHandler = new StepIntoActionHandler();
+  private final StepOutActionHandler myStepOutActionHandler = new StepOutActionHandler();
+  private final ForceStepOverActionHandler myForceStepOverActionHandler = new ForceStepOverActionHandler();
+  private final ForceStepIntoActionHandler myForceStepIntoActionHandler = new ForceStepIntoActionHandler();
+  private final RunToCursorActionHandler myRunToCursorActionHandler = new RunToCursorActionHandler();
+  private final ForceRunToCursorActionHandler myForceRunToCursorActionHandler = new ForceRunToCursorActionHandler();
+  private final ResumeActionHandler myResumeActionHandler = new ResumeActionHandler();
+  private final PauseActionHandler myPauseActionHandler = new PauseActionHandler();
+  private final ToggleLineBreakpointActionHandler myToggleLineBreakpointActionHandler = new ToggleLineBreakpointActionHandler();
+  private final ShowExecutionPointActionHandler myShowExecutionPointActionHandler = new ShowExecutionPointActionHandler();
+  private final EvaluateActionHandler myEvaluateActionHandler = new EvaluateActionHandler();
+  private final QuickEvaluateActionHandler myQuickEvaluateHandler = new QuickEvaluateActionHandler();
+  private final JavaDebuggerSettingsPanelProvider myDebuggerSettingsPanelProvider = new JavaDebuggerSettingsPanelProvider();
+  private final MuteBreakpointsActionHandler myMuteBreakpointsHandler = new MuteBreakpointsActionHandler();
+  private final DebuggerActionHandler mySmartStepIntoHandler = new SmartStepIntoActionHandler();
+  private final DebuggerActionHandler myAddToWatchedActionHandler = new AddToWatchActionHandler();
 
   @NotNull
   public BreakpointPanelProvider<?> getBreakpointPanelProvider() {
@@ -156,6 +137,12 @@ public class JavaDebuggerSupport extends DebuggerSupport {
   @NotNull
   public QuickEvaluateHandler getQuickEvaluateHandler() {
     return myQuickEvaluateHandler;
+  }
+
+  @NotNull
+  @Override
+  public DebuggerActionHandler getAddToWatchesActionHandler() {
+    return myAddToWatchedActionHandler;
   }
 
   @NotNull

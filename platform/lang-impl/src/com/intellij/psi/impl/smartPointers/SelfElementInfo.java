@@ -26,6 +26,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
 * User: cdr
@@ -115,6 +116,7 @@ class SelfElementInfo implements SmartPointerElementInfo {
     return null;
   }
 
+  @Nullable
   public static PsiFile restoreFile(PsiFile file,@NotNull Project project) {
     if (file == null) return null;
     if (file.isValid()) return file;

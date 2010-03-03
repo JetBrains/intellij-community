@@ -34,6 +34,7 @@ public class ExecutorWrapper {
   private final Object myLock;
   private boolean myInProgress;
   private Runnable myStopper;
+  private Thread myCurrentWorker;
   private AtomicSectionsAware myAtomicSectionsAware;
 
   protected ExecutorWrapper(final Project project, final String name) {
@@ -46,6 +47,9 @@ public class ExecutorWrapper {
       public void run() {
         synchronized (myLock) {
           myDisposeStarted = true;
+          if (myCurrentWorker != null) {
+            myCurrentWorker.interrupt();
+          }
           taskFinished();
         }
       }
@@ -72,6 +76,7 @@ public class ExecutorWrapper {
 
   private void taskFinished() {
     synchronized (myLock) {
+      myCurrentWorker = null;
       if (myInProgress) {
         myInProgress = false;
         mySemaphore.up();
@@ -93,6 +98,9 @@ public class ExecutorWrapper {
       }
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         public void run() {
+          synchronized (myLock) {
+            myCurrentWorker = Thread.currentThread();
+          }
           try {
             runnable.consume(myAtomicSectionsAware);
           } finally {

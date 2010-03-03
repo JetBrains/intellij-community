@@ -168,6 +168,14 @@ public class GroovyPropertyUtils {
     return false;
   }
 
+  public static String[] suggestGettersName(@NotNull String name) {
+    return new String[]{"get"+capitalize(name), "is"+capitalize(name)};
+  }
+
+  public static String[] suggestSettersName(@NotNull String name) {
+    return new String[]{"set"+capitalize(name)};
+  }
+
   public static boolean isSetterName(String name) {
     return name != null && name.startsWith("set") && name.length() > 3 && isUpperCase(name.charAt(3));
   }

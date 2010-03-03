@@ -283,8 +283,7 @@ public abstract class TestObject implements JavaCommandLine {
           public void run() {
             packetsReceiver.checkTerminated();
             final JUnitRunningModel model = packetsReceiver.getModel();
-            TestsUIUtil.notifyByBalloon(myProject, model != null ? model.getRoot() : null, consoleProperties,
-                                        Filter.DEFECT);
+            TestsUIUtil.notifyByBalloon(myProject, model != null ? model.getRoot() : null, consoleProperties, Filter.DEFECTIVE_LEAF);
           }
         });
       }

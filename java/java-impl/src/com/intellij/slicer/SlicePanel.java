@@ -17,6 +17,7 @@ package com.intellij.slicer;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.CloseTabToolbarAction;
+import com.intellij.ide.actions.RefreshAction;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -40,8 +41,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.event.TreeWillExpandListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
@@ -75,6 +78,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
 
   public SlicePanel(Project project, boolean dataFlowToThis, SliceNode rootNode, boolean splitByLeafExpressions) {
     super(new BorderLayout());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myProject = project;
     myTree = createTree();
 
@@ -190,6 +194,17 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
       }
     });
 
+    tree.addTreeWillExpandListener(new TreeWillExpandListener() {
+      public void treeWillCollapse(TreeExpansionEvent event) {
+      }
+
+      public void treeWillExpand(TreeExpansionEvent event) {
+        TreePath path = event.getPath();
+        SliceNode node = fromPath(path);
+        node.calculateDupNode();
+      }
+    });
+
     return tree;
   }
 
@@ -205,18 +220,26 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     });
   }
 
+  private static SliceNode fromPath(TreePath path) {
+    Object lastPathComponent = path.getLastPathComponent();
+    if (lastPathComponent instanceof DefaultMutableTreeNode) {
+      DefaultMutableTreeNode node = (DefaultMutableTreeNode)lastPathComponent;
+      Object userObject = node.getUserObject();
+      if (userObject instanceof SliceNode) {
+        return (SliceNode)userObject;
+      }
+    }
+   return null;
+  }
+
   private List<UsageInfo> getSelectedUsageInfos() {
     TreePath[] paths = myTree.getSelectionPaths();
     if (paths == null) return null;
     final ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
     for (TreePath path : paths) {
-      Object lastPathComponent = path.getLastPathComponent();
-      if (lastPathComponent instanceof DefaultMutableTreeNode) {
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode)lastPathComponent;
-        Object userObject = node.getUserObject();
-        if (userObject instanceof SliceNode) {
-          result.add(((SliceNode)userObject).getValue().getUsageInfo());
-        }
+      SliceNode sliceNode = fromPath(path);
+      if (sliceNode != null) {
+        result.add(sliceNode.getValue().getUsageInfo());
       }
     }
     if (result.isEmpty()) return null;
@@ -255,7 +278,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
 
   private ActionToolbar createToolbar() {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
-    actionGroup.add(new RefreshAction(myTree));
+    actionGroup.add(new MyRefreshAction(myTree));
     actionGroup.add(myAutoScrollToSourceHandler.createToggleAction());
     actionGroup.add(new CloseAction());
     actionGroup.add(new ToggleAction(UsageViewBundle.message("preview.usages.action.text"), "preview", IconLoader.getIcon("/actions/preview.png")) {
@@ -295,8 +318,8 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
 
   protected abstract void close();
 
-  private final class RefreshAction extends com.intellij.ide.actions.RefreshAction {
-    private RefreshAction(JComponent tree) {
+  private final class MyRefreshAction extends RefreshAction {
+    private MyRefreshAction(JComponent tree) {
       super(IdeBundle.message("action.refresh"), IdeBundle.message("action.refresh"), IconLoader.getIcon("/actions/sync.png"));
       registerShortcutOn(tree);
     }

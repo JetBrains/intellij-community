@@ -192,7 +192,7 @@ public class XDebugSessionTab extends DebuggerLogConsoleManagerBase {
         }
       }, consoleContent);
     }
-
+    session.getDebugProcess().registerAdditionalContent(myUi);
 
     myRunContentDescriptor = new RunContentDescriptor(myConsole, executionResult.getProcessHandler(), myUi.getComponent(), getSessionName());
 

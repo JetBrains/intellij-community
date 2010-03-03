@@ -21,6 +21,7 @@ import com.intellij.ide.structureView.ModelListener;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.ide.util.treeView.smartTree.SmartTreeStructure;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -52,7 +53,7 @@ class StructureTreeBuilder extends AbstractTreeBuilder {
     super(
       tree,
       treeModel,
-      treeStructure, null
+      treeStructure, null, false
     );
 
     myProject = project;
@@ -70,6 +71,8 @@ class StructureTreeBuilder extends AbstractTreeBuilder {
     CopyPasteManager.getInstance().addContentChangedListener(myCopyPasteListener);
     initRootNode();
     myStructureModel.addModelListener(myModelListener);
+
+    setCanYieldUpdate(!ApplicationManager.getApplication().isUnitTestMode());
   }
 
   public final void dispose() {

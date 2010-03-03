@@ -694,7 +694,7 @@
 
     <codeStyleSettingsProvider implementation="com.intellij.application.options.GenerationSettingsProvider"/>
     <codeStyleSettingsProvider implementation="com.intellij.application.options.codeStyle.IndentAndBracesSettingsProvider"/>
-    <codeStyleSettingsProvider implementation="com.intellij.application.options.WrappingSettingsProvider"/>
+    <codeStyleSettingsProvider implementation="com.intellij.application.options.codeStyle.WrappingSettingsProvider"/>
     <codeStyleSettingsProvider implementation="com.intellij.application.options.codeStyle.BlankLinesSettingsProvider"/>
     <codeStyleSettingsProvider implementation="com.intellij.application.options.codeStyle.SpacesSettingsProvider"/>
     <codeStyleSettingsProvider implementation="com.intellij.application.options.ImportsSettingsProvider"/>

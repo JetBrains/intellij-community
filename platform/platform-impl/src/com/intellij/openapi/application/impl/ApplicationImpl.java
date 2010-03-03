@@ -85,11 +85,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   private final EventDispatcher<ApplicationListener> myDispatcher = EventDispatcher.create(ApplicationListener.class);
 
-  private boolean myTestModeFlag = false;
-  private boolean myHeadlessMode = false;
-  private boolean myCommandLineMode = false;
+  private final boolean myTestModeFlag;
+  private final boolean myHeadlessMode;
+  private final boolean myCommandLineMode;
 
-  private boolean myIsInternal = false;
+  private final boolean myIsInternal;
   private final String myName;
 
   private final ReentrantWriterPreferenceReadWriteLock myActionsLock = new ReentrantWriterPreferenceReadWriteLock();

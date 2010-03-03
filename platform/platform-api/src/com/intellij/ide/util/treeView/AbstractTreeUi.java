@@ -170,6 +170,16 @@ public class AbstractTreeUi {
     myNodeDescriptorComparator = comparator;
     myUpdateIfInactive = updateIfInactive;
 
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      public void run() {
+        if (!myRootNodeWasInitialized) {
+          if (myRootNode.getChildCount() == 0) {
+            insertLoadingNode(myRootNode, true);
+          }
+        }
+      }
+    });
+
     myExpansionListener = new MyExpansionListener();
     myTree.addTreeExpansionListener(myExpansionListener);
 
@@ -1552,7 +1562,8 @@ public class AbstractTreeUi {
       }
 
       if (myInitialized.isDone()) {
-        for (ActionCallback each : getReadyCallbacks(true)) {
+        ActionCallback[] ready = getReadyCallbacks(true);
+        for (ActionCallback each : ready) {
           each.setDone();
         }
       }

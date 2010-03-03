@@ -22,6 +22,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -186,10 +187,17 @@ class CopyClassDialog extends DialogWrapper{
               }
             }.execute();
           } else {
-            myTargetDirectory = PackageUtil.findOrCreateDirectoryForPackage(ModuleUtil.findModuleForFile(myDefaultTargetDirectory.getVirtualFile(), myProject), packageName, myDefaultTargetDirectory, true);
+            final Module module = ModuleUtil.findModuleForFile(myDefaultTargetDirectory.getVirtualFile(), myProject);
+            if (module != null) {
+              myTargetDirectory = PackageUtil.findOrCreateDirectoryForPackage(module, packageName, myDefaultTargetDirectory, true);
+            } else {
+              errorString[0] = "No module found for directory \'" + myDefaultTargetDirectory.getVirtualFile().getPresentableUrl() + "\'";
+            }
           }
           if (myTargetDirectory == null) {
-            errorString[0] = ""; // message already reported by PackageUtil
+            if (errorString[0] == null) {
+              errorString[0] = ""; // message already reported by PackageUtil
+            }
           } else {
             CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
               public void run() {

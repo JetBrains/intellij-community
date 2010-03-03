@@ -311,7 +311,6 @@
       <action id="Debugger.ShowFrame" class="com.intellij.debugger.actions.ShowFrameAction"/>
       <action id="Debugger.ResumeThread" class="com.intellij.debugger.actions.ResumeThreadAction"/>
       <action id="Debugger.FreezeThread" class="com.intellij.debugger.actions.FreezeThreadAction"/>
-      <action id="Debugger.AddToWatch" class="com.intellij.debugger.actions.AddToWatchAction" icon="/debugger/addToWatch.png"/>
       <action id="Debugger.FocusOnBreakpoint" class="com.intellij.debugger.ui.breakpoints.actions.FocusOnBreakpointAction"/>
 
     </group>
@@ -326,17 +325,12 @@
 
     <action id="AnalyzeStacktraceOnError" class="com.intellij.unscramble.AnalyzeStacktraceOnErrorAction" text="Analyze Stacktrace"/>
 
-    <group id="EditorPopupMenu2">
-      <separator/>
-      <reference ref="EvaluateExpression"/>
-      <reference ref="RunToCursor"/>
-      <reference ref="ForceRunToCursor"/>
-      <reference ref="Debugger.AddToWatch"/>
+    <group id="EditorPopupMenuDebugJava">
       <separator/>
       <reference ref="ToggleFieldBreakpoint"/>
       <separator/>
 
-      <add-to-group group-id="EditorLangPopupMenu" relative-to-action="EditorPopupMenu.Run" anchor="before"/>
+      <add-to-group group-id="EditorPopupMenuDebug" anchor="last"/>
     </group>
 
     <reference ref="Compile">

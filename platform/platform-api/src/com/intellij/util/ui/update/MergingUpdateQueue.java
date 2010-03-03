@@ -117,6 +117,9 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
   public void cancelAllUpdates() {
     synchronized (myScheduledUpdates) {
+      for (Update each : myScheduledUpdates.keySet()) {
+        each.setRejected();
+      }
       myScheduledUpdates.clear();
     }
   }
@@ -317,6 +320,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
       }
       if (update.canEat(eachInQueue)) {
         myScheduledUpdates.remove(eachInQueue);
+        eachInQueue.setRejected();
       }
     }
     return false;

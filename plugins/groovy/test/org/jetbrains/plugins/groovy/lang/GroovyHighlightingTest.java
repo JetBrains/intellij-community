@@ -212,4 +212,9 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testSetInitializing() throws Exception {doTest();}
 
   public void testEmptyTupleAssignability() throws Exception {doTest();}
+
+  public void testGrDefFieldsArePrivateInJavaCode() throws Exception {
+    myFixture.configureByText("X.groovy", "public class X{def x=5}");
+    myFixture.testHighlighting(true, false, false, getTestName(false) + ".java");
+  }
 }

@@ -17,6 +17,7 @@ package com.intellij.ide.structureView;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.util.ActionCallback;
 
 import javax.swing.*;
 

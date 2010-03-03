@@ -31,6 +31,15 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
     doTest(createAction("pack1", "target"));
   }
 
+  public void testMovePackageWithTxtFilesInside() throws Exception {
+    doTest(createAction("pack1", "target"));
+  }
+
+  public void testMultipleClassesInOneFile() throws Exception {
+    doTest(createAction("pack1", "target"));
+  }
+
+
   public void testRemoveUnresolvedImports() throws Exception {
     doTest(createAction("pack1", "target"));
   }

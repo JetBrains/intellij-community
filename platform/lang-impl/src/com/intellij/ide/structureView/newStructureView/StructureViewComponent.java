@@ -24,7 +24,6 @@ import com.intellij.ide.structureView.*;
 import com.intellij.ide.structureView.impl.StructureViewFactoryImpl;
 import com.intellij.ide.structureView.impl.StructureViewState;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
-import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.ide.util.treeView.smartTree.*;
@@ -37,10 +36,8 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -114,13 +111,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       }
 
       public boolean isToBuildChildrenInBackground(final Object element) {
-        if (element instanceof TreeElementWrapper) {
-          final Object o = ((TreeElementWrapper)element).getElement();
-          final TreeElement root = myModel.getRoot();
-          if (o == root)
-          return true;
-        }
-        return false;
+        return getRootElement() == element;
       }
 
       protected TreeElementWrapper createTree() {
@@ -140,7 +131,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
         return isValid(child);
       }
     };
-    myAbstractTreeBuilder.updateFromRoot();
     Disposer.register(this, myAbstractTreeBuilder);
     Disposer.register(myAbstractTreeBuilder, new Disposable() {
       public void dispose() {
@@ -409,59 +399,40 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     return myFileEditor;
   }
 
-  public DefaultMutableTreeNode expandPathToElement(Object element) {
-    if (myAbstractTreeBuilder == null) return null;
+  public AsyncResult<AbstractTreeNode> expandPathToElement(Object element) {
+    if (myAbstractTreeBuilder == null) return new AsyncResult.Rejected<AbstractTreeNode>();
 
     ArrayList<AbstractTreeNode> pathToElement = getPathToElement(element);
+    if (pathToElement.isEmpty()) return new AsyncResult.Rejected<AbstractTreeNode>();
 
-    if (pathToElement.isEmpty()) return null;
+    final AsyncResult<AbstractTreeNode> result = new AsyncResult<AbstractTreeNode>();
+    final AbstractTreeNode toExpand = pathToElement.get(pathToElement.size() - 1);
+    myAbstractTreeBuilder.expand(toExpand, new Runnable() {
+      public void run() {
+        result.setDone(toExpand);
+      }
+    });
 
-    JTree tree = myAbstractTreeBuilder.getTree();
-
-    if (pathToElement.size() == 1) {
-      return (DefaultMutableTreeNode)tree.getModel().getRoot();
-    }
-
-    DefaultMutableTreeNode currentTreeNode = (DefaultMutableTreeNode)tree.getModel().getRoot();
-    pathToElement.remove(0);
-    DefaultMutableTreeNode result = null;
-    while (currentTreeNode != null) {
-      AbstractTreeNode topPathElement;
-      if (!pathToElement.isEmpty()) {
-        topPathElement = pathToElement.get(0);
-        pathToElement.remove(0);
-      }
-      else {
-        topPathElement = null;
-      }
-      TreePath treePath = new TreePath(currentTreeNode.getPath());
-      if (!tree.isExpanded(treePath)) {
-        tree.expandPath(treePath);
-      }
-      if (topPathElement != null) {
-        currentTreeNode = findInChildren(currentTreeNode, topPathElement);
-        result = currentTreeNode;
-      }
-      else {
-        currentTreeNode = null;
-      }
-    }
     return result;
   }
 
-  public boolean select(Object element, boolean requestFocus) {
-    DefaultMutableTreeNode currentTreeNode = expandPathToElement(element);
-
-    if (currentTreeNode != null) {
-      TreeUtil.selectInTree(currentTreeNode, requestFocus, getTree());
-      myAutoScrollToSourceHandler.setShouldAutoScroll(false);
-      TreePath path = new TreePath(currentTreeNode.getPath());
-      TreeUtil.showRowCentered(getTree(), getTree().getRowForPath(path), false);
-      myAutoScrollToSourceHandler.setShouldAutoScroll(true);
-      centerSelectedRow();
-      return true;
-    }
-    return false;
+  public boolean select(final Object element, final boolean requestFocus) {
+    myAbstractTreeBuilder.getReady(this).doWhenDone(new Runnable() {
+      public void run() {
+        expandPathToElement(element).doWhenDone(new AsyncResult.Handler<AbstractTreeNode>() {
+          public void run(AbstractTreeNode abstractTreeNode) {
+            myAbstractTreeBuilder.select(abstractTreeNode, new Runnable() {
+              public void run() {
+                if (requestFocus) {
+                  IdeFocusManager.getInstance(myProject).requestFocus(myAbstractTreeBuilder.getTree(), false);
+                }
+              }
+            });
+          }
+        });
+      }
+    });
+    return true;
   }
 
   private ArrayList<AbstractTreeNode> getPathToElement(Object element) {
@@ -785,6 +756,16 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       return super.getChildren();
     }
 
+    @Override
+    public boolean isAlwaysShowPlus() {
+      return getValue().getChildren().length > 0;
+    }
+
+    @Override
+    public boolean isAlwaysLeaf() {
+      return getValue().getChildren().length == 0;
+    }
+
     protected TreeElementWrapper createChildNode(final TreeElement child) {
       return new StructureViewTreeElementWrapper(myProject, child, myTreeModel);
     }
@@ -823,4 +804,5 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   public String getHelpID() {
     return ourHelpID;
   }
+
 }

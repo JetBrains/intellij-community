@@ -534,7 +534,6 @@ public final class PsiUtil extends PsiUtilBase {
   /**
    * Checks whether given class is inner (as opposed to nested)
    *
-   * @param aClass
    */
   public static boolean isInnerClass(PsiClass aClass) {
     return !aClass.hasModifierProperty(PsiModifier.STATIC) && aClass.getContainingClass() != null;

@@ -91,6 +91,9 @@ public abstract class DebuggerSupport {
   public abstract QuickEvaluateHandler getQuickEvaluateHandler();
 
   @NotNull
+  public abstract DebuggerActionHandler getAddToWatchesActionHandler();
+
+  @NotNull
   public abstract DebuggerToggleActionHandler getMuteBreakpointsHandler();
 
   @Nullable

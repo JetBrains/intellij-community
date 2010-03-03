@@ -31,7 +31,9 @@ import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -60,7 +62,7 @@ public class SdkConfigurationUtil {
     if (selection.length > 0) {
       for (SdkType sdkType : sdkTypes) {
         if (sdkType.isValidSdkHome(selection[0].getPath())) {
-          return setupSdk(selection[0], sdkType);
+          return setupSdk(selection[0], sdkType, false);
         }
       }
     }
@@ -100,19 +102,37 @@ public class SdkConfigurationUtil {
     });
   }
 
-
-  public static Sdk setupSdk(final VirtualFile homeDir, final SdkType sdkType) {
-    return ApplicationManager.getApplication().runWriteAction(new Computable<Sdk>() {
-        public Sdk compute(){
+  @Nullable
+  public static Sdk setupSdk(final VirtualFile homeDir, final SdkType sdkType, final boolean silent) {
+    return ApplicationManager.getApplication().runWriteAction(new NullableComputable<Sdk>() {
+        public Sdk compute() {
           final Sdk[] sdks = ProjectJdkTable.getInstance().getAllJdks();
-          final String sdkName = createUniqueSdkName(sdkType, homeDir.getPath(), Arrays.asList(sdks));
-          final ProjectJdkImpl projectJdk = new ProjectJdkImpl(sdkName, sdkType);
-          projectJdk.setHomePath(homeDir.getPath());
-          sdkType.setupSdkPaths(projectJdk);
+          ProjectJdkImpl projectJdk;
+          try {
+            final String sdkName = createUniqueSdkName(sdkType, homeDir.getPath(), Arrays.asList(sdks));
+            projectJdk = new ProjectJdkImpl(sdkName, sdkType);
+            projectJdk.setHomePath(homeDir.getPath());
+            sdkType.setupSdkPaths(projectJdk);
+          }
+          catch (Exception e) {
+            if (!silent) {
+              Messages.showErrorDialog("Error configuring SDK: " +
+                                       e.getMessage() +
+                                       ".\nPlease make sure that " +
+                                       FileUtil.toSystemDependentName(homeDir.getPath()) +
+                                       " is a valid home path for this SDK type.", "Error configuring SDK");
+            }
+            return null;
+          }
           ProjectJdkTable.getInstance().addJdk(projectJdk);
           return projectJdk;
         }
     });
+  }
+
+  @Nullable
+  public static Sdk setupSdk(final VirtualFile homeDir, final SdkType sdkType) {
+    return setupSdk(homeDir, sdkType, true);
   }
 
   public static void setDirectoryProjectSdk(final Project project, final Sdk sdk) {
@@ -167,7 +187,7 @@ public class SdkConfigurationUtil {
           }
         });
         if (sdkHome != null) {
-          return setupSdk(sdkHome, sdkType);
+          return setupSdk(sdkHome, sdkType, true);
         }
       }
     }

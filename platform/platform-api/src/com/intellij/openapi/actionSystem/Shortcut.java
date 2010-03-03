@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.openapi.keymap.KeymapUtil;
+
 /**
  * A keyboard or mouse shortcut which can be used for invoking an action.
  *
@@ -27,4 +29,9 @@ public abstract class Shortcut {
   public abstract boolean isKeyboard();
 
   public abstract boolean startsWith(final Shortcut sc);
+
+  @Override
+  public String toString() {
+    return KeymapUtil.getShortcutText(this);
+  }
 }

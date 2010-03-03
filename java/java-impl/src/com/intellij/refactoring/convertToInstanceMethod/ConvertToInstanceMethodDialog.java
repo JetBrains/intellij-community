@@ -25,6 +25,9 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodDialogBase;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 /**
  * @author ven
@@ -62,5 +65,21 @@ public class ConvertToInstanceMethodDialog  extends MoveInstanceMethodDialogBase
     vBox.add(createListAndVisibilityPanels());
     label.setText(RefactoringBundle.message("moveInstanceMethod.select.an.instance.parameter"));
     return vBox;
+  }
+
+  @Override
+  protected JList createTargetVariableChooser() {
+    final JList variableChooser = super.createTargetVariableChooser();
+    variableChooser.addMouseListener(new MouseAdapter() {
+      public void mouseClicked(MouseEvent e) {
+        if (e.getClickCount() != 2) return;
+        Point point = e.getPoint();
+        int index = variableChooser.locationToIndex(point);
+        if (index == -1) return;
+        if (!variableChooser.getCellBounds(index, index).contains(point)) return;
+        doRefactorAction();
+      }
+    });
+    return variableChooser;
   }
 }

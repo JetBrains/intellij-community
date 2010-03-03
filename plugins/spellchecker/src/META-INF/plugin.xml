@@ -32,7 +32,7 @@
     <action id="com.intellij.spellchecker.SpellCheckerCompletion" class="com.intellij.spellchecker.actions.CompleteWordFromDictionaryAction"
             text="Complete Word From Dictionary"
             description="Complete word from spelling dictionaries">
-      <add-to-group group-id="CodeCompletionGroup" anchor="after" relative-to-action="WordCompletion"/>
+      <add-to-group group-id="CodeCompletionGroup" anchor="after" relative-to-action="HippieBackwardCompletion"/>
     </action>
     <group id="com.intellij.spellchecker.actions.SpellingPopupActionGroup"
            class="com.intellij.spellchecker.actions.SpellingPopupActionGroup" text="Spelling" popup="true">

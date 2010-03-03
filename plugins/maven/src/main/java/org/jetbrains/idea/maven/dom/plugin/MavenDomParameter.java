@@ -34,4 +34,6 @@ public interface MavenDomParameter extends MavenDomElement {
 
   @NotNull
   GenericDomValue<String> getDescription();
+
+  GenericDomValue<Boolean> getRequired();
 }

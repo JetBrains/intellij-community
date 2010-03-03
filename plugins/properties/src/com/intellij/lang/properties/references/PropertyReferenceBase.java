@@ -183,6 +183,7 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
   @Nullable
   protected abstract List<PropertiesFile> getPropertiesFiles();
 
+  @NotNull
   public Object[] getVariants() {
     final Set<Object> variants = new THashSet<Object>(new TObjectHashingStrategy<Object>() {
       public int computeHashCode(final Object object) {

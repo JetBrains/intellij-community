@@ -651,7 +651,9 @@ public class ShowUsagesAction extends AnAction {
             // after new editor created, some editor resizing events are still bubbling. To prevent hiding hint, invokeLater this
             IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(new Runnable() {
               public void run() {
-                showHint(hint, newEditor, popupPosition, handler, maxUsages);
+                if (newEditor.getComponent().isShowing()) {
+                  showHint(hint, newEditor, popupPosition, handler, maxUsages);
+                }
               }
             });
           }

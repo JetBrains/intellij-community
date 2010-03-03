@@ -25,7 +25,6 @@ import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -52,7 +51,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
   private PsiDirectory myTargetDirectory;
   private boolean mySearchInComments;
   private boolean mySearchInNonJavaFiles;
-  private Map<PsiClass, TargetDirectoryWrapper> myClassesToMove;
+  private Map<PsiFile, TargetDirectoryWrapper> myFilesToMove;
   private NonCodeUsageInfo[] myNonCodeUsages;
   private MoveCallback myMoveCallback;
 
@@ -69,16 +68,16 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
     mySearchInComments = searchInComments;
     mySearchInNonJavaFiles = searchInNonJavaFiles;
     myMoveCallback = moveCallback;
-    myClassesToMove = new HashMap<PsiClass, TargetDirectoryWrapper>();
+    myFilesToMove = new HashMap<PsiFile, TargetDirectoryWrapper>();
     for (PsiDirectory dir : directories) {
-      collectClasses(myClassesToMove, dir, includeSelf ? dir.getParentDirectory() : dir, getTargetDirectory(dir));
+      collectFiles2Move(myFilesToMove, dir, includeSelf ? dir.getParentDirectory() : dir, getTargetDirectory(dir));
     }
   }
 
   @Override
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
-    PsiElement[] elements = new PsiElement[myClassesToMove.size()];
-    final PsiClass[] classes = myClassesToMove.keySet().toArray(new PsiClass[myClassesToMove.keySet().size()]);
+    PsiElement[] elements = new PsiElement[myFilesToMove.size()];
+    final PsiFile[] classes = myFilesToMove.keySet().toArray(new PsiFile[myFilesToMove.keySet().size()]);
     System.arraycopy(classes, 0, elements, 0, classes.length);
     return new MoveClassesOrPackagesViewDescriptor(elements, false, false, getTargetName());
   }
@@ -92,11 +91,14 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
   public UsageInfo[] findUsages() {
     final List<UsageInfo> usages = new ArrayList<UsageInfo>();
     final Set<String> packageNames = new HashSet<String>();
-    for (PsiClass psiClass : myClassesToMove.keySet()) {
-      Collections.addAll(usages, MoveClassesOrPackagesUtil.findUsages(psiClass, mySearchInComments, mySearchInNonJavaFiles, psiClass.getName()));
-      final String fqName = psiClass.getQualifiedName();
-      assert fqName != null;
-      packageNames.add(StringUtil.getPackageName(fqName));
+    for (PsiFile psiFile : myFilesToMove.keySet()) {
+      if (psiFile instanceof PsiClassOwner) {
+        final PsiClass[] classes = ((PsiClassOwner)psiFile).getClasses();
+        for (PsiClass aClass : classes) {
+          Collections.addAll(usages, MoveClassesOrPackagesUtil.findUsages(aClass, mySearchInComments, mySearchInNonJavaFiles, aClass.getName()));
+        }
+        packageNames.add(((PsiClassOwner)psiFile).getPackageName());
+      }
     }
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
     for (String packageName : packageNames) {
@@ -136,12 +138,12 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
   @Override
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
-    for (PsiClass psiClass : myClassesToMove.keySet()) {
+    for (PsiFile psiFile : myFilesToMove.keySet()) {
       try {
-        myClassesToMove.get(psiClass).checkMove(psiClass);
+        myFilesToMove.get(psiFile).checkMove(psiFile);
       }
       catch (IncorrectOperationException e) {
-        conflicts.putValue(psiClass, e.getMessage());
+        conflicts.putValue(psiFile, e.getMessage());
       }
     }
     return showConflicts(conflicts);
@@ -153,9 +155,9 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
   @Override
   public void performRefactoring(UsageInfo[] usages) {
     //try to create all directories beforehand
-    for (PsiClass psiClass : myClassesToMove.keySet()) {
+    for (PsiFile psiFile : myFilesToMove.keySet()) {
       try {
-        myClassesToMove.get(psiClass).findOrCreateTargetDirectory();
+        myFilesToMove.get(psiFile).findOrCreateTargetDirectory();
       }
       catch (IncorrectOperationException e) {
         Messages.showErrorDialog(myProject, e.getMessage(), CommonBundle.getErrorTitle());
@@ -163,16 +165,25 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
       }
     }
     final Map<PsiElement, PsiElement> oldToNewElementsMapping = new HashMap<PsiElement, PsiElement>();
-    for (PsiClass psiClass : myClassesToMove.keySet()) {
-      ChangeContextUtil.encodeContextInfo(psiClass, true);
-      final RefactoringElementListener listener = getTransaction().getElementListener(psiClass);
-      final PsiDirectory moveDestination = myClassesToMove.get(psiClass).getTargetDirectory();
-      final PsiClass newClass = MoveClassesOrPackagesUtil.doMoveClass(psiClass, moveDestination);
-      oldToNewElementsMapping.put(psiClass, newClass);
-      listener.elementMoved(newClass);
+    for (PsiFile psiFile : myFilesToMove.keySet()) {
+      ChangeContextUtil.encodeContextInfo(psiFile, true);
+      final RefactoringElementListener listener = getTransaction().getElementListener(psiFile);
+      final PsiDirectory moveDestination = myFilesToMove.get(psiFile).getTargetDirectory();
+      if (psiFile instanceof PsiClassOwner) {
+        for (PsiClass psiClass : ((PsiClassOwner)psiFile).getClasses()) {
+          final PsiClass newClass = MoveClassesOrPackagesUtil.doMoveClass(psiClass, moveDestination);
+          oldToNewElementsMapping.put(psiClass, newClass);
+          listener.elementMoved(newClass);
+        }
+      } else {
+        if (!moveDestination.equals(psiFile.getContainingDirectory())) {
+          psiFile.getManager().moveFile(psiFile, moveDestination);
+          listener.elementMoved(psiFile);
+        }
+      }
     }
-    for (PsiClass psiClass : myClassesToMove.keySet()) {
-      ChangeContextUtil.decodeContextInfo(psiClass, null, null);
+    for (PsiElement newElement : oldToNewElementsMapping.values()) {
+      ChangeContextUtil.decodeContextInfo(newElement, null, null);
     }
     myNonCodeUsages = MoveClassesOrPackagesProcessor.retargetUsages(usages, oldToNewElementsMapping);
     for (UsageInfo usage : usages) {
@@ -196,7 +207,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
     }
   }
 
-  private static void collectClasses(Map<PsiClass, TargetDirectoryWrapper> classesToMove,
+  private static void collectFiles2Move(Map<PsiFile, TargetDirectoryWrapper> files2Move,
                                      PsiDirectory directory,
                                      PsiDirectory rootDirectory,
                                      @NotNull TargetDirectoryWrapper targetDirectory) {
@@ -207,13 +218,11 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
                                                       ? targetDirectory
                                                       : targetDirectory.findOrCreateChild(relativePath);
     for (PsiElement child : children) {
-      if (child instanceof PsiJavaFile) {
-        for (PsiClass aClass : ((PsiJavaFile)child).getClasses()) {
-          classesToMove.put(aClass, newTargetDirectory);
-        }
+      if (child instanceof PsiFile) {
+        files2Move.put((PsiFile)child, newTargetDirectory);
       }
       else if (child instanceof PsiDirectory){
-        collectClasses(classesToMove, (PsiDirectory)child, directory, newTargetDirectory);
+        collectFiles2Move(files2Move, (PsiDirectory)child, directory, newTargetDirectory);
       }
     }
   }
@@ -281,9 +290,9 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
       return new TargetDirectoryWrapper(this, relativePath);
     }
 
-    public void checkMove(PsiClass psiClass) throws IncorrectOperationException {
+    public void checkMove(PsiFile psiFile) throws IncorrectOperationException {
       if (myTargetDirectory != null) {
-        psiClass.getManager().checkMove(psiClass, myTargetDirectory);
+        psiFile.getManager().checkMove(psiFile, myTargetDirectory);
       }
     }
   }

@@ -392,22 +392,27 @@ public class DualView extends JPanel {
     BaseTableView.store(myTreeStorage, myTreeView);
   }
 
-  public void setRoot(final TreeNode node, final Object selection) {
+  public void setRoot(final TreeNode node, final List<Object> selection) {
     ListTableModel model = myFlatView.getListTableModel();
     final int column = model.getSortedColumnIndex();
     final int sortingType = model.getSortingType();
-    final Object obj = myFlatView.getSelectedObject() != null ? myFlatView.getSelectedObject() : selection;
+
+    final List<Object> currentlySelected = myFlatView.getSelectedObjects();
+    final List<Object> targetSelection = (currentlySelected != null && (! currentlySelected.isEmpty())) ? currentlySelected : selection;
+    //final Object obj = myFlatView.getSelectedObject() != null ? myFlatView.getSelectedObject() : selection;
 
     myTreeView.getTreeViewModel().setRoot(node);
 
     if (column != -1) {
       model.sortByColumn(column, sortingType);
     }
-    if (obj != null) {
+    if ((targetSelection != null) && (! targetSelection.isEmpty())) {
       final List items = myFlatView.getItems();
-      if (items.contains(obj)) {
-        final int idx = items.indexOf(obj);
-        setSelectionInterval(idx, idx);
+      for (Object selElement : targetSelection) {
+        if (items.contains(selElement)) {
+          final int idx = items.indexOf(selElement);
+          setSelectionInterval(idx, idx);
+        }
       }
     }
   }

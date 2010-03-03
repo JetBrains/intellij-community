@@ -127,13 +127,6 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
     return optionGroup.createPanel();
   }
 
-  private static JPanel createPreviewPanel() {
-    JPanel panel = new JPanel();
-    panel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.preview")));
-    panel.setPreferredSize(new Dimension(200, 0));
-    return panel;
-  }
-
   protected void resetImpl(final CodeStyleSettings settings) {
     myKeepBlankLinesInDeclarations.setText(String.valueOf(settings.KEEP_BLANK_LINES_IN_DECLARATIONS));
     myKeepBlankLinesInCode.setText(String.valueOf(settings.KEEP_BLANK_LINES_IN_CODE));
