@@ -531,7 +531,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
   public String getStringToReplace(@NotNull String foundString, @NotNull FindModel model, int startOffset, @NotNull String documentText) {
     String toReplace = model.getStringToReplace();
     if (model.isRegularExpressions()) {
-      return getStringToReplaceByRegexp(foundString, model, documentText, startOffset);
+      return getStringToReplaceByRegexp(model, documentText, startOffset);
     }
     if (model.isPreserveCase()) {
       return replaceWithCaseRespect (toReplace, foundString);
@@ -539,7 +539,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     return toReplace;
   }
 
-  private String getStringToReplaceByRegexp(@NotNull String foundString, @NotNull final FindModel model, @NotNull String text, int startOffset) {
+  private String getStringToReplaceByRegexp(@NotNull final FindModel model, @NotNull String text, int startOffset) {
     Matcher matcher = compileRegExp(model, text);
 
     if (model.isForward()){
@@ -561,7 +561,8 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     }
     try {
       StringBuffer replaced = new StringBuffer();
-      matcher.appendReplacement(replaced, model.getStringToReplace());
+      String toReplace = StringUtil.unescapeStringCharacters(model.getStringToReplace());
+      matcher.appendReplacement(replaced, toReplace);
 
       return replaced.substring(matcher.start());
     }
