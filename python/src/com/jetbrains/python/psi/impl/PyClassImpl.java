@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -18,6 +19,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeImpl;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
+import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.resolve.VariantsProcessor;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
@@ -124,6 +126,21 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   public PyDecoratorList getDecoratorList() {
     return childToPsi(this, PyElementTypes.DECORATOR_LIST);
+  }
+
+  public String getQualifiedName() {
+    String name = getName();
+    PsiElement ancestor = getParent();
+    while(!(ancestor instanceof PsiFile)) {
+      if (ancestor == null) return name;    // can this happen?
+      if (ancestor instanceof PyClass) {
+        name = ((PyClass)ancestor).getName() + "." + name;
+      }
+      ancestor = ancestor.getParent();
+    }
+
+    final String packageName = ResolveImportUtil.findShortestImportableName(this, ((PsiFile)ancestor).getVirtualFile());
+    return packageName + "." + name;
   }
 
   protected List<PyClass> getSuperClassesList() {
