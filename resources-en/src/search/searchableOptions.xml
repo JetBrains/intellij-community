@@ -622,6 +622,9 @@
     <option name="closing" hit="Automatically insert closing tag" />
     <option name="insert" hit="Automatically insert closing tag" />
     <option name="tag" hit="Automatically insert closing tag" />
+    <option name="zen" hit="Enable Zen Coding" />
+    <option name="enable" hit="Enable Zen Coding" />
+    <option name="coding" hit="Enable Zen Coding" />
     <option name="attributes" hit="Automatically insert required attributes" />
     <option name="automatically" hit="Automatically insert required attributes" />
     <option name="insert" hit="Automatically insert required attributes" />
