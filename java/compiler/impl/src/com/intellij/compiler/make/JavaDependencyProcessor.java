@@ -370,7 +370,7 @@ class JavaDependencyProcessor {
       if (ClsUtil.isAnnotation(oldCache.getFlags(depQName))) {
         if (!visitedAnnotations.contains(depQName)) {
           visitedAnnotations.add(depQName);
-          markAnnotationDependenciesRecursively(oldCache.getBackDependencies(depQName), LOG.isDebugEnabled()? "; reason: cascade semantics change for " + myDependencyCache.resolve(depQName) : "", new TIntHashSet());
+          markAnnotationDependenciesRecursively(oldCache.getBackDependencies(depQName), LOG.isDebugEnabled()? "; reason: cascade semantics change for " + myDependencyCache.resolve(depQName) : "", visitedAnnotations);
         }
       }
     }
