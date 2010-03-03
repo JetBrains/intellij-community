@@ -114,4 +114,5 @@ public class StructureViewComposite implements StructureView {
   public StructureViewModel getTreeModel() {
     return getSelectedStructureView().getTreeModel();
   }
+
 }

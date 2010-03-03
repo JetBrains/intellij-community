@@ -43,7 +43,6 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -73,6 +72,8 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   // -------------------------------------------------------------------------
   // Constructor
   // -------------------------------------------------------------------------
+
+  private Runnable myPendingSelection;
 
   public StructureViewWrapperImpl(Project project) {
     myProject = project;
@@ -140,17 +141,34 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     rebuild();
   }
 
-  public boolean selectCurrentElement(FileEditor fileEditor, VirtualFile file, boolean requestFocus) {
-    if (myStructureView != null) {
-      if (!Comparing.equal(myStructureView.getFileEditor(), fileEditor)) {
-        myFile = file;
-        rebuild();
+  public boolean selectCurrentElement(final FileEditor fileEditor, final VirtualFile file, final boolean requestFocus) {
+    //todo [kirillk]
+    // this is dirty hack since some bright minds decided to used different TreeUi every time, so selection may be followed
+    // by rebuild on completely different instance of TreeUi
+
+    Runnable runnable = new Runnable() {
+      public void run() {
+        if (myStructureView != null) {
+          if (!Comparing.equal(myStructureView.getFileEditor(), fileEditor)) {
+            myFile = file;
+            rebuild();
+          }
+          myStructureView.navigateToSelectedElement(requestFocus);
+        }
       }
-      return myStructureView.navigateToSelectedElement(requestFocus);
+    };
+
+    if (isStructureViewShowing()) {
+      if (myUpdateQueue.isEmpty()) {
+        runnable.run();
+      } else {
+        myPendingSelection = runnable;
+      }
+    } else {
+      myPendingSelection = runnable;
     }
-    else {
-      return false;
-    }
+
+    return true;
   }
 
   private void scheduleRebuild() {
@@ -243,6 +261,12 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
 
     myPanel.validate();
     myPanel.repaint();
+
+    if (myPendingSelection != null) {
+      Runnable selection = myPendingSelection;
+      myPendingSelection = null;
+      selection.run();
+    }
   }
 
   @Nullable
