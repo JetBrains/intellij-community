@@ -22,7 +22,7 @@ setProperty("pluginFilter", [
         "JSInspections",
         "JSIntentionPowerPack",
         "SpellChecker", "spellchecker",
-        "yaml", "yaml-plugin", "sass"
+        "sass"
 ])
 
 private List platformImplementationModules() {
@@ -40,6 +40,7 @@ private List platformImplementationModules() {
           "xml",
           "lvcs-impl",
           "images",
+          "yaml"
   ]
 }
 
