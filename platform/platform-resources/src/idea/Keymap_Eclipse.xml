@@ -51,9 +51,6 @@
       <keyboard-shortcut first-keystroke="shift alt D" />
       <keyboard-shortcut first-keystroke="shift F9" />
     </action>
-    <action id="DebugAgain">
-      <keyboard-shortcut first-keystroke="F11" />
-    </action>
     <action id="Debugger.Inspect">
       <keyboard-shortcut first-keystroke="shift control I" />
     </action>
@@ -64,12 +61,6 @@
     <action id="EditSource">
       <keyboard-shortcut first-keystroke="F12" />
       <keyboard-shortcut first-keystroke="shift control E" />
-    </action>
-    <action id="Editor Redo">
-      <keyboard-shortcut first-keystroke="control Y" />
-    </action>
-    <action id="Editor Undo">
-      <keyboard-shortcut first-keystroke="control Z" />
     </action>
     <action id="EditorCodeBlockEnd">
       <keyboard-shortcut first-keystroke="control CLOSE_BRACKET" />

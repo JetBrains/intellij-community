@@ -15,6 +15,7 @@
  */
 package com.intellij.notification;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.Balloon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +27,8 @@ import java.lang.ref.WeakReference;
  * @author spleaner
  */
 public class Notification {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.notification.Notification");
+
   private String myGroupId;
   private String myContent;
   private NotificationType myType;
@@ -62,6 +65,7 @@ public class Notification {
 
   @NotNull
   public String getContent() {
+    LOG.assertTrue(myContent.trim().length() > 0, "Notification should have content!");
     return myContent;
   }
 

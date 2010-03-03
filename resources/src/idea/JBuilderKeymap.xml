@@ -70,11 +70,6 @@
       <keyboard-shortcut first-keystroke="control N"/>
       <keyboard-shortcut first-keystroke="control MINUS"/>
     </action>
-    <action id="GotoDefinition">
-      <keyboard-shortcut first-keystroke="control alt D"/>
-      <mouse-shortcut keystroke="control button2"/>
-      <keyboard-shortcut first-keystroke="control ENTER"/>
-    </action>
     <action id="GotoNextBookmark">
       <keyboard-shortcut first-keystroke="shift control PERIOD"/>
     </action>

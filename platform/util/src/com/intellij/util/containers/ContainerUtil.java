@@ -390,6 +390,19 @@ public class ContainerUtil {
     return concat(new List[]{list1, list2});
   }
 
+  public static <T> Iterable<T> concat(@NotNull final Iterable<? extends T>... iterables) {
+    return new Iterable<T>() {
+      public Iterator<T> iterator() {
+        Iterator[] iterators = new Iterator[iterables.length];
+        for (int i = 0, iterablesLength = iterables.length; i < iterablesLength; i++) {
+          Iterable<? extends T> iterable = iterables[i];
+          iterators[i] = iterable.iterator();
+        }
+        return new SequenceIterator<T>(iterators);
+      }
+    };
+  }
+
   public static <T> List<T> concat(@NotNull final List<? extends T>... lists) {
     int size = 0;
     for (List<? extends T> each : lists) {

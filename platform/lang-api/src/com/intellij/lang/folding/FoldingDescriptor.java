@@ -27,6 +27,9 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.Set;
+
 /**
  * Defines a single folding region in the code.
  *
@@ -117,5 +120,10 @@ public class FoldingDescriptor {
       return foldingBuilder.getPlaceholderText(myElement);
     }
     return null;
+  }
+  
+  @NotNull
+  public Set<Object> getDependencies() {
+    return Collections.emptySet();
   }
 }

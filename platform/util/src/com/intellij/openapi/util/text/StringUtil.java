@@ -727,6 +727,7 @@ public class StringUtil {
   }
 
   public static void repeatSymbol(@NotNull Appendable buffer, char symbol, int times) {
+    assert times >=0 : times;
     try {
       for (int i = 0; i < times; i++) {
         buffer.append(symbol);

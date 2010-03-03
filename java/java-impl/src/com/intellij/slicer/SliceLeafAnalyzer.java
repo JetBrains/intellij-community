@@ -188,7 +188,7 @@ public class SliceLeafAnalyzer {
 
   static class SliceNodeGuide implements WalkingState.TreeGuide<SliceNode> {
     private final AbstractTreeStructure myTreeStructure;
-    // use tree strucutre because it's setting 'parent' fields in the process
+    // use tree structure because it's setting 'parent' fields in the process
 
     SliceNodeGuide(@NotNull AbstractTreeStructure treeStructure) {
       myTreeStructure = treeStructure;
@@ -229,7 +229,7 @@ public class SliceLeafAnalyzer {
     WalkingState<SliceNode> walkingState = new WalkingState<SliceNode>(guide) {
       @Override
       public void visit(@NotNull SliceNode element) {
-        element.update(null);
+        element.calculateDupNode();
         node(element, map).clear();
         SliceNode duplicate = element.getDuplicate();
         if (duplicate != null) {

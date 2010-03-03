@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeList;
@@ -33,7 +34,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.ui.EditChangelistDialog;
 
-public class RenameChangeListAction extends AnAction {
+public class RenameChangeListAction extends AnAction implements DumbAware {
 
   public void update(AnActionEvent e) {
     ChangeList[] lists = e.getData(VcsDataKeys.CHANGE_LISTS);

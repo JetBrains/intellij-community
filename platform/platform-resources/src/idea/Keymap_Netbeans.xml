@@ -81,21 +81,15 @@
     <action id="Debug">
       <keyboard-shortcut first-keystroke="control F5" />
     </action>
-    <action id="DebugAgain" />
     <action id="DebugClass">
       <keyboard-shortcut first-keystroke="shift control F5" />
       <keyboard-shortcut first-keystroke="shift alt F5" />
     </action>
-    <action id="Debugger.MaximizeContent" />
     <action id="Debugger.NewWatch">
       <keyboard-shortcut first-keystroke="shift control F7" />
     </action>
-    <action id="Debugger.RestoreContent" />
     <action id="Debugger.ResumeThread">
       <keyboard-shortcut first-keystroke="F5" />
-    </action>
-    <action id="Editor Redo">
-      <keyboard-shortcut first-keystroke="control Y" />
     </action>
     <action id="EditorCompleteStatement">
       <keyboard-shortcut first-keystroke="shift control ENTER" />

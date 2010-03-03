@@ -95,10 +95,7 @@ public class TabbedPaneImpl extends JTabbedPane implements TabbedPane {
     };
     final AnAction nextAction = ActionManager.getInstance().getAction(installKeyboardNavigation.getNextActionId());
     LOG.assertTrue(nextAction != null, "Cannot find action with specified id: " + installKeyboardNavigation.getNextActionId());
-    myNextTabAction.registerCustomShortcutSet(
-      nextAction.getShortcutSet(),
-      this
-    );
+    myNextTabAction.registerCustomShortcutSet(nextAction.getShortcutSet(), this);
 
     myPreviousTabAction = new AnAction() {
       {
@@ -115,10 +112,7 @@ public class TabbedPaneImpl extends JTabbedPane implements TabbedPane {
     };
     final AnAction prevAction = ActionManager.getInstance().getAction(installKeyboardNavigation.getPrevActionId());
     LOG.assertTrue(prevAction != null, "Cannot find action with specified id: " + installKeyboardNavigation.getPrevActionId());
-    myPreviousTabAction.registerCustomShortcutSet(
-      prevAction.getShortcutSet(),
-      this
-    );
+    myPreviousTabAction.registerCustomShortcutSet(prevAction.getShortcutSet(), this);
   }
 
   private void uninstallKeyboardNavigation() {
@@ -281,42 +275,43 @@ public class TabbedPaneImpl extends JTabbedPane implements TabbedPane {
     /**
      * @return value of <code>leadingTabIndex</code> field of BasicTabbedPaneUI.ScrollableTabSupport class.
      */
-    public int getLeadingTabIndex(){
-      try{
-        final Field tabScrollerField=BasicTabbedPaneUI.class.getDeclaredField(TAB_SCROLLER_NAME);
+    public int getLeadingTabIndex() {
+      try {
+        final Field tabScrollerField = BasicTabbedPaneUI.class.getDeclaredField(TAB_SCROLLER_NAME);
         tabScrollerField.setAccessible(true);
-        final Object tabScrollerValue=tabScrollerField.get(myUI);
+        final Object tabScrollerValue = tabScrollerField.get(myUI);
 
-        final Field leadingTabIndexField=tabScrollerValue.getClass().getDeclaredField(LEADING_TAB_INDEX_NAME);
+        final Field leadingTabIndexField = tabScrollerValue.getClass().getDeclaredField(LEADING_TAB_INDEX_NAME);
         leadingTabIndexField.setAccessible(true);
         return leadingTabIndexField.getInt(tabScrollerValue);
-      }catch(Exception exc) {
+      }
+      catch (Exception exc) {
         final String writer = StringUtil.getThrowableText(exc);
         throw new IllegalStateException("myUI=" + myUI + "; cause=" + writer);
       }
     }
 
-    public void setLeadingTabIndex(final int leadingIndex){
-      try{
-        final Field tabScrollerField=BasicTabbedPaneUI.class.getDeclaredField(TAB_SCROLLER_NAME);
+    public void setLeadingTabIndex(final int leadingIndex) {
+      try {
+        final Field tabScrollerField = BasicTabbedPaneUI.class.getDeclaredField(TAB_SCROLLER_NAME);
         tabScrollerField.setAccessible(true);
-        final Object tabScrollerValue=tabScrollerField.get(myUI);
+        final Object tabScrollerValue = tabScrollerField.get(myUI);
 
-        Method setLeadingIndexMethod=null;
-        final Method[] methods=tabScrollerValue.getClass().getDeclaredMethods();
+        Method setLeadingIndexMethod = null;
+        final Method[] methods = tabScrollerValue.getClass().getDeclaredMethods();
         for (final Method method : methods) {
           if (SET_LEADING_TAB_INDEX_METHOD.equals(method.getName())) {
             setLeadingIndexMethod = method;
             break;
           }
         }
-        if(setLeadingIndexMethod==null){
+        if (setLeadingIndexMethod == null) {
           throw new IllegalStateException("method setLeadingTabIndex not found");
         }
         setLeadingIndexMethod.setAccessible(true);
-        setLeadingIndexMethod.invoke(
-          tabScrollerValue, Integer.valueOf(getTabPlacement()), Integer.valueOf(leadingIndex));
-      }catch(Exception exc) {
+        setLeadingIndexMethod.invoke(tabScrollerValue, Integer.valueOf(getTabPlacement()), Integer.valueOf(leadingIndex));
+      }
+      catch (Exception exc) {
         final String writer = StringUtil.getThrowableText(exc);
         throw new IllegalStateException("myUI=" + myUI + "; cause=" + writer);
       }
