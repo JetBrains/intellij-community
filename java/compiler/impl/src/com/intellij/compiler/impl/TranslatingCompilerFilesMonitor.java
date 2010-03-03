@@ -495,9 +495,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
   @Nullable
   private static SourceFileInfo loadSourceInfo(final VirtualFile file) {
-    final DataInputStream is = ourSourceFileAttribute.readAttribute(file);
-    if (is != null) {
-      try {
+    try {
+      final DataInputStream is = ourSourceFileAttribute.readAttribute(file);
+      if (is != null) {
         try {
           return new SourceFileInfo(is);
         }
@@ -505,9 +505,18 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
           is.close();
         }
       }
-      catch (IOException ignored) {
-        LOG.info(ignored);
+    }
+    catch (RuntimeException e) {
+      final Throwable cause = e.getCause();
+      if (cause instanceof IOException) {
+        LOG.info(e); // ignore IOExceptions
       }
+      else {
+        throw e;
+      }
+    }
+    catch (IOException ignored) {
+      LOG.info(ignored);
     }
     return null;
   }
@@ -533,9 +542,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
   @Nullable
   private static OutputFileInfo loadOutputInfo(final VirtualFile file) {
-    final DataInputStream is = ourOutputFileAttribute.readAttribute(file);
-    if (is != null) {
-      try {
+    try {
+      final DataInputStream is = ourOutputFileAttribute.readAttribute(file);
+      if (is != null) {
         try {
           return new OutputFileInfo(is);
         }
@@ -543,9 +552,18 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
           is.close();
         }
       }
-      catch (IOException ignored) {
-        LOG.info(ignored);
+    }
+    catch (RuntimeException e) {
+      final Throwable cause = e.getCause();
+      if (cause instanceof IOException) {
+        LOG.info(e); // ignore IO exceptions
       }
+      else {
+        throw e;
+      }
+    }
+    catch (IOException ignored) {
+      LOG.info(ignored);
     }
     return null;
   }
