@@ -20,7 +20,6 @@ import com.intellij.codeInsight.hint.DocumentFragmentTooltipRenderer;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
-import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.*;
 import com.intellij.ide.dnd.DnDManager;
@@ -65,7 +64,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.EmptyClipboardOwner;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -226,7 +224,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private char[] myPrefixText;
   private TextAttributes myPrefixAttributes;
   private IndentGuideDescriptor myCaretIndentGuide = null;
-  private int myIndentSize = -1;
+  private IndentsModel myIndentsModel;
 
   static {
     ourCaretBlinkingCommand = new RepaintCursorCommand();
@@ -285,12 +283,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDocument.addDocumentListener(mySelectionModel);
     myDocument.addDocumentListener(myEditorDocumentAdapter);
 
+    myIndentsModel = new IndentsModelImpl(this);
     myCaretModel.addCaretListener(new CaretListener() {
       LightweightHint myCurrentHint = null;
 
       public void caretPositionChanged(CaretEvent e) {
 
-        final IndentGuideDescriptor newGuide = getCaretIndentGuide();
+        final IndentGuideDescriptor newGuide = myIndentsModel.getCaretIndentGuide();
         if (!Comparing.equal(newGuide, myCaretIndentGuide)) {
           repaintGuide(newGuide);
           repaintGuide(myCaretIndentGuide);
@@ -443,7 +442,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myCharHeight = -1;
     myLineHeight = -1;
     myDescent = -1;
-    myIndentSize = -1;
     myPlainFontMetrics = null;
 
     myCaretModel.reinitSettings();
@@ -1231,13 +1229,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       int y = clip.y;
       int line = xyToLogicalPosition(new Point(0, y)).line;
 
-      final int indentSize = getIndentSize();
+      final int indentSize = myIndentsModel.getIndentSize();
       int gapWidth = EditorUtil.getSpaceWidth(Font.PLAIN, this) * indentSize;
       final CharSequence chars = myDocument.getCharsNoThreadCheck();
 
       int prevIndent = -1;
       do {
-        final int indents = getIndents(line);
+        final int indents = myIndentsModel.getIndentLevel(line);
 
         /*
         if (prevIndent > indents && isWhitespaceAt(chars, x, y)) {
@@ -1298,39 +1296,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  @Nullable
-  public IndentGuideDescriptor getCaretIndentGuide() {
-    if (!mySettings.isIndentGuidesShown()) return null;
-    
-    final int indentSize = getIndentSize();
-    if (indentSize == 0) return null;
-
-    final LogicalPosition caretPosition = myCaretModel.getLogicalPosition();
-    int startLine = caretPosition.line;
-    int endLine = startLine;
-    final int caretIndent = caretPosition.column / indentSize;
-    final int indents = getIndents(startLine);
-
-    if (caretIndent * indentSize != caretPosition.column) return null;
-    if (caretIndent > indents|| indents == 0) return null;
-    
-    if (caretIndent > 0 && caretPosition.column % indentSize == 0) {
-      while (startLine > 0) {
-        if (getIndents(startLine - 1) <= caretIndent) break;
-        startLine--;
-      }
-
-      while (endLine < myDocument.getLineCount() - 1) {
-        if (getIndents(endLine + 1) <= caretIndent) break;
-        endLine++;
-      }
-
-      if (startLine < endLine) {
-        return new IndentGuideDescriptor(caretIndent, startLine, endLine, indentSize);
-      }
-    }
-
-    return null;
+  public IndentsModel getIndentsModel() {
+    return myIndentsModel;
   }
 
   public void setHeaderComponent(JComponent header) {
@@ -2284,50 +2251,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return line;
   }
 
-  private int getIndentSize() {
-    if (myIndentSize == -1) {
-      if (myProject == null || myProject.isDisposed() || myVirtualFile == null) return EditorUtil.getTabSize(this);
-      myIndentSize = CodeStyleFacade.getInstance(myProject).getIndentSize(myVirtualFile.getFileType());
-    }
-    return myIndentSize;
-  }
-
-  private int getIndents(int line, boolean goUp, boolean goDown) {
-    if (line <= 0 || line >= myDocument.getLineCount()) return 0;
-    int lineStart = myDocument.getLineStartOffset(line);
-    int lineEnd = myDocument.getLineEndOffset(line);
-
-    CharSequence chars = myDocument.getCharsNoThreadCheck();
-    int nonWhitespaceOffset = CharArrayUtil.shiftForward(chars, lineStart, " \t");
-    if (nonWhitespaceOffset < lineEnd) {
-      final int columnNumber = calcColumnNumber(nonWhitespaceOffset, line);
-      final int indentSize = getIndentSize();
-      return indentSize != 0 ? columnNumber / indentSize : columnNumber;
-    }
-    else {
-      int upIndent = goUp ? getIndents(line - 1, true, false) : 100;
-      int downIndent = goDown ? getIndents(line + 1, false, true) : 100;
-      return Math.min(upIndent, downIndent);
-    }
-  }
-
-  private int getIndents(int line) {
-    int answer = getIndents(line, true, true);
-    if (answer == 0) return 0;
-
-    int prev;
-    do {
-      prev = getIndents(--line, true, false);
-    }
-    while (line > 0 && prev == answer); 
-
-    if (answer - 2 > prev) {
-      return prev + 1;
-    }
-
-    return answer;
-  }
-
   @NotNull
   public VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos) {
     assertReadAccess();
@@ -2482,7 +2405,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return lineIndex;
   }
 
-  private int calcColumnNumber(int offset, int lineIndex) {
+  int calcColumnNumber(int offset, int lineIndex) {
     if (myDocument.getTextLength() == 0) return 0;
 
     CharSequence text = myDocument.getCharsSequence();

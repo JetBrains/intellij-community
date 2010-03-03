@@ -597,7 +597,7 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
     return myDelegate.calcColumnNumber(myDelegate.getDocument().getText(), hostStart, hostOffset, tabSize);
   }
 
-  public IndentGuideDescriptor getCaretIndentGuide() {
-    return null; // Caret guide is purely text-based thing so it is handled at top editor level.
+  public IndentsModel getIndentsModel() {
+    return myDelegate.getIndentsModel();
   }
 }

@@ -91,7 +91,7 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
 
     @Override
     public void execute(Editor editor, DataContext dataContext) {
-      final IndentGuideDescriptor guide = editor.getCaretIndentGuide();
+      final IndentGuideDescriptor guide = editor.getIndentsModel().getCaretIndentGuide();
       final SelectionModel selectionModel = editor.getSelectionModel();
       if (guide != null && !selectionModel.hasSelection() && !selectionModel.hasBlockSelection() && isWhitespaceAtCaret(editor)) {
         selectWithGuide(editor, guide);
