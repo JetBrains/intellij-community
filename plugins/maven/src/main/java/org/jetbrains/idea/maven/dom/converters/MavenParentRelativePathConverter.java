@@ -17,15 +17,15 @@ package org.jetbrains.idea.maven.dom.converters;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.paths.PathReferenceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReference;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.xml.ConvertContext;
-import com.intellij.util.xml.DomFileElement;
-import com.intellij.util.xml.GenericDomValue;
-import com.intellij.util.xml.ResolvingConverter;
+import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +42,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile> {
+public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile> implements CustomReferenceConverter {
   @Override
   public PsiFile fromString(@Nullable @NonNls String s, ConvertContext context) {
     if (s == null) return null;
@@ -111,5 +111,15 @@ public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile
         el.setStringValue(MavenDomUtil.calcRelativePath(currentFile.getParent(), parentFile.getFile()));
       }
     }
+  }
+
+  @NotNull
+  public PsiReference[] createReferences(final GenericDomValue genericDomValue, final PsiElement element, final ConvertContext context) {
+    return createReferences(element, false);
+  }
+
+  @NotNull
+  public PsiReference[] createReferences(@NotNull final PsiElement psiElement, final boolean soft) {
+    return PathReferenceManager.getInstance().createReferences(psiElement, soft);
   }
 }
