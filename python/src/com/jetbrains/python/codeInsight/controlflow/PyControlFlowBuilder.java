@@ -276,6 +276,18 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
         myBuilder.addEdge(myBuilder.prevInstruction, bodyInstruction);  //loop
         myBuilder.addPendingEdge(node, myBuilder.prevInstruction); // exit
       }
+      final Ref<Instruction> bodyInstRef = new Ref<Instruction>(bodyInstruction);
+      myBuilder.processPending(new ControlFlowBuilder.PendingProcessor() {
+        public void process(final PsiElement pendingScope, final Instruction instruction) {
+          if (pendingScope != null && PsiTreeUtil.isAncestor(list, pendingScope, false)) {
+            myBuilder.addEdge(instruction, bodyInstRef.get());  //loop
+            myBuilder.addPendingEdge(node, instruction); // exit
+          }
+          else {
+            myBuilder.addPendingEdge(pendingScope, instruction);
+          }
+        }
+      });
     }
     myBuilder.prevInstruction = head;
     if (elsePart != null) {
