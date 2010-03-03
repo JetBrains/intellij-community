@@ -58,7 +58,7 @@ public class SegmentArray {
       newArraySize = 16;
     }
     while (newArraySize <= index) {
-      newArraySize = (newArraySize * 120) / 100;
+      newArraySize = newArraySize * 120 / 100;
     }
     int[] newArray = new int[newArraySize];
     System.arraycopy(array, 0, newArray, 0, array.length);
@@ -74,7 +74,7 @@ public class SegmentArray {
       newArraySize = 16;
     }
     while (newArraySize <= index) {
-      newArraySize = (newArraySize * 120) / 100;
+      newArraySize = newArraySize * 120 / 100;
     }
 
     T[] newArray = (T[])Array.newInstance(array.getClass().getComponentType(), newArraySize);
@@ -91,7 +91,7 @@ public class SegmentArray {
       newArraySize = 16;
     }
     while (newArraySize <= index) {
-      newArraySize = (newArraySize * 120) / 100;
+      newArraySize = newArraySize * 120 / 100;
     }
     short[] newArray = new short[newArraySize];
     System.arraycopy(array, 0, newArray, 0, array.length);
