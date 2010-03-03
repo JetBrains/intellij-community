@@ -4,8 +4,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.stubs.StubIndex;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFile;
@@ -19,7 +17,6 @@ import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
 
 /**
  * @author Dennis.Ushakov
@@ -27,8 +24,7 @@ import java.util.Collection;
 public class PyDynamicMember {
   private String myName;
   private final boolean myResolveToInstance;
-  private final String myTypeShortName;
-  private final String myTypeModuleName;
+  private final String myTypeName;
 
   private final String myResolveShortName;
   private final String myResolveModuleName;
@@ -40,12 +36,9 @@ public class PyDynamicMember {
   public PyDynamicMember(final String name, final String type, final String resolveTo, final boolean resolveToInstance) {
     myName = name;
     myResolveToInstance = resolveToInstance;
+    myTypeName = type;
 
-    int split = type.lastIndexOf('.');
-    myTypeShortName = type.substring(split + 1);
-    myTypeModuleName = type.substring(0, split);
-
-    split = resolveTo.lastIndexOf('.');
+    int split = resolveTo.lastIndexOf('.');
     myResolveShortName = resolveTo.substring(split + 1);
     myResolveModuleName = resolveTo.substring(0, split);
   }
@@ -60,13 +53,9 @@ public class PyDynamicMember {
 
   @Nullable
   public PsiElement resolve(Project project, PyClass modelClass) {
-    final Collection<PyClass> classes = StubIndex.getInstance().get(PyClassNameIndex.KEY, myTypeShortName, project,
-                                                                    GlobalSearchScope.allScope(project));
-    for (PyClass clazz : classes) {
-      final String moduleName = ResolveImportUtil.findShortestImportableName(modelClass, clazz.getContainingFile().getVirtualFile());
-      if (myTypeModuleName.equals(moduleName)) {
-        return new MyInstanceElement(clazz, findResolveTarget(modelClass));
-      }
+    PyClass targetClass = PyClassNameIndex.findClass(myTypeName, project);
+    if (targetClass != null) {
+      return new MyInstanceElement(targetClass, findResolveTarget(modelClass));
     }
     return null;
   }
@@ -87,7 +76,8 @@ public class PyDynamicMember {
   }
 
   public String getShortType() {
-    return myTypeShortName;
+    int pos = myTypeName.lastIndexOf('.');
+    return myTypeName.substring(pos+1);
   }
 
   private class MyInstanceElement extends PyElementImpl implements PyExpression {

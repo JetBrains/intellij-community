@@ -32,7 +32,7 @@ public class PyGotoSymbolContributor implements ChooseByNameContributor {
                                     : GlobalSearchScope.projectScope(project);
 
     List<NavigationItem> symbols = new ArrayList<NavigationItem>();
-    symbols.addAll(StubIndex.getInstance().get(PyClassNameIndex.KEY, name, project, scope));
+    symbols.addAll(PyClassNameIndex.find(name, project, scope));
     symbols.addAll(StubIndex.getInstance().get(PyFunctionNameIndex.KEY, name, project, scope));
 
     return symbols.toArray(new NavigationItem[symbols.size()]);
