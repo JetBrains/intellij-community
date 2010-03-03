@@ -1279,6 +1279,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean isWhitespaceAt(CharSequence chars, int x, int y) {
     LogicalPosition log = xyToLogicalPosition(new Point(x, y));
     int offset = logicalPositionToOffset(log);
+    if (offset >= chars.length()) return false;
 
     char c = chars.charAt(offset);
     return c == ' ' || c == '\t' || c == '\n';
