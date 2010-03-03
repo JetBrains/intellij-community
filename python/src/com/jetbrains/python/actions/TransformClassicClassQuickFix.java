@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElementGenerator;
@@ -37,14 +38,15 @@ public class TransformClassicClassQuickFix implements LocalQuickFix {
       PyElementGenerator generator = pythonLanguage.getElementGenerator();
       if (superClassExpressions.length == 0) {
         pyClass.replace(generator.createFromText(project, PyClass.class,
-                                                 "class " + pyClass.getName() + "(object):\n    " + pyClass.getStatementList().getText()));
+                                                 "class " + pyClass.getName() + "(" +
+                                                 PyNames.OBJECT + "):\n    " + pyClass.getStatementList().getText()));
       } else {
         StringBuilder stringBuilder = new StringBuilder("class ");
         stringBuilder.append(pyClass.getName()).append("(");
         for (PyExpression expression: superClassExpressions) {
           stringBuilder.append(expression.getText()).append(", ");
         }
-        stringBuilder.append("object):\n    ");
+        stringBuilder.append(PyNames.OBJECT).append(":\n    ");
         stringBuilder.append(pyClass.getStatementList().getText());
         pyClass.replace(generator.createFromText(project, PyClass.class, stringBuilder.toString()));
       }
