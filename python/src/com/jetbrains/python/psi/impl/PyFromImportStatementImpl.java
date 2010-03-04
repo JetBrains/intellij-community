@@ -36,6 +36,10 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
   }
 
   public boolean isStarImport() {
+    final PyFromImportStatementStub stub = getStub();
+    if (stub != null) {
+      return stub.isStarImport();
+    }
     return getStarImportElement() != null;
   }
 
@@ -70,6 +74,10 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
   }
 
   public int getRelativeLevel() {
+    final PyFromImportStatementStub stub = getStub();
+    if (stub != null) {
+      return stub.getRelativeLevel();
+    }
     // crude but OK for reasonable cases, and in unreasonably complex error cases this number is moot anyway. 
     int result = 0;
     PsiElement import_kwd = findChildByType(PyTokenTypes.IMPORT_KEYWORD);

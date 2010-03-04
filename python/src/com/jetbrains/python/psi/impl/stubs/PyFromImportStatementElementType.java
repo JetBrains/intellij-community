@@ -32,15 +32,17 @@ public class PyFromImportStatementElementType extends PyStubElementType<PyFromIm
 
   @Override
   public PyFromImportStatementStub createStub(PyFromImportStatement psi, StubElement parentStub) {
-    return new PyFromImportStatementStubImpl(psi.isStarImport(), parentStub);
+    return new PyFromImportStatementStubImpl(psi.isStarImport(), psi.getRelativeLevel(), parentStub);
   }
 
   public void serialize(PyFromImportStatementStub stub, StubOutputStream dataStream) throws IOException {
     dataStream.writeBoolean(stub.isStarImport());
+    dataStream.writeVarInt(stub.getRelativeLevel());
   }
 
   public PyFromImportStatementStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
     boolean isStarImport = dataStream.readBoolean();
-    return new PyFromImportStatementStubImpl(isStarImport, parentStub);
+    int relativeLevel = dataStream.readVarInt();
+    return new PyFromImportStatementStubImpl(isStarImport, relativeLevel, parentStub);
   }
 }

@@ -8,4 +8,5 @@ import com.jetbrains.python.psi.PyFromImportStatement;
  */
 public interface PyFromImportStatementStub extends StubElement<PyFromImportStatement> {
   boolean isStarImport();
+  int getRelativeLevel();
 }
