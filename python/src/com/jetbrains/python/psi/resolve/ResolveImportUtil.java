@@ -6,6 +6,7 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -125,24 +126,24 @@ public class ResolveImportUtil {
         }
 
         if (module_reference != null) { // either "from bar import foo" or "from ...bar import foo"
-          imported_from_module = resolveModule(module_reference, file, absolute_import_enabled, relative_level);
+          imported_from_module = resolveModule(getQualifiedName(module_reference), file, absolute_import_enabled, relative_level);
           PsiElement result = resolveChild(imported_from_module, referencedName, file, false);
           if (result != null) return result;
         }
       }
       else if (grandparent instanceof PyImportStatement) { // "import foo"
-        PsiElement result = resolveModule(importRef, file, absolute_import_enabled, 0);
+        PsiElement result = resolveModule(getQualifiedName(importRef), file, absolute_import_enabled, 0);
         if (result != null) return result;
       }
     }
     else if (parent instanceof PyFromImportStatement) { // "from foo import"
       PyFromImportStatement from_import_statement = (PyFromImportStatement)parent;
-      PsiElement module = resolveModule(importRef, file, absolute_import_enabled, from_import_statement.getRelativeLevel());
+      PsiElement module = resolveModule(getQualifiedName(importRef), file, absolute_import_enabled, from_import_statement.getRelativeLevel());
       if (module != null) return module;
     }
     // in-python resolution failed
     if (module_reference != null) {
-      return resolveForeignImport(importRef, importRef.getText(), resolveModule(module_reference, file, false, 0));
+      return resolveForeignImport(importRef, importRef.getText(), resolveModule(getQualifiedName(module_reference), file, false, 0));
     }
     return null;
   }
@@ -156,17 +157,16 @@ public class ResolveImportUtil {
    * @return
    */
   @Nullable
-  private static PsiElement resolveModule(@NotNull PyReferenceExpression module_reference, PsiFile source_file,
+  private static PsiElement resolveModule(@Nullable List<String> qualifiedName, PsiFile source_file,
                                           boolean import_is_absolute, int relative_level) {
     PsiElement imported_from_module;
 
-    String qualified_name = PyResolveUtil.toPath(module_reference, ".") + "#" + Integer.toString(relative_level);
+    if (qualifiedName == null) return null;
+    String marker = StringUtil.join(qualifiedName, ".") + "#" + Integer.toString(relative_level);
     Set<String> being_imported = ourBeingImported.get();
-    if (being_imported.contains(qualified_name)) return null; // break endless loop in import
+    if (being_imported.contains(marker)) return null; // break endless loop in import
     try {
-      being_imported.add(qualified_name);
-      List<String> qualifiedName = getQualifiedName(module_reference);
-      if (qualifiedName == null) return null;
+      being_imported.add(marker);
       if (relative_level > 0) {
         // "from ...module import"
         imported_from_module = resolveModuleAt(stepBackFrom(source_file, relative_level), source_file, qualifiedName);
@@ -181,13 +181,17 @@ public class ResolveImportUtil {
       return imported_from_module;
     }
     finally {
-      being_imported.remove(qualified_name);
+      being_imported.remove(marker);
     }
   }
 
+  @Nullable
   private static List<String> getQualifiedName(PyReferenceExpression reference) {
     List<String> result = new ArrayList<String>();
     final List<PyReferenceExpression> components = PyResolveUtil.unwindQualifiers(reference);
+    if (components == null) {
+      return null;
+    }
     for (PyReferenceExpression component : components) {
       result.add(component.getReferencedName());
     }
@@ -196,8 +200,10 @@ public class ResolveImportUtil {
 
   /**
    * Searches for a module at given directory, unwinding qualifiers and traversing directories as needed.
+   *
    * @param directory where to start from; top qualifier will be searched for here.
-   * @param source_file
+   * @param sourceFile the file containing the import statement being resolved
+   * @param qualifiedName the qualified name of the module to search
    * @return module's file, or null.
    */
   @Nullable
