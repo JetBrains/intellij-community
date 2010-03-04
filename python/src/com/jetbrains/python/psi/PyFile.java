@@ -24,6 +24,9 @@ public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner
 
   /**
    * Looks for a name exported by this file, preferably in an efficient way.
+   * TODO[yole] this behaves differently in stub-based and AST-based mode: in stub-based mode, it returns the import element for
+   * an imported name, in AST-based - the actual element referenced by the import
+   *
    * @param name what to find
    * @return found element, or null.
    */

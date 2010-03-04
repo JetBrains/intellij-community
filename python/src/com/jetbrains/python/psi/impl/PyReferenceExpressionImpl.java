@@ -254,7 +254,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     // here we have an unqualified expr. it may be defined:
     // ...in current file
     ResolveProcessor processor = new ResolveProcessor(referencedName);
-    PsiElement uexpr = PyResolveUtil.treeCrawlUp(processor, this);
+    PsiElement uexpr = PyResolveUtil.treeCrawlUp(processor, false, this, getContainingFile());
     if ((uexpr != null)) {
       if ((uexpr instanceof PyClass)) {
         // is it a case of the bizarre "class Foo(Foo)" construct?

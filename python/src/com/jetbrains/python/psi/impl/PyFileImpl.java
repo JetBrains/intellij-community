@@ -23,6 +23,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveProcessor;
 import com.jetbrains.python.psi.stubs.PyFromImportStatementStub;
+import com.jetbrains.python.psi.stubs.PyImportStatementStub;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
@@ -179,7 +180,6 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   public PsiElement findExportedName(String name) {
-    /*
     final StubElement stub = getStub();
     if (stub != null) {
       final List children = stub.getChildrenStubs();
@@ -187,8 +187,8 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
         if (child instanceof NamedStub && name.equals(((NamedStub)child).getName())) {
           return ((NamedStub) child).getPsi();
         }
-        else if (child instanceof PyFromImportStatementStub) {
-          final List<StubElement> importElements = ((PyFromImportStatementStub)child).getChildrenStubs();
+        else if (child instanceof PyFromImportStatementStub || child instanceof PyImportStatementStub) {
+          final List<StubElement> importElements = ((StubElement)child).getChildrenStubs();
           for (StubElement importElement : importElements) {
             final PsiElement psi = importElement.getPsi();
             if (psi instanceof PyImportElement && name.equals(((PyImportElement) psi).getVisibleName())) {
@@ -200,11 +200,11 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       return null;
     }
     else {
-    */
-    // dull plain resolve, as fast as stub index or better
-    ResolveProcessor proc = new ResolveProcessor(name);
-    PyResolveUtil.treeCrawlUp(proc, true, getLastChild());
-    return proc.getResult();
+      // dull plain resolve, as fast as stub index or better
+      ResolveProcessor proc = new ResolveProcessor(name);
+      PyResolveUtil.treeCrawlUp(proc, true, getLastChild());
+      return proc.getResult();
+    }
   }
 
   public List<PyImportElement> getImportTargets() {
