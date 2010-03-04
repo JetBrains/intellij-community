@@ -615,9 +615,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     for (Module module : modules) {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       final String[] contentRootUrls = moduleRootManager.getContentRootUrls();
-      for (String url : contentRootUrls) {
-        rootPaths.add(extractLocalPath(url));
-      }
+      rootPaths.addAll(getRootsToTrack(contentRootUrls));
       rootPaths.add(module.getModuleFilePath());
     }
 
@@ -631,7 +629,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     if (baseDir != null) {
       rootPaths.add(baseDir.getPath());
     }
-    // No need to add workspace file separately since they're definetely on same directory with ipr.
+    // No need to add workspace file separately since they're definitely on same directory with ipr.
 
     for (Module module : modules) {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
@@ -675,11 +673,13 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   }
 
   private static List<String> getRootsToTrack(final String[] urls) {
-    List<String> result = new ArrayList<String>();
+    final List<String> result = new ArrayList<String>(urls.length);
     for (String url : urls) {
       if (url != null) {
-        String path = extractLocalPath(url);
-        result.add(path);
+        final String protocol = VirtualFileManager.extractProtocol(url);
+        if (protocol == null || JarFileSystem.PROTOCOL.equals(protocol) || LocalFileSystem.PROTOCOL.equals(protocol)) {
+          result.add(extractLocalPath(url));
+        }
       }
     }
 
