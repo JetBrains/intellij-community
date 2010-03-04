@@ -15,9 +15,9 @@ PsiReferenceExpression:i : java.util.concurrent.atomic.AtomicInteger
 Conversions:
 0 -> new AtomicInteger($val$) $val$
 9 -> $qualifier$.set($val$) $qualifier$ = $val$ i = 9
-i + 9 -> $qualifier$.addAndGet($delta$) $qualifier$ + $delta$
+i + 9 -> $qualifier$.get() + $val$ $qualifier$+$val$
 i += 2 -> $qualifier$.getAndAdd(($val$)) $qualifier$ += $val$
-i - 9 -> $qualifier$.addAndGet(-($delta$)) $qualifier$ - $delta$
+i - 9 -> $qualifier$.get() - $val$ $qualifier$-$val$
 i -= 5 -> $qualifier$.getAndAdd(-($val$)) $qualifier$ -= $val$
 i == 0 -> $qualifier$.get()==$val$ $qualifier$==$val$
 

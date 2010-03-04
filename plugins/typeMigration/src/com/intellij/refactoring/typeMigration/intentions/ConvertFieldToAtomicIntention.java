@@ -12,8 +12,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeMigrationReplacementUtil;
 import com.intellij.refactoring.typeMigration.rules.AtomicConversionRule;
@@ -115,7 +117,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
       psiVariable.getTypeElement().replace(elementFactory.createTypeElement(toType));
       final PsiExpression initializer = psiVariable.getInitializer();
       if (initializer != null) {
-        final TypeConversionDescriptor directConversion = AtomicConversionRule.findDirectConversion(initializer, toType, initializer.getType());
+        final TypeConversionDescriptor directConversion = AtomicConversionRule.wrapWithNewExpression(toType, fromType);
         if (directConversion != null) {
           TypeMigrationReplacementUtil.replaceExpression(initializer, project, directConversion);
         }
@@ -126,6 +128,18 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
           final PsiElement parent = psiElement.getParent();
           if (parent instanceof PsiExpression && !(parent instanceof PsiReferenceExpression)) {
             psiElement = parent;
+          }
+          if (psiElement instanceof PsiBinaryExpression) {
+            PsiBinaryExpression binaryExpression = (PsiBinaryExpression)psiElement;
+            if (TypeConversionUtil.isBinaryOperatorApplicable(binaryExpression.getOperationTokenType(), binaryExpression.getLOperand(), binaryExpression.getROperand(), true)) {
+              continue;
+            }
+          } else if (psiElement instanceof PsiAssignmentExpression) {
+            final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)psiElement;
+            IElementType opSign = TypeConversionUtil.convertEQtoOperation(assignmentExpression.getOperationTokenType());
+            if (opSign != null && TypeConversionUtil.isBinaryOperatorApplicable(opSign, assignmentExpression.getLExpression(), assignmentExpression.getRExpression(), true)) {
+              continue;
+            }
           }
           final TypeConversionDescriptor directConversion = AtomicConversionRule.findDirectConversion(psiElement, toType, fromType);
           if (directConversion != null) {

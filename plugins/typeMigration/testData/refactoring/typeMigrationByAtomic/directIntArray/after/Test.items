@@ -18,8 +18,8 @@ PsiReferenceExpression:a : java.util.concurrent.atomic.AtomicIntegerArray
 PsiReferenceExpression:a : java.util.concurrent.atomic.AtomicIntegerArray
 
 Conversions:
-a[0] -> $qualifier$.addAndGet($idx$, $delta$) $qualifier$[$idx$] + $delta$ a[0] + 7
 a[0] -> $qualifier$.decrementAndGet($idx$) --$qualifier$[$idx$] --a[0]
+a[0] -> $qualifier$.get($idx$) + $val$) $qualifier$[$idx$]+$val$ a[0] + 7
 a[0] -> $qualifier$.get($idx$)==$val$ $qualifier$[$idx$]==$val$ a[0] == 0
 a[0] -> $qualifier$.getAndAdd($idx$, ($val$)) $qualifier$[$idx$] += $val$ a[0] += (2)
 a[0] -> $qualifier$.getAndDecrement($idx$) $qualifier$[$idx$]-- a[0]--

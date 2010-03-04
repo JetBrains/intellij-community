@@ -12,7 +12,7 @@ class Test {
           a.getAndAdd(0, ((2)));
           a.set(0, a.get(0) * 2);
           if (a.get(0) == 0) {
-              System.out.println(a.addAndGet(0, 7));
+              System.out.println(a.get(0) + 7);
           }
       }
   }

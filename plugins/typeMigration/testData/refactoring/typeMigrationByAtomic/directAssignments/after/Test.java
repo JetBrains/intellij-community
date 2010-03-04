@@ -10,7 +10,7 @@ class Test {
       i.set(9);
     }
 
-    System.out.println(i.addAndGet(9));
-    System.out.println(i.addAndGet(-(9)));
+    System.out.println(i.get() + 9);
+    System.out.println(i.get() - 9);
   }
 }
