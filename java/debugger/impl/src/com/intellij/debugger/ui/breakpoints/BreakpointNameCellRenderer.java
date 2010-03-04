@@ -36,8 +36,8 @@ public class BreakpointNameCellRenderer extends DefaultTableCellRenderer {
       return this;
     };
     final Icon icon = (breakpoint instanceof BreakpointWithHighlighter)?
-                      breakpoint.ENABLED? ((BreakpointWithHighlighter)breakpoint).getSetIcon() : ((BreakpointWithHighlighter)breakpoint).getDisabledIcon() :  
-                      breakpoint.getIcon();
+                      breakpoint.ENABLED? ((BreakpointWithHighlighter)breakpoint).getSetIcon(false) : ((BreakpointWithHighlighter)breakpoint).getDisabledIcon(
+                        false) : breakpoint.getIcon();
     setIcon(icon);
     setDisabledIcon(icon);
 

@@ -34,4 +34,5 @@
     
     <projectOpenProcessor implementation="com.intellij.platform.PlatformProjectOpenProcessor"/>
   </extensions>
+
 </idea-plugin>

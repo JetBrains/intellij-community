@@ -91,7 +91,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     private int myInitialCount = 500;
     private int myInitialDays = 90;
     private int myRefreshInterval = 30;
-    private boolean myRefreshEnabled = true;
+    private boolean myRefreshEnabled = false;
 
     public int getInitialCount() {
       return myInitialCount;
