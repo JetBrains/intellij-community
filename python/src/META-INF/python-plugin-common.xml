@@ -256,8 +256,8 @@
       </action>
       <add-to-group group-id="ToolsMenu" anchor="after" relative-to-action="Django.RunManageTaskAction"/>
     </group>
-    <action id="com.jetbrains.python.console.RunPythonREPLConsoleAction"
-            class="com.jetbrains.python.console.RunPythonREPLConsoleAction"
+    <action id="com.jetbrains.python.console.RunPythonConsoleAction"
+            class="com.jetbrains.python.console.RunPythonConsoleAction"
             text="Run Python Console..." description="Allows to quickly run Python console">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>

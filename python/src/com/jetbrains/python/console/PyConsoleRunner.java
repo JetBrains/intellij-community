@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.PairProcessor;
@@ -37,7 +38,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.Arrays;
-import java.util.Collections;
 
 /**
  * @author oleg
@@ -47,36 +47,28 @@ public class PyConsoleRunner {
   private final String myConsoleTitle;
 
   private OSProcessHandler myProcessHandler;
-  private final String myCommand;
+  private final CommandLineArgumentsProvider myProvider;
   private final String myWorkingDir;
 
   private ConsoleView myConsoleView;
   private final ConsoleHistoryModel myHistory = new ConsoleHistoryModel();
 
-  /**
-   * @param project      Current project
-   * @param consoleTitle Title for console
-   * @param workingDir   Working directory, null to inherit parent add home directory
-   * @param provider     Provides commandline arguments
-   */
-
-
   private PyConsoleRunner(@NotNull final Project project,
                           @NotNull final String consoleTitle,
-                          @NotNull final String command,
+                          @NotNull final CommandLineArgumentsProvider provider,
                           @Nullable final String workingDir) throws ExecutionException {
     myProject = project;
     myConsoleTitle = consoleTitle;
-    myCommand = command;
+    myProvider = provider;
     myWorkingDir = workingDir;
   }
 
   public static void run(@NotNull final Project project,
                          @NotNull final String consoleTitle,
-                         @NotNull final String command,
+                         @NotNull final CommandLineArgumentsProvider provider,
                          @Nullable final String workingDir) {
     try {
-      final PyConsoleRunner consoleRunner = createRunner(project, consoleTitle, command, workingDir);
+      final PyConsoleRunner consoleRunner = createRunner(project, consoleTitle, provider, workingDir);
       initAndRun(consoleRunner);
     }
     catch (ExecutionException e) {
@@ -87,9 +79,9 @@ public class PyConsoleRunner {
   @NotNull
   public static PyConsoleRunner createRunner(@NotNull final Project project,
                                              @NotNull final String consoleTitle,
-                                             @NotNull final String command,
+                                             @NotNull final CommandLineArgumentsProvider provider,
                                              @Nullable final String workingDir) throws ExecutionException {
-    return new PyConsoleRunner(project, consoleTitle, command, workingDir);
+    return new PyConsoleRunner(project, consoleTitle, provider, workingDir);
   }
 
   public static void initAndRun(@NotNull final PyConsoleRunner runner) throws ExecutionException {
@@ -99,17 +91,10 @@ public class PyConsoleRunner {
 
   private void init() throws ExecutionException {
 // add holder created
-    final Process process = Runner.createProcess(myWorkingDir, true, Collections.<String, String>emptyMap(), myCommand, "-i");
+    final Process process = Runner.createProcess(myWorkingDir, true, myProvider.getAdditionalEnvs(), myProvider.getArguments());
 
     final Charset outputEncoding = EncodingManager.getInstance().getDefaultCharset();
-    myProcessHandler = new ColoredProcessHandler(process, myCommand, outputEncoding){
-      @Override
-      protected void textAvailable(final String text, final Key attributes) {
-        if (!(text.startsWith(">>>") && attributes == ProcessOutputTypes.STDERR)){
-          super.textAvailable(text, attributes);
-        }
-      }
-    };
+    myProcessHandler = new PyConsoleColoredProcessHandler(process, outputEncoding);
 
     ProcessTerminatedListener.attach(myProcessHandler);
 
@@ -234,9 +219,35 @@ public class PyConsoleRunner {
     sendInput(line +"\n", myProcessHandler.getCharset(), myProcessHandler.getProcessInput());
   }
 
-  static class OutputConsoleFilter implements Filter {
+  private class OutputConsoleFilter implements Filter {
     public Result applyFilter(String line, int entireLength) {
       return new Result(entireLength - line.length(), entireLength, null, ColoredProcessHandler.getByKey(ConsoleHighlighter.OUT));
+    }
+  }
+
+  private String getProviderCommandLine() {
+    final StringBuilder builder = new StringBuilder();
+    for (String s : myProvider.getArguments()) {
+      if (builder.length() > 0){
+        builder.append(' ');
+      }
+      builder.append(s);
+    }
+    return builder.toString();
+  }
+  
+  private class PyConsoleColoredProcessHandler extends ColoredProcessHandler {
+    public PyConsoleColoredProcessHandler(final Process process, final Charset outputEncoding) {
+      super(process, getProviderCommandLine(), outputEncoding);
+    }
+
+
+
+    @Override
+    protected void textAvailable(final String text, final Key attributes) {
+      if (!(text.startsWith(">>>") && attributes == ProcessOutputTypes.STDERR)){
+        super.textAvailable(text, attributes);
+      }
     }
   }
 }

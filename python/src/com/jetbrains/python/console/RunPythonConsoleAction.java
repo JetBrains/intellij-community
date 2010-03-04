@@ -1,5 +1,6 @@
 package com.jetbrains.python.console;
 
+import com.intellij.execution.process.CommandLineArgumentsProvider;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -15,14 +16,16 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * @author oleg
  */
-public class RunPythonREPLConsoleAction extends AnAction implements DumbAware {
+public class RunPythonConsoleAction extends AnAction implements DumbAware {
   private static final Icon ICON = IconLoader.getIcon("/com/jetbrains/python/python.png");
 
-  public RunPythonREPLConsoleAction() {
+  public RunPythonConsoleAction() {
     super();
     getTemplatePresentation().setIcon(ICON);
   }
@@ -44,7 +47,19 @@ public class RunPythonREPLConsoleAction extends AnAction implements DumbAware {
 
     PyConsoleRunner.run(module.getProject(),
                         PyBundle.message("irb.console"),
-                        sdk.getHomePath(),
+                        new CommandLineArgumentsProvider() {
+                          public String[] getArguments() {
+                            return new String[]{sdk.getHomePath(), "-i"};
+                          }
+
+                          public boolean passParentEnvs() {
+                            return false;
+                          }
+
+                          public Map<String, String> getAdditionalEnvs() {
+                            return Collections.emptyMap();
+                          }
+                        },
                         getFirstContentRoot(module).getPath());
   }
 
