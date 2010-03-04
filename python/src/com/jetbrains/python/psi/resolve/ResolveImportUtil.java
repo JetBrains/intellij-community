@@ -156,9 +156,8 @@ public class ResolveImportUtil {
    * @return
    */
   @Nullable
-  private static PsiElement resolveModule(
-    @NotNull PyReferenceExpression module_reference, PsiFile source_file, boolean import_is_absolute, int relative_level
-  ) {
+  private static PsiElement resolveModule(@NotNull PyReferenceExpression module_reference, PsiFile source_file,
+                                          boolean import_is_absolute, int relative_level) {
     PsiElement imported_from_module;
 
     String qualified_name = PyResolveUtil.toPath(module_reference, ".") + "#" + Integer.toString(relative_level);
@@ -171,10 +170,11 @@ public class ResolveImportUtil {
         imported_from_module = resolveModuleAt(stepBackFrom(source_file, relative_level), module_reference);
       }
       else { // "from module import"
-        if (import_is_absolute) imported_from_module = resolveModuleInRoots(module_reference, source_file);
+        List<String> qualifiedName = getQualifiedName(module_reference);
+        if (import_is_absolute) imported_from_module = resolveModuleInRoots(qualifiedName, source_file);
         else {
           imported_from_module = resolveModuleAt(source_file.getContainingDirectory(), module_reference);
-          if (imported_from_module == null) imported_from_module = resolveModuleInRoots(module_reference, source_file);
+          if (imported_from_module == null) imported_from_module = resolveModuleInRoots(qualifiedName, source_file);
         }
       }
       return imported_from_module;
@@ -182,6 +182,15 @@ public class ResolveImportUtil {
     finally {
       being_imported.remove(qualified_name);
     }
+  }
+
+  private static List<String> getQualifiedName(PyReferenceExpression reference) {
+    List<String> result = new ArrayList<String>();
+    final List<PyReferenceExpression> components = PyResolveUtil.unwindQualifiers(reference);
+    for (PyReferenceExpression component : components) {
+      result.add(component.getReferencedName());
+    }
+    return result;
   }
 
   /**
@@ -208,24 +217,21 @@ public class ResolveImportUtil {
   }
 
   @Nullable
-  private static PsiElement resolveModuleInRoots(PyReferenceExpression moduleRef, PsiElement foothold) {
-    if (moduleRef == null || !moduleRef.isValid()) return null;
+  private static PsiElement resolveModuleInRoots(List<String> moduleQualifiedName, PsiElement foothold) {
     if (foothold == null || !foothold.isValid()) return null;
     PsiFile foothold_file = foothold.getContainingFile();
     if (foothold_file == null || !foothold_file.isValid()) return null;
 
-    // in a chain of qualifiers, resolve top qualifier in roots, then resolve the rest under it
-    List<PyReferenceExpression> module_path = PyResolveUtil.unwindQualifiers(moduleRef);
-    if (module_path == null || module_path.size() < 1) return null;
+    if (moduleQualifiedName.size() < 1) return null;
 
-    Iterator<PyReferenceExpression> qualifier_sequence = module_path.iterator();
-    String top_module_name = qualifier_sequence.next().getReferencedName(); // guaranteed to be unqualified
+    Iterator<String> qualifier_sequence = moduleQualifiedName.iterator();
+    String top_module_name = qualifier_sequence.next(); // guaranteed to be unqualified
 
     LookupRootVisitor visitor = new LookupRootVisitor(top_module_name, foothold.getManager());
     visitRoots(foothold, visitor);
     PsiElement module = visitor.getResult();
     while (module != null && qualifier_sequence.hasNext()) {
-      module = resolveChild(module, qualifier_sequence.next().getReferencedName(), foothold_file, false); // only files, we want a module
+      module = resolveChild(module, qualifier_sequence.next(), foothold_file, false); // only files, we want a module
     }
     return module;
   }
