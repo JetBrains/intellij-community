@@ -141,6 +141,11 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
     doInspectionTest("DictCreation.py", PyDictCreationInspection.class, PyBundle.message("QFIX.dict.creation"), true, true);
   }
 
+  public void testTransformClassicClass() throws Exception {
+    doInspectionTest("TransformClassicClass.py", PyClassicStyleClassInspection.class,
+                     PyBundle.message("QFIX.classic.class.transform"), true, true);
+  }
+
   protected void doInspectionTestWithPy3k(@NonNls String testFileName,
                                         final Class inspectionClass,
                                         @NonNls String quickFixName,

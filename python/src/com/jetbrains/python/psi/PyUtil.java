@@ -29,7 +29,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -213,6 +215,20 @@ public class PyUtil {
     PsiElement seeker = start;
     while (seeker instanceof PsiWhiteSpace || seeker instanceof PsiComment) seeker = seeker.getNextSibling();
     return seeker;
+  }
+
+  @Nullable
+  public static <T extends PyElement> T[] getAllChildrenOfType(@NotNull PsiElement element, @NotNull Class<T> aClass) {
+    List<T> result = new SmartList<T>();
+    for (PsiElement child : element.getChildren()) {
+      if (instanceOf(child, aClass)) {
+        result.add((T)child);
+      }
+      else {
+        result.addAll(Arrays.asList(getAllChildrenOfType(child, aClass)));
+      }
+    }
+    return ArrayUtil.toObjectArray(result, aClass);
   }
 
   /**

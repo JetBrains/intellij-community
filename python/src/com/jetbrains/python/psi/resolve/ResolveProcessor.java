@@ -83,7 +83,7 @@ public class ResolveProcessor implements PyAsScopeProcessor {
       PsiElement by_name = definer.getElementNamed(myName);
       if (by_name != null) {
         myResult = by_name;
-        if (!PsiTreeUtil.isAncestor(element, by_name, true)) { // non-trivial definer
+        if (isNonTrivialDefiner(element, by_name)) {
           addNameDefiner(definer);
         }
         return false;
@@ -91,6 +91,13 @@ public class ResolveProcessor implements PyAsScopeProcessor {
     }
 
     return true;
+  }
+
+  private static boolean isNonTrivialDefiner(PsiElement element, PsiElement by_name) {
+    if (element.getContainingFile() != by_name.getContainingFile()) {
+      return true;
+    }
+    return !PsiTreeUtil.isAncestor(element, by_name, true);
   }
 
   public boolean execute(final PsiElement element, final String asName) {

@@ -58,7 +58,7 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
     List<PyExpression> candidates = PyUtil.flattenedParens(psi_nodes); // put all possible tuples to one level
     List<PyExpression> targets = new ArrayList<PyExpression>();
     for (PyExpression expr : candidates) { // only filter out targets
-      if (expr instanceof PyTargetExpression) {
+      if (expr instanceof PyTargetExpression || expr instanceof PySubscriptionExpression) {
         targets.add(expr);
       }
     }

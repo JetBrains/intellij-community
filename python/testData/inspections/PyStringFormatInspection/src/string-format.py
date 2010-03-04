@@ -53,3 +53,11 @@ def greet(all):
 "%s" % []  #ok
 "%f" % [x + 1 for x in [1, 2, 3, 4]]  #Unexpected type
 "%d %d" % (3, 5)  #ok
+"Hello %s %s" % tuple(['world', '!'])  #ok
+
+def foo(a):
+  if a == 1:
+    return "a", "b"
+  else:
+    return "c", "d"
+print "%s" % foo(1)  #Too many arguments for format string

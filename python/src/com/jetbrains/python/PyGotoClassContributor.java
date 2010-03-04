@@ -25,7 +25,7 @@ public class PyGotoClassContributor implements ChooseByNameContributor {
     final GlobalSearchScope scope = includeNonProjectItems
                                     ? ProjectScope.getAllScope(project)
                                     : GlobalSearchScope.projectScope(project);
-    final Collection<PyClass> classes = StubIndex.getInstance().get(PyClassNameIndex.KEY, name, project, scope);
+    final Collection<PyClass> classes = PyClassNameIndex.find(name, project, scope);
     return classes.toArray(new NavigationItem[classes.size()]);
   }
 }

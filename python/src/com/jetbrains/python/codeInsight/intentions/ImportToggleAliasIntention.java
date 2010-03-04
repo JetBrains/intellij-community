@@ -62,7 +62,7 @@ public class ImportToggleAliasIntention implements IntentionAction {
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     myImportElement  = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyImportElement.class);
     if (myImportElement != null && myImportElement .isValid()) {
-      PyTargetExpression target = myImportElement.getAsName();
+      PyTargetExpression target = myImportElement.getAsNameElement();
       if (target != null && target.isValid()) myAlias = target.getName();
       else myAlias = null;
       myFromImportStatement = PsiTreeUtil.getParentOfType(myImportElement, PyFromImportStatement.class);

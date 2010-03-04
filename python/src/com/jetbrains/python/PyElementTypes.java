@@ -27,7 +27,9 @@ public interface PyElementTypes {
   TokenSet FORMAL_PARAMETER_SET = TokenSet.create(NAMED_PARAMETER);
 
   PyElementType ARGUMENT_LIST = new PyElementType("ARGUMENT_LIST", PyArgumentListImpl.class);
-  PyElementType IMPORT_ELEMENT = new PyElementType("IMPORT_ELEMENT", PyImportElementImpl.class);
+
+  PyStubElementType<PyImportElementStub, PyImportElement> IMPORT_ELEMENT = new PyImportElementElementType();
+  
   PyElementType STAR_IMPORT_ELEMENT = new PyElementType("STAR_IMPORT_ELEMENT", PyStarImportElementImpl.class);
   PyElementType EXCEPT_PART = new PyElementType("EXCEPT_PART", PyExceptPartImpl.class);
   PyElementType PRINT_TARGET = new PyElementType("PRINT_TARGET", PyPrintTargetImpl.class);
@@ -43,9 +45,11 @@ public interface PyElementTypes {
   PyElementType DEL_STATEMENT = new PyElementType("DEL_STATEMENT", PyDelStatementImpl.class);
   PyElementType EXEC_STATEMENT = new PyElementType("EXEC_STATEMENT", PyExecStatementImpl.class);
   PyElementType FOR_STATEMENT = new PyElementType("FOR_STATEMENT", PyForStatementImpl.class);
-  PyElementType FROM_IMPORT_STATEMENT = new PyElementType("FROM_IMPORT_STATEMENT", PyFromImportStatementImpl.class);
+
+  PyStubElementType<PyFromImportStatementStub, PyFromImportStatement> FROM_IMPORT_STATEMENT = new PyFromImportStatementElementType();
+  PyStubElementType<PyImportStatementStub, PyImportStatement> IMPORT_STATEMENT = new PyImportStatementElementType();
+
   PyElementType GLOBAL_STATEMENT = new PyElementType("GLOBAL_STATEMENT", PyGlobalStatementImpl.class);
-  PyElementType IMPORT_STATEMENT = new PyElementType("IMPORT_STATEMENT", PyImportStatementImpl.class);
   PyElementType IF_STATEMENT = new PyElementType("IF_STATEMENT", PyIfStatementImpl.class);
   PyElementType PASS_STATEMENT = new PyElementType("PASS_STATEMENT", PyPassStatementImpl.class);
   PyElementType PRINT_STATEMENT = new PyElementType("PRINT_STATEMENT", PyPrintStatementImpl.class);

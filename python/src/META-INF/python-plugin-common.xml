@@ -142,6 +142,24 @@
 
     <liveTemplateContext implementation="com.jetbrains.django.lang.template.DjangoTemplateContextType"/>
     <liveTemplateMacro implementation="com.jetbrains.django.lang.template.DjangoVariableMacro"/>
+
+    <!-- App Engine -->
+    <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
+
+    <configurationType implementation="com.jetbrains.appengine.run.AppEngineServerRunConfigurationType"/>
+
+    <lang.parserDefinition language="GQL" implementationClass="com.jetbrains.appengine.lang.gql.parsing.GqlParserDefinition" />
+    <multiHostInjector implementation="com.jetbrains.appengine.lang.gql.GqlLanguageInjector"/>
+    <lang.syntaxHighlighterFactory key="GQL"
+                                     implementationClass="com.jetbrains.appengine.lang.gql.highlighting.GqlHighlighterFactory"/>
+
+    <completion.contributor language="Python" implementationClass="com.jetbrains.appengine.model.ModelAttributeCompletionContributor"/>
+    <completion.contributor language="yaml" implementationClass="com.jetbrains.appengine.completion.AppYamlKeyCompletionContributor"/>
+    <completion.contributor language="GQL" implementationClass="com.jetbrains.appengine.completion.GqlKeywordCompletionContributor"/>
+
+    <psi.referenceContributor implementation="com.jetbrains.appengine.ref.AppEngineReferenceContributor"/>
+
+    <inspectionToolProvider implementation="com.jetbrains.appengine.inspection.AppEngineInspectionToolProvider"/>
   </extensions>
 
   <extensionPoints>
@@ -168,6 +186,9 @@
     <!-- Django -->
     <pyClassMembersProvider implementation="com.jetbrains.django.codeInsight.DjangoClassMembersProvider"/>
     <unresolvedReferenceQuickFixProvider implementation="com.jetbrains.django.ref.DjangoViewReferenceQuickFixProvider"/>
+
+    <!-- App Engine -->
+    <typeProvider implementation="com.jetbrains.appengine.model.AppEngineTypeProvider"/>
   </extensions>
 
   <project-components>
@@ -221,6 +242,25 @@
             description="Runs manage.py task">
 
       <add-to-group group-id="ToolsMenu" anchor="first"/>
+    </action>
+
+    <group text="Google App Engine" popup="true">
+      <action id="PythonAppEngine.UploadAppAction" class="com.jetbrains.appengine.action.UpdateAppAction"
+              text="Upload App Engine app..."
+              description="Uploads App Engine application to google server">
+
+      </action>
+
+      <action id="PythonAppEngine.GetLogsAction" class="com.jetbrains.appengine.action.GetLogsAction"
+              text="Get App Engine logs..."
+              description="Downloads App Engine logs">
+      </action>
+      <add-to-group group-id="ToolsMenu" anchor="after" relative-to-action="Django.RunManageTaskAction"/>
+    </group>
+    <action id="com.jetbrains.python.console.RunPythonConsoleAction"
+            class="com.jetbrains.python.console.RunPythonConsoleAction"
+            text="Run Python Console..." description="Allows to quickly run Python console">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
   </actions>
 </idea-plugin>

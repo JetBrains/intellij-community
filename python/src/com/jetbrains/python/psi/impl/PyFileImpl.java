@@ -6,6 +6,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.stubs.NamedStub;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -15,12 +16,14 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PythonDocStringFinder;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.codeInsight.controlflow.PyControlFlowBuilder;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeImpl;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.codeInsight.controlflow.PyControlFlowBuilder;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveProcessor;
+import com.jetbrains.python.psi.stubs.PyFromImportStatementStub;
+import com.jetbrains.python.psi.stubs.PyImportStatementStub;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
@@ -57,10 +61,18 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   public PyFunction findTopLevelFunction(String name) {
-    final List<PyFunction> functions = getTopLevelFunctions();
-    for (PyFunction function : functions) {
-      if (name.equals(function.getName())) {
-        return function;
+    return findByName(name, getTopLevelFunctions());
+  }
+
+  public PyClass findTopLevelClass(String name) {
+    return findByName(name, getTopLevelClasses());
+  }
+
+  @Nullable
+  private static <T extends PsiNamedElement> T findByName(String name, List<T> namedElements) {
+    for (T namedElement : namedElements) {
+      if (name.equals(namedElement.getName())) {
+        return namedElement;
       }
     }
     return null;
@@ -112,7 +124,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       if (!processor.execute(e, substitutor)) return false;
     }
 
-    for(PyExpression e: getImportTargets()) {
+    for(PyImportElement e: getImportTargets()) {
       if (e == lastParent) continue;
       if (!processor.execute(e, substitutor)) return false;
     }
@@ -168,40 +180,44 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   public PsiElement findExportedName(String name) {
-    // dull plain resolve, as fast as stub index or better
-    ResolveProcessor proc = new ResolveProcessor(name);
-    PyResolveUtil.treeCrawlUp(proc, true, getLastChild());
-    return proc.getResult();
-  }
-
-  public List<PyExpression> getImportTargets() {
-    List<PyExpression> ret = new ArrayList<PyExpression>();
-    List<PyImportStatement> imports = getTopLevelItems(PyElementTypes.IMPORT_STATEMENT, PyImportStatement.class);
-    for (PyImportStatement one: imports) {
-      for (PyImportElement elt: one.getImportElements()) {
-        PyExpression target = elt.getAsName();
-        if (target != null) ret.add(target);
-        else {
-          target = elt.getImportReference();
-          if (target != null) ret.add(target);
+    final StubElement stub = getStub();
+    if (stub != null) {
+      final List children = stub.getChildrenStubs();
+      for (Object child : children) {
+        if (child instanceof NamedStub && name.equals(((NamedStub)child).getName())) {
+          return ((NamedStub) child).getPsi();
+        }
+        else if (child instanceof PyFromImportStatementStub || child instanceof PyImportStatementStub) {
+          final List<StubElement> importElements = ((StubElement)child).getChildrenStubs();
+          for (StubElement importElement : importElements) {
+            final PsiElement psi = importElement.getPsi();
+            if (psi instanceof PyImportElement && name.equals(((PyImportElement) psi).getVisibleName())) {
+              return psi;
+            }
+          }
         }
       }
+      return null;
+    }
+    else {
+      // dull plain resolve, as fast as stub index or better
+      ResolveProcessor proc = new ResolveProcessor(name);
+      PyResolveUtil.treeCrawlUp(proc, true, getLastChild());
+      return proc.getResult();
+    }
+  }
+
+  public List<PyImportElement> getImportTargets() {
+    List<PyImportElement> ret = new ArrayList<PyImportElement>();
+    List<PyImportStatement> imports = getTopLevelItems(PyElementTypes.IMPORT_STATEMENT, PyImportStatement.class);
+    for (PyImportStatement one: imports) {
+      ret.addAll(Arrays.asList(one.getImportElements()));
     }
     return ret;
   }
   
   public List<PyFromImportStatement> getFromImports() {
-    final List<PyFromImportStatement> result = new ArrayList<PyFromImportStatement>();
-    accept(new PyRecursiveElementVisitor() {
-      public void visitPyElement(final PyElement node) {
-        super.visitPyElement(node);
-        if (PyFromImportStatement.class.isInstance(node)) {
-          //noinspection unchecked
-          result.add((PyFromImportStatement)node);
-        }
-      }
-    });
-    return result;
+    return getTopLevelItems(PyElementTypes.FROM_IMPORT_STATEMENT, PyFromImportStatement.class);
   }
 
   private <T> List<T> getTopLevelItems(final IElementType elementType, final Class itemClass) {

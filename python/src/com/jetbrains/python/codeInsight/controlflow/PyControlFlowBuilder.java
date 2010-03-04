@@ -48,6 +48,16 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
+  public void visitPySubscriptionExpression(PySubscriptionExpression node) {
+    myBuilder.startNode(node);
+    node.getOperand().accept(this);
+    final PyExpression expression = node.getIndexExpression();
+    if (expression != null) {
+      expression.accept(this);
+    }
+  }
+
+  @Override
   public void visitPyReferenceExpression(final PyReferenceExpression node) {
     final PyExpression qualifier = node.getQualifier();
     if (qualifier != null){
@@ -266,6 +276,18 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
         myBuilder.addEdge(myBuilder.prevInstruction, bodyInstruction);  //loop
         myBuilder.addPendingEdge(node, myBuilder.prevInstruction); // exit
       }
+      final Ref<Instruction> bodyInstRef = new Ref<Instruction>(bodyInstruction);
+      myBuilder.processPending(new ControlFlowBuilder.PendingProcessor() {
+        public void process(final PsiElement pendingScope, final Instruction instruction) {
+          if (pendingScope != null && PsiTreeUtil.isAncestor(list, pendingScope, false)) {
+            myBuilder.addEdge(instruction, bodyInstRef.get());  //loop
+            myBuilder.addPendingEdge(node, instruction); // exit
+          }
+          else {
+            myBuilder.addPendingEdge(pendingScope, instruction);
+          }
+        }
+      });
     }
     myBuilder.prevInstruction = head;
     if (elsePart != null) {
@@ -306,21 +328,24 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyRaiseStatement(final PyRaiseStatement node) {
-    final Instruction instruction = myBuilder.startNode(node);
-    for (PyExpression expression : node.getExpressions()) {
-      expression.accept(this);
-    }
-
-    myBuilder.processPending(new ControlFlowBuilder.PendingProcessor() {
-      public void process(final PsiElement pendingScope, final Instruction instruction) {
-        final PsiElement pendingElement = instruction.getElement();
-        if (PsiTreeUtil.isAncestor(node, pendingElement, false)) {
-          myBuilder.addEdge(null, instruction);
-        } else {
-          myBuilder.addPendingEdge(pendingScope, instruction);
-        }
+    myBuilder.startNode(node);
+    final PyExpression[] expressions = node.getExpressions();
+    if (expressions != null){
+      for (PyExpression expression : expressions) {
+        expression.accept(this);
       }
-    });
+
+      myBuilder.processPending(new ControlFlowBuilder.PendingProcessor() {
+        public void process(final PsiElement pendingScope, final Instruction instruction) {
+          final PsiElement pendingElement = instruction.getElement();
+          if (pendingElement != null && PsiTreeUtil.isAncestor(node, pendingElement, false)) {
+            myBuilder.addEdge(null, instruction);
+          } else {
+            myBuilder.addPendingEdge(pendingScope, instruction);
+          }
+        }
+      });
+    }
     myBuilder.addPendingEdge(null, myBuilder.prevInstruction);
     myBuilder.flowAbrupted();
   }
@@ -428,6 +453,11 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyListCompExpression(final PyListCompExpression node) {
+    visitPyGeneratorExpression(node);
+  }
+
+  @Override
+  public void visitPyGeneratorExpression(final PyGeneratorExpression node) {
     myBuilder.startNode(node);
     PyExpression prevCondition = null;
     for (ComprhIfComponent component : node.getIfComponents()) {

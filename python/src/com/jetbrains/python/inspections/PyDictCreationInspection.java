@@ -57,7 +57,9 @@ public class PyDictCreationInspection extends LocalInspectionTool {
           return;
         }
         String name = node.getTargets()[0].getName();
-        assert name != null;
+        if (name == null) {
+          return;
+        }
 
         PyStatement statement = PsiTreeUtil.getNextSiblingOfType(node, PyStatement.class);
         DictCreationQuickFix quickFix = null;
@@ -80,7 +82,9 @@ loop:
             break loop;
           }
 
-          assert(quickFix != null);
+          if (quickFix == null) {
+            return;
+          }
           quickFix.addStatement(assignmentStatement);
           statement = PsiTreeUtil.getNextSiblingOfType(assignmentStatement, PyStatement.class);
         }

@@ -628,7 +628,7 @@ public class PythonSdkType extends SdkType {
     String run_dir = new File(binaryPath).getParent();
     final ProcessOutput process_output = SdkUtil.getProcessOutput(run_dir, new String[]{binaryPath, version_opt});
     if (process_output.getExitCode() != 0) {
-      LOG.error(process_output.getStderr() + " (exit code " + process_output.getExitCode() + ")");
+      throw new RuntimeException(process_output.getStderr() + " (exit code " + process_output.getExitCode() + ")");
     }
     String version = SdkUtil.getFirstMatch(process_output.getStderrLines(), pattern);
     return version;
@@ -719,7 +719,7 @@ public class PythonSdkType extends SdkType {
     else {
       StringBuffer sb = new StringBuffer();
       for (String err_line : run_result.getStderrLines()) sb.append(err_line).append("\n");
-      LOG.error("failed to run " + FIND_BINARIES + ", exit code " + run_result.getExitCode() + ", stderr '" + sb.toString() + "'");
+      throw new RuntimeException("failed to run " + FIND_BINARIES + ", exit code " + run_result.getExitCode() + ", stderr '" + sb.toString() + "'");
     }
   }
 

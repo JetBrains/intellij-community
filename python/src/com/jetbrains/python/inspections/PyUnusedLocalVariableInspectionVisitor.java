@@ -53,9 +53,25 @@ class PyUnusedLocalVariableInspectionVisitor extends PyInspectionVisitor {
     registerProblems();
   }
 
+  class DontPerformException extends RuntimeException {}
 
   private void processScope(final ScopeOwner owner) {
     // TODO[oleg] Do not show warning in python code expression mode (evaluate in debug or watches)
+
+    // Do not perform inspection if locals() call is found
+    try {
+      owner.accept(new PyRecursiveElementVisitor(){
+        @Override
+        public void visitPyCallExpression(final PyCallExpression node) {
+          if ("locals".equals(node.getCallee().getText())){
+            throw new DontPerformException();
+          }
+        }
+      });
+    }
+    catch (DontPerformException e) {
+      return;
+    }
 
     // If method overrides others do not mark parameters as unused if they are
     boolean parametersCanBeUnused = false;
@@ -112,6 +128,7 @@ class PyUnusedLocalVariableInspectionVisitor extends PyInspectionVisitor {
               final PsiElement resolveElement = result.getElement();
               if (!PsiTreeUtil.isAncestor(owner, resolveElement, false)){
                 outOfScope = true;
+                myUnusedElements.remove(element);
                 myUnusedElements.remove(resolveElement);
               }
             }

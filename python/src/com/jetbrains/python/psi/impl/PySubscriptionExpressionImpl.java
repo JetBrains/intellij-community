@@ -18,6 +18,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PySubscriptionExpression;
 import com.jetbrains.python.psi.types.PyType;
@@ -42,6 +43,11 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
   @Nullable
   public PyExpression getIndexExpression() {
     return childToPsi(PyElementTypes.EXPRESSIONS, 1);
+  }
+
+  @Override
+  protected void acceptPyVisitor(final PyElementVisitor pyVisitor) {
+    pyVisitor.visitPySubscriptionExpression(this);
   }
 
   public PyType getType() {

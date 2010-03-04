@@ -155,7 +155,7 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
       Project project = node.getProject();
       GlobalSearchScope scope = ProjectScope.getAllScope(project);
       List<PsiElement> symbols = new ArrayList<PsiElement>();
-      symbols.addAll(StubIndex.getInstance().get(PyClassNameIndex.KEY, ref_text, project, scope));
+      symbols.addAll(PyClassNameIndex.find(ref_text, project, scope));
       symbols.addAll(StubIndex.getInstance().get(PyFunctionNameIndex.KEY, ref_text, project, scope));
       // NOTE: possible CPU hog 
       if (symbols.size() > 0) {

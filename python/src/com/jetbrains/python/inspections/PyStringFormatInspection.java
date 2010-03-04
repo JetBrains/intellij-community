@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -86,9 +87,10 @@ public class PyStringFormatInspection extends LocalInspectionTool {
         myVisitor = visitor;
       }
 
+      // return number of arguments or -1 if it can not be computed
       private int inspectArguments(@Nullable final PyExpression rightExpression) {
         final Class[] SIMPLE_RHS_EXPRESSIONS =
-          {PyLiteralExpression.class, PyReferenceExpression.class, PyCallExpression.class, PySubscriptionExpression.class,
+          {PyLiteralExpression.class, PyReferenceExpression.class, PySubscriptionExpression.class,
           PyBinaryExpression.class,  PyConditionalExpression.class};
 
         if (PyUtil.instanceOf(rightExpression, SIMPLE_RHS_EXPRESSIONS)) {
@@ -97,6 +99,30 @@ public class PyStringFormatInspection extends LocalInspectionTool {
             checkType(rightExpression, myFormatSpec.get("1"));
           }
           return 1;
+        }
+        else if (rightExpression instanceof PyCallExpression) {
+          PyCallExpression.PyMarkedFunction markedFunction = ((PyCallExpression)rightExpression).resolveCallee();
+          if (markedFunction != null) {
+            PyStatementList statementList = markedFunction.getFunction().getStatementList();
+            PyReturnStatement[] returnStatements = PyUtil.getAllChildrenOfType(statementList, PyReturnStatement.class);
+            if (returnStatements != null) {
+              int expressionsSize = -1;
+              for (PyReturnStatement returnStatement : returnStatements) {
+                if (returnStatement.getExpression() instanceof PyCallExpression) {
+                  return -1;
+                }
+                List<PyExpression> expressionList = PyUtil.flattenedParens(returnStatement.getExpression());
+                if (expressionsSize < 0) {
+                  expressionsSize = expressionList.size();
+                }
+                if (expressionsSize != expressionList.size()) {
+                  return -1;
+                }
+              }
+              return expressionsSize;
+            }
+          }
+          return -1;
         }
         else if (rightExpression instanceof PyParenthesizedExpression) {
           return inspectArguments(((PyParenthesizedExpression)rightExpression).getContainedExpression());
@@ -156,7 +182,7 @@ public class PyStringFormatInspection extends LocalInspectionTool {
             return 1;
           }
         }
-        return 0;
+        return -1;
       }
 
       private void registerProblem(@NotNull final PyExpression rightExpression, @NotNull final String message) {
@@ -291,7 +317,7 @@ public class PyStringFormatInspection extends LocalInspectionTool {
 
       private void inspectArgumentsNumber(@NotNull final PyExpression rightExpression) {
         final int arguments = inspectArguments(rightExpression);
-        if (myUsedMappingKeys.isEmpty()) {
+        if (myUsedMappingKeys.isEmpty() && arguments >= 0) {
           if (myExpectedArguments < arguments) {
             registerProblem(rightExpression, "Too many arguments for format string");
           }

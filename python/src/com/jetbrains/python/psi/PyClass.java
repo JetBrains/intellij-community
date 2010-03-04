@@ -60,4 +60,6 @@ public interface PyClass extends PsiNamedElement, PyStatement, NameDefiner, PyDo
 
   @Nullable
   PyDecoratorList getDecoratorList();
+
+  String getQualifiedName();
 }

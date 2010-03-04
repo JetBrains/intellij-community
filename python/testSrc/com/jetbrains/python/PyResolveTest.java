@@ -211,4 +211,9 @@ public class PyResolveTest extends PyResolveTestCase {
     PsiElement targetElement = resolve();
     assertNull(targetElement);
   }
+
+  public void testFieldNotInInit() throws Exception {
+    PsiElement targetElement = resolve();
+    assertTrue(targetElement instanceof PyTargetExpression);
+  }
 }

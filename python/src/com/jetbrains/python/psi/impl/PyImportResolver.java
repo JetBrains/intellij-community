@@ -2,7 +2,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
-import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyElement;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -12,5 +12,5 @@ public interface PyImportResolver {
   ExtensionPointName<PyImportResolver> EP_NAME = ExtensionPointName.create("Pythonid.importResolver");
 
   @Nullable
-  PsiElement resolveImportReference(PyReferenceExpression importRef, final PsiElement importFrom);
+  PsiElement resolveImportReference(PyElement importElement, String importText, final PsiElement importFrom);
 }

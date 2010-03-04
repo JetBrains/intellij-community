@@ -110,4 +110,9 @@
     <line>54</line>
     <description>Unexpected type</description>
   </problem>
+  <problem>
+    <file>string-format.py</file>
+    <line>63</line>
+    <description>Too many arguments for format string</description>
+  </problem>
 </problems>

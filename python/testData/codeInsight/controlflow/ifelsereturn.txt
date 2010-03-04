@@ -1,15 +1,16 @@
 0(1) element: null
 1(2) element: PyIfStatement
-2(3,11) READ ACCESS: markup
+2(3,12) READ ACCESS: markup
 3(4) element: PyStatementList. Condition: markup:true
 4(5) element: PyTryExceptStatement
 5(6) element: PyTryPart
 6(7) element: PyReturnStatement
-7(14) READ ACCESS: renderer
+7(15) READ ACCESS: renderer
 8(9) element: PyExceptPart
 9(10) READ ACCESS: KeyError
-10(14) element: PyRaiseStatement
-11(12) element: PyElsePart. Condition: markup:false
-12(13) element: PyReturnStatement
-13(14) READ ACCESS: body
-14() element: null
+10(11) element: PyRaiseStatement
+11(15) READ ACCESS: Error
+12(13) element: PyElsePart. Condition: markup:false
+13(14) element: PyReturnStatement
+14(15) READ ACCESS: body
+15() element: null

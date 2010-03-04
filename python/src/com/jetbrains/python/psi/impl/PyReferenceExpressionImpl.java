@@ -184,9 +184,8 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
    * @return resolution result.
    * @see #resolve()
    */
-  private
   @NotNull
-  List<RatedResolveResult> resolveInner() {
+  private List<RatedResolveResult> resolveInner() {
     //List<PsiElement> ret = new ArrayList<PsiElement>();
     ResultList ret = new ResultList();
 
@@ -255,7 +254,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     // here we have an unqualified expr. it may be defined:
     // ...in current file
     ResolveProcessor processor = new ResolveProcessor(referencedName);
-    PsiElement uexpr = PyResolveUtil.treeCrawlUp(processor, this);
+    PsiElement uexpr = PyResolveUtil.treeCrawlUp(processor, false, this, getContainingFile());
     if ((uexpr != null)) {
       if ((uexpr instanceof PyClass)) {
         // is it a case of the bizarre "class Foo(Foo)" construct?
@@ -632,6 +631,10 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
   @Nullable
   public static PyType getTypeFromTarget(final PsiElement target) {
+    final PyType pyType = getReferenceTypeFromProviders(target);
+    if (pyType != null) {
+      return pyType;
+    }
     if (target instanceof PyTargetExpression && PyNames.NONE.equals(((PyTargetExpression) target).getName())) {
       return PyNoneType.INSTANCE;
     }
@@ -648,7 +651,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       PsiFile file = ((PsiDirectory)target).findFile(PyNames.INIT_DOT_PY);
       if (file != null) return getTypeFromTarget(file);
     }
-    return getReferenceTypeFromProviders(target);
+    return null;
   }
 
   @Nullable

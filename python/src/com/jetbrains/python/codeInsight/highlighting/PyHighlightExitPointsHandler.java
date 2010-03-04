@@ -92,7 +92,7 @@ public class PyHighlightExitPointsHandler extends HighlightUsagesHandlerBase<Psi
                                              HighlightUsagesHandler.getShortcutText());
   }
 
-  private Collection<PsiElement> findExitPointsAndStatements(final ControlFlow flow) {
+  private static Collection<PsiElement> findExitPointsAndStatements(final ControlFlow flow) {
     final List<PsiElement> statements = new ArrayList<PsiElement>();
     final Instruction[] instructions = flow.getInstructions();
     for (Instruction instruction : instructions[instructions.length - 1].allPred()){
