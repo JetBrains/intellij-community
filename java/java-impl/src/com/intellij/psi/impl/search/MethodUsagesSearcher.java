@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
@@ -78,11 +79,8 @@ public class MethodUsagesSearcher implements QueryExecutor<PsiReference, MethodR
     final SearchScope restrictedByAccess = searchScope.intersectWith(accessScope);
 
     short searchContext = UsageSearchContext.IN_CODE | UsageSearchContext.IN_COMMENTS | UsageSearchContext.IN_FOREIGN_LANGUAGES;
-    boolean toContinue = psiManager.getSearchHelper().processElementsWithWord(processor1,
-                                                                              restrictedByAccess,
-                                                                              textToSearch,
-                                                                              searchContext, true);
-    if (!toContinue) return false;
+    PsiSearchHelper helper = psiManager.getSearchHelper();
+    if (!helper.processElementsWithWord(processor1, restrictedByAccess, textToSearch, searchContext, true)) return false;
 
     final String propertyName = ApplicationManager.getApplication().runReadAction(new Computable<String>(){
       public String compute() {
@@ -90,29 +88,24 @@ public class MethodUsagesSearcher implements QueryExecutor<PsiReference, MethodR
         return PropertyUtil.getPropertyName(method);
       }
     });
-    if (propertyName != null) {
-      final SearchScope scope = ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
-        public SearchScope compute() {
-          SearchScope additional = GlobalSearchScope.getScopeRestrictedByFileTypes(GlobalSearchScope.allScope(psiManager.getProject()),
-                                           StdFileTypes.JSP, StdFileTypes.JSPX,
-                                           StdFileTypes.XML, StdFileTypes.XHTML);
-
-          for (CustomPropertyScopeProvider provider : Extensions.getExtensions(CustomPropertyScopeProvider.EP_NAME)) {
-            SearchScope s = provider.getScope(psiManager.getProject());
-            additional = additional.union(s);
-          }
-
-          return restrictedByAccess.intersectWith(additional);
-        }
-      });
-      toContinue = psiManager.getSearchHelper().processElementsWithWord(processor1,
-                                                                        scope,
-                                                                        propertyName,
-                                                                        UsageSearchContext.IN_FOREIGN_LANGUAGES, true);
-      if (!toContinue) return false;
+    if (StringUtil.isEmpty(propertyName)) {
+      return true;
     }
+    final SearchScope scope = ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
+      public SearchScope compute() {
+        SearchScope additional = GlobalSearchScope.getScopeRestrictedByFileTypes(GlobalSearchScope.allScope(psiManager.getProject()),
+                                         StdFileTypes.JSP, StdFileTypes.JSPX,
+                                         StdFileTypes.XML, StdFileTypes.XHTML);
 
-    return true;
+        for (CustomPropertyScopeProvider provider : Extensions.getExtensions(CustomPropertyScopeProvider.EP_NAME)) {
+          SearchScope s = provider.getScope(psiManager.getProject());
+          additional = additional.union(s);
+        }
+
+        return restrictedByAccess.intersectWith(additional);
+      }
+    });
+    return helper.processElementsWithWord(processor1, scope, propertyName, UsageSearchContext.IN_FOREIGN_LANGUAGES, true);
   }
 
   @NotNull

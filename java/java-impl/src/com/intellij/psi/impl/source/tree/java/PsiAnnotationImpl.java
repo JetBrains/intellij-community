@@ -25,8 +25,8 @@ import com.intellij.psi.impl.java.stubs.PsiAnnotationStub;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.JavaStubPsiElement;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -51,16 +51,12 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
   }
 
   public PsiJavaCodeReferenceElement getNameReferenceElement() {
-    return (PsiJavaCodeReferenceElement)getMirrorTreeElement().findChildByRoleAsPsiElement(ChildRole.CLASS_REFERENCE);
-  }
-
-  private CompositeElement getMirrorTreeElement() {
     final PsiAnnotationStub stub = getStub();
     if (stub != null) {
-      return stub.getTreeElement();
+      return (PsiJavaCodeReferenceElement)stub.getTreeElement().findChildByRoleAsPsiElement(ChildRole.CLASS_REFERENCE);
     }
 
-    return (CompositeElement)getNode();
+    return PsiTreeUtil.getChildOfType(this, PsiJavaCodeReferenceElement.class);
   }
 
   public PsiAnnotationMemberValue findAttributeValue(String attributeName) {
@@ -82,7 +78,12 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
 
   @NotNull
   public PsiAnnotationParameterList getParameterList() {
-    return (PsiAnnotationParameterList)getMirrorTreeElement().findChildByRoleAsPsiElement(ChildRole.PARAMETER_LIST);
+    final PsiAnnotationStub stub = getStub();
+    if (stub != null) {
+      return (PsiAnnotationParameterList)stub.getTreeElement().findChildByRoleAsPsiElement(ChildRole.PARAMETER_LIST);
+    }
+
+    return PsiTreeUtil.getRequiredChildOfType(this, PsiAnnotationParameterList.class);
   }
 
   @Nullable public String getQualifiedName() {
