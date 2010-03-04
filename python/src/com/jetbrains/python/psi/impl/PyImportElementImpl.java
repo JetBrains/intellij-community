@@ -43,6 +43,14 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
     return (PyReferenceExpression)importRefNode.getPsi();
   }
 
+  public List<String> getImportedQName() {
+    final PyImportElementStub stub = getStub();
+    if (stub != null) {
+      return stub.getImportedQName();
+    }
+    return ResolveImportUtil.getQualifiedName(getImportReference());
+  }
+
   public PyTargetExpression getAsName() {
     final ASTNode asNameNode = getNode().findChildByType(PyElementTypes.TARGET_EXPRESSION);
     if (asNameNode == null) return null;
@@ -57,9 +65,9 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
       if (!StringUtil.isEmpty(asName)) {
         return asName;
       }
-      final String importedName = stub.getImportedName();
-      if (!StringUtil.isEmpty(importedName)) {
-        return importedName;
+      final List<String> importedName = stub.getImportedQName();
+      if (importedName.size() > 0) {
+        return importedName.get(importedName.size()-1);
       }
       return null;
     }

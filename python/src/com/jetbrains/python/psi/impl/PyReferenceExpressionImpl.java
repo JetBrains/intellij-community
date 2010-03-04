@@ -184,9 +184,8 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
    * @return resolution result.
    * @see #resolve()
    */
-  private
   @NotNull
-  List<RatedResolveResult> resolveInner() {
+  private List<RatedResolveResult> resolveInner() {
     //List<PsiElement> ret = new ArrayList<PsiElement>();
     ResultList ret = new ResultList();
 
