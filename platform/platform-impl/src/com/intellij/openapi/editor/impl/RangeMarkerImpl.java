@@ -118,9 +118,9 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
       isValid = false;
       return;
     }
-    String markerBefore = toString();
     changedUpdateImpl(e);
     if (isValid && (myStart > myEnd || myStart < 0 || myEnd > docLength)) {
+      String markerBefore = toString();
       LOG.error("Update failed. Event = " + e + ". " +
                 "old doc length=" + docLength + "; real doc length = "+myDocument.getTextLength()+
                 "; old mod count="+modCount+"; mod count="+this.modCount+
