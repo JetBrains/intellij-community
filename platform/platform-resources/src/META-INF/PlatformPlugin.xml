@@ -34,10 +34,5 @@
     
     <projectOpenProcessor implementation="com.intellij.platform.PlatformProjectOpenProcessor"/>
   </extensions>
-  <actions>
-    <group id="Console.HistoryActions">
-      <action id="Console.History.Previous" class="com.intellij.openapi.actionSystem.EmptyAction" text="Previous"/>
-      <action id="Console.History.Next" class="com.intellij.openapi.actionSystem.EmptyAction" text="Next"/>
-    </group>
-  </actions>
+
 </idea-plugin>
