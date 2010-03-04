@@ -165,15 +165,16 @@ public class ResolveImportUtil {
     if (being_imported.contains(qualified_name)) return null; // break endless loop in import
     try {
       being_imported.add(qualified_name);
+      List<String> qualifiedName = getQualifiedName(module_reference);
+      if (qualifiedName == null) return null;
       if (relative_level > 0) {
         // "from ...module import"
-        imported_from_module = resolveModuleAt(stepBackFrom(source_file, relative_level), module_reference);
+        imported_from_module = resolveModuleAt(stepBackFrom(source_file, relative_level), source_file, qualifiedName);
       }
       else { // "from module import"
-        List<String> qualifiedName = getQualifiedName(module_reference);
         if (import_is_absolute) imported_from_module = resolveModuleInRoots(qualifiedName, source_file);
         else {
-          imported_from_module = resolveModuleAt(source_file.getContainingDirectory(), module_reference);
+          imported_from_module = resolveModuleAt(source_file.getContainingDirectory(), source_file, qualifiedName);
           if (imported_from_module == null) imported_from_module = resolveModuleInRoots(qualifiedName, source_file);
         }
       }
@@ -196,22 +197,18 @@ public class ResolveImportUtil {
   /**
    * Searches for a module at given directory, unwinding qualifiers and traversing directories as needed.
    * @param directory where to start from; top qualifier will be searched for here.
-   * @param module reference to a module
+   * @param source_file
    * @return module's file, or null.
    */
   @Nullable
-  private static PsiElement resolveModuleAt(PsiDirectory directory, PyReferenceExpression module) {
+  private static PsiElement resolveModuleAt(PsiDirectory directory, PsiFile sourceFile, List<String> qualifiedName) {
     // prerequisites
     if (directory == null || ! directory.isValid()) return null;
-    if (module == null || !module.isValid()) return null;
-    List<PyReferenceExpression> module_path = PyResolveUtil.unwindQualifiers(module);
-    if (module_path == null) return null;
-    PsiFile file = module.getContainingFile();
-    if (file == null || ! file.isValid()) return null;
+    if (sourceFile == null || !sourceFile.isValid()) return null;
 
     PsiElement seeker = directory;
-    for (PyReferenceExpression supermodule : module_path) {
-      seeker = resolveChild(seeker, supermodule.getReferencedName(), file, true);
+    for (String name : qualifiedName) {
+      seeker = resolveChild(seeker, name, sourceFile, true);
     }
     return seeker;
   }
