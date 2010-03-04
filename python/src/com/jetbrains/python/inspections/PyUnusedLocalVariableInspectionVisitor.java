@@ -128,6 +128,7 @@ class PyUnusedLocalVariableInspectionVisitor extends PyInspectionVisitor {
               final PsiElement resolveElement = result.getElement();
               if (!PsiTreeUtil.isAncestor(owner, resolveElement, false)){
                 outOfScope = true;
+                myUnusedElements.remove(element);
                 myUnusedElements.remove(resolveElement);
               }
             }
