@@ -256,5 +256,14 @@
       </action>
       <add-to-group group-id="ToolsMenu" anchor="after" relative-to-action="Django.RunManageTaskAction"/>
     </group>
+    <action id="com.jetbrains.python.console.RunPythonREPLConsoleAction"
+            class="com.jetbrains.python.console.RunPythonREPLConsoleAction"
+            text="Run Python Console..." description="Allows to quickly run Python console">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </action>
+    <group id="Console.HistoryActions">
+      <action id="Console.History.Previous" class="com.intellij.openapi.actionSystem.EmptyAction" text="Previous"/>
+      <action id="Console.History.Next" class="com.intellij.openapi.actionSystem.EmptyAction" text="Next"/>
+    </group>
   </actions>
 </idea-plugin>
