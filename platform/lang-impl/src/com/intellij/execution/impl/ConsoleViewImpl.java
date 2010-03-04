@@ -854,8 +854,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     final int dirtyRegionStart = document.getLineStartOffset(startLine);
     final int diretyRegionEnd = document.getLineEndOffset(endLine);
     for (FoldRegion region : myEditor.getFoldingModel().getAllFoldRegions()) {
-      if (region.getStartOffset() >= dirtyRegionStart ||
-          region.getEndOffset() <= diretyRegionEnd) {
+      final int regStart = region.getStartOffset();
+      final int regEnd = region.getEndOffset();
+      if (regStart >= dirtyRegionStart && regStart <= dirtyRegionStart ||
+          regEnd >= dirtyRegionStart && regEnd <= diretyRegionEnd) {
         toRemove.add(region);
       }
     }
