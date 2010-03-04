@@ -1,6 +1,3 @@
-/*
- * Copyright (c) 2005, Your Corporation. All Rights Reserved.
- */
 package com.jetbrains.python.psi;
 
 import com.intellij.openapi.util.Key;
@@ -46,4 +43,6 @@ public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner
   PyClass findTopLevelClass(String name);
 
   LanguageLevel getLanguageLevel();
+
+  List<PyFromImportStatement> getFromImports();
 }

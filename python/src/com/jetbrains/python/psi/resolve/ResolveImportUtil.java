@@ -37,37 +37,25 @@ public class ResolveImportUtil {
     }
   };
 
-
-  // TODO: generalize into LanguageFeature interface.
   private static boolean isAbsoluteImportEnabledFor(PsiElement foothold) {
     if (foothold != null) {
       PsiFile file = foothold.getContainingFile();
-      if (file != null) {
-        boolean seen_doc_comment = false;
-        PsiElement seeker = file.getFirstChild();
-        while (seeker != null) {
-          if (seeker instanceof PyFromImportStatement) {
-            PyFromImportStatement statement = (PyFromImportStatement)seeker;
-            PyReferenceExpression source = statement.getImportSource();
-            if (source == null) return false; // null source -> relative import stmt, not allowed before "from __future__"
-            if (!PyNames.FUTURE_MODULE.equals(source.getReferencedName())) return false; // non-future import stmt, not allowed before "from __future__"
-            PyImportElement[] elements = statement.getImportElements();
-            for (PyImportElement import_element : elements) {
-              PyReferenceExpression ref = import_element.getImportReference();
-              if (ref != null) {
-                if ("absolute_import".equals(ref.getReferencedName())) {
-                  return true;
-                }
+      if (file instanceof PyFile) {
+        final PyFile pyFile = (PyFile)file;
+        if (pyFile.getLanguageLevel().isPy3K()) {
+          return true;
+        }
+        final List<PyFromImportStatement> fromImports = pyFile.getFromImports();
+        for (PyFromImportStatement fromImport : fromImports) {
+          if (fromImport.isFromFuture()) {
+            final PyImportElement[] pyImportElements = fromImport.getImportElements();
+            for (PyImportElement element : pyImportElements) {
+              final List<String> qName = element.getImportedQName();
+              if (qName != null && qName.size() == 1 && qName.get(0).equals("absolute_import")) {
+                return true;
               }
             }
           }
-          else if (!seen_doc_comment && seeker instanceof PyExpressionStatement) {
-            PyExpression expr = ((PyExpressionStatement)seeker).getExpression();
-            if (expr instanceof PyStringLiteralExpression) seen_doc_comment = true;
-            else return false; // non-string expressions are not allowed
-          }
-          else return false; // any non-doc-comment statement breaks the magic
-          seeker = PyUtil.getFirstNonCommentAfter(seeker.getNextSibling());
         }
       }
     }
@@ -106,14 +94,14 @@ public class ResolveImportUtil {
     }
 
     final PsiFile file = import_element.getContainingFile();
-    final PsiElement grandparent = import_element.getParent();
+    final PyStatement importStatement = import_element.getContainingImportStatement();
 
     boolean absolute_import_enabled = isAbsoluteImportEnabledFor(import_element);
     List<String> moduleQName = null;
 
-    if (grandparent instanceof PyFromImportStatement) {
+    if (importStatement instanceof PyFromImportStatement) {
       PsiElement imported_from_module;
-      PyFromImportStatement from_import_statement = (PyFromImportStatement)grandparent;
+      PyFromImportStatement from_import_statement = (PyFromImportStatement)importStatement;
       moduleQName = from_import_statement.getImportSourceQName();
       final int relative_level = from_import_statement.getRelativeLevel();
 
@@ -127,7 +115,7 @@ public class ResolveImportUtil {
         if (result != null) return result;
       }
     }
-    else if (grandparent instanceof PyImportStatement) { // "import foo"
+    else if (importStatement instanceof PyImportStatement) { // "import foo"
       PsiElement result = resolveModule(qName, file, absolute_import_enabled, 0);
       if (result != null) return result;
     }
@@ -582,8 +570,8 @@ public class ResolveImportUtil {
       }
       else {
         // look for name in the file:
-        processor = new ResolveProcessor(referencedName);
-        ret = PyResolveUtil.treeCrawlUp(processor, true, parent);
+        //processor = new ResolveProcessor(referencedName);
+        ret = resolveExportedName(parent, referencedName);
         if (ret != null) return ret;
       }
     }
@@ -607,6 +595,26 @@ public class ResolveImportUtil {
   }
 
   @Nullable
+  private static PsiElement resolveExportedName(PsiElement parent, String referencedName) {
+    ResolveProcessor processor = new ResolveProcessor(referencedName);
+
+    return PyResolveUtil.treeCrawlUp(processor, true, parent);
+
+    /*
+    ((PyFile) parent).processDeclarations(processor, ResolveState.initial(), null, parent);
+    return processor.getResult();
+    */
+    
+    /*
+    final PsiElement exportedName = ((PyFile)parent).findExportedName(referencedName);
+    if (exportedName instanceof PyImportElement) {
+      return ((PyImportElement) exportedName).getElementNamed(referencedName);
+    }
+    return exportedName;
+    */
+  }
+
+  @Nullable
   private static PsiElement resolveInDirectory(
     final String referencedName, final PsiFile containingFile, final PsiDirectory dir, ResolveProcessor processor, boolean isFileOnly
   ) {
@@ -622,9 +630,8 @@ public class ResolveImportUtil {
       // not a subdir, not a file; could be a name in parent/__init__.py
       final PsiFile initPy = dir.findFile(PyNames.INIT_DOT_PY);
       if (initPy == containingFile) return null; // don't dive into the file we're in
-      if (initPy != null) {
-        if (processor == null) processor = new ResolveProcessor(referencedName); // by default
-        return PyResolveUtil.treeCrawlUp(processor, true, initPy);
+      if (initPy instanceof PyFile) {
+        return resolveExportedName(initPy, referencedName);
       }
     }
     return null;

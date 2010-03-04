@@ -105,8 +105,8 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
   }
 
   public boolean isFromFuture() {
-    PyReferenceExpression source = getImportSource();
-    return (source != null && PyNames.FUTURE_MODULE.equals(source.getReferencedName()));
+    final List<String> qName = getImportSourceQName();
+    return qName != null && qName.size() == 1 && PyNames.FUTURE_MODULE.equals(qName.get(0));
   }
 
   public boolean processDeclarations(@NotNull final PsiScopeProcessor processor, @NotNull final ResolveState state, final PsiElement lastParent,

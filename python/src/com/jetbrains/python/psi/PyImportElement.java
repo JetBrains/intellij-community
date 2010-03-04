@@ -28,4 +28,6 @@ public interface PyImportElement extends PyElement, NameDefiner, StubBasedPsiEle
   @Nullable
   String getVisibleName();
 
+  PyStatement getContainingImportStatement();
+
 }

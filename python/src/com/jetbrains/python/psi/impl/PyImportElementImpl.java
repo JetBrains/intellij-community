@@ -89,6 +89,19 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
     return null; // we might have not found any names
   }
 
+  @Nullable
+  public PyStatement getContainingImportStatement() {
+    final PyImportElementStub stub = getStub();
+    PsiElement parent;
+    if (stub != null) {
+      parent = stub.getParentStub().getPsi();
+    }
+    else {
+      parent = getParent();
+    }
+    return parent instanceof PyStatement ? (PyStatement)parent : null;
+  }
+
   @Override
   public boolean processDeclarations(@NotNull final PsiScopeProcessor processor, @NotNull final ResolveState state, final PsiElement lastParent,
                                      @NotNull final PsiElement place) {

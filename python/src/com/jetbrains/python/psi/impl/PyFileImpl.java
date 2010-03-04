@@ -6,6 +6,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.stubs.NamedStub;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -15,12 +16,13 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PythonDocStringFinder;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.codeInsight.controlflow.PyControlFlowBuilder;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeImpl;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.codeInsight.controlflow.PyControlFlowBuilder;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveProcessor;
+import com.jetbrains.python.psi.stubs.PyFromImportStatementStub;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
@@ -177,9 +179,31 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   public PsiElement findExportedName(String name) {
+    /*
+    final StubElement stub = getStub();
+    if (stub != null) {
+      final List children = stub.getChildrenStubs();
+      for (Object child : children) {
+        if (child instanceof NamedStub && name.equals(((NamedStub)child).getName())) {
+          return ((NamedStub) child).getPsi();
+        }
+        else if (child instanceof PyFromImportStatementStub) {
+          final List<StubElement> importElements = ((PyFromImportStatementStub)child).getChildrenStubs();
+          for (StubElement importElement : importElements) {
+            final PsiElement psi = importElement.getPsi();
+            if (psi instanceof PyImportElement && name.equals(((PyImportElement) psi).getVisibleName())) {
+              return psi;
+            }
+          }
+        }
+      }
+      return null;
+    }
+    else {
+    */
     // dull plain resolve, as fast as stub index or better
     ResolveProcessor proc = new ResolveProcessor(name);
-    PyResolveUtil.treeCrawlUp(proc, true, getLastChild(), this);
+    PyResolveUtil.treeCrawlUp(proc, true, getLastChild());
     return proc.getResult();
   }
 
