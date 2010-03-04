@@ -712,6 +712,8 @@
 
     <consoleFilterProvider implementation="com.intellij.execution.filters.DefaultConsoleFiltersProvider"/>
 
+    <stackFrameFilter implementation="com.intellij.execution.filters.ReflectionStackFrameFilter"/>
+
     <quoteHandler fileType="JAVA" className="com.intellij.codeInsight.editorActions.JavaQuoteHandler"/>
     <typedHandler implementation="com.intellij.codeInsight.editorActions.JavaTypedHandler" id="java"/>
 

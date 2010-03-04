@@ -172,7 +172,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private ArrayList<TokenInfo> myTokens = new ArrayList<TokenInfo>();
   private final Hyperlinks myHyperlinks = new Hyperlinks();
-  private final TIntObjectHashMap<String> myFolding = new TIntObjectHashMap<String>();
+  private final TIntObjectHashMap<Boolean> myFolding = new TIntObjectHashMap<Boolean>();
 
   private String myHelpId;
 
@@ -826,7 +826,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         final int highlightEndOffset = result.highlightEndOffset;
         final HyperlinkInfo hyperlinkInfo = result.hyperlinkInfo;
         addHyperlink(highlightStartOffset, highlightEndOffset, result.highlightAttributes, hyperlinkInfo, hyperlinkAttributes);
-        addFolding(document, chars, line, result.foldingPlaceholder, toAdd);
+        addFolding(document, chars, line, result.isInternal, toAdd);
       }
     }
     if (!toAdd.isEmpty() || !toRemove.isEmpty()) {
@@ -864,21 +864,23 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return toRemove;
   }
 
-  private void addFolding(Document document, CharSequence chars, int line, @Nullable String placeholder, List<FoldRegion> toAdd) {
-    myFolding.put(line, placeholder);
-    final String prevFolding = myFolding.get(line - 1);
-    if (prevFolding != null && !prevFolding.equals(placeholder)) {
+  private void addFolding(Document document, CharSequence chars, int line, boolean isInternal, List<FoldRegion> toAdd) {
+    myFolding.put(line, isInternal);
+    final Boolean prevFolding = myFolding.get(line - 1);
+    if (!isInternal && Boolean.TRUE.equals(prevFolding)) {
       final int lEnd = line - 1;
       int lStart = lEnd;
-      while (prevFolding.equals(myFolding.get(lStart - 1))) lStart--;
+      while (Boolean.TRUE.equals(myFolding.get(lStart - 1))) lStart--;
       if (lStart == lEnd) {
         return;
       }
 
-      int oStart = CharArrayUtil.shiftForward(chars, document.getLineStartOffset(lStart), " \t");
+      int oStart = document.getLineStartOffset(lStart);
+      oStart = CharArrayUtil.shiftForward(chars, oStart, " \t");
+//      if (oStart > 0) oStart--;
       int oEnd = CharArrayUtil.shiftBackward(chars, document.getLineEndOffset(lEnd) - 1, " \t") + 1;
 
-      toAdd.add(new FoldRegionImpl(myEditor, oStart, oEnd, prevFolding, null));
+      toAdd.add(new FoldRegionImpl(myEditor, oStart, oEnd, " " + (lEnd - lStart + 1) + " internal calls", null));
     }
   }
 

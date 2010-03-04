@@ -27,12 +27,9 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ui.classFilter.ClassFilter;
-import com.intellij.ui.classFilter.DebuggerClassFilterProvider;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -72,7 +69,7 @@ public class ExceptionFilter implements Filter, DumbAware {
     final int lastDotIndex = line.lastIndexOf('.', lparenthIndex);
     if (lastDotIndex < 0 || lastDotIndex < atIndex) return null;
     String className = line.substring(atIndex + AT.length() + 1, lastDotIndex).trim();
-    final String fullName = className;
+    final boolean isInternal = shouldFold(className);
     final int dollarIndex = className.indexOf('$');
     if (dollarIndex >= 0){
       className = className.substring(0, dollarIndex);
@@ -116,23 +113,19 @@ public class ExceptionFilter implements Filter, DumbAware {
         attributes.setForegroundColor(color);
         attributes.setEffectColor(color);
       }
-      return new Result(highlightStartOffset, highlightEndOffset, info, attributes, getFoldingPlaceholder(fullName));
+      return new Result(highlightStartOffset, highlightEndOffset, info, attributes, isInternal);
     }
     catch(NumberFormatException e){
       return null;
     }
   }
 
-  @Nullable
-  private static String getFoldingPlaceholder(String className) {
-    for (DebuggerClassFilterProvider provider : DebuggerClassFilterProvider.EP_NAME.getExtensions()) {
-      for (ClassFilter filter : provider.getFilters()) {
-        final String pattern = filter.getPattern();
-        if (pattern.endsWith("*") && className.startsWith(pattern.substring(0, pattern.length() - 1))) {
-          return "...";
-        }
+  private static boolean shouldFold(String className) {
+    for (StackFrameFilter provider : StackFrameFilter.EP_NAME.getExtensions()) {
+      if (provider.isInternalFrame(className, "")) {
+        return true;
       }
     }
-    return null;
+    return false;
   }
 }
