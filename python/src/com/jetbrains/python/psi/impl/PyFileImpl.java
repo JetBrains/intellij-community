@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
@@ -120,7 +121,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       if (!processor.execute(e, substitutor)) return false;
     }
 
-    for(PyExpression e: getImportTargets()) {
+    for(PyImportElement e: getImportTargets()) {
       if (e == lastParent) continue;
       if (!processor.execute(e, substitutor)) return false;
     }
@@ -182,18 +183,11 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     return proc.getResult();
   }
 
-  public List<PyExpression> getImportTargets() {
-    List<PyExpression> ret = new ArrayList<PyExpression>();
+  public List<PyImportElement> getImportTargets() {
+    List<PyImportElement> ret = new ArrayList<PyImportElement>();
     List<PyImportStatement> imports = getTopLevelItems(PyElementTypes.IMPORT_STATEMENT, PyImportStatement.class);
     for (PyImportStatement one: imports) {
-      for (PyImportElement elt: one.getImportElements()) {
-        PyExpression target = elt.getAsName();
-        if (target != null) ret.add(target);
-        else {
-          target = elt.getImportReference();
-          if (target != null) ret.add(target);
-        }
-      }
+      ret.addAll(Arrays.asList(one.getImportElements()));
     }
     return ret;
   }

@@ -162,11 +162,16 @@ public class PyStubsTest extends PyLightFixtureTestCase {
 
   public void testImportStatement() throws Exception {
     final PyFileImpl file = (PyFileImpl) getTestFile();
+
     final List<PyFromImportStatement> fromImports = file.getFromImports();
     assertEquals(1, fromImports.size());
     final PyImportElement[] importElements = fromImports.get(0).getImportElements();
     assertEquals(1, importElements.length);
     assertEquals("argv", importElements [0].getVisibleName());
+
+    final List<PyImportElement> importTargets = file.getImportTargets();
+    assertEquals(1, importTargets.size());
+
     assertNotParsed(file);
   }
 

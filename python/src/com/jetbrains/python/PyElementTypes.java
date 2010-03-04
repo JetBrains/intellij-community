@@ -47,9 +47,9 @@ public interface PyElementTypes {
   PyElementType FOR_STATEMENT = new PyElementType("FOR_STATEMENT", PyForStatementImpl.class);
 
   PyStubElementType<PyFromImportStatementStub, PyFromImportStatement> FROM_IMPORT_STATEMENT = new PyFromImportStatementElementType();
+  PyStubElementType<PyImportStatementStub, PyImportStatement> IMPORT_STATEMENT = new PyImportStatementElementType();
 
   PyElementType GLOBAL_STATEMENT = new PyElementType("GLOBAL_STATEMENT", PyGlobalStatementImpl.class);
-  PyElementType IMPORT_STATEMENT = new PyElementType("IMPORT_STATEMENT", PyImportStatementImpl.class);
   PyElementType IF_STATEMENT = new PyElementType("IF_STATEMENT", PyIfStatementImpl.class);
   PyElementType PASS_STATEMENT = new PyElementType("PASS_STATEMENT", PyPassStatementImpl.class);
   PyElementType PRINT_STATEMENT = new PyElementType("PRINT_STATEMENT", PyPrintStatementImpl.class);
