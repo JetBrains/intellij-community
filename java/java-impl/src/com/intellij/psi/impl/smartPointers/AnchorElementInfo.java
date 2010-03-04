@@ -89,7 +89,7 @@ class AnchorElementInfo implements SmartPointerElementInfo {
   public PsiElement restoreElement() {
     if (!mySyncMarkerIsValid) return null;
     myFile = SelfElementInfo.restoreFile(myFile, myProject);
-
+    if (myFile == null) return null;
     PsiElement anchor = myFile.findElementAt(mySyncStartOffset);
     if (anchor == null) return null;
 

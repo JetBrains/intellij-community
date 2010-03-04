@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.actionSystem;
 
-import com.intellij.openapi.keymap.KeymapUtil;
-
-/**
- * A keyboard or mouse shortcut which can be used for invoking an action.
- *
- * @see ShortcutSet
+/*
+ * User: anna
+ * Date: 02-Mar-2010
  */
-public abstract class Shortcut {
-  Shortcut(){
-  }
+package com.intellij.lang.documentation;
 
-  public abstract boolean isKeyboard();
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
 
-  public abstract boolean startsWith(final Shortcut sc);
+import java.util.List;
 
-  @Override
-  public String toString() {
-    return KeymapUtil.getShortcutText(this);
-  }
+public interface ExternalDocumentationProvider {
+  @Nullable
+  String fetchExternalDocumentation(final Project project, PsiElement element, final List<String> docUrls);
 }

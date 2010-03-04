@@ -3,12 +3,6 @@
     <action id="Back">
       <keyboard-shortcut first-keystroke="shift alt LEFT" />
     </action>
-    <action id="Debugger.NextContent">
-      <keyboard-shortcut first-keystroke="shift alt RIGHT" />
-    </action>
-    <action id="Debugger.PreviousContent">
-      <keyboard-shortcut first-keystroke="shift alt LEFT" />
-    </action>
     <action id="EvaluateExpression">
       <keyboard-shortcut first-keystroke="shift alt 8" />
     </action>

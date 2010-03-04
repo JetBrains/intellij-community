@@ -665,12 +665,13 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     FoldRegion[] visibleFoldRegions = ((FoldingModelImpl)myEditor.getFoldingModel()).fetchVisible();
 
-    int firstVisibleOffset = myEditor.logicalPositionToOffset(
-      myEditor.xyToLogicalPosition(new Point(0, clip.y - myEditor.getLineHeight())));
-    int lastVisibleOffset = myEditor.logicalPositionToOffset(
-      myEditor.xyToLogicalPosition(new Point(0, clip.y + clip.height + myEditor.getLineHeight())));
+    int firstVisibleOffset =
+      myEditor.logicalPositionToOffset(myEditor.xyToLogicalPosition(new Point(0, clip.y - myEditor.getLineHeight())));
+    int lastVisibleOffset =
+      myEditor.logicalPositionToOffset(myEditor.xyToLogicalPosition(new Point(0, clip.y + clip.height + myEditor.getLineHeight())));
 
     for (FoldRegion visibleFoldRegion : visibleFoldRegions) {
+      if (!visibleFoldRegion.isValid()) continue;
       if (visibleFoldRegion.getStartOffset() > lastVisibleOffset) continue;
       if (getEndOffset(visibleFoldRegion) < firstVisibleOffset) continue;
       drawAnchor(visibleFoldRegion, width, clip, g, anchorX, false, false);
@@ -716,6 +717,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
 
     for (FoldRegion visibleFoldRegion : visibleFoldRegions) {
+      if (!visibleFoldRegion.isValid()) continue;
       if (visibleFoldRegion.getStartOffset() > lastVisibleOffset) continue;
       if (getEndOffset(visibleFoldRegion) < firstVisibleOffset) continue;
       drawAnchor(visibleFoldRegion, width, clip, g, anchorX, false, true);
@@ -736,56 +738,56 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   public int getHeadCenterY(FoldRegion foldRange) {
     int width = getFoldingAnchorWidth();
     VisualPosition foldStart = offsetToLineStartPosition(foldRange.getStartOffset());
-    int y = myEditor.visibleLineNumberToYPosition(foldStart.line) + myEditor.getLineHeight() - myEditor.getDescent() -
-            width / 2;
 
-    return y;
+    return myEditor.visibleLineNumberToYPosition(foldStart.line) + myEditor.getLineHeight() - myEditor.getDescent() - width / 2;
   }
 
   private void drawAnchor(FoldRegion foldRange, int width, Rectangle clip, Graphics2D g,
                           int anchorX, boolean active, boolean paintBackground) {
-    if (foldRange.isValid()) {
-      VisualPosition foldStart = offsetToLineStartPosition(foldRange.getStartOffset());
+    if (!foldRange.isValid()) {
+      return;
+    }
+    VisualPosition foldStart = offsetToLineStartPosition(foldRange.getStartOffset());
 
-      final int endOffset = getEndOffset(foldRange);
-      VisualPosition foldEnd = offsetToLineStartPosition(endOffset);
-      final Document document = myEditor.getDocument();
-      if (document.getLineNumber(foldRange.getStartOffset()) == document.getLineNumber(endOffset)) {
-        return;
-      }
+    final int endOffset = getEndOffset(foldRange);
+    VisualPosition foldEnd = offsetToLineStartPosition(endOffset);
+    final Document document = myEditor.getDocument();
+    if (document.getLineNumber(foldRange.getStartOffset()) == document.getLineNumber(endOffset)) {
+      return;
+    }
 
-      int y = myEditor.visibleLineNumberToYPosition(foldStart.line) + myEditor.getLineHeight() - myEditor.getDescent() -
-              width;
-      int height = width + 2;
+    int y = myEditor.visibleLineNumberToYPosition(foldStart.line) + myEditor.getLineHeight() - myEditor.getDescent() -
+            width;
+    int height = width + 2;
 
-      final FoldingGroup group = foldRange.getGroup();
+    final FoldingGroup group = foldRange.getGroup();
 
-      final boolean drawTop = group == null || ((FoldingModelImpl)myEditor.getFoldingModel()).getFirstRegion(group) == foldRange;
-      if (!foldRange.isExpanded()) {
-        if (y <= clip.y + clip.height && y + height >= clip.y) {
-          if (drawTop) {
-            drawSquareWithPlus(g, anchorX, y, width, active, paintBackground);
-          }
+    final boolean drawTop = group == null || ((FoldingModelImpl)myEditor.getFoldingModel()).getFirstRegion(group) == foldRange;
+    if (!foldRange.isExpanded()) {
+      if (y <= clip.y + clip.height && y + height >= clip.y) {
+        if (drawTop) {
+          drawSquareWithPlus(g, anchorX, y, width, active, paintBackground);
         }
       }
-      else {
-        int endY = myEditor.visibleLineNumberToYPosition(foldEnd.line) + myEditor.getLineHeight() -
-                   myEditor.getDescent();
+    }
+    else {
+      int endY = myEditor.visibleLineNumberToYPosition(foldEnd.line) + myEditor.getLineHeight() -
+                 myEditor.getDescent();
 
-        if (y <= clip.y + clip.height && y + height >= clip.y) {
-          if (drawTop) {
-            drawDirectedBox(g, anchorX, y, width, height, width - 2, active, paintBackground);
-          }
+      if (y <= clip.y + clip.height && y + height >= clip.y) {
+        if (drawTop) {
+          drawDirectedBox(g, anchorX, y, width, height, width - 2, active, paintBackground);
         }
+      }
 
-        if (endY - height <= clip.y + clip.height && endY >= clip.y) {
-          drawDirectedBox(g, anchorX, endY, width, -height, -width + 2, active, paintBackground);
-        }
+      if (endY - height <= clip.y + clip.height && endY >= clip.y) {
+        drawDirectedBox(g, anchorX, endY, width, -height, -width + 2, active, paintBackground);
       }
     }
   }
 
   private int getEndOffset(FoldRegion foldRange) {
+    LOG.assertTrue(foldRange.isValid(), foldRange);
     FoldingGroup group = foldRange.getGroup();
     return group == null ? foldRange.getEndOffset() : ((FoldingModelImpl)myEditor.getFoldingModel()).getEndOffset(group);
   }
@@ -803,8 +805,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
 
     try {
-      int[] xPoints = new int[]{anchorX, anchorX + width, anchorX + width, anchorX + width / 2, anchorX};
-      int[] yPoints = new int[]{y, y, y + baseHeight, y + height, y + baseHeight};
+      int[] xPoints = {anchorX, anchorX + width, anchorX + width, anchorX + width / 2, anchorX};
+      int[] yPoints = {y, y, y + baseHeight, y + height, y + baseHeight};
 
       if (paintBackground) {
         g.setColor(myEditor.getBackroundColor());
@@ -902,12 +904,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   public int getLineNumberAreaWidth() {
-    if (isLineNumbersShown()) {
-      return myLineNumberAreaWidth;
-    }
-    else {
-      return 0;
-    }
+    return isLineNumbersShown() ? myLineNumberAreaWidth : 0;
   }
 
   public int getLineMarkerAreaWidth() {
@@ -953,6 +950,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     FoldRegion[] visibleRanges = ((FoldingModelImpl)myEditor.getFoldingModel()).fetchVisible();
     for (FoldRegion foldRange : visibleRanges) {
+      if (!foldRange.isValid()) continue;
       final FoldingGroup group = foldRange.getGroup();
       if (group != null && ((FoldingModelImpl)myEditor.getFoldingModel()).getFirstRegion(group) != foldRange) {
         continue;
@@ -1113,7 +1111,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private ActiveGutterRenderer getActiveRendererByMouseEvent(final MouseEvent e) {
-    final ActiveGutterRenderer[] gutterRenderer = new ActiveGutterRenderer[]{null};
+    final ActiveGutterRenderer[] gutterRenderer = {null};
     if (findFoldingAnchorAt(e.getX(), e.getY()) == null) {
       if (!e.isConsumed() &&
 
@@ -1238,7 +1236,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     ArrayList<GutterIconRenderer> renderers = myLineToGutterRenderers.get(line);
     if (renderers == null) return null;
 
-    final GutterIconRenderer[] result = new GutterIconRenderer[]{null};
+    final GutterIconRenderer[] result = {null};
     processIconsRow(line, renderers, new LineGutterIconRendererProcessor() {
       public void process(int x, int y, GutterIconRenderer renderer) {
         Icon icon = renderer.getIcon();
@@ -1325,7 +1323,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
   }
 
-  private class MyDragSourceListener implements DragSourceListener{
+  private class MyDragSourceListener extends DragSourceAdapter {
     public void dragEnter(DragSourceDragEvent dsde) {
       updateCursor(dsde);
     }
@@ -1363,17 +1361,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         myGutterDraggableObject.removeSelf();
       }
     }
-
-    public void dragExit(DragSourceEvent dse) {}
   }
 
-  private class MyDropTargetListener implements DropTargetListener {
-    public void dragEnter(DropTargetDragEvent dtde) {}
-
-    public void dragOver(DropTargetDragEvent dtde) {}
-
-    public void dropActionChanged(DropTargetDragEvent dtde) {}
-
+  private class MyDropTargetListener extends DropTargetAdapter {
     public void drop(DropTargetDropEvent dtde) {
       if (myGutterDraggableObject != null) {
         int dropAction = dtde.getDropAction();
@@ -1383,10 +1373,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           return;
         }
       }
-
       dtde.rejectDrop();
     }
-
-    public void dragExit(DropTargetEvent dte) {}
   }
 }

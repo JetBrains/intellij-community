@@ -160,14 +160,33 @@ public class ChooseRunConfigurationAction extends AnAction {
       }
     });
 
-    popup.registerAction("0Action", KeyStroke.getKeyStroke("0"), createNumberAction(0, popup, getDefaultExecutor()));
-    popup.registerAction("0Action_", KeyStroke.getKeyStroke("shift pressed 0"), createNumberAction(0, popup, getAlternateExecutor()));
-    popup.registerAction("1Action", KeyStroke.getKeyStroke("1"), createNumberAction(1, popup, getDefaultExecutor()));
-    popup.registerAction("1Action_", KeyStroke.getKeyStroke("shift pressed 1"), createNumberAction(1, popup, getAlternateExecutor()));
-    popup.registerAction("2Action", KeyStroke.getKeyStroke("2"), createNumberAction(2, popup, getDefaultExecutor()));
-    popup.registerAction("2Action_", KeyStroke.getKeyStroke("shift pressed 2"), createNumberAction(2, popup, getAlternateExecutor()));
-    popup.registerAction("3Action", KeyStroke.getKeyStroke("3"), createNumberAction(3, popup, getDefaultExecutor()));
-    popup.registerAction("3Action_", KeyStroke.getKeyStroke("shift pressed 3"), createNumberAction(3, popup, getAlternateExecutor()));
+    final Action action0 = createNumberAction(0, popup, getDefaultExecutor());
+    final Action action0_ = createNumberAction(0, popup, getAlternateExecutor());
+    popup.registerAction("0Action", KeyStroke.getKeyStroke("0"), action0);
+    popup.registerAction("0Action_", KeyStroke.getKeyStroke("shift pressed 0"), action0_);
+    popup.registerAction("0Action1", KeyStroke.getKeyStroke("NUMPAD0"), action0);
+    popup.registerAction("0Action_1", KeyStroke.getKeyStroke("shift pressed NUMPAD0"), action0_);
+
+    final Action action1 = createNumberAction(1, popup, getDefaultExecutor());
+    final Action action1_ = createNumberAction(1, popup, getAlternateExecutor());
+    popup.registerAction("1Action", KeyStroke.getKeyStroke("1"), action1);
+    popup.registerAction("1Action_", KeyStroke.getKeyStroke("shift pressed 1"), action1_);
+    popup.registerAction("1Action1", KeyStroke.getKeyStroke("NUMPAD1"), action1);
+    popup.registerAction("1Action_1", KeyStroke.getKeyStroke("shift pressed NUMPAD1"), action1_);
+
+    final Action action2 = createNumberAction(2, popup, getDefaultExecutor());
+    final Action action2_ = createNumberAction(2, popup, getAlternateExecutor());
+    popup.registerAction("2Action", KeyStroke.getKeyStroke("2"), action2);
+    popup.registerAction("2Action_", KeyStroke.getKeyStroke("shift pressed 2"), action2_);
+    popup.registerAction("2Action1", KeyStroke.getKeyStroke("NUMPAD2"), action2);
+    popup.registerAction("2Action_1", KeyStroke.getKeyStroke("shift pressed NUMPAD2"), action2_);
+
+    final Action action3 = createNumberAction(3, popup, getDefaultExecutor());
+    final Action action3_ = createNumberAction(3, popup, getAlternateExecutor());
+    popup.registerAction("3Action", KeyStroke.getKeyStroke("3"), action3);
+    popup.registerAction("3Action_", KeyStroke.getKeyStroke("shift pressed 3"), action3_);
+    popup.registerAction("3Action1", KeyStroke.getKeyStroke("NUMPAD3"), action3);
+    popup.registerAction("3Action_1", KeyStroke.getKeyStroke("shift pressed NUMPAD3"), action3_);
   }
 
   private void updatePresentation(ListPopupImpl listPopup) {

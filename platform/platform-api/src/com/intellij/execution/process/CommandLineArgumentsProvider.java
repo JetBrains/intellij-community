@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.actionSystem;
+package com.intellij.execution.process;
 
-import com.intellij.openapi.keymap.KeymapUtil;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
 
 /**
- * A keyboard or mouse shortcut which can be used for invoking an action.
- *
- * @see ShortcutSet
+ * @author oleg
  */
-public abstract class Shortcut {
-  Shortcut(){
-  }
+public interface CommandLineArgumentsProvider {
+    /**
+   * @return Commands to execute (one command corresponds to one add argument)
+   */
+  String[] getArguments();
 
-  public abstract boolean isKeyboard();
+  boolean passParentEnvs();
 
-  public abstract boolean startsWith(final Shortcut sc);
-
-  @Override
-  public String toString() {
-    return KeymapUtil.getShortcutText(this);
-  }
+  @Nullable
+  Map<String, String> getAdditionalEnvs();
 }

@@ -39,7 +39,7 @@ public class EditorNotificationPanel extends JPanel {
     super(new BorderLayout());
 
     setBackground(LightColors.YELLOW);
-    setBorder(new SideBorder(Color.black, SideBorder.BOTTOM, true));
+    setBorder(new SideBorder(Color.gray, SideBorder.BOTTOM, true));
 
     setPreferredSize(new Dimension(-1, 24));
     add(myLabel, BorderLayout.CENTER);

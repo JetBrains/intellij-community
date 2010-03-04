@@ -228,10 +228,10 @@
       <keyboard-shortcut first-keystroke="control F4"/>
       <keyboard-shortcut first-keystroke="control X" second-keystroke="K"/>
     </action>
-    <action id="SplitVertical">
+    <action id="SplitVertically">
       <keyboard-shortcut first-keystroke="control 2"/>
     </action>
-    <action id="SplitHorisontal">
+    <action id="SplitHorizontally">
       <keyboard-shortcut first-keystroke="control 3"/>
     </action>
     <action id="UnsplitAll">

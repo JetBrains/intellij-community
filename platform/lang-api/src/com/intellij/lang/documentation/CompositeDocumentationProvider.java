@@ -17,13 +17,14 @@
 package com.intellij.lang.documentation;
 
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class CompositeDocumentationProvider implements DocumentationProvider{
+public class CompositeDocumentationProvider implements DocumentationProvider, ExternalDocumentationProvider{
 
   private final List<DocumentationProvider> myProviders;
 
@@ -113,6 +114,16 @@ public class CompositeDocumentationProvider implements DocumentationProvider{
     for (DocumentationProvider provider : myProviders) {
       if (provider instanceof CodeDocumentationProvider) {
         return (CodeDocumentationProvider)provider;
+      }
+    }
+    return null;
+  }
+
+  public String fetchExternalDocumentation(Project project, PsiElement element, List<String> docUrls) {
+    for (DocumentationProvider provider : myProviders) {
+      if (provider instanceof ExternalDocumentationProvider) {
+        final String doc = ((ExternalDocumentationProvider)provider).fetchExternalDocumentation(project, element, docUrls);
+        if (doc != null) return doc;
       }
     }
     return null;

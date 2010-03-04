@@ -24,11 +24,14 @@ import com.intellij.lang.folding.FoldingBuilderEx;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -37,6 +40,7 @@ import java.util.*;
  */
 public class PropertyFoldingBuilder extends FoldingBuilderEx {
   private static final int FOLD_MAX_LENGTH = 50;
+  private static final Key<Property> CACHE = Key.create("i18n.property.cache");
 
   @NotNull
   public FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement element, @NotNull Document document, boolean quick) {
@@ -68,7 +72,10 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
 
   private static void checkLiteral(PsiLiteralExpression expression, List<FoldingDescriptor> result) {
     if (isI18nProperty(expression)) {
-      final String msg = getI18nMessage(expression);
+      final Property property = getI18nProperty(expression);
+      final HashSet<Object> set = new HashSet<Object>();
+      set.add(property);
+      final String msg = formatI18nProperty(expression, property);
 
       final PsiElement parent = expression.getParent();
       if (!msg.equals(expression.getText()) &&
@@ -89,13 +96,13 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
             }
           }
           if (ok) {
-            result.add(new FoldingDescriptor(parent.getParent(), parent.getParent().getTextRange()));
+            result.add(new FoldingDescriptor(ObjectUtils.assertNotNull(parent.getParent().getNode()), parent.getParent().getTextRange(), null, set));
             return;
           }
         }
       }
 
-      result.add(new FoldingDescriptor(expression, expression.getTextRange()));
+      result.add(new FoldingDescriptor(ObjectUtils.assertNotNull(expression.getNode()), expression.getTextRange(), null, set));
     }
   }
 
@@ -135,7 +142,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
           if (!text.equals(methodCallExpression.getText())) {
             text = text.replace("''", "'");
           }
-          return text.length() > FOLD_MAX_LENGTH ? text.substring(0, FOLD_MAX_LENGTH - 3) + "..." : text;
+          return text.length() > FOLD_MAX_LENGTH ? text.substring(0, FOLD_MAX_LENGTH - 3) + "...\"" : text;
         }
       }
     }
@@ -144,6 +151,14 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
   }
 
   private static String getI18nMessage(PsiLiteralExpression literal) {
+    final Property property = getI18nProperty(literal);
+    return property == null ? literal.getText() : formatI18nProperty(literal, property);
+  }
+
+  @Nullable
+  private static Property getI18nProperty(PsiLiteralExpression literal) {
+    final Property property = literal.getUserData(CACHE);
+    if (property != null && property.isValid()) return property;
     if (isI18nProperty(literal)) {
       final PsiReference[] references = literal.getReferences();
       for (PsiReference reference : references) {
@@ -152,18 +167,27 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
           for (ResolveResult result : results) {
             final PsiElement element = result.getElement();
             if (element instanceof Property) {
-              return "\"" + ((Property)element).getValue() + "\"";
-            }            
+              Property p = (Property)element;
+              literal.putUserData(CACHE, p);
+              return p;
+            }
           }
         } else {
           final PsiElement element = reference.resolve();
           if (element instanceof Property) {
-            return "\"" + ((Property)element).getValue() + "\"";
+            Property p = (Property)element;
+            literal.putUserData(CACHE, p);
+            return p;
           }
         }
       }
     }
-    return literal.getText();
+    return null;
+  }
+
+  private static String formatI18nProperty(PsiLiteralExpression literal, Property property) {
+    return property == null ?
+           literal.getText() : "\"" + property.getValue() + "\"";
   }
 
   public boolean isCollapsedByDefault(@NotNull ASTNode node) {

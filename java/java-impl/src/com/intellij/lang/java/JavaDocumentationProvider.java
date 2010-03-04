@@ -25,6 +25,7 @@ import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
+import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -56,7 +57,7 @@ import java.util.Map;
 /**
  * @author Maxim.Mossienko
  */
-public class JavaDocumentationProvider implements CodeDocumentationProvider {
+public class JavaDocumentationProvider implements CodeDocumentationProvider, ExternalDocumentationProvider {
   private static final Logger LOG = Logger.getInstance("#" + JavaDocumentationProvider.class.getName());
   private static final String LINE_SEPARATOR = "\n";
 
@@ -542,24 +543,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider {
   @Nullable
   public static String generateExternalJavadoc(final PsiElement element) {
     final JavaDocInfoGenerator javaDocInfoGenerator = new JavaDocInfoGenerator(element.getProject(), element);
-    JavaDocExternalFilter docFilter = new JavaDocExternalFilter(element.getProject());
-    List<String> docURLs = getExternalJavaDocUrl(element);
-
-    if (docURLs != null) {
-      for (String docURL : docURLs) {
-        try {
-          final String javadoc = generateExternalJavadoc(element, docURL, true, docFilter);
-          if (javadoc != null) return javadoc;
-        }
-        catch (IndexNotReadyException e) {
-          throw e;
-        }
-        catch (Exception e) {
-          LOG.info(e); //connection problems should be ignored
-        }
-      }
-    }
-
+    final List<String> docURLs = getExternalJavaDocUrl(element);
     return JavaDocExternalFilter.filterInternalDocInfo(javaDocInfoGenerator.generateDocInfo(docURLs));
   }
 
@@ -766,5 +750,29 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider {
 
   public PsiElement getDocumentationElementForLink(final PsiManager psiManager, final String link, final PsiElement context) {
     return JavaDocUtil.findReferenceTarget(psiManager, link, context);
+  }
+
+  public String fetchExternalDocumentation(final Project project, PsiElement element, final List<String> docUrls) {
+    return fetchExternalJavadoc(element, project, docUrls);
+  }
+
+  public static String fetchExternalJavadoc(PsiElement element, final Project project, final List<String> docURLs) {
+    final JavaDocExternalFilter docFilter = new JavaDocExternalFilter(project);
+
+    if (docURLs != null) {
+      for (String docURL : docURLs) {
+        try {
+          final String javadoc = generateExternalJavadoc(element, docURL, true, docFilter);
+          if (javadoc != null) return javadoc;
+        }
+        catch (IndexNotReadyException e) {
+          throw e;
+        }
+        catch (Exception e) {
+          LOG.info(e); //connection problems should be ignored
+        }
+      }
+    }
+    return null;
   }
 }

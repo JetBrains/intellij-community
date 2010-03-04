@@ -39,7 +39,7 @@ import java.util.List;
  */
 public class SliceNode extends AbstractTreeNode<SliceUsage> implements DuplicateNodeRenderer.DuplicatableNode<SliceNode>, MyColoredTreeCellRenderer {
   protected List<SliceNode> myCachedChildren;
-  protected boolean initialized;
+  protected boolean dupNodeCalculated;
   protected SliceNode duplicate;
   protected final DuplicateMap targetEqualUsages;
   protected boolean changed;
@@ -53,7 +53,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
   SliceNode copy() {
     SliceUsage newUsage = getValue().copy();
     SliceNode newNode = new SliceNode(getProject(), newUsage, targetEqualUsages);
-    newNode.initialized = initialized;
+    newNode.dupNodeCalculated = dupNodeCalculated;
     newNode.duplicate = duplicate;
     return newNode;
   }
@@ -145,16 +145,21 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
   }
 
   protected void update(PresentationData presentation) {
-    if (!initialized) {
-      if (!(getValue() instanceof SliceTooComplexDFAUsage)) duplicate = targetEqualUsages.putNodeCheckDupe(this);
-      initialized = true;
-    }
     if (presentation != null) {
       if (duplicate != null) {
         presentation.setTooltip("Duplicate node");
       }
       presentation.setChanged(presentation.isChanged() || changed);
       changed = false;
+    }
+  }
+
+  public void calculateDupNode() {
+    if (!dupNodeCalculated) {
+      if (!(getValue() instanceof SliceTooComplexDFAUsage)) {
+        duplicate = targetEqualUsages.putNodeCheckDupe(this);
+      }
+      dupNodeCalculated = true;
     }
   }
 
