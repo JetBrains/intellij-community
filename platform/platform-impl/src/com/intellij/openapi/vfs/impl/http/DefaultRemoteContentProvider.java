@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.impl.http;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -56,7 +57,8 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
     InputStream input = null;
     OutputStream output = null;
     try {
-      callback.setProgressText(VfsBundle.message("download.progress.connecting", url), true);
+      String presentableUrl = StringUtil.first(url, 40, true);
+      callback.setProgressText(VfsBundle.message("download.progress.connecting", presentableUrl), true);
       HttpURLConnection connection = (HttpURLConnection)new URL(url).openConnection();
       connection.setConnectTimeout(CONNECT_TIMEOUT);
       connection.setReadTimeout(READ_TIMEOUT);
@@ -69,7 +71,7 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
 
       final int size = connection.getContentLength();
       output = new BufferedOutputStream(new FileOutputStream(file));
-      callback.setProgressText(VfsBundle.message("download.progress.downloading", url), size == -1);
+      callback.setProgressText(VfsBundle.message("download.progress.downloading", presentableUrl), size == -1);
       if (size != -1) {
         callback.setProgressFraction(0);
       }

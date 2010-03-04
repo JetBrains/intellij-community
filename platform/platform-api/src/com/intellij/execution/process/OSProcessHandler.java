@@ -154,8 +154,9 @@ public class OSProcessHandler extends ProcessHandler {
               }
               catch (ExecutionException ignored) {
               }
-
-              onOSProcessTerminated(exitCode);
+              finally {
+                onOSProcessTerminated(exitCode);
+              }
             }
           };
 

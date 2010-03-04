@@ -217,6 +217,12 @@ public class SvnVcs extends AbstractVcs {
     invokeRefreshSvnRoots(true);
   }
 
+  @Override
+  protected void shutdown() throws VcsException {
+    super.shutdown();
+    myAuthNotifier.stop();
+  }
+
   public void invokeRefreshSvnRoots(final boolean asynchronous) {
     REFRESH_LOG.debug("refresh: ", new Throwable());
     if (myCopiesRefreshManager != null) {
