@@ -45,6 +45,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
+import com.intellij.openapi.editor.impl.FoldRegionImpl;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -71,6 +72,9 @@ import com.intellij.util.Alarm;
 import com.intellij.util.EditorPopupHandler;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.text.CharArrayUtil;
+import gnu.trove.THashSet;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -168,6 +172,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private ArrayList<TokenInfo> myTokens = new ArrayList<TokenInfo>();
   private final Hyperlinks myHyperlinks = new Hyperlinks();
+  private final TIntObjectHashMap<String> myFolding = new TIntObjectHashMap<String>();
 
   private String myHelpId;
 
@@ -618,7 +623,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     editorSettings.setLineMarkerAreaShown(false);
     editorSettings.setIndentGuidesShown(false);
     editorSettings.setLineNumbersShown(false);
-    editorSettings.setFoldingOutlineShown(false);
+    editorSettings.setFoldingOutlineShown(true);
     editorSettings.setAdditionalPageAtBottom(false);
     editorSettings.setAdditionalColumnsCount(0);
     editorSettings.setAdditionalLinesCount(0);
@@ -793,18 +798,22 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return myHyperlinks.getHyperlinkAt(offset);
   }
 
-  private void highlightHyperlinks(final int line1, final int line2){
+  private void highlightHyperlinks(final int line1, final int endLine){
     ApplicationManager.getApplication().assertIsDispatchThread();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     final Document document = myEditor.getDocument();
     final CharSequence chars = document.getCharsSequence();
     final TextAttributes hyperlinkAttributes = getHyperlinkAttributes();
 
-    for(int line = line1; line <= line2; line++) {
-      if (line < 0) continue;
+    final int startLine = Math.max(0, line1);
+
+    final Set<FoldRegion> toRemove = clearOutdatedFolding(document, endLine, startLine);
+    final List<FoldRegion> toAdd = new ArrayList<FoldRegion>();
+
+    for(int line = startLine; line <= endLine; line++) {
       final int startOffset = document.getLineStartOffset(line);
       int endOffset = document.getLineEndOffset(line);
-      if (endOffset < document.getTextLength()){
+      if (endOffset < document.getTextLength()) {
         endOffset++; // add '\n'
       }
       final String text = chars.subSequence(startOffset, endOffset).toString();
@@ -817,7 +826,57 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         final int highlightEndOffset = result.highlightEndOffset;
         final HyperlinkInfo hyperlinkInfo = result.hyperlinkInfo;
         addHyperlink(highlightStartOffset, highlightEndOffset, result.highlightAttributes, hyperlinkInfo, hyperlinkAttributes);
+        addFolding(document, chars, line, result.foldingPlaceholder, toAdd);
       }
+    }
+    if (!toAdd.isEmpty() || !toRemove.isEmpty()) {
+      doUpdateFolding(toRemove, toAdd);
+    }
+  }
+
+  private void doUpdateFolding(final Set<FoldRegion> toRemove, final List<FoldRegion> toAdd) {
+    final FoldingModel model = myEditor.getFoldingModel();
+    model.runBatchFoldingOperationDoNotCollapseCaret(new Runnable() {
+      public void run() {
+        for (FoldRegion region : toRemove) {
+          model.removeFoldRegion(region);
+        }
+        for (FoldRegion region : toAdd) {
+          region.setExpanded(false);
+          model.addFoldRegion(region);
+        }
+      }
+    });
+  }
+
+  private Set<FoldRegion> clearOutdatedFolding(Document document, int endLine, int startLine) {
+    final THashSet<FoldRegion> toRemove = new THashSet<FoldRegion>();
+    final int dirtyRegionStart = document.getLineStartOffset(startLine);
+    final int diretyRegionEnd = document.getLineEndOffset(endLine);
+    for (FoldRegion region : myEditor.getFoldingModel().getAllFoldRegions()) {
+      if (region.getStartOffset() >= dirtyRegionStart ||
+          region.getEndOffset() <= diretyRegionEnd) {
+        toRemove.add(region);
+      }
+    }
+    return toRemove;
+  }
+
+  private void addFolding(Document document, CharSequence chars, int line, @Nullable String placeholder, List<FoldRegion> toAdd) {
+    myFolding.put(line, placeholder);
+    final String prevFolding = myFolding.get(line - 1);
+    if (prevFolding != null && !prevFolding.equals(placeholder)) {
+      final int lEnd = line - 1;
+      int lStart = lEnd;
+      while (prevFolding.equals(myFolding.get(lStart - 1))) lStart--;
+      if (lStart == lEnd) {
+        return;
+      }
+
+      int oStart = CharArrayUtil.shiftForward(chars, document.getLineStartOffset(lStart), " \t");
+      int oEnd = CharArrayUtil.shiftBackward(chars, document.getLineEndOffset(lEnd) - 1, " \t") + 1;
+
+      toAdd.add(new FoldRegionImpl(myEditor, oStart, oEnd, prevFolding, null));
     }
   }
 
@@ -1152,6 +1211,12 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private OccurenceInfo next(final int delta, boolean doMove) {
     List<RangeHighlighter> ranges = new ArrayList<RangeHighlighter>(myHyperlinks.getRanges().keySet());
+    for (Iterator<RangeHighlighter> iterator = ranges.iterator(); iterator.hasNext();) {
+      RangeHighlighter highlighter = iterator.next();
+      if (myEditor.getFoldingModel().getCollapsedRegionAtOffset(highlighter.getStartOffset()) != null) {
+        iterator.remove();
+      }
+    }
     Collections.sort(ranges, new Comparator<RangeHighlighter>() {
       public int compare(final RangeHighlighter o1, final RangeHighlighter o2) {
         return o1.getStartOffset() - o2.getStartOffset();
