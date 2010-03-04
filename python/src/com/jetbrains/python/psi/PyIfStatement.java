@@ -17,13 +17,11 @@
 package com.jetbrains.python.psi;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * The 'if/elif/else' statement.
  */
-public interface PyIfStatement extends PyStatement {
+public interface PyIfStatement extends PyStatementWithElse {
   @NotNull PyIfPart getIfPart();
   @NotNull PyIfPart[] getElifParts();
-  @Nullable PyElsePart getElsePart();
 }

@@ -23,15 +23,12 @@ import org.jetbrains.annotations.Nullable;
  * The 'try/except/else/finally' statement.
  * Date: 02.06.2005
  */
-public interface PyTryExceptStatement extends PyStatement {
+public interface PyTryExceptStatement extends PyStatementWithElse {
   @NotNull
   PyTryPart getTryPart();
 
   @NotNull
   PyExceptPart[] getExceptParts();
-
-  @Nullable
-  PyElsePart getElsePart();
 
   @Nullable
   PyFinallyPart getFinallyPart();

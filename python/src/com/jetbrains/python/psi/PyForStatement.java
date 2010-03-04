@@ -17,12 +17,10 @@
 package com.jetbrains.python.psi;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * The 'for/else' statement.
  */
-public interface PyForStatement extends PyLoopStatement, NameDefiner {
+public interface PyForStatement extends PyLoopStatement, PyStatementWithElse, NameDefiner {
   @NotNull PyForPart getForPart();
-  @Nullable PyElsePart getElsePart();
 }

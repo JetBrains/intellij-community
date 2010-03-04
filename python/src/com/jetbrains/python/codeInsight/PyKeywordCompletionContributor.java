@@ -305,8 +305,19 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
 
   private static void putKeywords(@NonNls @NotNull String[] words, TailType tail, final CompletionResultSet result) {
     for (String s : words) {
-      result.addElement(TailTypeDecorator.withTail(LookupElementBuilder.create(s).setBold(), tail));
+      result.addElement(TailTypeDecorator.withTail(new PythonLookupElement(s, true, null), tail));
     }
+  }
+  
+  private static void putKeyword(
+    @NotNull @NonNls String keyword,
+    InsertHandler<PythonLookupElement> handler,
+    TailType tail,
+    CompletionResultSet result)
+  {
+    final PythonLookupElement lookup_elt = new PythonLookupElement(keyword, true, null);
+    lookup_elt.setHandler(handler);
+    result.addElement(TailTypeDecorator.withTail(lookup_elt, tail));
   }
 
   private void addPreColonStatements() {
@@ -437,9 +448,7 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
         protected void addCompletions(
           @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
         ) {
-          final @NonNls String[] strings = {"elif"};
-          putKeywords(strings, PRE_COLON, result);
-          // TODO: have it dedent properly
+          putKeyword("elif", UnindentingInsertHandler.OF_ELSE, PRE_COLON, result);
         }
       }
     );
@@ -458,11 +467,8 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
         protected void addCompletions(
           @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
         ) {
-          final @NonNls String[] pre_colon_strings = {"except"};
-          final @NonNls String[] colon_strings = {"finally"};
-          putKeywords(pre_colon_strings, PRE_COLON, result);
-          putKeywords(colon_strings, TailType.CASE_COLON, result);
-          // TODO: have it dedent properly
+          putKeyword("except", UnindentingInsertHandler.OF_TRY, PRE_COLON, result);
+          putKeyword("finally", UnindentingInsertHandler.OF_TRY, TailType.CASE_COLON, result);
         }
       }
     );
@@ -481,8 +487,7 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
         protected void addCompletions(
           @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
         ) {
-          final @NonNls String[] colon_strings = {"else"};
-          putKeywords(colon_strings, TailType.CASE_COLON, result); // TODO: have it dedent properly
+          putKeyword("else", UnindentingInsertHandler.OF_ELSE, TailType.CASE_COLON, result);
         }
       }
     );
