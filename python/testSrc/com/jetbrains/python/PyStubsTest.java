@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubUpdatingIndex;
+import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.psi.*;
@@ -19,6 +20,7 @@ import com.jetbrains.python.psi.stubs.PyClassStub;
 import java.io.IOException;
 import java.util.List;
 
+@TestDataPath("$CONTENT_ROOT/../testData/stubs/")
 public class PyStubsTest extends PyLightFixtureTestCase {
   private static final String PARSED_ERROR_MSG = "Operations should have been performed on stubs but caused file to be parsed";
 
@@ -81,7 +83,7 @@ public class PyStubsTest extends PyLightFixtureTestCase {
 
     assertNotParsed(file);
   }
-  
+
   public void testLoadingDeeperTreeRemainsKnownPsiElement() throws Exception {
     final PyFile file = getTestFile();
     final List<PyClass> classes = file.getTopLevelClasses();
@@ -146,7 +148,7 @@ public class PyStubsTest extends PyLightFixtureTestCase {
 
     StubElement fileStub = fileImpl.getStub();
     assertNull("There should be no stub if file holds tree element", fileStub);
-    
+
     FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, myFixture.getProject(), null);
     fileImpl.unloadContent();
     assertNull(fileImpl.getTreeElement()); // Test unload successed.
@@ -156,6 +158,16 @@ public class PyStubsTest extends PyLightFixtureTestCase {
 
     final PyClassStub newclassstub = (PyClassStub)fileStub.getChildrenStubs().get(0);
     assertEquals("RenamedClass", newclassstub.getName());
+  }
+
+  public void testImportStatement() throws Exception {
+    final PyFileImpl file = (PyFileImpl) getTestFile();
+    final List<PyFromImportStatement> fromImports = file.getFromImports();
+    assertEquals(1, fromImports.size());
+    final PyImportElement[] importElements = fromImports.get(0).getImportElements();
+    assertEquals(1, importElements.length);
+    assertEquals("argv", importElements [0].getVisibleName());
+    assertNotParsed(file);
   }
 
   private PyFile getTestFile() throws Exception {

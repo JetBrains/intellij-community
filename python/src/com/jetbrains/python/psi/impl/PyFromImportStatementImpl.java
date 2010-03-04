@@ -1,19 +1,3 @@
-/*
- *  Copyright 2005 Pythonid Project
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS"; BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -21,11 +5,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.ArrayFactory;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
+import com.jetbrains.python.psi.stubs.PyFromImportStatementStub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,15 +19,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 02.06.2005
- * Time: 22:31:35
- * To change this template use File | Settings | File Templates.
+ * @author yole
  */
-public class PyFromImportStatementImpl extends PyElementImpl implements PyFromImportStatement {
+public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportStatementStub> implements PyFromImportStatement {
   public PyFromImportStatementImpl(ASTNode astNode) {
     super(astNode);
+  }
+
+  public PyFromImportStatementImpl(PyFromImportStatementStub stub) {
+    super(stub, PyElementTypes.FROM_IMPORT_STATEMENT);
   }
 
   @Override
@@ -59,6 +45,14 @@ public class PyFromImportStatementImpl extends PyElementImpl implements PyFromIm
   }
 
   public PyImportElement[] getImportElements() {
+    final PyFromImportStatementStub stub = getStub();
+    if (stub != null) {
+      return stub.getChildrenByType(PyElementTypes.IMPORT_ELEMENT, new ArrayFactory<PyImportElement>() {
+        public PyImportElement[] create(int count) {
+          return new PyImportElement[count];
+        }
+      });
+    }
     List<PyImportElement> result = new ArrayList<PyImportElement>();
     final ASTNode importKeyword = getNode().findChildByType(PyTokenTypes.IMPORT_KEYWORD);
     if (importKeyword != null) {

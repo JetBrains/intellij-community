@@ -64,7 +64,8 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     return findByName(name, getTopLevelClasses());
   }
 
-  private <T extends PsiNamedElement> T findByName(String name, List<T> namedElements) {
+  @Nullable
+  private static <T extends PsiNamedElement> T findByName(String name, List<T> namedElements) {
     for (T namedElement : namedElements) {
       if (name.equals(namedElement.getName())) {
         return namedElement;
@@ -177,7 +178,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   public PsiElement findExportedName(String name) {
     // dull plain resolve, as fast as stub index or better
     ResolveProcessor proc = new ResolveProcessor(name);
-    PyResolveUtil.treeCrawlUp(proc, true, getLastChild());
+    PyResolveUtil.treeCrawlUp(proc, true, getLastChild(), this);
     return proc.getResult();
   }
 
@@ -198,17 +199,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
   
   public List<PyFromImportStatement> getFromImports() {
-    final List<PyFromImportStatement> result = new ArrayList<PyFromImportStatement>();
-    accept(new PyRecursiveElementVisitor() {
-      public void visitPyElement(final PyElement node) {
-        super.visitPyElement(node);
-        if (PyFromImportStatement.class.isInstance(node)) {
-          //noinspection unchecked
-          result.add((PyFromImportStatement)node);
-        }
-      }
-    });
-    return result;
+    return getTopLevelItems(PyElementTypes.FROM_IMPORT_STATEMENT, PyFromImportStatement.class);
   }
 
   private <T> List<T> getTopLevelItems(final IElementType elementType, final Class itemClass) {

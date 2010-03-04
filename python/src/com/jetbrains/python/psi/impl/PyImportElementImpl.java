@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -13,6 +14,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyAsScopeProcessor;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
+import com.jetbrains.python.psi.stubs.PyImportElementStub;
 import com.jetbrains.python.toolbox.SingleIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,9 +27,13 @@ import java.util.List;
  *
  * @author yole
  */
-public class PyImportElementImpl extends PyElementImpl implements PyImportElement {
+public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> implements PyImportElement {
   public PyImportElementImpl(ASTNode astNode) {
     super(astNode);
+  }
+
+  public PyImportElementImpl(PyImportElementStub stub) {
+    super(stub, PyElementTypes.IMPORT_ELEMENT);
   }
 
   @Nullable
@@ -45,6 +51,18 @@ public class PyImportElementImpl extends PyElementImpl implements PyImportElemen
 
   @Nullable
   public String getVisibleName() {
+    final PyImportElementStub stub = getStub();
+    if (stub != null) {
+      final String asName = stub.getAsName();
+      if (!StringUtil.isEmpty(asName)) {
+        return asName;
+      }
+      final String importedName = stub.getImportedName();
+      if (!StringUtil.isEmpty(importedName)) {
+        return importedName;
+      }
+      return null;
+    }
     PyTargetExpression asname = getAsName();
     if (asname != null) return asname.getName();
     final PyReferenceExpression import_ref = getImportReference();
