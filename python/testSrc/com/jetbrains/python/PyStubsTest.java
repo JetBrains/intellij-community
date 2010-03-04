@@ -171,6 +171,9 @@ public class PyStubsTest extends PyLightFixtureTestCase {
     assertEquals("argv", importElements [0].getVisibleName());
     assertFalse(fromImport.isStarImport());
     assertEquals(0, fromImport.getRelativeLevel());
+    final List<String> qName = fromImport.getImportSourceQName();
+    assertEquals(1, qName.size());
+    assertEquals("sys", qName.get(0));
 
     final List<PyImportElement> importTargets = file.getImportTargets();
     assertEquals(1, importTargets.size());

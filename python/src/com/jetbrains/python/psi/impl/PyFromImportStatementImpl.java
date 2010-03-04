@@ -48,6 +48,15 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
     return childToPsi(TokenSet.create(PyElementTypes.REFERENCE_EXPRESSION), 0);
   }
 
+  public List<String> getImportSourceQName() {
+    final PyFromImportStatementStub stub = getStub();
+    if (stub != null) {
+      return stub.getImportSourceQName();
+    }
+
+    return ResolveImportUtil.getQualifiedName(getImportSource());
+  }
+
   public PyImportElement[] getImportElements() {
     final PyFromImportStatementStub stub = getStub();
     if (stub != null) {

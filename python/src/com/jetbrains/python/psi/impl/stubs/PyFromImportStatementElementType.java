@@ -11,6 +11,8 @@ import com.jetbrains.python.psi.impl.PyFromImportStatementImpl;
 import com.jetbrains.python.psi.stubs.PyFromImportStatementStub;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
@@ -32,17 +34,27 @@ public class PyFromImportStatementElementType extends PyStubElementType<PyFromIm
 
   @Override
   public PyFromImportStatementStub createStub(PyFromImportStatement psi, StubElement parentStub) {
-    return new PyFromImportStatementStubImpl(psi.isStarImport(), psi.getRelativeLevel(), parentStub);
+    return new PyFromImportStatementStubImpl(psi.getImportSourceQName(), psi.isStarImport(), psi.getRelativeLevel(), parentStub);
   }
 
   public void serialize(PyFromImportStatementStub stub, StubOutputStream dataStream) throws IOException {
+    final List<String> qName = stub.getImportSourceQName();
+    dataStream.writeVarInt(qName.size());
+    for (String s : qName) {
+      dataStream.writeName(s);
+    }
     dataStream.writeBoolean(stub.isStarImport());
     dataStream.writeVarInt(stub.getRelativeLevel());
   }
 
   public PyFromImportStatementStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
+    int size = dataStream.readVarInt();
+    List<String> qName = new ArrayList<String>(size);
+    for (int i = 0; i < size; i++) {
+      qName.add(dataStream.readName().getString());
+    }
     boolean isStarImport = dataStream.readBoolean();
     int relativeLevel = dataStream.readVarInt();
-    return new PyFromImportStatementStubImpl(isStarImport, relativeLevel, parentStub);
+    return new PyFromImportStatementStubImpl(qName, isStarImport, relativeLevel, parentStub);
   }
 }

@@ -186,7 +186,7 @@ public class ResolveImportUtil {
   }
 
   @Nullable
-  private static List<String> getQualifiedName(PyReferenceExpression reference) {
+  public static List<String> getQualifiedName(PyReferenceExpression reference) {
     List<String> result = new ArrayList<String>();
     final List<PyReferenceExpression> components = PyResolveUtil.unwindQualifiers(reference);
     if (components == null) {
