@@ -132,7 +132,10 @@ public class PyBuiltinCache {
 
   @Nullable
   public PyClass getClass(@NonNls String name) {
-    return myBuiltinsFile.findTopLevelClass(name);
+    if (myBuiltinsFile != null) {
+      return myBuiltinsFile.findTopLevelClass(name);
+    }
+    return null;
   }
 
   /**
