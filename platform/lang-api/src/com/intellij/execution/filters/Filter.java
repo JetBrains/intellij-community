@@ -28,16 +28,22 @@ public interface Filter {
     public final int highlightEndOffset;
     public final TextAttributes highlightAttributes;
     public final HyperlinkInfo hyperlinkInfo;
+    @Nullable public final String foldingPlaceholder;
 
     public Result(final int highlightStartOffset, final int highlightEndOffset, final HyperlinkInfo hyperlinkInfo) {
       this(highlightStartOffset, highlightEndOffset, hyperlinkInfo, null);
     }
 
     public Result(final int highlightStartOffset, final int highlightEndOffset, final HyperlinkInfo hyperlinkInfo, final TextAttributes highlightAttributes) {
+      this(highlightStartOffset, highlightEndOffset, hyperlinkInfo, highlightAttributes, null);
+    }
+
+    public Result(final int highlightStartOffset, final int highlightEndOffset, final HyperlinkInfo hyperlinkInfo, final TextAttributes highlightAttributes, @Nullable String foldingPlaceholder) {
       this.highlightStartOffset = highlightStartOffset;
       this.highlightEndOffset = highlightEndOffset;
-      this.hyperlinkInfo = hyperlinkInfo;
       this.highlightAttributes = highlightAttributes;
+      this.hyperlinkInfo = hyperlinkInfo;
+      this.foldingPlaceholder = foldingPlaceholder;
     }
   }
 
