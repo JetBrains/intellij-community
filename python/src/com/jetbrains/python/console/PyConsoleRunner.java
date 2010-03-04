@@ -10,19 +10,23 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.process.*;
-import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.PairProcessor;
@@ -50,7 +54,7 @@ public class PyConsoleRunner {
   private final CommandLineArgumentsProvider myProvider;
   private final String myWorkingDir;
 
-  private ConsoleView myConsoleView;
+  private LanguageConsoleViewImpl myConsoleView;
   private final ConsoleHistoryModel myHistory = new ConsoleHistoryModel();
 
   private PyConsoleRunner(@NotNull final Project project,
@@ -100,6 +104,15 @@ public class PyConsoleRunner {
 
     // Init console view
     myConsoleView = new LanguageConsoleViewImpl(myProject, "title", PythonLanguage.getInstance());
+    myProcessHandler.addProcessListener(new ProcessAdapter() {
+      @Override
+      public void processTerminated(ProcessEvent event) {
+        myConsoleView.setEditorEnabled(false);
+      }
+    });
+
+// Setup default prompt
+    myConsoleView.getConsole().setPrompt(">>>");
 
 // Attach to process
     myConsoleView.attachToProcess(myProcessHandler);
@@ -129,8 +142,7 @@ public class PyConsoleRunner {
 // Show in run toolwindow
     ExecutionManager.getInstance(myProject).getContentManager().showRunContent(defaultExecutor, myDescriptor);
 
-    // request focus
-    ((ConsoleViewImpl)myConsoleView).setEditorEnabled(false);
+// Request focus
     IdeFocusManager.getInstance(myProject).requestFocus(myConsoleView.getPreferredFocusableComponent(), true);
   }
 
@@ -202,7 +214,7 @@ public class PyConsoleRunner {
   }
 
   public LanguageConsoleImpl getLanguageConsole() {
-    return ((LanguageConsoleViewImpl)myConsoleView).getConsole();
+    return myConsoleView.getConsole();
   }
 
   private void runExecuteActionInner(final boolean erase) {
@@ -237,17 +249,24 @@ public class PyConsoleRunner {
   }
   
   private class PyConsoleColoredProcessHandler extends ColoredProcessHandler {
+    private final String[] PROMPTS = new String[]{">>>", "help>"};
+
     public PyConsoleColoredProcessHandler(final Process process, final Charset outputEncoding) {
       super(process, getProviderCommandLine(), outputEncoding);
     }
 
-
-
     @Override
     protected void textAvailable(final String text, final Key attributes) {
-      if (!(text.startsWith(">>>") && attributes == ProcessOutputTypes.STDERR)){
-        super.textAvailable(text, attributes);
+      for (String prompt : PROMPTS) {
+        if (text.startsWith(prompt)) {
+          final String currentPrompt = myConsoleView.getConsole().getPrompt();
+          if (!currentPrompt.equals(prompt)){
+            myConsoleView.getConsole().setPrompt(prompt);
+          }
+          return;
+        }
       }
+      super.textAvailable(text, attributes);
     }
   }
 }

@@ -46,7 +46,7 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
     assert sdk != null : "sdk is null";
 
     PyConsoleRunner.run(module.getProject(),
-                        PyBundle.message("irb.console"),
+                        PyBundle.message("python.console"),
                         new CommandLineArgumentsProvider() {
                           public String[] getArguments() {
                             return new String[]{sdk.getHomePath(), "-i"};
