@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.template;
 
+import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -294,8 +295,8 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
   }
 
   public String computeTemplateKey(@NotNull CustomTemplateCallback callback) {
-    ZenCodingSettings settings = ZenCodingSettings.getInstance();
-    if (!settings.ENABLED) {
+    WebEditorOptions webEditorOptions = WebEditorOptions.getInstance();
+    if (!webEditorOptions.isZenCodingEnabled()) {
       return null;
     }
     PsiFile file = callback.getFile();

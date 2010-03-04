@@ -28,6 +28,7 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
   private JCheckBox myAutomaticallyInsertClosingTagCheckBox;
   private JCheckBox myAutomaticallyInsertRequiredAttributesCheckBox;
   private JCheckBox myAutomaticallyStartAttributeAfterCheckBox;
+  private JCheckBox myEnableZenCodingCheckBox;
 
   public String getDisplayName() {
     return XmlBundle.message("web.editor.configuration.title");
@@ -47,9 +48,10 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
 
   public boolean isModified() {
     final WebEditorOptions xmlEditorOptions = WebEditorOptions.getInstance();
-    return xmlEditorOptions.isAutomaticallyInsertClosingTag() != myAutomaticallyInsertClosingTagCheckBox.isSelected()
-        || xmlEditorOptions.isAutomaticallyInsertRequiredAttributes() != myAutomaticallyInsertRequiredAttributesCheckBox.isSelected()
-        || xmlEditorOptions.isAutomaticallyStartAttribute() != myAutomaticallyStartAttributeAfterCheckBox.isSelected();
+    return xmlEditorOptions.isAutomaticallyInsertClosingTag() != myAutomaticallyInsertClosingTagCheckBox.isSelected() ||
+           xmlEditorOptions.isAutomaticallyInsertRequiredAttributes() != myAutomaticallyInsertRequiredAttributesCheckBox.isSelected() ||
+           xmlEditorOptions.isAutomaticallyStartAttribute() != myAutomaticallyStartAttributeAfterCheckBox.isSelected() ||
+           xmlEditorOptions.isZenCodingEnabled() != myEnableZenCodingCheckBox.isSelected();
   }
 
   public void apply() throws ConfigurationException {
@@ -57,6 +59,7 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
     xmlEditorOptions.setAutomaticallyInsertClosingTag(myAutomaticallyInsertClosingTagCheckBox.isSelected());
     xmlEditorOptions.setAutomaticallyInsertRequiredAttributes(myAutomaticallyInsertRequiredAttributesCheckBox.isSelected());
     xmlEditorOptions.setAutomaticallyStartAttribute(myAutomaticallyStartAttributeAfterCheckBox.isSelected());
+    xmlEditorOptions.setEnableZenCoding(myEnableZenCodingCheckBox.isSelected());
   }
 
   public void reset() {
@@ -64,6 +67,7 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
     myAutomaticallyInsertClosingTagCheckBox.setSelected(xmlEditorOptions.isAutomaticallyInsertClosingTag());
     myAutomaticallyInsertRequiredAttributesCheckBox.setSelected(xmlEditorOptions.isAutomaticallyInsertRequiredAttributes());
     myAutomaticallyStartAttributeAfterCheckBox.setSelected(xmlEditorOptions.isAutomaticallyStartAttribute());
+    myEnableZenCodingCheckBox.setSelected(xmlEditorOptions.isZenCodingEnabled());
   }
 
   public void disposeUIResources() {

@@ -65,7 +65,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class StructureViewComponent extends SimpleToolWindowPanel implements TreeActionsOwner, DataProvider, StructureView {
+public class StructureViewComponent extends SimpleToolWindowPanel implements TreeActionsOwner, DataProvider, StructureView.Scrollable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.structureView.newStructureView.StructureViewComponent");
   @NonNls private static final String ourHelpID = "viewingStructure.fileStructureView";
 
@@ -87,6 +87,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   private final Project myProject;
   private final StructureViewModel myTreeModel;
   private static int ourSettingsModificationCount;
+  private JTree myTree;
 
   public StructureViewComponent(FileEditor editor, StructureViewModel structureViewModel, Project project) {
     this(editor, structureViewModel, project, true);
@@ -120,12 +121,12 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     };
 
     final DefaultTreeModel model = new DefaultTreeModel(new DefaultMutableTreeNode(treeStructure.getRootElement()));
-    JTree tree = new Tree(model);
-    tree.setRootVisible(showRootNode);
-    tree.setShowsRootHandles(true);
+    myTree = new Tree(model);
+    myTree.setRootVisible(showRootNode);
+    myTree.setShowsRootHandles(true);
 
-    myAbstractTreeBuilder = new StructureTreeBuilder(project, tree,
-                                                     (DefaultTreeModel)tree.getModel(),treeStructure,myTreeModelWrapper) {
+    myAbstractTreeBuilder = new StructureTreeBuilder(project, myTree,
+                                                     (DefaultTreeModel)myTree.getModel(),treeStructure,myTreeModelWrapper) {
       @Override
       protected boolean validateNode(Object child) {
         return isValid(child);
@@ -805,4 +806,28 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     return ourHelpID;
   }
 
+  public Dimension getCurrentSize() {
+    return myTree.getSize();
+  }
+
+  public void setReferenceSizeWhileInitializing(Dimension size) {
+    _setRefSize(size);
+
+    if (size != null) {
+      myAbstractTreeBuilder.getReady(this).doWhenDone(new Runnable() {
+        public void run() {
+          _setRefSize(null);
+        }
+      });
+    }
+  }
+
+  private void _setRefSize(Dimension size) {
+    myTree.setPreferredSize(size);
+    myTree.setMinimumSize(size);
+    myTree.setMaximumSize(size);
+
+    myTree.revalidate();
+    myTree.repaint();
+  }
 }

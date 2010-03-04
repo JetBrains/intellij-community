@@ -107,32 +107,15 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
           final AnAction anAction = (AnAction)actionWithParentGroup.getKey();
           final Presentation templatePresentation = anAction.getTemplatePresentation();
           final Icon icon = templatePresentation.getIcon();
-          final LayeredIcon layeredIcon = new LayeredIcon(2);
-          layeredIcon.setIcon(EMPTY_ICON, 0);
-          if (icon != null && icon.getIconWidth() <= EMPTY_ICON.getIconWidth() && icon.getIconHeight() <= EMPTY_ICON.getIconHeight()) {
-            layeredIcon.setIcon(icon, 1, (- icon.getIconWidth() + EMPTY_ICON.getIconWidth())/2, (EMPTY_ICON.getIconHeight() - icon.getIconHeight())/2);
-          }
 
-          final Presentation presentation = new Presentation();
+          final DataContext dataContext = DataManager.getInstance().getDataContext(myContextComponent);
 
-          final AnActionEvent event = new AnActionEvent(null, DataManager.getInstance().getDataContext(myContextComponent),
-                                                        ActionPlaces.UNKNOWN, presentation, ActionManager.getInstance(),
-                                                        0);
+          final AnActionEvent event = updateActionBeforShow(anAction, dataContext);
+          final Presentation presentation = event.getPresentation();
 
-          ActionUtil.performDumbAwareUpdate(anAction, event, false);
-          ActionUtil.performDumbAwareUpdate(anAction, event, true);
+          final Color fg = defaultActionForeground(isSelected, presentation);
 
-          final Color fg = isSelected ? UIUtil.getListSelectionForeground() :
-                           presentation.isEnabled() && presentation.isVisible() ? UIUtil.getListForeground() : UIUtil.getInactiveTextColor();
-
-          final Shortcut[] shortcutSet = KeymapManager.getInstance().getActiveKeymap().getShortcuts(myActionManager.getId(anAction));
-          final String actionPresentation = templatePresentation.getText() + (shortcutSet != null && shortcutSet.length > 0
-                                                                              ? " (" + KeymapUtil.getShortcutText(shortcutSet[0]) + ")"
-                                                                              : "");
-          final JLabel actionLabel = new JLabel(actionPresentation, layeredIcon, SwingConstants.LEFT);
-          actionLabel.setBackground(bg);
-          actionLabel.setForeground(fg);
-
+          final JLabel actionLabel = createActionLabel(anAction, templatePresentation.getText(), fg, bg, icon);
           panel.add(actionLabel, BorderLayout.WEST);
 
           final String groupName = (String)actionWithParentGroup.getValue();
@@ -146,6 +129,45 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
         return panel;
       }
     };
+  }
+
+  protected String getActionId(AnAction anAction) {
+    return myActionManager.getId(anAction);
+  }
+
+  protected JLabel createActionLabel(final AnAction anAction, final String anActionName,
+                                     final Color fg, final Color bg,
+                                     final Icon icon) {
+    final LayeredIcon layeredIcon = new LayeredIcon(2);
+    layeredIcon.setIcon(EMPTY_ICON, 0);
+    if (icon != null && icon.getIconWidth() <= EMPTY_ICON.getIconWidth() && icon.getIconHeight() <= EMPTY_ICON.getIconHeight()) {
+      layeredIcon.setIcon(icon, 1, (- icon.getIconWidth() + EMPTY_ICON.getIconWidth())/2, (EMPTY_ICON.getIconHeight() - icon.getIconHeight())/2);
+    }
+
+    final Shortcut[] shortcutSet = KeymapManager.getInstance().getActiveKeymap().getShortcuts(getActionId(anAction));
+    final String actionName = anActionName + (shortcutSet != null && shortcutSet.length > 0
+                                                                        ? " (" + KeymapUtil.getShortcutText(shortcutSet[0]) + ")"
+                                                                        : "");
+    final JLabel actionLabel = new JLabel(actionName, layeredIcon, SwingConstants.LEFT);
+    actionLabel.setBackground(bg);
+    actionLabel.setForeground(fg);
+    return actionLabel;
+  }
+
+  protected AnActionEvent updateActionBeforShow(AnAction anAction, DataContext dataContext) {
+    final AnActionEvent event = new AnActionEvent(null, dataContext,
+                                                  ActionPlaces.UNKNOWN, new Presentation(), ActionManager.getInstance(),
+                                                  0);
+    ActionUtil.performDumbAwareUpdate(anAction, event, false);
+    ActionUtil.performDumbAwareUpdate(anAction, event, true);
+    return event;
+  }
+
+  protected Color defaultActionForeground(boolean isSelected, Presentation presentation) {
+    return isSelected ? UIUtil.getListSelectionForeground()
+                      : presentation.isEnabled() && presentation.isVisible()
+                        ? UIUtil.getListForeground()
+                        : UIUtil.getInactiveTextColor();
   }
 
   public String[] getNames(boolean checkBoxState) {
@@ -170,7 +192,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
         collectActionIds(result, (ActionGroup)action);
       }
       else if (action != null) {
-        result.add(myActionManager.getId(action));
+        result.add(getActionId(action));
       }
     }
   }
@@ -182,7 +204,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
     if (checkBoxState) {
       final Set<String> ids = ((ActionManagerImpl)myActionManager).getActionIds();
       for (AnAction action : map.keySet()) { //do not add already included actions
-        ids.remove(myActionManager.getId(action));
+        ids.remove(getActionId(action));
       }
       if (ids.contains(id)) {
         final AnAction anAction = myActionManager.getAction(id);
@@ -201,7 +223,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
         final ActionGroup actionGroup = (ActionGroup)action;
         final String groupName = actionGroup.getTemplatePresentation().getText();
         collectActions(id, result, actionGroup, groupName != null ? groupName : containingGroupName);
-      } else if (myActionManager.getId(action) == id) {
+      } else if (getActionId(action) == id) {
         final String groupName = group.getTemplatePresentation().getText();
         result.put(action, groupName != null && groupName.length() > 0 ? groupName : containingGroupName);
       }

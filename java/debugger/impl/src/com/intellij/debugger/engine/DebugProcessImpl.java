@@ -738,13 +738,12 @@ public abstract class DebugProcessImpl implements DebugProcess {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     
     if (myState.compareAndSet(STATE_INITIAL, STATE_DETACHING) || myState.compareAndSet(STATE_ATTACHED, STATE_DETACHING)) {
-      myVirtualMachineProxy = null;
-      myPositionManager = null;
-
       try {
         getManagerThread().close();
       }
       finally {
+        myVirtualMachineProxy = null;
+        myPositionManager = null;
         myState.set(STATE_DETACHED);
         try {
           myDebugProcessDispatcher.getMulticaster().processDetached(this, closedByUser);

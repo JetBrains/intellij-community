@@ -72,7 +72,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private final Set<Runnable> myIdleRequests = new com.intellij.util.containers.HashSet<Runnable>();
   private final EdtRunnable myIdleRunnable = new EdtRunnable() {
     public void runEdt() {
-      if (isFocusTransferReady() && !isIdleQueueEmpty()) {
+      if (isFocusTransferReady() && !isIdleQueueEmpty() && IdeEventQueue.getInstance().isReady()) {
         flushIdleRequests();
       }
       else {

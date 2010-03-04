@@ -19,6 +19,7 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.impl.FileSetCompileScope;
 import com.intellij.compiler.impl.ModuleCompileScope;
 import com.intellij.compiler.impl.javaCompiler.AnnotationProcessingCompiler;
+import com.intellij.compiler.impl.resourceCompiler.ResourceCompiler;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.compiler.CompilerBundle;
@@ -38,7 +39,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -48,7 +48,8 @@ public class ProcessAnnotationsAction extends CompileActionBase {
     final Module module = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
     final CompilerFilter filter = new CompilerFilter() {
       public boolean acceptCompiler(com.intellij.openapi.compiler.Compiler compiler) {
-        return compiler instanceof AnnotationProcessingCompiler;
+        // EclipseLink CanonicalModelProcessor reads input from output hence adding ResourcesCompiler
+        return compiler instanceof AnnotationProcessingCompiler || compiler instanceof ResourceCompiler;
       }
     };
     if (module != null) {
