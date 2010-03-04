@@ -67,4 +67,13 @@ public interface KeyboardShortcut extends DomElement {
 	GenericAttributeValue<String> getSecondKeystroke();
 
 
+        /**
+         * Returns the value of the remove child.
+         * Attribute remove option
+         * @return the value of the remove child.
+         */
+        @NotNull
+        GenericAttributeValue<String> getRemove();
+
+
 }
