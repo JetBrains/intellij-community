@@ -17,6 +17,7 @@
 package com.intellij.execution.impl;
 
 import com.intellij.codeInsight.navigation.IncrementalSearchHandler;
+import com.intellij.execution.ConsoleFolding;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.filters.*;
 import com.intellij.execution.process.ProcessHandler;
@@ -73,7 +74,6 @@ import com.intellij.util.EditorPopupHandler;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.CharArrayUtil;
-import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -172,7 +172,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private ArrayList<TokenInfo> myTokens = new ArrayList<TokenInfo>();
   private final Hyperlinks myHyperlinks = new Hyperlinks();
-  private final TIntObjectHashMap<Boolean> myFolding = new TIntObjectHashMap<Boolean>();
+  private final TIntObjectHashMap<ConsoleFolding> myFolding = new TIntObjectHashMap<ConsoleFolding>();
 
   private String myHelpId;
 
@@ -807,16 +807,14 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
     final int startLine = Math.max(0, line1);
 
-    final Set<FoldRegion> toRemove = clearOutdatedFolding(document, endLine, startLine);
     final List<FoldRegion> toAdd = new ArrayList<FoldRegion>();
 
     for(int line = startLine; line <= endLine; line++) {
-      final int startOffset = document.getLineStartOffset(line);
       int endOffset = document.getLineEndOffset(line);
       if (endOffset < document.getTextLength()) {
         endOffset++; // add '\n'
       }
-      final String text = chars.subSequence(startOffset, endOffset).toString();
+      final String text = getLineText(document, line, true);
       Filter.Result result = myCustomFilter.applyFilter(text, endOffset);
       if (result == null) {
         result = myPredefinedMessageFilter.applyFilter(text, endOffset);
@@ -826,21 +824,18 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         final int highlightEndOffset = result.highlightEndOffset;
         final HyperlinkInfo hyperlinkInfo = result.hyperlinkInfo;
         addHyperlink(highlightStartOffset, highlightEndOffset, result.highlightAttributes, hyperlinkInfo, hyperlinkAttributes);
-        addFolding(document, chars, line, result.isInternal, toAdd);
       }
+      addFolding(document, chars, line, toAdd);
     }
-    if (!toAdd.isEmpty() || !toRemove.isEmpty()) {
-      doUpdateFolding(toRemove, toAdd);
+    if (!toAdd.isEmpty()) {
+      doUpdateFolding(toAdd);
     }
   }
 
-  private void doUpdateFolding(final Set<FoldRegion> toRemove, final List<FoldRegion> toAdd) {
+  private void doUpdateFolding(final List<FoldRegion> toAdd) {
     final FoldingModel model = myEditor.getFoldingModel();
     model.runBatchFoldingOperationDoNotCollapseCaret(new Runnable() {
       public void run() {
-        for (FoldRegion region : toRemove) {
-          model.removeFoldRegion(region);
-        }
         for (FoldRegion region : toAdd) {
           region.setExpanded(false);
           model.addFoldRegion(region);
@@ -849,39 +844,49 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     });
   }
 
-  private Set<FoldRegion> clearOutdatedFolding(Document document, int endLine, int startLine) {
-    final THashSet<FoldRegion> toRemove = new THashSet<FoldRegion>();
-    final int dirtyRegionStart = document.getLineStartOffset(startLine);
-    final int diretyRegionEnd = document.getLineEndOffset(endLine);
-    for (FoldRegion region : myEditor.getFoldingModel().getAllFoldRegions()) {
-      final int regStart = region.getStartOffset();
-      final int regEnd = region.getEndOffset();
-      if (regStart >= dirtyRegionStart && regStart <= dirtyRegionStart ||
-          regEnd >= dirtyRegionStart && regEnd <= diretyRegionEnd) {
-        toRemove.add(region);
-      }
-    }
-    return toRemove;
-  }
+  private void addFolding(Document document, CharSequence chars, int line, List<FoldRegion> toAdd) {
+    ConsoleFolding current = foldingForLine(getLineText(document, line, false));
+    myFolding.put(line, current);
 
-  private void addFolding(Document document, CharSequence chars, int line, boolean isInternal, List<FoldRegion> toAdd) {
-    myFolding.put(line, isInternal);
-    final Boolean prevFolding = myFolding.get(line - 1);
-    if (!isInternal && Boolean.TRUE.equals(prevFolding)) {
+    final ConsoleFolding prevFolding = myFolding.get(line - 1);
+    if (current == null && prevFolding != null) {
       final int lEnd = line - 1;
       int lStart = lEnd;
-      while (Boolean.TRUE.equals(myFolding.get(lStart - 1))) lStart--;
+      while (prevFolding.equals(myFolding.get(lStart - 1))) lStart--;
       if (lStart == lEnd) {
         return;
       }
 
+      List<String> toFold = new ArrayList<String>(lEnd - lStart + 1);
+      for (int i = lStart; i <= lEnd; i++) {
+        toFold.add(getLineText(document, i, false));
+      }
+
       int oStart = document.getLineStartOffset(lStart);
-      oStart = CharArrayUtil.shiftForward(chars, oStart, " \t");
-//      if (oStart > 0) oStart--;
+//      oStart = CharArrayUtil.shiftForward(chars, oStart, " \t");
+      if (oStart > 0) oStart--;
       int oEnd = CharArrayUtil.shiftBackward(chars, document.getLineEndOffset(lEnd) - 1, " \t") + 1;
 
-      toAdd.add(new FoldRegionImpl(myEditor, oStart, oEnd, " " + (lEnd - lStart + 1) + " internal calls", null));
+      toAdd.add(new FoldRegionImpl(myEditor, oStart, oEnd, prevFolding.getPlaceholderText(toFold), null));
     }
+  }
+
+  private static String getLineText(Document document, int lineNumber, boolean includeEol) {
+    int endOffset = document.getLineEndOffset(lineNumber);
+    if (includeEol && endOffset < document.getTextLength()) {
+      endOffset++;
+    }
+    return document.getCharsSequence().subSequence(document.getLineStartOffset(lineNumber), endOffset).toString();
+  }
+
+  private static ConsoleFolding foldingForLine(String lineText) {
+    ConsoleFolding current = null;
+    for (ConsoleFolding folding : ConsoleFolding.EP_NAME.getExtensions()) {
+      if (folding.shouldFoldLine(lineText)) {
+        current = folding;
+      }
+    }
+    return current;
   }
 
   private void addHyperlink(final int highlightStartOffset,

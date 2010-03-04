@@ -28,22 +28,16 @@ public interface Filter {
     public final int highlightEndOffset;
     public final TextAttributes highlightAttributes;
     public final HyperlinkInfo hyperlinkInfo;
-    public final boolean isInternal;
 
     public Result(final int highlightStartOffset, final int highlightEndOffset, final HyperlinkInfo hyperlinkInfo) {
       this(highlightStartOffset, highlightEndOffset, hyperlinkInfo, null);
     }
 
     public Result(final int highlightStartOffset, final int highlightEndOffset, final HyperlinkInfo hyperlinkInfo, final TextAttributes highlightAttributes) {
-      this(highlightStartOffset, highlightEndOffset, hyperlinkInfo, highlightAttributes, false);
-    }
-
-    public Result(final int highlightStartOffset, final int highlightEndOffset, final HyperlinkInfo hyperlinkInfo, final TextAttributes highlightAttributes, boolean isInternal) {
       this.highlightStartOffset = highlightStartOffset;
       this.highlightEndOffset = highlightEndOffset;
-      this.highlightAttributes = highlightAttributes;
       this.hyperlinkInfo = hyperlinkInfo;
-      this.isInternal = isInternal;
+      this.highlightAttributes = highlightAttributes;
     }
   }
 

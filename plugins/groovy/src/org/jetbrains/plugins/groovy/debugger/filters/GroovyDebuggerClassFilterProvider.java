@@ -41,7 +41,12 @@ public class GroovyDebuggerClassFilterProvider extends StackFrameFilter implemen
     return list;
   }
 
-  public boolean isInternalFrame(String className, String methodName) {
+  public boolean isAuxiliaryFrame(String className, String methodName) {
+    if (className.equals("org.codehaus.groovy.runtime.DefaultGroovyMethods") ||
+        className.equals("org.codehaus.groovy.runtime.DefaultGroovyMethodsSupport")) {
+      return false;
+    }
+
     for (ClassFilter filter : FILTERS) {
       final String pattern = filter.getPattern();
       if (className.startsWith(pattern.substring(0, pattern.length() - 1))) {

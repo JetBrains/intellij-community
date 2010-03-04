@@ -141,8 +141,9 @@
     <extensionPoint name="clsStubBuilderFactory" interface="com.intellij.psi.impl.compiled.ClsStubBuilderFactory"/>
     <extensionPoint name="javaMainMethodProvider" interface="com.intellij.codeInsight.runner.JavaMainMethodProvider"/>
 
-    <!--debugger-->
     <extensionPoint name="debuggerClassFilterProvider" interface="com.intellij.ui.classFilter.DebuggerClassFilterProvider"/>
+
+    <extensionPoint name="stackFrameFilter" interface="com.intellij.execution.filters.StackFrameFilter"/>
 
     <extensionPoint name="paletteItemProvider" area="IDEA_PROJECT" interface="com.intellij.ide.palette.PaletteItemProvider"/>
 
@@ -711,6 +712,7 @@
     <gotoFileContributor implementation="com.intellij.ide.util.gotoByName.ProjectBaseDirNavigationContributor"/>
 
     <consoleFilterProvider implementation="com.intellij.execution.filters.DefaultConsoleFiltersProvider"/>
+    <console.folding implementation="com.intellij.execution.filters.AuxiliaryCallsFolding"/>
 
     <stackFrameFilter implementation="com.intellij.execution.filters.ReflectionStackFrameFilter"/>
 

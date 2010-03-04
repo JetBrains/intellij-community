@@ -239,7 +239,7 @@
 
   <extensionPoint name="consoleFilterProvider" interface="com.intellij.execution.filters.ConsoleFilterProvider"/>
 
-  <extensionPoint name="stackFrameFilter" interface="com.intellij.execution.filters.StackFrameFilter"/>
+  <extensionPoint name="console.folding" interface="com.intellij.execution.ConsoleFolding"/>
 
   <extensionPoint name="configurationProducer"
                   interface="com.intellij.execution.junit.RuntimeConfigurationProducer"/>

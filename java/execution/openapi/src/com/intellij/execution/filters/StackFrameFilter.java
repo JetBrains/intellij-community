@@ -8,6 +8,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 public abstract class StackFrameFilter {
   public static final ExtensionPointName<StackFrameFilter> EP_NAME = ExtensionPointName.create("com.intellij.stackFrameFilter");
 
-  public abstract boolean isInternalFrame(String className, String methodName);
+  public abstract boolean isAuxiliaryFrame(String className, String methodName);
 
 }
