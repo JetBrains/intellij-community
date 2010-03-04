@@ -421,7 +421,7 @@ public class DependencyCache {
           findModifiedConstants(qName, changed, removed);
           if (!changed.isEmpty() || !removed.isEmpty()) {
             new ChangedConstantsDependencyProcessor(
-              project, searcher, this, qName,
+              project, searcher, this, qName, context.getProgressIndicator().isCanceled(),
               changed.toArray(new ChangedConstantsDependencyProcessor.FieldChangeInfo[changed.size()]),
               removed.toArray(new ChangedConstantsDependencyProcessor.FieldChangeInfo[removed.size()])
             ).run();
