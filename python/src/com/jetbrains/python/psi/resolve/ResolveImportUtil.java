@@ -141,8 +141,10 @@ public class ResolveImportUtil {
       if (module != null) return module;
     }
     // in-python resolution failed
-    if (module_reference != null) return resolveForeignImport(importRef, resolveModule(module_reference, file, false, 0));
-    else return null;
+    if (module_reference != null) {
+      return resolveForeignImport(importRef, importRef.getText(), resolveModule(module_reference, file, false, 0));
+    }
+    return null;
   }
 
   /**
@@ -426,9 +428,9 @@ public class ResolveImportUtil {
   }
 
   @Nullable
-  private static PsiElement resolveForeignImport(final PyReferenceExpression importRef, final PsiElement importFrom) {
+  private static PsiElement resolveForeignImport(final PyElement importElement, final String importText, final PsiElement importFrom) {
     for(PyImportResolver resolver: Extensions.getExtensions(PyImportResolver.EP_NAME)) {
-      PsiElement result = resolver.resolveImportReference(importRef, importFrom);
+      PsiElement result = resolver.resolveImportReference(importElement, importText, importFrom);
       if (result != null) {
         return result;
       }
