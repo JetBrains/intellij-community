@@ -14,8 +14,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
 
@@ -23,11 +21,10 @@ import java.util.Map;
  * @author oleg
  */
 public class RunPythonConsoleAction extends AnAction implements DumbAware {
-  private static final Icon ICON = IconLoader.getIcon("/com/jetbrains/python/python.png");
 
   public RunPythonConsoleAction() {
     super();
-    getTemplatePresentation().setIcon(ICON);
+    getTemplatePresentation().setIcon(IconLoader.getIcon("/com/jetbrains/python/python.png"));
   }
 
   @Override

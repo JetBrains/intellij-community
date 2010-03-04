@@ -42,8 +42,8 @@ public class PyHighlighter extends SyntaxHighlighterBase {
 
   static final TextAttributesKey PY_KEYWORD = _copy("PY.KEYWORD", KEYWORD);
 
-  static final TextAttributesKey PY_STRING = _copy("PY.STRING", STRING);
-  static final TextAttributesKey PY_NUMBER = _copy("PY.NUMBER", NUMBER);
+  public static final TextAttributesKey PY_STRING = _copy("PY.STRING", STRING);
+  public static final TextAttributesKey PY_NUMBER = _copy("PY.NUMBER", NUMBER);
 
   static final TextAttributesKey PY_LINE_COMMENT = _copy("PY.LINE_COMMENT", LINE_COMMENT);
 

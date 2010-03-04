@@ -18,7 +18,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -91,7 +90,7 @@ public class PyConsoleRunner {
     final Process process = Runner.createProcess(myWorkingDir, true, myProvider.getAdditionalEnvs(), myProvider.getArguments());
 
     final Charset outputEncoding = EncodingManager.getInstance().getDefaultCharset();
-    myProcessHandler = new PyConsoleColoredProcessHandler(process, outputEncoding);
+    myProcessHandler = new PyConsoleProcessHandler(this, process, getProviderCommandLine(), outputEncoding);
 
     ProcessTerminatedListener.attach(myProcessHandler);
 
@@ -230,7 +229,7 @@ public class PyConsoleRunner {
     }
   }
 
-  private String getProviderCommandLine() {
+  protected String getProviderCommandLine() {
     final StringBuilder builder = new StringBuilder();
     for (String s : myProvider.getArguments()) {
       if (builder.length() > 0){
@@ -239,27 +238,5 @@ public class PyConsoleRunner {
       builder.append(s);
     }
     return builder.toString();
-  }
-  
-  private class PyConsoleColoredProcessHandler extends ColoredProcessHandler {
-    private final String[] PROMPTS = new String[]{">>>", "help>"};
-
-    public PyConsoleColoredProcessHandler(final Process process, final Charset outputEncoding) {
-      super(process, getProviderCommandLine(), outputEncoding);
-    }
-
-    @Override
-    protected void textAvailable(final String text, final Key attributes) {
-      for (String prompt : PROMPTS) {
-        if (text.startsWith(prompt)) {
-          final String currentPrompt = myConsoleView.getConsole().getPrompt();
-          if (!currentPrompt.equals(prompt)){
-            myConsoleView.getConsole().setPrompt(prompt);
-          }
-          return;
-        }
-      }
-      super.textAvailable(text, attributes);
-    }
   }
 }
