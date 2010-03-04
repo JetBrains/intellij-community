@@ -186,7 +186,12 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
 
     boolean hadFocus = ToolWindowId.STRUCTURE_VIEW.equals(ToolWindowManager.getInstance(myProject).getActiveToolWindowId());
 
+    Dimension referenceSize = null;
     if (myStructureView != null) {
+      if (myStructureView instanceof StructureView.Scrollable) {
+        referenceSize = ((StructureView.Scrollable)myStructureView).getCurrentSize();
+      }
+
       myStructureView.storeState();
       Disposer.dispose(myStructureView);
       myStructureView = null;
@@ -238,6 +243,9 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
           final StructureViewBuilder structureViewBuilder = editor.getStructureViewBuilder();
           if (structureViewBuilder != null) {
             myStructureView = structureViewBuilder.createStructureView(editor, myProject);
+            if (myStructureView instanceof StructureView.Scrollable) {
+              ((StructureView.Scrollable)myStructureView).setReferenceSizeWhileInitializing(referenceSize);
+            }
             myPanel.add(myStructureView.getComponent(), BorderLayout.CENTER);
             if (hadFocus) {
               JComponent focusedComponent = IdeFocusTraversalPolicy.getPreferredFocusedComponent(myStructureView.getComponent());

@@ -7,6 +7,7 @@ package com.intellij.xml.breadcrumbs;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.SideBorder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +41,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     addMouseMotionListener(myMouseListener);
 
     setToolTipText(new String());
+    setBorder(new SideBorder(Color.gray, SideBorder.BOTTOM, true));
   }
 
   public void setItems(@Nullable final List<T> itemsList) {
@@ -327,7 +329,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
 
   public Dimension getPreferredSize() {
     final Graphics2D g2 = (Graphics2D)getGraphics();
-    return new Dimension(Integer.MAX_VALUE, DEFAULT_PAINTER.getSize("DUMMY", g2.getFontMetrics(), Integer.MAX_VALUE).height);
+    return new Dimension(Integer.MAX_VALUE, DEFAULT_PAINTER.getSize("DUMMY", g2.getFontMetrics(), Integer.MAX_VALUE).height + 1);
   }
 
   public Dimension getMaximumSize() {
@@ -671,13 +673,13 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
       final int width = c.getWidth();
       if (bg != null) {
         g2.setColor(bg);
-        g2.fillRoundRect(offset + 2, 0, width - 4, height - 2, ROUND_VALUE, ROUND_VALUE);
+        g2.fillRoundRect(offset + 2, 0, width - 4, height - 3, ROUND_VALUE, ROUND_VALUE);
       }
 
       final Color borderColor = s.getBorderColor(c);
       if (borderColor != null) {
         g2.setColor(borderColor);
-        g2.drawRoundRect(offset + 1, 0, width - 2, height - 2, ROUND_VALUE, ROUND_VALUE);
+        g2.drawRoundRect(offset + 1, 0, width - 2, height - 3, ROUND_VALUE, ROUND_VALUE);
       }
 
       final Color textColor = s.getForegroundColor(c);

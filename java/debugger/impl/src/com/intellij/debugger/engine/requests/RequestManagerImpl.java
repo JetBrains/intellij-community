@@ -43,10 +43,7 @@ import com.sun.jdi.event.ClassPrepareEvent;
 import com.sun.jdi.request.*;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author lex
@@ -87,10 +84,11 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
   public Set findRequests(Requestor requestor) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if (!myRequestorToBelongedRequests.containsKey(requestor)) {
+    final Set<EventRequest> requestSet = myRequestorToBelongedRequests.get(requestor);
+    if (requestSet == null) {
       return Collections.emptySet();
     }
-    return Collections.unmodifiableSet(myRequestorToBelongedRequests.get(requestor));
+    return Collections.unmodifiableSet(requestSet);
   }
 
   public Requestor findRequestor(EventRequest request) {
@@ -266,11 +264,13 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     if(!myDebugProcess.isAttached()) {
       return;
     }
-    final Set<EventRequest> requests = myRequestorToBelongedRequests.remove(requestor);
+    final Set<EventRequest> requests = myRequestorToBelongedRequests.get(requestor);
     if(requests == null) {
       return;
     }
-    for (final EventRequest request : requests) {
+    for (Iterator<EventRequest> iterator = requests.iterator(); iterator.hasNext();) {
+      final EventRequest request = iterator.next();
+      iterator.remove();
       try {
         final Requestor targetRequestor = (Requestor)request.getProperty(REQUESTOR);
         if (targetRequestor != requestor) {
@@ -280,9 +280,6 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
           final Set<EventRequest> allTargetRequestorRequests = myRequestorToBelongedRequests.get(targetRequestor);
           if (allTargetRequestorRequests != null) {
             allTargetRequestorRequests.remove(request);
-            if (allTargetRequestorRequests.size() == 0) {
-              myRequestorToBelongedRequests.remove(targetRequestor);
-            }
           }
         }
         myEventRequestManager.deleteEventRequest(request);
@@ -355,6 +352,8 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
   public void setInvalid(Requestor requestor, String message) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
+    deleteRequest(requestor);
+    myRequestorToBelongedRequests.remove(requestor); // clear any mapping to empty set if any
     myRequestWarnings.put(requestor, message);
   }
   
@@ -366,7 +365,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   public boolean isVerified(Requestor requestor) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     //ClassPrepareRequest is added in any case
-    return findRequests(requestor).size() > 1;
+    return myRequestorToBelongedRequests.containsKey(requestor);
   }
 
   public void processDetached(DebugProcessImpl process, boolean closedByUser) {
