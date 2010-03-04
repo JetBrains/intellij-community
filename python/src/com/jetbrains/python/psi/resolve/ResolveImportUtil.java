@@ -99,6 +99,46 @@ public class ResolveImportUtil {
   }
 
   @Nullable
+  public static PsiElement resolveImportElement(PyImportElement import_element) {
+    final List<String> qName = import_element.getImportedQName();
+    if (qName == null) {
+      return null;
+    }
+
+    final PsiFile file = import_element.getContainingFile();
+    final PsiElement grandparent = import_element.getParent();
+
+    boolean absolute_import_enabled = isAbsoluteImportEnabledFor(import_element);
+    List<String> moduleQName = null;
+
+    if (grandparent instanceof PyFromImportStatement) {
+      PsiElement imported_from_module;
+      PyFromImportStatement from_import_statement = (PyFromImportStatement)grandparent;
+      moduleQName = from_import_statement.getImportSourceQName();
+      final int relative_level = from_import_statement.getRelativeLevel();
+
+      if (relative_level > 0 && moduleQName == null) { // "from ... import foo"
+        return resolveChild(stepBackFrom(file, relative_level), qName.get(0), file, false);
+      }
+
+      if (moduleQName != null) { // either "from bar import foo" or "from ...bar import foo"
+        imported_from_module = resolveModule(moduleQName, file, absolute_import_enabled, relative_level);
+        PsiElement result = resolveChild(imported_from_module, qName.get(0), file, false);
+        if (result != null) return result;
+      }
+    }
+    else if (grandparent instanceof PyImportStatement) { // "import foo"
+      PsiElement result = resolveModule(qName, file, absolute_import_enabled, 0);
+      if (result != null) return result;
+    }
+    // in-python resolution failed
+    if (moduleQName != null) {
+      return resolveForeignImport(import_element, StringUtil.join(qName, "."), resolveModule(moduleQName, file, false, 0));
+    }
+    return null;
+  }
+
+  @Nullable
   public static PsiElement resolveImportReference(final PyReferenceExpression importRef) {
     // prerequisites
     if (importRef == null) return null;
@@ -108,42 +148,20 @@ public class ResolveImportUtil {
     final PsiFile file = importRef.getContainingFile();
     if (file == null || !file.isValid()) return null;
 
-    PyReferenceExpression module_reference = null; // possible module ref if a "from module import"
     boolean absolute_import_enabled = isAbsoluteImportEnabledFor(importRef);
 
     final PsiElement parent = PsiTreeUtil.getParentOfType(importRef, PyImportElement.class, PyFromImportStatement.class); //importRef.getParent();
     if (parent instanceof PyImportElement) {
       PyImportElement import_element = (PyImportElement)parent;
-      final PsiElement grandparent = import_element.getParent();
-      if (grandparent instanceof PyFromImportStatement) {
-        PsiElement imported_from_module;
-        PyFromImportStatement from_import_statement = (PyFromImportStatement)grandparent;
-        module_reference =  from_import_statement.getImportSource();
-        final int relative_level = from_import_statement.getRelativeLevel();
-
-        if (relative_level > 0 && module_reference == null) { // "from ... import foo"
-          return resolveChild(stepBackFrom(file, relative_level), referencedName, file, false);
-        }
-
-        if (module_reference != null) { // either "from bar import foo" or "from ...bar import foo"
-          imported_from_module = resolveModule(getQualifiedName(module_reference), file, absolute_import_enabled, relative_level);
-          PsiElement result = resolveChild(imported_from_module, referencedName, file, false);
-          if (result != null) return result;
-        }
-      }
-      else if (grandparent instanceof PyImportStatement) { // "import foo"
-        PsiElement result = resolveModule(getQualifiedName(importRef), file, absolute_import_enabled, 0);
-        if (result != null) return result;
+      final PsiElement result = resolveImportElement(import_element);
+      if (result != null) {
+        return result;
       }
     }
     else if (parent instanceof PyFromImportStatement) { // "from foo import"
       PyFromImportStatement from_import_statement = (PyFromImportStatement)parent;
       PsiElement module = resolveModule(getQualifiedName(importRef), file, absolute_import_enabled, from_import_statement.getRelativeLevel());
       if (module != null) return module;
-    }
-    // in-python resolution failed
-    if (module_reference != null) {
-      return resolveForeignImport(importRef, importRef.getText(), resolveModule(getQualifiedName(module_reference), file, false, 0));
     }
     return null;
   }
@@ -187,6 +205,9 @@ public class ResolveImportUtil {
 
   @Nullable
   public static List<String> getQualifiedName(PyReferenceExpression reference) {
+    if (reference == null) {
+      return null;
+    }
     List<String> result = new ArrayList<String>();
     final List<PyReferenceExpression> components = PyResolveUtil.unwindQualifiers(reference);
     if (components == null) {

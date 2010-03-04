@@ -198,7 +198,7 @@ public class ImportFromToImportIntention implements IntentionAction {
         ASTNode target_node = referring_elt.getNode();
         assert target_node != null; // else it won't be valid
         PyImportElement ielt = entry.getValue();
-        if (ielt.getAsName() != null) {
+        if (ielt.getAsNameElement() != null) {
           // we have an alias, replace it with real name
           PyReferenceExpression refex = ielt.getImportReference();
           assert refex != null; // else we won't resolve to this ielt

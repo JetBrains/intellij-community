@@ -17,7 +17,10 @@ public interface PyImportElement extends PyElement, NameDefiner, StubBasedPsiEle
   List<String> getImportedQName();
 
   @Nullable
-  PyTargetExpression getAsName();
+  PyTargetExpression getAsNameElement();
+
+  @Nullable
+  String getAsName();
 
   /**
    * @return name under which the element is visible, that is, "as name" is there is one, or just name.

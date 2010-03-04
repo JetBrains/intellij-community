@@ -51,7 +51,11 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
   public List<String> getImportSourceQName() {
     final PyFromImportStatementStub stub = getStub();
     if (stub != null) {
-      return stub.getImportSourceQName();
+      final List<String> qName = stub.getImportSourceQName();
+      if (qName.size() == 0) {  // relative import only: from .. import the_name
+        return null;
+      }
+      return qName;
     }
 
     return ResolveImportUtil.getQualifiedName(getImportSource());

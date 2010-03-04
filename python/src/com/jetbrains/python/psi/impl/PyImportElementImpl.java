@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
@@ -51,10 +52,20 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
     return ResolveImportUtil.getQualifiedName(getImportReference());
   }
 
-  public PyTargetExpression getAsName() {
+  public PyTargetExpression getAsNameElement() {
     final ASTNode asNameNode = getNode().findChildByType(PyElementTypes.TARGET_EXPRESSION);
     if (asNameNode == null) return null;
     return (PyTargetExpression)asNameNode.getPsi();
+  }
+
+  public String getAsName() {
+    final PyImportElementStub stub = getStub();
+    if (stub != null) {
+      final String asName = stub.getAsName();
+      return StringUtil.isEmpty(asName) ? null : asName;
+    }
+    final PyTargetExpression element = getAsNameElement();
+    return element != null ? element.getName() : null;    
   }
 
   @Nullable
@@ -71,7 +82,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
       }
       return null;
     }
-    PyTargetExpression asname = getAsName();
+    PyTargetExpression asname = getAsNameElement();
     if (asname != null) return asname.getName();
     final PyReferenceExpression import_ref = getImportReference();
     if (import_ref != null) return PyResolveUtil.toPath(import_ref, ".");
@@ -90,7 +101,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
       final PsiElement element = importRef.resolve();
       if (element != null) {
         if (processor instanceof PyAsScopeProcessor) {
-          PyTargetExpression asName = getAsName();
+          PyTargetExpression asName = getAsNameElement();
           if (asName != null) {
             return ((PyAsScopeProcessor) processor).execute(element, asName.getText()); // might resolve to asName to show the source of name
           }
@@ -156,7 +167,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
           buf.append("import?.. ");
         }
         // are we the name or the 'as'?
-        PyTargetExpression as_part = getAsName();
+        PyTargetExpression as_part = getAsNameElement();
         if (as_part != null) {
           buf.append(" as ").append(as_part.getName());
         }
@@ -175,7 +186,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
 
   @NotNull
   public Iterable<PyElement> iterateNames() {
-    PyElement ret = getAsName();
+    PyElement ret = getAsNameElement();
     if (ret == null) {
       List<PyReferenceExpression> unwound_path = PyResolveUtil.unwindQualifiers(getImportReference());
       if ((unwound_path != null) && (unwound_path.size() > 0)) ret = unwound_path.get(0); 
@@ -187,17 +198,18 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
   }
 
   public PsiElement getElementNamed(final String the_name) {
-    PyElement named_elt = IterHelper.findName(iterateNames(), the_name);
-    if (named_elt != null) {
-      PyReferenceExpression import_ref = getImportReference(); // = most qualified import name: "z" for "import x.y.z"
-      if (getAsName() == null) { // the match was not by target expr of "import ... as foo"
-        if (named_elt instanceof PyReferenceExpression) import_ref  = (PyReferenceExpression)named_elt; // [part of] import ref matched
-        else return null; // I wonder what could have matched there?
-      }
-      return ResolveImportUtil.resolveImportReference(import_ref);
+    String asName = getAsName();
+    if (asName != null) {
+      if (!Comparing.equal(the_name, asName)) return null;
     }
-    // no element of this name
-    return null;
+    else {
+      final List<String> qName = getImportedQName();
+      if (qName == null || qName.size() != 1 || !Comparing.equal(qName.get(0), the_name)) {
+        return null;
+      }
+    }
+
+    return ResolveImportUtil.resolveImportElement(this);
   }
 
   public boolean mustResolveOutside() {
