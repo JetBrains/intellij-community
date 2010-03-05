@@ -216,7 +216,7 @@ public class OverrideImplementUtil {
     return overrideOrImplementMethod(aClass, method, substitutor, toCopyJavaDoc, true);
   }
 
-  private static boolean isInsertOverride(PsiMethod superMethod, PsiClass targetClass) {
+  public static boolean isInsertOverride(PsiMethod superMethod, PsiClass targetClass) {
     if (!CodeStyleSettingsManager.getSettings(targetClass.getProject()).INSERT_OVERRIDE_ANNOTATION || !PsiUtil.isLanguageLevel5OrHigher(targetClass)) {
       return false;
     }
