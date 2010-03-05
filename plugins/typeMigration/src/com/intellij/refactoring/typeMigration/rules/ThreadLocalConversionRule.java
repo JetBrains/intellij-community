@@ -122,7 +122,14 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
         final PsiJavaToken signToken = assignmentExpression.getOperationSign();
         final IElementType operationSign = signToken.getTokenType();
         final String sign = signToken.getText();
+        final PsiExpression lExpression = assignmentExpression.getLExpression();
         if (operationSign == JavaTokenType.EQ) {
+          if (lExpression instanceof PsiReferenceExpression) {
+            final PsiElement element = ((PsiReferenceExpression)lExpression).resolve();
+            if (element instanceof PsiVariable && ((PsiVariable)element).hasModifierProperty(PsiModifier.FINAL)) {
+              return wrapWithNewExpression(to, from, ((PsiAssignmentExpression)context).getRExpression());
+            }
+          }
           return new TypeConversionDescriptor("$qualifier$ = $val$", "$qualifier$.set(" +
                                                                      toBoxed("$val$", from, context) +
                                                                      ")");
@@ -134,7 +141,7 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
                                                                                                         " " + sign.charAt(0) +
                                                                                                         " $val$", labeler, context,
                                                                                               rExpression != null
-                                                                                              ? assignmentExpression.getLExpression()
+                                                                                              ? lExpression
                                                                                                 .getText() +
                                                                                                 sign.charAt(0) +
                                                                                                 rExpression.getText()
@@ -144,6 +151,28 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
       }
     }
     return null;
+  }
+
+  public static TypeConversionDescriptor wrapWithNewExpression(PsiType to, PsiType from, PsiExpression initializer) {
+    final String boxedTypeName = from instanceof PsiPrimitiveType ? ((PsiPrimitiveType)from).getBoxedTypeName() : from.getCanonicalText();
+    return new TypeConversionDescriptor("$qualifier$", "new " +
+                                                       to.getCanonicalText() +
+                                                       "() {\n" +
+                                                       "@Override \n" +
+                                                       "protected " +
+                                                       boxedTypeName +
+                                                       " initialValue() {\n" +
+                                                       "  return " +
+                                                       (PsiUtil.isLanguageLevel5OrHigher(initializer)
+                                                        ? initializer.getText()
+                                                        : (from instanceof PsiPrimitiveType ? "new " +
+                                                                                              ((PsiPrimitiveType)from).getBoxedTypeName() +
+                                                                                              "(" +
+                                                                                              initializer.getText() +
+                                                                                              ")" : initializer.getText())) +
+                                                       ";\n" +
+                                                       "}\n" +
+                                                       "}", initializer);
   }
 
   private static String toPrimitive(String replaceByArg, PsiType from, PsiElement context) {

@@ -15,5 +15,6 @@ class Test {
               System.out.println(a.get(0) + 7);
           }
       }
+      a = new AtomicIntegerArray(new int[0]);
   }
 }

@@ -99,23 +99,7 @@ public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionA
 
       final PsiExpression initializer = psiField.getInitializer();
       if (initializer != null) {
-        final String boxedTypeName = fromType instanceof PsiPrimitiveType ? ((PsiPrimitiveType)fromType).getBoxedTypeName() : fromType.getCanonicalText();
-        psiField.setInitializer(elementFactory.createExpressionFromText("new " +
-                                                                        toType.getCanonicalText() +
-                                                                        "() {\n" +
-                                                                        "@Override \n" +
-                                                                        "protected " +
-                                                                        boxedTypeName +
-                                                                        " initialValue() {\n" +
-                                                                        "  return " +
-                                                                        (PsiUtil.isLanguageLevel5OrHigher(psiField)
-                                                                         ? initializer.getText()
-                                                                         : (fromType instanceof PsiPrimitiveType
-                                                                            ? "new " + ((PsiPrimitiveType)fromType).getBoxedTypeName() + "(" + initializer.getText() + ")"
-                                                                            : initializer.getText())) +
-                                                                        ";\n" +
-                                                                        "}\n" +
-                                                                        "}", psiField));
+        TypeMigrationReplacementUtil.replaceExpression(initializer, project, ThreadLocalConversionRule.wrapWithNewExpression(toType, fromType, initializer));
         CodeStyleManager.getInstance(project).reformat(psiField);
       }
     }

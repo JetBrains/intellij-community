@@ -177,23 +177,19 @@ public class AtomicConversionRule extends TypeConversionRule {
     if (context instanceof PsiReferenceExpression) {
       return new TypeConversionDescriptor("$qualifier$", "$qualifier$.get()");
     }
-    else if (context instanceof PsiBinaryExpression) {
-      if (((PsiBinaryExpression)context).getOperationTokenType() == JavaTokenType.EQEQ) {
-        return new TypeConversionDescriptor("$qualifier$==$val$", "$qualifier$.get()==$val$");
-      }
-    }
-
-    if (parent instanceof PsiExpressionStatement) {
-      if (context instanceof PsiBinaryExpression) {
-        final String sign = ((PsiBinaryExpression)context).getOperationSign().getText();
-        return new TypeConversionDescriptor("$qualifier$" + sign + "$val$",
-                                            "$qualifier$.set(" + getBoxedWrapper(from, to, "$qualifier$.get() " + sign + " $val$)") + ")");
-      }
-      else if (context instanceof PsiAssignmentExpression) {
-        final PsiJavaToken signToken = ((PsiAssignmentExpression)context).getOperationSign();
-        final IElementType operationSign = signToken.getTokenType();
-        final String sign = signToken.getText();
+    else if (context instanceof PsiAssignmentExpression) {
+      final PsiJavaToken signToken = ((PsiAssignmentExpression)context).getOperationSign();
+      final IElementType operationSign = signToken.getTokenType();
+      final String sign = signToken.getText();
+      if (parent instanceof PsiExpressionStatement) {
         if (operationSign == JavaTokenType.EQ) {
+          final PsiExpression lExpression = ((PsiAssignmentExpression)context).getLExpression();
+          if (lExpression instanceof PsiReferenceExpression) {
+            final PsiElement element = ((PsiReferenceExpression)lExpression).resolve();
+            if (element instanceof PsiVariable && ((PsiVariable)element).hasModifierProperty(PsiModifier.FINAL)) {
+              return wrapWithNewExpression(to, from, ((PsiAssignmentExpression)context).getRExpression());
+            }
+          }
           return new TypeConversionDescriptor("$qualifier$ = $val$", "$qualifier$.set($val$)");
         }
         else {
@@ -203,9 +199,9 @@ public class AtomicConversionRule extends TypeConversionRule {
                                                                                                         " $val$") +
                                                                               ")");
         }
-      }
+      } //else should be a conflict
     }
-    if (context instanceof PsiPostfixExpression) {
+    else if (context instanceof PsiPostfixExpression) {
       final String sign = ((PsiPostfixExpression)context).getOperationSign().getText();
       return new TypeConversionDescriptor("$qualifier$" + sign, "$qualifier$.getAndSet(" +
                                                                 getBoxedWrapper(from, to, "$qualifier$.get() " + sign.charAt(0) + " 1") +
@@ -216,19 +212,18 @@ public class AtomicConversionRule extends TypeConversionRule {
       return new TypeConversionDescriptor(sign + "$qualifier$", "$qualifier$.set(" +
                                                                 getBoxedWrapper(from, to, "$qualifier$.get() " + sign.charAt(0) + " 1") +
                                                                 ")");
-    }
-    if (context instanceof PsiBinaryExpression) {
+    } else if (context instanceof PsiBinaryExpression) {
       final String sign = ((PsiBinaryExpression)context).getOperationSign().getText();
       return new TypeConversionDescriptor("$qualifier$" + sign + "$val$", "$qualifier$.get() " + sign + " $val$");
     }
 
     if (parent instanceof PsiVariable) {
-      return wrapWithNewExpression(to, from);
+      return wrapWithNewExpression(to, from, null);
     }
     return null;
   }
 
-  public static TypeConversionDescriptor wrapWithNewExpression(PsiType to, PsiType from) {
+  public static TypeConversionDescriptor wrapWithNewExpression(PsiType to, PsiType from, PsiExpression expression) {
     String typeText = to.getPresentableText();
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(to);
     final PsiClass atomicClass = resolveResult.getElement();
@@ -243,120 +238,78 @@ public class AtomicConversionRule extends TypeConversionRule {
           final PsiClassType boxedFromType = ((PsiPrimitiveType)from).getBoxedType(atomicClass);
           LOG.assertTrue(boxedFromType != null);
           if (!TypeConversionUtil.isAssignable(initial, boxedFromType)) {
-            return new TypeConversionDescriptor("$val$", "new " + typeText + "((" + unboxedInitialType.getCanonicalText() + ")$val$)");
+            return new TypeConversionDescriptor("$val$", "new " + typeText + "((" + unboxedInitialType.getCanonicalText() + ")$val$)", expression);
           }
         }
       }
     }
-    return new TypeConversionDescriptor("$val$", "new " + typeText + "($val$)");
+    return new TypeConversionDescriptor("$val$", "new " + typeText + "($val$)", expression);
   }
 
   @Nullable
   private static TypeConversionDescriptor findDirectConversionForAtomicReferenceArray(PsiElement context, PsiType to, PsiType from) {
     LOG.assertTrue(from instanceof PsiArrayType);
     from = ((PsiArrayType)from).getComponentType();
-    final PsiElement parentExpression = context.getParent();
-    final PsiElement parent = parentExpression.getParent();
+    final PsiElement parent = context.getParent();
+    final PsiElement parentParent = parent.getParent();
 
     if (parent instanceof PsiAssignmentExpression) {
-      final IElementType operationSign = ((PsiAssignmentExpression)parent).getOperationTokenType();
-      if (operationSign == JavaTokenType.EQ) {
-        return new TypeConversionDescriptor("$qualifier$[$idx$] = $val$", "$qualifier$.set($idx$, $val$)", (PsiAssignmentExpression)parent);
-      }
-    }
-
-    else if (parent instanceof PsiMethodCallExpression) {
-      return new TypeConversionDescriptor("$qualifier$[$idx$]", "$qualifier$.get($idx$)", (PsiExpression)parent);
-    }
-
-    if (parentExpression instanceof PsiReferenceExpression) {
-      return new TypeConversionDescriptor("$qualifier$[$idx$]", "$qualifier$.get($idx$)", (PsiExpression)parentExpression);
-    }
-
-    else if (parentExpression instanceof PsiBinaryExpression) {
-      if (((PsiBinaryExpression)parentExpression).getOperationTokenType() == JavaTokenType.EQEQ) {
-        return new TypeConversionDescriptor("$qualifier$[$idx$]==$val$", "$qualifier$.get($idx$)==$val$", (PsiExpression)parentExpression);
-      }
-    }
-
-    else if (parentExpression instanceof PsiVariable) {
-      if (context instanceof PsiNewExpression) {
-        final PsiArrayInitializerExpression arrayInitializer = ((PsiNewExpression)context).getArrayInitializer();
-        String typeText = to.getPresentableText();
-        final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(to);
-        final PsiClass atomicClass = resolveResult.getElement();
-        LOG.assertTrue(atomicClass != null);
-        final PsiTypeParameter[] typeParameters = atomicClass.getTypeParameters();
-        if (typeParameters.length == 1) {
-          final PsiType initial = resolveResult.getSubstitutor().substitute(typeParameters[0]);
-          final PsiPrimitiveType unboxedInitialType = PsiPrimitiveType.getUnboxedType(initial);
-          if (unboxedInitialType != null) {
-            LOG.assertTrue(initial != null);
-            if (from instanceof PsiPrimitiveType) {
-              final PsiClassType boxedFromType = ((PsiPrimitiveType)from).getBoxedType(atomicClass);
-              LOG.assertTrue(boxedFromType != null);
-              final String qualifiedName = atomicClass.getQualifiedName();
-              LOG.assertTrue(qualifiedName != null);
-              if (qualifiedName.equals(AtomicReferenceArray.class.getName())) {
-                return arrayInitializer != null ?
-                       new TypeConversionDescriptor("new $type$[]{$initializer$}", "new " + typeText + "(new " + boxedFromType.getClassName() + "[] {$initializer$})") :
-                       new TypeConversionDescriptor("new $type$ [$length$]", "new " + typeText + "(new " + boxedFromType.getClassName() + "[$length$])");
-              }
+      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+      final IElementType operationSign = assignmentExpression.getOperationTokenType();
+      final String sign = assignmentExpression.getOperationSign().getText();
+      if (context instanceof PsiArrayAccessExpression) {
+        if (parentParent instanceof PsiExpressionStatement) {
+          if (assignmentExpression.getLExpression() == context) {
+            if (operationSign == JavaTokenType.EQ) {
+              return new TypeConversionDescriptor("$qualifier$[$idx$] = $val$", "$qualifier$.set($idx$, $val$)", assignmentExpression);
+            }
+            else {
+              return new TypeConversionDescriptor("$qualifier$[$idx$]" + sign + "$val$",
+                                                  "$qualifier$.set($idx$, " + getBoxedWrapper(from, to, "$qualifier$.get($idx$) " + sign.charAt(0) + " $val$") + ")",
+                                                  assignmentExpression);
             }
           }
-        }
-        return arrayInitializer != null ? new TypeConversionDescriptor("new $type$[] {$initializer$}", "new " + typeText + "(new $type$[] {$initializer$})")
-                                        : new TypeConversionDescriptor("new $type$ [$length$]", "new " + typeText + "(new $type$[$length$])");
+        } //else should be a conflict
       }
-      return wrapWithNewExpression(to, from);
+      else {
+        final PsiExpression rExpression = assignmentExpression.getRExpression();
+        if (rExpression == context && operationSign == JavaTokenType.EQ) {   //array = new T[l];
+          return wrapWithNewExpression(to, from, rExpression);
+        }
+      }
+    } else if (parent instanceof PsiVariable) {
+      if (((PsiVariable)parent).getInitializer() == context) {
+        return wrapWithNewExpression(to, from, (PsiExpression)context);
+      }
     }
 
-
-
-    if (parent instanceof PsiExpressionStatement) {
-      if (parentExpression instanceof PsiPostfixExpression) {
-        final String sign = ((PsiPostfixExpression)parentExpression).getOperationSign().getText();
+    if (parentParent instanceof PsiExpressionStatement) {
+      if (parent instanceof PsiPostfixExpression) {
+        final String sign = ((PsiPostfixExpression)parent).getOperationSign().getText();
         return new TypeConversionDescriptor("$qualifier$[$idx$]" + sign, "$qualifier$.getAndSet($idx$, " +
                                                                          getBoxedWrapper(from, to,
                                                                                          "$qualifier$.get($idx$) " + sign.charAt(0) + " 1") +
-                                                                         ")", (PsiExpression)parentExpression);
+                                                                         ")", (PsiExpression)parent);
       }
-      else if (parentExpression instanceof PsiPrefixExpression) {
-        final String sign = ((PsiPrefixExpression)parentExpression).getOperationSign().getText();
+      else if (parent instanceof PsiPrefixExpression) {
+        final String sign = ((PsiPrefixExpression)parent).getOperationSign().getText();
         return new TypeConversionDescriptor(sign + "$qualifier$[$idx$]", "$qualifier$.set($idx$, " +
                                                                          getBoxedWrapper(from, to,
                                                                                          "$qualifier$.get($idx$) " + sign.charAt(0) + " 1") +
-                                                                         ")", (PsiExpression)parentExpression);
+                                                                         ")", (PsiExpression)parent);
       }
-      else if (parentExpression instanceof PsiBinaryExpression) {
-        final String sign = ((PsiBinaryExpression)parentExpression).getOperationSign().getText();
+      else if (parent instanceof PsiBinaryExpression) {
+        final String sign = ((PsiBinaryExpression)parent).getOperationSign().getText();
         return new TypeConversionDescriptor("$qualifier$[$idx$]" + sign + "$val$", "$qualifier$.set($idx$, " +
                                                                                    getBoxedWrapper(from, to, "$qualifier$.get($idx$) " +
                                                                                                              sign +
                                                                                                              " $val$)") +
-                                                                                   ")", (PsiExpression)parentExpression);
-      }
-      else if (parentExpression instanceof PsiAssignmentExpression) {
-        final PsiJavaToken signToken = ((PsiAssignmentExpression)parentExpression).getOperationSign();
-        final IElementType operationSign = signToken.getTokenType();
-        final String sign = signToken.getText();
-        if (operationSign == JavaTokenType.EQ) {
-          return new TypeConversionDescriptor("$qualifier$[$idx$] = $val$", "$qualifier$.set($idx$, $val$)", (PsiExpression)parentExpression);
-        }
-        else {
-          return new TypeConversionDescriptor("$qualifier$[$idx$]" + sign + "$val$", "$qualifier$.set($idx$, " +
-                                                                                     getBoxedWrapper(from, to, "$qualifier$.get($idx$) " +
-                                                                                                               sign.charAt(0) +
-                                                                                                               " $val$") +
-                                                                                     ")", (PsiExpression)parentExpression);
-        }
+                                                                                   ")", (PsiExpression)parent);
       }
     }
 
-    if (parentExpression instanceof PsiBinaryExpression) {
-      final String sign = ((PsiBinaryExpression)parentExpression).getOperationSign().getText();
-      return new TypeConversionDescriptor("$qualifier$[$idx$]" + sign + "$val$", "$qualifier$.get($idx$) " + sign + " $val$)",
-                                          (PsiExpression)parentExpression);
+    if (context instanceof PsiArrayAccessExpression) {
+      return new TypeConversionDescriptor("$qualifier$[$idx$]", "$qualifier$.get($idx$)", (PsiExpression)context);
     }
     return null;
   }

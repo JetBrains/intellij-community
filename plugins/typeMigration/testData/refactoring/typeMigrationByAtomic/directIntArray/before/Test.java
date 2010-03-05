@@ -13,5 +13,6 @@ class Test {
               System.out.println(a[0] + 7);
           }
       }
+      a = new int[0];
   }
 }

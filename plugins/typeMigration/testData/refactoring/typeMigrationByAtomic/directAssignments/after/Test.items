@@ -19,7 +19,7 @@ i + 9 -> $qualifier$.get() + $val$ $qualifier$+$val$
 i += 2 -> $qualifier$.getAndAdd(($val$)) $qualifier$ += $val$
 i - 9 -> $qualifier$.get() - $val$ $qualifier$-$val$
 i -= 5 -> $qualifier$.getAndAdd(-($val$)) $qualifier$ -= $val$
-i == 0 -> $qualifier$.get()==$val$ $qualifier$==$val$
+i == 0 -> $qualifier$.get() == $val$ $qualifier$==$val$
 
 New expression type changes:
 Fails:

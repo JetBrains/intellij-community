@@ -4,7 +4,8 @@
  */
 package com.intellij.refactoring;
 
-import com.intellij.refactoring.ChangeTypeSignatureTest;
+import com.intellij.codeInsight.ConvertToAtomicIntentionTest;
+import com.intellij.codeInsight.ConvertToThreadLocalIntentionTest;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
@@ -17,6 +18,8 @@ public class AllTypeMigrationTests {
      suite.addTestSuite(TypeMigrationByThreadLocalRuleTest.class);
      suite.addTestSuite(MigrateTypeSignatureTest.class);
      suite.addTestSuite(ChangeTypeSignatureTest.class);
+     suite.addTestSuite(ConvertToAtomicIntentionTest.class);
+     suite.addTestSuite(ConvertToThreadLocalIntentionTest.class);
      return suite;
    }
 }

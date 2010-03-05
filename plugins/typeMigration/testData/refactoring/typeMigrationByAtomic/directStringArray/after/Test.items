@@ -6,8 +6,8 @@ PsiReferenceExpression:s : java.util.concurrent.atomic.AtomicReferenceArray<java
 PsiReferenceExpression:s : java.util.concurrent.atomic.AtomicReferenceArray<java.lang.String>
 
 Conversions:
-new String[2] -> new AtomicReferenceArray<String>(new $type$[$length$]) new $type$ [$length$]
-s[0] -> $qualifier$.get($idx$) $qualifier$[$idx$] System.out.println(s[0])
+new String[2] -> new AtomicReferenceArray<String>($val$) $val$ new String[2]
+s[0] -> $qualifier$.get($idx$) $qualifier$[$idx$] s[0]
 s[0] -> $qualifier$.set($idx$, $val$) $qualifier$[$idx$] = $val$ s[0] = ""
 
 New expression type changes:
