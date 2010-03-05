@@ -152,46 +152,69 @@ public class MatcherImpl {
     }
   }
 
-  public boolean processMatchesInFile(MatchContext context, final Configuration configuration, PsiFile psiFile, final PairProcessor<MatchResult, Configuration> processor) {
-    LocalSearchScope scope = new LocalSearchScope(psiFile);
-
-      matchContext.clear();
-      matchContext.setMatcher(visitor);
-
-      MatchOptions options = context.getOptions();
-      matchContext.setOptions(options);
-      matchContext.setPattern(context.getPattern());
-      visitor.setMatchContext(matchContext);
-
-      matchContext.setSink(
-        new MatchConstraintsSink(
-          new MatchResultSink() {
-            public void newMatch(MatchResult result) {
-              processor.process(result, configuration);
-            }
-
-            public void processFile(PsiFile element) {
-            }
-
-            public void setMatchingProcess(MatchingProcess matchingProcess) {
-            }
-
-            public void matchingFinished() {
-            }
-
-            public ProgressIndicator getProgressIndicator() {
-              return null;
-            }
-          },
-          options.getMaxMatchesCount(),
-          options.isDistinct(),
-          options.isCaseSensitiveMatch()
-        )
-      );
-      options.setScope(scope);
-      match(psiFile);
+  public static boolean checkIfShouldAttemptToMatch(MatchContext context,PsiElement elt) {
+    CompiledPattern pattern = context.getPattern();
+    PsiElement element = pattern.getNodes().current();
+    MatchingHandler matchingHandler = pattern.getHandler(element);
+    return matchingHandler.canMatch(element, elt);
+  }
+  
+  public void processMatchesInElement(MatchContext context, Configuration configuration,
+                                      PsiElement element,
+                                      PairProcessor<MatchResult, Configuration> processor) {
+    configureOptions(context, configuration, element, processor);
+    context.setShouldRecursivelyMatch(false);
+    visitor.matchContext(new ArrayBackedNodeIterator(new PsiElement[] {element}));
+  }
+  
+  public boolean processMatchesInFile(MatchContext context, Configuration configuration, PsiFile psiFile, 
+                                      PairProcessor<MatchResult, Configuration> processor) {
+    configureOptions(context, configuration, psiFile, processor);
+    match(psiFile);
 
     return true;
+  }
+
+  private void configureOptions(MatchContext context,
+                                final Configuration configuration,
+                                PsiElement psiFile,
+                                final PairProcessor<MatchResult, Configuration> processor) {
+    LocalSearchScope scope = new LocalSearchScope(psiFile);
+
+    matchContext.clear();
+    matchContext.setMatcher(visitor);
+
+    MatchOptions options = context.getOptions();
+    matchContext.setOptions(options);
+    matchContext.setPattern(context.getPattern());
+    visitor.setMatchContext(matchContext);
+
+    matchContext.setSink(
+      new MatchConstraintsSink(
+        new MatchResultSink() {
+          public void newMatch(MatchResult result) {
+            processor.process(result, configuration);
+          }
+
+          public void processFile(PsiFile element) {
+          }
+
+          public void setMatchingProcess(MatchingProcess matchingProcess) {
+          }
+
+          public void matchingFinished() {
+          }
+
+          public ProgressIndicator getProgressIndicator() {
+            return null;
+          }
+        },
+        options.getMaxMatchesCount(),
+        options.isDistinct(),
+        options.isCaseSensitiveMatch()
+      )
+    );
+    options.setScope(scope);
   }
 
   public CompiledOptions precompileOptions(List<Configuration> configurations) {

@@ -27,7 +27,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiElementVisitor;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.Matcher;
 import com.intellij.structuralsearch.SSRBundle;
@@ -83,43 +83,44 @@ public class SSBasedInspection extends BaseJavaLocalInspectionTool {
     return "SSBasedInspection";
   }
 
-  @Nullable
-  public ProblemDescriptor[] checkFile(@NotNull final PsiFile file, @NotNull final InspectionManager manager, final boolean isOnTheFly) {
-    final Project project = file.getProject();
-    if (compiledConfigurations == null) return null;
-    final List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
-    final List<Pair<MatchContext,Configuration>> contexts = compiledConfigurations.getMatchContexts();
-    //JobUtil.invokeConcurrentlyForAll(contexts, new Processor<Pair<MatchContext, Configuration>>() {
-    //  public boolean process(Pair<MatchContext, Configuration> pair) {
-    for (Pair<MatchContext, Configuration> pair : contexts) {
-        Configuration configuration = pair.second;
-        MatchContext context = pair.first;
-
-    try {
-          new Matcher(project).processMatchesInFile(context, configuration, file, new PairProcessor<MatchResult, Configuration>() {
-            public boolean process(MatchResult matchResult, Configuration configuration) {
-              PsiElement element = matchResult.getMatch();
+  @NotNull
+  @Override
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+    if (compiledConfigurations == null) return super.buildVisitor(holder, isOnTheFly);
+    
+    return new PsiElementVisitor() {
+      final List<Pair<MatchContext,Configuration>> contexts = compiledConfigurations.getMatchContexts();
+      final Matcher matcher = new Matcher(holder.getManager().getProject());
+      final PairProcessor<MatchResult, Configuration> processor = new PairProcessor<MatchResult, Configuration>() {
+        public boolean process(MatchResult matchResult, Configuration configuration) {
+          PsiElement element = matchResult.getMatch();
               String name = configuration.getName();
-              LocalQuickFix fix = createQuickFix(project, matchResult, configuration);
-              ProblemDescriptor problemDescriptor = manager.createProblemDescriptor(element, name, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                                                                    isOnTheFly);
-              synchronized (problems) {
-                problems.add(problemDescriptor);
-              }
-              return true;
-            }
-          });
+              LocalQuickFix fix = createQuickFix(holder.getManager().getProject(), matchResult, configuration);
+              holder.registerProblem(
+                holder.getManager().createProblemDescriptor(
+                  element, 
+                  name, 
+                  fix, 
+                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                  isOnTheFly
+                )
+              );
+          return true;
         }
-        // hack for huge file case
-        catch (StackOverflowError ignored) {
+      };
+      
+      @Override
+      public void visitElement(PsiElement element) {
+        for (Pair<MatchContext, Configuration> pair : contexts) {
+          Configuration configuration = pair.second;
+          MatchContext context = pair.first;
+          
+          if (Matcher.checkIfShouldAttemptToMatch(context, element)) {
+            matcher.processMatchesInElement(context, configuration, element, processor);
+          }
         }
-    //    return true;
-    //  }
-    //}, "match");
-    }
-    synchronized (problems) {
-      return problems.toArray(new ProblemDescriptor[problems.size()]);
-    }
+      }
+    };
   }
 
   private static LocalQuickFix createQuickFix(final Project project, final MatchResult matchResult, final Configuration configuration) {

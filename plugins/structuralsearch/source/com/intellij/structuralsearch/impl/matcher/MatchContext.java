@@ -17,6 +17,7 @@ public class MatchContext {
   private CompiledPattern pattern;
   private MatchOptions options;
   private MatchingVisitor matcher;
+  private boolean shouldRecursivelyMatch = true;
 
   private LinkedList<PsiElement> myMatchedNodes;
 
@@ -53,11 +54,6 @@ public class MatchContext {
 
   public MatchResultImpl getPreviousResult() {
     return previousResults.size() == 0 ? null:previousResults.getLast();
-  }
-
-  public void setPreviousResult(final MatchResultImpl previousResult) {
-    if (previousResults.size() > 0) previousResults.removeLast();
-    previousResults.addLast(previousResult);
   }
 
   public MatchResultImpl getResult() {
@@ -106,9 +102,12 @@ public class MatchContext {
     pattern = null;
   }
 
-  public void clearResult() {
-    pattern.clearHandlersState();
-    result.clear();
+  public boolean shouldRecursivelyMatch() {
+    return shouldRecursivelyMatch;
+  }
+
+  public void setShouldRecursivelyMatch(boolean shouldRecursivelyMatch) {
+    this.shouldRecursivelyMatch = shouldRecursivelyMatch;
   }
 
   public void setUnmatchedElementsListener(UnmatchedElementsListener _unmatchedElementsListener) {

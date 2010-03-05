@@ -357,7 +357,7 @@ public class MatchingVisitor {
       matchContext.setMatchedNodes(null);
 
       if (!patternNodes.hasNext()) return;
-      final MatchingHandler firstMatchingHandler = matchContext.getPattern().getHandler(patternNodes.current());
+      final MatchingHandler firstMatchingHandler = pattern.getHandler(patternNodes.current());
 
       for(;elements.hasNext();elements.advance()) {
         final PsiElement elementNode = elements.current();
@@ -1092,6 +1092,10 @@ public class MatchingVisitor {
     }
 
     @Override public void visitMethodCallExpression(final PsiMethodCallExpression mcall) {
+      if (!(element instanceof PsiMethodCallExpression)) {
+        result = false;
+        return;
+      }
       final PsiMethodCallExpression mcall2 = (PsiMethodCallExpression) element;
       final PsiReferenceExpression mcallRef1 = mcall.getMethodExpression();
       final PsiReferenceExpression mcallRef2 = mcall2.getMethodExpression();
@@ -1425,6 +1429,10 @@ public class MatchingVisitor {
         return;
       }
 
+      if (!(element instanceof PsiNewExpression)) {
+        result = false;
+        return;
+      }
       final PsiNewExpression new2 = (PsiNewExpression) element;
 
       if (new1.getClassReference() != null) {

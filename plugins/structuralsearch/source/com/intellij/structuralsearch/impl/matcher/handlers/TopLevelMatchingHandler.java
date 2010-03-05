@@ -44,7 +44,9 @@ public final class TopLevelMatchingHandler extends MatchingHandler {
     }
 
     if ((!matched || matchContext.getOptions().isRecursiveSearch()) &&
-        matchContext.getPattern().getStrategy().continueMatching(matchedNode)) {
+        matchContext.getPattern().getStrategy().continueMatching(matchedNode) &&
+        matchContext.shouldRecursivelyMatch()
+       ) {
       matchContext.getMatcher().matchContext(
         new FilteringNodeIterator(
           new ArrayBackedNodeIterator(matchedNode.getChildren())
