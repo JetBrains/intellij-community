@@ -1,18 +1,16 @@
 package org.jetbrains.plugins.groovy.refactoring.rename;
 
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.refactoring.rename.RenameProcessor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
-import org.jetbrains.plugins.groovy.util.TestUtils;
-
-import java.util.List;
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiReference
+import com.intellij.psi.impl.source.PostprocessReformattingAspect
+import com.intellij.refactoring.rename.RenameProcessor
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import org.jetbrains.plugins.groovy.GroovyFileType
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
+import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * @author ven
@@ -24,6 +22,29 @@ public class RenameTest extends LightCodeInsightFixtureTestCase {
   public void testTo_prop() throws Throwable { doTest(); }
   public void testTo_setter() throws Throwable { doTest(); }
   public void testScriptMethod() throws Throwable { doTest(); }
+
+  public void testParameterIsNotAUsageOfGroovyParameter() throws Exception {
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
+def foo(f) {
+  // Parameter
+  println 'Parameter' // also
+  return <caret>f
+}
+""")
+    def txt = "Just the Parameter word, which shouldn't be renamed"
+    def txtFile = myFixture.addFileToProject("a.txt", txt)
+
+    def parameter = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset).resolve()
+    myFixture.renameElement(parameter, "newName", true, true)
+    myFixture.checkResult """
+def foo(newName) {
+  // Parameter
+  println 'Parameter' // also
+  return <caret>newName
+}
+"""
+    assertEquals txt, txtFile.text
+  }
 
   public void doTest() throws Throwable {
     final String testFile = getTestName(true).replace('$', '/') + ".test";
