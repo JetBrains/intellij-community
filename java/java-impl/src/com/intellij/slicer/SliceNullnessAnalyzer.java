@@ -16,6 +16,7 @@
 package com.intellij.slicer;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
@@ -46,7 +47,7 @@ public class SliceNullnessAnalyzer {
 
     SliceUsage rootUsage = oldRoot.myCachedChildren.get(0).getValue();
     SliceManager.getInstance(root.getProject()).createToolWindow(true, root, true, SliceManager.getElementDescription(null, rootUsage.getElement(), " Grouped by Nullness") );
-}
+  }
 
   public static SliceRootNode createNewTree(NullAnalysisResult result, SliceRootNode oldRoot, final Map<SliceNode, NullAnalysisResult> map) {
     SliceRootNode root = oldRoot.copy();
@@ -56,70 +57,104 @@ public class SliceNullnessAnalyzer {
     root.targetEqualUsages.clear();
     root.myCachedChildren = new ArrayList<SliceNode>();
 
-    if (!result.nulls.isEmpty()) {
-      SliceLeafValueClassNode nullRoot = new SliceLeafValueClassNode(root.getProject(), root, "Null Values");
-      root.myCachedChildren.add(nullRoot);
+    createValueRootNode(result, oldRoot, map, root, oldRootStart, "Null Values", NullAnalysisResult.NULLS);
+    //if (!result.nulls.isEmpty()) {
+    //  SliceLeafValueClassNode nullRoot = new SliceLeafValueClassNode(root.getProject(), root, "Null Values");
+    //  root.myCachedChildren.add(nullRoot);
+    //
+    //
+    //  Set<PsiElement> uniqueValues = new THashSet<PsiElement>(result.nulls, SliceLeafAnalyzer.LEAF_ELEMENT_EQUALITY);
+    //  for (final PsiElement nullExpression : uniqueValues) {
+    //    SliceNode newRoot = SliceLeafAnalyzer.filterTree(oldRootStart, new NullableFunction<SliceNode, SliceNode>() {
+    //      public SliceNode fun(SliceNode oldNode) {
+    //        if (oldNode.getDuplicate() != null) {
+    //          return null;
+    //        }
+    //
+    //        for (PsiElement nullSuspect : node(oldNode, map).nulls) {
+    //          if (nullSuspect.getManager().areElementsEquivalent(nullSuspect, nullExpression)) {
+    //            return oldNode.copy();
+    //          }
+    //        }
+    //        return null;
+    //      }
+    //    },new PairProcessor<SliceNode, List<SliceNode>>() {
+    //      public boolean process(SliceNode node, List<SliceNode> children) {
+    //        if (!children.isEmpty()) return true;
+    //        PsiElement element = node.getValue().getElement();
+    //        if (element == null) return false;
+    //        return element.getManager().areElementsEquivalent(element, nullExpression); // leaf can be there only if it's filtering expression
+    //      }
+    //    });
+    //    nullRoot.myCachedChildren.add(new SliceLeafValueRootNode(root.getProject(), nullExpression, nullRoot, Collections.singletonList(newRoot),
+    //                                                             oldRoot.getValue().params));
+    //  }
+    //}
+    createValueRootNode(result, oldRoot, map, root, oldRootStart, "NotNull Values", NullAnalysisResult.NOT_NULLS);
+    createValueRootNode(result, oldRoot, map, root, oldRootStart, "Other Values", NullAnalysisResult.UNKNOWNS);
 
-      for (final PsiElement nullExpression : result.nulls) {
-        SliceNode newRoot = SliceLeafAnalyzer.filterTree(oldRootStart, new NullableFunction<SliceNode, SliceNode>() {
-          public SliceNode fun(SliceNode oldNode) {
-            return oldNode.getDuplicate() == null && node(oldNode, map).nulls.contains(nullExpression) ? oldNode.copy() : null;
-          }
-        },new PairProcessor<SliceNode, List<SliceNode>>() {
-        public boolean process(SliceNode node, List<SliceNode> children) {
-          if (!children.isEmpty()) return true;
-          PsiElement element = node.getValue().getElement();
-          if (element == null) return false;
-          return element.getManager().areElementsEquivalent(element, nullExpression); // leaf can be there only if it's filtering expression
-        }
-      });
-        nullRoot.myCachedChildren.add(new SliceLeafValueRootNode(root.getProject(), nullExpression, nullRoot, Collections.singletonList(newRoot),
-                                                                 oldRoot.getValue().params));
-      }
-    }
-    if (!result.notNulls.isEmpty()) {
-      SliceLeafValueClassNode valueRoot = new SliceLeafValueClassNode(root.getProject(), root, "NotNull Values");
-      root.myCachedChildren.add(valueRoot);
-
-      for (final PsiElement expression : result.notNulls) {
-        SliceNode newRoot = SliceLeafAnalyzer.filterTree(oldRootStart, new NullableFunction<SliceNode, SliceNode>() {
-          public SliceNode fun(SliceNode oldNode) {
-            return oldNode.getDuplicate() == null && node(oldNode, map).notNulls.contains(expression) ? oldNode.copy() : null;
-          }
-        },new PairProcessor<SliceNode, List<SliceNode>>() {
-        public boolean process(SliceNode node, List<SliceNode> children) {
-          if (!children.isEmpty()) return true;
-          PsiElement element = node.getValue().getElement();
-          if (element == null) return false;
-          return element.getManager().areElementsEquivalent(element, expression); // leaf can be there only if it's filtering expression
-        }
-      });
-        valueRoot.myCachedChildren.add(new SliceLeafValueRootNode(root.getProject(), expression, valueRoot, Collections.singletonList(newRoot),
-                                                                  oldRoot.getValue().params));
-      }
-    }
-    if (!result.unknown.isEmpty()) {
-      SliceLeafValueClassNode valueRoot = new SliceLeafValueClassNode(root.getProject(), root, "Other Values");
-      root.myCachedChildren.add(valueRoot);
-
-      for (final PsiElement expression : result.unknown) {
-        SliceNode newRoot = SliceLeafAnalyzer.filterTree(oldRootStart, new NullableFunction<SliceNode, SliceNode>() {
-          public SliceNode fun(SliceNode oldNode) {
-            return oldNode.getDuplicate() == null && node(oldNode, map).unknown.contains(expression) ? oldNode.copy() : null;
-          }
-        },new PairProcessor<SliceNode, List<SliceNode>>() {
-        public boolean process(SliceNode node, List<SliceNode> children) {
-          if (!children.isEmpty()) return true;
-          PsiElement element = node.getValue().getElement();
-          if (element == null) return false;
-          return element.getManager().areElementsEquivalent(element, expression); // leaf can be there only if it's filtering expression
-        }
-      });
-        valueRoot.myCachedChildren.add(new SliceLeafValueRootNode(root.getProject(), expression, valueRoot, Collections.singletonList(newRoot),
-                                                                  oldRoot.getValue().params));
-      }
-    }
+    //if (!result.unknown.isEmpty()) {
+    //  SliceLeafValueClassNode valueRoot = new SliceLeafValueClassNode(root.getProject(), root, "Other Values");
+    //  root.myCachedChildren.add(valueRoot);
+    //
+    //  Set<PsiElement> uniqueValues = new THashSet<PsiElement>(result.unknown, SliceLeafAnalyzer.LEAF_ELEMENT_EQUALITY);
+    //  for (final PsiElement expression : uniqueValues) {
+    //    SliceNode newRoot = SliceLeafAnalyzer.filterTree(oldRootStart, new NullableFunction<SliceNode, SliceNode>() {
+    //      public SliceNode fun(SliceNode oldNode) {
+    //        return oldNode.getDuplicate() == null && node(oldNode, map).unknown.contains(expression) ? oldNode.copy() : null;
+    //      }
+    //    },new PairProcessor<SliceNode, List<SliceNode>>() {
+    //    public boolean process(SliceNode node, List<SliceNode> children) {
+    //      if (!children.isEmpty()) return true;
+    //      PsiElement element = node.getValue().getElement();
+    //      if (element == null) return false;
+    //      return element.getManager().areElementsEquivalent(element, expression); // leaf can be there only if it's filtering expression
+    //    }
+    //  });
+    //    valueRoot.myCachedChildren.add(new SliceLeafValueRootNode(root.getProject(), expression, valueRoot, Collections.singletonList(newRoot),
+    //                                                              oldRoot.getValue().params));
+    //  }
+    //}
     return root;
+  }
+
+  private static void createValueRootNode(NullAnalysisResult result, SliceRootNode oldRoot,
+                                          final Map<SliceNode, NullAnalysisResult> map,
+                                          SliceRootNode root,
+                                          SliceNode oldRootStart, String nodeName, final int group) {
+    Collection<PsiElement> groupedByValue = result.groupedByValue[group];
+    if (groupedByValue.isEmpty()) {
+      return;
+    }
+    SliceLeafValueClassNode valueRoot = new SliceLeafValueClassNode(root.getProject(), root, nodeName);
+    root.myCachedChildren.add(valueRoot);
+
+    Set<PsiElement> uniqueValues = new THashSet<PsiElement>(groupedByValue, SliceLeafAnalyzer.LEAF_ELEMENT_EQUALITY);
+    for (final PsiElement expression : uniqueValues) {
+      SliceNode newRoot = SliceLeafAnalyzer.filterTree(oldRootStart, new NullableFunction<SliceNode, SliceNode>() {
+        public SliceNode fun(SliceNode oldNode) {
+          if (oldNode.getDuplicate() != null) {
+            return null;
+          }
+
+          for (PsiElement nullSuspect : group(oldNode, map, group)) {
+            if (PsiEquivalenceUtil.areElementsEquivalent(nullSuspect, expression)) {
+              return oldNode.copy();
+            }
+          }
+          return null;
+        }
+      },new PairProcessor<SliceNode, List<SliceNode>>() {
+        public boolean process(SliceNode node, List<SliceNode> children) {
+          if (!children.isEmpty()) return true;
+          PsiElement element = node.getValue().getElement();
+          if (element == null) return false;
+          return PsiEquivalenceUtil.areElementsEquivalent(element, expression); // leaf can be there only if it's filtering expression
+        }
+      });
+      valueRoot.myCachedChildren.add(new SliceLeafValueRootNode(root.getProject(), expression, valueRoot, Collections.singletonList(newRoot),
+                                                                oldRoot.getValue().params));
+    }
   }
 
   public static void startAnalyzeNullness(final AbstractTreeStructure treeStructure, final Runnable finish) {
@@ -170,6 +205,9 @@ public class SliceNullnessAnalyzer {
   private static NullAnalysisResult node(SliceNode node, Map<SliceNode, NullAnalysisResult> nulls) {
     return nulls.get(node);
   }
+  private static Collection<PsiElement> group(SliceNode node, Map<SliceNode, NullAnalysisResult> nulls, int group) {
+    return nulls.get(node).groupedByValue[group];
+  }
 
   @NotNull
   public static NullAnalysisResult calcNullableLeaves(@NotNull final SliceNode root, @NotNull AbstractTreeStructure treeStructure,
@@ -193,15 +231,15 @@ public class SliceNullnessAnalyzer {
             }
           });
           if (nullness == DfaUtil.Nullness.NULL) {
-            node(element, map).nulls.add(value);
+            group(element, map, NullAnalysisResult.NULLS).add(value);
           }
           else if (nullness == DfaUtil.Nullness.NOT_NULL) {
-            node(element, map).notNulls.add(value);
+            group(element, map, NullAnalysisResult.NOT_NULLS).add(value);
           }
           else {
             Collection<? extends AbstractTreeNode> children = element.getChildren();
             if (children.isEmpty()) {
-              node(element, map).unknown.add(value);
+              group(element, map, NullAnalysisResult.UNKNOWNS).add(value);
             }
             super.visit(element);
           }
@@ -275,20 +313,23 @@ public class SliceNullnessAnalyzer {
   }
 
   public static class NullAnalysisResult {
-    public final Collection<PsiElement> nulls = new THashSet<PsiElement>(SliceLeafAnalyzer.LEAF_ELEMENT_EQUALITY);
-    public final Collection<PsiElement> notNulls = new THashSet<PsiElement>(SliceLeafAnalyzer.LEAF_ELEMENT_EQUALITY);
-    public final Collection<PsiElement> unknown = new THashSet<PsiElement>(SliceLeafAnalyzer.LEAF_ELEMENT_EQUALITY);
+    public static int NULLS = 0;
+    public static int NOT_NULLS = 1;
+    public static int UNKNOWNS = 2;
+    public final Collection<PsiElement>[] groupedByValue = new Collection[] {new THashSet<PsiElement>(),new THashSet<PsiElement>(),new THashSet<PsiElement>()};
 
     public void clear() {
-      nulls.clear();
-      notNulls.clear();
-      unknown.clear();
+      for (Collection<PsiElement> elements : groupedByValue) {
+        elements.clear();
+      }
     }
 
     public void add(NullAnalysisResult duplicate) {
-      nulls.addAll(duplicate.nulls);
-      notNulls.addAll(duplicate.notNulls);
-      unknown.addAll(duplicate.unknown);
+      for (int i = 0; i < groupedByValue.length; i++) {
+        Collection<PsiElement> elements = groupedByValue[i];
+        Collection<PsiElement> other = duplicate.groupedByValue[i];
+        elements.addAll(other);
+      }
     }
   }
 }
