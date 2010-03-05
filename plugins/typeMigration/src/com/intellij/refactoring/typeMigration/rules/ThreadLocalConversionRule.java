@@ -76,9 +76,9 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
       return new TypeConversionDescriptor("$qualifier$", toPrimitive("$qualifier$.get()", from, context));
     }
     else if (context instanceof PsiBinaryExpression) {
-      if (((PsiBinaryExpression)context).getOperationTokenType() == JavaTokenType.EQEQ) {
-        return new TypeConversionDescriptor("$qualifier$==$val$", toPrimitive("$qualifier$.get()", from, context) + "==$val$");
-      }
+      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)context;
+      final String sign = binaryExpression.getOperationSign().getText();
+      return new TypeConversionDescriptor("$qualifier$" + sign + "$val$", toPrimitive("$qualifier$.get()", from, context) + " " + sign + " $val$");
     }
 
     if (parent instanceof PsiExpressionStatement) {
@@ -103,19 +103,6 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
                                                                                                              sign.charAt(0) +
                                                                                                              " 1" : null) +
                                                                   ")");
-      }
-      else if (context instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)context;
-        final String sign = binaryExpression.getOperationSign().getText();
-        final PsiExpression rOperand = binaryExpression.getROperand();
-        return new TypeConversionDescriptor("$qualifier$" + sign + "$val$", "$qualifier$.set(" +
-                                                                            getBoxedWrapper(from, to,
-                                                                                            toPrimitive("$qualifier$.get()", from, context) + " " + sign + " $val$)",
-                                                                                            labeler, context, rOperand != null
-                                                                                                     ? binaryExpression.getLOperand()
-                                                                                .getText() + sign + rOperand.getText()
-                                                                                                     : null) +
-                                                                            ")");
       }
       else if (context instanceof PsiAssignmentExpression) {
         final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)context;
