@@ -25,6 +25,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.xml.*;
+import com.intellij.pom.references.PomService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -103,7 +104,10 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
       if (nameValue != null && nameValue.referencable()) {
         DomElement parent = domElement.getParent();
         assert parent != null;
-        references = ArrayUtil.append(references, PsiReferenceBase.createSelfReference(psiElement, parent.getXmlElement()), PsiReference.class);
+        final DomTarget target = DomTarget.getTarget(parent);
+        if (target != null) {
+          references = ArrayUtil.append(references, PsiReferenceBase.createSelfReference(psiElement, PomService.convertToPsi(target)), PsiReference.class);
+        }
       }
     }
     return references;

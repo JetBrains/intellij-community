@@ -114,10 +114,6 @@ public class FindUsagesManager implements JDOMExternalizable {
     myAnotherManager = anotherManager;
   }
 
-  /**
-   * @param handler
-   * @deprecated use extension point instead
-   */
   public void registerFindUsagesHandler(FindUsagesHandlerFactory handler) {
     myHandlers.add(0, handler);
   }

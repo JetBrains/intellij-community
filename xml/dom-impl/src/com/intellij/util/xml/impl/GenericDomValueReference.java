@@ -16,9 +16,10 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
-import com.intellij.codeInsight.lookup.LookupValueFactory;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupValueFactory;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReferenceBase;
@@ -87,7 +88,8 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
       return (PsiElement)o;
     }
     if (o instanceof DomElement) {
-      return ((DomElement)o).getXmlElement();
+      DomTarget target = DomTarget.getTarget((DomElement)o);
+      return target == null ? null : PomService.convertToPsi(target);
     }
     if (o instanceof MergedObject) {
       final List<T> list = ((MergedObject<T>)o).getImplementations();

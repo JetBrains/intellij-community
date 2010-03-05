@@ -18,7 +18,8 @@ package com.intellij.util.xml;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiManager;
+import com.intellij.pom.references.PomService;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -29,6 +30,7 @@ import com.intellij.util.containers.SoftFactoryMap;
 import com.intellij.util.xml.highlighting.ResolvingElementQuickFix;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Map;
@@ -91,6 +93,13 @@ public class DomResolveConverter<T extends DomElement> extends ResolvingConverte
   public final T fromString(final String s, final ConvertContext context) {
     if (s == null) return null;
     return (T) myResolveCache.get(getResolvingScope(context)).getValue().get(s);
+  }
+
+  @Override
+  public PsiElement getPsiElement(@Nullable T resolvedValue) {
+    if (resolvedValue == null) return null;
+    DomTarget target = DomTarget.getTarget(resolvedValue);
+    return target == null ? super.getPsiElement(resolvedValue) : PomService.convertToPsi(target);
   }
 
   private static DomElement getResolvingScope(final ConvertContext context) {
