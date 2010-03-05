@@ -70,15 +70,6 @@ public class PomTargetPsiElementImpl extends RenameableFakePsiElement implements
     throw new UnsupportedOperationException("Method getTypeName is not yet implemented for " + myTarget.getClass().getName() + "; see PomDescriptionProvider");
   }
 
-  @NotNull
-  @Override
-  public PsiElement getNavigationElement() {
-    if (myTarget instanceof PsiTarget) {
-      return ((PsiTarget)myTarget).getNavigationElement();
-    }
-    return super.getNavigationElement();  
-  }
-
   public Icon getIcon() {
     for (IconProvider iconProvider : IconProvider.EXTENSION_POINT_NAME.getExtensions()) {
       if (iconProvider instanceof PomIconProvider) {
