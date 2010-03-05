@@ -459,7 +459,7 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
       CompletionType.BASIC, psiElement()
         .withLanguage(PythonLanguage.getInstance())
         .and(FIRST_ON_LINE)
-        .andOr(IN_TRY_BODY, AFTER_TRY)
+        .andOr(IN_TRY_BODY, IN_EXCEPT_BODY, AFTER_TRY)
         //.andNot(RIGHT_AFTER_COLON)
         .andNot(AFTER_QUALIFIER)
       ,
