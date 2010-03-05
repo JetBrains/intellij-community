@@ -55,7 +55,7 @@ public class DefaultNonCodeSearchElementDescriptionProvider implements ElementDe
       return ((PsiNamedElement)element).getName();
     }
     else {
-      LOG.error("Unknown element type: " + element);
+     // LOG.error("Unknown element type: " + element);
       return null;
     }
   }
