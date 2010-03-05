@@ -913,8 +913,8 @@
 
     <stepsBeforeRunProvider implementation="com.intellij.compiler.options.CompileStepBeforeRun" id="compileBeforeRun"/>
     <stepsBeforeRunProvider implementation="com.intellij.packaging.impl.run.BuildArtifactsBeforeRunTaskProvider" order="after compileBeforeRun"/>
-    <programRunner implementation="com.intellij.execution.impl.DefaultJavaProgramRunner"/>
-    <programRunner implementation="com.intellij.debugger.impl.GenericDebuggerRunner" order="last"/>
+    <programRunner id="defaultRunRunner" implementation="com.intellij.execution.impl.DefaultJavaProgramRunner"/>
+    <programRunner id="defaultDebugRunner" implementation="com.intellij.debugger.impl.GenericDebuggerRunner" order="last"/>
 
     <configurationType implementation="com.intellij.execution.applet.AppletConfigurationType"/>
     <configurationType implementation="com.intellij.execution.application.ApplicationConfigurationType"/>
