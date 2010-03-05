@@ -502,4 +502,11 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
                     myJavaFacade.getElementFactory().createTypeFromText("java.util.Map<java.lang.String,java.lang.String>", null),
                     myJavaFacade.getElementFactory().createTypeFromText("java.util.Map<java.lang.String,java.lang.Integer>", null));
   }
+
+  //param List -> Array[]
+  public void testT101() throws Exception {
+    doTestFirstParamType("meth",
+                    myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.util.ArrayList<java.lang.Integer>>", null),
+                    myJavaFacade.getElementFactory().createTypeFromText("java.util.ArrayList<java.lang.Integer>[]", null));
+  }
 }

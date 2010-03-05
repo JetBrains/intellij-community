@@ -1,6 +1,6 @@
 Types:
 PsiField:s : java.lang.String[]
-PsiMethodCallExpression:s.get(0) : E
+PsiMethodCallExpression:s.get(0) : java.lang.String
 PsiMethodCallExpression:s.set(0, "") : void
 PsiReferenceExpression:s : java.lang.String[]
 PsiReferenceExpression:s : java.lang.String[]

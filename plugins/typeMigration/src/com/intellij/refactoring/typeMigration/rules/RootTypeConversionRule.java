@@ -46,7 +46,7 @@ public class RootTypeConversionRule extends TypeConversionRule {
 
             assert originalParams.length == migrationParams.length;
             final PsiSubstitutor methodTypeParamsSubstitutor =
-              labeler.getTypeEvaluator().createMethodSubstitution(originalParams, actualParams, method, context, labeler);
+              labeler.getTypeEvaluator().createMethodSubstitution(originalParams, actualParams, method, (PsiReferenceExpression)context);
             for (int i = 0; i < originalParams.length; i++) {
               final PsiType originalType = resolveResult.getSubstitutor().substitute(originalParams[i].getType());
 

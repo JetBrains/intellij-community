@@ -336,7 +336,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
     if (method instanceof PsiMethod) {
       final PsiExpression[] psiExpressions = methodCallExpression.getArgumentList().getExpressions();
       final PsiParameter[] originalParams = ((PsiMethod)method).getParameterList().getParameters();
-      final PsiSubstitutor evalSubstitutor = myTypeEvaluator.createMethodSubstitution(originalParams, psiExpressions, (PsiMethod)method, methodCallExpression, myLabeler);
+      final PsiSubstitutor evalSubstitutor = myTypeEvaluator.createMethodSubstitution(originalParams, psiExpressions, (PsiMethod)method, methodCallExpression);
       for (int i = 0; i < psiExpressions.length; i++) {
         PsiParameter originalParameter;
         if (originalParams.length <= i) {
