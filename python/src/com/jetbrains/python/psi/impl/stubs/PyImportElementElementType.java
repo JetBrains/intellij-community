@@ -44,18 +44,29 @@ public class PyImportElementElementType extends PyStubElementType<PyImportElemen
 
   public void serialize(PyImportElementStub stub, StubOutputStream dataStream) throws IOException {
     final List<String> qName = stub.getImportedQName();
-    dataStream.writeVarInt(qName.size());
-    for (String s : qName) {
-      dataStream.writeName(s);
+    if (qName == null) {
+      dataStream.writeVarInt(0);
+    }
+    else {
+      dataStream.writeVarInt(qName.size());
+      for (String s : qName) {
+        dataStream.writeName(s);
+      }
     }
     dataStream.writeName(stub.getAsName());
   }
 
   public PyImportElementStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
     int size = dataStream.readVarInt();
-    List<String> qName = new ArrayList<String>(size);
-    for (int i = 0; i < size; i++) {
-      qName.add(dataStream.readName().getString());
+    List<String> qName;
+    if (size == 0) {
+      qName = null;
+    }
+    else {
+      qName = new ArrayList<String>(size);
+      for (int i = 0; i < size; i++) {
+        qName.add(dataStream.readName().getString());
+      }
     }
     StringRef asName = dataStream.readName();
     return new PyImportElementStubImpl(qName, asName.getString(), parentStub);  }
