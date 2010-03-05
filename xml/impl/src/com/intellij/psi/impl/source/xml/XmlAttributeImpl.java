@@ -88,16 +88,16 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     return (XmlAttributeValue)XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild(this);
   }
 
-  public void setValue(String valueText) throws IncorrectOperationException{
+  public void setValue(String valueText) throws IncorrectOperationException {
     final ASTNode value = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild(this);
     final PomModel model = PomManager.getModel(getProject());
     final XmlAttribute attribute = XmlElementFactory.getInstance(getProject()).createXmlAttribute("a", valueText);
     final ASTNode newValue = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild((ASTNode)attribute);
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     model.runTransaction(new PomTransactionBase(this, aspect) {
-      public PomModelEvent runInner(){
+      public PomModelEvent runInner() {
         final XmlAttributeImpl att = XmlAttributeImpl.this;
-        if(value != null){
+        if (value != null) {
           if (newValue != null) {
             att.replaceChild(value, newValue.copyElement());
           }
@@ -124,7 +124,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     final String name = getName();
     final String prefixByQualifiedName = XmlUtil.findPrefixByQualifiedName(name);
     // The namespace name for an unprefixed attribute name always has no value. Namespace recommendation section 6.2, third paragraph
-    if(prefixByQualifiedName.length() == 0) return XmlUtil.EMPTY_URI;
+    if (prefixByQualifiedName.length() == 0) return XmlUtil.EMPTY_URI;
     return getParent().getNamespaceByPrefix(prefixByQualifiedName);
   }
 
@@ -134,7 +134,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     return XmlUtil.findPrefixByQualifiedName(getName());
   }
 
-  public XmlTag getParent(){
+  public XmlTag getParent() {
     final PsiElement parentTag = super.getParent();
     return parentTag instanceof XmlTag ? (XmlTag)parentTag : null; // Invalid elements might belong to DummyHolder instead.
   }
@@ -183,7 +183,8 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
       final int start = buffer.length();
       IElementType elementType = child.getElementType();
       if (elementType == XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER) {
-        valueTextRange = new TextRange(valueTextRange.getStartOffset(), child.getTextRange().getStartOffset() - value.getTextRange().getStartOffset());
+        valueTextRange =
+          new TextRange(valueTextRange.getStartOffset(), child.getTextRange().getStartOffset() - value.getTextRange().getStartOffset());
         break;
       }
       if (elementType == XmlTokenType.XML_CHAR_ENTITY_REF) {
@@ -226,11 +227,17 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     final int bsResult = Arrays.binarySearch(myGapPhysicalStarts, physicalIndex);
 
     final int gapIndex;
-    if(bsResult > 0) gapIndex = bsResult;
-    else if(bsResult < -1) gapIndex = -bsResult - 2;
-    else gapIndex = -1;
+    if (bsResult > 0) {
+      gapIndex = bsResult;
+    }
+    else if (bsResult < -1) {
+      gapIndex = -bsResult - 2;
+    }
+    else {
+      gapIndex = -1;
+    }
 
-    if(gapIndex < 0) return physicalIndex;
+    if (gapIndex < 0) return physicalIndex;
     final int shift = myGapPhysicalStarts[gapIndex] - myGapDisplayStarts[gapIndex];
     return Math.max(myGapDisplayStarts[gapIndex], physicalIndex - shift);
   }
@@ -243,11 +250,17 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     final int bsResult = Arrays.binarySearch(myGapDisplayStarts, displayIndex);
     final int gapIndex;
 
-    if(bsResult > 0) gapIndex = bsResult - 1;
-    else if(bsResult < -1) gapIndex = -bsResult - 2;
-    else gapIndex = -1;
+    if (bsResult > 0) {
+      gapIndex = bsResult - 1;
+    }
+    else if (bsResult < -1) {
+      gapIndex = -bsResult - 2;
+    }
+    else {
+      gapIndex = -1;
+    }
 
-    if(gapIndex < 0) return displayIndex;
+    if (gapIndex < 0) return displayIndex;
     final int shift = myGapPhysicalStarts[gapIndex] - myGapDisplayStarts[gapIndex];
     return displayIndex + shift;
   }
@@ -284,7 +297,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     final ASTNode newName = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild((ASTNode)attribute);
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     model.runTransaction(new PomTransactionBase(getParent(), aspect) {
-      public PomModelEvent runInner(){
+      public PomModelEvent runInner() {
         final PomModelEvent event = new PomModelEvent(model);
         final XmlAspectChangeSetImpl xmlAspectChangeSet = new XmlAspectChangeSetImpl(model, (XmlFile)getContainingFile());
         xmlAspectChangeSet.add(new XmlAttributeSetImpl(getParent(), oldName, null));
@@ -314,15 +327,18 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
       refs = new PsiReference[referencesFromProviders.length + 1];
       final String localName = getLocalName();
       final String prefix = XmlUtil.findPrefixByQualifiedName(getName());
-      final TextRange range = prefix.length() == 0 ? TextRange.from(getName().length(), 0) : TextRange.from(prefix.length() + 1, localName.length());
-      refs[0] = new SchemaPrefixReference(this, range,localName);
-    } else {
+      final TextRange range =
+        prefix.length() == 0 ? TextRange.from(getName().length(), 0) : TextRange.from(prefix.length() + 1, localName.length());
+      refs[0] = new SchemaPrefixReference(this, range, localName);
+    }
+    else {
       final String prefix = getNamespacePrefix();
       if (prefix.length() > 0 && getLocalName().length() > 0) {
         refs = new PsiReference[referencesFromProviders.length + 2];
         refs[0] = new SchemaPrefixReference(this, TextRange.from(0, prefix.length()), prefix);
         refs[1] = new MyPsiReference();
-      } else {
+      }
+      else {
         refs = new PsiReference[referencesFromProviders.length + 1];
         refs[0] = new MyPsiReference();
       }
@@ -348,7 +364,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
       protected XmlAttributeDescriptor compute() {
         final PsiElement parentElement = getParent();
         final XmlElementDescriptor descr = ((XmlTag)parentElement).getDescriptor();
-        if (descr != null){
+        if (descr != null) {
           return descr.getAttributeDescriptor(XmlAttributeImpl.this);
         }
         return null;
@@ -362,7 +378,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     public TextRange getRangeInElement() {
       final int parentOffset = getNameElement().getStartOffsetInParent();
       int nsLen = getNamespacePrefix().length();
-      nsLen+= nsLen > 0 && getRealLocalName().length() > 0 ? 1 : -nsLen;
+      nsLen += nsLen > 0 && getRealLocalName().length() > 0 ? 1 : -nsLen;
       return new TextRange(parentOffset + nsLen, parentOffset + getNameElement().getTextLength());
     }
 
@@ -389,10 +405,11 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     }
 
     // TODO[ik]: namespace support
+
     public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
-      if (element instanceof PsiMetaOwner){
+      if (element instanceof PsiMetaOwner) {
         final PsiMetaOwner owner = (PsiMetaOwner)element;
-        if (owner.getMetaData() instanceof XmlElementDescriptor){
+        if (owner.getMetaData() instanceof XmlElementDescriptor) {
           setName(owner.getMetaData().getName());
         }
       }
@@ -409,7 +426,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
       final XmlTag declarationTag = getParent();
       LOG.assertTrue(declarationTag.isValid());
       final XmlElementDescriptor parentDescriptor = declarationTag.getDescriptor();
-      if (parentDescriptor != null){
+      if (parentDescriptor != null) {
         final XmlAttribute[] attributes = declarationTag.getAttributes();
         XmlAttributeDescriptor[] descriptors = parentDescriptor.getAttributesDescriptors(declarationTag);
 
@@ -420,7 +437,9 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
       return variants.toArray();
     }
 
-    private void addVariants(final Collection<MutableLookupElement<String>> variants, final XmlAttribute[] attributes, final XmlAttributeDescriptor[] descriptors) {
+    private void addVariants(final Collection<MutableLookupElement<String>> variants,
+                             final XmlAttribute[] attributes,
+                             final XmlAttributeDescriptor[] descriptors) {
       final XmlTag tag = getParent();
       final XmlExtension extension = XmlExtension.getExtension(tag.getContainingFile());
       final String prefix = getName().contains(":") && getRealLocalName().length() > 0 ? getNamespacePrefix() + ":" : null;
@@ -435,6 +454,10 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
             final MutableLookupElement<String> element = LookupElementFactory.getInstance().createLookupElement(name);
             if (descriptor instanceof PsiPresentableMetaData) {
               element.setIcon(((PsiPresentableMetaData)descriptor).getIcon());
+            }
+            final int separator = name.indexOf(':');
+            if (separator > 0) {
+              element.addLookupStrings(name.substring(separator + 1));
             }
             element.setInsertHandler(XmlAttributeInsertHandler.INSTANCE);
             variants.add(element);
@@ -469,8 +492,6 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
 
   private String getRealLocalName() {
     final String name = getLocalName();
-    return name.endsWith(DUMMY_IDENTIFIER_TRIMMED)
-           ? name.substring(0, name.length() - DUMMY_IDENTIFIER_TRIMMED.length())
-           : name;
+    return name.endsWith(DUMMY_IDENTIFIER_TRIMMED) ? name.substring(0, name.length() - DUMMY_IDENTIFIER_TRIMMED.length()) : name;
   }
 }
