@@ -19,10 +19,12 @@ import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupValueFactory;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.PomTarget;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReferenceBase;
+import com.intellij.psi.impl.PomTargetPsiElementImpl;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
@@ -106,7 +108,16 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
   public boolean isReferenceTo(final PsiElement element) {
     final Converter<T> converter = getConverter();
     if (converter instanceof ResolvingConverter) {
-      return ((ResolvingConverter<T>)converter).isReferenceTo(element, getStringValue(), myGenericValue.getValue(), getConvertContext());
+      T value = myGenericValue.getValue();
+      if (value instanceof DomElement && element instanceof PomTargetPsiElementImpl) {
+        PomTarget target = ((PomTargetPsiElementImpl)element).getTarget();
+        if (target instanceof DomTarget) {
+          if (value.equals(((DomTarget)target).getDomElement())) {
+            return true;
+          }
+        }
+      }
+      return ((ResolvingConverter<T>)converter).isReferenceTo(element, getStringValue(), value, getConvertContext());
     }
     return super.isReferenceTo(element);
   }
