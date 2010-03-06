@@ -1,1 +1,0 @@
-a = <caret><warning descr="Method 'raw_input' has been removed, use 'input' instead">raw_input</warning>()

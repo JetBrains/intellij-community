@@ -1,1 +1,0 @@
-a = <caret><warning descr="String literals do not support a leading 'u' or 'U' in Python 3">u"text"</warning>

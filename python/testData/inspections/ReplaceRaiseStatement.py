@@ -1,1 +1,0 @@
-<caret><warning descr="Python 3 does not support this syntax">raise a, b, c</warning>

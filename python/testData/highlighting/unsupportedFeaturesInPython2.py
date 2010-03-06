@@ -2,7 +2,7 @@
 
 try:
   pass
-<warning descr="Python 2 does not support this syntax">except a as name:
+<warning descr="This Python version does not support this syntax">except a as name:
   pass</warning>
 
 class A(B):
@@ -12,3 +12,6 @@ class A(B):
 <warning descr="Python 2 does not support set literal expressions">{1, 2}</warning>
 
 <warning descr="Python 2 does not support star expressions">*b</warning>, c = 1, 2, 3, 4, 5
+
+if <warning descr="<> is deprecated, use != instead">a <> 2</warning>:
+    pass

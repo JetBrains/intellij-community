@@ -1,1 +1,0 @@
-a = <caret><warning descr="Integer literals do not support a trailing 'l' or 'L' in Python 3">1223l</warning>

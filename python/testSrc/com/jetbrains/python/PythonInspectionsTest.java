@@ -81,11 +81,6 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
     doTest(getTestName(false), inspection);
   }
 
-  public void testPyUnsupportedFeaturesInspection() throws Throwable {
-    LocalInspectionTool inspection = new PyUnsupportedFeaturesInspection();
-    doTestWithPy3k(getTestName(false), inspection);
-  }
-
   public void testPyDictCreationInspection() throws Throwable {
     LocalInspectionTool inspection = new PyDictCreationInspection();
     doTest(getTestName(false), inspection);
@@ -120,11 +115,6 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
 
   public void testPyExceptClausesOrderInspection() throws Throwable {
     LocalInspectionTool inspection = new PyExceptClausesOrderInspection();
-    doTest(getTestName(false), inspection);
-  }
-
-  public void testPyAssigningFunctionCallInspection() throws Throwable {
-    LocalInspectionTool inspection = new PyAssigningFunctionCallInspection();
     doTest(getTestName(false), inspection);
   }
 }
