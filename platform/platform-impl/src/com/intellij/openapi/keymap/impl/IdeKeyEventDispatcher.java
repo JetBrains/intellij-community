@@ -291,7 +291,10 @@ public final class IdeKeyEventDispatcher implements Disposable {
       myFirstKeyStroke=null;
       setState(KeyState.STATE_INIT);
       Project project = PlatformDataKeys.PROJECT.getData(myContext.getDataContext());
-      WindowManager.getInstance().getStatusBar(project).setInfo(null);
+      StatusBar bar = WindowManager.getInstance().getStatusBar(project);
+      if (bar != null) {
+        bar.setInfo(null);
+      }
       return false;
     }
 
@@ -309,7 +312,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
     Project project = PlatformDataKeys.PROJECT.getData(myContext.getDataContext());
     StatusBarEx statusBar = (StatusBarEx) WindowManager.getInstance().getStatusBar(project);
     if (processAction(e, myActionProcessor)) {
-      statusBar.setInfo(null);
+      if (statusBar != null) {
+        statusBar.setInfo(null);
+      }
       return true;
     } else {
       return false;
@@ -413,7 +418,10 @@ public final class IdeKeyEventDispatcher implements Disposable {
         message.append(")");
       }
 
-      WindowManager.getInstance().getStatusBar(project).setInfo(message.toString());
+      StatusBar bar = WindowManager.getInstance().getStatusBar(project);
+      if (bar != null) {
+        bar.setInfo(message.toString());
+      }
 
       mySecondStrokeTimeout.cancelAllRequests();
       mySecondStrokeTimeout.addRequest(mySecondStrokeTimeoutRunnable, Registry.intValue("actionSystem.secondKeystrokeTimout"));

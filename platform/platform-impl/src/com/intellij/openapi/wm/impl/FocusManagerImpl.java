@@ -72,7 +72,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private final Set<Runnable> myIdleRequests = new com.intellij.util.containers.HashSet<Runnable>();
   private final EdtRunnable myIdleRunnable = new EdtRunnable() {
     public void runEdt() {
-      if (isFocusTransferReady() && !isIdleQueueEmpty() && IdeEventQueue.getInstance().isReady()) {
+      if (isFocusTransferReady() && !isIdleQueueEmpty()) {
         flushIdleRequests();
       }
       else {
@@ -348,7 +348,9 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
       myFlushingIdleRequestsEntryCount++;
 
       final KeyEvent[] events = myToDispatchOnDone.toArray(new KeyEvent[myToDispatchOnDone.size()]);
-      IdeEventQueue.getInstance().getKeyEventDispatcher().resetState();
+      if (events.length > 0) {
+        IdeEventQueue.getInstance().getKeyEventDispatcher().resetState();
+      }
 
       boolean keyWasPressed = false;
 
