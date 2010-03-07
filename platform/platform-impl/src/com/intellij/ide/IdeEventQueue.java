@@ -742,7 +742,7 @@ public class IdeEventQueue extends EventQueue {
     return peekEvent(FocusEvent.FOCUS_GAINED) != null || peekEvent(FocusEvent.FOCUS_LOST) != null;
   }
 
-  public boolean isReady() {
+  private boolean isReady() {
     return !myKeyboardBusy && myKeyEventDispatcher.isReady();
   }
 
