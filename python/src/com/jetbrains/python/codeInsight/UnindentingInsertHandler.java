@@ -64,13 +64,14 @@ public class UnindentingInsertHandler implements InsertHandler<PythonLookupEleme
     int line_start_offset = document.getLineStartOffset(document.getLineNumber(offset));
     int nonspace_offset = findBeginning(line_start_offset, text);
 
+
     if (matcher == null) {
       int last_offset = nonspace_offset + 7; // length of 'except:'
       if (last_offset > offset) last_offset = offset;
       int local_length = last_offset - nonspace_offset;
       if (local_length > 0) {
-        final int else_len = "else".length();
         String piece = text.subSequence(nonspace_offset, last_offset+1).toString();
+        final int else_len = "else".length();
         if (local_length >= else_len) {
           if ((piece.startsWith("else") || piece.startsWith("elif")) && (piece.charAt(else_len) < 'a' || piece.charAt(else_len) < 'z')) {
             matcher = ELSE_MATCHER;
@@ -94,7 +95,7 @@ public class UnindentingInsertHandler implements InsertHandler<PythonLookupEleme
 
     if (matcher == null) return false; // failed
 
-    PsiElement token = file.findElementAt(offset-1);
+    PsiElement token = file.findElementAt(offset-2); // -1 is our ':' which may not be parsed yet; -2 is safer.
     List<? extends PsiElement> result = matcher.search(token);
     if (result != null && result.size() > 0) {
       PsiElement outer = result.get(0);
