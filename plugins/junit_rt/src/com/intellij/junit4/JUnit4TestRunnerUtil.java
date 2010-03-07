@@ -15,9 +15,17 @@
  */
 package com.intellij.junit4;
 
+import org.junit.internal.AssumptionViolatedException;
+import org.junit.internal.requests.ClassRequest;
+import org.junit.internal.runners.model.EachTestNotifier;
 import org.junit.runner.Description;
 import org.junit.runner.Request;
+import org.junit.runner.Runner;
 import org.junit.runner.manipulation.Filter;
+import org.junit.runner.notification.RunNotifier;
+import org.junit.runners.BlockJUnit4ClassRunner;
+import org.junit.runners.model.FrameworkMethod;
+import org.junit.runners.model.InitializationError;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -106,7 +114,18 @@ public class JUnit4TestRunnerUtil {
       else {
         int index = suiteClassName.indexOf(',');
         if (index != -1) {
-          return Request.method(loadTestClass(suiteClassName.substring(0, index)), suiteClassName.substring(index + 1));
+          final Class clazz = loadTestClass(suiteClassName.substring(0, index));
+          final Request classRequest = new ClassRequest(clazz){
+            public Runner getRunner() {
+              try {
+                return new IgnoreIgnoredTestJUnit4ClassRunner(clazz);
+              }
+              catch (InitializationError ignored) {
+              }
+              return super.getRunner();
+            }
+          };
+          return classRequest.filterWith(Description.createTestDescription(clazz, suiteClassName.substring(index + 1)));
         }
         appendTestClass(result, suiteClassName);
       }
@@ -154,4 +173,27 @@ public class JUnit4TestRunnerUtil {
   }
 
 
+  private static class IgnoreIgnoredTestJUnit4ClassRunner extends BlockJUnit4ClassRunner {
+    public IgnoreIgnoredTestJUnit4ClassRunner(Class clazz) throws InitializationError {
+      super(clazz);
+    }
+
+    protected void runChild(FrameworkMethod method, RunNotifier notifier) {
+      final Description description = describeChild(method);
+      final EachTestNotifier eachNotifier = new EachTestNotifier(notifier, description);
+      eachNotifier.fireTestStarted();
+      try {
+        methodBlock(method).evaluate();
+      }
+      catch (AssumptionViolatedException e) {
+        eachNotifier.addFailedAssumption(e);
+      }
+      catch (Throwable e) {
+        eachNotifier.addFailure(e);
+      }
+      finally {
+        eachNotifier.fireTestFinished();
+      }
+    }
+  }
 }

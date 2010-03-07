@@ -166,12 +166,12 @@
     </action>
 
     <action id="Maven.DownloadArtifacts" class="org.jetbrains.idea.maven.project.actions.DownloadArtifactsAction"
-            text="Download Sources And Javadoc For All Projects" description="Download sources and javadoc for all dependencies"
+            text="Download Sources And Documentation For All Projects" description="Download sources and documentation for all dependencies"
             icon="/images/download.png">
     </action>
 
     <action id="Maven.DownloadArtifactsForProject" class="org.jetbrains.idea.maven.project.actions.DownloadArtifactsForProjectAction"
-            text="Download Sources And Javadoc" description="Download sources and javadoc for all dependencies for selected projects"
+            text="Download Sources And Documentation" description="Download sources and documentation for all dependencies for selected projects"
             icon="/images/download.png">
     </action>
 

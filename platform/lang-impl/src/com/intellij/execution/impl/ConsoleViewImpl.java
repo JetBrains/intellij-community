@@ -17,6 +17,7 @@
 package com.intellij.execution.impl;
 
 import com.intellij.codeInsight.navigation.IncrementalSearchHandler;
+import com.intellij.execution.ConsoleFolding;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.filters.*;
 import com.intellij.execution.process.ProcessHandler;
@@ -45,6 +46,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
+import com.intellij.openapi.editor.impl.FoldRegionImpl;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -71,6 +73,8 @@ import com.intellij.util.Alarm;
 import com.intellij.util.EditorPopupHandler;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.text.CharArrayUtil;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -168,6 +172,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private ArrayList<TokenInfo> myTokens = new ArrayList<TokenInfo>();
   private final Hyperlinks myHyperlinks = new Hyperlinks();
+  private final TIntObjectHashMap<ConsoleFolding> myFolding = new TIntObjectHashMap<ConsoleFolding>();
 
   private String myHelpId;
 
@@ -618,7 +623,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     editorSettings.setLineMarkerAreaShown(false);
     editorSettings.setIndentGuidesShown(false);
     editorSettings.setLineNumbersShown(false);
-    editorSettings.setFoldingOutlineShown(false);
+    editorSettings.setFoldingOutlineShown(true);
     editorSettings.setAdditionalPageAtBottom(false);
     editorSettings.setAdditionalColumnsCount(0);
     editorSettings.setAdditionalLinesCount(0);
@@ -793,21 +798,23 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return myHyperlinks.getHyperlinkAt(offset);
   }
 
-  private void highlightHyperlinks(final int line1, final int line2){
+  private void highlightHyperlinks(final int line1, final int endLine){
     ApplicationManager.getApplication().assertIsDispatchThread();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     final Document document = myEditor.getDocument();
     final CharSequence chars = document.getCharsSequence();
     final TextAttributes hyperlinkAttributes = getHyperlinkAttributes();
 
-    for(int line = line1; line <= line2; line++) {
-      if (line < 0) continue;
-      final int startOffset = document.getLineStartOffset(line);
+    final int startLine = Math.max(0, line1);
+
+    final List<FoldRegion> toAdd = new ArrayList<FoldRegion>();
+
+    for(int line = startLine; line <= endLine; line++) {
       int endOffset = document.getLineEndOffset(line);
-      if (endOffset < document.getTextLength()){
+      if (endOffset < document.getTextLength()) {
         endOffset++; // add '\n'
       }
-      final String text = chars.subSequence(startOffset, endOffset).toString();
+      final String text = getLineText(document, line, true);
       Filter.Result result = myCustomFilter.applyFilter(text, endOffset);
       if (result == null) {
         result = myPredefinedMessageFilter.applyFilter(text, endOffset);
@@ -818,7 +825,68 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         final HyperlinkInfo hyperlinkInfo = result.hyperlinkInfo;
         addHyperlink(highlightStartOffset, highlightEndOffset, result.highlightAttributes, hyperlinkInfo, hyperlinkAttributes);
       }
+      addFolding(document, chars, line, toAdd);
     }
+    if (!toAdd.isEmpty()) {
+      doUpdateFolding(toAdd);
+    }
+  }
+
+  private void doUpdateFolding(final List<FoldRegion> toAdd) {
+    final FoldingModel model = myEditor.getFoldingModel();
+    model.runBatchFoldingOperationDoNotCollapseCaret(new Runnable() {
+      public void run() {
+        for (FoldRegion region : toAdd) {
+          region.setExpanded(false);
+          model.addFoldRegion(region);
+        }
+      }
+    });
+  }
+
+  private void addFolding(Document document, CharSequence chars, int line, List<FoldRegion> toAdd) {
+    ConsoleFolding current = foldingForLine(getLineText(document, line, false));
+    myFolding.put(line, current);
+
+    final ConsoleFolding prevFolding = myFolding.get(line - 1);
+    if (current == null && prevFolding != null) {
+      final int lEnd = line - 1;
+      int lStart = lEnd;
+      while (prevFolding.equals(myFolding.get(lStart - 1))) lStart--;
+      if (lStart == lEnd) {
+        return;
+      }
+
+      List<String> toFold = new ArrayList<String>(lEnd - lStart + 1);
+      for (int i = lStart; i <= lEnd; i++) {
+        toFold.add(getLineText(document, i, false));
+      }
+
+      int oStart = document.getLineStartOffset(lStart);
+//      oStart = CharArrayUtil.shiftForward(chars, oStart, " \t");
+      if (oStart > 0) oStart--;
+      int oEnd = CharArrayUtil.shiftBackward(chars, document.getLineEndOffset(lEnd) - 1, " \t") + 1;
+
+      toAdd.add(new FoldRegionImpl(myEditor, oStart, oEnd, prevFolding.getPlaceholderText(toFold), null));
+    }
+  }
+
+  private static String getLineText(Document document, int lineNumber, boolean includeEol) {
+    int endOffset = document.getLineEndOffset(lineNumber);
+    if (includeEol && endOffset < document.getTextLength()) {
+      endOffset++;
+    }
+    return document.getCharsSequence().subSequence(document.getLineStartOffset(lineNumber), endOffset).toString();
+  }
+
+  private static ConsoleFolding foldingForLine(String lineText) {
+    ConsoleFolding current = null;
+    for (ConsoleFolding folding : ConsoleFolding.EP_NAME.getExtensions()) {
+      if (folding.shouldFoldLine(lineText)) {
+        current = folding;
+      }
+    }
+    return current;
   }
 
   private void addHyperlink(final int highlightStartOffset,
@@ -1152,6 +1220,12 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private OccurenceInfo next(final int delta, boolean doMove) {
     List<RangeHighlighter> ranges = new ArrayList<RangeHighlighter>(myHyperlinks.getRanges().keySet());
+    for (Iterator<RangeHighlighter> iterator = ranges.iterator(); iterator.hasNext();) {
+      RangeHighlighter highlighter = iterator.next();
+      if (myEditor.getFoldingModel().getCollapsedRegionAtOffset(highlighter.getStartOffset()) != null) {
+        iterator.remove();
+      }
+    }
     Collections.sort(ranges, new Comparator<RangeHighlighter>() {
       public int compare(final RangeHighlighter o1, final RangeHighlighter o2) {
         return o1.getStartOffset() - o2.getStartOffset();

@@ -906,4 +906,9 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
   public ExternalInfo getExternalInfo() {
     return myExternalInfo;
   }
+
+  @Override
+  public String toString() {
+    return getPresentableName();
+  }
 }

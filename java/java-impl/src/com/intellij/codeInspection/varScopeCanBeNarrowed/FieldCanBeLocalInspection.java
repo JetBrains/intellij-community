@@ -153,17 +153,21 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
           }
         }
       }
+      final Collection<PsiVariable> writtenVariables = ControlFlowUtil.getWrittenVariables(controlFlow, 0, controlFlow.getSize(), false);
       final List<PsiReferenceExpression> readBeforeWrites = ControlFlowUtil.getReadBeforeWrite(controlFlow);
       for (final PsiReferenceExpression readBeforeWrite : readBeforeWrites) {
         final PsiElement resolved = readBeforeWrite.resolve();
         if (resolved instanceof PsiField) {
           final PsiField field = (PsiField)resolved;
-          PsiElement parent = body.getParent();
-          if (!(parent instanceof PsiMethod) ||
-              !((PsiMethod)parent).isConstructor() ||
-              field.getInitializer() == null ||
-              field.hasModifierProperty(PsiModifier.STATIC)) {
-            candidates.remove(field);
+          if (writtenVariables.contains(field)){
+            PsiElement parent = body.getParent();
+            if (!(parent instanceof PsiMethod) ||
+                !((PsiMethod)parent).isConstructor() ||
+                field.getInitializer() == null ||
+                field.hasModifierProperty(PsiModifier.STATIC) ||
+                !PsiTreeUtil.isAncestor(((PsiMethod)parent).getContainingClass(), field, true)) {
+              candidates.remove(field);
+            }
           }
         }
       }

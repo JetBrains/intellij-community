@@ -129,6 +129,8 @@ public abstract class XmlElementImpl extends CompositePsiElement implements XmlE
 
   @Override
   public boolean isEquivalentTo(final PsiElement another) {
+
+    if (super.isEquivalentTo(another)) return true;
     PsiElement element1 = this;
     PsiElement element2 = another;
 

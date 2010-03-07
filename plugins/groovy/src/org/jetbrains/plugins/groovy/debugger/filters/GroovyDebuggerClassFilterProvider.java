@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.debugger.filters;
 
+import com.intellij.execution.filters.StackFrameFilter;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.classFilter.DebuggerClassFilterProvider;
 
@@ -25,8 +26,8 @@ import java.util.List;
 /**
  * @author ilyas
  */
-public class GroovyDebuggerClassFilterProvider implements DebuggerClassFilterProvider {
-  private static final ClassFilter[] FITERS = {new ClassFilter("org.codehaus.groovy.*"), new ClassFilter("groovy.*")};
+public class GroovyDebuggerClassFilterProvider extends StackFrameFilter implements DebuggerClassFilterProvider {
+  private static final ClassFilter[] FILTERS = {new ClassFilter("org.codehaus.groovy.*"), new ClassFilter("groovy.*")};
 
   public List<ClassFilter> getFilters() {
 
@@ -34,10 +35,24 @@ public class GroovyDebuggerClassFilterProvider implements DebuggerClassFilterPro
     final Boolean flag = settings.DEBUG_DISABLE_SPECIFIC_GROOVY_METHODS;
     final ArrayList<ClassFilter> list = new ArrayList<ClassFilter>();
     if (flag == null || flag.booleanValue()) {
-      list.addAll(Arrays.asList(FITERS));
+      list.addAll(Arrays.asList(FILTERS));
       return list;
     }
     return list;
   }
 
+  public boolean isAuxiliaryFrame(String className, String methodName) {
+    if (className.equals("org.codehaus.groovy.runtime.DefaultGroovyMethods") ||
+        className.equals("org.codehaus.groovy.runtime.DefaultGroovyMethodsSupport")) {
+      return false;
+    }
+
+    for (ClassFilter filter : FILTERS) {
+      final String pattern = filter.getPattern();
+      if (className.startsWith(pattern.substring(0, pattern.length() - 1))) {
+        return true;
+      }
+    }
+    return false;
+  }
 }

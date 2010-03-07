@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Test.java</file>
+    <line>2</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Field can be local</problem_class>
+    <description>Field can be converted to a local variable</description>
+  </problem>
+</problems>
