@@ -217,7 +217,7 @@ public class PyUtil {
     return seeker;
   }
 
-  @Nullable
+  @NotNull
   public static <T extends PyElement> T[] getAllChildrenOfType(@NotNull PsiElement element, @NotNull Class<T> aClass) {
     List<T> result = new SmartList<T>();
     for (PsiElement child : element.getChildren()) {

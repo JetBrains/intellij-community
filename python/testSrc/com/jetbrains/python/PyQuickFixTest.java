@@ -88,55 +88,6 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
                      true, true);
   }
 
-  // we don't really need quickfixes for convering Py3 syntax into Py2
-  public void _testReplaceExceptPartTo2() throws Exception {
-    doInspectionTest("ReplaceExceptPartTo2.py", PyUnsupportedFeaturesInspection.class, PyBundle.message("QFIX.replace.except.part"), true,
-                     true);
-  }
-
-  public void testReplaceNotEqOperator() throws Exception {
-    doInspectionTestWithPy3k("ReplaceNotEqOperator.py", PyUnsupportedFeaturesInspection.class,
-                             PyBundle.message("QFIX.replace.noteq.operator"), true, true);
-  }
-
-  public void testReplaceBackquoteExpression() throws Exception {
-    doInspectionTestWithPy3k("ReplaceBackQuoteExpression.py", PyUnsupportedFeaturesInspection.class,
-                             PyBundle.message("QFIX.replace.backquote.expression"), true, true);
-  }
-
-  public void testReplaceMethod() throws Exception {
-    doInspectionTestWithPy3k("ReplaceMethod.py", PyUnsupportedFeaturesInspection.class, PyBundle.message("QFIX.replace.method"),
-                             true, true);
-  }
-
-  public void testRemoveLeadingU() throws Exception {
-    doInspectionTestWithPy3k("RemoveLeadingU.py", PyUnsupportedFeaturesInspection.class, PyBundle.message("QFIX.remove.leading.u"), true, true);
-  }
-
-  public void testTrailingL() throws Exception {
-    doInspectionTestWithPy3k("RemoveTrailingL.py", PyUnsupportedFeaturesInspection.class, PyBundle.message("QFIX.remove.trailing.l"), true, true);
-  }
-
-  public void testReplaceOctalNumericLiteral() throws Exception {
-    doInspectionTestWithPy3k("ReplaceOctalNumericLiteral.py", PyUnsupportedFeaturesInspection.class,
-                             PyBundle.message("QFIX.replace.octal.numeric.literal"), true, true);
-  }
-
-  public void testReplaceRaiseStatement() throws Exception {
-    doInspectionTestWithPy3k("ReplaceRaiseStatement.py", PyUnsupportedFeaturesInspection.class,
-                             PyBundle.message("QFIX.replace.raise.statement"), true, true);
-  }
-
-  public void testReplaceExceptPartTo3() throws Exception {
-    doInspectionTestWithPy3k("ReplaceExceptPartTo3.py", PyUnsupportedFeaturesInspection.class, PyBundle.message("QFIX.replace.except.part"),
-                             true, true);
-  }
-
-  public void testReplaceListComprehensions() throws Exception {
-    doInspectionTestWithPy3k("ReplaceListComprehensions.py", PyUnsupportedFeaturesInspection.class,
-                             PyBundle.message("QFIX.replace.list.comprehensions"), true, true);
-  }
-
   public void testDictCreation() throws Exception {
     doInspectionTest("DictCreation.py", PyDictCreationInspection.class, PyBundle.message("QFIX.dict.creation"), true, true);
   }
@@ -146,12 +97,13 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
                      PyBundle.message("QFIX.classic.class.transform"), true, true);
   }
 
-  protected void doInspectionTestWithPy3k(@NonNls String testFileName,
-                                        final Class inspectionClass,
-                                        @NonNls String quickFixName,
-                                        boolean applyFix,
-                                        boolean available) throws Exception {
-    PythonLanguageLevelPusher.FORCE_LANGUAGE_LEVEL = LanguageLevel.PYTHON30;
+  protected void doInspectionTest(@NonNls String testFileName,
+                                  final Class inspectionClass,
+                                  @NonNls String quickFixName,
+                                  boolean applyFix,
+                                  boolean available,
+                                  LanguageLevel languageLevel) throws Exception {
+    PythonLanguageLevelPusher.FORCE_LANGUAGE_LEVEL = languageLevel;
     PythonLanguageLevelPusher.pushLanguageLevel(myFixture.getProject());
     try {
       doInspectionTest(testFileName, inspectionClass, quickFixName, applyFix, available);

@@ -1,8 +1,11 @@
-package com.jetbrains.python.actions;
+package com.jetbrains.python.codeInsight.intentions;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.PyElementGenerator;
@@ -12,23 +15,31 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: 10.02.2010
- * Time: 19:24:17
+ * Author: Alexey.Ivanov
+ * Date:   06.03.2010
+ * Time:   16:50:53
  */
-public class ReplaceRaiseStatementQuickFix implements LocalQuickFix {
+public class ReplaceRaiseStatementIntention implements IntentionAction {
   @NotNull
-  public String getName() {
-    return PyBundle.message("QFIX.replace.raise.statement");
+  public String getText() {
+    return PyBundle.message("INTN.replace.raise.statement");
   }
 
   @NotNull
   public String getFamilyName() {
-    return PyBundle.message("INSP.GROUP.python");
+    return PyBundle.message("INTN.Family.migration.to.python3");
   }
 
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PyRaiseStatement raiseStatement = (PyRaiseStatement) descriptor.getPsiElement();
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    return true;
+  }
+
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    PyRaiseStatement raiseStatement =
+      PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyRaiseStatement.class);
+    if (raiseStatement == null) {
+      return;
+    }
     PyExpression[] expressions = raiseStatement.getExpressions();
     assert expressions != null;
     PyElementGenerator elementGenerator = PythonLanguage.getInstance().getElementGenerator();
@@ -39,5 +50,9 @@ public class ReplaceRaiseStatementQuickFix implements LocalQuickFix {
       raiseStatement.replace(elementGenerator.createFromText(project, PyRaiseStatement.class,
                                                              "raise " + newExpressionText + ".with_traceback(" + expressions[2].getText() + ")"));
     }
+  }
+
+  public boolean startInWriteAction() {
+    return true;
   }
 }

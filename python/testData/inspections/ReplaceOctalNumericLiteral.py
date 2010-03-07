@@ -1,1 +1,0 @@
-a = <caret><warning descr="Python 3 requires '0o' prefix for octal literals">01223</warning>

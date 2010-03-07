@@ -126,7 +126,11 @@ public class PythonHighlightingTest extends PyLightFixtureTestCase {
   }
 
   public void testUnsupportedFeaturesInPython2() throws Exception {
-    doTest(LanguageLevel.PYTHON26, true, false);
+    doTest(LanguageLevel.PYTHON25, true, false);
+  }
+
+  public void testUnsupportedFeaturesInPython3() throws Exception {
+    doTest(LanguageLevel.PYTHON30, true, false);
   }
 
   public void testYieldInNestedFunction() throws Exception {

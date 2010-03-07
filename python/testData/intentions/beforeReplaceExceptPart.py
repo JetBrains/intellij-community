@@ -1,4 +1,4 @@
 try:
   pass
-except e as<caret> name:
+except e,<caret> name:
   pass

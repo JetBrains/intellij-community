@@ -1,4 +1,4 @@
 try:
   pass
-except e, name:
+except e as name:
   pass

@@ -51,6 +51,23 @@ public class PyMethodOverridingInspection extends LocalInspectionTool {
   }
 
   public static class Visitor extends PyInspectionVisitor {
+    private static boolean isHavePositionalContainer(@NotNull PyParameter[] parameters) {
+      for (PyParameter parameter: parameters) {
+        if (parameter instanceof PyNamedParameter && ((PyNamedParameter) parameter).isPositionalContainer()) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    private static boolean isHaveKeywordContainer(@NotNull PyParameter[] parameters) {
+      for (PyParameter parameter: parameters) {
+        if (parameter instanceof PyNamedParameter && ((PyNamedParameter) parameter).isKeywordContainer()) {
+          return true;
+        }
+      }
+      return false;
+    }
 
     public Visitor(final ProblemsHolder holder) {
       super(holder);
@@ -62,32 +79,28 @@ public class PyMethodOverridingInspection extends LocalInspectionTool {
       PyClass cls = function.getContainingClass();
       if (cls == null) return; // not a method, ignore
       String name = function.getName();
-      if (PyNames.INIT.equals(name)) return; // inits are expected to change signature 
-      if (PyNames.NEW.equals(name)) return;  // __new__ is also expected to change signature   
+      if (PyNames.INIT.equals(name)) return; // inits are expected to change signature
+      if (PyNames.NEW.equals(name)) return;  // __new__ is also expected to change signature
       // real work
-      /* TODO: implement more sophisticated logic.
-       E.g. foo(a, b, c) -> foo(*params) is a compatible override, while foo(a, b=1) -> foo(a, c=1) isn't,
-       but current implementation thinks otherwise.
-       */
+      final PyParameter[] parameters = function.getParameterList().getParameters();
+      boolean havePositionalContainer = isHavePositionalContainer(parameters);
+      boolean haveKeywordContainer = isHaveKeywordContainer(parameters);
       for (PsiElement psiElement : PySuperMethodsSearch.search(function)) {
-        final PyParameter[] parameters = function.getParameterList().getParameters();
         if (psiElement instanceof PyFunction) {
           final PyParameter[] superFunctionParameters = ((PyFunction)psiElement).getParameterList().getParameters();
-          if (parameters.length != superFunctionParameters.length) {
-            registerProblem(function.getParameterList(), "Number of parameters does not match parameters of base method");
-            return;
-          }
-
-          for (int i = 0; i < parameters.length; ++i) {
-            if (parameters[i] instanceof PyNamedParameter && superFunctionParameters[i] instanceof PyNamedParameter) {
-              final PyNamedParameter namedParameter = (PyNamedParameter)parameters[i];
-              final PyNamedParameter namedSuperFunctionParameter = (PyNamedParameter)superFunctionParameters[i];
-              if (namedParameter.isKeywordContainer() != namedSuperFunctionParameter.isKeywordContainer() ||
-                  namedParameter.isPositionalContainer() != namedSuperFunctionParameter.isPositionalContainer()) {
-                registerProblem(namedParameter, "Method signature does not match signature of base method");
-              }
+          boolean superHavePositionalContainer = isHavePositionalContainer(superFunctionParameters);
+          boolean superHaveKeywordContainer = isHaveKeywordContainer(superFunctionParameters);
+          if (parameters.length == superFunctionParameters.length) {
+            if (havePositionalContainer == superHavePositionalContainer && haveKeywordContainer == superHaveKeywordContainer) {
+              return;
             }
           }
+          if (havePositionalContainer && parameters.length - 1 <= superFunctionParameters.length) {
+            if (haveKeywordContainer == superHaveKeywordContainer) {
+              return;
+            }
+          }
+          registerProblem(function.getParameterList(), "Method signature does not match signature of base method");
         }
       }
     }
