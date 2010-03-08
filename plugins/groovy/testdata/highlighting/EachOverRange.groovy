@@ -1,0 +1,1 @@
+(date1..date2).each { it }
