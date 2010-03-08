@@ -75,6 +75,7 @@ public class BasicToClassNameDelegator extends CompletionContributor{
         if (lookupElement instanceof JavaPsiClassReferenceElement) {
           ((JavaPsiClassReferenceElement)lookupElement).setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
         }
+        lookupElement.putUserData(XmlCompletionContributor.WORD_COMPLETION_COMPATIBLE, Boolean.TRUE); //todo think of a less dirty interaction
         result.addElement(lookupElement);
       }
     });
