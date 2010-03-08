@@ -12,8 +12,8 @@ import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ScriptScope
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns
 
@@ -102,7 +102,7 @@ class Context {
             if (parent instanceof GrArgumentList) {
               parent = parent.parent
             }
-            return parent instanceof GrMethodCallExpression
+            return parent instanceof GrCall
           }
         }
 

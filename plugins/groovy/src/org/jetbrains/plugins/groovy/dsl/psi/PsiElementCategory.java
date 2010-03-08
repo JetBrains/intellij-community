@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
@@ -38,14 +39,11 @@ public class PsiElementCategory implements PsiEnhancerCategory {
 
   @Nullable
   public static PsiElement bind(PsiElement element) {
-    PsiElement elem = element instanceof GrMethodCallExpression ? ((GrMethodCallExpression)element).getInvokedExpression() : element;
+    PsiElement elem = element instanceof GrMethodCallExpression ? ((GrMethodCallExpression)element).getInvokedExpression() :
+                      element instanceof GrApplicationStatement ? ((GrApplicationStatement)element).getFunExpression() :
+                      element;
     final PsiReference ref = elem.getReference();
-    if (ref == null) {
-      return null;
-    }
-    else {
-      return ref.resolve();
-    }
+    return ref == null ? null : ref.resolve();
   }
 
   @Nullable
