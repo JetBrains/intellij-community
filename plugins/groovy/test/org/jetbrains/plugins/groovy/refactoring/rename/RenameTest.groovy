@@ -46,6 +46,20 @@ def foo(newName) {
     assertEquals txt, txtFile.text
   }
 
+  public void testPreserveUnknownImports() throws Exception {
+    def someClass = myFixture.addClass("public class SomeClass {}")
+
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
+import foo.bar.Zoo
+SomeClass c = new SomeClass()
+""")
+    myFixture.renameElement(someClass, "NewClass")
+    myFixture.checkResult """
+import foo.bar.Zoo
+NewClass c = new NewClass()
+"""
+  }
+
   public void doTest() throws Throwable {
     final String testFile = getTestName(true).replace('$', '/') + ".test";
     final List<String> list = TestUtils.readInput(TestUtils.getAbsoluteTestDataPath() + "groovy/refactoring/rename/" + testFile);

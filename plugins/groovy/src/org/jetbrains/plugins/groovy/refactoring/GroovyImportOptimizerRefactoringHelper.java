@@ -16,22 +16,16 @@
 
 package org.jetbrains.plugins.groovy.refactoring;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringHelper;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
 import com.intellij.util.containers.hash.HashSet;
+import org.jetbrains.plugins.groovy.lang.editor.GroovyImportOptimizer;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 
 import java.util.Set;
-import java.util.Collections;
 
 /**
  * @author Maxim.Medvedev
@@ -52,41 +46,10 @@ public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper
   }
 
   public void performOperation(Project project, Set<GroovyFile> files) {
+    final GroovyImportOptimizer optimizer = new GroovyImportOptimizer();
     for (GroovyFile file : files) {
-      removeUnusedImports(file);
+      optimizer.removeUnusedImports(file);
     }
   }
 
-  public void removeUnusedImports(GroovyFile file) {
-    final GrImportStatement[] imports = file.getImportStatements();
-    final Set<GrImportStatement> unused = new HashSet<GrImportStatement>(imports.length);
-    Collections.addAll(unused, imports);
-    file.accept(new GroovyRecursiveElementVisitor() {
-      public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
-        visitRefElement(refElement);
-        super.visitCodeReferenceElement(refElement);
-      }
-
-      public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
-        visitRefElement(referenceExpression);
-        super.visitReferenceExpression(referenceExpression);
-      }
-
-      private void visitRefElement(GrReferenceElement refElement) {
-        final GroovyResolveResult[] resolveResults = refElement.multiResolve(false);
-        for (GroovyResolveResult resolveResult : resolveResults) {
-          final GroovyPsiElement context = resolveResult.getCurrentFileResolveContext();
-          final PsiElement element = resolveResult.getElement();
-          if (element == null) return;
-          if (context instanceof GrImportStatement) {
-            final GrImportStatement importStatement = (GrImportStatement)context;
-            unused.remove(importStatement);
-          }
-        }
-      }
-    });
-    for (GrImportStatement importStatement : unused) {
-      file.removeImport(importStatement);
-    }
-  }
 }
