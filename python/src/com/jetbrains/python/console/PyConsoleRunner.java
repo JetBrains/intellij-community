@@ -114,8 +114,8 @@ public class PyConsoleRunner {
 // Attach to process
     myConsoleView.attachToProcess(myProcessHandler);
 
-// Add filter
-    myConsoleView.addMessageFilter(new OutputConsoleFilter());
+// Add filter TODO[oleg]: Add stacktrace filters
+//    myConsoleView.addMessageFilter(new OutputConsoleFilter());
 
 // Runner creating
     final Executor defaultExecutor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID);
@@ -226,12 +226,6 @@ public class PyConsoleRunner {
     final String line = documentText.trim();
     myHistory.addToHistory(line);
     sendInput(line +"\n", myProcessHandler.getCharset(), myProcessHandler.getProcessInput());
-  }
-
-  private class OutputConsoleFilter implements Filter {
-    public Result applyFilter(String line, int entireLength) {
-      return new Result(entireLength - line.length(), entireLength, null, ColoredProcessHandler.getByKey(ConsoleHighlighter.OUT));
-    }
   }
 
   protected String getProviderCommandLine() {
