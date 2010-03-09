@@ -570,7 +570,7 @@ public class ResolveImportUtil {
       else {
         // look for name in the file:
         //processor = new ResolveProcessor(referencedName);
-        ret = resolveExportedName((PyFile) parent, referencedName);
+        ret = ((PyFile) parent).resolveExportedName(referencedName);
         if (ret != null) return ret;
       }
     }
@@ -594,15 +594,6 @@ public class ResolveImportUtil {
   }
 
   @Nullable
-  private static PsiElement resolveExportedName(PyFile parent, String referencedName) {
-    final PsiElement exportedName = parent.findExportedName(referencedName);
-    if (exportedName instanceof PyImportElement) {
-      return ((PyImportElement) exportedName).getElementNamed(referencedName);
-    }
-    return exportedName;
-  }
-
-  @Nullable
   private static PsiElement resolveInDirectory(
     final String referencedName, final PsiFile containingFile, final PsiDirectory dir, ResolveProcessor processor, boolean isFileOnly
   ) {
@@ -619,7 +610,7 @@ public class ResolveImportUtil {
       final PsiFile initPy = dir.findFile(PyNames.INIT_DOT_PY);
       if (initPy == containingFile) return null; // don't dive into the file we're in
       if (initPy instanceof PyFile) {
-        return resolveExportedName((PyFile)initPy, referencedName);
+        return ((PyFile)initPy).resolveExportedName(referencedName);
       }
     }
     return null;
