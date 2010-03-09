@@ -3,6 +3,6 @@ class MyClass {
 void foo() {}
 
 {
-  foo(<caret>);
+  fo<caret>
 }
 }

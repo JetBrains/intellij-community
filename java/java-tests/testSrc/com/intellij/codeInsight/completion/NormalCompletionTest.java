@@ -308,6 +308,25 @@ public class NormalCompletionTest extends LightCompletionTestCase {
     checkResultByFile("/codeInsight/completion/normal/MethodWithLeftParTailType2_after.java");
   }
 
+  public void testMethodWithLeftParTailTypeNoPairBrace() throws Exception {
+    final boolean old = CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET;
+    CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = false;
+
+    try {
+      configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
+      selectItem(myItems[0], '(');
+      checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + "_after.java");
+
+      //no tail type should work the normal way
+      configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
+      selectItem(myItems[0]);
+      checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + "_after2.java");
+    }
+    finally {
+      CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = old;
+    }
+  }
+
   public void testExcessSpaceInTypeCast() throws Throwable {
    configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
    selectItem(myItems[0]);
