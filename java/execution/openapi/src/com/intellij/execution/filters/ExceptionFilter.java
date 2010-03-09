@@ -74,13 +74,12 @@ public class ExceptionFilter implements Filter, DumbAware {
     if (lastDotIndex < 0 || lastDotIndex < atIndex) return null;
     String className = line.substring(atIndex + AT.length() + 1, lastDotIndex).trim();
 
-    //String methodName = text.substring(lastDotIndex + 1, lparenthIndex).trim();
+    String methodName = line.substring(lastDotIndex + 1, lparenthIndex).trim();
 
     final int rparenthIndex = line.indexOf(')', lparenthIndex);
     if (rparenthIndex < 0) return null;
 
-    final String fileAndLine = line.substring(lparenthIndex + 1, rparenthIndex).trim();
-    return Trinity.create(className, fileAndLine, new TextRange(lparenthIndex, rparenthIndex));
+    return Trinity.create(className, methodName, new TextRange(lparenthIndex, rparenthIndex));
   }
 
   public Result applyFilter(final String line, final int textEndOffset) {
@@ -95,7 +94,9 @@ public class ExceptionFilter implements Filter, DumbAware {
       className = className.substring(0, dollarIndex);
     }
 
-    final String fileAndLine = info.second;
+    final int lparenthIndex = info.third.getStartOffset();
+    final int rparenthIndex = info.third.getEndOffset();
+    final String fileAndLine = line.substring(lparenthIndex + 1, rparenthIndex).trim();
 
     final int colonIndex = fileAndLine.lastIndexOf(':');
     if (colonIndex < 0) return null;
@@ -118,8 +119,9 @@ public class ExceptionFilter implements Filter, DumbAware {
       */
 
       final int textStartOffset = textEndOffset - line.length();
-      final int highlightStartOffset = textStartOffset + info.third.getStartOffset() + 1;
-      final int highlightEndOffset = textStartOffset + info.third.getEndOffset();
+
+      final int highlightStartOffset = textStartOffset + lparenthIndex + 1;
+      final int highlightEndOffset = textStartOffset + rparenthIndex;
       VirtualFile virtualFile = file.getVirtualFile();
       final OpenFileHyperlinkInfo linkInfo = new OpenFileHyperlinkInfo(myProject, virtualFile, lineNumber - 1);
       TextAttributes attributes = HYPERLINK_ATTRIBUTES.clone();

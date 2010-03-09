@@ -344,6 +344,10 @@ public abstract class AbstractFileIndex<IndexEntry extends FileIndexEntry> imple
       return AbstractFileIndex.this.queryNeededFiles(myIncludeChangedFiles, myFileTypesToRefresh);
     }
 
+    public int getNumberOfPendingUpdateJobs() {
+      return 0;
+    }
+
     public void processFile(FileContent fileContent) {
       updateIndexEntry(fileContent.getVirtualFile());
     }

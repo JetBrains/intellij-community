@@ -1,4 +1,4 @@
 public class MyClass {
 
-  /** comment  MyClass <caret>*/
+  /** comment  MyClass<caret> */
 }

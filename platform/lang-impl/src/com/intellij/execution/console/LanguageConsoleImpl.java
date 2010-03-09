@@ -34,10 +34,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.MarkupModel;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -258,18 +255,17 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     this.myTitle = title;
   }
 
-  public void addToHistory(final String text, final ConsoleViewContentType contentType) {
-    final boolean scrollToEnd = shouldScrollHistoryToEnd();
+  public void addToHistory(final String text, final TextAttributes attributes) {
     final Document history = myHistoryViewer.getDocument();
     final MarkupModel markupModel = history.getMarkupModel(myProject);
     final int offset = history.getTextLength();
     history.insertString(offset, text);
-    if (!text.endsWith("\n")) history.insertString(history.getTextLength(), "\n");
-    markupModel.addRangeHighlighter(offset, history.getTextLength(), HighlighterLayer.SYNTAX, contentType.getAttributes(),
+    markupModel.addRangeHighlighter(offset,
+                                    history.getTextLength(),
+                                    HighlighterLayer.SYNTAX,
+                                    attributes,
                                     HighlighterTargetArea.EXACT_RANGE);
-    queueUiUpdate(scrollToEnd);
   }
-
 
   public String addCurrentToHistory(final TextRange textRange, final boolean erase) {
     final Ref<String> ref = Ref.create("");
@@ -286,7 +282,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     return ref.get();
   }
 
-  private boolean shouldScrollHistoryToEnd() {
+  public boolean shouldScrollHistoryToEnd() {
     final Rectangle visibleArea = myHistoryViewer.getScrollingModel().getVisibleArea();
     final int lineNum = (visibleArea.y + visibleArea.height + myHistoryViewer.getLineHeight()) / myHistoryViewer.getLineHeight();
     final int lineCount = myHistoryViewer.getDocument().getLineCount();
@@ -344,7 +340,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     return myPanel;
   }
 
-  private void queueUiUpdate(final boolean forceScrollToEnd) {
+  public void queueUiUpdate(final boolean forceScrollToEnd) {
     myForceScrollToEnd.compareAndSet(false, forceScrollToEnd);
     myUpdateQueue.queue(new Update("UpdateUi") {
       public void run() {
