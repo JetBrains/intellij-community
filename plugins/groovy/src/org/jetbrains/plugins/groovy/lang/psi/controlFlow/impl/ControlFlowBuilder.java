@@ -15,8 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiConstantEvaluationHelper;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
@@ -51,6 +53,12 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   private List<InstructionImpl> myInstructions;
 
   private Stack<InstructionImpl> myProcessingStack;
+  private PsiConstantEvaluationHelper myConstantEvaluator;
+
+  public ControlFlowBuilder(Project project) {
+    myConstantEvaluator = JavaPsiFacade.getInstance(project).getConstantEvaluationHelper();
+
+  }
 
   private class ExceptionInfo {
     GrCatchClause myClause;
@@ -485,7 +493,10 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     if (condition != null) {
       condition.accept(this);
     }
-    addPendingEdge(whileStatement, myHead); //break
+    final boolean endless = Boolean.TRUE.equals(myConstantEvaluator.computeConstantExpression(condition));
+    if (!endless) {
+      addPendingEdge(whileStatement, myHead); //break
+    }
     final GrCondition body = whileStatement.getBody();
     if (body != null) {
       body.accept(this);
