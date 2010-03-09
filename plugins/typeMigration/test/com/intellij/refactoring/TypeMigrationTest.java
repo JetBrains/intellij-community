@@ -509,4 +509,11 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
                     myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.util.ArrayList<java.lang.Integer>>", null),
                     myJavaFacade.getElementFactory().createTypeFromText("java.util.ArrayList<java.lang.Integer>[]", null));
   }
+
+  //param Set.add() -> Array[] with conflict
+  public void testT102() throws Exception {
+    doTestFirstParamType("method",
+                    myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<? extends java.lang.Object>", null),
+                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object[]", null));
+  }
 }
