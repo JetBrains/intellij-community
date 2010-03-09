@@ -19,6 +19,6 @@ public class ColonTypedHandler extends TypedHandlerDelegate {
     if (c == ':' && file instanceof PyFile) {
       UnindentingInsertHandler.unindentAsNeeded(project, editor, file, null);
     }
-    return Result.DEFAULT;
+    return Result.CONTINUE;
   }
 }
