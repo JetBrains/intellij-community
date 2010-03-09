@@ -10,6 +10,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.django.util.DjangoUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +44,6 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
     final Sdk sdk = PythonSdkType.findPythonSdk(module);
     assert sdk != null : "sdk is null";
 
-    final VirtualFile contentRoot = getFirstContentRoot(module);
     PyConsoleRunner.run(module.getProject(),
                         PyBundle.message("python.console"),
                         new CommandLineArgumentsProvider() {
@@ -58,13 +58,6 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
                           public Map<String, String> getAdditionalEnvs() {
                             return Collections.emptyMap();
                           }
-                        },
-                        contentRoot != null ? contentRoot.getPath() : null);
-  }
-
-  @Nullable
-  public static VirtualFile getFirstContentRoot(@NotNull final Module module) {
-    final VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
-    return roots.length > 0 ? roots[0] : null;
+                        }, DjangoUtil.getProjectRoot(module));
   }
 }
