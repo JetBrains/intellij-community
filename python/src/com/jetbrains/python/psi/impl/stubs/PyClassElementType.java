@@ -44,6 +44,9 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
       if (expression instanceof PyReferenceExpression) {
         superClasses.add(((PyReferenceExpression) expression).asQualifiedName());
       }
+      else {
+        superClasses.add(null);
+      }
     }
     return new PyClassStubImpl(psi.getName(), parentStub, superClasses.toArray(new PyQualifiedName[superClasses.size()]));
   }
@@ -73,9 +76,11 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
       sink.occurrence(PyClassNameIndex.KEY, name);
     }
     for(PyQualifiedName s: stub.getSuperClasses()) {
-      String className = s.getLastComponent();
-      if (className != null) {
-        sink.occurrence(PySuperClassIndex.KEY, className);
+      if (s != null) {
+        String className = s.getLastComponent();
+        if (className != null) {
+          sink.occurrence(PySuperClassIndex.KEY, className);
+        }
       }
     }
   }

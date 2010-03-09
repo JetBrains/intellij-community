@@ -147,6 +147,12 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     if (PyNames.FAKE_OLD_BASE.equals(getName())) {
       return Collections.emptyList();
     }
+
+    List<PyClass> stubSuperClasses = resolveSuperClassesFromStub();
+    if (stubSuperClasses != null) {
+      return stubSuperClasses;
+    }
+
     PsiElement[] superClassElements = getSuperClassElements();
     if (superClassElements.length > 0) {
       List<PyClass> result = new ArrayList<PyClass>();
@@ -169,10 +175,45 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return Collections.emptyList();
   }
 
+  @Nullable
+  private List<PyClass> resolveSuperClassesFromStub() {
+    final PyClassStub stub = getStub();
+    if (stub == null) {
+      return null;
+    }
+    // stub-based resolve currently works correctly only with classes in file level
+    final PsiElement parent = stub.getParentStub().getPsi();
+    if (!(parent instanceof PyFile)) {
+      return null;
+    }
+
+    List<PyClass> result = new ArrayList<PyClass>();
+    for (PyQualifiedName qualifiedName : stub.getSuperClasses()) {
+      if (qualifiedName == null) {
+        return null;
+      }
+      // TODO[yole] handle more cases
+      if (qualifiedName.getComponentCount() != 1) {
+        return null;
+      }
+      final PsiElement superClass = ((PyFile)parent).resolveExportedName(qualifiedName.getLastComponent());
+      if (!(superClass instanceof PyClass)) {
+        return null;
+      }
+      result.add((PyClass) superClass);
+    }
+    return result;
+  }
+
   @NotNull
   public PyClass[] getSuperClasses() {
+    List<PyClass> stubSuperClasses = resolveSuperClassesFromStub();
+    if (stubSuperClasses != null) {
+      return stubSuperClasses.toArray(new PyClass[stubSuperClasses.size()]);
+    }
+
     PsiElement[] superClassElements = getSuperClassElements();
-    if (superClassElements .length > 0) {
+    if (superClassElements.length > 0) {
       List<PyClass> result = new ArrayList<PyClass>();
       for(PsiElement element: superClassElements) {
         if (element instanceof PyClass) {

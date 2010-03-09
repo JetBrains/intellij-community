@@ -209,7 +209,13 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   @Nullable
   public PsiElement resolveExportedName(String name) {
-    final PsiElement exportedName = findExportedName(name);
+    PsiElement exportedName = findExportedName(name);
+    if (exportedName == null) {
+      final PyFile builtins = PyBuiltinCache.getInstance(this).getBuiltinsFile();
+      if (builtins != null && builtins != this) {
+        exportedName = builtins.findExportedName(name);
+      }
+    }
     if (exportedName instanceof PyImportElement) {
       return ((PyImportElement) exportedName).getElementNamed(name);
     }
