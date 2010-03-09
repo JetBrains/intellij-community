@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Map;
@@ -42,6 +43,7 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
     final Sdk sdk = PythonSdkType.findPythonSdk(module);
     assert sdk != null : "sdk is null";
 
+    final VirtualFile contentRoot = getFirstContentRoot(module);
     PyConsoleRunner.run(module.getProject(),
                         PyBundle.message("python.console"),
                         new CommandLineArgumentsProvider() {
@@ -57,10 +59,11 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
                             return Collections.emptyMap();
                           }
                         },
-                        getFirstContentRoot(module).getPath());
+                        contentRoot != null ? contentRoot.getPath() : null);
   }
 
-  private static VirtualFile getFirstContentRoot(@NotNull final Module module) {
+  @Nullable
+  public static VirtualFile getFirstContentRoot(@NotNull final Module module) {
     final VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
     return roots.length > 0 ? roots[0] : null;
   }

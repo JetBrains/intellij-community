@@ -12,6 +12,7 @@ import com.intellij.execution.process.*;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -99,7 +100,11 @@ public class PyConsoleRunner {
     myProcessHandler.addProcessListener(new ProcessAdapter() {
       @Override
       public void processTerminated(ProcessEvent event) {
-        myConsoleView.setEditorEnabled(false);
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            myConsoleView.setEditorEnabled(false);
+          }
+        });
       }
     });
 
