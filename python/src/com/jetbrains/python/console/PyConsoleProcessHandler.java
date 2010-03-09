@@ -103,12 +103,8 @@ class PyConsoleProcessHandler extends OSProcessHandler {
   private static void printToConsole(final LanguageConsoleImpl console, final String string, final ConsoleViewContentType type) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            final TextAttributes attributes = TextAttributes.merge(type.getAttributes(), ConsoleHighlighter.OUT.getDefaultAttributes());
-            console.addToHistory(string, attributes);
-          }
-        });
+        final TextAttributes attributes = TextAttributes.merge(type.getAttributes(), ConsoleHighlighter.OUT.getDefaultAttributes());
+        console.addToHistory(string, attributes);
       }
     });
   }
