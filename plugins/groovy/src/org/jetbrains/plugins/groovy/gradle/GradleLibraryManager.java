@@ -43,6 +43,7 @@ import java.util.regex.Pattern;
 public class GradleLibraryManager extends AbstractGroovyLibraryManager {
   public static final Icon GRADLE_ICON = IconLoader.getIcon("/icons/gradle/gradle.png");
   @NonNls static final Pattern GRADLE_JAR_FILE_PATTERN = Pattern.compile("gradle-(core-)?(\\d.*)\\.jar");
+  @NonNls static final Pattern ANY_GRADLE_JAR_FILE_PATTERN = Pattern.compile("gradle-(.*)\\.jar");
 
   @NotNull
   @Override
