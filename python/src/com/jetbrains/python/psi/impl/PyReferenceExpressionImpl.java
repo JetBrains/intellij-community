@@ -136,6 +136,15 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     return ret;
   }
 
+  @Nullable
+  public PyQualifiedName asQualifiedName() {
+    final List<PyReferenceExpression> components = PyResolveUtil.unwindQualifiers((PyReferenceExpression) this);
+    if (components == null) {
+      return null;
+    }
+    return new PyQualifiedName(components);
+  }
+
 
   private static class ResultList extends ArrayList<RatedResolveResult> {
     // Allows to add non-null elements and discard nulls in a hassle-free way.

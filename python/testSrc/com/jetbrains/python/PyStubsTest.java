@@ -15,6 +15,7 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 
 import java.io.IOException;
@@ -171,14 +172,14 @@ public class PyStubsTest extends PyLightFixtureTestCase {
     assertEquals("argv", importElements [0].getVisibleName());
     assertFalse(fromImport.isStarImport());
     assertEquals(0, fromImport.getRelativeLevel());
-    final List<String> qName = fromImport.getImportSourceQName();
-    assertSameElements(qName, "sys");
+    final PyQualifiedName qName = fromImport.getImportSourceQName();
+    assertSameElements(qName.getComponents(), "sys");
 
     final List<PyImportElement> importTargets = file.getImportTargets();
     assertEquals(1, importTargets.size());
     final PyImportElement importElement = importTargets.get(0);
-    final List<String> importQName = importElement.getImportedQName();
-    assertSameElements(importQName, "os", "path");
+    final PyQualifiedName importQName = importElement.getImportedQName();
+    assertSameElements(importQName.getComponents(), "os", "path");
 
     assertNotParsed(file);
   }

@@ -10,11 +10,10 @@ import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyImportElementImpl;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.stubs.PyImportElementStub;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author yole
@@ -43,31 +42,12 @@ public class PyImportElementElementType extends PyStubElementType<PyImportElemen
   }
 
   public void serialize(PyImportElementStub stub, StubOutputStream dataStream) throws IOException {
-    final List<String> qName = stub.getImportedQName();
-    if (qName == null) {
-      dataStream.writeVarInt(0);
-    }
-    else {
-      dataStream.writeVarInt(qName.size());
-      for (String s : qName) {
-        dataStream.writeName(s);
-      }
-    }
+    PyQualifiedName.serialize(stub.getImportedQName(), dataStream);
     dataStream.writeName(stub.getAsName());
   }
 
   public PyImportElementStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
-    int size = dataStream.readVarInt();
-    List<String> qName;
-    if (size == 0) {
-      qName = null;
-    }
-    else {
-      qName = new ArrayList<String>(size);
-      for (int i = 0; i < size; i++) {
-        qName.add(dataStream.readName().getString());
-      }
-    }
+    PyQualifiedName qName = PyQualifiedName.deserialize(dataStream);
     StringRef asName = dataStream.readName();
     return new PyImportElementStubImpl(qName, asName.getString(), parentStub);  }
 }

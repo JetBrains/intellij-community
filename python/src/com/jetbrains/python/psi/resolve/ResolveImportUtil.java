@@ -16,6 +16,7 @@ import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyImportResolver;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,8 +27,6 @@ import java.util.*;
  * @author dcheryasov
  */
 public class ResolveImportUtil {
-
-
   private ResolveImportUtil() {
   }
 
@@ -50,8 +49,8 @@ public class ResolveImportUtil {
           if (fromImport.isFromFuture()) {
             final PyImportElement[] pyImportElements = fromImport.getImportElements();
             for (PyImportElement element : pyImportElements) {
-              final List<String> qName = element.getImportedQName();
-              if (qName != null && qName.size() == 1 && qName.get(0).equals("absolute_import")) {
+              final PyQualifiedName qName = element.getImportedQName();
+              if (qName != null && qName.matches("absolute_import")) {
                 return true;
               }
             }
@@ -88,7 +87,7 @@ public class ResolveImportUtil {
 
   @Nullable
   public static PsiElement resolveImportElement(PyImportElement import_element) {
-    final List<String> qName = import_element.getImportedQName();
+    final PyQualifiedName qName = import_element.getImportedQName();
     if (qName == null) {
       return null;
     }
@@ -97,7 +96,7 @@ public class ResolveImportUtil {
     final PyStatement importStatement = import_element.getContainingImportStatement();
 
     boolean absolute_import_enabled = isAbsoluteImportEnabledFor(import_element);
-    List<String> moduleQName = null;
+    PyQualifiedName moduleQName = null;
 
     if (importStatement instanceof PyFromImportStatement) {
       PsiElement imported_from_module;
@@ -106,22 +105,22 @@ public class ResolveImportUtil {
       final int relative_level = from_import_statement.getRelativeLevel();
 
       if (relative_level > 0 && moduleQName == null) { // "from ... import foo"
-        return resolveChild(stepBackFrom(file, relative_level), qName.get(0), file, false);
+        return resolveChild(stepBackFrom(file, relative_level), qName.getComponents().get(0), file, false);
       }
 
       if (moduleQName != null) { // either "from bar import foo" or "from ...bar import foo"
-        imported_from_module = resolveModule(moduleQName, file, absolute_import_enabled, relative_level);
-        PsiElement result = resolveChild(imported_from_module, qName.get(0), file, false);
+        imported_from_module = resolveModule(moduleQName.getComponents(), file, absolute_import_enabled, relative_level);
+        PsiElement result = resolveChild(imported_from_module, qName.getComponents().get(0), file, false);
         if (result != null) return result;
       }
     }
     else if (importStatement instanceof PyImportStatement) { // "import foo"
-      PsiElement result = resolveModule(qName, file, absolute_import_enabled, 0);
+      PsiElement result = resolveModule(qName.getComponents(), file, absolute_import_enabled, 0);
       if (result != null) return result;
     }
     // in-python resolution failed
     if (moduleQName != null) {
-      return resolveForeignImport(import_element, StringUtil.join(qName, "."), resolveModule(moduleQName, file, false, 0));
+      return resolveForeignImport(import_element, StringUtil.join(qName.getComponents(), "."), resolveModule(moduleQName.getComponents(), file, false, 0));
     }
     return null;
   }
