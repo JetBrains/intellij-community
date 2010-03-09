@@ -45,8 +45,6 @@ import com.intellij.util.text.CharArrayUtil;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
-import java.awt.datatransfer.UnsupportedFlavorException;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
@@ -153,14 +151,7 @@ public class PasteHandler extends EditorActionHandler {
         );
       }
 
-      RawText rawText = null;
-      try {
-        rawText = (RawText)content.getTransferData(RawText.FLAVOR);
-      }
-      catch (UnsupportedFlavorException e) {
-      }
-      catch (IOException e) {
-      }
+      RawText rawText = RawText.fromTransferable(content);
 
       String newText = text;
       for(CopyPastePreProcessor preProcessor: Extensions.getExtensions(CopyPastePreProcessor.EP_NAME)) {
