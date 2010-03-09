@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.openapi.editor.RawText;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 
 import java.awt.datatransfer.DataFlavor;
@@ -41,9 +42,16 @@ class TextBlockTransferable implements Transferable {
     myRawText = rawText;
 
     List<DataFlavor> dataFlavors = new ArrayList<DataFlavor>();
-    Collections.addAll(dataFlavors, DataFlavor.stringFlavor, DataFlavor.plainTextFlavor, RawText.FLAVOR);
+    Collections.addAll(dataFlavors, DataFlavor.stringFlavor, DataFlavor.plainTextFlavor);
+    final DataFlavor flavor = RawText.getDataFlavor();
+    if (flavor != null) {
+      dataFlavors.add(flavor);
+    }
     for(TextBlockTransferableData data: extraData) {
-      dataFlavors.add(data.getFlavor());
+      final DataFlavor blockFlavor = data.getFlavor();
+      if (blockFlavor != null) {
+        dataFlavors.add(blockFlavor);
+      }
     }
     myTransferDataFlavors = dataFlavors.toArray(new DataFlavor[dataFlavors.size()]);
   }
@@ -65,11 +73,11 @@ class TextBlockTransferable implements Transferable {
   public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
     try {
       for(TextBlockTransferableData data: myExtraData) {
-        if (data.getFlavor().equals(flavor)) {
+        if (Comparing.equal(data.getFlavor(), flavor)) {
           return data;
         }
       }
-      if (RawText.FLAVOR.equals(flavor)) {
+      if (Comparing.equal(RawText.getDataFlavor(), flavor)) {
         return myRawText;
       }
       else if (DataFlavor.stringFlavor.equals(flavor)) {

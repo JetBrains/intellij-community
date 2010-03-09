@@ -30,6 +30,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
@@ -89,7 +90,10 @@ public class CopyPasteReferenceProcessor implements CopyPastePostProcessor {
     ReferenceTransferableData referenceData = null;
     if (CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE != CodeInsightSettings.NO) {
       try {
-        referenceData = (ReferenceTransferableData)content.getTransferData(ReferenceTransferableData.ReferenceData.FLAVOR);
+        final DataFlavor flavor = ReferenceTransferableData.ReferenceData.getDataFlavor();
+        if (flavor != null) {
+          referenceData = (ReferenceTransferableData)content.getTransferData(flavor);
+        }
       }
       catch (UnsupportedFlavorException ignored) {
       }

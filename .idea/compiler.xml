@@ -3,16 +3,8 @@
   <component name="BuildJarProjectSettings">
     <option name="BUILD_JARS_ON_MAKE" value="false" />
   </component>
-  <component name="CompilerAPISettings">
-    <option name="DEBUGGING_INFO" value="true" />
-    <option name="GENERATE_NO_WARNINGS" value="false" />
-    <option name="DEPRECATION" value="true" />
-    <option name="ADDITIONAL_OPTIONS_STRING" value="" />
-    <option name="MAXIMUM_HEAP_SIZE" value="128" />
-  </component>
   <component name="CompilerConfiguration">
     <option name="DEFAULT_COMPILER" value="Javac" />
-    <option name="DEPLOY_AFTER_MAKE" value="0" />
     <resourceExtensions>
       <entry name=".+\.(properties|xml|html|dtd|tld)" />
       <entry name=".+\.(gif|png|jpeg|jpg)" />
@@ -23,42 +15,18 @@
       <entry name="!*.class" />
       <entry name="!*.groovy" />
     </wildcardResourcePatterns>
+    <annotationProcessing enabled="false" useClasspath="true" />
   </component>
   <component name="EclipseCompilerSettings">
-    <option name="DEBUGGING_INFO" value="true" />
     <option name="GENERATE_NO_WARNINGS" value="true" />
     <option name="DEPRECATION" value="false" />
-    <option name="ADDITIONAL_OPTIONS_STRING" value="" />
-    <option name="MAXIMUM_HEAP_SIZE" value="128" />
   </component>
   <component name="EclipseEmbeddedCompilerSettings">
-    <option name="DEBUGGING_INFO" value="true" />
     <option name="GENERATE_NO_WARNINGS" value="true" />
     <option name="DEPRECATION" value="false" />
-    <option name="ADDITIONAL_OPTIONS_STRING" value="" />
-    <option name="MAXIMUM_HEAP_SIZE" value="128" />
   </component>
   <component name="JavacSettings">
-    <option name="DEBUGGING_INFO" value="true" />
-    <option name="GENERATE_NO_WARNINGS" value="false" />
-    <option name="DEPRECATION" value="true" />
-    <option name="ADDITIONAL_OPTIONS_STRING" value="" />
-    <option name="MAXIMUM_HEAP_SIZE" value="128" />
-  </component>
-  <component name="JikesSettings">
-    <option name="JIKES_PATH" value="" />
-    <option name="DEBUGGING_INFO" value="true" />
-    <option name="DEPRECATION" value="true" />
-    <option name="GENERATE_NO_WARNINGS" value="false" />
-    <option name="IS_EMACS_ERRORS_MODE" value="true" />
-    <option name="ADDITIONAL_OPTIONS_STRING" value="" />
-  </component>
-  <component name="RmicSettings">
-    <option name="IS_EANABLED" value="false" />
-    <option name="DEBUGGING_INFO" value="true" />
-    <option name="GENERATE_NO_WARNINGS" value="false" />
-    <option name="GENERATE_IIOP_STUBS" value="false" />
-    <option name="ADDITIONAL_OPTIONS_STRING" value="" />
+    <option name="MAXIMUM_HEAP_SIZE" value="200" />
   </component>
 </project>
 

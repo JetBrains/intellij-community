@@ -53,24 +53,26 @@ public class PsiMethodInsertHandler implements InsertHandler<LookupItem<PsiMetho
     final TailType tailType = getTailType(item, context);
     final Document document = editor.getDocument();
     final PsiFile file = context.getFile();
+    final int offset = editor.getCaretModel().getOffset();
 
     context.setAddCompletionChar(false);
 
     final LookupElement[] allItems = context.getElements();
-    boolean signatureSelected = allItems.length > 1 || item.getUserData(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null;
+    final boolean overloadsMatter = allItems.length == 1 && item.getUserData(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) == null;
 
-    int offset = editor.getCaretModel().getOffset();
+    final boolean hasParams = MethodParenthesesHandler.hasParams(item, allItems, overloadsMatter, myMethod);
     final boolean needLeftParenth = isToInsertParenth(file.findElementAt(context.getStartOffset()));
-    final boolean hasParams = MethodParenthesesHandler.hasParams(item, allItems, !signatureSelected, myMethod);
+    final boolean needRightParenth = shouldInsertRParenth(completionChar, tailType, hasParams);
+
     if (needLeftParenth) {
       final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(context.getProject());
-      new MethodParenthesesHandler(myMethod, !signatureSelected,
+      new MethodParenthesesHandler(myMethod, overloadsMatter,
                                            styleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES,
                                            styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES && hasParams,
-                                           shouldInsertRightParenthesis(tailType)
+                                           needRightParenth
       ).handleInsert(context, item);
     }
-    
+
     insertExplicitTypeParams(item, document, offset, file);
 
     final PsiType type = myMethod.getReturnType();
@@ -86,14 +88,25 @@ public class PsiMethodInsertHandler implements InsertHandler<LookupItem<PsiMetho
 
     if (needLeftParenth && hasParams) {
       // Invoke parameters popup
-      AutoPopupController.getInstance(myMethod.getProject()).autoPopupParameterInfo(editor, signatureSelected ? myMethod : null);
+      AutoPopupController.getInstance(myMethod.getProject()).autoPopupParameterInfo(editor, overloadsMatter ? null : myMethod);
     }
-    tailType.processTail(editor, context.getTailOffset());
+    if (tailType == TailType.SMART_COMPLETION || needLeftParenth && needRightParenth) {
+      tailType.processTail(editor, context.getTailOffset());
+    }
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 
-  protected static boolean shouldInsertRightParenthesis(TailType tailType) {
-    return tailType != TailType.SMART_COMPLETION;
+  private boolean shouldInsertRParenth(char completionChar, TailType tailType, boolean hasParams) {
+    if (tailType == TailType.SMART_COMPLETION) {
+      return false;
+    }
+
+    if (completionChar == '(' && !hasParams) {
+      //it's highly probable that the user will type ')' next and it may not be overwritten if the flag is off
+      return CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET;
+    }
+
+    return true;
   }
 
   @NotNull

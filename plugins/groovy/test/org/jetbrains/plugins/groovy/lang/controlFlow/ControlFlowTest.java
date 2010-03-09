@@ -44,6 +44,7 @@ public class ControlFlowTest extends LightCodeInsightFixtureTestCase {
   public void testTry7() throws Throwable { doTest(); }
   public void testWhile1() throws Throwable { doTest(); }
   public void testWhile2() throws Throwable { doTest(); }
+  public void testWhileNonConstant() throws Throwable { doTest(); }
   public void testIfInstanceofElse() throws Throwable { doTest(); }
 
   private static String dumpControlFlow(Instruction[] instructions) {
@@ -66,7 +67,7 @@ public class ControlFlowTest extends LightCodeInsightFixtureTestCase {
     final PsiElement start = file.findElementAt(model.hasSelection() ? model.getSelectionStart() : 0);
     final PsiElement end = file.findElementAt(model.hasSelection() ? model.getSelectionEnd() - 1 : file.getTextLength() - 1);
     final GrControlFlowOwner owner = PsiTreeUtil.getParentOfType(PsiTreeUtil.findCommonParent(start, end), GrControlFlowOwner.class, false);
-    final Instruction[] instructions = new ControlFlowBuilder().buildControlFlow(owner, null, null);
+    final Instruction[] instructions = new ControlFlowBuilder(getProject()).buildControlFlow(owner, null, null);
     final String cf = dumpControlFlow(instructions);
     assertEquals(input.get(1).trim(), cf.trim());
   }

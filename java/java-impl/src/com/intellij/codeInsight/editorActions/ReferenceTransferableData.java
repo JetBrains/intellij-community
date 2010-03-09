@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.editorActions;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import org.jetbrains.annotations.NonNls;
 
 import java.awt.datatransfer.DataFlavor;
@@ -32,7 +31,7 @@ public class ReferenceTransferableData implements TextBlockTransferableData, Clo
   }
 
   public DataFlavor getFlavor() {
-    return ReferenceData.FLAVOR;
+    return ReferenceData.getDataFlavor();
   }
 
   public int getOffsetCount() {
@@ -68,8 +67,7 @@ public class ReferenceTransferableData implements TextBlockTransferableData, Clo
   }
 
   public static class ReferenceData implements Cloneable, Serializable {
-    public static final @NonNls DataFlavor FLAVOR = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType+";class="+ReferenceData.class.getName(),
-                                                                   CodeInsightBundle.message("paste.dataflavor.referencedata"));
+    public static @NonNls DataFlavor ourFlavor;
 
     public int startOffset;
     public int endOffset;
@@ -90,6 +88,19 @@ public class ReferenceTransferableData implements TextBlockTransferableData, Clo
       catch(CloneNotSupportedException e){
         throw new RuntimeException();
       }
+    }
+
+    public static DataFlavor getDataFlavor() {
+      if (ourFlavor != null) {
+        return ourFlavor;
+      }
+      try {
+        ourFlavor = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=" + ReferenceData.class.getName(), "ReferenceData");
+      }
+      catch (NoClassDefFoundError e) {
+        return null;
+      }
+      return ourFlavor;
     }
   }
 }
