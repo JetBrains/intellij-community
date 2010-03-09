@@ -22,9 +22,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -112,14 +110,11 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
     List<PsiFileSystemItem> result = new ArrayList<PsiFileSystemItem>();
     final PsiManager psiManager = PsiManager.getInstance(thisModule.getProject());
     if (includingClasses) {
-      String[] libraryUrls = moduleRootManager.getUrls(OrderRootType.CLASSES);
-      for (String libraryUrl : libraryUrls) {
-        VirtualFile libFile = VirtualFileManager.getInstance().findFileByUrl(libraryUrl);
-        if (libFile != null) {
-          PsiDirectory directory = psiManager.findDirectory(libFile);
-          if (directory != null) {
-            result.add(directory);
-          }
+      VirtualFile[] libraryUrls = moduleRootManager.getFiles(OrderRootType.CLASSES);
+      for (VirtualFile file : libraryUrls) {
+        PsiDirectory directory = psiManager.findDirectory(file);
+        if (directory != null) {
+          result.add(directory);
         }
       }
     }
