@@ -20,8 +20,8 @@ import com.intellij.history.core.LocalVcs;
 import com.intellij.history.core.Paths;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.utils.LocalHistoryLog;
-import com.intellij.ide.caches.FileContent;
 import com.intellij.ide.caches.CacheUpdater;
+import com.intellij.ide.caches.FileContent;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.vfs.*;
@@ -57,6 +57,10 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
 
   private boolean isRefreshing() {
     return myRefreshDepth > 0;
+  }
+
+  public int getNumberOfPendingUpdateJobs() {
+    return 0;
   }
 
   public VirtualFile[] queryNeededFiles() {
