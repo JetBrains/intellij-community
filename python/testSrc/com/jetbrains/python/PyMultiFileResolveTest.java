@@ -148,6 +148,12 @@ public class PyMultiFileResolveTest extends PyLightFixtureTestCase {
     assertNull(doResolve());  // make sure we don't have a SOE here
   }
 
+  public void testResolveQualifiedSuperClass() throws Exception {
+    PsiElement element = doResolve();
+    assertTrue(element instanceof PyFunction);
+    assertEquals("copy", ((PyFunction) element).getName());
+  }
+
   private PsiFile prepareFile() throws Exception {
     String testName = getTestName(true);
     String fileName = getTestName(false) + ".py";

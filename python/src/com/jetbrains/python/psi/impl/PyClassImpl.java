@@ -187,6 +187,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     // stub-based resolve currently works correctly only with classes in file level
     final PsiElement parent = stub.getParentStub().getPsi();
     if (!(parent instanceof PyFile)) {
+      // TODO[yole] handle this case
       return null;
     }
 
@@ -195,15 +196,21 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       if (qualifiedName == null) {
         return null;
       }
-      // TODO[yole] handle more cases
-      if (qualifiedName.getComponentCount() != 1) {
+
+      NameDefiner currentParent = (NameDefiner) parent;
+      for (String component : qualifiedName.getComponents()) {
+        PsiElement element = currentParent.getElementNamed(component);
+        element = PyReferenceExpressionImpl.turnDirIntoInit(element);
+        if (!(element instanceof NameDefiner)) {
+          return null;
+        }
+        currentParent = (NameDefiner) element;
+      }
+
+      if (!(currentParent instanceof PyClass)) {
         return null;
       }
-      final PsiElement superClass = ((PyFile)parent).getElementNamed(qualifiedName.getLastComponent());
-      if (!(superClass instanceof PyClass)) {
-        return null;
-      }
-      result.add((PyClass) superClass);
+      result.add((PyClass) currentParent);
     }
     return result;
   }
