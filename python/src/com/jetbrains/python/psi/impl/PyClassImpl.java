@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.Icons;
@@ -356,8 +357,20 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
                                      @NotNull PsiElement place)
   {
     // class level
-    final PsiElement the_psi = getNode().getPsi();
-    PyResolveUtil.treeCrawlUp(processor, true, the_psi, the_psi);
+    final PyClassStub stub = getStub();
+    if (stub != null) {
+      final List<StubElement> children = stub.getChildrenStubs();
+      for (StubElement child : children) {
+        if (!processor.execute(child.getPsi(), ResolveState.initial())) {
+          return false;
+        }
+      }
+    }
+    else {
+      final PsiElement the_psi = getNode().getPsi();
+      PyResolveUtil.treeCrawlUp(processor, true, the_psi, the_psi);
+    }
+
     // instance level
     for(PyTargetExpression expr: getInstanceAttributes()) {
       if (expr == lastParent) continue;
