@@ -58,6 +58,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
   private XSourcePosition mySourcePosition;
   @NonNls private static final String BR_NBSP = "<br>&nbsp;";
   private boolean myDisposed;
+  private CustomizedBreakpointPresentation myCustomizedPresentation;
 
   public XLineBreakpointImpl(final XLineBreakpointType<P> type, XBreakpointManagerImpl breakpointManager, String url, int line, final @Nullable P properties) {
     super(type, breakpointManager, properties, new LineBreakpointState<P>(true, type.getId(), url, line));
@@ -141,13 +142,13 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
         }
       }
     }
+    if (myCustomizedPresentation != null) {
+      final Icon icon = myCustomizedPresentation.getIcon();
+      if (icon != null) {
+        return icon;
+      }
+    }
     return myType.getEnabledIcon();
-  }
-
-  @Nullable
-  private CustomizedBreakpointPresentation getCustomizedPresentation() {
-    final XDebugSessionImpl currentSession = getBreakpointManager().getDebuggerManager().getCurrentSession();
-    return currentSession != null ? currentSession.getBreakpointPresentation(this) : null;
   }
 
   public int getLine() {
@@ -270,8 +271,15 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
 
   @Nullable
   private String getErrorMessage() {
-    CustomizedBreakpointPresentation presentation = getCustomizedPresentation();
-    return presentation != null ? presentation.getErrorMessage() : null;
+    final XDebugSessionImpl currentSession = getBreakpointManager().getDebuggerManager().getCurrentSession();
+    if (currentSession != null) {
+      CustomizedBreakpointPresentation presentation = currentSession.getBreakpointPresentation(this);
+      if (presentation != null) {
+        final String message = presentation.getErrorMessage();
+        if (message != null) return message;
+      }
+    }
+    return myCustomizedPresentation != null ? myCustomizedPresentation.getErrorMessage() : null;
   }
 
   public void updatePosition() {
@@ -287,6 +295,10 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
       mySourcePosition = null;
       fireBreakpointChanged();
     }
+  }
+
+  public void setCustomizedPresentation(CustomizedBreakpointPresentation presentation) {
+    myCustomizedPresentation = presentation;
   }
 
   @Tag("line-breakpoint")

@@ -19,8 +19,13 @@ package com.intellij.ide.caches;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public interface CacheUpdater {
+  int getNumberOfPendingUpdateJobs();
+
   VirtualFile[] queryNeededFiles();
+
   void processFile(FileContent fileContent);
+
   void updatingDone();
+
   void canceled();
 }

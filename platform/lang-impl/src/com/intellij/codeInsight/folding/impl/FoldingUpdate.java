@@ -68,7 +68,7 @@ public class FoldingUpdate {
     
     return CachedValuesManager.getManager(project).getCachedValue(editor, CODE_FOLDING_KEY, new CachedValueProvider<Runnable>() {
       public Result<Runnable> compute() {
-
+        PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
         return getUpdateResult(file, document, quick, project, editor, applyDefaultState);
       }
     }, false);

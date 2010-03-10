@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collection;
 
 /**
@@ -62,4 +63,6 @@ public interface XBreakpointManager {
   void addBreakpointListener(@NotNull XBreakpointListener<XBreakpoint<?>> listener);
   void removeBreakpointListener(@NotNull XBreakpointListener<XBreakpoint<?>> listener);
   void addBreakpointListener(@NotNull XBreakpointListener<XBreakpoint<?>> listener, @NotNull Disposable parentDisposable);
+
+  void updateBreakpointPresentation(@NotNull XLineBreakpoint<?> breakpoint, @Nullable Icon icon, @Nullable String errorMessage);
 }
