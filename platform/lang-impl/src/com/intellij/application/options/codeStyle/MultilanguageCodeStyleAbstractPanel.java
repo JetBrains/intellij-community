@@ -122,12 +122,6 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
   }
 
 
-  protected PsiFile createFileFromText(Project project, String text) {
-    final PsiFile psiFile =
-      PsiFileFactory.getInstance(project).createFileFromText("a", getFileType(), text, LocalTimeCounter.currentTime(), true);
-    return psiFile;
-  }
-
   @Override
   protected PsiFile doReformat(final Project project, final PsiFile psiFile) {
     final String text = psiFile.getText();
