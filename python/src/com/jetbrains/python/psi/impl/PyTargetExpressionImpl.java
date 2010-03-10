@@ -130,4 +130,13 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
     }
     return null;
   }
+
+  public PyQualifiedName getAssignedQName() {
+    final PyTargetExpressionStub stub = getStub();
+    if (stub != null) {
+      return stub.getInitializer();
+    }
+    final PyExpression value = findAssignedValue();
+    return value instanceof PyReferenceExpression ? ((PyReferenceExpression) value).asQualifiedName() : null;
+  }
 }

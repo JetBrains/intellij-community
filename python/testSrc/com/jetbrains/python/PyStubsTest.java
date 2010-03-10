@@ -45,6 +45,7 @@ public class PyStubsTest extends PyLightFixtureTestCase {
     final PyTargetExpression[] attrs = pyClass.getClassAttributes();
     assertEquals(1, attrs.length);
     assertEquals("staticField", attrs [0].getName());
+    assertTrue(attrs [0].getAssignedQName().matches("deco"));
 
     final PyFunction[] methods = pyClass.getMethods();
     assertEquals(2, methods.length);

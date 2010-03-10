@@ -2,7 +2,7 @@ def deco(fun):
   return fun # valid
 
 class FooClass:
-  staticField = 1
+  staticField = deco
   def __init__(self):
     self.instanceField = 2
 
