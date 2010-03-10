@@ -102,7 +102,7 @@ public class IdeaProjectLoader {
     def includePatterns = []
     def excludePatterns = []
     def componentTag = getComponent(root, "CompilerConfiguration")
-    componentTag?.wildcardResourcePatterns.first()?.entry?.each {Node entryTag ->
+    componentTag?.wildcardResourcePatterns?.first()?.entry?.each {Node entryTag ->
       String pattern = entryTag."@name"
       if (pattern.startsWith("!")) {
         excludePatterns << convertPattern(pattern.substring(1))

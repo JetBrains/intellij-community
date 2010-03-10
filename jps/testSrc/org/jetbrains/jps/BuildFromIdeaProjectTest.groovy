@@ -3,15 +3,26 @@ package org.jetbrains.jps
 /**
  * @author nik
  */
-class BuildFromIprTest extends JpsBuildTestCase {
+class BuildFromIdeaProjectTest extends JpsBuildTestCase {
 
-  public void testBuild() {
-    def globalLib = {Project project ->
+  public void testLoadFromIpr() {
+    doTest("testData/iprProject/iprProject.ipr", getGlobalLib(), expectedOutput("iprProject"))
+  }
+
+  public void testLoadDirBased() throws Exception {
+    doTest("testData/dirBasedProject", getGlobalLib(), expectedOutput("dirBased"))
+  }
+
+  private Closure getGlobalLib() {
+    return {Project project ->
       project.createGlobalLibrary("jdom") {
         classpath "testData/iprProject/lib/jdom.jar"
       }
     }
-    doTest("testData/iprProject/iprProject.ipr", globalLib) {
+  }
+
+  private Closure expectedOutput(String moduleName) {
+    return {
       dir("artifacts") {
         dir("archive") {
           archive("archive.jar") {
@@ -54,7 +65,7 @@ class BuildFromIprTest extends JpsBuildTestCase {
         }
       }
       dir("production") {
-        dir("iprProject") {
+        dir(moduleName) {
           dir("xxx") {
             file("MyClass.class")
           }
@@ -62,5 +73,4 @@ class BuildFromIprTest extends JpsBuildTestCase {
       }
     }
   }
-
 }
