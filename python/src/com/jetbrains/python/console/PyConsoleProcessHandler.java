@@ -57,7 +57,7 @@ class PyConsoleProcessHandler extends OSProcessHandler {
   @Override
   public void notifyTextAvailable(final String text, final Key attributes) {
     final LanguageConsoleImpl languageConsole = myPyConsoleRunner.getLanguageConsole();
-    String string = text;
+    String string = StringUtil.convertLineSeparators(text);
     // Change prompt
     for (String prompt : PROMPTS) {
       if (string.startsWith(prompt)) {
