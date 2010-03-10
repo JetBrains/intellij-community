@@ -105,6 +105,7 @@ public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter imp
               }
             }
 
+            @NotNull
             public Object[] getVariants() {
               final Object[] variants = super.getVariants();
               if (myIndex == 0) {
