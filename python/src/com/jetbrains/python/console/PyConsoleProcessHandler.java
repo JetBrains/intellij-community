@@ -76,14 +76,19 @@ class PyConsoleProcessHandler extends OSProcessHandler {
         shouldScroll.set(languageConsole.shouldScrollHistoryToEnd());
       }
     });
+    // Highlight output by pattern
     Matcher matcher;
     while ((matcher = CODE_ELEMENT_PATTERN.matcher(string)).find()) {
       printToConsole(languageConsole, string.substring(0, matcher.start()), ConsoleViewContentType.NORMAL_OUTPUT);
+      // Number group
       if (matcher.group(1) != null) {
         printToConsole(languageConsole, matcher.group(1), NUMBER_ATTRIBUTES);
-      } else if (matcher.group(4) != null) {
+      }
+      // String group
+      else if (matcher.group(4) != null) {
         printToConsole(languageConsole, matcher.group(4), STRING_ATTRIBUTES);
-      } else {
+      }
+      else {
         printToConsole(languageConsole, matcher.group(), ConsoleViewContentType.NORMAL_OUTPUT);
       }
       string = string.substring(matcher.end());
