@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>test.py</file>
+    <line>4</line>
+  <description>"Local variable 'a' referenced before assignment"</description>
+  </problem>
+  <problem>
+    <file>test.py</file>
+    <line>14</line>
+  <description>"Name 'b' can be not defined"</description>
+  </problem>
+</problems>

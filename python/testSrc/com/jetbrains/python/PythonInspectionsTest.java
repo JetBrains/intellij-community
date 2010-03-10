@@ -132,4 +132,9 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
     LocalInspectionTool inspection = new PyRaisingNewStyleClassInspection();
     doTest(getTestName(false), inspection);
   }
+  
+  public void testPyUnboundLocalVariableInspection() throws Throwable {
+    LocalInspectionTool inspection = new PyUnboundLocalVariableInspection();
+    doTest(getTestName(false), inspection);
+  }
 }

@@ -7,4 +7,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface PyGlobalStatement extends PyStatement, NameDefiner {
   @NotNull PyReferenceExpression[] getGlobals();
+
+  void addGlobal(String name);
 }
