@@ -122,4 +122,9 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
     LocalInspectionTool inspection = new PyExceptionInheritInspection();
     doTest(getTestName(false), inspection);
   }
+
+  public void testPyDefaultArgumentInspection() throws Throwable {
+    LocalInspectionTool inspection = new PyDefaultArgumentInspection();
+    doTest(getTestName(false), inspection);
+  }
 }
