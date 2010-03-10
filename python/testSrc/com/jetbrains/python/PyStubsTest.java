@@ -40,6 +40,7 @@ public class PyStubsTest extends PyLightFixtureTestCase {
     assertEquals(1, classes.size());
     PyClass pyClass = classes.get(0);
     assertEquals("FooClass", pyClass.getName());
+    assertEquals("StubStructure.FooClass", pyClass.getQualifiedName());
 
     final PyTargetExpression[] attrs = pyClass.getClassAttributes();
     assertEquals(1, attrs.length);

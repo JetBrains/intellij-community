@@ -5,6 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.ResolveState;
+import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -131,13 +132,14 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   public String getQualifiedName() {
     String name = getName();
-    PsiElement ancestor = getParent();
+    final PyClassStub stub = getStub();
+    PsiElement ancestor = stub != null ? stub.getParentStub().getPsi() : getParent();
     while(!(ancestor instanceof PsiFile)) {
       if (ancestor == null) return name;    // can this happen?
       if (ancestor instanceof PyClass) {
         name = ((PyClass)ancestor).getName() + "." + name;
       }
-      ancestor = ancestor.getParent();
+      ancestor = stub != null ? ((StubBasedPsiElement) ancestor).getStub().getParentStub().getPsi() : getParent();
     }
 
     final String packageName = ResolveImportUtil.findShortestImportableName(this, ((PsiFile)ancestor).getVirtualFile());
