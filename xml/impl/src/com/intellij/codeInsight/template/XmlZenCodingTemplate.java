@@ -29,7 +29,6 @@ import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
-import com.sun.org.apache.xml.internal.utils.XML11Char;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -209,7 +208,7 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
             return null;
           }
           String prefix = getPrefix(key);
-          if (!callback.isLiveTemplateApplicable(prefix) && !XML11Char.isXML11ValidQName(prefix)) {
+          if (!callback.isLiveTemplateApplicable(prefix) && prefix.indexOf('<') >= 0 /*&& !XML11Char.isXML11ValidQName(prefix)*/) {
             return null;
           }
           MyTemplateToken token = parseSelectors(key);
