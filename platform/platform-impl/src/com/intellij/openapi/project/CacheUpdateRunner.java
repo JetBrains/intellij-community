@@ -49,6 +49,13 @@ class CacheUpdateRunner {
     return mySession.getFilesToUpdate().size();
   }
 
+  public int getNumberOfPendingUpdateJobs(ProgressIndicator indicator) {
+    if (mySession == null) {
+      mySession = new CacheUpdateSession(myUpdaters, indicator);
+    }
+    return mySession.getNumberOfPendingUpdateJobs();
+  }
+
   public void processFiles(final ProgressIndicator indicator, boolean processInReadAction) {
     try {
       indicator.checkCanceled();

@@ -240,7 +240,11 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
         return null;
       }
       checkFrames(threadReference);
-      return myFramesFromBottom.get(frameCount() - i  - 1);
+      final int frameCount = frameCount();
+      if (frameCount == 0) {
+        return null;
+      }
+      return myFramesFromBottom.get(frameCount - i  - 1);
     }
     catch (ObjectCollectedException e) {
       return null;

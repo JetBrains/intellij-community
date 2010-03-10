@@ -66,6 +66,10 @@ public class FileIndexRefreshCacheUpdater extends VirtualFileAdapter implements 
     }
   }
 
+  public int getNumberOfPendingUpdateJobs() {
+    return 0;
+  }
+
   public VirtualFile[] queryNeededFiles() {
     return VfsUtil.toVirtualFileArray(myChangedFiles);
   }

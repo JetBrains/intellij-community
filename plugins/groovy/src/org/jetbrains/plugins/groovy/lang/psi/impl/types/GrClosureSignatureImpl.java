@@ -133,9 +133,13 @@ public class GrClosureSignatureImpl implements GrClosureSignature {
         boolean opt = parameters1[i].isOptional() && parameters2[i].isOptional();
         params[i] = new GrClosureParameterImpl(/*null, */type, opt, null);
       }
-      PsiType returnType = TypesUtil.getLeastUpperBound(signature1.getReturnType(), signature2.getReturnType(), manager);
-      boolean isVarArgs = signature1.isVarargs() && signature2.isVarargs();
-      return new GrClosureSignatureImpl(params, returnType, isVarArgs);
+      final PsiType s1type = signature1.getReturnType();
+      final PsiType s2type = signature2.getReturnType();
+      if (s1type != null && s2type != null) {
+        PsiType returnType = TypesUtil.getLeastUpperBound(s1type, s2type, manager);
+        boolean isVarArgs = signature1.isVarargs() && signature2.isVarargs();
+        return new GrClosureSignatureImpl(params, returnType, isVarArgs);
+      }
     }
     return null; //todo
   }

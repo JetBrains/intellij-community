@@ -26,6 +26,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -37,12 +38,13 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.util.ProcessingContext;
 import com.intellij.util.Consumer;
+import com.intellij.util.ProcessingContext;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,6 +56,7 @@ import java.util.Set;
  * @author Dmitry Avdeev
  */
 public class XmlCompletionContributor extends CompletionContributor {
+  public static final Key<Boolean> WORD_COMPLETION_COMPATIBLE = Key.create("WORD_COMPLETION_COMPATIBLE");
 
   @NonNls public static final String TAG_NAME_COMPLETION_FEATURE = "tag.name.completion";
   private static final InsertHandlerDecorator<LookupElement> QUOTE_EATER = new InsertHandlerDecorator<LookupElement>() {
@@ -92,10 +95,14 @@ public class XmlCompletionContributor extends CompletionContributor {
                  return;
                }
 
+               final Set<String> usedWords = new THashSet<String>();
                final Ref<Boolean> addWordVariants = Ref.create(true);
                result.runRemainingContributors(parameters, new Consumer<LookupElement>() {
                  public void consume(LookupElement element) {
-                   addWordVariants.set(false);
+                   if (element.getUserData(WORD_COMPLETION_COMPATIBLE) == null) {
+                     addWordVariants.set(false);
+                   }
+                   usedWords.add(element.getLookupString());
                    result.addElement(LookupElementDecorator.withInsertHandler(element, QUOTE_EATER));
                  }
                });
@@ -108,7 +115,7 @@ public class XmlCompletionContributor extends CompletionContributor {
                }
 
                if (addWordVariants.get().booleanValue()) {
-                 WordCompletionContributor.addWordCompletionWariants(result, parameters);
+                 WordCompletionContributor.addWordCompletionVariants(result, parameters, usedWords);
                }
              }
            });

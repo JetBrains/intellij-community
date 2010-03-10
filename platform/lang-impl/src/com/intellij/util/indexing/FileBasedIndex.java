@@ -1190,6 +1190,10 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
     return pair != null? pair.getSecond() : null;
   }
 
+  public int getNumberOfPendingInvalidations() {
+    return myChangedFilesCollector.getNumberOfPendingInvalidations();
+  }
+
   public Collection<VirtualFile> getFilesToUpdate(final Project project) {
     final ProjectFileIndex projectIndex = ProjectRootManager.getInstance(project).getFileIndex();
     return ContainerUtil.findAll(myChangedFilesCollector.getAllFilesToUpdate(), new Condition<VirtualFile>() {
@@ -1530,6 +1534,16 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
       IndexingStamp.flushCache();
       if (unexpectedError != null) {
         LOG.error(unexpectedError);
+      }
+    }
+
+    public int getNumberOfPendingInvalidations() {
+      r.lock();
+      try {
+        return myFutureInvalidations.size();
+      }
+      finally {
+        r.unlock();
       }
     }
 

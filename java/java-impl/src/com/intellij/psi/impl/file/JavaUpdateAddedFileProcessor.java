@@ -16,7 +16,6 @@
 package com.intellij.psi.impl.file;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -30,7 +29,7 @@ public class JavaUpdateAddedFileProcessor extends UpdateAddedFileProcessor {
   }
 
   public void update(final PsiFile element, PsiFile originalElement) throws IncorrectOperationException {
-    if (PsiUtilBase.getTemplateLanguageFile(element) != element.getContainingFile()) return;
+    if (element.getViewProvider().getLanguages().size() > 1) return;
 
     PsiDirectory dir = element.getContainingDirectory();
     if (dir == null) return;

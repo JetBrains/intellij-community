@@ -28,6 +28,7 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -104,8 +105,11 @@ class AnnotationFieldGutter implements ActiveAnnotationGutter {
 
   public void gutterClosed() {
     myAnnotation.removeListener(myListener);
-    myAnnotation.dispose();
-    myEditor.getUserData(AnnotateToggleAction.KEY_IN_EDITOR).remove(this);
+    myAnnotation.dispose();    
+    final Collection<ActiveAnnotationGutter> gutters = myEditor.getUserData(AnnotateToggleAction.KEY_IN_EDITOR);
+    if (gutters != null) {
+      gutters.remove(this);
+    }
   }
 
   @Nullable

@@ -35,10 +35,19 @@ public class FeatureStatisticsBundle {
   }
 
   public static String message(@PropertyKey(resourceBundle = BUNDLE)String key, Object... params) {
-    return CommonBundle.message(getBundle(), key, params);
+    return CommonBundle.message(getBundle(key), key, params);
   }
 
-  private static ResourceBundle getBundle() {
+  private static ResourceBundle getBundle(final String key) {
+    // bundles provided by plugins
+    for (FeatureStatisticsBundleProvider provider : FeatureStatisticsBundleProvider.EP_NAME.getExtensions()) {
+      final ResourceBundle bundle = provider.getBundleFor(key);
+      if (bundle != null) {
+        return bundle;
+      }
+    }
+
+    // default bundle
     ResourceBundle bundle = null;
     if (ourBundle != null) bundle = ourBundle.get();
     if (bundle == null) {

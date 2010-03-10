@@ -333,4 +333,9 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   void allowTreeAccessForFile(VirtualFile file);
 
   void allowTreeAccessForAllFiles();
+
+  void renameElement(PsiElement element,
+                             String newName,
+                             boolean searchInComments,
+                             boolean searchTextOccurrences) throws Exception;
 }

@@ -257,7 +257,11 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
     GrExpression left = range.getLeftOperand();
     GrExpression right = range.getRightOperand();
     if (right != null) {
-      return TypesUtil.getLeastUpperBound(left.getType(), right.getType(), range.getManager());
+      final PsiType leftType = left.getType();
+      final PsiType rightType = right.getType();
+      if (leftType != null && rightType != null) {
+        return TypesUtil.getLeastUpperBound(leftType, rightType, range.getManager());
+      }
     }
     return null;
   }

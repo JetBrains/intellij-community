@@ -12,9 +12,10 @@ def i = 6
 println i
 -----
 def i = 6
-i = <caret>testMethod(i)
+i = testMethod()
 
-private int testMethod(int i) {
+private int testMethod() {
+  int i
   while (true) {
     println "preved"
     i = 42

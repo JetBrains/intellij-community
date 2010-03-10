@@ -102,6 +102,11 @@ public class DomResolveConverter<T extends DomElement> extends ResolvingConverte
     return target == null ? super.getPsiElement(resolvedValue) : PomService.convertToPsi(target);
   }
 
+  @Override
+  public boolean isReferenceTo(@NotNull PsiElement element, String stringValue, @Nullable T resolveResult, ConvertContext context) {
+    return resolveResult != null && element.getManager().areElementsEquivalent(element, resolveResult.getXmlElement());
+  }
+
   private static DomElement getResolvingScope(final ConvertContext context) {
     final DomElement invocationElement = context.getInvocationElement();
     return invocationElement.getManager().getResolvingScope((GenericDomValue)invocationElement);

@@ -29,5 +29,9 @@ public interface CustomLiveTemplate {
   @Nullable
   String computeTemplateKey(@NotNull CustomTemplateCallback callback);
 
-  void execute(String key, @NotNull CustomTemplateCallback callback, @Nullable TemplateInvokationListener listener);
+  boolean isApplicable(PsiFile file, int offset, boolean selection);
+
+  void expand(String key, @NotNull CustomTemplateCallback callback, @Nullable TemplateInvokationListener listener);
+
+  void wrap(String selection, @NotNull CustomTemplateCallback callback, @Nullable TemplateInvokationListener listener);
 }

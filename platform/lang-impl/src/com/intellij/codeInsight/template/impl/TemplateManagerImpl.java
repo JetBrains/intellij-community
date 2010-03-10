@@ -243,21 +243,23 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
 
     if (shortcutChar == templateSettings.getDefaultShortcutChar()) {
       for (final CustomLiveTemplate customLiveTemplate : CustomLiveTemplate.EP_NAME.getExtensions()) {
-        final CustomTemplateCallback callback = new CustomTemplateCallback(editor, file);
-        callback.fixInitialEditorState();
-        String key = customLiveTemplate.computeTemplateKey(callback);
-        if (key != null) {
-          int caretOffset = editor.getCaretModel().getOffset();
-          int offsetBeforeKey = caretOffset - key.length();
-          CharSequence text = editor.getDocument().getCharsSequence();
-          if (template2argument == null || !containsTemplateStartingBefore(template2argument, offsetBeforeKey, caretOffset, text)) {
-            callback.getEditor().getDocument().deleteString(offsetBeforeKey, caretOffset);
-            customLiveTemplate.execute(key, callback, new TemplateInvokationListener() {
-              public void finished(boolean inSeparateEvent) {
-                callback.finish();
-              }
-            });
-            return true;
+        int caretOffset = editor.getCaretModel().getOffset();
+        if (customLiveTemplate.isApplicable(file, caretOffset, false)) {
+          final CustomTemplateCallback callback = new CustomTemplateCallback(editor, file);
+          callback.fixInitialEditorState();
+          String key = customLiveTemplate.computeTemplateKey(callback);
+          if (key != null) {
+            int offsetBeforeKey = caretOffset - key.length();
+            CharSequence text = editor.getDocument().getCharsSequence();
+            if (template2argument == null || !containsTemplateStartingBefore(template2argument, offsetBeforeKey, caretOffset, text)) {
+              callback.getEditor().getDocument().deleteString(offsetBeforeKey, caretOffset);
+              customLiveTemplate.expand(key, callback, new TemplateInvokationListener() {
+                public void finished(boolean inSeparateEvent) {
+                  callback.finish();
+                }
+              });
+              return true;
+            }
           }
         }
       }

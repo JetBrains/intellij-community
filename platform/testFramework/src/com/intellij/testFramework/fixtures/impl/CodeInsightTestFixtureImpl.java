@@ -525,10 +525,19 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public void renameElement(final PsiElement element, final String newName) throws Exception {
+    final boolean searchInComments = false;
+    final boolean searchTextOccurrences = false;
+    renameElement(element, newName, searchInComments, searchTextOccurrences);
+  }
+
+  public void renameElement(final PsiElement element,
+                             final String newName,
+                             final boolean searchInComments,
+                             final boolean searchTextOccurrences) throws Exception {
     new WriteCommandAction.Simple(myProjectFixture.getProject()) {
       protected void run() throws Exception {
         final PsiElement substitution = RenamePsiElementProcessor.forElement(element).substituteElementToRename(element, myEditor);
-        new RenameProcessor(myProjectFixture.getProject(), substitution, newName, false, false).run();
+        new RenameProcessor(myProjectFixture.getProject(), substitution, newName, searchInComments, searchTextOccurrences).run();
      }
     }.execute().throwException();
   }
