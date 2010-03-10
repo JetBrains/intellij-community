@@ -225,17 +225,14 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       }
 
       PsiClass[] classes = getClasses();
-      if (classes.length == 1) {
-        if (!JavaPsiFacade.getInstance(getProject()).getNameHelper().isIdentifier(classes[0].getName())) {
-          return; // Can happen for package-info.class, or classes compiled from languages, that support different class naming scheme, like Scala.
-        }
-      }
-
-      PsiClass[] mirrorClasses = ((PsiJavaFile)mirrorFile).getClasses();
-      LOG.assertTrue(classes.length == mirrorClasses.length);
-      if (classes.length == mirrorClasses.length) {
-        for (int i = 0; i < classes.length; i++) {
-          ((ClsElementImpl)classes[i]).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirrorClasses[i]));
+      // Can happen for package-info.class, or classes compiled from languages, that support different class naming scheme, like Scala.
+      if (classes.length != 1 || JavaPsiFacade.getInstance(getProject()).getNameHelper().isIdentifier(classes[0].getName())) {
+        PsiClass[] mirrorClasses = ((PsiJavaFile)mirrorFile).getClasses();
+        LOG.assertTrue(classes.length == mirrorClasses.length);
+        if (classes.length == mirrorClasses.length) {
+          for (int i = 0; i < classes.length; i++) {
+            ((ClsElementImpl)classes[i]).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirrorClasses[i]));
+          }
         }
       }
     }

@@ -68,7 +68,7 @@ public abstract class CreateClassFix {
             argList.getNamedArguments().length + argList.getExpressionArguments().length > 0 &&
             targetClass instanceof GrMemberOwner) {
 
-          PsiType[] argTypes = PsiUtil.getArgumentTypes(myRefElement, false, false);
+          PsiType[] argTypes = PsiUtil.getArgumentTypes(myRefElement, false);
           assert argTypes != null;
 
           ChooseTypeExpression[] paramTypesExpressions = new ChooseTypeExpression[argTypes.length];

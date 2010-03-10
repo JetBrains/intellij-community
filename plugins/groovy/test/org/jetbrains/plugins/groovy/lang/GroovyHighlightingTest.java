@@ -219,4 +219,6 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
     myFixture.configureByText("X.groovy", "public class X{def x=5}");
     myFixture.testHighlighting(true, false, false, getTestName(false) + ".java");
   }
+
+  public void testSuperConstructorInvocation() throws Exception {doTest();}
 }

@@ -17,6 +17,7 @@
 package com.intellij.application.options;
 
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
@@ -45,6 +46,8 @@ import java.util.List;
 import java.util.Map;
 
 public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.GeneralCodeStylePanel");
+
   private static final String SYSTEM_DEPENDANT_STRING = ApplicationBundle.message("combobox.crlf.system.dependent");
   private static final String UNIX_STRING = ApplicationBundle.message("combobox.crlf.unix");
   private static final String WINDOWS_STRING = ApplicationBundle.message("combobox.crlf.windows");
@@ -72,7 +75,12 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     final FileTypeIndentOptionsProvider[] indentOptionsProviders = Extensions.getExtensions(FileTypeIndentOptionsProvider.EP_NAME);
     for (FileTypeIndentOptionsProvider indentOptionsProvider : indentOptionsProviders) {
       myIndentOptionsProviders.add(indentOptionsProvider);
-      myAdditionalIndentOptions.put(indentOptionsProvider.getFileType(), indentOptionsProvider.createOptionsEditor());
+      if (myAdditionalIndentOptions.containsKey(indentOptionsProvider.getFileType())) {
+        LOG.error("Duplicate extension: " + indentOptionsProvider);
+      }
+      else {
+        myAdditionalIndentOptions.put(indentOptionsProvider.getFileType(), indentOptionsProvider.createOptionsEditor());
+      }
     }
 
     myIndentPanel.setLayout(new BorderLayout());

@@ -48,7 +48,14 @@ public class PsiTreeUtil {
    */
   public static boolean isAncestor(@Nullable PsiElement ancestor, @NotNull PsiElement element, boolean strict) {
     if (ancestor == null) return false;
+    // fast path to avoid loading tree
+    if ((ancestor instanceof StubBasedPsiElement && (((StubBasedPsiElement)ancestor).getStub() != null)) ||
+        (element instanceof StubBasedPsiElement && ((StubBasedPsiElement)element).getStub() != null)) {
+      if (ancestor.getContainingFile() != element.getContainingFile()) return false;
+    }
+
     boolean stopAtFileLevel = !(ancestor instanceof PsiFile || ancestor instanceof PsiDirectory);
+
     PsiElement parent = strict ? element.getParent() : element;
     while (true) {
       if (parent == null) return false;

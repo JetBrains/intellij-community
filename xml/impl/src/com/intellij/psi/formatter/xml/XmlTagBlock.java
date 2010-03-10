@@ -372,7 +372,8 @@ public class XmlTagBlock extends AbstractXmlBlock{
 
   private boolean isAfterAttribute(final int newChildIndex) {
     List<Block> subBlocks = getSubBlocks();
-    Block prevBlock = subBlocks.get(newChildIndex - 1);
+    int index = newChildIndex - 1;
+    Block prevBlock = index < subBlocks.size() ? subBlocks.get(index):null;
     return prevBlock instanceof SyntheticBlock && ((SyntheticBlock)prevBlock).endsWithAttribute();
   }
 }
