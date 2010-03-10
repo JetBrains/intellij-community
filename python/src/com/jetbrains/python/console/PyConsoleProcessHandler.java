@@ -65,7 +65,7 @@ class PyConsoleProcessHandler extends OSProcessHandler {
         if (!currentPrompt.equals(prompt)) {
           languageConsole.setPrompt(prompt);
         }
-        string = string.substring(prompt.length());
+        string = string.substring(prompt.length()).trim();
         break;
       }
     }
