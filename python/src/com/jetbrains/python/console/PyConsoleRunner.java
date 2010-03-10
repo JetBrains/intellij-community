@@ -171,7 +171,8 @@ public class PyConsoleRunner {
       }
 
       public void update(final AnActionEvent e) {
-        e.getPresentation().setEnabled(getLanguageConsole().getEditorDocument().getTextLength() > 0);
+        e.getPresentation().setEnabled(!myProcessHandler.isProcessTerminated() &&
+                                       getLanguageConsole().getEditorDocument().getTextLength() > 0);
       }
     };
     toolbarActions.add(myRunAction);
