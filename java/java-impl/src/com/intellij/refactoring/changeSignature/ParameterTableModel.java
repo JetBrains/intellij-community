@@ -116,8 +116,7 @@ class ParameterTableModel extends AbstractTableModel implements RowEditableTable
 
   public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
     if (rowIndex < 0 || rowIndex >= myParameterInfos.size()) return;
-    String s = aValue instanceof String ? (String)aValue : null;
-    if (s == null) s = "";
+    String s = aValue instanceof String ? (String)aValue : "";
     s = s.trim();
     ParameterInfoImpl info = myParameterInfos.get(rowIndex);
     switch (columnIndex) {
@@ -186,8 +185,8 @@ class ParameterTableModel extends AbstractTableModel implements RowEditableTable
   }
 
   private JavaCodeFragment createDefaultValueCodeFragment(final String expressionText, final PsiType expectedType) {
-    PsiExpressionCodeFragment codeFragment = JavaPsiFacade.getInstance(myParameterList.getProject()).getElementFactory().createExpressionCodeFragment(expressionText,
-                                                                                                                           myReferenceExpression, expectedType, true);
+    PsiExpressionCodeFragment codeFragment = JavaPsiFacade.getInstance(myParameterList.getProject()).getElementFactory()
+      .createExpressionCodeFragment(expressionText, myReferenceExpression, expectedType, true);
     codeFragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
     return codeFragment;
   }

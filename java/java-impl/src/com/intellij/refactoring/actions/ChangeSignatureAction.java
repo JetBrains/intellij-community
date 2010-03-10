@@ -15,13 +15,16 @@
 */
 package com.intellij.refactoring.actions;
 
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
-import com.intellij.refactoring.changeSignature.ChangeSignatureTargetUtil;
+import org.jetbrains.annotations.Nullable;
 
 public class ChangeSignatureAction extends BaseRefactoringAction {
   public boolean isAvailableInEditorOnly() {
@@ -35,13 +38,29 @@ public class ChangeSignatureAction extends BaseRefactoringAction {
   protected boolean isAvailableOnElementInEditor(final PsiElement element, final Editor editor) {
     final Document document = editor.getDocument();
     final PsiFile file = PsiDocumentManager.getInstance(element.getProject()).getPsiFile(document);
-    if (file != null && ChangeSignatureTargetUtil.findTargetMember(file, editor) != null) {
+    final ChangeSignatureHandler handler = getChangeSignatureHandler(element.getLanguage());
+    if (handler == null) return false;
+    if (file != null && handler.findTargetMember(file, editor) != null) {
       return true;
     }
     return element instanceof PsiMethod || element instanceof PsiClass;
   }
 
   public RefactoringActionHandler getHandler(DataContext dataContext) {
-    return new ChangeSignatureHandler();
+    final Language language = LangDataKeys.LANGUAGE.getData(dataContext);
+    if (language != null) {
+      return getChangeSignatureHandler(language);
+    }
+    return null;
+  }
+
+  @Override
+  protected boolean isAvailableForLanguage(Language language) {
+    return getChangeSignatureHandler(language) != null;
+  }
+
+  @Nullable
+  private static ChangeSignatureHandler getChangeSignatureHandler(Language language) {
+    return LanguageRefactoringSupport.INSTANCE.forLanguage(language).getChangeSignatureHandler();
   }
 }

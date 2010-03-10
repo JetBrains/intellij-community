@@ -21,9 +21,11 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.extractSuperclass.ExtractSuperclassHandler;
+import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
+import com.intellij.refactoring.changeSignature.JavaChangeSignatureHandler;
 import com.intellij.refactoring.extractInterface.ExtractInterfaceHandler;
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
+import com.intellij.refactoring.extractSuperclass.ExtractSuperclassHandler;
 import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
 import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
@@ -82,6 +84,11 @@ public class JavaRefactoringSupportProvider extends DefaultRefactoringSupportPro
 
   public RefactoringActionHandler getExtractSuperClassHandler() {
     return new ExtractSuperclassHandler();
+  }
+
+  @Override
+  public ChangeSignatureHandler getChangeSignatureHandler() {
+    return new JavaChangeSignatureHandler();
   }
 
   public static boolean mayRenameInplace(PsiElement elementToRename, final PsiElement nameSuggestionContext) {

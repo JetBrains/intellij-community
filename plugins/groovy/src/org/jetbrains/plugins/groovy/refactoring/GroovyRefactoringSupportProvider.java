@@ -19,8 +19,10 @@ package org.jetbrains.plugins.groovy.refactoring;
 import com.intellij.lang.refactoring.DefaultRefactoringSupportProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.refactoring.changeSignature.GrChangeSignatureHandler;
 import org.jetbrains.plugins.groovy.refactoring.extractMethod.GroovyExtractMethodHandler;
 import org.jetbrains.plugins.groovy.refactoring.introduceVariable.GroovyIntroduceVariableHandler;
 
@@ -46,5 +48,10 @@ public class GroovyRefactoringSupportProvider extends DefaultRefactoringSupportP
   @Nullable
   public RefactoringActionHandler getExtractMethodHandler() {
     return new GroovyExtractMethodHandler();
+  }
+
+  @Override
+  public ChangeSignatureHandler getChangeSignatureHandler() {
+    return new GrChangeSignatureHandler();
   }
 }

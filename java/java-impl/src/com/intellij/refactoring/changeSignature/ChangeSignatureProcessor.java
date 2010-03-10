@@ -58,6 +58,7 @@ import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -479,7 +480,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
 
   protected boolean isProcessCovariantOverriders() {
     return Messages.showYesNoDialog(myProject, RefactoringBundle.message("do.you.want.to.process.overriding.methods.with.covariant.return.type"),
-                             ChangeSignatureHandler.REFACTORING_NAME, Messages.getQuestionIcon())
+                             JavaChangeSignatureHandler.REFACTORING_NAME, Messages.getQuestionIcon())
     == DialogWrapper.OK_EXIT_CODE;
   }
 
@@ -941,17 +942,13 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
             newArgs [newNonVarargCount] = createActualArgument(list, changeInfo.newParms [newNonVarargCount], toInsertDefaultValue, args);
           }
           else {
-            for (int i = 0; i < newVarargInitializers.length; i++) {
-              newArgs [i + newNonVarargCount] = newVarargInitializers [i];
-            }
+            System.arraycopy(newVarargInitializers, 0, newArgs, newNonVarargCount, newVarargInitializers.length);
           }
         }
         else {
           final int newVarargCount = newArgsLength - newNonVarargCount;
           LOG.assertTrue(newVarargCount == 0 || newVarargCount == varargCount);
-          for (int i = 0; i < newVarargCount; i++) {
-            newArgs[newNonVarargCount + i] = args[nonVarargCount + i];
-          }
+          System.arraycopy(args, nonVarargCount, newArgs, newNonVarargCount, newVarargCount);
         }
         ChangeSignatureUtil.synchronizeList(list, Arrays.asList(newArgs), ExpressionList.INSTANCE, changeInfo.toRemoveParm);
       }
@@ -973,6 +970,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @Nullable
   private PsiExpression createDefaultValue(final PsiElementFactory factory, final ParameterInfoImpl info, final PsiExpressionList list)
     throws IncorrectOperationException {
     if (info.useAnySingleVariable) {

@@ -17,6 +17,7 @@ package com.intellij.lang.refactoring;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -90,6 +91,12 @@ public interface RefactoringSupportProvider {
    * @see com.intellij.refactoring.RefactoringActionHandler
    */
   @Nullable RefactoringActionHandler getExtractSuperClassHandler();
+
+  /**
+   * @return  handler for changing signature in this language
+   * @see com.intellij.refactoring.RefactoringActionHandler
+   */
+  @Nullable ChangeSignatureHandler getChangeSignatureHandler();
 
   boolean doInplaceRenameFor(PsiElement element, PsiElement context);
 }
