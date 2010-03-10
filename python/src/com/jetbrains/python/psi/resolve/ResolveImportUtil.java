@@ -109,18 +109,18 @@ public class ResolveImportUtil {
       }
 
       if (moduleQName != null) { // either "from bar import foo" or "from ...bar import foo"
-        imported_from_module = resolveModule(moduleQName.getComponents(), file, absolute_import_enabled, relative_level);
+        imported_from_module = resolveModule(moduleQName, file, absolute_import_enabled, relative_level);
         PsiElement result = resolveChild(imported_from_module, qName.getComponents().get(0), file, false);
         if (result != null) return result;
       }
     }
     else if (importStatement instanceof PyImportStatement) { // "import foo"
-      PsiElement result = resolveModule(qName.getComponents(), file, absolute_import_enabled, 0);
+      PsiElement result = resolveModule(qName, file, absolute_import_enabled, 0);
       if (result != null) return result;
     }
     // in-python resolution failed
     if (moduleQName != null) {
-      return resolveForeignImport(import_element, StringUtil.join(qName.getComponents(), "."), resolveModule(moduleQName.getComponents(), file, false, 0));
+      return resolveForeignImport(import_element, StringUtil.join(qName.getComponents(), "."), resolveModule(moduleQName, file, false, 0));
     }
     return null;
   }
@@ -135,8 +135,6 @@ public class ResolveImportUtil {
     final PsiFile file = importRef.getContainingFile();
     if (file == null || !file.isValid()) return null;
 
-    boolean absolute_import_enabled = isAbsoluteImportEnabledFor(importRef);
-
     final PsiElement parent = PsiTreeUtil.getParentOfType(importRef, PyImportElement.class, PyFromImportStatement.class); //importRef.getParent();
     if (parent instanceof PyImportElement) {
       PyImportElement import_element = (PyImportElement)parent;
@@ -147,10 +145,22 @@ public class ResolveImportUtil {
     }
     else if (parent instanceof PyFromImportStatement) { // "from foo import"
       PyFromImportStatement from_import_statement = (PyFromImportStatement)parent;
-      PsiElement module = resolveModule(getQualifiedName(importRef), file, absolute_import_enabled, from_import_statement.getRelativeLevel());
+      PsiElement module = resolveFromImportStatementSource(from_import_statement, importRef.asQualifiedName());
       if (module != null) return module;
     }
     return null;
+  }
+
+  @Nullable
+  public static PsiElement resolveFromImportStatementSource(PyFromImportStatement from_import_statement) {
+    return resolveFromImportStatementSource(from_import_statement, from_import_statement.getImportSourceQName()); 
+  }
+
+  @Nullable
+  private static PsiElement resolveFromImportStatementSource(PyFromImportStatement from_import_statement, PyQualifiedName qName) {
+    boolean absolute_import_enabled = isAbsoluteImportEnabledFor(from_import_statement);
+    PsiFile file = from_import_statement.getContainingFile();
+    return resolveModule(qName, file, absolute_import_enabled, from_import_statement.getRelativeLevel());
   }
 
   /**
@@ -162,12 +172,12 @@ public class ResolveImportUtil {
    * @return
    */
   @Nullable
-  private static PsiElement resolveModule(@Nullable List<String> qualifiedName, PsiFile source_file,
+  private static PsiElement resolveModule(@Nullable PyQualifiedName qualifiedName, PsiFile source_file,
                                           boolean import_is_absolute, int relative_level) {
     PsiElement imported_from_module;
 
     if (qualifiedName == null) return null;
-    String marker = StringUtil.join(qualifiedName, ".") + "#" + Integer.toString(relative_level);
+    String marker = StringUtil.join(qualifiedName.getComponents(), ".") + "#" + Integer.toString(relative_level);
     Set<String> being_imported = ourBeingImported.get();
     if (being_imported.contains(marker)) return null; // break endless loop in import
     try {
@@ -190,22 +200,6 @@ public class ResolveImportUtil {
     }
   }
 
-  @Nullable
-  public static List<String> getQualifiedName(PyReferenceExpression reference) {
-    if (reference == null) {
-      return null;
-    }
-    List<String> result = new ArrayList<String>();
-    final List<PyReferenceExpression> components = PyResolveUtil.unwindQualifiers(reference);
-    if (components == null) {
-      return null;
-    }
-    for (PyReferenceExpression component : components) {
-      result.add(component.getReferencedName());
-    }
-    return result;
-  }
-
   /**
    * Searches for a module at given directory, unwinding qualifiers and traversing directories as needed.
    *
@@ -215,27 +209,27 @@ public class ResolveImportUtil {
    * @return module's file, or null.
    */
   @Nullable
-  private static PsiElement resolveModuleAt(PsiDirectory directory, PsiFile sourceFile, List<String> qualifiedName) {
+  private static PsiElement resolveModuleAt(PsiDirectory directory, PsiFile sourceFile, PyQualifiedName qualifiedName) {
     // prerequisites
     if (directory == null || ! directory.isValid()) return null;
     if (sourceFile == null || !sourceFile.isValid()) return null;
 
     PsiElement seeker = directory;
-    for (String name : qualifiedName) {
+    for (String name : qualifiedName.getComponents()) {
       seeker = resolveChild(seeker, name, sourceFile, true);
     }
     return seeker;
   }
 
   @Nullable
-  private static PsiElement resolveModuleInRoots(List<String> moduleQualifiedName, PsiElement foothold) {
+  private static PsiElement resolveModuleInRoots(PyQualifiedName moduleQualifiedName, PsiElement foothold) {
     if (foothold == null || !foothold.isValid()) return null;
     PsiFile foothold_file = foothold.getContainingFile();
     if (foothold_file == null || !foothold_file.isValid()) return null;
 
-    if (moduleQualifiedName.size() < 1) return null;
+    if (moduleQualifiedName.getComponentCount() < 1) return null;
 
-    Iterator<String> qualifier_sequence = moduleQualifiedName.iterator();
+    Iterator<String> qualifier_sequence = moduleQualifiedName.getComponents().iterator();
     String top_module_name = qualifier_sequence.next(); // guaranteed to be unqualified
 
     LookupRootVisitor visitor = new LookupRootVisitor(top_module_name, foothold.getManager());
