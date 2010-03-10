@@ -153,7 +153,8 @@ public class ResolveImportUtil {
 
   @Nullable
   public static PsiElement resolveFromImportStatementSource(PyFromImportStatement from_import_statement) {
-    return resolveFromImportStatementSource(from_import_statement, from_import_statement.getImportSourceQName()); 
+    final PyQualifiedName qName = from_import_statement.getImportSourceQName();
+    return qName == null ? null : resolveFromImportStatementSource(from_import_statement, qName);
   }
 
   @Nullable
