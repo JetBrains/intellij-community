@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
@@ -518,7 +519,12 @@ public class MatcherImpl {
         final Runnable task = tasks.removeFirst();
         try {
           task.run();
-        } catch (Throwable th) {
+        } catch (ProcessCanceledException e) {
+          tasks.clear();
+          ended = true;
+          throw e;
+        }
+        catch (Throwable th) {
           LOG.error(th);
         }
       }
