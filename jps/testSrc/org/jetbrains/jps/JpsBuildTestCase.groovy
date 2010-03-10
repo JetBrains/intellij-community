@@ -2,7 +2,9 @@ package org.jetbrains.jps
 
 import junit.framework.TestCase
 import org.codehaus.gant.GantBinding
-import org.jetbrains.jps.idea.IdeaProjectLoader;
+import org.jetbrains.jps.idea.IdeaProjectLoader
+import org.jetbrains.jps.util.FileSystemItem
+import org.jetbrains.jps.util.FileUtil;
 
 /**
  * @author nik

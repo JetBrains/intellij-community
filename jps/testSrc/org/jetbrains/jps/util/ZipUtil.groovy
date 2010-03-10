@@ -1,4 +1,4 @@
-package org.jetbrains.jps
+package org.jetbrains.jps.util
 
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile

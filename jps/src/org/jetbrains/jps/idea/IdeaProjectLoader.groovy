@@ -138,7 +138,7 @@ public class IdeaProjectLoader {
   }
 
   private NodeList loadProjectLibraries(Node librariesComponent, Project project, String projectBasePath) {
-    return librariesComponent?.library.each {Node libTag ->
+    return librariesComponent?.library?.each {Node libTag ->
       project.createLibrary(libTag."@name", libraryInitializer(libTag, projectBasePath, null))
     }
   }

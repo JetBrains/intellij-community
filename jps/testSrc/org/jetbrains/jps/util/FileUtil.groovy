@@ -1,4 +1,4 @@
-package org.jetbrains.jps
+package org.jetbrains.jps.util
 
 /**
  * @author nik
