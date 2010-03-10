@@ -29,8 +29,9 @@ public class PythonInspectionToolProvider implements InspectionToolProvider {
       PyExceptionInheritInspection.class,
       PyDefaultArgumentInspection.class,
       PyRaisingNewStyleClassInspection.class,
+      PyDocstringInspection.class,
       PyUnboundLocalVariableInspection.class,
-      PyDocstringInspection.class
+      PyStatementEffectInspection.class
     };
   }
 }
