@@ -781,7 +781,7 @@ public class PluginManager {
        }
      }
     }
-    else if (StringUtil.endsWithIgnoreCase(file.getName(), ".jar")) {
+    else if (StringUtil.endsWithIgnoreCase(file.getName(), ".jar") && file.exists()) {
       descriptor = loadDescriptorFromJar(file, fileName);
     }
 

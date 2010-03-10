@@ -65,10 +65,12 @@ public class FilePathImpl implements FilePath {
     }
   }
 
+  @Heavy
   public FilePathImpl(VirtualFile virtualParent, String name, final boolean isDirectory) {
     this(virtualParent, name, isDirectory, null, false);
   }
 
+  @Heavy
   private FilePathImpl(VirtualFile virtualParent, String name, final boolean isDirectory, final boolean forDeleted) {
     this(virtualParent, name, isDirectory, null, forDeleted);
   }

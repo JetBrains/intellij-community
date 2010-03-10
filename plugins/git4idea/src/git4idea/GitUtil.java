@@ -662,6 +662,7 @@ public class GitUtil {
     final List<CommittedChangeList> rc = new ArrayList<CommittedChangeList>();
 
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
+    h.setSilent(true);
     h.setNoSSH(true);
     h.addParameters("--pretty=format:%x0C%n" + GitChangeUtils.COMMITTED_CHANGELIST_FORMAT, "--name-status");
     parametersSpecifier.consume(h);

@@ -22,6 +22,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,6 +52,11 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider {
     if (str.length() < 2) {
       return PsiReference.EMPTY_ARRAY;
     }
+
+    if (position != null && PsiTreeUtil.getChildOfType(position, OuterLanguageElement.class) != null) {
+      return PsiReference.EMPTY_ARRAY;
+    }
+
     NotNullLazyValue<Set<String>> topLevelPackages = new NotNullLazyValue<Set<String>>() {
       @NotNull
       @Override
