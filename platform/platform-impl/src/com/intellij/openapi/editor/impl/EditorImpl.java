@@ -2300,7 +2300,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     CharSequence chars = myDocument.getCharsNoThreadCheck();
     int nonWhitespaceOffset = CharArrayUtil.shiftForward(chars, lineStart, " \t");
     if (nonWhitespaceOffset < lineEnd) {
-      return calcColumnNumber(nonWhitespaceOffset, line) / getIndentSize();
+      final int columnNumber = calcColumnNumber(nonWhitespaceOffset, line);
+      final int indentSize = getIndentSize();
+      return indentSize != 0 ? columnNumber / indentSize : columnNumber;
     }
     else {
       int upIndent = goUp ? getIndents(line - 1, true, false) : 100;
