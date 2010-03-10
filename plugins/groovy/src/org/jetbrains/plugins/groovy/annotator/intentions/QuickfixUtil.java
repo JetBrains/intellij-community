@@ -214,7 +214,7 @@ public class QuickfixUtil {
 
     if (isCall(referenceExpression)) {
       List<PsiType> unboxedTypes = new ArrayList<PsiType>();
-      for (PsiType type : PsiUtil.getArgumentTypes(referenceExpression, false, false)) {
+      for (PsiType type : PsiUtil.getArgumentTypes(referenceExpression, false)) {
         unboxedTypes.add(TypesUtil.unboxPrimitiveTypeWraperAndEraseGenerics(type));
       }
       final PsiType[] types = unboxedTypes.toArray(new PsiType[unboxedTypes.size()]);

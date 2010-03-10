@@ -413,7 +413,8 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         if (clazz.hasModifierProperty(GrModifier.STATIC)) {
           myHolder.createErrorAnnotation(newExpression, GroovyBundle.message("qualified.new.of.static.class"));
         }
-      } else {
+      }
+      else {
         final PsiClass outerClass = clazz.getContainingClass();
         if (com.intellij.psi.util.PsiUtil.isInnerClass(clazz) && !PsiUtil.hasEnclosingInstanceInScope(outerClass, newExpression, true)) {
           myHolder.createErrorAnnotation(newExpression, GroovyBundle.message("cannot.reference.nonstatic", clazz.getQualifiedName()));
@@ -422,10 +423,17 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
 
     final GroovyResolveResult constructorResolveResult = newExpression.resolveConstructorGenerics();
-    if (constructorResolveResult.getElement() != null) {
-      checkMethodApplicability(constructorResolveResult, refElement, myHolder);
+    final PsiElement constructor = constructorResolveResult.getElement();
+    if (constructor != null) {
       final GrArgumentList argList = newExpression.getArgumentList();
-      if (argList != null && argList.getExpressionArguments().length == 0) checkDefaultMapConstructor(myHolder, argList, constructorResolveResult);
+      if (argList != null &&
+          argList.getExpressionArguments().length == 0 &&
+          ((PsiMethod)constructor).getParameterList().getParametersCount() == 0) {
+        checkDefaultMapConstructor(myHolder, argList, constructor);
+      }
+      else {
+        checkMethodApplicability(constructorResolveResult, refElement, myHolder);
+      }
     }
     else {
       final GroovyResolveResult[] results = newExpression.multiResolveConstructor();
@@ -439,12 +447,17 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       else {
         if (element instanceof PsiClass) {
           //default constructor invocation
-          PsiType[] argumentTypes = PsiUtil.getArgumentTypes(refElement, true, true);
-          if (argumentTypes != null && argumentTypes.length > 0) {
+          PsiType[] argumentTypes = PsiUtil.getArgumentTypes(refElement, true);
+          if (argumentTypes == null ||
+              argumentTypes.length == 0 ||
+              (argumentTypes.length == 1 &&
+               PsiUtil.createMapType(newExpression.getManager(), newExpression.getResolveScope()).isAssignableFrom(argumentTypes[0]))) {
+            checkDefaultMapConstructor(myHolder, argList, element);
+          }
+          else {
             String message = GroovyBundle.message("cannot.find.default.constructor", ((PsiClass)element).getName());
             myHolder.createWarningAnnotation(toHighlight, message);
           }
-          else checkDefaultMapConstructor(myHolder, argList, constructorResolveResult);
         }
       }
     }
@@ -463,7 +476,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   @Override
   public void visitConstructorInvocation(GrConstructorInvocation invocation) {
     final GroovyResolveResult resolveResult = invocation.resolveConstructorGenerics();
-    if (resolveResult != null) {
+    if (resolveResult != null && resolveResult.getElement() != null) {
       checkMethodApplicability(resolveResult, invocation.getThisOrSuperKeyword(), myHolder);
     }
     else {
@@ -477,7 +490,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         final PsiClass clazz = invocation.getDelegatedClass();
         if (clazz != null) {
           //default constructor invocation
-          PsiType[] argumentTypes = PsiUtil.getArgumentTypes(invocation.getThisOrSuperKeyword(), true, true);
+          PsiType[] argumentTypes = PsiUtil.getArgumentTypes(invocation.getThisOrSuperKeyword(), true);
           if (argumentTypes != null && argumentTypes.length > 0) {
             String message = GroovyBundle.message("cannot.find.default.constructor", clazz.getName());
             myHolder.createWarningAnnotation(argList, message);
@@ -1151,7 +1164,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     if (!(element instanceof PsiMethod)) return;
 
     final PsiMethod method = (PsiMethod)element;
-    PsiType[] argumentTypes = PsiUtil.getArgumentTypes(place, method.isConstructor(), true);
+    PsiType[] argumentTypes = PsiUtil.getArgumentTypes(place, true);
     if ("call".equals(method.getName()) && place instanceof GrReferenceExpression) {
       final GrExpression qualifierExpression = ((GrReferenceExpression)place).getQualifierExpression();
       if (qualifierExpression != null) {
@@ -1254,9 +1267,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
   }
 
-  private static void checkDefaultMapConstructor(AnnotationHolder holder,
-                                                 GrArgumentList argList,
-                                                 GroovyResolveResult constructorResolveResult) {
+  private static void checkDefaultMapConstructor(AnnotationHolder holder, GrArgumentList argList, PsiElement element) {
     if (argList != null) {
       final GrNamedArgument[] args = argList.getNamedArguments();
       for (GrNamedArgument arg : args) {
@@ -1280,8 +1291,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
           if (resolved == null) {
             final Annotation annotation = holder.createWarningAnnotation(label, GroovyBundle.message("no.such.property", label.getName()));
 
-            PsiElement element = constructorResolveResult.getElement();
-            if (element instanceof PsiMember) {
+            if (element instanceof PsiMember && !(element instanceof PsiClass)) {
               element = ((PsiMember)element).getContainingClass();
             }
             if (element instanceof GrMemberOwner) {
@@ -1301,7 +1311,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     if (!(element instanceof GrVariable)) return;
     if (!(type instanceof GrClosureType)) return;
     final GrVariable variable = (GrVariable)element;
-    PsiType[] argumentTypes = PsiUtil.getArgumentTypes(place, false, true);
+    PsiType[] argumentTypes = PsiUtil.getArgumentTypes(place, true);
     if (argumentTypes == null) return;
 
     if (!PsiUtil.isApplicable(argumentTypes, (GrClosureType)type, element.getManager())) {
