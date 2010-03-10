@@ -81,6 +81,16 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
     assertTrue(ref.resolve() instanceof GrAccessorMethod);
   }
 
+  public void testFromGetter2() throws Exception {
+    PsiReference ref = configureByFile("fromGetter2/A.groovy");
+    assertTrue(ref.resolve() instanceof GrAccessorMethod);
+  }
+
+  public void testFromSetter2() throws Exception {
+    PsiReference ref = configureByFile("fromSetter2/A.groovy");
+    assertTrue(ref.resolve() instanceof GrAccessorMethod);
+  }
+
   public void testFromSetter() throws Exception {
     PsiReference ref = configureByFile("fromSetter/A.groovy");
     assertTrue(ref.resolve() instanceof GrAccessorMethod);
