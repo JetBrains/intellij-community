@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner {
+public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner, NameDefiner {
   
   Key<Boolean> KEY_IS_DIRECTORY = Key.create("Dir impersonated by __init__.py");
   Key<Boolean> KEY_EXCLUDE_BUILTINS = Key.create("Don't include builtins to processDeclaration results");
@@ -32,9 +32,6 @@ public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner
    */
   @Nullable
   PsiElement findExportedName(String name);
-
-  @Nullable
-  PsiElement resolveExportedName(String name);
 
   /**
   @return an URL of file, maybe bogus if virtual file is not present.

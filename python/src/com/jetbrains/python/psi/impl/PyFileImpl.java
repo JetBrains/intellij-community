@@ -194,7 +194,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
           if (starImportSource != null) {
             starImportSource = PyReferenceExpressionImpl.turnDirIntoInit(starImportSource);
             if (starImportSource instanceof PyFile) {
-              final PsiElement result = ((PyFile)starImportSource).resolveExportedName(name);
+              final PsiElement result = ((PyFile)starImportSource).getElementNamed(name);
               if (result != null) {
                 return result;
               }
@@ -222,7 +222,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   @Nullable
-  public PsiElement resolveExportedName(String name) {
+  public PsiElement getElementNamed(String name) {
     PsiElement exportedName = findExportedName(name);
     if (exportedName == null) {
       final PyFile builtins = PyBuiltinCache.getInstance(this).getBuiltinsFile();
@@ -234,6 +234,15 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       return ((PyImportElement) exportedName).getElementNamed(name);
     }
     return exportedName;
+  }
+
+  @NotNull
+  public Iterable<PyElement> iterateNames() {
+    throw new UnsupportedOperationException();
+  }
+
+  public boolean mustResolveOutside() {
+    return false;
   }
 
   public List<PyImportElement> getImportTargets() {

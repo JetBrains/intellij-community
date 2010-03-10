@@ -199,7 +199,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       if (qualifiedName.getComponentCount() != 1) {
         return null;
       }
-      final PsiElement superClass = ((PyFile)parent).resolveExportedName(qualifiedName.getLastComponent());
+      final PsiElement superClass = ((PyFile)parent).getElementNamed(qualifiedName.getLastComponent());
       if (!(superClass instanceof PyClass)) {
         return null;
       }

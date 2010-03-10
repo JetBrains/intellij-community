@@ -287,7 +287,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       // ...as a builtin symbol
       PyFile bfile = PyBuiltinCache.getInstance(this).getBuiltinsFile();
       if (bfile != null) {
-        uexpr = bfile.resolveExportedName(referencedName);
+        uexpr = bfile.getElementNamed(referencedName);
       }
     }
     if (uexpr == null) {

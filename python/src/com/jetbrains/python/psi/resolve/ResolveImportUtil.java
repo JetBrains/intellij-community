@@ -565,7 +565,7 @@ public class ResolveImportUtil {
       else {
         // look for name in the file:
         //processor = new ResolveProcessor(referencedName);
-        ret = ((PyFile) parent).resolveExportedName(referencedName);
+        ret = ((PyFile) parent).getElementNamed(referencedName);
         if (ret != null) return ret;
       }
     }
@@ -605,7 +605,7 @@ public class ResolveImportUtil {
       final PsiFile initPy = dir.findFile(PyNames.INIT_DOT_PY);
       if (initPy == containingFile) return null; // don't dive into the file we're in
       if (initPy instanceof PyFile) {
-        return ((PyFile)initPy).resolveExportedName(referencedName);
+        return ((PyFile)initPy).getElementNamed(referencedName);
       }
     }
     return null;
