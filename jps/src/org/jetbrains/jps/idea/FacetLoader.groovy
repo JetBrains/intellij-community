@@ -12,7 +12,8 @@ class FacetLoader {
   private static final Map<String, String> OUTPUT_PATHS = [
           "web.xml": "WEB-INF",
           "ejb-jar.xml": "META-INF",
-          "application.xml": "META-INF"
+          "application.xml": "META-INF",
+          "context.xml": "META-INF"
   ]
 
   def FacetLoader(module, projectBasePath, moduleBasePath) {
@@ -31,7 +32,7 @@ class FacetLoader {
         facetTag.configuration?.descriptors?.deploymentDescriptor?.each {Node tag ->
           def outputPath = OUTPUT_PATHS[tag."@name"]
           if (outputPath == null) {
-            outputPath = ""
+            outputPath = type == "web" ? "WEB-INF" : "META-INF"
           }
           facet.descriptors << [path: urlToPath(tag."@url"), outputPath: outputPath]
         }

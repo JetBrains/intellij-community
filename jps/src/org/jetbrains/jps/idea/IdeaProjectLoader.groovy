@@ -58,6 +58,7 @@ public class IdeaProjectLoader {
 
     def root = new XmlParser(false, false).parse(iprFile)
     loadProjectJdk(root, project)
+    loadCompilerConfiguration(root, project)
     loadModules(getComponent(root, "ProjectModuleManager"), project, projectBasePath)
     loadProjectLibraries(getComponent(root, "libraryTable"), project, projectBasePath)
     loadArtifacts(getComponent(root, "ArtifactManager"), project, projectBasePath)
@@ -70,6 +71,11 @@ public class IdeaProjectLoader {
     def miscXml = new File(dir, "misc.xml")
     if (!miscXml.exists()) project.error("Cannot find misc.xml in $dir")
     loadProjectJdk(new XmlParser(false, false).parse(miscXml), project)
+
+    def compilerXml = new File(dir, "compiler.xml")
+    if (compilerXml.exists()) {
+      loadCompilerConfiguration(new XmlParser(false, false).parse(compilerXml), project)
+    }
 
     Node modulesXmlRoot = new XmlParser(false, false).parse(modulesXml)
     def projectBasePath = dir.parentFile.absolutePath
@@ -92,7 +98,36 @@ public class IdeaProjectLoader {
     }
   }
 
-  def loadProjectJdk(Node root, Project project) {
+  private def loadCompilerConfiguration(Node root, Project project) {
+    def includePatterns = []
+    def excludePatterns = []
+    def componentTag = getComponent(root, "CompilerConfiguration")
+    componentTag?.wildcardResourcePatterns.first()?.entry?.each {Node entryTag ->
+      String pattern = entryTag."@name"
+      if (pattern.startsWith("!")) {
+        excludePatterns << convertPattern(pattern.substring(1))
+      }
+      else {
+        includePatterns << convertPattern(pattern)
+      }
+    }
+    if (!includePatterns.isEmpty() || !excludePatterns.isEmpty()) {
+      project.binding.ant.patternset(id: "compiler.resources") {
+        includePatterns.each { include(name: it)}
+        excludePatterns.each { exclude(name: it)}
+      }
+      project.props["compiler.resources.id"] = "compiler.resources"
+    }
+  }
+
+  private String convertPattern(String pattern) {
+    if (pattern.indexOf('/') == -1) {
+      return "**/" + pattern
+    }
+    return pattern
+  }
+
+  private def loadProjectJdk(Node root, Project project) {
     def componentTag = getComponent(root, "ProjectRootManager")
     def sdkName = componentTag."@project-jdk-name"
     def sdk = project.sdks[sdkName]

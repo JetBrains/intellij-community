@@ -1,10 +1,6 @@
 package org.jetbrains.jps.builders
 
-import org.jetbrains.jps.ModuleBuildState
-import org.jetbrains.jps.ModuleBuilder
-import org.jetbrains.jps.ModuleChunk
-import org.jetbrains.jps.Project
-import org.jetbrains.jps.JavaSdk
+import org.jetbrains.jps.*
 
 /**
  * @author max
@@ -73,32 +69,27 @@ class ResourceCopier implements ModuleBuilder {
     def project = chunk.project
     def ant = project.binding.ant
 
-    chunk.modules.each { module ->
-      def rootProcessor = {String root ->
-        if (new File(root).exists()) {
-          def target = state.targetFolder
-          def prefix = module.sourceRootPrefixes[root]
-          if (prefix != null) {
-            if (!(target.endsWith("/") || target.endsWith("\\"))) {
-              target += "/"
-            }
-            target += prefix
+    state.sourceRoots.each {String root ->
+      if (new File(root).exists()) {
+        def target = state.targetFolder
+        def prefix = chunk.modules.collect { it.sourceRootPrefixes[root] }.find {it != null}
+        if (prefix != null) {
+          if (!(target.endsWith("/") || target.endsWith("\\"))) {
+            target += "/"
           }
-
-          ant.copy(todir: target) {
-            fileset(dir: root) {
-              patternset(refid: chunk["compiler.resources.id"])
-              type(type: "file")
-            }
-          }
+          target += prefix
         }
-        else {
-          project.warning("$root doesn't exist")
+
+        ant.copy(todir: target) {
+          fileset(dir: root) {
+            patternset(refid: chunk["compiler.resources.id"])
+            type(type: "file")
+          }
         }
       }
-
-      module.sourceRoots.each (rootProcessor)
-      module.testRoots.each (rootProcessor)
+      else {
+        project.warning("$root doesn't exist")
+      }
     }
   }
 }
