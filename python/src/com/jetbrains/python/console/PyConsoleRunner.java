@@ -175,6 +175,7 @@ public class PyConsoleRunner {
                                        getLanguageConsole().getEditorDocument().getTextLength() > 0);
       }
     };
+    EmptyAction.setupAction(myRunAction, "Console.Python.Execute", null);
     toolbarActions.add(myRunAction);
 
 // history actions
