@@ -24,4 +24,6 @@ public interface PyParameter extends PyElement {
 
   @Nullable
   PyExpression getDefaultValue();
+
+  boolean hasDefaultValue();
 }

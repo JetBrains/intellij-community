@@ -9,4 +9,5 @@ import com.jetbrains.python.psi.PyNamedParameter;
 public interface PyNamedParameterStub extends NamedStub<PyNamedParameter> {
   boolean isPositionalContainer();
   boolean isKeywordContainer();
+  boolean hasDefaultValue();
 }

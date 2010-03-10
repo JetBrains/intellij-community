@@ -428,7 +428,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
         if (n_param != null) {
           final String param_name = n_param.getName();
           if (
-              (n_param.getDefaultValue() == null) &&   // has no default value
+              (!n_param.hasDefaultValue()) &&   // has no default value
               param_slots.containsKey(param_name) && // known as a slot
               (param_slots.get(param_name) == null)  // the slot yet unfilled
           ) {
@@ -444,7 +444,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
         if (n_param != null) {
           final String param_name = n_param.getName();
           if (
-              (n_param.getDefaultValue() == null) &&   // has no default value
+              (!n_param.hasDefaultValue()) &&   // has no default value
               param_slots.containsKey(param_name) && // known as a slot
               (param_slots.get(param_name) == null)  // the slot yet unfilled
           ) {
@@ -461,7 +461,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
       if (n_param != null) {
         final String param_name = n_param.getName();
         if (
-            (n_param.getDefaultValue() == null) &&   // has no default value
+            (!n_param.hasDefaultValue()) &&   // has no default value
             param_slots.containsKey(param_name) && // known as a slot
             (param_slots.get(param_name) == null)  // the slot yet unfilled
         ) {

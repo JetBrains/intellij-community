@@ -51,6 +51,10 @@ public class PyStubsTest extends PyLightFixtureTestCase {
     assertEquals("__init__", methods [0].getName());
     assertEquals("fooFunction", methods [1].getName());
 
+    final PyParameter[] parameters = methods[1].getParameterList().getParameters();
+    assertFalse(parameters [0].hasDefaultValue());
+    assertTrue(parameters [1].hasDefaultValue());
+
     // decorators
     PyFunction decorated = methods[1];
     PyDecoratorList decos = decorated.getDecoratorList();
