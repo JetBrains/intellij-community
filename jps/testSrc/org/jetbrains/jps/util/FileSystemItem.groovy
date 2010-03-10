@@ -42,8 +42,8 @@ class FileSystemItem {
       assertDirectoryEqual(file, relativePath);
     }
     else if (content != null) {
-      final String content = new String(FileUtil.loadFileText(file));
-      Assert.assertEquals("content mismatch for " + relativePath, content, content);
+      final String actualContent = new String(FileUtil.loadFileText(file));
+      Assert.assertEquals("content mismatch for " + relativePath, content, actualContent);
     }
   }
 }

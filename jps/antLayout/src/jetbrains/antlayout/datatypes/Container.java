@@ -1,33 +1,31 @@
 package jetbrains.antlayout.datatypes;
 
+import jetbrains.antlayout.util.LayoutFileSet;
+import jetbrains.antlayout.util.TempFileFactory;
+import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.types.FileSet;
 import org.apache.tools.ant.types.ZipFileSet;
-import org.apache.tools.ant.BuildException;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
-import java.util.HashSet;
-
-import jetbrains.antlayout.util.TempFileFactory;
-import jetbrains.antlayout.util.LayoutFileSet;
 
 /**
  * @author max
  */
 public abstract class Container extends Content {
-    private List<FileSet> filesets = new ArrayList<FileSet>();
-    private List<Container> children = new ArrayList<Container>();
+    private List<Content> children = new ArrayList<Content>();
 
     private String excludes = null;
     private String includes = null;
 
     public void addFileset(FileSet set) {
-        filesets.add(set);
+        children.add(new FileSetContainer(set));
     }
 
     public void addZipfileset(ZipFileSet set) {
-        filesets.add(set);
+        children.add(new FileSetContainer(set));
     }
 
     public void addDir(DirContainer container) {
@@ -50,15 +48,15 @@ public abstract class Container extends Content {
         children.add(container);
     }
 
+    public void addContent(Content content) {
+        children.add(content);
+    }
+
     public void addModule(IdeaModule module) {
-        filesets.add(module);
+        children.add(new FileSetContainer(module));
     }
 
-    public List<FileSet> getFilesets() {
-        return filesets;
-    }
-
-    public List<Container> getChildren() {
+    public List<Content> getChildren() {
         return children;
     }
 
@@ -72,12 +70,9 @@ public abstract class Container extends Content {
     }
 
     public List<LayoutFileSet> build(TempFileFactory temp) {
-        Set<LayoutFileSet> result = new HashSet<LayoutFileSet>();
-        for (FileSet set : filesets) {
-            result.add(createCopy(set));
-        }
+        Set<LayoutFileSet> result = new LinkedHashSet<LayoutFileSet>();
 
-        for (Container child : children) {
+        for (Content child : children) {
             for (LayoutFileSet set : child.build(temp)) {
                 result.add(createCopy(set));
             }
@@ -93,11 +88,11 @@ public abstract class Container extends Content {
                 set.setExcludes(excludes);
             }
         }
-        
+
         return list;
     }
 
-    protected LayoutFileSet createCopy(FileSet set) {
+    protected static LayoutFileSet createCopy(FileSet set) {
         if (set instanceof IdeaModule) {
             return new IdeaModule((IdeaModule) set);
         }
@@ -109,14 +104,8 @@ public abstract class Container extends Content {
     }
 
     public void validateArguments() throws BuildException {
-        for (Container child : children) {
+        for (Content child : children) {
             child.validateArguments();
-        }
-        
-        for (FileSet set : filesets) {
-            if (set instanceof IdeaModule) {
-                ((IdeaModule) set).validateArguments();
-            }
         }
     }
 }

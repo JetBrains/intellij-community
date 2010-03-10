@@ -15,6 +15,17 @@
         <element id="module-output" name="overwriteTest" />
       </root>
     </artifact>
+    <artifact name="fileCopy">
+      <output-path>$PROJECT_DIR$/out/artifacts/fileCopy</output-path>
+      <root id="root">
+        <element id="directory" name="xxx">
+          <element id="directory" name="a">
+            <element id="file-copy" path="$PROJECT_DIR$/data/f.txt" />
+          </element>
+          <element id="dir-copy" path="$PROJECT_DIR$/data/dir" />
+        </element>
+      </root>
+    </artifact>
   </component>
   <component name="CompilerConfiguration">
     <option name="DEFAULT_COMPILER" value="Javac" />

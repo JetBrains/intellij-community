@@ -9,7 +9,7 @@ import org.jetbrains.jps.util.FileUtil;
 /**
  * @author nik
  */
-class JpsBuildTestCase extends TestCase {
+abstract class JpsBuildTestCase extends TestCase {
   
   def doTest(String projectPath, Closure initProject, Closure expectedOutput) {
     def binding = new GantBinding()

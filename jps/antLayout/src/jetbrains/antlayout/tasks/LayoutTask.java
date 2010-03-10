@@ -14,7 +14,7 @@ import java.io.File;
  * @author max
  */
 public class LayoutTask extends Task {
-    private List<Container> containers = new ArrayList<Container>();
+    private List<Content> containers = new ArrayList<Content>();
     private File destDir;
 
     public void addDir(DirContainer container) {
@@ -54,8 +54,8 @@ public class LayoutTask extends Task {
 
         RootContainer root = new RootContainer(destDir);
         root.setProject(getProject());
-        for (Container container : containers) {
-            root.addContainer(container);
+        for (Content content : containers) {
+            root.addContent(content);
         }
 
         final File tempDir = new File(destDir, "___tmp___");
@@ -91,8 +91,8 @@ public class LayoutTask extends Task {
             throw new BuildException("todir attribute must be specified");
         }
 
-        for (Container container : containers) {
-            container.validateArguments();
+        for (Content content : containers) {
+            content.validateArguments();
         }
     }
 }

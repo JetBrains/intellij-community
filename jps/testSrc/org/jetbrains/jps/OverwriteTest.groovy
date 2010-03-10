@@ -13,6 +13,13 @@ class OverwriteTest extends JpsBuildTestCase {
         dir("dirs") {
           file("x.txt", "d2")
         }
+        dir("fileCopy") {
+          dir("xxx") {
+            dir("a") {
+              file("f.txt", "b")
+            }
+          }
+        }
       }
       dir("production") {
         dir("dep") {
