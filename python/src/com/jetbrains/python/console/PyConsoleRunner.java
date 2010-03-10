@@ -49,6 +49,7 @@ public class PyConsoleRunner {
 
   private LanguageConsoleViewImpl myConsoleView;
   private final ConsoleHistoryModel myHistory = new ConsoleHistoryModel();
+  private AnAction myRunAction;
 
   private PyConsoleRunner(@NotNull final Project project,
                           @NotNull final String consoleTitle,
@@ -100,6 +101,7 @@ public class PyConsoleRunner {
     myProcessHandler.addProcessListener(new ProcessAdapter() {
       @Override
       public void processTerminated(ProcessEvent event) {
+        myRunAction.getTemplatePresentation().setEnabled(false);
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             myConsoleView.setEditorEnabled(false);
@@ -163,7 +165,7 @@ public class PyConsoleRunner {
     toolbarActions.add(closeAction);
 
 // run action
-    final AnAction runAction = new DumbAwareAction(null, null, IconLoader.getIcon("/actions/execute.png")) {
+    myRunAction = new DumbAwareAction(null, null, IconLoader.getIcon("/actions/execute.png")) {
       public void actionPerformed(final AnActionEvent e) {
         runExecuteActionInner(true);
       }
@@ -172,7 +174,7 @@ public class PyConsoleRunner {
         e.getPresentation().setEnabled(getLanguageConsole().getEditorDocument().getTextLength() > 0);
       }
     };
-    toolbarActions.add(runAction);
+    toolbarActions.add(myRunAction);
 
 // history actions
     final PairProcessor<AnActionEvent, String> historyProcessor = new PairProcessor<AnActionEvent, String>() {
@@ -192,7 +194,7 @@ public class PyConsoleRunner {
     toolbarActions.add(historyNextAction);
     toolbarActions.add(historyPrevAction);
 
-    return new AnAction[]{stopAction, closeAction, runAction, historyNextAction, historyPrevAction};
+    return new AnAction[]{stopAction, closeAction, myRunAction, historyNextAction, historyPrevAction};
   }
 
   private void doRun() {
