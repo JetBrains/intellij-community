@@ -44,6 +44,10 @@ public class ToggleDumbModeAction extends AnAction implements DumbAware {
       if (project == null) return;
 
       CacheUpdater updater = new CacheUpdater() {
+        public int getNumberOfPendingUpdateJobs() {
+          return 0;
+        }
+
         public VirtualFile[] queryNeededFiles() {
           while (myDumb) {
             try {

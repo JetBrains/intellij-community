@@ -1,0 +1,15 @@
+i = 0
+while (condition()) {
+   if (i > 10) break
+   i++
+}
+-----
+0(1) element: null
+1(2) WRITE i
+2(3) element: WHILE statement
+3(4,8) READ condition
+4(5,6) element: IF statement
+5(8) READ i
+6(7) READ i
+7(2) WRITE i
+8() element: null

@@ -13,12 +13,12 @@ public class AuxiliaryCallsFolding extends ConsoleFolding {
   @Override
   public boolean shouldFoldLine(String line) {
     final Trinity<String, String, TextRange> pair = ExceptionFilter.parseExceptionLine(line);
-    return pair != null && shouldFold(pair.first);
+    return pair != null && shouldFold(pair.first, pair.second);
   }
 
-  private static boolean shouldFold(String className) {
+  private static boolean shouldFold(String className, String methodName) {
     for (StackFrameFilter provider : StackFrameFilter.EP_NAME.getExtensions()) {
-      if (provider.isAuxiliaryFrame(className, "")) {
+      if (provider.isAuxiliaryFrame(className, methodName)) {
         return true;
       }
     }

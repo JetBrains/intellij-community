@@ -159,13 +159,16 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass>{
     return super.canRepresent(element) || canRepresent(getValue(), element);
   }
 
-  private static boolean canRepresent(final PsiClass psiClass, final Object element) {
+  private boolean canRepresent(final PsiClass psiClass, final Object element) {
     final PsiFile parentFile = parentFileOf(psiClass);
     if (parentFile != null && (parentFile == element || parentFile.getVirtualFile() == element)) return true;
-    if (element instanceof PsiElement) {
-      PsiFile elementFile = ((PsiElement)element).getContainingFile();
-      if (elementFile != null && parentFile != null) {
-        return elementFile.equals(parentFile);
+
+    if (!getSettings().isShowMembers()) {
+      if (element instanceof PsiElement) {
+        PsiFile elementFile = ((PsiElement)element).getContainingFile();
+        if (elementFile != null && parentFile != null) {
+          return elementFile.equals(parentFile);
+        }
       }
     }
 

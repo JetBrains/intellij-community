@@ -141,17 +141,7 @@ public class EditorModificationUtil {
   }
 
   private static String getStringContent(final Transferable content) throws UnsupportedFlavorException, IOException {
-    RawText raw = null;
-    try {
-      raw = (RawText)content.getTransferData(RawText.FLAVOR);
-    }
-    catch (UnsupportedFlavorException e) {
-      // OK. raw will be null and we'll get plain string
-    }
-    catch (IOException e) {
-      // OK. raw will be null and we'll get plain string
-    }
-
+    RawText raw = RawText.fromTransferable(content);
     String s;
     if (raw != null) {
       s = raw.rawText;

@@ -97,6 +97,10 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
   }
 
   private class RefreshCacheUpdater implements CacheUpdater {
+    public int getNumberOfPendingUpdateJobs() {
+      return myIndex.getNumberOfPendingInvalidations();
+    }
+
     public VirtualFile[] queryNeededFiles() {
       Collection<VirtualFile> files = myIndex.getFilesToUpdate(myProject);
       return VfsUtil.toVirtualFileArray(files);

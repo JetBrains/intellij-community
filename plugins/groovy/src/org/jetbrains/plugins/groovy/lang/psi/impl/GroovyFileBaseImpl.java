@@ -177,7 +177,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
 
   public Instruction[] getControlFlow() {
     if (myControlFlow == null) {
-      myControlFlow = new ControlFlowBuilder().buildControlFlow(this, null, null);
+      myControlFlow = new ControlFlowBuilder(getProject()).buildControlFlow(this, null, null);
     }
 
     return myControlFlow;

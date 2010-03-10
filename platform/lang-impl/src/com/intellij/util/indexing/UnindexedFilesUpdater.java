@@ -19,7 +19,7 @@ package com.intellij.util.indexing;
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.ide.caches.FileContent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.CollectingContentIterator;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -36,6 +36,10 @@ public class UnindexedFilesUpdater implements CacheUpdater {
   public UnindexedFilesUpdater(final Project project, FileBasedIndex index) {
     myIndex = index;
     myProject = project;
+  }
+
+  public int getNumberOfPendingUpdateJobs() {
+    return myIndex.getNumberOfPendingInvalidations();
   }
 
   public VirtualFile[] queryNeededFiles() {
