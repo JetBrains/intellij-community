@@ -286,7 +286,9 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     if (uexpr == null) {
       // ...as a builtin symbol
       PyFile bfile = PyBuiltinCache.getInstance(this).getBuiltinsFile();
-      uexpr = PyResolveUtil.treeCrawlUp(new ResolveProcessor(referencedName), true, bfile);
+      if (bfile != null) {
+        uexpr = bfile.resolveExportedName(referencedName);
+      }
     }
     if (uexpr == null) {
       //uexpr = PyResolveUtil.resolveOffContext(this);
