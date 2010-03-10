@@ -1,0 +1,76 @@
+package com.jetbrains.python.inspections;
+
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.psi.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+
+/**
+ * Created by IntelliJ IDEA.
+ * Author: Alexey.Ivanov
+ * Date:   06.03.2010
+ * Time:   19:39:09
+ */
+public class PyExceptionInheritInspection extends LocalInspectionTool {
+  @Nls
+  @NotNull
+  @Override
+  public String getGroupDisplayName() {
+    return PyBundle.message("INSP.GROUP.python");
+  }
+
+  @Nls
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return PyBundle.message("INSP.NAME.exception.not.inherit");
+  }
+
+  @NotNull
+  @Override
+  public String getShortName() {
+    return "PyExceptionInheritInspection";
+  }
+
+  @NotNull
+  @Override
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    return new Visitor(holder);
+  }
+
+  private static class Visitor extends PyInspectionVisitor {
+
+    public Visitor(final ProblemsHolder holder) {
+      super(holder);
+    }
+
+    @Override
+    public void visitPyRaiseStatement(PyRaiseStatement node) {
+      PyExpression[] expressions = node.getExpressions();
+      if (expressions == null) {
+        return;
+      }
+expr:
+      for (PyExpression expression: expressions) {
+        if (expression instanceof PyCallExpression) {
+          PyExpression callee = ((PyCallExpression)expression).getCallee();
+          if (callee instanceof PyReferenceExpression) {
+            PsiElement psiElement = ((PyReferenceExpression)callee).resolve();
+            if (psiElement instanceof PyClass) {
+              for (PyClass pyClass : PyUtil.getAllSuperClasses((PyClass)psiElement)) {
+                if ("Exception".equals(pyClass.getName())) {
+                  continue expr;
+                }
+              }
+              registerProblem(expression, "Exception doesn't inherit from base \'Exception\' class");
+            }
+          }
+        }
+      }
+    }
+  }
+}
