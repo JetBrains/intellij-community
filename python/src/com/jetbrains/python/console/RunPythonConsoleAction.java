@@ -33,16 +33,16 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
 
   @Override
   public void update(final AnActionEvent e) {
+    e.getPresentation().setVisible(false);
+    e.getPresentation().setEnabled(false);
     final Project project = e.getData(LangDataKeys.PROJECT);
-    if (project == null){
-      e.getPresentation().setVisible(false);
-      return;
-    }
-    for (Module module : ModuleManager.getInstance(project).getModules()) {
-      e.getPresentation().setVisible(true);
-      if (PythonSdkType.findPythonSdk(module) != null){
-        e.getPresentation().setEnabled(true);
-        break;
+    if (project != null){
+      for (Module module : ModuleManager.getInstance(project).getModules()) {
+        e.getPresentation().setVisible(true);
+        if (PythonSdkType.findPythonSdk(module) != null){
+          e.getPresentation().setEnabled(true);
+          break;
+        }
       }
     }
   }
