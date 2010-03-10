@@ -15,10 +15,12 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vcs.FilePath;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author max
@@ -36,19 +38,15 @@ public class DeletedFilesHolder implements FileHolder {
   }
 
   public void cleanScope(final VcsDirtyScope scope) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        if (scope == null) {
-          myFiles.clear();
-        }
-        final List<LocallyDeletedChange> currentFiles = new ArrayList<LocallyDeletedChange>(myFiles.values());
-        for (LocallyDeletedChange change : currentFiles) {
-          if (scope.belongsTo(change.getPath())) {
-            myFiles.remove(change.getPresentableUrl());
-          }
-        }
+    if (scope == null) {
+      myFiles.clear();
+    }
+    final List<LocallyDeletedChange> currentFiles = new ArrayList<LocallyDeletedChange>(myFiles.values());
+    for (LocallyDeletedChange change : currentFiles) {
+      if (scope.belongsTo(change.getPath())) {
+        myFiles.remove(change.getPresentableUrl());
       }
-    });
+    }
   }
 
   public HolderType getType() {
