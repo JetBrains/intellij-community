@@ -38,7 +38,7 @@ class PyConsoleProcessHandler extends OSProcessHandler {
   public static final Key STRING_KEY = new Key("PYTHON_STRING");
   public static final Key NUMBER_KEY = new Key("PYTHON_NUMBER");
 
-  private static String NUMBERS = "(?<![\\w_#$=])(\\d+(_\\d+)*(\\.\\d+)?)";
+  private static String NUMBERS = "(\\d+(_\\d+)*(\\.\\d+)?)";
   private static String STRINGS = "((\"[^\"\n]*\")|((?<!\\w)'[^'\n]*'))";
 
   private static Pattern CODE_ELEMENT_PATTERN = Pattern.compile(NUMBERS + "|" + STRINGS);
