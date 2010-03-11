@@ -448,7 +448,7 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
         protected void addCompletions(
           @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
         ) {
-          putKeyword("elif", UnindentingInsertHandler.OF_ELSE, PRE_COLON, result);
+          putKeyword("elif", UnindentingInsertHandler.INSTANCE, PRE_COLON, result);
         }
       }
     );
@@ -467,8 +467,8 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
         protected void addCompletions(
           @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
         ) {
-          putKeyword("except", UnindentingInsertHandler.OF_TRY, PRE_COLON, result);
-          putKeyword("finally", UnindentingInsertHandler.OF_TRY, TailType.CASE_COLON, result);
+          putKeyword("except", UnindentingInsertHandler.INSTANCE, PRE_COLON, result);
+          putKeyword("finally", UnindentingInsertHandler.INSTANCE, TailType.CASE_COLON, result);
         }
       }
     );
@@ -487,7 +487,7 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
         protected void addCompletions(
           @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
         ) {
-          putKeyword("else", UnindentingInsertHandler.OF_ELSE, TailType.CASE_COLON, result);
+          putKeyword("else", UnindentingInsertHandler.INSTANCE, TailType.CASE_COLON, result);
         }
       }
     );

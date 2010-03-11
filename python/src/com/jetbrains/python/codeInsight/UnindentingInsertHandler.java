@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.psi.PyStatementWithElse;
@@ -25,24 +26,13 @@ public class UnindentingInsertHandler implements InsertHandler<PythonLookupEleme
   private final static ParentMatcher TRY_MATCHER = new ParentMatcher(PyTryExceptStatement.class);
   private final static ParentMatcher ELSE_MATCHER = new ParentMatcher(PyStatementWithElse.class);
 
-  /**
-   * An instance good for 'try' final parts, that is, for 'except' and 'finally'.
-   */
-  public final static UnindentingInsertHandler OF_TRY = new UnindentingInsertHandler(TRY_MATCHER);
+  public final static UnindentingInsertHandler INSTANCE = new UnindentingInsertHandler();
 
-  /**
-   * An instance good for 'else' parts of any statements that may contain an 'else' clause.
-   */
-  public final static UnindentingInsertHandler OF_ELSE = new UnindentingInsertHandler(ELSE_MATCHER);
-
-  private ParentMatcher myTopMatcher;
-
-  private UnindentingInsertHandler(ParentMatcher matcher) {
-    myTopMatcher = matcher;
+  private UnindentingInsertHandler() {
   }
 
   public void handleInsert(InsertionContext context, PythonLookupElement item) {
-    unindentAsNeeded(context.getProject(), context.getEditor(), context.getFile(), myTopMatcher);
+    unindentAsNeeded(context.getProject(), context.getEditor(), context.getFile());
   }
 
   /**
@@ -50,11 +40,9 @@ public class UnindentingInsertHandler implements InsertHandler<PythonLookupEleme
    * @param project
    * @param editor
    * @param file
-   * @param matcher it must detect the outer partful statement; if null, the beginning of current line is analyzed
-   * for keyword and a suitable matcher is found (e.g. for 'finally' the OF_TRY is found).
    * @return true if unindenting succeeded
    */
-  public static boolean unindentAsNeeded(Project project, Editor editor, PsiFile file, Matcher matcher) {
+  public static boolean unindentAsNeeded(Project project, Editor editor, PsiFile file) {
     // TODO: handle things other than "else"
     final Document document = editor.getDocument();
     int offset = editor.getCaretModel().getOffset();
@@ -65,37 +53,39 @@ public class UnindentingInsertHandler implements InsertHandler<PythonLookupEleme
     int nonspace_offset = findBeginning(line_start_offset, text);
 
 
-    if (matcher == null) {
-      int last_offset = nonspace_offset + 7; // length of 'except:'
-      if (last_offset > offset) last_offset = offset;
-      int local_length = last_offset - nonspace_offset;
-      if (local_length > 0) {
-        String piece = text.subSequence(nonspace_offset, last_offset+1).toString();
-        final int else_len = "else".length();
-        if (local_length >= else_len) {
-          if ((piece.startsWith("else") || piece.startsWith("elif")) && (piece.charAt(else_len) < 'a' || piece.charAt(else_len) < 'z')) {
-            matcher = ELSE_MATCHER;
-          }
-        }
-        final int except_len = "except".length();
-        if (local_length >= except_len) {
-          if (piece.startsWith("except") && (piece.charAt(except_len) < 'a' || piece.charAt(except_len) < 'z')) {
-            matcher = TRY_MATCHER;
-          }
-        }
-        final int finally_len = "finally".length();
-        if (local_length >= finally_len) {
-          if (piece.startsWith("finally") && (piece.charAt(finally_len) < 'a' || piece.charAt(finally_len) < 'z')) {
-            matcher = TRY_MATCHER;
-          }
+    Matcher matcher = null;
+
+    int last_offset = nonspace_offset + "finally".length(); // the longest of all
+    if (last_offset > offset) last_offset = offset;
+    int local_length = last_offset - nonspace_offset;
+    if (local_length > 0) {
+      String piece = text.subSequence(nonspace_offset, last_offset+1).toString();
+      final int else_len = "else".length();
+      if (local_length >= else_len) {
+        if ((piece.startsWith("else") || piece.startsWith("elif")) && (piece.charAt(else_len) < 'a' || piece.charAt(else_len) < 'z')) {
+          matcher = ELSE_MATCHER;
         }
       }
-
+      final int except_len = "except".length();
+      if (local_length >= except_len) {
+        if (piece.startsWith("except") && (piece.charAt(except_len) < 'a' || piece.charAt(except_len) < 'z')) {
+          matcher = TRY_MATCHER;
+        }
+      }
+      final int finally_len = "finally".length();
+      if (local_length >= finally_len) {
+        if (piece.startsWith("finally") && (piece.charAt(finally_len) < 'a' || piece.charAt(finally_len) < 'z')) {
+          matcher = TRY_MATCHER;
+        }
+      }
     }
+
 
     if (matcher == null) return false; // failed
 
-    PsiElement token = file.findElementAt(offset-2); // -1 is our ':' which may not be parsed yet; -2 is safer.
+    PsiDocumentManager.getInstance(project).commitDocument(document); // reparse
+
+    PsiElement token = file.findElementAt(offset-2); // -1 is our ':'; -2 is even safer.
     List<? extends PsiElement> result = matcher.search(token);
     if (result != null && result.size() > 0) {
       PsiElement outer = result.get(0);

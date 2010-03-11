@@ -17,7 +17,7 @@ public class ColonTypedHandler extends TypedHandlerDelegate {
   @Override
   public Result charTyped(char c, Project project, Editor editor, PsiFile file) {
     if (c == ':' && file instanceof PyFile) {
-      UnindentingInsertHandler.unindentAsNeeded(project, editor, file, null);
+      UnindentingInsertHandler.unindentAsNeeded(project, editor, file);
     }
     return Result.CONTINUE;
   }
