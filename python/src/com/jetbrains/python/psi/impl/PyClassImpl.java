@@ -139,7 +139,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       if (ancestor instanceof PyClass) {
         name = ((PyClass)ancestor).getName() + "." + name;
       }
-      ancestor = stub != null ? ((StubBasedPsiElement) ancestor).getStub().getParentStub().getPsi() : getParent();
+      ancestor = stub != null ? ((StubBasedPsiElement) ancestor).getStub().getParentStub().getPsi() : ancestor.getParent();
     }
 
     final String packageName = ResolveImportUtil.findShortestImportableName(this, ((PsiFile)ancestor).getVirtualFile());
