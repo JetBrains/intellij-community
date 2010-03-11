@@ -16,6 +16,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -102,9 +103,11 @@ public class PyConsoleRunner {
       @Override
       public void processTerminated(ProcessEvent event) {
         myRunAction.getTemplatePresentation().setEnabled(false);
+        myConsoleView.getConsole().setPrompt("");
+        myConsoleView.getConsole().getConsoleEditor().setRendererMode(true);
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            myConsoleView.setEditorEnabled(false);
+            myConsoleView.getConsole().getConsoleEditor().getComponent().updateUI();
           }
         });
       }
