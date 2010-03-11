@@ -188,7 +188,13 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
           }
           okHandler.run();
         }
-      });
+      }) {
+        @Override
+        protected void dispose() {
+          super.dispose();
+          myFindDialog = null; // avoid strong ref!
+        }
+      };
       myFindDialog.setModal(false);
     }
     myFindDialog.show();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.lang.ant.config;
 
-import com.intellij.lang.ant.config.impl.BuildTask;
-import com.intellij.lang.ant.psi.AntProject;
-import org.jetbrains.annotations.Nullable;
+/*
+ * @author max
+ */
+package com.intellij.openapi.editor.impl;
 
-public interface AntBuildModelBase extends AntBuildModel {
+import com.intellij.openapi.editor.IndentGuideDescriptor;
+import com.intellij.openapi.editor.IndentsModel;
 
-  @Nullable
-  String getDefaultTargetActionId();
+import java.util.List;
 
-  @Nullable
-  BuildTask findTask(final String targetName, final String taskName);
+public class EmptyIndentsModel implements IndentsModel {
 
-  @Nullable
-  AntProject getAntProject();
+  public IndentGuideDescriptor getCaretIndentGuide() {
+    return null;
+  }
 
-  boolean hasTargetWithActionId(final String id);
+  public void assumeIndents(List<IndentGuideDescriptor> descriptors) {
+  }
 }

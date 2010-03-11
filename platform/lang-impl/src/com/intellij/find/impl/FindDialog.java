@@ -68,7 +68,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-final class FindDialog extends DialogWrapper {
+class FindDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.impl.FindDialog");
 
   private ComboBox myInputComboBox;

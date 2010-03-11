@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.lang.ant.config;
+package com.intellij.usages.rules;
 
-import com.intellij.lang.ant.config.impl.BuildTask;
-import com.intellij.lang.ant.psi.AntProject;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.usages.rules.UsageFilteringRule;
 
-public interface AntBuildModelBase extends AntBuildModel {
-
-  @Nullable
-  String getDefaultTargetActionId();
-
-  @Nullable
-  BuildTask findTask(final String targetName, final String taskName);
-
-  @Nullable
-  AntProject getAntProject();
-
-  boolean hasTargetWithActionId(final String id);
+/**
+ * User: Maxim.Mossienko
+ * Date: 11.03.2010
+ * Time: 19:08:33
+ */
+public abstract class ImportFilteringRule implements UsageFilteringRule {
+  public static final ExtensionPointName<ImportFilteringRule> EP_NAME = ExtensionPointName.create("com.intellij.importFilteringRule");
 }

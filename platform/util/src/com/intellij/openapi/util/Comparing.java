@@ -130,6 +130,10 @@ public class Comparing {
   public static int hashcode(Object obj) { return obj == null ? 0 : obj.hashCode(); }
   public static int hashcode(Object obj1, Object obj2) { return hashcode(obj1) ^ hashcode(obj2); }
 
+  public static int compare(int name1, int name2) {
+    return name1 < name2 ? -1 : name1 == name2 ? 0 : 1;
+  }
+
   public static <T extends Comparable<T>> int compare(final T name1, final T name2) {
     if (name1 == null) return name2 == null ? 0 : -1;
     if (name2 == null) return 1;

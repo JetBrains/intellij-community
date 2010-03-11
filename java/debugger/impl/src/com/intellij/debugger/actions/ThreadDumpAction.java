@@ -87,8 +87,11 @@ public class ThreadDumpAction extends AnAction {
     for (ThreadReference threadReference : threads) {
       final StringBuilder buffer = new StringBuilder();
       boolean hasEmptyStack = true;
-      final String threadName = threadName(threadReference);
       final int threadStatus = threadReference.status();
+      if (threadStatus == ThreadReference.THREAD_STATUS_ZOMBIE) {
+        continue;
+      }
+      final String threadName = threadName(threadReference);
       final ThreadState threadState = new ThreadState(threadName, threadStatusToState(threadStatus));
       nameToThreadMap.put(threadName, threadState);
       result.add(threadState);

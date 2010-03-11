@@ -23,6 +23,7 @@
 package com.intellij.execution.filters;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.search.GlobalSearchScope;
 
 /**
  * @author dyoma
@@ -32,4 +33,8 @@ public class TextConsoleBuilderFactoryImpl extends TextConsoleBuilderFactory {
     return new TextConsoleBuilderImpl(project);
   }
 
+  @Override
+  public TextConsoleBuilder createBuilder(Project project, GlobalSearchScope scope) {
+    return new TextConsoleBuilderImpl(project, scope);
+  }
 }

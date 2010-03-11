@@ -1036,9 +1036,10 @@
     <fileStructureGroupRuleProvider implementation="com.intellij.usages.impl.rules.JavaClassGroupRuleProvider"/>
     <fileStructureGroupRuleProvider implementation="com.intellij.usages.impl.rules.JavaMethodGroupRuleProvider"/>
     <usageTypeProvider implementation="com.intellij.usages.impl.rules.JavaUsageTypeProvider"/>
-    <usageFilteringRuleProvider implementation="com.intellij.usages.impl.rules.JavaUsageFilteringRuleProvider"/>
-    <applicationService serviceInterface="com.intellij.usages.impl.rules.JavaUsageViewSettings"
-                        serviceImplementation="com.intellij.usages.impl.rules.JavaUsageViewSettings"/>
+    <importFilteringRule implementation="com.intellij.usages.impl.rules.ImportFilteringRule"/>
+    <usageFilteringRuleProvider implementation="com.intellij.usages.impl.ImportUsageFilteringRuleProvider"/>
+    <applicationService serviceInterface="com.intellij.usages.impl.ImportFilteringUsageViewSetting"
+                        serviceImplementation="com.intellij.usages.impl.ImportFilteringUsageViewSetting"/>
 
     <treeStructureProvider implementation="com.intellij.ide.projectView.impl.ClassesTreeStructureProvider"/>
 

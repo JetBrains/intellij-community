@@ -23,7 +23,6 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,8 +52,13 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider {
       return PsiReference.EMPTY_ARRAY;
     }
 
-    if (position != null && PsiTreeUtil.getChildOfType(position, OuterLanguageElement.class) != null) {
-      return PsiReference.EMPTY_ARRAY;
+    if (position != null) {
+      int offset = position.getTextRange().getStartOffset() + offsetInPosition;
+      for(PsiElement child = position.getFirstChild(); child != null; child = child.getNextSibling()){
+        if (child instanceof OuterLanguageElement && child.getTextRange().contains(offset)) {
+          return PsiReference.EMPTY_ARRAY;
+        }
+      }
     }
 
     NotNullLazyValue<Set<String>> topLevelPackages = new NotNullLazyValue<Set<String>>() {

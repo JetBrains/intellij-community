@@ -981,6 +981,6 @@ public class SvnVcs extends AbstractVcs {
 
   @Override
   public CommittedChangeList getRevisionChanges(VcsFileRevision revision, VirtualFile file) throws VcsException {
-    return ShowAllSubmittedFilesAction.loadRevisions(getProject(), (SvnFileRevision)revision, file);
+    return ShowAllSubmittedFilesAction.loadRevisions(getProject(), (SvnFileRevision)revision, file, false);
   }
 }

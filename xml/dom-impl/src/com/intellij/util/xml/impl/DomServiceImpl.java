@@ -45,6 +45,11 @@ public class DomServiceImpl extends DomService {
     return new ModelMergerImpl();
   }
 
+  @Override
+  public <T extends DomElement> DomAnchor<T> createAnchor(T domElement) {
+    return DomAnchorImpl.createAnchor(domElement);
+  }
+
   @NotNull
   public XmlFile getContainingFile(@NotNull DomElement domElement) {
     if (domElement instanceof DomFileElement) {

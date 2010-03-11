@@ -208,7 +208,12 @@ public class GrModifierListImpl extends GroovyBaseElementImpl<GrModifierListStub
         setModifierPropertyInternal(GrModifier.PRIVATE, false);
       }
     }
-    if (!GrModifier.PACKAGE_LOCAL.equals(name)) {
+    if (GrModifier.PACKAGE_LOCAL.equals(name) || GrModifier.PUBLIC.equals(name)) {
+      if (getModifiers().length == 0) {
+        setModifierProperty(GrModifier.DEF, true);
+      }
+    }
+    else {
       setModifierPropertyInternal(name, doSet);
     }
   }

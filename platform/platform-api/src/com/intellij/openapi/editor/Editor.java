@@ -309,6 +309,5 @@ public interface Editor extends UserDataHolder {
   @Nullable
   JComponent getHeaderComponent();
 
-  @Nullable
-  IndentGuideDescriptor getCaretIndentGuide();
+  IndentsModel getIndentsModel();
 }

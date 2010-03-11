@@ -26,10 +26,7 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.codeInsight.editorActions.SelectWordUtil;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.IndentGuideDescriptor;
-import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.project.DumbAware;
@@ -91,7 +88,7 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
 
     @Override
     public void execute(Editor editor, DataContext dataContext) {
-      final IndentGuideDescriptor guide = editor.getCaretIndentGuide();
+      final IndentGuideDescriptor guide = editor.getIndentsModel().getCaretIndentGuide();
       final SelectionModel selectionModel = editor.getSelectionModel();
       if (guide != null && !selectionModel.hasSelection() && !selectionModel.hasBlockSelection() && isWhitespaceAtCaret(editor)) {
         selectWithGuide(editor, guide);
@@ -113,8 +110,8 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
 
     private static void selectWithGuide(Editor editor, IndentGuideDescriptor guide) {
       final Document doc = editor.getDocument();
-      int startOffset = doc.getLineStartOffset(guide.startLine - 1);
-      int endOffset = Math.min(doc.getLineEndOffset(guide.endLine) + 1, doc.getTextLength());
+      int startOffset = editor.logicalPositionToOffset(new LogicalPosition(guide.startLine, 0));
+      int endOffset = Math.min(editor.logicalPositionToOffset(new LogicalPosition(guide.endLine + 1, 0)), doc.getTextLength());
 
       editor.getSelectionModel().setSelection(startOffset, endOffset);
     }

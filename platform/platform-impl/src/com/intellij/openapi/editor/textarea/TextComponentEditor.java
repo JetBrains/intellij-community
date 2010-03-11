@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
+import com.intellij.openapi.editor.impl.EmptyIndentsModel;
 import com.intellij.openapi.editor.impl.SettingsImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
@@ -227,7 +228,7 @@ public class TextComponentEditor extends UserDataHolderBase implements Editor {
     return null;
   }
 
-  public IndentGuideDescriptor getCaretIndentGuide() {
-    return null;
+  public IndentsModel getIndentsModel() {
+    return new EmptyIndentsModel();
   }
 }

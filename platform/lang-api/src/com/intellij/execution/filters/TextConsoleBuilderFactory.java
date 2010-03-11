@@ -24,12 +24,15 @@ package com.intellij.execution.filters;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.search.GlobalSearchScope;
 
 /**
  * @author dyoma
  */
 public abstract class TextConsoleBuilderFactory {
   public abstract TextConsoleBuilder createBuilder(Project project);
+
+  public abstract TextConsoleBuilder createBuilder(Project project, GlobalSearchScope scope);
 
   public static TextConsoleBuilderFactory getInstance() {
     return ServiceManager.getService(TextConsoleBuilderFactory.class);
