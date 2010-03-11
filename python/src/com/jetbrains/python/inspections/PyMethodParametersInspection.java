@@ -1,7 +1,9 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -10,14 +12,15 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.AddSelfQuickFix;
 import com.jetbrains.python.actions.RenameParameterQuickFix;
 import com.jetbrains.python.psi.*;
-import static com.jetbrains.python.psi.PyFunction.Flag.CLASSMETHOD;
-import static com.jetbrains.python.psi.PyFunction.Flag.STATICMETHOD;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
+
+import static com.jetbrains.python.psi.PyFunction.Flag.CLASSMETHOD;
+import static com.jetbrains.python.psi.PyFunction.Flag.STATICMETHOD;
 
 /**
  * Looks for the 'self'.
@@ -83,9 +86,10 @@ public class PyMethodParametersInspection extends LocalInspectionTool {
               open_paren != null && close_paren != null &&
               "(".equals(open_paren.getText()) && ")".equals(close_paren.getText())
             ) {
+              String paramName = flags.contains(CLASSMETHOD) ? "cls" : "self";
               registerProblem(
-                plist, PyBundle.message("INSP.must.have.first.parameter"),
-                ProblemHighlightType.GENERIC_ERROR, null, new AddSelfQuickFix()
+                plist, PyBundle.message("INSP.must.have.first.parameter", paramName),
+                ProblemHighlightType.GENERIC_ERROR, null, new AddSelfQuickFix(paramName)
               );
             }
           }

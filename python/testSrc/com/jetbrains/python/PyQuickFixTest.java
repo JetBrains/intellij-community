@@ -1,21 +1,13 @@
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.inspections.*;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
-import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NonNls;
-
-import java.io.File;
 
 /**
  * Test actions that various inspections add.
@@ -45,7 +37,11 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
   // TODO: add tests for stub indexes-based autoimport of unimported somehow.
 
   public void testAddSelf() throws Exception {
-    doInspectionTest("AddSelf.py", PyMethodParametersInspection.class, PyBundle.message("QFIX.add.parameter.self"), true, true);
+    doInspectionTest("AddSelf.py", PyMethodParametersInspection.class, PyBundle.message("QFIX.add.parameter.self", "self"), true, true);
+  }
+
+  public void testAddCls() throws Exception {
+    doInspectionTest("AddCls.py", PyMethodParametersInspection.class, PyBundle.message("QFIX.add.parameter.self", "cls"), true, true);
   }
 
   public void testRenameToSelf() throws Exception {
@@ -176,36 +172,5 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
     int dotpos = name.indexOf('.');
     if (dotpos < 0) dotpos = name.length();
     return name.substring(0, dotpos) + insertion + name.substring(dotpos, name.length());
-  }
-
-  private static Sdk createMockJdk(String jdkHome) {
-    File jdkHomeFile = new File(jdkHome);
-    if (!jdkHomeFile.exists()) return null;
-
-    final ProjectJdkImpl jdk = new ProjectJdkImpl("2.5", PythonSdkType.getInstance());
-    final SdkModificator sdkModificator = jdk.getSdkModificator();
-
-    String path = jdkHome.replace(File.separatorChar, '/');
-    sdkModificator.setHomePath(path);
-    sdkModificator.commitChanges();
-
-    PythonSdkType.getInstance().setupSdkPaths(jdk);
-
-    jdk.setVersionString("2.5");
-    return jdk;
-  }
-
-  protected static class PyWithSdkProjectDescriptor extends PyLightProjectDescriptor {
-    @Override
-    public Sdk getSdk() {
-      return createMockJdk(PathManager.getHomePath() + "/plugins/python/testData/mockPythonJDK");
-    }
-  }
-
-  private static final LightProjectDescriptor ourProjectDescriptor = new PyWithSdkProjectDescriptor();
-
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return ourProjectDescriptor;
   }
 }

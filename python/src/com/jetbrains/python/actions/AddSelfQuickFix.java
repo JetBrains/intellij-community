@@ -20,9 +20,15 @@ import org.jetbrains.annotations.NotNull;
  * Date: Nov 19, 2008
  */
 public class AddSelfQuickFix implements LocalQuickFix {
+  private final String myParamName;
+
+  public AddSelfQuickFix(String paramName) {
+    myParamName = paramName;
+  }
+
   @NotNull
   public String getName() {
-    return PyBundle.message("QFIX.add.parameter.self");
+    return PyBundle.message("QFIX.add.parameter.self", myParamName);
   }
 
   @NonNls
@@ -43,7 +49,7 @@ public class AddSelfQuickFix implements LocalQuickFix {
         final PythonLanguage pythonLanguage = (PythonLanguage)language;
         PyElementGenerator generator = pythonLanguage.getElementGenerator();
         // TODO: generalize, move to generator
-        PyNamedParameter new_param = generator.createFromText(project, PyNamedParameter.class, "def f(self): pass", new int[]{0, 3, 1});
+        PyNamedParameter new_param = generator.createFromText(project, PyNamedParameter.class, "def f(" + myParamName + "): pass", new int[]{0, 3, 1});
         param_list.addParameter(new_param);
       }
     }
