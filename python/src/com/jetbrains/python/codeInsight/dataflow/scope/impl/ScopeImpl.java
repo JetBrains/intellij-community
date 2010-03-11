@@ -4,6 +4,7 @@ import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInsight.dataflow.DFAEngine;
 import com.intellij.codeInsight.dataflow.DFAMap;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.PyReachingDefsDfaInstance;
 import com.jetbrains.python.codeInsight.dataflow.PyReachingDefsSemilattice;
@@ -24,6 +25,7 @@ public class ScopeImpl implements Scope {
   private List<DFAMap<ScopeVariable>> myCachedScopeVariables;
   private Set<String> myGlobals;
   private final ScopeOwner myFlowOwner;
+  private Set<String> myAllNames;
 
   public ScopeImpl(final ScopeOwner flowOwner) {
     myFlowOwner = flowOwner;
@@ -71,6 +73,23 @@ public class ScopeImpl implements Scope {
       myGlobals = computeGlobals(myFlowOwner);
     }
     return myGlobals.contains(name);
+  }
+
+  public boolean containsDeclaration(final String name) {
+    if (myAllNames == null){
+      myAllNames = computeAllNames();
+    }
+    return myAllNames.contains(name);
+  }
+
+  private Set<String> computeAllNames() {
+    final Set<String> names = new HashSet<String>();
+    for (DFAMap<ScopeVariable> map : computeScopeVariables()) {
+      for (Map.Entry<String, ScopeVariable> entry : map.entrySet()) {
+        names.add(entry.getKey());
+      }
+    }
+    return names;
   }
 
   private static Set<String> computeGlobals(final PsiElement owner) {

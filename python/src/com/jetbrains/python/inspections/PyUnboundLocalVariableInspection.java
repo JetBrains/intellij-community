@@ -4,11 +4,12 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.actions.AddGlobalQuickFix;
-import com.jetbrains.python.actions.AddImportAction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeVariable;
@@ -16,6 +17,7 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.impl.PyAssignmentStatementNavigator;
 import com.jetbrains.python.psi.impl.PyCallExpressionNavigator;
 import com.jetbrains.python.psi.impl.PyGlobalStatementNavigator;
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
@@ -78,23 +80,44 @@ public class PyUnboundLocalVariableInspection extends LocalInspectionTool {
         if (owner == null){
           return;
         }
-        final Scope scope = owner.getScope();
         final String name = node.getReferencedName();
-        // Ignore globals
-        if (scope.isGlobal(name)){
+        final Scope scope = owner.getScope();
+        // Ignore globals and if scope even doesn't contain such a declaration
+        if (scope.isGlobal(name) || (!scope.containsDeclaration(name))){
           return;
         }
         final ScopeVariable variable = scope.getDeclaredVariable(node, name);
         if (variable == null) {
-          if (owner instanceof PyClass || owner instanceof PyFunction){
-          registerProblem(node, PyBundle.message("INSP.unbound.local.variable", node.getName()),
-                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                          null,
-                          new AddGlobalQuickFix());
-          } else {
-            registerProblem(node, PyBundle.message("INSP.unbound.name.not.defined", node.getName()));
+          boolean resolves2LocalVariable = false;
+          boolean resolve2Scope = true;
+          for (ResolveResult result : node.multiResolve(true)) {
+            final PsiElement element = result.getElement();
+            if (element == null){
+              continue;
+            }
+            // Ingore builtin elements here
+            if ("__builtin__.py".equals(element.getContainingFile().getName())){
+              continue;
+            }
+            if (PyAssignmentStatementNavigator.getStatementByTarget(element)!=null){
+              resolves2LocalVariable = true;
+              resolve2Scope = PsiTreeUtil.isAncestor(owner, element, false);
+              break;
+            }
           }
-        }
+          // Ignore this if can resolve not to local variable
+          if (resolves2LocalVariable) {
+            if (owner instanceof PyClass || owner instanceof PyFunction){
+              registerProblem(node, PyBundle.message("INSP.unbound.local.variable", node.getName()),
+                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                              null,
+                              new AddGlobalQuickFix());
+            } else {
+              if (resolve2Scope){
+                registerProblem(node, PyBundle.message("INSP.unbound.name.not.defined", node.getName()));
+              }
+            }
+          }}
       }
     };
   }

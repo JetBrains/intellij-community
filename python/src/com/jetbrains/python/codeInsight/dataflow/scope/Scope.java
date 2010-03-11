@@ -22,4 +22,6 @@ public interface Scope {
   ScopeVariable getDeclaredVariable(@NotNull PsiElement anchorElement, @NotNull String name);
 
   boolean isGlobal(String name);
+
+  boolean containsDeclaration(String name);
 }
