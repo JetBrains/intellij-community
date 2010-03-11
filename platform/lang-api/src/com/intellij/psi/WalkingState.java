@@ -64,7 +64,7 @@ public abstract class WalkingState<T> {
     }
   }
 
-  private T next(T element, T root, boolean isDown) {
+  public T next(T element, T root, boolean isDown) {
     if (isDown) {
       T child = myWalker.getFirstChild(element);
       if (child != null) return child;
