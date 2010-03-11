@@ -6,6 +6,7 @@ import com.intellij.execution.process.ConsoleHighlighter;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -70,12 +71,6 @@ class PyConsoleProcessHandler extends OSProcessHandler {
       }
     }
 
-    final Ref<Boolean> shouldScroll = new Ref<Boolean>(false);
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        shouldScroll.set(languageConsole.shouldScrollHistoryToEnd());
-      }
-    });
     // Highlight output by pattern
     Matcher matcher;
     while ((matcher = CODE_ELEMENT_PATTERN.matcher(string)).find()) {
@@ -94,15 +89,6 @@ class PyConsoleProcessHandler extends OSProcessHandler {
       string = string.substring(matcher.end());
     }
     printToConsole(languageConsole, string, ConsoleViewContentType.NORMAL_OUTPUT);
-
-    // Revert scrolling
-    if (shouldScroll.get()){
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          languageConsole.queueUiUpdate(false);
-        }
-      });
-    }
   }
 
   private static void printToConsole(final LanguageConsoleImpl console, final String string, final ConsoleViewContentType type) {
