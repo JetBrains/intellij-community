@@ -23,7 +23,7 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
   public TypeConversionDescriptor findConversion(PsiType from,
                                                  PsiType to,
                                                  PsiMember member,
-                                                 PsiElement context,
+                                                 PsiExpression context,
                                                  TypeMigrationLabeler labeler) {
     if (to instanceof PsiClassType && isThreadLocalTypeMigration(from, (PsiClassType)to, context)) {
       return findDirectConversion(context, to, from, labeler);
@@ -31,7 +31,7 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
     return null;
   }
 
-  private static boolean isThreadLocalTypeMigration(PsiType from, PsiClassType to, PsiElement context) {
+  private static boolean isThreadLocalTypeMigration(PsiType from, PsiClassType to, PsiExpression context) {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(to);
     final PsiClass threadLocalClass = resolveResult.getElement();
 
@@ -51,7 +51,7 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
           }
         }
         else {
-          return TypeConversionUtil.isAssignable(toTypeParameterValue, from);
+          return TypeConversionUtil.isAssignable(from, PsiUtil.captureToplevelWildcards(toTypeParameterValue, context));
         }
       }
       return !PsiUtil.isLanguageLevel5OrHigher(context);
@@ -73,7 +73,8 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
     }
 
     if (context instanceof PsiReferenceExpression) {
-      return new TypeConversionDescriptor("$qualifier$", toPrimitive("$qualifier$.get()", from, context));
+      final PsiExpression qualifierExpression = ((PsiReferenceExpression)context).getQualifierExpression();
+      return new TypeConversionDescriptor("$qualifier$", toPrimitive("$qualifier$.get()", from, context), qualifierExpression != null ? qualifierExpression : (PsiExpression)context);
     }
     else if (context instanceof PsiBinaryExpression) {
       final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)context;

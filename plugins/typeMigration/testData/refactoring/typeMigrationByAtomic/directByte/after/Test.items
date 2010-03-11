@@ -11,7 +11,7 @@ PsiReferenceExpression:b : java.util.concurrent.atomic.AtomicReference<java.lang
 Conversions:
 0 -> new AtomicReference<Byte>((byte)$val$) $val$
 b += 0 -> $qualifier$.set(new Byte((byte)($qualifier$.get() + $val$))) $qualifier$+=$val$
-b -> $qualifier$.get() $qualifier$
+b -> $qualifier$.get() $qualifier$ b
 b == 0 -> $qualifier$.get() == $val$ $qualifier$==$val$
 b++ -> $qualifier$.getAndSet(new Byte((byte)($qualifier$.get() + 1))) $qualifier$++
 

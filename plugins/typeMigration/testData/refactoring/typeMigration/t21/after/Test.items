@@ -8,7 +8,6 @@ PsiReferenceExpression:stringList : java.util.Set<java.lang.String>
 
 Conversions:
 f.get(s) -> $
-s -> $
 stringList.add(s) -> $
 
 New expression type changes:

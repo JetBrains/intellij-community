@@ -12,7 +12,7 @@ import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 
 public class BoxingTypeConversionRule extends TypeConversionRule {
 
-  public TypeConversionDescriptor findConversion(final PsiType from, final PsiType to, final PsiMember member, final PsiElement context,
+  public TypeConversionDescriptor findConversion(final PsiType from, final PsiType to, final PsiMember member, final PsiExpression context,
                                                  final TypeMigrationLabeler labeler) {
     if (to instanceof PsiClassType && from instanceof PsiPrimitiveType) {
       if (!PsiUtil.getLanguageLevel(context).hasEnumKeywordAndAutoboxing()) {

@@ -1,0 +1,11 @@
+Types:
+PsiMethodCallExpression:p.add(new Integer(8)) : boolean
+PsiParameter:p : java.util.Set<? super java.lang.Integer>
+PsiReferenceExpression:p : java.util.Set<? super java.lang.Integer>
+
+Conversions:
+new Integer(8) -> $
+p.add(new Integer(8)) -> $
+
+New expression type changes:
+Fails:

@@ -18,6 +18,7 @@ public class AllTypeMigrationTests {
      suite.addTestSuite(TypeMigrationByThreadLocalRuleTest.class);
      suite.addTestSuite(MigrateTypeSignatureTest.class);
      suite.addTestSuite(ChangeTypeSignatureTest.class);
+     suite.addTestSuite(WildcardTypeMigrationTest.class);
      suite.addTestSuite(ConvertToAtomicIntentionTest.class);
      suite.addTestSuite(ConvertToThreadLocalIntentionTest.class);
      return suite;

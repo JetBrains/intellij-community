@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
@@ -370,6 +371,10 @@ public class TypeMigrationLabeler {
       }
     }
 
+    if (type instanceof PsiCapturedWildcardType) {
+      return false;
+    }
+
     if (resolved instanceof PsiMethod) {
       final PsiMethod method = ((PsiMethod)resolved);
       final PsiMethod[] methods = OverridingMethodsSearch.search(method, method.getUseScope(), false).toArray(PsiMethod.EMPTY_ARRAY);
@@ -553,7 +558,7 @@ public class TypeMigrationLabeler {
         }
         else if (element instanceof PsiVariable) {
           if (ref instanceof PsiReferenceExpression) {
-            getTypeEvaluator().setType(new TypeMigrationUsageInfo(ref), migrationType);
+            getTypeEvaluator().setType(new TypeMigrationUsageInfo(ref), PsiImplUtil.normalizeWildcardTypeByPosition(migrationType, (PsiReferenceExpression)ref));
           }
         }
         else {

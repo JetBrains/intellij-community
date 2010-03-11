@@ -14,7 +14,6 @@ PsiReferenceExpression:set : java.util.List<java.lang.String>
 Conversions:
 f.get(s) -> $
 f.put(s, set) -> $
-s -> $
 set -> $
 set.add(s1) -> $
 

@@ -7,6 +7,7 @@ package com.intellij.refactoring.typeMigration.rules;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -21,14 +22,14 @@ public class ListArrayConversionRule extends TypeConversionRule {
   public TypeConversionDescriptor findConversion(final PsiType from,
                                                  final PsiType to,
                                                  PsiMember member,
-                                                 final PsiElement context,
+                                                 final PsiExpression context,
                                                  final TypeMigrationLabeler labeler) {
     PsiExpression expression = (PsiExpression)context;
     PsiClassType classType = from instanceof PsiClassType ? (PsiClassType)from : to instanceof PsiClassType ? (PsiClassType)to : null;
     PsiArrayType arrayType = from instanceof PsiArrayType ? (PsiArrayType)from : to instanceof PsiArrayType ? (PsiArrayType)to : null;
 
     if (classType == null || arrayType == null) return null;
-    final PsiType collectionType = evaluateCollectionsType(classType, arrayType, from instanceof PsiArrayType);
+    final PsiType collectionType = evaluateCollectionsType(classType, arrayType, from instanceof PsiArrayType, expression);
     if (collectionType == null) return null;
 
     if (member == null) {
@@ -89,7 +90,7 @@ public class ListArrayConversionRule extends TypeConversionRule {
       return new TypeConversionDescriptor("$qualifier$[$idx$] = $expr$", "$qualifier$.set($idx$, $expr$)",
                                           (PsiExpression)parent);
     }
-    else if (context instanceof PsiArrayAccessExpression) {
+    else if (context instanceof PsiArrayAccessExpression && TypeConversionUtil.isAssignable(arrayType.getComponentType(), collectionType)) {
       return new TypeConversionDescriptor("$qualifier$[$idx$]", "$qualifier$.get($idx$)");
     }
 
@@ -97,7 +98,10 @@ public class ListArrayConversionRule extends TypeConversionRule {
   }
 
   @Nullable
-  public static PsiType evaluateCollectionsType(PsiClassType classType, PsiArrayType arrayType, boolean arrayToList) {
+  public static PsiType evaluateCollectionsType(PsiClassType classType,
+                                                PsiArrayType arrayType,
+                                                boolean arrayToList,
+                                                PsiExpression expression) {
     final PsiClassType.ClassResolveResult classResolveResult = PsiUtil.resolveGenericsClassInType(classType);
     if (classResolveResult != null) {
       final PsiClass psiClass = classResolveResult.getElement();
@@ -109,7 +113,7 @@ public class ListArrayConversionRule extends TypeConversionRule {
           final PsiSubstitutor substitutor =
             TypeConversionUtil.getClassSubstitutor(collectionClass, psiClass, classResolveResult.getSubstitutor());
           assert substitutor != null;
-          final PsiType collectionType = substitutor.substitute(collectionClass.getTypeParameters()[0]);
+          final PsiType collectionType = PsiImplUtil.normalizeWildcardTypeByPosition(substitutor.substitute(collectionClass.getTypeParameters()[0]), expression);
           if (collectionType != null) {
             if (arrayToList ? TypeConversionUtil.isAssignable(collectionType, arrayType.getComponentType()) : TypeConversionUtil.isAssignable( arrayType.getComponentType(), collectionType)) {
               return collectionType;
@@ -128,17 +132,17 @@ public class ListArrayConversionRule extends TypeConversionRule {
   public Pair<PsiType, PsiType> bindTypeParameters(final PsiType from,
                                                    final PsiType to,
                                                    final PsiMethod method,
-                                                   final PsiElement context,
+                                                   final PsiExpression context,
                                                    final TypeMigrationLabeler labeler) {
     if (findConversion(from, to, method, context, labeler) == null) return null;
     if (from instanceof PsiArrayType && to instanceof PsiClassType) {
-      final PsiType collectionType = evaluateCollectionsType((PsiClassType)to, (PsiArrayType)from, true);
+      final PsiType collectionType = evaluateCollectionsType((PsiClassType)to, (PsiArrayType)from, true, (PsiExpression)context);
       if (collectionType != null) {
         return new Pair<PsiType, PsiType>(((PsiArrayType)from).getComponentType(), collectionType);
       }
     }
     if (to instanceof PsiArrayType && from instanceof PsiClassType) {
-      final PsiType collectionType = evaluateCollectionsType((PsiClassType)from, (PsiArrayType)to, false);
+      final PsiType collectionType = evaluateCollectionsType((PsiClassType)from, (PsiArrayType)to, false, (PsiExpression)context);
       if (collectionType != null) {
         return new Pair<PsiType, PsiType>(collectionType, ((PsiArrayType)to).getComponentType());
 

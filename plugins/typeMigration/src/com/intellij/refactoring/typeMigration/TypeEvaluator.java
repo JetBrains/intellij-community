@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.tree.java.PsiBinaryExpressionImpl;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -125,13 +126,13 @@ public class TypeEvaluator {
     }
     else if (expr instanceof PsiMethodCallExpression) {
       final PsiMethodCallExpression call = (PsiMethodCallExpression)expr;
-
-      final PsiMethod method = call.resolveMethod();
+      final JavaResolveResult resolveResult = call.resolveMethodGenerics();
+      final PsiMethod method = (PsiMethod)resolveResult.getElement();
 
       if (method != null) {
         final PsiParameter[] parameters = method.getParameterList().getParameters();
         final PsiExpression[] actualParms = call.getArgumentList().getExpressions();
-        return createMethodSubstitution(parameters, actualParms, method, call).substitute(evaluateType(call.getMethodExpression()));
+        return PsiImplUtil.normalizeWildcardTypeByPosition(createMethodSubstitution(parameters, actualParms, method, call, resolveResult.getSubstitutor(), false).substitute(evaluateType(call.getMethodExpression())), expr);
       }
     }
     else if (expr instanceof PsiBinaryExpression) {
@@ -219,59 +220,9 @@ public class TypeEvaluator {
       }
     }
     else if (expr instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression ref = (PsiReferenceExpression)expr;
-      final PsiExpression qualifier = ref.getQualifierExpression();
-
-      if (qualifier == null) {
-        final PsiElement resolvee = ref.resolve();
-
-        if (resolvee == null) {
-          return null;
-        }
-
-        return resolvee instanceof PsiClass ? JavaPsiFacade.getElementFactory(resolvee.getProject()).createType((PsiClass)resolvee, PsiSubstitutor.EMPTY) : getType(resolvee);
-      }
-      else {
-        final PsiType qualifierType = evaluateType(qualifier);
-        if (!(qualifierType instanceof PsiArrayType)) {
-          final PsiElement element = ref.resolve();
-
-          final PsiClassType.ClassResolveResult result = resolveType(qualifierType);
-
-          final PsiClass aClass = result.getElement();
-          if (aClass != null) {
-            final PsiSubstitutor aSubst = result.getSubstitutor();
-            if (element instanceof PsiField) {
-              final PsiField field = (PsiField)element;
-              PsiType aType = field.getType();
-              final PsiClass superClass = field.getContainingClass();
-              if (InheritanceUtil.isInheritorOrSelf(aClass, superClass, true)) {
-                aType = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY).substitute(aType);
-              }
-              return aSubst.substitute(aType);
-            }  else if (element instanceof PsiMethod){
-              final PsiMethod method = (PsiMethod)element;
-              PsiType aType = method.getReturnType();
-              final PsiClass superClass = method.getContainingClass();
-              if (InheritanceUtil.isInheritorOrSelf(aClass, superClass, true)) {
-                aType = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY).substitute(aType);
-              } else if (InheritanceUtil.isInheritorOrSelf(superClass, aClass, true)) {
-                final PsiMethod[] methods = method.findSuperMethods(aClass);
-                if (methods.length > 0) {
-                  aType = methods[0].getReturnType();
-                }
-              /*}
-              final Pair<PsiType, PsiType> pair = myRules.bindTypeParameters(qualifier.getType(), qualifierType, method, ref, myLabeler);
-              if (pair != null) {
-                final PsiClass psiClass = PsiUtil.resolveClassInType(aType);
-                if (psiClass instanceof PsiTypeParameter) {
-                  aSubst = aSubst.put((PsiTypeParameter)psiClass, pair.getSecond());
-                }*/
-              }
-              return aSubst.substitute(aType);
-            }
-          }
-        }
+      final PsiType type = evaluateReferenceExpressionType(expr);
+      if (type != null) {
+        return PsiImplUtil.normalizeWildcardTypeByPosition(type, expr);
       }
     } else if (expr instanceof PsiSuperExpression) {
       final PsiClass psiClass = PsiTreeUtil.getParentOfType(expr, PsiClass.class);
@@ -286,6 +237,65 @@ public class TypeEvaluator {
     return getType(expr);
   }
 
+  @Nullable
+  private PsiType evaluateReferenceExpressionType(PsiExpression expr) {
+    final PsiReferenceExpression ref = (PsiReferenceExpression)expr;
+    final PsiExpression qualifier = ref.getQualifierExpression();
+
+    if (qualifier == null) {
+      final PsiElement resolvee = ref.resolve();
+
+      if (resolvee == null) {
+        return null;
+      }
+
+      return resolvee instanceof PsiClass ? JavaPsiFacade.getElementFactory(resolvee.getProject()).createType((PsiClass)resolvee, PsiSubstitutor.EMPTY) : getType(resolvee);
+    }
+    else {
+      final PsiType qualifierType = evaluateType(qualifier);
+      if (!(qualifierType instanceof PsiArrayType)) {
+        final PsiElement element = ref.resolve();
+
+        final PsiClassType.ClassResolveResult result = resolveType(qualifierType);
+
+        final PsiClass aClass = result.getElement();
+        if (aClass != null) {
+          final PsiSubstitutor aSubst = result.getSubstitutor();
+          if (element instanceof PsiField) {
+            final PsiField field = (PsiField)element;
+            PsiType aType = field.getType();
+            final PsiClass superClass = field.getContainingClass();
+            if (InheritanceUtil.isInheritorOrSelf(aClass, superClass, true)) {
+              aType = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY).substitute(aType);
+            }
+            return aSubst.substitute(aType);
+          }  else if (element instanceof PsiMethod){
+            final PsiMethod method = (PsiMethod)element;
+            PsiType aType = method.getReturnType();
+            final PsiClass superClass = method.getContainingClass();
+            if (InheritanceUtil.isInheritorOrSelf(aClass, superClass, true)) {
+              aType = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY).substitute(aType);
+            } else if (InheritanceUtil.isInheritorOrSelf(superClass, aClass, true)) {
+              final PsiMethod[] methods = method.findSuperMethods(aClass);
+              if (methods.length > 0) {
+                aType = methods[0].getReturnType();
+              }
+            /*}
+            final Pair<PsiType, PsiType> pair = myRules.bindTypeParameters(qualifier.getType(), qualifierType, method, ref, myLabeler);
+            if (pair != null) {
+              final PsiClass psiClass = PsiUtil.resolveClassInType(aType);
+              if (psiClass instanceof PsiTypeParameter) {
+                aSubst = aSubst.put((PsiTypeParameter)psiClass, pair.getSecond());
+              }*/
+            }
+            return aSubst.substitute(aType);
+          }
+        }
+      }
+    }
+    return null;
+  }
+
   public static PsiClassType.ClassResolveResult resolveType(PsiType type) {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(type);
     final PsiClass aClass = resolveResult.getElement();
@@ -298,12 +308,21 @@ public class TypeEvaluator {
 
   public PsiSubstitutor createMethodSubstitution(final PsiParameter[] parameters, final PsiExpression[] actualParms, final PsiMethod method,
                                                  final PsiExpression call) {
-    final SubstitutorBuilder substitutorBuilder = new SubstitutorBuilder(method, call);
+    return createMethodSubstitution(parameters, actualParms, method, call, PsiSubstitutor.EMPTY, false);
+  }
+
+  public PsiSubstitutor createMethodSubstitution(final PsiParameter[] parameters,
+                                                 final PsiExpression[] actualParms,
+                                                 final PsiMethod method,
+                                                 final PsiExpression call,
+                                                 PsiSubstitutor subst,
+                                                 boolean preferSubst) {
+    final SubstitutorBuilder substitutorBuilder = new SubstitutorBuilder(method, call, subst);
 
     for (int i = 0; i < Math.min(parameters.length, actualParms.length); i++) {
       substitutorBuilder.bindTypeParameters(getType(parameters[i]), evaluateType(actualParms[i]));
     }
-    return substitutorBuilder.createSubstitutor();
+    return substitutorBuilder.createSubstitutor(preferSubst);
   }
 
   public String getReport() {
@@ -407,10 +426,12 @@ public class TypeEvaluator {
   private class SubstitutorBuilder {
     private final Map<PsiTypeParameter, PsiType> myMapping;
     private final PsiMethod myMethod;
-    private final PsiElement myCall;
+    private final PsiExpression myCall;
+    private final PsiSubstitutor mySubst;
 
 
-    public SubstitutorBuilder(PsiMethod method, PsiElement call) {
+    public SubstitutorBuilder(PsiMethod method, PsiExpression call, PsiSubstitutor subst) {
+      mySubst = subst;
       myMapping = new HashMap<PsiTypeParameter, PsiType>();
       myMethod = method;
       myCall = call;
@@ -478,8 +499,11 @@ public class TypeEvaluator {
       }
     }
 
-    public PsiSubstitutor createSubstitutor() {
-      PsiSubstitutor theSubst = PsiSubstitutor.EMPTY;
+    public PsiSubstitutor createSubstitutor(boolean preferSubst) {
+      PsiSubstitutor theSubst = mySubst;
+      if (preferSubst) {
+        myMapping.keySet().removeAll(mySubst.getSubstitutionMap().keySet());
+      }
       for (final PsiTypeParameter parm : myMapping.keySet()) {
         theSubst = theSubst.put(parm, myMapping.get(parm));
       }

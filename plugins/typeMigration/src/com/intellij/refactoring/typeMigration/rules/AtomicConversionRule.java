@@ -25,19 +25,19 @@ public class AtomicConversionRule extends TypeConversionRule {
   public TypeConversionDescriptor findConversion(PsiType from,
                                                  PsiType to,
                                                  PsiMember member,
-                                                 PsiElement context,
+                                                 PsiExpression context,
                                                  TypeMigrationLabeler labeler) {
-    if (to instanceof PsiClassType && isAtomicTypeMigration(from, (PsiClassType)to)) {
+    if (to instanceof PsiClassType && isAtomicTypeMigration(from, (PsiClassType)to, context)) {
       return findDirectConversion(context, to, from);
     }
-    else if (from instanceof PsiClassType && isAtomicTypeMigration(to, (PsiClassType)from)) {
+    else if (from instanceof PsiClassType && isAtomicTypeMigration(to, (PsiClassType)from, context)) {
       return findReverseConversion(context);
     }
     if (PsiUtil.resolveClassInType(to) instanceof PsiTypeParameter) return findReverseConversion(context);
     return null;
   }
 
-  private static boolean isAtomicTypeMigration(PsiType from, PsiClassType to) {
+  private static boolean isAtomicTypeMigration(PsiType from, PsiClassType to, PsiExpression context) {
     if (from == PsiType.INT && to.getCanonicalText().equals(AtomicInteger.class.getName())) {
       return true;
     }
@@ -73,7 +73,7 @@ public class AtomicConversionRule extends TypeConversionRule {
           }
         }
         else {
-          return TypeConversionUtil.isAssignable(toTypeParameterValue, from.getDeepComponentType());
+          return TypeConversionUtil.isAssignable(from.getDeepComponentType(), PsiUtil.captureToplevelWildcards(toTypeParameterValue, context));
         }
       }
     }
@@ -175,7 +175,8 @@ public class AtomicConversionRule extends TypeConversionRule {
     }
 
     if (context instanceof PsiReferenceExpression) {
-      return new TypeConversionDescriptor("$qualifier$", "$qualifier$.get()");
+      final PsiExpression qualifierExpression = ((PsiReferenceExpression)context).getQualifierExpression();
+      return new TypeConversionDescriptor("$qualifier$", "$qualifier$.get()", qualifierExpression != null ? qualifierExpression : (PsiReferenceExpression)context );
     }
     else if (context instanceof PsiAssignmentExpression) {
       final PsiJavaToken signToken = ((PsiAssignmentExpression)context).getOperationSign();
