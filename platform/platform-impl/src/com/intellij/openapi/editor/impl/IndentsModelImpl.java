@@ -19,106 +19,33 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.codeStyle.CodeStyleFacade;
-import com.intellij.openapi.editor.EditorSettings;
-import com.intellij.openapi.editor.IndentGuideDescriptor;
-import com.intellij.openapi.editor.IndentsModel;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.text.CharArrayUtil;
-import gnu.trove.TIntArrayList;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class IndentsModelImpl implements IndentsModel {
   private EditorImpl myEditor;
-  private int myIndentSize = -1;
+  private List<IndentGuideDescriptor> myIndents = new ArrayList<IndentGuideDescriptor>();
 
   public IndentsModelImpl(EditorImpl editor) {
     myEditor = editor;
   }
 
-  public int getIndentLevel(int line) {
-    int answer = getIndents(line, true, true);
-    if (answer == 0) return 0;
-
-    int prev;
-    do {
-      prev = getIndents(--line, true, false);
-    }
-    while (line > 0 && prev == answer);
-
-    if (answer - 2 > prev) {
-      return prev + 1;
-    }
-
-    return answer;
-  }
-
-  private int getIndents(int line, boolean goUp, boolean goDown) {
-    DocumentImpl myDocument = (DocumentImpl)myEditor.getDocument();
-    if (line <= 0 || line >= myDocument.getLineCount()) return 0;
-    int lineStart = myDocument.getLineStartOffset(line);
-    int lineEnd = myDocument.getLineEndOffset(line);
-
-    CharSequence chars = myDocument.getCharsNoThreadCheck();
-    int nonWhitespaceOffset = CharArrayUtil.shiftForward(chars, lineStart, " \t");
-    if (nonWhitespaceOffset < lineEnd) {
-      return myEditor.calcColumnNumber(nonWhitespaceOffset, line) / getIndentSize();
-    }
-    else {
-      int upIndent = goUp ? getIndents(line - 1, true, false) : 100;
-      int downIndent = goDown ? getIndents(line + 1, false, true) : 100;
-      return Math.min(upIndent, downIndent);
-    }
-  }
-
-  public int getIndentSize() {
-    if (myIndentSize == -1) {
-      Project project = myEditor.getProject();
-      VirtualFile vFile = myEditor.getVirtualFile();
-      if (project == null || project.isDisposed() || vFile == null) return EditorUtil.getTabSize(myEditor);
-      myIndentSize = CodeStyleFacade.getInstance(project).getIndentSize(vFile.getFileType());
-    }
-    return myIndentSize;
-  }
-
-  public void assumeIndent(int line, int level) {
-    throw new UnsupportedOperationException("assumeIndent is not implemented"); // TODO
-  }
-
   public IndentGuideDescriptor getCaretIndentGuide() {
-    EditorSettings settings = myEditor.getSettings();
-    if (!settings.isIndentGuidesShown()) return null;
-
-    final int indentSize = getIndentSize();
-    if (indentSize == 0) return null;
-
-    final LogicalPosition caretPosition = myEditor.getCaretModel().getLogicalPosition();
-    int startLine = caretPosition.line;
-    int endLine = startLine;
-    final int caretIndent = caretPosition.column / indentSize;
-    final int indents = getIndentLevel(startLine);
-
-    if (caretIndent * indentSize != caretPosition.column) return null;
-    if (caretIndent > indents|| indents == 0) return null;
-
-    if (caretIndent > 0 && caretPosition.column % indentSize == 0) {
-      while (startLine > 0) {
-        if (getIndentLevel(startLine - 1) <= caretIndent) break;
-        startLine--;
-      }
-
-      while (endLine < myEditor.getDocument().getLineCount() - 1) {
-        if (getIndentLevel(endLine + 1) <= caretIndent) break;
-        endLine++;
-      }
-
-      if (startLine < endLine) {
-        return new IndentGuideDescriptor(caretIndent, startLine, endLine, indentSize);
+    final LogicalPosition pos = myEditor.getCaretModel().getLogicalPosition();
+    final int column = pos.column;
+    final int line = pos.line;
+    for (IndentGuideDescriptor indent : myIndents) {
+      if (column == indent.indentLevel && line >= indent.startLine && line < indent.endLine) {
+        return indent;
       }
     }
-
     return null;
+  }
+
+  public void assumeIndents(List<IndentGuideDescriptor> descriptors) {
+    myIndents = descriptors;
   }
 }

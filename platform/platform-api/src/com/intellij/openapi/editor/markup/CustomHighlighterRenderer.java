@@ -17,15 +17,12 @@
 /*
  * @author max
  */
-package com.intellij.openapi.editor;
+package com.intellij.openapi.editor.markup;
 
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.editor.Editor;
 
-import java.util.List;
+import java.awt.*;
 
-public interface IndentsModel {
-  @Nullable
-  IndentGuideDescriptor getCaretIndentGuide();
-
-  void assumeIndents(List<IndentGuideDescriptor> descriptors);
+public interface CustomHighlighterRenderer {
+  void paint(Editor editor, RangeHighlighter highlighter, Graphics g);
 }

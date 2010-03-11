@@ -22,19 +22,14 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.IndentGuideDescriptor;
 import com.intellij.openapi.editor.IndentsModel;
 
+import java.util.List;
+
 public class EmptyIndentsModel implements IndentsModel {
-  public int getIndentLevel(int line) {
-    return 0;
-  }
-
-  public int getIndentSize() {
-    return 4;
-  }
-
-  public void assumeIndent(int line, int level) {
-  }
 
   public IndentGuideDescriptor getCaretIndentGuide() {
     return null;
+  }
+
+  public void assumeIndents(List<IndentGuideDescriptor> descriptors) {
   }
 }

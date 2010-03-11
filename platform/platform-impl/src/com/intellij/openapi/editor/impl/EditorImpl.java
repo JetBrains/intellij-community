@@ -117,7 +117,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     ComplementaryFontsRegistry registry; // load costly font info
   }
 
-  private final CommandProcessor myCommandProcessor;
+  private final CommandProcessor myCommandProcessor;              
   private final MyScrollBar myVerticalScrollBar;
 
   private final CopyOnWriteArrayList<EditorMouseListener> myMouseListeners = ContainerUtil.createEmptyCOWList();
@@ -223,7 +223,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private char[] myPrefixText;
   private TextAttributes myPrefixAttributes;
-  private IndentGuideDescriptor myCaretIndentGuide = null;
   private IndentsModel myIndentsModel;
 
   static {
@@ -285,15 +284,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myIndentsModel = new IndentsModelImpl(this);
     myCaretModel.addCaretListener(new CaretListener() {
-      LightweightHint myCurrentHint = null;
+      private LightweightHint myCurrentHint = null;
+      private IndentGuideDescriptor myCurrentCaretGuide = null;
 
       public void caretPositionChanged(CaretEvent e) {
-
         final IndentGuideDescriptor newGuide = myIndentsModel.getCaretIndentGuide();
-        if (!Comparing.equal(newGuide, myCaretIndentGuide)) {
+        if (!Comparing.equal(myCurrentCaretGuide, newGuide)) {
           repaintGuide(newGuide);
-          repaintGuide(myCaretIndentGuide);
-          myCaretIndentGuide = newGuide;
+          repaintGuide(myCurrentCaretGuide);
+          myCurrentCaretGuide = newGuide;
 
           if (myCurrentHint != null) {
             myCurrentHint.hide();
@@ -302,11 +301,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
           if (newGuide != null) {
             final Rectangle visibleArea = getScrollingModel().getVisibleArea();
-            final int line = newGuide.startLine - 1;
+            final int line = newGuide.startLine;
             if (logicalLineToY(line) < visibleArea.y) {
-              TextRange textRange = new TextRange(myDocument.getLineStartOffset(line),
-                                                  myDocument.getLineEndOffset(line));
-              
+              TextRange textRange = new TextRange(myDocument.getLineStartOffset(line), myDocument.getLineEndOffset(line));
+
               myCurrentHint = EditorFragmentComponent.showEditorFragmentHint(EditorImpl.this, textRange, false, false);
             }
           }
@@ -1208,7 +1206,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     paintBackgrounds(g, clip);
     paintRectangularSelection(g);
     paintRightMargin(g, clip);
-    paintIndentGuides((Graphics2D)g, clip);
+    paintCustomRenderers((Graphics2D)g, clip);
     final MarkupModel docMarkup = myDocument.getMarkupModel(myProject);
     paintLineMarkersSeparators(g, clip, docMarkup);
     paintLineMarkersSeparators(g, clip, myMarkupModel);
@@ -1223,76 +1221,19 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     paintComposedTextDecoration((Graphics2D)g);
   }
 
-  private void paintIndentGuides(Graphics2D g, Rectangle clip) {
-    if (mySettings.isIndentGuidesShown()) {
-      int x = 0;
-      int y = clip.y;
-      int line = xyToLogicalPosition(new Point(0, y)).line;
+  private void paintCustomRenderers(Graphics2D g, Rectangle clip) {
+    MarkupModel mm = myMarkupModel;
 
-      final int indentSize = myIndentsModel.getIndentSize();
-      int gapWidth = EditorUtil.getSpaceWidth(Font.PLAIN, this) * indentSize;
-      final CharSequence chars = myDocument.getCharsNoThreadCheck();
+    int clipStartOffset = logicalPositionToOffset(xyToLogicalPosition(new Point(0, clip.y)));
+    int clipEndOffset = logicalPositionToOffset(xyToLogicalPosition(new Point(0, clip.y + clip.height + getLineHeight())));
 
-      int prevIndent = -1;
-      do {
-        final int indents = myIndentsModel.getIndentLevel(line);
-
-        /*
-        if (prevIndent > indents && isWhitespaceAt(chars, x, y)) {
-          g.setColor(myScheme.getColor(EditorColors.WHITESPACES_COLOR));
-          g.drawLine(x, y + getLineHeight() - 2, x + 7, y + getLineHeight() - 2);
+    for (RangeHighlighter highlighter : mm.getAllHighlighters()) {
+      if (highlighter.isValid()) {
+        final CustomHighlighterRenderer customRenderer = highlighter.getCustomRenderer();
+        if (customRenderer != null && clipStartOffset < highlighter.getEndOffset() && clipEndOffset > highlighter.getStartOffset()) {
+          customRenderer.paint(this, highlighter, g);
         }
-        */
-
-        y = logicalLineToY(line);
-        if (y > clip.y + clip.height) break;
-
-        for (int n = 1; n < indents; n++) {
-          x = n * gapWidth + 1;
-          drawSegment(g, x, y, chars, false);
-        }
-
-        line++;
-        prevIndent = indents;
       }
-      while (true);
-
-      if (myCaretIndentGuide != null) {
-        x = myCaretIndentGuide.indentLevel * gapWidth + 1;
-        for (int i = myCaretIndentGuide.startLine; i <= myCaretIndentGuide.endLine; i++) {
-          drawSegment(g, x, logicalLineToY(i), chars, true);
-        }
-
-        /*
-        y = logicalLineToY(myCaretIndentGuide.endLine);
-        if (isWhitespaceAt(chars, x, y)) {
-          g.setColor(getForegroundColor());
-          g.drawLine(x, y + getLineHeight() - 2, x + 7, y + getLineHeight() - 2);
-        }
-        */
-      }
-    }
-  }
-
-  private boolean isWhitespaceAt(CharSequence chars, int x, int y) {
-    LogicalPosition log = xyToLogicalPosition(new Point(x, y));
-    int offset = logicalPositionToOffset(log);
-    if (offset >= chars.length()) return false;
-
-    char c = chars.charAt(offset);
-    return c == ' ' || c == '\t' || c == '\n';
-  }
-
-  private void drawSegment(Graphics2D g, int x, int y, CharSequence chars, boolean selected) {
-    if (isWhitespaceAt(chars, x, y)) {
-      /*
-      UIUtil.drawDottedLine(g, x, y, x, y + getLineHeight(),
-                            getBackroundColor(),
-                            selected ? getForegroundColor() : myScheme.getColor(EditorColors.WHITESPACES_COLOR));
-      */
-
-      g.setColor(selected ? new Color(200, 200, 200) : new Color(230, 230, 230));
-      g.drawLine( x + 1, y, x + 1, y + getLineHeight());
     }
   }
 
@@ -2405,7 +2346,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return lineIndex;
   }
 
-  int calcColumnNumber(int offset, int lineIndex) {
+  public int calcColumnNumber(int offset, int lineIndex) {
     if (myDocument.getTextLength() == 0) return 0;
 
     CharSequence text = myDocument.getCharsSequence();

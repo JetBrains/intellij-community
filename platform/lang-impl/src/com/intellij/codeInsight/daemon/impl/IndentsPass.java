@@ -1,0 +1,278 @@
+/*
+ * Copyright 2000-2010 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+ * @author max
+ */
+package com.intellij.codeInsight.daemon.impl;
+
+import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.editor.markup.CustomHighlighterRenderer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.IntStack;
+import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
+
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
+public class IndentsPass extends TextEditorHighlightingPass implements DumbAware {
+  private static final Key<List<RangeHighlighter>> INDENT_HIGHLIGHTERS_IN_EDITOR_KEY = Key.create("INDENT_HIGHLIGHTERS_IN_EDITOR_KEY");
+  private static final Key<Long> LAST_TIME_INDENTS_BUILT = Key.create("LAST_TIME_INDENTS_BUILT");
+
+  private final EditorEx myEditor;
+  private final PsiFile myFile;
+  public static final Comparator<TextRange> RANGE_COMPARATOR = new Comparator<TextRange>() {
+    public int compare(TextRange o1, TextRange o2) {
+      if (o1.getStartOffset() == o2.getStartOffset()) {
+        return o1.getEndOffset() - o2.getEndOffset();
+      }
+
+      return o1.getStartOffset() - o2.getStartOffset();
+    }
+  };
+
+  private static final CustomHighlighterRenderer RENDERER = new CustomHighlighterRenderer() {
+    public void paint(Editor editor,
+                      RangeHighlighter highlighter,
+                      Graphics g) {
+      int startOffset = highlighter.getStartOffset();
+      final Document doc = highlighter.getDocument();
+      if (startOffset >= doc.getTextLength()) return;
+
+      int off;
+      int startLine = doc.getLineNumber(startOffset);
+      do {
+        int pos = doc.getLineStartOffset(startLine);
+        off = CharArrayUtil.shiftForward(doc.getCharsSequence(), pos, " \t");
+        startLine--;
+      }
+      while (startLine > 1 && doc.getCharsSequence().charAt(off) == '\n');
+
+      final VisualPosition startPosition = editor.offsetToVisualPosition(off);
+      if (startPosition.column <= 0) return;
+
+      if (editor.getFoldingModel().isOffsetCollapsed(off)) return;
+
+      final int endOffset = highlighter.getEndOffset();
+      final boolean selected;
+      final IndentGuideDescriptor guide = editor.getIndentsModel().getCaretIndentGuide();
+      if (guide != null) {
+        final CaretModel caretModel = editor.getCaretModel();
+        final int caretOffset = caretModel.getOffset();
+        selected =
+          caretOffset >= off && caretOffset < endOffset && caretModel.getLogicalPosition().column == startPosition.column;
+      }
+      else {
+        selected = false;
+      }
+
+      Point start = editor.visualPositionToXY(new VisualPosition(startPosition.line + 1, startPosition.column));
+      final VisualPosition endPosition = editor.offsetToVisualPosition(endOffset);
+      Point end = editor.visualPositionToXY(new VisualPosition(endPosition.line, endPosition.column));
+      g.setColor(selected ? new Color(200, 200, 200) : new Color(230, 230, 230));
+      g.drawLine(start.x + 2, start.y, start.x + 2, end.y);
+    }
+  };
+
+
+  public IndentsPass(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    super(project, editor.getDocument(), false);
+    myEditor = (EditorEx)editor;
+    myFile = file;
+  }
+
+  @Override
+  public void doCollectInformation(ProgressIndicator progress) {
+  }
+
+  private long nowStamp() {
+    if (!myEditor.getSettings().isIndentGuidesShown()) return -1;
+    return myDocument.getModificationStamp();
+  }
+
+  @Override
+  public void doApplyInformationToEditor() {
+    final Long stamp = myEditor.getUserData(LAST_TIME_INDENTS_BUILT);
+    if (stamp != null && stamp.longValue() == nowStamp()) return;
+
+    List<IndentGuideDescriptor> descriptors = buildDescriptors();
+
+    List<TextRange> ranges = new ArrayList<TextRange>();
+    for (IndentGuideDescriptor descriptor : descriptors) {
+      int endOffset = descriptor.endLine < myDocument.getLineCount() ? myDocument.getLineStartOffset(descriptor.endLine) : myDocument.getTextLength();
+      ranges.add(new TextRange(myDocument.getLineStartOffset(descriptor.startLine), endOffset));
+    }
+
+
+    Collections.sort(ranges, RANGE_COMPARATOR);
+    List<RangeHighlighter> oldHighlighters = myEditor.getUserData(INDENT_HIGHLIGHTERS_IN_EDITOR_KEY);
+    List<RangeHighlighter> newHighlighters = new ArrayList<RangeHighlighter>();  
+    MarkupModel mm = myEditor.getMarkupModel();
+
+    int curRange = 0;
+
+    if (oldHighlighters != null) {
+      int curHighlight = 0;
+      while (curRange < ranges.size() && curHighlight < oldHighlighters.size()) {
+        TextRange range = ranges.get(curRange);
+        RangeHighlighter highlighter = oldHighlighters.get(curHighlight);
+
+        int cmp = compare(range, highlighter);
+        if (cmp < 0) {
+          newHighlighters.add(createHighlighter(mm, range));
+          curRange++;
+        }
+        else if (cmp > 0) {
+          mm.removeHighlighter(highlighter);
+          curHighlight++;
+        }
+        else {
+          newHighlighters.add(highlighter);
+          curHighlight++;
+          curRange++;
+        }
+      }
+
+      for (; curHighlight < oldHighlighters.size(); curHighlight++) {
+        mm.removeHighlighter(oldHighlighters.get(curHighlight));
+      }
+    }
+
+    for (; curRange < ranges.size(); curRange++) {
+      newHighlighters.add(createHighlighter(mm, ranges.get(curRange)));
+    }
+
+    myEditor.putUserData(INDENT_HIGHLIGHTERS_IN_EDITOR_KEY, newHighlighters);
+    myEditor.putUserData(LAST_TIME_INDENTS_BUILT, nowStamp());
+    myEditor.getIndentsModel().assumeIndents(descriptors);
+  }
+
+  private List<IndentGuideDescriptor> buildDescriptors() {
+    if (!myEditor.getSettings().isIndentGuidesShown()) return Collections.emptyList();
+    
+    int[] lineIndents = calcIndents(myDocument);
+
+    List<IndentGuideDescriptor> descriptors = new ArrayList<IndentGuideDescriptor>();
+
+    IntStack lines = new IntStack();
+    IntStack indents = new IntStack();
+
+    lines.push(0);
+    indents.push(0);
+    for (int line = 1; line < lineIndents.length; line++) {
+      int curIndent = lineIndents[line];
+
+      while (!indents.empty() && curIndent <= indents.peek()) {
+        final int level = indents.pop();
+        int startLine = lines.pop();
+        descriptors.add(new IndentGuideDescriptor(level, startLine, line));
+      }
+
+      int prevLine = line - 1;
+      int prevIndent = lineIndents[prevLine];
+
+      if (curIndent - prevIndent > 1) {
+        lines.push(prevLine);
+        indents.push(prevIndent);
+      }
+    }
+
+    while (!indents.empty()) {
+      final int level = indents.pop();
+      if (level > 0) {
+        int startLine = lines.pop();
+        descriptors.add(new IndentGuideDescriptor(level, startLine, myDocument.getLineCount()));
+      }
+    }
+    return descriptors;
+  }
+
+  private int[] calcIndents(Document doc) {
+    CharSequence chars = doc.getCharsSequence();
+    int[] lineIndents = new int[doc.getLineCount()];
+
+    for (int line = 0; line < lineIndents.length; line++) {
+      int lineStart = myDocument.getLineStartOffset(line);
+      int lineEnd = myDocument.getLineEndOffset(line);
+
+      int nonWhitespaceOffset = CharArrayUtil.shiftForward(chars, lineStart, " \t");
+      if (nonWhitespaceOffset < lineEnd) {
+        lineIndents[line] = myEditor.calcColumnNumber(nonWhitespaceOffset, line);
+      }
+      else {
+        lineIndents[line] = -1;
+      }
+    }
+
+    int topIndent = 0;
+    for (int line = 0; line < lineIndents.length; line++) {
+      if (lineIndents[line] >= 0) {
+        topIndent = lineIndents[line];
+      }
+      else {
+        int startLine = line;
+        for (; line < lineIndents.length && lineIndents[line] == -1; line++);
+        int bottomIndent = line < lineIndents.length ? lineIndents[line] : topIndent;
+
+        int indent = Math.min(topIndent, bottomIndent);
+        if (bottomIndent < topIndent) {
+          int nonWhitespaceOffset = CharArrayUtil.shiftForward(chars, myDocument.getLineStartOffset(line), " \t");
+          HighlighterIterator iterator = myEditor.getHighlighter().createIterator(nonWhitespaceOffset);
+          if (BraceMatchingUtil.isRBraceToken(iterator, chars, myFile.getFileType())) {
+            indent = topIndent;
+          }
+        }
+
+        for (int blankLine = startLine; blankLine < line; blankLine++) {
+          assert lineIndents[blankLine] == -1;
+          lineIndents[blankLine] = Math.min(topIndent, indent);
+        }
+
+        line--; // will be incremented back at the end of the loop;
+      }
+    }
+
+    return lineIndents;
+  }
+
+  private static RangeHighlighter createHighlighter(MarkupModel mm, TextRange range) {
+    final RangeHighlighter highlighter =
+      mm.addRangeHighlighter(range.getStartOffset(), range.getEndOffset(), 0, null, HighlighterTargetArea.EXACT_RANGE);
+    highlighter.setCustomRenderer(RENDERER);
+    return highlighter;
+  }
+
+  private static int compare(TextRange r, RangeHighlighter h) {
+    int answer = r.getStartOffset() - h.getStartOffset();
+    return answer != 0 ? answer : r.getEndOffset() - h.getEndOffset();
+  }
+}

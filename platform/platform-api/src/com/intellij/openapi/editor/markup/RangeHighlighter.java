@@ -79,6 +79,11 @@ public interface RangeHighlighter extends RangeMarker {
    */
   void setLineMarkerRenderer(@Nullable LineMarkerRenderer renderer);
 
+
+  @Nullable
+  CustomHighlighterRenderer getCustomRenderer();
+
+  void setCustomRenderer(CustomHighlighterRenderer renderer);
   /**
    * Returns the renderer used for drawing gutter icons in the area covered by the
    * highlighter. Gutter icons are drawn to the left of the folding area and can be used,
