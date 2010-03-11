@@ -9,6 +9,8 @@ import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeVariable;
 import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeVariableImpl;
+import com.jetbrains.python.psi.PyGlobalStatement;
+import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -20,19 +22,25 @@ public class PyReachingDefsDfaInstance implements DfaInstance<ScopeVariable> {
   // Use this its own map, because check in PyReachingDefsDfaSemilattice is important
   public static final DFAMap<ScopeVariable> INITIAL_MAP = new DFAMap<ScopeVariable>();
 
-  public DFAMap<ScopeVariable> fun(final DFAMap<ScopeVariable> map, Instruction instruction) {
+  public DFAMap<ScopeVariable> fun(DFAMap<ScopeVariable> map, Instruction instruction) {
     final PsiElement element = instruction.getElement();
     //if (element == null || element.getUserData(ReferenceCompletionUtil.REFERENCE_BEING_COMPLETED)!=null){
     //  return map;
     //}
+
+    // Process readwrite instruction
     if (instruction instanceof ReadWriteInstruction) {
       final ReadWriteInstruction rwInstruction = (ReadWriteInstruction)instruction;
+      if (!rwInstruction.getAccess().isWriteAccess()){
+        return map;
+      }
       final String name = rwInstruction.getName();
       final ScopeVariable variable = map.get(name);
       // Parameter case
       final PsiElement parameterScope = ScopeUtil.getParameterScope(element);
       if (parameterScope != null) {
         final ScopeVariable scopeVariable = new ScopeVariableImpl(name, true, element);
+        map = new DFAMap<ScopeVariable>(map);
         map.put(name, scopeVariable);
       }
       // Local variable case
@@ -44,6 +52,7 @@ public class PyReachingDefsDfaInstance implements DfaInstance<ScopeVariable> {
         } else {
           scopeVariable = new ScopeVariableImpl(name, isParameter, variable.getDeclarations());
         }
+        map = new DFAMap<ScopeVariable>(map);
         map.put(name, scopeVariable);
       }
     }

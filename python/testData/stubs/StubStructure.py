@@ -2,12 +2,12 @@ def deco(fun):
   return fun # valid
 
 class FooClass:
-  staticField = 1
+  staticField = deco
   def __init__(self):
     self.instanceField = 2
 
   @deco
-  def fooFunction(fooParam1, fooParam2) :
+  def fooFunction(fooParam1, fooParam2=0) :
     pass
 
 def topLevelFunction(tlfp1, tlfp2) :

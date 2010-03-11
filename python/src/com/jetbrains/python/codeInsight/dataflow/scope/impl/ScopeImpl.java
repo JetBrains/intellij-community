@@ -9,11 +9,12 @@ import com.jetbrains.python.codeInsight.dataflow.PyReachingDefsDfaInstance;
 import com.jetbrains.python.codeInsight.dataflow.PyReachingDefsSemilattice;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeVariable;
+import com.jetbrains.python.psi.PyGlobalStatement;
+import com.jetbrains.python.psi.PyRecursiveElementVisitor;
+import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author oleg
@@ -21,8 +22,11 @@ import java.util.List;
 public class ScopeImpl implements Scope {
   private final Instruction[] myFlow;
   private List<DFAMap<ScopeVariable>> myCachedScopeVariables;
+  private Set<String> myGlobals;
+  private final ScopeOwner myFlowOwner;
 
   public ScopeImpl(final ScopeOwner flowOwner) {
+    myFlowOwner = flowOwner;
     myFlow = flowOwner.getControlFlow().getInstructions();
   }
 
@@ -60,5 +64,25 @@ public class ScopeImpl implements Scope {
       myCachedScopeVariables = engine.performDFA();
     }
     return myCachedScopeVariables;
+  }
+
+  public boolean isGlobal(final String name) {
+    if (myGlobals == null){
+      myGlobals = computeGlobals(myFlowOwner);
+    }
+    return myGlobals.contains(name);
+  }
+
+  private static Set<String> computeGlobals(final PsiElement owner) {
+    final Set<String> names = new HashSet<String>();
+    owner.accept(new PyRecursiveElementVisitor(){
+      @Override
+      public void visitPyGlobalStatement(final PyGlobalStatement node) {
+        for (PyReferenceExpression expression : node.getGlobals()) {
+          names.add(expression.getReferencedName());
+        }
+      }
+    });
+    return names;
   }
 }

@@ -8,7 +8,6 @@ import com.intellij.psi.ResolveState;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.codeInsight.PyDynamicMember;
 import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
@@ -69,6 +68,7 @@ public class PyClassType implements PyType {
     if (resolveResult != null) {
       return resolveResult;
     }
+    /*
     PyExpression[] superClassExpressions = myClass.getSuperClassExpressions();
     if (superClassExpressions.length > 0) {
       for(PyExpression expr: superClassExpressions) {
@@ -78,6 +78,16 @@ public class PyClassType implements PyType {
           if (superMember != null) {
             return superMember;
           }
+        }
+      }
+    }
+    */
+    final PyClass[] superClasses = myClass.getSuperClasses();
+    if (superClasses.length > 0) {
+      for (PyClass superClass : superClasses) {
+        final PsiElement superMember = new PyClassType(superClass, true).resolveMember(name);
+        if (superMember != null) {
+          return superMember;
         }
       }
     }
@@ -93,7 +103,7 @@ public class PyClassType implements PyType {
             final PyClass oldstyleclass = oldstyle.getPyClass();
             if (oldstyleclass != null) {
               final String oldstylename = oldstyleclass.getName();
-              if ((myname != null) && (oldstylename != null) && ! myname.equals(oldstylename) && !myname.equals("object")) {
+              if ((myname != null) && (oldstylename != null) && !myname.equals(oldstylename) && !myname.equals("object")) {
                 return oldstyle.resolveMember(name);
               }
             }

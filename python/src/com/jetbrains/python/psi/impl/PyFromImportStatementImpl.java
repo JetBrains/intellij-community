@@ -48,17 +48,21 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
     return childToPsi(TokenSet.create(PyElementTypes.REFERENCE_EXPRESSION), 0);
   }
 
-  public List<String> getImportSourceQName() {
+  public PyQualifiedName getImportSourceQName() {
     final PyFromImportStatementStub stub = getStub();
     if (stub != null) {
-      final List<String> qName = stub.getImportSourceQName();
-      if (qName != null && qName.size() == 0) {  // relative import only: from .. import the_name
+      final PyQualifiedName qName = stub.getImportSourceQName();
+      if (qName != null && qName.getComponentCount() == 0) {  // relative import only: from .. import the_name
         return null;
       }
       return qName;
     }
 
-    return ResolveImportUtil.getQualifiedName(getImportSource());
+    final PyReferenceExpression importSource = getImportSource();
+    if (importSource == null) {
+      return null;
+    }
+    return importSource.asQualifiedName();
   }
 
   public PyImportElement[] getImportElements() {
@@ -105,8 +109,8 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
   }
 
   public boolean isFromFuture() {
-    final List<String> qName = getImportSourceQName();
-    return qName != null && qName.size() == 1 && PyNames.FUTURE_MODULE.equals(qName.get(0));
+    final PyQualifiedName qName = getImportSourceQName();
+    return qName != null && qName.matches(PyNames.FUTURE_MODULE);
   }
 
   public boolean processDeclarations(@NotNull final PsiScopeProcessor processor, @NotNull final ResolveState state, final PsiElement lastParent,

@@ -1,10 +1,9 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.StubBasedPsiElement;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.stubs.PyFromImportStatementStub;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * Describes "from ... import" statements.
@@ -19,7 +18,7 @@ public interface PyFromImportStatement extends PyStatement, StubBasedPsiElement<
   @Nullable PyReferenceExpression getImportSource();
 
   @Nullable
-  List<String> getImportSourceQName();
+  PyQualifiedName getImportSourceQName();
 
   /**
    * @return elements that constitute the "import" clause

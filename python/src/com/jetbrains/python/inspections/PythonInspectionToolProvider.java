@@ -25,7 +25,13 @@ public class PythonInspectionToolProvider implements InspectionToolProvider {
       PyDictCreationInspection.class,
       PyExceptClausesOrderInspection.class,
       PyTupleAssignmentBalanceInspection.class,
-      PyClassicStyleClassInspection.class
+      PyClassicStyleClassInspection.class,
+      PyExceptionInheritInspection.class,
+      PyDefaultArgumentInspection.class,
+      PyRaisingNewStyleClassInspection.class,
+      PyDocstringInspection.class,
+      PyUnboundLocalVariableInspection.class,
+      PyStatementEffectInspection.class
     };
   }
 }

@@ -33,6 +33,9 @@ public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner
   @Nullable
   PsiElement findExportedName(String name);
 
+  @Nullable
+  PsiElement resolveExportedName(String name);
+
   /**
   @return an URL of file, maybe bogus if virtual file is not present.
   */

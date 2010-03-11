@@ -117,4 +117,34 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
     LocalInspectionTool inspection = new PyExceptClausesOrderInspection();
     doTest(getTestName(false), inspection);
   }
+
+  public void testPyExceptionInheritInspection() throws Throwable {
+    LocalInspectionTool inspection = new PyExceptionInheritInspection();
+    doTest(getTestName(false), inspection);
+  }
+
+  public void testPyDefaultArgumentInspection() throws Throwable {
+    LocalInspectionTool inspection = new PyDefaultArgumentInspection();
+    doTest(getTestName(false), inspection);
+  }
+
+  public void testPyRaisingNewStyleClassInspection() throws Throwable {
+    LocalInspectionTool inspection = new PyRaisingNewStyleClassInspection();
+    doTest(getTestName(false), inspection);
+  }
+  
+  public void testPyUnboundLocalVariableInspection() throws Throwable {
+    LocalInspectionTool inspection = new PyUnboundLocalVariableInspection();
+    doTest(getTestName(false), inspection);
+  }
+  
+  public void testPyDocstringInspection() throws Throwable {
+    LocalInspectionTool inspection = new PyDocstringInspection();
+    doTest(getTestName(false), inspection);
+  }
+
+  public void testPyStatementEffectInspection() throws Throwable {
+    LocalInspectionTool inspection = new PyStatementEffectInspection();
+    doTest(getTestName(false), inspection);
+  }
 }

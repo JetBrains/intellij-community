@@ -39,4 +39,8 @@ public class PySingleStarParameterImpl extends PyPresentableElementImpl<PySingle
   public PyExpression getDefaultValue() {
     return null;
   }
+
+  public boolean hasDefaultValue() {
+    return false;
+  }
 }

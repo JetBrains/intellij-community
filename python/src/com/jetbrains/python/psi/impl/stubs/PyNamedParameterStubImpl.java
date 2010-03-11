@@ -13,13 +13,15 @@ public class PyNamedParameterStubImpl extends StubBase<PyNamedParameter> impleme
   private final String myName;
   private final boolean myPositionalContainer;
   private final boolean myKeywordContainer;
+  private final boolean myHasDefaultValue;
 
-  public PyNamedParameterStubImpl(String name, boolean isPositionalContainer, boolean isKeywordContainer, StubElement parent) {
+  public PyNamedParameterStubImpl(String name, boolean isPositionalContainer, boolean isKeywordContainer, boolean hasDefaultValue,
+                                  StubElement parent) {
     super(parent, PyElementTypes.NAMED_PARAMETER);
-
     myName = name;
     myPositionalContainer = isPositionalContainer;
     myKeywordContainer = isKeywordContainer;
+    myHasDefaultValue = hasDefaultValue;
   }
 
   public boolean isPositionalContainer() {
@@ -28,6 +30,10 @@ public class PyNamedParameterStubImpl extends StubBase<PyNamedParameter> impleme
 
   public boolean isKeywordContainer() {
     return myKeywordContainer;
+  }
+
+  public boolean hasDefaultValue() {
+    return myHasDefaultValue;
   }
 
   public String getName() {

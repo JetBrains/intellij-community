@@ -2,6 +2,7 @@ package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.StubBasedPsiElement;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,11 +12,6 @@ import org.jetbrains.annotations.Nullable;
 public interface PyTargetExpression extends PyQualifiedExpression, PsiNamedElement, StubBasedPsiElement<PyTargetExpressionStub> {
   PyTargetExpression[] EMPTY_ARRAY = new PyTargetExpression[0];
 
-  /*
-  @Nullable
-  PyExpression getQualifier();
-  */
-
   /**
    * Find the value that maps to this target expression in an enclosing assignment expression.
    * Does not work with other expressions (e.g. if the target is in a 'for' loop).
@@ -24,4 +20,7 @@ public interface PyTargetExpression extends PyQualifiedExpression, PsiNamedEleme
    */
   @Nullable
   PyExpression findAssignedValue();
+
+  @Nullable
+  PyQualifiedName getAssignedQName();
 }

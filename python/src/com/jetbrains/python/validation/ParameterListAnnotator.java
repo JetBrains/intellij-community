@@ -52,7 +52,7 @@ public class ParameterListAnnotator extends PyAnnotator {
             else if (hadKeywordContainer) {
               markError(parameter, PyBundle.message("ANN.regular.param.after.keyword"));
             }
-            if (parameter.getDefaultValue() != null) {
+            if (parameter.hasDefaultValue()) {
               hadDefaultValue = true;
             }
             else {
@@ -69,7 +69,7 @@ public class ParameterListAnnotator extends PyAnnotator {
           if (languageLevel.isPy3K()) {
             markError(param, PyBundle.message("ANN.tuple.py3"));
           }
-          else if (param.getDefaultValue() == null && hadDefaultValue) {
+          else if (!param.hasDefaultValue() && hadDefaultValue) {
             markError(param, PyBundle.message("ANN.non.default.param.after.default"));
           }
         }

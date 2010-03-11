@@ -81,6 +81,14 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
     return null;
   }
 
+  public boolean hasDefaultValue() {
+    final PyNamedParameterStub stub = getStub();
+    if (stub != null) {
+      return stub.hasDefaultValue();
+    }
+    return getDefaultValue() != null;
+  }
+
   @NotNull
   public String getRepr(boolean includeDefaultValue) {
     StringBuffer sb = new StringBuffer();

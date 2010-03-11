@@ -87,7 +87,7 @@ public class PyArgumentListInspection  extends LocalInspectionTool {
               for (int i=first_param_offset; i < params.length; i += 1) {
                 PyNamedParameter par = params[i].getAsNamed();
                 // param tuples, non-starred or non-default won't do
-                if (par == null || (! par.isKeywordContainer() && ! par.isPositionalContainer() && (par.getDefaultValue() == null))) {
+                if (par == null || (! par.isKeywordContainer() && ! par.isPositionalContainer() && !par.hasDefaultValue())) {
                   String par_name;
                   if (par != null) par_name = par.getName();
                   else par_name = "(...)"; // can't be bothered to find the first non-tuple inside it

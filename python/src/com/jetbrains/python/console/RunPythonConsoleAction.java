@@ -5,7 +5,9 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.IconLoader;
@@ -31,24 +33,41 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
 
   @Override
   public void update(final AnActionEvent e) {
-    final Module module = (Module)e.getDataContext().getData(LangDataKeys.MODULE.getName());
-    e.getPresentation().setVisible(module != null);
-
-    final Sdk sdk = module != null ? PythonSdkType.findPythonSdk(module) : null;
-    e.getPresentation().setEnabled(sdk != null);
+    e.getPresentation().setVisible(false);
+    e.getPresentation().setEnabled(false);
+    final Project project = e.getData(LangDataKeys.PROJECT);
+    if (project != null){
+      for (Module module : ModuleManager.getInstance(project).getModules()) {
+        e.getPresentation().setVisible(true);
+        if (PythonSdkType.findPythonSdk(module) != null){
+          e.getPresentation().setEnabled(true);
+          break;
+        }
+      }
+    }
   }
 
   public void actionPerformed(final AnActionEvent e) {
-    final Module module = (Module)e.getDataContext().getData(LangDataKeys.MODULE.getName());
-    assert module != null : "Module cannot be null here";
-    final Sdk sdk = PythonSdkType.findPythonSdk(module);
-    assert sdk != null : "sdk is null";
+    final Project project = e.getData(LangDataKeys.PROJECT);
+    assert project != null : "Project is null";
+    Sdk sdk = null;
+    Module module = null;
+    for (Module m : ModuleManager.getInstance(project).getModules()) {
+      module = m;
+      sdk = PythonSdkType.findPythonSdk(module);
+      if (sdk != null){
+        break;
+      }
+    }
+    assert module != null : "Module is null";
+    assert sdk != null : "Sdk is null";
+    final String homePath = sdk.getHomePath();
 
-    PyConsoleRunner.run(module.getProject(),
+    PyConsoleRunner.run(project,
                         PyBundle.message("python.console"),
                         new CommandLineArgumentsProvider() {
                           public String[] getArguments() {
-                            return new String[]{sdk.getHomePath(), "-i"};
+                            return new String[]{homePath, "-i"};
                           }
 
                           public boolean passParentEnvs() {

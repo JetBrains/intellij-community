@@ -136,6 +136,15 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     return ret;
   }
 
+  @Nullable
+  public PyQualifiedName asQualifiedName() {
+    final List<PyReferenceExpression> components = PyResolveUtil.unwindQualifiers((PyReferenceExpression) this);
+    if (components == null) {
+      return null;
+    }
+    return new PyQualifiedName(components);
+  }
+
 
   private static class ResultList extends ArrayList<RatedResolveResult> {
     // Allows to add non-null elements and discard nulls in a hassle-free way.
@@ -259,11 +268,9 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       if ((uexpr instanceof PyClass)) {
         // is it a case of the bizarre "class Foo(Foo)" construct?
         PyClass cls = (PyClass)uexpr;
-        for (PyExpression base_expr : cls.getSuperClassExpressions()){
-          if (base_expr == this) {
-            ret.clear();
-            return ret; // cannot resolve us, the base class ref, to the class being defined
-          }
+        if (isSuperClassExpression(cls)) {
+          ret.clear();
+          return ret; // cannot resolve us, the base class ref, to the class being defined
         }
       }
       // sort what we got
@@ -279,7 +286,9 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     if (uexpr == null) {
       // ...as a builtin symbol
       PyFile bfile = PyBuiltinCache.getInstance(this).getBuiltinsFile();
-      uexpr = PyResolveUtil.treeCrawlUp(new ResolveProcessor(referencedName), true, bfile);
+      if (bfile != null) {
+        uexpr = bfile.resolveExportedName(referencedName);
+      }
     }
     if (uexpr == null) {
       //uexpr = PyResolveUtil.resolveOffContext(this);
@@ -288,6 +297,18 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     uexpr = turnDirIntoInit(uexpr); // treeCrawlUp might have found a dir
     if (uexpr != null) ret.poke(uexpr, getRate(uexpr));
     return ret;
+  }
+
+  private boolean isSuperClassExpression(PyClass cls) {
+    if (getContainingFile() != cls.getContainingFile()) {  // quick check to avoid unnecessary tree loading
+      return false;
+    }
+    for (PyExpression base_expr : cls.getSuperClassExpressions()) {
+      if (base_expr == this) {
+        return true;
+      }
+    }
+    return false;
   }
 
   // NOTE: very crude

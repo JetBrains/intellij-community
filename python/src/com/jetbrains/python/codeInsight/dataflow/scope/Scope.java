@@ -10,15 +10,16 @@ import java.util.Collection;
  * @author oleg
  */
 public interface Scope {
-    /*
+  /*
    * @return defined scope local/instance/class variables and parameters, using reaching defs
    */
   Collection<ScopeVariable> getDeclaredVariables(@NotNull PsiElement anchorElement);
-
 
   /*
    * @return defined scope local/instance/class variables and parameters, using reaching defs
    */
   @Nullable
   ScopeVariable getDeclaredVariable(@NotNull PsiElement anchorElement, @NotNull String name);
+
+  boolean isGlobal(String name);
 }

@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.toolbox.ArrayIterable;
 import org.jetbrains.annotations.NotNull;
 import com.jetbrains.python.PyElementTypes;
@@ -74,5 +75,12 @@ public class PyGlobalStatementImpl extends PyElementImpl implements PyGlobalStat
 
   public boolean mustResolveOutside() {
     return true;
+  }
+
+  public void addGlobal(final String name) {
+    final PyElementGenerator pyElementGenerator = PythonLanguage.getInstance().getElementGenerator();
+    add(pyElementGenerator.createComma(getProject()).getPsi());
+    add(pyElementGenerator.createWhiteSpace(getProject(), 1));
+    add(pyElementGenerator.createFromText(getProject(), PyGlobalStatement.class, "global " + name).getGlobals()[0]);
   }
 }

@@ -19,10 +19,6 @@ public class PyTupleParameterImpl extends PyPresentableElementImpl<PyTupleParame
     super(astNode);
   }
 
-  protected PyTupleParameterImpl(final PyTupleParameterStub stub, final IStubElementType nodeType) {
-    super(stub, nodeType);
-  }
-
   public PyTupleParameterImpl(PyTupleParameterStub stub) {
     super(stub, PyElementTypes.TUPLE_PARAMETER);
   }
@@ -41,6 +37,14 @@ public class PyTupleParameterImpl extends PyPresentableElementImpl<PyTupleParame
       return (PyExpression)nodes[0].getPsi();
     }
     return null;
+  }
+
+  public boolean hasDefaultValue() {
+    final PyTupleParameterStub stub = getStub();
+    if (stub != null) {
+      return stub.hasDefaultValue();
+    }
+    return getDefaultValue() != null;
   }
 
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {

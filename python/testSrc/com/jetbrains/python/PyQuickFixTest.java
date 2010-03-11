@@ -97,6 +97,16 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
                      PyBundle.message("QFIX.classic.class.transform"), true, true);
   }
 
+  public void testAddGlobalQuickFix() throws Exception {
+    doInspectionTest("AddGlobalStatement.py", PyUnboundLocalVariableInspection.class,
+                     PyBundle.message("QFIX.add.global"), true, true);
+  }
+
+  public void testAddGlobalExistingQuickFix() throws Exception {
+    doInspectionTest("AddGlobalExistingStatement.py", PyUnboundLocalVariableInspection.class,
+                     PyBundle.message("QFIX.add.global"), true, true);
+  }
+
   protected void doInspectionTest(@NonNls String testFileName,
                                   final Class inspectionClass,
                                   @NonNls String quickFixName,

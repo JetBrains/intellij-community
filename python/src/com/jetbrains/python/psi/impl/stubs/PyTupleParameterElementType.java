@@ -30,14 +30,15 @@ public class PyTupleParameterElementType extends PyStubElementType<PyTupleParame
   }
 
   public PyTupleParameterStub createStub(PyTupleParameter psi, StubElement parentStub) {
-    return new PyTupleParameterStubImpl(parentStub);
+    return new PyTupleParameterStubImpl(psi.hasDefaultValue(), parentStub);
   }
 
   public PyTupleParameterStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
-    return new PyTupleParameterStubImpl(parentStub);
+    boolean hasDefaultValue = dataStream.readBoolean();
+    return new PyTupleParameterStubImpl(hasDefaultValue, parentStub);
   }
 
   public void serialize(PyTupleParameterStub stub, StubOutputStream dataStream) throws IOException {
-    // nothing; children serialize themselves
+    dataStream.writeBoolean(stub.hasDefaultValue());
   }
 }

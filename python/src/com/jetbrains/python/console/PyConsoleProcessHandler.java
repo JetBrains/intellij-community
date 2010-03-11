@@ -38,7 +38,7 @@ class PyConsoleProcessHandler extends OSProcessHandler {
   public static final Key STRING_KEY = new Key("PYTHON_STRING");
   public static final Key NUMBER_KEY = new Key("PYTHON_NUMBER");
 
-  private static String NUMBERS = "(?<![\\w_#$=])(\\d+(_\\d+)*(\\.\\d+)?)";
+  private static String NUMBERS = "(\\d+(_\\d+)*(\\.\\d+)?)";
   private static String STRINGS = "((\"[^\"\n]*\")|((?<!\\w)'[^'\n]*'))";
 
   private static Pattern CODE_ELEMENT_PATTERN = Pattern.compile(NUMBERS + "|" + STRINGS);
@@ -57,7 +57,7 @@ class PyConsoleProcessHandler extends OSProcessHandler {
   @Override
   public void notifyTextAvailable(final String text, final Key attributes) {
     final LanguageConsoleImpl languageConsole = myPyConsoleRunner.getLanguageConsole();
-    String string = text;
+    String string = StringUtil.convertLineSeparators(text);
     // Change prompt
     for (String prompt : PROMPTS) {
       if (string.startsWith(prompt)) {
@@ -65,7 +65,7 @@ class PyConsoleProcessHandler extends OSProcessHandler {
         if (!currentPrompt.equals(prompt)) {
           languageConsole.setPrompt(prompt);
         }
-        string = string.substring(prompt.length());
+        string = string.substring(prompt.length()).trim();
         break;
       }
     }
@@ -76,14 +76,19 @@ class PyConsoleProcessHandler extends OSProcessHandler {
         shouldScroll.set(languageConsole.shouldScrollHistoryToEnd());
       }
     });
+    // Highlight output by pattern
     Matcher matcher;
     while ((matcher = CODE_ELEMENT_PATTERN.matcher(string)).find()) {
       printToConsole(languageConsole, string.substring(0, matcher.start()), ConsoleViewContentType.NORMAL_OUTPUT);
+      // Number group
       if (matcher.group(1) != null) {
         printToConsole(languageConsole, matcher.group(1), NUMBER_ATTRIBUTES);
-      } else if (matcher.group(4) != null) {
+      }
+      // String group
+      else if (matcher.group(4) != null) {
         printToConsole(languageConsole, matcher.group(4), STRING_ATTRIBUTES);
-      } else {
+      }
+      else {
         printToConsole(languageConsole, matcher.group(), ConsoleViewContentType.NORMAL_OUTPUT);
       }
       string = string.substring(matcher.end());

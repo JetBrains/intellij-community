@@ -1,10 +1,9 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.StubBasedPsiElement;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.stubs.PyImportElementStub;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * @author yole
@@ -14,7 +13,7 @@ public interface PyImportElement extends PyElement, NameDefiner, StubBasedPsiEle
   PyReferenceExpression getImportReference();
 
   @Nullable
-  List<String> getImportedQName();
+  PyQualifiedName getImportedQName();
 
   @Nullable
   PyTargetExpression getAsNameElement();

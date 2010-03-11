@@ -44,12 +44,13 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
     return (PyReferenceExpression)importRefNode.getPsi();
   }
 
-  public List<String> getImportedQName() {
+  public PyQualifiedName getImportedQName() {
     final PyImportElementStub stub = getStub();
     if (stub != null) {
       return stub.getImportedQName();
     }
-    return ResolveImportUtil.getQualifiedName(getImportReference());
+    final PyReferenceExpression importReference = getImportReference();
+    return importReference != null ? importReference.asQualifiedName() : null;
   }
 
   public PyTargetExpression getAsNameElement() {
@@ -76,11 +77,8 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
       if (!StringUtil.isEmpty(asName)) {
         return asName;
       }
-      final List<String> importedName = stub.getImportedQName();
-      if (importedName.size() > 0) {
-        return importedName.get(importedName.size()-1);
-      }
-      return null;
+      final PyQualifiedName importedName = stub.getImportedQName();
+      return importedName.getLastComponent();
     }
     PyTargetExpression asname = getAsNameElement();
     if (asname != null) return asname.getName();
@@ -216,8 +214,8 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
       if (!Comparing.equal(the_name, asName)) return null;
     }
     else {
-      final List<String> qName = getImportedQName();
-      if (qName == null || qName.size() != 1 || !Comparing.equal(qName.get(0), the_name)) {
+      final PyQualifiedName qName = getImportedQName();
+      if (qName == null || !qName.matches(the_name)) {
         return null;
       }
     }

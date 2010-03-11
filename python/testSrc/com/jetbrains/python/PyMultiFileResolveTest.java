@@ -1,8 +1,12 @@
 package com.jetbrains.python;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiManagerImpl;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.psi.*;
 
@@ -103,7 +107,7 @@ public class PyMultiFileResolveTest extends PyLightFixtureTestCase {
 
   public void testCircularImport() throws Exception {
     PsiElement element = doResolve();
-    assertTrue(element instanceof PyTargetExpression);
+    assertTrue(element == null ? "resolve failed" : element.toString(), element instanceof PyTargetExpression);
   }
 
 
@@ -134,6 +138,12 @@ public class PyMultiFileResolveTest extends PyLightFixtureTestCase {
     assertEquals("Context", ((PyClass) element).getName());
   }
 
+  public void testReimportStar() throws Exception {
+    PsiElement element = doResolve();
+    assertTrue(element instanceof PyClass);
+    assertEquals("CharField", ((PyClass) element).getName());
+  }
+
   public void testStackOverflowOnEmptyFile() throws Exception {
     assertNull(doResolve());  // make sure we don't have a SOE here
   }
@@ -159,7 +169,19 @@ public class PyMultiFileResolveTest extends PyLightFixtureTestCase {
     PsiFile psiFile = prepareFile();
     int offset = findMarkerOffset(psiFile);
     final PsiReference ref = psiFile.findReferenceAt(offset);
-    return ref.resolve();
+    final PsiManagerImpl psiManager = (PsiManagerImpl)myFixture.getPsiManager();
+    psiManager.setAssertOnFileLoadingFilter(new VirtualFileFilter() {
+      public boolean accept(VirtualFile file) {
+        FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
+        return fileType == PythonFileType.INSTANCE;
+      }
+    });
+    try {
+      return ref.resolve();
+    }
+    finally {
+      psiManager.setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
+    }
   }
 
   private ResolveResult[] doMultiResolve() throws Exception {

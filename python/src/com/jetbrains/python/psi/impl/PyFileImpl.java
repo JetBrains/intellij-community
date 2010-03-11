@@ -21,6 +21,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeImpl;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
+import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.resolve.ResolveProcessor;
 import com.jetbrains.python.psi.stubs.PyFromImportStatementStub;
 import com.jetbrains.python.psi.stubs.PyImportStatementStub;
@@ -187,11 +188,24 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
         if (child instanceof NamedStub && name.equals(((NamedStub)child).getName())) {
           return ((NamedStub) child).getPsi();
         }
+        else if (child instanceof PyFromImportStatementStub && ((PyFromImportStatementStub)child).isStarImport()) {
+          final PyFromImportStatement statement = ((PyFromImportStatementStub)child).getPsi();
+          PsiElement starImportSource = ResolveImportUtil.resolveFromImportStatementSource(statement);
+          if (starImportSource != null) {
+            starImportSource = PyReferenceExpressionImpl.turnDirIntoInit(starImportSource);
+            if (starImportSource instanceof PyFile) {
+              final PsiElement result = ((PyFile)starImportSource).resolveExportedName(name);
+              if (result != null) {
+                return result;
+              }
+            }
+          }
+        }
         else if (child instanceof PyFromImportStatementStub || child instanceof PyImportStatementStub) {
           final List<StubElement> importElements = ((StubElement)child).getChildrenStubs();
           for (StubElement importElement : importElements) {
             final PsiElement psi = importElement.getPsi();
-            if (psi instanceof PyImportElement && name.equals(((PyImportElement) psi).getVisibleName())) {
+            if (psi instanceof PyImportElement && name.equals(((PyImportElement)psi).getVisibleName())) {
               return psi;
             }
           }
@@ -205,6 +219,21 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       PyResolveUtil.treeCrawlUp(proc, true, getLastChild());
       return proc.getResult();
     }
+  }
+
+  @Nullable
+  public PsiElement resolveExportedName(String name) {
+    PsiElement exportedName = findExportedName(name);
+    if (exportedName == null) {
+      final PyFile builtins = PyBuiltinCache.getInstance(this).getBuiltinsFile();
+      if (builtins != null && builtins != this) {
+        exportedName = builtins.findExportedName(name);
+      }
+    }
+    if (exportedName instanceof PyImportElement) {
+      return ((PyImportElement) exportedName).getElementNamed(name);
+    }
+    return exportedName;
   }
 
   public List<PyImportElement> getImportTargets() {

@@ -8,8 +8,11 @@ import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.io.StringRef;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.impl.PyTargetExpressionImpl;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 
@@ -32,18 +35,24 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
   }
 
   public PyTargetExpressionStub createStub(final PyTargetExpression psi, final StubElement parentStub) {
-    return new PyTargetExpressionStubImpl(psi.getName(), parentStub);
+    final PyExpression assignedValue = psi.findAssignedValue();
+    final PyQualifiedName initializer = assignedValue instanceof PyReferenceExpression
+                                        ? ((PyReferenceExpression) assignedValue).asQualifiedName()
+                                        : null;
+    return new PyTargetExpressionStubImpl(psi.getName(), initializer, parentStub);
   }
 
   public void serialize(final PyTargetExpressionStub stub, final StubOutputStream dataStream)
       throws IOException {
     dataStream.writeName(stub.getName());
+    PyQualifiedName.serialize(stub.getInitializer(), dataStream);
   }
 
   public PyTargetExpressionStub deserialize(final StubInputStream dataStream, final StubElement parentStub)
       throws IOException {
     String name = StringRef.toString(dataStream.readName());
-    return new PyTargetExpressionStubImpl(name, parentStub);
+    PyQualifiedName initializer = PyQualifiedName.deserialize(dataStream);
+    return new PyTargetExpressionStubImpl(name, initializer, parentStub);
   }
 
   public boolean shouldCreateStub(final ASTNode node) {
