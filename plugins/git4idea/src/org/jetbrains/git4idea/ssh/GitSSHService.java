@@ -115,7 +115,7 @@ public class GitSSHService implements ApplicationComponent {
    */
   @NotNull
   public synchronized File getScriptPath() throws IOException {
-    if (myScriptPath == null) {
+    if (myScriptPath == null || !myScriptPath.exists()) {
       ScriptGenerator generator = new ScriptGenerator(GIT_SSH_PREFIX, SSHMain.class);
       generator.addInternal(Integer.toString(myXmlRpcServer.getPortNumber()));
       generator.addClasses(XmlRpcClientLite.class, DecoderException.class);
