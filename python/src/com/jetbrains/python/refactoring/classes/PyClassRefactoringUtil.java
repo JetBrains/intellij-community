@@ -108,20 +108,17 @@ public class PyClassRefactoringUtil {
     final String text = prepareClassText(superClass, elements, up, false, null);
 
     if (text == null) return;
-    System.out.println("createClassFromText:" + text);
 
     final PyClass newClass = PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyClass.class, text);
     final PyStatementList statements = superClass.getStatementList();
     if (statements.getStatements().length != 0) {
       for (PyElement newStatement : newClass.getStatementList().getStatements()) {
-        System.out.println("adding statement: " + newStatement.getText());
         //statements.add(PythonLanguage.getInstance().getElementGenerator().createNewLine(project));
         statements.add(newStatement);
       }
     } else {
       statements.replace(newClass.getStatementList());
     }
-    System.out.println("new class text: " + superClass.getText());
   }
 
   @Nullable
