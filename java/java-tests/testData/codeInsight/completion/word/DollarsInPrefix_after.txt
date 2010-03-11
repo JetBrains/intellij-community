@@ -1,2 +1,2 @@
 $test
-$test <caret>
+$test<caret>

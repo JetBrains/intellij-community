@@ -707,8 +707,7 @@ public abstract class BreakpointPropertiesPanel {
       final Icon icon;
       if (breakpoint != null) {
         icon = (breakpoint instanceof BreakpointWithHighlighter)?
-                          breakpoint.ENABLED? ((BreakpointWithHighlighter)breakpoint).getSetIcon() : ((BreakpointWithHighlighter)breakpoint).getDisabledIcon() :  
-                          breakpoint.getIcon();
+                          breakpoint.ENABLED? ((BreakpointWithHighlighter)breakpoint).getSetIcon(false) : ((BreakpointWithHighlighter)breakpoint).getDisabledIcon(false) : breakpoint.getIcon();
       }
       else {
         icon = null;

@@ -1279,6 +1279,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean isWhitespaceAt(CharSequence chars, int x, int y) {
     LogicalPosition log = xyToLogicalPosition(new Point(x, y));
     int offset = logicalPositionToOffset(log);
+    if (offset >= chars.length()) return false;
 
     char c = chars.charAt(offset);
     return c == ' ' || c == '\t' || c == '\n';
@@ -2299,7 +2300,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     CharSequence chars = myDocument.getCharsNoThreadCheck();
     int nonWhitespaceOffset = CharArrayUtil.shiftForward(chars, lineStart, " \t");
     if (nonWhitespaceOffset < lineEnd) {
-      return calcColumnNumber(nonWhitespaceOffset, line) / getIndentSize();
+      final int columnNumber = calcColumnNumber(nonWhitespaceOffset, line);
+      final int indentSize = getIndentSize();
+      return indentSize != 0 ? columnNumber / indentSize : columnNumber;
     }
     else {
       int upIndent = goUp ? getIndents(line - 1, true, false) : 100;

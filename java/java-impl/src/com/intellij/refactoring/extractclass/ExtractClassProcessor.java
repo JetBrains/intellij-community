@@ -38,6 +38,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.extractclass.usageInfo.*;
+import com.intellij.refactoring.move.MoveInstanceMembersUtil;
 import com.intellij.refactoring.psi.MethodInheritanceUtils;
 import com.intellij.refactoring.psi.TypeParametersVisitor;
 import com.intellij.refactoring.util.FixableUsageInfo;
@@ -236,6 +237,54 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       final PsiField member = psiClass.findFieldByName(field.getName(), false);
       if (member != null) {
         members.add(member);
+        final PsiExpression initializer = member.getInitializer();
+        if (initializer != null) {
+          final boolean[] moveInitializerToConstructor = new boolean[1];
+          initializer.accept(new JavaRecursiveElementWalkingVisitor(){
+            @Override
+            public void visitReferenceExpression(PsiReferenceExpression expression) {
+              super.visitReferenceExpression(expression);
+              final PsiElement resolved = expression.resolve();
+              if (resolved instanceof PsiField && !members.contains(resolved)) {
+                moveInitializerToConstructor[0] = true;
+              }
+            }
+          });
+
+          if (moveInitializerToConstructor[0]) {
+            final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
+            PsiMethod constructor;
+            final PsiMethod[] constructors = psiClass.getConstructors();
+            if (constructors.length == 0) {
+              constructor = elementFactory.createConstructor();
+              constructor.setName(psiClass.getName());
+              constructor = (PsiMethod)psiClass.add(constructor);
+            } else {
+              constructor = constructors[0];
+            }
+            MoveInstanceMembersUtil.moveInitializerToConstructor(elementFactory, constructor, member);
+          }
+        }
+      }
+    }
+
+    if (myGenerateAccessors) {
+      final NecessaryAccessorsVisitor visitor = new NecessaryAccessorsVisitor();
+      for (PsiField field : fields) {
+        field.accept(visitor);
+      }
+      for (PsiMethod method : methods) {
+        method.accept(visitor);
+      }
+      for (PsiClass innerClass : innerClasses) {
+        innerClass.accept(visitor);
+      }
+      for (PsiField field : visitor.getFieldsNeedingGetter()) {
+        sourceClass.add(PropertyUtil.generateGetterPrototype(field));
+      }
+
+      for (PsiField field : visitor.getFieldsNeedingSetter()) {
+        sourceClass.add(PropertyUtil.generateSetterPrototype(field));
       }
     }
     super.performRefactoring(usageInfos);
@@ -673,10 +722,16 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       super.visitReferenceExpression(expression);
       if (isProhibitedReference(expression)) {
         final PsiField field = getReferencedField(expression);
-        if (!hasGetter(field)) {
+        if (!hasGetter(field) && !isStaticFinal(field)) {
           fieldsNeedingGetter.add(field);
         }
       }
+    }
+
+    private boolean isStaticFinal(PsiField field) {
+      final PsiModifierList modifierList = field.getModifierList();
+      logger.assertTrue(modifierList != null);
+      return modifierList.hasModifierProperty(PsiModifier.STATIC) && modifierList.hasModifierProperty(PsiModifier.FINAL);
     }
 
     public void visitAssignmentExpression(PsiAssignmentExpression expression) {
@@ -685,7 +740,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       final PsiExpression lhs = expression.getLExpression();
       if (isProhibitedReference(lhs)) {
         final PsiField field = getReferencedField(lhs);
-        if (!hasGetter(field)) {
+        if (!hasGetter(field) && !isStaticFinal(field)) {
           fieldsNeedingSetter.add(field);
         }
       }
@@ -708,7 +763,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       }
       if (isProhibitedReference(operand)) {
         final PsiField field = getReferencedField(operand);
-        if (!hasSetter(field)) {
+        if (!hasSetter(field) && !isStaticFinal(field)) {
           fieldsNeedingSetter.add(field);
         }
       }

@@ -42,6 +42,7 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
   private boolean myAutomaticallyInsertClosingTag = true;
   private boolean myAutomaticallyInsertRequiredAttributes = true;
   private boolean myAutomaticallyStartAttribute = true;
+  private boolean myEnableZenCoding = true;
 
   public static WebEditorOptions getInstance() {
     return ServiceManager.getService(WebEditorOptions.class);
@@ -83,8 +84,16 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
     return myAutomaticallyStartAttribute;
   }
 
+  public boolean isZenCodingEnabled() {
+    return myEnableZenCoding;
+  }
+
   public void setAutomaticallyStartAttribute(final boolean automaticallyStartAttribute) {
     myAutomaticallyStartAttribute = automaticallyStartAttribute;
+  }
+
+  public void setEnableZenCoding(boolean enableZenCoding) {
+    myEnableZenCoding = enableZenCoding;
   }
 
   @NotNull

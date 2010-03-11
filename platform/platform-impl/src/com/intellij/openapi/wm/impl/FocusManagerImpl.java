@@ -348,7 +348,9 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
       myFlushingIdleRequestsEntryCount++;
 
       final KeyEvent[] events = myToDispatchOnDone.toArray(new KeyEvent[myToDispatchOnDone.size()]);
-      IdeEventQueue.getInstance().getKeyEventDispatcher().resetState();
+      if (events.length > 0) {
+        IdeEventQueue.getInstance().getKeyEventDispatcher().resetState();
+      }
 
       boolean keyWasPressed = false;
 

@@ -15,20 +15,20 @@
  */
 package org.jetbrains.plugins.groovy.lang.documentation;
 
-import com.intellij.util.ArrayUtil;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import java.util.Set;
 import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * @author ven
@@ -57,7 +57,7 @@ public class GroovyPresentationUtil {
 
             StringBuilder builder1 = new StringBuilder();
             builder1.append(((GrReferenceElement) parent).getReferenceName());
-            PsiType[] argTypes = PsiUtil.getArgumentTypes(parent, false, true);
+            PsiType[] argTypes = PsiUtil.getArgumentTypes(parent, true);
             if (argTypes != null) {
               builder1.append("(");
               if (argTypes.length > 0) {

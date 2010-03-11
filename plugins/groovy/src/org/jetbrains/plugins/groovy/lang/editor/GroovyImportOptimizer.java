@@ -57,7 +57,11 @@ public class GroovyImportOptimizer implements ImportOptimizer {
 
   @NotNull
   public Runnable processFile(PsiFile file) {
-    return new MyProcessor(file);
+    return new MyProcessor((GroovyFile)file, false);
+  }
+
+  public void removeUnusedImports(GroovyFile file) {
+    new MyProcessor(file, true).run();
   }
 
   public boolean supports(PsiFile file) {
@@ -66,9 +70,11 @@ public class GroovyImportOptimizer implements ImportOptimizer {
 
   private class MyProcessor implements Runnable {
     private final GroovyFile myFile;
+    private final boolean myRemoveUnusedOnly;
 
-    public MyProcessor(PsiFile file) {
-      myFile = (GroovyFile) file;
+    private MyProcessor(GroovyFile file, boolean removeUnusedOnly) {
+      myFile = file;
+      myRemoveUnusedOnly = removeUnusedOnly;
     }
 
     public void run() {
@@ -150,8 +156,21 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       });
 
 
-      // remove ALL imports from file
-      final GrImportStatement[] oldImports = myFile.getImportStatements();
+      final List<GrImportStatement> oldImports = new ArrayList<GrImportStatement>();
+      for (GrImportStatement statement : myFile.getImportStatements()) {
+        final GrCodeReferenceElement reference = statement.getImportReference();
+        if (reference != null && reference.getCanonicalText() != null) {
+          oldImports.add(statement);
+        }
+      }
+      if (myRemoveUnusedOnly) {
+        for (GrImportStatement oldImport : oldImports) {
+          if (!usedImports.contains(oldImport)) {
+            myFile.removeImport(oldImport);
+          }
+        }
+        return;
+      }
 
       // Getting aliased imports
       GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myFile.getProject());
@@ -174,11 +193,6 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       myFile.removeImport(myFile.addImport(factory.createImportStatementFromText("import xxxx"))); //to remove trailing whitespaces
 
       for (GrImportStatement importStatement : oldImports) {
-        final GrCodeReferenceElement reference = importStatement.getImportReference();
-        if (reference == null || reference.getCanonicalText() == null) {
-          continue;
-        }
-
         myFile.removeImport(importStatement);
       }
     }

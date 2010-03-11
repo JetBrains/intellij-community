@@ -29,9 +29,13 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.NonClasspathDirectoryScope;
 import org.jetbrains.annotations.NonNls;
@@ -53,14 +57,18 @@ import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author peter
  */
 public class GradleScriptType extends GroovyScriptType {
   @NonNls private static final String GRADLE_EXTENSION = "gradle";
+  private static final Pattern MAIN_CLASS_NAME_PATTERN = Pattern.compile("\nSTARTER_MAIN_CLASS=(.*)\n");
 
   @Override
   public boolean isSpecificScriptFile(GroovyFile file) {
@@ -89,6 +97,8 @@ public class GradleScriptType extends GroovyScriptType {
         configuration.setName(configuration.getName() + "." + target);
       }
     }
+
+    
     final CompileStepBeforeRun.MakeBeforeRunTask runTask =
       RunManagerEx.getInstanceEx(element.getProject()).getBeforeRunTask(configuration, CompileStepBeforeRun.ID);
     if (runTask != null) {
@@ -96,12 +106,12 @@ public class GradleScriptType extends GroovyScriptType {
     }
   }
 
-  private String getTaskTarget(PsiElement parent) {
-    String target = null;
+  @Nullable
+  private static String getTaskTarget(PsiElement parent) {
     if (isCreateTaskMethod(parent)) {
-      final GrExpression[] arguments = ((GrMethodCallExpression)parent).getArgumentList().getExpressionArguments();
+      final GrExpression[] arguments = ((GrMethodCallExpression)parent).getExpressionArguments();
       if (arguments.length > 0 && arguments[0] instanceof GrLiteral && ((GrLiteral)arguments[0]).getValue() instanceof String) {
-        target = (String)((GrLiteral)arguments[0]).getValue();
+        return (String)((GrLiteral)arguments[0]).getValue();
       }
     }
     else if (parent instanceof GrApplicationStatement) {
@@ -109,21 +119,21 @@ public class GradleScriptType extends GroovyScriptType {
       if (shiftExpression instanceof GrShiftExpressionImpl) {
         PsiElement shiftiesChild = shiftExpression.getChildren()[0];
         if (shiftiesChild instanceof GrReferenceExpression) {
-          target = shiftiesChild.getText();
+          return shiftiesChild.getText();
         }
         else if (shiftiesChild instanceof GrMethodCallExpression) {
-          target = shiftiesChild.getChildren()[0].getText();
+          return shiftiesChild.getChildren()[0].getText();
         }
       }
       else if (shiftExpression instanceof GrMethodCallExpression) {
-        target = shiftExpression.getChildren()[0].getText();
+        return shiftExpression.getChildren()[0].getText();
       }
     }
     
-    return target;
+    return null;
   }
 
-  private boolean isCreateTaskMethod(PsiElement parent) {
+  private static boolean isCreateTaskMethod(PsiElement parent) {
     return parent instanceof GrMethodCallExpression && PsiUtil.isMethodCall((GrMethodCallExpression)parent, "createTask");
   }
 
@@ -157,10 +167,12 @@ public class GradleScriptType extends GroovyScriptType {
                                        @Nullable Module module,
                                        boolean tests,
                                        VirtualFile script, GroovyScriptRunConfiguration configuration) throws CantRunException {
-        params.setMainClass("org.gradle.BootstrapMain");
-
-        final VirtualFile gradleHome = GradleLibraryManager.getSdkHome(module, configuration.getProject());
+        final Project project = configuration.getProject();
+        final VirtualFile gradleHome = GradleLibraryManager.getSdkHome(module, project);
         assert gradleHome != null;
+
+        params.setMainClass(findMainClass(gradleHome, script, project));
+
         final File[] groovyJars = GroovyUtils.getFilesInDirectoryByPattern(gradleHome.getPath() + "/lib/", GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN);
         if (groovyJars.length > 0) {
           params.getClassPath().add(groovyJars[0].getAbsolutePath());
@@ -171,9 +183,12 @@ public class GradleScriptType extends GroovyScriptType {
           }
         }
 
-        final File[] gradleJars = GroovyUtils.getFilesInDirectoryByPattern(gradleHome.getPath() + "/lib/", GradleLibraryManager.GRADLE_JAR_FILE_PATTERN);
-        if (gradleJars.length > 0) {
-          params.getClassPath().add(gradleJars[0].getAbsolutePath());
+        final String userDefinedClasspath = System.getProperty("gradle.launcher.classpath");
+        if (StringUtil.isNotEmpty(userDefinedClasspath)) {
+          params.getClassPath().add(userDefinedClasspath);
+        } else {
+          params.getClassPath().addAllFiles(
+            GroovyUtils.getFilesInDirectoryByPattern(gradleHome.getPath() + "/lib/", GradleLibraryManager.ANY_GRADLE_JAR_FILE_PATTERN));
         }
 
         params.getVMParametersList().addParametersString(configuration.vmParams);
@@ -188,6 +203,40 @@ public class GradleScriptType extends GroovyScriptType {
         params.getProgramParametersList().addParametersString(configuration.scriptParams);
       }
     };
+  }
+
+  @NotNull
+  private static String findMainClass(VirtualFile gradleHome, VirtualFile script, Project project) {
+    final String userDefined = System.getProperty("gradle.launcher.class");
+    if (StringUtil.isNotEmpty(userDefined)) {
+      return userDefined;
+    }
+
+    VirtualFile launcher = gradleHome.findFileByRelativePath("bin/gradle");
+    if (launcher == null) {
+      launcher = gradleHome.findFileByRelativePath("bin/gradle.bat");
+    }
+    if (launcher != null) {
+      try {
+        final String text = StringUtil.convertLineSeparators(VfsUtil.loadText(launcher));
+        final Matcher matcher = MAIN_CLASS_NAME_PATTERN.matcher(text);
+        if (matcher.find()) {
+          String candidate = matcher.group(1);
+          if (StringUtil.isNotEmpty(candidate)) {
+            return candidate;
+          }
+        }
+      }
+      catch (IOException ignored) {
+      }
+    }
+
+    final PsiFile grFile = PsiManager.getInstance(project).findFile(script);
+    if (grFile != null && JavaPsiFacade.getInstance(project).findClass("org.gradle.BootstrapMain", grFile.getResolveScope()) != null) {
+      return "org.gradle.BootstrapMain";
+    }
+
+    return "org.gradle.launcher.GradleMain";
   }
 
   @Override

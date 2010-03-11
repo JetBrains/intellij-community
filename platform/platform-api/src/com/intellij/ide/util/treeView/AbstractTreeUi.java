@@ -1562,7 +1562,8 @@ public class AbstractTreeUi {
       }
 
       if (myInitialized.isDone()) {
-        for (ActionCallback each : getReadyCallbacks(true)) {
+        ActionCallback[] ready = getReadyCallbacks(true);
+        for (ActionCallback each : ready) {
           each.setDone();
         }
       }

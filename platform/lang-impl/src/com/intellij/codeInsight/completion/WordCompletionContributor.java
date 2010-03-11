@@ -16,16 +16,13 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.TailType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageWordCompletion;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Computable;
-import static com.intellij.patterns.StandardPatterns.character;
 import com.intellij.psi.PlainTextTokenTypes;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -33,8 +30,11 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.filters.getters.AllWordsGetter;
 import com.intellij.psi.tree.IElementType;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+
+import static com.intellij.patterns.StandardPatterns.character;
 
 /**
  * @author peter
@@ -44,11 +44,11 @@ public class WordCompletionContributor extends CompletionContributor implements 
   @Override
   public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
     if (parameters.getCompletionType() == CompletionType.BASIC && shouldPerformWordCompletion(parameters)) {
-      addWordCompletionWariants(result, parameters);
+      addWordCompletionVariants(result, parameters, Collections.<String>emptySet());
     }
   }
 
-  public static void addWordCompletionWariants(CompletionResultSet result, CompletionParameters parameters) {
+  public static void addWordCompletionVariants(CompletionResultSet result, CompletionParameters parameters, Set<String> excludes) {
     int startOffset = parameters.getOffset();
     PsiElement insertedElement = parameters.getPosition();
     final CompletionResultSet javaResultSet = result.withPrefixMatcher(CompletionUtil.findJavaIdentifierPrefix(insertedElement, startOffset));
@@ -57,9 +57,11 @@ public class WordCompletionContributor extends CompletionContributor implements 
                                                                                                             character().javaIdentifierPart().andNot(character().equalTo('$')),
                                                                                                             character().javaIdentifierStart()));
     for (final String word : AllWordsGetter.getAllWords(insertedElement, startOffset)) {
-      final LookupElement item = TailTypeDecorator.withTail(LookupElementBuilder.create(word), TailType.SPACE);
-      javaResultSet.addElement(item);
-      plainResultSet.addElement(item);
+      if (!excludes.contains(word)) {
+        final LookupElement item = LookupElementBuilder.create(word);
+        javaResultSet.addElement(item);
+        plainResultSet.addElement(item);
+      }
     }
   }
 

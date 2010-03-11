@@ -217,6 +217,12 @@ public class SvnVcs extends AbstractVcs {
     invokeRefreshSvnRoots(true);
   }
 
+  @Override
+  protected void shutdown() throws VcsException {
+    super.shutdown();
+    myAuthNotifier.stop();
+  }
+
   public void invokeRefreshSvnRoots(final boolean asynchronous) {
     REFRESH_LOG.debug("refresh: ", new Throwable());
     if (myCopiesRefreshManager != null) {
@@ -646,7 +652,11 @@ public class SvnVcs extends AbstractVcs {
 
   public boolean fileIsUnderVcs(FilePath path) {
     final ChangeListManager clManager = ChangeListManager.getInstance(myProject);
-    return (! SvnStatusUtil.isIgnoredInAnySense(clManager, path.getVirtualFile())) && (! clManager.isUnversioned(path.getVirtualFile()));
+    final VirtualFile file = path.getVirtualFile();
+    if (file == null) {
+      return false;
+    }
+    return (! SvnStatusUtil.isIgnoredInAnySense(clManager, file)) && (! clManager.isUnversioned(file));
   }
 
   private static File getEntriesFile(File file) {

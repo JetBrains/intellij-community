@@ -20,6 +20,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.InternalTemplateBean;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
@@ -794,7 +795,9 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
       appendDefaultTemplatesDirFromClassloader(FileTemplateManagerImpl.class.getClassLoader(), dirList);
       PluginDescriptor[] plugins = ApplicationManager.getApplication().getPlugins();
       for (PluginDescriptor plugin : plugins) {
-        appendDefaultTemplatesDirFromClassloader(plugin.getPluginClassLoader(), dirList);
+        if (plugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)plugin).isEnabled()) {
+          appendDefaultTemplatesDirFromClassloader(plugin.getPluginClassLoader(), dirList);
+        }
       }
 
       ourTopDirs = VfsUtil.toVirtualFileArray(dirList);

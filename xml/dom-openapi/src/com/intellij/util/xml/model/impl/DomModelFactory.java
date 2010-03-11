@@ -41,9 +41,8 @@ public abstract class DomModelFactory<T extends DomElement, M extends DomModel<T
   }
 
   protected Module getModelScope(final XmlFile file) {
-    final Module module = ModuleUtil.findModuleForPsiElement(file);
 
-    return module;
+    return ModuleUtil.findModuleForPsiElement(file);
   }
 
   @NotNull

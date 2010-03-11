@@ -36,12 +36,16 @@ import java.util.List;
  */
 public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSaverDialog {
   protected final JTextField myFileName = new JTextField(20);
+  protected final JComboBox myExtentions = new JComboBox();
   protected final FileSaverDescriptor myDescriptor;
 
   public FileSaverDialogImpl(FileSaverDescriptor chooserDescriptor, Project project) {
     super(chooserDescriptor, project);
     myDescriptor = chooserDescriptor;
     setTitle(UIBundle.message("file.chooser.save.dialog.default.title"));
+    for (String ext : chooserDescriptor.getFileExtentions()) {
+      myExtentions.addItem(ext);
+    }
   }
 
   @Nullable
@@ -92,7 +96,7 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
     }
 
     if (!correctExt) {
-      path += "." + myDescriptor.getFileExtentions()[0];
+      path += "." + myExtentions.getSelectedItem();
     }
 
     return new File(path);
@@ -109,9 +113,6 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
           myPathTextField.getField().setText(parent.getPath());
         }
       }
-    }
-    if (selection.size() == 0) {
-      myFileName.setText("");
     }
     updateOkButton();
   }
@@ -137,6 +138,10 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
     });
 
     panel.add(myFileName, BorderLayout.CENTER);
+    if (myExtentions.getModel().getSize() > 0) {
+      myExtentions.setSelectedIndex(0);
+      panel.add(myExtentions, BorderLayout.EAST);
+    }
     return panel;
   }
 

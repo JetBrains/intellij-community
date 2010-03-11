@@ -24,6 +24,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.util.ArrayList;
@@ -59,8 +60,10 @@ public class CopyPasteFoldingProcessor implements CopyPastePostProcessor {
   public TextBlockTransferableData extractTransferableData(final Transferable content) {
     FoldingTransferableData foldingData = null;
     try {
-      foldingData =
-      (FoldingTransferableData)content.getTransferData(FoldingTransferableData.FoldingData.FLAVOR);
+      final DataFlavor flavor = FoldingTransferableData.FoldingData.getDataFlavor();
+      if (flavor != null) {
+        foldingData = (FoldingTransferableData)content.getTransferData(flavor);
+      }
     }
     catch (UnsupportedFlavorException e) {
     }

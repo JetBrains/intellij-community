@@ -68,7 +68,9 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   public static Icon ICON = DebuggerIcons.ENABLED_BREAKPOINT_ICON;
   public static final Icon MUTED_ICON = DebuggerIcons.MUTED_BREAKPOINT_ICON;
   public static final Icon DISABLED_ICON = DebuggerIcons.DISABLED_BREAKPOINT_ICON;
+  public static final Icon MUTED_DISABLED_ICON = DebuggerIcons.MUTED_DISABLED_BREAKPOINT_ICON;
   private static final Icon ourVerifiedWarningsIcon = IconLoader.getIcon("/debugger/db_verified_warning_breakpoint.png");
+  private static final Icon ourMutedVerifiedWarningsIcon = IconLoader.getIcon("/debugger/db_muted_verified_warning_breakpoint.png");
 
   private String myMethodName;
   public static final @NonNls Key<LineBreakpoint> CATEGORY = BreakpointCategory.lookup("line_breakpoints");
@@ -81,29 +83,30 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     super(project, highlighter);
   }
 
-  protected Icon getDisabledIcon() {
+  protected Icon getDisabledIcon(boolean isMuted) {
     final Breakpoint master = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this);
-    return master == null? DISABLED_ICON : DebuggerIcons.DISABLED_DEPENDENT_BREAKPOINT_ICON;
+    if (isMuted) {
+      return master == null? MUTED_DISABLED_ICON : DebuggerIcons.MUTED_DISABLED_DEPENDENT_BREAKPOINT_ICON;
+    }
+    else {
+      return master == null? DISABLED_ICON : DebuggerIcons.DISABLED_DEPENDENT_BREAKPOINT_ICON;
+    }
   }
 
-  protected Icon getMutedIcon() {
-    return MUTED_ICON;
+  protected Icon getSetIcon(boolean isMuted) {
+    return isMuted? MUTED_ICON : ICON;
   }
 
-  protected Icon getSetIcon() {
-    return ICON;
+  protected Icon getInvalidIcon(boolean isMuted) {
+    return isMuted? DebuggerIcons.MUTED_INVALID_BREAKPOINT_ICON : DebuggerIcons.INVALID_BREAKPOINT_ICON;
   }
 
-  protected Icon getInvalidIcon() {
-    return DebuggerIcons.INVALID_BREAKPOINT_ICON;
+  protected Icon getVerifiedIcon(boolean isMuted) {
+    return isMuted? DebuggerIcons.MUTED_VERIFIED_BREAKPOINT_ICON : DebuggerIcons.VERIFIED_BREAKPOINT_ICON;
   }
 
-  protected Icon getVerifiedIcon() {
-    return DebuggerIcons.VERIFIED_BREAKPOINT_ICON;
-  }
-
-  protected Icon getVerifiedWarningsIcon() {
-    return ourVerifiedWarningsIcon;
+  protected Icon getVerifiedWarningsIcon(boolean isMuted) {
+    return isMuted? ourMutedVerifiedWarningsIcon : ourVerifiedWarningsIcon;
   }
 
   public Key<LineBreakpoint> getCategory() {

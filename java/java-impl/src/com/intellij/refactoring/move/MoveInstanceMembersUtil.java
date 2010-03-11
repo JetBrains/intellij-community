@@ -15,10 +15,12 @@
  */
 package com.intellij.refactoring.move;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +32,8 @@ import java.util.Set;
  * @author ven
  */
 public class MoveInstanceMembersUtil {
+  private static final Logger LOG = Logger.getInstance("#" + MoveInstanceMembersUtil.class.getName());
+
   /**
    * @param member  nonstatic class member to search for class references in
    * @return Set<PsiMember> in result map may be null in case no member is needed, but class itself is.
@@ -144,5 +148,33 @@ public class MoveInstanceMembersUtil {
       }
     }
     return null;
+  }
+
+  public static void moveInitializerToConstructor(PsiElementFactory factory, PsiMethod constructor, PsiField field) {
+    final PsiExpression initializer = field.getInitializer();
+    PsiExpression initializerCopy = (PsiExpression)initializer.copy();
+    final PsiCodeBlock body = constructor.getBody();
+    if (body != null) {
+      try {
+        String fieldName = field.getName();
+        final PsiReferenceExpression refExpr = (PsiReferenceExpression)factory.createExpressionFromText(fieldName, body);
+        if (refExpr.resolve() != null) fieldName = "this." + fieldName;
+        PsiExpressionStatement statement = (PsiExpressionStatement)factory.createStatementFromText(fieldName + "= y;", null);
+        if (initializerCopy instanceof PsiArrayInitializerExpression) {
+          PsiType type = initializer.getType();
+          PsiNewExpression newExpression =
+            (PsiNewExpression)factory.createExpressionFromText("new " + type.getCanonicalText() + "{}", body);
+          newExpression.getArrayInitializer().replace(initializerCopy);
+          initializerCopy = newExpression;
+        }
+        ((PsiAssignmentExpression)statement.getExpression()).getRExpression().replace(initializerCopy);
+        statement = (PsiExpressionStatement)field.getManager().getCodeStyleManager().reformat(statement);
+        body.add(statement);
+        initializer.delete();
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    }
   }
 }

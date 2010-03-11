@@ -18,6 +18,7 @@ package com.intellij.openapi.keymap.impl.keyGestures;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.impl.ActionProcessor;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
+import com.intellij.openapi.keymap.impl.KeyState;
 import com.intellij.openapi.util.registry.Registry;
 
 import javax.swing.*;
@@ -96,14 +97,14 @@ public class KeyboardGestureProcessor {
   }
 
   void setState(KeyGestureState state) {
-    final boolean isGestureProcessingState = myDispatcher.getState() == IdeKeyEventDispatcher.STATE_KEY_GESTURE_PROCESSOR;
+    final boolean isGestureProcessingState = myDispatcher.getState() == KeyState.STATE_KEY_GESTURE_PROCESSOR;
     if (state == myWaitForStart) {
       myContext.actionKey = null;
       if (isGestureProcessingState) {
-        myDispatcher.setState(IdeKeyEventDispatcher.STATE_INIT);
+        myDispatcher.setState(KeyState.STATE_INIT);
       }
     } else if (state == myWaitForAction) {
-      myDispatcher.setState(IdeKeyEventDispatcher.STATE_KEY_GESTURE_PROCESSOR);
+      myDispatcher.setState(KeyState.STATE_KEY_GESTURE_PROCESSOR);
     }
     myState = state;
   }

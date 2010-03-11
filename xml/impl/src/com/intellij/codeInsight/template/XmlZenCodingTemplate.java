@@ -15,14 +15,18 @@
  */
 package com.intellij.codeInsight.template;
 
+import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -79,10 +83,6 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
     MyOperationToken(char sign) {
       mySign = sign;
     }
-  }
-
-  private static boolean isTemplateKeyPart(char c) {
-    return !Character.isWhitespace(c) && OPERATIONS.indexOf(c) < 0;
   }
 
   private static int parseNonNegativeInt(@NotNull String s) {
@@ -196,7 +196,7 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
     List<MyToken> result = new ArrayList<MyToken>();
     for (int i = 0, n = text.length(); i < n; i++) {
       char c = text.charAt(i);
-      if (i == n - 1 || OPERATIONS.indexOf(c) >= 0) {
+      if (i == n - 1 || (i < n - 2 && OPERATIONS.indexOf(c) >= 0)) {
         String key = templateKeyBuilder.toString();
         templateKeyBuilder = new StringBuilder();
         int num = parseNonNegativeInt(key);
@@ -208,7 +208,7 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
             return null;
           }
           String prefix = getPrefix(key);
-          if (!callback.isLiveTemplateApplicable(prefix) && prefix.indexOf('<') >= 0) {
+          if (!callback.isLiveTemplateApplicable(prefix) && prefix.indexOf('<') >= 0 /*&& !XML11Char.isXML11ValidQName(prefix)*/) {
             return null;
           }
           MyTemplateToken token = parseSelectors(key);
@@ -219,7 +219,7 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
         }
         result.add(i < n - 1 ? new MyOperationToken(c) : new MyMarkerToken());
       }
-      else if (isTemplateKeyPart(c)) {
+      else if (!Character.isWhitespace(c)) {
         templateKeyBuilder.append(c);
       }
       else {
@@ -294,50 +294,59 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
   }
 
   public String computeTemplateKey(@NotNull CustomTemplateCallback callback) {
-    ZenCodingSettings settings = ZenCodingSettings.getInstance();
-    if (!settings.ENABLED) {
-      return null;
-    }
-    PsiFile file = callback.getFile();
-    if (file.getLanguage() instanceof XMLLanguage) {
-      Editor editor = callback.getEditor();
-      PsiElement element = file.findElementAt(editor.getCaretModel().getOffset() - 1);
-      if (element == null || element.getLanguage() instanceof XMLLanguage) {
-        int line = editor.getCaretModel().getLogicalPosition().line;
-        int lineStart = editor.getDocument().getLineStartOffset(line);
-        int parentStart;
-        do {
-          parentStart = element != null ? element.getTextRange().getStartOffset() : 0;
-          int startOffset = parentStart > lineStart ? parentStart : lineStart;
-          String key = computeKey(editor, startOffset);
-          List<MyToken> tokens = parse(key, callback);
-          if (tokens != null && check(tokens)) {
-            if (tokens.size() == 2) {
-              MyToken token = tokens.get(0);
-              if (token instanceof MyTemplateToken) {
-                if (key.equals(((MyTemplateToken)token).myKey) && callback.isLiveTemplateApplicable(key)) {
-                  // do not activate only live template
-                  return null;
-                }
-              }
+    Editor editor = callback.getEditor();
+    int offset = callback.getOffset();
+    PsiElement element = callback.getFile().findElementAt(offset > 0 ? offset - 1 : offset);
+    int line = editor.getCaretModel().getLogicalPosition().line;
+    int lineStart = editor.getDocument().getLineStartOffset(line);
+    int parentStart;
+    do {
+      parentStart = element != null ? element.getTextRange().getStartOffset() : 0;
+      int startOffset = parentStart > lineStart ? parentStart : lineStart;
+      String key = computeKey(editor, startOffset);
+      List<MyToken> tokens = parse(key, callback);
+      if (tokens != null && check(tokens)) {
+        if (tokens.size() == 2) {
+          MyToken token = tokens.get(0);
+          if (token instanceof MyTemplateToken) {
+            if (key.equals(((MyTemplateToken)token).myKey) && callback.isLiveTemplateApplicable(key)) {
+              // do not activate only live template
+              return null;
             }
-            return key;
-          }
-          if (element != null) {
-            element = element.getParent();
           }
         }
-        while (element != null && parentStart > lineStart);
+        return key;
+      }
+      if (element != null) {
+        element = element.getParent();
       }
     }
+    while (element != null && parentStart > lineStart);
     return null;
   }
 
-  public void execute(String key, @NotNull CustomTemplateCallback callback, @Nullable TemplateInvokationListener listener) {
+  public boolean isApplicable(PsiFile file, int offset, boolean selection) {
+    WebEditorOptions webEditorOptions = WebEditorOptions.getInstance();
+    if (!webEditorOptions.isZenCodingEnabled()) {
+      return false;
+    }
+    if (file.getLanguage() instanceof XMLLanguage) {
+      PsiElement element = file.findElementAt(offset > 0 ? offset - 1 : offset);
+      if (element == null || element.getLanguage() instanceof XMLLanguage) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public void expand(String key, @NotNull CustomTemplateCallback callback, @Nullable TemplateInvokationListener listener) {
     List<MyToken> tokens = parse(key, callback);
     assert tokens != null;
     MyInterpreter interpreter = new MyInterpreter(tokens, callback, MyState.WORD, listener);
     interpreter.invoke(0);
+  }
+
+  public void wrap(String selection, @NotNull CustomTemplateCallback callback, @Nullable TemplateInvokationListener listener) {
   }
 
   private static void fail() {
@@ -439,39 +448,6 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
     return false;
   }*/
 
-  @Nullable
-  private static CharSequence getPrecedingTagName(CharSequence text, int index, int leftBound) {
-    int j = index - 1;
-    while (j >= leftBound && Character.isWhitespace(text.charAt(j))) {
-      j--;
-    }
-    if (j < leftBound || text.charAt(j) != '>') {
-      return null;
-    }
-    while (j >= leftBound && text.charAt(j) != '<') {
-      j--;
-    }
-    if (j < 0) {
-      return null;
-    }
-    return parseTagName(text, j + 1, index);
-  }
-
-  @Nullable
-  private static CharSequence parseTagName(CharSequence text, int index, int rightBound) {
-    int j = index;
-    if (rightBound > text.length()) {
-      rightBound = text.length();
-    }
-    while (j < rightBound && !Character.isWhitespace(text.charAt(j)) && text.charAt(j) != '>') {
-      j++;
-    }
-    if (j >= text.length()) {
-      return null;
-    }
-    return text.subSequence(index, j);
-  }
-
   private class MyInterpreter {
     private final List<MyToken> myTokens;
     private final CustomTemplateCallback myCallback;
@@ -500,22 +476,43 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
       int endOfTemplate = myCallback.getEndOfTemplate(templateBoundsKey);
       Editor editor = myCallback.getEditor();
       int offset = myCallback.getOffset();
-      Document document = myCallback.getEditor().getDocument();
-      CharSequence text = document.getCharsSequence();
-      CharSequence tagName = getPrecedingTagName(text, offset, startOfTemplate);
+
+      PsiFile file = myCallback.getFile();
+
+      PsiElement element = file.findElementAt(offset);
+      if (element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_END_TAG_START) {
+        return;
+      }
+
+      int newOffset = -1;
+      XmlTag tag = PsiTreeUtil.findElementOfClassAtRange(file, startOfTemplate, endOfTemplate, XmlTag.class);
+      if (tag != null) {
+        for (PsiElement child : tag.getChildren()) {
+          if (child instanceof XmlToken && ((XmlToken)child).getTokenType() == XmlTokenType.XML_END_TAG_START) {
+            newOffset = child.getTextOffset();
+          }
+        }
+      }
+
+      if (newOffset >= 0) {
+        myCallback.fixEndOffset();
+        editor.getCaretModel().moveToOffset(newOffset);
+      }
+
+      /*CharSequence tagName = getPrecedingTagName(text, offset, startOfTemplate);
       if (tagName != null) {
-        /*if (!hasClosingTag(text, tagName, offset, endOfTemplate)) {
+        *//*if (!hasClosingTag(text, tagName, offset, endOfTemplate)) {
           document.insertString(offset, "</" + tagName + '>');
-        }*/
+        }*//*
       }
       else if (offset != endOfTemplate) {
         tagName = getPrecedingTagName(text, endOfTemplate, startOfTemplate);
         if (tagName != null) {
-          /*fixEndOffset();
-          document.insertString(endOfTemplate, "</" + tagName + '>');*/
+          *//*fixEndOffset();
+          document.insertString(endOfTemplate, "</" + tagName + '>');*//*
           editor.getCaretModel().moveToOffset(endOfTemplate);
         }
-      }
+      }*/
     }
 
     public boolean invoke(int startIndex) {

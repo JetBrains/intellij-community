@@ -35,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author nik
@@ -58,15 +59,9 @@ public class JumpFromRemoteFileToLocalAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     final String url = myFile.getUrl();
-    for (LocalFileFinder finder : LocalFileFinder.EP_NAME.getExtensions()) {
-      final VirtualFile file = finder.findLocalFile(url, myProject);
-      if (file != null) {
-        navigateToFile(myProject, file);
-      }
-    }
+    final String fileName = myFile.getName();
+    Collection<VirtualFile> files = findLocalFiles(myProject, url, fileName);
 
-    final Collection<VirtualFile> files =
-      FilenameIndex.getVirtualFilesByName(myProject, myFile.getName(), GlobalSearchScope.allScope(myProject));
     if (files.isEmpty()) {
       Messages.showErrorDialog(myProject, "Cannot find local file for '" + url + "'", CommonBundle.getErrorTitle());
       return;
@@ -94,6 +89,17 @@ public class JumpFromRemoteFileToLocalAction extends AnAction {
          }
        }).createPopup().showUnderneathOf(e.getInputEvent().getComponent());
     }
+  }
+
+  public static Collection<VirtualFile> findLocalFiles(Project project, String url, String fileName) {
+    for (LocalFileFinder finder : LocalFileFinder.EP_NAME.getExtensions()) {
+      final VirtualFile file = finder.findLocalFile(url, project);
+      if (file != null) {
+        return Collections.singletonList(file);
+      }
+    }
+
+    return FilenameIndex.getVirtualFilesByName(project, fileName, GlobalSearchScope.allScope(project));
   }
 
   private static void navigateToFile(Project project, @NotNull VirtualFile file) {

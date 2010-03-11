@@ -23,6 +23,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IconDeferrer;
 import com.intellij.ui.RowIcon;
@@ -34,6 +35,8 @@ import javax.swing.*;
 
 
 public class IconUtil {
+
+  public static final Key<Icon> LAST_FILE_ICON = Key.create("lastVFileIcon");
 
   private IconUtil() {
   }
@@ -85,7 +88,9 @@ public class IconUtil {
   }
 
   public static Icon getIcon(final VirtualFile file, final int flags, final Project project) {
-    return IconDeferrer.getInstance().defer(file.getIcon(), new FileIconKey(file, project, flags), new Function<FileIconKey, Icon>() {
+    Icon lastIcon = file.getUserData(LAST_FILE_ICON);
+
+    return IconDeferrer.getInstance().defer(lastIcon != null ? lastIcon : file.getIcon(), new FileIconKey(file, project, flags), new Function<FileIconKey, Icon>() {
       public Icon fun(final FileIconKey key) {
         VirtualFile file = key.getFile();
         int flags = key.getFlags();
@@ -106,9 +111,11 @@ public class IconUtil {
         }
 
         if ((flags & Iconable.ICON_FLAG_READ_STATUS) != 0 && !file.isWritable()) {
-          return new LayeredIcon(icon, Icons.LOCKED_ICON);
+          icon = new LayeredIcon(icon, Icons.LOCKED_ICON);
         }
         
+        file.putUserData(LAST_FILE_ICON, icon);
+
         return icon;
       }
     });

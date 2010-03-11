@@ -17,8 +17,10 @@ package com.intellij.ide.structureView;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.util.ActionCallback;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * Defines the implementation of a custom structure view or file structure popup component.
@@ -73,4 +75,9 @@ public interface StructureView extends Disposable {
   void storeState();
 
   StructureViewModel getTreeModel();
+
+  interface Scrollable extends StructureView {
+    Dimension getCurrentSize();
+    void setReferenceSizeWhileInitializing(Dimension size);
+  }
 }

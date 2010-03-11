@@ -402,7 +402,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       }
 
       if (kind == Kind.METHOD_OR_PROPERTY) {
-        final PsiType[] argTypes = PsiUtil.getArgumentTypes(refExpr, false, false);
+        final PsiType[] argTypes = PsiUtil.getArgumentTypes(refExpr, false);
         PsiType thisType = getThisType(refExpr);
 
         MethodResolverProcessor methodResolver =

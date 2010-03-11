@@ -75,7 +75,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   private SourcePosition mySourcePosition;
 
   private boolean myVisible = true;
-  private Icon myIcon = getSetIcon();
+  private Icon myIcon = getSetIcon(false);
   private @Nullable String myClassName;
   private @Nullable String myPackageName;
   private @Nullable String myInvalidMessage;
@@ -83,17 +83,15 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   protected abstract void createRequestForPreparedClass(final DebugProcessImpl debugProcess,
                                                         final ReferenceType classType);
 
-  protected abstract Icon getDisabledIcon();
+  protected abstract Icon getDisabledIcon(boolean isMuted);
 
-  protected abstract Icon getMutedIcon();
+  protected abstract Icon getInvalidIcon(boolean isMuted);
 
-  protected abstract Icon getInvalidIcon();
+  protected abstract Icon getSetIcon(boolean isMuted);
 
-  protected abstract Icon getSetIcon();
-
-  protected abstract Icon getVerifiedIcon();
+  protected abstract Icon getVerifiedIcon(boolean isMuted);
   
-  protected abstract Icon getVerifiedWarningsIcon();
+  protected abstract Icon getVerifiedWarningsIcon(boolean isMuted);
 
   public Icon getIcon() {
     return myIcon;
@@ -138,21 +136,19 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   }
 
   private Icon calcIcon(DebugProcessImpl debugProcess) {
+    final boolean muted = debugProcess != null && isMuted(debugProcess);
     if (!ENABLED) {
-      return getDisabledIcon();
-    }
-    if (debugProcess != null && isMuted(debugProcess)) {
-      return getMutedIcon();
+      return getDisabledIcon(muted);
     }
 
     myInvalidMessage = "";
 
     if (!isValid()) {
-      return getInvalidIcon();
+      return getInvalidIcon(muted);
     }
 
     if(debugProcess == null){
-      return getSetIcon();
+      return getSetIcon(muted);
     }
 
     final RequestManagerImpl requestsManager = debugProcess.getRequestsManager();
@@ -163,16 +159,16 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     if(warning != null){
       myInvalidMessage = warning;
       if (!isVerified) {
-        return getInvalidIcon();
+        return getInvalidIcon(muted);
       }
-      return getVerifiedWarningsIcon();
+      return getVerifiedWarningsIcon(muted);
     }
 
     if(isVerified){
-      return getVerifiedIcon();
+      return getVerifiedIcon(muted);
     }
 
-    return getSetIcon();
+    return getSetIcon(muted);
   }
 
   protected BreakpointWithHighlighter(Project project) {

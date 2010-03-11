@@ -941,5 +941,7 @@
   <action id="Console.Hibernate.Properties"><keyboard-shortcut first-keystroke="alt ENTER"/></action>
   <action id="Console.Hibernate.Close"><keyboard-shortcut first-keystroke="control alt shift F4"/></action>
   <action id="Console.Hibernate.Terminate"><keyboard-shortcut first-keystroke="control alt shift DELETE"/></action>
+
+  <action id="Console.Python.Execute"><keyboard-shortcut first-keystroke="control ENTER"/></action>
 </keymap>
 </component>

@@ -71,6 +71,18 @@ public class ExtractClassTest extends MultiFileTestCase{
     doTestFieldAndMethod();
   }
 
+  public void testFieldInitializers() throws Exception {
+    doTestField(null);
+  }
+
+  public void testDependantFieldInitializers() throws Exception {
+    doTestField(null);
+  }
+
+  public void testDependantNonStaticFieldInitializers() throws Exception {
+    doTestField(null, true);
+  }
+
   public void testInheritanceDelegation() throws Exception {
     doTestMethod();
   }

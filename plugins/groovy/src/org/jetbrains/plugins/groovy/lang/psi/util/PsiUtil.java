@@ -64,6 +64,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
@@ -125,6 +126,9 @@ public class PsiUtil {
                                      boolean isInUseCategory) {
     if (argumentTypes == null) return true;
 
+    if (method instanceof GrMethod && method.isConstructor()) {
+      final GrParameter[] parameters = ((GrMethod)method).getParameters();
+    }
     GrClosureSignature signature = GrClosureSignatureUtil.createSignature(method, substitutor);
     if (isInUseCategory && method.hasModifierProperty(PsiModifier.STATIC) && method.getParameterList().getParametersCount() > 0) {
       signature.curry(1);
@@ -135,52 +139,6 @@ public class PsiUtil {
   public static boolean isApplicable(@Nullable PsiType[] argumentTypes, GrClosureType type, PsiManager manager) {
     GrClosureSignature signature = type.getSignature();
     return GrClosureSignatureUtil.isSignatureApplicable(signature, argumentTypes, manager, type.getResolveScope());
-  }
-
-  private static boolean checkMethodApplicability(PsiParameter[] parameters,
-                                                  PsiType[] argumentTypes,
-                                                  int optionalParametersCount,
-                                                  boolean hasVarArg,
-                                                  PsiSubstitutor substitutor,
-                                                  GlobalSearchScope scope,
-                                                  PsiManager manager) {
-
-    int argIndex = 0;
-    for (int i = 0; i < parameters.length - 1; i++) {
-      if (isOptionalParameter(parameters[i])) {
-        if (optionalParametersCount == 0) continue;
-        optionalParametersCount--;
-      }
-
-      final PsiType parameterType = substitutor.substitute(parameters[i].getType());
-      if (argIndex >= argumentTypes.length) return false;
-      final PsiType argType = argumentTypes[argIndex++];
-      if (!TypesUtil.isAssignableByMethodCallConversion(parameterType, argType, manager, scope)) {
-        return false;
-      }
-    }
-
-    final PsiParameter lastParameter = parameters[parameters.length - 1];
-    final PsiType lastParameterType = substitutor.substitute(lastParameter.getType());
-
-    if (hasVarArg) {
-      if (argIndex == argumentTypes.length - 1 &&
-          TypesUtil.isAssignableByMethodCallConversion(lastParameterType, argumentTypes[argIndex], manager, scope)) {
-        return true;
-      }
-      final PsiType arrayType = ((PsiArrayType)lastParameterType).getComponentType();
-      for (; argIndex < argumentTypes.length; argIndex++) {
-        if (!TypesUtil.isAssignableByMethodCallConversion(arrayType, argumentTypes[argIndex], manager, scope)) return false;
-      }
-    }
-    else {
-      if (!isOptionalParameter(lastParameter) || optionalParametersCount > 0) {
-        if (argIndex >= argumentTypes.length) return false;
-        final PsiType argType = argumentTypes[argIndex++];
-        if (!TypesUtil.isAssignableByMethodCallConversion(lastParameterType, argType, manager, scope)) return false;
-      }
-    }
-    return argIndex == argumentTypes.length;
   }
 
   private static boolean isOptionalParameter(PsiParameter parameter) {
@@ -206,17 +164,15 @@ public class PsiUtil {
 
   // Returns arguments types not including Map for named arguments
   @Nullable
-  public static PsiType[] getArgumentTypes(PsiElement place, boolean forConstructor, boolean nullAsBottom) {
+  public static PsiType[] getArgumentTypes(PsiElement place, boolean nullAsBottom) {
     PsiElement parent = place.getParent();
     if (parent instanceof GrCallExpression) {
       List<PsiType> result = new ArrayList<PsiType>();
       GrCallExpression call = (GrCallExpression)parent;
 
-      if (!forConstructor) {
-        GrNamedArgument[] namedArgs = call.getNamedArguments();
-        if (namedArgs.length > 0) {
-          result.add(createMapType(place.getManager(), place.getResolveScope()));
-        }
+      GrNamedArgument[] namedArgs = call.getNamedArguments();
+      if (namedArgs.length > 0) {
+        result.add(createMapType(place.getManager(), place.getResolveScope()));
       }
 
       GrExpression[] expressions = call.getExpressionArguments();
@@ -245,11 +201,9 @@ public class PsiUtil {
       final GrArgumentList argList = anonymous.getArgumentListGroovy();
       List<PsiType> result = new ArrayList<PsiType>();
 
-      if (!forConstructor) {
-        GrNamedArgument[] namedArgs = argList.getNamedArguments();
-        if (namedArgs.length > 0) {
-          result.add(createMapType(place.getManager(), place.getResolveScope()));
-        }
+      GrNamedArgument[] namedArgs = argList.getNamedArguments();
+      if (namedArgs.length > 0) {
+        result.add(createMapType(place.getManager(), place.getResolveScope()));
       }
 
       GrExpression[] expressions = argList.getExpressionArguments();

@@ -146,7 +146,7 @@ public abstract class VirtualFileManager implements ModificationTracker{
   }
 
   /**
-   * Extracts protocol from the given URL. Protocol is a substing from the beginning of the URL till "://".
+   * Extracts protocol from the given URL. Protocol is a substring from the beginning of the URL till "://".
    *
    * @param url the URL
    * @return protocol or <code>null</code> if there is no "://" in the URL

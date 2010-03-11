@@ -78,7 +78,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   VirtualFile copyDirectoryToProject(@NonNls String sourceFilePath, @NonNls String targetPath) throws IOException;
 
-  VirtualFile copyFileToProject(@NonNls String sourceFilePath) throws IOException;
+  VirtualFile copyFileToProject(@TestDataFile @NonNls String sourceFilePath) throws IOException;
 
   /**
    * Enables inspections for highlighting tests.
@@ -333,4 +333,9 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   void allowTreeAccessForFile(VirtualFile file);
 
   void allowTreeAccessForAllFiles();
+
+  void renameElement(PsiElement element,
+                             String newName,
+                             boolean searchInComments,
+                             boolean searchTextOccurrences) throws Exception;
 }
