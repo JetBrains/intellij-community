@@ -22,6 +22,8 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer;
@@ -98,7 +100,8 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
       Point start = editor.visualPositionToXY(new VisualPosition(startPosition.line + 1, startPosition.column));
       final VisualPosition endPosition = editor.offsetToVisualPosition(endOffset);
       Point end = editor.visualPositionToXY(new VisualPosition(endPosition.line, endPosition.column));
-      g.setColor(selected ? new Color(200, 200, 200) : new Color(230, 230, 230));
+      final EditorColorsScheme scheme = editor.getColorsScheme();
+      g.setColor(selected ? scheme.getColor(EditorColors.SELECTED_INDENT_GUIDE_COLOR) : scheme.getColor(EditorColors.INDENT_GUIDE_COLOR));
       g.drawLine(start.x + 2, start.y, start.x + 2, end.y);
     }
   };
