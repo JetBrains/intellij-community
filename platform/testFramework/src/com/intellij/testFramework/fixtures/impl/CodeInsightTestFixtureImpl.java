@@ -254,11 +254,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     for (InspectionToolProvider provider: providers) {
       for (Class clazz: provider.getInspectionClasses()) {
         try {
-          LocalInspectionTool inspection = (LocalInspectionTool)clazz.getConstructor().newInstance();
-          tools.add(inspection);
+          Object o = clazz.getConstructor().newInstance();
+          if (o instanceof LocalInspectionTool) {
+            LocalInspectionTool inspection = (LocalInspectionTool)o;
+            tools.add(inspection);
+          }
         }
         catch (Exception e) {
-          throw new RuntimeException("Cannot instantiate " + clazz);
+          throw new RuntimeException("Cannot instantiate " + clazz, e);
         }
       }
     }
