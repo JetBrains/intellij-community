@@ -17,10 +17,7 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyReferenceExpression;
-import com.jetbrains.python.psi.impl.PyAssignmentStatementNavigator;
-import com.jetbrains.python.psi.impl.PyCallExpressionNavigator;
-import com.jetbrains.python.psi.impl.PyGlobalStatementNavigator;
-import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
+import com.jetbrains.python.psi.impl.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -96,7 +93,8 @@ public class PyUnboundLocalVariableInspection extends LocalInspectionTool {
               continue;
             }
             // Ingore builtin elements here
-            if ("__builtin__.py".equals(element.getContainingFile().getName())){
+            final String fileName = element.getContainingFile().getName();
+            if (PyBuiltinCache.BUILTIN_FILE.equals(fileName) || PyBuiltinCache.BUILTIN_FILE_3K.equals(fileName)){
               continue;
             }
             if (PyAssignmentStatementNavigator.getStatementByTarget(element)!=null){
