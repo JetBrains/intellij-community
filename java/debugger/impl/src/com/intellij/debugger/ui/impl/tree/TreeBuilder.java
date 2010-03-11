@@ -122,7 +122,10 @@ public abstract class TreeBuilder implements TreeModel {
   }
 
   public void removeNodeFromParent(TreeBuilderNode node) {
-    ((TreeBuilderNode) node.getParent()).remove(node);
+    final TreeBuilderNode parent = (TreeBuilderNode)node.getParent();
+    if (parent != null) {
+      parent.remove(node);
+    }
   }
 
 }
