@@ -218,7 +218,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   }
 
   public AntFile getAntFile() {
-    final PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(myVFile);
+    final PsiFile psiFile = myVFile.isValid()? PsiManager.getInstance(getProject()).findFile(myVFile) : null;
     return psiFile != null? AntSupport.getAntFile(psiFile) : null;
   }
 
@@ -342,10 +342,12 @@ public class AntBuildFileImpl implements AntBuildFileBase {
 
   private void basicUpdateConfig() {
     final AntFile antFile = getAntFile();
-    registerPropertiesInPsi(antFile);
-    bindAnt();
-    myClassloaderHolder.updateClasspath();
-    antFile.clearCachesWithTypeDefinitions();
+    if (antFile != null) {
+      registerPropertiesInPsi(antFile);
+      bindAnt();
+      myClassloaderHolder.updateClasspath();
+      antFile.clearCachesWithTypeDefinitions();
+    }
   }
 
   private void registerPropertiesInPsi(final AntFile antFile) {

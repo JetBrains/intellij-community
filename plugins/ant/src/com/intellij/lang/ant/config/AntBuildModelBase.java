@@ -27,6 +27,7 @@ public interface AntBuildModelBase extends AntBuildModel {
   @Nullable
   BuildTask findTask(final String targetName, final String taskName);
 
+  @Nullable
   AntProject getAntProject();
 
   boolean hasTargetWithActionId(final String id);
