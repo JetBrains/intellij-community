@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,6 +92,11 @@ public class ShowAllSubmittedFilesAction extends AnAction implements DumbAware {
 
   @Nullable
   public static SvnChangeList loadRevisions(final Project project, final SvnFileRevision svnRevision, @Nullable final VirtualFile file) {
+    return loadRevisions(project, svnRevision, file, true);
+  }
+
+  @Nullable
+  public static SvnChangeList loadRevisions(final Project project, final SvnFileRevision svnRevision, @Nullable final VirtualFile file, boolean underProgress) {
     final Ref<SvnChangeList> result = new Ref<SvnChangeList>();
     final SvnRevisionNumber number = ((SvnRevisionNumber)svnRevision.getRevisionNumber());
 
@@ -123,7 +128,7 @@ public class ShowAllSubmittedFilesAction extends AnAction implements DumbAware {
         }
       }
 
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      final Runnable process = new Runnable() {
         public void run() {
           try {
 
@@ -138,13 +143,18 @@ public class ShowAllSubmittedFilesAction extends AnAction implements DumbAware {
             }
 
             ProgressManager.getInstance().getProgressIndicator().setText(SvnBundle.message("progress.text.processing.changes"));
-            result.set(new SvnChangeList(vcs, location, logEntry [0], repositoryUrl.toString()));
+            result.set(new SvnChangeList(vcs, location, logEntry[0], repositoryUrl.toString()));
           }
           catch (Exception e) {
             ex[0] = e;
           }
         }
-      }, getTitle(targetRevision.getNumber()), false, project);
+      };
+      if (underProgress) {
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(process, getTitle(targetRevision.getNumber()), false, project);
+      } else {
+        process.run();
+      }
       if (ex[0] != null) throw ex[0];
     }
     catch (Exception e1) {
