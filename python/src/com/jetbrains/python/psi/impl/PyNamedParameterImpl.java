@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Set;
 
 /**
  * @author yole
@@ -120,10 +121,12 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
       final PyParameter[] params = parameterList.getParameters();
       if (parameterList.getParent() instanceof PyFunction) {
         PyFunction func = (PyFunction) parameterList.getParent();
-        if (params [0] == this) { // must be 'self'
+        final Set<PyFunction.Flag> flags = PyUtil.detectDecorationsAndWrappersOf(func);
+        if (params [0] == this && !flags.contains(PyFunction.Flag.CLASSMETHOD) && !flags.contains(PyFunction.Flag.STATICMETHOD)) {
+          // must be 'self'
           final PyClass containingClass = func.getContainingClass();
           if (containingClass != null) {
-            return new PyClassType(containingClass, false); // TODO: check for @classmethod or @staticmethod node above us  
+            return new PyClassType(containingClass, false);
           }
         }
         if (isKeywordContainer()) {
