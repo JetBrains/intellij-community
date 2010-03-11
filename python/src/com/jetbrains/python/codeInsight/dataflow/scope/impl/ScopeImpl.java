@@ -5,6 +5,7 @@ import com.intellij.codeInsight.dataflow.DFAEngine;
 import com.intellij.codeInsight.dataflow.DFAMap;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.PyReachingDefsDfaInstance;
 import com.jetbrains.python.codeInsight.dataflow.PyReachingDefsSemilattice;
@@ -84,9 +85,9 @@ public class ScopeImpl implements Scope {
 
   private Set<String> computeAllNames() {
     final Set<String> names = new HashSet<String>();
-    for (DFAMap<ScopeVariable> map : computeScopeVariables()) {
-      for (Map.Entry<String, ScopeVariable> entry : map.entrySet()) {
-        names.add(entry.getKey());
+    for (Instruction instruction : myFlow) {
+      if (instruction instanceof ReadWriteInstruction && ((ReadWriteInstruction)instruction).getAccess().isWriteAccess()){
+        names.add(((ReadWriteInstruction)instruction).getName());
       }
     }
     return names;
