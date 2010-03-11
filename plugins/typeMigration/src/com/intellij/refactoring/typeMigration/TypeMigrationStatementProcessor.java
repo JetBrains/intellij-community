@@ -203,7 +203,8 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
     final PsiExpression value = statement.getIteratedValue();
     final PsiParameter psiParameter = statement.getIterationParameter();
     if (value != null) {
-      PsiType psiType = myTypeEvaluator.evaluateType(value);
+      final TypeView typeView = new TypeView(value);
+      PsiType psiType = typeView.getType();
       if (psiType instanceof PsiArrayType) {
         psiType = ((PsiArrayType)psiType).getComponentType();
       }
@@ -214,7 +215,10 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
         final PsiClass iterableClass =
             JavaPsiFacade.getInstance(project).findClass("java.lang.Iterable", GlobalSearchScope.allScope(project));
         if (iterableClass == null) return;
-        if (!InheritanceUtil.isInheritorOrSelf(psiClass, iterableClass, true)) return;
+        if (!InheritanceUtil.isInheritorOrSelf(psiClass, iterableClass, true)) {
+          findConversionOrFail(value, value, typeView.getTypePair());
+          return;
+        }
         final PsiSubstitutor iterableParamSubstitutor =
             TypeConversionUtil.getClassSubstitutor(iterableClass, psiClass, PsiSubstitutor.EMPTY);
         LOG.assertTrue(iterableParamSubstitutor != null);

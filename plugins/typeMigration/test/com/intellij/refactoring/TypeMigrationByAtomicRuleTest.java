@@ -42,6 +42,11 @@ public class TypeMigrationByAtomicRuleTest extends TypeMigrationTestBase{
                     myJavaFacade.getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicReference<java.lang.String>", null));
   }
 
+  public void testDirectForeach() throws Exception {
+    doTestFieldType("lst", myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.lang.String>", null),
+                    myJavaFacade.getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicReference<java.util.List<java.lang.String>>", null));
+  }
+
   public void testDirectStringArray() throws Exception {
     doTestFieldType("s", myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null).createArrayType(),
                     myJavaFacade.getElementFactory().createTypeFromText(AtomicReferenceArray.class.getName() + "<java.lang.String>", null));
