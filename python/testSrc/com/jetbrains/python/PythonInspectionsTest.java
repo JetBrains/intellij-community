@@ -28,6 +28,7 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
     }
     finally {
       PythonLanguageLevelPusher.FORCE_LANGUAGE_LEVEL = null;
+      PythonLanguageLevelPusher.pushLanguageLevel(myFixture.getProject());
     }
   }
 
