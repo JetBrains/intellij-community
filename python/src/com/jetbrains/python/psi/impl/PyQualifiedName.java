@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -24,6 +25,19 @@ public class PyQualifiedName {
     for (PyReferenceExpression component : components) {
       myComponents.add(component.getReferencedName());
     }
+  }
+
+  public static PyQualifiedName fromComponents(String... components) {
+    PyQualifiedName result = new PyQualifiedName(components.length);
+    Collections.addAll(result.myComponents, components);
+    return result;
+  }
+
+  public PyQualifiedName append(String name) {
+    PyQualifiedName result = new PyQualifiedName(myComponents.size()+1);
+    result.myComponents.addAll(myComponents);
+    result.myComponents.add(name);
+    return result;
   }
 
   public List<String> getComponents() {

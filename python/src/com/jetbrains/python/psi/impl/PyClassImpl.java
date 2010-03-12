@@ -201,10 +201,13 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       for (String component : qualifiedName.getComponents()) {
         PsiElement element = currentParent.getElementNamed(component);
         element = PyReferenceExpressionImpl.turnDirIntoInit(element);
+        if (element instanceof PyImportElement) {
+          element = ResolveImportUtil.resolveImportElement((PyImportElement) element);
+        }
         if (!(element instanceof NameDefiner)) {
           return null;
         }
-        currentParent = (NameDefiner) element;
+        currentParent = (NameDefiner)element;
       }
 
       if (!(currentParent instanceof PyClass)) {

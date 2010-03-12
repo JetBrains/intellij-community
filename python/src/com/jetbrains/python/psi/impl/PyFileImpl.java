@@ -188,25 +188,52 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
         if (child instanceof NamedStub && name.equals(((NamedStub)child).getName())) {
           return ((NamedStub) child).getPsi();
         }
-        else if (child instanceof PyFromImportStatementStub && ((PyFromImportStatementStub)child).isStarImport()) {
-          final PyFromImportStatement statement = ((PyFromImportStatementStub)child).getPsi();
-          PsiElement starImportSource = ResolveImportUtil.resolveFromImportStatementSource(statement);
-          if (starImportSource != null) {
-            starImportSource = PyReferenceExpressionImpl.turnDirIntoInit(starImportSource);
-            if (starImportSource instanceof PyFile) {
-              final PsiElement result = ((PyFile)starImportSource).getElementNamed(name);
-              if (result != null) {
-                return result;
+        else if (child instanceof PyFromImportStatementStub) {
+          if (((PyFromImportStatementStub)child).isStarImport()) {
+            final PyFromImportStatement statement = ((PyFromImportStatementStub)child).getPsi();
+            PsiElement starImportSource = ResolveImportUtil.resolveFromImportStatementSource(statement);
+            if (starImportSource != null) {
+              starImportSource = PyReferenceExpressionImpl.turnDirIntoInit(starImportSource);
+              if (starImportSource instanceof PyFile) {
+                final PsiElement result = ((PyFile)starImportSource).getElementNamed(name);
+                if (result != null) {
+                  return result;
+                }
+              }
+            }
+          }
+          else {
+            final List<StubElement> importElements = ((StubElement)child).getChildrenStubs();
+            for (StubElement importElement : importElements) {
+              final PsiElement psi = importElement.getPsi();
+              if (psi instanceof PyImportElement && name.equals(((PyImportElement)psi).getVisibleName())) {
+                return psi;
               }
             }
           }
         }
-        else if (child instanceof PyFromImportStatementStub || child instanceof PyImportStatementStub) {
+        else if (child instanceof PyImportStatementStub) {
           final List<StubElement> importElements = ((StubElement)child).getChildrenStubs();
-          for (StubElement importElement : importElements) {
-            final PsiElement psi = importElement.getPsi();
-            if (psi instanceof PyImportElement && name.equals(((PyImportElement)psi).getVisibleName())) {
-              return psi;
+          for (StubElement importElementStub : importElements) {
+            final PsiElement psi = importElementStub.getPsi();
+            if (psi instanceof PyImportElement) {
+              final PyImportElement importElement = (PyImportElement)psi;
+              final String asName = importElement.getAsName();
+              if (asName != null && asName.equals(name)) {
+                return psi;
+              }
+              final PyQualifiedName qName = importElement.getImportedQName();
+              if (qName != null && qName.getComponentCount() > 0) {
+                if (qName.getComponents().get(0).equals(name)) {
+                  if (qName.getComponentCount() == 1) {
+                    return psi;
+                  }
+                  return new PyImportedModule(this, PyQualifiedName.fromComponents(name));
+                }
+                if (name.equals(((PyImportElement)psi).getVisibleName())) {
+                  return psi;
+                }
+              }
             }
           }
         }
