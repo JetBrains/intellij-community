@@ -113,18 +113,10 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     return null;
   }
 
-  private List<MavenProject> extractProjectNodes() {
-    List<MavenProject> result = new ArrayList<MavenProject>();
-    for (MavenProjectsStructure.ProjectNode each : getSelectedProjectNodes()) {
-      result.add(each.getMavenProject());
-    }
-    return result.isEmpty() ? null : result;
-  }
-
   private VirtualFile extractVirtualFile() {
     for (MavenProjectsStructure.MavenSimpleNode each : getSelectedNodes(MavenProjectsStructure.MavenSimpleNode.class)) {
       VirtualFile file = each.getVirtualFile();
-      if (file != null) return file;
+      if (file != null && file.isValid()) return file;
     }
 
     final MavenProjectsStructure.ProjectNode projectNode = getContextProjectNode();
@@ -138,7 +130,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     final List<VirtualFile> files = new ArrayList<VirtualFile>();
     for (MavenProjectsStructure.MavenSimpleNode each : getSelectedNodes(MavenProjectsStructure.MavenSimpleNode.class)) {
       VirtualFile file = each.getVirtualFile();
-      if (file != null) files.add(file);
+      if (file != null && file.isValid()) files.add(file);
     }
     return files.isEmpty() ? null : VfsUtil.toVirtualFileArray(files);
   }
