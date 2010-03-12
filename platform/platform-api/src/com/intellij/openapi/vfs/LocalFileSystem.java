@@ -16,7 +16,6 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.util.Processor;
 import com.intellij.util.io.fs.IFile;
@@ -33,13 +32,12 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   @NonNls public static final String PROTOCOL = "file";
   @NonNls public static final String PROTOCOL_PREFIX = PROTOCOL + "://";
 
-  private static LocalFileSystem ourInstance = CachedSingletonsRegistry.markCachedField(LocalFileSystem.class);
+  private static class LocalFileSystemHolder {
+    private static final LocalFileSystem ourInstance = ApplicationManager.getApplication().getComponent(LocalFileSystem.class);
+  }
 
   public static LocalFileSystem getInstance() {
-    if (ourInstance == null) {
-      ourInstance = ApplicationManager.getApplication().getComponent(LocalFileSystem.class);
-    }
-    return ourInstance;
+    return LocalFileSystemHolder.ourInstance;
   }
 
   @Nullable
