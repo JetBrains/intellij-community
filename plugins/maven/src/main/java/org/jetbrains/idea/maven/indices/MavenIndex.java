@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.*;
 import gnu.trove.THashMap;
@@ -264,12 +265,10 @@ public class MavenIndex {
     return myKind;
   }
 
-  public boolean isForLocal(String repositoryId, File repository) {
-    return myKind == Kind.LOCAL && myRepositoryId.equals(repositoryId) && getRepositoryFile().equals(repository);
-  }
-
-  public boolean isForRemote(String repositoryId, String url) {
-    return myKind == Kind.REMOTE && myRepositoryId.equals(repositoryId) && getRepositoryUrl().equalsIgnoreCase(normalizePathOrUrl(url));
+  public boolean isFor(Kind kind, String repositoryId, String pathOrUrl) {
+    if (myKind != kind || !myRepositoryId.equals(repositoryId)) return false;
+    if (kind == Kind.LOCAL) return FileUtil.pathsEqual(myRepositoryPathOrUrl, normalizePathOrUrl(pathOrUrl));
+    return myRepositoryPathOrUrl.equalsIgnoreCase(normalizePathOrUrl(pathOrUrl));
   }
 
   public synchronized long getUpdateTimestamp() {

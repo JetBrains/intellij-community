@@ -104,16 +104,8 @@ public class MavenIndices {
   }
 
   public MavenIndex find(String repositoryId, String repositoryPathOrUrl, MavenIndex.Kind kind) {
-    File file = kind == MavenIndex.Kind.LOCAL ? new File(repositoryPathOrUrl.trim()) : null;
     for (MavenIndex each : myIndices) {
-      switch (kind) {
-        case LOCAL:
-          if (each.isForLocal(repositoryId, file)) return each;
-          break;
-        case REMOTE:
-          if (each.isForRemote(repositoryId, repositoryPathOrUrl)) return each;
-          break;
-      }
+      if (each.isFor(kind, repositoryId, repositoryPathOrUrl)) return each;
     }
     return null;
   }
