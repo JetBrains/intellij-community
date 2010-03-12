@@ -2,6 +2,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.ResolveState;
@@ -142,8 +143,13 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       ancestor = stub != null ? ((StubBasedPsiElement) ancestor).getStub().getParentStub().getPsi() : ancestor.getParent();
     }
 
-    final String packageName = ResolveImportUtil.findShortestImportableName(this, ((PsiFile)ancestor).getVirtualFile());
-    return packageName + "." + name;
+    PsiFile psiFile = ((PsiFile) ancestor).getOriginalFile();
+    VirtualFile vFile = psiFile.getVirtualFile();
+    if (vFile != null) {
+      final String packageName = ResolveImportUtil.findShortestImportableName(this, vFile);
+      return packageName + "." + name;
+    }
+    return name;
   }
 
   protected List<PyClass> getSuperClassesList() {

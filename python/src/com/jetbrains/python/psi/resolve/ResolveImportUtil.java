@@ -779,7 +779,7 @@ public class ResolveImportUtil {
    * the name with fewest qualifiers is selected.
    */
   @Nullable
-  public static String findShortestImportableName(PsiElement foothold, VirtualFile vfile) {
+  public static String findShortestImportableName(PsiElement foothold, @NotNull VirtualFile vfile) {
     PathChoosingVisitor visitor = new PathChoosingVisitor(vfile);
     visitRoots(foothold, visitor);
     return visitor.getResult();
