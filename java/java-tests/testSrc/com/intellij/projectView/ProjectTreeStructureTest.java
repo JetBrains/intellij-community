@@ -12,7 +12,7 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
                                   " PsiFile(plain text):Form2.form\n");
   }
 
-  public void testStandardProviders() {
+  public void _testStandardProviders() {
     useStandardProviders();
 
     assertStructureEqual(getPackageDirectory(), "PsiDirectory: package1\n" +
