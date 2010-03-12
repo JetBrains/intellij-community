@@ -20,11 +20,13 @@ public class MethodFilter extends JavaElementVisitor implements NodeFilter {
 
   private MethodFilter() {}
 
-  public static NodeFilter getInstance() {
-    if (instance==null) instance = new MethodFilter();
-    return instance;
+  private static class NodeFilterHolder {
+    private static final NodeFilter instance = new MethodFilter();
   }
-  private static NodeFilter instance;
+
+  public static NodeFilter getInstance() {
+    return NodeFilterHolder.instance;
+  }
 
   public boolean accepts(PsiElement element) {
     result = false;

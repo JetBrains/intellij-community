@@ -27,11 +27,12 @@ public class TypedSymbolNodeFilter extends JavaElementVisitor implements NodeFil
     // we need this since TypeParameter instanceof PsiClass (?)
   }
 
-  private static NodeFilter instance;
+  private static class NodeFilterHolder {
+    private static final NodeFilter instance = new TypedSymbolNodeFilter();
+  }
 
   public static NodeFilter getInstance() {
-    if (instance==null) instance = new TypedSymbolNodeFilter();
-    return instance;
+    return NodeFilterHolder.instance;
   }
 
   private TypedSymbolNodeFilter() {

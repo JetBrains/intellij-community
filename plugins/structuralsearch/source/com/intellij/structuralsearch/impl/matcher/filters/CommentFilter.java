@@ -31,11 +31,12 @@ public class CommentFilter extends JavaElementVisitor implements NodeFilter {
     result = true;
   }
 
-  private static NodeFilter instance;
+  private static class NodeFilterHolder {
+    private static final NodeFilter instance = new CommentFilter();
+  }
 
   public static NodeFilter getInstance() {
-    if (instance==null) instance = new CommentFilter();
-    return instance;
+    return NodeFilterHolder.instance;
   }
 
   private CommentFilter() {

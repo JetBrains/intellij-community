@@ -23,11 +23,12 @@ public class ClassFilter extends JavaElementVisitor implements NodeFilter {
     result = true;
   }
 
-  private static NodeFilter instance;
+  private static class NodeFilterHolder {
+    private static final NodeFilter instance = new ClassFilter();
+  }
 
   public static NodeFilter getInstance() {
-    if (instance==null) instance = new ClassFilter();
-    return instance;
+    return NodeFilterHolder.instance;
   }
 
   private ClassFilter() {

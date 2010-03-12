@@ -21,8 +21,6 @@ public class PredefinedConfiguration extends Configuration {
   private static final String GENERICS_TYPE = SSRBundle.message("generics.category");
   private static final String HTML_XML = SSRBundle.message("xml_html.category");
 
-  private static PredefinedConfiguration[] infos;
-
   private final Configuration configuration;
   private final String category;
   static final Object USER_DEFINED_TYPE = SSRBundle.message("user.defined.category");
@@ -61,12 +59,13 @@ public class PredefinedConfiguration extends Configuration {
     return configuration;
   }
 
-  static PredefinedConfiguration[] getPredefinedTemplates() {
-    if (infos == null) {
-      infos = createPredefinedTemplates();
-    }
+  private static class PredefinedConfigurationHolder {
+    private static final PredefinedConfiguration[] infos = createPredefinedTemplates();
+  }
 
-    return infos;
+  static PredefinedConfiguration[] getPredefinedTemplates() {
+
+    return PredefinedConfigurationHolder.infos;
   }
 
   private static PredefinedConfiguration[] createPredefinedTemplates() {

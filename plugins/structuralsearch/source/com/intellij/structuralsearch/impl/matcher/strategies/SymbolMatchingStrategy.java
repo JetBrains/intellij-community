@@ -43,10 +43,12 @@ public class SymbolMatchingStrategy extends ExprMatchingStrategy {
   }
 
   private SymbolMatchingStrategy() {}
-  private static SymbolMatchingStrategy instance;
+
+  private static class SymbolMatchingStrategyHolder {
+    private static final SymbolMatchingStrategy instance = new SymbolMatchingStrategy();
+  }
 
   public static MatchingStrategy getInstance() {
-    if (instance==null) instance = new SymbolMatchingStrategy();
-    return instance;
+    return SymbolMatchingStrategyHolder.instance;
   }
 }

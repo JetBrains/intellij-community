@@ -21,10 +21,12 @@ public final class JavaDocMatchingStrategy extends MatchingStrategyBase {
   }
 
   private JavaDocMatchingStrategy() {}
-  private static JavaDocMatchingStrategy instance;
+
+  private static class JavaDocMatchingStrategyHolder {
+    private static final JavaDocMatchingStrategy instance = new JavaDocMatchingStrategy();
+  }
 
   public static MatchingStrategy getInstance() {
-    if (instance==null) instance = new JavaDocMatchingStrategy();
-    return instance;
+    return JavaDocMatchingStrategyHolder.instance;
   }
 }

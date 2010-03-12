@@ -13,7 +13,6 @@ import com.intellij.psi.xml.XmlText;
  * To change this template use File | Settings | File Templates.
  */
 public class TagValueFilter extends XmlElementVisitor implements NodeFilter {
-  private static NodeFilter instance;
   private boolean result;
 
   @Override public void visitXmlText(XmlText text) {
@@ -24,9 +23,12 @@ public class TagValueFilter extends XmlElementVisitor implements NodeFilter {
     result = true;
   }
 
+  private static class NodeFilterHolder {
+    private static final NodeFilter instance = new TagValueFilter();
+  }
+
   public static NodeFilter getInstance() {
-    if (instance==null) instance = new TagValueFilter();
-    return instance;
+    return NodeFilterHolder.instance;
   }
 
   private TagValueFilter() {

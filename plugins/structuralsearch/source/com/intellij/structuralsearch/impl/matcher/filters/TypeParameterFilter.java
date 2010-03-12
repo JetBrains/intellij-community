@@ -29,11 +29,13 @@ public class TypeParameterFilter extends JavaElementVisitor implements NodeFilte
 
   private TypeParameterFilter() {}
 
-  public static NodeFilter getInstance() {
-    if (instance==null) instance = new TypeParameterFilter();
-    return instance;
+  private static class NodeFilterHolder {
+    private static final NodeFilter instance = new TypeParameterFilter();
   }
-  private static NodeFilter instance;
+
+  public static NodeFilter getInstance() {
+    return NodeFilterHolder.instance;
+  }
 
   public boolean accepts(PsiElement element) {
     result = false;

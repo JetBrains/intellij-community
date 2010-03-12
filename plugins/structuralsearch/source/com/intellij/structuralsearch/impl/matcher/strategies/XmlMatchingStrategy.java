@@ -20,11 +20,13 @@ public class XmlMatchingStrategy extends XmlElementVisitor implements MatchingSt
   }
 
   protected XmlMatchingStrategy() {}
-  private static XmlMatchingStrategy instance;
+
+  private static class XmlMatchingStrategyHolder {
+    private static final XmlMatchingStrategy instance = new XmlMatchingStrategy();
+  }
 
   public static MatchingStrategy getInstance() {
-    if (instance==null) instance = new XmlMatchingStrategy();
-    return instance;
+    return XmlMatchingStrategyHolder.instance;
   }
 
   public boolean accepts(PsiElement element) {

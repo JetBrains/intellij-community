@@ -27,11 +27,12 @@ public class DeclarationFilter extends JavaElementVisitor implements NodeFilter 
     result = true;
   }
 
-  private static NodeFilter instance;
+  private static class NodeFilterHolder {
+    private static final NodeFilter instance = new DeclarationFilter();
+  }
 
   public static NodeFilter getInstance() {
-    if (instance==null) instance = new DeclarationFilter();
-    return instance;
+    return NodeFilterHolder.instance;
   }
 
   private DeclarationFilter() {

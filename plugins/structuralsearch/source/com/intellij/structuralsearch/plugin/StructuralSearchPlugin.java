@@ -64,12 +64,15 @@ public final class StructuralSearchPlugin implements ProjectComponent, JDOMExter
   }
 
   // Simple logging facility
-  private static Logger logger;
 
   // Logs given string to IDEA logger
+
+  private static class LoggerHolder {
+    private static final Logger logger = Logger.getInstance("Structural search");
+  }
+
   public static void debug(String str) {
-    if (logger==null) logger = Logger.getInstance("Structural search");
-    logger.info(str);
+    LoggerHolder.logger.info(str);
   }
 
   public void readExternal(org.jdom.Element element) {

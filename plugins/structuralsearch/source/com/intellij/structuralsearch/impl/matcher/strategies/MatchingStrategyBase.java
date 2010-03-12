@@ -30,11 +30,13 @@ public class MatchingStrategyBase extends JavaElementVisitor implements Matching
   }
 
   protected MatchingStrategyBase() {}
-  private static MatchingStrategyBase instance;
+
+  private static class MatchingStrategyBaseHolder {
+    private static final MatchingStrategyBase instance = new MatchingStrategyBase();
+  }
 
   public static MatchingStrategy getInstance() {
-    if (instance==null) instance = new MatchingStrategyBase();
-    return instance;
+    return MatchingStrategyBaseHolder.instance;
   }
 
   public boolean accepts(PsiElement element) {

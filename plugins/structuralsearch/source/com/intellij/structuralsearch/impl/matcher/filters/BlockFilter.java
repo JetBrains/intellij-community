@@ -30,10 +30,12 @@ public class BlockFilter extends JavaElementVisitor implements NodeFilter {
   private BlockFilter() {
   }
 
-  public static NodeFilter getInstance() {
-    if (instance == null) instance = new BlockFilter();
-    return instance;
+  private static class NodeFilterHolder {
+    private static final NodeFilter instance = new BlockFilter();
   }
 
-  private static NodeFilter instance;
+  public static NodeFilter getInstance() {
+    return NodeFilterHolder.instance;
+  }
+
 }

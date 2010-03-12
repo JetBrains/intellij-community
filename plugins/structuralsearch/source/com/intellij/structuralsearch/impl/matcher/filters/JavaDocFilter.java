@@ -19,11 +19,12 @@ public class JavaDocFilter implements NodeFilter {
       element instanceof PsiDocComment;
   }
 
-  private static NodeFilter instance;
+  private static class NodeFilterHolder {
+    private static final NodeFilter instance = new JavaDocFilter();
+  }
 
   public static NodeFilter getInstance() {
-    if (instance==null) instance = new JavaDocFilter();
-    return instance;
+    return NodeFilterHolder.instance;
   }
 
   private JavaDocFilter() {

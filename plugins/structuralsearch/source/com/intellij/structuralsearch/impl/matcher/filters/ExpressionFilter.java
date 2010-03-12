@@ -19,11 +19,12 @@ public class ExpressionFilter extends JavaElementVisitor implements NodeFilter {
     result = true;
   }
 
-  private static NodeFilter instance;
+  private static class NodeFilterHolder {
+    private static final NodeFilter instance = new ExpressionFilter();
+  }
 
   public static NodeFilter getInstance() {
-    if (instance==null) instance = new ExpressionFilter();
-    return instance;
+    return NodeFilterHolder.instance;
   }
 
   private ExpressionFilter() {

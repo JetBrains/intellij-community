@@ -40,10 +40,12 @@ public class ExprMatchingStrategy extends MatchingStrategyBase {
   }
 
   protected ExprMatchingStrategy() {}
-  private static ExprMatchingStrategy instance;
+
+  private static class ExprMatchingStrategyHolder {
+    private static final ExprMatchingStrategy instance = new ExprMatchingStrategy();
+  }
 
   public static MatchingStrategy getInstance() {
-    if (instance==null) instance = new ExprMatchingStrategy();
-    return instance;
+    return ExprMatchingStrategyHolder.instance;
   }
 }

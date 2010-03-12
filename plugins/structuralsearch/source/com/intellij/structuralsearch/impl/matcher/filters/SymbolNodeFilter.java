@@ -52,11 +52,12 @@ public class SymbolNodeFilter extends JavaElementVisitor implements NodeFilter {
     result = true;
   }
 
-  private static NodeFilter instance;
+  private static class NodeFilterHolder {
+    private static final NodeFilter instance = new SymbolNodeFilter();
+  }
 
   public static NodeFilter getInstance() {
-    if (instance==null) instance = new SymbolNodeFilter();
-    return instance;
+    return NodeFilterHolder.instance;
   }
 
   private SymbolNodeFilter() {

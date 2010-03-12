@@ -26,10 +26,12 @@ public final class CommentMatchingStrategy extends MatchingStrategyBase {
   }
 
   private CommentMatchingStrategy() {}
-  private static CommentMatchingStrategy instance;
+
+  private static class CommentMatchingStrategyHolder {
+    private static final CommentMatchingStrategy instance = new CommentMatchingStrategy();
+  }
 
   public static MatchingStrategy getInstance() {
-    if (instance==null) instance = new CommentMatchingStrategy();
-    return instance;
+    return CommentMatchingStrategyHolder.instance;
   }
 }
