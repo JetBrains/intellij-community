@@ -50,6 +50,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.TreeSpeedSearch;
 import com.sun.jdi.*;
@@ -500,6 +501,20 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
           descriptor = myNodeManager.getStaticDescriptor(stackDescriptor, type);
         }
         myChildren.add(myNodeManager.createNode(descriptor, evaluationContext));
+
+        if (thisObjectReference != null && evaluationContext.getDebugProcess().getVirtualMachineProxy().canGetSyntheticAttribute())  {
+          final ReferenceType thisRefType = thisObjectReference.referenceType();
+          if (thisRefType instanceof ClassType) {
+            final ClassType clsType = (ClassType)thisRefType;
+            for (Field field : clsType.fields()) {
+              if (field.isSynthetic() && StringUtil.startsWith(field.name(), FieldDescriptorImpl.OUTER_LOCAL_VAR_FIELD_PREFIX)) {
+                final FieldDescriptorImpl fieldDescriptor = myNodeManager.getFieldDescriptor(stackDescriptor, thisObjectReference, field);
+                myChildren.add(myNodeManager.createNode(fieldDescriptor, evaluationContext));
+              }
+            }
+          }
+        }
+
         try {
           buildVariables(stackDescriptor, evaluationContext);
           if (NodeRendererSettings.getInstance().getClassRenderer().SORT_ASCENDING) {
