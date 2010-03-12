@@ -549,17 +549,15 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
 
   @Nullable
-  private static String generateExternalJavadoc(final PsiElement element, String fromUrl, boolean checkCompiled, JavaDocExternalFilter filter) {
-    if (!checkCompiled || element instanceof PsiCompiledElement) {
-      try {
-        String externalDoc = filter.getExternalDocInfoForElement(fromUrl, element);
-        if (externalDoc != null && externalDoc.length() > 0) {
-          return externalDoc;
-        }
+  private static String fetchExternalJavadoc(final PsiElement element, String fromUrl, JavaDocExternalFilter filter) {
+    try {
+      String externalDoc = filter.getExternalDocInfoForElement(fromUrl, element);
+      if (externalDoc != null && externalDoc.length() > 0) {
+        return externalDoc;
       }
-      catch (Exception e) {
-        //try to generate some javadoc
-      }
+    }
+    catch (Exception e) {
+      //try to generate some javadoc
     }
     return null;
   }
@@ -762,7 +760,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     if (docURLs != null) {
       for (String docURL : docURLs) {
         try {
-          final String javadoc = generateExternalJavadoc(element, docURL, true, docFilter);
+          final String javadoc = fetchExternalJavadoc(element, docURL, docFilter);
           if (javadoc != null) return javadoc;
         }
         catch (IndexNotReadyException e) {
