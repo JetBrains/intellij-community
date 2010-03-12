@@ -60,6 +60,8 @@ public class DFAEngine<E> {
     final boolean forward = myDfa.isForward();
     final int[] order = ControlFlowUtil.postOrder(myFlow);
 
+// Count limit for number of iterations per worklist
+    final int limit = getIterationLimit(forward);
     int dfaCount = 0;
     final long startTime = System.nanoTime();
 
@@ -74,6 +76,8 @@ public class DFAEngine<E> {
         break;
       }
 
+      // Iteration count per one worklist
+      int count = 0;
       final Instruction instruction = myFlow[order[i]];
       final int number = instruction.num();
 
@@ -82,8 +86,17 @@ public class DFAEngine<E> {
         worklist.add(instruction);
         visited[number] = true;
 
+        // It is essential to apply this check!!!
+        // This gives us more chances that resulting info will be closer to expected result
+        // Also it is used as indicator that "equals" method is implemented correctly in E
         while (true) {
-          dfaCount++;
+          count++;
+          if (count > limit){
+             if (LOG.isDebugEnabled()){
+               LOG.debug("Iteration count exceeded on worklist");
+             }
+             break;
+          }
 
           final Instruction currentInstruction = worklist.poll();
           if (currentInstruction == null) {
@@ -113,6 +126,7 @@ public class DFAEngine<E> {
       } else {
         i--;
       }
+      dfaCount += count;
     }
     if (LOG.isDebugEnabled()){
       LOG.debug("Done in: " + (System.nanoTime() - startTime)/10e6 + "ms. Ratio: " + dfaCount / myFlow.length);
@@ -120,6 +134,19 @@ public class DFAEngine<E> {
     return info;
   }
 
+
+  /**
+   * Count limit for dfa number of iterations.
+   * Every node in dfa should be processed <= pred times * 2
+   * Multiplier 2 is because of cycles.
+   */
+  private int getIterationLimit(final boolean forward) {
+    int allPred = myFlow.length;
+    for (Instruction instruction : myFlow) {
+      allPred += forward ? instruction.allPred().size() : instruction.allSucc().size();
+    }
+    return allPred * 2;
+  }
 
   private DFAMap<E> join(final Instruction instruction, final List<DFAMap<E>> info) {
     final Iterable<? extends Instruction> prev = myDfa.isForward() ? instruction.allPred() : instruction.allSucc();
