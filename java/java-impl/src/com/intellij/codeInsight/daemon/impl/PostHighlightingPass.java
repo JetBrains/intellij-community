@@ -55,14 +55,12 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.PsiClassImplUtil;
-import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.cache.CacheManager;
+import com.intellij.psi.impl.search.PsiSearchHelperImpl;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatement;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspSpiUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -523,23 +521,16 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     if (name == null) return false;
     SearchScope useScope = member.getUseScope();
     if (!(useScope instanceof GlobalSearchScope)) return false;
-    final int[] count = {0};
     GlobalSearchScope scope = (GlobalSearchScope)useScope;
     // some classes may have references from within XML outside dependent modules, e.g. our actions
     if (member instanceof PsiClass) scope = scope.uniteWith(GlobalSearchScope.projectScope(myProject));
 
-    CacheManager cacheManager = ((PsiManagerEx)myFile.getManager()).getCacheManager();
-    if (!cacheManager.processFilesWithWord(new Processor<PsiFile>() {
-      public boolean process(PsiFile file) {
-        if (file == myFile) return true;
-        count[0]++;
-        return count[0] <= 10;
-      }
-    }, name, UsageSearchContext.ANY, scope, true)) return false;
+    PsiSearchHelperImpl.Result cheapEnough = ((PsiSearchHelperImpl)myFile.getManager().getSearchHelper()).isItCheapEnoughToSearch(myFile, name, scope);
+    if (cheapEnough == PsiSearchHelperImpl.Result.TOO_MANY_OCCURRENCES) return false;
 
     //search usages if it cheap
     //if count is 0 there is no usages since we've called myRefCountHolder.isReferenced() before
-    if (count[0] == 0 && !canbeReferencedViaWeirdNames(member)) return true;
+    if (cheapEnough == PsiSearchHelperImpl.Result.ZERO_OCCURRENCES && !canbeReferencedViaWeirdNames(member)) return true;
 
     Query<PsiReference> query = member instanceof PsiMethod
                                 ? MethodReferencesSearch.search((PsiMethod)member, scope, true)
