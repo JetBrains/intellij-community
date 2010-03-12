@@ -15,10 +15,11 @@
  */
 package com.intellij.openapi.fileChooser.ex;
 
-import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDialog;
+import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.ui.DocumentAdapter;
@@ -159,5 +160,19 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
   protected void setOKActionEnabled(boolean isEnabled) {
     //double check. FileChooserFactoryImpl sets enable ok button 
     super.setOKActionEnabled(isFileNameExist());
+  }
+
+  @Override
+  protected void doOKAction() {
+    final File file = getFile();
+    if (file != null && file.exists()) {
+      if (OK_EXIT_CODE != Messages.showYesNoDialog(this.getRootPane(),
+                                                  UIBundle.message("file.chooser.save.dialog.confirmation", file.getName()),
+                                                  UIBundle.message("file.chooser.save.dialog.confirmation.title"),
+                                                  Messages.getWarningIcon())) {
+        return;
+      }
+    }
+    super.doOKAction();
   }
 }
