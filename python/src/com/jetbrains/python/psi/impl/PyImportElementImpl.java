@@ -212,15 +212,15 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
     String asName = getAsName();
     if (asName != null) {
       if (!Comparing.equal(the_name, asName)) return null;
+      return ResolveImportUtil.resolveImportElement(this);
     }
     else {
       final PyQualifiedName qName = getImportedQName();
-      if (qName == null || !qName.matches(the_name)) {
+      if (qName == null || qName.getComponentCount() == 0 || !qName.getComponents().get(0).equals(the_name)) {
         return null;
       }
+      return ResolveImportUtil.resolveImportElement(this, PyQualifiedName.fromComponents(the_name));
     }
-
-    return ResolveImportUtil.resolveImportElement(this);
   }
 
   public boolean mustResolveOutside() {

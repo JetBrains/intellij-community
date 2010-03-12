@@ -160,6 +160,18 @@ public class PyMultiFileResolveTest extends PyLightFixtureTestCase {
     assertEquals("copy", ((PyFunction) element).getName());
   }
 
+  public void testNestedPackage() throws Exception {
+    PsiElement element = doResolve();
+    assertTrue(element instanceof PyFile);
+    assertEquals("__init__.py", ((PyFile) element).getName());
+  }
+
+  public void testNestedPackageElement() throws Exception {
+    PsiElement element = doResolve();
+    assertTrue(element instanceof PyFile);
+    assertEquals("__init__.py", ((PyFile) element).getName());
+  }
+
   private PsiFile prepareFile() throws Exception {
     String testName = getTestName(true);
     String fileName = getTestName(false) + ".py";

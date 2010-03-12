@@ -87,7 +87,11 @@ public class ResolveImportUtil {
 
   @Nullable
   public static PsiElement resolveImportElement(PyImportElement import_element) {
-    final PyQualifiedName qName = import_element.getImportedQName();
+    return resolveImportElement(import_element, import_element.getImportedQName());
+  }
+
+  @Nullable
+  public static PsiElement resolveImportElement(PyImportElement import_element, final PyQualifiedName qName) {
     if (qName == null) {
       return null;
     }
@@ -138,7 +142,7 @@ public class ResolveImportUtil {
     final PsiElement parent = PsiTreeUtil.getParentOfType(importRef, PyImportElement.class, PyFromImportStatement.class); //importRef.getParent();
     if (parent instanceof PyImportElement) {
       PyImportElement import_element = (PyImportElement)parent;
-      final PsiElement result = resolveImportElement(import_element);
+      final PsiElement result = resolveImportElement(import_element, importRef.asQualifiedName());
       if (result != null) {
         return result;
       }
