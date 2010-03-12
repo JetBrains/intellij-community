@@ -185,7 +185,7 @@ public class PyBlock implements ASTBlock {
     IElementType type1 = childNode1.getElementType();
     IElementType type2 = childNode2.getElementType();
 
-    if (type1 == PyElementTypes.FUNCTION_DECLARATION) {
+    if (type1 == PyElementTypes.FUNCTION_DECLARATION || (type2 == PyElementTypes.FUNCTION_DECLARATION && type1 == PyElementTypes.CLASS_DECLARATION)) {
       int blankLines = mySettings.BLANK_LINES_AROUND_METHOD + 1;
       return Spacing.createSpacing(0, 0, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
     }

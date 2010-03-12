@@ -1,3 +1,6 @@
+class C:
+    pass
+
 def foo():
     pass
 

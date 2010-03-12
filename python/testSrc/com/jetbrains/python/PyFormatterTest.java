@@ -9,6 +9,10 @@ import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
  */
 public class PyFormatterTest extends PyLightFixtureTestCase {
   public void testBlankLineBetweenMethods() throws Exception {
+    doTest();
+  }
+
+  private void doTest() throws Exception {
     myFixture.configureByFile("formatter/" + getTestName(true) + ".py");
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
