@@ -38,4 +38,22 @@ public class ScopeVariableImpl implements ScopeVariable {
   public boolean isParameter() {
     return isParameter;
   }
+
+  @Override
+  public String toString() {
+    return (isParameter() ? "par" : "var") + "(" + myName+ ")[" + myDeclarations.size() + "]";
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof ScopeVariableImpl)) return false;
+
+    ScopeVariableImpl that = (ScopeVariableImpl)o;
+    if (isParameter != that.isParameter) return false;
+    if (myDeclarations != null ? !myDeclarations.equals(that.myDeclarations) : that.myDeclarations != null) return false;
+    if (myName != null ? !myName.equals(that.myName) : that.myName != null) return false;
+
+    return true;
+  }
 }

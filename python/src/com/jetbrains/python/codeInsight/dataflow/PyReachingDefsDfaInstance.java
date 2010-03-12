@@ -40,7 +40,7 @@ public class PyReachingDefsDfaInstance implements DfaInstance<ScopeVariable> {
       final PsiElement parameterScope = ScopeUtil.getParameterScope(element);
       if (parameterScope != null) {
         final ScopeVariable scopeVariable = new ScopeVariableImpl(name, true, element);
-        map = new DFAMap<ScopeVariable>(map);
+        map = map.asWritable();
         map.put(name, scopeVariable);
       }
       // Local variable case
@@ -52,7 +52,7 @@ public class PyReachingDefsDfaInstance implements DfaInstance<ScopeVariable> {
         } else {
           scopeVariable = new ScopeVariableImpl(name, isParameter, variable.getDeclarations());
         }
-        map = new DFAMap<ScopeVariable>(map);
+        map = map.asWritable();
         map.put(name, scopeVariable);
       }
     }
