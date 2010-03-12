@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.psi.PyArgumentList;
@@ -413,7 +414,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     }
 
     public void check(String text, String[] highlighted) {
-      check(text, highlighted, new String[0]);
+      check(text, highlighted, ArrayUtil.EMPTY_STRING_ARRAY);
     }
 
     public void assertNotFound() {
