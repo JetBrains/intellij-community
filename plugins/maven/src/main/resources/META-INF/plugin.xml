@@ -288,7 +288,7 @@
       <separator/>
       <action id="Maven.AssignShortcut"
               class="org.jetbrains.idea.maven.tasks.actions.AssignShortcutAction" text="Assign Shortcut..."
-              description="Assign shortcutto selected phase/goal">
+              description="Assign shortcut to selected phase/goal">
       </action>
 
       <action id="Generate.Dom.Elements" class="org.jetbrains.idea.maven.dom.generate.MavenGenerateDomActionGroup" text="Generate">
@@ -355,7 +355,7 @@
       <add-to-group group-id="GenerateGroup" anchor="first"/>
 
       <action id="GenerateDependency" class="org.jetbrains.idea.maven.dom.generate.GenerateDependencyAction"/>
-      <action id="OverrideDependency" class="org.jetbrains.idea.maven.dom.generate.GenerateOverridingDependencyAction"/>
+      <action id="OverrideDependency" class="org.jetbrains.idea.maven.dom.generate.GenerateAddManagedDependencyAction"/>
       <action id="GenerateParent" text="Parent" class="org.jetbrains.idea.maven.dom.generate.GenerateParentAction"/>
     </group>
   </actions>
