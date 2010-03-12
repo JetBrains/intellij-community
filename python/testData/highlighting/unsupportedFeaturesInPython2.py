@@ -9,7 +9,7 @@ class A(B):
   def foo(self):
     <warning descr="super() should have arguments in Python 2">super()</warning>
 
-<warning descr="Python 2 does not support set literal expressions">{1, 2}</warning>
+<warning descr="This Python version does not support set literal expressions">{1, 2}</warning>
 
 <warning descr="Python 2 does not support star expressions">*b</warning>, c = 1, 2, 3, 4, 5
 
