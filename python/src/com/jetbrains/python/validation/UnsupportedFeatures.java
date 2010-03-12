@@ -57,8 +57,11 @@ public class UnsupportedFeatures extends PyAnnotator {
 
   @Override
   public void visitPySetLiteralExpression(PySetLiteralExpression node) {
-    if (isPy2(node)) {
-      getHolder().createWarningAnnotation(node, "Python 2 does not support set literal expressions").registerFix(new ConvertSetLiteralIntention());
+    LanguageLevel languageLevel = getLanguageLevel(node);
+    if (languageLevel == LanguageLevel.PYTHON24
+        || languageLevel == LanguageLevel.PYTHON25
+        || languageLevel == LanguageLevel.PYTHON26) {
+      getHolder().createWarningAnnotation(node, "This Python version does not support set literal expressions").registerFix(new ConvertSetLiteralIntention());
     }
   }
 
