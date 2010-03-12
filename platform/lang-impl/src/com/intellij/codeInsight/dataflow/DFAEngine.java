@@ -23,7 +23,7 @@ import java.util.*;
 
 public class DFAEngine<E> {
   private static final Logger LOG = Logger.getInstance(DFAEngine.class.getName());
-  private static final double TIME_LIMIT = 5*10e9;
+  private static final double TIME_LIMIT = 3*10e9;
 
   private final Instruction[] myFlow;
 
@@ -60,8 +60,6 @@ public class DFAEngine<E> {
     final boolean forward = myDfa.isForward();
     final int[] order = ControlFlowUtil.postOrder(myFlow);
 
-// Count limit for number of iterations per worklist
-    final int limit = getIterationLimit(forward);
     int dfaCount = 0;
     final long startTime = System.nanoTime();
 
@@ -76,8 +74,6 @@ public class DFAEngine<E> {
         break;
       }
 
-      // Iteration count per one worklist
-      int count = 0;
       final Instruction instruction = myFlow[order[i]];
       final int number = instruction.num();
 
@@ -87,13 +83,7 @@ public class DFAEngine<E> {
         visited[number] = true;
 
         while (true) {
-          count++;
-          if (count > limit){
-             if (LOG.isDebugEnabled()){
-               LOG.debug("Iteration count exceeded on worklist");
-             }
-             break;
-          }
+          dfaCount++;
 
           final Instruction currentInstruction = worklist.poll();
           if (currentInstruction == null) {
@@ -105,6 +95,9 @@ public class DFAEngine<E> {
           final DFAMap<E> joinedE = join(currentInstruction, info);
           final DFAMap<E> newE = myDfa.fun(joinedE, currentInstruction);
           if (!mySemilattice.eq(newE, oldE)) {
+            if (LOG.isDebugEnabled()){
+              LOG.debug("Number: " + currentNumber + " old: " + oldE.keySet() + " new: " + newE.keySet());
+            }
             info.set(currentNumber, newE);
             for (Instruction next : getNext(currentInstruction)) {
               worklist.add(next);
@@ -120,7 +113,6 @@ public class DFAEngine<E> {
       } else {
         i--;
       }
-      dfaCount += count;
     }
     if (LOG.isDebugEnabled()){
       LOG.debug("Done in: " + (System.nanoTime() - startTime)/10e6 + "ms. Ratio: " + dfaCount / myFlow.length);
@@ -128,19 +120,6 @@ public class DFAEngine<E> {
     return info;
   }
 
-
-  /**
-   * Count limit for dfa number of iterations.
-   * Every node in dfa should be processed <= pred times * 2
-   * Multiplier 2 is because of cycles.
-   */
-  private int getIterationLimit(final boolean forward) {
-    int allPred = myFlow.length;
-    for (Instruction instruction : myFlow) {
-      allPred += forward ? instruction.allPred().size() : instruction.allSucc().size();
-    }
-    return allPred * 2;
-  }
 
   private DFAMap<E> join(final Instruction instruction, final List<DFAMap<E>> info) {
     final Iterable<? extends Instruction> prev = myDfa.isForward() ? instruction.allPred() : instruction.allSucc();
