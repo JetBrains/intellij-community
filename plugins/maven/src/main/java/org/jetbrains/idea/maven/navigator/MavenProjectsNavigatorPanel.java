@@ -56,13 +56,12 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     myTree = tree;
 
     final ActionManager actionManager = ActionManager.getInstance();
-    ActionToolbar actionToolbar = actionManager.createActionToolbar("New Maven Toolbar",
-                                                                    (ActionGroup)actionManager.getAction("Maven.NavigatorToolbar"),
+    ActionToolbar actionToolbar = actionManager.createActionToolbar("Maven Navigator Toolbar",
+                                                                    (DefaultActionGroup)actionManager.getAction("Maven.NavigatorActionsToolbar"),
                                                                     true);
-    actionToolbar.setTargetComponent(tree);
-    JComponent toolbar = actionToolbar.getComponent();
 
-    setToolbar(toolbar);
+    actionToolbar.setTargetComponent(tree);
+    setToolbar(actionToolbar.getComponent());
     setContent(new JScrollPane(myTree));
 
     myTree.addMouseListener(new PopupHandler() {
