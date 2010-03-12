@@ -504,7 +504,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
 
         if (thisObjectReference != null && evaluationContext.getDebugProcess().getVirtualMachineProxy().canGetSyntheticAttribute())  {
           final ReferenceType thisRefType = thisObjectReference.referenceType();
-          if (thisRefType instanceof ClassType) {
+          if (thisRefType instanceof ClassType && thisRefType.name().contains("$")) { // makes sense for nested classes only
             final ClassType clsType = (ClassType)thisRefType;
             for (Field field : clsType.fields()) {
               if (field.isSynthetic() && StringUtil.startsWith(field.name(), FieldDescriptorImpl.OUTER_LOCAL_VAR_FIELD_PREFIX)) {
