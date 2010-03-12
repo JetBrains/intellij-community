@@ -43,6 +43,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -62,6 +63,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.HashMap;
+import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsConfigurationDialogFactory;
 import com.sun.jdi.Field;
 import com.sun.jdi.InternalException;
@@ -277,7 +279,8 @@ public class BreakpointManager implements JDOMExternalizable {
                 return;
               }
               final int line = editor.xyToLogicalPosition(e.getMouseEvent().getPoint()).line;
-              if (line < 0 || line >= editor.getDocument().getLineCount()) {
+              final Document document = editor.getDocument();
+              if (line < 0 || line >= document.getLineCount()) {
                 return;
               }
               MouseEvent event = e.getMouseEvent();
@@ -287,7 +290,9 @@ public class BreakpointManager implements JDOMExternalizable {
               if (event.getButton() != 1) {
                 return;
               }
-
+              if (XDebuggerUtil.getInstance().canPutBreakpointAt(myProject, FileDocumentManager.getInstance().getFile(document), line)) {
+                return;
+              }
               e.consume();
 
               DebuggerInvocationUtil.invokeLater(myProject, new Runnable() {
