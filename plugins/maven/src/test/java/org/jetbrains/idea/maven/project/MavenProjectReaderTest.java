@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -529,11 +530,11 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
   public void testExpandingSystemAndEnvProperties() throws Exception {
     createProjectPom("<name>${java.home}</name>" +
-                     "<packaging>${env.TEMP}</packaging>");
+                     "<packaging>${env." + getEnvVar() + "}</packaging>");
 
     org.apache.maven.project.MavenProject p = readProject(myProjectPom);
     assertEquals(System.getProperty("java.home"), p.getName());
-    assertEquals(System.getenv("TEMP"), p.getPackaging());
+    assertEquals(System.getenv(getEnvVar()), p.getPackaging());
   }
 
   public void testExpandingPropertiesFromProfiles() throws Exception {
@@ -1101,17 +1102,19 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
   public void testActivatingProfilesByOS() throws Exception {
+    String os = SystemInfo.isWindows ? "windows" : SystemInfo.isMac ? "mac" : "unix";
+
     createProjectPom("<profiles>" +
                      "  <profile>" +
                      "    <id>one</id>" +
                      "    <activation>" +
-                     "      <os><family>windows</family></os>" +
+                     "      <os><family>" + os + "</family></os>" +
                      "    </activation>" +
                      "  </profile>" +
                      "  <profile>" +
                      "    <id>two</id>" +
                      "    <activation>" +
-                     "      <os><family>unix</family></os>" +
+                     "      <os><family>xxx</family></os>" +
                      "    </activation>" +
                      "  </profile>" +
                      "</profiles>");
@@ -1180,14 +1183,14 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
   public void testActivatingProfilesByEnvProperty() throws Exception {
-    String value = MavenUtil.getEnvProperties().getProperty("TMP");
+    String value = MavenUtil.getEnvProperties().getProperty(getEnvVar());
 
     createProjectPom("<profiles>" +
                      "  <profile>" +
                      "    <id>one</id>" +
                      "    <activation>" +
                      "      <property>" +
-                     "        <name>env.TMP</name>" +
+                     "        <name>env." + getEnvVar() + "</name>" +
                      "        <value>" + value + "</value>" +
                      "      </property>" +
                      "    </activation>" +

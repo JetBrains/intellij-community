@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
     super(chooserDescriptor, project);
     myDescriptor = chooserDescriptor;
     setTitle(UIBundle.message("file.chooser.save.dialog.default.title"));
-    for (String ext : chooserDescriptor.getFileExtentions()) {
+    for (String ext : chooserDescriptor.getFileExtensions()) {
       myExtentions.addItem(ext);
     }
   }
@@ -90,7 +90,7 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
     }
 
     boolean correctExt = true;
-    for (String ext : myDescriptor.getFileExtentions()) {
+    for (String ext : myDescriptor.getFileExtensions()) {
       correctExt = path.endsWith("." + ext);
       if (correctExt) break;
     }

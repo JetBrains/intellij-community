@@ -19,6 +19,7 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
@@ -27,6 +28,7 @@ import org.jetbrains.idea.maven.indices.ArchetypeInfo;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenId;
 
+import java.io.File;
 import java.util.List;
 
 public class MavenModuleBuilderTest extends MavenImportingTestCase {
@@ -104,13 +106,13 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     createNewModule(new MavenId("org.foo", "module", "1.0"));
 
     assertEquals(createPomXml("<groupId>test</groupId>" +
-                                  "<artifactId>project</artifactId>\r\n" +
-                                  "    <packaging>pom</packaging>\r\n" +
-                                  "    <version>1</version>\r\n" +
-                                  "    <modules>\r\n" +
-                                  "        <module>module</module>\r\n" +
-                                  "    </modules>\r\n"),
-                 VfsUtil.loadText(myProjectPom));
+                              "<artifactId>project</artifactId>\n" +
+                              "    <packaging>pom</packaging>\n" +
+                              "    <version>1</version>\n" +
+                              "    <modules>\n" +
+                              "        <module>module</module>\n" +
+                              "    </modules>\n"),
+                 StringUtil.convertLineSeparators(VfsUtil.loadText(myProjectPom)));
   }
 
   public void testAddingManagedProjectIfNoArrgerator() throws Exception {

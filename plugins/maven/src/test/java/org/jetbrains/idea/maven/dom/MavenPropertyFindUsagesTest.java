@@ -95,8 +95,8 @@ public class MavenPropertyFindUsagesTest extends MavenDomTestCase {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>module1</artifactId>" +
                      "<version>11</version>" +
-                     "<name>${env.<caret>TEMP}</name>" +
-                     "<description>${env.TEMP}</description>");
+                     "<name>${env.<caret>" + getEnvVar() + "}</name>" +
+                     "<description>${env." + getEnvVar() + "}</description>");
 
     assertSearchResultsInclude(myProjectPom, findTag("project.name"), findTag("project.description"));
   }
