@@ -162,9 +162,14 @@ public class JdkUtil {
             writer.close();
           }
 
+          String classpath = PathUtil.getJarPathForClass(commandLineWrapper);
+          final Class<UrlClassLoader> ourUrlClassLoader = UrlClassLoader.class;
+          if (ourUrlClassLoader.getName().equals(parametersList.getPropertyValue("java.system.class.loader"))) {
+            classpath += File.pathSeparator + PathUtil.getJarPathForClass(ourUrlClassLoader);
+          }
+
           commandLine.addParameter("-classpath");
-          commandLine.addParameter(PathUtil.getJarPathForClass(commandLineWrapper) + File.pathSeparator +
-                                   PathUtil.getJarPathForClass(UrlClassLoader.class));
+          commandLine.addParameter(classpath);
         }
         catch (IOException e) {
           LOG.error(e);
