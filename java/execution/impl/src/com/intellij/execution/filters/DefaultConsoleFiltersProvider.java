@@ -21,10 +21,15 @@
 package com.intellij.execution.filters;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
-public class DefaultConsoleFiltersProvider implements ConsoleFilterProvider{
+public class DefaultConsoleFiltersProvider implements ConsoleFilterProviderEx {
   public Filter[] getDefaultFilters(@NotNull Project project) {
     return new Filter[]{new ExceptionFilter(project), new YourkitFilter(project)};
+  }
+
+  public Filter[] getDefaultFilters(@NotNull Project project, @NotNull GlobalSearchScope scope) {
+    return new Filter[]{new ExceptionFilter(scope), new YourkitFilter(project)};
   }
 }

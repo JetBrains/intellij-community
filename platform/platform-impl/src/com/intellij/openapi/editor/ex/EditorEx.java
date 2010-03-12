@@ -121,4 +121,6 @@ public interface EditorEx extends Editor {
   VirtualFile getVirtualFile();
 
   int calcColumnNumber(CharSequence text, int start, int offset, int tabSize);
+
+  int calcColumnNumber(int offset, int lineIndex);
 }

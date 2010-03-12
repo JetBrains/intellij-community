@@ -85,10 +85,6 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
     }
   }
 
-  private static boolean isTemplateKeyPart(char c) {
-    return !Character.isWhitespace(c) && OPERATIONS.indexOf(c) < 0;
-  }
-
   private static int parseNonNegativeInt(@NotNull String s) {
     try {
       return Integer.parseInt(s);
@@ -200,7 +196,7 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
     List<MyToken> result = new ArrayList<MyToken>();
     for (int i = 0, n = text.length(); i < n; i++) {
       char c = text.charAt(i);
-      if (i == n - 1 || OPERATIONS.indexOf(c) >= 0) {
+      if (i == n - 1 || (i < n - 2 && OPERATIONS.indexOf(c) >= 0)) {
         String key = templateKeyBuilder.toString();
         templateKeyBuilder = new StringBuilder();
         int num = parseNonNegativeInt(key);
@@ -212,7 +208,7 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
             return null;
           }
           String prefix = getPrefix(key);
-          if (!callback.isLiveTemplateApplicable(prefix) && prefix.indexOf('<') >= 0) {
+          if (!callback.isLiveTemplateApplicable(prefix) && prefix.indexOf('<') >= 0 /*&& !XML11Char.isXML11ValidQName(prefix)*/) {
             return null;
           }
           MyTemplateToken token = parseSelectors(key);
@@ -223,7 +219,7 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
         }
         result.add(i < n - 1 ? new MyOperationToken(c) : new MyMarkerToken());
       }
-      else if (isTemplateKeyPart(c)) {
+      else if (!Character.isWhitespace(c)) {
         templateKeyBuilder.append(c);
       }
       else {

@@ -313,6 +313,8 @@
 
   <extensionPoint name="usageFilteringRuleProvider"
                   interface="com.intellij.usages.rules.UsageFilteringRuleProvider"/>
+  <extensionPoint name="importFilteringRule"
+                  interface="com.intellij.usages.rules.ImportFilteringRule"/>
   <extensionPoint name="usageGroupingRuleProvider"
                   interface="com.intellij.usages.rules.UsageGroupingRuleProvider"/>
   <extensionPoint name="usageTypeProvider"

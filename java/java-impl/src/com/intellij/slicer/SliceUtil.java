@@ -168,8 +168,9 @@ public class SliceUtil {
       final PsiCodeBlock body = override.getBody();
       if (body == null) continue;
 
-      final PsiSubstitutor superSubstitutor = methodCalled == override ? substitutor :
+      final PsiSubstitutor s = methodCalled == override ? substitutor :
         MethodSignatureUtil.getSuperMethodSignatureSubstitutor(methodCalled.getSignature(substitutor), override.getSignature(substitutor));
+      final PsiSubstitutor superSubstitutor = s == null ? parentSubstitutor : s;
 
       body.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override

@@ -46,6 +46,7 @@ public class RangeHighlighterImpl implements RangeHighlighterEx {
   private boolean myErrorStripeMarkIsThin;
   private Object myErrorStripeTooltip;
   private MarkupEditorFilter myFilter = MarkupEditorFilter.EMPTY;
+  private CustomHighlighterRenderer myCustomRenderer;
 
   RangeHighlighterImpl(@NotNull MarkupModel model,
                        int start,
@@ -108,6 +109,14 @@ public class RangeHighlighterImpl implements RangeHighlighterEx {
   public void setLineMarkerRenderer(LineMarkerRenderer renderer) {
     myLineMarkerRenderer = renderer;
     fireChanged();
+  }
+
+  public CustomHighlighterRenderer getCustomRenderer() {
+    return myCustomRenderer;
+  }
+
+  public void setCustomRenderer(CustomHighlighterRenderer renderer) {
+    myCustomRenderer = renderer;
   }
 
   public GutterIconRenderer getGutterIconRenderer() {

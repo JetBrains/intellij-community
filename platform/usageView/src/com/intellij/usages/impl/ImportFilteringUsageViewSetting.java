@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.usages.impl.rules;
+package com.intellij.usages.impl;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -25,25 +25,25 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
  * @author yole
  */
 @State(
-  name = "JavaUsageViewSettings",
+  name = "ImportFilteringUsageViewSetting",
   storages = {
     @Storage(
       id ="other",
       file = "$APP_CONFIG$/other.xml"
     )}
 )
-public class JavaUsageViewSettings implements PersistentStateComponent<JavaUsageViewSettings> {
-  public static JavaUsageViewSettings getInstance() {
-    return ServiceManager.getService(JavaUsageViewSettings.class);
+public class ImportFilteringUsageViewSetting implements PersistentStateComponent<ImportFilteringUsageViewSetting> {
+  public static ImportFilteringUsageViewSetting getInstance() {
+    return ServiceManager.getService(ImportFilteringUsageViewSetting.class);
   }
 
   public boolean SHOW_IMPORTS = true;
 
-  public JavaUsageViewSettings getState() {
+  public ImportFilteringUsageViewSetting getState() {
     return this;
   }
 
-  public void loadState(final JavaUsageViewSettings state) {
+  public void loadState(final ImportFilteringUsageViewSetting state) {
     XmlSerializerUtil.copyBean(state, this);
   }
 }

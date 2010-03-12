@@ -205,7 +205,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
   protected PsiFile createFileFromText(Project project, String text) {
     PsiFile psiFile = PsiFileFactory.getInstance(project)
-      .createFileFromText("a." + getFileTypeExtension(getFileType()), getFileType(), text, LocalTimeCounter.currentTime(), false, false);
+      .createFileFromText("a." + getFileTypeExtension(getFileType()), getFileType(), text, LocalTimeCounter.currentTime(), true);
     return psiFile;
   }
 

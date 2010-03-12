@@ -20,7 +20,6 @@ import com.intellij.concurrency.JobUtil;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -34,6 +33,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.IndexPatternSearch;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashSet;
@@ -214,36 +214,11 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     myManager.startBatchFilesProcessingMode();
 
     try {
-      List<String> words = StringUtil.getWordsIn(searcher.getPattern());
-      if (words.isEmpty()) return true;
-      Set<PsiFile> fileSet = new THashSet<PsiFile>();
-      Set<PsiFile> copy = new THashSet<PsiFile>();
-      final Application application = ApplicationManager.getApplication();
-      for (final String word : words) {
-        PsiFile[] psiFiles = application.runReadAction(new Computable<PsiFile[]>() {
-          public PsiFile[] compute() {
-            return myManager.getCacheManager().getFilesWithWord(word, searchContext, scope, caseSensitively);
-          }
-        });
-        if (fileSet.isEmpty()) {
-          fileSet.addAll(Arrays.asList(psiFiles));
-        }
-        else {
-          for (PsiFile psiFile : psiFiles) {
-            if (fileSet.contains(psiFile)) {
-              copy.add(psiFile);
-            }
-          }
-          Set<PsiFile> tmp = copy;
-          copy = fileSet;
-          fileSet = tmp;
-          copy.clear();
-        }
-        if (fileSet.isEmpty()) break;
-      }
+      String text = searcher.getPattern();
+      List<PsiFile> fileSet = getFilesWithText(scope, searchContext, caseSensitively, text);
 
       if (progress != null) {
-        progress.setText(PsiBundle.message("psi.search.for.word.progress", searcher.getPattern()));
+        progress.setText(PsiBundle.message("psi.search.for.word.progress", text));
       }
 
       final AtomicInteger counter = new AtomicInteger(0);
@@ -251,35 +226,36 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       final AtomicBoolean pceThrown = new AtomicBoolean(false);
 
       final int size = fileSet.size();
-      boolean completed = JobUtil.invokeConcurrentlyUnderMyProgress(new ArrayList<PsiFile>(fileSet), new Processor<PsiFile>() {
+      boolean completed = JobUtil.invokeConcurrentlyUnderMyProgress(fileSet, new Processor<PsiFile>() {
         public boolean process(final PsiFile file) {
-          if (file instanceof PsiBinaryFile) return true;
-          file.getViewProvider().getContents(); // load contents outside readaction
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            public void run() {
-              try {
-                PsiElement[] psiRoots = file.getPsiRoots();
-                Set<PsiElement> processed = new HashSet<PsiElement>(psiRoots.length * 2, (float)0.5);
-                for (PsiElement psiRoot : psiRoots) {
-                  ProgressManager.checkCanceled();
-                  if (!processed.add(psiRoot)) continue;
-                  if (!LowLevelSearchUtil.processElementsContainingWordInElement(processor, psiRoot, searcher, false)) {
-                    canceled.set(true);
-                    return;
+          if (!(file instanceof PsiBinaryFile)) {
+            file.getViewProvider().getContents(); // load contents outside readaction
+            ApplicationManager.getApplication().runReadAction(new Runnable() {
+              public void run() {
+                try {
+                  PsiElement[] psiRoots = file.getPsiRoots();
+                  Set<PsiElement> processed = new HashSet<PsiElement>(psiRoots.length * 2, (float)0.5);
+                  for (PsiElement psiRoot : psiRoots) {
+                    ProgressManager.checkCanceled();
+                    if (!processed.add(psiRoot)) continue;
+                    if (!LowLevelSearchUtil.processElementsContainingWordInElement(processor, psiRoot, searcher, false)) {
+                      canceled.set(true);
+                      return;
+                    }
                   }
+                  myManager.dropResolveCaches();
                 }
-                if (progress != null) {
-                  double fraction = (double)counter.incrementAndGet() / size;
-                  progress.setFraction(fraction);
+                catch (ProcessCanceledException e) {
+                  canceled.set(true);
+                  pceThrown.set(true);
                 }
-                myManager.dropResolveCaches();
               }
-              catch (ProcessCanceledException e) {
-                canceled.set(true);
-                pceThrown.set(true);
-              }
-            }
-          });
+            });
+          }
+          if (progress != null) {
+            double fraction = (double)counter.incrementAndGet() / size;
+            progress.setFraction(fraction);
+          }
           return !canceled.get();
         }
       }, "Process usages in files");
@@ -296,6 +272,59 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       }
       myManager.finishBatchFilesProcessingMode();
     }
+  }
+
+  private List<PsiFile> getFilesWithText(final GlobalSearchScope scope,
+                                        final short searchContext,
+                                        final boolean caseSensitively,
+                                        String text) {
+    List<PsiFile> result = new ArrayList<PsiFile>();
+    if (!processFilesWithText(scope, searchContext, caseSensitively, text, new CommonProcessors.CollectProcessor<PsiFile>(result))) return Collections.emptyList();
+    return result;
+  }
+
+  private boolean processFilesWithText(final GlobalSearchScope scope,
+                                        final short searchContext,
+                                        final boolean caseSensitively,
+                                        String text,
+                                        final Processor<PsiFile> processor) {
+    List<String> words = StringUtil.getWordsIn(text);
+    if (words.isEmpty()) return true;
+    Collections.sort(words, new Comparator<String>() {
+      public int compare(String o1, String o2) {
+        return o2.length() - o1.length();
+      }
+    });
+    final Set<PsiFile> fileSet;
+    if (words.size() > 1) {
+      fileSet = new THashSet<PsiFile>();
+      Set<PsiFile> copy = new THashSet<PsiFile>();
+      for (int i = 0; i < words.size() - 1; i++) {
+        ProgressManager.checkCanceled();
+        final String word = words.get(i);
+        myManager.getCacheManager().processFilesWithWord(new CommonProcessors.CollectProcessor<PsiFile>(copy), word, searchContext, scope, caseSensitively);
+        if (i == 0) {
+          fileSet.addAll(copy);
+        }
+        else {
+          fileSet.retainAll(copy);
+        }
+        copy.clear();
+        if (fileSet.isEmpty()) break;
+      }
+      if (fileSet.isEmpty()) return true;
+    }
+    else {
+      fileSet = null;
+    }
+    return myManager.getCacheManager().processFilesWithWord(new Processor<PsiFile>() {
+      public boolean process(PsiFile psiFile) {
+        if (fileSet != null && !fileSet.contains(psiFile)) {
+          return true;
+        }
+        return processor.process(psiFile);
+      }
+    }, words.get(words.size()-1), searchContext, scope, caseSensitively);
   }
 
   @NotNull
@@ -395,4 +424,25 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     myManager.getCacheManager().processFilesWithWord(processor, word, UsageSearchContext.IN_STRINGS, scope, true);
   }
 
+  public static enum Result {
+    ZERO_OCCURRENCES, FEW_OCCURRENCES, TOO_MANY_OCCURRENCES
+  }
+  public Result isItCheapEnoughToSearch(@Nullable final PsiFile fileToIgnoreOccurencesIn, @NotNull String name, @NotNull GlobalSearchScope scope) {
+    final int[] count = {0};
+    if (!processFilesWithText(scope, UsageSearchContext.ANY, true, name, new Processor<PsiFile>() {
+      public boolean process(PsiFile file) {
+        if (file == fileToIgnoreOccurencesIn) return true;
+        synchronized (count) {
+          count[0]++;
+          return count[0] <= 10;
+        }
+      }
+    })) {
+      return Result.TOO_MANY_OCCURRENCES;
+    }
+
+    synchronized (count) {
+      return count[0] == 0 ? Result.ZERO_OCCURRENCES : Result.FEW_OCCURRENCES;
+    }
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PreferredAction;
+import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.openapi.application.ApplicationManager;
@@ -273,14 +274,18 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
 
     final IntentionAction action = value.getAction();
 
+    Object iconable = null;
     //custom icon
     if (action instanceof QuickFixWrapper) {
-      final QuickFixWrapper quickFix = (QuickFixWrapper)action;
-      if (quickFix.getFix() instanceof Iconable) {
-        final Icon icon = ((Iconable)quickFix.getFix()).getIcon(0);
-        if (icon != null) {
-          return icon;
-        }
+      iconable = ((QuickFixWrapper)action).getFix();
+    } else if (action instanceof IntentionActionWrapper) {
+      iconable = ((IntentionActionWrapper)action).getDelegate(); 
+    }
+
+    if (iconable instanceof Iconable) {
+      final Icon icon = ((Iconable)iconable).getIcon(0);
+      if (icon != null) {
+        return icon;
       }
     }
 

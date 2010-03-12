@@ -58,6 +58,9 @@ public class UnBoxingEvaluator implements Evaluator{
 
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     final Value result = (Value)myOperand.evaluate(context);
+    if (result == null) {
+      throw new EvaluateException("java.lang.NullPointerException: cannot unbox null value");
+    }
     if (result instanceof ObjectReference) {
       final String valueTypeName = result.type().name();
       final Pair<String, String> pair = TYPES_TO_CONVERSION_METHOD_MAP.get(valueTypeName);

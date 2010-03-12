@@ -239,4 +239,8 @@ public class CustomTemplateCallback {
   public PsiFile getFile() {
     return myFile;
   }
+
+  public Project getProject() {
+    return myProject;
+  }
 }

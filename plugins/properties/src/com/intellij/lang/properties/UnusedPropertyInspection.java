@@ -29,6 +29,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.search.PsiSearchHelperImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
@@ -51,7 +52,7 @@ public class UnusedPropertyInspection extends PropertySuppressableInspectionBase
     return "UnusedProperty";
   }
 
-  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull final InspectionManager manager, final boolean isOnTheFly) {
+  public ProblemDescriptor[] checkFile(@NotNull final PsiFile file, @NotNull final InspectionManager manager, final boolean isOnTheFly) {
     if (!(file instanceof PropertiesFile)) return null;
     final List<Property> properties = ((PropertiesFile)file).getProperties();
     Module module = ModuleUtil.findModuleForPsiElement(file);
@@ -67,7 +68,11 @@ public class UnusedPropertyInspection extends PropertySuppressableInspectionBase
           original.setText(PropertiesBundle.message("searching.for.property.key.progress.text", property.getUnescapedKey()));
         }
 
-        final PsiReference usage = ReferencesSearch.search(property, searchScope, false).findFirst();
+        PsiSearchHelperImpl.Result cheapEnough = ((PsiSearchHelperImpl)file.getManager().getSearchHelper()).isItCheapEnoughToSearch(file, property.getName(), searchScope);
+        if (cheapEnough == PsiSearchHelperImpl.Result.TOO_MANY_OCCURRENCES) return true;
+
+        final PsiReference usage = cheapEnough == PsiSearchHelperImpl.Result.ZERO_OCCURRENCES ? null :
+                                   ReferencesSearch.search(property, searchScope, false).findFirst();
         if (usage == null) {
           final ASTNode propertyNode = property.getNode();
           assert propertyNode != null;

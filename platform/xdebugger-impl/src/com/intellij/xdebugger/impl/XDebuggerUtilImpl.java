@@ -81,6 +81,16 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     }
   }
 
+  @Override
+  public boolean canPutBreakpointAt(@NotNull Project project, @NotNull VirtualFile file, int line) {
+    for (XLineBreakpointType<?> type : getLineBreakpointTypes()) {
+      if (type.canPutAt(file, line, project)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public <P extends XBreakpointProperties> void toggleLineBreakpoint(@NotNull final Project project, @NotNull final XLineBreakpointType<P> type, @NotNull final VirtualFile file,
                                                                      final int line) {
     new WriteAction() {
