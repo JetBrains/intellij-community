@@ -30,7 +30,6 @@ import javax.swing.*;
 import java.awt.event.KeyEvent;
 
 public class MergeSourceDetailsAction extends AnAction implements DumbAware {
-  private static Icon myIcon;
 
   @Override
   public void update(AnActionEvent e) {
@@ -39,11 +38,12 @@ public class MergeSourceDetailsAction extends AnAction implements DumbAware {
     e.getPresentation().setEnabled(enabled(e));
   }
 
+  private static class IconHolder {
+    private static final Icon myIcon = IconLoader.getIcon("/icons/mergeSourcesDetails.png");
+  }
+
   private Icon getIcon() {
-    if (myIcon == null) {
-      myIcon = IconLoader.getIcon("/icons/mergeSourcesDetails.png");
-    }
-    return myIcon;
+    return IconHolder.myIcon;
   }
 
   public void registerSelf(final JComponent comp) {

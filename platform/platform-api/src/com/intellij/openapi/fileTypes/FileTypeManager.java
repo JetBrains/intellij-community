@@ -17,7 +17,6 @@ package com.intellij.openapi.fileTypes;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -31,18 +30,22 @@ import java.util.List;
  */
 
 public abstract class FileTypeManager{
-  private static FileTypeManager ourInstance = CachedSingletonsRegistry.markCachedField(FileTypeManager.class);
+  private static class FileTypeManagerHolder {
+    private static final FileTypeManager ourInstance = createFileTypeManager();
+  }
+
   /**
    * Returns the singleton instance of the FileTypeManager component.
    *
    * @return the instace of FileTypeManager
    */
   public static FileTypeManager getInstance() {
-    if (ourInstance == null) {
-      Application app = ApplicationManager.getApplication();
-      ourInstance = app != null ? app.getComponent(FileTypeManager.class) : new MockFileTypeManager();
-    }
-    return ourInstance;
+    return FileTypeManagerHolder.ourInstance;
+  }
+
+  private static FileTypeManager createFileTypeManager() {
+    Application app = ApplicationManager.getApplication();
+    return app == null ? new MockFileTypeManager() : app.getComponent(FileTypeManager.class);
   }
 
   public abstract void registerFileType(@NotNull FileType type, @NotNull List<FileNameMatcher> defaultAssociations);

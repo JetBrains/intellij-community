@@ -30,13 +30,13 @@ import java.io.DataOutputStream;
 import java.util.List;
 
 public abstract class ManagingFS implements FileSystemInterface {
-  private static ManagingFS ourInstance = CachedSingletonsRegistry.markCachedField(ManagingFS.class);
+
+  private static class ManagingFSHolder {
+    private static final ManagingFS ourInstance = ApplicationManager.getApplication().getComponent(ManagingFS.class);
+  }
 
   public static ManagingFS getInstance() {
-    if (ourInstance == null) {
-      ourInstance = ApplicationManager.getApplication().getComponent(ManagingFS.class);
-    }
-    return ourInstance;
+    return ManagingFSHolder.ourInstance;
   }
 
   @Nullable
