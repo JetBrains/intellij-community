@@ -304,7 +304,7 @@ class ChangeCollector {
         if ('M' == status) {
           sc.boundedToken('\t');
           String file = GitUtil.unescapePath(sc.line());
-          VirtualFile vFile = myVcsRoot.findFileByRelativePath(GitUtil.unescapePath(sc.line()));
+          VirtualFile vFile = myVcsRoot.findFileByRelativePath(file);
           if (GitUtil.gitRootOrNull(vFile) != myVcsRoot) {
             continue;
           }
