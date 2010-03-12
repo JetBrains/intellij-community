@@ -207,13 +207,12 @@ public class PythonParsingTest extends ParsingTestCase {
   }
 
   public void doTest(LanguageLevel languageLevel) throws Exception {
-    PythonLanguageLevelPusher.FORCE_LANGUAGE_LEVEL = languageLevel;
-    PythonLanguageLevelPusher.pushLanguageLevel(getProject());
+    PythonLanguageLevelPusher.setForcedLanguageLevel(ourProject, languageLevel);
     try {
       doTest(true);
     }
     finally {
-      PythonLanguageLevelPusher.FORCE_LANGUAGE_LEVEL = null;
+      PythonLanguageLevelPusher.setForcedLanguageLevel(ourProject, null);
     }
   }
 }

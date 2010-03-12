@@ -21,13 +21,12 @@ public class PyIntentionTest extends PyLightFixtureTestCase {
   }
 
   private void doTest(String hint, LanguageLevel languageLevel) throws Exception {
-    PythonLanguageLevelPusher.FORCE_LANGUAGE_LEVEL = languageLevel;
-    PythonLanguageLevelPusher.pushLanguageLevel(myFixture.getProject());
+    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
     try {
       doTest(hint);
     }
     finally {
-      PythonLanguageLevelPusher.FORCE_LANGUAGE_LEVEL = null;
+      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
     }
   }
 

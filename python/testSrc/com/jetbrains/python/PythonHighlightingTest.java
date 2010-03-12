@@ -148,13 +148,12 @@ public class PythonHighlightingTest extends PyLightFixtureTestCase {
   }
 
   private void doTest(final LanguageLevel languageLevel, final boolean checkWarnings, final boolean checkInfos) throws Exception {
-    PythonLanguageLevelPusher.FORCE_LANGUAGE_LEVEL = languageLevel;
-    PythonLanguageLevelPusher.pushLanguageLevel(myFixture.getProject());
+    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
     try {
       doTest(checkWarnings, checkInfos);
     }
     finally {
-      PythonLanguageLevelPusher.FORCE_LANGUAGE_LEVEL = null;
+      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
     }
   }
 

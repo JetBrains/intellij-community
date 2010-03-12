@@ -21,14 +21,12 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   }
 
   private void doTestWithPy3k(String testName, LocalInspectionTool localInspectionTool) throws Throwable {
-    PythonLanguageLevelPusher.FORCE_LANGUAGE_LEVEL = LanguageLevel.PYTHON30;
-    PythonLanguageLevelPusher.pushLanguageLevel(myFixture.getProject());
+    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);
     try {
       doTest(testName, localInspectionTool);
     }
     finally {
-      PythonLanguageLevelPusher.FORCE_LANGUAGE_LEVEL = null;
-      PythonLanguageLevelPusher.pushLanguageLevel(myFixture.getProject());
+      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
     }
   }
 
@@ -88,14 +86,13 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   }
 
   public void testPyDeprecatedModulesInspection() throws Throwable {
-    PythonLanguageLevelPusher.FORCE_LANGUAGE_LEVEL = LanguageLevel.PYTHON25;
-    PythonLanguageLevelPusher.pushLanguageLevel(myFixture.getProject());
+    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON25);
     try {
       LocalInspectionTool inspection = new PyDeprecatedModulesInspection();
       doTest(getTestName(false), inspection);
     }
     finally {
-      PythonLanguageLevelPusher.FORCE_LANGUAGE_LEVEL = null;
+      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
     }
   }
 

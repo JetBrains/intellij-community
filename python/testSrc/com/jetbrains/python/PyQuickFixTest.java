@@ -103,25 +103,8 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
                      PyBundle.message("QFIX.add.global"), true, true);
   }
 
-  protected void doInspectionTest(@NonNls String testFileName,
-                                  final Class inspectionClass,
-                                  @NonNls String quickFixName,
-                                  boolean applyFix,
-                                  boolean available,
-                                  LanguageLevel languageLevel) throws Exception {
-    PythonLanguageLevelPusher.FORCE_LANGUAGE_LEVEL = languageLevel;
-    PythonLanguageLevelPusher.pushLanguageLevel(myFixture.getProject());
-    try {
-      doInspectionTest(testFileName, inspectionClass, quickFixName, applyFix, available);
-    }
-    finally {
-      PythonLanguageLevelPusher.FORCE_LANGUAGE_LEVEL = null;
-    }
-  }
-
-  protected
   @NonNls
-  String getTestDataPath() {
+  protected String getTestDataPath() {
     return PythonTestUtil.getTestDataPath() + "/inspections/";
   }
 
