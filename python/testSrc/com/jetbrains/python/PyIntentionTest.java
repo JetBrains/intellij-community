@@ -82,7 +82,15 @@ public class PyIntentionTest extends PyLightFixtureTestCase {
     doTest(PyBundle.message("INTN.replace.method"), LanguageLevel.PYTHON30);
   }
 
-  public void testSplitIf()throws Exception {
+  public void testSplitIf() throws Exception {
     doTest(PyBundle.message("INTN.split.if.text"));
+  }
+
+  public void testNegateComparison() throws Exception {
+    doTest(PyBundle.message("INTN.negate.$0.to.$1", "<=", ">"));
+  }
+
+  public void testNegateComparison2() throws Exception {
+    doTest(PyBundle.message("INTN.negate.$0.to.$1", ">", "<="));
   }
 }

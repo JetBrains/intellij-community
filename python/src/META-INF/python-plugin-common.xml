@@ -95,6 +95,12 @@
       <descriptionDirectoryName>PySplitIfIntention</descriptionDirectoryName>
     </intentionAction>
 
+    <intentionAction>
+      <className>com.jetbrains.python.codeInsight.intentions.PyNegateComparisonIntention</className>
+      <category>Python</category>
+      <descriptionDirectoryName>PyNegateComparisonIntention</descriptionDirectoryName>
+    </intentionAction>
+
     <stubElementTypeHolder class="com.jetbrains.python.PyElementTypes"/>
     <inspectionToolProvider implementation="com.jetbrains.python.inspections.PythonInspectionToolProvider"/>
 
