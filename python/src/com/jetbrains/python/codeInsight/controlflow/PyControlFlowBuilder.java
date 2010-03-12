@@ -62,6 +62,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     final PyExpression qualifier = node.getQualifier();
     if (qualifier != null){
       qualifier.accept(this);
+      return;
     }
     if (PyImportStatementNavigator.getImportStatementByElement(node) != null){
       return;

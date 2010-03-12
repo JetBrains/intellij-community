@@ -56,6 +56,7 @@ public class PyCodeFragmentBuilder extends PyRecursiveElementVisitor {
     final PyExpression qualifier = element.getQualifier();
     if (qualifier != null){
       qualifier.accept(this);
+      return;
     }
     // Process import references
     if (PyImportStatementNavigator.getImportStatementByElement(element) != null){

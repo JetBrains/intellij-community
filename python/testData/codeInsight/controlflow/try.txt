@@ -8,28 +8,24 @@
 7(8) WRITE ACCESS: f
 8(9) element: PyAssignmentStatement
 9(10) READ ACCESS: f
-10(11) READ ACCESS: readline
-11(12) WRITE ACCESS: s
-12(13) element: PyAssignmentStatement
-13(14) READ ACCESS: int
-14(15) READ ACCESS: s
-15(16) READ ACCESS: strip
-16(17,25,28,34) WRITE ACCESS: i
-17(18) element: PyExceptPart
-18(19) READ ACCESS: IOError
-19(20) WRITE ACCESS: errno
-20(21) WRITE ACCESS: strerror
-21(22) element: PyPrintStatement
-22(23) READ ACCESS: format
-23(24) READ ACCESS: errno
-24(34) READ ACCESS: strerror
+10(11) WRITE ACCESS: s
+11(12) element: PyAssignmentStatement
+12(13) READ ACCESS: int
+13(14) READ ACCESS: s
+14(15,22,25,30) WRITE ACCESS: i
+15(16) element: PyExceptPart
+16(17) READ ACCESS: IOError
+17(18) WRITE ACCESS: errno
+18(19) WRITE ACCESS: strerror
+19(20) element: PyPrintStatement
+20(21) READ ACCESS: errno
+21(30) READ ACCESS: strerror
+22(23) element: PyExceptPart
+23(24) READ ACCESS: ValueError
+24(30) element: PyPrintStatement
 25(26) element: PyExceptPart
-26(27) READ ACCESS: ValueError
-27(34) element: PyPrintStatement
-28(29) element: PyExceptPart
-29(30) element: PyPrintStatement
-30(31) element: PySubscriptionExpression
-31(32) READ ACCESS: sys
-32(33) READ ACCESS: exc_info
-33(34) element: PyRaiseStatement
-34() element: null
+26(27) element: PyPrintStatement
+27(28) element: PySubscriptionExpression
+28(29) READ ACCESS: sys
+29(30) element: PyRaiseStatement
+30() element: null
