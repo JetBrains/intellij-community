@@ -9,6 +9,8 @@ import org.jetbrains.jps.dag.DagNode
  */
 class ArtifactBuilder {
   private final Project project
+  final List<ArtifactBuildTask> preBuildTasks = []
+  final List<ArtifactBuildTask> postBuildTasks = []
   final Map<Artifact, String> artifactOutputs = [:]
   private List<Artifact> sortedArtifacts
 
@@ -80,10 +82,28 @@ class ArtifactBuilder {
     project.stage("Building '${artifact.name}' artifact")
     def outputDir = new File(getBaseArtifactsOutput(), suggestFileName(artifact.name))
     artifactOutputs[artifact] = output = outputDir.absolutePath
+    preBuildTasks*.perform(artifact, output)
     project.binding.layout.call([output, {
       artifact.rootElement.build(project)
     }])
+    postBuildTasks*.perform(artifact, output)
     return output
+  }
+
+  def preBuildTask(String artifactName, Closure task) {
+    registerBuildTask(artifactName, preBuildTasks, task)
+  }
+
+  def postBuildTask(String artifactName, Closure task) {
+    registerBuildTask(artifactName, postBuildTasks, task)
+  }
+
+  private static def registerBuildTask(String artifactName, List<ArtifactBuildTask> tasks, Closure task) {
+    tasks << ({Artifact artifact, String output ->
+      if (artifact.name == artifactName) {
+        task(artifact, output)
+      }
+    } as ArtifactBuildTask)
   }
 
   private static String suggestFileName(String text) {

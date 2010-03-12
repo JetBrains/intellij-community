@@ -2,7 +2,7 @@ package org.jetbrains.jps
 
 import org.codehaus.gant.GantBinding
 import org.jetbrains.jps.dag.DagBuilder
-import org.jetbrains.jps.artifacts.Artifact
+import org.jetbrains.jps.builders.*
 
 /**
  * @author max
@@ -13,15 +13,30 @@ class ProjectBuilder {
   final Map<ModuleChunk, String> testOutputs = [:]
   final Map<ModuleChunk, List<String>> cp = [:]
   final Map<ModuleChunk, List<String>> testCp = [:]
+  List<ModuleChunk> chunks = null
 
   final Project project;
   final GantBinding binding;
 
-  List<ModuleChunk> chunks = null
+  final List<ModuleBuilder> sourceGeneratingBuilders = []
+  final List<ModuleBuilder> sourceModifyingBuilders = []
+  final List<ModuleBuilder> translatingBuilders = []
+  final List<ModuleBuilder> weavingBuilders = []
+  final CustomTasksBuilder preTasksBuilder = new CustomTasksBuilder()
+  final CustomTasksBuilder postTasksBuilder = new CustomTasksBuilder()
 
   def ProjectBuilder(GantBinding binding, Project project) {
     this.project = project
     this.binding = binding
+    sourceGeneratingBuilders << new GroovyStubGenerator(project)
+    translatingBuilders << new JavacBuilder()
+    translatingBuilders << new GroovycBuilder(project)
+    translatingBuilders << new ResourceCopier()
+    weavingBuilders << new JetBrainsInstrumentations(project)
+  }
+
+  private def List<ModuleBuilder> builders() {
+    [preTasksBuilder, sourceGeneratingBuilders, sourceModifyingBuilders, translatingBuilders, weavingBuilders, postTasksBuilder].flatten()
   }
 
   private def buildChunks() {
@@ -64,6 +79,14 @@ class ProjectBuilder {
     chunks.each {
       makeChunk(it)
     }
+  }
+
+  def preModuleBuildTask(String moduleName, Closure task) {
+    preTasksBuilder.registerTask(moduleName, task)
+  }
+
+  def postModuleBuildTask(String moduleName, Closure task) {
+    postTasksBuilder.registerTask(moduleName, task)
   }
 
   private ModuleChunk chunkForModule(Module m) {
@@ -138,7 +161,7 @@ class ProjectBuilder {
     )
 
     if (!project.dryRun) {
-      project.builders().each {
+      builders().each {
         it.processModule(chunk, state)
       }
       state.tempRootsToDelete.each {

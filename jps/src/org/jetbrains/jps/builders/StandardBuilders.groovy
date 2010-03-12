@@ -198,3 +198,21 @@ class JetBrainsInstrumentations implements ModuleBuilder {
     }
   }
 }
+
+class CustomTasksBuilder implements ModuleBuilder {
+  List<ModuleBuildTask> tasks = []
+
+  def processModule(ModuleChunk moduleChunk, ModuleBuildState state) {
+    moduleChunk.modules.each {Module module ->
+      tasks*.perform(module, state.targetFolder)
+    }
+  }
+
+  def registerTask(String moduleName, Closure task) {
+    tasks << ({Module module, String outputFolder ->
+      if (module.name == moduleName) {
+        task(module, outputFolder)
+      }
+    } as ModuleBuildTask)
+  }
+}

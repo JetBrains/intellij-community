@@ -2,17 +2,12 @@ package org.jetbrains.jps
 
 import org.apache.tools.ant.BuildException
 import org.codehaus.gant.GantBinding
+import org.jetbrains.jps.artifacts.Artifact
+import org.jetbrains.jps.artifacts.ArtifactBuilder
 import org.jetbrains.jps.resolvers.LibraryResolver
 import org.jetbrains.jps.resolvers.ModuleResolver
 import org.jetbrains.jps.resolvers.PathEntry
 import org.jetbrains.jps.resolvers.Resolver
-import org.jetbrains.jps.builders.GroovyStubGenerator
-import org.jetbrains.jps.builders.JavacBuilder
-import org.jetbrains.jps.builders.GroovycBuilder
-import org.jetbrains.jps.builders.ResourceCopier
-import org.jetbrains.jps.builders.JetBrainsInstrumentations
-import org.jetbrains.jps.artifacts.Artifact
-import org.jetbrains.jps.artifacts.ArtifactBuilder
 
 /**
  * @author max
@@ -20,10 +15,6 @@ import org.jetbrains.jps.artifacts.ArtifactBuilder
 class Project {
   final ProjectBuilder builder;
   final GantBinding binding;
-  final List<ModuleBuilder> sourceGeneratingBuilders = []
-  final List<ModuleBuilder> sourceModifyingBuilders = []
-  final List<ModuleBuilder> translatingBuilders = []
-  final List<ModuleBuilder> weavingBuilders = []
   final List<Resolver> resolvers = []
   final ArtifactBuilder artifactBuilder
   final Map<String, Object> props = [:]
@@ -43,14 +34,9 @@ class Project {
   boolean dryRun = false
 
   def Project(GantBinding binding) {
-    builder = new ProjectBuilder(binding, this)
     this.binding = binding
+    builder = new ProjectBuilder(binding, this)
     artifactBuilder = new ArtifactBuilder(this)
-    sourceGeneratingBuilders << new GroovyStubGenerator(this)
-    translatingBuilders << new JavacBuilder()
-    translatingBuilders << new GroovycBuilder(this)
-    translatingBuilders << new ResourceCopier()
-    weavingBuilders << new JetBrainsInstrumentations(this)
 
     resolvers << new ModuleResolver(project: this)
     resolvers << new LibraryResolver(project: this)
@@ -63,10 +49,6 @@ class Project {
     }
 
     props["compiler.resources.id"] = "default.compiler.resources"
-  }
-
-  def List<ModuleBuilder> builders() {
-    [sourceGeneratingBuilders, sourceModifyingBuilders, translatingBuilders, weavingBuilders].flatten()
   }
 
   def Module createModule(String name, Closure initializer) {
