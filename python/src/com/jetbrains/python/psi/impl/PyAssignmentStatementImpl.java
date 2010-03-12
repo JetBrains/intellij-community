@@ -1,19 +1,3 @@
-/*
- *  Copyright 2005 Pythonid Project
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS"; BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -22,9 +6,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.SmartList;
-import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.toolbox.FP;
 import com.jetbrains.python.toolbox.RepeatIterable;
@@ -35,11 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 29.05.2005
- * Time: 13:05:38
- * To change this template use File | Settings | File Templates.
+ * @author yole
  */
 public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssignmentStatement {
   public PyAssignmentStatementImpl(ASTNode astNode) {
@@ -52,10 +33,20 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
   }
 
   public PyExpression[] getTargets() {
-    final ASTNode[] nodes = getNode().getChildren(PyElementTypes.EXPRESSIONS);
-    PyExpression[] psi_nodes = new PyExpression[nodes.length];
-    for (int i = 0; i < nodes.length; i += 1) psi_nodes[i] = (PyExpression)nodes[i].getPsi();
-    List<PyExpression> candidates = PyUtil.flattenedParens(psi_nodes); // put all possible tuples to one level
+    final ASTNode[] eqSigns = getNode().getChildren(TokenSet.create(PyTokenTypes.EQ));
+    if (eqSigns.length == 0) {
+      return PyExpression.EMPTY_ARRAY;
+    }
+    final ASTNode lastEq = eqSigns[eqSigns.length-1];
+    List<PyExpression> candidates = new ArrayList<PyExpression>();
+    ASTNode node = getNode().getFirstChildNode();
+    while(node != null && node != lastEq) {
+      final PsiElement psi = node.getPsi();
+      if (psi instanceof PyExpression) {
+        addCandidate(candidates, (PyExpression)psi);
+      }
+      node = node.getTreeNext();
+    }
     List<PyExpression> targets = new ArrayList<PyExpression>();
     for (PyExpression expr : candidates) { // only filter out targets
       if (expr instanceof PyTargetExpression ||
@@ -65,6 +56,21 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
       }
     }
     return targets.toArray(new PyExpression[targets.size()]);
+  }
+
+  private static void addCandidate(List<PyExpression> candidates, PyExpression psi) {
+    if (psi instanceof PyParenthesizedExpression) {
+      addCandidate(candidates, ((PyParenthesizedExpression)psi).getContainedExpression());
+    }
+    else if (psi instanceof PyTupleExpression) {
+      final PyExpression[] pyExpressions = ((PyTupleExpression)psi).getElements();
+      for (PyExpression pyExpression : pyExpressions) {
+        addCandidate(candidates, pyExpression);
+      }
+    }
+    else {
+      candidates.add(psi);
+    }
   }
 
   /**

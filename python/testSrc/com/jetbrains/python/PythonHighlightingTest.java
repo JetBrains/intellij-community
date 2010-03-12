@@ -70,7 +70,7 @@ public class PythonHighlightingTest extends PyLightFixtureTestCase {
   }
 
   public void testAssignmentTargets() throws Exception {
-    doTest();
+    doTest(true, false);
   }
 
   public void testReturnOutsideOfFunction() throws Exception {
