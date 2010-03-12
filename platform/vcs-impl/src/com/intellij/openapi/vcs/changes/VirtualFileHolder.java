@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -31,6 +32,7 @@ public class VirtualFileHolder implements FileHolder {
   private final Set<VirtualFile> myFiles = new HashSet<VirtualFile>();
   private final Project myProject;
   private final HolderType myType;
+  private int myNumDirs;
 
   public VirtualFileHolder(Project project, final HolderType type) {
     myProject = project;
@@ -43,13 +45,16 @@ public class VirtualFileHolder implements FileHolder {
 
   public void cleanAll() {
     myFiles.clear();
+    myNumDirs = 0;
   }
 
-  static void cleanScope(final Project project, final Collection<VirtualFile> files, final VcsDirtyScope scope) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
+  // returns number of removed directories
+  static int cleanScope(final Project project, final Collection<VirtualFile> files, final VcsDirtyScope scope) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
+      public Integer compute() {
+        int result = 0;
         // to avoid deadlocks caused by incorrect lock ordering, need to lock on this after taking read action
-        if (project.isDisposed() || files.isEmpty()) return;
+        if (project.isDisposed() || files.isEmpty()) return 0;
         final List<VirtualFile> currentFiles = new ArrayList<VirtualFile>(files);
         if (scope.getRecursivelyDirtyDirectories().size() == 0) {
           final Set<FilePath> dirtyFiles = scope.getDirtyFiles();
@@ -58,12 +63,16 @@ public class VirtualFileHolder implements FileHolder {
             VirtualFile f = dirtyFile.getVirtualFile();
             if (f != null) {
               files.remove(f);
+              if (f.isDirectory()) ++ result;
             }
             else {
               if (!cleanedDroppedFiles) {
                 cleanedDroppedFiles = true;
                 for(VirtualFile file: currentFiles) {
-                  if (fileDropped(project, file)) files.remove(file);
+                  if (fileDropped(project, file)) {
+                    files.remove(file);
+                    if (file.isDirectory()) ++ result;
+                  }
                 }
               }
             }
@@ -73,15 +82,17 @@ public class VirtualFileHolder implements FileHolder {
           for (VirtualFile file : currentFiles) {
             if (fileDropped(project, file) || scope.belongsTo(new FilePathImpl(file))) {
               files.remove(file);
+              if (file.isDirectory()) ++ result;
             }
           }
         }
+        return result;
       }
     });
   }
 
   public void cleanScope(final VcsDirtyScope scope) {
-    cleanScope(myProject, myFiles, scope);
+    myNumDirs -= cleanScope(myProject, myFiles, scope);
   }
 
   private static boolean fileDropped(final Project project, final VirtualFile file) {
@@ -90,10 +101,12 @@ public class VirtualFileHolder implements FileHolder {
 
   public void addFile(VirtualFile file) {
     myFiles.add(file);
+    if (file.isDirectory()) ++ myNumDirs;
   }
 
   public void removeFile(VirtualFile file) {
     myFiles.remove(file);
+    if (file.isDirectory()) -- myNumDirs;
   }
 
   public List<VirtualFile> getFiles() {
@@ -103,6 +116,7 @@ public class VirtualFileHolder implements FileHolder {
   public VirtualFileHolder copy() {
     final VirtualFileHolder copyHolder = new VirtualFileHolder(myProject, myType);
     copyHolder.myFiles.addAll(myFiles);
+    copyHolder.myNumDirs = myNumDirs;
     return copyHolder;
   }
 
@@ -123,5 +137,13 @@ public class VirtualFileHolder implements FileHolder {
 
   public int hashCode() {
     return myFiles.hashCode();
+  }
+
+  public int getSize() {
+    return myFiles.size();
+  }
+
+  public int getNumDirs() {
+    return myNumDirs;
   }
 }
