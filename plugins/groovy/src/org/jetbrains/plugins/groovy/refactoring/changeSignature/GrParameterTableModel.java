@@ -15,8 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiCodeFragment;
 import com.intellij.ui.RowEditableTableModel;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
@@ -32,9 +35,9 @@ public class GrParameterTableModel extends AbstractTableModel implements RowEdit
   private final List<GrParameterInfo> infos;
   private final GrMethod myMethod;
   private final GrChangeSignatureDialog myDialog;
+  private final Project myProject;
 
-
-  public GrParameterTableModel(GrMethod method, GrChangeSignatureDialog dialog) {
+  public GrParameterTableModel(GrMethod method, GrChangeSignatureDialog dialog, Project project) {
     myMethod = method;
     myDialog = dialog;
     final GrParameter[] parameters = myMethod.getParameters();
@@ -43,11 +46,12 @@ public class GrParameterTableModel extends AbstractTableModel implements RowEdit
       GrParameter parameter = parameters[i];
       infos.add(new GrParameterInfo(parameter, i));
     }
+    myProject=project;
   }
 
   public void addRow() {
     final int row = infos.size();
-    infos.add(new GrParameterInfo());
+    infos.add(new GrParameterInfo(myProject, myMethod));
     fireTableRowsInserted(row, row);
   }
 
@@ -95,7 +99,7 @@ public class GrParameterTableModel extends AbstractTableModel implements RowEdit
     if (rowIndex < 0 || rowIndex >= infos.size()) return;
     if (columnIndex < 0 || columnIndex > 3) return;
 
-    String s = value instanceof String ? (String)value : "";
+    /*String s = value instanceof String ? (String)value : "";
     s = s.trim();
     final GrParameterInfo info = infos.get(rowIndex);
     switch (columnIndex) {
@@ -107,7 +111,7 @@ public class GrParameterTableModel extends AbstractTableModel implements RowEdit
         info.setDefaultInitializer(s);
       case 3:
         info.setDefaultValue(s);
-    }
+    }*/
     fireTableCellUpdated(rowIndex, columnIndex);
   }
 
@@ -130,9 +134,24 @@ public class GrParameterTableModel extends AbstractTableModel implements RowEdit
 
   @Override
   public Class<?> getColumnClass(int columnIndex) {
-    if (columnIndex < 0 || columnIndex > 3) throw new IllegalArgumentException();
-    return String.class;
+    switch (columnIndex) {
+      case 0:
+        return PsiCodeFragment.class;
+      case 1:
+      case 2:
+      case 3:
+        return GroovyCodeFragment.class;
+      default:
+        throw  new IllegalArgumentException();
+    }
   }
 
-  
+  @Override
+  public boolean isCellEditable(int rowIndex, int columnIndex) {
+    return true;
+  }
+
+  public List<GrParameterInfo> getParameterInfos() {
+    return infos;
+  }
 }

@@ -15,7 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCodeFragment;
+import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 
@@ -23,60 +28,48 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
  * @author Maxim.Medvedev
  */
 public class GrParameterInfo {
-  private String myName = "";
-  private String myDefaultValue = "";
-  private String myType = "";
-  private String myDefaultInitializer = "";
+  private GroovyCodeFragment myName;
+  private GroovyCodeFragment myDefaultValue;
+  private PsiTypeCodeFragment myType;
+  private GroovyCodeFragment myDefaultInitializer;
   private final int myPosition;
 
   public GrParameterInfo(GrParameter parameter, int position) {
     myPosition = position;
-    myName = parameter.getName();
+    final Project project = parameter.getProject();
+    myName = new GroovyCodeFragment(project, parameter.getName());
     final PsiType type = parameter.getDeclaredType();
     if (type != null) {
-      myType = type.getCanonicalText();
+      myType = JavaPsiFacade.getElementFactory(project).createTypeCodeFragment(type.getCanonicalText(), parameter, true, true);
     }
     final GrExpression defaultInitializer = parameter.getDefaultInitializer();
     if (defaultInitializer != null) {
-      myDefaultInitializer = defaultInitializer.getText();
+      myDefaultInitializer = new GroovyCodeFragment(project, defaultInitializer.getText());
     }
   }
 
-
-  public GrParameterInfo() {
+  public GrParameterInfo(Project project, PsiElement context) {
     this.myPosition = -1;
+    myName = new GroovyCodeFragment(project, "");
+    myDefaultValue = new GroovyCodeFragment(project, "");
+    myType = JavaPsiFacade.getElementFactory(project).createTypeCodeFragment("", context, true, true);
+    myDefaultInitializer = new GroovyCodeFragment(project, "");
   }
 
-  public String getName() {
+  public GroovyCodeFragment getName() {
     return myName;
   }
 
-  public String getDefaultValue() {
+  public GroovyCodeFragment getDefaultValue() {
     return myDefaultValue;
   }
 
-  public String getType() {
+  public PsiTypeCodeFragment getType() {
     return myType;
   }
 
-  public String getDefaultInitializer() {
+  public GroovyCodeFragment getDefaultInitializer() {
     return myDefaultInitializer;
-  }
-
-  public void setName(String name) {
-    myName = name;
-  }
-
-  public void setDefaultValue(String defaultValue) {
-    myDefaultValue = defaultValue;
-  }
-
-  public void setType(String type) {
-    myType = type;
-  }
-
-  public void setDefaultInitializer(String defaultInitializer) {
-    myDefaultInitializer = defaultInitializer;
   }
 
   public int getPosition() {
