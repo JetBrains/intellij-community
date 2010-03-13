@@ -17,7 +17,6 @@ package com.intellij.openapi.util.text;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -38,6 +37,9 @@ import java.util.*;
 public class StringUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.text.StringUtil");
   @NonNls private static final String VOWELS = "aeiouy";
+
+  private StringUtil() {
+  }
 
   public static String replace(@NonNls @NotNull String text, @NonNls @NotNull String oldS, @NonNls @Nullable String newS) {
     return replace(text, oldS, newS, false);
@@ -486,6 +488,40 @@ public class StringUtil {
       return s;
     }
     return s.substring(1, s.length() - 1);
+  }
+
+  /**
+   * This is just an optimized version of Matcher.quoteReplacement
+   */
+  public static String quoteReplacement(String s) {
+    boolean needReplacements = false;
+
+    for (int i = 0; i < s.length(); i++) {
+      char c = s.charAt(i);
+      if (c == '\\' || c == '$') {
+        needReplacements = true;
+        break;
+      }
+    }
+
+    if (!needReplacements) return s;
+
+    StringBuilder sb = new StringBuilder(s.length() * 6 / 5);
+    for (int i = 0; i < s.length(); i++) {
+      char c = s.charAt(i);
+      if (c == '\\') {
+        sb.append('\\');
+        sb.append('\\');
+      }
+      else if (c == '$') {
+        sb.append('\\');
+        sb.append('$');
+      }
+      else {
+        sb.append(c);
+      }
+    }
+    return sb.toString();
   }
 
   private static void unescapeStringCharacters(int length, @NotNull String s, @NotNull StringBuilder buffer) {

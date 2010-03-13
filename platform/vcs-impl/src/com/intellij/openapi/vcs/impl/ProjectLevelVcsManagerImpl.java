@@ -332,7 +332,7 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
     Content content = contentManager.findContent(displayName);
     if (content == null) {
       final EditorFactory editorFactory = EditorFactory.getInstance();
-      final Editor editor = editorFactory.createViewer(editorFactory.createDocument(""));
+      final Editor editor = editorFactory.createViewer(editorFactory.createDocument(""), myProject);
       EditorSettings editorSettings = editor.getSettings();
       editorSettings.setLineMarkerAreaShown(false);
       editorSettings.setIndentGuidesShown(false);

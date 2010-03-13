@@ -487,8 +487,8 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
   }
 
   public void testResolvingEnvVariableInRepositoryPath() throws Exception {
-    String temp = System.getenv("TMP");
-    updateSettingsXml("<localRepository>${env.TEMP}/tmpRepo</localRepository>");
+    String temp = System.getenv(getEnvVar());
+    updateSettingsXml("<localRepository>${env." + getEnvVar() + "}/tmpRepo</localRepository>");
 
     File repo = new File(temp + "/tmpRepo").getCanonicalFile();
     assertEquals(repo.getPath(), getMavenGeneralSettings().getEffectiveLocalRepository().getPath());

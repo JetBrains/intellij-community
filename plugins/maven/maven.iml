@@ -22,7 +22,7 @@
     <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/maven-2.2.0-uber.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/maven-2.2.1-uber.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

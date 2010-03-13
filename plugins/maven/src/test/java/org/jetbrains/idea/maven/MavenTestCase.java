@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -171,6 +172,16 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
   protected boolean runInWriteAction() {
     return true;
+  }
+
+  protected String getRoot() {
+    if (SystemInfo.isWindows) return "c:";
+    return "";
+  }
+
+  protected String getEnvVar() {
+    if (SystemInfo.isWindows) return "TEMP";
+    return "TMPDIR";
   }
 
   protected MavenGeneralSettings getMavenGeneralSettings() {

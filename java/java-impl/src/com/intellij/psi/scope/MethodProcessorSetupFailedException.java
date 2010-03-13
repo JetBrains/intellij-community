@@ -28,4 +28,10 @@ public class MethodProcessorSetupFailedException extends Exception{
   public MethodProcessorSetupFailedException(@NonNls String message){
     super(message);
   }
+
+  @SuppressWarnings({"NonSynchronizedMethodOverridesSynchronizedMethod"})
+  @Override
+  public Throwable fillInStackTrace() {
+    return this;
+  }
 }

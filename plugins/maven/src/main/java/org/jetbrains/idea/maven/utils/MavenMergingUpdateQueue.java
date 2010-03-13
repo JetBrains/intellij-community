@@ -86,16 +86,18 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
           }
         }, MavenMergingUpdateQueue.this);
 
-        if (CommandProcessor.getInstance().getCurrentCommand() != null) {
-          suspend();
-        }
-
         ProjectRootManager.getInstance(project).addModuleRootListener(new ModuleRootListener() {
+          boolean beforeCalled = false;
+
           public void beforeRootsChange(ModuleRootEvent event) {
             suspend();
+            beforeCalled = true;
           }
 
           public void rootsChanged(ModuleRootEvent event) {
+            if (!beforeCalled) return;
+            beforeCalled = false;
+            
             resume();
             MavenMergingUpdateQueue.this.restartTimer();
           }
@@ -109,7 +111,6 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
       protected void run(Result result) throws Throwable {
         MessageBusConnection connection = project.getMessageBus().connect(MavenMergingUpdateQueue.this);
         connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
-
           public void enteredDumbMode() {
             suspend();
           }
@@ -118,6 +119,7 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
             resume();
           }
         });
+
         if (DumbService.getInstance(project).isDumb()) {
           suspend();
         }

@@ -155,7 +155,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
                                                                                                        "maven-resources-plugin"),
                                                                    "escapeString", "\\");
 
-          long propertiesHashCode = calculateHashCode(properties);
+          long propertiesHashCode = calculateHashCode(mavenProject, properties);
 
           List<ProcessingItem> moduleItemsToProcess = new ArrayList<ProcessingItem>();
           collectProcessingItems(eachModule, mavenProject, context, properties, propertiesHashCode,
@@ -188,12 +188,12 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
     return result;
   }
 
-  private static long calculateHashCode(Properties properties) {
+  private static long calculateHashCode(MavenProject project, Properties properties) {
     Set<String> sorted = new TreeSet<String>();
     for (Map.Entry<Object, Object> each : properties.entrySet()) {
       sorted.add(each.getKey().toString() + "->" + each.getValue().toString());
     }
-    return sorted.hashCode();
+    return project.getLastReadStamp() + 31 * sorted.hashCode();
   }
 
   private static Properties loadPropertiesAndFilters(CompileContext context, MavenProject mavenProject) {

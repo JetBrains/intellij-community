@@ -157,7 +157,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     Set<OptionDescription> configs = myStorage.get(option);
     if (configs == null) {
       configs = new THashSet<OptionDescription>(3, 0.9f);
-      myStorage.put(option, configs);
+      myStorage.put(new String(option), configs);
     }
 
     configs.add(new OptionDescription(null, myIdentifierTable.intern(id), hit != null ? myIdentifierTable.intern(hit) : null,

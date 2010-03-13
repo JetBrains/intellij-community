@@ -111,7 +111,7 @@ public class DumbServiceImpl extends DumbService {
       }
       try {
         final int size = runner.queryNeededFiles(indicator);
-        if ((size + runner.getNumberOfPendingUpdateJobs(indicator)) < 50) {
+        if (application.isHeadlessEnvironment() || (size + runner.getNumberOfPendingUpdateJobs(indicator)) < 50) {
           // If not that many files found, process them on the spot, avoiding entering dumb mode
           // Consider number of pending tasks as well, becase they may take noticeable time to process even if the number of files is small
           if (size > 0) {

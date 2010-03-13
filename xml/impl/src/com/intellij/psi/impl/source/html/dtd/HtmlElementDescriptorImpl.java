@@ -22,6 +22,8 @@ import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.dtd.BaseXmlElementDescriptorImpl;
+import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
+import com.intellij.xml.util.XmlUtil;
 
 import java.util.HashMap;
 
@@ -96,6 +98,18 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
     if (!myCaseSensitive) attributeName = attributeName.toLowerCase();
     XmlAttributeDescriptor descriptor = super.getAttributeDescriptor(attributeName, context);
     if (descriptor == null) descriptor = RelaxedHtmlFromSchemaElementDescriptor.getAttributeDescriptorFromFacelets(attributeName, context);
+    
+    if (descriptor == null) {
+      String prefix = XmlUtil.findPrefixByQualifiedName(attributeName);
+      
+      if ("xml".equals(prefix)) { // todo this is not technically correct dtd document references namespaces but we should handle it at least for xml stuff
+        XmlNSDescriptor nsdescriptor = context.getNSDescriptor(XmlUtil.XML_NAMESPACE_URI, true);
+        if (nsdescriptor instanceof XmlNSDescriptorImpl) {
+          descriptor = ((XmlNSDescriptorImpl)nsdescriptor).getAttribute(
+            XmlUtil.findLocalNameByQualifiedName(attributeName), XmlUtil.XML_NAMESPACE_URI, context);
+        }
+      }
+    }
     return descriptor;
   }
 
