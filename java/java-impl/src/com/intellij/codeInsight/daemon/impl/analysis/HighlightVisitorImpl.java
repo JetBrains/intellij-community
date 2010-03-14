@@ -69,18 +69,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   private final Map<String, Pair<PsiImportStatementBase, PsiClass>> mySingleImportedClasses = new THashMap<String, Pair<PsiImportStatementBase, PsiClass>>();
   private final Map<String, Pair<PsiImportStaticReferenceElement, PsiField>> mySingleImportedFields = new THashMap<String, Pair<PsiImportStaticReferenceElement, PsiField>>();
   private PsiFile myFile;
-  private final PsiElementVisitor REGISTER_REFERENCES_VISITOR = new PsiRecursiveElementWalkingVisitor() {
-    @Override public void visitElement(PsiElement element) {
-      super.visitElement(element);
-      for (PsiReference reference : element.getReferences()) {
-        PsiElement resolved = reference.resolve();
-        if (resolved instanceof PsiNamedElement) {
-          myRefCountHolder.registerLocallyReferenced((PsiNamedElement)resolved);
-        }
-      }
-    }
-  };
-
+  
   @SuppressWarnings({"UnusedDeclaration"}) //in plugin.xml
   public HighlightVisitorImpl(Project project) {
     this(JavaPsiFacade.getInstance(project).getResolveHelper());
@@ -111,14 +100,14 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     element.accept(this);
 
     if (myRefCountHolder != null) {
-      registerReferencesFromInjectedFragments(element);
+      instantiateInjections(element);
     }
   }
 
-  private void registerReferencesFromInjectedFragments(final PsiElement element) {
+  private void instantiateInjections(final PsiElement element) {
     InjectedLanguageUtil.enumerate(element, myFile, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
       public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
-        injectedPsi.accept(REGISTER_REFERENCES_VISITOR);
+        // no op
       }
     }, false);
   }
