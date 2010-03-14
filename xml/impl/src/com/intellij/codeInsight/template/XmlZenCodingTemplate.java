@@ -20,15 +20,18 @@ import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlToken;
-import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.xml.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.IntArrayList;
+import org.apache.xerces.util.XML11Char;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,6 +65,8 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
   private static class MyTemplateToken extends MyToken {
     final String myKey;
     final List<Pair<String, String>> myAttribute2Value;
+    TemplateImpl myTemplate;
+    String myTemplateString;
 
     MyTemplateToken(String key, List<Pair<String, String>> attribute2value) {
       myKey = key;
@@ -189,6 +194,65 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
     return new MyTemplateToken(templateKey, attributes);
   }
 
+  private static boolean isXML11ValidQName(String str) {
+    final int colon = str.indexOf(':');
+    if (colon == 0 || colon == str.length() - 1) {
+      return false;
+    }
+    if (colon > 0) {
+      final String prefix = str.substring(0, colon);
+      final String localPart = str.substring(colon + 1);
+      return XML11Char.isXML11ValidNCName(prefix) && XML11Char.isXML11ValidNCName(localPart);
+    }
+    return XML11Char.isXML11ValidNCName(str);
+  }
+
+  private static boolean containsAttrsVar(TemplateImpl template) {
+    for (int i = 0; i < template.getVariableCount(); i++) {
+      String varName = template.getVariableNameAt(i);
+      if (ATTRS.equals(varName)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static void removeVariablesWhichHasNoSegment(TemplateImpl template) {
+    Set<String> segments = new HashSet<String>();
+    for (int i = 0; i < template.getSegmentsCount(); i++) {
+      segments.add(template.getSegmentName(i));
+    }
+    IntArrayList varsToRemove = new IntArrayList();
+    for (int i = 0; i < template.getVariableCount(); i++) {
+      String varName = template.getVariableNameAt(i);
+      if (!segments.contains(varName)) {
+        varsToRemove.add(i);
+      }
+    }
+    for (int i = 0; i < varsToRemove.size(); i++) {
+      template.removeVariable(varsToRemove.get(i));
+    }
+  }
+
+  @Nullable
+  private static XmlTag parseXmlTagInTemplate(String templateString, Project project) {
+    XmlFile xmlFile = (XmlFile)PsiFileFactory.getInstance(project).createFileFromText("dummy.xml", templateString);
+    XmlDocument document = xmlFile.getDocument();
+    return document == null ? null : document.getRootTag();
+  }
+
+  private static boolean generateTemplateAndAddToToken(MyTemplateToken token, CustomTemplateCallback callback) {
+    TemplateImpl template = callback.findApplicableTemplate(token.myKey);
+    assert template != null;
+    XmlTag tag = parseXmlTagInTemplate(template.getString(), callback.getProject());
+    if (tag == null) {
+      return false;
+    }
+    token.myTemplate = template;
+    token.myTemplateString = template.getString();
+    return true;
+  }
+
   @Nullable
   private static List<MyToken> parse(@NotNull String text, @NotNull CustomTemplateCallback callback) {
     text += MARKER;
@@ -208,12 +272,19 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
             return null;
           }
           String prefix = getPrefix(key);
-          if (!callback.isLiveTemplateApplicable(prefix) && prefix.indexOf('<') >= 0 /*&& !XML11Char.isXML11ValidQName(prefix)*/) {
+          boolean applicable = callback.isLiveTemplateApplicable(prefix);
+          if (!applicable && !isXML11ValidQName(prefix)) {
             return null;
           }
           MyTemplateToken token = parseSelectors(key);
           if (token == null) {
             return null;
+          }
+          if (applicable && token.myAttribute2Value.size() > 0) {
+            assert prefix.equals(token.myKey);
+            if (!generateTemplateAndAddToToken(token, callback)) {
+              return null;
+            }
           }
           result.add(token);
         }
@@ -353,45 +424,103 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
     LOG.error("Input string was checked incorrectly during isApplicable() invokation");
   }
 
-  @NotNull
-  private static String buildAttributesString(List<Pair<String, String>> attribute2value, int numberInIteration) {
+  @Nullable
+  private static Map<String, String> buildPredefinedValues(List<Pair<String, String>> attribute2value, int numberInIteration) {
     StringBuilder result = new StringBuilder();
     for (Iterator<Pair<String, String>> it = attribute2value.iterator(); it.hasNext();) {
       Pair<String, String> pair = it.next();
       String name = pair.first;
-      String value = pair.second.replace(NUMBER_IN_ITERATION_PLACE_HOLDER, Integer.toString(numberInIteration + 1));
+      String value = getValue(pair, numberInIteration);
       result.append(name).append("=\"").append(value).append('"');
       if (it.hasNext()) {
         result.append(' ');
       }
     }
-    return result.toString();
-  }
-
-  private static boolean invokeTemplate(MyTemplateToken token,
-                                        final CustomTemplateCallback callback,
-                                        final TemplateInvokationListener listener,
-                                        int numberInIteration) {
-    String attributes = buildAttributesString(token.myAttribute2Value, numberInIteration);
+    String attributes = result.toString();
     attributes = attributes.length() > 0 ? ' ' + attributes : null;
     Map<String, String> predefinedValues = null;
     if (attributes != null) {
       predefinedValues = new HashMap<String, String>();
       predefinedValues.put(ATTRS, attributes);
     }
-    if (callback.isLiveTemplateApplicable(token.myKey)) {
-      if (attributes != null && !callback.templateContainsVars(token.myKey, ATTRS)) {
-        TemplateImpl newTemplate = generateTemplateWithAttributes(token.myKey, attributes, callback);
-        if (newTemplate != null) {
-          return callback.startTemplate(newTemplate, predefinedValues, listener);
-        }
+    return predefinedValues;
+  }
+
+  private static String getValue(Pair<String, String> pair, int numberInIteration) {
+    return pair.second.replace(NUMBER_IN_ITERATION_PLACE_HOLDER, Integer.toString(numberInIteration + 1));
+  }
+
+  @Nullable
+  private static String addAttrsVar(TemplateImpl modifiedTemplate, XmlTag tag) {
+    String text = tag.getContainingFile().getText();
+    PsiElement[] children = tag.getChildren();
+    if (children.length >= 1 &&
+        children[0] instanceof XmlToken &&
+        ((XmlToken)children[0]).getTokenType() == XmlTokenType.XML_START_TAG_START) {
+      PsiElement beforeAttrs = children[0];
+      if (children.length >= 2 && children[1] instanceof XmlToken && ((XmlToken)children[1]).getTokenType() == XmlTokenType.XML_NAME) {
+        beforeAttrs = children[1];
       }
-      return callback.startTemplate(token.myKey, predefinedValues, listener);
+      TextRange range = beforeAttrs.getTextRange();
+      if (range == null) {
+        return null;
+      }
+      int offset = range.getEndOffset();
+      text = text.substring(0, offset) + " $ATTRS$" + text.substring(offset);
+      modifiedTemplate.addVariable(ATTRS, "", "", false);
+      return text;
+    }
+    return null;
+  }
+
+  private static boolean invokeTemplate(MyTemplateToken token,
+                                        final CustomTemplateCallback callback,
+                                        final TemplateInvokationListener listener,
+                                        int numberInIteration) {
+    List<Pair<String, String>> attr2value = new ArrayList<Pair<String, String>>(token.myAttribute2Value);
+    if (callback.isLiveTemplateApplicable(token.myKey)) {
+      if (token.myTemplate != null) {
+        TemplateImpl modifiedTemplate = token.myTemplate.copy();
+        XmlTag tag = parseXmlTagInTemplate(token.myTemplateString, callback.getProject());
+        assert tag != null;
+        for (Iterator<Pair<String, String>> iterator = attr2value.iterator(); iterator.hasNext();) {
+          Pair<String, String> pair = iterator.next();
+          if (tag.getAttribute(pair.first) != null) {
+            tag.setAttribute(pair.first, getValue(pair, numberInIteration));
+            iterator.remove();
+          }
+        }
+        String text = null;
+        if (!containsAttrsVar(modifiedTemplate) && attr2value.size() > 0) {
+          String textWithAttrs = addAttrsVar(modifiedTemplate, tag);
+          if (textWithAttrs != null) {
+            text = textWithAttrs;
+          }
+          else {
+            for (Iterator<Pair<String, String>> iterator = attr2value.iterator(); iterator.hasNext();) {
+              Pair<String, String> pair = iterator.next();
+              tag.setAttribute(pair.first, getValue(pair, numberInIteration));
+              iterator.remove();
+            }
+          }
+        }
+        if (text == null) {
+          text = tag.getContainingFile().getText();
+        }
+        modifiedTemplate.setString(text);
+        removeVariablesWhichHasNoSegment(modifiedTemplate);
+        Map<String, String> predefinedValues = buildPredefinedValues(attr2value, numberInIteration);
+        return callback.startTemplate(modifiedTemplate, predefinedValues, listener);
+      }
+      else {
+        Map<String, String> predefinedValues = buildPredefinedValues(attr2value, numberInIteration);
+        return callback.startTemplate(token.myKey, predefinedValues, listener);
+      }
     }
     else {
       TemplateImpl template = new TemplateImpl("", "");
       template.addTextSegment('<' + token.myKey);
-      if (attributes != null) {
+      if (attr2value.size() > 0) {
         template.addVariable(ATTRS, "", "", false);
         template.addVariableSegment(ATTRS);
       }
@@ -399,43 +528,9 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
       template.addVariableSegment(TemplateImpl.END);
       template.addTextSegment("</" + token.myKey + ">");
       template.setToReformat(true);
+      Map<String, String> predefinedValues = buildPredefinedValues(attr2value, numberInIteration);
       return callback.startTemplate(template, predefinedValues, listener);
     }
-  }
-
-  private static int findPlaceToInsertAttrs(@NotNull TemplateImpl template) {
-    String s = template.getString();
-    if (s.length() > 0) {
-      if (s.charAt(0) != '<') {
-        return -1;
-      }
-      int i = 1;
-      while (i < s.length() && !Character.isWhitespace(s.charAt(i)) && s.charAt(i) != '>') {
-        i++;
-      }
-      if (i == 1) {
-        return -1;
-      }
-      if (s.indexOf('>', i) >= i) {
-        return i;
-      }
-    }
-    return -1;
-  }
-
-  @Nullable
-  private static TemplateImpl generateTemplateWithAttributes(String key, String attributes, CustomTemplateCallback callback) {
-    TemplateImpl template = callback.findApplicableTemplate(key);
-    assert template != null;
-    String templateString = template.getString();
-    int offset = findPlaceToInsertAttrs(template);
-    if (offset >= 0) {
-      String newTemplateString = templateString.substring(0, offset) + attributes + templateString.substring(offset);
-      TemplateImpl newTemplate = template.copy();
-      newTemplate.setString(newTemplateString);
-      return newTemplate;
-    }
-    return null;
   }
 
   /*private static boolean hasClosingTag(CharSequence text, CharSequence tagName, int offset, int rightBound) {
@@ -544,7 +639,7 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
                       }
                     }
                   };
-                  if (!invokeTemplate(templateToken, myCallback, listener, -1)) {
+                  if (!invokeTemplate(templateToken, myCallback, listener, 0)) {
                     return false;
                   }
                   templateToken = null;
@@ -625,7 +720,7 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
           }
         }
       };
-      if (!invokeTemplate(templateToken, myCallback, listener, -1)) {
+      if (!invokeTemplate(templateToken, myCallback, listener, 0)) {
         return false;
       }
       return true;
@@ -704,4 +799,5 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
       return true;
     }
   }
+
 }
