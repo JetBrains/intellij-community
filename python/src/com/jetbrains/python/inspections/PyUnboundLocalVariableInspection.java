@@ -52,11 +52,6 @@ public class PyUnboundLocalVariableInspection extends LocalInspectionTool {
     return new PyInspectionVisitor(holder){
       @Override
       public void visitPyReferenceExpression(final PyReferenceExpression node) {
-        if (PsiTreeUtil.getParentOfType(node, PyExceptPart.class) != null){
-          // TODO[oleg] more accurate check
-          return;
-        }
-
         // Ignore callee expressions
         if (PyCallExpressionNavigator.getPyCallExpressionByCallee(node) != null){
           return;

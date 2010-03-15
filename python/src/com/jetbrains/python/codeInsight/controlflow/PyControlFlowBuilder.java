@@ -409,6 +409,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     for (Pair<PsiElement, Instruction> pair : myPending) {
       myBuilder.addPendingEdge(pair.first, pair.second);
     }
+    // Finally part handling
     final PyFinallyPart finallyPart = node.getFinallyPart();
     Instruction finallyInstruction = null;
     Instruction lastFinallyInstruction = null;
@@ -424,30 +425,40 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     myBuilder.processPending(new ControlFlowBuilder.PendingProcessor() {
       public void process(final PsiElement pendingScope, final Instruction instruction) {
         final PsiElement pendingElement = instruction.getElement();
+        if (pendingElement == null){
+          myBuilder.addPendingEdge(pendingScope, instruction);
+          return;
+        }
 
-        // handle raise instructions inside compound statement
-        if (pendingElement instanceof PyRaiseStatement && PsiTreeUtil.isAncestor(tryPart, pendingElement, false)) {
+        // Process raise statements
+        if (PsiTreeUtil.isAncestor(tryPart, pendingElement, false) &&
+            PsiTreeUtil.getParentOfType(pendingElement, PyRaiseStatement.class) != null){
           for (Instruction rescueInstruction : exceptInstructions) {
             myBuilder.addEdge(instruction, rescueInstruction);
           }
-          return;
-        }
-        // handle return pending instructions inside body if ensure block exists
-        if (pendingElement instanceof PyReturnStatement && !finallyRef.isNull() && PsiTreeUtil.isAncestor(node, pendingElement, false)) {
-          myBuilder.addEdge(instruction, finallyRef.get());
-          myBuilder.addPendingEdge(null, lastFinallyRef.get());
+          myBuilder.addPendingEdge(pendingScope, instruction);
           return;
         }
 
-        // Handle pending instructions inside body with ensure block
-        if (pendingElement != null &&
-            finallyPart != null &&
-            pendingScope != finallyPart &&
-            PsiTreeUtil.isAncestor(node, pendingElement, false)) {
+        // Add except statements
+        if (PsiTreeUtil.isAncestor(tryPart, pendingElement, false)){
+          for (Instruction rescueInstruction : exceptInstructions) {
+            myBuilder.addEdge(instruction, rescueInstruction);
+          }
+        }
+
+        // Process finally
+        if (!finallyRef.isNull()){
           myBuilder.addEdge(instruction, finallyRef.get());
+          if (!lastFinallyRef.isNull() &&
+              PsiTreeUtil.getParentOfType(pendingElement, PyReturnStatement.class, false) != null){
+            myBuilder.addPendingEdge(null, lastFinallyRef.get());
+          }
           return;
         }
+
         myBuilder.addPendingEdge(pendingScope, instruction);
+
       }
     });
   }
