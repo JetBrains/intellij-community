@@ -158,11 +158,11 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return processElementsWithWord(occurenceProcessor, searchScope, identifier, UsageSearchContext.IN_COMMENTS, true);
   }
 
-  public boolean processElementsWithWord(@NotNull TextOccurenceProcessor processor,
+  public boolean processElementsWithWord(@NotNull final TextOccurenceProcessor processor,
                                           @NotNull SearchScope searchScope,
-                                          @NotNull String text,
+                                          @NotNull final String text,
                                           short searchContext,
-                                          boolean caseSensitively) {
+                                          final boolean caseSensitively) {
     if (text.length() == 0) {
       throw new IllegalArgumentException("Cannot search for elements with empty text");
     }
@@ -179,10 +179,11 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       PsiElement[] scopeElements = scope.getScope();
       final boolean ignoreInjectedPsi = scope.isIgnoreInjectedPsi();
 
-      for (final PsiElement scopeElement : scopeElements) {
-        if (!processElementsWithWordInScopeElement(scopeElement, processor, text, caseSensitively, ignoreInjectedPsi)) return false;
-      }
-      return true;
+      return JobUtil.invokeConcurrentlyUnderMyProgress(Arrays.asList(scopeElements), new Processor<PsiElement>() {
+        public boolean process(PsiElement scopeElement) {
+          return processElementsWithWordInScopeElement(scopeElement, processor, text, caseSensitively, ignoreInjectedPsi);
+        }
+      }, "textsearch");
     }
   }
 
@@ -200,7 +201,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }).booleanValue();
   }
 
-  private boolean processElementsWithTextInGlobalScope(final TextOccurenceProcessor processor,
+  private boolean processElementsWithTextInGlobalScope(@NotNull final TextOccurenceProcessor processor,
                                                        final GlobalSearchScope scope,
                                                        final StringSearcher searcher,
                                                        final short searchContext,
