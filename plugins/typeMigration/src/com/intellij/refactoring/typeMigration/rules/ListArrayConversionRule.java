@@ -108,13 +108,14 @@ public class ListArrayConversionRule extends TypeConversionRule {
         final PsiClass collectionClass =
           JavaPsiFacade.getInstance(psiClass.getProject()).findClass("java.util.List", allScope);
         if (collectionClass != null && InheritanceUtil.isInheritorOrSelf(psiClass, collectionClass, true)) {
+          final PsiSubstitutor derivedSubstitutor = classResolveResult.getSubstitutor();
+          if (PsiUtil.isRawSubstitutor(psiClass, derivedSubstitutor)) return null;
           final PsiSubstitutor substitutor =
-            TypeConversionUtil.getClassSubstitutor(collectionClass, psiClass, classResolveResult.getSubstitutor());
+            TypeConversionUtil.getClassSubstitutor(collectionClass, psiClass, derivedSubstitutor);
           assert substitutor != null;
-          final PsiType collectionType = PsiImplUtil.normalizeWildcardTypeByPosition(substitutor.substitute(collectionClass.getTypeParameters()[0]), expression);
-          if (collectionType != null) {
-            return collectionType;
-          }
+          final PsiType type = substitutor.substitute(collectionClass.getTypeParameters()[0]);
+          assert type != null;
+          return PsiImplUtil.normalizeWildcardTypeByPosition(type, expression);
         }
       }
     }
@@ -165,7 +166,9 @@ public class ListArrayConversionRule extends TypeConversionRule {
       }
     }
     else if (methodName.equals("set")) {
-      return new TypeConversionDescriptor("$qualifier$.set($i$, $val$)", "$qualifier$[$i$] = $val$");
+      if (TypeConversionUtil.isAssignable(arrayType.getComponentType(), collectionType)) {
+        return new TypeConversionDescriptor("$qualifier$.set($i$, $val$)", "$qualifier$[$i$] = $val$");
+      }
     }
     return null;
   }

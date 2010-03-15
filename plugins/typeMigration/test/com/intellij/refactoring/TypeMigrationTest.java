@@ -516,4 +516,19 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
                     myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<? extends java.lang.Object>", null),
                     myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object[]", null));
   }
+
+  //set(1, "") should be assignment-checked over String
+  public void testT103() throws Exception {
+    doTestFirstParamType("method",
+                    myJavaFacade.getElementFactory().createTypeFromText("java.util.ArrayList<java.lang.String>", null),
+                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null).createArrayType());
+  }
+
+   //raw list type now should not be changed
+  public void testT104() throws Exception {
+    doTestFirstParamType("method",
+                    myJavaFacade.getElementFactory().createTypeFromText("java.util.ArrayList", null),
+                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null).createArrayType());
+  }
+
 }
