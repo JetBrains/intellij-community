@@ -124,7 +124,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myListeners.addListener(new ChangeListAdapter() {
       @Override
       public void defaultListChanged(final ChangeList oldDefaultList, ChangeList newDefaultList) {
-        if (oldDefaultList instanceof LocalChangeList &&
+        if (!ApplicationManager.getApplication().isUnitTestMode() &&
+          oldDefaultList instanceof LocalChangeList &&
           oldDefaultList.getChanges().isEmpty()) {
 
           SwingUtilities.invokeLater(new Runnable() {
