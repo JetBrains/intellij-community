@@ -65,7 +65,7 @@ TRIPLE_APOS_LITERAL = {THREE_APOS} {APOS_STRING_CHAR}* {THREE_APOS}
 
 %%
 
-[\n\r]+               { return PyTokenTypes.LINE_BREAK; }
+[\n]                  { return PyTokenTypes.LINE_BREAK; }
 [\ ]                  { return PyTokenTypes.SPACE; }
 [\t]                  { return PyTokenTypes.TAB; }
 [\f]                  { return PyTokenTypes.FORMFEED; }

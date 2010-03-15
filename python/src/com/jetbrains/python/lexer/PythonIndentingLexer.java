@@ -121,7 +121,7 @@ public class PythonIndentingLexer extends PythonFutureAwareLexer {
     }
     if (getBaseTokenType() == PyTokenTypes.LINE_BREAK) {
       backslashToken.setType(PyTokenTypes.SPACE);
-      processInsignificantLineBreak(getBaseTokenStart());
+      processInsignificantLineBreak(getBaseTokenStart(), true);
     }
     myProcessSpecialTokensPending = true;
   }
@@ -136,18 +136,25 @@ public class PythonIndentingLexer extends PythonFutureAwareLexer {
       processIndent(startPos);
     }
     else {
-      processInsignificantLineBreak(startPos);
+      processInsignificantLineBreak(startPos, false);
     }
   }
 
-  private void processInsignificantLineBreak(int startPos) {
+  private void processInsignificantLineBreak(int startPos, boolean breakStatementOnLineBreak) {
     // merge whitespace following the line break character into the
     // line break token
     int end = getBaseTokenEnd();
     advanceBase();
-    while (getBaseTokenType() == PyTokenTypes.SPACE || getBaseTokenType() == PyTokenTypes.LINE_BREAK) {
+    while (getBaseTokenType() == PyTokenTypes.SPACE || (!breakStatementOnLineBreak && getBaseTokenType() == PyTokenTypes.LINE_BREAK)) {
       end = getBaseTokenEnd();
       advanceBase();
+    }
+    if (breakStatementOnLineBreak && getBaseTokenType() == PyTokenTypes.LINE_BREAK) {
+      myTokenQueue.add(new PendingToken(PyTokenTypes.STATEMENT_BREAK, startPos, startPos));
+      while (getBaseTokenType() == PyTokenTypes.SPACE || getBaseTokenType() == PyTokenTypes.LINE_BREAK) {
+        end = getBaseTokenEnd();
+        advanceBase();
+      }
     }
     myTokenQueue.add(new PendingToken(PyTokenTypes.LINE_BREAK, startPos, end));
   }
