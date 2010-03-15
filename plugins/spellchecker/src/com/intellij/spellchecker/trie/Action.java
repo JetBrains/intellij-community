@@ -15,9 +15,7 @@
  */
 package com.intellij.spellchecker.trie;
 
-import java.util.Map;
-
 public interface Action {
 
-  void run(Map.Entry<? extends String,? extends String> entry);
+  void run(String entry);
 }

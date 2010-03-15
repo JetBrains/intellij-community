@@ -18,6 +18,7 @@ package com.siyeh.ig.classlayout;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -70,18 +71,6 @@ public class UtilityClassWithoutPrivateConstructorInspection
         final PsiClass aClass = (PsiClass)infos[0];
         final PsiMethod constructor = getNullArgConstructor(aClass);
         if (constructor == null) {
-            final Query<PsiReference> query =
-                    ReferencesSearch.search(aClass, aClass.getUseScope());
-            for (PsiReference reference : query) {
-                if (reference == null) {
-                    continue;
-                }
-                final PsiElement element = reference.getElement();
-                final PsiElement parent = element.getParent();
-                if (parent instanceof PsiNewExpression) {
-                    return null;
-                }
-            }
             return new CreateEmptyPrivateConstructor();
         } else {
             final Query<PsiReference> query =
@@ -112,6 +101,25 @@ public class UtilityClassWithoutPrivateConstructorInspection
             final PsiClass aClass = (PsiClass)classNameIdentifier.getParent();
             if (aClass == null) {
                 return;
+            }
+            final Query<PsiReference> query =
+                    ReferencesSearch.search(aClass, aClass.getUseScope());
+            for (PsiReference reference : query) {
+                if (reference == null) {
+                    continue;
+                }
+                final PsiElement element = reference.getElement();
+                final PsiElement parent = element.getParent();
+                if (parent instanceof PsiNewExpression) {
+                    SwingUtilities.invokeLater(new Runnable() {
+                        public void run() {
+                            Messages.showInfoMessage(aClass.getProject(),
+                                                     "Utility class has instantiations, private constructor will not be created",
+                                                     "Can't generate constructor");
+                        }
+                    });
+                    return;
+                }
             }
             final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
             final PsiElementFactory factory = psiFacade.getElementFactory();

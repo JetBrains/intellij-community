@@ -18,6 +18,8 @@ import com.intellij.codeInsight.controlflow.Instruction;
 import org.jetbrains.annotations.NotNull;
 
 public interface DfaInstance<E> {
+  // Please ensure that E has correctly implemented equals method
+
   // Invariant: fun must create new instance of DFAMap if modifies it
   DFAMap<E> fun(DFAMap<E> e, Instruction instruction);
 

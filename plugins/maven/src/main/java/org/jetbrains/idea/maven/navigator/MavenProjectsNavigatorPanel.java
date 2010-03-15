@@ -56,13 +56,12 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     myTree = tree;
 
     final ActionManager actionManager = ActionManager.getInstance();
-    ActionToolbar actionToolbar = actionManager.createActionToolbar("New Maven Toolbar",
-                                                                    (ActionGroup)actionManager.getAction("Maven.NavigatorToolbar"),
+    ActionToolbar actionToolbar = actionManager.createActionToolbar("Maven Navigator Toolbar",
+                                                                    (DefaultActionGroup)actionManager.getAction("Maven.NavigatorActionsToolbar"),
                                                                     true);
-    actionToolbar.setTargetComponent(tree);
-    JComponent toolbar = actionToolbar.getComponent();
 
-    setToolbar(toolbar);
+    actionToolbar.setTargetComponent(tree);
+    setToolbar(actionToolbar.getComponent());
     setContent(new JScrollPane(myTree));
 
     myTree.addMouseListener(new PopupHandler() {
@@ -114,18 +113,10 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     return null;
   }
 
-  private List<MavenProject> extractProjectNodes() {
-    List<MavenProject> result = new ArrayList<MavenProject>();
-    for (MavenProjectsStructure.ProjectNode each : getSelectedProjectNodes()) {
-      result.add(each.getMavenProject());
-    }
-    return result.isEmpty() ? null : result;
-  }
-
   private VirtualFile extractVirtualFile() {
     for (MavenProjectsStructure.MavenSimpleNode each : getSelectedNodes(MavenProjectsStructure.MavenSimpleNode.class)) {
       VirtualFile file = each.getVirtualFile();
-      if (file != null) return file;
+      if (file != null && file.isValid()) return file;
     }
 
     final MavenProjectsStructure.ProjectNode projectNode = getContextProjectNode();
@@ -139,7 +130,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     final List<VirtualFile> files = new ArrayList<VirtualFile>();
     for (MavenProjectsStructure.MavenSimpleNode each : getSelectedNodes(MavenProjectsStructure.MavenSimpleNode.class)) {
       VirtualFile file = each.getVirtualFile();
-      if (file != null) files.add(file);
+      if (file != null && file.isValid()) files.add(file);
     }
     return files.isEmpty() ? null : VfsUtil.toVirtualFileArray(files);
   }

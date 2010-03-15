@@ -56,6 +56,11 @@ public class ControlFlowUtil {
     public void clear() {
       myIndex = -1;
     }
+
+    @Override
+    public String toString() {
+      return "Stack(" + (myIndex + 1) + ") elements";
+    }
   }
 
   public static int[] postOrder(Instruction[] flow) {
@@ -74,7 +79,7 @@ public class ControlFlowUtil {
 
         while (!stack.isEmpty()) {
           final int num = stack.pop();
-          result[num] = N++;
+          result[N++] = num;
           for (Instruction succ : flow[num].allSucc()) {
             final int succNum = succ.num();
             if (!visited[succNum]) {

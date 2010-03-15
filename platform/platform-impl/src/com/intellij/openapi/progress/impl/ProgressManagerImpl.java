@@ -66,7 +66,7 @@ public class ProgressManagerImpl extends ProgressManager {
           }
         }
       };
-      thread.setPriority(Thread.MIN_PRIORITY + 1);
+      thread.setPriority(Thread.MAX_PRIORITY - 1);
       thread.start();
     }
   }

@@ -85,10 +85,10 @@ public class BaseSpellChecker implements SpellCheckerEngine {
     }
     final List<Suggestion> suggestions = new ArrayList<Suggestion>();
     engineDictionary.traverse(new Action() {
-      public void run(Map.Entry<? extends String, ? extends String> entry) {
-        if (transformed.charAt(0) == entry.getKey().charAt(0)/* && Math.abs(mpw.length() - entry.getKey().length()) <= 1*/) {
-          final int distance = metrics.calculateMetrics(transformed, entry.getKey());
-          suggestions.add(new Suggestion(entry.getKey(), distance));
+      public void run(String entry) {
+        if (transformed.charAt(0) == entry.charAt(0)/* && Math.abs(mpw.length() - entry.getKey().length()) <= 1*/) {
+          final int distance = metrics.calculateMetrics(transformed, entry);
+          suggestions.add(new Suggestion(entry, distance));
         }
       }
     });

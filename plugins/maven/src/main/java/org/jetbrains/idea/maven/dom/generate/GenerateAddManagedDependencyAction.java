@@ -33,8 +33,8 @@ import org.jetbrains.idea.maven.utils.MavenIcons;
 import java.util.List;
 import java.util.Set;
 
-public class GenerateOverridingDependencyAction extends GenerateDomElementAction {
-  public GenerateOverridingDependencyAction() {
+public class GenerateAddManagedDependencyAction extends GenerateDomElementAction {
+  public GenerateAddManagedDependencyAction() {
     super(new MavenOverridingDependencyGenerateProvider(), MavenIcons.DEPENDENCY_ICON);
   }
 
@@ -45,7 +45,7 @@ public class GenerateOverridingDependencyAction extends GenerateDomElementAction
 
   private static class MavenOverridingDependencyGenerateProvider extends MavenGenerateProvider<MavenDomDependency> {
     public MavenOverridingDependencyGenerateProvider() {
-      super(MavenDomBundle.message("override.dependency"), MavenDomDependency.class);
+      super(MavenDomBundle.message("generate.managed.dependency"), MavenDomDependency.class);
     }
 
     @Override

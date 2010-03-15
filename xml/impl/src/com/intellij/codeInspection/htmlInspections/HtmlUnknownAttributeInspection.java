@@ -16,8 +16,9 @@
 
 package com.intellij.codeInspection.htmlInspections;
 
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
@@ -30,7 +31,6 @@ import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -87,8 +87,8 @@ public class HtmlUnknownAttributeInspection extends HtmlUnknownTagInspection {
       XmlAttributeDescriptor attributeDescriptor = elementDescriptor.getAttributeDescriptor(attribute);
 
       final String name = attribute.getName();
-
-      if (attributeDescriptor == null) {
+      
+      if (attributeDescriptor == null && !attribute.isNamespaceDeclaration()) {
         if (!XmlUtil.attributeFromTemplateFramework(name, tag) && (!isCustomValuesEnabled() || !isCustomValue(name))) {
           final ASTNode node = attribute.getNode();
           assert node != null;
