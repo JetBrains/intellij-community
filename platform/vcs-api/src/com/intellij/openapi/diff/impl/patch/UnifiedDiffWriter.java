@@ -26,8 +26,8 @@ import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.Collection;
 import java.text.MessageFormat;
+import java.util.Collection;
 
 public class UnifiedDiffWriter {
   @NonNls private static final String INDEX_SIGNATURE = "Index: {0}{1}";
